@@ -13,7 +13,6 @@ import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowCallbac
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowInstance;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowNodeRun;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowTransfer;
-import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowVerification;
 import com.paytech.platform.support.workflow.core.enums.NodeRunStatus;
 
 import lombok.Getter;
@@ -44,9 +43,6 @@ public class WorkflowRuntimeChange {
 
     /** 新建的审批行。 */
     private final List<WorkflowApproval> newApprovals = new ArrayList<>();
-
-    /** 追加的验证记录。 */
-    private final List<WorkflowVerification> newVerifications = new ArrayList<>();
 
     /** 追加的转交记录。 */
     private final List<WorkflowTransfer> newTransfers = new ArrayList<>();

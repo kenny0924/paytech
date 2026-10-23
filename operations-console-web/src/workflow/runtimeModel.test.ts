@@ -5,8 +5,8 @@ import {
   pageTaskLink, previewPath, previousRoundAction, progressOf, resolveShortcut, revisionOf, runBatch, runtimeVariables, traversedEdges,
   visualState, waitingText,
 } from './runtimeModel.ts';
-import { changeSummary, diffOutputs, duplicateField, fieldProblems, moveField, outputOf, valueProblems } from './formModel.ts';
-import { configDiff, configProblems, frozenConfig, referenceSummary } from './templateModel.ts';
+import { changeSummary, diffOutputs, duplicateField, fieldProblems, moveField, newField, outputOf, valueProblems } from './formModel.ts';
+import { configDiff, configProblems, defaultConfig, frozenConfig, normalizeConfig, referenceSummary } from './templateModel.ts';
 import type { ActionRun, Approval, InstanceDetail, NodeRun, Task, WorkflowGraph } from './workflowTypes.ts';
 
 const run = (nodeKey: string, roundNo: number, status: NodeRun['status'], extra: Partial<NodeRun> = {}): NodeRun => ({
@@ -51,11 +51,14 @@ test('节点着色取最新一轮；排他网关只点亮选中的出口；进�
   const value = detail({ nodeRuns: runs, actionRuns: [action('risk-2', 'riskRule', 'PENDING', null)] });
   assert.deepEqual(progressOf(value), { completed: 1, active: 1, pending: 1, total: 3 });
   assert.deepEqual(currentHandlers(value).map(item => [item.nodeKey, item.stage, item.people]), [['risk', 'ACTION', ['ops.wang']]]);
+  // 我发起的时间线：本人显示为“你”
+  assert.deepEqual(currentHandlers(value, '7')[0].people, ['你']);
+  assert.deepEqual(currentHandlers(value, '99')[0].people, ['ops.wang']);
 });
 
-test('运行时变量取启动值与最新一轮已验证输出；页面任务拼接站内路由与参数', () => {
+test('运行时变量取启动值与最新一轮已完成输出；页面任务拼接站内路由与参数', () => {
   const value = detail({ nodeRuns: [run('risk', 1, 'RETURNED'), run('risk', 2, 'APPROVING')],
-    actionRuns: [action('risk-1', 'riskRule', 'VERIFIED', { note: 'v1' }), action('risk-2', 'riskRule', 'VERIFIED', { note: 'v2' })] });
+    actionRuns: [action('risk-1', 'riskRule', 'VERIFIED', { note: 'v1' }), action('risk-2', 'riskRule', 'COMPLETED', { note: 'v2' })] });
   const variables = runtimeVariables(value);
   assert.equal(variables['start.channelCode'], 'GEIDEA');
   assert.equal(variables['riskRule.note'], 'v2');
@@ -184,9 +187,11 @@ test('表单字段设计与填写校验', () => {
     { key: 'goLive', label: '上线日', type: 'DATE' as const, required: false },
     { key: 'refund', label: '退款', type: 'BOOLEAN' as const, required: false },
   ] };
+  // 需求 E1：旧配置的长度、范围与小数位不再检查，只查必填与平台技术保护（类型、平台长度上限）。
   assert.deepEqual(valueProblems(form, { name: '超过五个字符了', days: '120', currency: 'EUR', goLive: '2026/11/15', refund: 'yes' }),
-    { name: '不能超过 5 个字符', days: '必须在 1 到 90 之间', currency: '不是可选值', goLive: '必须是 YYYY-MM-DD 日期', refund: '必须是是或否' });
-  assert.deepEqual(valueProblems(form, { name: '', days: '1.5' }), { name: '必填', days: '最多 0 位小数' });
+    { currency: '不是可选值', goLive: '必须是 YYYY-MM-DD 日期', refund: '必须是是或否' });
+  assert.deepEqual(valueProblems(form, { name: '', days: 'abc' }), { name: '必填', days: '必须是数字' });
+  assert.deepEqual(valueProblems(form, { name: 'x'.repeat(256), days: '1.5' }), { name: '不能超过 255 个字符' });
   assert.deepEqual(valueProblems(form, { name: 'ok', days: '30', refund: false }), {});
   assert.deepEqual(outputOf(form, { name: 'ok', days: '30', currency: '', refund: false }), { name: 'ok', days: '30', refund: false });
   const duplicated = duplicateField({ fields: [form.fields[0], { ...form.fields[0], key: 'name' }] }, 0);
@@ -194,7 +199,7 @@ test('表单字段设计与填写校验', () => {
   assert.match(fieldProblems(duplicated).get(2)!, /重复/);
   assert.deepEqual(moveField(form, 0, 1).fields.map(field => field.key).slice(0, 2), ['days', 'name']);
   const files = { fields: [{ key: 'f', label: '合同', type: 'FILE' as const, required: true, rules: { minFiles: 2, maxFiles: 3 } }] };
-  assert.deepEqual(valueProblems(files, { f: ['/files/v1/11'] }), { f: '至少 2 个文件' });
+  assert.deepEqual(valueProblems(files, { f: ['/files/v1/11'] }), {}, '旧配置 minFiles 不再检查');
   assert.deepEqual(valueProblems(files, { f: ['/files/v1/11', '12'] }), { f: '文件地址无效，请重新上传' });
   assert.deepEqual(valueProblems(files, { f: ['/files/v1/11', '/files/v1/11'] }), { f: '文件重复' });
   assert.deepEqual(valueProblems(files, { f: ['/files/v1/11', '/files/v1/12'] }), {});
@@ -203,8 +208,17 @@ test('表单字段设计与填写校验', () => {
 
 test('动作模板配置校验、引用汇总与配置对比', () => {
   assert.deepEqual(configProblems('PAGE_TASK', { pageRoute: 'https://x.test', parameters: [] }), ['目标页面只允许以 / 开头的控制台内部路由，不接受外部地址']);
-  assert.deepEqual(configProblems('FILE_UPLOAD', { minFiles: 3, maxFiles: 2, mimeTypes: ['pdf'] }), ['最少文件数不能大于最多文件数', 'MIME 类型格式不正确，例如 application/pdf']);
-  assert.deepEqual(configProblems('MANUAL_CONFIRM', { instruction: '确认', noteRequired: true }), []);
+  assert.deepEqual(configProblems('FILE_UPLOAD', { minFiles: 3, maxFiles: 2, mimeTypes: ['pdf'] }), [], '数量与类型不再配置');
+  assert.deepEqual(configProblems('MANUAL_CONFIRM', { instruction: '确认' }), []);
+  assert.deepEqual(normalizeConfig('FILE_UPLOAD', { minFiles: 1, maxFiles: 3, mimeTypes: ['application/pdf'], instruction: '上传执照' }), { required: true, instruction: '上传执照' });
+  assert.deepEqual(normalizeConfig('FILE_UPLOAD', { minFiles: 0 }), { required: false, instruction: '' });
+  assert.deepEqual(normalizeConfig('MANUAL_CONFIRM', { instruction: '线下签约', noteRequired: true }), { instruction: '线下签约' });
+  assert.deepEqual(normalizeConfig('FORM', { fields: [{ key: 'n', label: 'N', type: 'TEXT', required: true, rules: { maxLength: 5 } },
+    { key: 'c', label: 'C', type: 'ENUM', required: false, rules: { options: [{ value: 'A', label: 'a' }], maxLength: 3 } }] }),
+  { fields: [{ key: 'n', label: 'N', type: 'TEXT', required: true }, { key: 'c', label: 'C', type: 'ENUM', required: false, rules: { options: [{ value: 'A', label: 'a' }] } }] });
+  assert.deepEqual(defaultConfig('FILE_UPLOAD'), { required: true, instruction: '' });
+  assert.deepEqual(newField({ fields: [] }, 'TEXT').rules, undefined);
+  assert.deepEqual(newField({ fields: [] }, 'FILE').rules, undefined);
   const current = { fields: [{ key: 'days', label: '周期', type: 'NUMBER' as const, required: true, rules: { min: '1', max: '90' } },
     { key: 'goLive', label: '上线日', type: 'DATE' as const, required: true }] };
   const frozen = { fields: [{ key: 'days', label: '周期', type: 'NUMBER' as const, required: true, rules: { min: '1', max: '60' } }] };

@@ -2,6 +2,8 @@ package com.paytech.platform.support.workflow.domainservice.repository.impl;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Repository;
 
@@ -10,6 +12,7 @@ import com.paytech.platform.support.workflow.domain.query.WorkflowHandledTaskVie
 import com.paytech.platform.support.workflow.domain.query.WorkflowNodeProgressView;
 import com.paytech.platform.support.workflow.domain.query.WorkflowOpenAssignmentView;
 import com.paytech.platform.support.workflow.domain.query.WorkflowTaskView;
+import com.paytech.platform.support.workflow.domain.query.WorkflowTemplateReferenceCountView;
 import com.paytech.platform.support.workflow.domain.query.WorkflowTemplateReferenceView;
 import com.paytech.platform.support.workflow.domainservice.repository.WorkflowTaskQueryRepository;
 
@@ -63,6 +66,17 @@ public class WorkflowTaskQueryRepositoryImpl implements WorkflowTaskQueryReposit
     @Override
     public List<WorkflowTemplateReferenceView> templateReferences(long templateId) {
         return mapper.templateReferences(Long.toString(templateId));
+    }
+
+    /** 一批模板被引用的流程数；快照中的模板 ID 为文本，按文本匹配。 */
+    @Override
+    public Map<Long, Integer> templateReferenceCounts(Collection<Long> templateIds) {
+        if (templateIds.isEmpty()) {
+            return Map.of();
+        }
+        List<String> ids = templateIds.stream().map(String::valueOf).toList();
+        return mapper.templateReferenceCounts(ids).stream().collect(Collectors.toMap(
+            WorkflowTemplateReferenceCountView::getTemplateId, WorkflowTemplateReferenceCountView::getDefinitionCount));
     }
 
     /**

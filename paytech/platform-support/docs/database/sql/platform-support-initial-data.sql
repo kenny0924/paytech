@@ -6035,16 +6035,20 @@ COMMIT;
 -- The menu group 工作流 is a top-level OPERATIONS menu (sort 60); menus and component keys follow
 -- operations-console-web/src/navigation/pageCapabilities.ts.
 -- Request bodies are capped at 65536 bytes (Gateway absolute ceiling), including saved drafts with the graph.
--- Workflow file routes (technique 7 #20 re-verify, #26 upload start, #27 upload completion, #28 attachment download,
+-- Workflow file routes (technique 7 #26 upload start, #27 upload completion, #28 attachment download,
 -- 2026-10-22 file segment) are bound to WORKFLOW_TASK_HANDLE; Platform checks the assignee, uploader and instance
--- participant. Upload start body limit 4096, the three bodyless commands 1024; attachment routes allow 30 calls per
+-- participant. Upload start body limit 4096, the two bodyless commands 1024; attachment routes allow 30 calls per
 -- minute per operator (one start plus one completion per file). Their responses carry short-lived storage URLs; the
 -- /workflow prefix is metadata-only logged in BFF and Platform. Incremental script for an environment that already has
 -- the first 364 rows: requirements/20261021/platform-support-工作流/verification/local-e2e/40-workflow-file-routes.sql.
--- Rows: permission 7, role_permission 7, console_resource 10, gateway_route 32, route_header 136,
--- query_param 30, guard_rule 192, notification_template 1, notification_template_content 1, notification_route 1
--- (417). #28 accepts the optional query disposition=INLINE|ATTACHMENT (query_param 127030, follow-up 2026-10-22;
+-- Rows: permission 7, role_permission 7, console_resource 11, gateway_route 31, route_header 130,
+-- query_param 30, guard_rule 186, notification_template 1, notification_template_content 1, notification_route 1
+-- (405). #28 accepts the optional query disposition=INLINE|ATTACHMENT (query_param 127030, follow-up 2026-10-22;
 -- incremental script verification/local-e2e/41-workflow-download-disposition.sql).
+-- 2026-10-22 UX revision (requirements/20261022/platform-support-工作流体验优化, technique 4.1 / 4.3): adds menu
+-- 127311 我发起的 (/workflow/started, permission WORKFLOW_TASK_HANDLE) and removes the #20 re-verify route 127429 with
+-- its 6 headers (127613-127618) and 6 guard rules (127869-127874); incremental script
+-- requirements/20261022/platform-support-工作流体验优化/sql/20-registration.sql.
 -- ID block 127: 1271xx permission, 1272xx role_permission, 1273xx console_resource, 1274xx route,
 -- 1275xx-1276xx route_header, 1270xx query_param, 12708x notification template/content/route, 1277xx-1278xx guard_rule.
 -- Rollback: delete the rows by the 900000000000127001-900000000000127999 IDs below (children first: guard_rule,
@@ -6086,7 +6090,8 @@ INSERT INTO t_console_resource (resource_id,resource_code,channel,resource_type,
   (900000000000127307, 'OPERATIONS_WORKFLOW_INSTANCE_READ', 'OPERATIONS', 'BUTTON', 900000000000127303, '查看全部', NULL, NULL, 900000000000127106, 20, 'DISABLED', 1, @workflow_console_time, @workflow_console_time),
   (900000000000127308, 'OPERATIONS_WORKFLOW_INSTANCE_MANAGE', 'OPERATIONS', 'BUTTON', 900000000000127303, '管理', NULL, NULL, 900000000000127107, 30, 'DISABLED', 1, @workflow_console_time, @workflow_console_time),
   (900000000000127309, 'OPERATIONS_WORKFLOW_DEFINITION_MANAGE', 'OPERATIONS', 'BUTTON', 900000000000127304, '维护', NULL, NULL, 900000000000127102, 10, 'DISABLED', 1, @workflow_console_time, @workflow_console_time),
-  (900000000000127310, 'OPERATIONS_WORKFLOW_ACTION_TEMPLATE_MANAGE', 'OPERATIONS', 'BUTTON', 900000000000127305, '维护', NULL, NULL, 900000000000127103, 10, 'DISABLED', 1, @workflow_console_time, @workflow_console_time);
+  (900000000000127310, 'OPERATIONS_WORKFLOW_ACTION_TEMPLATE_MANAGE', 'OPERATIONS', 'BUTTON', 900000000000127305, '维护', NULL, NULL, 900000000000127103, 10, 'DISABLED', 1, @workflow_console_time, @workflow_console_time),
+  (900000000000127311, 'OPERATIONS_WORKFLOW_STARTED', 'OPERATIONS', 'MENU', 900000000000127301, '我发起的', '/workflow/started', 'OPERATIONS_WORKFLOW_STARTED', 900000000000127105, 15, 'DISABLED', 1, @workflow_console_time, @workflow_console_time);
 
 INSERT INTO t_gateway_route (route_id, route_code, channel, http_method, external_path_template, downstream_path_template, target_id, security_profile_code, authorization_mode, permission_id, required_scope_code, request_cookie_mode, response_cookie_mode, idempotency_mode, body_limit_bytes, body_receive_timeout_millis, response_timeout_millis, status, version, created_by, updated_by, create_time, update_time) VALUES
   (900000000000127401, 'operations-workflow-template-list', 'OPERATIONS', 'GET', '/api/operations/workflow-admin/v1/action-templates', '/workflow-admin/v1/action-templates', @workflow_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @workflow_console_actor_id, @workflow_console_actor_id, @workflow_console_time, @workflow_console_time),
@@ -6117,7 +6122,6 @@ INSERT INTO t_gateway_route (route_id, route_code, channel, http_method, externa
   (900000000000127426, 'operations-workflow-assignee-list', 'OPERATIONS', 'GET', '/api/operations/workflow/v1/assignee-candidates', '/workflow/v1/assignee-candidates', @workflow_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127105, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @workflow_console_actor_id, @workflow_console_actor_id, @workflow_console_time, @workflow_console_time),
   (900000000000127427, 'operations-workflow-handled-task-list', 'OPERATIONS', 'GET', '/api/operations/workflow/v1/my-tasks/handled', '/workflow/v1/my-tasks/handled', @workflow_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127105, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @workflow_console_actor_id, @workflow_console_actor_id, @workflow_console_time, @workflow_console_time),
   (900000000000127428, 'operations-workflow-template-references', 'OPERATIONS', 'GET', '/api/operations/workflow-admin/v1/action-templates/{templateId}/references', '/workflow-admin/v1/action-templates/{templateId}/references', @workflow_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @workflow_console_actor_id, @workflow_console_actor_id, @workflow_console_time, @workflow_console_time),
-  (900000000000127429, 'operations-workflow-action-reverify', 'OPERATIONS', 'POST', '/api/operations/workflow/v1/action-runs/{actionRunId}/verification', '/workflow/v1/action-runs/{actionRunId}/verification', @workflow_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127105, NULL, 'DROP', 'NONE', 'NONE', 1024, 5000, 10000, 'DISABLED', 1, @workflow_console_actor_id, @workflow_console_actor_id, @workflow_console_time, @workflow_console_time),
   (900000000000127430, 'operations-workflow-attachment-upload', 'OPERATIONS', 'POST', '/api/operations/workflow/v1/attachments/uploads', '/workflow/v1/attachments/uploads', @workflow_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127105, NULL, 'DROP', 'NONE', 'NONE', 4096, 5000, 10000, 'DISABLED', 1, @workflow_console_actor_id, @workflow_console_actor_id, @workflow_console_time, @workflow_console_time),
   (900000000000127431, 'operations-workflow-attachment-complete', 'OPERATIONS', 'POST', '/api/operations/workflow/v1/attachments/uploads/{uploadId}/completion', '/workflow/v1/attachments/uploads/{uploadId}/completion', @workflow_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127105, NULL, 'DROP', 'NONE', 'NONE', 1024, 5000, 10000, 'DISABLED', 1, @workflow_console_actor_id, @workflow_console_actor_id, @workflow_console_time, @workflow_console_time),
   (900000000000127432, 'operations-workflow-attachment-download', 'OPERATIONS', 'POST', '/api/operations/workflow/v1/instances/{instanceId}/files/{fileId}/download', '/workflow/v1/instances/{instanceId}/files/{fileId}/download', @workflow_console_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127105, NULL, 'DROP', 'NONE', 'NONE', 1024, 5000, 10000, 'DISABLED', 1, @workflow_console_actor_id, @workflow_console_actor_id, @workflow_console_time, @workflow_console_time);
@@ -6235,12 +6239,6 @@ INSERT INTO t_gateway_route_header (route_header_id,route_id,header_name,header_
   (900000000000127610, 900000000000127427, 'origin', 'FORWARD_REQUEST'),
   (900000000000127611, 900000000000127428, 'authorization', 'CORS_REQUEST_ALLOWED'),
   (900000000000127612, 900000000000127428, 'origin', 'FORWARD_REQUEST'),
-  (900000000000127613, 900000000000127429, 'authorization', 'CORS_REQUEST_ALLOWED'),
-  (900000000000127614, 900000000000127429, 'origin', 'FORWARD_REQUEST'),
-  (900000000000127615, 900000000000127429, 'content-type', 'CORS_REQUEST_ALLOWED'),
-  (900000000000127616, 900000000000127429, 'content-type', 'FORWARD_REQUEST'),
-  (900000000000127617, 900000000000127429, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
-  (900000000000127618, 900000000000127429, 'idempotency-key', 'FORWARD_REQUEST'),
   (900000000000127619, 900000000000127430, 'authorization', 'CORS_REQUEST_ALLOWED'),
   (900000000000127620, 900000000000127430, 'origin', 'FORWARD_REQUEST'),
   (900000000000127621, 900000000000127430, 'content-type', 'CORS_REQUEST_ALLOWED'),
@@ -6461,12 +6459,6 @@ INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,cap
   (900000000000127866, 900000000000127428, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
   (900000000000127867, 900000000000127428, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
   (900000000000127868, 900000000000127428, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
-  (900000000000127869, 900000000000127429, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
-  (900000000000127870, 900000000000127429, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
-  (900000000000127871, 900000000000127429, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
-  (900000000000127872, 900000000000127429, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
-  (900000000000127873, 900000000000127429, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
-  (900000000000127874, 900000000000127429, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
   (900000000000127875, 900000000000127430, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
   (900000000000127876, 900000000000127430, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
   (900000000000127877, 900000000000127430, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),

@@ -10,7 +10,7 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * 实例变量的运行时视图。变量不单独建表（技术方案 3.3）：start.* 取实例的 start_values_json，
- * {@code <actionKey>.*} 取该动作最新一轮 VERIFIED 动作运行的 output_json，由调用方按声明组装。
+ * {@code <actionKey>.*} 取该动作最新一轮 COMPLETED 动作运行的 output_json，由调用方按声明组装。
  */
 public final class WorkflowVariables {
 

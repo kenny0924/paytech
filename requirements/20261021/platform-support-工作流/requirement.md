@@ -1,6 +1,9 @@
 # platform-support：工作流
 
-状态：**阶段 1 已确认**（2026-10-21，Q1—Q5 按建议，补充启动表单 C12）。确认记录见 [delivery.md](./delivery.md)，技术方案见 [technique.md](./technique.md)（阶段 2 起编写），设计讨论稿见 [design-discuss/workflow](../../../design-discuss/workflow/design.md)。
+状态：**阶段 1 已确认**（2026-10-21，Q1—Q5 按建议，补充启动表单 C12）。
+
+> **2026-10-22 修订：** 动作「验证」与提交校验已去掉，只保留字段级「必填」；动作状态为待处理 / 已完成 / 已取消，执行人点「完成」；必选动作全部完成后才进入审批，同意时再检查一次；文件扫描不挡完成。本文 R3「验证」列、B2、B3 措辞、AC-06 / AC-07 与通知触发「动作验证未通过」以[工作流页面体验优化需求 E 组](../../20261022/platform-support-工作流体验优化/requirement.md)为准。
+确认记录见 [delivery.md](./delivery.md)，技术方案见 [technique.md](./technique.md)（阶段 2 起编写），设计讨论稿见 [design-discuss/workflow](../../../design-discuss/workflow/design.md)。
 
 ## 1. 背景
 

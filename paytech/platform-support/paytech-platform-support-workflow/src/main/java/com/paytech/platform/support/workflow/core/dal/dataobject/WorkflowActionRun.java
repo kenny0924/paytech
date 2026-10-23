@@ -33,13 +33,13 @@ public class WorkflowActionRun {
     /** 动作的提交与验证方式，取自版本快照。允许值：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM。 */
     private WorkflowActionType actionType;
 
-    /** 1 表示必选，节点放行前必须 VERIFIED；0 表示可选，不阻塞放行。 */
+    /** 1 表示必选，节点进入审批或放行前必须 COMPLETED；0 表示可选，不阻塞放行。 */
     private Boolean required;
 
     /** 当前指派的执行人 Operations 账号 ID；转交后更新。 */
     private Long assigneeId;
 
-    /** PENDING 未提交；VERIFIED 最后一次验证通过且不再接受提交；UNVERIFIED 最后一次验证未通过；CANCELLED 节点被终止或结束时未完成。允许值：PENDING、VERIFIED、UNVERIFIED、CANCELLED。 */
+    /** PENDING 待处理；COMPLETED 已完成；CANCELLED 节点结束或实例终止时仍未完成。允许值：PENDING、COMPLETED、CANCELLED。 */
     private ActionRunStatus status;
 
     /** 执行人最近一次提交的输出，按动作类型与配置校验；未提交时为空。 */

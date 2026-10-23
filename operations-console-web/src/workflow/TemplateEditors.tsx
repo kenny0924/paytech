@@ -1,35 +1,46 @@
 import { useEffect, useState } from 'react';
-import { Alert, AutoComplete, Button, Empty, Form, Input, InputNumber, Modal, Select, Spin, Steps, Switch, Table, Tag } from 'antd';
+import { Alert, AutoComplete, Button, Empty, Input, Modal, Select, Spin, Switch, Table, Tag } from 'antd';
+import { actionTypeIcons } from './workflowIcons';
+import { CheckOutlined, CloseOutlined, PlusOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { session } from '../api/session';
 import { pageCapabilities } from '../navigation/pageCapabilities';
+import { creatableTypes } from './catalogModel';
 import { FieldDesigner, FormPreview } from './FieldDesigner';
 import { operatorsByType } from './graphModel';
-import { configDiff, configProblems, defaultConfig, fileCountCeiling, frozenConfig, instructionLimit, normalizeConfig, referenceSummary, templateCodePattern } from './templateModel';
-import { useWorkflowCommand } from './useWorkflowCommand';
-import { decodeMutation, decodeReferences, decodeVersion, workflowPaths } from './workflowApi';
-import { actionTypeGuides, actionTypeLabels, operatorLabels } from './workflowLabels';
+import { configDiff, defaultConfig, frozenConfig, instructionLimit, referenceSummary } from './templateModel';
+import { decodeReferences, decodeVersion, workflowPaths } from './workflowApi';
+import { actionTypeLabels, operatorLabels } from './workflowLabels';
 import type {
   ActionConfig, ActionTemplate, ActionType, DataQueryConfig, FileUploadConfig, FormDefinition, ManualConfirmConfig, PageTaskConfig, TemplateReferenceItem,
   TemplateReferences,
 } from './workflowTypes';
 import { Field, LoadFailed, workflowRoutes } from './WorkflowParts';
-import { rulesHint, uploadRules } from './fileModel';
+import { uploadRequired } from './fileModel';
 
 export const actionTypes: ActionType[] = ['FORM', 'FILE_UPLOAD', 'PAGE_TASK', 'MANUAL_CONFIRM', 'DATA_QUERY'];
-const routeOptions = pageCapabilities.map(page => ({ value: page.frontendRoute as string, label: `${page.displayName}（${page.frontendRoute}）` }));
-const mimeOptions = [
-  { value: 'application/pdf', label: 'PDF' }, { value: 'application/x-pem-file', label: 'PEM 证书' }, { value: 'application/x-pkcs12', label: 'PKCS#12' },
-  { value: 'application/zip', label: 'ZIP' }, { value: 'image/png', label: 'PNG' }, { value: 'image/jpeg', label: 'JPEG' },
-  { value: 'text/csv', label: 'CSV' }, { value: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', label: 'Excel' },
-];
+/** 类型说明（列表类型标签、新建选类型卡片，原型 06、07）；图标见 workflowIcons。 */
+export const actionTypeSummaries: Record<ActionType, string> = {
+  FORM: '填写结构化信息', FILE_UPLOAD: '上传一个或多个文件', PAGE_TASK: '到指定页面完成操作', MANUAL_CONFIRM: '确认一件线下事项', DATA_QUERY: '按条件查询并带出数据',
+};
 
-/** 按类型的配置编辑（原型 12、14—16）。 */
-export function ConfigEditor({ type, config, onChange, readOnly }: {
+/** 类型标签：图标 + 名称，按类型着色。 */
+export function ActionTypeTag({ type }: { type: ActionType }) {
+  return <span className={`wf-type-tag is-${type.toLowerCase()}`}><span aria-hidden>{actionTypeIcons[type]}</span>{actionTypeLabels[type]}</span>;
+}
+
+const routeOptions = pageCapabilities.map(page => ({ value: page.frontendRoute as string, label: `${page.displayName}（${page.frontendRoute}）` }));
+/** 按类型的配置编辑：表单为字段设计，其他类型为说明（原型 08，需求 E1）。 */
+export function ConfigEditor({ type, config, onChange, readOnly, templateName, description, savedKeys }: {
   type: ActionType; config: ActionConfig; onChange: (config: ActionConfig) => void; readOnly?: boolean;
+  /** 表单画布标题与说明（执行人在待办里看到的动作名称与描述）。 */
+  templateName?: string; description?: string;
+  /** 已保存配置的字段键，键不再随显示名称自动生成。 */
+  savedKeys?: ReadonlySet<string>;
 }) {
   switch (type) {
-    case 'FORM': return <FieldDesigner form={config as FormDefinition} readOnly={readOnly} variablePrefix="<动作键>." previewTitle="字段" onChange={onChange} />;
+    case 'FORM': return <FieldDesigner form={config as FormDefinition} readOnly={readOnly} variablePrefix="<动作键>." savedKeys={savedKeys}
+      previewTitle={templateName || '（未命名动作）'} previewDescription={description} onChange={onChange} />;
     case 'FILE_UPLOAD': return <FileUploadEditor config={config as FileUploadConfig} onChange={onChange} readOnly={readOnly} />;
     case 'PAGE_TASK': return <PageTaskEditor config={config as PageTaskConfig} onChange={onChange} readOnly={readOnly} />;
     case 'MANUAL_CONFIRM': return <ManualConfirmEditor config={config as ManualConfirmConfig} onChange={onChange} readOnly={readOnly} />;
@@ -37,27 +48,16 @@ export function ConfigEditor({ type, config, onChange, readOnly }: {
   }
 }
 
+/** 上传文件：只有执行说明与「至少上传一个」（需求 E1）；旧配置 minFiles ≥ 1 显示为已开启，不再写数量与类型。 */
 function FileUploadEditor({ config, onChange, readOnly }: { config: FileUploadConfig; onChange: (config: FileUploadConfig) => void; readOnly?: boolean }) {
-  const set = (patch: Partial<FileUploadConfig>) => onChange({ ...config, ...patch });
-  return <div className="wf-template-grid">
-    <section className="wf-card"><div className="wf-card-title">上传规则</div>
-      <Field label="文件数量" hint={`执行人至少上传多少、最多上传多少；上限不超过 ${fileCountCeiling}`}><div className="wf-inline">
-        至少 <InputNumber min={0} max={fileCountCeiling} value={config.minFiles} disabled={readOnly} onChange={value => set({ minFiles: value ?? 0 })} />
-        最多 <InputNumber min={1} max={fileCountCeiling} value={config.maxFiles} disabled={readOnly} onChange={value => set({ maxFiles: value ?? 1 })} /></div></Field>
-      <Field label="允许的文件类型" hint="按 MIME 类型校验，不只看扩展名"><Select mode="tags" value={config.mimeTypes ?? []} disabled={readOnly} style={{ width: '100%' }}
-        options={mimeOptions.map(item => ({ value: item.value, label: `${item.label} ${item.value}` }))} onChange={mimeTypes => set({ mimeTypes })} /></Field>
-      <Field label="单个文件大小"><span className="muted">由文件服务统一限制，动作里不单独配置</span></Field>
-      <Field label="执行说明 *" hint={`显示在执行人待办里；写清楚要传什么、从哪里拿（${(config.instruction ?? '').length} / ${instructionLimit}）`}>
-        <Input.TextArea rows={6} maxLength={instructionLimit} value={config.instruction} disabled={readOnly} onChange={event => set({ instruction: event.target.value })} /></Field>
-    </section>
-    <section className="wf-card"><div className="wf-card-title">验证规则 <Tag color="green">自动</Tag></div>
-      <p className="muted">执行人提交时系统逐条检查；全部通过动作才变为“已验证”。</p>
-      {[['文件属于本实例', '通过本动作上传，挂在当前实例下；不能引用其他实例或别处的文件'], ['扫描已通过', '每个文件的状态为“可用”（AVAILABLE）'],
-        ['数量符合', `${config.minFiles ?? 0} ≤ 文件数 ≤ ${config.maxFiles ?? '?'}`], ['类型符合', 'MIME 类型在允许列表内']].map(([title, text]) =>
-        <div key={title} className="wf-check"><span className="wf-ok-text">✓</span><div><strong>{title}</strong><div className="muted">{text}</div></div></div>)}
-      <Alert type="info" showIcon title="提交时文件还在扫描" description="动作记为“未验证”，原因写明哪些文件未就绪；扫描完成后执行人点“重新验证”，不用重新上传；每次验证都留记录。" />
-    </section>
-  </div>;
+  const set = (patch: Partial<FileUploadConfig>) => onChange({ required: uploadRequired(config), instruction: config.instruction ?? '', ...patch });
+  return <section className="wf-card">
+    <Field label="执行说明" hint={`显示在执行人待办里；写清楚要传什么、从哪里拿（${(config.instruction ?? '').length} / ${instructionLimit}）`}>
+      <Input.TextArea rows={6} maxLength={instructionLimit} value={config.instruction} disabled={readOnly} onChange={event => set({ instruction: event.target.value })} /></Field>
+    <label className="wf-inline"><Switch size="small" checked={uploadRequired(config)} disabled={readOnly} onChange={required => set({ required })} /> 至少上传一个</label>
+    <div className="wf-subtle"><div>输出：<code>&lt;动作键&gt;.files</code></div>
+      <div className="muted">不限数量与类型；单个文件大小由文件服务统一限制。安全检查在后台进行，不影响完成，未通过的文件不能预览和下载。</div></div>
+  </section>;
 }
 
 function PageTaskEditor({ config, onChange, readOnly }: { config: PageTaskConfig; onChange: (config: PageTaskConfig) => void; readOnly?: boolean }) {
@@ -72,19 +72,18 @@ function PageTaskEditor({ config, onChange, readOnly }: { config: PageTaskConfig
           onChange={event => set({ parameters: parameters.map((item, current) => current === index ? { ...item, key: event.target.value.trim() } : item) })} />
         <Input value={parameter.label} disabled={readOnly} placeholder="说明，如 渠道编码"
           onChange={event => set({ parameters: parameters.map((item, current) => current === index ? { ...item, label: event.target.value } : item) })} />
-        {!readOnly && <Button type="text" danger onClick={() => set({ parameters: parameters.filter((_, current) => current !== index) })}>✕</Button>}
+        {!readOnly && <Button type="text" danger aria-label="删除参数" icon={<CloseOutlined />} onClick={() => set({ parameters: parameters.filter((_, current) => current !== index) })} />}
       </div>)}
-      {!readOnly && <Button type="link" onClick={() => set({ parameters: [...parameters, { key: '', label: '' }] })}>＋ 添加参数</Button>}</Field>
+      {!readOnly && <Button type="link" onClick={() => set({ parameters: [...parameters, { key: '', label: '' }] })} icon={<PlusOutlined />}>添加参数</Button>}</Field>
     <Field label="执行说明"><Input.TextArea rows={4} maxLength={instructionLimit} value={config.instruction} disabled={readOnly} onChange={event => set({ instruction: event.target.value })} /></Field>
-    <div className="wf-subtle"><div>输出：<code>&lt;动作键&gt;.note</code>（确认说明，选填）</div><div className="muted">验证：执行人确认完成；以后可改为数据查询验证</div></div>
+    <div className="wf-subtle"><div>输出：<code>&lt;动作键&gt;.note</code>（说明，选填）</div><div className="muted">执行人打开页面完成操作后点「完成」</div></div>
   </section>;
 }
 
 function ManualConfirmEditor({ config, onChange, readOnly }: { config: ManualConfirmConfig; onChange: (config: ManualConfirmConfig) => void; readOnly?: boolean }) {
   return <section className="wf-card">
-    <Field label="执行说明 *"><Input.TextArea rows={5} maxLength={instructionLimit} value={config.instruction} disabled={readOnly} onChange={event => onChange({ ...config, instruction: event.target.value })} /></Field>
-    <label className="wf-inline"><Switch size="small" checked={!!config.noteRequired} disabled={readOnly} onChange={noteRequired => onChange({ ...config, noteRequired })} /> 确认说明必填</label>
-    <div className="wf-subtle"><div>输出：<code>&lt;动作键&gt;.note</code></div><div className="muted">验证：记录确认人与时间</div></div>
+    <Field label="执行说明 *"><Input.TextArea rows={5} maxLength={instructionLimit} value={config.instruction} disabled={readOnly} onChange={event => onChange({ instruction: event.target.value })} /></Field>
+    <div className="wf-subtle"><div>输出：<code>&lt;动作键&gt;.note</code>（说明，选填）</div><div className="muted">执行人点「完成」时记录完成人与时间</div></div>
   </section>;
 }
 
@@ -105,8 +104,8 @@ function DataQueryEditor({ config, onChange, readOnly }: { config: DataQueryConf
             onChange={source => set({ parameters: parameters.map((item, current) => current === index ? { ...item, source } : item) })} />
           <Input value={parameter.value} disabled={readOnly} placeholder={parameter.source === 'VARIABLE' ? 'start.channelCode' : 'ACTIVE'}
             onChange={event => set({ parameters: parameters.map((item, current) => current === index ? { ...item, value: event.target.value } : item) })} />
-          {!readOnly && <Button type="text" danger onClick={() => set({ parameters: parameters.filter((_, current) => current !== index) })}>✕</Button>}</div>)}
-        {!readOnly && <Button type="link" onClick={() => set({ parameters: [...parameters, { key: '', source: 'VARIABLE', value: '' }] })}>＋ 添加参数</Button>}</Field>
+          {!readOnly && <Button type="text" danger aria-label="删除参数" icon={<CloseOutlined />} onClick={() => set({ parameters: parameters.filter((_, current) => current !== index) })} />}</div>)}
+        {!readOnly && <Button type="link" onClick={() => set({ parameters: [...parameters, { key: '', source: 'VARIABLE', value: '' }] })} icon={<PlusOutlined />}>添加参数</Button>}</Field>
       <Field label="通过规则 *" hint="查询结果第一行满足条件才算验证通过"><div className="wf-inline">第一行的
         <Input value={rule.column} disabled={readOnly} style={{ width: 180 }} placeholder="列名" onChange={event => set({ passRule: { ...rule, column: event.target.value } })} />
         <Select value={rule.operator} disabled={readOnly} style={{ width: 110 }} options={operatorsByType.NUMBER.map(value => ({ value, label: operatorLabels[value] }))}
@@ -118,21 +117,29 @@ function DataQueryEditor({ config, onChange, readOnly }: { config: DataQueryConf
   </>;
 }
 
-/** 执行人看到的样子（各类型）。 */
+/** 执行人看到的样子（各类型，只读）：与我的待办展开的动作行同一套组件与样式，按钮不可用。 */
 export function ExecutorPreview({ template }: { template: Pick<ActionTemplate, 'templateName' | 'actionType' | 'config'> }) {
   const config = template.config ?? defaultConfig(template.actionType);
   const instruction = (config as { instruction?: string }).instruction;
-  return <div className="wf-action is-expanded wf-preview-card">
-    <div className="wf-action-head"><strong>{template.templateName || '（未命名动作）'}</strong><Tag color="blue">{actionTypeLabels[template.actionType]}</Tag><Tag color="red">必选</Tag></div>
-    {instruction && <p className="wf-instruction">{instruction}</p>}
-    {template.actionType === 'FORM' && <FormPreview form={config as FormDefinition} />}
-    {template.actionType === 'FILE_UPLOAD' && <div className="wf-upload-zone is-preview">拖入文件或点击上传（{rulesHint(uploadRules(config as FileUploadConfig))}）</div>}
-    {template.actionType === 'PAGE_TASK' && <><div className="wf-page-link"><div><strong>{(config as PageTaskConfig).pageRoute || '（未选择页面）'}</strong>
-      <div className="muted">{(config as PageTaskConfig).pageRoute}?{((config as PageTaskConfig).parameters ?? []).map(item => `${item.key}=…`).join('&')}</div></div>
-      <Button type="primary" disabled>打开页面</Button></div><Input.TextArea rows={2} placeholder="确认说明（选填）" disabled /></>}
-    {template.actionType === 'MANUAL_CONFIRM' && <Input.TextArea rows={2} placeholder={`确认说明${(config as ManualConfirmConfig).noteRequired ? ' *' : '（选填）'}`} disabled />}
-    {template.actionType === 'DATA_QUERY' && <Alert type="info" showIcon title="启用后执行人看到每次验证的结论与证据列；查询出错时动作保持未验证，可重新验证" />}
-    {template.actionType !== 'FORM' && template.actionType !== 'DATA_QUERY' && <div className="wf-right"><Button type="primary" disabled>{template.actionType === 'FILE_UPLOAD' ? '提交' : '确认完成'}</Button></div>}
+  const page = config as PageTaskConfig;
+  return <div className="wf-action-row is-open wf-preview-card">
+    <div className="wf-action-row-head"><span className="wf-action-icon">{actionTypeIcons[template.actionType]}</span>
+      <div className="wf-grow"><strong>{template.templateName || '（未命名动作）'}</strong><div className="muted">{actionTypeLabels[template.actionType]}</div></div>
+      <Tag>待处理</Tag></div>
+    <div className="wf-action-row-body">
+      {instruction && <p className="wf-instruction">{instruction}</p>}
+      {template.actionType === 'FORM' && ((config as FormDefinition).fields?.length
+        ? <FormPreview form={config as FormDefinition} readOnly /> : <span className="muted">还没有字段</span>)}
+      {template.actionType === 'FILE_UPLOAD' && <div className="wf-field"><div className="wf-field-label">上传文件{uploadRequired(config as FileUploadConfig) ? ' · 至少一个' : '（选填）'}</div>
+        <div className="wf-upload-zone is-preview">拖入文件或点击上传</div></div>}
+      {template.actionType === 'PAGE_TASK' && <div className="wf-page-link"><div><strong>{page.pageRoute || '（未选择页面）'}</strong>
+        <div className="muted">{page.pageRoute}{(page.parameters ?? []).length ? `?${(page.parameters ?? []).map(item => `${item.key}=…`).join('&')}` : ''}（参数来自实例变量）</div></div>
+        <Button disabled>打开页面</Button></div>}
+      {(template.actionType === 'PAGE_TASK' || template.actionType === 'MANUAL_CONFIRM') && <div className="wf-field"><div className="wf-field-label">说明（选填）</div>
+        <Input.TextArea rows={2} disabled /></div>}
+      {template.actionType === 'DATA_QUERY' && <Alert type="info" showIcon title="数据查询即将支持：本期不能被流程引用" />}
+      {template.actionType !== 'DATA_QUERY' && <div className="wf-action-foot"><Button type="primary" disabled>完成</Button><span className="muted">预览 · 不可提交</span></div>}
+    </div>
   </div>;
 }
 
@@ -210,72 +217,40 @@ export function ReferencesView({ template, state }: { template: ActionTemplate; 
   </div>;
 }
 
-/** 停用确认（原型 18）：说明影响与仍在运行的实例；引用它的草稿会在发布时被校验拒绝。 */
+/** 停用确认：显示被几个流程引用、已发布版本与运行中实例不受影响；引用它的草稿在发布时被校验拒绝。 */
 export function DeactivateModal({ template, references, saving, error, onCancel, onConfirm }: {
-  template: ActionTemplate; references: ReturnType<typeof useTemplateReferences>; saving: boolean; error: string | null; onCancel: () => void; onConfirm: () => void;
+  template: Pick<ActionTemplate, 'templateName' | 'actionType' | 'referencedDefinitionCount'>; references: ReturnType<typeof useTemplateReferences>;
+  saving: boolean; error: string | null; onCancel: () => void; onConfirm: () => void;
 }) {
   const summary = references.data ? referenceSummary(references.data) : null;
-  return <Modal open title={`停用“${template.templateName}”？`} okText="确认停用" okButtonProps={{ danger: true, loading: saving }} onCancel={onCancel} onOk={onConfirm}>
-    <div className="muted">{template.templateCode} · {actionTypeLabels[template.actionType]} · 当前版本 {template.version}</div>
-    <div className="wf-check"><span className="wf-danger-text">⊘</span><div><strong>新发布不能再引用</strong><div className="muted">流程编辑器的动作列表里不再可选；已引用它的草稿在发布时会校验失败，需要替换</div></div></div>
-    <div className="wf-check"><span className="wf-ok-text">✓</span><div><strong>已发布版本照常运行</strong><div className="muted">
-      {references.loading ? '正在读取引用…' : summary ? `发布时已冻结配置：${summary.versions} 个已发布版本、${summary.running} 个运行中实例按原样执行，执行人不受影响` : '发布时已冻结配置，按原样执行'}</div></div></div>
-    <div className="wf-check"><span className="wf-info-text">↺</span><div><strong>可以随时重新启用</strong><div className="muted">停用也会增加版本号，防止并发覆盖</div></div></div>
-    <p className="muted">停用原因：接口不记录原因（technique 7 · 接口 5 只有状态与版本），审计按操作记录。</p>
+  const definitions = references.data ? new Set(references.data.items.filter(item => item.currentVersion).map(item => item.definitionId)).size
+    : template.referencedDefinitionCount ?? null;
+  return <Modal open title={`停用「${template.templateName}」？`} okText="确认停用" okButtonProps={{ danger: true, loading: saving }} onCancel={onCancel} onOk={onConfirm}>
+    <p>{references.loading && definitions === null ? '正在读取引用…' : definitions ? <>当前被 <strong>{definitions} 个流程</strong>引用。</> : '当前没有流程引用这个动作。'}</p>
+    <div className="wf-check"><span className="wf-danger-text"><StopOutlined /></span><div><strong>新发布不能再引用</strong><div className="muted">流程编辑器里不再可选；已引用它的草稿在发布时会提示替换</div></div></div>
+    <div className="wf-check"><span className="wf-ok-text"><CheckOutlined /></span><div><strong>已发布版本照常运行</strong><div className="muted">
+      {summary ? `${summary.versions} 个已发布版本、${summary.running} 个运行中实例按发布时的配置执行` : '发布时已冻结配置，按原样执行'}</div></div></div>
+    <div className="wf-check"><span className="wf-info-text"><UndoOutlined /></span><div><strong>可以随时重新启用</strong></div></div>
     {error && <Alert type="error" showIcon title={error} />}
   </Modal>;
 }
 
-/** 新建动作：选择类型与基本信息 → 配置规则 → 预览并保存（原型 13）。 */
-export function CreateTemplateModal({ onClose, onCreated, onAuthorizationChanged, existingCodes }: {
-  onClose: () => void; onCreated: (templateId: string) => void; onAuthorizationChanged: () => void; existingCodes: Set<string>;
-}) {
-  const [step, setStep] = useState(0);
+/** 新建动作 · 选择类型（原型 07）：四类可选，数据查询标「即将支持」不可选；「下一步」把类型交给调用方（进入编辑页或抽屉）。 */
+export function ActionTypePicker({ onCancel, onNext }: { onCancel: () => void; onNext: (type: ActionType) => void }) {
   const [type, setType] = useState<ActionType>('FORM');
-  const [config, setConfig] = useState<ActionConfig>(defaultConfig('FORM'));
-  const [form] = Form.useForm<{ templateCode: string; templateName: string; description?: string }>();
-  const [basic, setBasic] = useState<{ templateCode?: string; templateName?: string; description?: string }>({});
-  const command = useWorkflowCommand(onAuthorizationChanged);
-  const codeTaken = !!basic.templateCode && existingCodes.has(basic.templateCode);
-  const codeValid = !!basic.templateCode && templateCodePattern.test(basic.templateCode) && !codeTaken;
-  const problems = configProblems(type, config);
-  const guide = actionTypeGuides[type];
-  async function save() {
-    const result = await command.run(workflowPaths.templates, 'POST', { templateCode: basic.templateCode, templateName: basic.templateName?.trim(), actionType: type,
-      ...(basic.description?.trim() ? { description: basic.description.trim() } : {}), config: normalizeConfig(type, config) }, decodeMutation, '新建失败');
-    if (result) onCreated(result.objectId);
-  }
-  return <Modal open width={1100} title="新建动作" onCancel={onClose} footer={<div className="wf-modal-foot">
-    <span className={codeTaken ? 'wf-danger-text' : 'wf-ok-text'}>{step === 0 && basic.templateCode ? (codeTaken ? `编码 ${basic.templateCode} 已被使用` : codeValid ? `编码 ${basic.templateCode} 可用` : '') : step === 1 && problems.length ? <span className="wf-danger-text">{problems[0]}</span> : command.formError}</span>
-    <span>{step > 0 ? <Button onClick={() => setStep(step - 1)}>上一步</Button> : <Button onClick={onClose}>取消</Button>}
-      {step < 2 ? <Button type="primary" disabled={step === 0 ? !codeValid || !basic.templateName?.trim() : problems.length > 0} onClick={() => setStep(step + 1)}>
-        下一步：{step === 0 ? '配置规则' : '预览并保存'}</Button>
-        : <Button type="primary" loading={command.saving} onClick={() => void save()}>保存</Button>}</span></div>}>
-    <Steps size="small" current={step} items={[{ title: '类型与基本信息' }, { title: '配置规则' }, { title: '预览并保存' }]} className="wf-steps" />
-    {step === 0 && <div className="wf-create-template">
-      <div>
-        <h3>选择动作类型</h3><p className="muted">类型决定执行人看到什么、提交什么、系统怎样判断“完成”。类型在创建后不能修改。</p>
-        <div className="wf-type-grid">{actionTypes.map(value => <button type="button" key={value} className={`wf-type${type === value ? ' is-selected' : ''}${value === 'DATA_QUERY' ? ' is-reserved' : ''}`}
-          onClick={() => { setType(value); setConfig(defaultConfig(value)); }}>
-          <strong>{actionTypeLabels[value]}</strong> <code>{value}</code>{value === 'DATA_QUERY' && <Tag color="orange">预留</Tag>}
-          <div className="muted">{actionTypeGuides[value].summary}</div><div className="wf-info-text">输出：{actionTypeGuides[value].output}</div></button>)}</div>
-        <h3>基本信息</h3>
-        <Form form={form} layout="vertical" initialValues={basic} onValuesChange={(_, all) => setBasic(all)} className="wf-two-columns">
-          <Form.Item name="templateCode" label="动作编码 *" normalize={(value?: string) => value?.toUpperCase()} extra="大写字母、数字、下划线；全局唯一，保存后不能修改"
-            rules={[{ pattern: templateCodePattern, message: '格式不正确' }]}><Input maxLength={64} /></Form.Item>
-          <Form.Item name="templateName" label="动作名称 *" extra="执行人在待办里看到的名称"><Input maxLength={128} /></Form.Item>
-          <Form.Item name="description" label="描述" className="wf-span-two"><Input.TextArea rows={3} maxLength={512} /></Form.Item>
-        </Form>
-      </div>
-      <aside className="wf-subtle wf-type-guide"><h3>选择“{actionTypeLabels[type]}”后</h3>
-        <Field label="执行人看到">{guide.sees}</Field><Field label="提交内容">{guide.submits}</Field>
-        <Field label="自动验证">{guide.verifies}</Field><Field label="可被引用为">{guide.output}</Field>
-        <Alert type="info" showIcon title="同一个动作可被多个流程复用" description="流程发布时会冻结动作当时的配置；之后在这里修改，只影响以后新发布的版本。" />
-      </aside>
-    </div>}
-    {step === 1 && <ConfigEditor type={type} config={config} onChange={setConfig} />}
-    {step === 2 && <div className="wf-template-grid"><section className="wf-card"><div className="wf-card-title">{basic.templateName} <code>{basic.templateCode}</code></div>
-      <p className="muted">{basic.description}</p>{type === 'DATA_QUERY' && <Alert type="warning" showIcon title="数据查询为预留类型：保存后不能被发布的流程引用" />}</section>
-      <section><div className="wf-card-title">执行人看到的样子</div><ExecutorPreview template={{ templateName: basic.templateName ?? '', actionType: type, config }} /></section></div>}
+  return <Modal open width={760} title="新建动作 · 选择类型" onCancel={onCancel} footer={<div className="wf-modal-foot">
+    <span className="muted">已选：{actionTypeLabels[type]}</span>
+    <span><Button onClick={onCancel}>取消</Button> <Button type="primary" onClick={() => onNext(type)}>下一步</Button></span></div>}>
+    <p className="muted">不同类型的配置方式不同，选好后进入对应的编辑页</p>
+    <div className="wf-type-cards" role="radiogroup">{actionTypes.map(value => {
+      const disabled = !creatableTypes.includes(value);
+      return <button type="button" role="radio" aria-checked={type === value} key={value} disabled={disabled}
+        className={`wf-type-card is-${value.toLowerCase()}${type === value ? ' is-selected' : ''}`} onClick={() => setType(value)}
+        onDoubleClick={() => !disabled && onNext(value)}>
+        <span className="wf-type-card-icon" aria-hidden>{actionTypeIcons[value]}</span>
+        {disabled && <span className="wf-type-card-soon">即将支持</span>}
+        {type === value && <span className="wf-type-card-check" aria-hidden><CheckOutlined /></span>}
+        <strong>{actionTypeLabels[value]}</strong><span className="muted">{actionTypeSummaries[value]}</span></button>;
+    })}</div>
   </Modal>;
 }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import com.paytech.platform.support.test.builder.OperatorBuilder.Operator;
 import com.paytech.platform.support.test.builder.WorkflowGraphJson;
 import com.paytech.platform.support.workflow.core.common.WorkflowPermissions;
 
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
@@ -146,6 +148,47 @@ class WorkflowActionTemplateApiTest extends WorkflowApiTestBase {
             () -> assertFalse(item.path("sameAsCurrent").asBoolean()),
             () -> assertEquals(1, item.path("runningInstanceCount").asLong()),
             () -> assertEquals(0, unused.path("items").size()));
+    }
+
+    /**
+     * 列表的被引用流程数：按流程定义当前发布版本去重计数——两个流程引用为 2；只有旧版本引用、当前版本已不引用的流程不计；
+     * 只在草稿中引用或从未被引用为 0。
+     */
+    @Test
+    void test_listReferencedDefinitionCount() {
+        long shared = confirmTemplate("SHARED_CONFIRM");
+        long other = confirmTemplate("OTHER_CONFIRM");
+        long unused = confirmTemplate("UNUSED_CONFIRM");
+        long draftOnly = confirmTemplate("DRAFT_ONLY_CONFIRM");
+        Operator executor = person();
+        Operator approver = person();
+        published("ONBOARDING", referencing(shared, executor, approver), WorkflowGraphJson.emptyForm());
+        published("CHANNEL_SETUP", referencing(shared, executor, approver), WorkflowGraphJson.emptyForm());
+        long replaced = published("REPLACED", referencing(shared, executor, approver), WorkflowGraphJson.emptyForm());
+        saveDraft(replaced, referencing(other, executor, approver), WorkflowGraphJson.emptyForm());
+        publish(replaced).assertOk();
+        saveDraft(createDefinition("DRAFT_ONLY"), referencing(draftOnly, executor, approver),
+            WorkflowGraphJson.emptyForm());
+
+        var items = get(TEMPLATES + "?size=50", admin).assertOk().json().path("items");
+        Map<String, Integer> counts = new HashMap<>();
+        items.forEach(item -> counts.put(item.path("templateId").asString(),
+            item.path("referencedDefinitionCount").asInt(-1)));
+        var detail = get(TEMPLATES + "/" + shared, admin).assertOk().json();
+
+        assertAll(() -> assertEquals(4, items.size()),
+            () -> assertEquals(2, counts.get(Long.toString(shared))),
+            () -> assertEquals(1, counts.get(Long.toString(other))),
+            () -> assertEquals(0, counts.get(Long.toString(unused))),
+            () -> assertEquals(0, counts.get(Long.toString(draftOnly))),
+            () -> assertTrue(detail.path("referencedDefinitionCount").isMissingNode()
+                || detail.path("referencedDefinitionCount").isNull()));
+    }
+
+    /** 一个任务节点引用指定模板的流程图。 */
+    private static JsonNode referencing(long templateId, Operator executor, Operator approver) {
+        return WorkflowGraphJson.graph().task("review", "审核").action("confirm", templateId, executor.accountId(), true)
+            .approval("ANY", approver.accountId()).end("end").chain("start", "review", "end").build();
     }
 
     /** 不存在的模板：读取、修改与启停均 404。 */

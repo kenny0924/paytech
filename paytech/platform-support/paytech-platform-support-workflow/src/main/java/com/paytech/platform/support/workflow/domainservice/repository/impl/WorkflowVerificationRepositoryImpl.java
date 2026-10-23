@@ -10,18 +10,12 @@ import com.paytech.platform.support.workflow.domainservice.repository.WorkflowVe
 
 import lombok.AllArgsConstructor;
 
-/** 验证记录单表访问实现；条件更新成功后同步原对象。 */
+/** 历史验证记录单表只读访问实现（2026-10-22 起不再写入）。 */
 @Repository
 @AllArgsConstructor
 public class WorkflowVerificationRepositoryImpl implements WorkflowVerificationRepository {
 
     private final WorkflowVerificationMapper mapper;
-
-    /** 追加一条验证记录。 */
-    @Override
-    public void insert(WorkflowVerification row) {
-        mapper.insert(row);
-    }
 
     /** 实例的全部验证记录，按验证时间。 */
     @Override

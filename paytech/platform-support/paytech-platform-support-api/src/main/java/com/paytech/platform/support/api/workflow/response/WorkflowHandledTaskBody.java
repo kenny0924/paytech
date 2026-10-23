@@ -44,7 +44,7 @@ public class WorkflowHandledTaskBody {
     /** 动作 key；审批为空。 */
     private String actionKey;
 
-    /** 结果：动作运行当前状态（VERIFIED、UNVERIFIED、CANCELLED 等）或审批决定（APPROVED、RETURNED、REJECTED）。 */
+    /** 结果：动作运行当前状态（COMPLETED、CANCELLED 等）或审批决定（APPROVED、RETURNED、REJECTED）。 */
     private String result;
 
     /** 处理时间：最近一次提交或决定时间。 */

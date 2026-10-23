@@ -5,7 +5,7 @@ import com.paytech.platform.support.api.enums.FileScanStatus;
 
 /**
  * 工作流附件校验与展示所需的文件事实，取自 file-document 按文件 ID 的元数据查询（技术方案第 5 节）
- * <li>只读快照：提交与发起时据此判断归属与内容，展示时给出名称、大小与扫描状态；不含存储坐标。</li>
+ * <li>只读快照：提交与发起时据此判断归属、可用与扫描是否未通过，展示时给出名称、大小与扫描状态；不含存储坐标。</li>
  *
  * @param fileId 文件 ID
  * @param sourceSystem 来源系统
@@ -21,21 +21,12 @@ public record AttachmentFact(long fileId, String sourceSystem, String reasonCode
     String mimeType, Long sizeBytes, FileScanStatus scanStatus, FileObjectStatus objectStatus) {
 
     /**
-     * 扫描尚未结束（待扫描或扫描中）。
+     * 扫描已结束且未通过（隔离或拒绝）：发起与完成动作都拒绝，须删除后重新上传；扫描中不算未通过。
      *
-     * @return 未结束返回 true
+     * @return 未通过返回 true
      */
-    public boolean scanning() {
-        return scanStatus == FileScanStatus.PENDING_SCAN || scanStatus == FileScanStatus.SCANNING;
-    }
-
-    /**
-     * 扫描通过且对象可用，可作为验证通过的附件与下载对象。
-     *
-     * @return 可用返回 true
-     */
-    public boolean available() {
-        return scanStatus == FileScanStatus.AVAILABLE && objectStatus == FileObjectStatus.ACTIVE;
+    public boolean scanFailed() {
+        return scanStatus == FileScanStatus.QUARANTINED || scanStatus == FileScanStatus.REJECTED;
     }
 
     /** 展示名可能含个人信息。 */

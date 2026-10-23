@@ -698,6 +698,12 @@ export const pageCapabilities = [
     "actions": []
   },
   {
+    "componentKey": "OPERATIONS_WORKFLOW_STARTED",
+    "displayName": "我发起的",
+    "frontendRoute": "/workflow/started",
+    "actions": []
+  },
+  {
     "componentKey": "OPERATIONS_WORKFLOW_INSTANCES",
     "displayName": "流程实例",
     "frontendRoute": "/workflow/instances",

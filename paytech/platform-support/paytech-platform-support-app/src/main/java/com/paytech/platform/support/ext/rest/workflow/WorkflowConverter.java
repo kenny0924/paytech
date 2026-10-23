@@ -139,10 +139,10 @@ public class WorkflowConverter {
                 .toList());
     }
 
-    /** 提交结果。 */
+    /** 完成动作的结果。 */
     WorkflowSubmissionResponseBody submission(WorkflowSubmissionResult result) {
         return new WorkflowSubmissionResponseBody(Long.toString(result.getActionRunId()), result.getStatus(),
-            Long.toString(result.getVerificationId()), result.getFailureReason(), result.getInstanceStatus());
+            result.getInstanceStatus());
     }
 
     /** 空白转 null，其余去除首尾空白。 */

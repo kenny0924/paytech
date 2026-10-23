@@ -16,15 +16,14 @@ import com.paytech.platform.support.workflow.domain.validation.WorkflowPublicati
 
 /**
  * 校验节点级与实例级的通知、回调规则（技术方案 4.2）：触发事件与位置相符，NOTIFY 有对象与渠道，
- * CALLBACK 有合法回调编码，指定用户是 ACTIVE 的 Operations 账号。
+ * CALLBACK 有合法回调编码，指定用户是 ACTIVE 的 Operations 账号；已停用的 VERIFICATION_FAILED 不能再配置（2026-10-22）。
  */
 final class NotificationRules {
 
     private static final Set<NotificationTrigger> NEED_APPROVERS = EnumSet.of(NotificationTrigger.APPROVAL_OPENED,
         NotificationTrigger.RETURNED_FOR_REVISION, NotificationTrigger.REJECTED);
 
-    private static final Set<NotificationTrigger> NEED_ACTIONS = EnumSet.of(NotificationTrigger.VERIFICATION_FAILED,
-        NotificationTrigger.RETURNED_FOR_REVISION);
+    private static final Set<NotificationTrigger> NEED_ACTIONS = EnumSet.of(NotificationTrigger.RETURNED_FOR_REVISION);
 
     private final WorkflowPublicationInput input;
 
@@ -85,6 +84,11 @@ final class NotificationRules {
     private void checkTrigger(WorkflowNode node, NotificationRule rule, String item) {
         NotificationTrigger trigger = rule.trigger();
         String nodeKey = node == null ? null : node.key();
+        if (trigger == NotificationTrigger.VERIFICATION_FAILED) {
+            problems.item(WorkflowProblemCode.NOTIFICATION_TRIGGER_INVALID, nodeKey, item,
+                "「动作验证未通过」已停用（动作不再验证），请删除该通知规则");
+            return;
+        }
         if (trigger.isInstanceLevel() != (node == null)) {
             problems.item(WorkflowProblemCode.NOTIFICATION_TRIGGER_INVALID, nodeKey, item,
                 "触发事件 " + trigger.getCode() + (node == null ? " 是节点级的，不能配置在流程设置中" : " 是实例级的，只能配置在流程设置中"));

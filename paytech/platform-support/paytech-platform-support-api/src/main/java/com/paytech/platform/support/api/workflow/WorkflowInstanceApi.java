@@ -72,7 +72,8 @@ public interface WorkflowInstanceApi {
      * @param actor 可信操作人账号
      * @param session 可信会话
      * @param request 定义、版本号、标题、业务关联键、启动值与人员修改
-     * @return 新实例；启动值不合法、人员不可用或版本已变返回 400
+     * @return 新实例；启动值不合法、人员不可用或版本已变返回 400；文件地址格式不合法或文件已确认未通过安全检查返回 422，
+     *         errors[].field 为 startValues.{key}[i]（扫描中不挡发起）
      */
     @PostExchange("/instances")
     WorkflowMutationResponseBody startInstance(@RequestHeader("X-Gateway-Actor-Subject") String actor,
@@ -144,30 +145,23 @@ public interface WorkflowInstanceApi {
         @Valid @RequestBody TerminateWorkflowInstanceRequestBody request);
 
     /**
-     * 提交动作输出并同步验证；只有被指派的执行人
+     * 完成动作：只有被指派的执行人；只检查必填、值类型、文件归属与地址格式及平台长度上限，扫描中的文件不挡完成，
+     * 已确认未通过安全检查的文件须删除后重新上传（2026-10-22）
      *
      * @param actor 可信操作人账号
      * @param session 可信会话
      * @param actionRunId 动作运行 ID
      * @param request 提交内容
-     * @return 本次验证结果；验证未通过也返回 200（status=UNVERIFIED）
+     * @return 200，动作状态 COMPLETED
+     *         <li>必填缺失、值类型或格式不符、超过长度上限、文件已确认未通过安全检查返回 422 VALIDATION_ERROR，
+     *         errors[].field 为 output.{key}、output.{key}[i]、output.files、output.files[i] 或 output.note，动作状态不变。</li>
+     *         <li>必选动作所在节点已进入审批（APPROVING）返回 409 CONCURRENT_REQUEST；节点已放行、动作已取消、实例已结束、
+     *         不是当前执行人或文件不属于提交人返回 400。</li>
      */
     @PostExchange("/action-runs/{actionRunId}/submission")
     WorkflowSubmissionResponseBody submitAction(@RequestHeader("X-Gateway-Actor-Subject") String actor,
         @RequestHeader("X-Gateway-Session-Id") String session, @PathVariable("actionRunId") String actionRunId,
         @Valid @RequestBody SubmitWorkflowActionRequestBody request);
-
-    /**
-     * 重新验证动作：文件扫描结束后，当前执行人按原提交内容再验证一次（技术方案第 7 节 #20）
-     *
-     * @param actor 可信操作人账号
-     * @param session 可信会话
-     * @param actionRunId 动作运行 ID
-     * @return 本次验证结果；仍未通过也返回 200（status=UNVERIFIED）；动作不是已提交未通过的文件类动作返回 400
-     */
-    @PostExchange("/action-runs/{actionRunId}/verification")
-    WorkflowSubmissionResponseBody reverifyAction(@RequestHeader("X-Gateway-Actor-Subject") String actor,
-        @RequestHeader("X-Gateway-Session-Id") String session, @PathVariable("actionRunId") String actionRunId);
 
     /**
      * 转交动作；当前执行人或有 WORKFLOW_INSTANCE_MANAGE 的人

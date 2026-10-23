@@ -20,8 +20,8 @@ export const triggerLabels: Record<NotificationTrigger, string> = {
   ACTIVATED: '节点激活', APPROVAL_OPENED: '进入待审批', PASSED: '节点通过', RETURNED_FOR_REVISION: '退回修改', REJECTED: '被驳回',
   VERIFICATION_FAILED: '动作验证未通过', TRANSFERRED: '转交', STARTED: '实例发起', COMPLETED: '实例完成', TERMINATED: '实例终止',
 };
-export const nodeTriggers: NotificationTrigger[] = ['ACTIVATED', 'APPROVAL_OPENED', 'PASSED', 'RETURNED_FOR_REVISION', 'REJECTED',
-  'VERIFICATION_FAILED', 'TRANSFERRED'];
+/** 可选的节点触发；「动作验证未通过」已停用，标签只用于显示历史。 */
+export const nodeTriggers: NotificationTrigger[] = ['ACTIVATED', 'APPROVAL_OPENED', 'PASSED', 'RETURNED_FOR_REVISION', 'REJECTED', 'TRANSFERRED'];
 export const instanceTriggers: NotificationTrigger[] = ['STARTED', 'COMPLETED', 'TERMINATED'];
 export const recipientLabels: Record<NotificationRecipient, string> = {
   NODE_EXECUTORS: '本节点执行人', NODE_APPROVERS: '本节点审批人', STARTER: '发起人', SPECIFIED_USERS: '指定人员',
@@ -31,13 +31,14 @@ export const configStatusLabels: Record<ConfigStatus, string> = { ACTIVE: '启�
 export const instanceStatusLabels: Record<InstanceStatus, string> = { RUNNING: '运行中', COMPLETED: '已完成', TERMINATED: '已终止' };
 export const instanceStatusColors: Record<InstanceStatus, string> = { RUNNING: 'processing', COMPLETED: 'success', TERMINATED: 'default' };
 export const nodeRunStatusLabels: Record<NodeRunStatus, string> = {
-  ACTIVE: '待提交', APPROVING: '待审批', WAITING: '等待汇合', PASSED: '已通过', RETURNED: '退回修改', REJECTED: '被驳回', CANCELLED: '已取消',
+  ACTIVE: '待处理', APPROVING: '待审批', WAITING: '等待汇合', PASSED: '已通过', RETURNED: '退回修改', REJECTED: '被驳回', CANCELLED: '已取消',
 };
+/** 旧编码按新语义显示：VERIFIED → 已完成，UNVERIFIED → 待处理。 */
 export const actionRunStatusLabels: Record<ActionRunStatus, string> = {
-  PENDING: '待提交', VERIFIED: '已验证', UNVERIFIED: '未通过', CANCELLED: '已取消',
+  PENDING: '待处理', COMPLETED: '已完成', CANCELLED: '已取消', VERIFIED: '已完成', UNVERIFIED: '待处理',
 };
 export const actionRunStatusColors: Record<ActionRunStatus, string> = {
-  PENDING: 'processing', VERIFIED: 'success', UNVERIFIED: 'error', CANCELLED: 'default',
+  PENDING: 'processing', COMPLETED: 'success', CANCELLED: 'default', VERIFIED: 'success', UNVERIFIED: 'processing',
 };
 export const approvalStatusLabels: Record<ApprovalStatus, string> = {
   PENDING: '待审批', APPROVED: '已同意', RETURNED: '退回修改', REJECTED: '已驳回', WITHDRAWN: '已撤回',
@@ -50,14 +51,14 @@ export const callbackStatusColors: Record<string, string> = { PENDING: 'warning'
 
 /** 动作类型说明（新建动作右侧说明，原型 13）。 */
 export const actionTypeGuides: Record<ActionType, { summary: string; sees: string; submits: string; verifies: string; output: string }> = {
-  FORM: { summary: '执行人按字段填写；按字段规则校验（必填、长度、范围、选项）', sees: '按字段渲染的表单', submits: '各字段的值',
-    verifies: '必填、类型、长度、数值范围、枚举选项', output: '<动作键>.<字段>' },
-  FILE_UPLOAD: { summary: '上传一到多个文件；文件属于本实例、扫描通过、数量与类型符合才算完成', sees: '拖放上传区、已上传文件与扫描状态、执行说明',
-    submits: '文件 ID 列表（本实例上传的文件）', verifies: '每个文件扫描通过；数量、类型符合规则；未通过可以重新验证', output: '<动作键>.files' },
-  PAGE_TASK: { summary: '带参数跳到控制台内部页面完成操作，回来写确认说明', sees: '执行说明、目标页面与“打开页面”按钮、确认说明',
-    submits: '确认说明', verifies: '执行人确认完成；以后可改为数据查询验证', output: '<动作键>.note' },
-  MANUAL_CONFIRM: { summary: '按执行说明在系统外完成，提交确认说明', sees: '执行说明与确认说明输入框', submits: '确认说明',
-    verifies: '记录确认人与时间', output: '<动作键>.note' },
+  FORM: { summary: '执行人按字段填写后点「完成」；只检查必填字段', sees: '按字段渲染的表单', submits: '各字段的值',
+    verifies: '只检查必填', output: '<动作键>.<字段>' },
+  FILE_UPLOAD: { summary: '上传一到多个文件后点「完成」；可设「至少上传一个」，安全检查在后台进行、不挡完成', sees: '拖放上传区、已上传文件与安全检查状态、执行说明',
+    submits: '文件地址列表（本实例上传的文件）', verifies: '开启「至少上传一个」时检查有文件', output: '<动作键>.files' },
+  PAGE_TASK: { summary: '带参数跳到控制台内部页面完成操作，回来点「完成」，说明选填', sees: '执行说明、目标页面与“打开页面”按钮、说明',
+    submits: '说明（选填）', verifies: '执行人点「完成」', output: '<动作键>.note' },
+  MANUAL_CONFIRM: { summary: '按执行说明在系统外完成，点「完成」，说明选填', sees: '执行说明与说明输入框', submits: '说明（选填）',
+    verifies: '记录完成人与时间', output: '<动作键>.note' },
   DATA_QUERY: { summary: '以后由 data-service 执行它维护的 SQL 自动判断。本期可以先建，流程发布时不能引用', sees: '多次验证记录与证据列',
     submits: '无（由系统查询）', verifies: '查询结果满足通过规则', output: '指定的证据列' },
 };

@@ -129,7 +129,7 @@ export const TABLES = Object.freeze([
   defineTable({
     key: "workflow_action_run",
     name: "动作运行",
-    comment: "节点运行中一个动作的执行情况与最近一次提交的输出；以最后一次验证为准，验证通过后锁定，变量取自最新一轮 VERIFIED 的输出",
+    comment: "节点运行中一个动作的执行情况与最近一次完成的输出；必选动作在节点进入审批后锁定，变量取自最新一轮 COMPLETED 的输出",
     fields: [
       pk("action_run_id", "动作运行主键", "动作运行的 Snowflake 主键"),
       field("instance_id", "BIGINT", "NN", "所属实例", "动作运行所属的流程实例 ID"),
@@ -137,9 +137,9 @@ export const TABLES = Object.freeze([
       field("action_key", "VARCHAR(64)", "NN", "动作 key", "绑定流程版本中的动作 key，同时是输出变量前缀", BIN),
       field("action_template_id", "BIGINT", "NN", "动作模板", "引用的动作模板 ID；执行配置以流程版本的模板快照为准"),
       field("action_type", "VARCHAR(32)", "NN", "动作类型", "动作的提交与验证方式，取自版本快照", { values: ["FORM", "FILE_UPLOAD", "PAGE_TASK", "MANUAL_CONFIRM"] }),
-      field("required", "TINYINT", "NN", "是否必选", "1 表示必选，节点放行前必须 VERIFIED；0 表示可选，不阻塞放行"),
+      field("required", "TINYINT", "NN", "是否必选", "1 表示必选，节点进入审批或放行前必须 COMPLETED；0 表示可选，不阻塞放行"),
       account("assignee_id", "执行人", "当前指派的执行人 Operations 账号 ID；转交后更新"),
-      field("status", "VARCHAR(32)", "NN", "动作运行状态", "PENDING 未提交；VERIFIED 最后一次验证通过且不再接受提交；UNVERIFIED 最后一次验证未通过；CANCELLED 节点被终止或结束时未完成", { values: ["PENDING", "VERIFIED", "UNVERIFIED", "CANCELLED"] }),
+      field("status", "VARCHAR(32)", "NN", "动作运行状态", "PENDING 待处理；COMPLETED 已完成；CANCELLED 节点结束或实例终止时仍未完成", { values: ["PENDING", "COMPLETED", "CANCELLED"] }),
       field("output_json", "JSON", "N", "提交输出", "执行人最近一次提交的输出，按动作类型与配置校验；未提交时为空"),
       account("submitted_by", "提交人", "最近一次提交的 Operations 账号 ID；未提交时为空", "N"),
       field("submitted_time", "DATETIME(6)", "N", "提交时间", "最近一次提交的 UTC 微秒时间；未提交时为空"),

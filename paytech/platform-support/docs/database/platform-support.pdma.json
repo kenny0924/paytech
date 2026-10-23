@@ -32620,7 +32620,7 @@
       },
       "defKey": "t_workflow_action_run",
       "defName": "动作运行",
-      "comment": "节点运行中一个动作的执行情况与最近一次提交的输出；以最后一次验证为准，验证通过后锁定，变量取自最新一轮 VERIFIED 的输出",
+      "comment": "节点运行中一个动作的执行情况与最近一次完成的输出；必选动作在节点进入审批后锁定，变量取自最新一轮 COMPLETED 的输出",
       "properties": {
         "logicalTableKey": "workflow_action_run",
         "compositeForeignKeys": []
@@ -32902,7 +32902,7 @@
         {
           "defKey": "required",
           "defName": "是否必选",
-          "comment": "1 表示必选，节点放行前必须 VERIFIED；0 表示可选，不阻塞放行。",
+          "comment": "1 表示必选，节点进入审批或放行前必须 COMPLETED；0 表示可选，不阻塞放行。",
           "type": "TINYINT",
           "len": "",
           "scale": "",
@@ -32938,7 +32938,7 @@
         {
           "defKey": "status",
           "defName": "动作运行状态",
-          "comment": "PENDING 未提交；VERIFIED 最后一次验证通过且不再接受提交；UNVERIFIED 最后一次验证未通过；CANCELLED 节点被终止或结束时未完成。允许值：PENDING、VERIFIED、UNVERIFIED、CANCELLED。",
+          "comment": "PENDING 待处理；COMPLETED 已完成；CANCELLED 节点结束或实例终止时仍未完成。允许值：PENDING、COMPLETED、CANCELLED。",
           "type": "VARCHAR",
           "len": 32,
           "scale": "",

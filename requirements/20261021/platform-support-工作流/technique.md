@@ -171,12 +171,16 @@
 | 转交 | 修改动作运行的执行人或审批行的审批人，并写一条转交记录。不能转给自己，也不能转给同一节点的其他审批人 |
 | 终止 | 实例 `TERMINATED`；进行中的节点运行改为 `CANCELLED`，未完成的动作运行改为 `CANCELLED`，`PENDING` 审批行改为 `WITHDRAWN` |
 
+> **2026-10-22 修订**（[工作流体验优化 4.3](../../20261022/platform-support-工作流体验优化/technique.md)）：「提交动作」改为「完成动作」，只检查必填与技术保护（值类型、文件归属与地址格式、平台长度上限），不合格返回 422 字段错误、不改状态，合格直接 `COMPLETED`，不再写 `t_workflow_verification`；动作状态改为 `PENDING / COMPLETED / CANCELLED`（`VERIFIED` → `COMPLETED`，去掉 `UNVERIFIED`）。必选动作全部 `COMPLETED` 才进入审批或放行；必选动作在节点进入审批后不能再完成或修改（409），可选动作到节点放行前可完成；审批「同意」时再检查一次必选动作，未全部完成返回 409。「重新验证」已删除。
+
 - **验证通过即完成（Q9）**：动作 `VERIFIED` 后不再接受提交；要改只能由审批人退回修改开新一轮。之后业务数据如何变化由业务系统负责，工作流不跟踪。实例的节点、动作和配置始终来自发起时冻结的流程版本，运行中只能变更人员（转交）和执行人提交的内容。
+  - **2026-10-22 修订**：改为“完成即锁定”——必选动作在节点仍为 `ACTIVE` 时可再次完成（修改内容），进入审批后锁定；见上表后的修订说明。
 - **同一人限制**：同一人不能既是该节点某个动作的提交人又审批该节点。在审批决定时校验，而不是在指派时校验，因为转交可能让一个人兼两职。
 
 ### 4.1 并发与事务
 
 - **实例锁**：所有修改实例的入口（提交动作、重新验证、审批、转交、终止）都锁 `workflow-instance:{instanceId}`，使用 `TRY_LOCK`，等待时间沿用服务配置。事务内再做两道检查：实例 `version` CAS，以及节点运行、动作运行、审批行各自的状态条件更新，行数不符一律报 409。
+  - **2026-10-22 修订**：“重新验证”入口已删除，其余入口不变。
 - **定义与模板锁**：保存草稿、发布、启停流程锁 `workflow-definition:{definitionId}`；修改、启停动作模板锁 `workflow-action-template:{templateId}`。两者都同时做 `version` CAS。
 - **发起不加锁**：发起新实例是新建记录，没有可竞争的资源。
 - **事务内只写 `mor_platform`**。用户与权限校验、file-document 的 Owner 登记都是同库的本地 Service，可以在同一事务内完成。没有外部调用。
@@ -225,6 +229,7 @@
 
 - 发起时如果文件仍在扫描中，拒绝发起，提示“文件扫描中，请稍后再提交”。
 - `FILE_UPLOAD` 动作允许先提交；文件还在扫描中时验证结果为 `UNVERIFIED`，扫描通过后再触发一次重新验证即可。
+  - **2026-10-22 修订**：扫描状态不再挡动作完成，扫描中也能完成；发起仍拒绝扫描中与未通过扫描的文件；文件数量与类型不再校验。
 - file-document 需要做的改动：
   - 新增按调用方给定 Owner 开始上传的 Service 入口；
   - 新增“为已有文件追加 Owner 引用”的入口；
@@ -241,9 +246,11 @@
 4. **下载归属范围**：启动值中的 `FILE` 字段，加本实例各轮动作运行的输出（含未通过的提交）；请求人须是参与人或有 `WORKFLOW_INSTANCE_READ`。读侧检查不开事务，通过后在事务外签发 60 秒地址。
 5. **不能用于其他实例**：按地址字符串用 `JSON_SEARCH(…, 'one', 地址, '!', '$.*[*]')` 查实例启动值与动作输出（转义符 `!`，不受 NO_BACKSLASH_ESCAPES 影响），同一实例的不同轮次允许复用；按运营流程量级接受全表扫描，不加索引。
 6. **重新验证（#20）**：只适用于已提交、`UNVERIFIED`、含文件的动作（`FILE_UPLOAD` 或含 `FILE` 字段的 `FORM`），只能当前执行人触发，不改提交内容与提交人；锁实例（TRY_LOCK）后在一个本地短事务内重检权限、验证、保存、审计（`OPERATIONS_WORKFLOW_ACTION_REVERIFY`）；验证证据为 `{"files":[地址…]}`（按第 11 条存地址）。
+   - **2026-10-22 修订**：#20 已删除（Platform API、Controller、Processor、BFF 转发与路由 900000000000127429 及其 6 行 header、6 行 guard）；第 3 条中的“内容问题记 `UNVERIFIED`”改为：动作完成不检查数量、类型与扫描状态。
 7. **实例详情**新增 `files`（文件地址 `fileAddress`、文件 ID（只用于拼下载路径）、名称、类型、大小、扫描状态、上传人）。
 8. **草稿结构错误**：保存草稿与发布时 `graph` / `startForm` 的结构错误改为 422 `VALIDATION_ERROR` 字段错误，路径以 `graph`、`startForm` 为根（如 `graph.nodes[2].type`）；动作模板配置同理以 `config` 为根。
 9. **路由（块 127 追加）**：900000000000127429—127432 对应 #20、#26、#27、#28，均绑定 `WORKFLOW_TASK_HANDLE`；Body 上限开始上传 4096、其余 1024；重新验证每人每分钟 10 次、并发 2，附件三条每人每分钟 30 次、并发 3。块 127 合计 32 条路由、416 行。已执行过块 127 的环境用 `verification/local-e2e/40-workflow-file-routes.sql` 增量补齐。
+   - **2026-10-22 修订**：删除 127429（#20）后块 127 为 31 条路由；加上「我发起的」菜单 127311，块 127 合计 405 行。
 10. **前端**：启动表单、表单动作与 `FILE_UPLOAD` 面板真实上传（开始 → 直传 → 完成 → 显示扫描状态），任务面板与实例详情按需签发预览和下载，`UNVERIFIED` 文件动作提供重新验证。已知待联调风险：存储下载地址若带 `Content-Disposition: attachment`，PDF 无法内嵌预览；发起前没有扫描状态轮询，靠后端拒绝提示。
 11. **存文件地址（2026-10-22 用户确认）**：启动值与 `FORM` 的 `FILE` 字段、`FILE_UPLOAD` 输出、验证证据都存地址；提交与发起先用 `FileAddress.parse` 校验格式（非法 422），再用解析出的 ID 查元数据做归属、内容与扫描检查。下载 #28 的路径参数仍是 `{fileId}`（URL 寻址，不是业务存储），检查 `FileAddress.of(fileId).value()` 出现在本实例引用中。#27 完成上传的响应带 `fileAddress`（文件存储第二段），前端直接使用并核对与 `fileId` 一致，旧响应缺该字段时才按固定格式生成。`FileAddress` 归文件存储需求所有。
 12. **下载方式（2026-10-22 跟进）**：#28 增加可选 Query `disposition`（`INLINE`、`ATTACHMENT`，缺省或为空按 `ATTACHMENT`，其他值 400 `INVALID_REQUEST`），Platform 原样传给文件入口 `AuthorizeFileDownloadRequest`；`INLINE` 只对扫描 `AVAILABLE` 且 MIME 为 `application/pdf`、`image/png`、`image/jpeg` 的文件生效，否则由文件入口静默降为 `ATTACHMENT`。响应 `FileDownloadResponseBody.disposition` 为实际生效的方式，BFF 同路径转发 Query 并原样返回。前端“查看”对 PDF / PNG / JPEG 请求 `INLINE`，返回 `INLINE` 时 iframe / img 内嵌（不加 sandbox，加 `referrerPolicy="no-referrer"`），降为 `ATTACHMENT` 时改为“下载查看”；“下载”一律请求 `ATTACHMENT`。第 10 条的内嵌预览风险由此关闭。
@@ -328,6 +335,8 @@
 | 26 | POST `/workflow/v1/attachments/uploads` | TASK_HANDLE | 开始上传 |
 | 27 | POST `/workflow/v1/attachments/uploads/{uploadId}/completion` | TASK_HANDLE | 完成上传 |
 | 28 | POST `/workflow/v1/instances/{instanceId}/files/{fileId}/download` | TASK_HANDLE | 下载授权；可选 Query `disposition`（`INLINE` / `ATTACHMENT`，缺省 `ATTACHMENT`），响应带实际生效的 `disposition`（见 5.1 第 12 条） |
+
+> **2026-10-22 修订**（[工作流体验优化 4.3](../../20261022/platform-support-工作流体验优化/technique.md)）：#19 路径与请求体不变，语义改为“完成动作”，响应只含 `actionRunId`、`status`（`COMPLETED`）、`instanceStatus`；必填缺失或值不合法返回 422（`output.{key}`、`output.files[i]`），必选动作所在节点已进入审批返回 409。#20 已删除。
 
 **权限（7 项，块 127）**：
 

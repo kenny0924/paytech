@@ -13,7 +13,6 @@ import com.paytech.platform.support.workflow.domainservice.repository.WorkflowCa
 import com.paytech.platform.support.workflow.domainservice.repository.WorkflowInstanceRepository;
 import com.paytech.platform.support.workflow.domainservice.repository.WorkflowNodeRunRepository;
 import com.paytech.platform.support.workflow.domainservice.repository.WorkflowTransferRepository;
-import com.paytech.platform.support.workflow.domainservice.repository.WorkflowVerificationRepository;
 
 import lombok.AllArgsConstructor;
 
@@ -32,7 +31,6 @@ public class WorkflowRuntimeServiceImpl implements WorkflowRuntimeService {
     private final WorkflowCallbackRepository callbacks;
     private final WorkflowTransferRepository transfers;
     private final WorkflowActionRunRepository actionRuns;
-    private final WorkflowVerificationRepository verifications;
 
     /** 按固定顺序保存全部变化。 */
     @Override
@@ -49,7 +47,6 @@ public class WorkflowRuntimeServiceImpl implements WorkflowRuntimeService {
         change.getNewActionRuns().forEach(actionRuns::insert);
         change.getUpdatedApprovals().forEach(approvals::update);
         change.getNewApprovals().forEach(approvals::insert);
-        change.getNewVerifications().forEach(verifications::insert);
         change.getNewTransfers().forEach(transfers::insert);
         change.getNewCallbacks().forEach(callbacks::insert);
         change.getCompensationEvents().forEach(event -> registrar().register(event));

@@ -20,7 +20,7 @@ public sealed interface ActionConfig permits FormActionConfig, FileUploadActionC
     WorkflowActionType actionType();
 
     /**
-     * 动作验证通过后对外提供的输出变量。
+     * 动作完成后对外提供的输出变量。
      *
      * @param actionKey 节点上引用该模板的动作 key，作为变量前缀
      * @return 输出变量声明

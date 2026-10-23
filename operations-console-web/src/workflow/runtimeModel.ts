@@ -4,6 +4,18 @@ import type {
 } from './workflowTypes.ts';
 import { gatewayExits, nodeOf, outgoing, topologicalOrder } from './graphModel.ts';
 
+// ---------- 动作状态 ----------
+export type ActionState = 'PENDING' | 'COMPLETED' | 'CANCELLED';
+
+/** 动作状态归一（需求 E2）：后端改名前的旧编码 VERIFIED 视为已完成，UNVERIFIED 视为待处理；未知值按待处理。 */
+export function actionState(status: string | null | undefined): ActionState {
+  if (status === 'COMPLETED' || status === 'VERIFIED') return 'COMPLETED';
+  if (status === 'CANCELLED') return 'CANCELLED';
+  return 'PENDING';
+}
+export const isCompleted = (run: Pick<ActionRun, 'status'>) => actionState(run.status) === 'COMPLETED';
+export const isPendingAction = (run: Pick<ActionRun, 'status'>) => actionState(run.status) === 'PENDING';
+
 // ---------- 节点状态 ----------
 export type VisualState = 'done' | 'active' | 'pending' | 'rejected' | 'cancelled';
 
@@ -57,10 +69,11 @@ export function progressOf(detail: Pick<InstanceDetail, 'graph' | 'nodeRuns'>): 
     pending: states.filter(state => state === 'pending').length, total: tasks.length };
 }
 
-export interface Handler { nodeKey: string; nodeName: string; stage: 'ACTION' | 'APPROVAL'; people: string[]; waitingSince: string; unverified: boolean }
+export interface Handler { nodeKey: string; nodeName: string; stage: 'ACTION' | 'APPROVAL'; people: string[]; waitingSince: string }
 
 /** 当前进行中的任务节点与处理人：待提交看动作执行人，待审批看未决审批人。 */
-export function currentHandlers(detail: InstanceDetail): Handler[] {
+/** actorId 给出时本人显示为“你”（我发起的时间线与表格一致）。 */
+export function currentHandlers(detail: InstanceDetail, actorId?: string): Handler[] {
   if (detail.instance.status !== 'RUNNING') return [];
   const runs = latestRuns(detail.nodeRuns);
   return detail.graph.nodes.filter(node => node.type === 'TASK').flatMap(node => {
@@ -68,11 +81,10 @@ export function currentHandlers(detail: InstanceDetail): Handler[] {
     if (!run || (run.status !== 'ACTIVE' && run.status !== 'APPROVING')) return [];
     const actions = detail.actionRuns.filter(item => item.nodeRunId === run.nodeRunId);
     const people = run.status === 'ACTIVE'
-      ? [...new Set(actions.filter(item => item.status === 'PENDING' || item.status === 'UNVERIFIED').map(item => item.assigneeId))]
+      ? [...new Set(actions.filter(isPendingAction).map(item => item.assigneeId))]
       : detail.approvals.filter(item => item.nodeRunId === run.nodeRunId && item.status === 'PENDING').map(item => item.approverId);
     return [{ nodeKey: node.key, nodeName: node.name || node.key, stage: run.status === 'ACTIVE' ? 'ACTION' : 'APPROVAL',
-      people: people.map(id => detail.people[id] ?? id), waitingSince: run.activatedTime,
-      unverified: actions.some(item => item.status === 'UNVERIFIED') }];
+      people: people.map(id => id === actorId ? '你' : detail.people[id] ?? id), waitingSince: run.activatedTime }];
   });
 }
 
@@ -84,14 +96,14 @@ export function routeChips(graph: WorkflowGraph, nodeRuns: NodeRun[]): { key: st
 }
 
 // ---------- 变量与动作 ----------
-/** 运行时变量：start.* 取启动值，<actionKey>.* 取最新一轮已验证动作的输出（3.3）。 */
+/** 运行时变量：start.* 取启动值，<actionKey>.* 取最新一轮已完成动作的输出（3.3）。 */
 export function runtimeVariables(detail: Pick<InstanceDetail, 'startValues' | 'actionRuns' | 'nodeRuns'>): Record<string, unknown> {
   const variables: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(detail.startValues ?? {})) variables[`start.${key}`] = value;
   const roundOf = new Map(detail.nodeRuns.map(run => [run.nodeRunId, run.roundNo]));
   const latest = new Map<string, ActionRun>();
   for (const run of detail.actionRuns) {
-    if (run.status !== 'VERIFIED') continue;
+    if (!isCompleted(run)) continue;
     const current = latest.get(run.actionKey);
     if (!current || (roundOf.get(run.nodeRunId) ?? 0) > (roundOf.get(current.nodeRunId) ?? 0)) latest.set(run.actionKey, run);
   }

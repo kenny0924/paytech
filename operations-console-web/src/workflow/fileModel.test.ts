@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  canReverify, countProblem, decodeDownloadGrant, decodeFiles, decodeUploadGrant, decodeUploadReceipt, fileAddressesOf, fileAddressOf, fileIdOfAddress, fileIndex, hasFileInput, mimeAllowed,
+  countProblem, decodeDownloadGrant, decodeFiles, decodeUploadGrant, decodeUploadReceipt, fileAddressesOf, fileAddressOf, fileIdOfAddress, fileIndex, mimeAllowed,
   needsLayout, outputFileAddresses, preCheckFiles, previewKind, rulesHint, safeTransferUrl, safeUploadHeaders, sizeText, startFileAddresses, structureProblems,
-  uploadOne,
+  SCAN_FAILED_TEXT, blockingFiles, scanFailed, scanFailedAddresses, scanPending, uploadOne, uploadRequired, uploadRules, withoutInlineFileErrors,
 } from './fileModel.ts';
+import { COUNT_PAGE_SIZE, decodeSubmission } from './workflowApi.ts';
 import type { UploadPhase, WorkflowPost } from './fileModel.ts';
-import type { ActionRun, WorkflowGraph } from './workflowTypes.ts';
+import type { ActionRun, WorkflowFile, WorkflowGraph } from './workflowTypes.ts';
 
 const future = new Date(Date.now() + 60_000).toISOString();
 const past = new Date(Date.now() - 1_000).toISOString();
@@ -81,7 +82,7 @@ test('upload stops before completion when the transfer fails or the grant is uns
 });
 
 const run = (extra: Partial<ActionRun>): ActionRun => ({ actionRunId: '1', nodeRunId: 'n', actionKey: 'a', actionType: 'FILE_UPLOAD', required: true,
-  assigneeId: '7', status: 'UNVERIFIED', output: { files: ['/files/v1/11', '/files/v1/12'] }, submittedBy: '7', submittedTime: future, ...extra });
+  assigneeId: '7', status: 'COMPLETED', output: { files: ['/files/v1/11', '/files/v1/12'] }, submittedBy: '7', submittedTime: future, ...extra });
 const formTemplate = { config: { fields: [{ key: 'contract', label: '合同', type: 'FILE' as const, required: true }, { key: 'note', label: '说明', type: 'TEXT' as const, required: false }] } };
 
 test('file address format: build and parse /files/v1/{fileId}', () => {
@@ -100,17 +101,22 @@ test('file addresses come from FILE_UPLOAD output, FORM file fields and start va
   assert.deepEqual(outputFileAddresses(run({ actionType: 'MANUAL_CONFIRM', output: { note: '/files/v1/11' } })), []);
   assert.deepEqual(startFileAddresses({ startForm: formTemplate.config, startValues: { contract: ['/files/v1/41', '/files/v1/42'], note: 'x' } }),
     ['/files/v1/41', '/files/v1/42']);
-  assert.equal(hasFileInput(run({ actionType: 'FORM' }), formTemplate), true);
-  assert.equal(hasFileInput(run({ actionType: 'FORM' }), { config: { fields: [] } }), false);
 });
 
-test('re-verify only for the assignee of an unverified submitted file action on an active node', () => {
-  assert.equal(canReverify(run({}), undefined, '7', true), true);
-  assert.equal(canReverify(run({}), undefined, '8', true), false);
-  assert.equal(canReverify(run({}), undefined, '7', false), false);
-  assert.equal(canReverify(run({ status: 'VERIFIED' }), undefined, '7', true), false);
-  assert.equal(canReverify(run({ output: null }), undefined, '7', true), false);
-  assert.equal(canReverify(run({ actionType: 'MANUAL_CONFIRM' }), undefined, '7', true), false);
+test('upload requirement: required switch, legacy minFiles, no count or type limits; scan state helpers', () => {
+  assert.equal(uploadRequired({ required: true }), true);
+  assert.equal(uploadRequired({ required: false, minFiles: 2 }), false);
+  assert.equal(uploadRequired({ minFiles: 1, maxFiles: 3, mimeTypes: ['application/pdf'] }), true);
+  assert.equal(uploadRequired({ minFiles: 0 }), false);
+  assert.equal(uploadRequired(undefined), false);
+  assert.deepEqual(uploadRules({ minFiles: 1, maxFiles: 3, mimeTypes: ['application/pdf'] }), {});
+  const meta = (scanStatus: WorkflowFile['scanStatus']) => ({ fileId: '1', fileAddress: '/files/v1/1', displayName: null, mimeType: null, sizeBytes: null, scanStatus, uploaderId: null });
+  assert.equal(scanPending(meta('SCANNING')), true);
+  assert.equal(scanPending(meta(null)), true);
+  assert.equal(scanPending(meta('AVAILABLE')), false);
+  assert.equal(scanFailed(meta('REJECTED')), true);
+  assert.equal(scanFailed(meta('QUARANTINED')), true);
+  assert.equal(scanFailed(meta('SCANNING')), false);
 });
 
 test('file metadata decoding, preview kind and size text', () => {
@@ -155,4 +161,43 @@ test('422 draft field errors map to node, edge or start form field', () => {
   assert.equal(problems[3].message, 'graph.settings 未知属性');
   assert.equal(needsLayout(graph), true);
   assert.equal(needsLayout({ ...graph, nodes: [graph.nodes[0], { ...graph.nodes[1], position: { x: 240, y: 0 } }] }), false);
+});
+
+test('未通过安全检查的文件：发起与完成同一规则，按 422 路径取回地址，扫描中不挡', () => {
+  const backend = '文件未通过安全检查，请删除后重新上传';
+  assert.ok(backend.includes(SCAN_FAILED_TEXT));
+  const output = { files: ['/files/v1/11', '/files/v1/12'], contract: ['/files/v1/21'] };
+  assert.deepEqual(scanFailedAddresses([{ field: 'output.files[1]', message: backend }, { field: 'output.contract[0]', message: backend },
+    { field: 'output.files', message: backend }, { field: 'output.files[9]', message: backend }],
+  'output', output), ['/files/v1/12', '/files/v1/21']);
+  // ops-bff 把远端文案统一替换为「请检查此处配置」（ConfigurationValidationConverter）：按文件元素路径判断，不看文案
+  assert.deepEqual(scanFailedAddresses([{ field: 'output.files[0]', message: '请检查此处配置' }], 'output', output), ['/files/v1/11']);
+  assert.deepEqual(scanFailedAddresses([{ field: 'startValues.contract[0]', message: '请检查此处配置' }], 'startValues', output), ['/files/v1/21']);
+  assert.deepEqual(scanFailedAddresses([{ field: 'startValues.contract[0]', message: backend }], 'startValues', output), ['/files/v1/21']);
+  assert.deepEqual(scanFailedAddresses([{ field: 'startValues.contract[0]', message: backend }], 'output', output), []);
+  const meta = (id: string, scanStatus: WorkflowFile['scanStatus']): [string, WorkflowFile] => [`/files/v1/${id}`,
+    { fileId: id, fileAddress: `/files/v1/${id}`, displayName: null, mimeType: null, sizeBytes: null, scanStatus, uploaderId: null }];
+  const known = new Map([meta('1', 'SCANNING'), meta('2', 'QUARANTINED'), meta('3', 'AVAILABLE'), meta('4', 'PENDING_SCAN')]);
+  const chosen = ['/files/v1/1', '/files/v1/2', '/files/v1/3', '/files/v1/4', '/files/v1/5'];
+  assert.deepEqual(blockingFiles(chosen, known, new Set(['/files/v1/5'])), ['/files/v1/2', '/files/v1/5']);
+  assert.deepEqual(blockingFiles(['/files/v1/1', '/files/v1/4'], known, new Set()), []);
+  assert.deepEqual(blockingFiles(['/files/v1/1'], undefined, new Set()), []);
+});
+
+test('完成动作响应（#19）：只取 actionRunId / status / instanceStatus，不再读取验证字段', () => {
+  assert.deepEqual(decodeSubmission({ actionRunId: '9', status: 'COMPLETED', instanceStatus: 'RUNNING', verificationId: '1', failureReason: 'x' }),
+    { actionRunId: '9', status: 'COMPLETED', instanceStatus: 'RUNNING' });
+  assert.throws(() => decodeSubmission({ actionRunId: '9', status: 'COMPLETED' }));
+});
+
+test('只取 total 的计数请求使用 Platform 接受的每页条数（size=1 会被拒绝 400）', () => {
+  assert.ok([10, 20, 50, 100].includes(COUNT_PAGE_SIZE));
+});
+
+test('422 后已在文件上标红的元素错误不再按字段重复显示，其他字段错误保留', () => {
+  const output = { files: ['/files/v1/11', '/files/v1/12'], monthlyVolume: '' };
+  const errors = [{ field: 'output.files[1]', message: '文件未通过安全检查，请删除后重新上传' }, { field: 'output.monthlyVolume', message: '必填' },
+    { field: 'output.files[5]', message: '请检查此处填写' }];
+  assert.deepEqual(withoutInlineFileErrors(errors, 'output', output), [errors[1], errors[2]]);
+  assert.deepEqual(withoutInlineFileErrors([], 'output', output), []);
 });

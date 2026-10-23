@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Input, Progress, Segmented, Select, Table, Tag } from 'antd';
+import { PlusOutlined, RightOutlined } from '@ant-design/icons';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { requestAllPages } from '../api/paging';
 import type { ConsoleResource } from '../api/types';
@@ -52,7 +53,7 @@ function InstanceList({ resources, onAuthorizationChanged }: Props) {
       <Segmented value={status} onChange={value => setStatus(value as StatusTab)}
         options={(['RUNNING', 'COMPLETED', 'TERMINATED', 'ALL'] as StatusTab[]).map(value => ({ value, label: value === 'ALL' ? '全部' : instanceStatusLabels[value] }))} />
       <span className="wf-grow" />
-      {canStart && <Button type="primary" onClick={() => setParams({ launch: '' })}>＋ 发起流程</Button>}
+      {canStart && <Button type="primary" icon={<PlusOutlined />} onClick={() => setParams({ launch: '' })}>发起流程</Button>}
     </div>
     <div className="wf-filters">
       <Select value={scope} onChange={setScope} style={{ width: 160 }} options={[{ value: 'MINE', label: '范围：我参与的' }, ...(canReadAll ? [{ value: 'ALL', label: '范围：全部' }] : [])]} />
@@ -79,7 +80,7 @@ function InstanceList({ resources, onAuthorizationChanged }: Props) {
               {item.nodeName}{item.handlers.length > 0 && <span className="muted">{item.handlers.map(person => person.displayName).join('、')}</span>}
               <Tag color={item.status === 'APPROVING' ? 'orange' : item.status === 'WAITING' ? 'default' : 'blue'}>{nodeRunStatusLabels[item.status] ?? item.status}</Tag></span>)}</div>; } },
           { title: '发起', width: 170, render: (_, row) => <span className="muted">{row.startedByName ?? row.startedBy} · {shortTime(row.startTime)}</span> },
-          { title: '', width: 40, render: (_, row) => <Link to={`${workflowRoutes.instances}/${row.instanceId}`}>›</Link> },
+          { title: '', width: 40, render: (_, row) => <Link to={`${workflowRoutes.instances}/${row.instanceId}`} aria-label="打开实例"><RightOutlined /></Link> },
         ]} />
     </section>
     {launching !== null && <LaunchModal initialDefinitionId={launching || null} onAuthorizationChanged={onAuthorizationChanged}

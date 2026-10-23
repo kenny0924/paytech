@@ -10,6 +10,8 @@ import { decodeFiles } from './fileModel.ts';
 /** BFF 同路径转发（technique 第 7 节）；session 统一加 /api/operations 前缀。 */
 export const adminBase = '/workflow-admin/v1';
 export const runtimeBase = '/workflow/v1';
+/** 只取 total 的计数请求用的每页条数：Platform 列表只接受 10 / 20 / 50 / 100（size=1 返回 400）。 */
+export const COUNT_PAGE_SIZE = 10;
 export const workflowPaths = {
   templates: `${adminBase}/action-templates`,
   template: (id: string) => `${adminBase}/action-templates/${encodeURIComponent(id)}`,
@@ -27,8 +29,8 @@ export const workflowPaths = {
   instance: (id: string) => `${runtimeBase}/instances/${encodeURIComponent(id)}`,
   activities: (id: string) => `${runtimeBase}/instances/${encodeURIComponent(id)}/activities`,
   termination: (id: string) => `${runtimeBase}/instances/${encodeURIComponent(id)}/termination`,
+  /** 完成动作（接口 #19，原提交接口，路径与请求体不变）。 */
   submission: (id: string) => `${runtimeBase}/action-runs/${encodeURIComponent(id)}/submission`,
-  verification: (id: string) => `${runtimeBase}/action-runs/${encodeURIComponent(id)}/verification`,
   actionTransfer: (id: string) => `${runtimeBase}/action-runs/${encodeURIComponent(id)}/transfer`,
   decision: (id: string) => `${runtimeBase}/approvals/${encodeURIComponent(id)}/decision`,
   approvalTransfer: (id: string) => `${runtimeBase}/approvals/${encodeURIComponent(id)}/transfer`,
@@ -96,7 +98,8 @@ export function decodeTemplate(value: unknown): ActionTemplate {
   check(typeof item.templateId === 'string' && typeof item.templateCode === 'string' && typeof item.actionType === 'string');
   return { ...(item as unknown as ActionTemplate), description: text(item.description),
     config: item.config === null || item.config === undefined ? null : object(item.config) as ActionConfig,
-    version: Number(item.version) };
+    version: Number(item.version),
+    referencedDefinitionCount: Number.isInteger(item.referencedDefinitionCount) ? item.referencedDefinitionCount as number : null };
 }
 
 export function decodeMutation(value: unknown): Mutation {
@@ -173,8 +176,9 @@ export function decodeTask(value: unknown): Task {
 
 export function decodeSubmission(value: unknown): SubmissionResult {
   const item = object(value);
-  check(typeof item.actionRunId === 'string' && typeof item.status === 'string');
-  return item as unknown as SubmissionResult;
+  check(typeof item.actionRunId === 'string' && typeof item.status === 'string' && typeof item.instanceStatus === 'string');
+  return { actionRunId: item.actionRunId, status: item.status as SubmissionResult['status'],
+    instanceStatus: item.instanceStatus as SubmissionResult['instanceStatus'] };
 }
 
 export function decodeCandidates(value: unknown): AssigneeCandidate[] {

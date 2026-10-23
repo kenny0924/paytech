@@ -32,6 +32,7 @@ import com.paytech.platform.support.api.workflow.response.WorkflowTaskBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowVersionBody;
 import com.paytech.platform.support.workflow.domainservice.validator.AttachmentRules;
 import com.paytech.platform.support.workflow.core.common.WorkflowPermissions;
+import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionRun;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionTemplate;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowApproval;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowDefinition;
@@ -88,7 +89,7 @@ public class WorkflowQueryProcessor {
     private final WorkflowRuntimeJson runtimeJson = new WorkflowRuntimeJson();
     private final WorkflowGraphJsonReader graphReader = new WorkflowGraphJsonReader();
 
-    /** 动作模板分页。 */
+    /** 动作模板分页；每行带被引用的流程定义数（一次分组查询）。 */
     public PagingResponseBody<WorkflowActionTemplateResponseBody> listTemplates(String actor, String session,
         String actionType, String status, String keyword, PagingRequestBody paging) {
         support.authorize(actor, session, WorkflowPermissions.DEFINITION_READ);
@@ -98,8 +99,13 @@ public class WorkflowQueryProcessor {
         List<WorkflowActionTemplate> rows = templates.page(type, state, text, paging.offset(), paging.size());
         Map<String, String> people = support.displayNames(rows.stream().map(WorkflowActionTemplate::getUpdatedBy)
             .filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new)));
-        List<WorkflowActionTemplateResponseBody> items = rows.stream()
-            .map(row -> assembler.template(row, false, people)).toList();
+        Map<Long, Integer> referenceCounts = tasks.templateReferenceCounts(
+            rows.stream().map(WorkflowActionTemplate::getActionTemplateId).toList());
+        List<WorkflowActionTemplateResponseBody> items = rows.stream().map(row -> {
+            WorkflowActionTemplateResponseBody body = assembler.template(row, false, people);
+            body.setReferencedDefinitionCount(referenceCounts.getOrDefault(row.getActionTemplateId(), 0));
+            return body;
+        }).toList();
         return new PagingResponseBody<>(items, paging.page(), paging.size(), templates.count(type, state, text));
     }
 
@@ -286,7 +292,10 @@ public class WorkflowQueryProcessor {
         return result;
     }
 
-    /** 活动记录：节点状态、提交与验证、审批决定、转交、通知回调，按时间正序。 */
+    /**
+     * 活动记录：节点状态、动作完成、审批决定、转交、通知回调，按时间正序
+     * <li>动作完成取各动作运行最近一次完成；2026-10-22 前的历史验证记录照常列出，与其同时刻的那次提交不重复列出。</li>
+     */
     public WorkflowActivityListResponseBody listActivities(String actor, String session, long instanceId) {
         WorkflowInstanceContext context = visible(actor, session, instanceId);
         Map<String, String> people = support.displayNames(people(context));
@@ -295,6 +304,9 @@ public class WorkflowQueryProcessor {
             .forEach(run -> items.add(assembler.nodeActivity(run)));
         context.getVerifications().forEach(row -> items.add(assembler.verificationActivity(row,
             nodeOfAction(context, row.getActionRunId()), people)));
+        context.getActionRuns().stream().filter(run -> run.getSubmittedTime() != null && !recordedByVerification(context, run))
+            .forEach(run -> items.add(assembler.completionActivity(run, context.nodeRun(run.getNodeRunId()).orElse(null),
+                people)));
         context.getApprovals().stream().filter(row -> row.getDecidedTime() != null
             && row.getStatus() != ApprovalStatus.PENDING).forEach(row -> items.add(assembler.approvalActivity(row,
                 context.nodeRun(row.getNodeRunId()).orElse(null), people)));
@@ -379,6 +391,12 @@ public class WorkflowQueryProcessor {
     WorkflowNodeRun nodeOfAction(WorkflowInstanceContext context, Long actionRunId) {
         return context.getActionRuns().stream().filter(run -> run.getActionRunId().equals(actionRunId)).findFirst()
             .flatMap(run -> context.nodeRun(run.getNodeRunId())).orElse(null);
+    }
+
+    /** 动作运行最近一次提交是否已由历史验证记录表达（旧版提交与验证同一时刻写入）。 */
+    boolean recordedByVerification(WorkflowInstanceContext context, WorkflowActionRun run) {
+        return context.getVerifications().stream().anyMatch(row -> row.getActionRunId().equals(run.getActionRunId())
+            && row.getVerifiedTime().equals(run.getSubmittedTime()));
     }
 
     /** 读取定义；不存在为 404。 */

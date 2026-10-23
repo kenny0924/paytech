@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.platform.support.workflow.core.enums.ApprovalMode;
@@ -49,6 +50,7 @@ class WorkflowFormAndNotificationValidationTest {
 
     private final ActionConfigValidator configValidator = new ActionConfigValidator();
 
+    /** 字段 key、显示名与枚举选项仍校验；长度、范围、文件数量与类型等校验键只按结构接受。 */
     @Test
     void test_startFormRules() {
         FormDefinition form = new FormDefinition(List.of(
@@ -65,17 +67,17 @@ class WorkflowFormAndNotificationValidationTest {
             withRules("files", FormFieldType.FILE, new FieldRules(null, null, null, null, List.of(), 3, 1, List.of())),
             withRules("foreign", FormFieldType.BOOLEAN, new FieldRules(10, null, null, null, List.of(), null, null,
                 List.of()))));
-        ProblemChecker.of(validator.validate(PublicationInputBuilder.of(WorkflowGraphBuilder.template().build())
-                .startForm(form).build()))
+        List<WorkflowGraphProblem> problems = validator.validate(PublicationInputBuilder.of(
+            WorkflowGraphBuilder.template().build()).startForm(form).build());
+        ProblemChecker.of(problems)
             .item(WorkflowProblemCode.FIELD_KEY_DUPLICATE, "ok")
             .item(WorkflowProblemCode.FIELD_KEY_INVALID, "bad key")
             .item(WorkflowProblemCode.FIELD_LABEL_MISSING, "noLabel")
-            .item(WorkflowProblemCode.FIELD_RULE_INVALID, "longText")
-            .item(WorkflowProblemCode.FIELD_RULE_INVALID, "range")
             .item(WorkflowProblemCode.FIELD_RULE_INVALID, "noOptions")
-            .item(WorkflowProblemCode.FIELD_RULE_INVALID, "dupOptions")
-            .item(WorkflowProblemCode.FIELD_RULE_INVALID, "files")
-            .item(WorkflowProblemCode.FIELD_RULE_INVALID, "foreign");
+            .item(WorkflowProblemCode.FIELD_RULE_INVALID, "dupOptions");
+        // 2026-10-22 起 maxLength、min / max、文件数量与类型等校验键忽略，不再报告
+        Assertions.assertEquals(List.of(), problems.stream()
+            .filter(problem -> List.of("longText", "range", "files", "foreign").contains(problem.itemKey())).toList());
     }
 
     @Test
@@ -134,6 +136,18 @@ class WorkflowFormAndNotificationValidationTest {
             .node(WorkflowProblemCode.NOTIFICATION_TRIGGER_INVALID, null);
     }
 
+    /** 「动作验证未通过」已停用：即使节点有动作，新配置也报告触发事件不合法（枚举值保留以兼容已发布配置）。 */
+    @Test
+    void test_verificationFailedTriggerRetired() {
+        WorkflowGraph graph = WorkflowGraphBuilder.graph().start("start")
+            .task("task", task -> task.approvers(ApprovalMode.ANY, WorkflowFixtures.APPROVER_A)
+                .action("confirm", WorkflowFixtures.TPL_CONFIRM, WorkflowFixtures.EXECUTOR_A)
+                .rule(notifyRule(NotificationTrigger.VERIFICATION_FAILED, NotificationRecipient.NODE_EXECUTORS)))
+            .end("end").chain("start", "task", "end").build();
+        ProblemChecker.of(validate(graph)).item(WorkflowProblemCode.NOTIFICATION_TRIGGER_INVALID, "notifications[0]")
+            .exactly(WorkflowProblemCode.NOTIFICATION_TRIGGER_INVALID);
+    }
+
     @Test
     void test_notificationOnGatewayRejected() {
         WorkflowGraph graph = WorkflowGraphBuilder.graph()
@@ -152,9 +166,10 @@ class WorkflowFormAndNotificationValidationTest {
             .none();
         ProblemChecker.of(configValidator.validate(new FormActionConfig(FormDefinition.EMPTY)))
             .exactly(WorkflowProblemCode.ACTION_CONFIG_INVALID);
-        ProblemChecker.of(configValidator.validate(new FileUploadActionConfig(2, 1, List.of("PDF"), null)))
-            .exactly(WorkflowProblemCode.ACTION_CONFIG_INVALID);
-        ProblemChecker.of(configValidator.validate(new FileUploadActionConfig(0, 5, List.of("image/png"), null))).none();
+        ProblemChecker.of(configValidator.validate(new FileUploadActionConfig(2, 1, List.of("PDF"), null, false)))
+            .none();
+        ProblemChecker.of(configValidator.validate(new FileUploadActionConfig(null, null, List.of(), "上传", true)))
+            .none();
         for (String route : List.of("https://evil.example/x", "//evil.example", "commercial/agreements")) {
             ProblemChecker.of(configValidator.validate(new PageTaskActionConfig(route, List.of(), null)))
                 .exactly(WorkflowProblemCode.ACTION_CONFIG_INVALID);

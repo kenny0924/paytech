@@ -1,29 +1,49 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, App, Button, Empty, Input, Space, Tabs, Tag } from 'antd';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { App, Button, Drawer, Dropdown, Empty, Input, Table } from 'antd';
+import { EllipsisOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { requestAllPages } from '../api/paging';
 import type { ConsoleResource } from '../api/types';
-import { useUnsavedRuleGuard } from '../risk/useUnsavedRuleGuard';
-import { configProblems, normalizeConfig } from '../workflow/templateModel';
-import { ConfigEditor, CreateTemplateModal, DeactivateModal, ExecutorPreview, ReferencesView, actionTypes, useTemplateReferences } from '../workflow/TemplateEditors';
+import { ActionTemplateEditor } from '../workflow/ActionTemplateEditor';
+import { catalogTabs, currentReferences, filterTemplates, newTemplateType, referenceText } from '../workflow/catalogModel';
+import type { CatalogTab } from '../workflow/catalogModel';
+import { ActionTypePicker, ActionTypeTag, DeactivateModal, ExecutorPreview, useTemplateReferences } from '../workflow/TemplateEditors';
 import { useWorkflowCommand } from '../workflow/useWorkflowCommand';
 import { decodeMutation, decodePage, decodeTemplate, workflowPaths } from '../workflow/workflowApi';
 import { actionTypeLabels, configStatusLabels } from '../workflow/workflowLabels';
-import type { ActionConfig, ActionTemplate, ActionType } from '../workflow/workflowTypes';
-import { Field, LoadFailed, Spinner, hasButton, personName, shortTime, useLoad, workflowButtons, workflowRoutes } from '../workflow/WorkflowParts';
+import type { ActionTemplate } from '../workflow/workflowTypes';
+import { LoadFailed, Spinner, WorkflowFrame, hasButton, personName, shortTime, useLoad, workflowButtons, workflowRoutes } from '../workflow/WorkflowParts';
 import '../workflow/workflow.css';
 
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
 const decodeTemplates = decodePage(decodeTemplate);
 
-/** 动作目录：分类、列表、详情三栏；新建、按类型配置、引用与影响、停用确认（原型 12—18）。 */
+/**
+ * 动作目录（原型 06—08）：/workflow/action-templates 为列表 + 只读预览抽屉；
+ * /:templateId 为编辑页，new?type= 为新建（先在列表选类型）。
+ */
 export function WorkflowActionTemplates({ resources, onAuthorizationChanged }: Props) {
-  const { templateId } = useParams(); const navigate = useNavigate();
+  const { templateId } = useParams(); const [search] = useSearchParams(); const navigate = useNavigate();
   const canManage = hasButton(resources, workflowButtons.templateManage);
+  const newType = templateId === 'new' ? newTemplateType(search.get('type')) : null;
+  useEffect(() => {
+    if (templateId === 'new' && !newType) void navigate(workflowRoutes.templates, { replace: true });
+  }, [templateId, newType, navigate]);
+  const onCreated = useCallback((template: ActionTemplate) => void navigate(`${workflowRoutes.templates}/${template.templateId}`, { replace: true }), [navigate]);
+  if (templateId === 'new') return newType ? <WorkflowFrame><ActionTemplateEditor key={`new:${newType}`} mode="page" actionType={newType} canManage={canManage}
+    onAuthorizationChanged={onAuthorizationChanged} onCreated={onCreated} /></WorkflowFrame> : null;
+  if (templateId) return <WorkflowFrame><ActionTemplateEditor key={templateId} mode="page" templateId={templateId} canManage={canManage}
+    onAuthorizationChanged={onAuthorizationChanged} /></WorkflowFrame>;
+  return <WorkflowFrame><TemplateCatalog canManage={canManage} onAuthorizationChanged={onAuthorizationChanged} /></WorkflowFrame>;
+}
+
+function TemplateCatalog({ canManage, onAuthorizationChanged }: { canManage: boolean; onAuthorizationChanged: () => void }) {
+  const navigate = useNavigate();
   const [items, setItems] = useState<ActionTemplate[]>([]); const [loading, setLoading] = useState(true); const [failure, setFailure] = useState<unknown>();
   const [reload, setReload] = useState(0);
-  const [category, setCategory] = useState<ActionType | 'ALL'>('ALL'); const [keyword, setKeyword] = useState('');
-  const [creating, setCreating] = useState(false);
+  const [tab, setTab] = useState<CatalogTab>('ALL'); const [keyword, setKeyword] = useState('');
+  const [picking, setPicking] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   useEffect(() => {
     const controller = new AbortController(); setLoading(true); setFailure(undefined);
     requestAllPages(workflowPaths.templates, controller.signal, undefined, {}, decodeTemplates)
@@ -33,101 +53,78 @@ export function WorkflowActionTemplates({ resources, onAuthorizationChanged }: P
     return () => controller.abort();
   }, [reload]);
   const refresh = useCallback(() => setReload(value => value + 1), []);
-  const visible = items.filter(item => (category === 'ALL' || item.actionType === category)
-    && (!keyword.trim() || `${item.templateCode} ${item.templateName}`.toLowerCase().includes(keyword.trim().toLowerCase())));
-  const open = (id: string) => void navigate(`${workflowRoutes.templates}/${id}`);
+  const tabs = catalogTabs(items);
+  const activeTab = tabs.some(item => item.key === tab) ? tab : 'ALL';
+  const visible = filterTemplates(items, activeTab, keyword);
+  const preview = items.find(item => item.templateId === previewId);
   return <div className="wf-page">
-    <div className="wf-page-head"><h1>动作目录</h1><span className="muted">可复用的节点动作，流程发布时冻结当时的配置</span><span className="wf-grow" />
-      {canManage && <Button type="primary" onClick={() => setCreating(true)}>＋ 新建动作</Button>}</div>
+    <div className="wf-page-head"><h1>动作目录</h1><span className="wf-grow" />
+      <Input allowClear prefix={<SearchOutlined className="muted" />} placeholder="搜索动作名称、编码" style={{ width: 260 }} value={keyword} onChange={event => setKeyword(event.target.value)} />
+      {canManage && <Button type="primary" icon={<PlusOutlined />} onClick={() => setPicking(true)}>新建动作</Button>}</div>
     {failure ? <LoadFailed failure={failure} retry={refresh} title="动作目录加载失败" /> : null}
-    <div className="wf-catalog">
-      <aside className="wf-card wf-categories">
-        {(['ALL', ...actionTypes] as const).map(value => <button type="button" key={value} className={`wf-category${category === value ? ' is-active' : ''}`}
-          onClick={() => setCategory(value)}><span>{value === 'ALL' ? '全部' : actionTypeLabels[value]}</span>
-          <span className="muted">{value === 'ALL' ? items.length : items.filter(item => item.actionType === value).length}</span></button>)}
-        <p className="muted">数据查询：本期只预留，以后由 data-service 执行其维护的查询。</p>
-      </aside>
-      <section className="wf-catalog-list">
-        <Input.Search allowClear placeholder="搜索编码或名称" value={keyword} onChange={event => setKeyword(event.target.value)} />
-        {loading ? <Spinner /> : !visible.length ? <Empty description="没有动作" /> : visible.map(item => <button type="button" key={item.templateId}
-          className={`wf-card wf-template-item${item.templateId === templateId ? ' is-selected' : ''}`} onClick={() => open(item.templateId)}>
-          <div><strong>{item.templateName}</strong> <Tag color={item.status === 'ACTIVE' ? 'green' : 'default'}>{configStatusLabels[item.status]}</Tag>
-            {item.actionType === 'DATA_QUERY' && <Tag color="orange">预留</Tag>}</div>
-          <div className="muted">{item.templateCode} · {actionTypeLabels[item.actionType]}{item.description ? ` · ${item.description}` : ''}</div></button>)}
-      </section>
-      <section className="wf-catalog-detail">
-        {templateId ? <TemplateDetail key={templateId} templateId={templateId} canManage={canManage} onAuthorizationChanged={onAuthorizationChanged} onChanged={refresh} />
-          : <section className="wf-card"><Empty description="选择一个动作查看与编辑" /></section>}
-      </section>
-    </div>
-    {creating && <CreateTemplateModal existingCodes={new Set(items.map(item => item.templateCode))} onClose={() => setCreating(false)}
-      onAuthorizationChanged={onAuthorizationChanged} onCreated={id => { setCreating(false); refresh(); open(id); }} />}
+    <section className="wf-catalog-panel">
+      <div className="wf-tabs wf-catalog-tabs" role="tablist">{tabs.map(item => <button type="button" role="tab" aria-selected={activeTab === item.key} key={item.key}
+        className={`wf-tab${activeTab === item.key ? ' is-active' : ''}`} onClick={() => setTab(item.key)}>
+        {item.key === 'ALL' ? '全部' : actionTypeLabels[item.key]}<span className="wf-tab-count">{item.count}</span></button>)}</div>
+      {loading && !items.length ? <Spinner /> : <Table<ActionTemplate> rowKey="templateId" size="middle" dataSource={visible} className="wf-catalog-table"
+        pagination={visible.length > 50 ? { pageSize: 50, showSizeChanger: false } : false}
+        locale={{ emptyText: <Empty description={keyword.trim() ? '没有匹配的动作' : '还没有动作'} /> }}
+        rowClassName={row => `${row.templateId === previewId ? 'wf-row-selected' : ''}${row.status === 'INACTIVE' ? ' is-inactive' : ''}`}
+        onRow={row => ({ onClick: () => setPreviewId(row.templateId), style: { cursor: 'pointer' } })} columns={[
+          { title: '名称', render: (_, row) => <div className="wf-catalog-name"><strong>{row.templateName}</strong>
+            {row.description && <div className="muted wf-ellipsis">{row.description}</div>}</div> },
+          { title: '类型', width: 130, render: (_, row) => <ActionTypeTag type={row.actionType} /> },
+          { title: '被引用', width: 110, render: (_, row) => <span className={row.referencedDefinitionCount ? '' : 'muted'}>{referenceText(row.referencedDefinitionCount)}</span> },
+          { title: '状态', width: 90, render: (_, row) => <span className="wf-inline"><span className={`wf-status-dot is-${row.status.toLowerCase()}`} />{configStatusLabels[row.status]}</span> },
+          { title: '最近修改', width: 190, render: (_, row) => <span>{row.updatedByName ?? personName(row.updatedBy)} <span className="muted">{shortTime(row.updateTime)}</span></span> },
+        ]} />}
+    </section>
+    {preview && <TemplatePreviewDrawer key={preview.templateId} summary={preview} canManage={canManage} onAuthorizationChanged={onAuthorizationChanged}
+      onClose={() => setPreviewId(null)} onChanged={refresh} onEdit={() => void navigate(`${workflowRoutes.templates}/${preview.templateId}`)} />}
+    {picking && <ActionTypePicker onCancel={() => setPicking(false)} onNext={type => void navigate(`${workflowRoutes.templates}/new?type=${type}`)} />}
   </div>;
 }
 
-interface Draft { templateName: string; description: string; config: ActionConfig }
-
-function TemplateDetail({ templateId, canManage, onAuthorizationChanged, onChanged }: { templateId: string; canManage: boolean; onAuthorizationChanged: () => void; onChanged: () => void }) {
-  const { message, modal } = App.useApp();
-  const loaded = useLoad<ActionTemplate>(workflowPaths.template(templateId), decodeTemplate);
+/** 只读预览抽屉（原型 06）：执行人看到的样子 + 被这些流程引用；底部「编辑」与「⋯」中的停用 / 启用。 */
+function TemplatePreviewDrawer({ summary, canManage, onAuthorizationChanged, onClose, onChanged, onEdit }: {
+  summary: ActionTemplate; canManage: boolean; onAuthorizationChanged: () => void; onClose: () => void; onChanged: () => void; onEdit: () => void;
+}) {
+  const { message } = App.useApp();
+  const loaded = useLoad<ActionTemplate>(workflowPaths.template(summary.templateId), decodeTemplate);
   const template = loaded.data;
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [tab, setTab] = useState('config');
-  const [deactivating, setDeactivating] = useState(false);
+  const references = useTemplateReferences(template, true);
   const command = useWorkflowCommand(onAuthorizationChanged);
-  useEffect(() => { if (template) setDraft({ templateName: template.templateName, description: template.description ?? '', config: template.config ?? { fields: [] } }); }, [template]);
-  const dirty = !!template && !!draft && JSON.stringify(draft) !== JSON.stringify({ templateName: template.templateName, description: template.description ?? '', config: template.config });
-  const confirmLeave = useCallback(() => new Promise<boolean>(resolve => {
-    modal.confirm({ title: '离开当前动作？', content: '尚未保存的修改将丢失。', okText: '离开', cancelText: '继续编辑', onOk: () => resolve(true), onCancel: () => resolve(false) });
-  }), [modal]);
-  useUnsavedRuleGuard(dirty, confirmLeave);
-  const references = useTemplateReferences(template, tab === 'references' || deactivating);
-  const problems = useMemo(() => template && draft ? configProblems(template.actionType, draft.config) : [], [template, draft]);
-  if (loaded.loading && !template) return <Spinner />;
-  if (!template || !draft) return <LoadFailed failure={loaded.failure} retry={loaded.refresh} title="动作加载失败" />;
-  const readOnly = !canManage;
-  async function save() {
-    if (!template || !draft) return;
-    if (!draft.templateName.trim()) { void message.warning('请填写名称'); return; }
-    const result = await command.run(workflowPaths.template(template.templateId), 'PUT', { templateName: draft.templateName.trim(),
-      ...(draft.description.trim() ? { description: draft.description.trim() } : {}), config: normalizeConfig(template.actionType, draft.config),
-      expectedVersion: template.version }, decodeMutation, '保存失败');
-    if (result) { void message.success('已保存；只影响之后新发布的流程版本'); loaded.refresh(); onChanged(); }
-  }
+  const [deactivating, setDeactivating] = useState(false);
+  const grouped = currentReferences(references.data);
   async function changeStatus(status: 'ACTIVE' | 'INACTIVE') {
     if (!template) return;
     const result = await command.run(workflowPaths.templateStatus(template.templateId), 'POST', { status, expectedVersion: template.version }, decodeMutation, '状态修改失败');
-    if (result) { setDeactivating(false); void message.success(status === 'ACTIVE' ? '已启用' : '已停用'); loaded.refresh(); onChanged(); }
+    if (!result) return;
+    setDeactivating(false); void message.success(status === 'ACTIVE' ? '已启用' : '已停用'); loaded.refresh(); onChanged();
   }
-  return <div className="wf-template-detail">
-    <div className="wf-page-head"><h2>{template.templateName}</h2><Tag color="blue">{actionTypeLabels[template.actionType]} {template.actionType}</Tag>
-      <Tag color={template.status === 'ACTIVE' ? 'green' : 'default'}>{configStatusLabels[template.status]}</Tag>
-      {template.actionType === 'DATA_QUERY' && <Tag color="orange">预留</Tag>}
-      <span className="muted">{template.templateCode} · 版本 {template.version} · {template.updatedByName ?? personName(template.updatedBy)} 于 {shortTime(template.updateTime)} 修改</span>
-      <span className="wf-grow" />
-      {dirty && <span className="wf-warn-text">有未保存的修改</span>}
-      {canManage && <Space>
-        {template.status === 'ACTIVE' ? <Button onClick={() => setDeactivating(true)}>停用</Button> : <Button onClick={() => void changeStatus('ACTIVE')}>启用</Button>}
-        {dirty && <Button onClick={() => setDraft({ templateName: template.templateName, description: template.description ?? '', config: template.config ?? { fields: [] } })}>放弃修改</Button>}
-        <Button type="primary" disabled={!dirty || problems.length > 0} title={problems[0]} loading={command.saving} onClick={() => void save()}>保存</Button></Space>}
-    </div>
-    {command.conflict && <Alert type="warning" showIcon title="动作已被他人修改，你的修改未保存" action={<Button size="small" onClick={() => { command.clearConflict(); loaded.refresh(); }}>重新加载</Button>} />}
-    {command.formError && <Alert type="error" showIcon title={command.formError} />}
-    {problems.length > 0 && canManage && <Alert type="warning" showIcon title={`配置还有 ${problems.length} 个问题：${problems.join('；')}`} />}
-    <Tabs activeKey={tab} onChange={setTab} items={[
-      { key: 'basic', label: '基本信息', children: <section className="wf-card">
-        <Field label="编码"><code>{template.templateCode}</code></Field>
-        <Field label="名称"><Input value={draft.templateName} maxLength={128} disabled={readOnly} onChange={event => setDraft({ ...draft, templateName: event.target.value })} /></Field>
-        <Field label="描述"><Input.TextArea rows={3} maxLength={512} value={draft.description} disabled={readOnly} onChange={event => setDraft({ ...draft, description: event.target.value })} /></Field>
-        <Field label="类型"><span>{actionTypeLabels[template.actionType]}（创建后不能修改）</span></Field></section> },
-      { key: 'config', label: template.actionType === 'FORM' ? '字段设计' : template.actionType === 'DATA_QUERY' ? '查询与通过规则' : '规则与验证',
-        children: <ConfigEditor type={template.actionType} config={draft.config} readOnly={readOnly}
-          onChange={config => setDraft({ ...draft, config })} /> },
-      { key: 'preview', label: '执行人预览', children: <div className="wf-preview-pane"><ExecutorPreview template={{ templateName: draft.templateName, actionType: template.actionType, config: draft.config }} />
-        <p className="muted">预览使用未保存的配置；校验规则与提交时服务端校验一致。</p></div> },
-      { key: 'references', label: `引用与影响${references.data ? `（${references.data.items.length}）` : ''}`, children: <ReferencesView template={template} state={references} /> },
-    ]} />
-    {deactivating && <DeactivateModal template={template} references={references} saving={command.saving} error={command.formError}
-      onCancel={() => setDeactivating(false)} onConfirm={() => void changeStatus('INACTIVE')} />}
-  </div>;
+  const shown = template ?? summary;
+  return <Drawer open size={520} onClose={onClose} className="wf-preview-drawer" title={<div className="wf-drawer-title">
+    <div className="wf-inline"><strong>{shown.templateName}</strong><ActionTypeTag type={shown.actionType} /></div>
+    <div className="muted wf-drawer-sub">{shown.description ? `${shown.description} · ` : ''}{shown.updatedByName ?? personName(shown.updatedBy)} 修改于 {shortTime(shown.updateTime)}</div></div>}
+    footer={<div className="wf-drawer-foot">
+      {canManage ? <Dropdown trigger={['click']} menu={{ items: [shown.status === 'ACTIVE' ? { key: 'off', label: '停用', danger: true } : { key: 'on', label: '启用' }],
+        onClick: ({ key }) => key === 'off' ? setDeactivating(true) : void changeStatus('ACTIVE') }}>
+        <Button aria-label="更多操作" loading={command.saving} icon={<EllipsisOutlined />} /></Dropdown> : <span />}
+      <Button type="primary" onClick={onEdit}>{canManage ? '编辑' : '查看详情'}</Button></div>}>
+    {!template ? (loaded.failure ? <LoadFailed failure={loaded.failure} retry={loaded.refresh} title="动作加载失败" /> : <Spinner />) : <>
+      <div className="wf-section-title">执行人看到的样子<span className="muted">只读预览</span></div>
+      <ExecutorPreview template={template} />
+      <div className="wf-section-title">被这些流程引用<span className="muted">{references.data ? grouped.current.length : ''}</span></div>
+      {references.loading && !references.data ? <Spinner /> : references.failure ? <LoadFailed failure={references.failure} title="引用查询失败" />
+        : !grouped.current.length ? <div className="muted">还没有已发布的流程引用这个动作{grouped.historical ? `（${grouped.historical} 个历史版本曾引用）` : ''}</div>
+        : <ul className="wf-reference-list">{grouped.current.map(item => <li key={item.definitionId}>
+          <Link to={`${workflowRoutes.definitions}/${item.definitionId}/versions/${item.versionNo}`}><strong>{item.definitionName}</strong></Link>
+          <span className="wf-grow" />{item.runningInstanceCount > 0 && <span className="muted">{item.runningInstanceCount} 个运行中</span>}
+          <span className={item.sameAsCurrent ? 'wf-ok-text' : 'wf-warn-text'}>已发布 v{item.versionNo}{item.sameAsCurrent ? '' : ' · 旧配置'}</span></li>)}
+          {grouped.historical > 0 && <li className="muted">另有 {grouped.historical} 个历史版本引用（不计入）</li>}</ul>}
+    </>}
+    {command.formError && !deactivating && <div className="wf-danger-text">{command.formError}</div>}
+    {deactivating && template && <DeactivateModal template={{ ...template, referencedDefinitionCount: summary.referencedDefinitionCount }} references={references}
+      saving={command.saving} error={command.formError} onCancel={() => setDeactivating(false)} onConfirm={() => void changeStatus('INACTIVE')} />}
+  </Drawer>;
 }

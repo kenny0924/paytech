@@ -83,7 +83,7 @@ public final class WorkflowFixtures {
                 new PageTaskActionConfig("/commercial/agreements", List.of(new PageParameter("channelCode", "渠道")),
                     null)),
             TPL_UPLOAD, template(TPL_UPLOAD, WorkflowActionType.FILE_UPLOAD, ActionTemplateStatus.ACTIVE,
-                new FileUploadActionConfig(1, 5, List.of("application/pdf"), null)),
+                new FileUploadActionConfig(1, 5, List.of("application/pdf"), null, false)),
             TPL_INACTIVE, template(TPL_INACTIVE, WorkflowActionType.MANUAL_CONFIRM, ActionTemplateStatus.INACTIVE,
                 new ManualConfirmActionConfig(null, false)),
             TPL_DATA_QUERY, template(TPL_DATA_QUERY, WorkflowActionType.DATA_QUERY, ActionTemplateStatus.ACTIVE,

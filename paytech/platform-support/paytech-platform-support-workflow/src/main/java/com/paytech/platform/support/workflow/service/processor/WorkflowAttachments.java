@@ -111,7 +111,7 @@ public class WorkflowAttachments {
         if (template == null) {
             return Map.of();
         }
-        requireAddresses(AttachmentRules.addressErrors(template.config(), output, OUTPUT_ROOT));
+        requireNoFieldErrors(AttachmentRules.addressErrors(template.config(), output, OUTPUT_ROOT));
         Set<Long> fileIds = AttachmentRules.referenced(template.config(), output);
         Map<Long, AttachmentFact> facts = facts(fileIds);
         requireAttachable(fileIds, facts, submitter, context.getInstance().getInstanceId());
@@ -119,11 +119,11 @@ public class WorkflowAttachments {
     }
 
     /**
-     * 要求文件地址格式合法；否则按请求体字段返回 422 VALIDATION_ERROR。
+     * 要求没有字段错误（文件地址格式、完成动作的必填与值类型）；否则按请求体字段返回 422 VALIDATION_ERROR。
      *
-     * @param errors 字段路径到原因
+     * @param errors 请求体字段路径到原因
      */
-    public void requireAddresses(Map<String, String> errors) {
+    public void requireNoFieldErrors(Map<String, String> errors) {
         if (!errors.isEmpty()) {
             throw new RequestBodyValidationException(errors.entrySet().stream()
                 .map(error -> new ProblemFieldError(error.getKey(), error.getValue())).toList(), null);
@@ -131,7 +131,7 @@ public class WorkflowAttachments {
     }
 
     /**
-     * 实例引用的全部文件：启动值的 FILE 字段，以及各轮动作运行输出（含未通过验证的提交）中的文件。
+     * 实例引用的全部文件：启动值的 FILE 字段，以及各轮动作运行输出中的文件。
      * 归属在写入时已确认，下载授权以此为准。
      *
      * @param context 实例上下文

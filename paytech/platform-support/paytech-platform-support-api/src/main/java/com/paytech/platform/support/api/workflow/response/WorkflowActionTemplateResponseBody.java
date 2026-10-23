@@ -48,4 +48,11 @@ public class WorkflowActionTemplateResponseBody {
 
     /** 最后修改时间。 */
     private Instant updateTime;
+
+    /**
+     * 被引用的流程定义数。
+     * <li>当前发布版本冻结了该模板的流程定义数，按定义去重，口径与引用查询中 currentVersion 为 true 的行一致。</li>
+     * <li>只在列表接口返回；详情接口为空。</li>
+     */
+    private Integer referencedDefinitionCount;
 }

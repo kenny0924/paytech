@@ -85,6 +85,15 @@ test('工作流页面登记子路由：实例详情、流程编辑器与版本�
   assert.deepEqual(menuPages(buildMenuTree([group, definitions, tasks])).map(item => item.displayName), ['我的待办', '流程定义']);
 });
 
+test('我发起的：工作流菜单下独立页面 /workflow/started，只有根路径，排在我的待办之后', () => {
+  assert.deepEqual(pageRoutePaths({ frontendRoute: '/workflow/started', componentKey: 'OPERATIONS_WORKFLOW_STARTED' } as ConsoleResource), ['/workflow/started']);
+  const group = resource('workflow', { displayName: '工作流' });
+  const tasks = resource('tasks', { parentResourceId: 'workflow', displayName: '我的待办', frontendRoute: '/workflow/my-tasks', componentKey: 'OPERATIONS_WORKFLOW_MY_TASKS', sortOrder: 10 });
+  const started = resource('started', { parentResourceId: 'workflow', displayName: '我发起的', frontendRoute: '/workflow/started', componentKey: 'OPERATIONS_WORKFLOW_STARTED', sortOrder: 15 });
+  const instances = resource('instances', { parentResourceId: 'workflow', displayName: '流程实例', frontendRoute: '/workflow/instances', componentKey: 'OPERATIONS_WORKFLOW_INSTANCES', sortOrder: 20 });
+  assert.deepEqual(menuPages(buildMenuTree([group, instances, started, tasks])).map(item => item.frontendRoute), ['/workflow/my-tasks', '/workflow/started', '/workflow/instances']);
+});
+
 test('数据查询：模板页登记编辑器子路由（:templateId 含 new），数据源页只有根路径', () => {
   const menu = { frontendRoute: '/data-query/templates', componentKey: 'OPERATIONS_QUERY_TEMPLATES' } as ConsoleResource;
   assert.deepEqual(pageRoutePaths(menu), ['/data-query/templates', '/data-query/templates/:templateId']);

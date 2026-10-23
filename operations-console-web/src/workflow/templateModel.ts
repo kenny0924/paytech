@@ -1,19 +1,19 @@
 import type {
   ActionConfig, ActionType, DataQueryConfig, FileUploadConfig, FormDefinition, ManualConfirmConfig, PageTaskConfig, TemplateReferences, VersionBody,
 } from './workflowTypes.ts';
-import { fieldProblems } from './formModel.ts';
+import { cleanFieldRules, fieldProblems } from './formModel.ts';
+import { uploadRequired } from './fileModel.ts';
 import { isInternalRoute } from './runtimeModel.ts';
 
 export const templateCodePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
-export const fileCountCeiling = 20;
 export const instructionLimit = 2000;
 
 export function defaultConfig(type: ActionType): ActionConfig {
   switch (type) {
     case 'FORM': return { fields: [] } satisfies FormDefinition;
-    case 'FILE_UPLOAD': return { minFiles: 1, maxFiles: 5, mimeTypes: ['application/pdf'], instruction: '' } satisfies FileUploadConfig;
+    case 'FILE_UPLOAD': return { required: true, instruction: '' } satisfies FileUploadConfig;
     case 'PAGE_TASK': return { pageRoute: '', parameters: [], instruction: '' } satisfies PageTaskConfig;
-    case 'MANUAL_CONFIRM': return { instruction: '', noteRequired: true } satisfies ManualConfirmConfig;
+    case 'MANUAL_CONFIRM': return { instruction: '' } satisfies ManualConfirmConfig;
     case 'DATA_QUERY': return { queryCode: '', parameters: [], passRule: { column: '', operator: 'GTE', value: '' }, evidenceColumns: [] } satisfies DataQueryConfig;
   }
 }
@@ -30,12 +30,6 @@ export function configProblems(type: ActionType, config: ActionConfig): string[]
     }
     case 'FILE_UPLOAD': {
       const file = config as FileUploadConfig;
-      const min = file.minFiles ?? 0; const max = file.maxFiles ?? 0;
-      if (min < 0 || max < 1) problems.push('文件数量至少为 1');
-      if (min > max) problems.push('最少文件数不能大于最多文件数');
-      if (max > fileCountCeiling) problems.push(`最多文件数不能超过 ${fileCountCeiling}`);
-      if (!(file.mimeTypes?.length)) problems.push('至少允许一种文件类型');
-      if (file.mimeTypes?.some(type => !/^[a-z]+\/[A-Za-z0-9.+-]+$/.test(type))) problems.push('MIME 类型格式不正确，例如 application/pdf');
       if ((file.instruction ?? '').length > instructionLimit) problems.push(`执行说明不能超过 ${instructionLimit} 字`);
       break;
     }
@@ -59,16 +53,16 @@ export function configProblems(type: ActionType, config: ActionConfig): string[]
   return problems;
 }
 
-/** 保存前整理：去掉空参数行、空 MIME，保持与类型对应的键。 */
+/** 保存前整理：去掉空参数行，只写仍生效的键（需求 E1：表单只留必填与枚举选项，上传只留 required，人工确认不写 noteRequired）。 */
 export function normalizeConfig(type: ActionType, config: ActionConfig): ActionConfig {
   switch (type) {
-    case 'FORM': return { fields: (config as FormDefinition).fields };
+    case 'FORM': return cleanFieldRules(config as FormDefinition);
     case 'FILE_UPLOAD': { const file = config as FileUploadConfig;
-      return { minFiles: file.minFiles, maxFiles: file.maxFiles, mimeTypes: (file.mimeTypes ?? []).filter(Boolean), instruction: file.instruction ?? '' }; }
+      return { required: uploadRequired(file), instruction: file.instruction ?? '' }; }
     case 'PAGE_TASK': { const page = config as PageTaskConfig;
       return { pageRoute: page.pageRoute, parameters: (page.parameters ?? []).filter(item => item.key), instruction: page.instruction ?? '' }; }
     case 'MANUAL_CONFIRM': { const manual = config as ManualConfirmConfig;
-      return { instruction: manual.instruction ?? '', noteRequired: !!manual.noteRequired }; }
+      return { instruction: manual.instruction ?? '' }; }
     case 'DATA_QUERY': return config;
   }
 }

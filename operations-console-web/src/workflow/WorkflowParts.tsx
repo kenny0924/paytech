@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Alert, Button, ConfigProvider, Form, Input, InputNumber, Popover, Radio, Select, Spin, Switch, Tag, Typography } from 'antd';
 import { ApiError, session } from '../api/session';
+import type { ConsoleResource } from '../api/types';
 import { DatePicker } from '../components/DatePicker';
+import { buildMenuTree, menuPages } from '../navigation/menu';
 import { displayValue } from './formModel';
 import { decodeCandidates, workflowPaths } from './workflowApi';
 import type { AssigneeCandidate, FormDefinition, FormField, WorkflowFile } from './workflowTypes';
@@ -111,33 +113,35 @@ export function TransferPopover({ title, open, onOpenChange, actorId, people, bl
 }
 
 /** 按字段定义渲染 antd Form.Item（启动表单与 FORM 动作共用，3.2）。changed 标出与上一轮不同的字段。 */
-export function DynamicFields({ form, disabled, changed, previous, problems = {}, files }: {
+export function DynamicFields({ form, disabled, changed, previous, problems = {}, files, failedFiles }: {
   form: FormDefinition; disabled?: boolean; changed?: Set<string>; previous?: Record<string, unknown> | null; problems?: Record<string, string>;
   /** 已有文件的元数据（显示名称与扫描状态）。 */
   files?: Map<string, WorkflowFile>;
+  /** 服务端已报告未通过安全检查的文件地址：FILE 字段内标红，须删除后重新上传。 */
+  failedFiles?: ReadonlySet<string>;
 }) {
   return <>{form.fields.map(field => <Form.Item key={field.key} name={field.key} label={<span>{field.label || field.key}
     {changed?.has(field.key) && <Tag color="gold" className="wf-changed-tag">已修改</Tag>}</span>}
     required={field.required} validateStatus={problems[field.key] ? 'error' : undefined} help={problems[field.key]}
     valuePropName={field.type === 'BOOLEAN' ? 'checked' : 'value'}
     extra={previous && changed?.has(field.key) ? `上一轮：${displayValue(previous[field.key], field)}` : undefined}>
-    {fieldInput(field, disabled, files)}
+    {fieldInput(field, disabled, files, failedFiles)}
   </Form.Item>)}</>;
 }
 
-function fieldInput(field: FormField, disabled?: boolean, files?: Map<string, WorkflowFile>): ReactNode {
+function fieldInput(field: FormField, disabled?: boolean, files?: Map<string, WorkflowFile>, failedFiles?: ReadonlySet<string>): ReactNode {
   const rules = field.rules ?? {};
   switch (field.type) {
-    case 'TEXT': return <Input disabled={disabled} maxLength={rules.maxLength ?? 255} />;
-    case 'LONG_TEXT': return <Input.TextArea disabled={disabled} rows={3} maxLength={rules.maxLength ?? 4000} showCount />;
-    case 'NUMBER': return <InputNumber disabled={disabled} stringMode style={{ width: '100%' }}
-      min={rules.min as never} max={rules.max as never} precision={rules.scale} />;
+    // 只用平台上限（需求 E7）；旧配置的长度、范围与小数位不再限制输入。
+    case 'TEXT': return <Input disabled={disabled} maxLength={255} />;
+    case 'LONG_TEXT': return <Input.TextArea disabled={disabled} rows={3} maxLength={4000} showCount />;
+    case 'NUMBER': return <InputNumber disabled={disabled} stringMode style={{ width: '100%' }} />;
     case 'BOOLEAN': return <Switch disabled={disabled} />;
     case 'ENUM': return (rules.options?.length ?? 0) <= 4
       ? <Radio.Group disabled={disabled} optionType="button" options={(rules.options ?? []).map(option => ({ value: option.value, label: option.label || option.value }))} />
       : <Select disabled={disabled} allowClear options={(rules.options ?? []).map(option => ({ value: option.value, label: `${option.value} · ${option.label}` }))} />;
     case 'DATE': return <DatePicker disabled={disabled} />;
-    case 'FILE': return <FileUploadField disabled={disabled} rules={rules} known={files} />;
+    case 'FILE': return <FileUploadField disabled={disabled} known={files} failed={failedFiles} />;
   }
 }
 
@@ -167,9 +171,16 @@ export const workflowButtons = {
   instanceManage: 'OPERATIONS_WORKFLOW_INSTANCE_MANAGE',
 } as const;
 
+/**
+ * 本人是否有「流程实例」菜单（与左侧菜单同一口径）：没有时不能跳到 /workflow/instances/:id，
+ * 待办与「我发起的」只用只读完整流程弹窗。
+ */
+export const canOpenInstances = (resources: ConsoleResource[]) =>
+  menuPages(buildMenuTree(resources)).some(page => page.componentKey === 'OPERATIONS_WORKFLOW_INSTANCES');
+
 /** 前端路由（与 pageCapabilities、menu.pageRoutePaths 一致）。 */
 export const workflowRoutes = {
-  myTasks: '/workflow/my-tasks', instances: '/workflow/instances', definitions: '/workflow/definitions', templates: '/workflow/action-templates',
+  myTasks: '/workflow/my-tasks', started: '/workflow/started', instances: '/workflow/instances', definitions: '/workflow/definitions', templates: '/workflow/action-templates',
 } as const;
 
 /** 工作流页面外框：按钮文字不自动插空格（与外部 API 页面一致）。 */

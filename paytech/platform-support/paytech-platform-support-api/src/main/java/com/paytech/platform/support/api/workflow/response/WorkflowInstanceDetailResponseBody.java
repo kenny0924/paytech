@@ -57,7 +57,7 @@ public class WorkflowInstanceDetailResponseBody {
     /** 动作运行。 */
     private List<ActionRunBody> actionRuns;
 
-    /** 验证记录，按时间。 */
+    /** 历史验证记录，按时间；2026-10-22 起不再产生新记录。 */
     private List<VerificationBody> verifications;
 
     /** 审批行。 */
@@ -150,7 +150,7 @@ public class WorkflowInstanceDetailResponseBody {
         /** 当前执行人。 */
         private String assigneeId;
 
-        /** 状态。 */
+        /** 状态：PENDING 待处理、COMPLETED 已完成、CANCELLED 已取消。 */
         private String status;
 
         /** 最近一次提交的输出；未提交为空。 */

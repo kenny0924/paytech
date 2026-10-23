@@ -9,7 +9,7 @@ import lombok.Setter;
 
 import tools.jackson.databind.JsonNode;
 
-/** 提交动作输出并同步验证。 */
+/** 完成动作的提交内容。 */
 @Getter
 @Setter
 @NoArgsConstructor

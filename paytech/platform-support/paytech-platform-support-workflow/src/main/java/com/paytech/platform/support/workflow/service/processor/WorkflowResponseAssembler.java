@@ -53,7 +53,7 @@ final class WorkflowResponseAssembler {
         return new WorkflowActionTemplateResponseBody(id(row.getActionTemplateId()), row.getTemplateCode(),
             row.getTemplateName(), row.getActionType().getCode(), row.getDescription(),
             withConfig ? json.tree(row.getConfigJson()) : null, row.getStatus().getCode(), row.getVersion(),
-            id(row.getUpdatedBy()), people.get(id(row.getUpdatedBy())), row.getUpdateTime());
+            id(row.getUpdatedBy()), people.get(id(row.getUpdatedBy())), row.getUpdateTime(), null);
     }
 
     /** 流程定义摘要。 */
@@ -140,7 +140,14 @@ final class WorkflowResponseAssembler {
             id(row.getNodeRunId()));
     }
 
-    /** 提交与验证的活动。 */
+    /** 动作完成的活动：最近一次完成的时间、完成人与当前状态，明细为动作 key。 */
+    WorkflowActivityBody completionActivity(WorkflowActionRun row, WorkflowNodeRun node, Map<String, String> people) {
+        return new WorkflowActivityBody(row.getSubmittedTime(), "SUBMISSION", node == null ? null : node.getNodeKey(),
+            node == null ? null : node.getRoundNo(), row.getStatus().getCode(), id(row.getSubmittedBy()),
+            people.get(id(row.getSubmittedBy())), row.getActionKey(), id(row.getActionRunId()));
+    }
+
+    /** 历史提交与验证的活动（2026-10-22 前的记录）。 */
     WorkflowActivityBody verificationActivity(WorkflowVerification row, WorkflowNodeRun node, Map<String, String> people) {
         return new WorkflowActivityBody(row.getVerifiedTime(), "SUBMISSION", node == null ? null : node.getNodeKey(),
             node == null ? null : node.getRoundNo(), row.getResult().getCode(), id(row.getVerifiedBy()),

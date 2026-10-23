@@ -35,6 +35,7 @@ import com.paytech.platform.support.test.builder.WorkflowGraphJson;
 import com.paytech.platform.support.test.checker.PlatformResponseChecker;
 import com.paytech.platform.support.test.mocker.local.WorkflowFileMocker;
 import com.paytech.platform.support.workflow.core.common.WorkflowPermissions;
+import com.paytech.platform.support.workflow.core.enums.ActionRunStatus;
 import com.paytech.platform.support.workflow.domainservice.validator.AttachmentRules;
 
 import tools.jackson.databind.JsonNode;
@@ -109,7 +110,7 @@ class WorkflowAttachmentApiTest extends WorkflowFileTestBase {
             () -> assertEquals(AttachmentRules.REASON_CODE, row.get("reason_code")),
             () -> assertEquals(executor.accountId(), ((Number) row.get("uploader_id")).longValue()),
             () -> assertEquals(receipt.getFileId(), repeated.getFileId()),
-            () -> assertEquals("VERIFIED", submitted.getStatus()),
+            () -> assertEquals(ActionRunStatus.COMPLETED.getCode(), submitted.getStatus()),
             () -> assertTrue(download.getExpiresAt().isAfter(clock.instant())),
             () -> assertEquals("https", URI.create(download.getUrl()).getScheme()),
             () -> assertArrayEquals(FileBuilder.PDF, bytes),

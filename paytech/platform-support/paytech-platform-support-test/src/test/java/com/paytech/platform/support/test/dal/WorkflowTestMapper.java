@@ -56,7 +56,8 @@ public interface WorkflowTestMapper {
 
     /** 实例的动作运行。 */
     @Select("""
-        SELECT a.action_run_id, a.node_run_id, a.action_key, a.assignee_id, a.status, a.submitted_by, n.node_key, n.round_no
+        SELECT a.action_run_id, a.node_run_id, a.action_key, a.assignee_id, a.status, a.submitted_by, a.output_json,
+            a.version, n.node_key, n.round_no
         FROM t_workflow_action_run a JOIN t_workflow_node_run n ON n.node_run_id = a.node_run_id
         WHERE a.instance_id = #{instanceId} ORDER BY n.activated_time, a.action_run_id
         """)
@@ -74,7 +75,14 @@ public interface WorkflowTestMapper {
     @Select("SELECT COUNT(*) FROM t_workflow_instance")
     int instanceCount();
 
-    /** 实例的验证记录数。 */
+    /**
+     * 构造被测入口无法自然到达的数据：直接改写动作运行状态（如节点待审批时把必选动作改回 PENDING，
+     * 验证同意时的兜底检查）。
+     */
+    @Update("UPDATE t_workflow_action_run SET status = #{status}, version = version + 1 WHERE action_run_id = #{id}")
+    int forceActionStatus(@Param("id") long actionRunId, @Param("status") String status);
+
+    /** 实例的历史验证记录数；2026-10-22 起完成动作不再写入。 */
     @Select("SELECT COUNT(*) FROM t_workflow_verification WHERE instance_id = #{instanceId}")
     int verificationCount(@Param("instanceId") long instanceId);
 

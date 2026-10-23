@@ -157,19 +157,57 @@ export function outputFileAddresses(run: Pick<ActionRun, 'actionType' | 'output'
 export const startFileAddresses = (detail: Pick<InstanceDetail, 'startForm' | 'startValues'>) =>
   fileFieldKeys(detail.startForm).flatMap(key => fileAddressesOf(detail.startValues[key]));
 
-/** 动作是否带文件（可重新验证）。 */
-export function hasFileInput(run: Pick<ActionRun, 'actionType'>, template?: Pick<FrozenTemplate, 'config'>): boolean {
-  return run.actionType === 'FILE_UPLOAD' || run.actionType === 'FORM' && fileFieldKeys(template?.config as FormDefinition | undefined).length > 0;
+/** 上传动作是否要求至少一个文件：新配置看 required，旧配置 minFiles ≥ 1 视为要求（需求 E1）。 */
+export const uploadRequired = (config: FileUploadConfig | undefined): boolean =>
+  config?.required ?? (config?.minFiles ?? 0) >= 1;
+
+/** 上传动作不再限制数量与类型（需求 E1）：旧配置的 minFiles / maxFiles / mimeTypes 忽略。 */
+export const uploadRules = (_config?: FileUploadConfig | undefined): FileRules => ({});
+
+/** 扫描未完成（等待或进行中）：不挡完成，只提示在后台进行（需求 E3）。 */
+export const scanPending = (file: WorkflowFile | undefined) => !file?.scanStatus || file.scanStatus === 'PENDING_SCAN' || file.scanStatus === 'SCANNING';
+
+/** 未通过安全检查：不可预览、不可下载。 */
+export const scanFailed = (file: WorkflowFile | undefined) => file?.scanStatus === 'QUARANTINED' || file?.scanStatus === 'REJECTED';
+
+/** 已确认未通过安全检查的文件在上传区与 FILE 字段的提示；发起与完成同一规则，须删除后才能提交。 */
+export const SCAN_FAILED_TEXT = '未通过安全检查，请删除后重新上传';
+
+/**
+ * 422 中落在单个文件元素上的错误：字段路径为 {root}.{key}[i]（上传动作 key 为 files），按本次提交值取回地址。
+ * 前端刚上传的文件没有扫描元数据，以服务端结论为准。ops-bff 只透传登记的 Platform 固定文案，其余为通用提示，
+ * 因此不按文案判断：落在单个文件元素上的错误（页面只会提交本人刚上传的文件，实际即未通过安全检查）都要求删除后重新上传。
+ */
+export function scanFailedErrors(errors: readonly { field: string; message: string }[], root: string,
+  submitted: Record<string, unknown>): { field: string; address: string }[] {
+  const prefix = `${root}.`;
+  return errors.flatMap(error => {
+    if (!error.field.startsWith(prefix)) return [];
+    const item = /^([A-Za-z][A-Za-z0-9_]*)\[(\d+)\]$/.exec(error.field.slice(prefix.length));
+    const value = item ? submitted[item[1]] : undefined;
+    const address = Array.isArray(value) ? value[Number(item![2])] : undefined;
+    return fileIdOfAddress(address) ? [{ field: error.field, address: address as string }] : [];
+  });
 }
 
-/** 重新验证按钮：被指派人、节点执行中、动作 UNVERIFIED 且已提交、带文件。 */
-export function canReverify(run: ActionRun, template: Pick<FrozenTemplate, 'config'> | undefined, actorId: string, nodeActive: boolean): boolean {
-  return nodeActive && run.assigneeId === actorId && run.status === 'UNVERIFIED' && !!run.output && hasFileInput(run, template);
+/** 须删除重传的文件地址（见 scanFailedErrors）。 */
+export function scanFailedAddresses(errors: readonly { field: string; message: string }[], root: string,
+  submitted: Record<string, unknown>): string[] {
+  return scanFailedErrors(errors, root, submitted).map(item => item.address);
 }
 
-/** FILE_UPLOAD 配置转为规则。 */
-export const uploadRules = (config: FileUploadConfig | undefined): FileRules =>
-  ({ minFiles: config?.minFiles, maxFiles: config?.maxFiles, mimeTypes: config?.mimeTypes });
+/** 去掉已在文件上就地标红的元素错误，剩余的才按字段汇总显示，避免同一问题出现两次。 */
+export function withoutInlineFileErrors<T extends { field: string; message: string }>(errors: readonly T[], root: string,
+  submitted: Record<string, unknown>): T[] {
+  const inline = new Set(scanFailedErrors(errors, root, submitted).map(item => item.field));
+  return errors.filter(error => !inline.has(error.field));
+}
+
+/** 已选文件中须删除后才能提交的：实例元数据为未通过，或服务端已报告未通过；扫描中的不算。 */
+export function blockingFiles(addresses: string[], known: ReadonlyMap<string, WorkflowFile> | undefined,
+  reported: ReadonlySet<string>): string[] {
+  return addresses.filter(address => reported.has(address) || scanFailed(known?.get(address)));
+}
 
 /** 文件服务可内嵌打开的图片类型，与 Platform 的内联白名单一致（另有 application/pdf）。 */
 const INLINE_IMAGE_TYPES = new Set(['image/png', 'image/jpeg']);
@@ -189,7 +227,7 @@ export function previewKind(mime: string | null | undefined): PreviewKind {
 export const downloadable = (file: WorkflowFile | undefined) => file?.scanStatus === 'AVAILABLE';
 
 export const scanStatusLabels: Record<NonNullable<WorkflowFile['scanStatus']>, string> = {
-  PENDING_SCAN: '等待扫描', SCANNING: '扫描中', AVAILABLE: '可用', QUARANTINED: '已隔离', REJECTED: '未通过检查',
+  PENDING_SCAN: '安全检查中', SCANNING: '安全检查中', AVAILABLE: '已通过安全检查', QUARANTINED: '未通过安全检查', REJECTED: '未通过安全检查',
 };
 export const scanStatusColors: Record<NonNullable<WorkflowFile['scanStatus']>, string> = {
   PENDING_SCAN: 'processing', SCANNING: 'processing', AVAILABLE: 'success', QUARANTINED: 'error', REJECTED: 'error',

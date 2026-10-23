@@ -1,6 +1,6 @@
 import type { FieldType, FormDefinition, FormField } from './workflowTypes.ts';
 import { keyPattern, graphLimits } from './graphModel.ts';
-import { countProblem, fileAddressesOf } from './fileModel.ts';
+import { fileAddressesOf } from './fileModel.ts';
 
 export const textLimit = 255;
 export const longTextLimit = 4000;
@@ -12,13 +12,35 @@ export function newField(form: FormDefinition, type: FieldType): FormField {
   const prefix = { TEXT: 'text', LONG_TEXT: 'longText', NUMBER: 'number', BOOLEAN: 'flag', ENUM: 'choice', DATE: 'date', FILE: 'files' }[type];
   const used = new Set(form.fields.map(field => field.key));
   let index = 1; while (used.has(`${prefix}${index}`)) index++;
-  const rules = type === 'ENUM' ? { options: [{ value: 'OPTION_1', label: '选项 1' }] }
-    : type === 'FILE' ? { minFiles: 1, maxFiles: 5, mimeTypes: [] } : type === 'TEXT' ? { maxLength: textLimit } : undefined;
+  // 只保留必填与枚举选项（需求 E1）；不再写长度、范围、文件数量 / 类型等校验项。
+  const rules = type === 'ENUM' ? { options: [{ value: 'OPTION_1', label: '选项 1' }] } : undefined;
   return { key: `${prefix}${index}`, label: '', type, required: false, ...(rules ? { rules } : {}) };
 }
 
 export function addField(form: FormDefinition, type: FieldType): { form: FormDefinition; index: number } {
   return { form: { fields: [...form.fields, newField(form, type)] }, index: form.fields.length };
+}
+
+/** 在指定位置插入新字段（从字段类型拖到画布某个字段之前）；index 超出范围时加到末尾。 */
+export function insertField(form: FormDefinition, type: FieldType, index: number): { form: FormDefinition; index: number } {
+  const at = Math.max(0, Math.min(index, form.fields.length));
+  const fields = [...form.fields]; fields.splice(at, 0, newField(form, type));
+  return { form: { fields }, index: at };
+}
+
+/**
+ * 按显示名称建议字段键：取名称中的英文与数字，转为小写下划线（如 “Company Name” → company_name），以字母开头、最长 64 位，
+ * 与其他字段重复时加 _2、_3。名称中没有英文或数字（如纯中文）时保留 fallback（按类型编号的默认键）。
+ */
+export function fieldKeyFromLabel(label: string, otherKeys: ReadonlySet<string>, fallback: string): string {
+  const words = label.match(/[A-Za-z0-9]+/g);
+  if (!words) return fallback;
+  let base = words.join('_').toLowerCase();
+  if (!/^[a-z]/.test(base)) base = `f_${base}`;
+  base = base.slice(0, 60);
+  if (!otherKeys.has(base)) return base;
+  let index = 2; while (otherKeys.has(`${base}_${index}`)) index++;
+  return `${base}_${index}`;
 }
 
 export function updateField(form: FormDefinition, index: number, patch: Partial<FormField>): FormDefinition {
@@ -45,7 +67,7 @@ export function duplicateField(form: FormDefinition, index: number): FormDefinit
   return { fields };
 }
 
-/** 字段定义问题：key 格式与重复、标签必填、枚举选项、数量上限、文件数量（字段设计器标红用）。 */
+/** 字段定义问题：key 格式与重复、标签必填、枚举选项、数量上限（字段设计器标红用）。 */
 export function fieldProblems(form: FormDefinition): Map<number, string> {
   const problems = new Map<number, string>();
   const counts = new Map<string, number>();
@@ -56,8 +78,6 @@ export function fieldProblems(form: FormDefinition): Map<number, string> {
       : !field.label.trim() ? '请填写显示名称'
       : field.type === 'ENUM' && !(field.rules?.options?.length) ? '枚举至少需要一个选项'
       : field.type === 'ENUM' && new Set(field.rules!.options!.map(option => option.value)).size !== field.rules!.options!.length ? '枚举选项值重复'
-      : field.type === 'FILE' && (field.rules?.minFiles ?? 0) > (field.rules?.maxFiles ?? Infinity) ? '最少文件数不能大于最多文件数'
-      : field.type === 'NUMBER' && field.rules?.min && field.rules?.max && Number(field.rules.min) > Number(field.rules.max) ? '最小值不能大于最大值'
       : null;
     if (problem) problems.set(index, problem);
   });
@@ -67,38 +87,42 @@ export function fieldProblems(form: FormDefinition): Map<number, string> {
 
 const isEmpty = (value: unknown) => value === undefined || value === null || value === '' || Array.isArray(value) && value.length === 0;
 
-/** 与后端 FormValueValidator 一致的前端预检；返回字段 key → 问题。 */
+/**
+ * 字段值预检（需求 E1 / E7）：必填，加平台技术保护（类型正确、文本长度不超过平台上限、文件地址有效且不重复）。
+ * 旧配置里的 maxLength、min / max / scale、minFiles / maxFiles 不再检查。返回字段 key → 问题。
+ */
 export function valueProblems(form: FormDefinition, values: Record<string, unknown>): Record<string, string> {
   const problems: Record<string, string> = {};
   for (const field of form.fields) {
-    const value = values[field.key]; const rules = field.rules ?? {};
+    const value = values[field.key];
     if (isEmpty(value)) { if (field.required) problems[field.key] = '必填'; continue; }
     let problem: string | null = null;
     switch (field.type) {
       case 'TEXT': case 'LONG_TEXT': {
-        const limit = rules.maxLength ?? (field.type === 'TEXT' ? textLimit : longTextLimit);
+        const limit = field.type === 'TEXT' ? textLimit : longTextLimit;
         problem = typeof value !== 'string' ? '必须是文本' : value.length > limit ? `不能超过 ${limit} 个字符` : null; break;
       }
-      case 'NUMBER': {
-        if (typeof value !== 'string' || !decimalPattern.test(value)) { problem = '必须是数字'; break; }
-        const scale = value.split('.')[1]?.length ?? 0;
-        problem = rules.scale !== undefined && scale > rules.scale ? `最多 ${rules.scale} 位小数`
-          : rules.min !== undefined && Number(value) < Number(rules.min) ? (rules.max !== undefined ? `必须在 ${rules.min} 到 ${rules.max} 之间` : `不能小于 ${rules.min}`)
-          : rules.max !== undefined && Number(value) > Number(rules.max) ? (rules.min !== undefined ? `必须在 ${rules.min} 到 ${rules.max} 之间` : `不能大于 ${rules.max}`)
-          : null; break;
-      }
+      case 'NUMBER': problem = typeof value === 'string' && decimalPattern.test(value) ? null : '必须是数字'; break;
       case 'BOOLEAN': problem = typeof value === 'boolean' ? null : '必须是是或否'; break;
-      case 'ENUM': problem = (rules.options ?? []).some(option => option.value === value) ? null : '不是可选值'; break;
+      case 'ENUM': problem = (field.rules?.options ?? []).some(option => option.value === value) ? null : '不是可选值'; break;
       case 'DATE': problem = typeof value === 'string' && datePattern.test(value) ? null : '必须是 YYYY-MM-DD 日期'; break;
       case 'FILE': {
         const addresses = fileAddressesOf(value);
         problem = !Array.isArray(value) || addresses.length !== value.length ? '文件地址无效，请重新上传'
-          : new Set(addresses).size !== addresses.length ? '文件重复' : countProblem(rules, addresses.length, field.required); break;
+          : new Set(addresses).size !== addresses.length ? '文件重复' : null; break;
       }
     }
     if (problem) problems[field.key] = problem;
   }
   return problems;
+}
+
+/** 只保留仍生效的字段配置：键、名称、类型、必填与枚举选项；去掉旧的长度、范围、文件规则。 */
+export function cleanFieldRules(form: FormDefinition): FormDefinition {
+  return { fields: form.fields.map(field => {
+    const { rules, ...rest } = field;
+    return field.type === 'ENUM' ? { ...rest, rules: { options: rules?.options ?? [] } } : rest;
+  }) };
 }
 
 /** 表单值 → 提交 JSON：去掉未填的可选字段，数字保持十进制字符串。 */

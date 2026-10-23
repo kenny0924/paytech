@@ -68,6 +68,7 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_CHANNEL_MIDS: lazy(() => import('../pages/ChannelMids').then(m => ({ default: m.ChannelMids }))),
   OPERATIONS_CHANNEL_COST_PLANS: lazy(() => import('../pages/ChannelCostPlans').then(m => ({ default: m.ChannelCostPlans }))),
   OPERATIONS_WORKFLOW_MY_TASKS: lazy(() => import('../pages/WorkflowMyTasks').then(m => ({ default: m.WorkflowMyTasks }))),
+  OPERATIONS_WORKFLOW_STARTED: lazy(() => import('../pages/WorkflowStarted').then(m => ({ default: m.WorkflowStarted }))),
   OPERATIONS_WORKFLOW_INSTANCES: lazy(() => import('../pages/WorkflowInstances').then(m => ({ default: m.WorkflowInstances }))),
   OPERATIONS_WORKFLOW_DEFINITIONS: lazy(() => import('../pages/WorkflowDefinitions').then(m => ({ default: m.WorkflowDefinitions }))),
   OPERATIONS_WORKFLOW_ACTION_TEMPLATES: lazy(() => import('../pages/WorkflowActionTemplates').then(m => ({ default: m.WorkflowActionTemplates }))),

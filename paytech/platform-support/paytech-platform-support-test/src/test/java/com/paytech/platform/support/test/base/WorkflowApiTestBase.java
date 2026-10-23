@@ -27,6 +27,7 @@ import com.paytech.platform.support.test.builder.WorkflowGraphJson;
 import com.paytech.platform.support.test.checker.PlatformResponseChecker;
 import com.paytech.platform.support.test.dal.WorkflowTestMapper;
 import com.paytech.platform.support.test.workflow.WorkflowFixture;
+import com.paytech.platform.support.workflow.core.enums.ActionRunStatus;
 
 import tools.jackson.databind.JsonNode;
 
@@ -129,11 +130,11 @@ public abstract class WorkflowApiTestBase extends OperationsApiTestBase {
             .as(WorkflowInstanceDetailResponseBody.class);
     }
 
-    /** 某动作最新一轮仍可提交（PENDING / UNVERIFIED）的动作运行 ID。 */
+    /** 某动作最新一轮待处理（PENDING）的动作运行 ID。 */
     protected String openAction(long instanceId, String actionKey) {
         return detail(instanceId, admin).getActionRuns().stream()
             .filter(run -> run.getActionKey().equals(actionKey))
-            .filter(run -> "PENDING".equals(run.getStatus()) || "UNVERIFIED".equals(run.getStatus()))
+            .filter(run -> ActionRunStatus.PENDING.getCode().equals(run.getStatus()))
             .map(ActionRunBody::getActionRunId).reduce((first, last) -> last)
             .orElseThrow(() -> new AssertionError("没有可提交的动作：" + actionKey));
     }
@@ -146,17 +147,17 @@ public abstract class WorkflowApiTestBase extends OperationsApiTestBase {
             .orElseThrow(() -> new AssertionError("没有待决定的审批：" + approver.actor()));
     }
 
-    /** 提交动作。 */
+    /** 完成动作（#19）。 */
     protected PlatformResponseChecker submit(String actionRunId, Operator executor, JsonNode output) {
         return post(RUNTIME + "/action-runs/" + actionRunId + "/submission", executor,
             new SubmitWorkflowActionRequestBody(output));
     }
 
-    /** 提交动作并要求验证通过。 */
+    /** 完成动作并要求状态为 COMPLETED。 */
     protected void confirm(long instanceId, String actionKey, Operator executor) {
         var result = submit(openAction(instanceId, actionKey), executor, WorkflowGraphJson.empty()).assertOk()
             .as(WorkflowSubmissionResponseBody.class);
-        assertEquals("VERIFIED", result.getStatus(), actionKey + " 提交结果");
+        assertEquals(ActionRunStatus.COMPLETED.getCode(), result.getStatus(), actionKey + " 完成结果");
     }
 
     /** 审批决定。 */

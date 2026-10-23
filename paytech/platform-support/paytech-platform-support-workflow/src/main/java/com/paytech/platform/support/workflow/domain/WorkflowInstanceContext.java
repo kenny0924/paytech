@@ -196,13 +196,13 @@ public class WorkflowInstanceContext {
     }
 
     /**
-     * 是否已有可用作变量的验证通过输出：该动作最新一轮为 VERIFIED。
+     * 是否已有可用作变量的输出：该动作最新一轮为 COMPLETED。
      *
      * @param actionKey 动作 key
-     * @return 最新一轮 VERIFIED 的运行
+     * @return 最新一轮 COMPLETED 的运行
      */
-    public Optional<WorkflowActionRun> verifiedOutput(String actionKey) {
-        return latestActionRun(actionKey).filter(run -> run.getStatus() == ActionRunStatus.VERIFIED);
+    public Optional<WorkflowActionRun> completedOutput(String actionKey) {
+        return latestActionRun(actionKey).filter(run -> run.getStatus() == ActionRunStatus.COMPLETED);
     }
 
     /**

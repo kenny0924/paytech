@@ -1,75 +1,134 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, App, Button, Checkbox, Empty, Input, Pagination, Segmented, Switch, Table, Tag } from 'antd';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Alert, App, Button, Checkbox, Empty, Input, Pagination, Popover, Segmented, Switch, Tag } from 'antd';
+import { CheckOutlined, CloseOutlined, EditOutlined, InfoCircleOutlined, QuestionCircleOutlined, SearchOutlined, SettingOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { useSearchParams } from 'react-router-dom';
 import { ApiError, session } from '../api/session';
+import { createPagingLoader } from '../api/paging';
 import type { ConsoleResource } from '../api/types';
 import { usePaging } from '../hooks/usePaging';
-import { nodeOf } from '../workflow/graphModel';
-import { batchStatus, batchSubmission, neighborTask, nextAfterDone, overOneDay, resolveShortcut, runBatch, waitingText } from '../workflow/runtimeModel';
+import { batchStatus, batchSubmission, resolveShortcut, runBatch } from '../workflow/runtimeModel';
 import type { BatchResult, BatchStatus } from '../workflow/runtimeModel';
-import { ActionTaskPanel, ApprovalPanel, BatchPanel, TaskHeader } from '../workflow/TaskPanels';
+import { BatchPanel, HandledDetail, TaskDetail } from '../workflow/TaskPanels';
 import type { PanelHandles } from '../workflow/TaskPanels';
+import {
+  OVERDUE_HOURS, batchCandidates, batchIdle, enterBatch, exitBatch, groupCounts, groupTasks, handledResult, neighborGroup, nextGroupAfterDone, overdueText,
+  relativeTime, toggleAll, toggleChecked,
+} from '../workflow/taskModel';
+import type { BatchMode, TaskGroup } from '../workflow/taskModel';
 import { failureText, sendWorkflowCommand, useWorkflowCommand, workflowCommand } from '../workflow/useWorkflowCommand';
-import { decodeHandledTask, decodeInstanceDetail, decodeInstanceSummary, decodeMutation, decodePage, decodeTask, workflowPaths } from '../workflow/workflowApi';
-import { actionRunStatusLabels, approvalStatusLabels, instanceStatusColors, instanceStatusLabels } from '../workflow/workflowLabels';
-import type { HandledTask, InstanceDetail, InstanceSummary, Task } from '../workflow/workflowTypes';
-import { LoadFailed, Spinner, shortTime, workflowRoutes } from '../workflow/WorkflowParts';
+import { decodeHandledTask, decodeInstanceDetail, decodeMutation, decodePage, decodeTask, workflowPaths } from '../workflow/workflowApi';
+import { instanceStatusLabels } from '../workflow/workflowLabels';
+import type { HandledTask, InstanceDetail, Task } from '../workflow/workflowTypes';
+import { LoadFailed, Spinner, canOpenInstances, useLoad } from '../workflow/WorkflowParts';
 import { DETAIL_PRIORITY, DetailQueue, DetailRequestCancelled, planBatchFill, planPrefetch, retryAfterMillis } from '../workflow/prefetchModel';
 import '../workflow/workflow.css';
 
 interface Props { resources: ConsoleResource[]; actorId: string; onAuthorizationChanged: () => void }
-type Filter = 'ALL' | 'ACTION' | 'APPROVAL' | 'OVERDUE';
+type TaskType = 'ALL' | 'ACTION' | 'APPROVAL';
 /** 实例详情 429：会话层不透出 Retry-After，按默认短退避重试一次。 */
 function detailRetryDelay(error: unknown): number | null {
   return error instanceof ApiError && error.status === 429 ? retryAfterMillis(null) : null;
 }
 
 const decodeTasks = decodePage(decodeTask);
-const decodeInstances = decodePage(decodeInstanceSummary);
+const loadTaskPage = createPagingLoader(workflowPaths.myTasks, decodeTasks);
+/** 待办全量读取：Platform 每页最多 100 条；最多读 5 页，超出时列表提示只显示前 500 条。 */
+const TASK_PAGE_SIZE = 100;
+const TASK_MAX_PAGES = 5;
+
+/**
+ * 读取全部待办（按标题关键字过滤走服务端）。合并后的列表项与「全部 / 填写 / 审批」计数都在前端按同一份全量数据计算，
+ * 不再用服务端按条（每个动作一条）的 total，避免计数与列表项对不上；待办量小，全量读取代价可接受。
+ */
+function useAllTasks(keyword: string) {
+  const [state, setState] = useState<{ items: Task[]; truncated: boolean; loading: boolean; error: string }>({ items: [], truncated: false, loading: true, error: '' });
+  const [reload, setReload] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setState(current => ({ ...current, loading: true, error: '' }));
+    (async () => {
+      const items = new Map<string, Task>(); let total = 0;
+      for (let page = 1; page <= TASK_MAX_PAGES; page++) {
+        const result = await loadTaskPage({ page, size: TASK_PAGE_SIZE }, controller.signal, keyword ? { keyword } : {});
+        total = result.total;
+        result.items.forEach(task => { if (!items.has(`${task.taskType}:${task.taskId}`)) items.set(`${task.taskType}:${task.taskId}`, task); });
+        if (page * TASK_PAGE_SIZE >= result.total || !result.items.length) break;
+      }
+      return { items: [...items.values()], truncated: total > items.size };
+    })().then(result => { if (!controller.signal.aborted) setState({ ...result, loading: false, error: '' }); })
+      .catch(error => { if (!controller.signal.aborted) setState(current => ({ ...current, loading: false, error: error instanceof Error ? error.message : '待办加载失败' })); });
+    return () => controller.abort();
+  }, [keyword, reload]);
+  return { ...state, refresh: useCallback(() => setReload(value => value + 1), []) };
+}
 const autoNextKey = 'workflow.my-tasks.auto-next';
 function readAutoNext() { try { return window.localStorage.getItem(autoNextKey) !== '0'; } catch { return true; } }
 function saveAutoNext(value: boolean) { try { window.localStorage.setItem(autoNextKey, value ? '1' : '0'); } catch { /* 偏好可丢失 */ } }
 
-/** 我的待办：左侧列表、右侧直接处理（原型 01、02、19—22）。 */
-export function WorkflowMyTasks({ actorId, onAuthorizationChanged }: Props) {
-  const [tab, setTab] = useState<'TODO' | 'HANDLED' | 'STARTED'>('TODO');
+const shortcutRows: [string[], string][] = [[['J', 'K'], '下一条 / 上一条'], [['A'], '选中「同意」'], [['R'], '选中「退回修改」并填写意见'], [['T'], '转交'],
+  [['Ctrl', 'Enter'], '完成动作 / 提交选中的审批决定']];
+
+/** 我的待办（原型 01—04）：一组页签「待办 N / 已办」，右上 ⚙ 设置与 ? 快捷键浮层。 */
+export function WorkflowMyTasks({ resources, actorId, onAuthorizationChanged }: Props) {
+  const canOpenInstance = canOpenInstances(resources);
+  const [tab, setTab] = useState<'TODO' | 'HANDLED'>('TODO');
+  const [todoTotal, setTodoTotal] = useState<number | null>(null);
+  const [autoNext, setAutoNext] = useState(readAutoNext);
+  const settings = <div className="wf-popover">
+    <label className="wf-popover-row"><span><strong>处理完自动打开下一条</strong><div className="muted">完成或审批后直接进入列表中的下一项</div></span>
+      <Switch checked={autoNext} onChange={value => { setAutoNext(value); saveAutoNext(value); }} /></label>
+    <div className="wf-popover-row"><span><strong>超时标记阈值</strong><div className="muted">超过阈值的待办在列表中以红色时长标出</div></span><span>{OVERDUE_HOURS} 小时</span></div>
+  </div>;
+  const shortcuts = <div className="wf-popover">{shortcutRows.map(([keys, label]) => <div key={label} className="wf-popover-row">
+    <span>{keys.map(key => <kbd key={key}>{key}</kbd>)}</span><span className="muted">{label}</span></div>)}
+    <div className="muted">输入框内只响应 Ctrl + Enter。</div></div>;
   return <div className="wf-page">
     <div className="wf-page-head"><h1>我的待办</h1>
-      <Segmented value={tab} onChange={value => setTab(value as typeof tab)} options={[{ value: 'TODO', label: '待处理' }, { value: 'HANDLED', label: '已处理' }, { value: 'STARTED', label: '我发起的' }]} /></div>
-    {tab === 'TODO' ? <TodoWorkspace actorId={actorId} onAuthorizationChanged={onAuthorizationChanged} />
-      : tab === 'HANDLED' ? <HandledTasks /> : <StartedByMe actorId={actorId} />}
+      <nav className="wf-tabs">
+        <button type="button" className={`wf-tab${tab === 'TODO' ? ' is-active' : ''}`} onClick={() => setTab('TODO')}>待办{todoTotal !== null && <span className="wf-tab-count">{todoTotal}</span>}</button>
+        <button type="button" className={`wf-tab${tab === 'HANDLED' ? ' is-active' : ''}`} onClick={() => setTab('HANDLED')}>已办</button>
+      </nav>
+      <span className="wf-grow" />
+      <Popover trigger="click" placement="bottomRight" title="待办设置" content={settings}><Button className="wf-icon-btn" aria-label="待办设置" icon={<SettingOutlined />} /></Popover>
+      <Popover trigger="click" placement="bottomRight" title="键盘快捷键" content={shortcuts}><Button className="wf-icon-btn" aria-label="键盘快捷键" icon={<QuestionCircleOutlined />} /></Popover>
+    </div>
+    {tab === 'TODO' ? <TodoWorkspace actorId={actorId} canOpenInstance={canOpenInstance} autoNext={autoNext} onTotal={setTodoTotal} onAuthorizationChanged={onAuthorizationChanged} />
+      : <HandledWorkspace canOpenInstance={canOpenInstance} />}
   </div>;
 }
 
-function TodoWorkspace({ actorId, onAuthorizationChanged }: { actorId: string; onAuthorizationChanged: () => void }) {
+function TodoWorkspace({ actorId, canOpenInstance, autoNext, onTotal, onAuthorizationChanged }: {
+  actorId: string; canOpenInstance: boolean; autoNext: boolean; onTotal: (total: number | null) => void; onAuthorizationChanged: () => void;
+}) {
   const { message } = App.useApp();
   const [params, setParams] = useSearchParams();
-  const [filter, setFilter] = useState<Filter>('ALL');
+  const [taskType, setTaskType] = useState<TaskType>('ALL');
   const [keyword, setKeyword] = useState('');
-  const paging = usePaging<Task>(workflowPaths.myTasks, decodeTasks);
-  /** 类型与标题关键字走服务端；“超过 1 天”在当前页内筛选。空值参数不发送。 */
-  function query(nextFilter: Filter, nextKeyword: string) {
-    paging.applyFilters({ ...(nextFilter === 'ACTION' || nextFilter === 'APPROVAL' ? { taskType: nextFilter } : {}),
-      ...(nextKeyword.trim() ? { keyword: nextKeyword.trim() } : {}) });
-  }
-  function changeFilter(value: Filter) { setFilter(value); setChecked([]); query(value, keyword); }
-  const tasks = useMemo(() => paging.data.items.filter(task => filter !== 'OVERDUE' || overOneDay(task.waitingSince)), [paging.data.items, filter]);
-  const selectedId = params.get('task');
-  const selected = tasks.find(task => task.taskId === selectedId) ?? null;
-  const select = useCallback((task: Task | null) => {
-    setParams(current => { const next = new URLSearchParams(current); if (task) next.set('task', task.taskId); else next.delete('task'); return next; }, { replace: true });
+  const [appliedKeyword, setAppliedKeyword] = useState('');
+  const [searching, setSearching] = useState(false);
+  const all = useAllTasks(appliedKeyword);
+  const tasks = all.items;
+  // 列表项：同一实例同一节点运行上我的动作合为一项；类型筛选与计数都在前端按合并后的列表项计算。
+  const groups = useMemo(() => groupTasks(tasks), [tasks]);
+  const counts = useMemo(() => groupCounts(groups), [groups]);
+  const visible = useMemo(() => taskType === 'ALL' ? groups : groups.filter(group => group.taskType === taskType), [groups, taskType]);
+  const selectedKey = params.get('task');
+  const selectedGroup = visible.find(group => group.key === selectedKey) ?? null;
+  const selected = selectedGroup?.tasks[0] ?? null;
+  const select = useCallback((group: TaskGroup | null) => {
+    setParams(current => { const next = new URLSearchParams(current); if (group) next.set('task', group.key); else next.delete('task'); return next; }, { replace: true });
   }, [setParams]);
-  useEffect(() => { if (!paging.loading && !selected && tasks.length) select(tasks[0]); }, [paging.loading, selected, tasks, select]);
+  const [batch, setBatch] = useState<BatchMode>(batchIdle);
+  useEffect(() => { if (!batch.active && !all.loading && !selectedGroup && visible.length) select(visible[0]); }, [batch.active, all.loading, selectedGroup, visible, select]);
+  useEffect(() => { onTotal(appliedKeyword || all.loading && !tasks.length ? null : counts.ALL); }, [counts.ALL, appliedKeyword, all.loading, tasks.length, onTotal]);
   // 实例详情缓存：处理区与批量资格判断共用。
   const [details, setDetails] = useState<Map<string, InstanceDetail>>(new Map());
-  const [checked, setChecked] = useState<string[]>([]);
-  const batchMode = checked.length > 0;
   const [detailFailure, setDetailFailure] = useState<unknown>();
   const cache = useRef(details); cache.current = details;
-  // 所有实例详情请求走同一串行队列：选中项 > 批量勾选 > 普通预取，同一实例合并，最多 1 个在途，429 退避重试一次。
-  const queue = useMemo(() => new DetailQueue<InstanceDetail>(async instanceId => {
-    const value = await session.request(workflowPaths.instance(instanceId), {}, decodeInstanceDetail);
-    setDetails(current => new Map(current).set(instanceId, value));
+  // 所有实例详情走同一串行队列：选中项 > 批量 > 预取，同一请求合并，最多 1 个在途，429 退避重试一次。
+  const queue = useMemo(() => new DetailQueue<InstanceDetail>(async id => {
+    const value = await session.request(workflowPaths.instance(id), {}, decodeInstanceDetail);
+    setDetails(current => new Map(current).set(id, value));
     return value;
   }, { retryDelay: detailRetryDelay }), []);
   useEffect(() => () => { for (const tag of ['selected', 'batch', 'prefetch']) queue.cancel(tag); }, [queue]);
@@ -78,27 +137,27 @@ function TodoWorkspace({ actorId, onAuthorizationChanged }: { actorId: string; o
     return queue.request(instanceId, DETAIL_PRIORITY.SELECTED, 'refresh');
   }, [queue]);
   useEffect(() => {
-    if (!selected) return;
+    if (!selected || batch.active) return;
     setDetailFailure(undefined);
     if (cache.current.has(selected.instanceId)) return;
     queue.request(selected.instanceId, DETAIL_PRIORITY.SELECTED, 'selected')
       .catch(error => { if (!(error instanceof DetailRequestCancelled)) setDetailFailure(error); });
     return () => queue.cancel('selected');
-  }, [selected?.instanceId, queue]); // 只随所选实例变化，避免缓存更新时重复请求
-  // 审批待办预取少量详情，用于判断能否批量同意；排在选中项之后，切换选中或卸载时取消剩余预取。
+  }, [selected?.instanceId, batch.active, queue]); // 只随所选实例变化，避免缓存更新时重复请求
+  // 审批待办预取少量详情，用于判断能否批量同意；排在选中项之后。
   const approvalIds = tasks.filter(task => task.taskType === 'APPROVAL').map(task => task.instanceId).join(',');
   useEffect(() => {
-    if (batchMode) return; // 批量模式由按需补齐接管
+    if (batch.active) return; // 批量模式由按需补齐接管
     const ids = planPrefetch(approvalIds ? approvalIds.split(',') : [], selected?.instanceId ?? null, new Set(cache.current.keys()));
     ids.forEach(id => { queue.request(id, DETAIL_PRIORITY.PREFETCH, 'prefetch').catch(() => undefined); });
     return () => queue.cancel('prefetch');
-  }, [approvalIds, selected?.instanceId, batchMode, queue]);
+  }, [approvalIds, selected?.instanceId, batch.active, queue]);
   // 批量模式：按需补齐勾选项（优先）与其他审批待办的详情；重试后仍失败的实例标为无法检查。
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
   const failedRef = useRef(failed); failedRef.current = failed;
-  const checkedInstanceIds = paging.data.items.filter(task => checked.includes(task.taskId)).map(task => task.instanceId).join(',');
+  const checkedInstanceIds = tasks.filter(task => batch.checked.includes(task.taskId)).map(task => task.instanceId).join(',');
   useEffect(() => {
-    if (!batchMode) { if (failedRef.current.size) setFailed(new Set()); return; }
+    if (!batch.active) { if (failedRef.current.size) setFailed(new Set()); return; }
     const ids = planBatchFill(checkedInstanceIds ? checkedInstanceIds.split(',') : [], approvalIds ? approvalIds.split(',') : [],
       new Set(cache.current.keys()), failedRef.current);
     ids.forEach(id => {
@@ -107,26 +166,33 @@ function TodoWorkspace({ actorId, onAuthorizationChanged }: { actorId: string; o
       });
     });
     return () => queue.cancel('batch');
-  }, [batchMode, checkedInstanceIds, approvalIds, queue]);
-  const statuses = useMemo(() => new Map<string, BatchStatus>(paging.data.items.map(task => [task.taskId,
-    batchStatus(task, details.get(task.instanceId), actorId, failed.has(task.instanceId))])), [paging.data.items, details, actorId, failed]);
-  const [autoNext, setAutoNext] = useState(readAutoNext);
+  }, [batch.active, checkedInstanceIds, approvalIds, queue]);
+  const statuses = useMemo(() => new Map<string, BatchStatus>(tasks.map(task => [task.taskId,
+    batchStatus(task, details.get(task.instanceId), actorId, failed.has(task.instanceId))])), [tasks, details, actorId, failed]);
   const [batchResults, setBatchResults] = useState<Map<string, BatchResult>>(new Map());
   const [batchRunning, setBatchRunning] = useState(false); const [batchComment, setBatchComment] = useState('');
   const command = useWorkflowCommand(onAuthorizationChanged);
   const handles = useRef<PanelHandles>({});
   const detail = selected ? details.get(selected.instanceId) : undefined;
-  const batchTasks = paging.data.items.filter(task => checked.includes(task.taskId));
-  // 开始提交时冻结勾选项与资格状态：提交后列表刷新会移除已同意的项，汇总与结果表格仍按冻结列表展示，直到关闭或退出批量模式。
+  const candidates = batchCandidates(tasks, statuses);
+  const eligibleIds = candidates.eligible.map(task => task.taskId);
+  const batchTasks = tasks.filter(task => batch.checked.includes(task.taskId));
+  // 开始提交时冻结勾选项与资格状态：提交后列表刷新会移除已同意的项，结果仍按冻结列表展示，直到完成或退出批量模式。
   const [frozenBatch, setFrozenBatch] = useState<{ tasks: Task[]; statuses: ReadonlyMap<string, BatchStatus> } | null>(null);
-  useEffect(() => { if (!batchMode) { setFrozenBatch(null); setBatchResults(new Map()); } }, [batchMode]);
 
+  function startBatch() { setBatch(enterBatch(selectedGroup?.key ?? null)); setBatchResults(new Map()); setFrozenBatch(null); setBatchComment(''); }
+  function leaveBatch() {
+    const { mode, restore } = exitBatch(batch);
+    setBatch(mode); setBatchResults(new Map()); setFrozenBatch(null); setBatchComment('');
+    const group = visible.find(item => item.key === restore) ?? null;
+    if (group) select(group); else if (!visible.find(item => item.key === selectedKey)) select(visible[0] ?? null);
+  }
   function changed(finished: boolean) {
-    if (!selected) return;
-    const done = selected;
+    if (!selected || !selectedGroup) return;
+    const done = selectedGroup;
     void loadDetail(done.instanceId, true).catch(() => undefined);
-    paging.refresh();
-    if (finished && autoNext) select(nextAfterDone(tasks, done.taskId));
+    all.refresh();
+    if (finished && autoNext) select(nextGroupAfterDone(visible, done.key));
   }
   async function runBatchApprove() {
     const plan = batchSubmission(batchTasks.map(task => task.taskId), statuses);
@@ -137,20 +203,20 @@ function TodoWorkspace({ actorId, onAuthorizationChanged }: { actorId: string; o
       await sendWorkflowCommand(workflowCommand(workflowPaths.decision(taskId), 'POST',
         { decision: 'APPROVE', ...(batchComment.trim() ? { comment: batchComment.trim() } : {}) }), decodeMutation);
     }, failureText, result => setBatchResults(current => new Map(current).set(result.taskId, result)));
-    setBatchRunning(false); paging.refresh();
+    setBatchRunning(false); all.refresh();
     for (const id of new Set(batchTasks.map(task => task.instanceId))) void loadDetail(id, true).catch(() => undefined);
   }
-  // 快捷键：J/K 切换，A 同意，R 退回修改，T 转交，Ctrl+Enter 提交。
+  // 快捷键：J/K 在列表项之间切换，A 选中同意，R 选中退回修改，T 转交，Ctrl+Enter 完成或提交选中的决定；批量模式下不响应处理类快捷键。
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const editable = !!target?.closest('input, textarea, select, [contenteditable="true"]');
       const action = resolveShortcut({ key: event.key, ctrlKey: event.ctrlKey, metaKey: event.metaKey, altKey: event.altKey, editable,
-        taskType: checked.length ? null : selected?.taskType ?? null });
-      if (!action) return;
+        taskType: batch.active ? null : selected?.taskType ?? null });
+      if (!action || (batch.active && (action === 'NEXT' || action === 'PREVIOUS'))) return;
       event.preventDefault();
       if (action === 'NEXT' || action === 'PREVIOUS') {
-        const next = neighborTask(tasks, selected?.taskId ?? null, action === 'NEXT' ? 1 : -1);
+        const next = neighborGroup(visible, selectedGroup?.key ?? null, action === 'NEXT' ? 1 : -1);
         if (next) select(next); else void message.info(action === 'NEXT' ? '已经是最后一条' : '已经是第一条');
       }
       if (action === 'SUBMIT') handles.current.submit?.();
@@ -160,109 +226,127 @@ function TodoWorkspace({ actorId, onAuthorizationChanged }: { actorId: string; o
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [tasks, selected, select, checked.length, message]);
+  }, [visible, selected, selectedGroup, select, batch.active, message]);
 
   let panel;
-  if (checked.length) panel = <BatchPanel tasks={frozenBatch?.tasks ?? batchTasks} details={details} statuses={frozenBatch?.statuses ?? statuses}
-    results={batchResults} running={batchRunning} comment={batchComment}
-    onComment={setBatchComment} onRun={() => void runBatchApprove()} onClear={() => { setChecked([]); setBatchResults(new Map()); setFrozenBatch(null); }}
-    onFinish={() => { setChecked([]); setBatchResults(new Map()); setBatchComment(''); setFrozenBatch(null); }} />;
-  else if (!selected) panel = <section className="wf-card"><Empty description={paging.loading ? '加载中' : '没有待处理的事项'} /></section>;
-  else if (detailFailure) panel = <LoadFailed failure={detailFailure} retry={() => { setDetailFailure(undefined); loadDetail(selected.instanceId, true).catch(setDetailFailure); }} />;
-  else if (!detail) panel = <Spinner />;
-  else {
-    const props = { detail, task: selected, actorId, command, handles, onChanged: changed };
-    panel = <div key={selected.taskId}><TaskHeader {...props} />
-      {selected.taskType === 'ACTION' ? <ActionTaskPanel {...props} /> : <ApprovalPanel {...props} />}</div>;
-  }
-  return <div className="wf-split">
-    <aside className="wf-task-column">
-      <div className="wf-chips">
-        {(['ALL', 'ACTION', 'APPROVAL', 'OVERDUE'] as Filter[]).map(value => <button type="button" key={value}
-          className={`wf-chip${filter === value ? ' is-active' : ''}`} onClick={() => changeFilter(value)}>
-          {{ ALL: '全部', ACTION: '待我执行', APPROVAL: '待我审批', OVERDUE: '超过 1 天' }[value]}</button>)}
-      </div>
-      <Input.Search allowClear placeholder="搜索实例标题" value={keyword} onChange={event => setKeyword(event.target.value)} onSearch={value => query(filter, value)} />
-      {paging.error && <Alert type="warning" showIcon title="待办加载失败" action={<Button size="small" onClick={paging.refresh}>重试</Button>} />}
-      {checked.length > 0 && <div className="wf-batch-bar"><span>已选 {checked.length} 项（只能批量同意没有动作的审批）</span>
-        <Button type="link" size="small" onClick={() => setChecked([])}>清除</Button></div>}
-      <div className="wf-task-list">
-        {tasks.map(task => {
-          const taskDetail = details.get(task.instanceId);
-          const eligibility = task.taskType === 'APPROVAL' ? statuses.get(task.taskId) ?? null : null;
-          const isChecked = checked.includes(task.taskId);
-          const node = taskDetail ? nodeOf(taskDetail.graph, task.nodeKey) : undefined;
-          const overdue = overOneDay(task.waitingSince);
-          return <div key={task.taskId} role="button" tabIndex={0} className={`wf-task-item${task.taskId === selected?.taskId && !checked.length ? ' is-selected' : ''}`}
-            onClick={() => { setChecked([]); select(task); }} onKeyDown={event => { if (event.key === 'Enter') select(task); }}>
-            {eligibility && <Checkbox checked={isChecked} disabled={!isChecked && (eligibility.state === 'INELIGIBLE' || eligibility.state === 'UNCHECKABLE')}
-              title={eligibility.reason || undefined}
-              onClick={event => event.stopPropagation()}
-              onChange={event => setChecked(current => event.target.checked ? [...current, task.taskId] : current.filter(id => id !== task.taskId))} />}
-            <span className={`wf-task-icon is-${task.taskType.toLowerCase()}`}>{task.taskType === 'ACTION' ? '✎' : '✓'}</span>
-            <div className="wf-task-body">
-              <div className="wf-task-row"><strong>{task.nodeName || node?.name || task.nodeKey}</strong>
-                <Tag color={overdue ? 'red' : 'orange'}>{task.roundNo > 1 ? `第 ${task.roundNo} 轮 · ` : ''}停留 {waitingText(task.waitingSince)}</Tag></div>
-              <div className="muted">{task.instanceTitle}{task.definitionName ? ` · ${task.definitionName}` : taskDetail ? ` · ${taskDetail.definitionName}` : ''}</div>
-              <div className="wf-task-kind">{task.taskType === 'ACTION' ? `执行 · ${task.actionKey ?? ''}` : `审批 · ${node?.approval?.mode ?? ''}`}
-                {eligibility && (eligibility.state === 'UNCHECKABLE' || filter === 'APPROVAL' && eligibility.state === 'INELIGIBLE')
-                  && <span className="wf-warn-text"> · {eligibility.reason}</span>}
-                {eligibility?.state === 'CHECKING' && isChecked && <span className="muted"> · 检查中</span>}</div>
+  if (batch.active) panel = <BatchPanel tasks={frozenBatch?.tasks ?? batchTasks} details={details} statuses={frozenBatch?.statuses ?? statuses}
+    results={batchResults} running={batchRunning} comment={batchComment} untouched={Math.max(0, groups.length - batchTasks.length)}
+    onComment={setBatchComment} onRemove={taskId => setBatch(current => ({ ...current, checked: current.checked.filter(id => id !== taskId) }))}
+    onRun={() => void runBatchApprove()} onCancel={leaveBatch} onFinish={leaveBatch} />;
+  else if (!selected || !selectedGroup) panel = <div className="wf-detail wf-detail-empty"><Empty description={all.loading ? '加载中' : '没有待处理的事项'} /></div>;
+  else if (detailFailure) panel = <div className="wf-detail wf-detail-empty"><LoadFailed failure={detailFailure}
+    retry={() => { setDetailFailure(undefined); loadDetail(selected.instanceId, true).catch(setDetailFailure); }} /></div>;
+  else if (!detail) panel = <div className="wf-detail wf-detail-empty"><Spinner /></div>;
+  else panel = <TaskDetail key={selectedGroup.key} detail={detail} task={selected} actorId={actorId} command={command} handles={handles} onChanged={changed}
+    canOpenInstance={canOpenInstance} />;
+
+  const count = (value: number) => all.loading && !tasks.length ? '' : ` ${value}`;
+  const itemOf = (task: Task) => <div key={task.taskId} role="button" tabIndex={0}
+    className={`wf-inbox-item${batch.checked.includes(task.taskId) ? ' is-selected' : ''}`}
+    onClick={() => { if (!batchRunning) setBatch(current => ({ ...current, checked: toggleChecked(current.checked, task.taskId, eligibleIds) })); }}
+    onKeyDown={event => { if (event.key === 'Enter' && !batchRunning) setBatch(current => ({ ...current, checked: toggleChecked(current.checked, task.taskId, eligibleIds) })); }}>
+    <Checkbox checked={batch.checked.includes(task.taskId)} disabled={batchRunning} onClick={event => event.stopPropagation()}
+      onChange={() => setBatch(current => ({ ...current, checked: toggleChecked(current.checked, task.taskId, eligibleIds) }))} />
+    <span className="wf-inbox-icon is-approval" title="审批"><CheckOutlined /></span>
+    <div className="wf-inbox-body">
+      <strong className="wf-ellipsis">{task.instanceTitle}</strong>
+      <span className="muted wf-ellipsis">{[task.definitionName, task.nodeName || task.nodeKey].filter(Boolean).join(' · ')}{task.roundNo > 1 ? ` · 第 ${task.roundNo} 轮` : ''}</span>
+    </div>
+    <TaskTime since={task.waitingSince} />
+  </div>;
+  return <div className="wf-inbox">
+    <aside className="wf-inbox-list">
+      {batch.active ? <>
+        <div className="wf-batch-strip"><span><UnorderedListOutlined /> 批量审批 · 已选 {batch.checked.length} / {eligibleIds.length} 可批量</span><span className="wf-grow" />
+          <Button size="small" type="text" className="wf-on-primary" disabled={batchRunning || !eligibleIds.length}
+            onClick={() => setBatch(current => ({ ...current, checked: toggleAll(current.checked, eligibleIds) }))}>
+            {eligibleIds.length && eligibleIds.every(id => batch.checked.includes(id)) ? '全不选' : '全选'}</Button>
+          <Button size="small" ghost disabled={batchRunning} icon={<CloseOutlined />} onClick={leaveBatch}>退出批量</Button></div>
+        <div className="wf-batch-note"><InfoCircleOutlined /> 只列出无需填写、可直接同意的审批；其余 {Math.max(0, groups.length - candidates.eligible.length)} 项暂时隐藏{candidates.checking ? `，${candidates.checking} 项正在检查` : ''}</div>
+      </> : <div className="wf-inbox-tools">
+        <Segmented size="small" value={taskType} onChange={value => setTaskType(value as TaskType)}
+          options={[{ value: 'ALL', label: `全部${count(counts.ALL)}` }, { value: 'ACTION', label: `填写${count(counts.ACTION)}` }, { value: 'APPROVAL', label: `审批${count(counts.APPROVAL)}` }]} />
+        <span className="wf-grow" />
+        <Button type="text" size="small" aria-label="搜索" icon={<SearchOutlined />} onClick={() => setSearching(!searching)} />
+        <Button type="link" size="small" icon={<UnorderedListOutlined />} onClick={startBatch}>批量审批</Button>
+      </div>}
+      {searching && !batch.active && <div className="wf-inbox-search"><Input.Search allowClear autoFocus placeholder="搜索实例标题" value={keyword}
+        onChange={event => setKeyword(event.target.value)} onSearch={value => setAppliedKeyword(value.trim())} /></div>}
+      {all.error && <Alert type="warning" showIcon title="待办加载失败" action={<Button size="small" onClick={all.refresh}>重试</Button>} />}
+      <div className="wf-inbox-items">
+        {batch.active ? candidates.eligible.map(itemOf) : visible.map(group => {
+          const isSelected = group.key === selectedGroup?.key;
+          const many = group.tasks.length > 1;
+          return <div key={group.key} role="button" tabIndex={0} className={`wf-inbox-item${isSelected ? ' is-selected' : ''}`}
+            onClick={() => select(group)} onKeyDown={event => { if (event.key === 'Enter') select(group); }}>
+            <span className={`wf-inbox-icon is-${group.taskType.toLowerCase()}`} title={group.taskType === 'ACTION' ? '填写' : '审批'}>
+              {group.taskType === 'ACTION' ? <EditOutlined /> : <CheckOutlined />}</span>
+            <div className="wf-inbox-body">
+              <strong className="wf-ellipsis">{group.instanceTitle}</strong>
+              <span className="muted wf-ellipsis">{[group.definitionName, group.nodeName || group.nodeKey].filter(Boolean).join(' · ')}
+                {group.roundNo > 1 ? ` · 第 ${group.roundNo} 轮` : ''}{many ? ` · ${group.tasks.length} 个动作` : ''}</span>
             </div>
+            <TaskTime since={group.waitingSince} />
           </div>;
         })}
-        {!paging.loading && !tasks.length && <Empty description="没有符合条件的待办" />}
-      </div>
-      {paging.data.total > paging.data.size && <Pagination size="small" {...paging.pagination} />}
-      <div className="wf-shortcuts">
-        <label><Switch size="small" checked={autoNext} onChange={value => { setAutoNext(value); saveAutoNext(value); }} /> 处理完自动打开下一条</label>
-        <span className="muted">共 {paging.data.total} 条</span>
-        <div><kbd>J</kbd><kbd>K</kbd> 上下切换 <kbd>A</kbd> 同意 <kbd>R</kbd> 退回修改 <kbd>T</kbd> 转交 <kbd>Ctrl</kbd><kbd>Enter</kbd> 提交</div>
+        {!all.loading && !(batch.active ? candidates.eligible : visible).length && <Empty description={batch.active ? (candidates.checking ? '正在检查哪些审批可以批量同意' : '没有可批量同意的审批') : '没有符合条件的待办'} />}
+        {all.truncated && <div className="muted wf-inbox-note">待办较多，只显示最早的 {TASK_PAGE_SIZE * TASK_MAX_PAGES} 条（按动作 / 审批计），计数也只统计这些</div>}
       </div>
     </aside>
-    <main className="wf-task-main">{panel}</main>
+    {panel}
   </div>;
 }
 
-const decodeHandled = decodePage(decodeHandledTask);
-const handledResultLabels: Record<string, string> = { ...actionRunStatusLabels, ...approvalStatusLabels };
-
-/** 已处理：我提交过的动作与做过决定的审批（接口 26）。 */
-function HandledTasks() {
-  const [taskType, setTaskType] = useState<'ALL' | 'ACTION' | 'APPROVAL'>('ALL');
-  const paging = usePaging<HandledTask>(workflowPaths.handledTasks, decodeHandled);
-  const [keyword, setKeyword] = useState('');
-  function query(nextType: typeof taskType, nextKeyword: string) {
-    paging.applyFilters({ ...(nextType === 'ALL' ? {} : { taskType: nextType }), ...(nextKeyword.trim() ? { keyword: nextKeyword.trim() } : {}) });
-  }
-  return <section className="table-panel">
-    <div className="wf-filters" style={{ marginBottom: 12 }}>
-      <Segmented value={taskType} onChange={value => { setTaskType(value as typeof taskType); query(value as typeof taskType, keyword); }}
-        options={[{ value: 'ALL', label: '全部' }, { value: 'ACTION', label: '执行的动作' }, { value: 'APPROVAL', label: '做过的审批' }]} />
-      <Input.Search allowClear placeholder="搜索实例标题" style={{ width: 260 }} value={keyword} onChange={event => setKeyword(event.target.value)}
-        onSearch={value => query(taskType, value)} />
-    </div>
-    <Table<HandledTask> rowKey={row => `${row.taskType}:${row.taskId}`} loading={paging.loading} dataSource={paging.error ? [] : paging.data.items} pagination={paging.pagination} columns={[
-      { title: '实例', render: (_, row) => <div><Link to={`${workflowRoutes.instances}/${row.instanceId}`}>{row.instanceTitle}</Link>
-        <div className="muted">{row.definitionName ?? ''}</div></div> },
-      { title: '节点', render: (_, row) => <span>{row.nodeName ?? row.nodeKey}{row.roundNo > 1 ? ` · 第 ${row.roundNo} 轮` : ''}</span> },
-      { title: '类型', width: 110, render: (_, row) => row.taskType === 'ACTION' ? `执行 · ${row.actionKey ?? ''}` : '审批' },
-      { title: '结果', width: 110, render: (_, row) => <Tag color={row.result === 'VERIFIED' || row.result === 'APPROVED' ? 'success'
-        : row.result === 'UNVERIFIED' || row.result === 'REJECTED' ? 'error' : row.result === 'RETURNED' ? 'warning' : 'default'}>{handledResultLabels[row.result] ?? row.result}</Tag> },
-      { title: '实例状态', width: 100, render: (_, row) => <Tag color={instanceStatusColors[row.instanceStatus]}>{instanceStatusLabels[row.instanceStatus] ?? row.instanceStatus}</Tag> },
-      { title: '处理时间', width: 140, render: (_, row) => shortTime(row.handledTime) },
-    ]} /></section>;
+/** 列表右侧：超时显示红色时长，否则相对时间。 */
+function TaskTime({ since }: { since: string }) {
+  const overdue = overdueText(since);
+  return overdue ? <span className="wf-overdue">{overdue}</span> : <span className="wf-inbox-time">{relativeTime(since)}</span>;
 }
 
-/** 我发起的：按发起人为自己查询实例。 */
-function StartedByMe({ actorId }: { actorId: string }) {
-  const filters = useMemo(() => ({ scope: 'MINE', startedBy: actorId }), [actorId]);
-  const paging = usePaging<InstanceSummary>(workflowPaths.instances, decodeInstances, filters);
-  return <section className="table-panel">
-    <Table<InstanceSummary> rowKey="instanceId" loading={paging.loading} dataSource={paging.error ? [] : paging.data.items} pagination={paging.pagination} columns={[
-      { title: '实例', render: (_, row) => <Link to={`${workflowRoutes.instances}/${row.instanceId}`}>{row.title}</Link> },
-      { title: '业务关联键', dataIndex: 'businessKey', render: value => value ?? '—' },
-      { title: '状态', width: 100, render: (_, row) => <Tag color={instanceStatusColors[row.status]}>{instanceStatusLabels[row.status]}</Tag> },
-      { title: '发起时间', width: 160, render: (_, row) => shortTime(row.startTime) },
-    ]} /></section>;
+const decodeHandled = decodePage(decodeHandledTask);
+
+/** 已办（原型 04）：列表同待办风格，带我的处理结果；点击在右侧只读打开。 */
+function HandledWorkspace({ canOpenInstance }: { canOpenInstance: boolean }) {
+  const [taskType, setTaskType] = useState<TaskType>('ALL');
+  const [keyword, setKeyword] = useState(''); const [searching, setSearching] = useState(false);
+  const paging = usePaging<HandledTask>(workflowPaths.handledTasks, decodeHandled);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const keyOf = (row: HandledTask) => `${row.taskType}:${row.taskId}`;
+  const items = paging.error ? [] : paging.data.items;
+  const selected = items.find(row => keyOf(row) === selectedKey) ?? items[0] ?? null;
+  function query(nextType: TaskType, nextKeyword: string) {
+    paging.applyFilters({ ...(nextType === 'ALL' ? {} : { taskType: nextType }), ...(nextKeyword.trim() ? { keyword: nextKeyword.trim() } : {}) });
+  }
+  const detail = useLoad<InstanceDetail>(selected ? workflowPaths.instance(selected.instanceId) : null, decodeInstanceDetail);
+  const loaded = detail.data && selected && detail.data.instance.instanceId === selected.instanceId ? detail.data : undefined;
+  return <div className="wf-inbox">
+    <aside className="wf-inbox-list">
+      <div className="wf-inbox-tools">
+        <Segmented size="small" value={taskType} onChange={value => { setTaskType(value as TaskType); query(value as TaskType, keyword); }}
+          options={[{ value: 'ALL', label: '全部' }, { value: 'ACTION', label: '填写' }, { value: 'APPROVAL', label: '审批' }]} />
+        <span className="wf-grow" /><Button type="text" size="small" aria-label="搜索" icon={<SearchOutlined />} onClick={() => setSearching(!searching)} />
+      </div>
+      {searching && <div className="wf-inbox-search"><Input.Search allowClear autoFocus placeholder="搜索实例标题" value={keyword}
+        onChange={event => setKeyword(event.target.value)} onSearch={value => query(taskType, value)} /></div>}
+      <div className="wf-inbox-items">
+        {items.map(row => {
+          const result = handledResult(row.result);
+          return <div key={keyOf(row)} role="button" tabIndex={0} className={`wf-inbox-item${selected && keyOf(selected) === keyOf(row) ? ' is-selected' : ''}`}
+            onClick={() => setSelectedKey(keyOf(row))} onKeyDown={event => { if (event.key === 'Enter') setSelectedKey(keyOf(row)); }}>
+            <span className={`wf-inbox-icon is-${row.taskType.toLowerCase()}`}>{row.taskType === 'ACTION' ? <EditOutlined /> : <CheckOutlined />}</span>
+            <div className="wf-inbox-body"><strong className="wf-ellipsis">{row.instanceTitle}</strong>
+              <span className="muted wf-ellipsis">{row.nodeName ?? row.nodeKey} · {relativeTime(row.handledTime)}</span></div>
+            <div className="wf-inbox-result"><Tag color={result.color}>{result.label}</Tag>
+              <span className="muted">实例{instanceStatusLabels[row.instanceStatus] ?? row.instanceStatus}</span></div>
+          </div>;
+        })}
+        {!paging.loading && !items.length && <Empty description="还没有处理过的事项" />}
+      </div>
+      {paging.data.total > paging.data.size && <div className="wf-inbox-pager"><Pagination size="small" simple {...paging.pagination} /></div>}
+    </aside>
+    {!selected ? <div className="wf-detail wf-detail-empty"><Empty description={paging.loading ? '加载中' : '选择左侧一项查看'} /></div>
+      : detail.failure ? <div className="wf-detail wf-detail-empty"><LoadFailed failure={detail.failure} retry={detail.refresh} /></div>
+      : !loaded ? <div className="wf-detail wf-detail-empty"><Spinner /></div>
+      : <HandledDetail key={keyOf(selected)} detail={loaded} handled={selected} canOpenInstance={canOpenInstance} />}
+  </div>;
 }

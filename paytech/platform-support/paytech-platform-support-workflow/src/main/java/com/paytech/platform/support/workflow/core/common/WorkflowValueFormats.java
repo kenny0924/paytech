@@ -21,9 +21,6 @@ public final class WorkflowValueFormats {
     /** 日期：YYYY-MM-DD。 */
     private static final Pattern DATE = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
 
-    /** MIME 类型：type/subtype，小写。 */
-    private static final Pattern MIME_TYPE = Pattern.compile("[a-z0-9][a-z0-9!#$&^_.+-]{0,63}/[a-z0-9][a-z0-9!#$&^_.+-]{0,126}");
-
     private WorkflowValueFormats() {
     }
 
@@ -83,16 +80,6 @@ public final class WorkflowValueFormats {
      */
     public static boolean isBoolean(String value) {
         return "true".equals(value) || "false".equals(value);
-    }
-
-    /**
-     * 是否为合法 MIME 类型。
-     *
-     * @param value 候选值
-     * @return 合法返回 true
-     */
-    public static boolean isMimeType(String value) {
-        return value != null && MIME_TYPE.matcher(value).matches();
     }
 
     /**

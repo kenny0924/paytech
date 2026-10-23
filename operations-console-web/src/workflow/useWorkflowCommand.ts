@@ -22,7 +22,8 @@ export function sendWorkflowCommand<T>(command: Command, decode: (value: unknown
 /** 业务拒绝的说明：400 BUSINESS_CHECK_FAILED 用后端中文 detail，409 提示刷新。 */
 export function failureText(error: unknown): string {
   if (error instanceof ApiError) {
-    if (error.status === 409) return '数据已被他人更新或正在处理，请刷新后重试';
+    // 409 带业务说明时（如“还有必选动作未完成”）用后端说明，否则提示刷新。
+    if (error.status === 409) return error.detail || '数据已被他人更新或正在处理，请刷新后重试';
     if (error.detail) return error.detail;
     return error.message || error.code;
   }
@@ -41,6 +42,8 @@ export function fieldErrorText(error: ApiError): string {
 export function useWorkflowCommand(onAuthorizationChanged: () => void) {
   const notify = useErrorNotification();
   const [saving, setSaving] = useState(false); const [conflict, setConflict] = useState(false);
+  /** 最近一次 409 的后端说明（如同意时必选动作未完成、节点已进入审批不能再修改）；没有说明时为 null。 */
+  const [conflictMessage, setConflictMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   /** 最近一次 400/422 的请求体字段错误（如 graph.nodes[2].type），供页面就地定位。 */
   const [fieldErrors, setFieldErrors] = useState<readonly { field: string; message: string }[]>([]);
@@ -48,7 +51,7 @@ export function useWorkflowCommand(onAuthorizationChanged: () => void) {
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const run = useCallback(async <T>(path: string, method: WorkflowMethod, body: unknown, decode: (value: unknown) => T, failureTitle: string): Promise<T | null> => {
     if (busy.current) return null;
-    busy.current = true; setSaving(true); setFormError(null); setFieldErrors([]);
+    busy.current = true; setSaving(true); setFormError(null); setFieldErrors([]); setConflictMessage(null);
     const command = workflowCommand(path, method, body, last.current); last.current = command;
     try {
       const result = await sendWorkflowCommand(command, decode);
@@ -56,7 +59,7 @@ export function useWorkflowCommand(onAuthorizationChanged: () => void) {
       return result;
     } catch (error) {
       if (error instanceof ApiError && error.status === 403) onAuthorizationChanged();
-      if (error instanceof ApiError && error.status === 409) { if (mounted.current) setConflict(true); return null; }
+      if (error instanceof ApiError && error.status === 409) { if (mounted.current) { setConflict(true); setConflictMessage(error.detail || null); } return null; }
       if (error instanceof ApiError && (error.status === 400 || error.status === 422) && (error.detail || error.fieldErrors.length)) {
         if (mounted.current) {
           setFormError(`${error.detail || '请求内容不合法'}（${error.code}）${fieldErrorText(error)}`);
@@ -68,6 +71,6 @@ export function useWorkflowCommand(onAuthorizationChanged: () => void) {
       return null;
     } finally { busy.current = false; if (mounted.current) setSaving(false); }
   }, [notify, onAuthorizationChanged]);
-  return { saving, conflict, formError, fieldErrors, run, clearConflict: () => setConflict(false),
-    clearError: () => { setFormError(null); setFieldErrors([]); } };
+  return { saving, conflict, conflictMessage, formError, fieldErrors, run, clearConflict: () => { setConflict(false); setConflictMessage(null); },
+    clearError: () => { setFormError(null); setFieldErrors([]); setConflictMessage(null); } };
 }

@@ -179,8 +179,8 @@ test('Workflow console block 127 registers the agreed rows inside its ID block a
     't_gateway_route_header', 't_gateway_route_query_param', 't_gateway_guard_rule', 't_notification_template',
     't_notification_template_content', 't_notification_route'].map(table => [table, rows(table)]));
   assert.deepEqual(Object.fromEntries(Object.entries(counts).map(([table, ids]) => [table, ids.length])), {
-    t_permission: 7, t_role_permission: 7, t_console_resource: 10, t_gateway_route: 32, t_gateway_route_header: 136,
-    t_gateway_route_query_param: 30, t_gateway_guard_rule: 192, t_notification_template: 1,
+    t_permission: 7, t_role_permission: 7, t_console_resource: 11, t_gateway_route: 31, t_gateway_route_header: 130,
+    t_gateway_route_query_param: 30, t_gateway_guard_rule: 186, t_notification_template: 1,
     t_notification_template_content: 1, t_notification_route: 1 });
   const ids = Object.values(counts).flat();
   assert.equal(new Set(ids).size, ids.length);

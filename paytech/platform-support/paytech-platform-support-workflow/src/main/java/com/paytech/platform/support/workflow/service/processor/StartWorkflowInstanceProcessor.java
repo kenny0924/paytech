@@ -45,12 +45,16 @@ import lombok.RequiredArgsConstructor;
  * 发起实例（R5，技术方案第 4 节“发起”）：校验启动表单 → 冻结人员分配（版本默认值加发起时的修改，均须为 ACTIVE 的 Operations 账号）
  * → 写实例与 START 运行 → 推进到第一批任务节点，并按规则登记通知回调
  * <li>流程须 ACTIVE 且当前发布版本等于请求的版本号（防止发布中途换版本）；新建记录没有可竞争的资源，不加锁。</li>
- * <li>启动表单的文件字段存文件地址（/files/v1/{fileId}），格式不合法返回 422；文件须由发起人以工作流附件上传、未被其他实例引用；仍在扫描时拒绝发起（“文件扫描中，请稍后再提交”）。</li>
+ * <li>启动表单的文件字段存文件地址（/files/v1/{fileId}），格式不合法返回 422；文件须由发起人以工作流附件上传、未被其他实例引用；扫描中不挡发起，已确认未通过扫描的文件在该文件路径上返回 422（“文件未通过安全检查，请删除后重新上传”）。</li>
+ * <li>启动值只检查必填、值类型与平台长度上限（2026-10-22 起字段规则中的长度、范围、文件数量与类型不再校验），问题按字段返回 422（路径 startValues.&lt;key&gt;，原因与完成动作一致）。</li>
  */
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "operations.authentication.enabled", havingValue = "true")
 public class StartWorkflowInstanceProcessor extends AbstractProcessor<StartInstanceRequest, WorkflowMutation> {
+
+    /** 启动值在请求体中的属性名。 */
+    static final String START_VALUES = "startValues";
 
     private final WorkflowProcessorSupport support;
     private final WorkflowAttachments attachments;
@@ -105,10 +109,8 @@ public class StartWorkflowInstanceProcessor extends AbstractProcessor<StartInsta
         StartInstanceRequest request, long actor) {
         WorkflowGraph graph = graphReader.read(version.getGraphJson());
         var startForm = formReader.read(version.getStartFormJson());
-        List<String> problems = forms.validate(startForm, request.getStartValues(), startFiles(startForm, request, actor));
-        if (!problems.isEmpty()) {
-            throw new BizCheckFailException("启动表单不合法：" + String.join("；", problems));
-        }
+        attachments.requireNoFieldErrors(forms.requestErrors(startForm, request.getStartValues(),
+            startFiles(startForm, request, actor), START_VALUES));
         WorkflowAssignment assignment = assignment(graph, request);
         support.requireActive(assignment.accountIds(), "执行人或审批人");
         WorkflowInstance instance = instance(definition, version, request, assignment, actor);
@@ -119,15 +121,15 @@ public class StartWorkflowInstanceProcessor extends AbstractProcessor<StartInsta
         return new WorkflowInstanceContext(snapshot, runs, instance.getStartTime(), true);
     }
 
-    /** 启动值引用的文件：检查归属与扫描状态后返回文件事实。 */
+    /** 启动值引用的文件：检查归属与扫描未通过后返回文件事实；扫描中不挡发起。 */
     Map<Long, AttachmentFact> startFiles(FormDefinition startForm, StartInstanceRequest request, long actor) {
-        attachments.requireAddresses(AttachmentRules.addressErrors(startForm, request.getStartValues(), "startValues"));
+        attachments.requireNoFieldErrors(
+            AttachmentRules.addressErrors(startForm, request.getStartValues(), START_VALUES));
         Set<Long> fileIds = AttachmentRules.referenced(startForm, request.getStartValues());
         Map<Long, AttachmentFact> facts = attachments.facts(fileIds);
         attachments.requireAttachable(fileIds, facts, actor, null);
-        if (AttachmentRules.anyScanning(fileIds, facts)) {
-            throw new BizCheckFailException(AttachmentRules.SCANNING_REJECTION);
-        }
+        attachments.requireNoFieldErrors(
+            AttachmentRules.scanFailedErrors(startForm, request.getStartValues(), facts, START_VALUES));
         return facts;
     }
 

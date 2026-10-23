@@ -173,6 +173,14 @@ class WorkflowJsonReaderTest {
         FileUploadActionConfig upload = (FileUploadActionConfig) configReader.read(WorkflowActionType.FILE_UPLOAD,
             "{\"minFiles\": 1, \"maxFiles\": 5, \"mimeTypes\": [\"application/pdf\"], \"instruction\": \"上传合同\"}");
         Assertions.assertEquals(5, upload.maxFiles());
+        Assertions.assertFalse(upload.required());
+        Assertions.assertTrue(upload.requiresFiles());
+        FileUploadActionConfig flagged = (FileUploadActionConfig) configReader.read(WorkflowActionType.FILE_UPLOAD,
+            "{\"required\": true}");
+        Assertions.assertTrue(flagged.requiresFiles());
+        FileUploadActionConfig optional = (FileUploadActionConfig) configReader.read(WorkflowActionType.FILE_UPLOAD,
+            "{\"minFiles\": 0, \"instruction\": \"可选\"}");
+        Assertions.assertFalse(optional.requiresFiles());
         PageTaskActionConfig page = (PageTaskActionConfig) configReader.read(WorkflowActionType.PAGE_TASK,
             "{\"pageRoute\": \"/commercial/agreements\", \"parameters\": [{\"key\": \"channelCode\", \"label\": \"渠道\"}],"
                 + " \"instruction\": \"\"}");

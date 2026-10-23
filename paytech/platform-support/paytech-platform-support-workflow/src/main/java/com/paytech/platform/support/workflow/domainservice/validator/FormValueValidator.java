@@ -1,88 +1,117 @@
 package com.paytech.platform.support.workflow.domainservice.validator;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.paytech.platform.support.workflow.core.common.WorkflowValueFormats;
+import com.paytech.platform.support.workflow.core.enums.FormFieldType;
 import com.paytech.platform.support.workflow.domain.attachment.AttachmentFact;
-import com.paytech.platform.support.workflow.domain.form.FieldRules;
 import com.paytech.platform.support.workflow.domain.form.FormDefinition;
 import com.paytech.platform.support.workflow.domain.form.FormField;
 
 import tools.jackson.databind.JsonNode;
 
 /**
- * 按字段定义校验提交值（启动表单与 FORM 动作共用，规则 B2 的字段规则验证），返回全部中文问题。
+ * 按字段定义检查提交值（启动表单与 FORM 动作共用），按字段路径返回中文原因。
  *
- * <p>值形态：TEXT / LONG_TEXT / ENUM / DATE / NUMBER 为字符串（NUMBER 为普通十进制字符串），BOOLEAN 为布尔，FILE 为文件地址（/files/v1/{fileId}）字符串数组。
- * FILE 按 {@link AttachmentRules} 校验数量、类型与扫描状态，文件事实由调用方事先查询；归属另由调用方在保存前拒绝。</p>
+ * <p>2026-10-22 起只检查必填与值类型（网关条件依赖类型正确），并保留平台文本长度上限；字段规则中的 maxLength、
+ * min / max / scale、文件数量与 MIME 类型不再校验。值形态：TEXT / LONG_TEXT / ENUM / DATE / NUMBER 为字符串（NUMBER
+ * 为普通十进制字符串），BOOLEAN 为布尔，FILE 为文件地址（/files/v1/{fileId}）字符串数组。FILE 元素扫描中不挡，
+ * 已确认未通过扫描的报告为字段错误；归属由调用方在保存前拒绝。</p>
  */
 public final class FormValueValidator {
 
-    /**
-     * 校验不含文件的提交值；FILE 字段有值时因没有文件事实报告文件不存在。
-     *
-     * @param form 字段定义
-     * @param values 提交值对象
-     * @return 问题列表；通过时为空
-     */
-    public List<String> validate(FormDefinition form, JsonNode values) {
-        return validate(form, values, Map.of());
-    }
+    /** TEXT 的平台长度上限。 */
+    static final int TEXT_LIMIT = 255;
+
+    /** LONG_TEXT 的平台长度上限。 */
+    static final int LONG_TEXT_LIMIT = 4000;
 
     /**
-     * 校验提交值。
+     * 检查提交值并返回请求体字段路径（{@code root.<key>}、文件元素 {@code root.<key>[i]}）到原因，供 422 字段错误使用；
+     * 原因与完成动作的检查一致。
      *
      * @param form 字段定义
      * @param values 提交值对象
      * @param files 引用文件的事实，按文件 ID
-     * @return 问题列表；通过时为空
+     * @param root 提交值在请求体中的属性名，如 startValues
+     * @return 请求体字段路径到原因；通过时为空
      */
-    public List<String> validate(FormDefinition form, JsonNode values, Map<Long, AttachmentFact> files) {
-        List<String> problems = new ArrayList<>();
+    public Map<String, String> requestErrors(FormDefinition form, JsonNode values, Map<Long, AttachmentFact> files,
+        String root) {
         if (values == null || !values.isObject()) {
-            return List.of("提交值必须是 JSON 对象");
+            return Map.of(root, "必须是 JSON 对象");
         }
-        Set<String> keys = form.fields().stream().map(FormField::key).collect(Collectors.toSet());
-        values.propertyNames().stream().filter(name -> !keys.contains(name))
-            .forEach(name -> problems.add("未定义的字段：" + name));
-        for (FormField field : form.fields()) {
-            String problem = fieldProblem(field, values.get(field.key()), files);
-            if (problem != null) {
-                problems.add(field.label() + "（" + field.key() + "）" + problem);
-            }
-        }
-        return problems;
+        Map<String, String> prefixed = new LinkedHashMap<>();
+        fieldErrors(form, values, files).forEach((path, reason) -> prefixed.put(root + "." + path, reason));
+        return prefixed;
     }
 
     /**
-     * 单个字段的问题。
+     * 按字段检查提交值。
+     *
+     * @param form 字段定义
+     * @param values 提交值对象；调用方已确认是 JSON 对象
+     * @param files 引用文件的事实，按文件 ID
+     * @return 相对路径（字段 key，文件元素为 {@code key[i]}）到原因；通过时为空
+     */
+    public Map<String, String> fieldErrors(FormDefinition form, JsonNode values, Map<Long, AttachmentFact> files) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        Set<String> keys = form.fields().stream().map(FormField::key).collect(Collectors.toSet());
+        values.propertyNames().stream().filter(name -> !keys.contains(name))
+            .forEach(name -> errors.put(name, "未定义的字段"));
+        for (FormField field : form.fields()) {
+            fieldErrors(field, values.get(field.key()), files, errors);
+        }
+        return errors;
+    }
+
+    /**
+     * 单个字段的问题：空值只看必填；FILE 交给附件规则检查形态与文件可用性；其余检查值类型。
      *
      * @param field 字段定义
      * @param value 提交值；缺失为 null
      * @param files 引用文件的事实
+     * @param errors 收集结果
+     */
+    void fieldErrors(FormField field, JsonNode value, Map<Long, AttachmentFact> files, Map<String, String> errors) {
+        if (isEmpty(value)) {
+            if (field.required()) {
+                errors.put(field.key(), "必填");
+            }
+            return;
+        }
+        if (field.type() == FormFieldType.FILE) {
+            errors.putAll(AttachmentRules.valueErrors(value, field.key(), files));
+            return;
+        }
+        String problem = valueProblem(field, value);
+        if (problem != null) {
+            errors.put(field.key(), problem);
+        }
+    }
+
+    /**
+     * 非文件字段的值类型问题；ENUM 须为定义的选项值，网关按该值分支。
+     *
+     * @param field 字段定义
+     * @param value 非空提交值
      * @return 问题说明；合法时为 null
      */
-    String fieldProblem(FormField field, JsonNode value, Map<Long, AttachmentFact> files) {
-        if (isEmpty(value)) {
-            return field.required() ? "必填" : null;
-        }
-        FieldRules rules = field.rules();
+    String valueProblem(FormField field, JsonNode value) {
         return switch (field.type()) {
-            case TEXT -> textProblem(value, rules.maxLength() == null ? FormDefinitionRules.TEXT_LIMIT : rules.maxLength());
-            case LONG_TEXT -> textProblem(value,
-                rules.maxLength() == null ? FormDefinitionRules.LONG_TEXT_LIMIT : rules.maxLength());
-            case NUMBER -> numberProblem(value, rules);
+            case TEXT -> textProblem(value, TEXT_LIMIT);
+            case LONG_TEXT -> textProblem(value, LONG_TEXT_LIMIT);
+            case NUMBER -> value.isString() && WorkflowValueFormats.isDecimal(value.asString()) ? null
+                : "必须是十进制数字字符串";
             case BOOLEAN -> value.isBoolean() ? null : "必须是布尔值";
-            case ENUM -> value.isString() && rules.options().stream().anyMatch(option -> option.value().equals(
+            case ENUM -> value.isString() && field.rules().options().stream().anyMatch(option -> option.value().equals(
                 value.asString())) ? null : "不是可选值";
             case DATE -> value.isString() && WorkflowValueFormats.isDate(value.asString()) ? null
                 : "必须是 YYYY-MM-DD 日期";
-            case FILE -> AttachmentRules.valueProblem(value, rules.minFiles(), rules.maxFiles(), rules.mimeTypes(), files);
+            case FILE -> null;
         };
     }
 
@@ -98,41 +127,17 @@ public final class FormValueValidator {
     }
 
     /**
-     * 文本长度问题。
+     * 文本类型与平台长度上限问题。
      *
      * @param value 提交值
-     * @param limit 最大长度
+     * @param limit 平台长度上限
      * @return 问题说明或 null
      */
-    private String textProblem(JsonNode value, int limit) {
+    static String textProblem(JsonNode value, int limit) {
         if (!value.isString()) {
             return "必须是文本";
         }
         return value.asString().codePointCount(0, value.asString().length()) > limit ? "超过 " + limit + " 个字符"
             : null;
-    }
-
-    /**
-     * 数字问题：普通十进制字符串，范围与小数位。
-     *
-     * @param value 提交值
-     * @param rules 字段规则
-     * @return 问题说明或 null
-     */
-    private String numberProblem(JsonNode value, FieldRules rules) {
-        if (!value.isString() || !WorkflowValueFormats.isDecimal(value.asString())) {
-            return "必须是十进制数字字符串";
-        }
-        BigDecimal number = new BigDecimal(value.asString());
-        if (rules.min() != null && number.compareTo(rules.min()) < 0) {
-            return "不能小于 " + rules.min().toPlainString();
-        }
-        if (rules.max() != null && number.compareTo(rules.max()) > 0) {
-            return "不能大于 " + rules.max().toPlainString();
-        }
-        if (rules.scale() != null && Math.max(number.scale(), 0) > rules.scale()) {
-            return "小数位不能超过 " + rules.scale();
-        }
-        return null;
     }
 }

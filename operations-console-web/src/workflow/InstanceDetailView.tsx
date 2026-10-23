@@ -6,7 +6,7 @@ import { displayValue } from './formModel';
 import { fileAddressesOf, fileIndex, outputFileAddresses } from './fileModel';
 import { AttachmentList } from './WorkflowFiles';
 import { nodeOf } from './graphModel';
-import { actionLabel, currentHandlers, frozenTemplate, hadRevision, latestRuns, progressOf, traversedEdges, visualState, waitingText } from './runtimeModel';
+import { actionLabel, currentHandlers, frozenTemplate, hadRevision, isCompleted, isPendingAction, latestRuns, progressOf, traversedEdges, visualState, waitingText } from './runtimeModel';
 import { useWorkflowCommand } from './useWorkflowCommand';
 import { WorkflowCanvas } from './WorkflowCanvas';
 import type { CanvasSelection } from './WorkflowCanvas';
@@ -76,8 +76,8 @@ function InstanceGraph({ detail, actorId, instanceId }: { detail: InstanceDetail
       const actions = run ? detail.actionRuns.filter(item => item.nodeRunId === run.nodeRunId) : [];
       const pendingApprovers = run ? detail.approvals.filter(item => item.nodeRunId === run.nodeRunId && item.status === 'PENDING') : [];
       subtitle = !run ? '未到达'
-        : run.status === 'ACTIVE' ? `待提交 · ${[...new Set(actions.filter(item => item.status !== 'VERIFIED').map(item => personName(item.assigneeId, detail.people)))].join('、')} · ${waitingText(run.activatedTime)}`
-        : run.status === 'APPROVING' ? `${actions.filter(item => item.status === 'VERIFIED').length}/${actions.length} 已验证 · 待审批 ${pendingApprovers.map(item => personName(item.approverId, detail.people)).join('、')}`
+        : run.status === 'ACTIVE' ? `待处理 · ${[...new Set(actions.filter(item => !isCompleted(item)).map(item => personName(item.assigneeId, detail.people)))].join('、')} · ${waitingText(run.activatedTime)}`
+        : run.status === 'APPROVING' ? `${actions.filter(isCompleted).length}/${actions.length} 已完成 · 待审批 ${pendingApprovers.map(item => personName(item.approverId, detail.people)).join('、')}`
         : nodeRunStatusLabels[run.status];
     }
     return { state, subtitle, badge: run && run.roundNo > 1 ? `第 ${run.roundNo} 轮` : hadRevision(detail.nodeRuns, node.key) ? '有退回' : undefined,
@@ -105,7 +105,7 @@ function NodeDrawer({ detail, node, actorId, instanceId }: { detail: InstanceDet
   const transfers = detail.transfers.filter(item => detail.actionRuns.some(run => run.actionRunId === item.targetId && runIds.has(run.nodeRunId))
     || approvals.some(row => row.approvalId === item.targetId));
   const roundOf = (nodeRunId: string) => detail.nodeRuns.find(run => run.nodeRunId === nodeRunId)?.roundNo;
-  const myAction = actions.find(item => item.assigneeId === actorId && (item.status === 'PENDING' || item.status === 'UNVERIFIED') && latest?.status === 'ACTIVE');
+  const myAction = actions.find(item => item.assigneeId === actorId && isPendingAction(item) && latest?.status === 'ACTIVE');
   const myApproval = approvals.find(item => item.approverId === actorId && item.status === 'PENDING' && item.nodeRunId === latest?.nodeRunId);
   const myTask = myApproval?.approvalId ?? myAction?.actionRunId;
   const activities = useLoad<Activity[]>(workflowPaths.activities(instanceId), decodeActivities);
@@ -117,18 +117,12 @@ function NodeDrawer({ detail, node, actorId, instanceId }: { detail: InstanceDet
     <Tabs items={[
       { key: 'actions', label: `动作 ${actions.length}`, children: actions.length ? actions.map(run => {
         const template = frozenTemplate(detail, run.actionKey);
-        const verifications = detail.verifications.filter(item => detail.actionRuns.some(row => row.actionRunId === item.actionRunId && row.actionKey === run.actionKey && runIds.has(row.nodeRunId)))
-          .sort((left, right) => right.verifiedTime.localeCompare(left.verifiedTime));
         return <div key={run.actionRunId} className="wf-action is-expanded">
           <div className="wf-action-head"><strong>{actionLabel(detail, run)}</strong><Tag color="blue">{actionTypeLabels[run.actionType]}</Tag>
             {run.required ? <Tag color="red">必选</Tag> : <Tag>可选</Tag>}<span className="wf-grow" /><Tag color={actionRunStatusColors[run.status]}>{actionRunStatusLabels[run.status]}</Tag></div>
           <div className="muted">执行人 {personName(run.assigneeId, detail.people)}</div>
           <OutputView output={run.output} form={run.actionType === 'FORM' ? template?.config as FormDefinition : undefined} />
           {outputFileAddresses(run, template).length > 0 && <AttachmentList instanceId={detail.instance.instanceId} addresses={outputFileAddresses(run, template)} known={fileIndex(detail)} />}
-          <ul className="wf-verifications">{verifications.map(item => <li key={item.verificationId}>
-            <span className={item.result === 'PASSED' ? 'wf-ok-text' : 'wf-danger-text'}>{item.result === 'PASSED' ? '✓' : '✕'}</span>
-            {shortTime(item.verifiedTime)} {personName(item.verifiedBy, detail.people)} {item.result === 'PASSED' ? '验证通过' : `未通过：${item.failureReason ?? ''}`}
-            {' '}（第 {roundOf(detail.actionRuns.find(row => row.actionRunId === item.actionRunId)?.nodeRunId ?? '')} 轮）</li>)}</ul>
         </div>;
       }) : <Empty description="本节点没有动作或尚未到达" /> },
       { key: 'approvals', label: `审批 ${approvals.length}`, children: approvals.length ? <ul className="wf-records">{approvals.map(item => <li key={item.approvalId}>
@@ -153,7 +147,7 @@ function NodeDrawer({ detail, node, actorId, instanceId }: { detail: InstanceDet
 }
 
 type ActivityFilter = 'ALL' | 'MANUAL' | 'STATE' | 'NOTIFY' | 'CALLBACK';
-const isDelivery = (item: Activity) => item.activityType === 'NOTIFY' || item.activityType === 'CALLBACK';
+export const isDelivery = (item: Activity) => item.activityType === 'NOTIFY' || item.activityType === 'CALLBACK';
 const activityGroups: Record<ActivityFilter, (item: Activity) => boolean> = {
   ALL: () => true,
   MANUAL: item => item.activityType === 'SUBMISSION' || item.activityType === 'APPROVAL' || item.activityType === 'TRANSFER',
@@ -207,9 +201,11 @@ function ActivityLog({ detail, instanceId, canRetry, onAuthorizationChanged }: {
   </div>;
 }
 
-function activityText(item: Activity, detail: InstanceDetail): string {
+/** 活动的一行文字（实例详情、我发起的、已办共用）。 */
+/** actorId 给出时本人显示为“你”。 */
+export function activityText(item: Activity, detail: InstanceDetail, actorId?: string): string {
   const node = item.nodeKey ? nodeOf(detail.graph, item.nodeKey)?.name ?? item.nodeKey : '';
-  const actor = item.actorName ?? (item.actorId ? personName(item.actorId, detail.people) : '');
+  const actor = actorId && item.actorId === actorId ? '你' : item.actorName ?? (item.actorId ? personName(item.actorId, detail.people) : '');
   const round = item.roundNo && item.roundNo > 1 ? `第 ${item.roundNo} 轮 ` : '';
   const status = item.status && !isDelivery(item)
     ? (approvalStatusLabels as Record<string, string>)[item.status] ?? (nodeRunStatusLabels as Record<string, string>)[item.status]
@@ -231,7 +227,10 @@ function StartInfo({ detail }: { detail: InstanceDetail }) {
   </section>;
 }
 
-function TerminateModal({ instanceId, onClose, onDone, onAuthorizationChanged }: { instanceId: string; onClose: () => void; onDone: () => void; onAuthorizationChanged: () => void }) {
+/** 终止实例（发起人或有管理实例权限的人）；title 可改为「撤回（终止实例）」。 */
+export function TerminateModal({ instanceId, onClose, onDone, onAuthorizationChanged, title = '终止实例' }: {
+  instanceId: string; onClose: () => void; onDone: () => void; onAuthorizationChanged: () => void; title?: string;
+}) {
   const { message } = App.useApp();
   const [form] = Form.useForm<{ reason: string }>();
   const command = useWorkflowCommand(onAuthorizationChanged);
@@ -239,7 +238,7 @@ function TerminateModal({ instanceId, onClose, onDone, onAuthorizationChanged }:
     const result = await command.run(workflowPaths.termination(instanceId), 'POST', { reason: reason.trim() }, decodeMutation, '终止失败');
     if (result) { void message.success('实例已终止'); onDone(); }
   }
-  return <Modal open title="终止实例" okText="确认终止" okButtonProps={{ danger: true, loading: command.saving }} onCancel={onClose} onOk={() => form.submit()}>
+  return <Modal open title={title} okText="确认终止" okButtonProps={{ danger: true, loading: command.saving }} onCancel={onClose} onOk={() => form.submit()}>
     <p className="muted">终止后实例只读：进行中的节点与未完成动作取消，待审批撤回。终止不回退任何业务数据。</p>
     {command.formError && <Alert type="error" showIcon title={command.formError} />}
     {command.conflict && <Alert type="warning" showIcon title="实例状态已变化，请刷新后重试" />}

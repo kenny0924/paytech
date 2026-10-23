@@ -24,7 +24,6 @@ import com.paytech.platform.support.api.workflow.response.WorkflowTaskBody;
 import com.paytech.platform.support.ext.rest.audit.Audit;
 import com.paytech.platform.support.workflow.service.processor.DecideWorkflowApprovalProcessor;
 import com.paytech.platform.support.workflow.service.processor.RetryWorkflowCallbackProcessor;
-import com.paytech.platform.support.workflow.service.processor.ReverifyWorkflowActionProcessor;
 import com.paytech.platform.support.workflow.service.processor.SearchWorkflowAssigneesProcessor;
 import com.paytech.platform.support.workflow.service.processor.StartWorkflowInstanceProcessor;
 import com.paytech.platform.support.workflow.service.processor.SubmitWorkflowActionProcessor;
@@ -33,7 +32,6 @@ import com.paytech.platform.support.workflow.service.processor.TransferWorkflowA
 import com.paytech.platform.support.workflow.service.processor.TransferWorkflowApprovalProcessor;
 import com.paytech.platform.support.workflow.service.processor.WorkflowQueryProcessor;
 import com.paytech.platform.support.workflow.service.processor.request.RetryCallbackRequest;
-import com.paytech.platform.support.workflow.service.processor.request.ReverifyActionRequest;
 import com.paytech.platform.support.workflow.service.processor.request.SubmitActionRequest;
 import com.paytech.platform.support.workflow.service.processor.request.TerminateInstanceRequest;
 
@@ -49,7 +47,6 @@ public class WorkflowInstanceController implements WorkflowInstanceApi {
     private final WorkflowQueryProcessor queries;
     private final StartWorkflowInstanceProcessor startProcessor;
     private final SubmitWorkflowActionProcessor submitProcessor;
-    private final ReverifyWorkflowActionProcessor reverifyProcessor;
     private final RetryWorkflowCallbackProcessor retryProcessor;
     private final DecideWorkflowApprovalProcessor decideProcessor;
     private final TransferWorkflowActionProcessor transferActionProcessor;
@@ -110,7 +107,7 @@ public class WorkflowInstanceController implements WorkflowInstanceApi {
             converter.id(instanceId, "instanceId"), request.getReason().strip())));
     }
 
-    /** 提交动作。 */
+    /** 完成动作。 */
     @Audit(action = "OPERATIONS_WORKFLOW_ACTION_SUBMIT", resourceType = "WORKFLOW_ACTION_RUN",
         resourceIdParameter = "actionRunId", fallbackResourceId = "WORKFLOW_ACTION_RUN")
     @Override
@@ -119,15 +116,6 @@ public class WorkflowInstanceController implements WorkflowInstanceApi {
         converter.object(request.getOutput(), "output");
         return converter.submission(submitProcessor.process(new SubmitActionRequest(actor, session,
             converter.id(actionRunId, "actionRunId"), request.getOutput())));
-    }
-
-    /** 重新验证动作。 */
-    @Audit(action = "OPERATIONS_WORKFLOW_ACTION_REVERIFY", resourceType = "WORKFLOW_ACTION_RUN",
-        resourceIdParameter = "actionRunId", fallbackResourceId = "WORKFLOW_ACTION_RUN")
-    @Override
-    public WorkflowSubmissionResponseBody reverifyAction(String actor, String session, String actionRunId) {
-        return converter.submission(reverifyProcessor.process(new ReverifyActionRequest(actor, session,
-            converter.id(actionRunId, "actionRunId"))));
     }
 
     /** 转交动作。 */

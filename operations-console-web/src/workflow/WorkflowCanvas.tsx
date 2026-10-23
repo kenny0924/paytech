@@ -1,10 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { Dropdown } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { nodeTypeIcons } from './workflowIcons';
 import {
-  Background, ConnectionLineType, Controls, Handle, MarkerType, MiniMap, Position, ReactFlow, ReactFlowProvider, applyNodeChanges, useReactFlow,
+  Background, BaseEdge, ConnectionLineType, Controls, EdgeLabelRenderer, Handle, MarkerType, MiniMap, Position, ReactFlow, ReactFlowProvider,
+  applyNodeChanges, getSmoothStepPath, useReactFlow,
 } from '@xyflow/react';
-import type { Edge, Node, NodeChange, NodeProps } from '@xyflow/react';
-import { toCanvas } from './graphModel';
+import type { Edge, EdgeProps, Node, NodeChange, NodeProps } from '@xyflow/react';
+import { insertableTypes, toCanvas } from './graphModel';
+import { nodeTypeLabels } from './workflowLabels';
 import type { VariableInfo } from './graphModel';
 import type { VisualState } from './runtimeModel';
 import type { GraphNode, NodeType, WorkflowGraph } from './workflowTypes';
@@ -17,7 +22,6 @@ interface Decoration { subtitle?: ReactNode; state?: VisualState; error?: string
 type CardData = { node: GraphNode; decoration: Decoration; connectable: boolean };
 type CardNode = Node<CardData>;
 
-const icons: Partial<Record<NodeType, string>> = { EXCLUSIVE: '✕', PARALLEL_SPLIT: '+', PARALLEL_JOIN: '+' };
 const stateClass = (decoration: Decoration) => `${decoration.state ? ` is-${decoration.state}` : ''}${decoration.error ? ' has-error' : ''}${decoration.dim ? ' is-dim' : ''}`;
 
 function CircleCard({ data, selected }: NodeProps<CardNode>) {
@@ -34,7 +38,7 @@ function GatewayCard({ data, selected }: NodeProps<CardNode>) {
   const { node, decoration } = data;
   return <div className={`wf-gateway${selected ? ' is-selected' : ''}${stateClass(decoration)}`} title={decoration.error}>
     <Handle type="target" position={Position.Left} isConnectable={data.connectable} />
-    <div className="wf-gateway-diamond"><span>{icons[node.type]}</span></div>
+    <div className="wf-gateway-diamond"><span>{nodeTypeIcons[node.type]}</span></div>
     {decoration.error && <span className="wf-error-badge">!</span>}
     <div className="wf-gateway-label">{node.name || node.key}</div>
     <Handle type="source" position={Position.Right} isConnectable={data.connectable} />
@@ -53,12 +57,44 @@ function TaskCard({ data, selected }: NodeProps<CardNode>) {
 }
 const nodeTypes = { circle: CircleCard, gateway: GatewayCard, task: TaskCard };
 
+/** 可插入节点的连线：悬停时显示圆形「+」，点开选择节点类型（需求 D3）。 */
+type InsertData = { visible: boolean; onHover: (key: string | null) => void; onMenu: (key: string | null) => void; onInsert: (edgeKey: string, type: NodeType) => void };
+type InsertEdge = Edge<InsertData, 'insertable'>;
+function InsertableEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, style, label, labelStyle, labelBgStyle,
+  labelBgPadding, labelBgBorderRadius, data }: EdgeProps<InsertEdge>) {
+  const [path, labelX, labelY] = getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition });
+  // 没有条件标签时「+」在中点；有标签时放到标签与终点之间的最后一段，避免压住标签。
+  const plus = label ? { x: (labelX + targetX) / 2, y: targetY } : { x: labelX, y: labelY };
+  return <>
+    <BaseEdge id={id} path={path} markerEnd={markerEnd} style={style} interactionWidth={24} label={label} labelX={labelX} labelY={labelY}
+      labelStyle={labelStyle} labelShowBg={!!label} labelBgStyle={labelBgStyle} labelBgPadding={labelBgPadding} labelBgBorderRadius={labelBgBorderRadius} />
+    {data && <EdgeLabelRenderer>
+      {/* EdgeLabelRenderer 是 React portal：点击会沿 React 树冒泡到连线的 onEdgeClick，把选中项改回连线（插入后应选中新节点），因此在这里截住。 */}
+      <div className={`wf-edge-insert nodrag nopan${data.visible ? ' is-visible' : ''}`}
+        style={{ transform: `translate(-50%, -50%) translate(${plus.x}px, ${plus.y}px)` }}
+        onClick={event => event.stopPropagation()}
+        onMouseEnter={() => data.onHover(id)} onMouseLeave={() => data.onHover(null)}>
+        <Dropdown trigger={['click']} onOpenChange={open => data.onMenu(open ? id : null)}
+          menu={{ items: insertableTypes.map(type => ({ key: type, label: nodeTypeLabels[type] })), onClick: ({ key, domEvent }) => {
+            domEvent.stopPropagation(); data.onMenu(null); data.onInsert(id, key as NodeType); } }}>
+          <button type="button" title="在此插入节点" aria-label="在此插入节点"><PlusOutlined /></button>
+        </Dropdown>
+      </div>
+    </EdgeLabelRenderer>}
+  </>;
+}
+const edgeTypes = { insertable: InsertableEdge };
+
 export interface CanvasProps {
   graph: WorkflowGraph; editable: boolean; selection: CanvasSelection; onSelect: (selection: CanvasSelection) => void;
   decorate?: (node: GraphNode) => Decoration; edgeState?: (edgeKey: string) => 'done' | 'pending' | undefined;
-  variables?: (gatewayKey: string) => VariableInfo[]; focusKey?: string;
+  variables?: (gatewayKey: string) => VariableInfo[];
+  /** 定位并居中的节点或连线 key。 */
+  focusKey?: string;
   onConnect?: (from: string, to: string) => void; onMove?: (key: string, position: { x: number; y: number }) => void;
   onDelete?: (selection: NonNullable<CanvasSelection>) => void; onDropNode?: (type: NodeType, position: { x: number; y: number }) => void;
+  /** 提供时连线悬停出现「+」，可在该连线上插入节点。 */
+  onInsertOnEdge?: (edgeKey: string, type: NodeType) => void;
   toolbar?: ReactNode; footer?: ReactNode; height?: number | string;
 }
 
@@ -68,8 +104,17 @@ export function WorkflowCanvas(props: CanvasProps) {
 }
 
 function CanvasInner({ graph, editable, selection, onSelect, decorate, edgeState, variables, focusKey, onConnect, onMove, onDelete, onDropNode,
-  toolbar, footer, height = 560 }: CanvasProps) {
+  onInsertOnEdge, toolbar, footer, height = 560 }: CanvasProps) {
   const view = useReactFlow();
+  const graphRef = useRef(graph); graphRef.current = graph;
+  // 「+」的显示：悬停连线或按钮时显示，离开后稍等再隐藏（便于从连线移到按钮上）；菜单打开时保持显示。
+  const [hoverEdge, setHoverEdge] = useState<string | null>(null); const [menuEdge, setMenuEdge] = useState<string | null>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(hideTimer.current), []);
+  const hover = useMemo(() => (key: string | null) => {
+    clearTimeout(hideTimer.current);
+    if (key) setHoverEdge(key); else hideTimer.current = setTimeout(() => setHoverEdge(null), 250);
+  }, []);
   const derived = useMemo(() => toCanvas(graph, variables, selection?.kind === 'node' ? selection.key : null), [graph, variables, selection]);
   const [nodes, setNodes] = useState<CardNode[]>([]);
   useEffect(() => {
@@ -81,13 +126,19 @@ function CanvasInner({ graph, editable, selection, onSelect, decorate, edgeState
     const state = edgeState?.(edge.id);
     const active = selection?.kind === 'edge' && selection.key === edge.id;
     const color = active ? '#315dca' : state === 'done' ? '#1f8a4c' : '#8a96ad';
-    return { id: edge.id, source: edge.source, target: edge.target, type: 'smoothstep', deletable: false, selected: active,
+    const insertable = editable && onInsertOnEdge
+      ? { type: 'insertable', data: { visible: hoverEdge === edge.id || menuEdge === edge.id, onHover: hover, onMenu: setMenuEdge, onInsert: onInsertOnEdge } }
+      : { type: 'smoothstep' };
+    return { id: edge.id, source: edge.source, target: edge.target, ...insertable, deletable: false, selected: active,
       markerEnd: { type: MarkerType.ArrowClosed, color }, style: { stroke: color, strokeWidth: active ? 2 : 1.4, strokeDasharray: state === 'pending' ? '4 4' : undefined },
       ...(edge.label ? { label: edge.label, labelStyle: { fill: edge.data.isDefault ? '#6b7486' : '#315dca', fontSize: 11 },
         labelBgStyle: { fill: '#fff', stroke: active ? '#315dca' : '#d5dce8' }, labelBgPadding: [6, 3] as [number, number], labelBgBorderRadius: 4 } : {}) };
-  }), [derived.edges, edgeState, selection]);
+  }), [derived.edges, edgeState, selection, editable, onInsertOnEdge, hoverEdge, menuEdge, hover]);
   useEffect(() => {
-    if (focusKey) void view.fitView({ nodes: [{ id: focusKey }], padding: 1, duration: 250, maxZoom: 1 });
+    if (!focusKey) return;
+    // 定位连线时把两端节点一起放进视野（节点与连线 key 在版本内不重复）。
+    const edge = graphRef.current.edges.find(item => item.key === focusKey);
+    void view.fitView({ nodes: (edge ? [edge.from, edge.to] : [focusKey]).map(id => ({ id })), padding: edge ? 0.6 : 1, duration: 250, maxZoom: 1 });
   }, [focusKey, view]);
   function changeNodes(changes: NodeChange<CardNode>[]) {
     setNodes(current => applyNodeChanges(changes.filter(change => change.type === 'position' || change.type === 'dimensions'), current));
@@ -106,13 +157,15 @@ function CanvasInner({ graph, editable, selection, onSelect, decorate, edgeState
       onDropNode?.(type, view.screenToFlowPosition({ x: event.clientX, y: event.clientY }));
     }}>
     {toolbar && <div className="wf-canvas-toolbar">{toolbar}</div>}
-    <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} connectionLineType={ConnectionLineType.SmoothStep} fitView
+    <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} connectionLineType={ConnectionLineType.SmoothStep} fitView
       fitViewOptions={{ padding: 0.15, maxZoom: 1 }} minZoom={0.25} maxZoom={1.6} nodesDraggable={editable} nodesConnectable={editable}
       elementsSelectable edgesReconnectable={false} deleteKeyCode={null} proOptions={{ hideAttribution: true }}
       onNodesChange={changeNodes}
       onNodeDragStop={(_, node) => onMove?.(node.id, node.position)}
       onNodeClick={(_, node) => onSelect({ kind: 'node', key: node.id })}
       onEdgeClick={(_, edge) => onSelect({ kind: 'edge', key: edge.id })}
+      onEdgeMouseEnter={onInsertOnEdge ? (_, edge) => hover(edge.id) : undefined}
+      onEdgeMouseLeave={onInsertOnEdge ? () => hover(null) : undefined}
       onPaneClick={() => onSelect(null)}
       onConnect={connection => { if (editable && connection.source && connection.target) onConnect?.(connection.source, connection.target); }}
       isValidConnection={connection => connection.source !== connection.target}>

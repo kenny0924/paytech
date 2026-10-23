@@ -7,7 +7,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 import com.paytech.platform.support.api.enums.FileObjectStatus;
@@ -31,7 +30,9 @@ import tools.jackson.databind.JsonNode;
  * <ul>
  * <li>归属：文件存在、来源系统为 platform-support、上传原因为 WORKFLOW_ATTACHMENT、上传人为提交人。不满足直接拒绝，不保存，
  * 防止把他人的文件地址写进实例后借下载授权读取。</li>
- * <li>内容：数量、MIME、扫描状态与对象状态。发起时扫描中直接拒绝；动作提交时记为验证未通过，扫描结束后重新验证。</li>
+ * <li>内容：只检查形态、重复、对象可用与扫描是否未通过（2026-10-22 起不检查数量与 MIME）。发起与完成动作同一规则：
+ * 扫描中不挡；已确认未通过（隔离 / 拒绝）的文件在该文件路径上返回 422，须删除后重新上传。审批人在提交内容中看到
+ * 每个文件的扫描状态，未通过的不能下载。</li>
  * </ul>
  */
 public final class AttachmentRules {
@@ -42,8 +43,8 @@ public final class AttachmentRules {
     /** 工作流附件的来源系统：Platform 内部模块调用文件入口时使用的来源系统。 */
     public static final String SOURCE_SYSTEM = FileSourceCodes.PLATFORM_SUPPORT;
 
-    /** 发起时文件仍在扫描的拒绝原因。 */
-    public static final String SCANNING_REJECTION = "文件扫描中，请稍后再提交";
+    /** 文件已确认未通过安全检查时的字段错误原因（发起与完成动作同一口径）。 */
+    public static final String SCAN_FAILED = "文件未通过安全检查，请删除后重新上传";
 
     private AttachmentRules() {
     }
@@ -206,20 +207,6 @@ public final class AttachmentRules {
     }
 
     /**
-     * 动作是否接收文件：FILE_UPLOAD，或含 FILE 字段的 FORM。
-     *
-     * @param config 动作配置
-     * @return 接收文件返回 true
-     */
-    public static boolean acceptsFiles(ActionConfig config) {
-        return switch (config) {
-            case FileUploadActionConfig upload -> true;
-            case FormActionConfig form -> form.form().fields().stream().anyMatch(f -> f.type() == FormFieldType.FILE);
-            default -> false;
-        };
-    }
-
-    /**
      * 归属问题：文件不存在、不是工作流附件或不是提交人上传。
      *
      * @param ids 引用的文件
@@ -244,70 +231,65 @@ public final class AttachmentRules {
     }
 
     /**
-     * 是否有文件仍在扫描。
+     * 表单 FILE 字段中已确认未通过扫描的文件；形态不合法的值跳过，由地址格式与字段校验报告。
      *
-     * @param ids 引用的文件
+     * @param form 字段定义
+     * @param values 提交值
      * @param facts 文件事实
-     * @return 有扫描中的文件返回 true
+     * @param root 提交值在请求体中的路径，如 startValues
+     * @return 请求体字段路径（如 startValues.contractFiles[0]）到原因
      */
-    public static boolean anyScanning(Collection<Long> ids, Map<Long, AttachmentFact> facts) {
-        return ids.stream().map(facts::get).anyMatch(fact -> fact != null && fact.scanning());
+    public static Map<String, String> scanFailedErrors(FormDefinition form, JsonNode values,
+        Map<Long, AttachmentFact> facts, String root) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        if (form == null || values == null || !values.isObject()) {
+            return errors;
+        }
+        for (FormField field : form.fields()) {
+            if (field.type() != FormFieldType.FILE) {
+                continue;
+            }
+            List<Long> ids = Objects.requireNonNullElse(fileIds(values.get(field.key())), List.of());
+            for (int index = 0; index < ids.size(); index++) {
+                AttachmentFact fact = facts.get(ids.get(index));
+                if (fact != null && fact.scanFailed()) {
+                    errors.put(root + "." + field.key() + "[" + index + "]", SCAN_FAILED);
+                }
+            }
+        }
+        return errors;
     }
 
     /**
-     * 一个 FILE 值的内容问题：形态、重复、数量、类型与扫描状态。
+     * 一个非空 FILE 值的技术问题：形态、重复、文件存在、扫描未通过与对象可用。2026-10-22 起不检查数量与 MIME；
+     * 扫描中不挡，已确认未通过的文件须删除后重新上传。
      *
      * @param value 非空的 FILE 值
-     * @param minFiles 最少文件数；为空不限
-     * @param maxFiles 最多文件数；为空不限
-     * @param mimeTypes 允许的 MIME；为空不限
+     * @param path 值的路径，如 output.files、contractFiles
      * @param facts 文件事实
-     * @return 问题说明；合法时为 null
+     * @return 路径（单个文件为 {@code path[i]}）到原因；合法时为空
      */
-    public static String valueProblem(JsonNode value, Integer minFiles, Integer maxFiles, List<String> mimeTypes,
-        Map<Long, AttachmentFact> facts) {
+    public static Map<String, String> valueErrors(JsonNode value, String path, Map<Long, AttachmentFact> facts) {
+        Map<String, String> errors = new LinkedHashMap<>();
         List<Long> ids = fileIds(value);
         if (ids == null) {
-            return "必须是文件地址数组";
+            errors.put(path, "必须是文件地址数组");
+            return errors;
         }
         if (new LinkedHashSet<>(ids).size() != ids.size()) {
-            return "文件不能重复";
+            errors.put(path, "文件不能重复");
+            return errors;
         }
-        if (minFiles != null && ids.size() < minFiles) {
-            return "至少需要 " + minFiles + " 个文件";
+        for (int index = 0; index < ids.size(); index++) {
+            AttachmentFact fact = facts.get(ids.get(index));
+            if (fact == null) {
+                errors.put(path + "[" + index + "]", "文件不存在：" + address(ids.get(index)));
+            } else if (fact.scanFailed()) {
+                errors.put(path + "[" + index + "]", SCAN_FAILED);
+            } else if (fact.objectStatus() != FileObjectStatus.ACTIVE) {
+                errors.put(path + "[" + index + "]", "文件不可用：" + address(ids.get(index)));
+            }
         }
-        if (maxFiles != null && ids.size() > maxFiles) {
-            return "最多 " + maxFiles + " 个文件";
-        }
-        List<String> problems = new ArrayList<>();
-        ids.forEach(id -> fileProblem(id, facts.get(id), mimeTypes).ifPresent(problems::add));
-        return problems.isEmpty() ? null : String.join("，", problems);
-    }
-
-    /**
-     * 单个文件的内容问题。
-     *
-     * @param id 文件 ID
-     * @param fact 文件事实；查不到为 null
-     * @param mimeTypes 允许的 MIME；为空不限
-     * @return 问题说明
-     */
-    static Optional<String> fileProblem(long id, AttachmentFact fact, List<String> mimeTypes) {
-        if (fact == null) {
-            return Optional.of("文件不存在：" + address(id));
-        }
-        if (fact.objectStatus() != FileObjectStatus.ACTIVE) {
-            return Optional.of("文件不可用：" + address(id));
-        }
-        if (!mimeTypes.isEmpty() && !mimeTypes.contains(fact.mimeType())) {
-            return Optional.of("文件类型 " + fact.mimeType() + " 不在允许范围：" + address(id));
-        }
-        if (fact.scanning()) {
-            return Optional.of("文件扫描中，扫描通过后请重新验证：" + address(id));
-        }
-        if (!fact.available()) {
-            return Optional.of("文件未通过安全扫描：" + address(id));
-        }
-        return Optional.empty();
+        return errors;
     }
 }

@@ -15,6 +15,8 @@
 --   DROP TABLE `t_workflow_verification`; DROP TABLE `t_workflow_action_run`; DROP TABLE `t_workflow_node_run`;
 --   DROP TABLE `t_workflow_instance`; DROP TABLE `t_workflow_action_template`;
 --   DROP TABLE `t_workflow_definition_version`; DROP TABLE `t_workflow_definition`;
+-- 2026-10-22 修订：t_workflow_action_run 的表注释与 required、status 列注释按动作状态 PENDING / COMPLETED / CANCELLED 同步为当前模型；
+--   已按旧注释建表的环境由 requirements/20261022/platform-support-工作流体验优化/sql/10-action-run-status.sql 迁移数据并改注释。
 SET NAMES utf8mb4;
 
 CREATE TABLE `t_workflow_definition` (
@@ -123,9 +125,9 @@ CREATE TABLE `t_workflow_action_run` (
   `action_key` VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '绑定流程版本中的动作 key，同时是输出变量前缀。',
   `action_template_id` BIGINT NOT NULL COMMENT '引用的动作模板 ID；执行配置以流程版本的模板快照为准。',
   `action_type` VARCHAR(32) NOT NULL COMMENT '动作的提交与验证方式，取自版本快照。允许值：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM。',
-  `required` TINYINT NOT NULL COMMENT '1 表示必选，节点放行前必须 VERIFIED；0 表示可选，不阻塞放行。',
+  `required` TINYINT NOT NULL COMMENT '1 表示必选，节点进入审批或放行前必须 COMPLETED；0 表示可选，不阻塞放行。',
   `assignee_id` BIGINT NOT NULL COMMENT '当前指派的执行人 Operations 账号 ID；转交后更新。',
-  `status` VARCHAR(32) NOT NULL COMMENT 'PENDING 未提交；VERIFIED 最后一次验证通过且不再接受提交；UNVERIFIED 最后一次验证未通过；CANCELLED 节点被终止或结束时未完成。允许值：PENDING、VERIFIED、UNVERIFIED、CANCELLED。',
+  `status` VARCHAR(32) NOT NULL COMMENT 'PENDING 待处理；COMPLETED 已完成；CANCELLED 节点结束或实例终止时仍未完成。允许值：PENDING、COMPLETED、CANCELLED。',
   `output_json` JSON NULL COMMENT '执行人最近一次提交的输出，按动作类型与配置校验；未提交时为空。',
   `submitted_by` BIGINT NULL COMMENT '最近一次提交的 Operations 账号 ID；未提交时为空。',
   `submitted_time` DATETIME(6) NULL COMMENT '最近一次提交的 UTC 微秒时间；未提交时为空。',
@@ -136,7 +138,7 @@ CREATE TABLE `t_workflow_action_run` (
   UNIQUE KEY `uk_workflow_action_node` (`node_run_id`, `action_key`) COMMENT '保证业务唯一性：node_run_id、action_key',
   KEY `idx_workflow_action_assignee` (`assignee_id`, `status`) COMMENT '支持访问路径：assignee_id、status',
   KEY `idx_workflow_action_inst` (`instance_id`) COMMENT '支持访问路径：instance_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='节点运行中一个动作的执行情况与最近一次提交的输出；以最后一次验证为准，验证通过后锁定，变量取自最新一轮 VERIFIED 的输出';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='节点运行中一个动作的执行情况与最近一次完成的输出；必选动作在节点进入审批后锁定，变量取自最新一轮 COMPLETED 的输出';
 
 CREATE TABLE `t_workflow_verification` (
   `verification_id` BIGINT NOT NULL COMMENT '验证记录的 Snowflake 主键。',

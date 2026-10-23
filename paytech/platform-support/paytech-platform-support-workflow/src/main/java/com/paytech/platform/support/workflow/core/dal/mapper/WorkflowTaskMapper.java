@@ -9,6 +9,7 @@ import com.paytech.platform.support.workflow.domain.query.WorkflowHandledTaskVie
 import com.paytech.platform.support.workflow.domain.query.WorkflowNodeProgressView;
 import com.paytech.platform.support.workflow.domain.query.WorkflowOpenAssignmentView;
 import com.paytech.platform.support.workflow.domain.query.WorkflowTaskView;
+import com.paytech.platform.support.workflow.domain.query.WorkflowTemplateReferenceCountView;
 import com.paytech.platform.support.workflow.domain.query.WorkflowTemplateReferenceView;
 
 /** 我的待办组合查询（动作运行、审批、节点运行与实例），SQL 位于 mapper/workflow/WorkflowTaskMapper.xml。 */
@@ -38,4 +39,7 @@ public interface WorkflowTaskMapper {
 
     /** 冻结了该模板的已发布版本（文本预筛）。 */
     List<WorkflowTemplateReferenceView> templateReferences(@Param("templateId") String templateId);
+
+    /** 一批模板各自被多少个流程定义的当前发布版本引用；未被引用的模板不返回行。 */
+    List<WorkflowTemplateReferenceCountView> templateReferenceCounts(@Param("ids") Collection<String> templateIds);
 }

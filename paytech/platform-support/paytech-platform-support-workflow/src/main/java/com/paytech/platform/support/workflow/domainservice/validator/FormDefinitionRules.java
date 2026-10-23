@@ -1,6 +1,5 @@
 package com.paytech.platform.support.workflow.domainservice.validator;
 
-import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,22 +12,13 @@ import com.paytech.platform.support.workflow.domain.form.FormDefinition;
 import com.paytech.platform.support.workflow.domain.form.FormField;
 
 /**
- * 校验字段定义（技术方案 3.2），启动表单与 FORM 动作配置共用：最多 50 个字段，key 合法且唯一，
- * 规则只出现在对应类型上且取值不越界。问题的 itemKey 为字段 key。
+ * 校验字段定义（技术方案 3.2），启动表单与 FORM 动作配置共用：最多 50 个字段，key 合法且唯一，显示名非空，
+ * 枚举字段的选项合法。问题的 itemKey 为字段 key。
  */
 final class FormDefinitionRules {
 
     /** 每个表单的字段上限。 */
     static final int MAX_FIELDS = 50;
-
-    /** TEXT 最大长度。 */
-    static final int TEXT_LIMIT = 255;
-
-    /** LONG_TEXT 最大长度。 */
-    static final int LONG_TEXT_LIMIT = 4000;
-
-    /** NUMBER 最多小数位。 */
-    static final int MAX_SCALE = 8;
 
     private final ProblemCollector problems;
 
@@ -72,84 +62,15 @@ final class FormDefinitionRules {
     }
 
     /**
-     * 返回字段规则的问题说明。
+     * 返回字段规则的问题说明：只校验网关条件需要的枚举选项；maxLength、min / max / scale、minFiles / maxFiles /
+     * mimeTypes 等校验键 2026-10-22 起忽略（存量配置照常接受，不再校验取值）。
      *
      * @param type 字段类型
      * @param rules 字段规则
      * @return 问题说明；合法时为 null
      */
     static String ruleProblem(FormFieldType type, FieldRules rules) {
-        String foreign = foreignRule(type, rules);
-        if (foreign != null) {
-            return foreign + " 不能用于 " + type.getCode() + " 字段";
-        }
-        return switch (type) {
-            case TEXT -> lengthProblem(rules.maxLength(), TEXT_LIMIT);
-            case LONG_TEXT -> lengthProblem(rules.maxLength(), LONG_TEXT_LIMIT);
-            case NUMBER -> numberProblem(rules);
-            case ENUM -> optionProblem(rules);
-            case FILE -> fileCountProblem(rules.minFiles(), rules.maxFiles(), rules.mimeTypes().stream()
-                .anyMatch(mime -> !WorkflowValueFormats.isMimeType(mime)));
-            default -> null;
-        };
-    }
-
-    /**
-     * 找出不属于该类型的规则名。
-     *
-     * @param type 字段类型
-     * @param rules 字段规则
-     * @return 第一个不适用的规则名；全部适用时为 null
-     */
-    private static String foreignRule(FormFieldType type, FieldRules rules) {
-        boolean text = type == FormFieldType.TEXT || type == FormFieldType.LONG_TEXT;
-        boolean number = type == FormFieldType.NUMBER;
-        boolean file = type == FormFieldType.FILE;
-        if (!text && rules.maxLength() != null) {
-            return "maxLength";
-        }
-        if (!number && (rules.min() != null || rules.max() != null || rules.scale() != null)) {
-            return "min / max / scale";
-        }
-        if (type != FormFieldType.ENUM && !rules.options().isEmpty()) {
-            return "options";
-        }
-        if (!file && (rules.minFiles() != null || rules.maxFiles() != null || !rules.mimeTypes().isEmpty())) {
-            return "minFiles / maxFiles / mimeTypes";
-        }
-        return null;
-    }
-
-    /**
-     * 文本长度规则问题。
-     *
-     * @param maxLength 配置的最大长度
-     * @param limit 类型上限
-     * @return 问题说明或 null
-     */
-    private static String lengthProblem(Integer maxLength, int limit) {
-        if (maxLength != null && (maxLength < 1 || maxLength > limit)) {
-            return "maxLength 必须在 1 到 " + limit + " 之间";
-        }
-        return null;
-    }
-
-    /**
-     * 数字规则问题。
-     *
-     * @param rules 字段规则
-     * @return 问题说明或 null
-     */
-    private static String numberProblem(FieldRules rules) {
-        BigDecimal min = rules.min();
-        BigDecimal max = rules.max();
-        if (min != null && max != null && min.compareTo(max) > 0) {
-            return "min 不能大于 max";
-        }
-        if (rules.scale() != null && (rules.scale() < 0 || rules.scale() > MAX_SCALE)) {
-            return "scale 必须在 0 到 " + MAX_SCALE + " 之间";
-        }
-        return null;
+        return type == FormFieldType.ENUM ? optionProblem(rules) : null;
     }
 
     /**
@@ -172,26 +93,5 @@ final class FormDefinitionRules {
             }
         }
         return null;
-    }
-
-    /**
-     * 文件数量与类型规则问题；上传文件动作配置复用。
-     *
-     * @param minFiles 最少文件数
-     * @param maxFiles 最多文件数
-     * @param invalidMime 是否有不合法的 MIME 类型
-     * @return 问题说明或 null
-     */
-    static String fileCountProblem(Integer minFiles, Integer maxFiles, boolean invalidMime) {
-        if (minFiles != null && minFiles < 0) {
-            return "minFiles 不能小于 0";
-        }
-        if (maxFiles != null && maxFiles < 1) {
-            return "maxFiles 不能小于 1";
-        }
-        if (minFiles != null && maxFiles != null && minFiles > maxFiles) {
-            return "minFiles 不能大于 maxFiles";
-        }
-        return invalidMime ? "mimeTypes 含有不合法的 MIME 类型" : null;
     }
 }

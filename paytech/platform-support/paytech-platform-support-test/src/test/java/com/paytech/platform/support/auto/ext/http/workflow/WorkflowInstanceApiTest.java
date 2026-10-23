@@ -27,13 +27,16 @@ import com.paytech.platform.support.test.base.WorkflowApiTestBase;
 import com.paytech.platform.support.test.builder.OperatorBuilder;
 import com.paytech.platform.support.test.builder.OperatorBuilder.Operator;
 import com.paytech.platform.support.test.builder.WorkflowGraphJson;
+import com.paytech.platform.support.test.checker.PlatformResponseChecker;
 import com.paytech.platform.support.workflow.core.common.WorkflowPermissions;
+import com.paytech.platform.support.workflow.core.enums.ActionRunStatus;
 import com.paytech.platform.support.workflow.core.enums.RejectionKind;
 
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 工作流运行：发起、提交与同步验证、ANY / ALL 审批、必选与可选动作、排他与并行网关、退回修改与四种驳回位置、
+ * 工作流运行：发起、完成动作、ANY / ALL 审批、必选与可选动作、排他与并行网关、退回修改与四种驳回位置、
  * 同人限制与指派限制、转交、终止、我的待办与实例可见性。
  *
  * @see WorkflowInstanceApi
@@ -136,7 +139,10 @@ class WorkflowInstanceApiTest extends WorkflowApiTestBase {
                 id(extra.get("assignee_id"))), () -> assertEquals("COMPLETED", instanceStatus(instanceId)));
     }
 
-    /** 排他网关按启动表单取值走条件连线，否则走默认连线。 */
+    /**
+     * 排他网关按启动表单取值走条件连线，否则走默认连线；启动值缺少必填、不是可选值或类型不对时按 startValues.&lt;key&gt;
+     * 返回 422 字段错误，原因与完成动作一致。
+     */
     @Test
     void test_exclusiveGateway() {
         JsonNode graph = WorkflowGraphJson.graph()
@@ -150,8 +156,13 @@ class WorkflowInstanceApiTest extends WorkflowApiTestBase {
 
         long apple = started(definitionId, admin, WorkflowGraphJson.values("method", "APPLE_PAY"));
         long card = started(definitionId, admin, WorkflowGraphJson.values("method", "CARD"));
-        start(definitionId, admin, WorkflowGraphJson.values("method", "CASH"), null, null).assertProblem(400,
-            CommonErrorCode.BUSINESS_CHECK_FAILED);
+        assertStartFieldError(start(definitionId, admin, WorkflowGraphJson.empty(), null, null),
+            "startValues.method", "必填");
+        assertStartFieldError(start(definitionId, admin, WorkflowGraphJson.values("method", "CASH"), null, null),
+            "startValues.method", "不是可选值");
+        ObjectNode wrongType = (ObjectNode) WorkflowGraphJson.empty();
+        wrongType.put("method", true);
+        assertStartFieldError(start(definitionId, admin, wrongType, null, null), "startValues.method", "不是可选值");
 
         assertAll(() -> assertEquals("APPROVING", nodeStatus(apple, "apple", 1)),
             () -> assertNull(nodeStatus(apple, "card", 1)),
@@ -219,7 +230,10 @@ class WorkflowInstanceApiTest extends WorkflowApiTestBase {
             () -> assertEquals("RUNNING", instanceStatus(instanceId)));
     }
 
-    /** 只有被指派人可以提交与审批；同一人不能既执行又审批同一节点；验证失败可重新提交；上传动作未带文件记为未通过。 */
+    /**
+     * 只有被指派人可以完成与审批；同一人不能既执行又审批同一节点；不是可选值返回 422 且可修正后完成；
+     * 上传动作存量 minFiles ≥ 1 视为至少一个文件，未带文件返回 422；不写验证记录。
+     */
     @Test
     void test_assigneeAndSamePerson() {
         long upload = template("UPLOAD_DOC", "FILE_UPLOAD",
@@ -238,22 +252,21 @@ class WorkflowInstanceApiTest extends WorkflowApiTestBase {
 
         submit(risk, approverA, WorkflowGraphJson.values("riskLevel", "LOW")).assertProblem(400,
             CommonErrorCode.BUSINESS_CHECK_FAILED);
-        var failed = submit(risk, executor, WorkflowGraphJson.values("riskLevel", "MEDIUM")).assertOk()
-            .as(WorkflowSubmissionResponseBody.class);
-        var verified = submit(risk, executor, WorkflowGraphJson.values("riskLevel", "LOW")).assertOk()
+        submit(risk, executor, WorkflowGraphJson.values("riskLevel", "MEDIUM")).assertProblem(422,
+            CommonErrorCode.VALIDATION_ERROR).assertFieldError("output.riskLevel");
+        var completed = submit(risk, executor, WorkflowGraphJson.values("riskLevel", "LOW")).assertOk()
             .as(WorkflowSubmissionResponseBody.class);
         decide(instanceId, executor, "APPROVE", null, null).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
         post(RUNTIME + "/approvals/" + openApproval(instanceId, executor) + "/transfer", admin,
             new TransferWorkflowTaskRequestBody(approverA.actor(), "回避")).assertOk();
         approve(instanceId, approverA);
-        var uploadResult = submit(openAction(instanceId, "upload"), executor, WorkflowGraphJson.empty()).assertOk()
-            .as(WorkflowSubmissionResponseBody.class);
+        var noFiles = submit(openAction(instanceId, "upload"), executor, WorkflowGraphJson.empty()).assertProblem(422,
+            CommonErrorCode.VALIDATION_ERROR).assertFieldError("output.files");
 
-        assertAll(() -> assertEquals("UNVERIFIED", failed.getStatus()), () -> assertNotNull(failed.getFailureReason()),
-            () -> assertEquals("VERIFIED", verified.getStatus()),
-            () -> assertEquals(3, workflowData.verificationCount(instanceId)),
-            () -> assertEquals("UNVERIFIED", uploadResult.getStatus()),
-            () -> assertTrue(uploadResult.getFailureReason().contains("文件（files）必填")),
+        assertAll(() -> assertEquals(ActionRunStatus.COMPLETED.getCode(), completed.getStatus()),
+            () -> assertEquals(0, workflowData.verificationCount(instanceId)),
+            () -> assertTrue(noFiles.json().path("errors").get(0).path("message").asString().contains("至少上传一个文件")),
+            () -> assertEquals(ActionRunStatus.PENDING.getCode(), actionStatus(instanceId, "upload")),
             () -> assertEquals("ACTIVE", nodeStatus(instanceId, "files", 1)));
     }
 
@@ -340,8 +353,8 @@ class WorkflowInstanceApiTest extends WorkflowApiTestBase {
 
         post(RUNTIME + "/instances", admin, new StartWorkflowInstanceRequestBody(Long.toString(definitionId), 2, "实例",
             null, WorkflowGraphJson.empty(), null, null)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
-        start(definitionId, admin, WorkflowGraphJson.values("unknown", "x"), null, null).assertProblem(400,
-            CommonErrorCode.BUSINESS_CHECK_FAILED);
+        assertStartFieldError(start(definitionId, admin, WorkflowGraphJson.values("unknown", "x"), null, null),
+            "startValues.unknown", "未定义的字段");
         start(definitionId, admin, WorkflowGraphJson.empty(), null,
             List.of(new StartWorkflowInstanceRequestBody.ActionExecutor("missing", executor.actor()))).assertProblem(400,
                 CommonErrorCode.BUSINESS_CHECK_FAILED);
@@ -392,7 +405,8 @@ class WorkflowInstanceApiTest extends WorkflowApiTestBase {
             () -> assertEquals("流程 " + definitionId, tasks.path("items").get(0).path("definitionName").asString()),
             () -> assertEquals("审核", tasks.path("items").get(0).path("nodeName").asString()),
             () -> assertEquals(1, handledByExecutor.path("total").asInt()),
-            () -> assertEquals("VERIFIED", handledByExecutor.path("items").get(0).path("result").asString()),
+            () -> assertEquals(ActionRunStatus.COMPLETED.getCode(),
+                handledByExecutor.path("items").get(0).path("result").asString()),
             () -> assertEquals("审核", handledByExecutor.path("items").get(0).path("nodeName").asString()),
             () -> assertEquals("APPROVED", handledByApprover.path("items").get(0).path("result").asString()),
             () -> assertEquals("COMPLETED", handledByApprover.path("items").get(0).path("instanceStatus").asString()),
@@ -404,6 +418,14 @@ class WorkflowInstanceApiTest extends WorkflowApiTestBase {
     }
 
     /** start → review（执行人确认 + 两名审批人）→ end。 */
+    /** 发起被拒：422 VALIDATION_ERROR，字段错误落在给定路径且原因一致。 */
+    private static void assertStartFieldError(PlatformResponseChecker response, String field, String message) {
+        JsonNode errors = response.assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError(field).json()
+            .path("errors");
+        assertTrue(errors.valueStream().anyMatch(error -> field.equals(error.path("field").asString())
+            && message.equals(error.path("message").asString())), errors.toString());
+    }
+
     private JsonNode review(String mode) {
         return WorkflowGraphJson.graph().task("review", "审核").action("confirm", confirm, executor.accountId(), true)
             .approval(mode, approverA.accountId(), approverB.accountId()).end("end").chain("start", "review", "end")
@@ -437,6 +459,12 @@ class WorkflowInstanceApiTest extends WorkflowApiTestBase {
         return workflowData.nodeRuns(instanceId).stream().filter(row -> nodeKey.equals(row.get("node_key")))
             .filter(row -> ((Number) row.get("round_no")).intValue() == round).map(row -> (String) row.get("status"))
             .findFirst().orElse(null);
+    }
+
+    /** 某动作最新一轮的状态。 */
+    private String actionStatus(long instanceId, String actionKey) {
+        return workflowData.actionRuns(instanceId).stream().filter(row -> actionKey.equals(row.get("action_key")))
+            .map(row -> (String) row.get("status")).reduce((first, last) -> last).orElseThrow();
     }
 
     /** 待审批节点的驳回方式。 */

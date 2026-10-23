@@ -9,9 +9,6 @@ import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowVerific
 /** t_workflow_verification 的 MyBatis 映射，SQL 位于 mapper/workflow/WorkflowVerificationMapper.xml。 */
 public interface WorkflowVerificationMapper {
 
-    /** 插入一行。 */
-    int insert(@Param("row") WorkflowVerification row);
-
     /** 按主键读取。 */
     WorkflowVerification selectById(@Param("id") long id);
 

@@ -200,7 +200,7 @@ public class HttpServiceClientFactoryTest {
     }
 
     @Test
-    void test_explicitBodyValidationPreservesOnlyPathsAndOtherClientsKeepTheirContract() {
+    void test_explicitBodyValidationKeepsSafeMessageWithRemoteFieldsAndOtherClientsKeepTheirContract() {
         respondProblem(422, problem(422, "VALIDATION_ERROR").replace("bad", PRIVATE_DETAIL));
         var options = HttpServiceClientOptions.strict().withRequestValidationFailures()
             .withDependencyFailureMapper((kind, cause) -> new ServiceUnavailableException(cause))
@@ -210,7 +210,9 @@ public class HttpServiceClientFactoryTest {
         var failure = assertThrows(HttpRequestValidationException.class, () -> enabled.save(new ValidationBody("a")));
         assertEquals(CommonErrorCode.VALIDATION_ERROR.getMessage(), failure.getMessage());
         assertEquals(List.of("name"), failure.fieldPaths());
+        assertEquals(List.of(new ProblemFieldError("name", PRIVATE_DETAIL)), failure.remoteFieldErrors());
         assertThrows(UnsupportedOperationException.class, () -> failure.fieldPaths().add("changed"));
+        assertThrows(UnsupportedOperationException.class, () -> failure.remoteFieldErrors().clear());
         assertInstanceOf(RestClientResponseException.class, failure.getCause());
         assertInvalidResponse(api::read);
         var defaultBody = HttpServiceClientFactory.create(client(Duration.ofSeconds(2))).createClient(ValidationApi.class);

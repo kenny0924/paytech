@@ -29,7 +29,10 @@ public enum NotificationTrigger implements CodeEnum {
     /** 节点被驳回。 */
     REJECTED("REJECTED", false),
 
-    /** 节点动作验证未通过。 */
+    /**
+     * 节点动作验证未通过。
+     * <li>2026-10-22 去掉动作验证后不再产生；保留以兼容已发布配置与历史回调，草稿校验拒绝新配置使用。</li>
+     */
     VERIFICATION_FAILED("VERIFICATION_FAILED", false),
 
     /** 节点动作或审批被转交。 */

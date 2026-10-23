@@ -11,7 +11,7 @@ import com.paytech.platform.support.workflow.domain.variable.VariableDeclaration
  * MANUAL_CONFIRM 动作配置：执行人确认已完成，输出 {@code <actionKey>.note}。
  *
  * @param instruction 给执行人的说明；可能为空
- * @param noteRequired 确认时是否必须填写说明
+ * @param noteRequired 存量配置的“说明必填”；2026-10-22 起忽略，说明一律选填
  */
 public record ManualConfirmActionConfig(String instruction, boolean noteRequired) implements ActionConfig {
 

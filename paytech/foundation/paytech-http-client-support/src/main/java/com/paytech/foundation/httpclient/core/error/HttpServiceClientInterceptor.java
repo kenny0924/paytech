@@ -127,7 +127,7 @@ public final class HttpServiceClientInterceptor implements MethodInterceptor {
         if (requestValidationFailuresEnabled && requestBody && decoded.strictProfile()
             && failure.getStatusCode().value() == 422
             && CommonErrorCode.VALIDATION_ERROR.getCode().equals(decoded.code())) {
-            return new HttpRequestValidationException(decoded.fields(), failure);
+            return new HttpRequestValidationException(decoded.fields(), decoded.errors(), failure);
         }
         return classifyClientCode(decoded, requestBody, failure);
     }

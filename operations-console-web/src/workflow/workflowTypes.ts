@@ -16,6 +16,7 @@ export type ApprovalMode = 'ANY' | 'ALL';
 
 export type InputSource = 'VARIABLE' | 'CONSTANT';
 
+/** VERIFICATION_FAILED 已停用（需求 E5），只为显示历史配置与活动保留。 */
 export type NotificationTrigger = 'ACTIVATED' | 'APPROVAL_OPENED' | 'PASSED' | 'RETURNED_FOR_REVISION' | 'REJECTED'
   | 'VERIFICATION_FAILED' | 'TRANSFERRED' | 'STARTED' | 'COMPLETED' | 'TERMINATED';
 
@@ -31,7 +32,8 @@ export type InstanceStatus = 'RUNNING' | 'COMPLETED' | 'TERMINATED';
 
 export type NodeRunStatus = 'ACTIVE' | 'APPROVING' | 'WAITING' | 'PASSED' | 'RETURNED' | 'REJECTED' | 'CANCELLED';
 
-export type ActionRunStatus = 'PENDING' | 'VERIFIED' | 'UNVERIFIED' | 'CANCELLED';
+/** 动作状态：待处理 / 已完成 / 已取消（需求 E2）。VERIFIED、UNVERIFIED 为旧编码，前端分别按已完成、待处理解释。 */
+export type ActionRunStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED' | 'VERIFIED' | 'UNVERIFIED';
 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'RETURNED' | 'REJECTED' | 'WITHDRAWN';
 
@@ -69,6 +71,7 @@ export interface WorkflowGraph { nodes: GraphNode[]; edges: GraphEdge[]; setting
 
 // ---------- 字段定义（3.2） ----------
 export interface EnumOption { value: string; label: string }
+/** 只有 options 仍生效；maxLength、min、max、scale、minFiles、maxFiles、mimeTypes 为旧配置，读取时忽略、编辑器不再写入（需求 E1）。 */
 export interface FieldRules {
   maxLength?: number; min?: string; max?: string; scale?: number; options?: EnumOption[];
   minFiles?: number; maxFiles?: number; mimeTypes?: string[];
@@ -77,9 +80,11 @@ export interface FormField { key: string; label: string; type: FieldType; requir
 export interface FormDefinition { fields: FormField[] }
 
 // ---------- 动作模板 config（3.3） ----------
-export interface FileUploadConfig { minFiles?: number; maxFiles?: number; mimeTypes?: string[]; instruction?: string }
+/** required：至少上传一个；minFiles / maxFiles / mimeTypes 为旧配置，只读兼容（minFiles ≥ 1 视为 required）。 */
+export interface FileUploadConfig { required?: boolean; minFiles?: number; maxFiles?: number; mimeTypes?: string[]; instruction?: string }
 export interface PageParameter { key: string; label: string }
 export interface PageTaskConfig { pageRoute: string; parameters?: PageParameter[]; instruction?: string }
+/** noteRequired 为旧配置，已忽略：说明一律选填。 */
 export interface ManualConfirmConfig { instruction?: string; noteRequired?: boolean }
 /** DATA_QUERY 预留：内部结构为前端假设，后端只限制顶层四个键。 */
 export interface DataQueryConfig {
@@ -102,6 +107,8 @@ export interface ActionTemplate {
   config: ActionConfig | null; status: ConfigStatus; version: number; updatedBy: string | null;
   /** 最后修改人显示名；账号不存在时为空。 */
   updatedByName?: string | null; updateTime: string;
+  /** 被引用的流程定义数（当前发布版本冻结了该模板，按定义去重）；只在列表接口返回，旧响应或详情为 null。 */
+  referencedDefinitionCount?: number | null;
 }
 export interface Mutation { objectType: string; objectId: string; status: string | null; version: number }
 export interface Problem { code: string; nodeKey: string | null; edgeKey: string | null; itemKey: string | null; message: string }
@@ -150,6 +157,7 @@ export interface ActionRun {
   /** 发布时冻结的模板名称；早期快照为空。 */
   templateName?: string | null;
 }
+/** 历史验证记录（2026-10-22 起不再产生）：实例详情仍返回，只用于解码，界面不展示。 */
 export interface Verification {
   verificationId: string; actionRunId: string; result: 'PASSED' | 'FAILED'; failureReason: string | null; evidence: unknown;
   verifiedBy: string; verifiedTime: string;
@@ -192,9 +200,8 @@ export interface HandledTask {
   taskType: TaskType; taskId: string; instanceId: string; instanceTitle: string; instanceStatus: InstanceStatus; definitionName: string | null;
   nodeKey: string; nodeName: string | null; roundNo: number; actionKey: string | null; result: string; handledTime: string;
 }
-export interface SubmissionResult {
-  actionRunId: string; status: ActionRunStatus; verificationId: string | null; failureReason: string | null; instanceStatus: InstanceStatus;
-}
+/** 接口 19（完成动作）：动作运行状态与实例状态；2026-10-22 起不再返回验证记录。 */
+export interface SubmissionResult { actionRunId: string; status: ActionRunStatus; instanceStatus: InstanceStatus }
 /** 接口 28：显示名为登录名，没有登录名时为脱敏邮箱（Q11）。 */
 export interface AssigneeCandidate { accountId: string; loginName: string | null; emailMasked: string | null; displayName: string }
 

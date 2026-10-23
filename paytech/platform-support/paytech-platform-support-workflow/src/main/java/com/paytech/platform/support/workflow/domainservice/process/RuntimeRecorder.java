@@ -124,14 +124,13 @@ final class RuntimeRecorder {
     }
 
     /**
-     * 节点离开进行状态时，取消仍未完成（PENDING、UNVERIFIED）的动作运行。
+     * 节点离开进行状态时，取消仍未完成（PENDING）的动作运行。
      *
      * @param run 节点运行
      */
     void cancelOpenActions(WorkflowNodeRun run) {
         context.actionRunsOf(run.getNodeRunId()).stream()
-            .filter(action -> action.getStatus() == ActionRunStatus.PENDING
-                || action.getStatus() == ActionRunStatus.UNVERIFIED)
+            .filter(action -> action.getStatus() == ActionRunStatus.PENDING)
             .forEach(action -> {
                 action.setStatus(ActionRunStatus.CANCELLED);
                 action.setUpdateTime(context.getNow());

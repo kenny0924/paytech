@@ -1,18 +1,17 @@
 package com.paytech.platform.support.workflow.domainservice.process;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.LongSupplier;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
+import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.platform.support.workflow.core.common.WorkflowValueFormats;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionRun;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowApproval;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowNodeRun;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowTransfer;
-import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowVerification;
 import com.paytech.platform.support.workflow.core.enums.ActionRunStatus;
 import com.paytech.platform.support.workflow.core.enums.ApprovalDecision;
 import com.paytech.platform.support.workflow.core.enums.ApprovalMode;
@@ -20,10 +19,8 @@ import com.paytech.platform.support.workflow.core.enums.ApprovalStatus;
 import com.paytech.platform.support.workflow.core.enums.NodeRunStatus;
 import com.paytech.platform.support.workflow.core.enums.NotificationTrigger;
 import com.paytech.platform.support.workflow.core.enums.TransferTargetType;
-import com.paytech.platform.support.workflow.core.enums.VerificationResult;
 import com.paytech.platform.support.workflow.core.enums.WorkflowInstanceStatus;
 import com.paytech.platform.support.workflow.domain.WorkflowInstanceContext;
-import com.paytech.platform.support.workflow.domain.action.ActionTemplateReference;
 import com.paytech.platform.support.workflow.domain.attachment.AttachmentFact;
 import com.paytech.platform.support.workflow.domain.graph.WorkflowNode;
 import com.paytech.platform.support.workflow.domain.runtime.NavigationPlan;
@@ -31,28 +28,22 @@ import com.paytech.platform.support.workflow.domain.runtime.NodeRunState;
 import com.paytech.platform.support.workflow.domain.variable.VariableDeclaration;
 import com.paytech.platform.support.workflow.domain.variable.WorkflowVariables;
 import com.paytech.platform.support.workflow.domainservice.convert.WorkflowRuntimeJson;
-import com.paytech.platform.support.workflow.domainservice.validator.AttachmentRules;
 
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.JsonNodeFactory;
-import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 运行引擎（技术方案第 4 节）：在已加载的实例上下文上执行发起、提交动作、审批决定、转交与终止，
+ * 运行引擎（技术方案第 4 节）：在已加载的实例上下文上执行发起、完成动作、审批决定、转交与终止，
  * 结合 {@link WorkflowNavigator} 推进，并按规则登记通知回调。纯内存计算，不访问数据库或外部服务。
  *
- * <p>人员与状态前提不满足抛 {@link BizCheckFailException}；运行记录与版本不一致抛 {@link ErrorException}。
+ * <p>人员与状态前提不满足抛 {@link BizCheckFailException}；节点已进入审批后改必选动作、同意时必选动作未全部完成抛
+ * {@link ConcurrentRequestException}（409）；运行记录与版本不一致抛 {@link ErrorException}。
  * 写时并发由保存时的版本与旧状态条件最终保护。</p>
  */
 public final class WorkflowRuntimeEngine {
 
-    /** 失败原因列的上限。 */
-    private static final int REASON_LIMIT = 512;
-
     private final WorkflowNavigator navigator = new WorkflowNavigator();
 
-    private final ActionOutputVerifier verifier = new ActionOutputVerifier();
+    private final ActionOutputChecker checker = new ActionOutputChecker();
 
     private final CallbackPlanner planner = new CallbackPlanner();
 
@@ -74,83 +65,41 @@ public final class WorkflowRuntimeEngine {
     }
 
     /**
-     * 执行人提交动作输出并同步验证；必选动作全部通过后开放审批或直接放行。
+     * 执行人完成动作（需求 E2 / E4）：只检查必填与技术保护；不合格返回字段问题且不改任何状态。合格即 COMPLETED，
+     * 节点仍在执行中且必选动作全部完成时开放审批，没有审批人则直接放行。
+     * <li>必选动作在节点进入审批前可再次完成（修改提交内容）；进入审批后锁定。</li>
+     * <li>可选动作在节点放行前（执行中或待审批）均可完成，不触发放行。</li>
      *
      * @param context 实例上下文
      * @param actionRunId 动作运行
      * @param output 提交内容
-     * @param actorId 提交人
+     * @param actorId 执行人
      * @param files 提交内容引用文件的事实；归属已由调用方确认
      * @param ids ID 生成器
-     * @return 本次验证记录
+     * @return 请求体字段路径到原因；空表示已完成
      */
-    public WorkflowVerification submitAction(WorkflowInstanceContext context, long actionRunId, JsonNode output,
+    public Map<String, String> completeAction(WorkflowInstanceContext context, long actionRunId, JsonNode output,
         long actorId, Map<Long, AttachmentFact> files, LongSupplier ids) {
         requireRunning(context);
         WorkflowActionRun row = actionRun(context, actionRunId);
         WorkflowNodeRun nodeRun = nodeRun(context, row.getNodeRunId());
-        requireSubmittable(row, nodeRun, actorId);
-        ActionTemplateReference template = context.getTemplates().get(row.getActionTemplateId());
-        List<String> problems = verifier.verify(template, output, files);
+        requireCompletable(context, row, nodeRun, actorId);
+        Map<String, String> errors = checker.check(context.getTemplates().get(row.getActionTemplateId()), output, files);
+        if (!errors.isEmpty()) {
+            return errors;
+        }
         row.setOutputJson(json.write(output));
         row.setSubmittedBy(actorId);
         row.setSubmittedTime(context.getNow());
-        return recordVerification(context, row, nodeRun, template, problems, actorId, ids);
-    }
-
-    /**
-     * 重新验证（技术方案第 4 节）：对已提交但未通过、接收文件的动作，按原提交内容再验证一次，用于文件扫描结束后；
-     * 不改提交内容与提交人。只有当前执行人可以触发，节点须在执行中。
-     *
-     * @param context 实例上下文
-     * @param actionRunId 动作运行
-     * @param actorId 操作人
-     * @param files 原提交内容引用文件的事实
-     * @param ids ID 生成器
-     * @return 本次验证记录
-     */
-    public WorkflowVerification reverifyAction(WorkflowInstanceContext context, long actionRunId, long actorId,
-        Map<Long, AttachmentFact> files, LongSupplier ids) {
-        requireRunning(context);
-        WorkflowActionRun row = actionRun(context, actionRunId);
-        WorkflowNodeRun nodeRun = nodeRun(context, row.getNodeRunId());
-        requireSubmittable(row, nodeRun, actorId);
-        ActionTemplateReference template = context.getTemplates().get(row.getActionTemplateId());
-        if (row.getStatus() != ActionRunStatus.UNVERIFIED || row.getOutputJson() == null) {
-            throw new BizCheckFailException("动作尚未提交，不能重新验证：" + row.getActionKey());
-        }
-        if (template == null || !AttachmentRules.acceptsFiles(template.config())) {
-            throw new BizCheckFailException("只有含文件的动作可以重新验证：" + row.getActionKey());
-        }
-        List<String> problems = verifier.verify(template, json.tree(row.getOutputJson()), files);
-        return recordVerification(context, row, nodeRun, template, problems, actorId, ids);
-    }
-
-    /**
-     * 按验证结果更新动作状态、追加验证记录，并在必选动作全部通过后开放审批或放行。
-     *
-     * @param context 实例上下文
-     * @param row 动作运行（提交内容已就位）
-     * @param nodeRun 节点运行
-     * @param template 模板快照
-     * @param problems 验证问题
-     * @param actorId 操作人
-     * @param ids ID 生成器
-     * @return 验证记录
-     */
-    WorkflowVerification recordVerification(WorkflowInstanceContext context, WorkflowActionRun row,
-        WorkflowNodeRun nodeRun, ActionTemplateReference template, List<String> problems, long actorId,
-        LongSupplier ids) {
+        row.setStatus(ActionRunStatus.COMPLETED);
+        row.setUpdateTime(context.getNow());
+        context.getChange().updated(row);
         RuntimeRecorder recorder = new RuntimeRecorder(context, ids);
-        WorkflowVerification verification = recordResult(context, row, template, problems, actorId, ids);
-        if (!problems.isEmpty()) {
-            recorder.event(RuntimeEvent.node(NotificationTrigger.VERIFICATION_FAILED, nodeRun, null, null, actorId,
-                verification.getFailureReason()));
-        } else if (requiredVerified(context, nodeRun)) {
+        if (nodeRun.getStatus() == NodeRunStatus.ACTIVE && missingRequired(context, nodeRun).isEmpty()) {
             advanceAfterActions(context, nodeRun, recorder, actorId);
         }
         finish(context, recorder);
-        return verification;
+        return errors;
     }
 
     /**
@@ -198,8 +147,7 @@ public final class WorkflowRuntimeEngine {
         requireRunning(context);
         WorkflowActionRun row = actionRun(context, actionRunId);
         WorkflowNodeRun nodeRun = nodeRun(context, row.getNodeRunId());
-        boolean open = row.getStatus() == ActionRunStatus.PENDING || row.getStatus() == ActionRunStatus.UNVERIFIED;
-        if (!open || nodeRun.getStatus() != NodeRunStatus.ACTIVE) {
+        if (row.getStatus() != ActionRunStatus.PENDING || nodeRun.getStatus() != NodeRunStatus.ACTIVE) {
             throw new BizCheckFailException("动作已完成或节点不在执行中，不能转交：" + row.getActionKey());
         }
         requireTransferable(row.getAssigneeId(), toUserId, actorId, manage);
@@ -276,7 +224,7 @@ public final class WorkflowRuntimeEngine {
     }
 
     /**
-     * 当前实例变量：start.* 取启动值，动作输出取最新一轮 VERIFIED 的 output_json（技术方案 3.3）。
+     * 当前实例变量：start.* 取启动值，动作输出取最新一轮 COMPLETED 的 output_json（技术方案 3.3）。
      *
      * @param context 实例上下文
      * @return 实例变量
@@ -286,7 +234,7 @@ public final class WorkflowRuntimeEngine {
             VariableDeclaration.ofForm(VariableDeclaration.START_PREFIX, context.getStartForm()),
             json.tree(context.getInstance().getStartValuesJson()));
         for (WorkflowNode node : context.getGraph().nodes()) {
-            node.actions().forEach(action -> context.verifiedOutput(action.key()).ifPresent(run -> builder.add(
+            node.actions().forEach(action -> context.completedOutput(action.key()).ifPresent(run -> builder.add(
                 context.getTemplates().get(action.templateId()).config().outputs(action.key()),
                 json.tree(run.getOutputJson()))));
         }
@@ -294,7 +242,7 @@ public final class WorkflowRuntimeEngine {
     }
 
     /**
-     * 同意：ANY 任一人同意即放行并撤回其余；ALL 全部同意才放行。
+     * 同意：先兜底确认必选动作全部已完成（放行规则 A），再按 ANY 任一人同意即放行并撤回其余、ALL 全部同意才放行。
      *
      * @param context 实例上下文
      * @param approval 审批行
@@ -305,6 +253,10 @@ public final class WorkflowRuntimeEngine {
      */
     void approve(WorkflowInstanceContext context, WorkflowApproval approval, WorkflowNodeRun nodeRun, String comment,
         RuntimeRecorder recorder, long actorId) {
+        List<String> missing = missingRequired(context, nodeRun);
+        if (!missing.isEmpty()) {
+            throw new ConcurrentRequestException("必选动作尚未全部完成，不能同意：" + String.join("、", missing));
+        }
         decideRow(context, approval, ApprovalStatus.APPROVED, comment, null);
         ApprovalMode mode = context.node(nodeRun.getNodeKey()).approval().mode();
         boolean all = context.approvalsOf(nodeRun.getNodeRunId()).stream()
@@ -379,64 +331,31 @@ public final class WorkflowRuntimeEngine {
     }
 
     /**
-     * 节点运行的全部必选动作是否都已 VERIFIED。
+     * 节点运行中尚未完成的必选动作，按动作名（版本快照冻结的模板名称，缺失时为动作 key）列出。
      *
      * @param context 实例上下文
      * @param nodeRun 节点运行
-     * @return 全部通过返回 true
+     * @return 未完成的必选动作名；全部完成为空
      */
-    boolean requiredVerified(WorkflowInstanceContext context, WorkflowNodeRun nodeRun) {
-        return context.actionRunsOf(nodeRun.getNodeRunId()).stream().filter(WorkflowActionRun::getRequired)
-            .allMatch(run -> run.getStatus() == ActionRunStatus.VERIFIED);
+    List<String> missingRequired(WorkflowInstanceContext context, WorkflowNodeRun nodeRun) {
+        List<WorkflowActionRun> missing = context.actionRunsOf(nodeRun.getNodeRunId()).stream()
+            .filter(WorkflowActionRun::getRequired).filter(run -> run.getStatus() != ActionRunStatus.COMPLETED).toList();
+        if (missing.isEmpty()) {
+            return List.of();
+        }
+        return actionNames(context, missing);
     }
 
     /**
-     * 更新动作状态并追加验证记录；以最后一次验证为准。接收文件的动作以引用的文件地址作为证据。
+     * 动作名：版本快照冻结的模板名称，缺失时为动作 key。
      *
      * @param context 实例上下文
-     * @param row 动作运行
-     * @param template 模板快照
-     * @param problems 验证问题
-     * @param actorId 验证触发人
-     * @param ids ID 生成器
-     * @return 验证记录
+     * @param runs 动作运行
+     * @return 与 runs 同序的动作名
      */
-    WorkflowVerification recordResult(WorkflowInstanceContext context, WorkflowActionRun row,
-        ActionTemplateReference template, List<String> problems, long actorId, LongSupplier ids) {
-        row.setStatus(problems.isEmpty() ? ActionRunStatus.VERIFIED : ActionRunStatus.UNVERIFIED);
-        row.setUpdateTime(context.getNow());
-        context.getChange().updated(row);
-        WorkflowVerification verification = new WorkflowVerification();
-        verification.setVerificationId(ids.getAsLong());
-        verification.setActionRunId(row.getActionRunId());
-        verification.setInstanceId(row.getInstanceId());
-        verification.setResult(problems.isEmpty() ? VerificationResult.PASSED : VerificationResult.FAILED);
-        verification.setFailureReason(problems.isEmpty() ? null : truncate(String.join("；", problems)));
-        verification.setEvidenceJson(fileEvidence(template, row));
-        verification.setVerifiedBy(actorId);
-        verification.setVerifiedTime(context.getNow());
-        verification.setCreateTime(context.getNow());
-        context.getVerifications().add(verification);
-        context.getChange().getNewVerifications().add(verification);
-        return verification;
-    }
-
-    /**
-     * 接收文件的动作的验证证据：{@code {"files": ["/files/v1/{fileId}", ...]}}（文件地址）；其他动作没有证据。
-     *
-     * @param template 模板快照
-     * @param row 动作运行
-     * @return 证据 JSON；没有为 null
-     */
-    String fileEvidence(ActionTemplateReference template, WorkflowActionRun row) {
-        if (template == null || !AttachmentRules.acceptsFiles(template.config())) {
-            return null;
-        }
-        Collection<Long> fileIds = AttachmentRules.referenced(template.config(), json.tree(row.getOutputJson()));
-        ObjectNode evidence = JsonNodeFactory.instance.objectNode();
-        ArrayNode files = evidence.putArray("files");
-        fileIds.forEach(id -> files.add(AttachmentRules.address(id)));
-        return json.write(evidence);
+    List<String> actionNames(WorkflowInstanceContext context, List<WorkflowActionRun> runs) {
+        Map<Long, String> names = json.snapshotNames(context.getVersion().getActionSnapshotJson());
+        return runs.stream().map(run -> names.getOrDefault(run.getActionTemplateId(), run.getActionKey())).toList();
     }
 
     /**
@@ -498,24 +417,29 @@ public final class WorkflowRuntimeEngine {
     }
 
     /**
-     * 提交前提：节点在执行中、提交人是当前执行人、动作尚未验证通过。
+     * 完成前提：节点未放行、操作人是当前执行人、动作未取消；必选动作在节点进入审批后锁定。
      *
+     * @param context 实例上下文
      * @param row 动作运行
      * @param nodeRun 节点运行
-     * @param actorId 提交人
+     * @param actorId 操作人
      */
-    void requireSubmittable(WorkflowActionRun row, WorkflowNodeRun nodeRun, long actorId) {
-        if (nodeRun.getStatus() != NodeRunStatus.ACTIVE) {
-            throw new BizCheckFailException("节点当前不接受提交：" + nodeRun.getNodeKey());
+    void requireCompletable(WorkflowInstanceContext context, WorkflowActionRun row, WorkflowNodeRun nodeRun,
+        long actorId) {
+        boolean open = nodeRun.getStatus() == NodeRunStatus.ACTIVE || nodeRun.getStatus() == NodeRunStatus.APPROVING;
+        if (!open) {
+            throw new BizCheckFailException("节点已结束，不再接受提交：" + nodeRun.getNodeKey());
         }
         if (row.getAssigneeId() != actorId) {
-            throw new BizCheckFailException("只有被指派的执行人可以提交该动作");
-        }
-        if (row.getStatus() == ActionRunStatus.VERIFIED) {
-            throw new BizCheckFailException("动作已验证通过，不再接受提交；需要修改请由审批人退回修改");
+            throw new BizCheckFailException("只有被指派的执行人可以完成该动作");
         }
         if (row.getStatus() == ActionRunStatus.CANCELLED) {
             throw new BizCheckFailException("动作已取消");
+        }
+        if (row.getRequired() && nodeRun.getStatus() == NodeRunStatus.APPROVING) {
+            throw new ConcurrentRequestException("节点已进入审批，必选动作不能再完成或修改：" + actionNames(context,
+                List.of(row)).get(0)
+                + "；需要修改请由审批人退回修改");
         }
     }
 
@@ -613,15 +537,5 @@ public final class WorkflowRuntimeEngine {
      */
     WorkflowNodeRun nodeRun(WorkflowInstanceContext context, Long id) {
         return context.nodeRun(id).orElseThrow(() -> new ErrorException("实例中不存在节点运行：" + id));
-    }
-
-    /**
-     * 截断失败原因到列上限。
-     *
-     * @param reason 原因
-     * @return 不超过 512 字符的原因
-     */
-    static String truncate(String reason) {
-        return reason.length() <= REASON_LIMIT ? reason : reason.substring(0, REASON_LIMIT - 1) + "…";
     }
 }

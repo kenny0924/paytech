@@ -44,16 +44,16 @@ public final class ActionConfigJsonReader {
     }
 
     /**
-     * 解析上传文件配置。
+     * 解析上传文件配置；minFiles / maxFiles / mimeTypes 为兼容存量配置仍按结构解析。
      *
      * @param root 配置对象
      * @return 上传文件配置
      */
     private FileUploadActionConfig readFileUpload(JsonNode root) {
-        StrictJson.allowOnly(root, ROOT, Set.of("minFiles", "maxFiles", "mimeTypes", "instruction"));
+        StrictJson.allowOnly(root, ROOT, Set.of("minFiles", "maxFiles", "mimeTypes", "instruction", "required"));
         return new FileUploadActionConfig(StrictJson.integer(root, "minFiles", ROOT),
             StrictJson.integer(root, "maxFiles", ROOT), StrictJson.texts(root, "mimeTypes", ROOT),
-            StrictJson.text(root, "instruction", ROOT));
+            StrictJson.text(root, "instruction", ROOT), StrictJson.bool(root, "required", ROOT, false));
     }
 
     /**
@@ -82,7 +82,7 @@ public final class ActionConfigJsonReader {
     }
 
     /**
-     * 解析人工确认配置。
+     * 解析人工确认配置；noteRequired 为兼容存量配置仍按结构解析，完成时忽略（说明一律选填）。
      *
      * @param root 配置对象
      * @return 人工确认配置

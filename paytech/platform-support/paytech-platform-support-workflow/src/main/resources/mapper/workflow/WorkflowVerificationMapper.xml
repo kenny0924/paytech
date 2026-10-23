@@ -16,11 +16,6 @@
         create_time AS createTime
     </sql>
 
-    <insert id="insert">
-        INSERT INTO t_workflow_verification (verification_id, action_run_id, instance_id, result, evidence_json, failure_reason, verified_by, verified_time, create_time)
-        VALUES (#{row.verificationId}, #{row.actionRunId}, #{row.instanceId}, #{row.result}, #{row.evidenceJson}, #{row.failureReason}, #{row.verifiedBy}, #{row.verifiedTime}, #{row.createTime})
-    </insert>
-
     <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowVerification">
         SELECT <include refid="columns"/> FROM t_workflow_verification WHERE verification_id = #{id}
     </select>

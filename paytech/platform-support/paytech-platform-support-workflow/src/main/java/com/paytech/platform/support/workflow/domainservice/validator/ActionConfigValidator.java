@@ -17,6 +17,8 @@ import com.paytech.platform.support.workflow.domain.validation.WorkflowGraphProb
 
 /**
  * 动作模板配置校验（技术方案 3.3）：新建与修改模板时按类型校验 config，一次返回全部问题。
+ * <li>2026-10-22 起上传文件动作只有「至少一个」开关，存量 minFiles / maxFiles / mimeTypes 只按结构接受、不再校验；
+ * 人工确认的 noteRequired 忽略。</li>
  */
 public final class ActionConfigValidator {
 
@@ -30,7 +32,8 @@ public final class ActionConfigValidator {
         ProblemCollector problems = new ProblemCollector();
         switch (config) {
             case FormActionConfig form -> checkForm(form, problems);
-            case FileUploadActionConfig upload -> checkFileUpload(upload, problems);
+            case FileUploadActionConfig upload -> {
+            }
             case PageTaskActionConfig page -> checkPageTask(page, problems);
             case ManualConfirmActionConfig confirm -> {
             }
@@ -51,20 +54,6 @@ public final class ActionConfigValidator {
             problems.graph(WorkflowProblemCode.ACTION_CONFIG_INVALID, "表单动作至少需要一个字段");
         }
         new FormDefinitionRules(problems).check(form.form(), "表单动作");
-    }
-
-    /**
-     * 上传文件动作的数量与 MIME 类型。
-     *
-     * @param upload 上传文件动作配置
-     * @param problems 问题收集
-     */
-    private void checkFileUpload(FileUploadActionConfig upload, ProblemCollector problems) {
-        String invalid = FormDefinitionRules.fileCountProblem(upload.minFiles(), upload.maxFiles(),
-            upload.mimeTypes().stream().anyMatch(mime -> !WorkflowValueFormats.isMimeType(mime)));
-        if (invalid != null) {
-            problems.graph(WorkflowProblemCode.ACTION_CONFIG_INVALID, "上传文件动作配置不合法：" + invalid);
-        }
     }
 
     /**

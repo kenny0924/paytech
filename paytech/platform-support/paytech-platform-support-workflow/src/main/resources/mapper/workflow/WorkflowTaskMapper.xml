@@ -4,6 +4,7 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.platform.support.workflow.core.dal.mapper.WorkflowTaskMapper">
 
+    <!-- 待办动作：待处理的动作，节点执行中；可选动作在节点待审批时仍可完成，也列入（2026-10-22）。 -->
     <sql id="tasks">
         SELECT * FROM (
             SELECT 'ACTION' AS taskType, a.action_run_id AS taskId, a.instance_id AS instanceId, i.title AS instanceTitle,
@@ -12,7 +13,8 @@
             FROM t_workflow_action_run a
             JOIN t_workflow_node_run n ON n.node_run_id = a.node_run_id
             JOIN t_workflow_instance i ON i.instance_id = a.instance_id
-            WHERE a.assignee_id = #{accountId} AND a.status IN ('PENDING', 'UNVERIFIED') AND n.status = 'ACTIVE'
+            WHERE a.assignee_id = #{accountId} AND a.status = 'PENDING'
+                AND (n.status = 'ACTIVE' OR (n.status = 'APPROVING' AND a.required = 0))
                 AND i.status = 'RUNNING'
             UNION ALL
             SELECT 'APPROVAL', p.approval_id, p.instance_id, i.title, i.definition_id, i.definition_version_id, n.node_run_id, n.node_key,
@@ -86,7 +88,7 @@
     <select id="openAssignments" resultType="com.paytech.platform.support.workflow.domain.query.WorkflowOpenAssignmentView">
         SELECT n.instance_id AS instanceId, n.node_key AS nodeKey, n.status AS nodeStatus, a.assignee_id AS userId
         FROM t_workflow_node_run n
-        JOIN t_workflow_action_run a ON a.node_run_id = n.node_run_id AND a.status IN ('PENDING', 'UNVERIFIED')
+        JOIN t_workflow_action_run a ON a.node_run_id = n.node_run_id AND a.status = 'PENDING'
         WHERE n.status = 'ACTIVE' AND n.instance_id IN
         <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
         UNION ALL
@@ -108,5 +110,16 @@
         JOIN t_workflow_definition d ON d.definition_id = v.definition_id
         WHERE v.status = 'PUBLISHED' AND v.action_snapshot_json LIKE CONCAT('%"', #{templateId}, '"%')
         ORDER BY d.definition_code, v.version_no DESC
+    </select>
+
+    <!-- 动作模板被引用的流程数：按当前发布版本冻结的快照展开模板 ID，按模板分组、流程去重计数；未被引用的模板不返回行。 -->
+    <select id="templateReferenceCounts" resultType="com.paytech.platform.support.workflow.domain.query.WorkflowTemplateReferenceCountView">
+        SELECT t.template_id AS templateId, COUNT(DISTINCT d.definition_id) AS definitionCount
+        FROM t_workflow_definition d
+        JOIN t_workflow_definition_version v ON v.definition_id = d.definition_id AND v.version_no = d.current_version_no
+        JOIN JSON_TABLE(v.action_snapshot_json, '$.templates[*]' COLUMNS (template_id VARCHAR(32) PATH '$.templateId')) t
+        WHERE v.status = 'PUBLISHED' AND t.template_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        GROUP BY t.template_id
     </select>
 </mapper>

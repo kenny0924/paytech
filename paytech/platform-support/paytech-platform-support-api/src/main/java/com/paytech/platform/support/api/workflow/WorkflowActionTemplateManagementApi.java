@@ -37,7 +37,7 @@ public interface WorkflowActionTemplateManagementApi {
      * @param keyword 编码或名称关键字；可空
      * @param page 页码
      * @param size 每页条数
-     * @return 模板摘要（不含配置）
+     * @return 模板摘要（不含配置），每行带被当前发布版本引用的流程定义数 referencedDefinitionCount
      */
     @GetExchange
     PagingResponseBody<WorkflowActionTemplateResponseBody> listActionTemplates(
