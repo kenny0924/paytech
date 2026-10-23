@@ -1,0 +1,45 @@
++--------------------------------------------------+--------+--------+----+
+| item                                             | actual | expect | ok |
++--------------------------------------------------+--------+--------+----+
+| menu 127311 absent                               |      0 |      0 |  1 |
+| resource_code OPERATIONS_WORKFLOW_STARTED unused |      0 |      0 |  1 |
+| frontend_route /workflow/started unused          |      0 |      0 |  1 |
+| parent menu 127301 ACTIVE                        |      1 |      1 |  1 |
+| permission 127105 present                        |      1 |      1 |  1 |
+| route 127429 reverify present                    |      1 |      1 |  1 |
+| route 127429 headers (127613-127618)             |      6 |      6 |  1 |
+| route 127429 headers total                       |      6 |      6 |  1 |
+| route 127429 guard rules (127869-127874)         |      6 |      6 |  1 |
+| route 127429 guard rules total                   |      6 |      6 |  1 |
+| route 127429 query params                        |      0 |      0 |  1 |
+| role 510 PLATFORM_ADMIN present                  |      1 |      1 |  1 |
+| action_run unknown status                        |      0 |      0 |  1 |
+| block 127 console_resource                       |     10 |     10 |  1 |
+| block 127 gateway_route                          |     32 |     32 |  1 |
+| block 127 route_header                           |    136 |    136 |  1 |
+| block 127 guard_rule                             |    192 |    192 |  1 |
+| block 127 query_param                            |     30 |     30 |  1 |
++--------------------------------------------------+--------+--------+----+
++----------+-------------+
+| status   | action_runs |
++----------+-------------+
+| VERIFIED |           4 |
++----------+-------------+
++--------------------+----------------+---------+----------------------------+
+| role_id            | role_code      | version | update_time                |
++--------------------+----------------+---------+----------------------------+
+| 900000000000000510 | PLATFORM_ADMIN |      46 | 2026-10-23 05:25:09.240768 |
++--------------------+----------------+---------+----------------------------+
++--------------------+--------------------------------------+--------+----------------------------+
+| resource_id        | resource_code                        | status | frontend_route             |
++--------------------+--------------------------------------+--------+----------------------------+
+| 900000000000127302 | OPERATIONS_WORKFLOW_MY_TASKS         | ACTIVE | /workflow/my-tasks         |
+| 900000000000127303 | OPERATIONS_WORKFLOW_INSTANCES        | ACTIVE | /workflow/instances        |
+| 900000000000127304 | OPERATIONS_WORKFLOW_DEFINITIONS      | ACTIVE | /workflow/definitions      |
+| 900000000000127305 | OPERATIONS_WORKFLOW_ACTION_TEMPLATES | ACTIVE | /workflow/action-templates |
++--------------------+--------------------------------------+--------+----------------------------+
++--------------------+-------------------------------------+-------------+--------------------------------------------------------------------+--------+---------+
+| route_id           | route_code                          | http_method | external_path_template                                             | status | version |
++--------------------+-------------------------------------+-------------+--------------------------------------------------------------------+--------+---------+
+| 900000000000127429 | operations-workflow-action-reverify | POST        | /api/operations/workflow/v1/action-runs/{actionRunId}/verification | ACTIVE |       2 |
++--------------------+-------------------------------------+-------------+--------------------------------------------------------------------+--------+---------+

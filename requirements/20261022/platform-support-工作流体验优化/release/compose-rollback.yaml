@@ -1,0 +1,16 @@
+# 工作流体验优化：mor-test 回滚覆盖文件 = 2026-10-23 05:50Z docker inspect 读到的六个运行镜像（文件公开桶发布，tag pubbucket-20261023a）。
+# 用法同 compose-candidate.yaml，只传本文件。回滚顺序与 SQL 前提见 release.md 第 6 节（Platform 回退必须在停机窗口内配合 90-rollback-status.sql）。
+# 环境变量由主 compose 提供，与现网逐键相同；本文件只钉镜像。
+services:
+  card-service:
+    image: sha256:810b6b72b6ea019c60b0afff4750b0d858aaec5c2ee0acd5102a7d488459a81f  # pubbucket-20261023a（JAR 5cc2fd8dad707c11）
+  client-master-service:
+    image: sha256:2e495b40adee0d918d7fe96a93be837514f83936e2537139122de6155c5c604f  # pubbucket-20261023a（JAR 795461b0b2962663）
+  client-console-bff:
+    image: sha256:b8ecaaea2b2f0e642cb21400bb904cf7b3d65da165ef099871091ae937ac7748  # pubbucket-20261023a（JAR aea366e52763a595）
+  operations-console-bff:
+    image: sha256:06d850d16a3f697f98f8bcc8fe455eed09cbb0cc1dc5adcd8e5935c323d524da  # pubbucket-20261023a（JAR fef610e60dac3754）
+  platform-support-service:
+    image: sha256:68ba631faa8dfb65cb09296cd28a37f6e8c2bcf406bfdecd4de70016e3a6475f  # pubbucket-20261023a（JAR 9d735ffd2321621b）
+  operations-console-web:
+    image: sha256:f8b5dc3234a587285a5d47c4016240aedaf07248b43185c954343381251d7e5e  # pubbucket-20261023a（= 22ede435 + 公开桶 + 16 个文件，dist 已由本包复现逐字节一致）

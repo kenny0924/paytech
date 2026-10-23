@@ -1,0 +1,43 @@
+Files operations-console-web/package-lock.json and operations-console-web/package-lock.json differ
+Files operations-console-web/package.json and operations-console-web/package.json differ
+Files operations-console-web/src/configuration/configurationModel.test.ts and operations-console-web/src/configuration/configurationModel.test.ts differ
+Files operations-console-web/src/navigation/ConsolePage.tsx and operations-console-web/src/navigation/ConsolePage.tsx differ
+Files operations-console-web/src/navigation/menu.test.ts and operations-console-web/src/navigation/menu.test.ts differ
+Files operations-console-web/src/navigation/pageCapabilities.ts and operations-console-web/src/navigation/pageCapabilities.ts differ
+Files operations-console-web/src/pages/WorkflowActionTemplates.tsx and operations-console-web/src/pages/WorkflowActionTemplates.tsx differ
+Files operations-console-web/src/pages/WorkflowDefinitions.tsx and operations-console-web/src/pages/WorkflowDefinitions.tsx differ
+Files operations-console-web/src/pages/WorkflowInstances.tsx and operations-console-web/src/pages/WorkflowInstances.tsx differ
+Files operations-console-web/src/pages/WorkflowMyTasks.tsx and operations-console-web/src/pages/WorkflowMyTasks.tsx differ
+Only in operations-console-web/src/pages: WorkflowStarted.tsx
+Only in operations-console-web/src/workflow: ActionTemplateEditor.tsx
+Files operations-console-web/src/workflow/DefinitionEditor.tsx and operations-console-web/src/workflow/DefinitionEditor.tsx differ
+Files operations-console-web/src/workflow/EditorPanels.tsx and operations-console-web/src/workflow/EditorPanels.tsx differ
+Files operations-console-web/src/workflow/FieldDesigner.tsx and operations-console-web/src/workflow/FieldDesigner.tsx differ
+Files operations-console-web/src/workflow/InstanceDetailView.tsx and operations-console-web/src/workflow/InstanceDetailView.tsx differ
+Files operations-console-web/src/workflow/LaunchModal.tsx and operations-console-web/src/workflow/LaunchModal.tsx differ
+Only in operations-console-web/src/workflow: PublishDialog.tsx
+Files operations-console-web/src/workflow/TaskPanels.tsx and operations-console-web/src/workflow/TaskPanels.tsx differ
+Files operations-console-web/src/workflow/TemplateEditors.tsx and operations-console-web/src/workflow/TemplateEditors.tsx differ
+Files operations-console-web/src/workflow/WorkflowCanvas.tsx and operations-console-web/src/workflow/WorkflowCanvas.tsx differ
+Files operations-console-web/src/workflow/WorkflowFiles.tsx and operations-console-web/src/workflow/WorkflowFiles.tsx differ
+Files operations-console-web/src/workflow/WorkflowParts.tsx and operations-console-web/src/workflow/WorkflowParts.tsx differ
+Only in operations-console-web/src/workflow: catalogModel.test.ts
+Only in operations-console-web/src/workflow: catalogModel.ts
+Only in operations-console-web/src/workflow: definitionModel.test.ts
+Only in operations-console-web/src/workflow: definitionModel.ts
+Files operations-console-web/src/workflow/fileModel.test.ts and operations-console-web/src/workflow/fileModel.test.ts differ
+Files operations-console-web/src/workflow/fileModel.ts and operations-console-web/src/workflow/fileModel.ts differ
+Files operations-console-web/src/workflow/formModel.ts and operations-console-web/src/workflow/formModel.ts differ
+Files operations-console-web/src/workflow/graphModel.test.ts and operations-console-web/src/workflow/graphModel.test.ts differ
+Files operations-console-web/src/workflow/graphModel.ts and operations-console-web/src/workflow/graphModel.ts differ
+Files operations-console-web/src/workflow/runtimeModel.test.ts and operations-console-web/src/workflow/runtimeModel.test.ts differ
+Files operations-console-web/src/workflow/runtimeModel.ts and operations-console-web/src/workflow/runtimeModel.ts differ
+Only in operations-console-web/src/workflow: taskModel.test.ts
+Only in operations-console-web/src/workflow: taskModel.ts
+Files operations-console-web/src/workflow/templateModel.ts and operations-console-web/src/workflow/templateModel.ts differ
+Files operations-console-web/src/workflow/useWorkflowCommand.ts and operations-console-web/src/workflow/useWorkflowCommand.ts differ
+Files operations-console-web/src/workflow/workflow.css and operations-console-web/src/workflow/workflow.css differ
+Files operations-console-web/src/workflow/workflowApi.ts and operations-console-web/src/workflow/workflowApi.ts differ
+Only in operations-console-web/src/workflow: workflowIcons.tsx
+Files operations-console-web/src/workflow/workflowLabels.ts and operations-console-web/src/workflow/workflowLabels.ts differ
+Files operations-console-web/src/workflow/workflowTypes.ts and operations-console-web/src/workflow/workflowTypes.ts differ

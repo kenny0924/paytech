@@ -1,0 +1,13 @@
+live=2529 cand=2530 removed=0 added=1 changed=11
++ BOOT-INF/classes/com/paytech/operations/console/bff/integration/impl/WorkflowRuntimeValidationConverter.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/ext/rest/WorkflowInstanceController.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/PlatformWorkflowClient.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/impl/ConfigurationValidationConverter.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/impl/PlatformWorkflowClientImpl.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/impl/WorkflowContractConverter.class
+~ paytech-http-client-support!com/paytech/foundation/httpclient/api/HttpRequestValidationException.class
+~ paytech-http-client-support!com/paytech/foundation/httpclient/core/error/HttpServiceClientInterceptor.class
+~ paytech-platform-support-api!com/paytech/platform/support/api/workflow/WorkflowInstanceApi.class
+~ paytech-platform-support-api!com/paytech/platform/support/api/workflow/response/WorkflowActionTemplateResponseBody.class
+~ paytech-platform-support-api!com/paytech/platform/support/api/workflow/response/WorkflowActivityBody.class
+~ paytech-platform-support-api!com/paytech/platform/support/api/workflow/response/WorkflowSubmissionResponseBody.class
