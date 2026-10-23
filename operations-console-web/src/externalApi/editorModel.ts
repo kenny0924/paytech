@@ -1,6 +1,9 @@
 import { ApiError } from '../api/session.ts';
 import type { ScriptStage } from './externalApiModel.ts';
 import type { ParamType } from './integrationApiModel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('channel');
 
 export interface RegisteredFunction {
   functionCode: string; kind: string; params: { name: string; dataType: string; required: boolean }[];
@@ -61,15 +64,16 @@ export function decodeScript(value: unknown, expectedCode: string): ScriptDetail
     updateTime: v.updateTime };
 }
 
-/** 脚本按阶段可读写的对象说明，供编辑页右侧对象树展示。 */
-export function scriptObjects(stage: ScriptStage): { path: string; access: '读写' | '只读'; note: string }[] {
+/** 脚本按阶段可读写的对象说明，供编辑页右侧对象树展示；access 为代码，文案调用时翻译（channel.script.object.*）。 */
+export function scriptObjects(stage: ScriptStage): { path: string; access: 'READ_WRITE' | 'READ_ONLY'; note: string }[] {
+  const params = { path: t('script.object.paramsPath'), access: 'READ_ONLY' as const, note: t('script.object.params') };
   return stage === 'REQUEST'
-    ? [{ path: 'http.requestHeaders', access: '读写', note: '组装后的请求头' },
-      { path: 'http.requestBody', access: '读写', note: '组装后、编码前的请求体' },
-      { path: 'params.<名称>', access: '只读', note: '脚本参数' }]
-    : [{ path: 'http.responseStatus', access: '只读', note: 'HTTP 状态码' },
-      { path: 'http.responseHeaders', access: '读写', note: '响应头工作副本' },
-      { path: 'http.responseBody', access: '读写', note: '解码后的响应体工作副本' },
-      { path: 'http.requestHeaders / http.requestBody', access: '只读', note: '已发送的请求' },
-      { path: 'params.<名称>', access: '只读', note: '脚本参数' }];
+    ? [{ path: 'http.requestHeaders', access: 'READ_WRITE', note: t('script.object.requestHeaders') },
+      { path: 'http.requestBody', access: 'READ_WRITE', note: t('script.object.requestBody') },
+      params]
+    : [{ path: 'http.responseStatus', access: 'READ_ONLY', note: t('script.object.responseStatus') },
+      { path: 'http.responseHeaders', access: 'READ_WRITE', note: t('script.object.responseHeaders') },
+      { path: 'http.responseBody', access: 'READ_WRITE', note: t('script.object.responseBody') },
+      { path: 'http.requestHeaders / http.requestBody', access: 'READ_ONLY', note: t('script.object.sentRequest') },
+      params];
 }

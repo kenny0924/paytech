@@ -13,11 +13,15 @@ import { PermissionSelect } from './PermissionSelect';
 import { useConfigurationForm } from './useConfigurationForm';
 import { defaultIdempotencyMode, idempotencyOptions, initialGuards, routeWrite } from './gatewayEditorModel';
 import { editable } from './configurationModel';
-const required = [{ required: true, message: '请填写此项' }];
+import { enumLabel, formatDateTime } from '../i18n/index';
+import type { Translate } from '../i18n/index';
+import { useT } from '../i18n/react';
+const requiredRule = (t: Translate) => [{ required: true, message: t('editor.required') }];
 const options = (values: readonly string[] = []) => values.map(value => ({ value, label: value }));
 interface Values extends Partial<ManagedRoute> { discoveryServiceName?: string; reason: string }
 
 export function GatewayEditor({ resources, onAuthorizationChanged, capabilities, kind }: GatewayPageProps & { capabilities: GatewayCapabilities; kind: 'target' | 'route' }) {
+  const t = useT('gateway'), tCommon = useT('common'); const required = requiredRule(t);
   const location = useLocation(); const navigate = useNavigate(); const notify = useErrorNotification(); const { modal } = App.useApp();
   const [form] = Form.useForm<Values>(); const editor = useConfigurationForm(onAuthorizationChanged, form);
   const query = new URLSearchParams(location.search); const creating = query.get('mode') === 'create'; const code = query.get('code') || '';
@@ -39,9 +43,10 @@ export function GatewayEditor({ resources, onAuthorizationChanged, capabilities,
       if (controller.signal.aborted) return;
       if ('routeCode' in result) validateGatewayRoute(result, code); else validateGatewayTarget(result, code);
       setDetail(result); form.setFieldsValue({ ...result, reason: '' });
-    }).catch(error => { if (!controller.signal.aborted) { setFailed(true); notify(error, '配置详情加载失败'); if (error instanceof ApiError && error.status === 403) onAuthorizationChanged(); } })
+    }).catch(error => { if (!controller.signal.aborted) { setFailed(true); notify(error, t('editor.detailLoadFailed')); if (error instanceof ApiError && error.status === 403) onAuthorizationChanged(); } })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
+  // t 随语言包刷新换新，只用于失败通知标题，不应触发重新查询
   }, [code, creating, form, notify, path, reload]);
   useEffect(() => {
     if (kind !== 'route' || !channel) return;
@@ -53,8 +58,9 @@ export function GatewayEditor({ resources, onAuthorizationChanged, capabilities,
         rows.push(...result.items); if (rows.length >= result.total || !result.items.length) break;
       }
       if (!abort.signal.aborted) setTargets(rows);
-    })().catch(error => { if (!abort.signal.aborted) { setTargetsFailed(true); notify(error, '目标服务加载失败'); } });
+    })().catch(error => { if (!abort.signal.aborted) { setTargetsFailed(true); notify(error, t('editor.targetsLoadFailed')); } });
     return () => abort.abort();
+  // t 随语言包刷新换新，只用于失败通知标题，不应触发重新查询
   }, [kind, channel, notify, targetsReload]);
   function locked(field: string) { return readOnly || editor.saving || !creating && !editable(detail?.managementProtection, field); }
   async function switchProfile(nextChannel: string, nextProfile?: string) {
@@ -64,7 +70,7 @@ export function GatewayEditor({ resources, onAuthorizationChanged, capabilities,
     // 选择器受控回显原值，确认后才清理旧 Channel/Profile 下的草稿字段。
     form.setFieldsValue({ channel, securityProfileCode: profileCode });
     if (editor.dirty) {
-      const confirmed = await modal.confirm({ title: '切换安全配置？', content: '将重设授权、Cookie、请求幂等和 Guard 配置。切换 Channel 还会清空目标服务。', okText: '切换', cancelText: '保留当前配置' });
+      const confirmed = await modal.confirm({ title: t('editor.switchProfile.title'), content: t('editor.switchProfile.content'), okText: t('editor.switchProfile.confirm'), cancelText: t('editor.switchProfile.keep') });
       if (!confirmed) return;
     }
     form.setFieldsValue({ channel: nextChannel, securityProfileCode: selected.securityProfileCode,
@@ -85,66 +91,67 @@ export function GatewayEditor({ resources, onAuthorizationChanged, capabilities,
     void navigate(`?${next}`, { replace: true }); onAuthorizationChanged();
   }
   async function reloadLatest() {
-    if (editor.dirty && !await modal.confirm({ title: '重新加载当前配置？', content: '这将丢弃当前草稿。', okText: '重新加载', cancelText: '继续编辑' })) return;
+    if (editor.dirty && !await modal.confirm({ title: t('editor.reloadConfirm.title'), content: t('editor.reloadConfirm.content'), okText: t('editor.reload'), cancelText: t('config.leave.stay') })) return;
     editor.reset(); setReload(v => v + 1);
   }
   if (loading) return <Spin />;
-  if (failed || (!creating && !detail)) return <Button onClick={() => setReload(v => v + 1)}>重新加载详情</Button>;
-  return <div className="configuration-page configuration-wide-editor"><div className="page-heading"><h1>{creating ? '新增' : readOnly ? '' : '编辑'}{kind === 'target' ? '目标服务' : 'API 路由'}{readOnly ? '详情' : ''}</h1></div>
-    <section className="configuration-editor"><header className="configuration-editor-heading"><div><h2>{creating ? kind === 'target' ? '新目标服务' : '新路由' : code}<Tag color={detail?.status === 'ACTIVE' ? 'green' : 'default'}>{detail?.status === 'ACTIVE' ? '启用' : '停用'}</Tag></h2>
+  if (failed || (!creating && !detail)) return <Button onClick={() => setReload(v => v + 1)}>{t('editor.reloadDetail')}</Button>;
+  return <div className="configuration-page configuration-wide-editor"><div className="page-heading"><h1>{creating ? t('editor.title.create', { kind }) : readOnly ? t('editor.title.view', { kind }) : t('editor.title.edit', { kind })}</h1></div>
+    <section className="configuration-editor"><header className="configuration-editor-heading"><div><h2>{creating ? kind === 'target' ? t('editor.newTarget') : t('editor.newRoute') : code}<Tag color={detail?.status === 'ACTIVE' ? 'green' : 'default'}>{enumLabel(t, 'enum.resourceStatus', detail?.status === 'ACTIVE' ? 'ACTIVE' : 'DISABLED')}</Tag></h2>
       {detail && <Typography.Text className="configuration-code" copyable>{code}</Typography.Text>}</div>
-      {readOnly && canManage && !!detail?.managementProtection.editableFields.length && <Button onClick={() => { const next = new URLSearchParams(location.search); next.set('mode', 'edit'); void navigate(`?${next}`); }}>编辑</Button>}</header>
+      {readOnly && canManage && !!detail?.managementProtection.editableFields.length && <Button onClick={() => { const next = new URLSearchParams(location.search); next.set('mode', 'edit'); void navigate(`?${next}`); }}>{t('resources.action.edit')}</Button>}</header>
       {detail?.managementProtection.reason && <p className="configuration-protection">{detail.managementProtection.reason}</p>}
-      {editor.conflict && <Alert type="warning" showIcon title="配置已变化，当前草稿已保留。请重新加载后编辑。" action={<Button onClick={() => void reloadLatest()}>重新加载</Button>} />}
+      {editor.conflict && <Alert type="warning" showIcon title={t('editor.conflict')} action={<Button onClick={() => void reloadLatest()}>{t('editor.reload')}</Button>} />}
       <Form form={form} layout="vertical" disabled={readOnly || editor.saving} onValuesChange={() => editor.setDirty(true)} onFinish={save}
         initialValues={{ reason: '', idempotencyMode: 'NONE', headers: [], queryParameterNames: [], guardRules: [], bodyLimitBytes: Math.min(65536, capabilities.limits.maxBodyLimitBytes), bodyReceiveTimeoutMillis: capabilities.limits.maxBodyReceiveTimeoutMillis, responseTimeoutMillis: capabilities.limits.maxResponseTimeoutMillis }}>
-        <h3 className="configuration-section-heading">基本信息</h3><div className="configuration-grid two">
-          <Form.Item name={kind === 'target' ? 'targetServiceCode' : 'routeCode'} label={kind === 'target' ? '目标服务编码' : '路由编码'} rules={[...required, { pattern: /^[a-z][a-z0-9-]{2,127}$/, message: '3–128 位小写字母、数字或连字符，以字母开头' }]}><Input disabled={!creating || readOnly || editor.saving} maxLength={128} /></Form.Item>
-          <Form.Item name="channel" label="Channel" rules={required}><Select disabled={!creating || readOnly || editor.saving} options={options(capabilities.channels.map(c => c.channel))} onChange={value => { if (kind === 'route') void switchProfile(value); }} /></Form.Item>
+        <h3 className="configuration-section-heading">{t('resources.editor.basics')}</h3><div className="configuration-grid two">
+          <Form.Item name={kind === 'target' ? 'targetServiceCode' : 'routeCode'} label={kind === 'target' ? t('routes.field.targetServiceCode') : t('routes.field.routeCode')} rules={[...required, { pattern: /^[a-z][a-z0-9-]{2,127}$/, message: t('editor.codePattern') }]}><Input disabled={!creating || readOnly || editor.saving} maxLength={128} /></Form.Item>
+          <Form.Item name="channel" label={t('routes.field.channel')} rules={required}><Select disabled={!creating || readOnly || editor.saving} options={options(capabilities.channels.map(c => c.channel))} onChange={value => { if (kind === 'route') void switchProfile(value); }} /></Form.Item>
         </div>
-        {kind === 'target' ? <Form.Item name="discoveryServiceName" label="服务发现名" rules={required}><Input maxLength={255} disabled={locked('discoveryServiceName')} /></Form.Item> : <>
-          <div className="configuration-grid two"><Form.Item name="httpMethod" label="HTTP Method" rules={required}><Select options={options(capabilities.httpMethods)} disabled={locked('httpMethod')} /></Form.Item>
-            <Form.Item name="targetServiceCode" label="目标服务" rules={required}><Select showSearch optionFilterProp="label" disabled={locked('targetServiceCode')} options={targets.map(t => ({ value: t.targetServiceCode, label: `${t.targetServiceCode} · ${t.status === 'ACTIVE' ? '启用' : '停用'}` }))} /></Form.Item></div>
-          {targetsFailed && <Button onClick={() => setTargetsReload(v => v + 1)}>重新加载目标服务</Button>}
-          <div className="configuration-grid two"><Form.Item name="externalPathTemplate" label="入口路径" rules={required}><Input maxLength={1000} disabled={locked('externalPathTemplate')} /></Form.Item>
-            <Form.Item name="downstreamPathTemplate" label="下游路径" rules={required}><Input maxLength={1000} disabled={locked('downstreamPathTemplate')} /></Form.Item></div>
-          <h3 className="configuration-section-heading">安全与授权</h3><div className="configuration-grid two">
-            <Form.Item name="securityProfileCode" label="安全策略" rules={required}><Select options={options(capabilities.channels.find(c => c.channel === channel)?.profiles.map(p => p.securityProfileCode))} disabled={locked('securityProfileCode')} onChange={value => void switchProfile(channel!, value)} /></Form.Item>
-            <Form.Item name="authorizationMode" label="授权方式" rules={required}><Select options={options(profile?.authorizationModes)} disabled={locked('authorizationMode')} onChange={() => form.setFieldsValue({ permissionId: null, requiredScopeCode: null })} /></Form.Item>
-            {authorizationMode === 'HUMAN_PERMISSION' && <Form.Item name="permissionId" label="权限" rules={required}><PermissionSelect usage="GATEWAY_ROUTE" disabled={locked('permissionId')} currentLabel={route?.permissionCode || undefined} /></Form.Item>}
-            {authorizationMode === 'API_SCOPE' && <Form.Item name="requiredScopeCode" label="API Scope" rules={required}><ScopeSelect disabled={locked('requiredScopeCode')} originalValue={route?.requiredScopeCode} /></Form.Item>}
-          </div><div className="configuration-grid two"><Form.Item name="requestCookieMode" label="请求 Cookie" rules={required}><Select options={options(profile?.requestCookieModes)} disabled={locked('requestCookieMode')} /></Form.Item>
-            <Form.Item name="responseCookieMode" label="响应 Cookie" rules={required}><Select options={options(profile?.responseCookieModes)} disabled={locked('responseCookieMode')} /></Form.Item></div>
-          <div className="configuration-grid two"><Form.Item name="idempotencyMode" label="请求幂等" rules={required}><Select options={idempotencyOptions(profile?.idempotencyModes, route?.idempotencyMode)} disabled={locked('idempotencyMode')} /></Form.Item></div>
-          <h3 className="configuration-section-heading">请求限制与超时</h3><div className="configuration-grid three">
-            <Form.Item name="bodyLimitBytes" label="Body 上限（字节）" rules={required}><InputNumber min={0} max={capabilities.limits.maxBodyLimitBytes} precision={0} disabled={locked('bodyLimitBytes')} /></Form.Item>
-            <Form.Item name="bodyReceiveTimeoutMillis" label="接收超时（毫秒）" rules={required}><InputNumber min={1} max={capabilities.limits.maxBodyReceiveTimeoutMillis} precision={0} disabled={locked('bodyReceiveTimeoutMillis')} /></Form.Item>
-            <Form.Item name="responseTimeoutMillis" label="响应超时（毫秒）" rules={required}><InputNumber min={1} max={capabilities.limits.maxResponseTimeoutMillis} precision={0} disabled={locked('responseTimeoutMillis')} /></Form.Item></div>
-          <h3 className="configuration-section-heading">Header</h3><Form.List name="headers">{(fields, { add, remove }) => <div className="configuration-field-list">{fields.map(field => <div key={field.key} className="configuration-field-row">
-            <Form.Item name={[field.name, 'headerName']} rules={[...required, { validator: (_, value: string) => capabilities.forbiddenHeaderNames.includes(value?.toLowerCase()) ? Promise.reject(new Error('该 Header 由网关管理')) : Promise.resolve() }]}><Input placeholder="Header 名称" disabled={locked('headers')} /></Form.Item>
-            <Form.Item name={[field.name, 'headerUse']} rules={required}><Select placeholder="用途" options={options(capabilities.headerUses)} disabled={locked('headers')} /></Form.Item>
-            {!locked('headers') && <Button danger onClick={() => { remove(field.name); editor.setDirty(true); }}>移除</Button>}</div>)}
-            {!locked('headers') && <Button disabled={fields.length >= capabilities.limits.maxCorsHeaders + capabilities.limits.maxForwardedHeaders} onClick={() => { add({ headerName: '', headerUse: capabilities.headerUses[0] }); editor.setDirty(true); }}>＋ 添加 Header</Button>}</div>}</Form.List>
-          <h3 className="configuration-section-heading">Query 参数</h3><Form.Item name="queryParameterNames" rules={[{ type: 'array', max: capabilities.limits.maxQueryParameters }]}><Select mode="tags" open={false} tokenSeparators={[',']} placeholder="输入参数名称后按回车" disabled={locked('queryParameterNames')} /></Form.Item>
-          <h3 className="configuration-section-heading">Guard</h3><GuardFields profile={profile} capabilities={capabilities} disabled={locked('guardRules')} onChanged={() => editor.setDirty(true)} />
+        {kind === 'target' ? <Form.Item name="discoveryServiceName" label={t('routes.field.discoveryServiceName')} rules={required}><Input maxLength={255} disabled={locked('discoveryServiceName')} /></Form.Item> : <>
+          <div className="configuration-grid two"><Form.Item name="httpMethod" label={t('editor.httpMethod')} rules={required}><Select options={options(capabilities.httpMethods)} disabled={locked('httpMethod')} /></Form.Item>
+            <Form.Item name="targetServiceCode" label={t('routes.field.targetService')} rules={required}><Select showSearch optionFilterProp="label" disabled={locked('targetServiceCode')} options={targets.map(target => ({ value: target.targetServiceCode, label: t('editor.targetOption', { code: target.targetServiceCode, status: enumLabel(t, 'enum.resourceStatus', target.status === 'ACTIVE' ? 'ACTIVE' : 'DISABLED') }) }))} /></Form.Item></div>
+          {targetsFailed && <Button onClick={() => setTargetsReload(v => v + 1)}>{t('editor.reloadTargets')}</Button>}
+          <div className="configuration-grid two"><Form.Item name="externalPathTemplate" label={t('routes.field.entryPath')} rules={required}><Input maxLength={1000} disabled={locked('externalPathTemplate')} /></Form.Item>
+            <Form.Item name="downstreamPathTemplate" label={t('editor.downstreamPath')} rules={required}><Input maxLength={1000} disabled={locked('downstreamPathTemplate')} /></Form.Item></div>
+          <h3 className="configuration-section-heading">{t('editor.securitySection')}</h3><div className="configuration-grid two">
+            <Form.Item name="securityProfileCode" label={t('editor.securityProfile')} rules={required}><Select options={options(capabilities.channels.find(c => c.channel === channel)?.profiles.map(p => p.securityProfileCode))} disabled={locked('securityProfileCode')} onChange={value => void switchProfile(channel!, value)} /></Form.Item>
+            <Form.Item name="authorizationMode" label={t('editor.authorizationMode')} rules={required}><Select options={options(profile?.authorizationModes)} disabled={locked('authorizationMode')} onChange={() => form.setFieldsValue({ permissionId: null, requiredScopeCode: null })} /></Form.Item>
+            {authorizationMode === 'HUMAN_PERMISSION' && <Form.Item name="permissionId" label={t('editor.permission')} rules={required}><PermissionSelect usage="GATEWAY_ROUTE" disabled={locked('permissionId')} currentLabel={route?.permissionCode || undefined} /></Form.Item>}
+            {authorizationMode === 'API_SCOPE' && <Form.Item name="requiredScopeCode" label={t('routes.field.apiScope')} rules={required}><ScopeSelect disabled={locked('requiredScopeCode')} originalValue={route?.requiredScopeCode} /></Form.Item>}
+          </div><div className="configuration-grid two"><Form.Item name="requestCookieMode" label={t('editor.requestCookie')} rules={required}><Select options={options(profile?.requestCookieModes)} disabled={locked('requestCookieMode')} /></Form.Item>
+            <Form.Item name="responseCookieMode" label={t('editor.responseCookie')} rules={required}><Select options={options(profile?.responseCookieModes)} disabled={locked('responseCookieMode')} /></Form.Item></div>
+          <div className="configuration-grid two"><Form.Item name="idempotencyMode" label={t('editor.idempotency')} rules={required}><Select options={idempotencyOptions(profile?.idempotencyModes, route?.idempotencyMode)} disabled={locked('idempotencyMode')} /></Form.Item></div>
+          <h3 className="configuration-section-heading">{t('editor.limitsSection')}</h3><div className="configuration-grid three">
+            <Form.Item name="bodyLimitBytes" label={t('editor.bodyLimit')} rules={required}><InputNumber min={0} max={capabilities.limits.maxBodyLimitBytes} precision={0} disabled={locked('bodyLimitBytes')} /></Form.Item>
+            <Form.Item name="bodyReceiveTimeoutMillis" label={t('editor.receiveTimeout')} rules={required}><InputNumber min={1} max={capabilities.limits.maxBodyReceiveTimeoutMillis} precision={0} disabled={locked('bodyReceiveTimeoutMillis')} /></Form.Item>
+            <Form.Item name="responseTimeoutMillis" label={t('editor.responseTimeout')} rules={required}><InputNumber min={1} max={capabilities.limits.maxResponseTimeoutMillis} precision={0} disabled={locked('responseTimeoutMillis')} /></Form.Item></div>
+          <h3 className="configuration-section-heading">{t('editor.headerSection')}</h3><Form.List name="headers">{(fields, { add, remove }) => <div className="configuration-field-list">{fields.map(field => <div key={field.key} className="configuration-field-row">
+            <Form.Item name={[field.name, 'headerName']} rules={[...required, { validator: (_, value: string) => capabilities.forbiddenHeaderNames.includes(value?.toLowerCase()) ? Promise.reject(new Error(t('editor.headerManaged'))) : Promise.resolve() }]}><Input placeholder={t('editor.headerName')} disabled={locked('headers')} /></Form.Item>
+            <Form.Item name={[field.name, 'headerUse']} rules={required}><Select placeholder={t('editor.headerUse')} options={options(capabilities.headerUses)} disabled={locked('headers')} /></Form.Item>
+            {!locked('headers') && <Button danger onClick={() => { remove(field.name); editor.setDirty(true); }}>{t('editor.remove')}</Button>}</div>)}
+            {!locked('headers') && <Button disabled={fields.length >= capabilities.limits.maxCorsHeaders + capabilities.limits.maxForwardedHeaders} onClick={() => { add({ headerName: '', headerUse: capabilities.headerUses[0] }); editor.setDirty(true); }}>{t('editor.addHeader')}</Button>}</div>}</Form.List>
+          <h3 className="configuration-section-heading">{t('editor.querySection')}</h3><Form.Item name="queryParameterNames" rules={[{ type: 'array', max: capabilities.limits.maxQueryParameters }]}><Select mode="tags" open={false} tokenSeparators={[',']} placeholder={t('editor.queryPlaceholder')} disabled={locked('queryParameterNames')} /></Form.Item>
+          <h3 className="configuration-section-heading">{t('editor.guardSection')}</h3><GuardFields profile={profile} capabilities={capabilities} disabled={locked('guardRules')} onChanged={() => editor.setDirty(true)} />
         </>}
-        {!readOnly && <><h3 className="configuration-section-heading">变更说明</h3><Form.Item name="reason" label="操作原因" rules={[{ required: true, whitespace: true, message: '请填写操作原因' }]}><Input.TextArea rows={3} maxLength={500} showCount /></Form.Item>
-          <footer className="configuration-save-bar"><span className="muted">{creating ? '新配置保存为停用状态' : `当前版本 ${detail?.version}`}</span><Button type="primary" htmlType="submit" loading={editor.saving} disabled={editor.conflict || !canManage}>保存配置</Button></footer></>}
+        {!readOnly && <><h3 className="configuration-section-heading">{t('editor.changeSection')}</h3><Form.Item name="reason" label={tCommon('reason.label')} rules={[{ required: true, whitespace: true, message: tCommon('reason.required') }]}><Input.TextArea rows={3} maxLength={500} showCount /></Form.Item>
+          <footer className="configuration-save-bar"><span className="muted">{creating ? t('editor.createdDisabled') : t('config.currentVersion', { version: detail?.version ?? '' })}</span><Button type="primary" htmlType="submit" loading={editor.saving} disabled={editor.conflict || !canManage}>{t('config.save')}</Button></footer></>}
       </Form>
-      {readOnly && detail && <div className="configuration-readonly-field">版本 {detail.version}<span>最近更新 {new Date(detail.updateTime).toLocaleString()}</span></div>}
+      {readOnly && detail && <div className="configuration-readonly-field">{t('editor.version', { version: detail.version })}<span>{t('editor.lastUpdated', { time: formatDateTime(detail.updateTime) })}</span></div>}
     </section></div>;
 }
 function GuardFields({ profile, capabilities, disabled, onChanged }: { profile?: GatewayProfileCapability; capabilities: GatewayCapabilities; disabled: boolean; onChanged: () => void }) {
+  const t = useT('gateway'); const required = requiredRule(t);
   const form = Form.useFormInstance<Values>(); const limits = capabilities.limits;
   return <Form.List name="guardRules">{(fields, { add, remove }) => <div className="configuration-field-list">{fields.map(field => <div key={field.key} className="configuration-guard-row">
-    <div className="configuration-field-row"><Form.Item name={[field.name, 'dimension']} label="维度" rules={required}><Select options={options(profile?.allowedGuardDimensions)} disabled={disabled} /></Form.Item>
-      <Form.Item name={[field.name, 'ruleType']} label="类型" rules={required}><Select options={options(['RATE_LIMIT', 'CONCURRENCY'])} disabled={disabled} onChange={value => {
+    <div className="configuration-field-row"><Form.Item name={[field.name, 'dimension']} label={t('editor.guard.dimension')} rules={required}><Select options={options(profile?.allowedGuardDimensions)} disabled={disabled} /></Form.Item>
+      <Form.Item name={[field.name, 'ruleType']} label={t('editor.guard.ruleType')} rules={required}><Select options={options(['RATE_LIMIT', 'CONCURRENCY'])} disabled={disabled} onChange={value => {
         form.setFieldValue(['guardRules', field.name], { ...form.getFieldValue(['guardRules', field.name]), capacity: value === 'RATE_LIMIT' ? 10 : null, refillTokens: value === 'RATE_LIMIT' ? 10 : null, refillPeriodMillis: value === 'RATE_LIMIT' ? 1000 : null, concurrencyLimit: value === 'CONCURRENCY' ? 5 : null });
-      }} /></Form.Item>{!disabled && <Button danger style={{ marginTop: 30 }} onClick={() => { remove(field.name); onChanged(); }}>移除</Button>}</div>
+      }} /></Form.Item>{!disabled && <Button danger style={{ marginTop: 30 }} onClick={() => { remove(field.name); onChanged(); }}>{t('editor.remove')}</Button>}</div>
     <Form.Item noStyle shouldUpdate={(before, after) => before.guardRules?.[field.name]?.ruleType !== after.guardRules?.[field.name]?.ruleType}>{() => form.getFieldValue(['guardRules', field.name, 'ruleType']) === 'RATE_LIMIT'
-      ? <div className="configuration-grid three"><Form.Item name={[field.name, 'capacity']} label="容量" rules={required}><InputNumber min={1} max={limits.maxRateCapacity} precision={0} disabled={disabled} /></Form.Item>
-        <Form.Item name={[field.name, 'refillTokens']} label="补充 Token" rules={required}><InputNumber min={1} max={limits.maxRateRefillTokens} precision={0} disabled={disabled} /></Form.Item>
-        <Form.Item name={[field.name, 'refillPeriodMillis']} label="补充周期（毫秒）" rules={required}><InputNumber min={1} max={limits.maxRateRefillPeriodMillis} precision={0} disabled={disabled} /></Form.Item></div>
-      : <Form.Item name={[field.name, 'concurrencyLimit']} label="并发上限" rules={required}><InputNumber min={1} max={limits.maxConcurrencyLimit} precision={0} disabled={disabled} /></Form.Item>}</Form.Item>
-  </div>)}{!disabled && <Button disabled={fields.length >= limits.maxGuardRules} onClick={() => { add({ ruleType: 'RATE_LIMIT', dimension: profile?.allowedGuardDimensions[0], capacity: 10, refillTokens: 10, refillPeriodMillis: 1000, concurrencyLimit: null }); onChanged(); }}>＋ 添加 Guard</Button>}</div>}</Form.List>;
+      ? <div className="configuration-grid three"><Form.Item name={[field.name, 'capacity']} label={t('editor.guard.capacity')} rules={required}><InputNumber min={1} max={limits.maxRateCapacity} precision={0} disabled={disabled} /></Form.Item>
+        <Form.Item name={[field.name, 'refillTokens']} label={t('editor.guard.refillTokens')} rules={required}><InputNumber min={1} max={limits.maxRateRefillTokens} precision={0} disabled={disabled} /></Form.Item>
+        <Form.Item name={[field.name, 'refillPeriodMillis']} label={t('editor.guard.refillPeriod')} rules={required}><InputNumber min={1} max={limits.maxRateRefillPeriodMillis} precision={0} disabled={disabled} /></Form.Item></div>
+      : <Form.Item name={[field.name, 'concurrencyLimit']} label={t('editor.guard.concurrencyLimit')} rules={required}><InputNumber min={1} max={limits.maxConcurrencyLimit} precision={0} disabled={disabled} /></Form.Item>}</Form.Item>
+  </div>)}{!disabled && <Button disabled={fields.length >= limits.maxGuardRules} onClick={() => { add({ ruleType: 'RATE_LIMIT', dimension: profile?.allowedGuardDimensions[0], capacity: 10, refillTokens: 10, refillPeriodMillis: 1000, concurrencyLimit: null }); onChanged(); }}>{t('editor.addGuard')}</Button>}</div>}</Form.List>;
 }

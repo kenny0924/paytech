@@ -7,6 +7,9 @@ import {
 import { addField, fieldKeyFromLabel, insertField } from './formModel.ts';
 import { defaultConfig, normalizeConfig } from './templateModel.ts';
 import type { ActionConfig, ActionTemplate, ActionType, FormDefinition, TemplateReferences } from './workflowTypes.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('workflow');
 
 const row = (templateId: string, actionType: ActionType, templateName: string, extra: Partial<ActionTemplate> = {}): ActionTemplate => ({
   templateId, templateCode: `CODE_${templateId}`, templateName, actionType, description: null, config: null, status: 'ACTIVE', version: 1,
@@ -38,8 +41,8 @@ test('按页签与关键字过滤：名称、编码、描述，不区分大小�
 });
 
 test('被引用列：N 个流程；0 或后端缺字段时为「—」', () => {
-  assert.equal(referenceText(3), '3 个流程');
-  assert.equal(referenceText(1), '1 个流程');
+  assert.equal(referenceText(3), '3 processes');
+  assert.equal(referenceText(1), '1 process');
   assert.equal(referenceText(0), '—');
   assert.equal(referenceText(null), '—');
   assert.equal(referenceText(undefined), '—');
@@ -113,15 +116,15 @@ test('从字段类型拖到画布：插入到目标字段之前，越界加到�
   const inserted = insertField(form, 'ENUM', 1);
   assert.equal(inserted.index, 1);
   assert.deepEqual(inserted.form.fields.map(field => field.type), ['TEXT', 'ENUM', 'DATE']);
-  assert.deepEqual(inserted.form.fields[1].rules, { options: [{ value: 'OPTION_1', label: '选项 1' }] });
+  assert.deepEqual(inserted.form.fields[1].rules, { options: [{ value: 'OPTION_1', label: t('form.defaultOption', { index: 1 }) }] });
   assert.equal(insertField(form, 'BOOLEAN', 99).index, 2);
 });
 
 test('步骤：表单为字段设计、其他类型为说明；引用只在已保存的动作出现并带数量', () => {
-  assert.deepEqual(editorSteps('FORM', true).map(step => step.label), ['基本信息', '字段设计']);
-  assert.deepEqual(editorSteps('FILE_UPLOAD', false, 2), [{ key: 'basic', label: '基本信息' }, { key: 'config', label: '说明' },
-    { key: 'references', label: '引用', count: 2 }]);
-  assert.deepEqual(editorSteps('MANUAL_CONFIRM', false).at(-1), { key: 'references', label: '引用' });
+  assert.deepEqual(editorSteps('FORM', true).map(step => step.label), ['Basic Information', 'Field Design']);
+  assert.deepEqual(editorSteps('FILE_UPLOAD', false, 2), [{ key: 'basic', label: 'Basic Information' }, { key: 'config', label: 'Instructions' },
+    { key: 'references', label: 'References', count: 2 }]);
+  assert.deepEqual(editorSteps('MANUAL_CONFIRM', false).at(-1), { key: 'references', label: 'References' });
 });
 
 test('新建路由的类型：只接受四类可新建类型，数据查询与非法值回列表', () => {

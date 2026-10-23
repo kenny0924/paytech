@@ -3,8 +3,7 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useId, useRef, useState } from 'react';
-import zhCN from 'antd/es/date-picker/locale/zh_CN';
-import 'dayjs/locale/zh-cn';
+import { useT } from '../i18n/react';
 import { resolveTimeRange } from './timeRange';
 import type { TimeRangePreset, TimeRangeValue } from './timeRange';
 import './TimeRangePicker.css';
@@ -15,12 +14,8 @@ const { RangePicker } = AntDatePicker;
 const VALUE_FORMAT = 'YYYY-MM-DD[T]HH:mm:ss';
 const DISPLAY_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 
-const shortcuts: Array<{ label: string; value: TimeRangePreset }> = [
-  { label: '今天', value: 'TODAY' },
-  { label: '最近 3 天', value: 'LAST_3_DAYS' },
-  { label: '最近 7 天', value: 'LAST_7_DAYS' },
-  { label: '自定义', value: 'CUSTOM' },
-];
+/** Shortcut order; labels are `common.timeRange.preset.<value>`. */
+const shortcuts: TimeRangePreset[] = ['TODAY', 'LAST_3_DAYS', 'LAST_7_DAYS', 'CUSTOM'];
 
 export interface TimeRangePickerProps {
   id?: string;
@@ -32,7 +27,7 @@ export interface TimeRangePickerProps {
 
 function pickerDate(value?: string): Dayjs | null {
   if (!value) return null;
-  const parsed = dayjs(value, VALUE_FORMAT, true).locale('zh-cn');
+  const parsed = dayjs(value, VALUE_FORMAT, true);
   return parsed.isValid() ? parsed : null;
 }
 
@@ -42,12 +37,13 @@ function pickerRange(value?: TimeRangeValue): [Dayjs | null, Dayjs | null] | nul
   return [pickerDate(range.start), pickerDate(range.end)];
 }
 
-function localTimeZone(): string {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone || '本地时区';
+function localTimeZone(): string | undefined {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
 }
 
 /** 页面查询通用的本地日期时间范围选择器。 */
 export function TimeRangePicker({ id, value, onChange, disabled, className }: TimeRangePickerProps) {
+  const t = useT('common');
   const generatedId = useId().replaceAll(':', '');
   const controlId = id || `time-range-${generatedId}`;
   const [open, setOpen] = useState(false);
@@ -85,7 +81,7 @@ export function TimeRangePicker({ id, value, onChange, disabled, className }: Ti
 
   return <div className={['time-range-picker', className].filter(Boolean).join(' ')}>
     <RangePicker id={{ start: `${controlId}-start`, end: `${controlId}-end` }}
-      aria-label="时间范围"
+      aria-label={t('timeRange.label')}
       value={pickerRange(value)}
       onChange={commitRange}
       onCalendarChange={() => setDraftPreset('CUSTOM')}
@@ -93,7 +89,6 @@ export function TimeRangePicker({ id, value, onChange, disabled, className }: Ti
       open={open}
       onOpenChange={changeOpen}
       disabled={disabled}
-      locale={zhCN}
       format={DISPLAY_FORMAT}
       showTime={{ format: 'HH:mm:ss', use12Hours: false,
         defaultOpenValue: [dayjs().startOf('day'), dayjs().startOf('day')] }}
@@ -101,22 +96,22 @@ export function TimeRangePicker({ id, value, onChange, disabled, className }: Ti
       showNow={false}
       allowClear
       separator={<span aria-hidden="true" className="time-range-separator">→</span>}
-      placeholder={['开始时间', '结束时间']}
+      placeholder={[t('timeRange.start'), t('timeRange.end')]}
       placement="bottomLeft"
       classNames={{ popup: { root: 'time-range-picker-popup' } }}
       panelRender={panel => <div className="time-range-dropdown">
-        <aside className="time-range-shortcuts" aria-label="快捷时间范围">
-          <div className="time-range-shortcuts-title">快捷选择</div>
-          {shortcuts.map(shortcut => <button key={shortcut.value} type="button"
-            className={activePreset === shortcut.value ? 'is-active' : undefined}
-            aria-pressed={activePreset === shortcut.value}
-            onClick={() => selectShortcut(shortcut.value)}>{shortcut.label}</button>)}
+        <aside className="time-range-shortcuts" aria-label={t('timeRange.shortcuts')}>
+          <div className="time-range-shortcuts-title">{t('timeRange.shortcutsTitle')}</div>
+          {shortcuts.map(shortcut => <button key={shortcut} type="button"
+            className={activePreset === shortcut ? 'is-active' : undefined}
+            aria-pressed={activePreset === shortcut}
+            onClick={() => selectShortcut(shortcut)}>{t('timeRange.preset.' + shortcut)}</button>)}
         </aside>
         <div className="time-range-calendar">{panel}</div>
       </div>}
       renderExtraFooter={() => <div className="time-range-footer">
-        <span>本地时间 · {localTimeZone()}</span>
-        <button type="button" onMouseDown={event => event.preventDefault()} onClick={() => changeOpen(false)}>取消</button>
+        <span>{t('timeRange.localTime', { timeZone: localTimeZone() ?? t('timeRange.localTimeZone') })}</span>
+        <button type="button" onMouseDown={event => event.preventDefault()} onClick={() => changeOpen(false)}>{t('action.cancel')}</button>
       </div>} />
   </div>;
 }

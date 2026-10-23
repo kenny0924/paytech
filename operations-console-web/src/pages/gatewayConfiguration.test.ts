@@ -3,6 +3,9 @@ import test from 'node:test';
 import { ApiError } from '../api/session.ts';
 import { gatewayFilters, gatewayRouteBreakGlassWarning, gatewayStatusCommand, gatewayStatusFailureAction,
   gatewayStatusSavedMessage, isExpectedGatewayStatusResponse } from './gatewayConfigurationModel.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('gateway');
 
 test('status command uses PATCH, the current version and a trimmed reason', () => {
   const command = gatewayStatusCommand({ kind: 'route', code: 'checkout route/one', status: 'ACTIVE', version: 7 },
@@ -30,7 +33,8 @@ test('filters trim text and omit empty controls', () => {
 });
 
 test('status outcome keeps success wording bounded and refreshes stale resources', () => {
-  assert.equal(gatewayStatusSavedMessage, 'Platform 当前配置已保存；此页面不确认 Gateway 实例刷新状态。');
+  assert.equal(gatewayStatusSavedMessage(), t('statusModal.saved'));
+  assert.match(gatewayStatusSavedMessage(), /doesn't confirm that Gateway instances have refreshed/);
   assert.equal(gatewayStatusFailureAction(new ApiError(404, 'GATEWAY_CONFIGURATION_NOT_FOUND')), 'STALE');
   assert.equal(gatewayStatusFailureAction(new ApiError(409, 'CONCURRENT_REQUEST')), 'CONFLICT');
   assert.equal(gatewayStatusFailureAction(new ApiError(403, 'OPERATIONS_PERMISSION_DENIED')), 'AUTHORIZATION_CHANGED');
@@ -47,10 +51,12 @@ test('status response must identify the resource and advance exactly one version
 });
 
 test('disabling Operations Gateway management routes warns about self lockout', () => {
+  assert.equal(gatewayRouteBreakGlassWarning({ kind: 'route', code: 'operations-gateway-route-status',
+    status: 'ACTIVE', version: 2 }), t('statusModal.routeStatusRouteWarning'));
   assert.match(gatewayRouteBreakGlassWarning({ kind: 'route', code: 'operations-gateway-route-status',
-    status: 'ACTIVE', version: 2 }) ?? '', /无法再执行任何 Route 状态变更/);
-  assert.match(gatewayRouteBreakGlassWarning({ kind: 'route', code: 'operations-gateway-routes',
-    status: 'ACTIVE', version: 3 }) ?? '', /削弱或切断本页面/);
+    status: 'ACTIVE', version: 2 }) ?? '', /can no longer change any route status/);
+  assert.equal(gatewayRouteBreakGlassWarning({ kind: 'route', code: 'operations-gateway-routes',
+    status: 'ACTIVE', version: 3 }), t('statusModal.managementRouteWarning'));
   assert.equal(gatewayRouteBreakGlassWarning({ kind: 'route', code: 'client-orders', status: 'ACTIVE', version: 1 }), null);
   assert.equal(gatewayRouteBreakGlassWarning({ kind: 'route', code: 'operations-gateway-route-status',
     status: 'DISABLED', version: 2 }), null);

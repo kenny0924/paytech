@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import type { Key } from 'react';
 import { Alert, Button, Checkbox, Dropdown, Empty, Input, Select, Table, Tag } from 'antd';
-import { accountClassLabels, buildAccountTree, chartAccountStatusLabels, expandableKeys, filterAccountTree, referenceStatusLabels } from './finance';
+import { enumLabel } from '../i18n/index';
+import { useT } from '../i18n/react';
+import { buildAccountTree, expandableKeys, filterAccountTree } from './finance';
 import type { ChartAccount, TreeNode } from './finance';
 import { ChartAccountChangesDrawer, ChartAccountFormModal, ToggleChartAccountModal } from './ChartAccountModals';
 import { FinanceNote, LoadFailure, SideTag, StatusTag } from './FinanceParts';
@@ -18,6 +20,7 @@ interface Props { canManage: boolean; onAuthorizationChanged: () => void }
  * <li>新增、编辑、新增下级、停用 / 启用只在维护权限下显示；无维护权限只保留变更记录。</li>
  */
 export function SetupChartsTab({ canManage, onAuthorizationChanged }: Props) {
+  const t = useT('finance');
   const charts = useCharts(onAuthorizationChanged);
   const [chosen, setChosen] = useState<string | null>(null);
   const [keyword, setKeyword] = useState(''); const [showInactive, setShowInactive] = useState(false);
@@ -34,47 +37,47 @@ export function SetupChartsTab({ canManage, onAuthorizationChanged }: Props) {
   const expandedKeys = keyword.trim() || expanded === null ? allKeys : expanded;
   const done = () => { setAction(null); setReloadToken(value => value + 1); };
   const menu = (row: ChartAccount) => [
-    ...(canManage ? [{ key: 'edit', label: '编辑', onClick: () => setAction({ kind: 'edit', account: row }) },
+    ...(canManage ? [{ key: 'edit', label: t('charts.action.edit'), onClick: () => setAction({ kind: 'edit', account: row }) },
       ...(!row.postingAllowed && row.accountStatus === 'ACTIVE' && row.level < 4
-        ? [{ key: 'child', label: '新增下级', onClick: () => setAction({ kind: 'create', parent: row }) }] : []),
-      { key: 'toggle', label: row.accountStatus === 'ACTIVE' ? '停用' : '启用', onClick: () => setAction({ kind: 'toggle', account: row }) }] : []),
-    { key: 'changes', label: '变更记录', onClick: () => setAction({ kind: 'changes', account: row }) },
+        ? [{ key: 'child', label: t('charts.action.addChild'), onClick: () => setAction({ kind: 'create', parent: row }) }] : []),
+      { key: 'toggle', label: row.accountStatus === 'ACTIVE' ? t('charts.action.disable') : t('charts.action.enable'), onClick: () => setAction({ kind: 'toggle', account: row }) }] : []),
+    { key: 'changes', label: t('charts.action.changes'), onClick: () => setAction({ kind: 'changes', account: row }) },
   ];
   return <>
     <div className="finance-section-head">
-        <Select<string> className="finance-chart-select" value={chartCode ?? undefined} loading={charts.loading} placeholder="选择科目表"
+        <Select<string> className="finance-chart-select" value={chartCode ?? undefined} loading={charts.loading} placeholder={t('charts.selectChart')}
           onChange={code => { setChosen(code); setExpanded(null); }} options={charts.items.map(chart => ({
-            value: chart.chartCode, label: <span>{chart.chartCode} · {chart.chartName}{chart.status !== 'ACTIVE' && <span className="muted">（{referenceStatusLabels[chart.status]}）</span>}</span> }))} />
-        <span className="cell-meta">{chartCode ? `${visible.length} 个${showInactive ? '' : '启用'}科目` : ''}</span>
+            value: chart.chartCode, label: <span>{chart.chartCode} · {chart.chartName}{chart.status !== 'ACTIVE' && <span className="muted">{t('common.parenthesized', { text: enumLabel(t, 'enum.referenceStatus', chart.status) })}</span>}</span> }))} />
+        <span className="cell-meta">{chartCode ? t(showInactive ? 'charts.countAll' : 'charts.countActive', { count: visible.length }) : ''}</span>
         <span className="finance-spacer" />
-        <Input.Search allowClear className="finance-tree-search" placeholder="搜索编号 / 名称 / 代码" onSearch={setKeyword}
+        <Input.Search allowClear className="finance-tree-search" placeholder={t('charts.searchPlaceholder')} onSearch={setKeyword}
           onChange={event => { if (!event.target.value) setKeyword(''); }} />
-        <Checkbox checked={showInactive} onChange={event => setShowInactive(event.target.checked)}>显示已停用</Checkbox>
-        <Button size="small" onClick={() => setExpanded(allKeys)}>全部展开</Button>
-        <Button size="small" onClick={() => setExpanded([])}>全部折叠</Button>
-        {canManage && chartCode && <Button type="primary" onClick={() => setAction({ kind: 'create' })}>新增科目</Button>}
+        <Checkbox checked={showInactive} onChange={event => setShowInactive(event.target.checked)}>{t('charts.showInactive')}</Checkbox>
+        <Button size="small" onClick={() => setExpanded(allKeys)}>{t('charts.expandAll')}</Button>
+        <Button size="small" onClick={() => setExpanded([])}>{t('charts.collapseAll')}</Button>
+        {canManage && chartCode && <Button type="primary" onClick={() => setAction({ kind: 'create' })}>{t('charts.createAccount')}</Button>}
     </div>
     {charts.error ? <LoadFailure message={charts.error} onRetry={charts.reload} /> : <>
         {adoption.adoptedBy > 0 && <Alert type="info" showIcon className="finance-banner"
-          title={`本科目表已被 ${adoption.adoptedBy} 个账簿采用，既有科目的编号与上级不可修改；仍可追加科目、改名、停用与启用。`} />}
-        {!chartCode ? <div className="finance-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={charts.loading ? '加载中' : '没有可查看的科目表'} /></div>
+          title={t('charts.adoptedBanner', { count: adoption.adoptedBy })} />}
+        {!chartCode ? <div className="finance-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={charts.loading ? t('common.loading') : t('charts.noCharts')} /></div>
           : accounts.error ? <LoadFailure message={accounts.error} onRetry={accounts.reload} /> : <section className="table-panel">
           <Table<TreeNode<ChartAccount>> rowKey="chartAccountId" tableLayout="fixed" dataSource={tree} loading={accounts.loading} pagination={false}
             scroll={{ x: 960 }} expandable={{ expandedRowKeys: [...expandedKeys], onExpandedRowsChange: keys => setExpanded(keys) }}
             rowClassName={row => row.accountStatus === 'INACTIVE' ? 'finance-inactive-row' : row.postingAllowed ? 'finance-posting-row' : ''}
-            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={keyword.trim() ? '没有符合条件的科目' : '该科目表没有科目'} /> }} columns={[
-              { title: '编号', width: 170, render: (_, row) => <span className="mono">{row.accountNo}</span> },
-              { title: '名称', render: (_, row) => row.postingAllowed ? row.accountName : <strong>{row.accountName}</strong> },
-              { title: '代码', width: 260, render: (_, row) => <span className="finance-code">{row.accountCode}</span> },
-              { title: '类别', width: 70, render: (_, row) => accountClassLabels[row.accountClass] },
-              { title: '方向', width: 64, render: (_, row) => <SideTag side={row.normalSide} /> },
-              { title: '类型', width: 70, render: (_, row) => <Tag color={row.postingAllowed ? 'green' : 'default'}>{row.postingAllowed ? '末级' : '汇总'}</Tag> },
-              { title: '状态', width: 70, render: (_, row) => <StatusTag status={row.accountStatus} labels={chartAccountStatusLabels} /> },
-              { title: '操作', width: 90, render: (_, row) => <Dropdown trigger={['click']} menu={{ items: menu(row) }}>
-                <Button size="small">{canManage ? '操作 ▾' : '记录 ▾'}</Button></Dropdown> },
+            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={keyword.trim() ? t('charts.emptyFiltered') : t('charts.empty')} /> }} columns={[
+              { title: t('charts.changeField.accountNo'), width: 170, render: (_, row) => <span className="mono">{row.accountNo}</span> },
+              { title: t('charts.changeField.name'), render: (_, row) => row.postingAllowed ? row.accountName : <strong>{row.accountName}</strong> },
+              { title: t('charts.column.code'), width: 260, render: (_, row) => <span className="finance-code">{row.accountCode}</span> },
+              { title: t('charts.column.class'), width: 70, render: (_, row) => enumLabel(t, 'enum.accountClass', row.accountClass) },
+              { title: t('field.side'), width: 64, render: (_, row) => <SideTag side={row.normalSide} /> },
+              { title: t('ledger.lines.column.type'), width: 70, render: (_, row) => <Tag color={row.postingAllowed ? 'green' : 'default'}>{row.postingAllowed ? t('charts.leaf') : t('charts.summary')}</Tag> },
+              { title: t('field.status'), width: 70, render: (_, row) => <StatusTag status={row.accountStatus} enumType="chartAccountStatus" /> },
+              { title: t('field.actions'), width: 90, render: (_, row) => <Dropdown trigger={['click']} menu={{ items: menu(row) }}>
+                <Button size="small">{canManage ? t('charts.actionsMenu') : t('charts.recordsMenu')}</Button></Dropdown> },
             ]} /></section>}
       </>}
-    <FinanceNote>末级科目可开户记账，汇总科目只汇总下级；停用的科目不能新建账户、不能被新规则引用，已有账户与记账不受影响。科目维护不审批、保存即生效，每次变化都记入变更记录。</FinanceNote>
+    <FinanceNote>{t('charts.note')}</FinanceNote>
     {chartCode && (action?.kind === 'create' || action?.kind === 'edit') && <ChartAccountFormModal chartCode={chartCode} accounts={accounts.items}
       editing={action.kind === 'edit' ? action.account : undefined} parent={action.kind === 'create' ? action.parent : undefined}
       adopted={adoption.adoptedBy > 0} onClose={() => setAction(null)} onDone={done} onAuthorizationChanged={onAuthorizationChanged} />}

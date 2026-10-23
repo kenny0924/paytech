@@ -20,12 +20,13 @@ export function conditionDepth(condition: EditorCondition): number {
   return condition.kind === 'CONDITION' ? 1 : 1 + Math.max(...condition.children.map(conditionDepth));
 }
 
+/** 单位显示名是 `risk.enum.durationUnit.<值>`。 */
 export const durationUnits = [
-  { value: 'MILLISECOND', label: '毫秒', factor: 1n },
-  { value: 'SECOND', label: '秒', factor: 1000n },
-  { value: 'MINUTE', label: '分钟', factor: 60000n },
-  { value: 'HOUR', label: '小时', factor: 3600000n },
-  { value: 'DAY', label: '天', factor: 86400000n },
+  { value: 'MILLISECOND', factor: 1n },
+  { value: 'SECOND', factor: 1000n },
+  { value: 'MINUTE', factor: 60000n },
+  { value: 'HOUR', factor: 3600000n },
+  { value: 'DAY', factor: 86400000n },
 ] as const;
 export type DurationUnit = typeof durationUnits[number]['value'];
 

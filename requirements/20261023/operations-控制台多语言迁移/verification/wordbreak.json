@@ -1,0 +1,8 @@
+{
+ "1280 /card-bin-library": [
+  "Activate | w=60 | ant-table-content | col#1 | th=Type"
+ ],
+ "1280 /commercial/agreements": [
+  "Name | w=0 | ant-table-content | col#1 | th=Name"
+ ]
+}

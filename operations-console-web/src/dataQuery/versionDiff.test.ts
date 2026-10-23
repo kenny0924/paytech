@@ -47,10 +47,11 @@ test('参数 / 约束 / 列 / 数据源变化', () => {
     ],
     columns: [{ name: 'email', mask: 'KEEP_EDGES', keepStart: 2, keepEnd: 4 }, { name: 'id', label: '编号' }],
     constraints: { ...base.constraints, timeoutSeconds: 10 } };
-  assert.deepEqual(declarationChanges(base, next).map(change => `${change.subject}：${change.change}`), [
-    '参数 sortBy：改为必填', '参数 sortBy：片段取值新增 AMOUNT → amount DESC', '参数 channels：新增 LIST<STRING>', '参数 currency：删除',
-    '参数顺序：clientId, sortBy → sortBy, clientId', '约束 超时：5 s → 10 s',
-    '列 email：email · 全部掩码 → email · 保留首尾（首 2 尾 4）', '列 id：新增 编号 · 不屏蔽', '数据源：PAYMENT_REPLICA → LEDGER_REPLICA',
+  assert.deepEqual(declarationChanges(base, next).map(change => `${change.subject}: ${change.change}`), [
+    'Parameter sortBy: Now required', 'Parameter sortBy: Fragment choice added AMOUNT → amount DESC', 'Parameter channels: Added LIST<STRING>',
+    'Parameter currency: Removed', 'Parameter Order: clientId, sortBy → sortBy, clientId', 'Constraint Timeout: 5 s → 10 s',
+    'Column email: email · Fully Masked → email · Keep Edges (first 2, last 4)', 'Column id: Added 编号 · No Masking',
+    'Data Source: PAYMENT_REPLICA → LEDGER_REPLICA',
   ]);
   assert.deepEqual(declarationChanges(base, { ...base, versionNo: 3 }), []);
 });

@@ -10,6 +10,9 @@ import {
   fieldPath, lifecycleActions, percent, primaryLifecycleAction, scopeDrafts, tokenSuffixLabel,
 } from './channel.ts';
 import type { CapabilityDefinition, CostPlan, ScopeDraft } from './channel.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('channel');
 
 const time = '2026-10-20T01:00:00Z';
 const hash = 'a'.repeat(64);
@@ -80,11 +83,11 @@ test('解码：合法响应通过，身份不一致、缺字段或非法状态�
 
 test('状态按钮：只显示当前状态允许的下一步，CLOSED 与无权限无操作', () => {
   assert.deepEqual(lifecycleActions('DRAFT', true).map(a => a.targetStatus), ['ACTIVE', 'CLOSED']);
-  assert.deepEqual(lifecycleActions('ACTIVE', true).map(a => a.label), ['暂停', '关闭']);
-  assert.deepEqual(lifecycleActions('SUSPENDED', true).map(a => a.label), ['恢复', '关闭']);
+  assert.deepEqual(lifecycleActions('ACTIVE', true).map(a => a.label), ['Suspend', 'Close']);
+  assert.deepEqual(lifecycleActions('SUSPENDED', true).map(a => a.label), ['Resume', 'Close']);
   assert.deepEqual(lifecycleActions('CLOSED', true), []);
   assert.deepEqual(lifecycleActions('ACTIVE', false), []);
-  assert.equal(primaryLifecycleAction('DRAFT', true)?.label, '激活');
+  assert.equal(primaryLifecycleAction('DRAFT', true)?.label, t('lifecycle.activate'));
   assert.equal(primaryLifecycleAction('CLOSED', true), null);
   assert.equal(editable('CLOSED', true), false);
   assert.equal(editable('SUSPENDED', true), true);
@@ -116,16 +119,16 @@ test('成本版本按钮：Maker / Checker 权限分离，作废只给未到期 
 });
 
 test('账号配置：键格式、重复、值长度与 64 项上限；凭据不回显只显示 Token 末 4 位', () => {
-  assert.equal(configEntryIssues([{ key: 'merchantId', value: 'PM-1' }, { key: 'outlet.ref', value: 'x' }], '参数'), null);
-  assert.match(configEntryIssues([{ key: '1bad', value: 'x' }], '参数') ?? '', /名称须以字母开头/);
-  assert.match(configEntryIssues([{ key: 'apiKey', value: 'a' }, { key: 'apiKey', value: 'b' }], '凭据') ?? '', /重复/);
-  assert.match(configEntryIssues([{ key: 'apiKey', value: '' }], '凭据') ?? '', /1–8192/);
-  assert.match(configEntryIssues([{ key: 'apiKey', value: 'x'.repeat(8193) }], '凭据') ?? '', /1–8192/);
-  assert.match(configEntryIssues(Array.from({ length: 65 }, (_, i) => ({ key: `k${i}`, value: 'v' })), '参数') ?? '', /64/);
+  assert.equal(configEntryIssues([{ key: 'merchantId', value: 'PM-1' }, { key: 'outlet.ref', value: 'x' }], 'Parameters'), null);
+  assert.match(configEntryIssues([{ key: '1bad', value: 'x' }], 'Parameters') ?? '', /^Parameters row 1: the name must start with a letter/);
+  assert.match(configEntryIssues([{ key: 'apiKey', value: 'a' }, { key: 'apiKey', value: 'b' }], 'Credential') ?? '', /Credential row 2: the name apiKey is a duplicate/);
+  assert.match(configEntryIssues([{ key: 'apiKey', value: '' }], 'Credential') ?? '', /1–8192/);
+  assert.match(configEntryIssues([{ key: 'apiKey', value: 'x'.repeat(8193) }], 'Credential') ?? '', /1–8192/);
+  assert.match(configEntryIssues(Array.from({ length: 65 }, (_, i) => ({ key: `k${i}`, value: 'v' })), 'Parameters') ?? '', /64/);
   assert.deepEqual(configurationBody([{ key: 'merchantId', value: 'PM-1' }], [{ key: 'apiKey', value: 'secret' }]),
     { parameters: { merchantId: 'PM-1' }, credentials: { apiKey: 'secret' } });
   assert.equal(tokenSuffixLabel({ configured: true, vaultTokenSuffix: '7Q2x' }), 'Token …7Q2x');
-  assert.equal(tokenSuffixLabel({ configured: false, vaultTokenSuffix: null }), '未配置');
+  assert.equal(tokenSuffixLabel({ configured: false, vaultTokenSuffix: null }), 'Not configured');
 });
 
 test('能力组：六维条件格式与明细按目录类型只取一个值', () => {
@@ -134,10 +137,10 @@ test('能力组：六维条件格式与明细按目录类型只取一个值', ()
   assert.deepEqual(Object.keys(issues).sort(), ['countryCode', 'currency', 'mccCode', 'paymentMethodCode', 'schemeCode']);
   assert.equal(capabilityDetailIssues([{ capabilityCode: 'ACTION.PAY', booleanValue: true }, { capabilityCode: 'AMOUNT.MIN', decimalValue: '10.5' },
     { capabilityCode: 'SECURITY.3DS_MODE', codeValue: 'REQUIRED' }], definitions), null);
-  assert.match(capabilityDetailIssues([{ capabilityCode: 'UNKNOWN' }], definitions) ?? '', /未在目录中注册/);
-  assert.match(capabilityDetailIssues([{ capabilityCode: 'AMOUNT.MIN', decimalValue: '1.123456789' }], definitions) ?? '', /8 位小数/);
-  assert.match(capabilityDetailIssues([{ capabilityCode: 'SECURITY.3DS_MODE', codeValue: 'MAYBE' }], definitions) ?? '', /只能取/);
-  assert.match(capabilityDetailIssues([], definitions) ?? '', /至少一项/);
+  assert.match(capabilityDetailIssues([{ capabilityCode: 'UNKNOWN' }], definitions) ?? '', /isn't registered in the catalog/);
+  assert.match(capabilityDetailIssues([{ capabilityCode: 'AMOUNT.MIN', decimalValue: '1.123456789' }], definitions) ?? '', /up to 8 decimal places/);
+  assert.match(capabilityDetailIssues([{ capabilityCode: 'SECURITY.3DS_MODE', codeValue: 'MAYBE' }], definitions) ?? '', /must be one of REQUIRED/);
+  assert.equal(capabilityDetailIssues([], definitions), t('validation.detailRequired'));
   assert.deepEqual(capabilityDetailsBody([{ capabilityCode: 'AMOUNT.MIN', decimalValue: ' 10 ', booleanValue: true }], definitions),
     [{ capabilityCode: 'AMOUNT.MIN', booleanValue: null, decimalValue: '10', codeValue: null }]);
 });
@@ -147,14 +150,16 @@ test('版本编制：MCC 以外的范围格式、十进制费率与金额、组�
     components: [{ componentCode: 'PROC_FEE', componentType: 'PROCESSING_FEE', calculationBase: 'TRANSACTION_AMOUNT', rateValue: '0.0290', fixedAmount: '1.00',
       currency: 'AED', roundingMode: 'HALF_UP' }] };
   assert.deepEqual(costVersionIssues(time, [good]), []);
-  assert.ok(costVersionIssues(undefined, []).includes('生效时间必填'));
+  assert.ok(costVersionIssues(undefined, []).includes(t('validation.cost.effectiveFromRequired')));
   const bad: ScopeDraft = { ...good, countryCode: 'ARE', currency: 'AE', components: [{ ...good.components[0], rateValue: '2.9%', fixedAmount: '1.123456789' },
     { ...good.components[0], currency: undefined }] };
   const issues = costVersionIssues(time, [bad, good, good]).join('\n');
-  for (const expected of ['国家须为两位', '币种须为三位', '费率须为最多 10 位小数', '金额须为最多 8 位小数', '组成代码 PROC_FEE 重复', '填写金额时需要币种', '六维相同']) {
+  for (const expected of ['Scope 1: Country must be a two-letter', 'Scope 1: Currency must be a three-letter', 'Scope 1 component 1: Rate must be a decimal with up to 10 decimal places',
+    'Scope 1 component 1: Amounts must be decimals with up to 8 decimal places', 'Scope 1 component 2: Component code PROC_FEE is a duplicate',
+    'Scope 1 component 2: A currency is required when amounts are entered', 'Scope 3: Same six dimensions as an earlier scope']) {
     assert.ok(issues.includes(expected), expected);
   }
-  assert.ok(costVersionIssues(time, [{ ...good, channelAgreementRef: '  ' }]).includes('范围 1：合同引用必填'));
+  assert.ok(costVersionIssues(time, [{ ...good, channelAgreementRef: '  ' }]).includes('Scope 1: Agreement reference is required.'));
   const body = costVersionBody(time, [{ ...good, channelAgreementRef: ' PM-2026 ' }]);
   assert.equal(body.scopes[0].scopeNo, 1);
   assert.equal(body.scopes[0].channelAgreementRef, 'PM-2026');
@@ -192,11 +197,11 @@ test('展示与错误：百分比字符串移位、成本摘要、Owner 原因�
   assert.equal(percent('0.012'), '1.2%');
   assert.equal(percent('1'), '100%');
   assert.equal(componentSummary({ rateValue: '0.0290', fixedAmount: '1.00', currency: 'AED', minAmount: null, maxAmount: '50.00', roundingMode: 'HALF_UP' }),
-    '2.90% + 1.00 AED · 上限 50.00 AED · HALF_UP');
-  assert.equal(componentSummary({ rateValue: null, fixedAmount: '2.00', currency: 'AED', minAmount: null, maxAmount: null, roundingMode: 'HALF_UP' }), '固定 2.00 AED · HALF_UP');
-  assert.equal(channelErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'r', 'Platform 不存在同编码接入方 NI')), '操作被拒绝：Platform 不存在同编码接入方 NI');
+    '2.90% + 1.00 AED · Max 50.00 AED · HALF_UP');
+  assert.equal(componentSummary({ rateValue: null, fixedAmount: '2.00', currency: 'AED', minAmount: null, maxAmount: null, roundingMode: 'HALF_UP' }), 'Fixed 2.00 AED · HALF_UP');
+  assert.equal(channelErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'r', 'Platform 不存在同编码接入方 NI')), t('error.rejectedWithDetail', { detail: 'Platform 不存在同编码接入方 NI' }));
   assert.match(channelErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'r', '业务校验未通过')) ?? '', /BUSINESS_CHECK_FAILED/);
-  assert.equal(channelErrorMessage(new ApiError(409, 'CONCURRENT_REQUEST')), '数据已被其他操作修改，请重新加载后再试。');
+  assert.equal(channelErrorMessage(new ApiError(409, 'CONCURRENT_REQUEST')), t('error.conflict'));
   assert.equal(channelErrorMessage(new ApiError(404, 'NOT_FOUND', 'r', '渠道不存在: 1')), '渠道不存在: 1');
   assert.equal(channelErrorMessage(new ApiError(503, 'DEPENDENCY_UNAVAILABLE')), null);
   assert.deepEqual(fieldPath('scopes[0].components[1].rateValue'), ['scopes', 0, 'components', 1, 'rateValue']);

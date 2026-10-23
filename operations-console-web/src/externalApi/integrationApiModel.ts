@@ -1,6 +1,9 @@
 import { ApiError } from '../api/session.ts';
 import { decodeFields } from './externalApiModel.ts';
 import type { ApiField, FieldDataType, ScriptStage } from './externalApiModel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('channel');
 
 /** 取值绑定：PATH 读路径，EXPRESSION 为 Aviator 表达式（第 1 步只做结构与引用校验），FUNCTION 调注册纯函数。 */
 export type Binding =
@@ -128,8 +131,8 @@ export function pathVariableHints(template: string, requestFields: ApiField[]): 
   const variables = pathVariables(template);
   const pathFields = requestFields.filter(field => field.fieldLocation === 'PATH').map(field => field.fieldPath);
   return [
-    ...variables.filter(name => !pathFields.includes(name)).map(name => `路径变量 {${name}} 没有对应的 PATH 字段`),
-    ...pathFields.filter(name => !variables.includes(name)).map(name => `PATH 字段 ${name} 未出现在路径模板中`),
+    ...variables.filter(name => !pathFields.includes(name)).map(name => t('api.hint.pathVariableUnmatched', { name })),
+    ...pathFields.filter(name => !variables.includes(name)).map(name => t('api.hint.pathFieldUnused', { name })),
   ];
 }
 

@@ -80,18 +80,18 @@ test('editable catalog supplies the exact frozen Chinese displays, help text and
   const result = matchAuthoringContext(decodeRuleAuthoringContext(authoringContext));
   assert.equal(result.editable, true); if (!result.editable) return;
   assert.deepEqual(result.catalog.fields.map(({ fieldCode, label, helpText, widget }) => [fieldCode, label, helpText, widget]), [
-    ['country_code', '国家/地区', 'ISO 3166-1 大写二字母，例如 AE', 'COUNTRY_CODE'],
-    ['locale', '语言区域', '规范 BCP 47 标签，例如 ar-AE', 'LOCALE'],
-    ['industry_code', '行业代码', '1–64 位平台行业大写代码', 'UPPER_CODE'],
-    ['mcc_code', 'MCC', '保留前导零的四位十进制代码', 'MCC'],
-    ['currency', '币种', 'ISO 4217 大写三字母，例如 USD', 'CURRENCY'],
-    ['merchandise_amount', '商品金额', '最多 16 位整数和 8 位小数', 'DECIMAL'],
-    ['discount_amount', '优惠金额', '最多 16 位整数和 8 位小数', 'DECIMAL'],
-    ['net_amount', '净金额', '最多 16 位整数和 8 位小数', 'DECIMAL'],
-    ['entity_source_type', '经营主体来源', '仅 PLATFORM、CLIENT 或 PARTNER', 'ENTITY_SOURCE'],
+    ['country_code', 'Country/Region', 'ISO 3166-1 two uppercase letters, e.g. AE', 'COUNTRY_CODE'],
+    ['locale', 'Locale', 'Canonical BCP 47 tag, e.g. ar-AE', 'LOCALE'],
+    ['industry_code', 'Industry Code', 'Platform industry code of 1–64 uppercase characters', 'UPPER_CODE'],
+    ['mcc_code', 'MCC', 'Four-digit decimal code with leading zeros kept', 'MCC'],
+    ['currency', 'Currency', 'ISO 4217 three uppercase letters, e.g. USD', 'CURRENCY'],
+    ['merchandise_amount', 'Merchandise Amount', 'At most 16 integer digits and 8 decimal places', 'DECIMAL'],
+    ['discount_amount', 'Discount Amount', 'At most 16 integer digits and 8 decimal places', 'DECIMAL'],
+    ['net_amount', 'Net Amount', 'At most 16 integer digits and 8 decimal places', 'DECIMAL'],
+    ['entity_source_type', 'Operating Entity Source', 'PLATFORM, CLIENT or PARTNER only', 'ENTITY_SOURCE'],
   ]);
-  assert.deepEqual(result.catalog.actions, [{ actionCode: 'ALLOW_CHECKOUT', label: '通过（PASS）' }, { actionCode: 'REVIEW_CHECKOUT', label: '复核（REVIEW）' }, { actionCode: 'DENY_CHECKOUT', label: '拒绝（REJECT）' }]);
-  assert.deepEqual(result.catalog.operators.map(item => item.label), ['等于', '不等于', '大于', '大于等于', '小于', '小于等于', '属于', '不属于', '介于', '为空', '不为空']);
+  assert.deepEqual(result.catalog.actions, [{ actionCode: 'ALLOW_CHECKOUT', label: 'Pass (PASS)' }, { actionCode: 'REVIEW_CHECKOUT', label: 'Review (REVIEW)' }, { actionCode: 'DENY_CHECKOUT', label: 'Reject (REJECT)' }]);
+  assert.deepEqual(result.catalog.operators.map(item => item.label), ['Equals', 'Not Equal To', 'Greater Than', 'Greater Than or Equal To', 'Less Than', 'Less Than or Equal To', 'In', 'Not In', 'Between', 'Is Empty', 'Is Not Empty']);
   for (const path of paths(result.catalog)) {
     const value = atPath(result.catalog, path); if (value && typeof value === 'object') assert.ok(Object.isFrozen(value), path.join('.'));
   }

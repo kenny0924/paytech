@@ -1,9 +1,12 @@
 import { ApiError } from '../api/session.ts';
-import { offsetInstant, optionalInstant } from './commercial.ts';
+import { joinList, offsetInstant, optionalInstant } from './commercial.ts';
+import { enumLabel, i18n, tOr, translator } from '../i18n/index.ts';
 import type { AgreementCapability, CapabilityStatus } from './commercial.ts';
 import type { CapabilityDimension, CatalogCapability } from './commercialConsole.ts';
 import { percentInput, percentIssue, rateFromPercent } from './componentTable.ts';
 import type { CapabilityCondition } from './termReview.ts';
+
+const t = translator('commercial');
 
 // ---------- 维度清单（commercial GET /products/dimensions，代码登记、只读） ----------
 
@@ -12,12 +15,7 @@ export interface DimensionDefinition {
   dimensionCode: string; displayName: string; factSource: string; evaluationPoint: string; acceptanceAllowed: boolean; pricingAllowed: boolean;
 }
 
-/** 维度中文名兜底（维度清单读取失败或未返回 displayName 时使用）。 */
-export const dimensionLabels: Readonly<Record<string, string>> = {
-  CURRENCY: '币种', CONSUMER_COUNTRY: '消费者国家', CARD_BRAND: '卡组织', FUNDING_TYPE: '借贷记类型', CARD_LEVEL: '卡等级', CARD_PRODUCT: '卡产品',
-  ISSUER_COUNTRY: '发卡国', ISSUER_REGION: '发卡地区', THREE_DS_RESULT: '3DS 结果', TRANSACTION_TYPE: '交易类型', PAYOUT_RAIL: '出款通道',
-  DESTINATION_COUNTRY: '目的国', CURRENCY_PAIR: '币对', DISPUTE_STAGE: '争议阶段',
-};
+/** 已知维度的显示名为 commercial 命名空间的 enum.dimension.<代码>；未登记的维度用维度清单的 displayName。 */
 
 /** 常见取值建议（只作下拉建议，仍可输入其他代码）。 */
 export const dimensionSuggestions: Readonly<Record<string, readonly string[]>> = {
@@ -28,12 +26,9 @@ export const dimensionSuggestions: Readonly<Record<string, readonly string[]>> =
 };
 
 // TODO by CLAUDE: 币种改为字典维护后替换此常量
-/** 币种下拉的候选（暂为写死的常用币种，后续改为字典维护）：代码 → 中文名。 */
-export const currencyOptions: Readonly<Record<string, string>> = {
-  AED: '阿联酋迪拉姆', USD: '美元', SAR: '沙特里亚尔', EUR: '欧元', GBP: '英镑', KWD: '科威特第纳尔', QAR: '卡塔尔里亚尔', BHD: '巴林第纳尔',
-  OMR: '阿曼里亚尔', EGP: '埃及镑', JOD: '约旦第纳尔', INR: '印度卢比', PKR: '巴基斯坦卢比', CNY: '人民币', HKD: '港币', JPY: '日元', SGD: '新加坡元',
-  CHF: '瑞士法郎', CAD: '加拿大元', AUD: '澳大利亚元',
-};
+/** 币种下拉的候选（暂为写死的常用币种，后续改为字典维护）；名称为 commercial 命名空间的 enum.currencyName.<代码>。 */
+export const currencyCodes: readonly string[] = ['AED', 'USD', 'SAR', 'EUR', 'GBP', 'KWD', 'QAR', 'BHD', 'OMR', 'EGP', 'JOD', 'INR', 'PKR', 'CNY', 'HKD',
+  'JPY', 'SGD', 'CHF', 'CAD', 'AUD'];
 
 /** 币种快捷标签之外的部分：快捷标签（AED、USD…）各自点选，其余币种由「更多币种」下拉选择。 */
 const isQuickCurrency = (code: string) => (dimensionSuggestions.CURRENCY ?? []).includes(code);
@@ -51,37 +46,37 @@ export function mergeCurrencies(quick: readonly string[], more: readonly string[
 
 /** 「更多币种」下拉选项：常用币种中除快捷标签以外的，加上已选但不在清单中的币种（编辑回填不丢）；文字「KWD 科威特第纳尔」。 */
 export function currencySelectOptions(values: readonly string[] | null | undefined): { value: string; label: string }[] {
-  const codes = [...Object.keys(currencyOptions).filter(code => !isQuickCurrency(code)),
-    ...splitCurrencies(values).more.filter(code => !currencyOptions[code])];
-  return codes.map(code => ({ value: code, label: currencyOptions[code] ? `${code} ${currencyOptions[code]}` : code }));
+  const codes = [...currencyCodes.filter(code => !isQuickCurrency(code)),
+    ...splitCurrencies(values).more.filter(code => !currencyCodes.includes(code))];
+  return codes.map(code => ({ value: code, label: codeWithName(code, 'enum.currencyName.' + code) }));
 }
 
-/** 国家代码中文名（国家类维度的选项文字；未列出的合法代码原样显示）。 */
-export const countryLabels: Readonly<Record<string, string>> = {
-  AE: '阿联酋', SA: '沙特阿拉伯', KW: '科威特', QA: '卡塔尔', BH: '巴林', OM: '阿曼', EG: '埃及', JO: '约旦', US: '美国', GB: '英国', DE: '德国',
-  FR: '法国', IN: '印度', CN: '中国', SG: '新加坡',
-};
+/** 已列出名称的国家代码（国家类维度的选项；名称为 commercial 命名空间的 enum.country.<代码>，未列出的合法代码原样显示）。 */
+export const countryCodes: readonly string[] = ['AE', 'SA', 'KW', 'QA', 'BH', 'OM', 'EG', 'JO', 'US', 'GB', 'DE', 'FR', 'IN', 'CN', 'SG'];
 
-/** 枚举型取值中文名（汇总与标签用；未列出的取值原样显示）。 */
-const valueLabels: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  FUNDING_TYPE: { CREDIT: '贷记', DEBIT: '借记', PREPAID: '预付', CHARGE: '签账' },
-  CARD_PRODUCT: { CONSUMER: '个人卡', COMMERCIAL: '商务卡' },
-  ISSUER_REGION: { GCC: '海湾国家', MEA: '中东非洲（不含海湾）', EUROPE: '欧洲', NORTH_AMERICA: '北美', LATAM: '拉丁美洲', APAC: '亚太' },
-};
+/** 「代码 名称」；没有名称时只有代码。 */
+function codeWithName(code: string, key: string): string {
+  return t.has(key) ? `${code} ${t(key)}` : code;
+}
 
-/** 标签上的取值文字：国家为「AE 阿联酋」（与抽屉选项一致），枚举为中文名，币种等其余为代码。 */
+/** 国家选项文字「AE 阿联酋」；未列出的代码原样。 */
+export function countryOptionLabel(code: string): string {
+  return codeWithName(code, 'enum.country.' + code);
+}
+
+/** 标签上的取值文字：国家为「AE 阿联酋」（与抽屉选项一致），枚举为显示名，币种等其余为代码。 */
 export function conditionTagValue(dimensionCode: string, value: string): string {
-  if (dimensionCode.endsWith('_COUNTRY')) return countryLabels[value] ? `${value} ${countryLabels[value]}` : value;
+  if (dimensionCode.endsWith('_COUNTRY')) return countryOptionLabel(value);
   return conditionValueLabel(dimensionCode, value);
 }
 
 /** 3DS 要求的条件标签文字。 */
-export const require3dsTag = '要求 3DS';
+export const require3dsTag = () => t('condition.require3ds');
 
-/** 取值显示名：枚举中文名 / 国家中文名，其余原样。 */
+/** 取值显示名：枚举型取值（enum.conditionValue.<维度>.<值>）/ 国家名，其余原样。 */
 export function conditionValueLabel(dimensionCode: string, value: string): string {
-  if (dimensionCode.endsWith('_COUNTRY')) return countryLabels[value] ?? value;
-  return valueLabels[dimensionCode]?.[value] ?? value;
+  if (dimensionCode.endsWith('_COUNTRY')) return enumLabel(t, 'enum.country', value);
+  return enumLabel(t, 'enum.conditionValue.' + dimensionCode, value);
 }
 
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -95,15 +90,18 @@ export function decodeDimensions(value: unknown): DimensionDefinition[] {
   return v.dimensions.map(item => {
     const d = item as DimensionDefinition;
     require(object(d) && text(d.dimensionCode, 64) && typeof d.acceptanceAllowed === 'boolean' && typeof d.pricingAllowed === 'boolean');
-    return { dimensionCode: d.dimensionCode, displayName: text(d.displayName, 64) ? d.displayName : dimensionLabels[d.dimensionCode] ?? d.dimensionCode,
+    return { dimensionCode: d.dimensionCode, displayName: text(d.displayName, 64) ? d.displayName : d.dimensionCode,
       factSource: typeof d.factSource === 'string' ? d.factSource : '', evaluationPoint: typeof d.evaluationPoint === 'string' ? d.evaluationPoint : '',
       acceptanceAllowed: d.acceptanceAllowed, pricingAllowed: d.pricingAllowed };
   });
 }
 
-/** 维度显示名：优先维度清单，其次兜底中文名，最后原代码。 */
+/** 维度显示名：中文界面为维度清单 displayName > 界面文案 > 原代码；其他语言为界面文案（enum.dimension.<代码>）> displayName > 原代码。 */
 export function dimensionLabel(code: string, definitions: readonly DimensionDefinition[] = []): string {
-  return definitions.find(item => item.dimensionCode === code)?.displayName ?? dimensionLabels[code] ?? code;
+  const server = definitions.find(item => item.dimensionCode === code)?.displayName;
+  // 维度清单的名称是中文：中文界面沿用迁移前的优先级（清单名称 > 本地名称），其他语言先用界面翻译。
+  if (server && server !== code && i18n.locale() === 'zh-CN') return server;
+  return tOr(t, 'enum.dimension.' + code, server ?? code);
 }
 
 // ---------- 接受条件取值 ----------
@@ -155,20 +153,20 @@ export function conditionSummary(dimensions: readonly CapabilityDimension[], for
   const parts = orderedDimensions(dimensions).map(dimension => {
     const label = dimensionLabel(dimension.dimensionCode, definitions);
     const values = normalizeValues(form?.[dimension.dimensionCode]);
-    if (values.length) return `${label} ${values.map(value => conditionValueLabel(dimension.dimensionCode, value)).join('、')}`;
-    return dimension.required ? `${label}未选` : `${label}不限`;
+    if (values.length) return t('condition.values', { dimension: label, values: joinList(values.map(value => conditionValueLabel(dimension.dimensionCode, value))) });
+    return dimension.required ? t('condition.notSelected', { dimension: label }) : t('condition.any', { dimension: label });
   });
-  if (require3ds) parts.push('要求 3DS');
-  return `接受：${parts.length ? parts.join(' · ') : '不限'}`;
+  if (require3ds) parts.push(require3dsTag());
+  return t('condition.summary', { conditions: parts.length ? parts.join(' · ') : t('condition.unrestricted') });
 }
 
 /** 取值格式（与 commercial 校验一致）：币种 3 位、国家 2 位大写字母，币对 USD/AED，其余 [A-Z0-9_]{1,64}。返回问题或 null。 */
 export function conditionValueIssue(dimensionCode: string, value: string): string | null {
-  if (dimensionCode === 'CURRENCY') return /^[A-Z]{3}$/.test(value) ? null : `${value} 不是三位币种`;
-  if (dimensionCode.endsWith('_COUNTRY')) return /^[A-Z]{2}$/.test(value) ? null : `${value} 不是两位国家码`;
+  if (dimensionCode === 'CURRENCY') return /^[A-Z]{3}$/.test(value) ? null : t('condition.issue.currency', { value });
+  if (dimensionCode.endsWith('_COUNTRY')) return /^[A-Z]{2}$/.test(value) ? null : t('condition.issue.country', { value });
   // 币对与定价画像同写法 USD/AED；其余维度按代码格式。
-  if (dimensionCode === 'CURRENCY_PAIR') return /^[A-Z]{3}\/[A-Z]{3}$/.test(value) ? null : `${value} 不是币对（如 USD/AED）`;
-  return /^[A-Z0-9_]{1,64}$/.test(value) ? null : `${value} 只能是大写字母、数字与下划线`;
+  if (dimensionCode === 'CURRENCY_PAIR') return /^[A-Z]{3}\/[A-Z]{3}$/.test(value) ? null : t('condition.issue.currencyPair', { value });
+  return /^[A-Z0-9_]{1,64}$/.test(value) ? null : t('condition.issue.code', { value });
 }
 
 /** 取值规范化：去空白、转大写、去重，保持输入顺序。 */
@@ -196,10 +194,10 @@ export function conditionIssues(dimensions: readonly CapabilityDimension[], form
   const issues: string[] = [];
   for (const dimension of dimensions) {
     const values = normalizeValues(form?.[dimension.dimensionCode]);
-    if (dimension.required && values.length === 0) issues.push(`${dimensionLabel(dimension.dimensionCode, definitions)}必填`);
+    if (dimension.required && values.length === 0) issues.push(t('condition.issue.required', { dimension: dimensionLabel(dimension.dimensionCode, definitions) }));
     for (const value of values) {
       const issue = conditionValueIssue(dimension.dimensionCode, value);
-      if (issue) issues.push(`${dimensionLabel(dimension.dimensionCode, definitions)}：${issue}`);
+      if (issue) issues.push(t('condition.issue.withDimension', { dimension: dimensionLabel(dimension.dimensionCode, definitions), issue }));
     }
   }
   return issues;
@@ -213,7 +211,7 @@ export function conditionTags(capability: Pick<AgreementCapability, 'conditions'
   definitions: readonly DimensionDefinition[] = []): string[] {
   const tags = capability.conditions.map(condition => `${dimensionLabel(condition.dimensionCode, definitions)} ${condition.values
     .map(value => conditionTagValue(condition.dimensionCode, value)).join(' / ')}`);
-  return capability.require3ds ? [...tags, require3dsTag] : tags;
+  return capability.require3ds ? [...tags, require3dsTag()] : tags;
 }
 
 // ---------- 合同开通项表单 ----------
@@ -250,7 +248,7 @@ export function capabilityFormPatch(capability: AgreementCapability): Pick<Capab
 
 /** 保证金显示：5% / 90 天；未设置为 —。 */
 export function reserveText(capability: Pick<AgreementCapability, 'rollingReserveRate' | 'rollingReserveDays'>): string {
-  return capability.rollingReserveRate ? `${percentInput(capability.rollingReserveRate)}% / ${capability.rollingReserveDays ?? '—'} 天` : '—';
+  return capability.rollingReserveRate ? t('reserve.text', { percent: percentInput(capability.rollingReserveRate) ?? '', days: capability.rollingReserveDays ?? '—' }) : '—';
 }
 
 /** 开通项卡片：目录项 + 该 OE 上已有的合同开通项（有则置灰、点击编辑它）。 */
@@ -269,12 +267,14 @@ export function capabilityChoices(catalog: readonly CatalogCapability[], product
 /** 卡片上的已有标记：ENABLED 为「已开通」，其余为「已添加 · 暂停 / 关闭」；没有为 null。 */
 export function existingMark(existing: Pick<AgreementCapability, 'status'> | null): string | null {
   if (!existing) return null;
-  return existing.status === 'ENABLED' ? '已开通' : `已添加 · ${existing.status === 'SUSPENDED' ? '暂停' : '关闭'}`;
+  return existing.status === 'ENABLED' ? t('capability.mark.enabled')
+    : t('capability.mark.added', { status: enumLabel(t, 'enum.capabilityStatus', existing.status === 'SUSPENDED' ? 'SUSPENDED' : 'DISABLED') });
 }
 
 /** 卡片的可配维度说明：中文名以「、」连接，没有可配维度时写明。 */
 export function dimensionNames(dimensions: readonly CapabilityDimension[], definitions: readonly DimensionDefinition[] = []): string {
-  return dimensions.length ? `可配：${dimensions.map(item => dimensionLabel(item.dimensionCode, definitions)).join('、')}` : '无可配维度';
+  return dimensions.length ? t('capability.dimensions', { dimensions: joinList(dimensions.map(item => dimensionLabel(item.dimensionCode, definitions))) })
+    : t('capability.noDimensions');
 }
 
 /**

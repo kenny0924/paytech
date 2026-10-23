@@ -2,6 +2,9 @@ import { ApiError, session } from '../api/session.ts';
 import type { PagingResponseBody } from '../api/types.ts';
 import { configurationCommand } from '../configuration/configurationModel.ts';
 import type { ConfigurationCommand } from '../configuration/configurationModel.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('channel');
 
 // ---------- 路径、路由与按钮 ----------
 
@@ -89,26 +92,16 @@ export type ValueType = typeof valueTypes[number];
 export type ChangeTargetType = typeof changeTargetTypes[number];
 export type CostVersionAction = 'submit' | 'approve' | 'reject' | 'cancel';
 
-export const lifecycleStatusLabels: Record<LifecycleStatus, string> = { DRAFT: '草稿', ACTIVE: '生效', SUSPENDED: '暂停', CLOSED: '已关闭' };
-export const channelTypeLabels: Record<ChannelType, string> = { PAYMENT: '支付渠道', SERVICE: '服务渠道' };
-export const grantStatusLabels: Record<GrantStatus, string> = { ACTIVE: '放行', DISABLED: '已停用' };
-export const capabilityStatusLabels: Record<CapabilityStatus, string> = { ENABLED: '启用', DISABLED: '停用' };
-export const planStatusLabels: Record<PlanStatus, string> = { DRAFT: '草稿', ACTIVE: '生效', INACTIVE: '失效' };
-export const costVersionStatusLabels: Record<CostVersionStatus, string> = {
-  DRAFT: '草稿', PENDING_APPROVAL: '待审批', APPROVED: '已批准', ACTIVE: '生效', INACTIVE: '失效', REJECTED: '已驳回',
-};
-export const changeTargetLabels: Record<ChangeTargetType, string> = {
-  CHANNEL: '渠道', CHANNEL_ACCOUNT: '技术账号 / 凭据', CHANNEL_MID: 'MID', MID_CAPABILITY: '能力组', CHANNEL_COST_VERSION: '成本版本',
-  CHANNEL_CALL_GRANT: '调用授权', CHANNEL_API: '原子 API', CHANNEL_SCRIPT: '公共脚本', CHANNEL_IMPLEMENTATION: '标准 API 实现',
-  STANDARD_API: '标准 API', VERIFY_ACCOUNT: '验证账号', VERIFY_CASE: '验证用例',
-};
-/** 变更对象类型文案；未知类型显示原值。 */
-export function changeTargetLabel(targetType: string): string {
-  return (changeTargetLabels as Readonly<Record<string, string>>)[targetType] ?? targetType;
-}
-export const changeTypeLabels: Readonly<Record<string, string>> = {
-  CREATE: '创建', UPDATE: '修改', STATUS: '状态变更', CONFIGURATION: '配置写入', REBIND: '改绑账号', CANCEL: '作废',
-};
+/** 枚举文案（channel.enum.<类型>.<值>）：调用时翻译，未知值显示原代码。 */
+export const lifecycleStatusLabel = (status: string) => enumLabel(t, 'enum.lifecycleStatus', status);
+export const channelTypeLabel = (type: string) => enumLabel(t, 'enum.channelType', type);
+export const grantStatusLabel = (status: string) => enumLabel(t, 'enum.grantStatus', status);
+export const capabilityStatusLabel = (status: string) => enumLabel(t, 'enum.capabilityStatus', status);
+export const planStatusLabel = (status: string) => enumLabel(t, 'enum.planStatus', status);
+export const costVersionStatusLabel = (status: string) => enumLabel(t, 'enum.costVersionStatus', status);
+/** 变更对象类型文案；未知类型（如历史 INTEGRATION）显示原值。 */
+export const changeTargetLabel = (targetType: string) => enumLabel(t, 'enum.changeTarget', targetType);
+export const changeTypeLabel = (changeType: string) => enumLabel(t, 'enum.changeType', changeType);
 /** 状态色：生效 / 启用为绿，草稿与失效为灰，暂停为金，待审批橙，已批准青，驳回与关闭为红灰。 */
 export const channelStatusColors: Readonly<Record<string, string>> = {
   ACTIVE: 'green', ENABLED: 'green', APPROVED: 'cyan', PENDING_APPROVAL: 'orange', SUSPENDED: 'gold', DRAFT: 'default', DISABLED: 'default',
@@ -400,11 +393,11 @@ export interface LifecycleAction { targetStatus: Exclude<LifecycleStatus, 'DRAFT
 /** 渠道 / 账号 / MID 共用流转：DRAFT → ACTIVE、ACTIVE ⇄ SUSPENDED、非 CLOSED → CLOSED；CLOSED 无操作；无维护权限不显示。 */
 export function lifecycleActions(status: LifecycleStatus, canManage: boolean): LifecycleAction[] {
   if (!canManage) return [];
-  const close: LifecycleAction = { targetStatus: 'CLOSED', label: '关闭', danger: true };
+  const close: LifecycleAction = { targetStatus: 'CLOSED', label: t('lifecycle.close'), danger: true };
   switch (status) {
-    case 'DRAFT': return [{ targetStatus: 'ACTIVE', label: '激活', danger: false }, close];
-    case 'ACTIVE': return [{ targetStatus: 'SUSPENDED', label: '暂停', danger: false }, close];
-    case 'SUSPENDED': return [{ targetStatus: 'ACTIVE', label: '恢复', danger: false }, close];
+    case 'DRAFT': return [{ targetStatus: 'ACTIVE', label: t('lifecycle.activate'), danger: false }, close];
+    case 'ACTIVE': return [{ targetStatus: 'SUSPENDED', label: t('lifecycle.suspend'), danger: false }, close];
+    case 'SUSPENDED': return [{ targetStatus: 'ACTIVE', label: t('lifecycle.resume'), danger: false }, close];
     default: return [];
   }
 }
@@ -450,14 +443,14 @@ const blank = (value: string | null | undefined) => { const v = value?.trim(); r
 export interface ConfigEntry { key: string; value: string }
 /** 参数 / 凭据键值行：键格式与唯一、值 1–8192、各 ≤64 项；返回首个问题，无问题为 null。 */
 export function configEntryIssues(entries: readonly ConfigEntry[], label: string): string | null {
-  if (entries.length > 64) return `${label}最多 64 项`;
+  if (entries.length > 64) return t('validation.entryTooMany', { label });
   const keys = new Set<string>();
   for (const [index, entry] of entries.entries()) {
-    const row = `${label}第 ${index + 1} 行`;
-    if (!configKeyPattern.test(entry.key)) return `${row}名称须以字母开头，只含字母、数字、_ . -，最长 64`;
-    if (keys.has(entry.key)) return `${row}名称 ${entry.key} 重复`;
+    const row = index + 1;
+    if (!configKeyPattern.test(entry.key)) return t('validation.entryKeyPattern', { label, row });
+    if (keys.has(entry.key)) return t('validation.entryKeyDuplicate', { label, row, key: entry.key });
     keys.add(entry.key);
-    if (entry.value.length === 0 || entry.value.length > 8192) return `${row}值长度须为 1–8192`;
+    if (entry.value.length === 0 || entry.value.length > 8192) return t('validation.entryValueLength', { label, row });
   }
   return null;
 }
@@ -465,26 +458,26 @@ export function configurationBody(parameters: readonly ConfigEntry[], credential
   return { parameters: Object.fromEntries(parameters.map(e => [e.key, e.value])), credentials: Object.fromEntries(credentials.map(e => [e.key, e.value])) };
 }
 export function tokenSuffixLabel(account: Pick<ChannelAccountSummary, 'configured' | 'vaultTokenSuffix'>): string {
-  return account.configured ? `Token …${account.vaultTokenSuffix ?? ''}` : '未配置';
+  return account.configured ? `Token …${account.vaultTokenSuffix ?? ''}` : t('account.notConfigured');
 }
 
 export interface DetailDraft { capabilityCode: string; booleanValue?: boolean; decimalValue?: string; codeValue?: string }
 /** 明细按目录类型只取一个值；未注册代码、空值、DECIMAL 格式与 CODE 越界返回问题。 */
 export function capabilityDetailIssues(drafts: readonly DetailDraft[], definitions: readonly CapabilityDefinition[]): string | null {
-  if (drafts.length === 0) return '能力明细至少一项';
-  if (drafts.length > 64) return '能力明细最多 64 项';
+  if (drafts.length === 0) return t('validation.detailRequired');
+  if (drafts.length > 64) return t('validation.detailTooMany');
   const seen = new Set<string>();
   for (const draft of drafts) {
     const definition = definitions.find(d => d.capabilityCode === draft.capabilityCode);
-    if (!definition) return `能力代码 ${draft.capabilityCode || '（空）'} 未在目录中注册`;
-    if (seen.has(draft.capabilityCode)) return `能力代码 ${draft.capabilityCode} 重复`;
+    if (!definition) return draft.capabilityCode ? t('validation.detailUnregistered', { code: draft.capabilityCode }) : t('validation.detailUnregisteredEmpty');
+    if (seen.has(draft.capabilityCode)) return t('validation.detailDuplicate', { code: draft.capabilityCode });
     seen.add(draft.capabilityCode);
-    if (definition.valueType === 'BOOLEAN' && typeof draft.booleanValue !== 'boolean') return `${draft.capabilityCode} 需要布尔值`;
+    if (definition.valueType === 'BOOLEAN' && typeof draft.booleanValue !== 'boolean') return t('validation.detailBoolean', { code: draft.capabilityCode });
     if (definition.valueType === 'DECIMAL' && !capabilityDecimalPattern.test(draft.decimalValue?.trim() ?? '')) {
-      return `${draft.capabilityCode} 须为最多 8 位小数的十进制`;
+      return t('validation.detailDecimal', { code: draft.capabilityCode });
     }
     if (definition.valueType === 'CODE' && !definition.allowedCodes.includes(draft.codeValue ?? '')) {
-      return `${draft.capabilityCode} 只能取 ${definition.allowedCodes.join(' / ')}`;
+      return t('validation.detailCode', { code: draft.capabilityCode, allowed: definition.allowedCodes.join(' / ') });
     }
   }
   return null;
@@ -509,11 +502,11 @@ export interface CapabilityFormValues { paymentMethodCode: string; schemeCode: s
 /** 六维条件：支付方式精确代码；卡组 / 国家 / 币种可为 *；MCC 四位数字。 */
 export function capabilityConditionIssues(values: Partial<CapabilityFormValues>): Partial<Record<keyof CapabilityFormValues, string>> {
   const issues: Partial<Record<keyof CapabilityFormValues, string>> = {};
-  if (!paymentMethodPattern.test(values.paymentMethodCode ?? '')) issues.paymentMethodCode = '支付方式须为大写目录代码';
-  if (!(values.schemeCode === '*' || paymentMethodPattern.test(values.schemeCode ?? ''))) issues.schemeCode = '卡组须为目录代码或 *';
-  if (!(values.countryCode === '*' || countryPattern.test(values.countryCode ?? ''))) issues.countryCode = '国家须为两位大写代码或 *';
-  if (!(values.currency === '*' || currencyPattern.test(values.currency ?? ''))) issues.currency = '币种须为三位大写代码或 *';
-  if (!mccPattern.test(values.mccCode ?? '')) issues.mccCode = 'MCC 须为四位数字';
+  if (!paymentMethodPattern.test(values.paymentMethodCode ?? '')) issues.paymentMethodCode = t('validation.conditionPaymentMethod');
+  if (!(values.schemeCode === '*' || paymentMethodPattern.test(values.schemeCode ?? ''))) issues.schemeCode = t('validation.conditionScheme');
+  if (!(values.countryCode === '*' || countryPattern.test(values.countryCode ?? ''))) issues.countryCode = t('validation.conditionCountry');
+  if (!(values.currency === '*' || currencyPattern.test(values.currency ?? ''))) issues.currency = t('validation.conditionCurrency');
+  if (!mccPattern.test(values.mccCode ?? '')) issues.mccCode = t('validation.conditionMcc');
   return issues;
 }
 
@@ -531,42 +524,42 @@ const scopeKey = (s: Pick<ScopeDraft, 'midId' | 'entityNo' | 'countryCode' | 'cu
 /** 版本编制校验：至少一个范围、≤200；每个范围六维格式与唯一、1–20 个组成；组成代码唯一、费率 / 金额十进制、固定费与上下限需币种。 */
 export function costVersionIssues(effectiveFrom: string | undefined, scopes: readonly ScopeDraft[]): string[] {
   const issues: string[] = [];
-  if (!effectiveFrom || !Number.isFinite(Date.parse(effectiveFrom))) issues.push('生效时间必填');
-  if (scopes.length === 0) issues.push('至少添加一个范围');
-  if (scopes.length > 200) issues.push('范围最多 200 个');
+  if (!effectiveFrom || !Number.isFinite(Date.parse(effectiveFrom))) issues.push(t('validation.cost.effectiveFromRequired'));
+  if (scopes.length === 0) issues.push(t('validation.cost.scopeRequired'));
+  if (scopes.length > 200) issues.push(t('validation.cost.scopeTooMany'));
   const keys = new Set<string>();
   scopes.forEach((scope, index) => {
-    const at = `范围 ${index + 1}`;
-    if (!idPattern.test(scope.midId ?? '')) issues.push(`${at}：请选择 MID`);
-    if (!entityNoPattern.test(scope.entityNo ?? '')) issues.push(`${at}：OE 须为两位大写字母加三位数字`);
-    if (!countryPattern.test(scope.countryCode ?? '')) issues.push(`${at}：国家须为两位大写代码`);
-    if (!currencyPattern.test(scope.currency ?? '')) issues.push(`${at}：币种须为三位大写代码`);
-    if (!codePattern.test(scope.paymentMethodCode ?? '')) issues.push(`${at}：支付方式须为大写代码`);
-    if (!codePattern.test(scope.actionType ?? '')) issues.push(`${at}：动作须为大写代码`);
-    if (blank(scope.channelAgreementRef) === null) issues.push(`${at}：合同引用必填`);
-    if ((scope.channelAgreementRef?.length ?? 0) > 128) issues.push(`${at}：合同引用最长 128`);
+    const at = t('validation.cost.scopeAt', { index: index + 1 });
+    if (!idPattern.test(scope.midId ?? '')) issues.push(t('validation.cost.midRequired', { at }));
+    if (!entityNoPattern.test(scope.entityNo ?? '')) issues.push(t('validation.cost.entityNoPattern', { at }));
+    if (!countryPattern.test(scope.countryCode ?? '')) issues.push(t('validation.cost.countryPattern', { at }));
+    if (!currencyPattern.test(scope.currency ?? '')) issues.push(t('validation.cost.currencyPattern', { at }));
+    if (!codePattern.test(scope.paymentMethodCode ?? '')) issues.push(t('validation.cost.paymentMethodPattern', { at }));
+    if (!codePattern.test(scope.actionType ?? '')) issues.push(t('validation.cost.actionPattern', { at }));
+    if (blank(scope.channelAgreementRef) === null) issues.push(t('validation.cost.agreementRefRequired', { at }));
+    if ((scope.channelAgreementRef?.length ?? 0) > 128) issues.push(t('validation.cost.agreementRefLength', { at }));
     const key = scopeKey(scope);
-    if (keys.has(key)) issues.push(`${at}：与前面的范围六维相同`);
+    if (keys.has(key)) issues.push(t('validation.cost.scopeDuplicate', { at }));
     keys.add(key);
-    if (!scope.components?.length) issues.push(`${at}：至少添加一个组成`);
-    if ((scope.components?.length ?? 0) > 20) issues.push(`${at}：组成最多 20 个`);
+    if (!scope.components?.length) issues.push(t('validation.cost.componentRequired', { at }));
+    if ((scope.components?.length ?? 0) > 20) issues.push(t('validation.cost.componentTooMany', { at }));
     const codes = new Set<string>();
     (scope.components ?? []).forEach((component, componentIndex) => {
-      const where = `${at} 组成 ${componentIndex + 1}`;
-      if (!codePattern.test(component.componentCode ?? '')) issues.push(`${where}：组成代码须为大写代码`);
-      if (codes.has(component.componentCode)) issues.push(`${where}：组成代码 ${component.componentCode} 重复`);
+      const where = t('validation.cost.componentAt', { at, index: componentIndex + 1 });
+      if (!codePattern.test(component.componentCode ?? '')) issues.push(t('validation.cost.componentCodePattern', { at: where }));
+      if (codes.has(component.componentCode)) issues.push(t('validation.cost.componentCodeDuplicate', { at: where, code: component.componentCode }));
       codes.add(component.componentCode);
-      if (!blank(component.componentType)) issues.push(`${where}：类型必填`);
-      if (!blank(component.calculationBase)) issues.push(`${where}：计算基数必填`);
-      if (!blank(component.roundingMode)) issues.push(`${where}：舍入方式必填`);
+      if (!blank(component.componentType)) issues.push(t('validation.cost.componentTypeRequired', { at: where }));
+      if (!blank(component.calculationBase)) issues.push(t('validation.cost.calculationBaseRequired', { at: where }));
+      if (!blank(component.roundingMode)) issues.push(t('validation.cost.roundingModeRequired', { at: where }));
       const rate = blank(component.rateValue);
-      if (rate !== null && !ratePattern.test(rate)) issues.push(`${where}：费率须为最多 10 位小数的十进制（如 0.0290）`);
+      if (rate !== null && !ratePattern.test(rate)) issues.push(t('validation.cost.ratePattern', { at: where }));
       const amounts = [component.fixedAmount, component.minAmount, component.maxAmount].map(blank);
-      if (amounts.some(a => a !== null && !amountPattern.test(a))) issues.push(`${where}：金额须为最多 8 位小数的十进制`);
-      if (rate === null && amounts[0] === null) issues.push(`${where}：费率与固定费至少填一项`);
+      if (amounts.some(a => a !== null && !amountPattern.test(a))) issues.push(t('validation.cost.amountPattern', { at: where }));
+      if (rate === null && amounts[0] === null) issues.push(t('validation.cost.rateOrFixedRequired', { at: where }));
       const currency = blank(component.currency);
-      if (amounts.some(a => a !== null) && currency === null) issues.push(`${where}：填写金额时需要币种`);
-      if (currency !== null && !currencyPattern.test(currency)) issues.push(`${where}：币种须为三位大写代码`);
+      if (amounts.some(a => a !== null) && currency === null) issues.push(t('validation.cost.amountCurrencyRequired', { at: where }));
+      if (currency !== null && !currencyPattern.test(currency)) issues.push(t('validation.cost.currencyPattern', { at: where }));
     });
   });
   return issues;
@@ -609,8 +602,9 @@ export function percent(rate: string | null): string {
 export function componentSummary(c: Pick<CostComponent, 'rateValue' | 'fixedAmount' | 'currency' | 'minAmount' | 'maxAmount' | 'roundingMode'>): string {
   const money = (amount: string) => `${amount}${c.currency ? ` ${c.currency}` : ''}`;
   const head = c.rateValue && c.fixedAmount ? `${percent(c.rateValue)} + ${money(c.fixedAmount)}`
-    : c.rateValue ? percent(c.rateValue) : c.fixedAmount ? `固定 ${money(c.fixedAmount)}` : '—';
-  return [head, c.minAmount ? `下限 ${money(c.minAmount)}` : null, c.maxAmount ? `上限 ${money(c.maxAmount)}` : null, c.roundingMode]
+    : c.rateValue ? percent(c.rateValue) : c.fixedAmount ? t('component.fixed', { amount: money(c.fixedAmount) }) : '—';
+  return [head, c.minAmount ? t('component.min', { amount: money(c.minAmount) }) : null,
+    c.maxAmount ? t('component.max', { amount: money(c.maxAmount) }) : null, c.roundingMode]
     .filter(Boolean).join(' · ');
 }
 export function scopeLabel(s: Pick<CostScope, 'midId' | 'entityNo' | 'countryCode' | 'currency' | 'paymentMethodCode' | 'actionType'>, midNames?: Readonly<Record<string, string>>) {
@@ -638,7 +632,7 @@ export function utcInstant(local: string): string {
 // ---------- 版本对比 ----------
 
 export type DiffChange = 'ADDED' | 'REMOVED' | 'CHANGED' | 'UNCHANGED';
-export const diffChangeLabels: Record<DiffChange, string> = { ADDED: '新增', REMOVED: '删除', CHANGED: '修改', UNCHANGED: '未变' };
+export const diffChangeLabel = (change: DiffChange) => enumLabel(t, 'enum.diffChange', change);
 export const diffChangeColors: Record<DiffChange, string> = { ADDED: 'green', REMOVED: 'red', CHANGED: 'orange', UNCHANGED: 'default' };
 export interface DiffRow {
   key: string; change: DiffChange; scope: CostScope; componentCode: string; baseSummary: string | null; targetSummary: string | null;
@@ -692,18 +686,19 @@ export function diffSummary(diff: CostVersionDiff): DiffSummary {
 // ---------- 错误与命令 ----------
 
 /** BFF 原因未透传时的公共说明（Foundation BUSINESS_CHECK_FAILED 默认消息）。 */
-const genericBusinessDetail = '业务校验未通过';
+// 「业务校验未通过」：与服务端返回的原文比较，不是界面文案，故以转义保存
+const genericBusinessDetail = '\u4e1a\u52a1\u6821\u9a8c\u672a\u901a\u8fc7';
 /**
  * 渠道写命令的错误说明：400 BUSINESS_CHECK_FAILED 与 404 直接显示 Owner 透传的 detail（例如「Platform 不存在同编码接入方 NI」）；
  * 409 为并发冲突。其余返回 null，由调用方走通用通知。
  */
 export function channelErrorMessage(error: unknown): string | null {
   if (!(error instanceof ApiError)) return null;
-  if (error.status === 409) return '数据已被其他操作修改，请重新加载后再试。';
+  if (error.status === 409) return t('error.conflict');
   const owner = error.detail && error.detail !== genericBusinessDetail ? error.detail : null;
-  if (error.status === 404) return owner ?? '目标不存在。';
+  if (error.status === 404) return owner ?? t('error.notFound');
   if (error.status !== 400 || error.code !== 'BUSINESS_CHECK_FAILED') return null;
-  return owner ? `操作被拒绝：${owner}` : '操作被拒绝：当前状态或关联对象不满足规则（BUSINESS_CHECK_FAILED）';
+  return owner ? t('error.rejectedWithDetail', { detail: owner }) : t('error.rejected');
 }
 
 export type CommandMethod = 'POST' | 'PUT';

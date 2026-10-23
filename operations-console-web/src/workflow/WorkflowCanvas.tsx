@@ -9,7 +9,8 @@ import {
 } from '@xyflow/react';
 import type { Edge, EdgeProps, Node, NodeChange, NodeProps } from '@xyflow/react';
 import { insertableTypes, toCanvas } from './graphModel';
-import { nodeTypeLabels } from './workflowLabels';
+import { nodeTypeLabel } from './workflowLabels';
+import { useT } from '../i18n/react';
 import type { VariableInfo } from './graphModel';
 import type { VisualState } from './runtimeModel';
 import type { GraphNode, NodeType, WorkflowGraph } from './workflowTypes';
@@ -62,6 +63,7 @@ type InsertData = { visible: boolean; onHover: (key: string | null) => void; onM
 type InsertEdge = Edge<InsertData, 'insertable'>;
 function InsertableEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, style, label, labelStyle, labelBgStyle,
   labelBgPadding, labelBgBorderRadius, data }: EdgeProps<InsertEdge>) {
+  const t = useT('workflow');
   const [path, labelX, labelY] = getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition });
   // 没有条件标签时「+」在中点；有标签时放到标签与终点之间的最后一段，避免压住标签。
   const plus = label ? { x: (labelX + targetX) / 2, y: targetY } : { x: labelX, y: labelY };
@@ -75,9 +77,9 @@ function InsertableEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition
         onClick={event => event.stopPropagation()}
         onMouseEnter={() => data.onHover(id)} onMouseLeave={() => data.onHover(null)}>
         <Dropdown trigger={['click']} onOpenChange={open => data.onMenu(open ? id : null)}
-          menu={{ items: insertableTypes.map(type => ({ key: type, label: nodeTypeLabels[type] })), onClick: ({ key, domEvent }) => {
+          menu={{ items: insertableTypes.map(type => ({ key: type, label: nodeTypeLabel(type) })), onClick: ({ key, domEvent }) => {
             domEvent.stopPropagation(); data.onMenu(null); data.onInsert(id, key as NodeType); } }}>
-          <button type="button" title="在此插入节点" aria-label="在此插入节点"><PlusOutlined /></button>
+          <button type="button" title={t('canvas.insertNode')} aria-label={t('canvas.insertNode')}><PlusOutlined /></button>
         </Dropdown>
       </div>
     </EdgeLabelRenderer>}

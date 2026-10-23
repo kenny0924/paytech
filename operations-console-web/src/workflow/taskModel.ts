@@ -6,6 +6,9 @@ import { fileAddressesOf, outputFileAddresses, scanFailed, scanPending, uploadRe
 import { nodeOf, outgoing } from './graphModel.ts';
 import { actionState, isCompleted, latestRuns } from './runtimeModel.ts';
 import type { BatchStatus } from './runtimeModel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('workflow');
 
 /**
  * 我的待办 / 我发起的（工作流体验优化 S1，technique 3.1、3.2、3.5）的纯逻辑：超时标记、相对时间、横向进度条、
@@ -29,7 +32,7 @@ export function overdueText(since: string | null | undefined, now = Date.now(), 
   const elapsed = elapsedMillis(since, now);
   if (elapsed === null || elapsed < thresholdHours * HOUR) return null;
   const hours = Math.floor(elapsed / HOUR);
-  return hours >= 24 ? `超时 ${Math.floor(hours / 24)} 天` : `超时 ${hours} 小时`;
+  return hours >= 24 ? t('overdue.days', { count: Math.floor(hours / 24) }) : t('overdue.hours', { count: hours });
 }
 
 const pad = (value: number) => String(value).padStart(2, '0');
@@ -40,12 +43,12 @@ export function relativeTime(time: string | null | undefined, now = Date.now()):
   if (elapsed === null) return '—';
   const date = new Date(time!); const today = new Date(now);
   const minutes = Math.floor(elapsed / 60_000);
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes} 分钟前`;
+  if (minutes < 1) return t('relative.justNow');
+  if (minutes < 60) return t('relative.minutesAgo', { count: minutes });
   const sameDay = date.toDateString() === today.toDateString();
-  if (sameDay) return `${Math.floor(minutes / 60)} 小时前`;
+  if (sameDay) return t('relative.hoursAgo', { count: Math.floor(minutes / 60) });
   const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) return `昨天 ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  if (date.toDateString() === yesterday.toDateString()) return t('relative.yesterday', { time: `${pad(date.getHours())}:${pad(date.getMinutes())}` });
   const day = `${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
   return date.getFullYear() === today.getFullYear() ? day : `${date.getFullYear()}-${day}`;
 }
@@ -56,9 +59,9 @@ export function durationText(start: string | null | undefined, end: string | nul
   const elapsed = elapsedMillis(start, Number.isFinite(finish) ? finish : now);
   if (elapsed === null) return '—';
   const minutes = Math.floor(elapsed / 60_000);
-  if (minutes >= 1440) return `${Math.floor(minutes / 1440)} 天`;
-  if (minutes >= 60) return `${Math.floor(minutes / 60)} 小时`;
-  return `${minutes} 分钟`;
+  if (minutes >= 1440) return t('duration.days', { count: Math.floor(minutes / 1440) });
+  if (minutes >= 60) return t('duration.hours', { count: Math.floor(minutes / 60) });
+  return t('duration.minutes', { count: minutes });
 }
 
 // ---------- 横向进度条 ----------
@@ -213,10 +216,10 @@ export function actionProgress(runs: Pick<ActionRun, 'status' | 'required'>[]): 
 /** 底部操作栏左侧文字：未完成时提示还差几项，完成后说明进入哪里。 */
 export function progressText(progress: ActionProgress, nextStep?: string | null, hasApprovers = true): { text: string; warn: boolean } {
   const open = progress.required - progress.requiredDone;
-  if (!progress.required) return { text: progress.optional ? `本节点只有可选动作，不阻塞放行` : '本节点没有动作', warn: false };
-  const after = hasApprovers ? '进入审批' : `进入${nextStep || '下一步'}`;
-  if (open > 0) return { text: `还有 ${open} 项必选动作未完成，完成后${after}`, warn: true };
-  return { text: `必选 ${progress.required} 项 · 已完成 ${progress.requiredDone} 项`, warn: false };
+  if (!progress.required) return { text: progress.optional ? t('progress.optionalOnly') : t('progress.noActions'), warn: false };
+  if (open > 0) return { text: hasApprovers ? t('progress.openToApproval', { open })
+    : t('progress.openToStep', { open, step: nextStep || t('progress.nextStep') }), warn: true };
+  return { text: t('progress.done', { required: progress.required, done: progress.requiredDone }), warn: false };
 }
 
 /** 完成前的必填检查（需求 E1）：表单查必填（及平台技术保护），上传查「至少上传一个」，其他类型不检查。 */
@@ -224,7 +227,7 @@ export function completionProblems(run: Pick<ActionRun, 'actionType'>, template:
   values: Record<string, unknown>): Record<string, string> {
   if (run.actionType === 'FORM') return valueProblems((template?.config ?? { fields: [] }) as FormDefinition, values);
   if (run.actionType === 'FILE_UPLOAD' && uploadRequired(template?.config as FileUploadConfig | undefined) && !fileAddressesOf(values.files).length)
-    return { files: '请至少上传一个文件' };
+    return { files: t('completion.filesRequired') };
   return {};
 }
 
@@ -236,11 +239,11 @@ export function visibleProblems(problems: Record<string, string>, touched: Reado
 /** 完成接口 422 的字段错误映射到字段：output.<key> → key，output.files[i] → files（标明第几个文件）；其余归入 _。 */
 export function outputFieldErrors(errors: readonly { field: string; message: string }[]): Record<string, string> {
   const result: Record<string, string> = {};
-  const add = (key: string, message: string) => { result[key] = result[key] ? `${result[key]}；${message}` : message; };
+  const add = (key: string, message: string) => { result[key] = result[key] ? `${result[key]}${t('list.semicolon')}${message}` : message; };
   for (const error of errors) {
     const item = /^output\.([A-Za-z][A-Za-z0-9_]*)(?:\[(\d+)\])?/.exec(error.field);
     if (!item) { add('_', `${error.field} ${error.message}`); continue; }
-    add(item[1], item[2] !== undefined ? `第 ${Number(item[2]) + 1} 个文件：${error.message}` : error.message);
+    add(item[1], item[2] !== undefined ? t('completion.fileError', { index: Number(item[2]) + 1, message: error.message }) : error.message);
   }
   return result;
 }
@@ -254,33 +257,34 @@ export function anyScanPending(addresses: string[], known: ReadonlyMap<string, W
 /** 「动作与提交内容」的内容摘要：表单 = 字段数，上传 = 文件数与安全检查，说明 = 说明文字（需求 E3、原型 15）。 */
 export function submissionSummary(run: Pick<ActionRun, 'actionType' | 'output' | 'status'>, template: Pick<FrozenTemplate, 'config'> | undefined,
   known: ReadonlyMap<string, WorkflowFile>): string {
-  if (!isCompleted(run) || !run.output) return actionState(run.status) === 'CANCELLED' ? '已取消' : '尚未完成';
+  if (!isCompleted(run) || !run.output) return actionState(run.status) === 'CANCELLED' ? t('submission.cancelled') : t('submission.notCompleted');
   if (run.actionType === 'FORM') {
     const fields = ((template?.config as FormDefinition | undefined)?.fields ?? []).map(field => field.key);
     const keys = fields.length ? fields : Object.keys(run.output);
     const filled = keys.filter(key => { const value = run.output![key]; return value !== undefined && value !== null && value !== '' && !(Array.isArray(value) && !value.length); });
-    return `${filled.length} 个字段`;
+    return t('submission.fields', { count: filled.length });
   }
   if (run.actionType === 'FILE_UPLOAD') {
     const addresses = outputFileAddresses(run, template);
     const failed = addresses.filter(address => scanFailed(known.get(address))).length;
     const pending = addresses.filter(address => scanPending(known.get(address))).length;
-    return [`${addresses.length} 个文件`, failed ? `${failed} 个未通过安全检查` : '', pending ? `${pending} 个安全检查中` : ''].filter(Boolean).join(' · ');
+    return [t('submission.files', { count: addresses.length }), failed ? t('submission.scanFailed', { count: failed }) : '',
+      pending ? t('submission.scanPending', { count: pending }) : ''].filter(Boolean).join(' · ');
   }
   const note = typeof run.output.note === 'string' ? run.output.note.trim() : '';
-  return note ? `说明：${note}` : '已完成（未填写说明）';
+  return note ? t('submission.note', { note }) : t('submission.noNote');
 }
 
 // ---------- 已办 ----------
 /** 已办结果：动作完成（含旧编码 VERIFIED）为已完成，审批为已同意 / 已退回 / 已驳回。 */
 export function handledResult(result: string): { label: string; color: string } {
   switch (result) {
-    case 'COMPLETED': case 'VERIFIED': return { label: '已完成', color: 'blue' };
-    case 'APPROVED': return { label: '已同意', color: 'success' };
-    case 'RETURNED': return { label: '已退回', color: 'warning' };
-    case 'REJECTED': return { label: '已驳回', color: 'error' };
-    case 'CANCELLED': case 'WITHDRAWN': return { label: '已取消', color: 'default' };
-    case 'PENDING': case 'UNVERIFIED': return { label: '待处理', color: 'processing' };
+    case 'COMPLETED': case 'VERIFIED': return { label: t('handled.completed'), color: 'blue' };
+    case 'APPROVED': return { label: t('handled.approved'), color: 'success' };
+    case 'RETURNED': return { label: t('handled.returned'), color: 'warning' };
+    case 'REJECTED': return { label: t('handled.rejected'), color: 'error' };
+    case 'CANCELLED': case 'WITHDRAWN': return { label: t('handled.cancelled'), color: 'default' };
+    case 'PENDING': case 'UNVERIFIED': return { label: t('handled.pending'), color: 'processing' };
     default: return { label: result, color: 'default' };
   }
 }
@@ -318,9 +322,9 @@ export function waitingOn(row: Pick<InstanceSummary, 'status' | 'currentNodes'>,
   const nodes = row.currentNodes ?? [];
   if (!nodes.length) return '—';
   return nodes.map(node => {
-    const names = node.handlers.map(person => person.accountId === actorId ? '你' : person.displayName);
-    return names.length ? `${node.nodeName} · 等待 ${names.join('、')}` : node.nodeName;
-  }).join('；');
+    const names = node.handlers.map(person => person.accountId === actorId ? t('people.you') : person.displayName);
+    return names.length ? t('started.waitingOn', { node: node.nodeName, people: names.join(t('list.comma')) }) : node.nodeName;
+  }).join(t('list.semicolon'));
 }
 
 /** 是否轮到发起人自己处理（状态列显示“待你处理”）。 */

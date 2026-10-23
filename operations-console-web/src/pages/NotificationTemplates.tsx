@@ -5,10 +5,13 @@ import { session } from '../api/session';
 import type { ConsoleResource } from '../api/types';
 import { useErrorNotification } from '../feedback/useErrorNotification';
 import { usePaging } from '../hooks/usePaging';
+import { enumLabel, formatDateTime } from '../i18n/index';
+import type { Translate } from '../i18n/index';
+import { useT } from '../i18n/react';
 import { StatusChangeModal } from '../notification/StatusChangeModal';
 import {
   codePattern, decodeMutation, decodePreview, decodeProvider, decodeTemplateDetail, decodeTemplateSummary, manageTemplates,
-  missingRequired, notificationAdminPath, pageOf, placeholders, statusLabels, templateRoute,
+  configStatuses, joinList, missingRequired, notificationAdminPath, pageOf, placeholders, templateRoute,
 } from '../notification/notification';
 import type { Preview, ProviderSummary, TemplateContent, TemplateDetail, TemplateSummary } from '../notification/notification';
 import { useNotificationCommand } from '../notification/useNotificationCommand';
@@ -16,24 +19,26 @@ import '../configuration/configuration.css';
 import '../notification/notification.css';
 
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
-const date = (value: string) => new Date(value).toLocaleString('zh-CN', { hour12: false });
-const statusTag = (status: string | null) => status === null ? <span className="muted">未配置</span>
-  : <Tag color={status === 'ACTIVE' ? 'green' : 'default'}>{statusLabels[status]}</Tag>;
-const purposeTag = (transientTemplate: boolean) => transientTemplate ? <Tag color="orange">认证</Tag> : <Tag color="blue">普通</Tag>;
+const statusTag = (t: Translate, status: string | null) => status === null ? <span className="muted">{t('templates.notConfigured')}</span>
+  : <Tag color={status === 'ACTIVE' ? 'green' : 'default'}>{enumLabel(t, 'enum.status', status)}</Tag>;
+const purposeTag = (t: Translate, transientTemplate: boolean) => transientTemplate
+  ? <Tag color="orange">{t('templates.purpose.authentication')}</Tag> : <Tag color="blue">{t('templates.purpose.general')}</Tag>;
 const summaryPage = pageOf(decodeTemplateSummary);
 
 /** 通知模板：列表与新建（/notification-templates），详情与编辑（/notification-templates/:templateCode）。 */
 export function NotificationTemplates(props: Props) {
-  const location = useLocation();
+  const location = useLocation(); const t = useT('notification');
   const code = decodeURIComponent(location.pathname.slice(templateRoute.length).replace(/^\/|\/$/g, ''));
   if (!code) return <TemplateList {...props} />;
-  if (!codePattern.test(code)) return <Alert type="warning" showIcon title="模板编码不合法" />;
+  if (!codePattern.test(code)) return <Alert type="warning" showIcon title={t('templates.invalidCode')} />;
   return <TemplateDetailPage key={code} {...props} templateCode={code} />;
 }
 
 /** 模板列表：按编码搜索、按状态筛选；有维护权限时可新建。 */
 function TemplateList({ resources, onAuthorizationChanged }: Props) {
   const navigate = useNavigate(); const [form] = Form.useForm<{ keyword?: string; status?: string }>();
+  const t = useT('notification'), tCommon = useT('common'), tNav = useT('nav');
+  const statusOptions = useMemo(() => configStatuses.map(value => ({ value, label: enumLabel(t, 'enum.status', value) })), [t]);
   const canManage = resources.some(r => r.resourceType === 'BUTTON' && r.resourceCode === manageTemplates);
   const page = usePaging<TemplateSummary>(`${notificationAdminPath}/templates`, summaryPage);
   const [creating, setCreating] = useState(false);
@@ -41,21 +46,21 @@ function TemplateList({ resources, onAuthorizationChanged }: Props) {
     page.applyFilters(Object.fromEntries(Object.entries(values).flatMap(([k, v]) => typeof v === 'string' && v.trim() ? [[k, v.trim()]] : [])));
   }
   return <div className="configuration-page notification-page">
-    <div className="page-heading"><h1>通知模板</h1>{canManage && <Button type="primary" onClick={() => setCreating(true)}>新建模板</Button>}</div>
+    <div className="page-heading"><h1>{tNav('resource.OPERATIONS_NOTIFICATION_TEMPLATES')}</h1>{canManage && <Button type="primary" onClick={() => setCreating(true)}>{t('templates.create')}</Button>}</div>
     <Form form={form} layout="vertical" onFinish={search}><div className="notification-search">
-      <Form.Item name="keyword" label="模板编码"><Input allowClear maxLength={64} placeholder="输入编码关键字，如 REFUND" /></Form.Item>
-      <Form.Item name="status" label="状态"><Select allowClear placeholder="全部" options={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))} /></Form.Item>
-      <div className="configuration-actions"><Button type="primary" htmlType="submit">查询</Button><Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>重置</Button></div>
+      <Form.Item name="keyword" label={t('templates.field.code')}><Input allowClear maxLength={64} placeholder={t('templates.field.keywordPlaceholder')} /></Form.Item>
+      <Form.Item name="status" label={t('templates.column.status')}><Select allowClear placeholder={t('records.field.all')} options={statusOptions} /></Form.Item>
+      <div className="configuration-actions"><Button type="primary" htmlType="submit">{t('records.search')}</Button><Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>{t('records.reset')}</Button></div>
     </div></Form>
-    <section className="table-panel"><div className="table-toolbar"><span>共 {page.data.total} 个模板</span><Button onClick={page.refresh} loading={page.loading}>{page.error ? '重试' : '刷新'}</Button></div>
+    <section className="table-panel"><div className="table-toolbar"><span>{t('templates.count', { count: page.data.total })}</span><Button onClick={page.refresh} loading={page.loading}>{page.error ? tCommon('action.retry') : tCommon('action.refresh')}</Button></div>
       <Table<TemplateSummary> rowKey="templateCode" tableLayout="fixed" dataSource={page.error ? [] : page.data.items} loading={page.loading}
         scroll={{ x: 1000 }} pagination={page.pagination} onRow={row => ({ onClick: () => void navigate(`${templateRoute}/${row.templateCode}`), className: 'clickable-row' })} columns={[
-          { title: '编码', width: 300, render: (_, row) => <span className="mono">{row.templateCode}</span> },
-          { title: '状态', width: 90, render: (_, row) => statusTag(row.status) },
-          { title: '用途', width: 90, render: (_, row) => purposeTag(row.transientTemplate) },
-          { title: '语言', width: 180, render: (_, row) => row.locales.length ? row.locales.join(' · ') : <span className="muted">—</span> },
-          { title: '路由', width: 110, render: (_, row) => statusTag(row.routeStatus) },
-          { title: '更新时间', width: 180, render: (_, row) => date(row.updateTime) },
+          { title: t('templates.column.code'), width: 300, render: (_, row) => <span className="mono">{row.templateCode}</span> },
+          { title: t('templates.column.status'), width: 90, render: (_, row) => statusTag(t, row.status) },
+          { title: t('templates.column.purpose'), width: 90, render: (_, row) => purposeTag(t, row.transientTemplate) },
+          { title: t('templates.column.locales'), width: 180, render: (_, row) => row.locales.length ? row.locales.join(' · ') : <span className="muted">—</span> },
+          { title: t('templates.column.route'), width: 110, render: (_, row) => statusTag(t, row.routeStatus) },
+          { title: t('templates.column.updatedAt'), width: 180, render: (_, row) => formatDateTime(row.updateTime) },
         ]} /></section>
     {creating && <CreateTemplateModal onClose={() => setCreating(false)} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={code => void navigate(`${templateRoute}/${code}`)} />}
@@ -65,20 +70,21 @@ function TemplateList({ resources, onAuthorizationChanged }: Props) {
 /** 新建模板：新模板为停用，需添加语言内容并配置路由后再启用。 */
 function CreateTemplateModal({ onClose, onCreated, onAuthorizationChanged }: { onClose: () => void; onCreated: (code: string) => void; onAuthorizationChanged: () => void }) {
   const [form] = Form.useForm<{ templateCode: string; reason: string }>(); const command = useNotificationCommand(onAuthorizationChanged, form);
+  const t = useT('notification'), tCommon = useT('common');
   async function submit() {
     const values = await form.validateFields();
     const result = await command.run(`${notificationAdminPath}/templates`, 'POST', { templateCode: values.templateCode, reason: values.reason.trim() },
-      value => decodeMutation(value, values.templateCode), '新建模板失败');
+      value => decodeMutation(value, values.templateCode), t('templates.createModal.failed'));
     if (result) onCreated(result.code);
   }
-  return <Modal open title="新建模板" okText="创建" cancelText="取消" confirmLoading={command.saving} onOk={() => void submit()}
+  return <Modal open title={t('templates.create')} okText={t('templates.createModal.ok')} cancelText={tCommon('action.cancel')} confirmLoading={command.saving} onOk={() => void submit()}
     onCancel={() => { if (!command.saving) onClose(); }} destroyOnHidden>
     <Form form={form} layout="vertical" disabled={command.saving}>
-      <Form.Item name="templateCode" label="模板编码" extra="大写字母开头，只含大写字母、数字和下划线，最多 64 位；创建后不可修改。"
-        rules={[{ required: true, message: '请填写模板编码' }, { pattern: codePattern, message: '编码格式不正确' }]}><Input maxLength={64} placeholder="例如 ORDER_PAID_EMAIL" /></Form.Item>
-      <Form.Item label="介质"><Input value="EMAIL（本期仅支持邮件）" disabled /></Form.Item>
-      <Form.Item name="reason" label="原因" rules={[{ required: true, whitespace: true, message: '请填写原因' }]}><Input.TextArea rows={2} maxLength={500} /></Form.Item>
-      <div className="muted">新建后模板为「停用」，添加至少一条语言内容并配置路由后再启用。</div>
+      <Form.Item name="templateCode" label={t('templates.field.code')} extra={t('templates.createModal.codeHint')}
+        rules={[{ required: true, message: t('templates.createModal.codeRequired') }, { pattern: codePattern, message: t('templates.createModal.codePattern') }]}><Input maxLength={64} placeholder={t('templates.createModal.codePlaceholder')} /></Form.Item>
+      <Form.Item label={t('templates.createModal.medium')}><Input value={t('templates.createModal.mediumValue')} disabled /></Form.Item>
+      <Form.Item name="reason" label={t('providerForm.reason')} rules={[{ required: true, whitespace: true, message: t('providerForm.reasonRequired') }]}><Input.TextArea rows={2} maxLength={500} /></Form.Item>
+      <div className="muted">{t('templates.createModal.note')}</div>
     </Form>
   </Modal>;
 }
@@ -87,7 +93,7 @@ type StatusTarget = { kind: 'template' | 'route'; target: 'ACTIVE' | 'DISABLED' 
 
 /** 模板详情：认证提示、发送路由卡片、语言标签页（编辑与预览）。 */
 function TemplateDetailPage({ templateCode, resources, onAuthorizationChanged }: Props & { templateCode: string }) {
-  const notify = useErrorNotification(); const navigate = useNavigate();
+  const notify = useErrorNotification(); const navigate = useNavigate(); const t = useT('notification'), tCommon = useT('common'), tNav = useT('nav');
   const canManage = resources.some(r => r.resourceType === 'BUTTON' && r.resourceCode === manageTemplates);
   const [detail, setDetail] = useState<TemplateDetail>(); const [failed, setFailed] = useState(false); const [reload, setReload] = useState(0);
   const [status, setStatus] = useState<StatusTarget | null>(null); const [editingRoute, setEditingRoute] = useState(false);
@@ -95,41 +101,46 @@ function TemplateDetailPage({ templateCode, resources, onAuthorizationChanged }:
     const abort = new AbortController(); setFailed(false);
     session.request(`${notificationAdminPath}/templates/${templateCode}`, { signal: abort.signal }, value => decodeTemplateDetail(value, templateCode))
       .then(value => { if (!abort.signal.aborted) setDetail(value); })
-      .catch(error => { if (!abort.signal.aborted) { setFailed(true); notify(error, '模板加载失败'); } });
+      .catch(error => { if (!abort.signal.aborted) { setFailed(true); notify(error, t('templates.detail.loadFailed')); } });
     return () => abort.abort();
+  // t 随语言包刷新换新，只用于失败通知标题，不应触发重新查询
   }, [templateCode, reload, notify]);
   const refresh = () => setReload(v => v + 1);
-  if (failed && !detail) return <div className="configuration-page"><Alert type="warning" showIcon title="模板暂时无法加载"
-    action={<Button size="small" onClick={refresh}>重试</Button>} /></div>;
+  if (failed && !detail) return <div className="configuration-page"><Alert type="warning" showIcon title={t('templates.detail.unavailable')}
+    action={<Button size="small" onClick={refresh}>{tCommon('action.retry')}</Button>} /></div>;
   if (!detail) return <Spin />;
-  const purpose = templateCode === 'CLIENT_PASSWORD_RESET' ? '找回密码' : '注册邮箱验证';
+  const passwordReset = templateCode === 'CLIENT_PASSWORD_RESET';
   return <div className="configuration-page notification-page">
-    <div className="cell-meta"><a onClick={() => void navigate(templateRoute)}>通知模板</a> / {templateCode}</div>
+    <div className="cell-meta"><a onClick={() => void navigate(templateRoute)}>{tNav('resource.OPERATIONS_NOTIFICATION_TEMPLATES')}</a> / {templateCode}</div>
     <div className="page-heading"><h1>{templateCode}</h1>
-      <Space>{detail.transientTemplate && <Tag color="orange">认证邮件</Tag>}{statusTag(detail.status)}<span className="muted">版本 {detail.version}</span>
-        <Button onClick={refresh}>刷新</Button>
+      <Space>{detail.transientTemplate && <Tag color="orange">{t('templates.detail.authenticationEmail')}</Tag>}{statusTag(t, detail.status)}<span className="muted">{t('templates.detail.version', { version: detail.version })}</span>
+        <Button onClick={refresh}>{tCommon('action.refresh')}</Button>
         {canManage && <Button danger={detail.status === 'ACTIVE'} onClick={() => setStatus({ kind: 'template', target: detail.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE' })}>
-          {detail.status === 'ACTIVE' ? '停用模板' : '启用模板'}</Button>}</Space></div>
+          {detail.status === 'ACTIVE' ? t('templates.detail.disableTemplate') : t('templates.detail.enableTemplate')}</Button>}</Space></div>
     {detail.transientTemplate && <Alert type="warning" showIcon className="notification-hint"
-      title={`${purpose}邮件使用此模板。正文必须包含 \${link}；停用模板或路由后，用户将收不到${purpose}邮件。`} />}
+      title={passwordReset ? t('templates.detail.transientHint.passwordReset', { slot: '${link}' })
+        : t('templates.detail.transientHint.emailVerification', { slot: '${link}' })} />}
     <section className="notification-card">
-      <div className="notification-card-head"><h2>发送路由</h2>{canManage && <Space>
-        <Button onClick={() => setEditingRoute(true)}>{detail.route ? '修改路由' : '配置路由'}</Button>
+      <div className="notification-card-head"><h2>{t('templates.route.title')}</h2>{canManage && <Space>
+        <Button onClick={() => setEditingRoute(true)}>{detail.route ? t('templates.route.edit') : t('templates.route.configure')}</Button>
         {detail.route && <Button danger={detail.route.status === 'ACTIVE'} onClick={() => setStatus({ kind: 'route', target: detail.route!.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE' })}>
-          {detail.route.status === 'ACTIVE' ? '停用路由' : '启用路由'}</Button>}</Space>}</div>
+          {detail.route.status === 'ACTIVE' ? t('templates.route.disable') : t('templates.route.enable')}</Button>}</Space>}</div>
       {detail.route ? <Descriptions column={5} items={[
-        { key: 'primary', label: '主账号', children: <span className="mono">{detail.route.primaryProviderCode}</span> },
-        { key: 'fallback', label: '备用账号', children: detail.route.fallbackProviderCode ?? '—' },
-        { key: 'status', label: '状态', children: statusTag(detail.route.status) },
-        { key: 'version', label: '版本', children: detail.route.version },
-        { key: 'time', label: '更新时间', children: date(detail.route.updateTime) },
-      ]} /> : <div className="muted">尚未配置路由，模板无法发送。</div>}
+        { key: 'primary', label: t('templates.route.primary'), children: <span className="mono">{detail.route.primaryProviderCode}</span> },
+        { key: 'fallback', label: t('templates.route.fallback'), children: detail.route.fallbackProviderCode ?? '—' },
+        { key: 'status', label: t('templates.column.status'), children: statusTag(t, detail.route.status) },
+        { key: 'version', label: t('templates.route.version'), children: detail.route.version },
+        { key: 'time', label: t('templates.column.updatedAt'), children: formatDateTime(detail.route.updateTime) },
+      ]} /> : <div className="muted">{t('templates.route.none')}</div>}
     </section>
     <ContentTabs detail={detail} canManage={canManage} onSaved={refresh} onAuthorizationChanged={onAuthorizationChanged} />
-    {status && <StatusChangeModal title={status.kind === 'template' ? `${status.target === 'ACTIVE' ? '启用' : '停用'}模板 ${templateCode}？` : `${status.target === 'ACTIVE' ? '启用' : '停用'}路由？`}
+    {status && <StatusChangeModal title={status.kind === 'template'
+      ? (status.target === 'ACTIVE' ? t('templates.status.enableTemplate', { code: templateCode }) : t('templates.status.disableTemplate', { code: templateCode }))
+      : (status.target === 'ACTIVE' ? t('templates.status.enableRoute') : t('templates.status.disableRoute'))}
       path={`${notificationAdminPath}/templates/${templateCode}${status.kind === 'route' ? '/route' : ''}/status`} code={templateCode} target={status.target}
       version={status.kind === 'template' ? detail.version : detail.route!.version}
-      impact={status.target === 'DISABLED' && detail.transientTemplate ? `这是认证邮件模板。停用后用户申请${purpose}时收不到邮件，接口仍返回受理；已发出的链接不受影响，重新启用后立即恢复。` : undefined}
+      impact={status.target === 'DISABLED' && detail.transientTemplate
+        ? (passwordReset ? t('templates.status.impact.passwordReset') : t('templates.status.impact.emailVerification')) : undefined}
       onClose={() => setStatus(null)} onDone={() => { setStatus(null); refresh(); }} onAuthorizationChanged={onAuthorizationChanged} />}
     {editingRoute && <RouteModal detail={detail} onClose={() => setEditingRoute(false)} onSaved={() => { setEditingRoute(false); refresh(); }} onAuthorizationChanged={onAuthorizationChanged} />}
   </div>;
@@ -139,36 +150,38 @@ function TemplateDetailPage({ templateCode, resources, onAuthorizationChanged }:
 function RouteModal({ detail, onClose, onSaved, onAuthorizationChanged }: { detail: TemplateDetail; onClose: () => void; onSaved: () => void; onAuthorizationChanged: () => void }) {
   const [form] = Form.useForm<{ primaryProviderCode: string; fallbackProviderCode?: string; reason: string }>();
   const command = useNotificationCommand(onAuthorizationChanged, form); const notify = useErrorNotification();
+  const t = useT('notification'), tCommon = useT('common');
   const [providers, setProviders] = useState<ProviderSummary[]>([]);
   useEffect(() => {
     const abort = new AbortController();
     session.request(`${notificationAdminPath}/providers?page=1&size=100`, { signal: abort.signal }, pageOf(decodeProvider))
       .then(value => { if (!abort.signal.aborted) setProviders(value.items); })
-      .catch(error => { if (!abort.signal.aborted) notify(error, '发送账号加载失败'); });
+      .catch(error => { if (!abort.signal.aborted) notify(error, t('templates.route.providersLoadFailed')); });
     return () => abort.abort();
+  // t 随语言包刷新换新，只用于失败通知标题，不应触发重新查询
   }, [notify]);
   const options = providers.filter(p => p.status === 'ACTIVE' && p.medium === 'EMAIL').map(p => ({ value: p.providerCode, label: p.providerCode }));
   async function submit() {
     const values = await form.validateFields();
     const result = await command.run(`${notificationAdminPath}/templates/${detail.templateCode}/route`, 'PUT', {
       primaryProviderCode: values.primaryProviderCode, fallbackProviderCode: values.fallbackProviderCode ?? null,
-      expectedVersion: detail.route?.version ?? 0, reason: values.reason.trim() }, value => decodeMutation(value, detail.templateCode), '保存路由失败');
+      expectedVersion: detail.route?.version ?? 0, reason: values.reason.trim() }, value => decodeMutation(value, detail.templateCode), t('templates.route.saveFailed'));
     if (result) onSaved();
   }
-  return <Modal open title={detail.route ? '修改发送路由' : '配置发送路由'} okText="保存路由" cancelText="取消" confirmLoading={command.saving}
+  return <Modal open title={detail.route ? t('templates.route.editTitle') : t('templates.route.configureTitle')} okText={t('templates.route.save')} cancelText={tCommon('action.cancel')} confirmLoading={command.saving}
     okButtonProps={{ disabled: command.conflict }} onOk={() => void submit()} onCancel={() => { if (!command.saving) onClose(); }} destroyOnHidden>
     <Form form={form} layout="vertical" disabled={command.saving || command.conflict}
       initialValues={{ primaryProviderCode: detail.route?.primaryProviderCode, fallbackProviderCode: detail.route?.fallbackProviderCode ?? undefined }}>
-      <Form.Item name="primaryProviderCode" label="主账号" extra="只能选择「启用」的邮件账号。" rules={[{ required: true, message: '请选择主账号' }]}>
-        <Select options={options} placeholder="请选择" /></Form.Item>
-      <Form.Item name="fallbackProviderCode" label="备用账号（可选）" dependencies={['primaryProviderCode']}
-        extra="不能与主账号相同。普通通知在主账号拒绝或无法确认时改用备用账号；认证邮件只用主账号。"
-        rules={[({ getFieldValue }) => ({ validator: async (_, value) => { if (value && value === getFieldValue('primaryProviderCode')) throw new Error('备用账号不能与主账号相同'); } })]}>
-        <Select allowClear options={options} placeholder="请选择" /></Form.Item>
-      <Form.Item name="reason" label="原因" rules={[{ required: true, whitespace: true, message: '请填写原因' }]}><Input.TextArea rows={2} maxLength={500} /></Form.Item>
-      <div className="muted">{detail.route ? `当前版本 ${detail.route.version}，保存时版本不一致将提示冲突。` : '新建的路由为启用状态。'}</div>
+      <Form.Item name="primaryProviderCode" label={t('templates.route.primary')} extra={t('templates.route.primaryHint')} rules={[{ required: true, message: t('templates.route.primaryRequired') }]}>
+        <Select options={options} placeholder={t('templates.route.selectPlaceholder')} /></Form.Item>
+      <Form.Item name="fallbackProviderCode" label={t('templates.route.fallbackOptional')} dependencies={['primaryProviderCode']}
+        extra={t('templates.route.fallbackHint')}
+        rules={[({ getFieldValue }) => ({ validator: async (_, value) => { if (value && value === getFieldValue('primaryProviderCode')) throw new Error(t('templates.route.fallbackSame')); } })]}>
+        <Select allowClear options={options} placeholder={t('templates.route.selectPlaceholder')} /></Form.Item>
+      <Form.Item name="reason" label={t('providerForm.reason')} rules={[{ required: true, whitespace: true, message: t('providerForm.reasonRequired') }]}><Input.TextArea rows={2} maxLength={500} /></Form.Item>
+      <div className="muted">{detail.route ? t('templates.route.versionNote', { version: detail.route.version }) : t('templates.route.newNote')}</div>
     </Form>
-    {command.conflict && <Alert type="error" showIcon title="路由已被他人修改，请关闭后刷新再编辑。" />}
+    {command.conflict && <Alert type="error" showIcon title={t('templates.route.conflict')} />}
   </Modal>;
 }
 
@@ -176,17 +189,17 @@ const NEW_LOCALE = '__new__';
 
 /** 语言标签页：切换语言前若有未保存修改需确认。 */
 function ContentTabs({ detail, canManage, onSaved, onAuthorizationChanged }: { detail: TemplateDetail; canManage: boolean; onSaved: () => void; onAuthorizationChanged: () => void }) {
-  const { modal } = App.useApp();
+  const { modal } = App.useApp(); const t = useT('notification');
   const [active, setActive] = useState(detail.contents[0]?.locale ?? NEW_LOCALE); const [dirty, setDirty] = useState(false);
   const tabs = detail.contents.map(c => ({ key: c.locale, label: c.locale }));
-  if (canManage) tabs.push({ key: NEW_LOCALE, label: '+ 新增语言' });
+  if (canManage) tabs.push({ key: NEW_LOCALE, label: t('templates.content.addLocale') });
   function change(key: string) {
     if (!dirty) { setActive(key); return; }
-    modal.confirm({ title: '放弃未保存的修改？', okText: '放弃修改', cancelText: '继续编辑', onOk: () => { setDirty(false); setActive(key); } });
+    modal.confirm({ title: t('templates.content.discardTitle'), okText: t('templates.content.discard'), cancelText: t('templates.content.keepEditing'), onOk: () => { setDirty(false); setActive(key); } });
   }
   const content = detail.contents.find(c => c.locale === active) ?? null;
-  return <section className="notification-card"><div className="notification-card-head"><h2>语言内容</h2></div>
-    {tabs.length === 0 ? <div className="muted">尚无语言内容。</div> : <>
+  return <section className="notification-card"><div className="notification-card-head"><h2>{t('templates.content.title')}</h2></div>
+    {tabs.length === 0 ? <div className="muted">{t('templates.content.empty')}</div> : <>
       <Tabs activeKey={active} onChange={change} items={tabs} />
       {(content || active === NEW_LOCALE) && <ContentEditor key={`${active}:${content?.version ?? 0}`} detail={detail} content={content} canManage={canManage}
         onDirty={setDirty} onSaved={locale => { setDirty(false); setActive(locale); onSaved(); }} onAuthorizationChanged={onAuthorizationChanged} />}
@@ -202,6 +215,7 @@ function ContentEditor({ detail, content, canManage, onDirty, onSaved, onAuthori
   onSaved: (locale: string) => void; onAuthorizationChanged: () => void;
 }) {
   const [form] = Form.useForm<ContentValues>(); const command = useNotificationCommand(onAuthorizationChanged, form);
+  const t = useT('notification');
   const subject = Form.useWatch('subjectTemplate', form) ?? content?.subjectTemplate ?? '';
   const body = Form.useWatch('bodyTemplate', form) ?? content?.bodyTemplate ?? '';
   const [samples, setSamples] = useState<Record<string, string>>({}); const [previewing, setPreviewing] = useState(false);
@@ -211,34 +225,35 @@ function ContentEditor({ detail, content, canManage, onDirty, onSaved, onAuthori
     const locale = content?.locale ?? values.locale!.trim();
     const result = await command.run(`${notificationAdminPath}/templates/${detail.templateCode}/contents/${encodeURIComponent(locale)}`, 'PUT', {
       subjectTemplate: values.subjectTemplate, bodyTemplate: values.bodyTemplate, expectedVersion: content?.version ?? 0, reason: values.reason.trim(),
-    }, value => decodeMutation(value), '保存内容失败');
+    }, value => decodeMutation(value), t('templates.content.saveFailed'));
     if (result) onSaved(result.code);
   }
   return <div className="notification-editor">
-    {command.conflict && <Alert type="error" showIcon className="notification-hint" title="该内容已被他人修改"
-      description="你的草稿仍保留在编辑框中。重新加载会显示最新内容，可先复制草稿。"
-      action={<Space orientation="vertical"><Button size="small" onClick={() => void navigator.clipboard?.writeText(`${subject}\n\n${body}`)}>复制我的草稿</Button>
-        <Button size="small" type="primary" onClick={() => onSaved(content?.locale ?? '')}>重新加载</Button></Space>} />}
+    {command.conflict && <Alert type="error" showIcon className="notification-hint" title={t('templates.content.conflict')}
+      description={t('templates.content.conflictHint')}
+      action={<Space orientation="vertical"><Button size="small" onClick={() => void navigator.clipboard?.writeText(`${subject}\n\n${body}`)}>{t('templates.content.copyDraft')}</Button>
+        <Button size="small" type="primary" onClick={() => onSaved(content?.locale ?? '')}>{t('templates.content.reload')}</Button></Space>} />}
     <Form form={form} layout="vertical" disabled={!canManage || command.saving} onFinish={save}
         onValuesChange={() => onDirty(true)} initialValues={{ subjectTemplate: content?.subjectTemplate ?? '', bodyTemplate: content?.bodyTemplate ?? '', reason: '' }}>
-        {!content && <Form.Item name="locale" label="语言" extra="BCP 47 语言标签，如 zh-CN、en-US" rules={[{ required: true, whitespace: true, message: '请填写语言' },
-          { validator: async (_, value) => { if (value && detail.contents.some(c => c.locale.toLowerCase() === String(value).trim().toLowerCase())) throw new Error('该语言已存在'); } }]}>
-          <Input maxLength={35} placeholder="例如 en-US" /></Form.Item>}
-        <Form.Item name="subjectTemplate" label="标题模板" rules={[{ required: true, whitespace: true, message: '请填写标题' },
-          { validator: async (_, value) => { if (/[\r\n]/.test(value ?? '')) throw new Error('标题不能换行'); } }]}>
+        {!content && <Form.Item name="locale" label={t('templates.content.locale')} extra={t('templates.content.localeHint')} rules={[{ required: true, whitespace: true, message: t('templates.content.localeRequired') },
+          { validator: async (_, value) => { if (value && detail.contents.some(c => c.locale.toLowerCase() === String(value).trim().toLowerCase())) throw new Error(t('templates.content.localeExists')); } }]}>
+          <Input maxLength={35} placeholder={t('templates.content.localePlaceholder')} /></Form.Item>}
+        <Form.Item name="subjectTemplate" label={t('templates.content.subject')} rules={[{ required: true, whitespace: true, message: t('templates.content.subjectRequired') },
+          { validator: async (_, value) => { if (/[\r\n]/.test(value ?? '')) throw new Error(t('templates.content.subjectNewline')); } }]}>
           <Input maxLength={1024} /></Form.Item>
-        <Form.Item name="bodyTemplate" label="正文模板" rules={[{ required: true, whitespace: true, message: '请填写正文' }]}>
+        <Form.Item name="bodyTemplate" label={t('templates.content.body')} rules={[{ required: true, whitespace: true, message: t('templates.content.bodyRequired') }]}>
           <Input.TextArea rows={9} maxLength={60000} /></Form.Item>
-        <div className="notification-slots"><span className="muted">占位符</span>
-          {detail.requiredParameters.map(name => <Tag key={name} color={missing.includes(name) ? 'red' : 'geekblue'}>{`\${${name}} 必填${missing.includes(name) ? ' · 缺失' : ''}`}</Tag>)}
+        <div className="notification-slots"><span className="muted">{t('templates.content.placeholders')}</span>
+          {detail.requiredParameters.map(name => <Tag key={name} color={missing.includes(name) ? 'red' : 'geekblue'}>
+            {missing.includes(name) ? t('templates.content.requiredMissing', { slot: `\${${name}}` }) : t('templates.content.required', { slot: `\${${name}}` })}</Tag>)}
           {names.filter(n => !detail.requiredParameters.includes(n)).map(name => <Tag key={name}>{`\${${name}}`}</Tag>)}
-          <span className="muted">语法 {'${name}'}；标题不可换行；正文最多 60000 字节</span></div>
-        {canManage && <><Form.Item name="reason" label="修改原因" rules={[{ required: true, whitespace: true, message: '请填写原因' }]}>
-          <Input maxLength={500} placeholder="必填" /></Form.Item>
-          <div className="configuration-actions"><Button disabled={command.saving || !subject.trim() || !body.trim()} onClick={() => setPreviewing(true)}>预览</Button>
-            <Button disabled={command.saving} onClick={() => { form.resetFields(); onDirty(false); }}>放弃修改</Button>
+          <span className="muted">{t('templates.content.syntax', { syntax: '${name}' })}</span></div>
+        {canManage && <><Form.Item name="reason" label={t('templates.content.reason')} rules={[{ required: true, whitespace: true, message: t('providerForm.reasonRequired') }]}>
+          <Input maxLength={500} placeholder={t('templates.content.reasonPlaceholder')} /></Form.Item>
+          <div className="configuration-actions"><Button disabled={command.saving || !subject.trim() || !body.trim()} onClick={() => setPreviewing(true)}>{t('templates.content.preview')}</Button>
+            <Button disabled={command.saving} onClick={() => { form.resetFields(); onDirty(false); }}>{t('templates.content.discard')}</Button>
             <Button type="primary" htmlType="submit" loading={command.saving} disabled={command.conflict || missing.length > 0}>
-              保存{content ? ` ${content.locale}` : ''}</Button></div></>}
+              {content ? t('templates.content.saveLocale', { locale: content.locale }) : t('templates.content.save')}</Button></div></>}
     </Form>
     {previewing && <PreviewModal subject={subject} body={body} names={names} samples={samples} onSamples={setSamples} onClose={() => setPreviewing(false)} />}
   </div>;
@@ -249,14 +264,14 @@ function PreviewModal({ subject, body, names, samples, onSamples, onClose }: {
   subject: string; body: string; names: string[]; samples: Record<string, string>;
   onSamples: (update: (samples: Record<string, string>) => Record<string, string>) => void; onClose: () => void;
 }) {
-  const { preview, loading, render } = usePreview(subject, body);
+  const { preview, loading, render } = usePreview(subject, body); const t = useT('notification');
   const initial = useRef(samples);
   useEffect(() => { void render(initial.current); }, [render]);
-  return <Modal open title="预览（不发送）" width={680} onCancel={onClose} destroyOnHidden footer={<Button onClick={onClose}>关闭</Button>}>
+  return <Modal open title={t('templates.preview.title')} width={680} onCancel={onClose} destroyOnHidden footer={<Button onClick={onClose}>{t('testSend.close')}</Button>}>
     {names.length > 0 && <div className="notification-samples">
-      {names.map(name => <label key={name} className="notification-sample"><span className="muted">参数 {name}</span>
+      {names.map(name => <label key={name} className="notification-sample"><span className="muted">{t('templates.preview.parameter', { name })}</span>
         <Input size="small" maxLength={2048} value={samples[name] ?? ''} onChange={e => onSamples(s => ({ ...s, [name]: e.target.value }))} /></label>)}
-      <div><Button size="small" loading={loading} onClick={() => void render(samples)}>更新预览</Button></div>
+      <div><Button size="small" loading={loading} onClick={() => void render(samples)}>{t('templates.preview.update')}</Button></div>
     </div>}
     <Spin spinning={loading}><PreviewResult preview={preview} /></Spin>
   </Modal>;
@@ -264,7 +279,7 @@ function PreviewModal({ subject, body, names, samples, onSamples, onClose }: {
 
 /** 按需请求预览：只发送已填写的示例参数；关闭弹窗后丢弃未返回的结果。 */
 function usePreview(subject: string, body: string) {
-  const notify = useErrorNotification();
+  const notify = useErrorNotification(); const t = useT('notification');
   const [preview, setPreview] = useState<Preview | null>(null); const [loading, setLoading] = useState(false);
   const pending = useRef<AbortController | null>(null);
   useEffect(() => () => pending.current?.abort(), []);
@@ -279,18 +294,21 @@ function usePreview(subject: string, body: string) {
         body: JSON.stringify({ subjectTemplate: subject, bodyTemplate: body, parameters }) }, decodePreview);
       if (!abort.signal.aborted) setPreview(value);
     } catch (error) {
-      if (!abort.signal.aborted) { setPreview(null); notify(error, '预览失败'); }
+      if (!abort.signal.aborted) { setPreview(null); notify(error, t('templates.preview.failed')); }
     } finally {
       if (!abort.signal.aborted) setLoading(false);
     }
+  // t 只用于失败通知标题；加入依赖会在语言包刷新时重新渲染预览
   }, [subject, body, notify]);
   return { preview, loading, render };
 }
 
 /** 渲染后的标题与正文，以及未提供的参数。 */
 function PreviewResult({ preview }: { preview: Preview | null }) {
-  if (!preview) return <div className="notification-mail muted">暂无预览结果。</div>;
+  const t = useT('notification');
+  if (!preview) return <div className="notification-mail muted">{t('templates.preview.empty')}</div>;
   return <><div className="notification-mail"><strong>{preview.subject}</strong><pre>{preview.body}</pre></div>
     <div className={preview.missingParameters.length ? 'notification-missing' : 'muted'}>
-      未提供参数：{preview.missingParameters.length ? preview.missingParameters.join('、') : '无'}</div></>;
+      {t('templates.preview.missing', { parameters: preview.missingParameters.length
+        ? joinList(preview.missingParameters) : t('templates.preview.none') })}</div></>;
 }

@@ -4,6 +4,7 @@ import { App, Button, Input, Select, Table, Tag } from 'antd';
 import { Link } from 'react-router-dom';
 import { loadAllPages } from '../externalApi/externalApiHooks';
 import { decodeIntegrationApiSummary, decodePage, integrationPath } from '../externalApi/externalApiModel';
+import { useT } from '../i18n/react';
 import { channelPaths, channelRoutes, decodeChannel } from './channel';
 import type { CallGrant, Channel, ChannelAccountSummary, ChannelEndpoint } from './channel';
 import { endpointDraftIssues, endpointReferences, endpointRowErrors, endpointsBody, maxEndpoints, workspaceRoutes } from './channelWorkspace';
@@ -34,6 +35,7 @@ interface OverviewProps {
  * 数据都来自 Owner；前端只汇总展示，不重复判断激活规则。
  */
 export function ChannelOverview({ channel, canManage, implemented, accounts, grants, midCount, onEditEndpoints }: OverviewProps) {
+  const t = useT('channel');
   const references = useEndpointReferences(channel.channelCode);
   const routes = workspaceRoutes(channel.channelId);
   const service = channel.channelType === 'SERVICE';
@@ -44,46 +46,46 @@ export function ChannelOverview({ channel, canManage, implemented, accounts, gra
   const unknown = (value: unknown) => value === undefined;
   return <div className="channel-overview">
     <section className="channel-panel">
-      <div className="channel-section-head"><h2>出站地址</h2><span className="channel-cell-meta">{channel.endpoints.length} / {maxEndpoints}</span>
+      <div className="channel-section-head"><h2>{t('overview.endpoints')}</h2><span className="channel-cell-meta">{channel.endpoints.length} / {maxEndpoints}</span>
         <span className="channel-spacer" />
-        {canManage && channel.status !== 'CLOSED' && <Button onClick={onEditEndpoints}>编辑出站地址</Button>}</div>
+        {canManage && channel.status !== 'CLOSED' && <Button onClick={onEditEndpoints}>{t('endpointEditor.title')}</Button>}</div>
       <Table<ChannelEndpoint> rowKey="endpointCode" size="middle" pagination={false} dataSource={channel.endpoints}
-        locale={{ emptyText: '未配置出站地址；配置后渠道才能激活' }} columns={[
-          { title: '地址编码', width: 200, render: (_, row) => <span className="mono">{row.endpointCode}</span> },
+        locale={{ emptyText: t('overview.endpointsEmpty') }} columns={[
+          { title: t('overview.column.endpointCode'), width: 200, render: (_, row) => <span className="mono">{row.endpointCode}</span> },
           { title: 'Base URL', render: (_, row) => <span className="mono">{row.baseUrl}</span> },
-          { title: '环境', width: 90, render: (_, row) => row.sandbox ? <Tag color="blue">沙箱</Tag> : <Tag>生产</Tag> },
-          { title: '引用原子 API', width: 140, render: (_, row) => {
+          { title: t('overview.column.environment'), width: 90, render: (_, row) => row.sandbox ? <Tag color="blue">{t('overview.sandbox')}</Tag> : <Tag>{t('overview.production')}</Tag> },
+          { title: t('overview.column.referencedApis'), width: 140, render: (_, row) => {
             if (!references) return '—';
             const apis = references.get(row.endpointCode) ?? [];
-            return apis.length ? <span title={apis.join('、')}>{apis.length}</span> : '0';
+            return apis.length ? <span title={apis.join(t('list.separator'))}>{apis.length}</span> : '0';
           } },
         ]} />
-      <ChannelNote>出站地址只允许 https；解析结果为回环、私网、链路本地或保留地址的会被拦截（不发出请求，结果 NOT_SENT）。本机与 mor-test 的 Mock 地址经 trusted-networks 放行。</ChannelNote>
-      <h2>描述</h2>
-      <p className="channel-description">{channel.description || <span className="channel-cell-meta">未填写</span>}</p>
+      <ChannelNote>{t('overview.endpointsNote')}</ChannelNote>
+      <h2>{t('overview.description')}</h2>
+      <p className="channel-description">{channel.description || <span className="channel-cell-meta">{t('overview.notFilled')}</span>}</p>
     </section>
     <aside className="channel-panel channel-overview-side">
-      <h2>激活条件</h2>
+      <h2>{t('overview.activationChecks')}</h2>
       <ul className="channel-checks">
-        <Check ok={channel.endpoints.length > 0} label="出站地址已配置" note="必需" />
+        <Check ok={channel.endpoints.length > 0} label={t('overview.endpointsConfigured')} note={t('overview.required')} />
         {service
-          ? <Check ok={unknown(accounts) ? null : !!credential?.configured} label={credential?.configured ? `凭据已配置（…${credential.vaultTokenSuffix ?? ''}）` : '凭据已配置'} note="执行需要" />
-          : <Check ok={unknown(accounts) ? null : activeAccounts.length > 0} label={`ACTIVE 技术账号 ${activeAccounts.length} 个`} note="执行需要" />}
-        <Check ok={unknown(implemented) ? null : (implemented?.length ?? 0) > 0} label={`标准 API 实现 ${implemented?.length ?? '—'} 个`} note="执行需要" />
-        {service && disabledGrants > 0 && <Check ok={null} warn label={`DISABLED 授权 ${disabledGrants} 条`} note="不影响激活" />}
+          ? <Check ok={unknown(accounts) ? null : !!credential?.configured} label={credential?.configured ? t('overview.credentialConfiguredSuffix', { suffix: credential.vaultTokenSuffix ?? '' }) : t('overview.credentialConfigured')} note={t('overview.neededForExecution')} />
+          : <Check ok={unknown(accounts) ? null : activeAccounts.length > 0} label={t('overview.activeAccounts', { count: activeAccounts.length })} note={t('overview.neededForExecution')} />}
+        <Check ok={unknown(implemented) ? null : (implemented?.length ?? 0) > 0} label={implemented ? t('overview.implementations', { count: implemented.length }) : t('overview.implementationsUnknown')} note={t('overview.neededForExecution')} />
+        {service && disabledGrants > 0 && <Check ok={null} warn label={t('overview.disabledGrants', { count: disabledGrants })} note={t('overview.notBlocking')} />}
       </ul>
-      <h2>关联</h2>
+      <h2>{t('overview.related')}</h2>
       <dl className="channel-kv-list">
         {service ? <>
-          <Related label="调用授权" value={grants ? <Link to={routes.tab('grants')}>{activeGrants} ACTIVE / {disabledGrants} DISABLED</Link> : '—'} />
-          <Related label="调用入口" value="通用入口（需授权）" />
-          <Related label="MID / 能力 / 成本" value="不适用" />
+          <Related label={t('workspace.tab.grants')} value={grants ? <Link to={routes.tab('grants')}>{activeGrants} ACTIVE / {disabledGrants} DISABLED</Link> : '—'} />
+          <Related label={t('overview.entry')} value={t('overview.entryGeneric')} />
+          <Related label={t('overview.midCapabilityCost')} value={t('overview.notApplicable')} />
         </> : <>
-          <Related label="MID" value={midCount === null ? '—' : <Link to={`${channelRoutes.mids}?channelId=${channel.channelId}`}>{midCount} 个</Link>} />
-          <Related label="成本方案" value={<Link to={channelRoutes.costPlans}>按渠道查看</Link>} />
-          <Related label="调用入口" value="支付入口（仅 Payment）" />
+          <Related label="MID" value={midCount === null ? '—' : <Link to={`${channelRoutes.mids}?channelId=${channel.channelId}`}>{t('overview.midCount', { count: midCount })}</Link>} />
+          <Related label={t('overview.costPlans')} value={<Link to={channelRoutes.costPlans}>{t('overview.viewByChannel')}</Link>} />
+          <Related label={t('overview.entry')} value={t('overview.entryPayment')} />
         </>}
-        <Related label="沙箱验证" value={<Link to={routes.tab('verify')}>查看用例与最近运行</Link>} />
+        <Related label={t('workspace.tab.verify')} value={<Link to={routes.tab('verify')}>{t('overview.viewVerify')}</Link>} />
       </dl>
     </aside>
   </div>;
@@ -106,6 +108,7 @@ function Related({ label, value }: { label: string; value: ReactNode }) {
 export function EndpointEditorModal({ channel, onSaved, onClose, onReload, onAuthorizationChanged }: {
   channel: Channel; onSaved: (channel: Channel) => void; onClose: () => void; onReload: () => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('channel'), tCommon = useT('common');
   const { modal } = App.useApp();
   const command = useChannelCommand(onAuthorizationChanged);
   const references = useEndpointReferences(channel.channelCode);
@@ -125,7 +128,7 @@ export function EndpointEditorModal({ channel, onSaved, onClose, onReload, onAut
     setTouched(true);
     if (issues.size) return;
     const saved = await command.run(channelPaths.channelEndpoints(channel.channelId), 'PUT', endpointsBody(channel.version, rows),
-      value => decodeChannel(value, channel.channelId), '出站地址保存失败');
+      value => decodeChannel(value, channel.channelId), t('endpointEditor.saveFailed'));
     if (saved) onSaved(saved);
   };
   // 422 字段错误与 400 / 404 的 Owner 原因按行定位；409 由冲突横幅显示（保留输入）
@@ -137,38 +140,38 @@ export function EndpointEditorModal({ channel, onSaved, onClose, onReload, onAut
     const located = endpointRowErrors(rows, lastError.fieldErrors, detail);
     setRowErrors(located.rows); setGeneral(located.general);
   }, [lastError]); // eslint-disable-line react-hooks/exhaustive-deps
-  const confirmSandbox = (index: number) => modal.confirm({ title: '标记为沙箱地址？', centered: true, okText: '确认是沙箱', cancelText: '取消',
-    content: '标记后，沙箱验证运行会真实调用这个地址。请确认它是渠道的沙箱 / 测试环境；把生产地址标记为沙箱会产生真实交易。',
+  const confirmSandbox = (index: number) => modal.confirm({ title: t('endpointEditor.sandboxConfirmTitle'), centered: true, okText: t('endpointEditor.sandboxConfirmOk'), cancelText: tCommon('action.cancel'),
+    content: t('endpointEditor.sandboxConfirmContent'),
     onOk: () => update(index, { sandbox: true }) });
-  return <CommandModal title={<span>编辑出站地址 <span className="channel-cell-meta">{channel.channelCode} · 配置版本 v{channel.version}</span></span>}
-    command={{ ...command, formError: null }} okText="保存" width={860} onOk={() => void save()} onClose={onClose} onReload={onReload}>
+  return <CommandModal title={<span>{t('endpointEditor.title')} <span className="channel-cell-meta">{t('endpointEditor.titleMeta', { code: channel.channelCode, version: channel.version })}</span></span>}
+    command={{ ...command, formError: null }} okText={tCommon('action.save')} width={860} onOk={() => void save()} onClose={onClose} onReload={onReload}>
     {general.length > 0 && <ChannelNote tone="warning">{general.map(item => <div key={item}>{item}</div>)}</ChannelNote>}
     <div className="channel-endpoint-list">
       {rows.map((row, index) => {
         const refs = locked(row);
         const errors = [...(touched && issues.has(index) ? [issues.get(index)!] : []), ...(rowErrors.get(index) ?? [])];
         return <div key={index} className={`channel-endpoint-row${errors.length ? ' has-error' : ''}`}>
-          <Input aria-label="地址编码" className="mono" maxLength={64} placeholder="地址编码，如 NI_API" value={row.endpointCode} disabled={refs.length > 0}
+          <Input aria-label={t('overview.column.endpointCode')} className="mono" maxLength={64} placeholder={t('endpointEditor.codePlaceholder')} value={row.endpointCode} disabled={refs.length > 0}
             status={errors.length ? 'error' : undefined} onChange={event => update(index, { endpointCode: event.target.value.trim().toUpperCase() })} />
           <Input aria-label="Base URL" className="mono" maxLength={512} placeholder="https://..." value={row.baseUrl}
             status={errors.length ? 'error' : undefined} onChange={event => update(index, { baseUrl: event.target.value })} />
-          <Select aria-label="环境" value={row.sandbox ? 'SANDBOX' : 'PRODUCTION'} style={{ width: 96 }}
-            options={[{ value: 'PRODUCTION', label: '生产' }, { value: 'SANDBOX', label: '沙箱' }]}
+          <Select aria-label={t('overview.column.environment')} value={row.sandbox ? 'SANDBOX' : 'PRODUCTION'} style={{ width: 96 }}
+            options={[{ value: 'PRODUCTION', label: t('overview.production') }, { value: 'SANDBOX', label: t('overview.sandbox') }]}
             onChange={value => value === 'SANDBOX' ? confirmSandbox(index) : update(index, { sandbox: false })} />
           <Button type="link" danger disabled={refs.length > 0 || rows.length === 1} onClick={() => {
             setRows(current => current.filter((_, i) => i !== index)); setRowErrors(new Map());
-          }}>删除</Button>
-          {refs.length > 0 && <div className="channel-endpoint-hint">被 {refs.length} 个原子 API 引用（{refs.join('、')}），不能删除或改编码；可修改 URL。</div>}
+          }}>{t('endpointEditor.delete')}</Button>
+          {refs.length > 0 && <div className="channel-endpoint-hint">{t('endpointEditor.referencedHint', { count: refs.length, apis: refs.join(t('list.separator')) })}</div>}
           {errors.map(error => <div key={error} className="channel-endpoint-error">{error}</div>)}
         </div>;
       })}
       <Button type="link" disabled={rows.length >= maxEndpoints} onClick={() => setRows(current => [...current, { endpointCode: '', baseUrl: '', sandbox: false }])}>
-        + 增加地址</Button>
+        {t('endpointEditor.add')}</Button>
     </div>
     <ChannelNote>
-      <div>• 只允许 https；保存时校验格式与 IP 字面量，执行时还会在连接前重新解析并固定地址。</div>
-      <div>• 本机与 mor-test 的 Mock 地址由 channel-connector 配置 trusted-networks 放行，页面不提供绕过开关。</div>
-      <div>• 保存递增配置版本；并发修改时提示「配置已被他人修改」并保留本次输入。</div>
+      <div>{t('endpointEditor.note.https')}</div>
+      <div>{t('endpointEditor.note.trusted')}</div>
+      <div>{t('endpointEditor.note.version')}</div>
     </ChannelNote>
   </CommandModal>;
 }

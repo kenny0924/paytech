@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
 import { App, Button, Form, Input, Popconfirm, Select, Table } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
 import { localTime } from '../finance/finance';
 import { FinanceNote, LoadFailure } from '../finance/FinanceParts';
-import { decodeWithId, directionLabels, hasReconAction, pageOf, platformTxnStatusLabels, reconActions, reconPaths } from '../reconciliation/reconModel';
+import { useT } from '../i18n/react';
+import { decodeWithId, directionEnum, hasReconAction, pageOf, platformTxnStatusEnum, reconActions, reconLabel, reconOptions, reconPaths } from '../reconciliation/reconModel';
 import type { PlatformTxn, ReconException } from '../reconciliation/reconModel';
 import { EmptyHint, Money, ReconCommandFeedback, ReconTag } from '../reconciliation/ReconParts';
 import { channelLinesOfTxn, compactFilters, reconRoutes } from '../reconciliation/reconRoutes';
@@ -18,7 +20,6 @@ interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => vo
 
 const decodePage = pageOf(decodeWithId<PlatformTxn>('platformTxnId'));
 const filterKeys = ['clearingAccountId', 'status', 'direction', 'externalTransactionId', 'businessDateFrom', 'businessDateTo'] as const;
-const statusOptions = Object.entries(platformTxnStatusLabels).map(([value, label]) => ({ value, label }));
 
 /**
  * 平台流水（UC-R05、R17）：由 billing PAYMENT / REFUND 事实生成的待清算应收 / 应付；查询与人工开异常（D-02）
@@ -26,8 +27,10 @@ const statusOptions = Object.entries(platformTxnStatusLabels).map(([value, label
  * <li>人工开异常只给来源对象，异常类型（PLATFORM_ITEM_UNSETTLED）与差异金额由对账服务按未完成金额算出；开立后去「对账异常」处置。</li>
  */
 export function ReconPlatformTxns({ resources, onAuthorizationChanged }: Props) {
+  const t = useT('recon'), tNav = useT('nav');
   const { message } = App.useApp();
   const navigate = useNavigate();
+  const statusOptions = useMemo(() => reconOptions(t, platformTxnStatusEnum), [t]);
   const canOperate = hasReconAction(resources, reconActions.operate);
   const clearing = useClearingAccounts(onAuthorizationChanged);
   const page = useReconListQuery<PlatformTxn>(reconPaths.platformTxns, decodePage, filterKeys);
@@ -35,48 +38,49 @@ export function ReconPlatformTxns({ resources, onAuthorizationChanged }: Props) 
   const [form] = Form.useForm<Record<string, string | undefined>>();
   async function openException(row: PlatformTxn) {
     const result = await command.run(reconPaths.exceptions, 'POST', { sourceType: 'PLATFORM_TXN', sourceId: row.platformTxnId },
-      decodeWithId<ReconException>('exceptionId'), '开立异常失败');
+      decodeWithId<ReconException>('exceptionId'), t('bankLine.openExceptionFailed'));
     if (!result) return;
-    void message.success(`已开立异常，差异 ${result.differenceAmount} ${result.currency}`);
+    void message.success(t('platformTxns.exceptionOpened', { amount: result.differenceAmount, currency: result.currency }));
     page.refresh();
     void navigate(reconRoutes.exception(result.exceptionId));
   }
-  return <div className="configuration-page finance-page"><div className="page-heading"><h1>平台流水</h1></div>
+  return <div className="configuration-page finance-page"><div className="page-heading"><h1>{tNav('resource.OPERATIONS_FINANCE_RECON_PLATFORM_TXNS')}</h1></div>
     <ReconCommandFeedback command={command} onReload={() => { command.clearConflict(); page.refresh(); }} />
     <Form form={form} name="recon-platform-filters" layout="vertical" initialValues={page.filters} onFinish={values => page.applyFilters(compactFilters(values))}>
       <div className="finance-search">
-        <Form.Item name="clearingAccountId" label="清算账户"><Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder="全部" loading={clearing.loading}
+        <Form.Item name="clearingAccountId" label={t('field.clearingAccount')}><Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder={t('placeholder.all')} loading={clearing.loading}
           options={clearing.items.map(item => ({ value: item.clearingAccountId, label: item.clearingAccountCode }))} /></Form.Item>
-        <Form.Item name="status" label="状态"><Select allowClear placeholder="全部" options={statusOptions} /></Form.Item>
-        <Form.Item name="direction" label="方向"><Select allowClear placeholder="全部" options={[{ value: 'RECEIVABLE', label: '应收' }, { value: 'PAYABLE', label: '应付' }]} /></Form.Item>
-        <Form.Item name="externalTransactionId" label="外部交易号"><Input allowClear maxLength={128} /></Form.Item>
-        <Form.Item name="businessDateFrom" label="业务日起" rules={[{ pattern: /^\d{4}-\d{2}-\d{2}$/, message: 'YYYY-MM-DD' }]}><Input allowClear placeholder="YYYY-MM-DD" /></Form.Item>
-        <Form.Item name="businessDateTo" label="业务日止" rules={[{ pattern: /^\d{4}-\d{2}-\d{2}$/, message: 'YYYY-MM-DD' }]}><Input allowClear placeholder="YYYY-MM-DD" /></Form.Item>
-        <div className="configuration-actions"><Button htmlType="submit">查询</Button>
-          <Button onClick={() => { resetForm(form); page.applyFilters({}); }}>重置</Button></div>
+        <Form.Item name="status" label={t('field.status')}><Select allowClear placeholder={t('placeholder.all')} options={statusOptions} /></Form.Item>
+        <Form.Item name="direction" label={t('field.direction')}><Select allowClear placeholder={t('placeholder.all')}
+          options={['RECEIVABLE', 'PAYABLE'].map(value => ({ value, label: reconLabel(t, directionEnum, value) }))} /></Form.Item>
+        <Form.Item name="externalTransactionId" label={t('field.externalTransactionId')}><Input allowClear maxLength={128} /></Form.Item>
+        <Form.Item name="businessDateFrom" label={t('platformTxns.businessDateFrom')} rules={[{ pattern: /^\d{4}-\d{2}-\d{2}$/, message: 'YYYY-MM-DD' }]}><Input allowClear placeholder="YYYY-MM-DD" /></Form.Item>
+        <Form.Item name="businessDateTo" label={t('platformTxns.businessDateTo')} rules={[{ pattern: /^\d{4}-\d{2}-\d{2}$/, message: 'YYYY-MM-DD' }]}><Input allowClear placeholder="YYYY-MM-DD" /></Form.Item>
+        <div className="configuration-actions"><Button htmlType="submit">{t('common.search')}</Button>
+          <Button onClick={() => { resetForm(form); page.applyFilters({}); }}>{t('common.reset')}</Button></div>
       </div>
     </Form>
     {page.error ? <LoadFailure message={page.error} onRetry={page.refresh} /> : <section className="table-panel">
-      <Table<PlatformTxn> rowKey="platformTxnId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 1360 }}
-        pagination={{ ...page.pagination, showTotal: total => `共 ${total} 条` }}
-        locale={{ emptyText: <EmptyHint text="没有平台流水。billing 记录支付或退款事实后，对应清算账户下会出现待清算的应收或应付。" /> }}
+      <Table<PlatformTxn> rowKey="platformTxnId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 1390 }}
+        pagination={{ ...page.pagination, showTotal: total => t('common.total', { total }) }}
+        locale={{ emptyText: <EmptyHint text={t('platformTxns.empty')} /> }}
         columns={[
-          { title: '外部交易号', width: 200, render: (_, row) => <span className="mono">{row.externalTransactionId}<div className="cell-meta">{row.referenceType}
-            {!/^0(\.0+)?$/.test(row.matchedAmount) && <> · <Link to={channelLinesOfTxn(row)}>渠道流水</Link></>}</div></span> },
-          { title: '清算账户', width: 150, render: (_, row) => <Link to={reconRoutes.clearingAccount(row.clearingAccountId)}>{clearing.byId.get(row.clearingAccountId)?.clearingAccountCode ?? row.clearingAccountId}</Link> },
-          { title: '方向', width: 80, render: (_, row) => directionLabels[row.direction] ?? row.direction },
-          { title: '来源', width: 90, dataIndex: 'txnSource' },
-          { title: '应清算', width: 120, align: 'right', render: (_, row) => <><Money value={row.expectedAmount} /> {row.currency}</> },
-          { title: '已匹配', width: 110, align: 'right', render: (_, row) => <Money value={row.matchedAmount} /> },
-          { title: '预估 / 实际费用', width: 140, align: 'right', render: (_, row) => <><Money value={row.expectedFee} /> / <Money value={row.actualFee} /></> },
-          { title: '已结算', width: 110, align: 'right', render: (_, row) => <Money value={row.settledAmount} /> },
-          { title: '状态', width: 100, render: (_, row) => <ReconTag status={row.status} labels={platformTxnStatusLabels} /> },
-          { title: '业务时间', width: 150, render: (_, row) => localTime(row.businessTime) },
+          { title: t('field.externalTransactionId'), width: 200, render: (_, row) => <span className="mono">{row.externalTransactionId}<div className="cell-meta">{row.referenceType}
+            {!/^0(\.0+)?$/.test(row.matchedAmount) && <> · <Link to={channelLinesOfTxn(row)}>{t('link.channelLines')}</Link></>}</div></span> },
+          { title: t('field.clearingAccount'), width: 150, render: (_, row) => <Link to={reconRoutes.clearingAccount(row.clearingAccountId)}>{clearing.byId.get(row.clearingAccountId)?.clearingAccountCode ?? row.clearingAccountId}</Link> },
+          { title: t('field.direction'), width: 110, render: (_, row) => reconLabel(t, directionEnum, row.direction) },
+          { title: t('field.source'), width: 90, dataIndex: 'txnSource' },
+          { title: t('platformTxns.expectedAmount'), width: 120, align: 'right', render: (_, row) => <><Money value={row.expectedAmount} /> {row.currency}</> },
+          { title: t('field.matchedAmount'), width: 110, align: 'right', render: (_, row) => <Money value={row.matchedAmount} /> },
+          { title: t('platformTxns.fees'), width: 140, align: 'right', render: (_, row) => <><Money value={row.expectedFee} /> / <Money value={row.actualFee} /></> },
+          { title: t('platformTxns.settledAmount'), width: 110, align: 'right', render: (_, row) => <Money value={row.settledAmount} /> },
+          { title: t('field.status'), width: 100, render: (_, row) => <ReconTag status={row.status} kind={platformTxnStatusEnum} /> },
+          { title: t('field.businessTime'), width: 150, render: (_, row) => localTime(row.businessTime) },
           ...(canOperate ? [{ title: '', width: 110, fixed: 'right' as const, render: (_: unknown, row: PlatformTxn) => row.status === 'SETTLED' ? null
-            : <Popconfirm title="为这笔平台流水开一个不阻塞的「平台流水未结算」异常，差异金额由系统算出。确认？" okText="开立" cancelText="取消"
-              onConfirm={() => void openException(row)}><Button type="link" disabled={command.saving}>开异常</Button></Popconfirm> }] : []),
+            : <Popconfirm title={t('platformTxns.confirmOpenException')} okText={t('bankLine.open')} cancelText={t('common.cancel')}
+              onConfirm={() => void openException(row)}><Button type="link" disabled={command.saving}>{t('bankLine.openException')}</Button></Popconfirm> }] : []),
         ]} />
     </section>}
-    <FinanceNote>平台流水只由 billing 事实生成，页面不能新增或修改；长期未结算的流水可开异常，经处置「接受时间差」或「归类 RECON_DIFFERENCE」结案。{!canOperate && ' 当前账号没有对账操作权限。'}</FinanceNote>
+    <FinanceNote>{t('platformTxns.note')}{!canOperate && ' ' + t('permission.noOperate')}</FinanceNote>
   </div>;
 }

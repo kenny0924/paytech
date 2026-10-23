@@ -1,0 +1,16 @@
+# operations-console-bff：9f210b5c 干净构建（a）对候选 opsi18n-20261023a（b，JAR 3c7e6f64）
+entries a=2597 b=2599 removed=0 added=2 changed=12
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/CommercialPricePreviewModels$IllustrationNote.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/CommercialPricePreviewModels$IllustrationNoteCode.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/impl/PlatformOperationsClientImpl.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/RolePermissionTree.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/AuditModels$AuditChange.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/AuditModels$AuditProperty.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/CommercialPricePreviewModels$ComponentIllustration.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/CommercialPricePreviewModels.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/RoleModels$GrantablePermission.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/RoleModels$PermissionNode.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/RoleModels$PermissionResource.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/AuditEventDetailsProcessor$ChangeValues.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/AuditEventDetailsProcessor.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/CommercialFeeIllustrator.class

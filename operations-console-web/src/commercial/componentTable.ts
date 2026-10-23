@@ -1,5 +1,8 @@
 import { priceDraft } from './commercial.ts';
 import type { BandDraft, ComponentDraft, ComponentType, Price, PriceDraft } from './commercial.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('commercial');
 
 // ---------- 百分比 ↔ 小数 ----------
 
@@ -37,10 +40,10 @@ export function rateFromPercent(value: string | null | undefined): string | null
 export function percentIssue(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;
-  if (!percentPattern.test(trimmed)) return '0 至 100 的百分比，最多 8 位小数';
+  if (!percentPattern.test(trimmed)) return t('percent.issue');
   const [integer, fraction = ''] = trimmed.split('.');
   const overHundred = Number(integer) > 100 || (integer === '100' && /[1-9]/.test(fraction));
-  return overHundred ? '0 至 100 的百分比，最多 8 位小数' : null;
+  return overHundred ? t('percent.issue') : null;
 }
 
 /** 主单位十进制金额：最多 16 位整数、8 位小数。 */
@@ -110,29 +113,25 @@ export function componentTypePatch(type: ComponentType, current: Pick<ComponentD
 /** 价格卡片摘要：价格 N · OE · 币种 · 画像 · 优先级 P · K 个组件；未填项显示「—」。 */
 export function priceSummary(draft: Partial<PriceDraft> | undefined, index: number): string {
   const text = (value: string | number | null | undefined) => value === null || value === undefined || value === '' ? '—' : String(value);
-  return `价格 ${index + 1} · ${text(draft?.entityNo)} · ${text(draft?.currency)} · ${text(draft?.pricingProfileCode)} · 优先级 ${text(draft?.priorityNo)}`
-    + ` · ${draft?.components?.length ?? 0} 个组件`;
+  return t('price.summary', { no: index + 1, entityNo: text(draft?.entityNo), currency: text(draft?.currency), profile: text(draft?.pricingProfileCode),
+    priority: text(draft?.priorityNo), count: draft?.components?.length ?? 0 });
 }
 
-/** 阶梯单元格文案：N 档 · 模式中文名。 */
+/** 阶梯单元格文案：N 档 · 模式显示名。 */
 export function tierSummary(bands: readonly unknown[] | null | undefined, bandMode: string | null | undefined): string {
-  return `${bands?.length ?? 0} 档 · ${bandMode ? bandModeLabels[bandMode] ?? bandMode : '未选模式'}`;
+  return t('tier.summary', { count: bands?.length ?? 0, mode: bandMode ? enumLabel(t, 'enum.bandMode', bandMode) : t('tier.noMode') });
 }
 
-// ---------- 中文标签与可编辑列 ----------
+// ---------- 枚举标签与可编辑列 ----------
 
-export const calculationBaseLabels: Readonly<Record<string, string>> = {
-  GROSS_AMOUNT: '交易总额', NET_AMOUNT: '交易净额', ACTUAL_CLIENT_FEE: '实收 Client 费用', FIXED_PER_EVENT: '每笔固定', BUY_RATE_DIFFERENCE: '买入价差',
-};
-export const refundBehaviorLabels: Readonly<Record<string, string>> = { RETURN_ALL: '全额退', RETURN_PRORATA: '按比例退', KEEP: '不退' };
-export const bandBasisLabels: Readonly<Record<string, string>> = { TRANSACTION_AMOUNT: '单笔金额', PERIOD_VOLUME: '周期交易量' };
-export const bandModeLabels: Readonly<Record<string, string>> = { WHOLE_BASE: '整笔适用', PROGRESSIVE: '分段累进', RETROACTIVE: '回溯' };
+/** 组件字段的枚举：显示名为 commercial 命名空间的 enum.<种类>.<值>。 */
+export type ComponentEnum = 'calculationBase' | 'refundBehavior' | 'bandBasis' | 'bandMode';
 
 export interface LabeledOption { value: string; label: string }
 
-/** 下拉选项：label 为中文名（缺失时用代码），代码由页面作为副文字显示。 */
-export function labeledOptions(values: readonly string[], labels: Readonly<Record<string, string>>): LabeledOption[] {
-  return values.map(value => ({ value, label: labels[value] ?? value }));
+/** 下拉选项：label 为显示名（缺失时用代码），代码由页面作为副文字显示。调用时取文案。 */
+export function labeledOptions(values: readonly string[], kind: ComponentEnum): LabeledOption[] {
+  return values.map(value => ({ value, label: enumLabel(t, 'enum.' + kind, value) }));
 }
 
 export type ComponentColumn = 'rate' | 'fixedAmount' | 'minAmount' | 'maxAmount' | 'bands';

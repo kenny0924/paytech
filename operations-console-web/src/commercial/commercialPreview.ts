@@ -1,22 +1,22 @@
 import { ApiError } from '../api/session.ts';
 import {
-  currencyPattern, decodeComponent, decodeCondition, decodePrice, decodeSettlement, entityNoPattern, idPattern, ownerReason,
+  currencyPattern, decodeComponent, decodeCondition, decodePrice, decodeSettlement, entityNoPattern, idPattern, joinList, ownerReason,
 } from './commercial.ts';
+import { tOr, translator } from '../i18n/index.ts';
 import type { Dimension, Price, PriceComponent, PriceSettlement, ProfileCondition } from './commercial.ts';
 import { decodeTermVersionListItem } from './commercialConsole.ts';
 import { decodeCapabilityCondition } from './termReview.ts';
 import type { CapabilityCondition } from './termReview.ts';
 import type { TermVersionListItem } from './commercialConsole.ts';
 
+const t = translator('commercial');
+
 // ---------- 工作台 ----------
 
 /** 工作台指标卡片，声明顺序即卡片顺序（与 BFF CommercialDashboardMetric 一致）。 */
 export const dashboardMetrics = ['PENDING_APPROVAL_VERSIONS', 'SCHEDULED_VERSIONS', 'DRAFT_AGREEMENTS', 'PENDING_SIGNATURE_AGREEMENTS', 'ACTIVE_AGREEMENTS'] as const;
 export type DashboardMetricCode = typeof dashboardMetrics[number];
-export const dashboardMetricLabels: Record<DashboardMetricCode, string> = {
-  PENDING_APPROVAL_VERSIONS: '待审批版本', SCHEDULED_VERSIONS: '已排期待生效', DRAFT_AGREEMENTS: '草稿合同', PENDING_SIGNATURE_AGREEMENTS: '待签署合同',
-  ACTIVE_AGREEMENTS: '生效合同',
-};
+/** 卡片标题为 commercial 命名空间的 enum.dashboardMetric.<值>。 */
 export interface DashboardMetric { metricCode: DashboardMetricCode; count: number }
 export interface Dashboard { asOf: string; metrics: DashboardMetric[]; approvalQueue: TermVersionListItem[] }
 
@@ -146,7 +146,7 @@ export function rateCardPath(base: string, query: RateCardQuery): string {
 export function capabilityLabel(capability: Pick<RateCardCapability, 'capabilityCode' | 'paymentMethodCode' | 'dimensionCode' | 'dimensionValue'>): string {
   const detail = [capability.paymentMethodCode, capability.dimensionCode && capability.dimensionValue ? `${capability.dimensionCode}=${capability.dimensionValue}` : null]
     .filter(Boolean).join(' · ');
-  return detail ? `${capability.capabilityCode}（${detail}）` : capability.capabilityCode;
+  return detail ? t('capability.withDetail', { code: capability.capabilityCode, detail }) : capability.capabilityCode;
 }
 
 /** 截止秒数 → HH:mm:ss。 */
@@ -191,9 +191,31 @@ export function simulationFieldName(field: string): Exclude<keyof SimulationForm
   return field === 'paymentFacts.paymentMethodCode' ? 'paymentMethodCode' : null;
 }
 
+/**
+ * One note on an illustrated component, translated by the page from `code` with `params` (all strings):
+ * BAND_HIT {bandNo} · BAND_NONE · PROGRESSIVE_BANDS {count} · MIN_APPLIED {amount} · MAX_APPLIED {amount} (computed);
+ * BASE_DEPENDS_ON_FEE {base} · COMPONENT_UNSUPPORTED {type} · BAND_BASIS_PERIODIC {basis} · BAND_MODE_UNSUPPORTED {mode}
+ * (not computed; then it is the only note).
+ */
+export interface IllustrationNote { code: string; params: Record<string, string> }
+
+/** 说明参数中参与复数的数量（count）按数字传入 ICU；其余参数原样。 */
+const numericNoteParams = new Set(['count']);
+/**
+ * 一条说明的显示文本：simulator.note.<code> 按参数翻译；未知编码显示编码与参数原值（BFF 新增编码未同步时不至于空白）。
+ */
+export function illustrationNoteText(note: IllustrationNote): string {
+  const params = Object.fromEntries(Object.entries(note.params).map(([name, value]) =>
+    [name, numericNoteParams.has(name) && /^\d+$/.test(value) ? Number(value) : value]));
+  return tOr(t, 'simulator.note.' + note.code, [note.code, ...Object.values(note.params)].join(' '), params);
+}
+/** 多条说明按分句连接。 */
+export function illustrationNotesText(notes: readonly IllustrationNote[]): string {
+  return joinList(notes.map(illustrationNoteText), 'clauses');
+}
 export interface ComponentIllustration {
   componentNo: number; componentCode: string; componentType: string; calculationBase: string; computed: boolean; rawAmount: string | null;
-  amount: string | null; note: string | null;
+  amount: string | null; notes: IllustrationNote[];
 }
 export interface FeeEventIllustration { feeEventCode: string; totalAmount: string | null; components: ComponentIllustration[] }
 export interface FeeIllustration { amount: string; currency: string; fractionDigits: number; feeEvents: FeeEventIllustration[] }
@@ -207,8 +229,10 @@ function decodeIllustration(value: unknown): FeeIllustration | null {
     require(object(event) && typeof event.feeEventCode === 'string' && optional(decimal)(event.totalAmount) && array(event.components));
     return { feeEventCode: event.feeEventCode, totalAmount: orNull(event.totalAmount), components: event.components.map(component => {
       const c = component as ComponentIllustration;
-      require(object(c) && Number.isInteger(c.componentNo) && typeof c.computed === 'boolean' && (!c.computed || (decimal(c.amount) && decimal(c.rawAmount))));
-      return { ...c, rawAmount: orNull(c.rawAmount), amount: orNull(c.amount), note: orNull(c.note) };
+      require(object(c) && Number.isInteger(c.componentNo) && typeof c.computed === 'boolean' && (!c.computed || (decimal(c.amount) && decimal(c.rawAmount)))
+        && array(c.notes) && c.notes.every(note => object(note) && typeof note.code === 'string' && object(note.params)
+          && Object.values(note.params).every(value => typeof value === 'string')));
+      return { ...c, rawAmount: orNull(c.rawAmount), amount: orNull(c.amount), notes: c.notes };
     }) };
   }) };
 }
@@ -225,19 +249,20 @@ export function decodeSimulation(request: { termVersionId: string; entityNo: str
   };
 }
 
+/** commercial 命中失败的错误码；说明为 simulator.error.<编码>。 */
+export const priceErrorCodes = ['PRICING_FACTS_INCOMPLETE', 'PRICE_NOT_FOUND', 'INVALID_PRICING_FACT', 'PRICE_AMBIGUOUS'] as const;
+/** 命中失败错误码的可读说明；不是命中失败的编码返回 null。 */
+export function priceErrorLabel(code: string): string | null {
+  return (priceErrorCodes as readonly string[]).includes(code) ? t('simulator.error.' + code) : null;
+}
 /** commercial 命中失败的可读说明：错误码 + Owner 原因；其他错误返回 null 交给通用通知。 */
-export const priceErrorLabels: Readonly<Record<string, string>> = {
-  PRICING_FACTS_INCOMPLETE: '定价事实不完整：候选画像用到的维度未提供（确认不适用请勾选「不适用」）',
-  PRICE_NOT_FOUND: '没有命中的价格：该版本、OE、币种与支付方式下没有匹配的画像',
-  INVALID_PRICING_FACT: '定价事实不合法：维度代码或取值不在目录内',
-  PRICE_AMBIGUOUS: '价格命中存在歧义或父链冲突：同具体度同优先级有多条命中，或版本 / 合同 / Owner / OE 与请求不一致',
-};
 export function simulationErrorMessage(error: unknown): string | null {
   if (!(error instanceof ApiError)) return null;
-  const label = priceErrorLabels[error.code];
-  if (label) return error.detail && error.detail !== label ? `${label}。commercial：${error.detail}（${error.code}）` : `${label}（${error.code}）`;
-  if (error.status === 404) return '条款版本不存在。';
-  if (error.status === 400 && error.code === 'BUSINESS_CHECK_FAILED') return `业务校验未通过：${ownerReason(error) ?? '请检查输入'}`;
+  const label = priceErrorLabel(error.code);
+  if (label) return error.detail && error.detail !== label
+    ? t('simulator.error.withDetail', { label, detail: error.detail, code: error.code }) : t('simulator.error.withCode', { label, code: error.code });
+  if (error.status === 404) return t('simulator.error.versionNotFound');
+  if (error.status === 400 && error.code === 'BUSINESS_CHECK_FAILED') return t('error.businessCheckReason', { reason: ownerReason(error) ?? t('simulator.error.checkInput') });
   if (error.status === 400 && error.code === 'INVALID_REQUEST' && error.detail) return error.detail;
   return null;
 }

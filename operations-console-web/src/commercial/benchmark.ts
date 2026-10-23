@@ -2,6 +2,9 @@ import { percent } from './commercial.ts';
 import type { AgreementCapability, MatrixRow, Price, PriceComponent } from './commercial.ts';
 import type { CatalogCapability } from './commercialConsole.ts';
 import type { ComponentBenchmark, RelevanceWarning } from './termReview.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('commercial');
 
 // ---------- 破标标记 ----------
 
@@ -10,17 +13,18 @@ export interface BenchmarkMark { label: string; color: string; below: boolean }
 /** 组件标记：低于来源模板为红色「破标」，无来源或模板无对应组件为「无标准可比」，不低于模板不标。 */
 export function benchmarkMark(benchmark: ComponentBenchmark | null): BenchmarkMark | null {
   if (!benchmark || benchmark.status === 'AT_OR_ABOVE') return null;
-  return benchmark.status === 'BELOW_STANDARD' ? { label: '破标', color: 'red', below: true } : { label: '无标准可比', color: 'default', below: false };
+  return benchmark.status === 'BELOW_STANDARD' ? { label: t('benchmark.below'), color: 'red', below: true } : { label: t('benchmark.none'), color: 'default', below: false };
 }
 
 /** 悬停显示的模板值：费率按百分比，金额原样；模板无值的字段不列。 */
 export function benchmarkDetail(benchmark: ComponentBenchmark | null): string | null {
   if (!benchmark) return null;
-  if (benchmark.status === 'NO_BENCHMARK') return '来源模板没有可比较的同组件（或该价格不来自模板）';
-  const parts = [benchmark.standardRate !== null && `费率 ${percent(benchmark.standardRate)}`,
-    benchmark.standardFixedAmount !== null && `固定 ${benchmark.standardFixedAmount}`, benchmark.standardMinAmount !== null && `最低 ${benchmark.standardMinAmount}`,
-    benchmark.standardMaxAmount !== null && `最高 ${benchmark.standardMaxAmount}`].filter(Boolean);
-  return `模板值：${parts.length ? parts.join(' · ') : '—'}`;
+  if (benchmark.status === 'NO_BENCHMARK') return t('benchmark.noComparable');
+  const parts = [benchmark.standardRate !== null && t('benchmark.rate', { value: percent(benchmark.standardRate) }),
+    benchmark.standardFixedAmount !== null && t('benchmark.fixed', { value: benchmark.standardFixedAmount }),
+    benchmark.standardMinAmount !== null && t('benchmark.min', { value: benchmark.standardMinAmount }),
+    benchmark.standardMaxAmount !== null && t('benchmark.max', { value: benchmark.standardMaxAmount })].filter(Boolean);
+  return t('benchmark.templateValues', { values: parts.length ? parts.join(' · ') : '—' });
 }
 
 /** 一组价格里的破标组件数（版本未返回 belowStandardCount 时的兜底统计）。 */
@@ -36,15 +40,12 @@ export const cellBelowStandard = (components: readonly Pick<PriceComponent, 'ben
 
 /** 价格行来源标签：来自模板的行显示「模板名 vN」（版本级来源已知时），否则「标准价目」；手工行为 null。 */
 export function sourceLabel(price: Pick<Price, 'sourceTemplatePriceId'>, templateLabel: string | null): string | null {
-  return price.sourceTemplatePriceId ? templateLabel ?? '标准价目' : null;
+  return price.sourceTemplatePriceId ? templateLabel ?? t('source.standardTemplate') : null;
 }
 
 // ---------- 相关性提示 ----------
 
-export const relevanceReasonLabels: Readonly<Record<string, string>> = {
-  PAYMENT_METHOD_NOT_ENABLED: '支付方式未开通', CURRENCY_NOT_ENABLED: '币种不在开通范围', CONDITION_OUT_OF_SCOPE: '画像条件超出接受条件',
-  FEATURE_NOT_ENABLED: '功能未开通', NO_CAPABILITY_ON_ENTITY: '该 OE 没有相关开通项',
-};
+/** 原因显示名为 commercial 命名空间的 enum.relevanceReason.<编码>，未知编码原样显示。 */
 
 /** 价格的定位键：OE × 币种 × 画像（与矩阵行键一致）。 */
 export const priceKey = (item: { entityNo: string; currency: string; pricingProfileCode: string }) =>
@@ -52,8 +53,8 @@ export const priceKey = (item: { entityNo: string; currency: string; pricingProf
 
 /** 一条提示：AE001 / AED / CARD_AMEX：支付方式未开通（commercial 说明）。 */
 export function relevanceText(warning: RelevanceWarning): string {
-  const reason = relevanceReasonLabels[warning.reasonCode] ?? warning.reasonCode;
-  return `${warning.entityNo} / ${warning.currency} / ${warning.pricingProfileCode}：${reason}${warning.message ? `（${warning.message}）` : ''}`;
+  const params = { price: `${warning.entityNo} / ${warning.currency} / ${warning.pricingProfileCode}`, reason: enumLabel(t, 'enum.relevanceReason', warning.reasonCode) };
+  return warning.message ? t('relevance.textWithMessage', { ...params, message: warning.message }) : t('relevance.text', params);
 }
 
 // ---------- 价格按开通项分组 ----------
@@ -113,9 +114,9 @@ export function groupPricesByCapability(rows: readonly MatrixRow[], capabilities
       group(capability.agreementCapabilityId, () => ({ key: capability.agreementCapabilityId, title: `${capability.entityNo} · ${capability.capabilityCode}`,
         capability, unmatched: false })).rows.push(row);
     } else if (!rowWarnings.length && !row.price.paymentMethodCode) {
-      group(otherKey, () => ({ key: otherKey, title: '其他价格（非支付方式）', capability: null, unmatched: false })).rows.push(row);
+      group(otherKey, () => ({ key: otherKey, title: t('priceGroup.other'), capability: null, unmatched: false })).rows.push(row);
     } else {
-      const target = group(unmatchedKey, () => ({ key: unmatchedKey, title: '未对应开通项', capability: null, unmatched: true }));
+      const target = group(unmatchedKey, () => ({ key: unmatchedKey, title: t('priceGroup.unmatched'), capability: null, unmatched: true }));
       target.rows.push(row); target.warnings.push(...rowWarnings);
     }
   }

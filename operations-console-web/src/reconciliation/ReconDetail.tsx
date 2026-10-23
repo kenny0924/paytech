@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Breadcrumb, Button, Result, Spin } from 'antd';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LoadFailure } from '../finance/FinanceParts';
+import { useT } from '../i18n/react';
 import { backTarget } from './reconRoutes';
 import type { ReconDetailState } from './useReconDetail';
 import '../configuration/configuration.css';
@@ -30,18 +31,19 @@ export function useBackTarget(listRoute: string): string {
 export function ReconDetailPage<T>({ list, objectLabel, title, state, actions, children }: {
   list: ListRef; objectLabel: string; title: ReactNode; state: ReconDetailState<T>; actions?: ReactNode; children: (item: T) => ReactNode;
 }) {
+  const t = useT('recon'), tNav = useT('nav');
   const navigate = useNavigate();
   const back = useBackTarget(list.route);
   const item = state.item;
   return <div className="configuration-page finance-page recon-detail">
     <Breadcrumb className="finance-breadcrumb" items={[
-      { title: '财务' }, { title: '对账' }, { title: <Link to={back}>{list.label}</Link> },
+      { title: tNav('resource.OPERATIONS_FINANCE') }, { title: tNav('resource.OPERATIONS_FINANCE_RECON') }, { title: <Link to={back}>{list.label}</Link> },
       { title: <strong>{item ? title : objectLabel}</strong> },
     ]} />
     <div className="page-heading"><h1>{item ? title : objectLabel}</h1>
-      <div className="recon-detail-actions">{item && actions}<Button onClick={() => void navigate(back)}>返回列表</Button></div></div>
-    {state.notFound ? <Result status="404" title={`未找到该${objectLabel}`} subTitle="地址中的编号不存在或无权查看。"
-      extra={<Button type="primary" onClick={() => void navigate(back)}>返回{list.label}</Button>} />
+      <div className="recon-detail-actions">{item && actions}<Button onClick={() => void navigate(back)}>{t('detail.backToList')}</Button></div></div>
+    {state.notFound ? <Result status="404" title={t('detail.notFound', { object: objectLabel })} subTitle={t('detail.notFoundHint')}
+      extra={<Button type="primary" onClick={() => void navigate(back)}>{t('detail.backTo', { list: list.label })}</Button>} />
       : state.error && !item ? <LoadFailure message={state.error} onRetry={state.reload} />
       : !item ? <div className="content-loading"><Spin /></div>
       : children(item)}

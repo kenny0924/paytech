@@ -1,0 +1,4 @@
+# operations-console-bff：运行镜像 e4d913e0（JAR d52e541b）对 main 9f210b5c 干净构建（a=现网，b=9f210b5c）
+entries a=2597 b=2597 removed=0 added=0 changed=2
+~ lib:paytech-ledger-api!com/paytech/ledger/api/LedgerSetupQueryApi.class
+~ lib:paytech-ledger-api!com/paytech/ledger/api/enums/LedgerSetupErrorCode.class

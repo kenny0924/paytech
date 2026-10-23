@@ -10,7 +10,8 @@ import type { CatalogTab } from '../workflow/catalogModel';
 import { ActionTypePicker, ActionTypeTag, DeactivateModal, ExecutorPreview, useTemplateReferences } from '../workflow/TemplateEditors';
 import { useWorkflowCommand } from '../workflow/useWorkflowCommand';
 import { decodeMutation, decodePage, decodeTemplate, workflowPaths } from '../workflow/workflowApi';
-import { actionTypeLabels, configStatusLabels } from '../workflow/workflowLabels';
+import { actionTypeLabel, configStatusLabel } from '../workflow/workflowLabels';
+import { useT } from '../i18n/react';
 import type { ActionTemplate } from '../workflow/workflowTypes';
 import { LoadFailed, Spinner, WorkflowFrame, hasButton, personName, shortTime, useLoad, workflowButtons, workflowRoutes } from '../workflow/WorkflowParts';
 import '../workflow/workflow.css';
@@ -38,6 +39,7 @@ export function WorkflowActionTemplates({ resources, onAuthorizationChanged }: P
 }
 
 function TemplateCatalog({ canManage, onAuthorizationChanged }: { canManage: boolean; onAuthorizationChanged: () => void }) {
+  const t = useT('workflow'), tNav = useT('nav');
   const navigate = useNavigate();
   const [items, setItems] = useState<ActionTemplate[]>([]); const [loading, setLoading] = useState(true); const [failure, setFailure] = useState<unknown>();
   const [reload, setReload] = useState(0);
@@ -58,25 +60,25 @@ function TemplateCatalog({ canManage, onAuthorizationChanged }: { canManage: boo
   const visible = filterTemplates(items, activeTab, keyword);
   const preview = items.find(item => item.templateId === previewId);
   return <div className="wf-page">
-    <div className="wf-page-head"><h1>动作目录</h1><span className="wf-grow" />
-      <Input allowClear prefix={<SearchOutlined className="muted" />} placeholder="搜索动作名称、编码" style={{ width: 260 }} value={keyword} onChange={event => setKeyword(event.target.value)} />
-      {canManage && <Button type="primary" icon={<PlusOutlined />} onClick={() => setPicking(true)}>新建动作</Button>}</div>
-    {failure ? <LoadFailed failure={failure} retry={refresh} title="动作目录加载失败" /> : null}
+    <div className="wf-page-head"><h1>{tNav('resource.OPERATIONS_WORKFLOW_ACTION_TEMPLATES')}</h1><span className="wf-grow" />
+      <Input allowClear prefix={<SearchOutlined className="muted" />} placeholder={t('catalog.search')} style={{ width: 260 }} value={keyword} onChange={event => setKeyword(event.target.value)} />
+      {canManage && <Button type="primary" icon={<PlusOutlined />} onClick={() => setPicking(true)}>{t('catalog.create')}</Button>}</div>
+    {failure ? <LoadFailed failure={failure} retry={refresh} title={t('catalog.loadFailed')} /> : null}
     <section className="wf-catalog-panel">
       <div className="wf-tabs wf-catalog-tabs" role="tablist">{tabs.map(item => <button type="button" role="tab" aria-selected={activeTab === item.key} key={item.key}
         className={`wf-tab${activeTab === item.key ? ' is-active' : ''}`} onClick={() => setTab(item.key)}>
-        {item.key === 'ALL' ? '全部' : actionTypeLabels[item.key]}<span className="wf-tab-count">{item.count}</span></button>)}</div>
+        {item.key === 'ALL' ? t('catalog.all') : actionTypeLabel(item.key)}<span className="wf-tab-count">{item.count}</span></button>)}</div>
       {loading && !items.length ? <Spinner /> : <Table<ActionTemplate> rowKey="templateId" size="middle" dataSource={visible} className="wf-catalog-table"
         pagination={visible.length > 50 ? { pageSize: 50, showSizeChanger: false } : false}
-        locale={{ emptyText: <Empty description={keyword.trim() ? '没有匹配的动作' : '还没有动作'} /> }}
+        locale={{ emptyText: <Empty description={keyword.trim() ? t('catalog.noMatch') : t('catalog.empty')} /> }}
         rowClassName={row => `${row.templateId === previewId ? 'wf-row-selected' : ''}${row.status === 'INACTIVE' ? ' is-inactive' : ''}`}
         onRow={row => ({ onClick: () => setPreviewId(row.templateId), style: { cursor: 'pointer' } })} columns={[
-          { title: '名称', render: (_, row) => <div className="wf-catalog-name"><strong>{row.templateName}</strong>
+          { title: t('panel.name'), render: (_, row) => <div className="wf-catalog-name"><strong>{row.templateName}</strong>
             {row.description && <div className="muted wf-ellipsis">{row.description}</div>}</div> },
-          { title: '类型', width: 130, render: (_, row) => <ActionTypeTag type={row.actionType} /> },
-          { title: '被引用', width: 110, render: (_, row) => <span className={row.referencedDefinitionCount ? '' : 'muted'}>{referenceText(row.referencedDefinitionCount)}</span> },
-          { title: '状态', width: 90, render: (_, row) => <span className="wf-inline"><span className={`wf-status-dot is-${row.status.toLowerCase()}`} />{configStatusLabels[row.status]}</span> },
-          { title: '最近修改', width: 190, render: (_, row) => <span>{row.updatedByName ?? personName(row.updatedBy)} <span className="muted">{shortTime(row.updateTime)}</span></span> },
+          { title: t('designer.type'), width: 130, render: (_, row) => <ActionTypeTag type={row.actionType} /> },
+          { title: t('catalog.column.references'), width: 110, render: (_, row) => <span className={row.referencedDefinitionCount ? '' : 'muted'}>{referenceText(row.referencedDefinitionCount)}</span> },
+          { title: t('templateEditor.status'), width: 90, render: (_, row) => <span className="wf-inline"><span className={`wf-status-dot is-${row.status.toLowerCase()}`} />{configStatusLabel(row.status)}</span> },
+          { title: t('catalog.column.updated'), width: 190, render: (_, row) => <span>{row.updatedByName ?? personName(row.updatedBy)} <span className="muted">{shortTime(row.updateTime)}</span></span> },
         ]} />}
     </section>
     {preview && <TemplatePreviewDrawer key={preview.templateId} summary={preview} canManage={canManage} onAuthorizationChanged={onAuthorizationChanged}
@@ -89,6 +91,7 @@ function TemplateCatalog({ canManage, onAuthorizationChanged }: { canManage: boo
 function TemplatePreviewDrawer({ summary, canManage, onAuthorizationChanged, onClose, onChanged, onEdit }: {
   summary: ActionTemplate; canManage: boolean; onAuthorizationChanged: () => void; onClose: () => void; onChanged: () => void; onEdit: () => void;
 }) {
+  const t = useT('workflow');
   const { message } = App.useApp();
   const loaded = useLoad<ActionTemplate>(workflowPaths.template(summary.templateId), decodeTemplate);
   const template = loaded.data;
@@ -98,30 +101,30 @@ function TemplatePreviewDrawer({ summary, canManage, onAuthorizationChanged, onC
   const grouped = currentReferences(references.data);
   async function changeStatus(status: 'ACTIVE' | 'INACTIVE') {
     if (!template) return;
-    const result = await command.run(workflowPaths.templateStatus(template.templateId), 'POST', { status, expectedVersion: template.version }, decodeMutation, '状态修改失败');
+    const result = await command.run(workflowPaths.templateStatus(template.templateId), 'POST', { status, expectedVersion: template.version }, decodeMutation, t('templateEditor.statusFailed'));
     if (!result) return;
-    setDeactivating(false); void message.success(status === 'ACTIVE' ? '已启用' : '已停用'); loaded.refresh(); onChanged();
+    setDeactivating(false); void message.success(status === 'ACTIVE' ? t('templateEditor.enabled') : t('templateEditor.disabled')); loaded.refresh(); onChanged();
   }
   const shown = template ?? summary;
   return <Drawer open size={520} onClose={onClose} className="wf-preview-drawer" title={<div className="wf-drawer-title">
     <div className="wf-inline"><strong>{shown.templateName}</strong><ActionTypeTag type={shown.actionType} /></div>
-    <div className="muted wf-drawer-sub">{shown.description ? `${shown.description} · ` : ''}{shown.updatedByName ?? personName(shown.updatedBy)} 修改于 {shortTime(shown.updateTime)}</div></div>}
+    <div className="muted wf-drawer-sub">{shown.description ? `${shown.description} · ` : ''}{t('catalog.changedBy', { name: shown.updatedByName ?? personName(shown.updatedBy), time: shortTime(shown.updateTime) })}</div></div>}
     footer={<div className="wf-drawer-foot">
-      {canManage ? <Dropdown trigger={['click']} menu={{ items: [shown.status === 'ACTIVE' ? { key: 'off', label: '停用', danger: true } : { key: 'on', label: '启用' }],
+      {canManage ? <Dropdown trigger={['click']} menu={{ items: [shown.status === 'ACTIVE' ? { key: 'off', label: t('action.disable'), danger: true } : { key: 'on', label: t('action.enable') }],
         onClick: ({ key }) => key === 'off' ? setDeactivating(true) : void changeStatus('ACTIVE') }}>
-        <Button aria-label="更多操作" loading={command.saving} icon={<EllipsisOutlined />} /></Dropdown> : <span />}
-      <Button type="primary" onClick={onEdit}>{canManage ? '编辑' : '查看详情'}</Button></div>}>
-    {!template ? (loaded.failure ? <LoadFailed failure={loaded.failure} retry={loaded.refresh} title="动作加载失败" /> : <Spinner />) : <>
-      <div className="wf-section-title">执行人看到的样子<span className="muted">只读预览</span></div>
+        <Button aria-label={t('catalog.moreActions')} loading={command.saving} icon={<EllipsisOutlined />} /></Dropdown> : <span />}
+      <Button type="primary" onClick={onEdit}>{canManage ? t('catalog.edit') : t('catalog.viewDetails')}</Button></div>}>
+    {!template ? (loaded.failure ? <LoadFailed failure={loaded.failure} retry={loaded.refresh} title={t('templateEditor.loadFailed')} /> : <Spinner />) : <>
+      <div className="wf-section-title">{t('templateEditor.executorView')}<span className="muted">{t('templateEditor.readOnlyPreview')}</span></div>
       <ExecutorPreview template={template} />
-      <div className="wf-section-title">被这些流程引用<span className="muted">{references.data ? grouped.current.length : ''}</span></div>
-      {references.loading && !references.data ? <Spinner /> : references.failure ? <LoadFailed failure={references.failure} title="引用查询失败" />
-        : !grouped.current.length ? <div className="muted">还没有已发布的流程引用这个动作{grouped.historical ? `（${grouped.historical} 个历史版本曾引用）` : ''}</div>
+      <div className="wf-section-title">{t('catalog.usedBy')}<span className="muted">{references.data ? grouped.current.length : ''}</span></div>
+      {references.loading && !references.data ? <Spinner /> : references.failure ? <LoadFailed failure={references.failure} title={t('references.loadFailed')} />
+        : !grouped.current.length ? <div className="muted">{grouped.historical ? t('catalog.noCurrentWithHistory', { count: grouped.historical }) : t('references.empty')}</div>
         : <ul className="wf-reference-list">{grouped.current.map(item => <li key={item.definitionId}>
           <Link to={`${workflowRoutes.definitions}/${item.definitionId}/versions/${item.versionNo}`}><strong>{item.definitionName}</strong></Link>
-          <span className="wf-grow" />{item.runningInstanceCount > 0 && <span className="muted">{item.runningInstanceCount} 个运行中</span>}
-          <span className={item.sameAsCurrent ? 'wf-ok-text' : 'wf-warn-text'}>已发布 v{item.versionNo}{item.sameAsCurrent ? '' : ' · 旧配置'}</span></li>)}
-          {grouped.historical > 0 && <li className="muted">另有 {grouped.historical} 个历史版本引用（不计入）</li>}</ul>}
+          <span className="wf-grow" />{item.runningInstanceCount > 0 && <span className="muted">{t('catalog.running', { count: item.runningInstanceCount })}</span>}
+          <span className={item.sameAsCurrent ? 'wf-ok-text' : 'wf-warn-text'}>{item.sameAsCurrent ? t('definitions.card.published', { version: item.versionNo }) : t('catalog.publishedOld', { version: item.versionNo })}</span></li>)}
+          {grouped.historical > 0 && <li className="muted">{t('catalog.historicalExtra', { count: grouped.historical })}</li>}</ul>}
     </>}
     {command.formError && !deactivating && <div className="wf-danger-text">{command.formError}</div>}
     {deactivating && template && <DeactivateModal template={{ ...template, referencedDefinitionCount: summary.referencedDefinitionCount }} references={references}

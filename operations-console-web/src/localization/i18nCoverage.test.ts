@@ -9,9 +9,10 @@ import { parseIcu, validateTranslation } from './icu.ts';
 import type { IssueCode } from './icu.ts';
 
 const src = fileURLToPath(new URL('..', import.meta.url));
-const seed = JSON.parse(readFileSync(join(src, '../i18n/operations-console.zh-CN.seed.json'), 'utf8')) as {
-  format: string; application: string; locale: string; namespaces: Record<string, Record<string, string>>;
-};
+/** Namespaces owned by the localization pages; the console-wide rules live in src/i18nCatalog.test.ts. */
+const OWN = ['i18n-admin', 'enum'];
+const seed = { namespaces: Object.fromEntries(OWN.map(ns => [ns,
+  JSON.parse(readFileSync(join(src, '../i18n/zh-CN/' + ns + '.json'), 'utf8')) as Record<string, string>])) };
 const cjk = /[぀-ヿ㐀-䶿一-鿿가-힯豈-﫿＀-￯　-〿]/;
 const ADMIN = 'i18n-admin';
 
@@ -48,6 +49,8 @@ function withoutComments(text: string): string {
   }
   return out;
 }
+/** Shared `enum` keys this module owns; other modules add their own cross-module enums to the same file. */
+const localizationEnum = (key: string) => /^enum\.(release_display|locale_status|text_direction)\./.test(key);
 const textOf = (entry: unknown) => typeof entry === 'string' ? entry : (entry as { text: string }).text;
 const adminKeys = Object.keys(builtin[ADMIN]);
 const has = (full: string) => Object.hasOwn(builtin[full.split('.')[0]] ?? {}, full);
@@ -66,15 +69,11 @@ test('the comment stripper keeps strings and JSX text, so the scan cannot be byp
   assert.ok(!cjk.test(withoutComments("/** 注释 */\nconst url = 'https://x'; // 注释")));
 });
 
-test('English base and zh-CN seed have the same namespaces and keys, all namespace-prefixed and non-empty', () => {
-  // seed 即翻译导入文件（卡 A 1.7：code-mor-i18n-translation/1），可在翻译页直接导入。
-  assert.equal(seed.format, 'code-mor-i18n-translation/1');
-  assert.equal(seed.locale, 'zh-CN');
-  assert.equal(seed.application, 'operations-console');
-  assert.deepEqual(Object.keys(seed.namespaces).sort(), Object.keys(builtin).sort());
-  for (const ns of Object.keys(builtin)) {
+test('English base and zh-CN seed have the same keys, all namespace-prefixed and non-empty', () => {
+  // i18n/zh-CN/<ns>.json 是按命名空间拆分的中文种子，scripts/i18n-export-source.mjs 合并成翻译导入文件。
+  for (const ns of OWN) {
     assert.deepEqual(Object.keys(seed.namespaces[ns]).sort(), Object.keys(builtin[ns]).sort(), ns);
-    for (const key of Object.keys(builtin[ns])) {
+    for (const key of Object.keys(builtin[ns]).filter(key => ns !== 'enum' || localizationEnum(key))) {
       assert.match(key, new RegExp('^' + ns + '(\\.[a-z0-9_]+)+$'), key);
       assert.ok(textOf(builtin[ns][key]).trim(), 'empty English base for ' + key);
       assert.ok(seed.namespaces[ns][key].trim(), 'empty zh-CN seed for ' + key);
@@ -84,7 +83,7 @@ test('English base and zh-CN seed have the same namespaces and keys, all namespa
 
 test('every base text and seed translation is valid ICU with the same parameters (rules B5)', () => {
   const problems: string[] = [];
-  for (const ns of Object.keys(builtin)) {
+  for (const ns of OWN) {
     for (const [key, entry] of Object.entries(builtin[ns])) {
       const source = textOf(entry), translation = seed.namespaces[ns][key];
       if (parseIcu(source).issues.length) problems.push('base ' + key);
@@ -136,6 +135,6 @@ test('every key used by the pages exists in the English base', () => {
 
 test('the English base has no unused keys', () => {
   const used = new Set([...staticKeys(), ...dynamicKeys, ...enumKeys]);
-  const all = Object.values(builtin).flatMap(entries => Object.keys(entries));
+  const all = [...Object.keys(builtin[ADMIN]), ...Object.keys(builtin.enum).filter(localizationEnum)];
   assert.deepEqual(all.filter(key => !used.has(key)), []);
 });

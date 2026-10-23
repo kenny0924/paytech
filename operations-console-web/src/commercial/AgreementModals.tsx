@@ -1,9 +1,8 @@
 import { Button, Form, Input, InputNumber, Radio, Select, Tag } from 'antd';
 import { DatePicker } from '../components/DatePicker';
 import {
-  acceptanceBody, acceptanceMethodLabels, acceptanceMethods, agreementBody, agreementTypeLabels, businessModes, capabilityStatusLabels,
-  capabilityStatuses, commercialPaths, decodeAgreementWrite, decodeCapabilityWrite, decodePlan, entityNoPattern, idPattern, localInput,
-  offsetInstant, partnerTermTypes, partyRoleLabels, partyRoles, planBody, reserveError, termTypeLabels, termTypes,
+  acceptanceBody, acceptanceMethods, agreementBody, businessModes, capabilityStatuses, commercialPaths, decodeAgreementWrite, decodeCapabilityWrite,
+  decodePlan, entityNoPattern, idPattern, localInput, offsetInstant, partnerTermTypes, partyRoles, planBody, reserveError, termTypes,
 } from './commercial';
 import type {
   AcceptanceFormValues, Agreement, AgreementCapability, AgreementFormValues, AgreementParty, AgreementWriteResult, PlanFormValues, TermPlan,
@@ -13,80 +12,87 @@ import {
 } from './capabilityConditions';
 import type { CapabilityChoice, CapabilityFormValues, DimensionDefinition } from './capabilityConditions';
 import { ConditionFields } from './ConditionFields';
-import { capabilityKindLabels, catalogLabel } from './catalogTree';
+import { capabilityKindLabel } from './catalogTree';
 import { ClientIdInput } from './ClientIdInput';
 import { browserStorage, rememberClient, subscribableProductOptions } from './commercialConsole';
 import { CommandDrawer, CommandModal, CommercialNote, DrawerSection } from './CommercialParts';
 import { useCatalogCapabilities, useCatalogDimensions, useCatalogProducts } from './useCatalog';
 import { useCommercialCommand } from './useCommercialCommand';
+import { enumLabel } from '../i18n/index';
+import type { Translate } from '../i18n/index';
+import { useT } from '../i18n/react';
 import './capabilityPricing.css';
 
 interface Base { onClose: () => void; onReload: () => void; onAuthorizationChanged: () => void }
 const required = (message: string) => ({ required: true, whitespace: true, message });
-const idRule = { pattern: idPattern, message: '必须是正十进制整数' };
-const hashRule = { pattern: /^[0-9a-fA-F]{64}$/, message: '必须是 64 位十六进制 SHA-256' };
-const options = (labels: Readonly<Record<string, string>>, values: readonly string[]) => values.map(value => ({ value, label: `${labels[value] ?? value} ${value}` }));
-/** 按钮组只显示中文，代码放悬停提示，避免长代码把按钮挤到第二行。 */
-const buttonOptions = (labels: Readonly<Record<string, string>>, values: readonly string[]) =>
-  values.map(value => ({ value, label: labels[value] ?? value, title: value }));
+const idRule = (t: Translate) => ({ pattern: idPattern, message: t('form.idPattern') });
+const hashRule = (t: Translate) => ({ pattern: /^[0-9a-fA-F]{64}$/, message: t('form.hashPattern') });
+/** 下拉选项「显示名 代码」；显示名为 commercial 命名空间的 enum.<kind>.<值>。 */
+const options = (t: Translate, kind: string, values: readonly string[]) =>
+  values.map(value => ({ value, label: `${enumLabel(t, 'enum.' + kind, value)} ${value}` }));
+/** 按钮组只显示名称，代码放悬停提示，避免长代码把按钮挤到第二行。 */
+const buttonOptions = (t: Translate, kind: string, values: readonly string[]) =>
+  values.map(value => ({ value, label: enumLabel(t, 'enum.' + kind, value), title: value }));
 
 /** 新建合同：CLIENT 绑定一个 OE，PARTNER 覆盖多个 OE；资金模式与定价权本期固定，不在表单中选择。 */
 export function CreateAgreementModal({ onClose, onCreated, onAuthorizationChanged }: { onClose: () => void; onCreated: (agreementId: string) => void; onAuthorizationChanged: () => void }) {
+  const t = useT('commercial');
   const [form] = Form.useForm<AgreementFormValues>();
   const command = useCommercialCommand(onAuthorizationChanged, 'agreement', form);
   const type = Form.useWatch('agreementType', form) ?? 'CLIENT';
   const submit = async () => {
     const values = await form.validateFields();
-    const result = await command.run(commercialPaths.agreements, 'POST', agreementBody(values), decodeAgreementWrite(), '合同创建失败');
+    const result = await command.run(commercialPaths.agreements, 'POST', agreementBody(values), decodeAgreementWrite(), t('agreement.create.failed'));
     if (!result) return;
     if (values.agreementType === 'CLIENT' && values.clientId) rememberClient(browserStorage(), values.clientId);
     onCreated(result.agreementId);
   };
-  return <CommandModal title="新建合同" command={command} okText="创建" onOk={() => void submit()} onClose={onClose} onReload={onClose} width={760}>
+  return <CommandModal title={t('agreement.create.title')} command={command} okText={t('shared.create')} onOk={() => void submit()} onClose={onClose} onReload={onClose} width={760}>
     <Form form={form} name="commercial-agreement-create" layout="vertical" initialValues={{ agreementType: 'CLIENT', businessMode: 'MOR',
       parties: [{ partyRole: 'CLIENT' }, { partyRole: 'PLATFORM_SIGNATORY' }] }}>
       <div className="commercial-form-grid">
-        <Form.Item name="agreementNo" label="合同编号" rules={[required('请填写合同编号'), { pattern: /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/, message: '字母数字及 . _ -，最长 64 位' }]}>
+        <Form.Item name="agreementNo" label={t('agreement.field.agreementNo')} rules={[required(t('agreement.create.agreementNoRequired')),
+          { pattern: /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/, message: t('agreement.create.agreementNoPattern') }]}>
           <Input maxLength={64} placeholder="AGR-AE001-0001" /></Form.Item>
-        <Form.Item name="agreementName" label="合同名称" rules={[required('请填写合同名称')]}><Input maxLength={255} /></Form.Item>
-        <Form.Item name="agreementType" label="合同类型"><Radio.Group optionType="button" options={buttonOptions(agreementTypeLabels, ['CLIENT', 'PARTNER'])} /></Form.Item>
+        <Form.Item name="agreementName" label={t('agreement.create.agreementName')} rules={[required(t('agreement.create.agreementNameRequired'))]}><Input maxLength={255} /></Form.Item>
+        <Form.Item name="agreementType" label={t('agreement.create.agreementType')}><Radio.Group optionType="button" options={buttonOptions(t, 'agreementType', ['CLIENT', 'PARTNER'])} /></Form.Item>
         {type === 'CLIENT'
-          ? <Form.Item name="businessMode" label="业务模式" rules={[{ required: true, message: '请选择业务模式' }]}><Radio.Group optionType="button" options={businessModes.map(v => ({ value: v, label: v }))} /></Form.Item>
+          ? <Form.Item name="businessMode" label={t('agreement.create.businessMode')} rules={[{ required: true, message: t('agreement.create.businessModeRequired') }]}><Radio.Group optionType="button" options={businessModes.map(v => ({ value: v, label: v }))} /></Form.Item>
           : <div />}
         {type === 'CLIENT' ? <>
-          <Form.Item name="clientId" label="Client ID" extra="可选最近使用或审核通过的 Client；暂不支持按名称搜索" rules={[required('请填写 Client ID'), idRule]}>
+          <Form.Item name="clientId" label="Client ID" extra={t('agreement.create.clientIdHint')} rules={[required(t('agreement.create.clientIdRequired')), idRule(t)]}>
             <ClientIdInput /></Form.Item>
-          <Form.Item name="entityNo" label="经营主体 OE" normalize={(v: string) => v?.toUpperCase()} rules={[required('请填写 OE'), { pattern: entityNoPattern, message: '两位国家码加三位序号，如 AE001' }]}>
+          <Form.Item name="entityNo" label={t('agreement.create.entityNo')} normalize={(v: string) => v?.toUpperCase()} rules={[required(t('agreement.create.entityNoRequired')), { pattern: entityNoPattern, message: t('form.entityNoPattern') }]}>
             <Input maxLength={5} placeholder="AE001" /></Form.Item>
-          <Form.Item name="referralPartnerId" label="推荐伙伴 ID（可空）" rules={[idRule]}><Input maxLength={19} /></Form.Item>
+          <Form.Item name="referralPartnerId" label={t('agreement.create.referralPartnerId')} rules={[idRule(t)]}><Input maxLength={19} /></Form.Item>
           <div />
         </> : <>
-          <Form.Item name="localPartnerId" label="Local Partner ID" rules={[required('请填写 Local Partner ID'), idRule]}><Input maxLength={19} /></Form.Item>
-          <Form.Item name="operatingEntityNos" label="覆盖 OE" extra="提交签署前至少一个" rules={[{ validator: async (_, value?: string[]) => {
-            if ((value ?? []).some(v => !entityNoPattern.test(v))) throw new Error('OE 必须是两位国家码加三位序号');
+          <Form.Item name="localPartnerId" label="Local Partner ID" rules={[required(t('agreement.create.localPartnerIdRequired')), idRule(t)]}><Input maxLength={19} /></Form.Item>
+          <Form.Item name="operatingEntityNos" label={t('agreement.create.operatingEntityNos')} extra={t('agreement.create.operatingEntityNosHint')} rules={[{ validator: async (_, value?: string[]) => {
+            if ((value ?? []).some(v => !entityNoPattern.test(v))) throw new Error(t('agreement.create.operatingEntityNosPattern'));
           } }]}><Select mode="tags" tokenSeparators={[',', ' ']} placeholder="AE001, SA001" /></Form.Item>
         </>}
-        <Form.Item name="effectiveFrom" label="生效起点" rules={[{ required: true, message: '请选择生效起点' }]}><DatePicker showTime /></Form.Item>
-        <Form.Item name="effectiveTo" label="生效终点（可空）"><DatePicker showTime /></Form.Item>
+        <Form.Item name="effectiveFrom" label={t('form.effectiveFrom')} rules={[{ required: true, message: t('form.effectiveFromRequired') }]}><DatePicker showTime /></Form.Item>
+        <Form.Item name="effectiveTo" label={t('form.effectiveToOptional')}><DatePicker showTime /></Form.Item>
       </div>
-      <h3 className="commercial-subtitle">参与方</h3>
+      <h3 className="commercial-subtitle">{t('agreement.create.parties')}</h3>
       <Form.List name="parties">{(fields, { add, remove }) => <div className="commercial-row-list">
         {fields.map(field => <div className="commercial-row" key={field.key}>
-          <Form.Item name={[field.name, 'partyId']} rules={[required('Party ID'), idRule]}><Input placeholder="Party ID" maxLength={19} /></Form.Item>
-          <Form.Item name={[field.name, 'partyProfileId']} rules={[required('资料版本 ID'), idRule]}><Input placeholder="资料版本 ID" maxLength={19} /></Form.Item>
-          <Form.Item name={[field.name, 'partyRole']} rules={[{ required: true, message: '角色' }]}><Select options={options(partyRoleLabels, partyRoles)} /></Form.Item>
-          <Button onClick={() => remove(field.name)} disabled={fields.length <= 1}>移除</Button>
+          <Form.Item name={[field.name, 'partyId']} rules={[required('Party ID'), idRule(t)]}><Input placeholder="Party ID" maxLength={19} /></Form.Item>
+          <Form.Item name={[field.name, 'partyProfileId']} rules={[required(t('agreement.create.partyProfileId')), idRule(t)]}><Input placeholder={t('agreement.create.partyProfileId')} maxLength={19} /></Form.Item>
+          <Form.Item name={[field.name, 'partyRole']} rules={[{ required: true, message: t('agreement.party.role') }]}><Select options={options(t, 'partyRole', partyRoles)} /></Form.Item>
+          <Button onClick={() => remove(field.name)} disabled={fields.length <= 1}>{t('agreement.create.removeParty')}</Button>
         </div>)}
-        <Button onClick={() => add({ partyRole: type === 'CLIENT' ? 'OPERATING_ENTITY' : 'LOCAL_PARTNER' })}>添加参与方</Button>
+        <Button onClick={() => add({ partyRole: type === 'CLIENT' ? 'OPERATING_ENTITY' : 'LOCAL_PARTNER' })}>{t('agreement.create.addParty')}</Button>
       </div>}</Form.List>
-      <h3 className="commercial-subtitle">签署文件（可后补，提交签署前必须恰好一份）</h3>
+      <h3 className="commercial-subtitle">{t('agreement.create.signingDocument')}</h3>
       <div className="commercial-form-grid">
-        <Form.Item name="signingFileId" label="文件 ID" rules={[idRule]}><Input maxLength={19} /></Form.Item>
-        <Form.Item name="signingContentHash" label="SHA-256" dependencies={['signingFileId']} rules={[hashRule, ({ getFieldValue }) => ({ validator: async (_, value?: string) => {
-          if (getFieldValue('signingFileId') && !value) throw new Error('填写文件 ID 时必须填写 SHA-256');
+        <Form.Item name="signingFileId" label={t('agreement.documents.fileId')} rules={[idRule(t)]}><Input maxLength={19} /></Form.Item>
+        <Form.Item name="signingContentHash" label="SHA-256" dependencies={['signingFileId']} rules={[hashRule(t), ({ getFieldValue }) => ({ validator: async (_, value?: string) => {
+          if (getFieldValue('signingFileId') && !value) throw new Error(t('agreement.create.hashWithFile'));
         } })]}><Input maxLength={64} /></Form.Item>
       </div>
-      <CommercialNote>资金模式本期固定 SETTLE_THROUGH_PLATFORM、定价权固定 PLATFORM；同一合同编号重复提交且内容一致时返回原合同。</CommercialNote>
+      <CommercialNote>{t('agreement.create.note')}</CommercialNote>
     </Form>
   </CommandModal>;
 }
@@ -95,18 +101,20 @@ export function CreateAgreementModal({ onClose, onCreated, onAuthorizationChange
 export function TransitionModal({ agreement, action, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
   agreement: Agreement; action: 'submit' | 'activate'; onDone: (result: AgreementWriteResult) => void;
 }) {
+  const t = useT('commercial');
   const command = useCommercialCommand(onAuthorizationChanged, 'agreement');
   const path = action === 'submit' ? commercialPaths.submitForSignature(agreement.agreementId) : commercialPaths.activateAgreement(agreement.agreementId);
   const submit = async () => {
     const result = await command.run(path, 'POST', { expectedChangeVersion: agreement.changeVersion }, decodeAgreementWrite(agreement.agreementId),
-      action === 'submit' ? '提交签署失败' : '激活失败');
+      action === 'submit' ? t('agreement.transition.submitFailed') : t('agreement.transition.activateFailed'));
     if (result) onDone(result);
   };
-  return <CommandModal title={action === 'submit' ? '提交签署' : '激活合同'} command={command} okText={action === 'submit' ? '提交签署' : '激活'}
+  return <CommandModal title={action === 'submit' ? t('agreement.action.submit') : t('agreement.transition.activateTitle')} command={command}
+    okText={action === 'submit' ? t('agreement.action.submit') : t('agreement.action.activate')}
     onOk={() => void submit()} onClose={onClose} onReload={onReload} width={480}>
     <p>{action === 'submit'
-      ? `合同 ${agreement.agreementNo} 将进入待签署；之后各参与方逐一登记签署结果。`
-      : `合同 ${agreement.agreementNo} 将生效，并向 acquiring 发布状态变更；生效后条款版本才能排期。`}</p>
+      ? t('agreement.transition.submitNotice', { agreementNo: agreement.agreementNo })
+      : t('agreement.transition.activateNotice', { agreementNo: agreement.agreementNo })}</p>
   </CommandModal>;
 }
 
@@ -114,30 +122,31 @@ export function TransitionModal({ agreement, action, onDone, onClose, onReload, 
 export function AcceptanceModal({ agreement, party, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
   agreement: Agreement; party: AgreementParty; onDone: (result: AgreementWriteResult) => void;
 }) {
+  const t = useT('commercial');
   const [form] = Form.useForm<AcceptanceFormValues>();
   const command = useCommercialCommand(onAuthorizationChanged, 'agreement', form);
   const method = Form.useWatch('acceptanceMethod', form) ?? 'E_SIGNATURE';
   const submit = async () => {
     const values = await form.validateFields();
     const result = await command.run(commercialPaths.acceptance(agreement.agreementId, party.partyId), 'POST',
-      acceptanceBody(agreement.changeVersion, values), decodeAgreementWrite(agreement.agreementId), '签署登记失败');
+      acceptanceBody(agreement.changeVersion, values), decodeAgreementWrite(agreement.agreementId), t('agreement.acceptance.failed'));
     if (result) onDone(result);
   };
-  return <CommandModal title={`登记签署 · Party ${party.partyId}`} command={command} okText="登记" onOk={() => void submit()} onClose={onClose} onReload={onReload}>
+  return <CommandModal title={t('agreement.acceptance.title', { partyId: party.partyId })} command={command} okText={t('agreement.acceptance.ok')} onOk={() => void submit()} onClose={onClose} onReload={onReload}>
     <Form form={form} name="commercial-acceptance" layout="vertical" initialValues={{ acceptanceMethod: 'E_SIGNATURE' }}>
-      <Form.Item name="acceptanceMethod" label="签署方式"><Radio.Group optionType="button" options={buttonOptions(acceptanceMethodLabels, acceptanceMethods)} /></Form.Item>
+      <Form.Item name="acceptanceMethod" label={t('sign.field.method')}><Radio.Group optionType="button" options={buttonOptions(t, 'acceptanceMethod', acceptanceMethods)} /></Form.Item>
       <div className="commercial-form-grid">
-        <Form.Item name="acceptanceReference" label="签署编号" extra="全局唯一；同编号重放返回原结果" rules={[required('请填写签署编号'),
-          { pattern: /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/, message: '字母数字及 . _ : -' }]}><Input maxLength={128} /></Form.Item>
-        <Form.Item name="acceptedAt" label="签署时刻" rules={[{ required: true, message: '请选择签署时刻' }]}><DatePicker showTime /></Form.Item>
+        <Form.Item name="acceptanceReference" label={t('sign.field.reference')} extra={t('agreement.acceptance.referenceHint')} rules={[required(t('sign.field.referenceRequired')),
+          { pattern: /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/, message: t('agreement.acceptance.referencePattern') }]}><Input maxLength={128} /></Form.Item>
+        <Form.Item name="acceptedAt" label={t('sign.field.time')} rules={[{ required: true, message: t('sign.issue.time') }]}><DatePicker showTime /></Form.Item>
         {method === 'CLICK_ACCEPTANCE'
-          ? <Form.Item name="acceptedByActorId" label="接受人 Actor ID" rules={[required('点击接受必须填写接受人'), idRule]}><Input maxLength={19} /></Form.Item>
+          ? <Form.Item name="acceptedByActorId" label={t('agreement.acceptance.actorId')} rules={[required(t('agreement.acceptance.actorIdRequired')), idRule(t)]}><Input maxLength={19} /></Form.Item>
           : <>
-            <Form.Item name="fileId" label="执行文件 ID" rules={[required('请填写执行文件 ID'), idRule]}><Input maxLength={19} /></Form.Item>
-            <Form.Item name="contentHash" label="执行文件 SHA-256" rules={[required('请填写 SHA-256'), hashRule]}><Input maxLength={64} /></Form.Item>
+            <Form.Item name="fileId" label={t('agreement.acceptance.fileId')} rules={[required(t('agreement.acceptance.fileIdRequired')), idRule(t)]}><Input maxLength={19} /></Form.Item>
+            <Form.Item name="contentHash" label={t('agreement.acceptance.hash')} rules={[required(t('form.hashRequired')), hashRule(t)]}><Input maxLength={64} /></Form.Item>
           </>}
       </div>
-      <CommercialNote>同一 Party 的全部角色一次登记；全部 Party 签完后合同进入「已签署」。点击接受的证据是合同的签署文件。</CommercialNote>
+      <CommercialNote>{t('agreement.acceptance.note')}</CommercialNote>
     </Form>
   </CommandModal>;
 }
@@ -146,6 +155,7 @@ export function AcceptanceModal({ agreement, party, onDone, onClose, onReload, o
 export function TerminateModal({ agreement, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
   agreement: Agreement; onDone: (result: AgreementWriteResult) => void;
 }) {
+  const t = useT('commercial');
   const [form] = Form.useForm<{ effectiveTo: string; fileId: string; contentHash: string }>();
   const command = useCommercialCommand(onAuthorizationChanged, 'agreement', form);
   const submit = async () => {
@@ -153,15 +163,15 @@ export function TerminateModal({ agreement, onDone, onClose, onReload, onAuthori
     const result = await command.run(commercialPaths.terminateAgreement(agreement.agreementId), 'POST', {
       expectedChangeVersion: agreement.changeVersion, effectiveTo: offsetInstant(values.effectiveTo),
       terminationNotice: { fileId: values.fileId.trim(), contentHash: values.contentHash.trim().toLowerCase() },
-    }, decodeAgreementWrite(agreement.agreementId), '终止失败');
+    }, decodeAgreementWrite(agreement.agreementId), t('agreement.terminate.failed'));
     if (result) onDone(result);
   };
-  return <CommandModal title="终止合同" command={command} okText="终止" danger onOk={() => void submit()} onClose={onClose} onReload={onReload}>
+  return <CommandModal title={t('agreement.terminate.title')} command={command} okText={t('agreement.action.terminate')} danger onOk={() => void submit()} onClose={onClose} onReload={onReload}>
     <Form form={form} name="commercial-terminate" layout="vertical" initialValues={{ effectiveTo: localInput(agreement.effectiveTo) }}>
-      <Form.Item name="effectiveTo" label="生效终点" extra="不早于现在，不晚于原终点" rules={[{ required: true, message: '请选择生效终点' }]}><DatePicker showTime /></Form.Item>
+      <Form.Item name="effectiveTo" label={t('form.effectiveTo')} extra={t('agreement.terminate.effectiveToHint')} rules={[{ required: true, message: t('form.effectiveToRequired') }]}><DatePicker showTime /></Form.Item>
       <div className="commercial-form-grid">
-        <Form.Item name="fileId" label="终止通知文件 ID" rules={[required('请填写文件 ID'), idRule]}><Input maxLength={19} /></Form.Item>
-        <Form.Item name="contentHash" label="SHA-256" rules={[required('请填写 SHA-256'), hashRule]}><Input maxLength={64} /></Form.Item>
+        <Form.Item name="fileId" label={t('agreement.terminate.fileId')} rules={[required(t('form.fileIdRequired')), idRule(t)]}><Input maxLength={19} /></Form.Item>
+        <Form.Item name="contentHash" label="SHA-256" rules={[required(t('form.hashRequired')), hashRule(t)]}><Input maxLength={64} /></Form.Item>
       </div>
     </Form>
   </CommandModal>;
@@ -171,6 +181,7 @@ export function TerminateModal({ agreement, onDone, onClose, onReload, onAuthori
 export function ProductsModal({ agreement, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
   agreement: Agreement; onDone: (result: AgreementWriteResult) => void;
 }) {
+  const t = useT('commercial');
   const [form] = Form.useForm<{ productCodes: string[] }>();
   const command = useCommercialCommand(onAuthorizationChanged, 'agreement', form);
   const products = useCatalogProducts(onAuthorizationChanged);
@@ -178,13 +189,13 @@ export function ProductsModal({ agreement, onDone, onClose, onReload, onAuthoriz
     const values = await form.validateFields();
     const result = await command.run(commercialPaths.products(agreement.agreementId), 'PUT', {
       expectedChangeVersion: agreement.changeVersion, productCodes: [...new Set((values.productCodes ?? []).map(code => code.trim().toUpperCase()))],
-    }, decodeAgreementWrite(agreement.agreementId), '订阅保存失败');
+    }, decodeAgreementWrite(agreement.agreementId), t('agreement.products.failed'));
     if (result) onDone(result);
   };
-  return <CommandModal title="订阅产品" command={command} onOk={() => void submit()} onClose={onClose} onReload={onReload} width={520}>
+  return <CommandModal title={t('agreement.products.title')} command={command} onOk={() => void submit()} onClose={onClose} onReload={onReload} width={520}>
     <Form form={form} name="commercial-products" layout="vertical" initialValues={{ productCodes: agreement.productCodes }}>
-      <Form.Item name="productCodes" label="产品" extra={products.failed ? '产品目录读取失败，可直接输入产品代码；整体替换，仍有开通项的产品不能移除'
-        : '选项来自产品目录（启用的非基础产品）；整体替换，仍有开通项的产品不能移除'}>
+      <Form.Item name="productCodes" label={t('agreement.products.products')} extra={products.failed ? t('agreement.products.catalogFailedHint')
+        : t('agreement.products.hint')}>
         <Select mode="tags" loading={products.loading} options={subscribableProductOptions(products.items)} /></Form.Item>
     </Form>
   </CommandModal>;
@@ -197,6 +208,7 @@ export function ProductsModal({ agreement, onDone, onClose, onReload, onAuthoriz
 export function CapabilityDrawer({ agreement, capability, productCode, onEdit, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
   agreement: Agreement; capability?: AgreementCapability; productCode?: string; onEdit: (capability: AgreementCapability) => void; onDone: () => void;
 }) {
+  const t = useT('commercial');
   const [form] = Form.useForm<CapabilityFormValues>();
   const command = useCommercialCommand(onAuthorizationChanged, 'agreement', form);
   const catalog = useCatalogCapabilities(onAuthorizationChanged);
@@ -217,46 +229,46 @@ export function CapabilityDrawer({ agreement, capability, productCode, onEdit, o
     const values = await form.validateFields();
     const body = capabilityBody(agreement.changeVersion, values, dimensions, !!capability);
     const path = capability ? commercialPaths.capability(agreement.agreementId, capability.agreementCapabilityId) : commercialPaths.capabilities(agreement.agreementId);
-    const result = await command.run(path, capability ? 'PUT' : 'POST', body, decodeCapabilityWrite(agreement.agreementId), '开通项保存失败');
+    const result = await command.run(path, capability ? 'PUT' : 'POST', body, decodeCapabilityWrite(agreement.agreementId), t('capabilityDrawer.failed'));
     if (result) onDone();
   };
-  return <CommandDrawer title={capability ? `编辑开通项 · ${capability.entityNo} / ${catalogItem?.capabilityName ?? capability.capabilityCode}`
-    : productName ? `开通 · ${productName}` : '新增开通项'}
+  return <CommandDrawer title={capability ? t('capabilityDrawer.editTitle', { entityNo: capability.entityNo, name: catalogItem?.capabilityName ?? capability.capabilityCode })
+    : productName ? t('capabilityDrawer.productTitle', { product: productName }) : t('agreement.detail.addCapability')}
     command={command} onOk={() => void submit()} onClose={onClose} onReload={onReload}>
     <Form form={form} name="commercial-capability" layout="vertical" initialValues={capability ? {
       entityNo: capability.entityNo, capabilityCode: capability.capabilityCode, status: capability.status, effectiveFrom: localInput(capability.effectiveFrom),
       effectiveTo: localInput(capability.effectiveTo), ...capabilityFormPatch(capability),
     } : { entityNo: entities[0], conditions: {}, require3ds: false }}>
-      <DrawerSection title="基本">
+      <DrawerSection title={t('capabilityDrawer.basic')}>
         <div className="commercial-form-grid">
-          <Form.Item name="entityNo" label="OE" rules={[{ required: true, message: '请选择 OE' }]}>
+          <Form.Item name="entityNo" label="OE" rules={[{ required: true, message: t('capabilityDrawer.entityNoRequired') }]}>
             <Select disabled={!!capability} options={entities.map(value => ({ value, label: value }))} /></Form.Item>
-          {capability ? <Form.Item name="status" label="状态"><Radio.Group optionType="button" options={buttonOptions(capabilityStatusLabels, capabilityStatuses)} /></Form.Item>
+          {capability ? <Form.Item name="status" label={t('shared.column.status')}><Radio.Group optionType="button" options={buttonOptions(t, 'capabilityStatus', capabilityStatuses)} /></Form.Item>
             : <div />}
         </div>
         {capability ? <Form.Item name="capabilityCode" hidden><Input /></Form.Item>
-          : <Form.Item name="capabilityCode" label="可开通项" rules={[{ required: true, whitespace: true, message: '请选择可开通项' }]}
-            extra={catalog.failed ? '目录读取失败，请直接输入可开通项代码'
-              : `列出${productName ? `「${productName}」` : '已订阅产品'}下启用的项；已开通的项置灰，点击可编辑`} normalize={(v: string) => v?.toUpperCase()}>
+          : <Form.Item name="capabilityCode" label={t('productSections.column.capability')} rules={[{ required: true, whitespace: true, message: t('capabilityDrawer.capabilityRequired') }]}
+            extra={catalog.failed ? t('capabilityDrawer.catalogFailedHint')
+              : productName ? t('capabilityDrawer.productHint', { product: productName }) : t('capabilityDrawer.subscribedHint')} normalize={(v: string) => v?.toUpperCase()}>
             {catalog.failed ? <Input maxLength={64} />
               : <CapabilityCards choices={choices} loading={catalog.loading} definitions={definitions} onChoose={choose} onEdit={onEdit} />}</Form.Item>}
       </DrawerSection>
-      {code && <DrawerSection title="接受条件" extra={<span className="commercial-cell-meta">同维度任一取值，异维度同时满足</span>}>
+      {code && <DrawerSection title={t('productSections.column.conditions')} extra={<span className="commercial-cell-meta">{t('capabilityDrawer.conditionsHint')}</span>}>
         <ConditionFields form={form} dimensions={dimensions} definitions={definitions} />
       </DrawerSection>}
-      <DrawerSection title="有效期与保证金">
+      <DrawerSection title={t('capabilityDrawer.validityReserve')}>
         <div className="commercial-form-grid">
-          <Form.Item name="effectiveFrom" label="生效起点" rules={[{ required: true, message: '请选择生效起点' }]}><DatePicker showTime /></Form.Item>
-          <Form.Item name="effectiveTo" label="生效终点（可空）"><DatePicker showTime /></Form.Item>
-          <Form.Item name="reservePercent" label="滚动保证金比例（%）" extra="按百分比填写，5 即 5%" rules={[{ validator: async (_, value?: string) => {
+          <Form.Item name="effectiveFrom" label={t('form.effectiveFrom')} rules={[{ required: true, message: t('form.effectiveFromRequired') }]}><DatePicker showTime /></Form.Item>
+          <Form.Item name="effectiveTo" label={t('form.effectiveToOptional')}><DatePicker showTime /></Form.Item>
+          <Form.Item name="reservePercent" label={t('capabilityDrawer.reservePercent')} extra={t('capabilityDrawer.reservePercentHint')} rules={[{ validator: async (_, value?: string) => {
             const issue = reservePercentIssue(value); if (issue) throw new Error(issue);
           } }]}><Input placeholder="5" suffix="%" /></Form.Item>
-          <Form.Item name="rollingReserveDays" label="保证金天数" dependencies={['reservePercent']} rules={[({ getFieldValue }) => ({ validator: async (_, days?: number | null) => {
+          <Form.Item name="rollingReserveDays" label={t('capabilityDrawer.reserveDays')} dependencies={['reservePercent']} rules={[({ getFieldValue }) => ({ validator: async (_, days?: number | null) => {
             const error = reserveError(getFieldValue('reservePercent'), days); if (error) throw new Error(error);
           } })]}><InputNumber className="commercial-number" min={1} max={3650} precision={0} /></Form.Item>
         </div>
       </DrawerSection>
-      <CommercialNote>币种为必填条件；开通项的每个币种（及有条件维度的取值组合）在条款版本激活时都必须有价格。停用目录项不影响已开通的合同。</CommercialNote>
+      <CommercialNote>{t('capabilityDrawer.note')}</CommercialNote>
     </Form>
   </CommandDrawer>;
 }
@@ -266,19 +278,20 @@ function CapabilityCards({ choices, loading, definitions, value, onChoose, onEdi
   choices: CapabilityChoice[]; loading: boolean; definitions: DimensionDefinition[]; value?: string; onChoose: (code: string) => void;
   onEdit: (capability: AgreementCapability) => void;
 }) {
-  if (loading) return <div className="commercial-cell-meta">目录加载中…</div>;
-  if (!choices.length) return <CommercialNote tone="warning">没有可开通的项：请先订阅产品，或该产品下没有启用的可开通项。</CommercialNote>;
+  const t = useT('commercial');
+  if (loading) return <div className="commercial-cell-meta">{t('capabilityDrawer.catalogLoading')}</div>;
+  if (!choices.length) return <CommercialNote tone="warning">{t('capabilityDrawer.noChoices')}</CommercialNote>;
   return <div className="cc-cards" role="radiogroup">{choices.map(({ item, existing }) => {
     const mark = existingMark(existing);
     const selected = value === item.capabilityCode;
     return <button key={item.capabilityCode} type="button" role="radio" aria-checked={selected}
-      title={existing ? '已开通，点击编辑该开通项' : undefined}
+      title={existing ? t('capabilityDrawer.existingTitle') : undefined}
       className={`cc-card${selected ? ' is-selected' : ''}${existing ? ' is-existing' : ''}`}
       onClick={() => existing ? onEdit(existing) : onChoose(item.capabilityCode)}>
       <span className="cc-card-top"><span className="cc-card-name">{item.capabilityName}</span>
         {mark && <Tag color={existing?.status === 'ENABLED' ? 'green' : 'default'} className="cc-card-mark">{mark}</Tag>}</span>
       <span className="cc-card-line"><span className="mono cc-card-code">{item.capabilityCode}</span>
-        <Tag className="cc-card-kind">{catalogLabel(capabilityKindLabels, item.capabilityKind)}</Tag>
+        <Tag className="cc-card-kind">{capabilityKindLabel(item.capabilityKind)}</Tag>
         {item.paymentMethodCode && item.paymentMethodCode !== item.capabilityCode && <span className="mono cc-card-code">{item.paymentMethodCode}</span>}</span>
       <span className="commercial-cell-meta cc-card-dims">{dimensionNames(item.dimensions, definitions)}</span>
     </button>;
@@ -290,29 +303,31 @@ export function CreatePlanModal({ agreement, onClose, onCreated, onAuthorization
   agreement?: Pick<Agreement, 'agreementId' | 'agreementType' | 'clientId' | 'localPartnerId'>; onClose: () => void;
   onCreated: (plan: TermPlan) => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('commercial');
   const [form] = Form.useForm<PlanFormValues>();
   const command = useCommercialCommand(onAuthorizationChanged, 'version', form);
   const termType = Form.useWatch('termType', form) ?? 'CLIENT_PRICING';
   const partner = partnerTermTypes.includes(termType);
   const submit = async () => {
     const values = await form.validateFields();
-    const plan = await command.run(commercialPaths.plans, 'POST', planBody(values), decodePlan, '方案创建失败');
+    const plan = await command.run(commercialPaths.plans, 'POST', planBody(values), decodePlan, t('plan.create.failed'));
     if (plan) onCreated(plan);
   };
   const defaultType = agreement?.agreementType === 'PARTNER' ? 'PARTNER_SHARE' : 'CLIENT_PRICING';
-  return <CommandModal title="新建条款方案" command={command} okText="创建" onOk={() => void submit()} onClose={onClose} onReload={onClose}>
+  return <CommandModal title={t('agreement.detail.createPlan')} command={command} okText={t('shared.create')} onOk={() => void submit()} onClose={onClose} onReload={onClose}>
     <Form form={form} name="commercial-plan-create" layout="vertical" initialValues={{ termType: defaultType, agreementId: agreement?.agreementId,
       ownerId: agreement?.agreementType === 'PARTNER' ? agreement.localPartnerId ?? undefined : agreement?.clientId ?? undefined }}>
       <div className="commercial-form-grid">
-        <Form.Item name="termType" label="条款类型" rules={[{ required: true, message: '请选择条款类型' }]}>
-          <Select options={options(termTypeLabels, termTypes)} /></Form.Item>
-        <Form.Item name="planCode" label="方案编号" extra="同一条款类型内唯一" rules={[required('请填写方案编号'), { pattern: /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/, message: '字母数字及 . _ -' }]}>
+        <Form.Item name="termType" label={t('shared.column.termType')} rules={[{ required: true, message: t('form.termTypeRequired') }]}>
+          <Select options={options(t, 'termType', termTypes)} /></Form.Item>
+        <Form.Item name="planCode" label={t('plan.field.planCode')} extra={t('plan.create.planCodeHint')} rules={[required(t('plan.create.planCodeRequired')),
+          { pattern: /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/, message: t('form.codePattern') }]}>
           <Input maxLength={64} /></Form.Item>
-        <Form.Item name="agreementId" label="合同 ID" rules={[required('请填写合同 ID'), idRule]}><Input maxLength={19} disabled={!!agreement} /></Form.Item>
-        <Form.Item name="ownerId" label={partner ? 'Local Partner ID' : 'Client ID'} extra="必须等于合同的 Owner" rules={[required('请填写 Owner'), idRule]}>
+        <Form.Item name="agreementId" label={t('plan.field.agreementId')} rules={[required(t('plan.create.agreementIdRequired')), idRule(t)]}><Input maxLength={19} disabled={!!agreement} /></Form.Item>
+        <Form.Item name="ownerId" label={partner ? 'Local Partner ID' : 'Client ID'} extra={t('plan.create.ownerHint')} rules={[required(t('plan.create.ownerRequired')), idRule(t)]}>
           <Input maxLength={19} /></Form.Item>
       </div>
-      <CommercialNote>一份合同每种条款类型只有一个方案；方案创建后在其下新建版本、编辑价格并走审批。</CommercialNote>
+      <CommercialNote>{t('plan.create.note')}</CommercialNote>
     </Form>
   </CommandModal>;
 }

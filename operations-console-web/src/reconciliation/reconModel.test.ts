@@ -50,7 +50,7 @@ test('能力清单：八个对账页面（含渠道流水）与两个按钮登�
 
 test('CSV：引号、逗号、引号转义、CRLF 与空行', () => {
   assert.deepEqual(parseCsv('a,"b,c","d ""e"""\r\n\r\nf,,g\n'), [['a', 'b,c', 'd "e"'], ['f', '', 'g']]);
-  assert.throws(() => parseCsv('a,"b'), /引号未闭合/);
+  assert.throws(() => parseCsv('a,"b'), /Unclosed quote/);
 });
 
 test('渠道账单：S1 解析为账单头与三行明细，特有列进 rawAttributes（空值不带）', () => {
@@ -66,20 +66,20 @@ test('渠道账单：S1 解析为账单头与三行明细，特有列进 rawAttr
 });
 
 test('渠道账单：结构错误整单拒绝并给出行号与原因', () => {
-  assert.deepEqual(parseChannelStatementCsv('line_no\n1').issues, [{ lineNo: null, reason: '前两行必须是以 #HEADER 开头的账单头列名行与取值行' }]);
+  assert.deepEqual(parseChannelStatementCsv('line_no\n1').issues, [{ lineNo: null, reason: 'The first two rows must be the #HEADER column-name row and value row' }]);
   const missing = s1.replace(',cash_direction', '').replace(',CREDIT\r\n', '\r\n');
-  assert.ok(parseChannelStatementCsv(missing).issues.some(issue => issue.reason === '账单头缺少列 cash_direction'));
+  assert.ok(parseChannelStatementCsv(missing).issues.some(issue => issue.reason === 'Header is missing column cash_direction'));
   const bad = s1.replace('2,REFUND,DEBIT,30.00', '4,REFUND,SIDEWAYS,-30').replace('3,ADJUSTMENT,DEBIT', '3,PAYMENT,DEBIT');
   const { file, issues } = parseChannelStatementCsv(bad);
   assert.equal(file, null);
   assert.deepEqual(issues, [
-    { lineNo: 2, reason: 'line_no 应为 2，实际为「4」' },
-    { lineNo: 2, reason: 'direction 只能为 CREDIT 或 DEBIT' },
-    { lineNo: 2, reason: 'amount 必须是非负十进制金额' },
-    { lineNo: 3, reason: 'PAYMENT 行必须带外部交易号' },
+    { lineNo: 2, reason: 'line_no should be 2, but is "4"' },
+    { lineNo: 2, reason: 'direction must be CREDIT or DEBIT' },
+    { lineNo: 2, reason: 'amount must be a non-negative decimal amount' },
+    { lineNo: 3, reason: 'PAYMENT lines must have an external transaction ID' },
   ]);
   assert.ok(parseChannelStatementCsv(s1.replace('2026-10-19,USD', '2026-02-30,USD')).issues
-    .some(issue => issue.reason === 'settlement_date 必须是 YYYY-MM-DD'));
+    .some(issue => issue.reason === 'settlement_date must be YYYY-MM-DD'));
 });
 
 test('银行对账单：期初可为负；末四位须与所选银行账户一致；流水金额须为正', () => {
@@ -88,9 +88,9 @@ test('银行对账单：期初可为负；末四位须与所选银行账户一�
   assert.equal(file?.header.openingBalance, '-10.00');
   assert.deepEqual(file?.lines[0], { lineNo: 1, bankTransactionRef: 'ENBD-TXN-0001', valueDate: '2026-10-19', direction: 'CREDIT', amount: '67.40',
     counterpartyName: 'NETWORK INTERNATIONAL', referenceText: 'SETTLEMENT NI-20261019-001' });
-  assert.deepEqual(parseBankStatementCsv(bank, '9999').issues, [{ lineNo: null, reason: '文件末四位 4321 与所选银行账户 9999 不一致' }]);
+  assert.deepEqual(parseBankStatementCsv(bank, '9999').issues, [{ lineNo: null, reason: "The file's last four 4321 don't match the selected bank account 9999" }]);
   assert.deepEqual(parseBankStatementCsv(bank.replace('CREDIT,67.40', 'CREDIT,0'), '4321').issues,
-    [{ lineNo: 1, reason: 'amount 必须是正的十进制金额' }]);
+    [{ lineNo: 1, reason: 'amount must be a positive decimal amount' }]);
   const empty = bank.split('\n').slice(0, 3).join('\n');
   assert.deepEqual(parseBankStatementCsv(empty, '4321').file?.lines, []);
 });
@@ -119,8 +119,8 @@ test('十进制：带符号合计与比较精确，不受浮点误差影响', ()
   assert.equal(compareDecimal('10.00', '10'), 0);
   assert.equal(compareDecimal('-0.01', '0'), -1);
   assert.equal(expectedRemaining({ expectedAmount: '67.55', confirmedAmount: '67.40', classifiedAmount: '0.15' }), '0.00');
-  assert.equal(positiveAmountError('0.001'), '小数位不能超过 2 位');
-  assert.equal(positiveAmountError('0'), '金额必须大于零');
+  assert.equal(positiveAmountError('0.001'), 'Use no more than 2 decimal places.');
+  assert.equal(positiveAmountError('0'), 'The amount must be greater than zero.');
 });
 
 test('人工多选匹配：同向为正、反向为负，实时剩余；超出流水金额或预期剩余时不能提交（AC-V5）', () => {
@@ -134,7 +134,7 @@ test('人工多选匹配：同向为正、反向为负，实时剩余；超出�
   const over = manualMatchTotals(line, [credit('80.00'), credit('10.01', '20.00')]);
   assert.deepEqual([over.remaining, over.exceeds, over.submittable], ['-0.01', true, false]);
   const beyondMovement = manualMatchTotals(line, [credit('80.01')]);
-  assert.deepEqual([beyondMovement.errors[0], beyondMovement.submittable], ['超过预期流水剩余 80.00', false]);
+  assert.deepEqual([beyondMovement.errors[0], beyondMovement.submittable], ["Exceeds the expected transaction's remaining 80.00", false]);
   const negative = manualMatchTotals(line, [debit('5.00')]);
   assert.deepEqual([negative.signed, negative.submittable], ['-5.00', false]);
   assert.equal(manualMatchTotals(line, []).submittable, false);

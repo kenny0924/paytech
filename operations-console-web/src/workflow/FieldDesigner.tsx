@@ -6,7 +6,8 @@ import { fieldTypeIcons } from './workflowIcons';
 import { designerLayout } from './catalogModel';
 import { duplicateField, fieldKeyFromLabel, fieldProblems, insertField, moveField, removeField, updateField, valueProblems } from './formModel';
 import { graphLimits } from './graphModel';
-import { fieldTypeLabels } from './workflowLabels';
+import { fieldTypeLabel } from './workflowLabels';
+import { useT } from '../i18n/react';
 import type { EnumOption, FieldRules, FieldType, FormDefinition, FormField } from './workflowTypes';
 import { DynamicFields, Field } from './WorkflowParts';
 
@@ -40,6 +41,7 @@ export function FieldDesigner({ form, onChange, readOnly, variablePrefix, refere
   /** 已保存配置中的字段键：这些字段的键不再随显示名称自动生成；缺省为打开时已有的字段。 */
   savedKeys?: ReadonlySet<string>;
 }) {
+  const t = useT('workflow');
   const [selected, setSelected] = useState(0);
   const [initialKeys] = useState(() => new Set(form.fields.map(field => field.key)));
   const [manualKeys, setManualKeys] = useState<ReadonlySet<string>>(new Set());
@@ -78,11 +80,11 @@ export function FieldDesigner({ form, onChange, readOnly, variablePrefix, refere
   const columns = layout.single ? 'minmax(0, 1fr)' : layout.stacked ? `minmax(0, 1fr) ${layout.properties}px` : `${layout.palette}px minmax(0, 1fr) ${layout.properties}px`;
   return <div ref={container} className={`wf-designer${layout.stacked ? ' is-stacked' : ''}`} style={{ gridTemplateColumns: columns }}>
     <aside className="wf-designer-palette">
-      <div className="wf-card-title">字段类型</div>
-      <p className="muted">拖到右侧表单，或点击添加到末尾（{form.fields.length} / {graphLimits.formFields}）</p>
+      <div className="wf-card-title">{t('designer.fieldTypes')}</div>
+      <p className="muted">{t('designer.paletteHint', { count: form.fields.length, max: graphLimits.formFields })}</p>
       <div className="wf-palette-items">{fieldTypes.map(type => <button type="button" key={type} className="wf-palette-item" disabled={readOnly || full}
         draggable={!readOnly && !full} onDragStart={event => { event.dataTransfer.setData(typeData, type); event.dataTransfer.effectAllowed = 'copy'; }}
-        onClick={() => add(type)}><span className="wf-palette-icon">{fieldTypeIcons[type]}</span><span className="wf-grow">{fieldTypeLabels[type]}</span>
+        onClick={() => add(type)}><span className="wf-palette-icon">{fieldTypeIcons[type]}</span><span className="wf-grow">{fieldTypeLabel(type)}</span>
         <span className="wf-grip" aria-hidden><HolderOutlined /></span></button>)}</div>
     </aside>
     <section className="wf-designer-canvas">
@@ -96,22 +98,22 @@ export function FieldDesigner({ form, onChange, readOnly, variablePrefix, refere
             onDragStart={event => { event.dataTransfer.setData(indexData, String(index)); event.dataTransfer.effectAllowed = 'move'; }}
             onDragOver={event => { if (readOnly) return; event.preventDefault(); setDropAt(index); }} onDragLeave={() => setDropAt(null)}
             onDrop={event => drop(event, index)}>
-            {!readOnly && <span className="wf-canvas-handle" title="拖动排序"><HolderOutlined /></span>}
+            {!readOnly && <span className="wf-canvas-handle" title={t('designer.dragToSort')}><HolderOutlined /></span>}
             {!readOnly && <span className="wf-canvas-tools" onClick={event => event.stopPropagation()}>
-              <Tooltip title="上移"><Button size="small" type="text" disabled={index === 0} onClick={() => { onChange(moveField(form, index, index - 1)); setSelected(index - 1); }} icon={<ArrowUpOutlined />} aria-label="上移" /></Tooltip>
-              <Tooltip title="下移"><Button size="small" type="text" disabled={index === form.fields.length - 1} onClick={() => { onChange(moveField(form, index, index + 1)); setSelected(index + 1); }} icon={<ArrowDownOutlined />} aria-label="下移" /></Tooltip>
-              <Tooltip title="复制"><Button size="small" type="text" disabled={full} onClick={() => { onChange(duplicateField(form, index)); setSelected(index + 1); }} icon={<CopyOutlined />} aria-label="复制" /></Tooltip>
-              <Tooltip title="删除"><Button size="small" type="text" danger onClick={() => { onChange(removeField(form, index)); setSelected(Math.max(0, index - 1)); }} icon={<DeleteOutlined />} aria-label="删除" /></Tooltip>
+              <Tooltip title={t('designer.moveUp')}><Button size="small" type="text" disabled={index === 0} onClick={() => { onChange(moveField(form, index, index - 1)); setSelected(index - 1); }} icon={<ArrowUpOutlined />} aria-label={t('designer.moveUp')} /></Tooltip>
+              <Tooltip title={t('designer.moveDown')}><Button size="small" type="text" disabled={index === form.fields.length - 1} onClick={() => { onChange(moveField(form, index, index + 1)); setSelected(index + 1); }} icon={<ArrowDownOutlined />} aria-label={t('designer.moveDown')} /></Tooltip>
+              <Tooltip title={t('designer.duplicate')}><Button size="small" type="text" disabled={full} onClick={() => { onChange(duplicateField(form, index)); setSelected(index + 1); }} icon={<CopyOutlined />} aria-label={t('designer.duplicate')} /></Tooltip>
+              <Tooltip title={t('designer.delete')}><Button size="small" type="text" danger onClick={() => { onChange(removeField(form, index)); setSelected(Math.max(0, index - 1)); }} icon={<DeleteOutlined />} aria-label={t('designer.delete')} /></Tooltip>
             </span>}
-            <div className="wf-canvas-field-body"><DynamicFields form={{ fields: [{ ...item, label: item.label || '（未命名字段）' }] }} /></div>
+            <div className="wf-canvas-field-body"><DynamicFields form={{ fields: [{ ...item, label: item.label || t('designer.unnamedField') }] }} /></div>
             {problems.has(index) && <div className="wf-danger-text">{problems.get(index)}</div>}
           </div>)}
         </Form>
         {!readOnly && <div className={`wf-canvas-drop${dropAt === form.fields.length ? ' is-drop-target' : ''}`} role="button" tabIndex={0}
           onClick={() => add('TEXT')} onKeyDown={event => { if (event.key === 'Enter') add('TEXT'); }}
           onDragOver={event => { event.preventDefault(); setDropAt(form.fields.length); }} onDragLeave={() => setDropAt(null)}
-          onDrop={event => drop(event, form.fields.length)}><PlusOutlined /> 拖入字段，或从左侧点击添加</div>}
-        {readOnly && !form.fields.length && <div className="muted">还没有字段</div>}
+          onDrop={event => drop(event, form.fields.length)}><PlusOutlined /> {t('designer.dropHint')}</div>}
+        {readOnly && !form.fields.length && <div className="muted">{t('designer.noFields')}</div>}
       </div>
     </section>
     <aside className="wf-designer-props">
@@ -119,7 +121,7 @@ export function FieldDesigner({ form, onChange, readOnly, variablePrefix, refere
         saved={persisted.has(field.key)} references={references?.(field) ?? []}
         onChange={change => patch(selected, change)}
         onKeyEdited={key => setManualKeys(current => new Set(current).add(key))} />
-        : <div className="muted wf-props-empty">选择画布中的字段查看属性</div>}
+        : <div className="muted wf-props-empty">{t('designer.selectField')}</div>}
     </aside>
   </div>;
 }
@@ -128,6 +130,7 @@ function FieldProperties({ field, onChange, onKeyEdited, readOnly, variablePrefi
   field: FormField; onChange: (patch: Partial<FormField>) => void; onKeyEdited: (key: string) => void; readOnly?: boolean; variablePrefix: string;
   references: ReactNode[]; saved: boolean;
 }) {
+  const t = useT('workflow');
   const [editingKey, setEditingKey] = useState(false);
   const rules = field.rules ?? {};
   // 只写枚举选项；旧配置的长度、范围、文件规则在此丢弃（需求 E1）。
@@ -135,40 +138,41 @@ function FieldProperties({ field, onChange, onKeyEdited, readOnly, variablePrefi
   const options = rules.options ?? [];
   const setOption = (index: number, patch: Partial<EnumOption>) => setRules({ options: options.map((option, current) => current === index ? { ...option, ...patch } : option) });
   return <div className="wf-props">
-    <div className="wf-props-head"><strong>字段属性</strong><Tag>{fieldTypeLabels[field.type]}</Tag></div>
-    <Field label="显示名称"><Input value={field.label} maxLength={64} disabled={readOnly} placeholder="如 公司注册名称" onChange={event => onChange({ label: event.target.value })} /></Field>
+    <div className="wf-props-head"><strong>{t('designer.properties')}</strong><Tag>{fieldTypeLabel(field.type)}</Tag></div>
+    <Field label={t('designer.label')}><Input value={field.label} maxLength={64} disabled={readOnly} placeholder={t('designer.labelPlaceholder')} onChange={event => onChange({ label: event.target.value })} /></Field>
     <div className="wf-field">
-      <div className="wf-key-line"><span className="wf-field-label">字段键</span>
-        {!readOnly && !editingKey && <Button type="link" size="small" onClick={() => setEditingKey(true)}>修改</Button>}</div>
+      <div className="wf-key-line"><span className="wf-field-label">{t('designer.key')}</span>
+        {!readOnly && !editingKey && <Button type="link" size="small" onClick={() => setEditingKey(true)}>{t('designer.editKey')}</Button>}</div>
       {editingKey ? <Input size="small" value={field.key} maxLength={64} autoFocus onBlur={() => setEditingKey(false)}
         onChange={event => { const key = event.target.value.trim(); onKeyEdited(key); onChange({ key }); }} />
         : <code className="wf-key-value">{field.key}</code>}
-      <div className="wf-field-hint">{saved ? '被引用后不建议修改' : '根据显示名称自动生成（取英文与数字），被引用后不建议修改'} · 引用为 {variablePrefix}{field.key}</div>
+      <div className="wf-field-hint">{saved ? t('designer.keyHintSaved', { ref: variablePrefix + field.key }) : t('designer.keyHintNew', { ref: variablePrefix + field.key })}</div>
     </div>
-    <Field label="类型"><Select value={field.type} disabled={readOnly} style={{ width: '100%' }} options={fieldTypes.map(type => ({ value: type, label: fieldTypeLabels[type] }))}
-      onChange={(type: FieldType) => onChange({ type, rules: type === 'ENUM' ? { options: options.length ? options : [{ value: 'OPTION_1', label: '选项 1' }] } : undefined })} /></Field>
-    <div className="wf-props-switch"><span>必填</span><Switch size="small" checked={field.required} disabled={readOnly} onChange={required => onChange({ required })} /></div>
-    {field.type === 'ENUM' && <Field label="枚举选项（值 · 显示文字）" hint="选项值被连线条件引用，修改或删除会让引用失效">
+    <Field label={t('designer.type')}><Select value={field.type} disabled={readOnly} style={{ width: '100%' }} options={fieldTypes.map(type => ({ value: type, label: fieldTypeLabel(type) }))}
+      onChange={(type: FieldType) => onChange({ type, rules: type === 'ENUM' ? { options: options.length ? options : [{ value: 'OPTION_1', label: t('form.defaultOption', { index: 1 }) }] } : undefined })} /></Field>
+    <div className="wf-props-switch"><span>{t('form.value.required')}</span><Switch size="small" checked={field.required} disabled={readOnly} onChange={required => onChange({ required })} /></div>
+    {field.type === 'ENUM' && <Field label={t('designer.options')} hint={t('designer.optionsHint')}>
       {options.map((option, index) => <div key={index} className="wf-option-row">
-        <Input value={option.value} disabled={readOnly} placeholder="值" onChange={event => setOption(index, { value: event.target.value.trim() })} />
-        <Input value={option.label} disabled={readOnly} placeholder="显示文字" onChange={event => setOption(index, { label: event.target.value })} />
-        {!readOnly && <Button type="text" danger aria-label="删除选项" icon={<CloseOutlined />} onClick={() => setRules({ options: options.filter((_, current) => current !== index) })} />}
+        <Input value={option.value} disabled={readOnly} placeholder={t('designer.optionValue')} onChange={event => setOption(index, { value: event.target.value.trim() })} />
+        <Input value={option.label} disabled={readOnly} placeholder={t('designer.optionLabel')} onChange={event => setOption(index, { label: event.target.value })} />
+        {!readOnly && <Button type="text" danger aria-label={t('designer.deleteOption')} icon={<CloseOutlined />} onClick={() => setRules({ options: options.filter((_, current) => current !== index) })} />}
       </div>)}
-      {!readOnly && <Button type="link" onClick={() => setRules({ options: [...options, { value: `OPTION_${options.length + 1}`, label: '' }] })} icon={<PlusOutlined />}>添加选项</Button>}
+      {!readOnly && <Button type="link" onClick={() => setRules({ options: [...options, { value: `OPTION_${options.length + 1}`, label: '' }] })} icon={<PlusOutlined />}>{t('designer.addOption')}</Button>}
     </Field>}
-    {field.type === 'FILE' && <div className="muted">文件字段只看「必填」：必填时至少上传一个，不限数量与类型；安全检查在后台进行。</div>}
-    {references.length > 0 && <Alert type="warning" showIcon title={`被引用 ${references.length} 处`}
-      description={<><ul className="wf-plain-list">{references.map((item, index) => <li key={index}>{item}</li>)}</ul>修改字段键或删除选项会让引用失效，保存时会提示。</>} />}
+    {field.type === 'FILE' && <div className="muted">{t('designer.fileHint')}</div>}
+    {references.length > 0 && <Alert type="warning" showIcon title={t('designer.references', { count: references.length })}
+      description={<><ul className="wf-plain-list">{references.map((item, index) => <li key={index}>{item}</li>)}</ul>{t('designer.referencesHint')}</>} />}
   </div>;
 }
 
 /** 执行人 / 发起人看到的样子；填写只在本地校验，不提交。readOnly 时只展示、不可填写。 */
 export function FormPreview({ form, readOnly }: { form: FormDefinition; readOnly?: boolean }) {
+  const t = useT('workflow');
   const [values, setValues] = useState<Record<string, unknown>>({});
   const problems = valueProblems(form, values);
   return <Form layout="vertical" onValuesChange={(_, all) => setValues(all)} className="wf-preview-form">
     <div className="wf-form-grid"><DynamicFields form={form} disabled={readOnly}
       problems={readOnly ? {} : Object.fromEntries(Object.entries(problems).filter(([key]) => values[key] !== undefined))} /></div>
-    {!readOnly && <div className="muted">{Object.keys(problems).length ? `${Object.keys(problems).length} 个字段待填写` : '必填字段已填写'} · 预览不提交</div>}
+    {!readOnly && <div className="muted">{Object.keys(problems).length ? t('designer.previewPending', { count: Object.keys(problems).length }) : t('designer.previewFilled')}</div>}
   </Form>;
 }

@@ -1,6 +1,10 @@
 import { invariant } from './riskDictionary.ts';
-import { nodeLabels, PAYMENT_OUTPUT_FALLBACK } from './decisionFlow.ts';
-import { operatorLabels, variableSourceLabels, variableTypeLabels } from './riskVariable.ts';
+import { nodeTypeLabel, paymentOutputFallback } from './decisionFlow.ts';
+import { operatorLabel as variableOperatorLabel, variableSourceLabel, variableTypeLabel } from './riskVariable.ts';
+import { enumLabel, tOr, translator } from '../i18n/index.ts';
+
+const t = translator('risk');
+export { nodeTypeLabel, variableSourceLabel, variableTypeLabel };
 
 /** 评估查询方式：按支付尝试 ID 或订单 ID 查正式评估，或直接按评估 ID 查。 */
 export type EvaluationQueryType = 'attempt' | 'order' | 'evaluation';
@@ -130,8 +134,9 @@ export function decodeExplanation(v: unknown): EvaluationExplanation {
 
 /* ---------- 查询条件 ---------- */
 export interface EvaluationQuery { type: EvaluationQueryType; id: string }
-export const queryTypeLabels: Record<EvaluationQueryType, string> = { attempt: '支付尝试 ID', order: '订单 ID', evaluation: '评估 ID' };
-export const ID_FORMAT_MESSAGE = '请输入 1～19 位数字';
+export const queryTypes: EvaluationQueryType[] = ['attempt', 'order', 'evaluation'];
+export function queryTypeLabel(type: EvaluationQueryType): string { return t(`evaluation.queryType.${type}`); }
+export function idFormatMessage(): string { return t('evaluation.idFormat'); }
 
 /** 地址栏查询条件；未知类型按支付尝试处理，ID 原样保留（由 normalizeId 判断格式）。 */
 export function parseEvaluationQuery(search: string): EvaluationQuery {
@@ -151,31 +156,30 @@ export function normalizeId(value: string): string | null {
 }
 
 /* ---------- 结论 ---------- */
-export const resultLabels: Record<EvaluationResult, string> = { ALLOW: '放行', REVIEW: '审核', DENY: '拒绝', FAILED: '失败', TIMED_OUT: '超时' };
 const resultColors: Record<EvaluationResult, string> = { ALLOW: 'green', REVIEW: 'orange', DENY: 'red', FAILED: 'default', TIMED_OUT: 'default' };
-export const failureCodeLabels: Record<string, string> = { EVALUATION_ERROR: '评估执行出错', FEATURE_ERROR: '变量计算失败', EVALUATION_TIMEOUT: '评估超时' };
-export const modeLabels: Record<string, string> = { PRIMARY: '正式评估', SHADOW: '影子评估' };
-const AUTHENTICATION = PAYMENT_OUTPUT_FALLBACK[0]!;
+/** 结论、失败码与评估方式的显示名是 `risk.enum.evaluationResult|evaluationFailure|evaluationMode.<值>`。 */
+const authentication = () => paymentOutputFallback()[0]!;
 
-export function resultLabel(result: string): string { return resultLabels[result as EvaluationResult] ?? result; }
+export function resultLabel(result: string): string { return enumLabel(t, 'enum.evaluationResult', result); }
 /** 放行绿、审核橙、拒绝红、失败/超时灰；未知结论灰。 */
 export function resultColor(result: string): string { return resultColors[result as EvaluationResult] ?? 'default'; }
 export function authenticationLabel(outputs: Record<string, string>): string | null {
-  const value = outputs[AUTHENTICATION.outputCode];
+  const declaration = authentication();
+  const value = outputs[declaration.outputCode];
   if (!value) return null;
-  return AUTHENTICATION.allowedValues.find(v => v.value === value)?.name ?? value;
+  return declaration.allowedValues.find(v => v.value === value)?.name ?? value;
 }
 /** 结论标题：放行时附带认证要求，如“放行（需要 3DS）”。 */
 export function conclusionTitle(evaluation: Pick<Evaluation, 'result' | 'outputs'>): string {
   const label = resultLabel(evaluation.result);
-  return evaluation.result === 'ALLOW' && evaluation.outputs[AUTHENTICATION.outputCode] === 'THREE_DS_REQUIRED' ? `${label}（需要 3DS）` : label;
+  return evaluation.result === 'ALLOW' && evaluation.outputs[authentication().outputCode] === 'THREE_DS_REQUIRED' ? t('evaluation.allowWithThreeDs', { label }) : label;
 }
 export function failureLabel(failureCode: string | null): string {
   if (!failureCode) return '—';
-  const label = failureCodeLabels[failureCode];
-  return label ? `${failureCode}（${label}）` : failureCode;
+  const key = 'enum.evaluationFailure.' + failureCode;
+  return t.has(key) ? t('evaluation.failureWithLabel', { code: failureCode, label: t(key) }) : failureCode;
 }
-export function modeLabel(mode: string): string { return modeLabels[mode] ?? mode; }
+export function modeLabel(mode: string): string { return enumLabel(t, 'enum.evaluationMode', mode); }
 export function isShadow(evaluation: Pick<Evaluation, 'mode'>): boolean { return evaluation.mode === 'SHADOW'; }
 /** UTC ISO 时间按“yyyy-MM-dd HH:mm:ss UTC”显示，与 Risk 存储口径一致。 */
 export function formatUtc(value: string): string {
@@ -184,8 +188,7 @@ export function formatUtc(value: string): string {
 }
 
 /* ---------- 路径 ---------- */
-export const PATH_UNAVAILABLE = '路径未记录（该评估早于路径记录功能上线）';
-export function nodeTypeLabel(nodeType: string): string { return (nodeLabels as Record<string, string>)[nodeType] ?? nodeType; }
+export function pathUnavailableText(): string { return t('evaluation.pathUnavailable'); }
 export function stepName(step: PathStep): string { return step.nodeName ?? nodeTypeLabel(step.nodeType); }
 export function ruleSetLabel(code: string | null, versionNo: number | null, fallbackId: string | null): string {
   if (code) return versionNo === null ? code : `${code} v${versionNo}`;
@@ -194,11 +197,11 @@ export function ruleSetLabel(code: string | null, versionNo: number | null, fall
 /** 路径步骤的摘要：规则集节点写命中与决定，结束节点写结论。 */
 export function stepSummary(step: PathStep): string {
   if (step.nodeType === 'RULE_SET') {
-    const parts = [`规则集 ${ruleSetLabel(step.ruleSetCode, step.ruleSetVersionNo, step.ruleSetVersionId)}`, step.matched ? '命中' : '未命中'];
+    const parts = [t('evaluation.step.ruleSet', { ruleSet: ruleSetLabel(step.ruleSetCode, step.ruleSetVersionNo, step.ruleSetVersionId) }), matchedText(step.matched === true)];
     if (step.decision) parts.push(resultLabel(step.decision));
     return parts.join(' · ');
   }
-  if (step.nodeType === 'END') return step.decision ? `结束 · ${resultLabel(step.decision)}` : '结束';
+  if (step.nodeType === 'END') return step.decision ? t('evaluation.step.endWithDecision', { decision: resultLabel(step.decision) }) : nodeTypeLabel('END');
   return '';
 }
 export function exitEdgeLabel(step: PathStep): string | null { return step.exitEdgeName ?? step.exitEdgeKey; }
@@ -220,13 +223,16 @@ export function groupRules(rules: readonly RuleItem[], path: readonly PathStep[]
   return groups;
 }
 
-export const groupOperatorLabels: Record<string, string> = { AND: '全部满足', OR: '任一满足', NOT: '不满足' };
-export const predicateResultLabels = { true: '成立', false: '不成立', null: '未求值' } as const;
+/** 分组运算符的显示名是 `risk.enum.conditionGroup.<值>`。 */
 export function predicateMark(result: PredicateResult): { mark: string; label: string; tone: 'pass' | 'fail' | 'none' } {
-  if (result === true) return { mark: '✓', label: predicateResultLabels.true, tone: 'pass' };
-  if (result === false) return { mark: '✗', label: predicateResultLabels.false, tone: 'fail' };
-  return { mark: '—', label: predicateResultLabels.null, tone: 'none' };
+  if (result === true) return { mark: '✓', label: t('evaluation.predicate.true'), tone: 'pass' };
+  if (result === false) return { mark: '✗', label: t('evaluation.predicate.false'), tone: 'fail' };
+  return { mark: '—', label: t('evaluation.predicate.null'), tone: 'none' };
 }
+/** 规则与路径的命中文案。 */
+function matchedText(matched: boolean): string { return matched ? t('evaluation.matched') : t('evaluation.notMatched'); }
+/** 并列取值的分隔符（中文“、”，英文“, ”）。 */
+function joinValues(values: readonly string[]): string { return values.join(t('evaluation.valueSeparator')); }
 
 type NameOf = (variableCode: string) => string | null;
 /** 数值字面量去掉存储精度带来的尾零（5000.00000000 → 5000、0.50 → 0.5）；非十进制文本原样返回。 */
@@ -235,32 +241,32 @@ export function plainDecimal(value: string): string {
   return value.replace(/0+$/, '').replace(/\.$/, '');
 }
 function literalText(operand: ConditionOperand, nameOf: NameOf): string {
-  const raw = operand.literalValue ?? '空';
-  const value = operand.valueType === 'BOOLEAN' ? (raw === 'true' ? '是' : raw === 'false' ? '否' : raw)
+  const raw = operand.literalValue ?? t('evaluation.literal.empty');
+  const value = operand.valueType === 'BOOLEAN' ? (raw === 'true' ? t('evaluation.literal.true') : raw === 'false' ? t('evaluation.literal.false') : raw)
     : operand.valueType === 'NUMBER' ? plainDecimal(raw) : raw;
   if (operand.numericUnit !== 'MONEY') return value;
   const currency = operand.currencyCode ?? (operand.currencyVariableCode ? nameOf(operand.currencyVariableCode) ?? operand.currencyVariableCode : null);
-  return currency ? `${value}（${currency}）` : value;
+  return currency ? t('evaluation.moneyLiteral', { value, currency }) : value;
 }
 export function operandText(operand: ConditionOperand, nameOf: NameOf = () => null): string {
   if (operand.sourceType === 'VARIABLE') return operand.variableName ?? (operand.variableCode ? nameOf(operand.variableCode) ?? operand.variableCode : '—');
   return literalText(operand, nameOf);
 }
-export function operatorLabel(operator: string | null): string { return operator ? (operatorLabels as Record<string, string>)[operator] ?? operator : ''; }
+export function operatorLabel(operator: string | null): string { return operator ? variableOperatorLabel(operator) : ''; }
 /** 谓词的可读表达：左值 运算符 右值（IN 列出全部值，BETWEEN 写“a 至 b”，为空类运算符没有右值）。 */
 export function predicateText(node: ConditionNode, nameOf: NameOf = () => null): string {
   const side = (role: string) => node.operands.filter(o => o.operandRole === role).map(o => operandText(o, nameOf));
-  const left = side('LEFT').join('、'), right = side('RIGHT');
+  const left = joinValues(side('LEFT')), right = side('RIGHT');
   const op = operatorLabel(node.comparisonOperator);
   if (!right.length) return `${left} ${op}`.trim();
-  const rightText = node.comparisonOperator === 'BETWEEN' && right.length === 2 ? `${right[0]} 至 ${right[1]}` : right.join('、');
+  const rightText = node.comparisonOperator === 'BETWEEN' && right.length === 2 ? t('evaluation.between', { from: right[0]!, to: right[1]! }) : joinValues(right);
   return `${left} ${op} ${rightText}`;
 }
 export interface ConditionLine { key: string; depth: number; kind: 'GROUP' | 'PREDICATE'; text: string; result: PredicateResult }
 /** 条件树展开为缩进行：分组写“全部满足/任一满足/不满足”，谓词写完整表达；每行带求值结果。 */
 export function conditionLines(node: ConditionNode, nameOf: NameOf = () => null, depth = 0): ConditionLine[] {
   if (node.nodeType === 'PREDICATE') return [{ key: node.nodeKey, depth, kind: 'PREDICATE', text: predicateText(node, nameOf), result: node.result }];
-  const head: ConditionLine = { key: node.nodeKey, depth, kind: 'GROUP', text: groupOperatorLabels[node.groupOperator ?? ''] ?? node.groupOperator ?? '分组', result: node.result };
+  const head: ConditionLine = { key: node.nodeKey, depth, kind: 'GROUP', text: node.groupOperator ? enumLabel(t, 'enum.conditionGroup', node.groupOperator) : t('evaluation.group'), result: node.result };
   return [head, ...node.children.flatMap(child => conditionLines(child, nameOf, depth + 1))];
 }
 /** 条件中引用变量的中文名：先取解释变量表。 */
@@ -269,57 +275,50 @@ export function variableNameLookup(variables: readonly VariableItem[]): NameOf {
   return code => names.get(code) ?? null;
 }
 export function ruleOutcome(rule: RuleItem): string {
-  const parts = [rule.matched ? '命中' : '未命中'];
-  if (rule.matched && rule.terminal) parts.push('终态');
+  const parts = [matchedText(rule.matched)];
+  if (rule.matched && rule.terminal) parts.push(t('evaluation.terminal'));
   if (rule.action) parts.push(rule.action);
   return parts.join(' · ');
 }
 
 /* ---------- 变量 ---------- */
-export const CURRENT_VALUE_NOTE = '当前值：常量与集合不随评估保存，显示的是现在的值，可能与评估时不同';
+export function currentValueNote(): string { return t('evaluation.currentValueNote'); }
 export function isCurrentValue(variable: Pick<VariableItem, 'valueBasis'>): boolean { return variable.valueBasis === 'CURRENT'; }
 export function variableFailed(variable: Pick<VariableItem, 'technicalStatus'>): boolean { return variable.technicalStatus === 'FAILED'; }
 export function variableValueText(variable: VariableItem): string {
   if (variableFailed(variable)) return '—';
   if (variable.value !== null) return variable.value;
-  if (variable.values) return variable.values.length ? variable.values.join('、') : '（空集合）';
+  if (variable.values) return variable.values.length ? joinValues(variable.values) : t('evaluation.emptySet');
   return '—';
 }
 /** 依据列：评估时（含 Feature 耗时）/ 当前值 / 失败 + 失败码。 */
 export function variableBasisText(variable: VariableItem): string {
-  if (variableFailed(variable)) return `失败 ${variable.failureCode ?? ''}`.trim();
-  if (isCurrentValue(variable)) return '当前值';
-  if (variable.valueBasis === 'EVALUATION') return variable.elapsedMillis === null ? '评估时' : `评估时 ${variable.elapsedMillis} ms`;
+  if (variableFailed(variable)) return variable.failureCode ? t('evaluation.basis.failedWithCode', { code: variable.failureCode }) : t('evaluation.basis.failed');
+  if (isCurrentValue(variable)) return t('evaluation.basis.current');
+  if (variable.valueBasis === 'EVALUATION') return variable.elapsedMillis === null ? t('evaluation.basis.evaluation') : t('evaluation.basis.evaluationElapsed', { millis: variable.elapsedMillis });
   return variable.valueBasis;
 }
-export function variableSourceLabel(sourceType: string): string { return (variableSourceLabels as Record<string, string>)[sourceType] ?? sourceType; }
-export function variableTypeLabel(valueType: string): string { return (variableTypeLabels as Record<string, string>)[valueType] ?? valueType; }
 
 /* ---------- 输入 ---------- */
 export type InputField = { key: string; label: string };
-/** 支付尝试输入快照的 17 个字段（顺序同 Risk 输入合同）。 */
-export const PAYMENT_INPUT_FIELDS: readonly InputField[] = [
-  { key: 'paymentIntentId', label: '支付 Intent' }, { key: 'riskActionId', label: '风控 Action' }, { key: 'orderId', label: '订单' },
-  { key: 'clientId', label: 'Client' }, { key: 'entityNo', label: '运营主体' }, { key: 'paymentMethodCode', label: '支付方式' },
-  { key: 'captureMode', label: '捕获方式' }, { key: 'amount', label: '金额' }, { key: 'currency', label: '币种' },
-  { key: 'industryCode', label: '行业' }, { key: 'mccCode', label: 'MCC' }, { key: 'consumerCountryCode', label: '消费者国家' },
-  { key: 'consumerReference', label: '消费者引用' }, { key: 'clientIpAddress', label: 'IP' }, { key: 'userAgent', label: 'User-Agent' },
-  { key: 'cardFingerprint', label: '卡指纹' }, { key: 'cardBin', label: '卡 BIN' },
+/** 支付尝试输入快照的 17 个字段（顺序同 Risk 输入合同）；显示名是 `risk.evaluation.input.<字段>`。 */
+export const PAYMENT_INPUT_FIELDS: readonly string[] = [
+  'paymentIntentId', 'riskActionId', 'orderId', 'clientId', 'entityNo', 'paymentMethodCode', 'captureMode', 'amount', 'currency',
+  'industryCode', 'mccCode', 'consumerCountryCode', 'consumerReference', 'clientIpAddress', 'userAgent', 'cardFingerprint', 'cardBin',
 ];
 /** 结账准备输入快照的 12 个字段（顺序同 Risk 结账输入合同 v5）；订单 ID 是业务身份，显示在结论卡片中。 */
-export const CHECKOUT_INPUT_FIELDS: readonly InputField[] = [
-  { key: 'clientId', label: 'Client' }, { key: 'entityNo', label: '运营主体' }, { key: 'entitySourceType', label: '主体来源' },
-  { key: 'localPartnerId', label: 'Local Partner' }, { key: 'consumerCountryCode', label: '消费者国家' }, { key: 'currency', label: '币种' },
-  { key: 'merchandiseAmount', label: '商品金额' }, { key: 'discountAmount', label: '折扣金额' }, { key: 'netAmount', label: '净额' },
-  { key: 'industryCode', label: '行业' }, { key: 'mccCode', label: 'MCC' }, { key: 'lineCount', label: '明细行数' },
+export const CHECKOUT_INPUT_FIELDS: readonly string[] = [
+  'clientId', 'entityNo', 'entitySourceType', 'localPartnerId', 'consumerCountryCode', 'currency',
+  'merchandiseAmount', 'discountAmount', 'netAmount', 'industryCode', 'mccCode', 'lineCount',
 ];
-const POINT_INPUT_FIELDS: Record<string, readonly InputField[]> = { PAYMENT_ATTEMPT_RISK: PAYMENT_INPUT_FIELDS, CHECKOUT_PREPARE: CHECKOUT_INPUT_FIELDS };
+const POINT_INPUT_FIELDS: Record<string, readonly string[]> = { PAYMENT_ATTEMPT_RISK: PAYMENT_INPUT_FIELDS, CHECKOUT_PREPARE: CHECKOUT_INPUT_FIELDS };
 /** 风控点的已知输入字段；未知风控点没有已知字段，全部按原键显示。 */
-export function inputFieldsOf(pointCode: string): readonly InputField[] { return POINT_INPUT_FIELDS[pointCode] ?? []; }
-const BUSINESS_KEY_LABELS: Record<string, string> = { PAYMENT_ATTEMPT_RISK: '支付尝试', CHECKOUT_PREPARE: '订单' };
+export function inputFieldsOf(pointCode: string): readonly InputField[] {
+  return (POINT_INPUT_FIELDS[pointCode] ?? []).map(key => ({ key, label: t(`evaluation.input.${key}`) }));
+}
 /** 结论卡片中业务身份的标签；未知风控点显示“业务身份”。 */
-export function businessKeyLabel(pointCode: string): string { return BUSINESS_KEY_LABELS[pointCode] ?? '业务身份'; }
-export const NOT_PROVIDED = '未提供';
+export function businessKeyLabel(pointCode: string): string { return tOr(t, 'evaluation.businessKey.' + pointCode, t('evaluation.businessKey.default')); }
+export function notProvidedText(): string { return t('evaluation.notProvided'); }
 /** 该点已知字段在前，Risk 新增的未知字段按原键追加在后；空值为 null（页面显示“未提供”）。 */
 export function inputRows(inputs: Record<string, string | null>, pointCode: string): { key: string; label: string; value: string | null }[] {
   const fields = inputFieldsOf(pointCode);
@@ -329,4 +328,4 @@ export function inputRows(inputs: Record<string, string | null>, pointCode: stri
 }
 
 /* ---------- 影子评估 ---------- */
-export function changedLabel(changed: boolean): string { return changed ? '是' : '否'; }
+export function changedLabel(changed: boolean): string { return changed ? t('evaluation.changed.yes') : t('evaluation.changed.no'); }

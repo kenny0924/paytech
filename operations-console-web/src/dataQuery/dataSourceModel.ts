@@ -1,6 +1,9 @@
 import {
   isId, isInstant, isInteger, isOneOf, isOptionalText, isRecord, isText, isTextList, orNull, pageDecoder, require,
 } from './dataQueryCommon.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('data-query');
 
 export const engineTypes = ['MYSQL', 'DORIS'] as const;
 export type EngineType = typeof engineTypes[number];
@@ -59,14 +62,14 @@ export function decodeConnectionTest(value: unknown): ConnectionTest {
 
 /** 列表与详情的地址：有默认库为“主机:端口 / 库”，否则“主机:端口 · 整个实例”。 */
 export function addressLabel(source: Pick<DataSource, 'host' | 'port' | 'databaseName'>): string {
-  return source.databaseName ? `${source.host}:${source.port} / ${source.databaseName}` : `${source.host}:${source.port} · 整个实例`;
+  return source.databaseName ? `${source.host}:${source.port} / ${source.databaseName}` : t('dataSource.wholeInstance', { address: `${source.host}:${source.port}` });
 }
 
 /** 最后检查：未检查、通过 · 时间、失败 · 原因（无原因时显示时间）。 */
 export function lastCheckLabel(source: Pick<DataSource, 'lastCheckResult' | 'lastCheckMessage' | 'lastCheckTime'>, format: (value: string | null) => string): string {
-  if (!source.lastCheckResult) return '未检查';
-  if (source.lastCheckResult === 'PASSED') return `通过 · ${format(source.lastCheckTime)}`;
-  return `失败 · ${source.lastCheckMessage || format(source.lastCheckTime)}`;
+  if (!source.lastCheckResult) return t('dataSource.lastCheck.none');
+  if (source.lastCheckResult === 'PASSED') return t('dataSource.lastCheck.passed', { time: format(source.lastCheckTime) });
+  return t('dataSource.lastCheck.failed', { detail: source.lastCheckMessage || format(source.lastCheckTime) });
 }
 
 export interface GrantSegment { text: string; violation: boolean }
@@ -169,15 +172,15 @@ export interface SaveGate { allowed: boolean; reason: string | null }
  */
 export function saveGate(source: DataSource | null, test: { fingerprint: string; result: ConnectionTest } | null, fingerprint: string): SaveGate {
   if (!source || source.status !== 'ACTIVE') return { allowed: true, reason: null };
-  if (!test || test.fingerprint !== fingerprint) return { allowed: false, reason: '当前为启用状态：修改后必须测试连接并通过才能保存。' };
-  if (test.result.result !== 'PASSED') return { allowed: false, reason: '检查未通过，不能保存。原配置继续生效，运行中的查询不受影响。' };
+  if (!test || test.fingerprint !== fingerprint) return { allowed: false, reason: t('dataSource.saveGate.testRequired') };
+  if (test.result.result !== 'PASSED') return { allowed: false, reason: t('dataSource.saveGate.testFailed') };
   return { allowed: true, reason: null };
 }
 
 /** 状态动作：停用可启用（服务端先做连接检查），启用可停用。 */
 export function statusAction(source: Pick<DataSource, 'status'>): { target: 'ACTIVE' | 'INACTIVE'; verb: string; notice: string } | null {
-  if (source.status === 'ACTIVE') return { target: 'INACTIVE', verb: '停用', notice: '停用后引用它的模板无法执行；进行中的查询正常结束。' };
-  if (source.status === 'INACTIVE') return { target: 'ACTIVE', verb: '启用', notice: '启用前服务端会重新做连接与只读检查，未通过时拒绝启用。' };
+  if (source.status === 'ACTIVE') return { target: 'INACTIVE', verb: t('dataSource.status.disable'), notice: t('dataSource.status.disableNotice') };
+  if (source.status === 'INACTIVE') return { target: 'ACTIVE', verb: t('dataSource.status.enable'), notice: t('dataSource.status.enableNotice') };
   return null;
 }
 
@@ -186,13 +189,14 @@ export function statusAction(source: Pick<DataSource, 'status'>): { target: 'ACT
  */
 export function templateSourceOptions(sources: readonly DataSource[], inUse: readonly (string | null | undefined)[]): { value: string; label: string }[] {
   return sources.filter(item => item.status === 'ACTIVE' || inUse.includes(item.dataSourceId)).map(item => ({
-    value: item.dataSourceId, label: `${item.dataSourceCode} · ${engineLabels[item.engineType]}${item.status === 'ACTIVE' ? '' : '（停用）'}`,
+    value: item.dataSourceId, label: item.status === 'ACTIVE' ? `${item.dataSourceCode} · ${engineLabels[item.engineType]}`
+      : t('dataSource.optionInactive', { code: item.dataSourceCode, engine: engineLabels[item.engineType] }),
   }));
 }
 
 /** 删除前置条件：必须停用且没有启用中的模板引用。 */
 export function deletionBlock(source: Pick<DataSource, 'status' | 'activeTemplateCount'>): string | null {
-  if (source.status !== 'INACTIVE') return '请先停用数据源再删除。';
-  if (source.activeTemplateCount > 0) return `仍有 ${source.activeTemplateCount} 个启用中的模板引用此数据源，请先停用或改用其他数据源。`;
+  if (source.status !== 'INACTIVE') return t('dataSource.deletion.disableFirst');
+  if (source.activeTemplateCount > 0) return t('dataSource.deletion.referenced', { count: source.activeTemplateCount });
   return null;
 }

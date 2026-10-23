@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
-import { ensureStarted, i18n as defaultI18n } from './index.ts';
-import type { Params } from './runtime.ts';
+import { bindTranslate, ensureStarted, i18n as defaultI18n } from './index.ts';
+import type { Translate } from './index.ts';
 import type { I18n } from './runtime.ts';
 
 const Context = createContext<I18n>(defaultI18n);
@@ -15,37 +15,47 @@ function useRevision(instance: I18n): number {
   return useSyncExternalStore(instance.subscribe, instance.revision, instance.revision);
 }
 
-/** `t(key, params)` for one namespace; re-renders when the locale or a bundle changes. */
-export function useT(namespace: string): (key: string, params?: Params) => string {
+/**
+ * `t(key, params)` for one namespace (plus `t.has(key)`); re-renders when the locale or a bundle changes.
+ * Pass the result to `tOr` / `enumLabel` from `i18n/index.ts` when a key may be missing.
+ */
+export function useT(namespace: string): Translate {
   const instance = useContext(Context), revision = useRevision(instance);
   useEffect(() => { instance.use(namespace); }, [instance, namespace]);
-  return useMemo(() => (key: string, params?: Params) => instance.t(namespace, key, params),
-    [instance, namespace, revision]);
+  return useMemo(() => bindTranslate(instance, namespace), [instance, namespace, revision]);
 }
 
-/** Current locale, enabled locales and `setLocale`. */
+/** Current locale and the published locales the switcher may offer. */
 export function useLocale() {
   const instance = useContext(Context);
   useRevision(instance);
-  return { locale: instance.locale(), locales: instance.locales(), setLocale: instance.setLocale };
+  return { locale: instance.locale(), locales: instance.locales() };
 }
+
+/** Namespaces whose bundles a gate has already waited for; later gates over them render at once. */
+const settled = new Set<string>();
 
 /**
  * Holds rendering until the runtime has started and the given namespaces' bundles settled (loaded or failed),
- * so a zh-CN page does not flash the English base first. Never waits longer than `timeoutMs`.
+ * so a zh-CN page does not flash the English base first. Never waits longer than `timeoutMs`. The root gate in
+ * main.tsx covers every Operations namespace, so nested gates over the same namespaces never wait again.
  */
 export function I18nGate({ namespaces, fallback, timeoutMs = 2500, children }: {
-  namespaces: string[]; fallback: ReactNode; timeoutMs?: number; children: ReactNode;
+  namespaces: readonly string[]; fallback: ReactNode; timeoutMs?: number; children: ReactNode;
 }) {
-  const [ready, setReady] = useState(false);
   const key = namespaces.join(',');
+  const [ready, setReady] = useState(() => namespaces.every(ns => settled.has(ns)));
   useEffect(() => {
+    if (ready) return;
     let active = true;
     const done = () => { if (active) setReady(true); };
     const timer = setTimeout(done, timeoutMs);
-    for (const ns of key.split(',')) defaultI18n.use(ns);
-    ensureStarted().then(() => defaultI18n.loadNeeded()).catch(() => {}).finally(() => { clearTimeout(timer); done(); });
+    const list = key.split(',');
+    for (const ns of list) defaultI18n.use(ns);
+    ensureStarted().then(() => defaultI18n.loadNeeded()).catch(() => {}).finally(() => {
+      clearTimeout(timer); list.forEach(ns => settled.add(ns)); done();
+    });
     return () => { active = false; clearTimeout(timer); };
-  }, [key, timeoutMs]);
+  }, [key, timeoutMs, ready]);
   return <>{ready ? children : fallback}</>;
 }

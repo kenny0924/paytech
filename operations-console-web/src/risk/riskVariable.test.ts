@@ -24,18 +24,18 @@ test('both operand sides are variables or typed literals and units survive wire 
   assert.throws(()=>decodeVariableOperand({...left,fieldCode:'net_amount'}));assert.throws(()=>decodeVariableOperand({...left,literalValue:'runtime-value'}));
 });
 test('collection paste detects normalized numeric duplicates and preserves exact string identity',()=>{
-  assert.throws(()=>parsePastedMembers('1\n1.00000000','NUMBER','NONE'),/第 2 行.*重复/);
+  assert.throws(()=>parsePastedMembers('1\n1.00000000','NUMBER','NONE'),/Row 2: duplicate/);
   assert.deepEqual(parsePastedMembers('001\t前导零\nA\nA \n','STRING','TEXT').map(m=>m.value),['001','A','A ']);
-  assert.throws(()=>parsePastedMembers('true\nyes','BOOLEAN','NONE'),/第 2 行/);
+  assert.throws(()=>parsePastedMembers('true\nyes','BOOLEAN','NONE'),/Row 2:/);
   assert.deepEqual(parsePastedMembers('false\t否\ntrue\t是','BOOLEAN','NONE').map(m=>m.value),[false,true]);
-  assert.throws(()=>parsePastedMembers('US\nUSA','STRING','UPPER_ALPHA_2'),/第 2 行/);
+  assert.throws(()=>parsePastedMembers('US\nUSA','STRING','UPPER_ALPHA_2'),/Row 2:/);
 });
 test('explicit collection deduplication retains the first label and reports duplicate source rows',()=>{
   assert.deepEqual(deduplicatePastedMembers('1\t首次\n1.0\t后续\n2','NUMBER','NONE'),{
     members:[{value:'1.00000000',displayName:'首次'},{value:'2.00000000',displayName:null}],duplicateRows:[2],
   });
   assert.deepEqual(deduplicatePastedMembers('A\nA \nA','STRING','TEXT').duplicateRows,[3]);
-  assert.throws(()=>deduplicatePastedMembers('true\nyes','BOOLEAN','NONE'),/第 2 行/);
+  assert.throws(()=>deduplicatePastedMembers('true\nyes','BOOLEAN','NONE'),/Row 2:/);
 });
 test('selected variables outside the current point, usage or node are unavailable',()=>{
   assert.equal(matchesVariableFilters(arbitraryVariable,{pointCode:'CHECKOUT_PREPARE',usage:'RULE_CONDITION'}),true);

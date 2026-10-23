@@ -216,3 +216,152 @@ test('published-only: an English start still discovers zh-CN for the switcher', 
   assert.deepEqual(i18n.locales().map((item) => item.code), ['en', 'zh-CN']);
   assert.ok(http.calls.some((call) => call.url === '/manifest?locale=zh-CN'));
 });
+
+/** localStorage stand-in with key enumeration; `failOn` makes setItem throw for matching keys (quota). */
+function cacheStore(failOn?: (key: string) => boolean) {
+  const values = new Map<string, string>();
+  return {
+    values,
+    getItem: (k: string) => values.get(k) ?? null,
+    setItem: (k: string, v: string) => { if (failOn?.(k)) throw new DOMException('full', 'QuotaExceededError'); values.set(k, v); },
+    removeItem: (k: string) => { values.delete(k); },
+    key: (index: number) => [...values.keys()][index] ?? null,
+    get length() { return values.size; },
+  };
+}
+const cacheKeys = (store: ReturnType<typeof cacheStore>) => [...store.values.keys()].filter((key) => key.startsWith('i18n.cache.')).sort();
+/** Release N of the published route: bundle URLs carry the release number, the zh-CN title says which release. */
+function releaseRoute(releaseNo: number): Route {
+  return (url) => {
+    if (url.startsWith('/manifest')) {
+      const locale = new URL(url, 'http://x').searchParams.get('locale')!;
+      const value = manifest(locale, releaseNo);
+      if (locale === 'ar') delete value.bundles.ar;
+      return json(value);
+    }
+    if (url.endsWith('/en/team.e1.json')) return json({ 'team.title': 'Team r' + releaseNo });
+    if (url.endsWith('/zh-CN/team.z1.json')) return json({ 'team.title': '团队 r' + releaseNo });
+    return new Response('missing', { status: 404 });
+  };
+}
+/** Fills `cache` the way a normal (networked) zh-CN start does. */
+async function warmCache(cache: ReturnType<typeof cacheStore>, releaseNo = 7) {
+  const { i18n } = setup({ publishedOnly: true, cache }, releaseRoute(releaseNo));
+  i18n.use('team');
+  await i18n.start({ search: '?lang=zh-CN' });
+  await i18n.verifyOffered();
+  assert.equal(i18n.t('team', 'title'), '团队 r' + releaseNo);
+}
+
+test('cache: a cached locale starts and translates without waiting for the network', async () => {
+  const cache = cacheStore();
+  await warmCache(cache);
+  assert.deepEqual(cacheKeys(cache), ['i18n.cache.bundle.https://cdn.test/r7/en/team.e1.json', 'i18n.cache.bundle.https://cdn.test/r7/zh-CN/team.z1.json',
+    'i18n.cache.manifest.ar', 'i18n.cache.manifest.zh-CN']);
+  const pending: string[] = [];
+  const { i18n, storage, document } = setup({ publishedOnly: true, cache }, (url) => { pending.push(url); return new Promise<Response>(() => {}); });
+  storage.setItem('i18n.locale', 'zh-CN');
+  i18n.use('team');
+  await i18n.start({});
+  assert.equal(i18n.locale(), 'zh-CN');
+  assert.equal(document.documentElement.lang, 'zh-CN');
+  assert.equal(i18n.t('team', 'title'), '团队 r7');
+  assert.deepEqual(i18n.locales().map((item) => item.code), ['en', 'zh-CN']);
+  assert.deepEqual(pending, ['/manifest?locale=zh-CN']);
+});
+
+test('cache: a newer release found in the background replaces the bundles, updates the cache and drops old bundles', async () => {
+  const cache = cacheStore();
+  await warmCache(cache, 7);
+  const { i18n, storage } = setup({ publishedOnly: true, cache }, releaseRoute(8));
+  storage.setItem('i18n.locale', 'zh-CN');
+  i18n.use('team');
+  let changes = 0;
+  i18n.subscribe(() => { changes++; });
+  await i18n.start({});
+  assert.equal(i18n.t('team', 'title'), '团队 r7');
+  await settle(); await settle();
+  assert.equal(i18n.t('team', 'title'), '团队 r8');
+  assert.ok(changes > 1);
+  assert.equal(JSON.parse(cache.getItem('i18n.cache.manifest.zh-CN')!).releaseNo, 8);
+  assert.ok(cache.getItem('i18n.cache.bundle.https://cdn.test/r8/zh-CN/team.z1.json'));
+  assert.ok(cacheKeys(cache).every((key) => !key.includes('/r7/')), cacheKeys(cache).join(','));
+});
+
+test('cache: when the manifest is unreachable the cached language keeps working, offline included', async () => {
+  const cache = cacheStore();
+  await warmCache(cache);
+  for (const route of [() => new Response('down', { status: 503 }), () => { throw new TypeError('offline'); }] as Route[]) {
+    const { i18n, storage } = setup({ publishedOnly: true, cache }, route);
+    storage.setItem('i18n.locale', 'zh-CN');
+    i18n.use('team');
+    await i18n.start({});
+    await settle();
+    assert.equal(i18n.locale(), 'zh-CN');
+    assert.equal(i18n.t('team', 'title'), '团队 r7');
+    assert.equal(i18n.manifestFailed(), true);
+    assert.ok(cache.getItem('i18n.cache.manifest.zh-CN'));
+  }
+});
+
+test('cache: without every needed bundle cached the runtime falls back to the network start', async () => {
+  const cache = cacheStore();
+  await warmCache(cache);
+  cache.removeItem('i18n.cache.bundle.https://cdn.test/r7/zh-CN/team.z1.json');
+  const { i18n, http, storage } = setup({ publishedOnly: true, cache }, releaseRoute(7));
+  storage.setItem('i18n.locale', 'zh-CN');
+  i18n.use('team');
+  await i18n.start({});
+  assert.equal(i18n.t('team', 'title'), '团队 r7');
+  assert.ok(http.calls.some((call) => call.url.endsWith('/zh-CN/team.z1.json')));
+  assert.ok(cache.getItem('i18n.cache.bundle.https://cdn.test/r7/zh-CN/team.z1.json'));
+});
+
+test('cache: a quota failure clears every cached entry and the runtime carries on from memory', async () => {
+  const cache = cacheStore((key) => key.includes('/zh-CN/'));
+  cache.setItem('i18n.cache.manifest.old', '{}');
+  cache.setItem('unrelated', 'kept');
+  const { i18n } = setup({ publishedOnly: true, cache }, releaseRoute(7));
+  i18n.use('team');
+  await i18n.start({ search: '?lang=zh-CN' });
+  assert.equal(i18n.t('team', 'title'), '团队 r7');
+  assert.deepEqual(cacheKeys(cache).filter((key) => key.includes('/zh-CN/')), []);
+  assert.equal(cache.getItem('i18n.cache.manifest.old'), null);
+  assert.equal(cache.getItem('unrelated'), 'kept');
+});
+
+test('cache: a ?release= preview neither reads nor writes the cache', async () => {
+  const cache = cacheStore();
+  await warmCache(cache, 7);
+  const before = new Map(cache.values);
+  const { i18n, http } = setup({ publishedOnly: true, cache }, releaseRoute(9));
+  i18n.use('team');
+  await i18n.start({ search: '?lang=zh-CN&release=9' });
+  await i18n.prefetch('en');
+  assert.equal(i18n.t('team', 'title'), '团队 r9');
+  assert.equal(http.calls[0].url, '/manifest?locale=zh-CN&releaseNo=9');
+  assert.deepEqual(cache.values, before);
+});
+
+test('prefetch fills the cache for another language; rememberLocale stores the choice and drops ?lang', async () => {
+  const cache = cacheStore();
+  const { i18n, storage, session } = setup({ publishedOnly: true, cache }, releaseRoute(7));
+  i18n.use('team');
+  await i18n.start({ search: '?lang=en' });
+  assert.equal(cache.getItem('i18n.cache.bundle.https://cdn.test/r7/zh-CN/team.z1.json'), null);
+  await i18n.prefetch('zh-CN');
+  assert.ok(cache.getItem('i18n.cache.manifest.zh-CN'));
+  assert.ok(cache.getItem('i18n.cache.bundle.https://cdn.test/r7/zh-CN/team.z1.json'));
+  assert.equal(i18n.locale(), 'en');
+  i18n.rememberLocale('zh-CN');
+  assert.equal(storage.getItem('i18n.locale'), 'zh-CN');
+  assert.equal(session.getItem('i18n.session-locale'), null);
+  await assert.doesNotReject(setup({ publishedOnly: true, cache }, () => { throw new TypeError('offline'); }).i18n.prefetch('zh-CN'));
+});
+
+test('has() reports whether a key resolves, without a missing-key warning', async () => {
+  const { i18n, warnings } = setup();
+  assert.equal(i18n.has('team', 'title'), true);
+  assert.equal(i18n.has('team', 'absent'), false);
+  assert.deepEqual(warnings, []);
+});

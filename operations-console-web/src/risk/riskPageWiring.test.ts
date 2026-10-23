@@ -17,6 +17,7 @@ import * as candidateState from './testCandidateState.ts';
 import * as editorPresentation from './ruleEditorPresentation.ts';
 import { createRiskDecisionApi } from './riskDecisionApi.ts';
 import type { RuleSetDetail } from './riskApiModels.ts';
+import { testT } from '../i18n/testing.ts';
 import { candidateDetail, ruleSet, ruleSetDetail, deleteRuleSetResponse, createRuleSetResponse, freezeRuleSetResponse, createCandidateResponse, validateCandidateResponse } from './riskFixtures.ts';
 
 const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
@@ -41,7 +42,7 @@ test('background authorization refresh preserves mounted routes and last valid r
   assert.match(consoleSource, /!navigationLoaded && navigationFailed/);
   assert.match(consoleSource, /!navigationLoaded && loading/);
   assert.match(consoleSource, /navigationLoaded && navigationFailed/);
-  assert.match(consoleSource, /权限刷新失败，当前页面已保留/);
+  assert.match(consoleSource, /header\.permissionRefreshFailed/);
   assert.match(consoleSource, /controller\.signal\.aborted/);
 });
 
@@ -67,9 +68,9 @@ test('Rule Set list/detail use decoded paging, complete head checks and explicit
   assert.match(list, /usePaging<RuleSetListItem>\(/);
   assert.match(list, /decodeRuleSetPage, navigation.filters/);
   assert.match(list, /rowKey="ruleSetId"/);
-  assert.doesNotMatch(list, /title: '内容摘要'|title: '业务版本'/);
+  assert.doesNotMatch(list, /candidate\.field\.contentHash|ruleSetDetails\.businessVersion/);
   assert.match(list, /RuleSetFilters/); assert.match(list, /ruleSetCode/);
-  assert.match(detail, /detailToEditor\(detail\)/); assert.match(detail, /text: hash/); assert.match(detail, /复制完整 Hash/);
+  assert.match(detail, /detailToEditor\(detail\)/); assert.match(detail, /text: hash/); assert.match(detail, /ruleSetDetails\.copyHash/);
   assert.match(page, /loadObservedRuleSetHead\(/); assert.match(page, /requireSelectedObservedHead\(/); assert.match(page, /requireUnusedRuleSetCode\(/);
   assert.match(page, /loadObservedRuleSetHead\(/); assert.match(page, /controller\.signal\.aborted/);
 });
@@ -80,8 +81,8 @@ test('structured editor uses pure conversion, string inputs, field direction and
   assert.match(editor, /saveSizeState\(payload\)/); assert.match(editor, /utf8ByteLength\(payload\)/);
   assert.match(editor, /onSave\(prepared.payload\)/);
   assert.match(editor, /readOnly=\{base !== null\}/);
-  for (const token of ['draggable', 'onDragStart', 'onDragOver', 'onDrop', '上移', '下移']) assert.ok(editor.includes(token), token);
-  for (const token of ['字段在左', '字段在右', 'fieldSide', '满足全部', '满足任一', '不满足', 'canonicalFieldValue', 'operatorsForField']) assert.ok(condition.includes(token), token);
+  for (const token of ['draggable', 'onDragStart', 'onDragOver', 'onDrop', 'ruleEditor.moveUp', 'ruleEditor.moveDown']) assert.ok(editor.includes(token), token);
+  for (const token of ['conditionBuilder.fieldOnLeft', 'conditionBuilder.fieldOnRight', 'fieldSide', 'conditionBuilder.allTitle', 'conditionBuilder.anyTitle', 'conditionBuilder.not', 'canonicalFieldValue', 'operatorsForField']) assert.ok(condition.includes(token), token);
   assert.doesNotMatch(condition, /InputNumber|parseFloat|Number\(/);
   for (const source of [editor, condition]) assert.doesNotMatch(source, /JSON\.parse|<pre\b|<code\b|nodeKey|parentNodeKey|valueSequence|sequenceNo|operandRole/);
 });
@@ -89,7 +90,7 @@ test('command UI consumes the pure dispatcher/reducer and requires explicit same
   const page = readFileSync(new URL('../pages/RiskRuleConfiguration.tsx', import.meta.url), 'utf8');
   assert.match(page, /submitRiskCommand\(/); assert.match(page, /reduceRiskCommandResult\(/);
   assert.match(page, /randomCommand\(/); assert.match(page, /validateKey\(/);
-  assert.match(page, /重试同一命令/); assert.match(page, /查看当前配置/);
+  assert.match(page, /rulePage\.retrySame/); assert.match(page, /rulePage\.viewCurrent/);
   assert.match(page, /expectedContentHash: head.contentHash/);
   assert.match(page, /expectedVersion: row.managementVersion/);
   assert.doesNotMatch(page, /session\.request|JSON\.parse|console\./);
@@ -102,8 +103,8 @@ test('Candidate list/detail rely on decoded paging and the actor-bound pure reco
   assert.match(list, /CandidateFilters/);
   assert.match(detail, /classifyTestCandidate\(detail, actorId\)/);
   for (const kind of ['READY_TO_VALIDATE', 'RECOVERABLE_BY_CURRENT_ACTOR', 'RECOVERY_OWNED_BY_OTHER_ACTOR', 'WAITING_FOR_SHADOW', 'REJECTED']) assert.ok(detail.includes(kind), kind);
-  for (const text of ['恢复校验', '静态校验通过，等待未来 Shadow', '联系原操作员', 'staticChecks', 'stateChanges', 'frozenComposition']) assert.ok(detail.includes(text), text);
-  assert.doesNotMatch(page, /riskDecisionApi\.candidate\(|创建 TEST Candidate|恢复校验/);
+  for (const text of ['candidate.recover', 'candidate.waitingForShadow', 'candidate.otherActorHint', 'staticChecks', 'stateChanges', 'frozenComposition']) assert.ok(detail.includes(text), text);
+  assert.doesNotMatch(page, /riskDecisionApi\.candidate\(|TEST Candidate|candidate\.recover/);
 });
 test('feature-local styles are imported only at page entry and form errors use presentation labels', () => {
   const page = readFileSync(new URL('../pages/RiskRuleConfiguration.tsx', import.meta.url), 'utf8');
@@ -118,7 +119,7 @@ test('detail failures remain visible over drawers and pending retries survive de
   const page = readFileSync(new URL('../pages/RiskRuleConfiguration.tsx', import.meta.url), 'utf8');
   assert.equal((page.match(/\{failureAlert\}/g) ?? []).length, 2);
   assert.match(page, /!state\.confirmation && navigation\.view !== 'detail' && failureAlert/);
-  assert.match(page, /刷新列表/);
+  assert.match(page, /rulePage\.refreshList/);
   assert.match(page, /keyboard=\{!commandChangeDisabled\}/);
   assert.doesNotMatch(page, /onSelect=\{id => \{ setNotice\(''\); setFailure\(null\)/);
   for (const name of ['RuleSetTab.tsx', 'TestCandidateTab.tsx']) {
@@ -212,7 +213,7 @@ function componentHarness(options: { effects?: boolean; editor?: boolean; search
     return decode!(model.observed);
   } });
   const dependencies = { ...navigationModel, ...pageModel, ...head, ...commands, ...builder, ...catalog, ...candidateState, ...editorPresentation,
-    ruleForVariableEditing: editHistoricalRule, ApiError, riskDecisionApi: api, Fragment: 'Fragment', App: { useApp: () => ({ modal: { confirm() {} } }) },
+    ruleForVariableEditing: editHistoricalRule, ApiError, riskDecisionApi: api, useT: testT, Fragment: 'Fragment', App: { useApp: () => ({ modal: { confirm() {} } }) },
     jsx: (type: unknown, props: Record<string, unknown> | null, ...children: unknown[]): RenderedNode => ({ type, props: { ...props, children } }),
     useState<T>(initial: T | (() => T)) {
       const index = hook++;
@@ -279,10 +280,10 @@ function componentHarness(options: { effects?: boolean; editor?: boolean; search
     editor() { const node = nodes(tree!).find(node => node.type === Editor); assert.ok(node, 'editor remains mounted'); return node; },
     saveButton() {
       const editor = nodes(Editor(this.editor().props));
-      const button = editor.find(node => node.type === 'Button' && (node.props.children as unknown[]).includes('保存新版本'));
+      const button = editor.find(node => node.type === 'Button' && (node.props.children as unknown[]).includes('Save New Version'));
       assert.ok(button); return button;
     },
-    retryButtons() { return nodes(tree!).filter(node => node.type === 'Button' && (node.props.children as unknown[]).includes('重试同一命令')); },
+    retryButtons() { return nodes(tree!).filter(node => node.type === 'Button' && (node.props.children as unknown[]).includes('Retry Same Command')); },
   };
 }
 const savePayload = JSON.stringify(builder.editorToCreateRequest(builder.detailToEditor(ruleSetDetail), ruleSetDetail));
@@ -403,8 +404,8 @@ test('UNKNOWN Save retains edited content and explicit retry without page return
 });
 
 const modalCases = [
-  { action: 'FREEZE', title: '确认冻结版本', entry: '冻结版本' },
-  { action: 'DELETE', title: '确认删除规则集', entry: '删除' },
+  { action: 'FREEZE', title: 'Confirm Version Freeze', entry: 'Freeze Version' },
+  { action: 'DELETE', title: 'Confirm Rule Set Deletion', entry: 'Delete' },
 ] as const;
 async function openCommandModal(action: typeof modalCases[number]['action']) {
   const page = componentHarness({ effects: true, editor: false, search: '?view=list' });
@@ -462,14 +463,14 @@ for (const entry of modalCases) {
     assert.notEqual(page.posts[3]?.key, page.posts[0]?.key, 'a new random key is allowed only after deterministic settlement');
     assert.equal(page.controls.current.current.pendingCommand, null); assert.equal(page.controls.failure, null);
     assert.equal(page.controls.current.current.confirmation, null);
-    assert.equal(page.node('Modal', '确认冻结版本').props.open, false);
+    assert.equal(page.node('Modal', 'Confirm Version Freeze').props.open, false);
   });
 }
 for (const freeze of [false, true]) {
   test(`Round2 UNKNOWN blocks direct openLatest ${freeze ? 'Freeze' : 'Edit'} before it clears recovery`, async () => {
     const page = await openCommandModal('FREEZE');
     const openLatest = page.controls.openLatest;
-    await page.act(page.node('Modal', '确认冻结版本').props.onOk);
+    await page.act(page.node('Modal', 'Confirm Version Freeze').props.onOk);
     const recovery = recoverySnapshot(page); const reads = page.model.reads;
     await page.act(openLatest, ruleSetDetail, freeze);
     assert.equal(page.model.reads, reads); assertRecovery(page, recovery);
@@ -482,7 +483,7 @@ for (const readOutcome of ['failure', 'success'] as const) {
     const page = await openCommandModal('FREEZE');
     page.controls.setNewCode('UNUSED_RULE_SET'); await page.flush();
     const openNew = page.controls.openNew;
-    await page.act(page.node('Modal', '确认冻结版本').props.onOk);
+    await page.act(page.node('Modal', 'Confirm Version Freeze').props.onOk);
     const recovery = recoverySnapshot(page); const reads = page.model.reads;
     page.model.observed = null;
     page.model.readError = readOutcome === 'failure' ? new TypeError('head lookup unavailable') : null;

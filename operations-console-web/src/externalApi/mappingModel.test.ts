@@ -41,7 +41,7 @@ test('映射行：分组排序、父在子前并补对象行，固定值不列�
 test('变量类型与类型提示：初始化结果按根类型，路径类型不同才提示', () => {
   assert.equal(variableType('resources.channelAccount.parameters.outletId', variables), 'STRING');
   assert.equal(variableType('input.unknown', variables), null);
-  assert.equal(typeHint(body('amount.value', 'INTEGER'), path('input.paymentContext.amount'), variables), '类型不一致：变量是 STRING，字段是 INTEGER');
+  assert.equal(typeHint(body('amount.value', 'INTEGER'), path('input.paymentContext.amount'), variables), 'Type mismatch: the variable is STRING, the field is INTEGER');
   assert.equal(typeHint(body('amount.currency'), path('input.paymentContext.currency'), variables), null);
   assert.equal(typeHint(body('amount.value', 'INTEGER'), { kind: 'EXPRESSION', expression: '1' }, variables), null);
 });
@@ -70,7 +70,7 @@ test('变量树：input 分层、初始化结果需补全名称、steps 按节�
   const tree = variableTree(variables).map(node => `${'  '.repeat(node.depth)}${node.folder ? '▾' : ''}${node.label}${node.insert ? ` → ${node.insert}` : ''}${node.type ? ` (${node.type})` : ''}`);
   assert.deepEqual(tree, ['▾input', '  ▾paymentContext → input.paymentContext (OBJECT)', '    amount → input.paymentContext.amount (STRING)',
     '    currency → input.paymentContext.currency (STRING)', '  ▾consumer', '    currency → input.consumer.currency (INTEGER)',
-    '▾resources.channelAccount', '  parameters.<名称> → resources.channelAccount.parameters. (STRING)', '▾steps.createOrder',
+    '▾resources.channelAccount', '  parameters.<name> → resources.channelAccount.parameters. (STRING)', '▾steps.createOrder',
     '  executeStatus → steps.createOrder.executeStatus (STRING)', '  outputs.transactionRef → steps.createOrder.outputs.transactionRef (STRING)',
     'resources.channelAccount.credentials.* → resources.channelAccount.credentials. (PROTECTED_HANDLE)']);
   assert.deepEqual(variableTree(variables, 'CURR').map(node => node.insert), ['input.paymentContext.currency', 'input.consumer.currency']);

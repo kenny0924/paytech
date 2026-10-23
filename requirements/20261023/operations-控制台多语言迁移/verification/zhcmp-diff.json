@@ -1,0 +1,170 @@
+[
+[
+"__login",
+"login",
+"",
+"简体中文"
+],
+[
+"/audit",
+"page.main",
+"共 3312 条记录",
+"共 3313 条记录"
+],
+[
+"/audit",
+"page.main",
+"",
+"2026/10/23 22:51:20\t221546852372267008\t账号登录 | 登录会话 | 239460703906381824 | 成功 | PASSWORD_ACCEPTED | bbc3f53e-f8c7-40ca-9968-c0e67d59e7fa | 查看"
+],
+[
+"/audit",
+"page.main",
+"2026/10/23 16:20:53\t221546852372267008\t账号登录 | 登录会话 | 239362440997978112 | 成功 | PASSWORD_ACCEPTED | 9d6eb1fe-ca34-4133-8056-6be42fac1c3e | 查看",
+""
+],
+[
+"/audit",
+"detail.main",
+"共 3312 条记录",
+"共 3313 条记录"
+],
+[
+"/audit",
+"detail.main",
+"",
+"2026/10/23 22:51:20\t221546852372267008\t账号登录 | 登录会话 | 239460703906381824 | 成功 | PASSWORD_ACCEPTED | bbc3f53e-f8c7-40ca-9968-c0e67d59e7fa | 查看"
+],
+[
+"/audit",
+"detail.main",
+"2026/10/23 16:20:53\t221546852372267008\t账号登录 | 登录会话 | 239362440997978112 | 成功 | PASSWORD_ACCEPTED | 9d6eb1fe-ca34-4133-8056-6be42fac1c3e | 查看",
+""
+],
+[
+"/notification-providers",
+"page.main",
+"最近拉取 2026/10/23 22:47:12",
+"最近拉取 2026/10/23 22:54:21"
+],
+[
+"/notification-providers",
+"detail.main",
+"最近拉取 2026/10/23 22:47:12",
+"最近拉取 2026/10/23 22:54:21"
+],
+[
+"/commercial/workbench",
+"page.main",
+"统计时点 2026-10-23 22:49",
+"统计时点 2026-10-23 22:56"
+],
+[
+"/commercial/workbench",
+"detail.main",
+"统计时点 2026-10-23 22:49",
+"统计时点 2026-10-23 22:56"
+],
+[
+"/workflow/my-tasks",
+"page.main",
+"10 小时前",
+"11 小时前"
+],
+[
+"/workflow/started",
+"page.main",
+"变更复盘 · 等待 你\t10 小时\t待你处理",
+"变更复盘 · 等待 你\t11 小时\t待你处理"
+],
+[
+"/workflow/started",
+"page.main",
+"上线审批 · 等待 你\t10 小时\t待你处理",
+"上线审批 · 等待 你\t11 小时\t待你处理"
+],
+[
+"/workflow/started",
+"page.main",
+"合同变更复盘 v1 · 10-23 11:56 发起 · 已用 10 小时",
+"合同变更复盘 v1 · 10-23 11:56 发起 · 已用 11 小时"
+],
+[
+"/workflow/started",
+"page.main",
+"变更复盘 等待 你 处理 · 已 10 小时",
+"变更复盘 等待 你 处理 · 已 11 小时"
+],
+[
+"/i18n/translations",
+"page.main",
+"Translations",
+"翻译"
+],
+[
+"/i18n/translations",
+"page.main",
+"All",
+"全部"
+],
+[
+"/i18n/translations",
+"page.main",
+"Untranslated",
+"未翻译"
+],
+[
+"/i18n/translations",
+"page.main",
+"Source changed",
+"基准已变更"
+],
+[
+"/i18n/translations",
+"page.main",
+"1 issue | Import keys | Publish | This application has no keys yet | Create its namespaces, then import the English base file exported from code. | Import keys",
+"1 个问题 | 导入 key | 发布 | 这个应用还没有 key | 先创建命名空间，再导入开发从代码导出的英文基准文件 | 导入 key"
+],
+[
+"/i18n/releases",
+"page.main",
+"Releases",
+"发布记录"
+],
+[
+"/i18n/releases",
+"page.main",
+"Not published yet | Release\tStatus\tChanges\tPublished by\tTime | No releases yet",
+"尚未发布 | 发布\t状态\t改动\t发布人\t时间 | 还没有发布"
+],
+[
+"/i18n/settings",
+"page.main",
+"Languages & applications | Applications",
+"语言与应用 | 应用"
+],
+[
+"/i18n/settings",
+"page.main",
+"Languages",
+"语言"
+],
+[
+"/i18n/settings",
+"page.main",
+"New application | Application\tDefault language\tLive release\tRequired coverage\tLast modified",
+"新建应用 | 应用\t默认语言\t线上版本\t必须语言覆盖\t最近修改"
+],
+[
+"/i18n/settings",
+"page.main",
+"English\tNot published\t—\t#1 10-23 12:22",
+"English\t未发布\t—\t#1 10-23 12:22"
+],
+[
+"/i18n/settings",
+"page.main",
+"English\tNot published\t—\t#1 10-23 12:22",
+"English\t未发布\t—\t#1 10-23 12:22"
+]
+]

@@ -1,6 +1,9 @@
 import type {
   ActionRun, FileUploadConfig, FormDefinition, FrozenTemplate, InstanceDetail, Problem, WorkflowFile, WorkflowGraph,
 } from './workflowTypes.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('workflow');
 
 /**
  * 工作流附件的纯逻辑（technique 第 5 节、接口 #20 #26—#28）：上传状态机、临时地址与 Header 守卫、数量与类型预检、
@@ -15,7 +18,7 @@ export const fileAddressPattern = /^\/files\/v1\/[1-9][0-9]{0,18}$/;
 
 /** 按固定格式由文件 ID 生成文件地址；ID 非法时抛错。 */
 export function fileAddressOf(fileId: string): string {
-  if (!fileIdPattern.test(fileId)) throw new Error('文件 ID 无效');
+  if (!fileIdPattern.test(fileId)) throw new Error(t('file.error.invalidId'));
   return `/files/v1/${fileId}`;
 }
 
@@ -39,7 +42,7 @@ export interface DownloadGrant { url: string; expiresAt: string; disposition: Fi
 const object = (value: unknown): Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 
-function invalid(): never { throw new Error('文件接口响应无效'); }
+function invalid(): never { throw new Error(t('file.error.invalidResponse')); }
 
 export function decodeUploadGrant(value: unknown): UploadGrant {
   const item = object(value); const authorization = object(item.authorization);
@@ -82,9 +85,9 @@ export function decodeFiles(value: unknown): WorkflowFile[] {
 /** 临时地址：只接受 HTTPS、无账号口令与片段、未过期（与入驻上传一致）。 */
 export function safeTransferUrl(grant: { url: string; expiresAt: string }, now = Date.now()): string {
   let url: URL;
-  try { url = new URL(grant.url); } catch { throw new Error('文件授权已过期或无效，请重新获取'); }
+  try { url = new URL(grant.url); } catch { throw new Error(t('file.error.grantExpired')); }
   if (url.protocol !== 'https:' || url.username || url.password || url.hash || grant.url.length > 8192 || !(Date.parse(grant.expiresAt) > now))
-    throw new Error('文件授权已过期或无效，请重新获取');
+    throw new Error(t('file.error.grantExpired'));
   return url.href;
 }
 
@@ -92,7 +95,7 @@ export function safeTransferUrl(grant: { url: string; expiresAt: string }, now =
 export function safeUploadHeaders(headers: Record<string, string>): Headers {
   const result = new Headers();
   for (const [name, value] of Object.entries(headers)) {
-    if (/^(authorization|cookie|proxy-|x-gateway-|x-caller-)/i.test(name)) throw new Error('上传授权包含不允许的请求头');
+    if (/^(authorization|cookie|proxy-|x-gateway-|x-caller-)/i.test(name)) throw new Error(t('file.error.forbiddenHeader'));
     result.set(name, value);
   }
   return result;
@@ -114,20 +117,20 @@ export function mimeAllowed(mime: string, allowed: string[] | undefined): boolea
 /** 选择文件前的预检：空文件、文件名长度、类型与上限；返回第一个问题，通过为 null。 */
 export function preCheckFiles(rules: FileRules, existingCount: number, files: LocalFile[]): string | null {
   if (!files.length) return null;
-  if (rules.maxFiles !== undefined && existingCount + files.length > rules.maxFiles) return `最多 ${rules.maxFiles} 个文件，已有 ${existingCount} 个`;
+  if (rules.maxFiles !== undefined && existingCount + files.length > rules.maxFiles) return t('file.check.maxWithExisting', { max: rules.maxFiles, existing: existingCount });
   for (const file of files) {
-    if (file.size <= 0) return `「${file.name}」是空文件`;
-    if ([...file.name].length > 255) return `「${file.name.slice(0, 20)}…」文件名超过 255 个字符`;
-    if (!mimeAllowed(declaredMime(file), rules.mimeTypes)) return `「${file.name}」类型 ${declaredMime(file)} 不在允许范围（${rules.mimeTypes!.join('、')}）`;
+    if (file.size <= 0) return t('file.check.empty', { name: file.name });
+    if ([...file.name].length > 255) return t('file.check.nameTooLong', { name: file.name.slice(0, 20) });
+    if (!mimeAllowed(declaredMime(file), rules.mimeTypes)) return t('file.check.type', { name: file.name, mime: declaredMime(file), allowed: rules.mimeTypes!.join(t('list.comma')) });
   }
   return null;
 }
 
 /** 已选文件数量是否满足规则（提交前预检）。 */
 export function countProblem(rules: FileRules, count: number, required: boolean): string | null {
-  if (!count) return required ? '必填' : null;
-  if (rules.minFiles !== undefined && count < rules.minFiles) return `至少 ${rules.minFiles} 个文件`;
-  if (rules.maxFiles !== undefined && count > rules.maxFiles) return `最多 ${rules.maxFiles} 个文件`;
+  if (!count) return required ? t('form.value.required') : null;
+  if (rules.minFiles !== undefined && count < rules.minFiles) return t('file.check.min', { min: rules.minFiles });
+  if (rules.maxFiles !== undefined && count > rules.maxFiles) return t('file.check.max', { max: rules.maxFiles });
   return null;
 }
 
@@ -138,8 +141,8 @@ export function fileAddressesOf(value: unknown): string[] {
 
 /** 规则文字：“application/pdf · 1—5 个”。 */
 export function rulesHint(rules: FileRules): string {
-  return [rules.mimeTypes?.length ? rules.mimeTypes.join('、') : '类型不限',
-    rules.minFiles !== undefined || rules.maxFiles !== undefined ? `${rules.minFiles ?? 0}—${rules.maxFiles ?? '∞'} 个` : ''].filter(Boolean).join(' · ');
+  return [rules.mimeTypes?.length ? rules.mimeTypes.join(t('list.comma')) : t('file.rules.anyType'),
+    rules.minFiles !== undefined || rules.maxFiles !== undefined ? t('file.rules.range', { min: rules.minFiles ?? 0, max: rules.maxFiles ?? '∞' }) : ''].filter(Boolean).join(' · ');
 }
 
 /** 表单中 FILE 字段的 key。 */
@@ -171,7 +174,7 @@ export const scanPending = (file: WorkflowFile | undefined) => !file?.scanStatus
 export const scanFailed = (file: WorkflowFile | undefined) => file?.scanStatus === 'QUARANTINED' || file?.scanStatus === 'REJECTED';
 
 /** 已确认未通过安全检查的文件在上传区与 FILE 字段的提示；发起与完成同一规则，须删除后才能提交。 */
-export const SCAN_FAILED_TEXT = '未通过安全检查，请删除后重新上传';
+export const scanFailedText = () => t('file.scanFailedText');
 
 /**
  * 422 中落在单个文件元素上的错误：字段路径为 {root}.{key}[i]（上传动作 key 为 files），按本次提交值取回地址。
@@ -226,9 +229,7 @@ export function previewKind(mime: string | null | undefined): PreviewKind {
 /** 只有扫描通过的文件可以下载与预览。 */
 export const downloadable = (file: WorkflowFile | undefined) => file?.scanStatus === 'AVAILABLE';
 
-export const scanStatusLabels: Record<NonNullable<WorkflowFile['scanStatus']>, string> = {
-  PENDING_SCAN: '安全检查中', SCANNING: '安全检查中', AVAILABLE: '已通过安全检查', QUARANTINED: '未通过安全检查', REJECTED: '未通过安全检查',
-};
+export const scanStatusLabel = (status: NonNullable<WorkflowFile['scanStatus']>) => enumLabel(t, 'enum.scanStatus', status);
 export const scanStatusColors: Record<NonNullable<WorkflowFile['scanStatus']>, string> = {
   PENDING_SCAN: 'processing', SCANNING: 'processing', AVAILABLE: 'success', QUARANTINED: 'error', REJECTED: 'error',
 };
@@ -259,19 +260,19 @@ export async function uploadOne(file: LocalFile & Blob, paths: { uploads: string
   post: WorkflowPost, transport: Transport, onPhase: (phase: UploadPhase) => void = () => {}): Promise<string> {
   onPhase('UPLOADING');
   const grant = await post(paths.uploads, { filename: file.name, mimeType: declaredMime(file), sizeBytes: String(file.size) }, decodeUploadGrant);
-  if (grant.authorization.method !== 'PUT') throw new Error('上传授权无效');
+  if (grant.authorization.method !== 'PUT') throw new Error(t('file.error.invalidGrant'));
   const url = safeTransferUrl(grant.authorization);
   const headers = safeUploadHeaders(grant.authorization.headers);
   let response: { ok: boolean; status: number };
   try {
     response = await transport(url, { method: 'PUT', body: file, headers, credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer' });
   } catch {
-    throw new Error('文件传输未确认，请重新上传');
+    throw new Error(t('file.error.transferUnconfirmed'));
   }
-  if (!response.ok) throw new Error(`文件传输失败（${response.status}），请重新上传`);
+  if (!response.ok) throw new Error(t('file.error.transferFailed', { status: response.status }));
   onPhase('COMPLETING');
   const receipt = await post(paths.completion(grant.uploadId), undefined, decodeUploadReceipt);
-  if (receipt.uploadId !== grant.uploadId) throw new Error('文件完成响应无效');
+  if (receipt.uploadId !== grant.uploadId) throw new Error(t('file.error.invalidReceipt'));
   onPhase('DONE');
   return receipt.fileAddress;
 }
@@ -288,8 +289,8 @@ export function structureProblems(errors: readonly { field: string; message: str
     const nodeKey = node ? graph.nodes[Number(node[1])]?.key ?? null : null;
     const edgeKey = edge ? graph.edges[Number(edge[1])]?.key ?? null : null;
     const fieldKey = field ? startForm.fields[Number(field[1])]?.key : undefined;
-    const where = fieldKey ? `启动表单字段 ${fieldKey}（${error.field}）` : error.field;
-    return { code: 'STRUCTURE_INVALID', nodeKey, edgeKey, itemKey: fieldKey ?? null, message: `${where}${fieldKey ? '' : ' '}${error.message}` };
+    const message = fieldKey ? t('file.structureField', { key: fieldKey, field: error.field, message: error.message }) : `${error.field} ${error.message}`;
+    return { code: 'STRUCTURE_INVALID', nodeKey, edgeKey, itemKey: fieldKey ?? null, message };
   });
 }
 

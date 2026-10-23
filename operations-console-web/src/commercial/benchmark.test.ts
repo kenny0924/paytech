@@ -23,16 +23,16 @@ const capability = (agreementCapabilityId: string, capabilityCode: string, condi
 const catalog = [{ capabilityCode: 'CARD', paymentMethodCode: 'CARD' }, { capabilityCode: 'APPLE_PAY', paymentMethodCode: 'APPLE_PAY' }] as CatalogCapability[];
 
 test('AC-07 破标展示：低于模板标红「破标」，无来源「无标准可比」，不低于不标；悬停显示模板值', () => {
-  assert.deepEqual(benchmarkMark(below), { label: '破标', color: 'red', below: true });
-  assert.deepEqual(benchmarkMark({ ...below, status: 'NO_BENCHMARK' }), { label: '无标准可比', color: 'default', below: false });
+  assert.deepEqual(benchmarkMark(below), { label: 'Below Standard', color: 'red', below: true });
+  assert.deepEqual(benchmarkMark({ ...below, status: 'NO_BENCHMARK' }), { label: 'No Standard to Compare', color: 'default', below: false });
   assert.equal(benchmarkMark({ ...below, status: 'AT_OR_ABOVE' }), null);
   assert.equal(benchmarkMark(null), null);
-  assert.equal(benchmarkDetail(below), '模板值：费率 2.9% · 固定 0.30 · 最高 5.00');
-  assert.match(benchmarkDetail({ ...below, status: 'NO_BENCHMARK' }) ?? '', /没有可比较/);
+  assert.equal(benchmarkDetail(below), 'Template values: Rate 2.9% · Fixed 0.30 · Max 5.00');
+  assert.match(benchmarkDetail({ ...below, status: 'NO_BENCHMARK' }) ?? '', /no comparable component/);
   assert.equal(belowStandardComponents([price('AED', 'A', 'CARD', [], below), price('USD', 'A', 'CARD', [], { ...below, status: 'AT_OR_ABOVE' })]), 1);
   assert.equal(cellBelowStandard([component(null), component(below)]), true);
   assert.equal(sourceLabel({ sourceTemplatePriceId: '9' }, '标准价 v2'), '标准价 v2');
-  assert.equal(sourceLabel({ sourceTemplatePriceId: '9' }, null), '标准价目');
+  assert.equal(sourceLabel({ sourceTemplatePriceId: '9' }, null), 'Standard Price Template');
   assert.equal(sourceLabel({ sourceTemplatePriceId: null }, '标准价 v2'), null, '手工行无来源');
 });
 
@@ -46,8 +46,8 @@ test('相关性：画像条件与接受条件相容（同维度交集，未写�
   assert.equal(priceMatchesCapability(price('USD', 'P', 'APPLE_PAY'), card, catalog), false);
   assert.equal(priceMatchesCapability({ ...price('USD', 'P', 'CARD'), entityNo: 'SA001' }, card, catalog), false);
   assert.equal(relevanceText({ entityNo: 'AE001', currency: 'AED', pricingProfileCode: 'CARD_AMEX', reasonCode: 'CONDITION_OUT_OF_SCOPE', message: null }),
-    'AE001 / AED / CARD_AMEX：画像条件超出接受条件');
-  assert.equal(relevanceText({ entityNo: 'AE001', currency: 'AED', pricingProfileCode: 'X', reasonCode: 'NEW_CODE', message: '说明' }), 'AE001 / AED / X：NEW_CODE（说明）');
+    'AE001 / AED / CARD_AMEX: Profile conditions exceed the accepted conditions');
+  assert.equal(relevanceText({ entityNo: 'AE001', currency: 'AED', pricingProfileCode: 'X', reasonCode: 'NEW_CODE', message: '说明' }), 'AE001 / AED / X: NEW_CODE (说明)');
 });
 
 test('AC-12 按开通项分组：开通项顺序 → 其他价格 → 未对应开通项（相关性提示或挂不上）', () => {

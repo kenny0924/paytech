@@ -7,16 +7,17 @@ import { useErrorNotification } from '../feedback/useErrorNotification';
 import { configurationCommand } from './configurationModel';
 import type { ConfigurationCommand } from './configurationModel';
 import type { ConfigurationMutation } from './types';
+import { useT } from '../i18n/react';
 
 export function useConfigurationForm(onAuthorizationChanged: () => void, form?: FormInstance) {
-  const { modal, message } = App.useApp(); const notify = useErrorNotification();
+  const { modal, message } = App.useApp(); const notify = useErrorNotification(); const t = useT('gateway');
   const [dirty, setDirty] = useState(false); const [saving, setSaving] = useState(false);
   const [conflict, setConflict] = useState(false); const busy = useRef(false); const last = useRef<ConfigurationCommand>(undefined);
   const [fieldErrors, setFieldErrors] = useState<ApiError['fieldErrors']>([]);
   const confirmLeave = useCallback(() => new Promise<boolean>(resolve => {
-    modal.confirm({ title: '离开当前编辑？', content: '尚未保存的修改将丢失。', okText: '离开', cancelText: '继续编辑',
+    modal.confirm({ title: t('config.leave.title'), content: t('config.leave.content'), okText: t('config.leave.confirm'), cancelText: t('config.leave.stay'),
       onOk: () => resolve(true), onCancel: () => resolve(false) });
-  }), [modal]);
+  }), [modal, t]);
   useUnsavedRuleGuard(dirty, confirmLeave);
   async function save<T = ConfigurationMutation>(path: string, method: ConfigurationCommand['method'], payload: unknown, decode?: (value: unknown) => T) {
     if (busy.current || conflict) return null;
@@ -32,7 +33,7 @@ export function useConfigurationForm(onAuthorizationChanged: () => void, form?: 
         throw new ApiError(502, 'INVALID_RESPONSE');
       }
       setDirty(false); setConflict(false); setFieldErrors([]); last.current = undefined;
-      void message.success('Platform 当前配置已保存');
+      void message.success(t('config.saved'));
       return result as T;
     } catch (error) {
       if (error instanceof ApiError) {
@@ -43,7 +44,7 @@ export function useConfigurationForm(onAuthorizationChanged: () => void, form?: 
           name: item.field.replace(/\[(\d+)\]/g, '.$1').split('.').map(part => /^\d+$/.test(part) ? Number(part) : part),
           errors: [item.message] })));
       }
-      notify(error, '配置保存失败'); return null;
+      notify(error, t('config.saveFailed')); return null;
     } finally { busy.current = false; setSaving(false); }
   }
   return { dirty, setDirty, saving, conflict, fieldErrors, save, reset: () => { setDirty(false); setConflict(false); setFieldErrors([]); last.current = undefined; } };

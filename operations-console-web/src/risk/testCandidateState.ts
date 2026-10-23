@@ -1,5 +1,6 @@
 import type { ReleaseStaticCheck, TestCandidateDetail } from './riskApiModels.ts';
 import { validateKey } from './riskCommands.ts';
+import { translator } from '../i18n/index.ts';
 
 export type CandidatePresentation =
   | { kind: 'READY_TO_VALIDATE'; expectedVersion: 1 }
@@ -27,5 +28,5 @@ export function classifyTestCandidate(detail: TestCandidateDetail, currentActorI
   if (detail.status === 'REJECTED' && detail.version === 3) {
     return { kind: 'REJECTED', checks: detail.staticChecks };
   }
-  throw new Error('候选版本状态无法识别，请刷新后重试。');
+  throw new Error(translator('risk')('candidate.unknownState'));
 }

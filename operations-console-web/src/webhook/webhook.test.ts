@@ -2,11 +2,15 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ApiError } from '../api/session.ts';
 import {
-  clientAccessText, decodeClient, decodeDeliveryDetail, decodeDeliverySummary, decodeEndpointCreated, decodeEndpointMutation,
-  decodeEndpoints, decodeReplay, decodeSecretRotation, decodeTestResult, defaultDeliveryRange, deliveryFilters, deliveryStatusLabels,
-  endpointBody, endpointStatusLabels, eventTypes, failureText, hostAndPath, isReplayable, newestAttemptsFirst, readWebhookQuery,
+  clientAccessOk, clientAccessText, decodeClient, decodeDeliveryDetail, decodeDeliverySummary, decodeEndpointCreated, decodeEndpointMutation,
+  decodeEndpoints, decodeReplay, decodeSecretRotation, decodeTestResult, defaultDeliveryRange, deliveryFilters, deliveryStatuses,
+  endpointBody, eventTypes, failureText, hostAndPath, isReplayable, newestAttemptsFirst, readWebhookQuery,
   replayBody, rotateBody, secretPattern, statusBody, testEndpointRequest, testResultText, urlErrorMessage, webhookCommand,
 } from './webhook.ts';
+import { enumLabel } from '../i18n/index.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('webhook');
 
 const time = '2026-10-16T06:20:00Z';
 const secret = `whsec_${'A'.repeat(40)}b-_`;
@@ -63,18 +67,24 @@ test('测试结果、投递与 Replay 解码', () => {
   assert.throws(() => decodeReplay({ deliveryId: '' }), ApiError);
 });
 
-test('中文映射：状态、失败代码与测试结果摘要', () => {
-  assert.equal(endpointStatusLabels.DISABLED, '已停用');
-  assert.deepEqual(Object.values(deliveryStatusLabels), ['待投递', '处理中', '等待重试', '已送达', '已放弃', '已取消']);
-  assert.equal(failureText('HTTP_STATUS', 503), '对方返回 HTTP 503');
-  assert.equal(failureText('BLOCKED_ADDRESS', null), '地址解析到内网，已拦截');
-  assert.equal(failureText('INTERRUPTED', null), '发送中断（结果未知）');
-  assert.equal(testResultText({ result: 'SUCCEEDED', httpStatus: 204, failureCode: null, durationMs: 136 }), '成功 · HTTP 204 · 136 ms');
-  assert.equal(testResultText({ result: 'FAILED', httpStatus: 503, failureCode: 'HTTP_STATUS', durationMs: 812 }), '失败 · 对方返回 HTTP 503 · 耗时 812 ms');
-  assert.equal(testResultText({ result: 'FAILED', httpStatus: null, failureCode: 'TIMEOUT', durationMs: null }), '失败 · 超时');
-  assert.equal(clientAccessText({ ownerStatus: 'ACTIVE', securityStatus: 'ACTIVE' }), '正常');
-  assert.equal(clientAccessText({ ownerStatus: 'ACTIVE', securityStatus: 'SUSPENDED' }), '平台访问已暂停');
-  assert.equal(clientAccessText({ ownerStatus: 'PENDING', securityStatus: 'ACTIVE' }), '平台访问未开通');
+test('显示文案：状态、失败代码与测试结果摘要', () => {
+  assert.equal(enumLabel(t, 'enum.endpointStatus', 'DISABLED'), 'Disabled');
+  assert.deepEqual(deliveryStatuses.map(status => enumLabel(t, 'enum.deliveryStatus', status)),
+    ['Pending', 'Processing', 'Waiting to Retry', 'Delivered', 'Abandoned', 'Cancelled']);
+  assert.equal(failureText('HTTP_STATUS', 503), 'Endpoint returned HTTP 503');
+  assert.equal(failureText('HTTP_STATUS', null), 'Endpoint returned HTTP —');
+  assert.equal(failureText(null, 502), 'HTTP 502');
+  assert.equal(failureText('BLOCKED_ADDRESS', null), t('failure.BLOCKED_ADDRESS'));
+  assert.equal(failureText('INTERRUPTED', null), 'Sending interrupted (result unknown)');
+  assert.equal(testResultText({ result: 'SUCCEEDED', httpStatus: 204, failureCode: null, durationMs: 136 }), 'Succeeded · HTTP 204 · 136 ms');
+  assert.equal(testResultText({ result: 'FAILED', httpStatus: 503, failureCode: 'HTTP_STATUS', durationMs: 812 }), 'Failed · Endpoint returned HTTP 503 · took 812 ms');
+  assert.equal(testResultText({ result: 'FAILED', httpStatus: null, failureCode: 'TIMEOUT', durationMs: null }), 'Failed · Timed out');
+  assert.equal(clientAccessText({ ownerStatus: 'ACTIVE', securityStatus: 'ACTIVE' }), t('clientAccess.normal'));
+  assert.equal(clientAccessText({ ownerStatus: 'ACTIVE', securityStatus: 'SUSPENDED' }), 'Platform access suspended');
+  assert.equal(clientAccessText({ ownerStatus: 'PENDING', securityStatus: 'ACTIVE' }), 'Platform access not activated');
+  assert.equal(clientAccessText({ ownerStatus: 'TERMINATED', securityStatus: 'ACTIVE' }), 'Platform access terminated');
+  assert.equal(clientAccessOk({ ownerStatus: 'ACTIVE', securityStatus: 'ACTIVE' }), true);
+  assert.equal(clientAccessOk({ ownerStatus: 'SUSPENDED', securityStatus: 'ACTIVE' }), false);
 });
 
 test('只有已结束的投递可以 Replay；尝试最新在前', () => {
@@ -93,9 +103,9 @@ test('投递时间范围默认最近 24 小时，转 UTC，拒绝超过 31 天�
   assert.equal(new Date(filters.createdTo).getTime() - new Date(filters.createdFrom).getTime(), 86_400_000);
   assert.ok(filters.createdFrom.endsWith('Z'));
   assert.doesNotThrow(() => deliveryFilters('1', { timeRange: { preset: 'CUSTOM', start: '2026-09-15T00:00:00', end: '2026-10-16T00:00:00' } }, now));
-  assert.throws(() => deliveryFilters('1', { timeRange: { preset: 'CUSTOM', start: '2026-09-01T00:00:00', end: '2026-10-16T00:00:00' } }, now), /31 天/);
-  assert.throws(() => deliveryFilters('1', { timeRange: { preset: 'CUSTOM', start: '2026-10-16T00:00:00', end: '2026-10-15T00:00:00' } }, now), /晚于/);
-  assert.throws(() => deliveryFilters('1', { timeRange: { preset: 'CUSTOM', start: '2026-10-16T00:00:00' } }, now), /完整/);
+  assert.throws(() => deliveryFilters('1', { timeRange: { preset: 'CUSTOM', start: '2026-09-01T00:00:00', end: '2026-10-16T00:00:00' } }, now), { message: t('filters.rangeTooLong', { days: 31 }) });
+  assert.throws(() => deliveryFilters('1', { timeRange: { preset: 'CUSTOM', start: '2026-10-16T00:00:00', end: '2026-10-15T00:00:00' } }, now), { message: t('filters.endBeforeStart') });
+  assert.throws(() => deliveryFilters('1', { timeRange: { preset: 'CUSTOM', start: '2026-10-16T00:00:00' } }, now), { message: t('filters.incompleteRange') });
 });
 
 test('请求体：事件按固定顺序去重、原因去空白；测试事件不带请求体', () => {
@@ -119,9 +129,9 @@ test('URL 查询参数恢复 Client 与标签页；地址错误码回填地址�
   assert.deepEqual(readWebhookQuery(new URLSearchParams('clientId=abc&tab=x')), { clientId: null, tab: 'endpoints' });
   assert.equal(hostAndPath('https://erp.acme.example/webhooks/refunds?x=1'), 'erp.acme.example/webhooks/refunds');
   assert.equal(hostAndPath('https://hooks.acme.example/'), 'hooks.acme.example');
-  assert.equal(urlErrorMessage(new ApiError(400, 'WEBHOOK_URL_NOT_PUBLIC', '', '')), '端点地址指向内网或保留地址');
-  assert.equal(urlErrorMessage(new ApiError(400, 'WEBHOOK_URL_UNRESOLVABLE', '', '')), '端点主机名无法解析');
-  assert.equal(urlErrorMessage(new ApiError(400, 'WEBHOOK_URL_NOT_ALLOWED', '', '')), '地址格式不正确或协议不允许');
+  assert.equal(urlErrorMessage(new ApiError(400, 'WEBHOOK_URL_NOT_PUBLIC', '', '')), 'The endpoint URL points to an internal or reserved address.');
+  assert.equal(urlErrorMessage(new ApiError(400, 'WEBHOOK_URL_UNRESOLVABLE', '', '')), t('urlError.WEBHOOK_URL_UNRESOLVABLE'));
+  assert.equal(urlErrorMessage(new ApiError(400, 'WEBHOOK_URL_NOT_ALLOWED', '', '')), t('urlError.WEBHOOK_URL_NOT_ALLOWED'));
   assert.equal(urlErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', '', '端点地址指向内网或保留地址')), null);
   assert.equal(urlErrorMessage(new ApiError(409, 'WEBHOOK_URL_NOT_PUBLIC', '', '')), null);
 });

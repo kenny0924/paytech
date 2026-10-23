@@ -1,5 +1,9 @@
 import { ApiError } from '../api/session.ts';
 import type { ConsoleResource, PagingResponseBody } from '../api/types.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+import type { Translate } from '../i18n/index.ts';
+
+const t = translator('recon');
 
 /** Operations BFF 对账路径（浏览器路径 = /finance + reconciliation 路径，块 123）。 */
 const base = '/finance/reconciliation/v1';
@@ -239,47 +243,51 @@ export function decodeSummary(currency: string) {
 
 // ---------- 显示名 ----------
 
-export const clearingStatusLabels: Record<string, string> = { ACTIVE: '启用', INACTIVE: '停用' };
-export const cashStatusLabels: Record<string, string> = { PENDING_VERIFICATION: '待复核', ACTIVE: '有效', SUSPENDED: '暂停', CLOSED: '已关闭' };
-export const accountPurposeLabels: Record<string, string> = { CHANNEL_SETTLEMENT: '渠道结算', PAYOUT: '出款', TAX: '缴税' };
-export const entityTypeLabels: Record<string, string> = { OPERATING_ENTITY: '经营主体', FINANCE_ENTITY: '财务主体' };
-export const statementStatusLabels: Record<string, string> = {
-  RECEIVING: '接收中', REJECTED: '已拒绝', MATCHING: '匹配中', VOIDED: '已作废', RECONCILED: '已对平', CASH_CONFIRMED: '已到账',
-};
-export const bankStatementStatusLabels: Record<string, string> = { RECEIVING: '接收中', IMPORTED: '已导入', REJECTED: '已拒绝' };
-export const lineMatchStatusLabels: Record<string, string> = {
-  UNMATCHED: '未匹配', PARTIALLY_MATCHED: '部分匹配', MATCHED: '已匹配', EXCEPTION: '异常', SUSPENDED: '暂记',
-};
+/** 一组对账枚举：显示名在 recon.enum.<type>.<code>（reconLabel 取值，未知 Code 原样显示），codes 为下拉选项顺序。 */
+export interface ReconEnum { type: string; codes: readonly string[] }
+const reconEnum = (type: string, codes: readonly string[]): ReconEnum => ({ type, codes });
+
+export const clearingStatusEnum = reconEnum('clearingStatus', ['ACTIVE', 'INACTIVE']);
+export const cashStatusEnum = reconEnum('cashStatus', ['PENDING_VERIFICATION', 'ACTIVE', 'SUSPENDED', 'CLOSED']);
+/** 银行账户申请关闭、待复核时的附加标签（颜色沿用 PENDING_VERIFICATION）。 */
+export const closePendingEnum = reconEnum('closePending', ['PENDING_VERIFICATION']);
+export const accountPurposeEnum = reconEnum('accountPurpose', ['CHANNEL_SETTLEMENT', 'PAYOUT', 'TAX']);
+export const entityTypeEnum = reconEnum('entityType', ['OPERATING_ENTITY', 'FINANCE_ENTITY']);
+export const statementStatusEnum = reconEnum('statementStatus', ['RECEIVING', 'REJECTED', 'MATCHING', 'VOIDED', 'RECONCILED', 'CASH_CONFIRMED']);
+export const bankStatementStatusEnum = reconEnum('bankStatementStatus', ['RECEIVING', 'IMPORTED', 'REJECTED']);
+export const lineMatchStatusEnum = reconEnum('lineMatchStatus', ['UNMATCHED', 'PARTIALLY_MATCHED', 'MATCHED', 'EXCEPTION', 'SUSPENDED']);
 /** 渠道账单行只有三种匹配状态（接口只接受这三种筛选）。 */
-export const channelLineMatchStatusLabels: Record<string, string> = { UNMATCHED: '未匹配', MATCHED: '已匹配', EXCEPTION: '异常' };
-export const lineTypeLabels: Record<string, string> = { PAYMENT: '收款', REFUND: '退款', CHARGEBACK: '拒付', FEE: '费用', ADJUSTMENT: '调整' };
-export const directionLabels: Record<string, string> = { CREDIT: '贷（收）', DEBIT: '借（付）', RECEIVABLE: '应收', PAYABLE: '应付', NONE: '无' };
-export const platformTxnStatusLabels: Record<string, string> = {
-  OPEN: '未匹配', PARTIALLY_MATCHED: '部分匹配', MATCHED: '已匹配', SETTLED: '已结算', EXCEPTION: '异常',
-};
-export const movementStatusLabels: Record<string, string> = {
-  OPEN: '待到账', PARTIALLY_CONFIRMED: '部分到账', CONFIRMED: '已到账', CANCELLED: '已取消', EXCEPTION: '异常',
-};
-export const bankMatchStatusLabels: Record<string, string> = { PROPOSED: '建议', CONFIRMED: '已确认', REJECTED: '已拒绝' };
-export const exceptionStatusLabels: Record<string, string> = { OPEN: '待处置', UNDER_REVIEW: '待复核', RESOLVED: '已解决', AUTO_CLOSED: '自动关闭' };
-export const exceptionTypeLabels: Record<string, string> = {
-  CHANNEL_LINE_UNMATCHED: '账单行未命中', AMBIGUOUS_REFERENCE: '交易号多条命中', AMOUNT_MISMATCH: '金额超出', DUPLICATE_SETTLEMENT: '重复结算',
-  UNEXPLAINED_ADJUSTMENT: '调整行待归类', COST_DEVIATION: '渠道费偏差', PLATFORM_ITEM_UNSETTLED: '平台流水未结算', BANK_LINE_UNMATCHED: '银行流水未匹配',
-  BANK_AMOUNT_MISMATCH: '到账金额不符', BANK_MOVEMENT_OVERDUE: '应到未到', BANK_STATEMENT_GAP: '对账单不连续', LATE_DEBIT: '迟到扣款',
-};
-export const reconLayerLabels: Record<string, string> = { TRANSACTION: '交易层', BANK: '银行层' };
-export const sourceTypeLabels: Record<string, string> = {
-  CHANNEL_STATEMENT: '渠道账单', CHANNEL_STATEMENT_LINE: '渠道账单行', PLATFORM_TXN: '平台流水', BANK_STATEMENT: '银行对账单',
-  BANK_STATEMENT_LINE: '银行流水', EXPECTED_BANK_MOVEMENT: '预期银行流水',
-};
-export const resolutionTypeLabels: Record<string, string> = { RE_MATCH: '重新匹配', ACCEPT_TIMING_DIFFERENCE: '接受时间差', CLASSIFY: '归类' };
-export const resolutionStatusLabels: Record<string, string> = { PENDING_CHECK: '待复核', REJECTED: '已驳回', APPLIED: '已应用' };
-export const classificationLabels: Record<string, string> = {
-  CHANNEL_FEE_OTHER: '渠道其他费用', CHANNEL_RESERVE_HOLD: '渠道保证金扣留', CHANNEL_RESERVE_RELEASE: '渠道保证金释放', BANK_FEE: '银行手续费',
-  BANK_INTEREST: '银行利息', INTERNAL_TRANSFER: '自有账户调拨', UNALLOCATED_RECEIPT: '暂不能认定的收款', PAYOUT_RETURN_PENDING: '出款退回待处理',
-  RECON_DIFFERENCE: '对账差异',
-};
-export const ageBucketLabels: Record<string, string> = { D0_3: '0–3 天', D4_7: '4–7 天', D8_30: '8–30 天', D31_PLUS: '31 天以上' };
+export const channelLineMatchStatusEnum = reconEnum('lineMatchStatus', ['UNMATCHED', 'MATCHED', 'EXCEPTION']);
+export const lineTypeEnum = reconEnum('lineType', ['PAYMENT', 'REFUND', 'CHARGEBACK', 'FEE', 'ADJUSTMENT']);
+export const directionEnum = reconEnum('direction', ['CREDIT', 'DEBIT', 'RECEIVABLE', 'PAYABLE', 'NONE']);
+export const platformTxnStatusEnum = reconEnum('platformTxnStatus', ['OPEN', 'PARTIALLY_MATCHED', 'MATCHED', 'SETTLED', 'EXCEPTION']);
+export const movementStatusEnum = reconEnum('movementStatus', ['OPEN', 'PARTIALLY_CONFIRMED', 'CONFIRMED', 'CANCELLED', 'EXCEPTION']);
+export const bankMatchStatusEnum = reconEnum('bankMatchStatus', ['PROPOSED', 'CONFIRMED', 'REJECTED']);
+export const exceptionStatusEnum = reconEnum('exceptionStatus', ['OPEN', 'UNDER_REVIEW', 'RESOLVED', 'AUTO_CLOSED']);
+export const exceptionTypeEnum = reconEnum('exceptionType', [
+  'CHANNEL_LINE_UNMATCHED', 'AMBIGUOUS_REFERENCE', 'AMOUNT_MISMATCH', 'DUPLICATE_SETTLEMENT', 'UNEXPLAINED_ADJUSTMENT', 'COST_DEVIATION',
+  'PLATFORM_ITEM_UNSETTLED', 'BANK_LINE_UNMATCHED', 'BANK_AMOUNT_MISMATCH', 'BANK_MOVEMENT_OVERDUE', 'BANK_STATEMENT_GAP', 'LATE_DEBIT',
+]);
+export const reconLayerEnum = reconEnum('reconLayer', ['TRANSACTION', 'BANK']);
+export const sourceTypeEnum = reconEnum('sourceType', [
+  'CHANNEL_STATEMENT', 'CHANNEL_STATEMENT_LINE', 'PLATFORM_TXN', 'BANK_STATEMENT', 'BANK_STATEMENT_LINE', 'EXPECTED_BANK_MOVEMENT',
+]);
+export const resolutionTypeEnum = reconEnum('resolutionType', ['RE_MATCH', 'ACCEPT_TIMING_DIFFERENCE', 'CLASSIFY']);
+export const resolutionStatusEnum = reconEnum('resolutionStatus', ['PENDING_CHECK', 'REJECTED', 'APPLIED']);
+export const classificationEnum = reconEnum('classification', [
+  'CHANNEL_FEE_OTHER', 'CHANNEL_RESERVE_HOLD', 'CHANNEL_RESERVE_RELEASE', 'BANK_FEE', 'BANK_INTEREST', 'INTERNAL_TRANSFER', 'UNALLOCATED_RECEIPT',
+  'PAYOUT_RETURN_PENDING', 'RECON_DIFFERENCE',
+]);
+export const ageBucketEnum = reconEnum('ageBucket', ['D0_3', 'D4_7', 'D8_30', 'D31_PLUS']);
+
+/** 枚举显示名：t 为 recon 命名空间的翻译函数；空值返回 ''，未知 Code 原样显示。 */
+export function reconLabel(t: Translate, kind: ReconEnum, code: string | null | undefined): string {
+  return enumLabel(t, 'enum.' + kind.type, code);
+}
+/** 下拉选项：按 codes 顺序，标签为显示名。 */
+export function reconOptions(t: Translate, kind: ReconEnum): { value: string; label: string }[] {
+  return kind.codes.map(value => ({ value, label: reconLabel(t, kind, value) }));
+}
 export const reconStatusColors: Record<string, string> = {
   ACTIVE: 'green', INACTIVE: 'default', PENDING_VERIFICATION: 'gold', SUSPENDED: 'orange', CLOSED: 'default', RECEIVING: 'blue', REJECTED: 'red',
   MATCHING: 'gold', VOIDED: 'default', RECONCILED: 'green', CASH_CONFIRMED: 'green', IMPORTED: 'green', UNMATCHED: 'gold', PARTIALLY_MATCHED: 'gold',
@@ -350,10 +358,10 @@ export function compareDecimal(left: string, right: string): number {
 /** 正数金额输入：普通十进制、大于零、小数位不超过精度。 */
 export function positiveAmountError(value: string | undefined, minorUnit = 2): string | null {
   const text = value?.trim() ?? '';
-  if (!text) return '请填写金额';
-  if (!positiveDecimal.test(text)) return '金额为正的十进制数，如 100.00';
-  if (/^0(\.0+)?$/.test(text)) return '金额必须大于零';
-  if ((text.split('.')[1] ?? '').length > minorUnit) return `小数位不能超过 ${minorUnit} 位`;
+  if (!text) return t('validation.amountRequired');
+  if (!positiveDecimal.test(text)) return t('validation.amountPattern');
+  if (/^0(\.0+)?$/.test(text)) return t('validation.amountPositive');
+  if ((text.split('.')[1] ?? '').length > minorUnit) return t('validation.amountScale', { minorUnit });
   return null;
 }
 
@@ -374,7 +382,7 @@ export function manualMatchTotals(line: Pick<BankStatementLine, 'direction' | 'a
   const signed = signedSum([['0', 1], ...valid.map(item => [item.amount.trim(), item.direction === line.direction ? 1 : -1] as const)]);
   const remaining = signedSum([[line.amount, 1], [line.matchedAmount, -1], [signed, -1]]);
   const errors = allocations.map(item => positiveAmountError(item.amount, minorUnit)
-    ?? (compareDecimal(item.amount.trim(), item.remaining) > 0 ? `超过预期流水剩余 ${item.remaining}` : null));
+    ?? (compareDecimal(item.amount.trim(), item.remaining) > 0 ? t('match.exceedsRemaining', { remaining: item.remaining }) : null));
   const exceeds = compareDecimal(remaining, '0') < 0;
   const submittable = allocations.length > 0 && errors.every(error => !error) && compareDecimal(signed, '0') > 0 && !exceeds;
   return { signed, remaining, exceeds, errors, submittable };
@@ -401,7 +409,7 @@ export function parseCsv(text: string): string[][] {
       row.push(cell); rows.push(row); row = []; cell = '';
     } else cell += char;
   }
-  if (quoted) throw new CsvError('引号未闭合');
+  if (quoted) throw new CsvError(t('csv.unclosedQuote'));
   if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
   return rows.filter(cells => !(cells.length === 1 && cells[0].trim() === ''));
 }
@@ -425,16 +433,16 @@ const validDate = (value: string) => datePattern.test(value) && !Number.isNaN(Da
 function splitSections(rows: string[][], headerColumns: readonly string[], lineColumns: readonly string[]) {
   const issues: CsvIssue[] = [];
   if (rows.length < 3 || rows[0][0] !== '#HEADER' || rows[1][0] !== '#HEADER') {
-    return { issues: [{ lineNo: null, reason: '前两行必须是以 #HEADER 开头的账单头列名行与取值行' }], header: {}, columns: [], details: [] as string[][] };
+    return { issues: [{ lineNo: null, reason: t('csv.headerRows') }], header: {}, columns: [], details: [] as string[][] };
   }
   const headerNames = rows[0].slice(1).map(name => name.trim());
   const headerValues = rows[1].slice(1);
-  for (const column of headerColumns) if (!headerNames.includes(column)) issues.push({ lineNo: null, reason: `账单头缺少列 ${column}` });
-  if (headerValues.length !== headerNames.length) issues.push({ lineNo: null, reason: '账单头取值个数与列名不一致' });
+  for (const column of headerColumns) if (!headerNames.includes(column)) issues.push({ lineNo: null, reason: t('csv.headerColumnMissing', { column }) });
+  if (headerValues.length !== headerNames.length) issues.push({ lineNo: null, reason: t('csv.headerValueCount') });
   const header = Object.fromEntries(headerNames.map((name, index) => [name, (headerValues[index] ?? '').trim()]));
   const columns = rows[2].map(name => name.trim());
-  for (const column of lineColumns) if (!columns.includes(column)) issues.push({ lineNo: null, reason: `明细缺少列 ${column}` });
-  if (new Set(columns).size !== columns.length) issues.push({ lineNo: null, reason: '明细列名重复' });
+  for (const column of lineColumns) if (!columns.includes(column)) issues.push({ lineNo: null, reason: t('csv.lineColumnMissing', { column }) });
+  if (new Set(columns).size !== columns.length) issues.push({ lineNo: null, reason: t('csv.lineColumnDuplicate') });
   return { issues, header, columns, details: rows.slice(3) };
 }
 
@@ -445,13 +453,13 @@ function cellsOf(columns: readonly string[], cells: readonly string[]) {
 function checkHeaderAmount(issues: CsvIssue[], header: Record<string, string>, name: string, signed: boolean) {
   const value = header[name] ?? '';
   if (!(signed ? /^-?(0|[1-9][0-9]{0,15})(\.[0-9]{1,8})?$/ : positiveDecimal).test(value)) {
-    issues.push({ lineNo: null, reason: `账单头 ${name} 必须是${signed ? '带符号' : '非负'}十进制金额` });
+    issues.push({ lineNo: null, reason: t(signed ? 'csv.headerAmountSigned' : 'csv.headerAmountNonNegative', { name }) });
   }
 }
 
 /** 行号必须从 1 连续递增。 */
 function checkLineNo(issues: CsvIssue[], index: number, value: string) {
-  if (value !== String(index + 1)) issues.push({ lineNo: index + 1, reason: `line_no 应为 ${index + 1}，实际为「${value}」` });
+  if (value !== String(index + 1)) issues.push({ lineNo: index + 1, reason: t('csv.lineNo', { expected: index + 1, actual: value }) });
 }
 
 export interface ChannelStatementFile {
@@ -471,34 +479,34 @@ export function parseChannelStatementCsv(text: string): { file: ChannelStatement
   try { rows = parseCsv(text); } catch (error) { return { file: null, issues: [{ lineNo: null, reason: (error as Error).message }] }; }
   const { issues, header, columns, details } = splitSections(rows, channelHeaderColumns, channelLineColumns);
   if (issues.length) return { file: null, issues };
-  if (!/^[A-Z][A-Z0-9_-]{1,63}$/.test(header.clearing_account_code)) issues.push({ lineNo: null, reason: 'clearing_account_code 格式不正确' });
-  if (!visibleAscii.test(header.channel_batch_ref)) issues.push({ lineNo: null, reason: 'channel_batch_ref 必须是 1–128 位可见 ASCII' });
-  if (!validDate(header.settlement_date)) issues.push({ lineNo: null, reason: 'settlement_date 必须是 YYYY-MM-DD' });
-  if (!/^[A-Z]{3}$/.test(header.currency)) issues.push({ lineNo: null, reason: 'currency 必须是三位大写币种' });
+  if (!/^[A-Z][A-Z0-9_-]{1,63}$/.test(header.clearing_account_code)) issues.push({ lineNo: null, reason: t('csv.clearingAccountCode') });
+  if (!visibleAscii.test(header.channel_batch_ref)) issues.push({ lineNo: null, reason: t('csv.visibleAscii', { column: 'channel_batch_ref' }) });
+  if (!validDate(header.settlement_date)) issues.push({ lineNo: null, reason: t('csv.date', { column: 'settlement_date' }) });
+  if (!/^[A-Z]{3}$/.test(header.currency)) issues.push({ lineNo: null, reason: t('csv.currency') });
   checkHeaderAmount(issues, header, 'gross_amount', true);
   checkHeaderAmount(issues, header, 'fee_amount', false);
   checkHeaderAmount(issues, header, 'net_amount', false);
-  if (!['CREDIT', 'DEBIT', 'NONE'].includes(header.cash_direction)) issues.push({ lineNo: null, reason: 'cash_direction 只能为 CREDIT、DEBIT 或 NONE' });
-  if (!details.length) issues.push({ lineNo: null, reason: '没有明细行' });
-  if (details.length > maxStatementLines) issues.push({ lineNo: null, reason: `明细超过 ${maxStatementLines} 行` });
+  if (!['CREDIT', 'DEBIT', 'NONE'].includes(header.cash_direction)) issues.push({ lineNo: null, reason: t('csv.cashDirection') });
+  if (!details.length) issues.push({ lineNo: null, reason: t('csv.noLines') });
+  if (details.length > maxStatementLines) issues.push({ lineNo: null, reason: t('csv.tooManyLines', { max: maxStatementLines }) });
   const extra = columns.filter(name => !(channelLineColumns as readonly string[]).includes(name));
-  if (extra.length > 64) issues.push({ lineNo: null, reason: '渠道特有列超过 64 列' });
+  if (extra.length > 64) issues.push({ lineNo: null, reason: t('csv.tooManyExtraColumns') });
   const lines = details.map((cells, index) => {
     const v = cellsOf(columns, cells);
     const lineNo = index + 1;
     checkLineNo(issues, index, v.line_no);
-    if (cells.length !== columns.length) issues.push({ lineNo, reason: `列数应为 ${columns.length}，实际为 ${cells.length}` });
-    if (!['PAYMENT', 'REFUND', 'CHARGEBACK', 'FEE', 'ADJUSTMENT'].includes(v.line_type)) issues.push({ lineNo, reason: 'line_type 不在 PAYMENT / REFUND / CHARGEBACK / FEE / ADJUSTMENT 中' });
-    if (!['CREDIT', 'DEBIT'].includes(v.direction)) issues.push({ lineNo, reason: 'direction 只能为 CREDIT 或 DEBIT' });
-    if (!positiveDecimal.test(v.amount)) issues.push({ lineNo, reason: 'amount 必须是非负十进制金额' });
-    if (!positiveDecimal.test(v.fee_amount)) issues.push({ lineNo, reason: 'fee_amount 必须是非负十进制金额（没有填 0）' });
-    if (!!v.reference_type !== !!v.external_transaction_id) issues.push({ lineNo, reason: 'reference_type 与 external_transaction_id 必须同时填写或同时为空' });
-    if (v.reference_type && !/^[A-Z][A-Z0-9_]{0,31}$/.test(v.reference_type)) issues.push({ lineNo, reason: 'reference_type 格式不正确' });
-    if (v.external_transaction_id && !visibleAscii.test(v.external_transaction_id)) issues.push({ lineNo, reason: 'external_transaction_id 必须是 1–128 位可见 ASCII' });
-    if (!v.external_transaction_id && !['ADJUSTMENT', 'FEE'].includes(v.line_type)) issues.push({ lineNo, reason: `${v.line_type} 行必须带外部交易号` });
-    if (v.transaction_date && !validDate(v.transaction_date)) issues.push({ lineNo, reason: 'transaction_date 必须是 YYYY-MM-DD' });
+    if (cells.length !== columns.length) issues.push({ lineNo, reason: t('csv.cellCount', { expected: columns.length, actual: cells.length }) });
+    if (!['PAYMENT', 'REFUND', 'CHARGEBACK', 'FEE', 'ADJUSTMENT'].includes(v.line_type)) issues.push({ lineNo, reason: t('csv.lineType') });
+    if (!['CREDIT', 'DEBIT'].includes(v.direction)) issues.push({ lineNo, reason: t('csv.direction') });
+    if (!positiveDecimal.test(v.amount)) issues.push({ lineNo, reason: t('csv.amountNonNegative') });
+    if (!positiveDecimal.test(v.fee_amount)) issues.push({ lineNo, reason: t('csv.feeAmount') });
+    if (!!v.reference_type !== !!v.external_transaction_id) issues.push({ lineNo, reason: t('csv.referencePair') });
+    if (v.reference_type && !/^[A-Z][A-Z0-9_]{0,31}$/.test(v.reference_type)) issues.push({ lineNo, reason: t('csv.referenceType') });
+    if (v.external_transaction_id && !visibleAscii.test(v.external_transaction_id)) issues.push({ lineNo, reason: t('csv.visibleAscii', { column: 'external_transaction_id' }) });
+    if (!v.external_transaction_id && !['ADJUSTMENT', 'FEE'].includes(v.line_type)) issues.push({ lineNo, reason: t('csv.externalIdRequired', { lineType: v.line_type }) });
+    if (v.transaction_date && !validDate(v.transaction_date)) issues.push({ lineNo, reason: t('csv.date', { column: 'transaction_date' }) });
     const raw = Object.fromEntries(extra.filter(name => v[name]).map(name => [name.slice(0, 64), v[name]]));
-    if (Object.values(raw).some(value => value.length > 1024)) issues.push({ lineNo, reason: '渠道特有列的值超过 1024 字符' });
+    if (Object.values(raw).some(value => value.length > 1024)) issues.push({ lineNo, reason: t('csv.extraValueTooLong') });
     return { lineNo, lineType: v.line_type, direction: v.direction, amount: v.amount, feeAmount: v.fee_amount, referenceType: v.reference_type || null,
       externalTransactionId: v.external_transaction_id || null, transactionDate: v.transaction_date || null,
       rawAttributes: Object.keys(raw).length ? raw : null };
@@ -524,28 +532,28 @@ export function parseBankStatementCsv(text: string, expectedLast4?: string): { f
   try { rows = parseCsv(text); } catch (error) { return { file: null, issues: [{ lineNo: null, reason: (error as Error).message }] }; }
   const { issues, header, columns, details } = splitSections(rows, bankHeaderColumns, bankLineColumns);
   if (issues.length) return { file: null, issues };
-  if (!/^[A-Za-z0-9]{4}$/.test(header.bank_account_last4)) issues.push({ lineNo: null, reason: 'bank_account_last4 必须是 4 位字母或数字' });
+  if (!/^[A-Za-z0-9]{4}$/.test(header.bank_account_last4)) issues.push({ lineNo: null, reason: t('csv.bankAccountLast4') });
   else if (expectedLast4 && header.bank_account_last4 !== expectedLast4) {
-    issues.push({ lineNo: null, reason: `文件末四位 ${header.bank_account_last4} 与所选银行账户 ${expectedLast4} 不一致` });
+    issues.push({ lineNo: null, reason: t('csv.last4Mismatch', { fileLast4: header.bank_account_last4, expectedLast4 }) });
   }
-  if (!visibleAscii.test(header.statement_ref)) issues.push({ lineNo: null, reason: 'statement_ref 必须是 1–128 位可见 ASCII' });
-  if (!validDate(header.period_start) || !validDate(header.period_end)) issues.push({ lineNo: null, reason: 'period_start / period_end 必须是 YYYY-MM-DD' });
-  else if (header.period_end < header.period_start) issues.push({ lineNo: null, reason: 'period_end 不能早于 period_start' });
-  if (!/^[A-Z]{3}$/.test(header.currency)) issues.push({ lineNo: null, reason: 'currency 必须是三位大写币种' });
+  if (!visibleAscii.test(header.statement_ref)) issues.push({ lineNo: null, reason: t('csv.visibleAscii', { column: 'statement_ref' }) });
+  if (!validDate(header.period_start) || !validDate(header.period_end)) issues.push({ lineNo: null, reason: t('csv.periodDates') });
+  else if (header.period_end < header.period_start) issues.push({ lineNo: null, reason: t('csv.periodOrder') });
+  if (!/^[A-Z]{3}$/.test(header.currency)) issues.push({ lineNo: null, reason: t('csv.currency') });
   checkHeaderAmount(issues, header, 'opening_balance', true);
   checkHeaderAmount(issues, header, 'closing_balance', true);
-  if (details.length > maxStatementLines) issues.push({ lineNo: null, reason: `流水超过 ${maxStatementLines} 行` });
+  if (details.length > maxStatementLines) issues.push({ lineNo: null, reason: t('csv.tooManyBankLines', { max: maxStatementLines }) });
   const lines = details.map((cells, index) => {
     const v = cellsOf(columns, cells);
     const lineNo = index + 1;
     checkLineNo(issues, index, v.line_no);
-    if (cells.length !== columns.length) issues.push({ lineNo, reason: `列数应为 ${columns.length}，实际为 ${cells.length}` });
-    if (!visibleAscii.test(v.bank_transaction_ref)) issues.push({ lineNo, reason: 'bank_transaction_ref 必须是 1–128 位可见 ASCII' });
-    if (!validDate(v.value_date)) issues.push({ lineNo, reason: 'value_date 必须是 YYYY-MM-DD' });
-    if (!['CREDIT', 'DEBIT'].includes(v.direction)) issues.push({ lineNo, reason: 'direction 只能为 CREDIT 或 DEBIT' });
-    if (!positiveDecimal.test(v.amount) || /^0(\.0+)?$/.test(v.amount)) issues.push({ lineNo, reason: 'amount 必须是正的十进制金额' });
-    if (v.counterparty_name.length > 255) issues.push({ lineNo, reason: 'counterparty_name 超过 255 字符' });
-    if (v.reference_text.length > 500) issues.push({ lineNo, reason: 'reference_text 超过 500 字符' });
+    if (cells.length !== columns.length) issues.push({ lineNo, reason: t('csv.cellCount', { expected: columns.length, actual: cells.length }) });
+    if (!visibleAscii.test(v.bank_transaction_ref)) issues.push({ lineNo, reason: t('csv.visibleAscii', { column: 'bank_transaction_ref' }) });
+    if (!validDate(v.value_date)) issues.push({ lineNo, reason: t('csv.date', { column: 'value_date' }) });
+    if (!['CREDIT', 'DEBIT'].includes(v.direction)) issues.push({ lineNo, reason: t('csv.direction') });
+    if (!positiveDecimal.test(v.amount) || /^0(\.0+)?$/.test(v.amount)) issues.push({ lineNo, reason: t('csv.amountPositive') });
+    if (v.counterparty_name.length > 255) issues.push({ lineNo, reason: t('csv.tooLong', { column: 'counterparty_name', max: 255 }) });
+    if (v.reference_text.length > 500) issues.push({ lineNo, reason: t('csv.tooLong', { column: 'reference_text', max: 500 }) });
     return { lineNo, bankTransactionRef: v.bank_transaction_ref, valueDate: v.value_date, direction: v.direction, amount: v.amount,
       counterpartyName: v.counterparty_name || null, referenceText: v.reference_text || null };
   });

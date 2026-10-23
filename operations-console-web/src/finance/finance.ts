@@ -4,6 +4,9 @@ import type { PagingRequestBody } from '../api/paging.ts';
 import type { PagingResponseBody } from '../api/types.ts';
 import { configurationCommand } from '../configuration/configurationModel.ts';
 import type { ConfigurationCommand } from '../configuration/configurationModel.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('finance');
 
 /** Operations BFF 财务路径（浏览器路径 = /finance + Owner 路径）。 */
 export const financePaths = {
@@ -53,11 +56,14 @@ export const ownerTypes = ['OPERATING_ENTITY', 'FINANCE_ENTITY', 'CHANNEL_ACCOUN
 export const balanceBuckets = ['PENDING', 'AVAILABLE', 'LOCKED', 'NONE'] as const;
 /** 明细账 Owner 类型（account OwnerType）。 */
 export const subledgerOwnerTypes = ['CLIENT', 'LOCAL_PARTNER', 'CASH_ACCOUNT'] as const;
-/** 明细账科目目录（account OwnerAccountType 六条）与显示名，供科目筛选与列表副标题。 */
-export const subledgerAccountNames: Readonly<Record<string, string>> = {
-  CLIENT_PAYABLE: 'Client 应付', CLIENT_SECURITY_DEPOSIT: 'Client 保证金', CLIENT_RECOVERY_RECEIVABLE: 'Client 追偿应收',
-  PARTNER_PAYABLE: 'Partner 应付', PARTNER_RECOVERY_RECEIVABLE: 'Partner 追偿应收', BANK_CASH: '银行现金',
-};
+/** 明细账科目目录（account OwnerAccountType 六条），显示名为 finance.enum.subledgerAccount.*，供科目筛选与列表副标题。 */
+export const subledgerAccountCodes = [
+  'CLIENT_PAYABLE', 'CLIENT_SECURITY_DEPOSIT', 'CLIENT_RECOVERY_RECEIVABLE', 'PARTNER_PAYABLE', 'PARTNER_RECOVERY_RECEIVABLE', 'BANK_CASH',
+] as const;
+/** 明细账科目显示名；不在目录内的科目代码返回 null（列表不显示副标题）。 */
+export function subledgerAccountName(accountCode: string): string | null {
+  return (subledgerAccountCodes as readonly string[]).includes(accountCode) ? enumLabel(t, 'enum.subledgerAccount', accountCode) : null;
+}
 
 export type LedgerEntityType = typeof ledgerEntityTypes[number];
 export type OwnerType = typeof ownerTypes[number];
@@ -170,18 +176,12 @@ export interface AccountPosting {
   movementSourceType: string | null; movementSourceRef: string | null; entries: AccountPostingEntry[];
 }
 
-export const entityTypeLabels: Record<LedgerEntityType, string> = { OPERATING_ENTITY: '经营主体', FINANCE_ENTITY: '财务主体' };
-export const financeEntityStatusLabels: Record<FinanceEntityStatus, string> = { ACTIVE: '启用', CLOSED: '已关闭' };
-export const referenceStatusLabels: Record<ReferenceDataStatus, string> = { DRAFT: '草稿', ACTIVE: '启用', INACTIVE: '停用' };
-export const accountStatusLabels: Record<AccountStatus, string> = { ACTIVE: '启用', INACTIVE: '停用', CLOSED: '已关闭' };
-export const sideLabels: Record<Side, string> = { DEBIT: '借', CREDIT: '贷' };
-export const accountClassLabels: Record<AccountClass, string> = { ASSET: '资产', LIABILITY: '负债', EQUITY: '权益', REVENUE: '收入', EXPENSE: '费用' };
-export const chartAccountStatusLabels: Record<ChartAccountStatus, string> = { ACTIVE: '启用', INACTIVE: '停用' };
-export const changeTypeLabels: Record<ChartAccountChangeType, string> = { CREATE: '新增', UPDATE: '修改', DISABLE: '停用', ENABLE: '启用' };
-export const trialStatusLabels: Record<TrialBalanceStatus, string> = { CREATED: '已创建', RUNNING: '试算中', SUCCEEDED: '已完成', FAILED: '失败' };
-export const entryTypeLabels: Record<JournalEntryType, string> = { STANDARD: '标准', REVERSAL: '冲回', ADJUSTMENT: '调整', CLOSING: '结账', REOPENING: '重开' };
-export const ownerAccountStatusLabels: Record<OwnerAccountStatus, string> = { ACTIVE: '启用', FROZEN: '冻结', CLOSED: '已关闭' };
-export const postingSourceLabels: Record<PostingSourceType, string> = { ECONOMIC_FACT: '事实', BALANCE_MOVEMENT: '桶移动' };
+/**
+ * 枚举显示名在 finance.enum.<类型>.<值>（enumLabel 取值，未知值显示原代码）：ledgerEntityType、financeEntityStatus、
+ * referenceStatus、accountStatus、side、accountClass、chartAccountStatus、chartChangeType、trialStatus、entryType、
+ * ownerAccountStatus、postingSource。
+ */
+export const financeEntityStatuses: readonly FinanceEntityStatus[] = ['ACTIVE', 'CLOSED'];
 export const postingSourceColors: Record<PostingSourceType, string> = { ECONOMIC_FACT: 'default', BALANCE_MOVEMENT: 'orange' };
 /** 统一标签色：启用/开放为绿，未来/草稿为蓝/橙，停用/关闭为灰，异常为红。 */
 export const statusColors: Record<string, string> = {
@@ -512,50 +512,54 @@ export function decodeOpenedPeriod(value: unknown, accountingPeriodId: string): 
 
 /** 错误落点：字段名，或 null 表示表单顶部 / 页面提示。 */
 export interface FinanceErrorTarget { field: string | null; message: string }
+/** 错误码落点表的一项：messageKey 为 finance 命名空间下的文案 key（Problem detail 缺失时使用）。 */
+export interface FinanceErrorRule { field: string | null; messageKey: string }
 
 /** ledger LedgerSetupErrorCode 的页面落点（technique 2.4）。 */
-export const financeErrorTargets: Readonly<Record<string, FinanceErrorTarget>> = {
-  FINANCE_ENTITY_ALREADY_EXISTS: { field: null, message: '财务主体代码或法律 Party 已被使用' },
-  FINANCE_ENTITY_UNAVAILABLE: { field: 'entityId', message: '财务主体不存在或已关闭' },
-  FISCAL_CALENDAR_ALREADY_EXISTS: { field: 'entityId', message: '该主体已有财务日历' },
-  FISCAL_CALENDAR_NOT_FOUND: { field: null, message: '财务日历不存在' },
-  ACCOUNTING_PERIOD_OVERLAP: { field: 'startDate', message: '期间日期与同日历其他期间重叠' },
-  ACCOUNTING_PERIOD_NO_DUPLICATE: { field: 'periodNo', message: '同一财年期号已存在' },
-  ACCOUNTING_PERIOD_NOT_FOUND: { field: null, message: '会计期间不存在' },
-  ACCOUNTING_PERIOD_NOT_FUTURE: { field: null, message: '只有 FUTURE 期间可以开放' },
-  LEDGER_BOOK_ALREADY_EXISTS: { field: null, message: '同主体同币种已有账簿' },
-  CURRENCY_NOT_ACTIVE: { field: 'currency', message: '币种未启用' },
-  CHART_NOT_ACTIVE: { field: 'chartCode', message: '科目表不存在或未启用' },
-  LEDGER_BOOK_NOT_FOUND: { field: null, message: '账簿不存在' },
-  CHART_ACCOUNT_NOT_POSTABLE: { field: 'accountCode', message: '科目不存在或不可过账' },
-  ACCOUNT_IDENTITY_INVALID: { field: 'ownerType', message: '核算对象或余额桶不符合账户身份矩阵' },
+export const financeErrorTargets: Readonly<Record<string, FinanceErrorRule>> = {
+  FINANCE_ENTITY_ALREADY_EXISTS: { field: null, messageKey: 'error.ledgerSetup.FINANCE_ENTITY_ALREADY_EXISTS' },
+  FINANCE_ENTITY_UNAVAILABLE: { field: 'entityId', messageKey: 'error.ledgerSetup.FINANCE_ENTITY_UNAVAILABLE' },
+  FISCAL_CALENDAR_ALREADY_EXISTS: { field: 'entityId', messageKey: 'error.ledgerSetup.FISCAL_CALENDAR_ALREADY_EXISTS' },
+  FISCAL_CALENDAR_NOT_FOUND: { field: null, messageKey: 'error.ledgerSetup.FISCAL_CALENDAR_NOT_FOUND' },
+  ACCOUNTING_PERIOD_OVERLAP: { field: 'startDate', messageKey: 'error.ledgerSetup.ACCOUNTING_PERIOD_OVERLAP' },
+  ACCOUNTING_PERIOD_NO_DUPLICATE: { field: 'periodNo', messageKey: 'error.ledgerSetup.ACCOUNTING_PERIOD_NO_DUPLICATE' },
+  ACCOUNTING_PERIOD_NOT_FOUND: { field: null, messageKey: 'error.ledgerSetup.ACCOUNTING_PERIOD_NOT_FOUND' },
+  ACCOUNTING_PERIOD_NOT_FUTURE: { field: null, messageKey: 'error.ledgerSetup.ACCOUNTING_PERIOD_NOT_FUTURE' },
+  LEDGER_BOOK_ALREADY_EXISTS: { field: null, messageKey: 'error.ledgerSetup.LEDGER_BOOK_ALREADY_EXISTS' },
+  CURRENCY_NOT_ACTIVE: { field: 'currency', messageKey: 'error.ledgerSetup.CURRENCY_NOT_ACTIVE' },
+  CHART_NOT_ACTIVE: { field: 'chartCode', messageKey: 'error.ledgerSetup.CHART_NOT_ACTIVE' },
+  LEDGER_BOOK_NOT_FOUND: { field: null, messageKey: 'error.ledgerSetup.LEDGER_BOOK_NOT_FOUND' },
+  CHART_ACCOUNT_NOT_POSTABLE: { field: 'accountCode', messageKey: 'error.ledgerSetup.CHART_ACCOUNT_NOT_POSTABLE' },
+  ACCOUNT_IDENTITY_INVALID: { field: 'ownerType', messageKey: 'error.ledgerSetup.ACCOUNT_IDENTITY_INVALID' },
   // 设计画板 05：账户重复落在余额桶字段下（余额桶固定 NONE，同一核算对象 + 科目即重复）。
-  ACCOUNT_ALREADY_EXISTS: { field: 'balanceBucket', message: '该核算对象与余额桶的账户已存在' },
+  ACCOUNT_ALREADY_EXISTS: { field: 'balanceBucket', messageKey: 'error.ledgerSetup.ACCOUNT_ALREADY_EXISTS' },
   // 科目维护（technique 2.3）：编号、代码、上级落到表单字段，其余为页面提示；停用科目在建账户表单的科目字段。
-  CHART_ACCOUNT_NOT_FOUND: { field: null, message: '科目不存在' },
-  CHART_ACCOUNT_NO_INVALID: { field: 'accountNo', message: '科目编号不符合分级规则' },
-  CHART_ACCOUNT_NO_DUPLICATE: { field: 'accountNo', message: '科目编号已存在' },
-  CHART_ACCOUNT_CODE_DUPLICATE: { field: 'accountCode', message: '科目代码已存在' },
-  CHART_PARENT_INVALID: { field: 'parentAccountNo', message: '上级科目不存在、不是汇总科目、已停用、类别不同或会形成循环' },
-  CHART_STRUCTURE_FROZEN: { field: null, message: '科目表已被账簿采用，不能修改编号或上级' },
-  CHART_ACCOUNT_IN_USE: { field: null, message: '科目仍被规则、结转规则、账户类型目录或启用中的下级引用，不能停用' },
-  CHART_ACCOUNT_INACTIVE: { field: 'accountCode', message: '科目已停用' },
+  CHART_ACCOUNT_NOT_FOUND: { field: null, messageKey: 'error.ledgerSetup.CHART_ACCOUNT_NOT_FOUND' },
+  CHART_ACCOUNT_NO_INVALID: { field: 'accountNo', messageKey: 'error.ledgerSetup.CHART_ACCOUNT_NO_INVALID' },
+  CHART_ACCOUNT_NO_DUPLICATE: { field: 'accountNo', messageKey: 'error.ledgerSetup.CHART_ACCOUNT_NO_DUPLICATE' },
+  CHART_ACCOUNT_CODE_DUPLICATE: { field: 'accountCode', messageKey: 'error.ledgerSetup.CHART_ACCOUNT_CODE_DUPLICATE' },
+  CHART_PARENT_INVALID: { field: 'parentAccountNo', messageKey: 'error.ledgerSetup.CHART_PARENT_INVALID' },
+  CHART_STRUCTURE_FROZEN: { field: null, messageKey: 'error.ledgerSetup.CHART_STRUCTURE_FROZEN' },
+  CHART_ACCOUNT_IN_USE: { field: null, messageKey: 'error.ledgerSetup.CHART_ACCOUNT_IN_USE' },
+  CHART_ACCOUNT_INACTIVE: { field: 'accountCode', messageKey: 'error.ledgerSetup.CHART_ACCOUNT_INACTIVE' },
 };
 
 /** 余额查询（account BalanceQueryErrorCode）的落点：Owner 在该主体与币种下没有账户时挂在 Owner ID（画板 11）。 */
-export const balanceErrorTargets: Readonly<Record<string, FinanceErrorTarget>> = {
-  OWNER_ACCOUNT_NOT_FOUND: { field: 'ownerId', message: '该 Owner 在此经营主体与币种下没有账户' },
+export const balanceErrorTargets: Readonly<Record<string, FinanceErrorRule>> = {
+  OWNER_ACCOUNT_NOT_FOUND: { field: 'ownerId', messageKey: 'error.balance.OWNER_ACCOUNT_NOT_FOUND' },
 };
 
 /** 明细账查询（account AccountPostingErrorCode 与流水的 ACCOUNT_NOT_FOUND）的页面提示。 */
-export const subledgerErrorTargets: Readonly<Record<string, FinanceErrorTarget>> = {
-  ACCOUNT_NOT_FOUND: { field: null, message: 'Owner 账户不存在' },
-  POSTING_NOT_FOUND: { field: null, message: '过账批次不存在' },
+export const subledgerErrorTargets: Readonly<Record<string, FinanceErrorRule>> = {
+  ACCOUNT_NOT_FOUND: { field: null, messageKey: 'error.subledger.ACCOUNT_NOT_FOUND' },
+  POSTING_NOT_FOUND: { field: null, messageKey: 'error.subledger.POSTING_NOT_FOUND' },
 };
 
 /** 余额页无账户提示带上 Owner 类型与查询范围，例如「该 Local Partner 在 SG002 / USD 下没有账户」。 */
 export function ownerAccountNotFoundMessage(values: Pick<BalanceFormValues, 'ownerType' | 'entityNo' | 'currency'>): string {
-  return `该 ${values.ownerType === 'CLIENT' ? 'Client' : 'Local Partner'} 在 ${values.entityNo.trim()} / ${values.currency} 下没有账户（OWNER_ACCOUNT_NOT_FOUND）`;
+  return t('balance.ownerAccountNotFound', {
+    owner: values.ownerType === 'CLIENT' ? 'Client' : 'Local Partner', entityNo: values.entityNo.trim(), currency: values.currency,
+  });
 }
 
 /**
@@ -564,11 +568,11 @@ export function ownerAccountNotFoundMessage(values: Pick<BalanceFormValues, 'own
  * 未映射或非 400 返回 null，由调用方走通用通知。
  */
 export function financeErrorTarget(error: unknown, formFields: readonly string[] = [],
-  table: Readonly<Record<string, FinanceErrorTarget>> = financeErrorTargets): FinanceErrorTarget | null {
+  table: Readonly<Record<string, FinanceErrorRule>> = financeErrorTargets): FinanceErrorTarget | null {
   if (!(error instanceof ApiError) || error.status !== 400 || !Object.hasOwn(table, error.code)) return null;
   const target = table[error.code];
   // 优先显示 Problem detail：同一 Code（如 SELF_REVIEW_FORBIDDEN）在 ledger 与 billing 的默认消息不同，各自显示 Owner 原文
-  const message = `${error.detail || target.message}（${error.code}）`;
+  const message = t('error.withCode', { message: error.detail || t(target.messageKey), code: error.code });
   return { field: target.field && formFields.includes(target.field) ? target.field : null, message };
 }
 
@@ -607,7 +611,7 @@ export function abbreviateId(value: string): string {
 export function entityLabel(entityType: LedgerEntityType, entityId: string, entities?: ReadonlyMap<string, FinanceEntity>): string {
   if (entityType === 'OPERATING_ENTITY') return entityId;
   const entity = entities?.get(entityId);
-  return entity ? `${entity.entityCode}（${abbreviateId(entityId)}）` : entityId;
+  return entity ? t('common.labelWithId', { label: entity.entityCode, id: abbreviateId(entityId) }) : entityId;
 }
 
 // ---------- 表单与请求体 ----------
@@ -643,22 +647,24 @@ export function accountBody(values: AccountFormValues) {
 /** 核算对象标识校验：经营主体为 entityNo，其余（财务主体、渠道账户、银行账户、税务机关）为正十进制主键；返回错误文案或 null。 */
 export function ownerIdError(ownerType: string | undefined, ownerId: string | undefined): string | null {
   const value = ownerId?.trim() ?? '';
-  if (!value) return '请填写核算对象标识';
-  if (ownerType === 'OPERATING_ENTITY') return entityNoPattern.test(value) ? null : '必须是两位大写国家码加三位序号，如 AE001';
-  return decimalIdPattern.test(value) ? null : '必须是正十进制整数字符串';
+  if (!value) return t('validation.ownerIdRequired');
+  if (ownerType === 'OPERATING_ENTITY') return entityNoPattern.test(value) ? null : t('validation.entityNoPattern');
+  return decimalIdPattern.test(value) ? null : t('validation.decimalId');
 }
 
 /** 账户流水「来源」第二行：人工调整单号、account 批次（缩略主键 · 序号）或自动来源事件键。 */
 export function journalLineSourceMeta(line: Pick<JournalLine, 'originType' | 'adjustmentNo' | 'sourceEventKey' | 'accountPostingId' | 'accountPostingSequence'>): string {
   if (line.originType === 'MANUAL') return line.adjustmentNo ?? '—';
-  if (line.originType === 'ACCOUNT_POSTING' && line.accountPostingId) return `批次 …${line.accountPostingId.slice(-4)} · 序号 ${line.accountPostingSequence}`;
+  if (line.originType === 'ACCOUNT_POSTING' && line.accountPostingId) {
+    return t('ledger.lineSource.posting', { posting: line.accountPostingId.slice(-4), sequence: String(line.accountPostingSequence) });
+  }
   return line.sourceEventKey ?? '—';
 }
 
 /** 期间起止：开始不晚于结束。 */
 export function periodRangeError(startDate?: string, endDate?: string): string | null {
   if (!startDate || !endDate) return null;
-  return startDate <= endDate ? null : '开始日期不能晚于结束日期';
+  return startDate <= endDate ? null : t('validation.dateRange');
 }
 
 /** IANA 时区下拉；浏览器不支持枚举时只给 UTC。 */
@@ -690,11 +696,13 @@ export function defaultNormalSide(accountClass: AccountClass): Side {
 /** 科目编号分级校验（与 ledger ChartAccountNoRule 一致）：返回错误文案或 null；ledger 仍以 CHART_ACCOUNT_NO_INVALID 兜底。 */
 export function chartAccountNoError(accountNo: string | undefined, accountClass: AccountClass | undefined, parentAccountNo?: string | null): string | null {
   const value = accountNo?.trim() ?? '';
-  if (!value) return '请填写科目编号';
-  if (!chartAccountNoPattern.test(value)) return '科目编号为 4、6、8 或 10 位数字，首位不能为 0';
-  if (accountClass && value[0] !== classDigits[accountClass]) return `${accountClassLabels[accountClass]}类科目编号以 ${classDigits[accountClass]} 开头`;
-  if (!parentAccountNo) return value.length === 4 ? null : '一级科目编号为 4 位';
-  if (value.length !== parentAccountNo.length + 2 || !value.startsWith(parentAccountNo)) return `编号应为上级 ${parentAccountNo} 后加 2 位`;
+  if (!value) return t('validation.accountNoRequired');
+  if (!chartAccountNoPattern.test(value)) return t('validation.accountNoPattern');
+  if (accountClass && value[0] !== classDigits[accountClass]) {
+    return t('validation.accountNoClassDigit', { accountClass: enumLabel(t, 'enum.accountClass', accountClass), digit: classDigits[accountClass] });
+  }
+  if (!parentAccountNo) return value.length === 4 ? null : t('validation.accountNoTopLevel');
+  if (value.length !== parentAccountNo.length + 2 || !value.startsWith(parentAccountNo)) return t('validation.accountNoChild', { parent: parentAccountNo });
   return null;
 }
 
@@ -751,10 +759,11 @@ export function expandableKeys<T extends TreeItem>(nodes: readonly TreeNode<T>[]
 /** 变更记录只列有变化的字段：编号、上级、名称、状态。 */
 export function chartChangeFields(change: ChartAccountChange): { label: string; before: string; after: string }[] {
   const fields: [string, string | null, string | null][] = [
-    ['编号', change.beforeAccountNo, change.afterAccountNo],
-    ['上级', change.beforeParentAccountNo, change.afterParentAccountNo],
-    ['名称', change.beforeAccountName, change.afterAccountName],
-    ['状态', change.beforeAccountStatus && chartAccountStatusLabels[change.beforeAccountStatus], chartAccountStatusLabels[change.afterAccountStatus]],
+    [t('charts.changeField.accountNo'), change.beforeAccountNo, change.afterAccountNo],
+    [t('charts.changeField.parent'), change.beforeParentAccountNo, change.afterParentAccountNo],
+    [t('charts.changeField.name'), change.beforeAccountName, change.afterAccountName],
+    [t('charts.changeField.status'), change.beforeAccountStatus && enumLabel(t, 'enum.chartAccountStatus', change.beforeAccountStatus),
+      enumLabel(t, 'enum.chartAccountStatus', change.afterAccountStatus)],
   ];
   return fields.filter(([, before, after]) => before !== after).map(([label, before, after]) => ({ label, before: before ?? '—', after: after ?? '—' }));
 }
@@ -841,8 +850,8 @@ export function accountFilters(values: Readonly<Record<string, unknown>>) { retu
 /** 过账日期范围：yyyy-MM-dd，开始不晚于结束；默认不限。 */
 export function lineFilters(values: Readonly<Record<string, unknown>>) {
   const filters = trimmed(values, lineFilterKeys);
-  for (const key of lineFilterKeys) if (filters[key] && !isoDate(filters[key])) throw new Error('请输入 yyyy-MM-dd 格式的日期');
-  if (filters.postingDateFrom && filters.postingDateTo && filters.postingDateFrom > filters.postingDateTo) throw new Error('开始日期不能晚于结束日期');
+  for (const key of lineFilterKeys) if (filters[key] && !isoDate(filters[key])) throw new Error(t('validation.isoDate'));
+  if (filters.postingDateFrom && filters.postingDateTo && filters.postingDateFrom > filters.postingDateTo) throw new Error(t('validation.dateRange'));
   return filters;
 }
 
@@ -937,9 +946,9 @@ const subledgerPagingKeys = { accounts: ['page', 'size'], entries: ['entryPage',
 /** 主体标识：经营主体为 entityNo，财务主体为正十进制主键；返回错误文案或 null。 */
 export function subledgerEntityIdError(entityType: string | undefined, entityId: string | undefined): string | null {
   const value = entityId?.trim() ?? '';
-  if (!value) return '请填写主体标识';
-  if (entityType === 'FINANCE_ENTITY') return decimalIdPattern.test(value) ? null : '必须是财务主体主键（正十进制整数字符串）';
-  return entityNoPattern.test(value) ? null : '必须是两位大写国家码加三位序号，如 AE001';
+  if (!value) return t('validation.entityIdRequired');
+  if (entityType === 'FINANCE_ENTITY') return decimalIdPattern.test(value) ? null : t('validation.financeEntityId');
+  return entityNoPattern.test(value) ? null : t('validation.entityNoPattern');
 }
 
 const subledgerFilterValid = (key: string, value: string) => (key !== 'ownerType' || (subledgerOwnerTypes as readonly string[]).includes(value))
@@ -951,8 +960,8 @@ const subledgerFilterValid = (key: string, value: string) => (key !== 'ownerType
 export function subledgerFilters(values: Readonly<Record<string, unknown>>): Record<string, string> {
   const filters = trimmed(values, [...subledgerScopeKeys, ...subledgerAccountFilterKeys]);
   if (!(ledgerEntityTypes as readonly string[]).includes(filters.entityType) || subledgerEntityIdError(filters.entityType, filters.entityId)
-    || !currencyPattern.test(filters.currency ?? '')) throw new Error('请完整填写主体类型、主体标识与币种');
-  for (const key of subledgerAccountFilterKeys) if (filters[key] && !subledgerFilterValid(key, filters[key])) throw new Error('筛选条件格式不正确');
+    || !currencyPattern.test(filters.currency ?? '')) throw new Error(t('validation.subledgerScope'));
+  for (const key of subledgerAccountFilterKeys) if (filters[key] && !subledgerFilterValid(key, filters[key])) throw new Error(t('validation.filterInvalid'));
   return filters;
 }
 
@@ -1016,7 +1025,8 @@ export function subledgerPostingLink(accountPostingId: string, accountEntryId: s
 
 /** 明细流水「来源」列：事实批次为「事实 ID · v版本」，桶移动为来源类型。 */
 export function entrySourceLabel(entry: Pick<AccountEntry, 'sourceType' | 'factId' | 'factVersion' | 'movementSourceType'>): string {
-  return entry.sourceType === 'ECONOMIC_FACT' ? `事实 ${entry.factId} · v${entry.factVersion}` : entry.movementSourceType ?? '—';
+  return entry.sourceType === 'ECONOMIC_FACT'
+    ? t('subledger.entrySource.fact', { factId: String(entry.factId), version: String(entry.factVersion) }) : entry.movementSourceType ?? '—';
 }
 
 /** 批次流水借贷合计（Money 金额）。 */
@@ -1078,15 +1088,15 @@ export function balanceRequestPath(values: BalanceFormValues): string {
 /** 余额卡片：应付三桶；Client 另有保证金与追偿应收，Partner 只有追偿应收（不显示保证金）。 */
 export function balanceCards(result: ClientBalance | PartnerBalance): BalanceCard[] {
   const cards: BalanceCard[] = [
-    { key: 'pending', label: 'PENDING 待成熟应付', note: 'balance_available_time 未到', amount: result.pendingAmount },
-    { key: 'available', label: 'AVAILABLE 可用应付', note: '不等于可出款资格', amount: result.availableAmount },
-    { key: 'locked', label: 'LOCKED 已锁定应付', note: 'Payout 锁定', amount: result.lockedAmount },
+    { key: 'pending', label: t('balance.card.pending'), note: t('balance.card.pendingNote'), amount: result.pendingAmount },
+    { key: 'available', label: t('balance.card.available'), note: t('balance.card.availableNote'), amount: result.availableAmount },
+    { key: 'locked', label: t('balance.card.locked'), note: t('balance.card.lockedNote'), amount: result.lockedAmount },
   ];
   if ('clientId' in result) {
-    cards.push({ key: 'deposit', label: '保证金', code: 'CLIENT_SECURITY_DEPOSIT', note: '负债类 / NONE', amount: result.securityDepositAmount });
-    cards.push({ key: 'recovery', label: '追偿应收', code: 'CLIENT_RECOVERY_RECEIVABLE', note: '资产类 / NONE', amount: result.recoveryReceivableAmount });
+    cards.push({ key: 'deposit', label: t('balance.card.deposit'), code: 'CLIENT_SECURITY_DEPOSIT', note: t('balance.card.liabilityNote'), amount: result.securityDepositAmount });
+    cards.push({ key: 'recovery', label: t('balance.card.recovery'), code: 'CLIENT_RECOVERY_RECEIVABLE', note: t('balance.card.assetNote'), amount: result.recoveryReceivableAmount });
   } else {
-    cards.push({ key: 'recovery', label: '追偿应收', code: 'PARTNER_RECOVERY_RECEIVABLE', note: '资产类 / NONE', amount: result.recoveryReceivableAmount });
+    cards.push({ key: 'recovery', label: t('balance.card.recovery'), code: 'PARTNER_RECOVERY_RECEIVABLE', note: t('balance.card.assetNote'), amount: result.recoveryReceivableAmount });
   }
   return cards;
 }

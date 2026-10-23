@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, session } from '../api/session';
 import { useErrorNotification } from '../feedback/useErrorNotification';
+import { translator } from '../i18n/index';
+
+const t = translator('workflow');
 
 export type WorkflowMethod = 'POST' | 'PUT';
 interface Command { path: string; method: WorkflowMethod; body: string; key: string }
@@ -23,16 +26,17 @@ export function sendWorkflowCommand<T>(command: Command, decode: (value: unknown
 export function failureText(error: unknown): string {
   if (error instanceof ApiError) {
     // 409 带业务说明时（如“还有必选动作未完成”）用后端说明，否则提示刷新。
-    if (error.status === 409) return error.detail || '数据已被他人更新或正在处理，请刷新后重试';
+    if (error.status === 409) return error.detail || t('command.conflict');
     if (error.detail) return error.detail;
     return error.message || error.code;
   }
-  return '请求未完成，请稍后重试';
+  return t('command.unfinished');
 }
 
 /** 422 字段错误附在说明后，如“config.fields[2].type 取值不合法…”。 */
 export function fieldErrorText(error: ApiError): string {
-  return error.fieldErrors.length ? `：${error.fieldErrors.map(item => `${item.field} ${item.message}`).join('；')}` : '';
+  return error.fieldErrors.length
+    ? t('command.fieldErrors', { list: error.fieldErrors.map(item => `${item.field} ${item.message}`).join(t('list.semicolon')) }) : '';
 }
 
 /**
@@ -62,7 +66,7 @@ export function useWorkflowCommand(onAuthorizationChanged: () => void) {
       if (error instanceof ApiError && error.status === 409) { if (mounted.current) { setConflict(true); setConflictMessage(error.detail || null); } return null; }
       if (error instanceof ApiError && (error.status === 400 || error.status === 422) && (error.detail || error.fieldErrors.length)) {
         if (mounted.current) {
-          setFormError(`${error.detail || '请求内容不合法'}（${error.code}）${fieldErrorText(error)}`);
+          setFormError(t('command.formError', { detail: error.detail || t('command.invalid'), code: error.code, fields: fieldErrorText(error) }));
           setFieldErrors(error.fieldErrors);
         }
         return null;

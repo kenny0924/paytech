@@ -160,9 +160,9 @@ test('dispatcher refreshes authorization on authoritative 403 and never automati
   }
 });
 test('validated error paths render user labels without exposing wire structure names', () => {
-  assert.equal(riskFieldErrorLabel('ruleSetName'), '规则集名称');
-  assert.equal(riskFieldErrorLabel('rules[0].ruleName'), '规则 1 · 规则名称');
-  assert.equal(riskFieldErrorLabel('rules[1].conditionNodes[2].nodeKey'), '规则 2 · 条件配置');
-  assert.equal(riskFieldErrorLabel('rules[199].action.actionCode'), '规则 200 · 终态决定');
-  for (const field of ['unknown.field', 'nodeKey', 'rules[999999999].conditionNodes', 'parentNodeKey']) assert.equal(riskFieldErrorLabel(field), '规则配置');
+  assert.equal(riskFieldErrorLabel('ruleSetName'), 'Rule Set Name');
+  assert.equal(riskFieldErrorLabel('rules[0].ruleName'), 'Rule 1 · Rule Name');
+  assert.equal(riskFieldErrorLabel('rules[1].conditionNodes[2].nodeKey'), 'Rule 2 · Condition');
+  assert.equal(riskFieldErrorLabel('rules[199].action.actionCode'), 'Rule 200 · Terminal Decision');
+  for (const field of ['unknown.field', 'nodeKey', 'rules[999999999].conditionNodes', 'parentNodeKey']) assert.equal(riskFieldErrorLabel(field), 'Rule Configuration');
 });

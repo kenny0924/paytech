@@ -273,12 +273,13 @@ Processor 主方法直接展示阶段和提前返回，不要求每个阶段建�
 
 ## 10. 前端界面文案与语言
 
-确认依据见 [2026-10-22 前端界面文案决定](./decisions/2026-10-22-ui-text-localization.md)。本节只约束前端静态界面文案；服务端报错与校验文案、运营录入的业务内容另立需求，Exception 消息仍按第 4 节使用中文。
+确认依据见 [2026-10-22 前端界面文案决定](./decisions/2026-10-22-ui-text-localization.md)（含 2026-10-23 `operations-console-web` 全量接入补充）。本节只约束前端静态界面文案；服务端报错与校验文案、运营录入的业务内容另立需求，Exception 消息仍按第 4 节使用中文。
 
-- **不写死界面文案。** 已接入的 `*-web` 在 tsx/ts 中不直接书写给用户看的文字，统一通过 `useT(namespace)` 取得 `t`，以 `t(key, params)` 输出。参数用命名占位符传入，不在代码里拼接句子片段。
-- **key 命名。** key 为 `<namespace>.<area>.<name>`，全部小写、以点分层级，例如 `team.invite.submit`；首段必须是所属命名空间编码。命名空间由运营在 Platform 后台创建，新增命名空间前先确认已创建，否则导入会被拒绝。
-- **英文基准文件。** 英文是唯一基准语言，写在 `src/i18n/en/<namespace>.json`，扁平 key 到文案；需要给翻译者说明时使用对象形式并附 `description`。基准文件随代码提交、在构建时内置，并经控制台导入 Platform；其他语言只在 Platform 翻译，不在代码里维护。
-- **ICU MessageFormat 是唯一文案语法。** 复数、性别等变化用 `plural`、`select`、`selectordinal`，并且必须包含 `other` 分支；不另造插值语法，不按语言在代码里写条件分支。日期、数字与金额用浏览器 `Intl` 按当前语言格式化，金额的值与精度仍遵守第 2.1 节。
-- **枚举展示名。** 枚举 Code 的展示名放在各应用自己的 `enum` 命名空间，key 同样遵守上述命名规则；页面不再维护"Code → 中文名称"映射表。本期没有各端共享的命名空间。
-- **硬编码检查。** 各 web 以 node 测试扫描接入范围内的 tsx/ts，出现中日韩字符即失败；扫描范围随迁移进度扩大，不用 ESLint 规则代替。
-- **既有页面按任务迁移。** 尚未接入的页面不要求一次改完，在各自任务范围内迁移；一旦迁移或新增，该页面就完整遵守本节，不保留中英混写。`operations-console-web` 本期只有多语言管理页面按本节编写。
+- **接入范围。** `client-console-web` 与 `operations-console-web` 已全量接入：所有页面、弹窗、菜单、表头、按钮、提示、确认框与校验文案都走 key。`checkout-web`、`partner-console-web` 尚未接入，接入时按本节一次完成。
+- **不写死界面文案。** 已接入的 `*-web` 在 tsx/ts 中不直接书写给用户看的文字：组件内用 `useT(namespace)` 取得 `t`，非组件代码（模型、校验、API 辅助）用 `translator(namespace)` 在调用时取文案，不在模块加载时取值；以 `t(key, params)` 输出。参数用命名占位符传入，不在代码里拼接句子片段；句中需要嵌入等宽编码、链接或输入框时，整句一个 key，节点作为命名参数传入（`operations-console-web` 用 `src/i18n/richText.ts`）。
+- **key 命名。** key 为 `<namespace>.<area>.<name>`，以点分层级，首段必须是所属命名空间编码。新命名空间的段名用小驼峰，例如 `finance.adjustments.column.amount`、`recon.exceptions.action.resolve`；枚举值与资源编码保留原大小写（`<namespace>.enum.<Type>.<VALUE>`、`nav.resource.<RESOURCE_CODE>`）。已发布的蛇形 key（`client-console-web` 全部命名空间、`operations-console-web` 的 `i18n-admin` 与 `enum`）保持不变，不为改名迁移。同一句话在不同页面含义不同时用不同 key，不为去重合并。命名空间由运营在 Platform 后台创建，新增命名空间前先确认已创建，否则导入会被拒绝。
+- **英文基准与中文种子。** 英文是唯一基准语言，写在 `src/i18n/en/<namespace>.json`，扁平 key 到文案；基准文件随代码提交、在构建时内置，并经控制台导入 Platform。`operations-console-web` 另在 `i18n/zh-CN/<namespace>.json` 维护简体中文种子，与英文同一组 key，用于首批导入与测试核对；上线后的中文修订在 Platform 翻译并发布。**新增或修改界面文案时，先加英文基准 key 并同步补 zh-CN 种子，再在多语言管理中导入、翻译、发布**；`npm run i18n:export-source` 生成导入文件并校验两边 key 集合与 ICU 参数一致。英文用词遵守 [AGENTS.md 规范术语](../AGENTS.md#canonical-terminology)：菜单、标题、按钮、表头用 Title Case，提示与校验句首大写。
+- **ICU MessageFormat 是唯一文案语法。** 复数、性别等变化用 `plural`、`select`、`selectordinal`，并且必须包含 `other` 分支；不另造插值语法，不按语言在代码里写条件分支。日期、数字与金额用浏览器 `Intl` 按当前语言格式化（`operations-console-web` 用 `formatDateTime` 等辅助函数，不写死 `zh-CN`），金额的值与精度仍遵守第 2.1 节。
+- **枚举展示名。** 枚举 Code 的展示名放在 `enum` 命名空间（跨模块共用）或本模块命名空间的 `<namespace>.enum.<Type>.<VALUE>`，用 `enumLabel` 取值，未知值显示原始 Code；页面不再维护"Code → 中文名称"映射表。本期没有各端共享的命名空间。菜单、面包屑与页面标题按资源编码取 `nav.resource.<CODE>`，没有 key 时回退 Platform 的 `display_name`。
+- **语言选择与本地缓存。** 默认语言为英文 `en`，不读浏览器语言；来源顺序为 `?lang=` > 用户在页头或登录页选择并保存在浏览器本地的语言 > `en`，只列 manifest 已发布的语言。切换语言整页刷新并回到原路由，antd 组件语言、dayjs 与 `<html lang>` 一并切换。`operations-console-web` 把用过的 manifest 与语言包缓存在 `localStorage`，启动时有缓存即直接渲染、后台核对新发布并替换，网络不可用时继续用缓存；缓存只放公开语言包，`?release=` 预览不读写缓存。
+- **硬编码检查。** 各 web 以 node 测试扫描源码 tsx/ts（测试文件与注释除外），出现中日韩字符即失败，不用 ESLint 规则代替。`operations-console-web` 的 `src/i18nSourceGuard.test.ts` 对全部 `src` 严格执行，唯一白名单是 Platform 注册数据镜像 `navigation/pageCapabilities.ts`；与服务端原文比较的固定字符串用 `\u` 转义并注明是数据。单元测试按 key 或英文基准断言，不断言中文界面文案。

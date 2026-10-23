@@ -1,6 +1,9 @@
 import { session } from '../api/session.ts';
 import type { RequestClient } from '../api/session.ts';
 import type { ValueType, RuleOperand, OperatorCode } from './riskApiModels.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('risk');
 
 export type VariableSource = 'INPUT' | 'CONSTANT' | 'COLLECTION' | 'NODE_OUTPUT' | 'VELOCITY' | 'LIST';
 export type VariableUsage = 'RULE_CONDITION' | 'FLOW_CONDITION' | 'ACTION_PARAMETER';
@@ -35,15 +38,21 @@ export interface CreateVariable { variableCode: string; variableName: string; de
 export interface UpdateVariable { expectedVersion: string; variableName: string; description: string | null; currentValue: string | boolean | null; status: 'ACTIVE' | 'DISABLED' }
 export interface VariableOperand extends RuleOperand { sourceType: 'VARIABLE' | 'LITERAL'; variableCode: string | null; numericUnit: NumericUnit | null; currencyCode: string | null; currencyVariableCode: string | null }
 export type VariableFilters = Partial<Record<'keyword' | 'sourceType' | 'valueType' | 'status' | 'pointCode' | 'usage' | 'nodeType' | 'codes' | 'page' | 'size', string | number>>;
-export const variableSourceLabels: Record<VariableSource, string> = { INPUT: '字段变量', CONSTANT: '常量变量', COLLECTION: '集合变量', NODE_OUTPUT: '节点输出', VELOCITY: '实时累计', LIST: '名单命中' };
+/** 来源、主体、统计方式、窗口、值类型、用途与比较方式的显示名是 `risk.enum.<类型>.<值>`，未知值显示原代码。 */
+export function variableSourceLabel(sourceType: string): string { return enumLabel(t, 'enum.variableSource', sourceType); }
 /** 实时累计参数，创建后不可修改；distinctSubjectType 只用于 DISTINCT_COUNT。 */
 export interface VelocityParameters { eventCode: string; anchorSubjectType: string; metric: string; distinctSubjectType: string | null; windowSeconds: number; includeCurrent: boolean }
 /** 名单命中参数，创建后不可修改；主体类型随名单。 */
 export interface ListParameters { listCode: string; subjectType: string }
-export const riskSubjects = [{ value: 'CLIENT', label: 'Client' }, { value: 'OPERATING_ENTITY', label: '运营主体' }, { value: 'CONSUMER', label: '消费者' }, { value: 'IP_ADDRESS', label: 'IP 地址' }, { value: 'CARD_FINGERPRINT', label: '卡指纹' }, { value: 'CARD_BIN', label: '卡 BIN' }] as const;
-export const velocityMetrics = [{ value: 'COUNT', label: '次数' }, { value: 'SUM_AMOUNT', label: '金额合计' }, { value: 'DISTINCT_COUNT', label: '不同主体数' }, { value: 'LAST_AMOUNT', label: '最近一次金额' }, { value: 'SECONDS_SINCE_LAST', label: '距上次秒数' }] as const;
-export const velocityWindows = [{ value: 600, label: '10 分钟' }, { value: 3600, label: '1 小时' }, { value: 86400, label: '1 天' }, { value: 604800, label: '7 天' }] as const;
-const label = (items: readonly { value: string | number; label: string }[], value: string | number | null) => items.find(i => i.value === value)?.label ?? String(value ?? '');
+export const riskSubjects = ['CLIENT', 'OPERATING_ENTITY', 'CONSUMER', 'IP_ADDRESS', 'CARD_FINGERPRINT', 'CARD_BIN'] as const;
+export const velocityMetrics = ['COUNT', 'SUM_AMOUNT', 'DISTINCT_COUNT', 'LAST_AMOUNT', 'SECONDS_SINCE_LAST'] as const;
+export const velocityWindows = [600, 3600, 86400, 604800] as const;
+export function velocityMetricLabel(metric: string): string { return enumLabel(t, 'enum.velocityMetric', metric); }
+/** 已知窗口有固定写法（10 分钟、1 小时…），其他窗口按秒显示。 */
+export function velocityWindowLabel(seconds: number): string {
+  const key = 'enum.velocityWindow.' + seconds;
+  return t.has(key) ? t(key) : t('variable.windowSeconds', { seconds });
+}
 /** 金额合计、最近一次金额为金额量纲，其余为普通数值。 */
 export function velocityIsMoney(metric: string): boolean { return metric === 'SUM_AMOUNT' || metric === 'LAST_AMOUNT'; }
 /** 风控点目录；没有目录的风控点不能创建实时累计与名单命中变量。 */
@@ -77,16 +86,16 @@ function fallbackWindow(windows: readonly number[], current: number): number {
 }
 /** 页面校验：缺少参数时返回原因，Risk 仍做最终校验。 */
 export function velocityProblem(p: VelocityParameters): string | null {
-  if (!p.eventCode || !p.anchorSubjectType || !p.metric || !p.windowSeconds) return '请完整填写统计参数';
-  if (p.metric === 'DISTINCT_COUNT' && !p.distinctSubjectType) return '不同主体数需要选择去重主体';
+  if (!p.eventCode || !p.anchorSubjectType || !p.metric || !p.windowSeconds) return t('variable.velocity.incomplete');
+  if (p.metric === 'DISTINCT_COUNT' && !p.distinctSubjectType) return t('variable.velocity.distinctSubjectRequired');
   return null;
 }
 /** 口径预览，例如“同一卡指纹 10 分钟内的支付尝试评估次数（不含本次）”。 */
 export function velocityPreview(catalog: FeatureCatalog, p: VelocityParameters): string {
-  const metric = p.metric === 'DISTINCT_COUNT' ? `不同${label(riskSubjects, p.distinctSubjectType)}数` : label(velocityMetrics, p.metric);
-  const current = velocityAllowsCurrent(catalog, p) ? (p.includeCurrent ? '（含本次）' : '（不含本次）') : '';
+  const metric = p.metric === 'DISTINCT_COUNT' ? t('variable.velocity.distinctMetric', { subject: subjectLabel(p.distinctSubjectType ?? '') }) : velocityMetricLabel(p.metric);
+  const current = velocityAllowsCurrent(catalog, p) ? (p.includeCurrent ? 'include' : 'exclude') : 'none';
   const event = catalog.velocityEvents.find(e => e.eventCode === p.eventCode)?.eventName ?? p.eventCode;
-  return `同一${label(riskSubjects, p.anchorSubjectType)} ${label(velocityWindows, p.windowSeconds)}内的${event}${metric}${current}`;
+  return t('variable.velocity.preview', { anchor: subjectLabel(p.anchorSubjectType), window: velocityWindowLabel(p.windowSeconds), event, metric, current });
 }
 /** 实时累计变量的派生结构字段：数值、格式 NONE、金额类绑定本点币种变量。 */
 export function velocityDerived(catalog: FeatureCatalog, p: VelocityParameters): Pick<CreateVariable, 'sourceType' | 'valueType' | 'pointCode' | 'formatCode' | 'numericUnit' | 'currencyCode' | 'currencyVariableCode' | 'allowedValuesVariableCode' | 'currentValue' | 'sourceContractCode' | 'sourceContractVersion' | 'sourceField'> {
@@ -97,12 +106,15 @@ export function velocityDerived(catalog: FeatureCatalog, p: VelocityParameters):
 export function listDerived(pointCode: string | null): Pick<CreateVariable, 'sourceType' | 'valueType' | 'pointCode' | 'formatCode' | 'numericUnit' | 'currencyCode' | 'currencyVariableCode' | 'allowedValuesVariableCode' | 'currentValue' | 'sourceContractCode' | 'sourceContractVersion' | 'sourceField'> {
   return { sourceType: 'LIST', valueType: 'BOOLEAN', pointCode, formatCode: 'NONE', numericUnit: null, currencyCode: null, currencyVariableCode: null, allowedValuesVariableCode: null, currentValue: null, sourceContractCode: null, sourceContractVersion: null, sourceField: null };
 }
-export function subjectLabel(value: string): string { return label(riskSubjects, value); }
-export const variableTypeLabels: Record<ValueType, string> = { STRING: '文本', NUMBER: '数值', BOOLEAN: '布尔', DATETIME: '时间', DURATION: '时长' };
-export const usageLabels: Record<VariableUsage, string> = { RULE_CONDITION: '规则条件', FLOW_CONDITION: '流程条件', ACTION_PARAMETER: '动作主体' };
-export const operatorLabels: Record<OperatorCode, string> = { EQ: '等于', NE: '不等于', GT: '大于', GTE: '大于等于', LT: '小于', LTE: '小于等于', IN: '属于', NOT_IN: '不属于', BETWEEN: '介于', IS_NULL: '为空', IS_NOT_NULL: '不为空' };
+export function subjectLabel(value: string): string { return enumLabel(t, 'enum.subject', value); }
+export const valueTypes: ValueType[] = ['STRING', 'NUMBER', 'BOOLEAN', 'DATETIME', 'DURATION'];
+export function variableTypeLabel(valueType: string): string { return enumLabel(t, 'enum.valueType', valueType); }
+export const variableUsages: VariableUsage[] = ['RULE_CONDITION', 'FLOW_CONDITION', 'ACTION_PARAMETER'];
+export function usageLabel(usage: string): string { return enumLabel(t, 'enum.variableUsage', usage); }
+export const operatorCodes: OperatorCode[] = ['EQ', 'NE', 'GT', 'GTE', 'LT', 'LTE', 'IN', 'NOT_IN', 'BETWEEN', 'IS_NULL', 'IS_NOT_NULL'];
+export function operatorLabel(operator: string): string { return enumLabel(t, 'enum.operator', operator); }
 
-function check(ok: unknown): asserts ok { if (!ok) throw new Error('变量响应不符合协议'); }
+function check(ok: unknown): asserts ok { if (!ok) throw new Error(t('variable.error.invalidResponse')); }
 function record(v: unknown, keys: string): Record<string, unknown> { check(v !== null && typeof v === 'object' && !Array.isArray(v)); check(Object.keys(v).sort().join(' ') === keys.split(' ').sort().join(' ')); return v as Record<string, unknown>; }
 function text(v: unknown): string { check(typeof v === 'string'); return v; }
 function number(v: unknown): number { check(typeof v === 'number' && Number.isSafeInteger(v) && v >= 0); return v; }
@@ -142,7 +154,7 @@ function distinctList<T>(items:T[]):T[] {check(new Set(items).size===items.lengt
 /** 风控点目录：事件、主体、统计方式不重复，窗口为已登记秒数且升序。 */
 export function decodeFeatureCatalog(v:unknown):FeatureCatalog {const r=record(v,'pointCode currencyVariableCode velocityEvents velocityAnchors distinctSubjects listSubjects');const result={pointCode:code(r.pointCode),currencyVariableCode:code(r.currencyVariableCode),
   velocityEvents:array(r.velocityEvents,v=>{const e=record(v,'eventCode eventName includeCurrentAllowed');return {eventCode:code(e.eventCode),eventName:text(e.eventName),includeCurrentAllowed:bool(e.includeCurrentAllowed)};},20),
-  velocityAnchors:array(r.velocityAnchors,v=>{const a=record(v,'subjectType metrics');const metrics=array(a.metrics,v=>{const m=record(v,'metric windowSeconds includeCurrentAllowed');const windows=array(m.windowSeconds,number,4);check(windows.length>0&&windows.every((w,i)=>velocityWindows.some(x=>x.value===w)&&(i===0||windows[i-1]<w)));return {metric:one(m.metric,metricCodes),windowSeconds:windows,includeCurrentAllowed:bool(m.includeCurrentAllowed)};},5);distinctList(metrics.map(m=>m.metric));return {subjectType:one(a.subjectType,subjectCodes),metrics};},8),
+  velocityAnchors:array(r.velocityAnchors,v=>{const a=record(v,'subjectType metrics');const metrics=array(a.metrics,v=>{const m=record(v,'metric windowSeconds includeCurrentAllowed');const windows=array(m.windowSeconds,number,4);check(windows.length>0&&windows.every((w,i)=>(velocityWindows as readonly number[]).includes(w)&&(i===0||windows[i-1]<w)));return {metric:one(m.metric,metricCodes),windowSeconds:windows,includeCurrentAllowed:bool(m.includeCurrentAllowed)};},5);distinctList(metrics.map(m=>m.metric));return {subjectType:one(a.subjectType,subjectCodes),metrics};},8),
   distinctSubjects:distinctList(array(r.distinctSubjects,v=>one(v,subjectCodes),8)),listSubjects:distinctList(array(r.listSubjects,v=>one(v,subjectCodes),8))};
   distinctList(result.velocityEvents.map(e=>e.eventCode));distinctList(result.velocityAnchors.map(a=>a.subjectType));return result;}
 export function decodeContext(v:unknown):VariableContext {const r=record(v,'supportedPoints sources valueTypes formatProfiles numericUnits limits contracts featureCatalogs');return {
@@ -176,7 +188,7 @@ export function variableOperand(variable:VariableSummary,role:'LEFT'|'RIGHT'='LE
 export function literalOperand(type:ValueType,role:'LEFT'|'RIGHT'='RIGHT',value:string|boolean=''):VariableOperand {return {...emptyOperand(role),sourceType:'LITERAL',valueType:type,literalValue:type==='BOOLEAN'?(typeof value==='boolean'?value:false):value,numericUnit:type==='NUMBER'?'SCALAR':null};}
 export function decodeVariableOperand(v:unknown):VariableOperand {const r=record(v,'operandRole valueSequence sourceType fieldCode valueType literalValue variableCode numericUnit currencyCode currencyVariableCode');check(r.fieldCode===null);const result:VariableOperand={operandRole:one(r.operandRole,['LEFT','RIGHT']),valueSequence:number(r.valueSequence),sourceType:one(r.sourceType,['VARIABLE','LITERAL']),fieldCode:null,valueType:one(r.valueType,types),literalValue:nil(r.literalValue,scalar),variableCode:nil(r.variableCode,code),numericUnit:nil(r.numericUnit,v=>one(v,['SCALAR','MONEY'])),currencyCode:nil(r.currencyCode,text),currencyVariableCode:nil(r.currencyVariableCode,code)};check(result.valueSequence>0&&result.valueSequence<=100&&(result.sourceType==='VARIABLE'?result.variableCode!==null&&result.literalValue===null&&result.numericUnit===null&&result.currencyCode===null&&result.currencyVariableCode===null:result.variableCode===null&&result.literalValue!==null));return result;}
 export function normalizeLiteral(value:string|boolean,type:ValueType,format='NONE'):string|boolean {
-  const invalid=()=>{throw new Error('值不符合所选类型或格式');};
+  const invalid=()=>{throw new Error(t('variable.error.invalidValue'));};
   if(type==='BOOLEAN')return typeof value==='boolean'?value:invalid();
   if(typeof value!=='string')return invalid();
   if(type==='NUMBER') {if(!/^-?(0|[1-9]\d{0,15})(\.\d{1,8})?$/.test(value))return invalid();const [whole,fraction='']=value.split('.');return `${BigInt(whole!)===0n&&/^0*$/.test(fraction)?'0':whole}.${fraction.padEnd(8,'0')}`;}
@@ -192,22 +204,22 @@ export function normalizeLiteral(value:string|boolean,type:ValueType,format='NON
 export function prepareOperands(operator:string,operands:readonly RuleOperand[]):VariableOperand[] {
   const left=operands.filter(o=>o.operandRole==='LEFT'),right=operands.filter(o=>o.operandRole==='RIGHT');
   const unary=['IS_NULL','IS_NOT_NULL'].includes(operator),set=['IN','NOT_IN'].includes(operator);
-  if(left.length!==1||(unary?right.length!==0:set?right.length<1||right.length>100:right.length!==(operator==='BETWEEN'?2:1)))throw new Error('请补齐左右值');
-  if(!Object.hasOwn(operatorLabels,operator))throw new Error('比较方式无效');
+  if(left.length!==1||(unary?right.length!==0:set?right.length<1||right.length>100:right.length!==(operator==='BETWEEN'?2:1)))throw new Error(t('variable.error.operandsIncomplete'));
+  if(!(operatorCodes as string[]).includes(operator))throw new Error(t('variable.error.invalidOperator'));
   const prepared=[...left,...right].map(o=>{const r=decodeVariableOperand(o);return {...r,literalValue:r.sourceType==='LITERAL'?normalizeLiteral(r.literalValue!,r.valueType):null};});
-  if(left[0]!.valueSequence!==1||right.some((o,i)=>o.valueSequence!==i+1))throw new Error('操作数序号不连续');
-  if(right.some(o=>o.valueType!==left[0]!.valueType))throw new Error('左右两侧值类型不同');
-  if(['GT','GTE','LT','LTE','BETWEEN'].includes(operator)&&!['NUMBER','DATETIME','DURATION'].includes(left[0]!.valueType))throw new Error('大小和区间判断需要数值、时间或时长');
-  if(set&&right.length>1&&right.some(o=>o.sourceType!=='LITERAL'))throw new Error('集合判断请选择一个集合变量，或填写字面值列表');
+  if(left[0]!.valueSequence!==1||right.some((o,i)=>o.valueSequence!==i+1))throw new Error(t('variable.error.operandSequence'));
+  if(right.some(o=>o.valueType!==left[0]!.valueType))throw new Error(t('variable.error.typeMismatch'));
+  if(['GT','GTE','LT','LTE','BETWEEN'].includes(operator)&&!['NUMBER','DATETIME','DURATION'].includes(left[0]!.valueType))throw new Error(t('variable.error.rangeType'));
+  if(set&&right.length>1&&right.some(o=>o.sourceType!=='LITERAL'))throw new Error(t('variable.error.setOperand'));
   for(const o of prepared){
     if(o.sourceType!=='LITERAL')continue;
     if(o.valueType!=='NUMBER'){
-      if(o.numericUnit!==null||o.currencyCode!==null||o.currencyVariableCode!==null)throw new Error('非数值不能附带金额元数据');
+      if(o.numericUnit!==null||o.currencyCode!==null||o.currencyVariableCode!==null)throw new Error(t('variable.error.moneyOnNonNumber'));
     }else if(o.numericUnit==='SCALAR'){
-      if(o.currencyCode!==null||o.currencyVariableCode!==null)throw new Error('普通数值不能指定币种');
+      if(o.currencyCode!==null||o.currencyVariableCode!==null)throw new Error(t('variable.error.currencyOnScalar'));
     }else if(o.numericUnit==='MONEY'){
-      if((o.currencyCode===null)===(o.currencyVariableCode===null)||o.currencyCode!==null&&!/^[A-Z]{3}$/.test(o.currencyCode))throw new Error('金额必须指定固定币种或币种变量');
-    }else throw new Error('请选择数值单位');
+      if((o.currencyCode===null)===(o.currencyVariableCode===null)||o.currencyCode!==null&&!/^[A-Z]{3}$/.test(o.currencyCode))throw new Error(t('variable.error.moneyCurrency'));
+    }else throw new Error(t('variable.error.numericUnit'));
   }
   return prepared;
 }
@@ -222,7 +234,7 @@ export function matchesVariableFilters(variable:VariableSummary,filters:Variable
 
 export function parsePastedMembers(value:string,type:ValueType,format:string):VariableMember[] {
   const result=deduplicatePastedMembers(value,type,format);
-  if(result.duplicateRows.length)throw new Error(`第 ${result.duplicateRows[0]} 行：规范值重复，请先确认去重`);
+  if(result.duplicateRows.length)throw new Error(t('variable.error.duplicateRow', { row: result.duplicateRows[0]! }));
   return result.members;
 }
 
@@ -236,12 +248,12 @@ export function deduplicatePastedMembers(value:string,type:ValueType,format:stri
     try{
       const memberValue=normalizeLiteral(type==='BOOLEAN'?(raw==='true'?true:raw==='false'?false:raw!):raw!,type,format);
       const displayName=names.join('\t')||null;
-      if(displayName!==null&&([...displayName].length>255||/[\p{Cc}\p{Cs}]/u.test(displayName)))throw new Error('展示名称格式无效');
+      if(displayName!==null&&([...displayName].length>255||/[\p{Cc}\p{Cs}]/u.test(displayName)))throw new Error(t('variable.error.displayName'));
       const key=typeof memberValue+':'+String(memberValue);
       if(seen.has(key)){duplicateRows.push(index+1);return;}
       seen.add(key);members.push({value:memberValue,displayName});
-    }catch(e){throw new Error(`第 ${index+1} 行：${e instanceof Error?e.message:'值无效'}`);}
+    }catch(e){throw new Error(t('variable.error.rowProblem', { row: index+1, problem: e instanceof Error?e.message:t('variable.error.rowInvalid') }));}
   });
-  if(members.length>1000)throw new Error('集合最多 1,000 项');
+  if(members.length>1000)throw new Error(t('variable.error.tooManyMembers'));
   return {members,duplicateRows};
 }

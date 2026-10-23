@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, session } from '../api/session';
 import { useErrorNotification } from '../feedback/useErrorNotification';
+import { translator } from '../i18n/index';
 import { isNotFoundFailure } from './reconRoutes';
+
+const t = translator('recon');
 
 export interface ReconDetailState<T> { item: T | undefined; loading: boolean; notFound: boolean; error: string; reload: () => void }
 
@@ -30,7 +33,7 @@ export function useReconDetail<T>(path: string | null, decode: (value: unknown) 
           return;
         }
         if (failure instanceof ApiError && failure.status === 403) authorizationChanged.current();
-        setState({ path, item: undefined, loading: false, notFound: false, error: failure instanceof Error ? failure.message : '暂时无法加载，请重试。' });
+        setState({ path, item: undefined, loading: false, notFound: false, error: failure instanceof Error ? failure.message : t('common.loadFailed') });
         notify(failure, failureTitle);
       });
     return () => abort.abort();

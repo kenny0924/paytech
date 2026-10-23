@@ -4,6 +4,8 @@ import type { Edge as CanvasEdge, EdgeProps, Node as CanvasNode, NodeProps } fro
 import { outgoing, requestCoverage, statusCondition, workbenchLayout } from './flowModel';
 import type { ApiContract, ExecuteStatus, Flow, FlowEdge } from './flowModel';
 import { StatusTag } from './ui';
+import { translator } from '../i18n/index';
+import { useT } from '../i18n/react';
 import '@xyflow/react/dist/style.css';
 
 export const startId = '__start';
@@ -62,10 +64,11 @@ function LaneEdgeView({ id, sourceX, sourceY, targetX, targetY, markerEnd, style
 const edgeTypes = { lane: LaneEdgeView };
 
 /** 连线标签：执行状态快捷条件写成“1 · SUCCESS”，其他条件截断显示，兜底为“其他情况”。 */
+const tFlow = translator('channel');
 export function edgeLabel(edge: FlowEdge): string {
-  if (edge.default) return '其他情况';
+  if (edge.default) return tFlow('flow.edge.otherwise');
   const status = (['SUCCESS', 'FAIL', 'ERROR'] as ExecuteStatus[]).find(item => edge.condition === statusCondition(edge.from, item));
-  const condition = status ?? (edge.condition ? (edge.condition.length > 22 ? `${edge.condition.slice(0, 22)}…` : edge.condition) : '条件待填');
+  const condition = status ?? (edge.condition ? (edge.condition.length > 22 ? `${edge.condition.slice(0, 22)}…` : edge.condition) : tFlow('flow.edge.conditionPending'));
   return `${edge.priority} · ${condition}`;
 }
 
@@ -77,13 +80,14 @@ export function FlowCanvas({ flow, apis, standardApiCode, readOnly, selection, f
   flow: Flow; apis: ApiContract[]; standardApiCode: string; readOnly: boolean; selection: FlowSelection; focusId?: string;
   errors: Map<string, string>; onSelect: (selection: FlowSelection) => void; onConnect: (source: string, target: string) => void;
 }) {
+  const t = useT('channel');
   const view = useReactFlow();
   const positions = useMemo(() => workbenchLayout(flow, startId), [flow]);
   const selectedId = selection?.kind === 'start' ? startId : selection?.id ?? null;
   const returnIds = useMemo(() => new Set(flow.returns.map(item => item.id)), [flow.returns]);
   const nodes = useMemo<(StartNode | ApiNode | ReturnNode)[]>(() => [
     { id: startId, type: 'start', position: positions.get(startId)!, selected: selectedId === startId, deletable: false, connectable: !readOnly,
-      data: { label: `开始 · ${standardApiCode} 输入`, hint: flow.entry ? `入口：${flow.entry}` : '从开始拖出连线指定入口节点' } },
+      data: { label: t('flow.start', { api: standardApiCode }), hint: flow.entry ? t('flow.entry', { node: flow.entry }) : t('flow.entryHint') } },
     ...flow.nodes.map<ApiNode>(node => {
       const api = apis.find(item => item.apiCode === node.integrationApi);
       const coverage = requestCoverage(node, api);
@@ -91,15 +95,16 @@ export function FlowCanvas({ flow, apis, standardApiCode, readOnly, selection, f
       const boundParams = requiredParams.filter(param => node.params?.[param.name]).length;
       const complete = !!api && coverage.covered === coverage.required && boundParams === requiredParams.length;
       return { id: node.id, type: 'api', position: positions.get(node.id)!, selected: selectedId === node.id && selection?.kind === 'node', deletable: false,
-        data: { id: node.id, subtitle: api ? `${node.integrationApi} · ${api.apiName}` : `${node.integrationApi} · 原子 API 不存在`,
-          coverage: `请求 ${coverage.covered}/${coverage.required} · 参数 ${boundParams}/${requiredParams.length}${complete ? ' 已覆盖' : ' 未覆盖'}`,
+        data: { id: node.id, subtitle: api ? `${node.integrationApi} · ${api.apiName}` : t('flow.apiMissing', { api: node.integrationApi }),
+          coverage: t(complete ? 'flow.coverageComplete' : 'flow.coverageIncomplete', { covered: coverage.covered, required: coverage.required,
+            bound: boundParams, params: requiredParams.length }),
           complete, error: errors.get(node.id) } };
     }),
     ...flow.returns.map<ReturnNode>(item => ({ id: item.id, type: 'exit', position: positions.get(item.id)!, selected: selectedId === item.id,
       deletable: false, data: { id: item.id, status: item.executeStatus, error: errors.get(item.id),
-        subtitle: item.executeStatus === 'ERROR' ? '结果未知，输出为空'
-          : Object.keys(item.outputs ?? {}).length ? `输出 ${Object.keys(item.outputs ?? {}).join('、')}` : '尚未配置输出' } })),
-  ], [flow, apis, positions, selectedId, selection?.kind, errors, readOnly, standardApiCode]);
+        subtitle: item.executeStatus === 'ERROR' ? t('flow.errorExit')
+          : Object.keys(item.outputs ?? {}).length ? t('flow.exitOutputs', { names: Object.keys(item.outputs ?? {}).join(t('list.separator')) }) : t('flow.noOutputs') } })),
+  ], [flow, apis, positions, selectedId, selection?.kind, errors, readOnly, standardApiCode, t]);
   const edges = useMemo<CanvasEdge[]>(() => [
     ...(flow.entry ? [{ id: `${startId}->${flow.entry}`, source: startId, sourceHandle: 'b', target: flow.entry, targetHandle: 't',
       type: 'smoothstep', markerEnd: { type: MarkerType.ArrowClosed, color: '#8a96ad' },

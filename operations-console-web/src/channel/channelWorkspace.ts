@@ -1,5 +1,8 @@
 import { callerServicePattern, channelRoutes, channelTypes, idPattern } from './channel.ts';
 import type { CallGrant, ChannelEndpoint, ChannelType } from './channel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('channel'), tNav = translator('nav');
 
 /**
  * 渠道工作区（第二段画板 01–12）的纯逻辑：类型分段与地址栏、详情页签、协议 / 沙箱子页路由、旧接入方地址映射、
@@ -58,9 +61,8 @@ export const detailTabs: Record<ChannelType, readonly DetailTab[]> = {
   PAYMENT: ['overview', 'accounts', 'mids', 'protocol', 'verify', 'changes'],
   SERVICE: ['overview', 'credential', 'protocol', 'verify', 'grants', 'changes'],
 };
-export const detailTabLabels: Record<DetailTab, string> = {
-  overview: '概览', accounts: '技术账号', credential: '凭据', mids: 'MID', protocol: '协议配置', verify: '沙箱验证', grants: '调用授权', changes: '变更记录',
-};
+/** 页签文案（channel.workspace.tab.<页签>），调用时翻译。 */
+export const detailTabLabel = (tab: DetailTab) => t(`workspace.tab.${tab}`);
 /** 地址栏 ?tab= 取值；不属于该类型的页签回到概览。 */
 export function detailTab(type: ChannelType, value: string | null): DetailTab {
   return detailTabs[type].find(tab => tab === value) ?? 'overview';
@@ -68,7 +70,7 @@ export function detailTab(type: ChannelType, value: string | null): DetailTab {
 
 export type ProtocolSection = 'implementations' | 'apis' | 'scripts';
 export const protocolSections: readonly ProtocolSection[] = ['implementations', 'apis', 'scripts'];
-export const protocolSectionLabels: Record<ProtocolSection, string> = { implementations: '标准 API 实现', apis: '原子 API', scripts: '公共脚本' };
+export const protocolSectionLabel = (section: ProtocolSection) => t(`workspace.section.${section}`);
 export function protocolSection(value: string | null): ProtocolSection {
   return protocolSections.find(section => section === value) ?? 'implementations';
 }
@@ -109,8 +111,8 @@ export type WorkspaceRoutes = ReturnType<typeof workspaceRoutes>;
 /** 协议与沙箱子页的面包屑前缀：渠道 / {编码} / {页签或子导航}。 */
 export function workspaceCrumbs(channelId: string, channelCode: string, section: ProtocolSection | 'verify'): { label: string; to: string }[] {
   const routes = workspaceRoutes(channelId);
-  return [{ label: '渠道', to: channelRoutes.channels }, { label: channelCode, to: routes.root },
-    section === 'verify' ? { label: '沙箱验证', to: routes.tab('verify') } : { label: protocolSectionLabels[section], to: routes.protocol(section) }];
+  return [{ label: tNav('resource.OPERATIONS_CHANNEL_CHANNELS'), to: channelRoutes.channels }, { label: channelCode, to: routes.root },
+    section === 'verify' ? { label: detailTabLabel('verify'), to: routes.tab('verify') } : { label: protocolSectionLabel(section), to: routes.protocol(section) }];
 }
 
 /**
@@ -205,17 +207,12 @@ export function legacyIntegrationTarget(channelId: string, rest: readonly string
 
 // ---------- 调用授权（画板 07–09） ----------
 
-/** 新增授权的预置调用方：与内部认证服务名一致；中文名只用于展示。 */
-export const presetCallers: readonly { callerService: string; label: string }[] = [
-  { callerService: 'counterparty-service', label: '交易对手' },
-  { callerService: 'commerce-service', label: '托管收银台' },
-  { callerService: 'risk-service', label: '风控' },
-  { callerService: 'payment-service', label: '支付编排' },
-  { callerService: 'acquiring-service', label: '收单' },
-  { callerService: 'client-master-service', label: '客户主数据' },
+/** 新增授权的预置调用方：与内部认证服务名一致；显示名（channel.caller.<服务名>）只用于展示。 */
+export const presetCallers: readonly string[] = [
+  'counterparty-service', 'commerce-service', 'risk-service', 'payment-service', 'acquiring-service', 'client-master-service',
 ];
 export function callerLabel(callerService: string): string | null {
-  return presetCallers.find(item => item.callerService === callerService)?.label ?? null;
+  return presetCallers.includes(callerService) ? t(`caller.${callerService}`) : null;
 }
 export function isCallerService(value: string): boolean {
   return callerServicePattern.test(value);
@@ -225,7 +222,7 @@ export function isCallerService(value: string): boolean {
 export function callerOptions(grants: readonly Pick<CallGrant, 'callerService'>[]): { callerService: string; label: string | null; grantCount: number }[] {
   const counts = new Map<string, number>();
   for (const grant of grants) counts.set(grant.callerService, (counts.get(grant.callerService) ?? 0) + 1);
-  const names = new Set([...counts.keys(), ...presetCallers.map(item => item.callerService)]);
+  const names = new Set([...counts.keys(), ...presetCallers]);
   return [...names].toSorted().map(callerService => ({ callerService, label: callerLabel(callerService), grantCount: counts.get(callerService) ?? 0 }));
 }
 
@@ -285,9 +282,9 @@ export function endpointDraftIssues(rows: readonly Partial<ChannelEndpoint>[]): 
   const seen = new Set<string>();
   rows.forEach((row, index) => {
     const code = row.endpointCode?.trim() ?? '';
-    if (!code) issues.set(index, '请填写地址编码');
-    else if (seen.has(code)) issues.set(index, `地址编码 ${code} 重复`);
-    else if (!(row.baseUrl?.trim())) issues.set(index, '请填写 Base URL');
+    if (!code) issues.set(index, t('endpoint.codeRequired'));
+    else if (seen.has(code)) issues.set(index, t('endpoint.codeDuplicate', { code }));
+    else if (!(row.baseUrl?.trim())) issues.set(index, t('endpoint.baseUrlRequired'));
     seen.add(code);
   });
   return issues;

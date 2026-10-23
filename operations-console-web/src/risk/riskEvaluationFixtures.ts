@@ -9,7 +9,7 @@ export const evaluationWire = {
 const variable = (variableCode: string, variableName: string | null, valueType = 'NUMBER') =>
   ({ operandRole: 'LEFT', sourceType: 'VARIABLE', valueType, variableCode, variableName });
 const blockedCard = { nodeKey: '9101', nodeType: 'PREDICATE', comparisonOperator: 'EQ', result: false,
-  operands: [variable('CARD_BLOCKED', '卡指纹在黑名单', 'BOOLEAN'), { operandRole: 'RIGHT', sourceType: 'LITERAL', valueType: 'BOOLEAN', literalValue: 'true' }] };
+  operands: [variable('CARD_BLOCKED', 'Card fingerprint on block list', 'BOOLEAN'), { operandRole: 'RIGHT', sourceType: 'LITERAL', valueType: 'BOOLEAN', literalValue: 'true' }] };
 
 export const explanationWire = {
   evaluationId: '236600000000000001',
@@ -21,19 +21,19 @@ export const explanationWire = {
   pathAvailable: true,
   path: [
     { stepNo: 1, nodeKey: 'start', nodeType: 'START', nodeName: null, exitEdgeKey: 'e1', exitEdgeName: null },
-    { stepNo: 2, nodeKey: 'n_block', nodeType: 'RULE_SET', nodeName: '拦截', ruleSetVersionId: '236500000000000002', ruleSetCode: 'PAY_BLOCK', ruleSetVersionNo: 2,
-      matched: false, decision: null, reused: false, exitEdgeKey: 'e2', exitEdgeName: '其他情况' },
-    { stepNo: 3, nodeKey: 'n_auth', nodeType: 'RULE_SET', nodeName: '认证', ruleSetVersionId: '236500000000000003', ruleSetCode: 'PAY_AUTH', ruleSetVersionNo: 1,
-      matched: true, decision: 'ALLOW', reused: true, exitEdgeKey: 'e3', exitEdgeName: '需要认证' },
-    { stepNo: 4, nodeKey: 'end_3ds', nodeType: 'END', nodeName: '放行（需要 3DS）', decision: 'ALLOW' },
+    { stepNo: 2, nodeKey: 'n_block', nodeType: 'RULE_SET', nodeName: 'Block', ruleSetVersionId: '236500000000000002', ruleSetCode: 'PAY_BLOCK', ruleSetVersionNo: 2,
+      matched: false, decision: null, reused: false, exitEdgeKey: 'e2', exitEdgeName: 'Otherwise' },
+    { stepNo: 3, nodeKey: 'n_auth', nodeType: 'RULE_SET', nodeName: 'Authentication', ruleSetVersionId: '236500000000000003', ruleSetCode: 'PAY_AUTH', ruleSetVersionNo: 1,
+      matched: true, decision: 'ALLOW', reused: true, exitEdgeKey: 'e3', exitEdgeName: 'Needs authentication' },
+    { stepNo: 4, nodeKey: 'end_3ds', nodeType: 'END', nodeName: 'Allow (3DS required)', decision: 'ALLOW' },
   ],
   rules: [
-    { ruleSetVersionId: '236500000000000002', ruleId: '236500000000000021', ruleCode: 'BLOCKED_CARD', ruleName: '黑名单卡', priorityNo: 10, matched: false, terminal: false,
+    { ruleSetVersionId: '236500000000000002', ruleId: '236500000000000021', ruleCode: 'BLOCKED_CARD', ruleName: 'Blocked card', priorityNo: 10, matched: false, terminal: false,
       action: 'DENY_PAYMENT', conditionAvailable: true, condition: blockedCard as Record<string, unknown> | null },
-    { ruleSetVersionId: '236500000000000002', ruleId: '236500000000000022', ruleCode: 'LARGE_AMOUNT', ruleName: '大额审核', priorityNo: 30, matched: false, terminal: false,
+    { ruleSetVersionId: '236500000000000002', ruleId: '236500000000000022', ruleCode: 'LARGE_AMOUNT', ruleName: 'Large amount review', priorityNo: 30, matched: false, terminal: false,
       action: 'REVIEW_PAYMENT', conditionAvailable: true, condition: { nodeKey: '9201', nodeType: 'PREDICATE', comparisonOperator: 'GT', result: null,
         operands: [variable('PAY_INPUT_AMOUNT', null), { operandRole: 'RIGHT', sourceType: 'LITERAL', valueType: 'NUMBER', literalValue: '5000', numericUnit: 'MONEY', currencyVariableCode: 'PAY_INPUT_CURRENCY' }] } },
-    { ruleSetVersionId: '236500000000000003', ruleId: '236500000000000031', ruleCode: 'THREE_DS_AMOUNT', ruleName: '大于 500 需 3DS', priorityNo: 10, matched: true, terminal: true,
+    { ruleSetVersionId: '236500000000000003', ruleId: '236500000000000031', ruleCode: 'THREE_DS_AMOUNT', ruleName: 'Over 500 needs 3DS', priorityNo: 10, matched: true, terminal: true,
       action: 'ALLOW_PAYMENT', conditionAvailable: true, condition: { nodeKey: '9301', nodeType: 'GROUP', groupOperator: 'AND', result: true, children: [
         { nodeKey: '9302', nodeType: 'PREDICATE', comparisonOperator: 'GT', result: true,
           operands: [variable('PAY_INPUT_AMOUNT', null), { operandRole: 'RIGHT', sourceType: 'LITERAL', valueType: 'NUMBER', literalValue: '500', numericUnit: 'MONEY', currencyVariableCode: 'PAY_INPUT_CURRENCY' }] },
@@ -41,12 +41,12 @@ export const explanationWire = {
       ] } },
   ],
   variables: [
-    { variableCode: 'PAY_INPUT_AMOUNT', variableName: '支付金额', sourceType: 'INPUT', valueType: 'NUMBER', value: '600', valueBasis: 'EVALUATION' },
-    { variableCode: 'PAY_INPUT_CURRENCY', variableName: '支付币种', sourceType: 'INPUT', valueType: 'STRING', value: 'USD', valueBasis: 'EVALUATION' },
-    { variableCode: 'CARD_COUNT_1H', variableName: '同卡 1 小时次数', sourceType: 'VELOCITY', valueType: 'NUMBER', value: '1', valueBasis: 'EVALUATION', technicalStatus: 'SUCCEEDED', elapsedMillis: 2 },
-    { variableCode: 'CARD_LIMIT', variableName: '同卡次数上限', sourceType: 'CONSTANT', valueType: 'NUMBER', value: '5', valueBasis: 'CURRENT' },
-    { variableCode: 'HIGH_RISK_COUNTRIES', variableName: '高风险国家', sourceType: 'COLLECTION', valueType: 'STRING', value: null, values: ['AE', 'SA'], valueBasis: 'CURRENT' },
-    { variableCode: 'CARD_BLOCKED', variableName: '卡指纹在黑名单', sourceType: 'LIST', valueType: 'BOOLEAN', value: null, valueBasis: 'EVALUATION', technicalStatus: 'FAILED', failureCode: 'FEATURE_ERROR' },
+    { variableCode: 'PAY_INPUT_AMOUNT', variableName: 'Payment amount', sourceType: 'INPUT', valueType: 'NUMBER', value: '600', valueBasis: 'EVALUATION' },
+    { variableCode: 'PAY_INPUT_CURRENCY', variableName: 'Payment currency', sourceType: 'INPUT', valueType: 'STRING', value: 'USD', valueBasis: 'EVALUATION' },
+    { variableCode: 'CARD_COUNT_1H', variableName: 'Same-card count in 1 hour', sourceType: 'VELOCITY', valueType: 'NUMBER', value: '1', valueBasis: 'EVALUATION', technicalStatus: 'SUCCEEDED', elapsedMillis: 2 },
+    { variableCode: 'CARD_LIMIT', variableName: 'Same-card count limit', sourceType: 'CONSTANT', valueType: 'NUMBER', value: '5', valueBasis: 'CURRENT' },
+    { variableCode: 'HIGH_RISK_COUNTRIES', variableName: 'High-risk countries', sourceType: 'COLLECTION', valueType: 'STRING', value: null, values: ['AE', 'SA'], valueBasis: 'CURRENT' },
+    { variableCode: 'CARD_BLOCKED', variableName: 'Card fingerprint on block list', sourceType: 'LIST', valueType: 'BOOLEAN', value: null, valueBasis: 'EVALUATION', technicalStatus: 'FAILED', failureCode: 'FEATURE_ERROR' },
   ],
   shadows: [{ evaluationId: '236600000000000007', shadowRunId: '236600000000000100', result: 'ALLOW', decisionChanged: false, outputChanged: true, severity: 'LOW' }],
 };
@@ -54,7 +54,7 @@ export const explanationWire = {
 /** 结账准备评估：没有认证要求输出，业务身份为订单 ID；输入为结账合同 v5 的 12 个字段（非 PARTNER 来源无 Local Partner）。 */
 export const checkoutEvaluationWire = {
   ...evaluationWire, evaluationId: '236600000000000201', pointCode: 'CHECKOUT_PREPARE', businessKey: '991016000000000123', result: 'DENY',
-  reasonCode: 'HIGH_RISK_COUNTRY', reasonMessage: '高风险国家', outputs: {}, flowCode: 'CHECKOUT_FLOW', flowVersionNo: 2,
+  reasonCode: 'HIGH_RISK_COUNTRY', reasonMessage: 'High-risk countries', outputs: {}, flowCode: 'CHECKOUT_FLOW', flowVersionNo: 2,
 };
 export const checkoutExplanationWire = {
   ...explanationWire, evaluationId: '236600000000000201',

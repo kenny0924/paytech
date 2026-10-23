@@ -7,9 +7,11 @@ import {
 } from './taskModel.ts';
 import { actionState } from './runtimeModel.ts';
 import type { BatchStatus } from './runtimeModel.ts';
-import { actionRunStatusLabels } from './workflowLabels.ts';
+import { actionRunStatusLabel } from './workflowLabels.ts';
+import { testT } from '../i18n/testing.ts';
 import type { ActionRun, InstanceSummary, NodeRun, Task, WorkflowFile, WorkflowGraph } from './workflowTypes.ts';
 
+const t = testT('workflow');
 const HOUR = 3_600_000;
 const now = new Date('2026-10-22T12:00:00').getTime();
 const ago = (hours: number) => new Date(now - hours * HOUR).toISOString();
@@ -18,16 +20,16 @@ test('超时：达到 24 小时才标红，满 1 天按天；未到阈值返回 
   assert.equal(OVERDUE_HOURS, 24);
   assert.equal(overdueText(ago(0), now), null);
   assert.equal(overdueText(ago(23.9), now), null);
-  assert.equal(overdueText(ago(24), now), '超时 1 天');
-  assert.equal(overdueText(ago(50), now), '超时 2 天');
-  assert.equal(overdueText(ago(5), now, 4), '超时 5 小时');
+  assert.equal(overdueText(ago(24), now), 'Overdue by 1 day');
+  assert.equal(overdueText(ago(50), now), 'Overdue by 2 days');
+  assert.equal(overdueText(ago(5), now, 4), 'Overdue by 5 hours');
   assert.equal(overdueText('not a time', now), null);
-  assert.equal(relativeTime(ago(0.1), now), '6 分钟前');
-  assert.equal(relativeTime(ago(3), now), '3 小时前');
-  assert.equal(relativeTime(new Date('2026-10-21T16:40:00').toISOString(), now), '昨天 16:40');
+  assert.equal(relativeTime(ago(0.1), now), '6 minutes ago');
+  assert.equal(relativeTime(ago(3), now), '3 hours ago');
+  assert.equal(relativeTime(new Date('2026-10-21T16:40:00').toISOString(), now), 'Yesterday 16:40');
   assert.equal(relativeTime(new Date('2026-10-19T08:00:00').toISOString(), now), '10-19');
-  assert.equal(durationText(ago(98), null, now), '4 天');
-  assert.equal(durationText(ago(10), ago(8), now), '2 小时');
+  assert.equal(durationText(ago(98), null, now), '4 days');
+  assert.equal(durationText(ago(10), ago(8), now), '2 hours');
 });
 
 const node = (key: string, type: WorkflowGraph['nodes'][number]['type'], name = key) => ({ key, type, name, position: { x: 0, y: 0 } });
@@ -68,11 +70,12 @@ test('状态归一：COMPLETED 与旧 VERIFIED 为已完成，旧 UNVERIFIED 为
   assert.equal(actionState('UNVERIFIED'), 'PENDING');
   assert.equal(actionState('CANCELLED'), 'CANCELLED');
   assert.equal(actionState('SOMETHING_NEW'), 'PENDING');
-  assert.deepEqual([actionRunStatusLabels.PENDING, actionRunStatusLabels.COMPLETED, actionRunStatusLabels.CANCELLED], ['待处理', '已完成', '已取消']);
-  assert.equal(actionRunStatusLabels.VERIFIED, '已完成');
-  assert.equal(actionRunStatusLabels.UNVERIFIED, '待处理');
+  assert.deepEqual([actionRunStatusLabel('PENDING'), actionRunStatusLabel('COMPLETED'), actionRunStatusLabel('CANCELLED')], ['Pending', 'Completed', 'Cancelled']);
+  assert.equal(actionRunStatusLabel('VERIFIED'), 'Completed');
+  assert.equal(actionRunStatusLabel('UNVERIFIED'), 'Pending');
+  assert.equal(actionRunStatusLabel('SOMETHING_NEW'), 'SOMETHING_NEW');
   assert.deepEqual([handledResult('COMPLETED').label, handledResult('VERIFIED').label, handledResult('APPROVED').label, handledResult('RETURNED').label,
-    handledResult('REJECTED').label], ['已完成', '已完成', '已同意', '已退回', '已驳回']);
+    handledResult('REJECTED').label], ['Completed', 'Completed', 'Approved', 'Returned', 'Rejected']);
 });
 
 test('完成资格：必选动作进入审批后锁定，可选动作到放行前可完成；已完成可修改', () => {
@@ -93,37 +96,37 @@ test('必选计数与底部文字：已取消不计，可选不阻塞', () => {
   const runs = [action({ status: 'COMPLETED' }), action({ status: 'PENDING' }), action({ required: false }), action({ status: 'CANCELLED' })];
   const progress = actionProgress(runs);
   assert.deepEqual(progress, { required: 2, requiredDone: 1, optional: 1, optionalDone: 0 });
-  assert.deepEqual(progressText(progress, '合规审核', false), { text: '还有 1 项必选动作未完成，完成后进入合规审核', warn: true });
-  assert.deepEqual(progressText({ required: 2, requiredDone: 2, optional: 0, optionalDone: 0 }), { text: '必选 2 项 · 已完成 2 项', warn: false });
-  assert.equal(progressText({ required: 0, requiredDone: 0, optional: 1, optionalDone: 0 }).text, '本节点只有可选动作，不阻塞放行');
+  assert.deepEqual(progressText(progress, '合规审核', false), { text: '1 required action is still open. Once done, the process moves to 合规审核.', warn: true });
+  assert.deepEqual(progressText({ required: 2, requiredDone: 2, optional: 0, optionalDone: 0 }), { text: '2 required · 2 completed', warn: false });
+  assert.equal(progressText({ required: 0, requiredDone: 0, optional: 1, optionalDone: 0 }).text, t('progress.optionalOnly'));
 });
 
 test('必填检查只在失焦或尝试完成后显示；上传只查至少一个；扫描中不挡完成', () => {
   const template = { config: { fields: [{ key: 'name', label: '名称', type: 'TEXT' as const, required: true, rules: { maxLength: 3 } },
     { key: 'note', label: '备注', type: 'LONG_TEXT' as const, required: false }] } };
   const problems = completionProblems(action({}), template, { name: '' });
-  assert.deepEqual(problems, { name: '必填' });
+  assert.deepEqual(problems, { name: 'Required' });
   assert.deepEqual(completionProblems(action({}), template, { name: '超过三个字也可以' }), {}, '旧配置 maxLength 不再检查');
   assert.deepEqual(visibleProblems(problems, new Set(), false), {}, '打开时不标红');
-  assert.deepEqual(visibleProblems(problems, new Set(['name']), false), { name: '必填' });
-  assert.deepEqual(visibleProblems(problems, new Set(), true), { name: '必填' });
+  assert.deepEqual(visibleProblems(problems, new Set(['name']), false), { name: 'Required' });
+  assert.deepEqual(visibleProblems(problems, new Set(), true), { name: 'Required' });
   const upload = action({ actionType: 'FILE_UPLOAD' });
-  assert.deepEqual(completionProblems(upload, { config: { required: true } }, {}), { files: '请至少上传一个文件' });
+  assert.deepEqual(completionProblems(upload, { config: { required: true } }, {}), { files: 'Upload at least one file.' });
   assert.deepEqual(completionProblems(upload, { config: { minFiles: 1, maxFiles: 1 } }, { files: ['/files/v1/1', '/files/v1/2'] }), {});
   assert.deepEqual(completionProblems(upload, { config: { required: false } }, {}), {});
   assert.deepEqual(completionProblems(action({ actionType: 'MANUAL_CONFIRM' }), { config: { noteRequired: true } }, {}), {}, '说明一律选填');
   const known = new Map<string, WorkflowFile>([['/files/v1/1', { fileId: '1', fileAddress: '/files/v1/1', displayName: 'a.pdf', mimeType: null, sizeBytes: null, scanStatus: 'SCANNING', uploaderId: null }]]);
   assert.equal(anyScanPending(['/files/v1/1'], known), true);
   assert.deepEqual(outputFieldErrors([{ field: 'output.name', message: '必填' }, { field: 'output.files[1]', message: '文件不属于本实例' }, { field: 'expectedVersion', message: '缺失' }]),
-    { name: '必填', files: '第 2 个文件：文件不属于本实例', _: 'expectedVersion 缺失' });
+    { name: '必填', files: 'File 2: 文件不属于本实例', _: 'expectedVersion 缺失' });
 });
 
 test('422 字段路径就地映射：output.<key>、output.files、output.files[i]、output.note', () => {
   assert.deepEqual(outputFieldErrors([{ field: 'output.amount', message: '必须是数字' }, { field: 'output.files', message: '至少上传一个文件' },
     { field: 'output.files[0]', message: '文件未通过安全检查，请删除后重新上传' }, { field: 'output.note', message: '超过 4000 个字符' },
     { field: 'output.contract[2]', message: '文件不可用' }]),
-  { amount: '必须是数字', files: '至少上传一个文件；第 1 个文件：文件未通过安全检查，请删除后重新上传', note: '超过 4000 个字符',
-    contract: '第 3 个文件：文件不可用' });
+  { amount: '必须是数字', files: '至少上传一个文件; File 1: 文件未通过安全检查，请删除后重新上传', note: '超过 4000 个字符',
+    contract: 'File 3: 文件不可用' });
 });
 
 test('提交内容摘要：表单字段数、文件数与安全检查、说明文字', () => {
@@ -131,19 +134,19 @@ test('提交内容摘要：表单字段数、文件数与安全检查、说明�
     { fileId: id, fileAddress: `/files/v1/${id}`, displayName: `${id}.pdf`, mimeType: 'application/pdf', sizeBytes: '1', scanStatus, uploaderId: '7' }];
   const known = new Map([file('1', 'AVAILABLE'), file('2', 'REJECTED'), file('3', 'SCANNING')]);
   assert.equal(submissionSummary(action({ status: 'COMPLETED', output: { a: 'x', b: '' } }), { config: { fields: [
-    { key: 'a', label: 'A', type: 'TEXT', required: true }, { key: 'b', label: 'B', type: 'TEXT', required: false }] } }, known), '1 个字段');
+    { key: 'a', label: 'A', type: 'TEXT', required: true }, { key: 'b', label: 'B', type: 'TEXT', required: false }] } }, known), '1 field');
   assert.equal(submissionSummary(action({ actionType: 'FILE_UPLOAD', status: 'COMPLETED', output: { files: ['/files/v1/1', '/files/v1/2', '/files/v1/3'] } }), undefined, known),
-    '3 个文件 · 1 个未通过安全检查 · 1 个安全检查中');
-  assert.equal(submissionSummary(action({ actionType: 'MANUAL_CONFIRM', status: 'VERIFIED', output: { note: '已于 10-19 线下签约' } }), undefined, known), '说明：已于 10-19 线下签约');
-  assert.equal(submissionSummary(action({ actionType: 'MANUAL_CONFIRM', status: 'PENDING' }), undefined, known), '尚未完成');
+    '3 files · 1 failed the security scan · 1 being scanned');
+  assert.equal(submissionSummary(action({ actionType: 'MANUAL_CONFIRM', status: 'VERIFIED', output: { note: '已于 10-19 线下签约' } }), undefined, known), 'Note: 已于 10-19 线下签约');
+  assert.equal(submissionSummary(action({ actionType: 'MANUAL_CONFIRM', status: 'PENDING' }), undefined, known), 'Not completed');
 });
 
 test('批量模式：显式进入、只列可批量项、全选与退出恢复原选中项', () => {
   const task = (taskId: string, taskType: Task['taskType']): Task => ({ taskType, taskId, instanceId: `i${taskId}`, instanceTitle: taskId, nodeKey: 'n', roundNo: 1,
     actionKey: null, waitingSince: ago(1) });
   const tasks = [task('a', 'ACTION'), task('b', 'APPROVAL'), task('c', 'APPROVAL'), task('d', 'APPROVAL')];
-  const statuses = new Map<string, BatchStatus>([['b', { state: 'ELIGIBLE', reason: '' }], ['c', { state: 'INELIGIBLE', reason: '含 2 个动作' }],
-    ['d', { state: 'CHECKING', reason: '检查中' }]]);
+  const statuses = new Map<string, BatchStatus>([['b', { state: 'ELIGIBLE', reason: '' }], ['c', { state: 'INELIGIBLE', reason: t('batch.hasActions', { count: 2 }) }],
+    ['d', { state: 'CHECKING', reason: t('batch.checking') }]]);
   const mode = enterBatch('a');
   assert.deepEqual(mode, { active: true, checked: [], restoreTaskId: 'a' });
   const candidates = batchCandidates(tasks, statuses);
@@ -163,10 +166,10 @@ test('批量模式：显式进入、只列可批量项、全选与退出恢复�
 test('我发起的：当前步骤 · 等待人，本人显示为“你”；已结束为 —', () => {
   const row = (extra: Partial<InstanceSummary>): Pick<InstanceSummary, 'status' | 'currentNodes'> => ({ status: 'RUNNING', currentNodes: [], ...extra });
   assert.equal(waitingOn(row({ currentNodes: [{ nodeKey: 'k', nodeName: '合规审核', status: 'APPROVING', handlers: [{ accountId: '8', displayName: '李航' }] }] }), '7'),
-    '合规审核 · 等待 李航');
+    '合规审核 · Waiting on 李航');
   const mine = row({ currentNodes: [{ nodeKey: 'k', nodeName: '补充凭证', status: 'ACTIVE', handlers: [{ accountId: '7', displayName: 'ops.me' }, { accountId: '9', displayName: '陈雪' }] },
     { nodeKey: 'j', nodeName: '财务复核', status: 'WAITING', handlers: [] }] });
-  assert.equal(waitingOn(mine, '7'), '补充凭证 · 等待 你、陈雪；财务复核');
+  assert.equal(waitingOn(mine, '7'), '补充凭证 · Waiting on you, 陈雪; 财务复核');
   assert.equal(waitingForMe(mine, '7'), true);
   assert.equal(waitingForMe(mine, '8'), false);
   assert.equal(waitingOn(row({ status: 'COMPLETED' }), '7'), '—');

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { ApiError } from '../api/session.ts';
 import type { ConsoleResource } from '../api/types.ts';
+import { testT } from '../i18n/testing.ts';
 import { pageCapabilities } from '../navigation/pageCapabilities.ts';
 import { financeCommand, financeErrorTarget } from './finance.ts';
 import type { AccountingPeriod, ChartAccount, LedgerAccount } from './finance.ts';
@@ -23,6 +24,9 @@ const bookId = '7318800000000000101'; const periodId = '7312000000000000011'; co
 const invalid = (run: () => unknown) => assert.throws(run, (error: unknown) => error instanceof ApiError && error.code === 'INVALID_RESPONSE');
 const repo = (path: string) => readFileSync(new URL(`../../../${path}`, import.meta.url), 'utf8');
 const source = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
+const t = testT('finance');
+/** zh-CN 种子：错误码默认消息的中文须与 Owner 枚举逐字一致。 */
+const zhSeed = JSON.parse(source('../../i18n/zh-CN/finance.json')) as Record<string, string>;
 
 /** 读取 Java CodeMessageEnum 的 Code 与默认消息（多行常量合并后解析）。 */
 function javaCodes(path: string): Map<string, string> {
@@ -69,16 +73,17 @@ test('错误码：LedgerErrorCode 与 BillingFactErrorCode 全部登记，默认
   const ledger = javaCodes('paytech/ledger/paytech-ledger-api/src/main/java/com/paytech/ledger/api/enums/LedgerErrorCode.java');
   const billing = javaCodes('paytech/billing/paytech-billing-api/src/main/java/com/paytech/billing/api/enums/BillingFactErrorCode.java');
   assert.equal(ledger.size, 15); assert.equal(billing.size, 4);
-  for (const [code, message] of ledger) assert.equal(ledgerWorkflowErrorTargets[code]?.message, message, code);
-  for (const [code, message] of billing) assert.equal(billingErrorTargets[code]?.message, message, code);
+  for (const [code, message] of ledger) assert.equal(zhSeed['finance.' + ledgerWorkflowErrorTargets[code]?.messageKey], message, code);
+  for (const [code, message] of billing) assert.equal(zhSeed['finance.' + billingErrorTargets[code]?.messageKey], message, code);
+  for (const rule of [...Object.values(ledgerWorkflowErrorTargets), ...Object.values(billingErrorTargets)]) assert.ok(t.has(rule.messageKey), rule.messageKey);
 });
 
 test('错误落点：表单内字段就地显示，其余在顶部；未登记 Code 交给通用通知', () => {
   const error = (code: string) => new ApiError(400, code, '');
   assert.deepEqual(financeErrorTarget(error('ADJUSTMENT_PERIOD_NOT_OPEN'), ['accountingPeriodId', 'lines'], ledgerWorkflowErrorTargets),
-    { field: 'accountingPeriodId', message: '会计期间未开放（ADJUSTMENT_PERIOD_NOT_OPEN）' });
+    { field: 'accountingPeriodId', message: "The accounting period isn't open. (ADJUSTMENT_PERIOD_NOT_OPEN)" });
   assert.deepEqual(financeErrorTarget(error('SELF_REVIEW_FORBIDDEN'), [], billingErrorTargets),
-    { field: null, message: '制单人不能复核自己提交的计费事实（SELF_REVIEW_FORBIDDEN）' });
+    { field: null, message: "The maker can't review a billing fact they submitted. (SELF_REVIEW_FORBIDDEN)" });
   assert.equal(financeErrorTarget(error('RULE_LINE_INVALID'), [], ledgerWorkflowErrorTargets)?.field, null);
   assert.equal(financeErrorTarget(error('BUSINESS_CHECK_FAILED'), [], ledgerWorkflowErrorTargets), null);
   assert.deepEqual(formFieldPath('lines[2].amount'), ['lines', 2, 'amount']);
@@ -189,8 +194,8 @@ test('解码：规则包列表（当前版本与生效时间同有同无）、�
   assert.equal(decodeRuleVersion('STANDARD_TRANSACTION', '3', ['ACTIVE', 'APPROVED'])(version).lines.length, 4);
   invalid(() => decodeRuleVersion('STANDARD_TRANSACTION', '3', ['PENDING_APPROVAL'])(version));
   invalid(() => decodeRuleVersion('STANDARD_TRANSACTION', '3')({ ...version, lines: [{ ...version.lines[0], requiredFlag: 'yes' }] }));
-  assert.equal(ruleBundleName('STANDARD_TRANSACTION'), '交易记账规则');
-  assert.equal(ruleBundleName('STANDARD_ADJUSTMENT'), '调整记账规则');
+  assert.equal(ruleBundleName('STANDARD_TRANSACTION'), 'Transaction Posting Rules');
+  assert.equal(ruleBundleName('STANDARD_ADJUSTMENT'), 'Adjustment Posting Rules');
   assert.equal(ruleBundleName('CUSTOM_X'), 'CUSTOM_X');
 });
 
@@ -225,10 +230,12 @@ test('可操作期间：发起关账只给最早开放期间（之前全部已�
 });
 
 test('人工调整制单：金额校验、借贷合计实时计算、不平衡 / 不完整禁止提交、请求体不含操作人', () => {
-  assert.equal(amountError('', 2), '请填写金额');
-  assert.equal(amountError('0.00', 2), '金额必须大于零');
-  assert.equal(amountError('1.234', 2), '小数位不能超过 2 位');
-  assert.equal(amountError('-1', 2), '金额为正的十进制数，如 100.00');
+  assert.equal(amountError('', 2), 'Enter an amount.');
+  assert.equal(amountError('0.00', 2), 'The amount must be greater than zero.');
+  assert.equal(amountError('1.234', 2), 'Use no more than 2 decimal places.');
+  assert.equal(amountError('1.23', 0), 'Use no more than 0 decimal places.');
+  assert.equal(amountError('1.23', 1), 'Use no more than 1 decimal place.');
+  assert.equal(amountError('-1', 2), 'The amount must be a positive decimal number, such as 100.00.');
   assert.equal(amountError('10.5', 2), null);
   const line = (entrySide: 'DEBIT' | 'CREDIT', amount: string) => ({ accountId: '7318800000000000201', entrySide, amount, lineDescription: '说明' });
   const balanced = draftTotals([line('DEBIT', '100.10'), line('CREDIT', '60.05'), line('CREDIT', '40.05')], 2);
@@ -258,9 +265,9 @@ test('人工调整可选账户：排除控制科目、停用账户、停用 / �
 });
 
 test('计费事实：查询条件（主体与币种必填、时间区间）、明细行预检、请求体（头部绑定角色取头部值，不含操作人与来源）', () => {
-  assert.throws(() => billingFilters({ currency: 'USD' }), /经营主体/);
+  assert.throws(() => billingFilters({ currency: 'USD' }), /Operating Entity \(entityNo\)/);
   assert.throws(() => billingFilters({ entityNo: 'AE001', currency: 'USD', clientId: 'abc' }), /Client ID/);
-  assert.throws(() => billingFilters({ entityNo: 'AE001', currency: 'USD', createdFrom: '2026-10-02T00:00:00Z', createdTo: '2026-10-01T00:00:00Z' }), /结束时间/);
+  assert.throws(() => billingFilters({ entityNo: 'AE001', currency: 'USD', createdFrom: '2026-10-02T00:00:00Z', createdTo: '2026-10-01T00:00:00Z' }), /end time must be later/);
   assert.deepEqual(billingFilters({ entityNo: 'ae001', currency: 'USD', status: 'DRAFT', createdFrom: '2026-10-01T00:00:00Z' }),
     { entityNo: 'AE001', currency: 'USD', status: 'DRAFT', createdFrom: '2026-10-01T00:00:00.000Z' });
   const header = { clientId: '1001', entityNo: 'AE001' };
@@ -268,11 +275,11 @@ test('计费事实：查询条件（主体与币种必填、时间区间）、�
   assert.equal(resolvePartyId('CLIENT', '9999', header), '1001');
   assert.equal(resolvePartyId('CHANNEL', ' 42 ', header), '42');
   assert.equal(factLineError(valid, header, 2), null);
-  assert.match(factLineError({ ...valid, payeeRole: 'CHANNEL', payeeId: '42' }, header, 2) ?? '', /目标余额桶/);
+  assert.match(factLineError({ ...valid, payeeRole: 'CHANNEL', payeeId: '42' }, header, 2) ?? '', /target balance bucket/);
   assert.match(factLineError({ ...valid, componentType: 'PARTNER_SHARE' }, header, 2) ?? '', /Local Partner/);
-  assert.match(factLineError({ ...valid, payerRole: 'CLIENT' }, header, 2) ?? '', /付方与收方不能相同/);
-  assert.match(factLineError({ ...valid, payeeRole: 'LOCAL_PARTNER' }, header, 2) ?? '', /标识缺失/);
-  assert.equal(factLineError({ ...valid, amount: '1.001' }, header, 2), '小数位不能超过 2 位');
+  assert.match(factLineError({ ...valid, payerRole: 'CLIENT' }, header, 2) ?? '', /payer and payee can't be the same/);
+  assert.equal(factLineError({ ...valid, payeeRole: 'LOCAL_PARTNER' }, header, 2), 'Local Partner ID is missing (enter it in the header first).');
+  assert.equal(factLineError({ ...valid, amount: '1.001' }, header, 2), 'Use no more than 2 decimal places.');
   const body = billingFactBody({ ...header, currency: 'USD', ticketNo: ' T-1 ', lines: [valid] });
   assert.deepEqual(body, { factType: 'MANUAL_ADJUSTMENT', clientId: '1001', entityNo: 'AE001', currency: 'USD', refs: [{ refType: 'TICKET', refId: 'T-1' }],
     lines: [{ componentType: 'CLIENT_PRINCIPAL', payerRole: 'OPERATING_ENTITY', payerId: 'AE001', payeeRole: 'CLIENT', payeeId: '1001', amount: '25.00',
@@ -290,16 +297,16 @@ test('规则版本：模板复制（去掉主键与行号、按类型与行号�
   assert.deepEqual(groupRuleLines(version.lines).map(group => [group.instructionType, group.lines.map(line => line.lineNo)]),
     [['PAYMENT_SUCCEEDED', [1, 2]], ['ECONOMIC_ADJUSTMENT', [1, 2]]]);
   assert.equal(ruleLinesError(template), null);
-  assert.equal(ruleLinesError([]), '至少需要一行规则');
-  assert.equal(ruleLinesError([{ ...template[0], accountCode: '' }, template[1]]), '第 1 行未填写完整');
-  assert.match(ruleLinesError([template[0], { ...template[1], lineCode: 'L1' }]) ?? '', /行代码 L1 重复/);
-  assert.match(ruleLinesError([template[0]]) ?? '', /人工调整计费事实 缺少借方或贷方行/);
+  assert.equal(ruleLinesError([]), 'Add at least one rule line.');
+  assert.equal(ruleLinesError([{ ...template[0], accountCode: '' }, template[1]]), 'Line 1 is incomplete.');
+  assert.match(ruleLinesError([template[0], { ...template[1], lineCode: 'L1' }]) ?? '', /Line code L1 is duplicated/);
+  assert.equal(ruleLinesError([template[0]]), 'Manual Billing Fact Adjustment needs both a debit line and a credit line.');
   const body = ruleVersionBody('2026-10-21T08:00:00Z', [template[2], template[0], template[3], template[1]]);
   assert.equal(body.effectiveFrom, '2026-10-21T08:00:00.000Z');
   assert.deepEqual(body.lines.map(line => [line.instructionType, line.lineNo]),
     [['PAYMENT_SUCCEEDED', 1], ['ECONOMIC_ADJUSTMENT', 1], ['PAYMENT_SUCCEEDED', 2], ['ECONOMIC_ADJUSTMENT', 2]]);
   assert.equal('makerId' in body, false);
-  assert.throws(() => ruleVersionBody('not a time', template), /生效时间/);
+  assert.throws(() => ruleVersionBody('not a time', template), /valid effective time/);
 });
 
 test('跳转：试算记录链接到账本查询试算平衡页签，分录链接到账簿下钻', () => {
@@ -313,17 +320,17 @@ test('页面接线：三个新页按 BUTTON 资源控制写操作，空状态与
   assert.match(adjustments, /hasAction\(resources, financeActions\.adjustmentsManage\)/);
   assert.match(adjustments, /hasAction\(resources, financeActions\.adjustmentsApprove\)/);
   assert.match(source('./ManualAdjustmentsTab.tsx'), /canManage && book && <Form\.Item><Button type="primary"/);
-  assert.match(source('./ManualAdjustmentsTab.tsx'), /当前账号没有复核权限/);
+  assert.match(source('./ManualAdjustmentsTab.tsx'), /!canApprove && ' ' \+ t\('adjustments\.noCheckerPermission'\)/);
   assert.match(source('./ManualAdjustmentDrawers.tsx'), /disabled=\{!totals\.balanced \|\| command\.conflict\}/, '不平衡禁止提交');
-  assert.match(source('./BillingFactsTab.tsx'), /canManage && <Button type="primary" onClick=\{\(\) => setCreating\(true\)\}>登记计费事实/);
+  assert.match(source('./BillingFactsTab.tsx'), /canManage && <Button type="primary" onClick=\{\(\) => setCreating\(true\)\}>\{t\('billing\.create'\)\}/);
   const close = source('../pages/FinancePeriodClose.tsx');
   assert.match(close, /canManage && row\.period\.accountingPeriodId === closable/);
   assert.match(close, /canManage && row\.period\.accountingPeriodId === reopenable/);
   assert.match(close, /command\.saving && <Alert type="info"/, '关账执行中提示');
-  assert.match(close, /选择财务日历后查看期间关账看板/);
+  assert.match(close, /t\('periodClose\.selectCalendarHint'\)/);
   const rules = source('../pages/FinanceAccountingRules.tsx');
   assert.match(rules, /canManage && !!current && !hasVersionInProgress\(current\.versions\)/);
-  assert.match(rules, /选择规则包后查看版本/);
+  assert.match(rules, /t\('rules\.selectBundle'\)/);
   assert.match(source('./RuleVersionDrawers.tsx'), /ruleVersionActions\(version, actorId, canManage, canApprove\)/);
   assert.match(source('./PeriodCloseDrawers.tsx'), /canReview\(canApprove, item\.status, 'PENDING_CHECK', item\.makerId, actorId\)/);
   assert.match(source('./PeriodCloseDrawers.tsx'), /\{ approvedCloseHash: item\.closeHash \}/, '复核回传关账摘要');
@@ -331,20 +338,22 @@ test('页面接线：三个新页按 BUTTON 资源控制写操作，空状态与
 });
 
 test('同 Code 不同来源：SELF_REVIEW_FORBIDDEN 显示 Problem detail（各 Owner 默认消息），detail 缺失时退回本表文案', () => {
-  const ledgerMessage = ledgerWorkflowErrorTargets.SELF_REVIEW_FORBIDDEN.message;
-  const billingMessage = billingErrorTargets.SELF_REVIEW_FORBIDDEN.message;
+  // Problem detail 是 Owner 返回的中文默认消息（业务数据，原样显示）；detail 缺失时退回本表文案 key。
+  const ledgerMessage = zhSeed['finance.' + ledgerWorkflowErrorTargets.SELF_REVIEW_FORBIDDEN.messageKey];
+  const billingMessage = zhSeed['finance.' + billingErrorTargets.SELF_REVIEW_FORBIDDEN.messageKey];
   assert.notEqual(ledgerMessage, billingMessage);
   const fromBilling = new ApiError(400, 'SELF_REVIEW_FORBIDDEN', 'req-1', billingMessage);
   assert.equal(fromBilling.detail, billingMessage);
-  assert.equal(financeErrorTarget(fromBilling, [], ledgerWorkflowErrorTargets)?.message, `${billingMessage}（SELF_REVIEW_FORBIDDEN）`);
+  assert.equal(financeErrorTarget(fromBilling, [], ledgerWorkflowErrorTargets)?.message, `${billingMessage} (SELF_REVIEW_FORBIDDEN)`);
   const fromLedger = new ApiError(400, 'SELF_REVIEW_FORBIDDEN', 'req-2', ledgerMessage);
-  assert.equal(financeErrorTarget(fromLedger, [], billingErrorTargets)?.message, `${ledgerMessage}（SELF_REVIEW_FORBIDDEN）`);
-  assert.equal(financeErrorTarget(new ApiError(400, 'SELF_REVIEW_FORBIDDEN', 'req-3'), [], billingErrorTargets)?.message, `${billingMessage}（SELF_REVIEW_FORBIDDEN）`);
+  assert.equal(financeErrorTarget(fromLedger, [], billingErrorTargets)?.message, `${ledgerMessage} (SELF_REVIEW_FORBIDDEN)`);
+  assert.equal(financeErrorTarget(new ApiError(400, 'SELF_REVIEW_FORBIDDEN', 'req-3'), [], billingErrorTargets)?.message,
+    `${t('error.billing.SELF_REVIEW_FORBIDDEN')} (SELF_REVIEW_FORBIDDEN)`);
 });
 
 test('计费事实登记防重复提交：提交中按钮禁用、抽屉不能关闭，成功后关闭抽屉', () => {
   const drawer = source('./BillingFactDrawers.tsx');
-  assert.match(drawer, /loading=\{command\.saving\} disabled=\{command\.saving \|\| command\.conflict\} onClick=\{\(\) => void submit\(\)\}>提交复核/);
+  assert.match(drawer, /loading=\{command\.saving\} disabled=\{command\.saving \|\| command\.conflict\} onClick=\{\(\) => void submit\(\)\}>\{t\('workflow\.submitForReview'\)\}/);
   assert.match(drawer, /onClose=\{\(\) => \{ if \(!command\.saving\) onClose\(\); \}\}/);
   assert.match(drawer, /name="finance-create-billing-fact" layout="vertical" disabled=\{command\.saving \|\| command\.conflict\}/);
   assert.match(source('./BillingFactsTab.tsx'), /onCreated=\{factId => \{ setCreating\(false\);/);

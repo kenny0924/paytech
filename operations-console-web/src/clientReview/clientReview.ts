@@ -1,5 +1,8 @@
 import { ApiError } from '../api/session.ts';
 import type { PagingResponseBody } from '../api/types.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('client-review');
 
 /** Client 入驻审核的 BFF 路径与页面模型；Owner 事实原样展示，通过资格只看 Risk 门禁。 */
 export const reviewApi = '/client-onboarding-admin/v1';
@@ -30,32 +33,15 @@ export interface ReviewDetail {
 }
 export interface Command { caseId: string; status: string }
 
-export const caseStatusLabels: Record<string, string> = {
-  SUBMITTED: '待审核', IN_REVIEW: '审核中', RETURNED: '已退回', APPROVED: '已通过', REJECTED: '已拒绝', WITHDRAWN: '已撤回',
-};
+/**
+ * Display names are `client-review.enum.<type>.<code>` (caseStatus, qualification, role, evidence, blocker, section,
+ * relation) and `client-review.application.group.<group>` / `.field.<field>`, read with enumLabel; unknown codes show as is.
+ */
+export const caseStatuses = ['SUBMITTED', 'IN_REVIEW', 'RETURNED', 'APPROVED', 'REJECTED', 'WITHDRAWN'] as const;
 export const activeStatuses = ['SUBMITTED', 'IN_REVIEW'];
-export const qualificationLabels: Record<string, string> = {
-  INDIVIDUAL_KYC: '个人', ORGANIZATION_KYB: '组织', RELATED_PERSON_KYC: '关联人员',
-};
-export const roleLabels: Record<string, string> = { CLIENT: '申请主体', DIRECTOR: '董事', SIGNATORY: '授权签字人', UBO: '受益所有人' };
-export const evidenceLabels: Record<string, string> = { RECEIVED: '待核验', ACCEPTED: '已接受', REJECTED: '未接受' };
-export const blockerLabels: Record<string, string> = {
-  CASE_NOT_ACTIVE: '审核任务已结束', CHILD_CASE_NOT_ACTIVE: '有关联人员的审核已单独结束',
-  EVIDENCE_PENDING: '还有材料未核验', REQUIRED_MATERIAL_NOT_ACCEPTED: '有必需材料尚无已接受的证据',
-  CLASSIFICATION_NOT_RECEIVED: '行业与 MCC 尚未确认并交给 Risk',
-};
-export const sectionLabels: Record<string, string> = { BASIC: '基础资料', BUSINESS: '经营资料', PEOPLE: '相关人员', MATERIALS: '申请材料' };
-export const groupLabels: Record<string, string> = {
-  individual: '个人信息', organization: '组织信息', business: '经营信息', address: '地址', identifier: '证件',
-};
-export const fieldLabels: Record<string, string> = {
-  givenName: '名', middleName: '中间名', familyName: '姓', birthDate: '出生日期', nationalityCountry: '国籍', residenceCountry: '居住国家',
-  legalName: '法定名称', tradeName: '经营名称', incorporationCountry: '注册国家', organizationType: '组织类型', incorporationDate: '成立日期',
-  businessDescription: '业务描述', businessModelCode: '经营模式', currency: '币种', expectedTicket: '预计单笔金额', expectedVolume: '预计月交易额',
-  websiteUrl: '网站', countryCode: '国家', stateOrProvince: '州 / 省', city: '城市', postalCode: '邮编',
-  identifierType: '证件类型', identifierValue: '证件号码', issuingCountry: '签发国家', validFrom: '有效期起', validTo: '有效期止',
-};
-export const relationLabels: Record<string, string> = { DIRECTOR: '董事', SIGNATORY: '授权签字人', UBO: '受益所有人', OWNERSHIP: '持股 / 控制' };
+/** Client types offered in the list filter (related-person KYC is never a top-level case). */
+export const clientQualificationTypes = ['INDIVIDUAL_KYC', 'ORGANIZATION_KYB'] as const;
+export const returnSections = ['BASIC', 'BUSINESS', 'PEOPLE', 'MATERIALS'] as const;
 
 export const isId = (v: unknown): v is string => typeof v === 'string' && /^[1-9][0-9]{0,18}$/.test(v) && BigInt(v) <= 9223372036854775807n;
 const text = (v: unknown, max = 255): v is string => typeof v === 'string' && v.length <= max;
@@ -91,7 +77,7 @@ export function decodeCase(value: unknown, expectedId?: string): ReviewCase {
   require(v && isId(v.caseId) && (!expectedId || v.caseId === expectedId) && text(v.caseNo, 64) && isId(v.applicationId) && isId(v.clientId)
     && text(v.sourceSubmissionId, 64) && code(v.qualificationType) && code(v.status) && /^[1-9][0-9]{0,9}$/.test(v.version)
     && instant(v.submittedAt) && (v.decidedAt === null || instant(v.decidedAt)) && nullable(v.publicNote)
-    && (v.returnSection === null || Object.hasOwn(sectionLabels, v.returnSection))
+    && (v.returnSection === null || (returnSections as readonly string[]).includes(v.returnSection))
     && list(v.subjects ?? [], 64) && list(v.classifications ?? [], 20) && list(v.approvalBlockers ?? [], 16));
   return { caseId: v.caseId, caseNo: v.caseNo, applicationId: v.applicationId, clientId: v.clientId, sourceSubmissionId: v.sourceSubmissionId,
     qualificationType: v.qualificationType, status: v.status, version: v.version, submittedAt: v.submittedAt, decidedAt: v.decidedAt,
@@ -162,12 +148,12 @@ export function canApprove(review: ReviewCase): boolean {
 /** 分类草稿的前端校验；最终以 CCT 为准。 */
 export function classificationIssues(items: Classification[]): string[] {
   const issues: string[] = [];
-  if (items.length === 0) issues.push('至少添加一条分类');
-  if (items.length > 20) issues.push('最多 20 条分类');
-  if (items.filter(i => i.primary).length !== 1) issues.push('必须恰好有一个主要分类');
-  if (items.some(i => !/^[0-9]{4}$/.test(i.mccCode))) issues.push('MCC 必须是四位数字');
-  if (items.some(i => !i.industryCode)) issues.push('请选择行业');
-  if (new Set(items.map(i => `${i.industryCode}:${i.mccCode}`)).size !== items.length) issues.push('行业与 MCC 组合不能重复');
+  if (items.length === 0) issues.push(t('classification.issue.empty'));
+  if (items.length > 20) issues.push(t('classification.issue.tooMany'));
+  if (items.filter(i => i.primary).length !== 1) issues.push(t('classification.issue.onePrimary'));
+  if (items.some(i => !/^[0-9]{4}$/.test(i.mccCode))) issues.push(t('classification.issue.mccFormat'));
+  if (items.some(i => !i.industryCode)) issues.push(t('classification.issue.industryRequired'));
+  if (new Set(items.map(i => `${i.industryCode}:${i.mccCode}`)).size !== items.length) issues.push(t('classification.issue.duplicate'));
   return issues;
 }
 export function filters(values: Record<string, string | undefined>): Record<string, string> {

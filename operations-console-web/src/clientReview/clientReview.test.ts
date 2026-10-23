@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canApprove, classificationIssues, decodeCase, decodeCasePage, decodeCommand, decodeDetail, decodeFileDownload } from './clientReview.ts';
+import { canApprove, caseStatuses, classificationIssues, decodeCase, decodeCasePage, decodeCommand, decodeDetail, decodeFileDownload, returnSections } from './clientReview.ts';
+import { enumLabel } from '../i18n/index.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('client-review');
 
 const reviewCase = {
   caseId: '7001', caseNo: 'DD7001', applicationId: '8001', clientId: '8101', sourceSubmissionId: 'sub-1', qualificationType: 'ORGANIZATION_KYB',
@@ -48,11 +52,25 @@ test('page and command decoders reject foreign data', () => {
 
 test('classification draft checks', () => {
   assert.deepEqual(classificationIssues([{ industryCode: 'RETAIL', mccCode: '5411', primary: true }]), []);
-  assert.ok(classificationIssues([]).includes('至少添加一条分类'));
-  assert.ok(classificationIssues([{ industryCode: 'RETAIL', mccCode: '5411', primary: false }]).includes('必须恰好有一个主要分类'));
-  assert.ok(classificationIssues([{ industryCode: 'RETAIL', mccCode: '54A1', primary: true }]).includes('MCC 必须是四位数字'));
-  assert.ok(classificationIssues([{ industryCode: 'RETAIL', mccCode: '5411', primary: true }, { industryCode: 'RETAIL', mccCode: '5411', primary: false }])
-    .includes('行业与 MCC 组合不能重复'));
+  assert.deepEqual(classificationIssues([]), [t('classification.issue.empty'), t('classification.issue.onePrimary')]);
+  assert.ok(classificationIssues([]).includes('Add at least one classification'));
+  assert.deepEqual(classificationIssues([{ industryCode: 'RETAIL', mccCode: '5411', primary: false }]), [t('classification.issue.onePrimary')]);
+  assert.deepEqual(classificationIssues([{ industryCode: 'RETAIL', mccCode: '54A1', primary: true }]), [t('classification.issue.mccFormat')]);
+  assert.deepEqual(classificationIssues([{ industryCode: '', mccCode: '5411', primary: true }]), [t('classification.issue.industryRequired')]);
+  assert.deepEqual(classificationIssues(Array.from({ length: 21 }, (_, i) => ({ industryCode: 'RETAIL', mccCode: String(5000 + i), primary: i === 0 }))),
+    [t('classification.issue.tooMany')]);
+  assert.deepEqual(classificationIssues([{ industryCode: 'RETAIL', mccCode: '5411', primary: true }, { industryCode: 'RETAIL', mccCode: '5411', primary: false }]),
+    [t('classification.issue.duplicate')]);
+});
+
+test('labels: known review codes translate, unknown codes and fields stay raw', () => {
+  assert.equal(enumLabel(t, 'enum.caseStatus', 'IN_REVIEW'), 'In Review');
+  assert.equal(enumLabel(t, 'enum.blocker', 'EVIDENCE_PENDING'), "Some documents haven't been verified");
+  assert.equal(enumLabel(t, 'enum.blocker', 'FUTURE_BLOCKER'), 'FUTURE_BLOCKER');
+  assert.equal(enumLabel(t, 'application.field', 'legalName'), 'Legal Name');
+  assert.equal(enumLabel(t, 'application.field', 'unknownField'), 'unknownField');
+  for (const status of caseStatuses) assert.ok(t.has('enum.caseStatus.' + status), status);
+  for (const section of returnSections) assert.ok(t.has('enum.section.' + section), section);
 });
 
 test('file download grant must match the requested file and use HTTPS', () => {

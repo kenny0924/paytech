@@ -1,0 +1,132 @@
+{
+ "/audit": {
+  "lang": [
+   "zh-CN",
+   "zh-CN"
+  ],
+  "onlyBase": [
+   "page.main: 共 3330 条记录",
+   "page.main: 2026/10/24 00:05:31\t221546852372267008\t账号登录",
+   "page.main: 239479370899603456",
+   "page.main: 329fca6d-feb6-4724-bcca-7cc4ccc41187",
+   "page.main: 333",
+   "detail.main: 共 3330 条记录",
+   "detail.main: 2026/10/24 00:05:31\t221546852372267008\t账号登录",
+   "detail.main: 239479370899603456",
+   "detail.main: 329fca6d-feb6-4724-bcca-7cc4ccc41187",
+   "detail.main: 333"
+  ],
+  "onlyLive": [
+   "page.main: 共 3331 条记录",
+   "page.main: 2026/10/24 00:31:09\t221546852372267008\t账号登录",
+   "page.main: 239485822510907392",
+   "page.main: 2e64bf24-e114-4a33-8aea-04466d1745f3",
+   "page.main: 334",
+   "detail.main: 共 3331 条记录",
+   "detail.main: 2026/10/24 00:31:09\t221546852372267008\t账号登录",
+   "detail.main: 239485822510907392",
+   "detail.main: 2e64bf24-e114-4a33-8aea-04466d1745f3",
+   "detail.main: 334"
+  ]
+ },
+ "/commercial/workbench": {
+  "lang": [
+   "zh-CN",
+   "zh-CN"
+  ],
+  "onlyBase": [
+   "page.main: 统计时点 2026-10-24 00:29",
+   "detail.main: 统计时点 2026-10-24 00:29"
+  ],
+  "onlyLive": [
+   "page.main: 统计时点 2026-10-24 00:36",
+   "detail.main: 统计时点 2026-10-24 00:36"
+  ]
+ },
+ "/i18n/releases": {
+  "lang": [
+   "zh-CN",
+   "zh-CN"
+  ],
+  "onlyBase": [
+   "page.main: Releases",
+   "page.main: Not published yet",
+   "page.main: Release\tStatus\tChanges\tPublished by\tTime",
+   "page.main: No releases yet"
+  ],
+  "onlyLive": [
+   "page.main: 发布记录",
+   "page.main: 尚未发布",
+   "page.main: 发布\t状态\t改动\t发布人\t时间",
+   "page.main: 还没有发布"
+  ]
+ },
+ "/i18n/settings": {
+  "lang": [
+   "zh-CN",
+   "zh-CN"
+  ],
+  "onlyBase": [
+   "page.main: Languages & applications",
+   "page.main: Applications",
+   "page.main: Languages",
+   "page.main: New application",
+   "page.main: Application\tDefault language\tLive release\tRequired coverage\tLast modified",
+   "page.main: English\tNot published\t—\t#1 10-23 12:22",
+   "page.main: English\tNot published\t—\t#1 10-23 12:22"
+  ],
+  "onlyLive": [
+   "page.main: 语言与应用",
+   "page.main: 应用",
+   "page.main: 语言",
+   "page.main: 新建应用",
+   "page.main: 应用\t默认语言\t线上版本\t必须语言覆盖\t最近修改",
+   "page.main: English\t未发布\t—\t#1 10-23 12:22",
+   "page.main: English\t未发布\t—\t#1 10-23 12:22"
+  ]
+ },
+ "/i18n/translations": {
+  "lang": [
+   "zh-CN",
+   "zh-CN"
+  ],
+  "onlyBase": [
+   "page.main: Translations",
+   "page.main: All",
+   "page.main: Untranslated",
+   "page.main: Source changed",
+   "page.main: 1 issue",
+   "page.main: Import keys",
+   "page.main: Publish",
+   "page.main: This application has no keys yet",
+   "page.main: Create its namespaces, then import the English base file exported from code.",
+   "page.main: Import keys"
+  ],
+  "onlyLive": [
+   "page.main: 翻译",
+   "page.main: 全部",
+   "page.main: 未翻译",
+   "page.main: 基准已变更",
+   "page.main: 1 个问题",
+   "page.main: 导入 key",
+   "page.main: 发布",
+   "page.main: 这个应用还没有 key",
+   "page.main: 先创建命名空间，再导入开发从代码导出的英文基准文件",
+   "page.main: 导入 key"
+  ]
+ },
+ "/notification-providers": {
+  "lang": [
+   "zh-CN",
+   "zh-CN"
+  ],
+  "onlyBase": [
+   "page.main: 最近拉取 2026/10/24 00:27:21",
+   "detail.main: 最近拉取 2026/10/24 00:27:21"
+  ],
+  "onlyLive": [
+   "page.main: 最近拉取 2026/10/24 00:33:19",
+   "detail.main: 最近拉取 2026/10/24 00:33:19"
+  ]
+ }
+}

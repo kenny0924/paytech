@@ -3,11 +3,15 @@ import test from 'node:test';
 import {
   countProblem, decodeDownloadGrant, decodeFiles, decodeUploadGrant, decodeUploadReceipt, fileAddressesOf, fileAddressOf, fileIdOfAddress, fileIndex, mimeAllowed,
   needsLayout, outputFileAddresses, preCheckFiles, previewKind, rulesHint, safeTransferUrl, safeUploadHeaders, sizeText, startFileAddresses, structureProblems,
-  SCAN_FAILED_TEXT, blockingFiles, scanFailed, scanFailedAddresses, scanPending, uploadOne, uploadRequired, uploadRules, withoutInlineFileErrors,
+  scanFailedText, blockingFiles, scanFailed, scanFailedAddresses, scanPending, uploadOne, uploadRequired, uploadRules, withoutInlineFileErrors,
 } from './fileModel.ts';
 import { COUNT_PAGE_SIZE, decodeSubmission } from './workflowApi.ts';
 import type { UploadPhase, WorkflowPost } from './fileModel.ts';
 import type { ActionRun, WorkflowFile, WorkflowGraph } from './workflowTypes.ts';
+import { readFileSync } from 'node:fs';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('workflow');
 
 const future = new Date(Date.now() + 60_000).toISOString();
 const past = new Date(Date.now() - 1_000).toISOString();
@@ -15,33 +19,33 @@ const past = new Date(Date.now() - 1_000).toISOString();
 test('transfer url accepts only unexpired https without credentials or fragment', () => {
   assert.equal(safeTransferUrl({ url: 'https://minio.local/b/o?X-Amz=1', expiresAt: future }), 'https://minio.local/b/o?X-Amz=1');
   for (const url of ['http://minio.local/b/o', 'https://user:pass@minio.local/o', 'https://minio.local/o#x', 'not a url'])
-    assert.throws(() => safeTransferUrl({ url, expiresAt: future }), /无效/);
-  assert.throws(() => safeTransferUrl({ url: 'https://minio.local/o', expiresAt: past }), /过期/);
+    assert.throws(() => safeTransferUrl({ url, expiresAt: future }), /invalid/);
+  assert.throws(() => safeTransferUrl({ url: 'https://minio.local/o', expiresAt: past }), /expired/);
 });
 
 test('upload headers refuse session, cookie, proxy and gateway identity headers', () => {
   assert.equal(safeUploadHeaders({ 'Content-Type': 'application/pdf', 'If-None-Match': '*' }).get('if-none-match'), '*');
   for (const name of ['Authorization', 'cookie', 'Proxy-Authorization', 'X-Gateway-Actor-Subject', 'x-caller-service'])
-    assert.throws(() => safeUploadHeaders({ [name]: 'x' }), /不允许/);
+    assert.throws(() => safeUploadHeaders({ [name]: 'x' }), /disallowed/);
 });
 
 test('pre-check enforces empty files, name length, mime list and max count', () => {
   const rules = { minFiles: 1, maxFiles: 2, mimeTypes: ['application/pdf', 'image/*'] };
   const pdf = { name: 'a.pdf', type: 'application/pdf', size: 10 };
   assert.equal(preCheckFiles(rules, 0, [pdf, { name: 'b.png', type: 'image/png', size: 3 }]), null);
-  assert.match(preCheckFiles(rules, 1, [pdf, pdf])!, /最多 2 个/);
-  assert.match(preCheckFiles(rules, 0, [{ ...pdf, size: 0 }])!, /空文件/);
+  assert.match(preCheckFiles(rules, 1, [pdf, pdf])!, /Up to 2 files/);
+  assert.match(preCheckFiles(rules, 0, [{ ...pdf, size: 0 }])!, /is empty/);
   assert.match(preCheckFiles(rules, 0, [{ name: 'x.txt', type: 'text/plain', size: 1 }])!, /text\/plain/);
   assert.match(preCheckFiles(rules, 0, [{ name: 'x.bin', type: '', size: 1 }])!, /application\/octet-stream/);
   assert.match(preCheckFiles({}, 0, [{ ...pdf, name: 'a'.repeat(256) }])!, /255/);
   assert.equal(mimeAllowed('IMAGE/JPEG', ['image/*']), true);
   assert.equal(mimeAllowed('text/plain', []), true);
-  assert.equal(countProblem(rules, 0, true), '必填');
-  assert.equal(countProblem({ minFiles: 2 }, 1, false), '至少 2 个文件');
-  assert.equal(countProblem(rules, 3, false), '最多 2 个文件');
+  assert.equal(countProblem(rules, 0, true), 'Required');
+  assert.equal(countProblem({ minFiles: 2 }, 1, false), 'At least 2 files');
+  assert.equal(countProblem(rules, 3, false), 'At most 2 files');
   assert.equal(countProblem(rules, 0, false), null);
-  assert.equal(rulesHint(rules), 'application/pdf、image/* · 1—2 个');
-  assert.equal(rulesHint({}), '类型不限');
+  assert.equal(rulesHint(rules), 'application/pdf, image/* · 1–2 files');
+  assert.equal(rulesHint({}), 'Any type');
 });
 
 const file = (name: string, type: string, bytes: string) => Object.assign(new Blob([bytes], { type }), { name });
@@ -74,11 +78,11 @@ test('upload stops before completion when the transfer fails or the grant is uns
   const paths = { uploads: '/u', completion: (id: string) => `/u/${id}/completion` };
   const blob = file('a.pdf', 'application/pdf', 'x');
   await assert.rejects(uploadOne(blob, paths, post(grant('https://m/o')), async () => ({ ok: false, status: 403 })), /403/);
-  await assert.rejects(uploadOne(blob, paths, post(grant('https://m/o')), async () => { throw new TypeError('network'); }), /未确认/);
-  await assert.rejects(uploadOne(blob, paths, post(grant('http://m/o')), async () => ({ ok: true, status: 200 })), /无效/);
-  await assert.rejects(uploadOne(blob, paths, post(grant('https://m/o', 'POST')), async () => ({ ok: true, status: 200 })), /无效/);
+  await assert.rejects(uploadOne(blob, paths, post(grant('https://m/o')), async () => { throw new TypeError('network'); }), /wasn't confirmed/);
+  await assert.rejects(uploadOne(blob, paths, post(grant('http://m/o')), async () => ({ ok: true, status: 200 })), /invalid/);
+  await assert.rejects(uploadOne(blob, paths, post(grant('https://m/o', 'POST')), async () => ({ ok: true, status: 200 })), /Invalid upload authorization/);
   assert.deepEqual(completions, []);
-  assert.throws(() => decodeUploadGrant({ uploadId: '0', authorization: { url: 'https://m' } }), /无效/);
+  assert.throws(() => decodeUploadGrant({ uploadId: '0', authorization: { url: 'https://m' } }), /Invalid response/);
 });
 
 const run = (extra: Partial<ActionRun>): ActionRun => ({ actionRunId: '1', nodeRunId: 'n', actionKey: 'a', actionType: 'FILE_UPLOAD', required: true,
@@ -87,7 +91,7 @@ const formTemplate = { config: { fields: [{ key: 'contract', label: '合同', ty
 
 test('file address format: build and parse /files/v1/{fileId}', () => {
   assert.equal(fileAddressOf('901'), '/files/v1/901');
-  assert.throws(() => fileAddressOf('0901'), /无效/);
+  assert.throws(() => fileAddressOf('0901'), /Invalid file ID/);
   assert.equal(fileIdOfAddress('/files/v1/901'), '901');
   assert.equal(fileIdOfAddress('/files/v1/9223372036854775807'), '9223372036854775807');
   for (const value of ['901', '/files/v1/0901', '/files/v1/', '/files/v1/12345678901234567890', '/files/v2/1', 'https://x/files/v1/1', '/files/v1/1/', 901, null])
@@ -137,9 +141,9 @@ test('file metadata decoding, preview kind and size text', () => {
 test('upload receipt uses the returned file address and falls back to the fixed format', () => {
   assert.equal(decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: '/files/v1/901', completedAt: future }).fileAddress, '/files/v1/901');
   assert.equal(decodeUploadReceipt({ uploadId: '501', fileId: '901', completedAt: future }).fileAddress, '/files/v1/901');
-  assert.throws(() => decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: '/files/v1/902' }), /响应无效/);
-  assert.throws(() => decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: '/files/v1/0901' }), /响应无效/);
-  assert.throws(() => decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: 901 }), /响应无效/);
+  assert.throws(() => decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: '/files/v1/902' }), /Invalid response/);
+  assert.throws(() => decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: '/files/v1/0901' }), /Invalid response/);
+  assert.throws(() => decodeUploadReceipt({ uploadId: '501', fileId: '901', fileAddress: 901 }), /Invalid response/);
 });
 
 test('download grant decodes the effective disposition, defaulting to attachment', () => {
@@ -147,7 +151,7 @@ test('download grant decodes the effective disposition, defaulting to attachment
   assert.equal(decodeDownloadGrant({ url, expiresAt: future, disposition: 'INLINE' }).disposition, 'INLINE');
   assert.equal(decodeDownloadGrant({ url, expiresAt: future, disposition: 'ATTACHMENT' }).disposition, 'ATTACHMENT');
   assert.equal(decodeDownloadGrant({ url, expiresAt: future }).disposition, 'ATTACHMENT');
-  assert.throws(() => decodeDownloadGrant({ url, expiresAt: future, disposition: 'inline' }), /响应无效/);
+  assert.throws(() => decodeDownloadGrant({ url, expiresAt: future, disposition: 'inline' }), /Invalid response/);
 });
 
 test('422 draft field errors map to node, edge or start form field', () => {
@@ -157,7 +161,7 @@ test('422 draft field errors map to node, edge or start form field', () => {
     { field: 'startForm.fields[0].type', message: '取值不合法' }, { field: 'graph.settings', message: '未知属性' }], graph,
   { fields: [{ key: 'contract', label: '合同', type: 'FILE', required: true }] });
   assert.deepEqual(problems.map(item => [item.nodeKey, item.edgeKey, item.itemKey]), [['review', null, null], [null, 'e1', null], [null, null, 'contract'], [null, null, null]]);
-  assert.match(problems[2].message, /启动表单字段 contract（startForm\.fields\[0\]\.type）取值不合法/);
+  assert.match(problems[2].message, /Start form field contract \(startForm\.fields\[0\]\.type\) 取值不合法/);
   assert.equal(problems[3].message, 'graph.settings 未知属性');
   assert.equal(needsLayout(graph), true);
   assert.equal(needsLayout({ ...graph, nodes: [graph.nodes[0], { ...graph.nodes[1], position: { x: 240, y: 0 } }] }), false);
@@ -165,7 +169,10 @@ test('422 draft field errors map to node, edge or start form field', () => {
 
 test('未通过安全检查的文件：发起与完成同一规则，按 422 路径取回地址，扫描中不挡', () => {
   const backend = '文件未通过安全检查，请删除后重新上传';
-  assert.ok(backend.includes(SCAN_FAILED_TEXT));
+  // 前端提示与后端 detail 同一句话：中文种子须包含在后端原文中，英文基准取同一 key。
+  const seed = JSON.parse(readFileSync(new URL('../../i18n/zh-CN/workflow.json', import.meta.url), 'utf8')) as Record<string, string>;
+  assert.ok(backend.includes(seed['workflow.file.scanFailedText']));
+  assert.equal(scanFailedText(), t('file.scanFailedText'));
   const output = { files: ['/files/v1/11', '/files/v1/12'], contract: ['/files/v1/21'] };
   assert.deepEqual(scanFailedAddresses([{ field: 'output.files[1]', message: backend }, { field: 'output.contract[0]', message: backend },
     { field: 'output.files', message: backend }, { field: 'output.files[9]', message: backend }],

@@ -55,9 +55,11 @@ public final class AuditModels {
     public record AuditEventResponseBody(AuditEvent event, List<AuditChange> changes, List<AuditProperty> attributes) {
     }
 
-    public record AuditChange(String key, String label, List<String> before, List<String> after) {
+    /** 字段变更；字段名由前端按 {@code key} 翻译，未知 key 原样显示。 */
+    public record AuditChange(String key, List<String> before, List<String> after) {
     }
 
-    public record AuditProperty(String key, String label, List<String> values) {
+    /** 其他属性；属性名由前端按 {@code key} 翻译，未知 key 原样显示。 */
+    public record AuditProperty(String key, List<String> values) {
     }
 }

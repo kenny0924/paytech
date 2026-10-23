@@ -8,7 +8,8 @@ import { usePaging } from '../hooks/usePaging';
 import { InstanceDetailView } from '../workflow/InstanceDetailView';
 import { LaunchModal } from '../workflow/LaunchModal';
 import { decodeDefinitionSummary, decodeInstanceSummary, decodePage, workflowPaths } from '../workflow/workflowApi';
-import { instanceStatusColors, instanceStatusLabels, nodeRunStatusLabels } from '../workflow/workflowLabels';
+import { instanceStatusColors, instanceStatusLabel, nodeRunStatusLabel } from '../workflow/workflowLabels';
+import { useT } from '../i18n/react';
 import type { DefinitionSummary, InstanceSummary } from '../workflow/workflowTypes';
 import { PersonSelect, hasButton, shortTime, workflowButtons, workflowRoutes } from '../workflow/WorkflowParts';
 import '../workflow/workflow.css';
@@ -27,6 +28,7 @@ export function WorkflowInstances(props: Props) {
 type StatusTab = 'RUNNING' | 'COMPLETED' | 'TERMINATED' | 'ALL';
 
 function InstanceList({ resources, onAuthorizationChanged }: Props) {
+  const t = useT('workflow'), tNav = useT('nav');
   const [params, setParams] = useSearchParams();
   const canStart = hasButton(resources, workflowButtons.instanceStart);
   const canReadAll = hasButton(resources, workflowButtons.instanceReadAll);
@@ -49,38 +51,38 @@ function InstanceList({ resources, onAuthorizationChanged }: Props) {
   }, []);
   const launching = params.get('launch');
   return <div className="wf-page">
-    <div className="wf-page-head"><h1>流程实例</h1>
+    <div className="wf-page-head"><h1>{tNav('resource.OPERATIONS_WORKFLOW_INSTANCES')}</h1>
       <Segmented value={status} onChange={value => setStatus(value as StatusTab)}
-        options={(['RUNNING', 'COMPLETED', 'TERMINATED', 'ALL'] as StatusTab[]).map(value => ({ value, label: value === 'ALL' ? '全部' : instanceStatusLabels[value] }))} />
+        options={(['RUNNING', 'COMPLETED', 'TERMINATED', 'ALL'] as StatusTab[]).map(value => ({ value, label: value === 'ALL' ? t('catalog.all') : instanceStatusLabel(value) }))} />
       <span className="wf-grow" />
-      {canStart && <Button type="primary" icon={<PlusOutlined />} onClick={() => setParams({ launch: '' })}>发起流程</Button>}
+      {canStart && <Button type="primary" icon={<PlusOutlined />} onClick={() => setParams({ launch: '' })}>{t('launch.title')}</Button>}
     </div>
     <div className="wf-filters">
-      <Select value={scope} onChange={setScope} style={{ width: 160 }} options={[{ value: 'MINE', label: '范围：我参与的' }, ...(canReadAll ? [{ value: 'ALL', label: '范围：全部' }] : [])]} />
-      <Select allowClear value={definitionId} onChange={setDefinitionId} style={{ width: 220 }} placeholder="流程：全部"
+      <Select value={scope} onChange={setScope} style={{ width: 160 }} options={[{ value: 'MINE', label: t('instances.scope.MINE') }, ...(canReadAll ? [{ value: 'ALL', label: t('instances.scope.ALL') }] : [])]} />
+      <Select allowClear value={definitionId} onChange={setDefinitionId} style={{ width: 220 }} placeholder={t('instances.filter.definition')}
         options={definitions.map(item => ({ value: item.definitionId, label: item.definitionName }))} />
-      <div style={{ width: 200 }}><PersonSelect value={startedBy} onChange={value => setStartedBy(value)} placeholder="发起人：全部" /></div>
-      <Input.Search allowClear placeholder="标题关键字" style={{ width: 220 }} onSearch={setKeyword} />
-      <Input.Search allowClear placeholder="业务关联键（精确）" style={{ width: 220 }} onSearch={setBusinessKey} />
+      <div style={{ width: 200 }}><PersonSelect value={startedBy} onChange={value => setStartedBy(value)} placeholder={t('instances.filter.initiator')} /></div>
+      <Input.Search allowClear placeholder={t('instances.filter.keyword')} style={{ width: 220 }} onSearch={setKeyword} />
+      <Input.Search allowClear placeholder={t('instances.filter.businessKey')} style={{ width: 220 }} onSearch={setBusinessKey} />
     </div>
     <section className="table-panel">
       <Table<InstanceSummary> rowKey="instanceId" loading={paging.loading} dataSource={paging.error ? [] : paging.data.items} pagination={paging.pagination}
         columns={[
-          { title: '实例', render: (_, row) => <div><Link to={`${workflowRoutes.instances}/${row.instanceId}`}><strong>{row.title}</strong></Link>
+          { title: t('enum.activityType.INSTANCE'), render: (_, row) => <div><Link to={`${workflowRoutes.instances}/${row.instanceId}`}><strong>{row.title}</strong></Link>
             <div className="muted">{row.businessKey ?? ''}</div></div> },
-          { title: '流程', width: 180, render: (_, row) => row.definitionName ? `${row.definitionName} · v${row.versionNo ?? '?'}` : '—' },
-          { title: '进度', width: 200, render: (_, row) => { const total = row.totalTaskCount ?? 0; const done = row.completedTaskCount ?? 0;
+          { title: t('instance.start.process'), width: 180, render: (_, row) => row.definitionName ? `${row.definitionName} · v${row.versionNo ?? '?'}` : '—' },
+          { title: t('instances.column.progress'), width: 200, render: (_, row) => { const total = row.totalTaskCount ?? 0; const done = row.completedTaskCount ?? 0;
             return <div><Progress percent={total ? Math.round(done / total * 100) : 0} showInfo={false} size="small" status={row.status === 'TERMINATED' ? 'exception' : undefined} />
-              <span className="muted">{done} / {total} 个任务节点已完成</span></div>; } },
-          { title: '当前节点 · 处理人', render: (_, row) => {
+              <span className="muted">{t('instances.progress', { done, total })}</span></div>; } },
+          { title: t('instances.column.current'), render: (_, row) => {
             const nodes = row.currentNodes ?? [];
-            if (!nodes.length) return <Tag color={instanceStatusColors[row.status]}>{instanceStatusLabels[row.status]}</Tag>;
+            if (!nodes.length) return <Tag color={instanceStatusColors[row.status]}>{instanceStatusLabel(row.status)}</Tag>;
             return <div className="wf-handlers">{nodes.map(item => <span key={item.nodeKey} className="wf-handler">
-              <span className="wf-avatar" title={item.handlers.map(person => person.displayName).join('、')}>{(item.handlers[0]?.displayName ?? '?').replace(/^ops\./, '').slice(0, 2).toUpperCase()}</span>
-              {item.nodeName}{item.handlers.length > 0 && <span className="muted">{item.handlers.map(person => person.displayName).join('、')}</span>}
-              <Tag color={item.status === 'APPROVING' ? 'orange' : item.status === 'WAITING' ? 'default' : 'blue'}>{nodeRunStatusLabels[item.status] ?? item.status}</Tag></span>)}</div>; } },
-          { title: '发起', width: 170, render: (_, row) => <span className="muted">{row.startedByName ?? row.startedBy} · {shortTime(row.startTime)}</span> },
-          { title: '', width: 40, render: (_, row) => <Link to={`${workflowRoutes.instances}/${row.instanceId}`} aria-label="打开实例"><RightOutlined /></Link> },
+              <span className="wf-avatar" title={item.handlers.map(person => person.displayName).join(t('list.comma'))}>{(item.handlers[0]?.displayName ?? '?').replace(/^ops\./, '').slice(0, 2).toUpperCase()}</span>
+              {item.nodeName}{item.handlers.length > 0 && <span className="muted">{item.handlers.map(person => person.displayName).join(t('list.comma'))}</span>}
+              <Tag color={item.status === 'APPROVING' ? 'orange' : item.status === 'WAITING' ? 'default' : 'blue'}>{nodeRunStatusLabel(item.status)}</Tag></span>)}</div>; } },
+          { title: t('instances.column.started'), width: 170, render: (_, row) => <span className="muted">{row.startedByName ?? row.startedBy} · {shortTime(row.startTime)}</span> },
+          { title: '', width: 40, render: (_, row) => <Link to={`${workflowRoutes.instances}/${row.instanceId}`} aria-label={t('instances.open')}><RightOutlined /></Link> },
         ]} />
     </section>
     {launching !== null && <LaunchModal initialDefinitionId={launching || null} onAuthorizationChanged={onAuthorizationChanged}

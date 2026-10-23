@@ -6,6 +6,9 @@ import {
   megabytesToBytes, mimeTypeLabel, newRevisionBlocker, policyPath, retireBlocker, revisionPath, scanPolicyPath, selectablePolicies,
   unsupportedMimeTypes, updateRevisionBody, versionedReasonBody,
 } from './scanPolicy.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('file');
 import type { ScanPolicyDetail, ScanPolicyRevision, ScanPolicySummary } from './scanPolicy.ts';
 
 const time = '2026-10-22T07:40:00.123456Z';
@@ -67,8 +70,8 @@ test('请求体：类型去重并按可识别顺序；大小以 MB 录入换算�
   assert.deepEqual(createPolicyBody({ policyCode: ' MERCHANT_LOGO_PUBLIC ', allowedMimeTypes: ['image/jpeg', 'image/png', 'image/jpeg'],
     maxSizeMegabytes: 2, reason: ' 商户 Logo ' }, supported),
     { policyCode: 'MERCHANT_LOGO_PUBLIC', allowedMimeTypes: ['image/png', 'image/jpeg'], maxSizeBytes: '2097152', reason: '商户 Logo' });
-  assert.throws(() => createPolicyBody({ policyCode: 'X', allowedMimeTypes: [], maxSizeMegabytes: 1, reason: 'x' }, supported), /至少选择/);
-  assert.throws(() => createPolicyBody({ policyCode: 'X', allowedMimeTypes: ['text/csv'], maxSizeMegabytes: 1, reason: 'x' }, supported), /可识别/);
+  assert.throws(() => createPolicyBody({ policyCode: 'X', allowedMimeTypes: [], maxSizeMegabytes: 1, reason: 'x' }, supported), { message: t('policy.allowedTypesRequired') });
+  assert.throws(() => createPolicyBody({ policyCode: 'X', allowedMimeTypes: ['text/csv'], maxSizeMegabytes: 1, reason: 'x' }, supported), { message: t('policy.allowedTypesUnsupported') });
   assert.throws(() => megabytesToBytes(101), /100 MB/); assert.throws(() => megabytesToBytes(0), /100 MB/);
   assert.equal(megabytesToBytes(100), '104857600'); assert.equal(megabytesToBytes(0.5), '524288');
   assert.equal(bytesToMegabytes('20971520'), 20);
@@ -85,11 +88,13 @@ test('页签规则：无法识别的类型提示；已有草稿不能新建修�
     ['text/csv']);
   assert.equal(mimeTypeLabel('application/pdf'), 'PDF'); assert.equal(mimeTypeLabel('text/csv'), 'CSV');
   assert.equal(byteSizeLabel('10485760'), '10 MB'); assert.equal(byteSizeLabel('86016'), '84 KB'); assert.equal(byteSizeLabel('193'), '193 B');
-  assert.match(newRevisionBlocker(detail) ?? '', /已有草稿 r3/);
+  assert.equal(newRevisionBlocker(detail), t('policy.newRevisionBlocker.draft', { revisionNo: 3 }));
+  assert.match(newRevisionBlocker(detail) ?? '', /Draft r3 already exists/);
   assert.equal(newRevisionBlocker({ ...detail, revisions: detail.revisions.slice(1) }), null);
-  assert.match(newRevisionBlocker({ ...detail, revisions: [revision(1, 'RETIRED')] }) ?? '', /没有生效修订/);
-  assert.match(retireBlocker(detail) ?? '', /被 1 条写入规则引用/);
+  assert.equal(newRevisionBlocker({ ...detail, revisions: [revision(1, 'RETIRED')] }), t('policy.newRevisionBlocker.noActive'));
+  assert.equal(retireBlocker(detail), t('policy.retireBlocker.referenced', { count: 1 }));
   assert.equal(retireBlocker({ ...detail, routes: [] }), null);
-  assert.match(activationNotice(detail, detail.revisions[0]), /r3 检查，r2 改为已停用；已开始、尚未完成的上传仍按 r2 检查/);
+  assert.equal(activationNotice(detail, detail.revisions[0]), t('policy.activationNotice.replace', { draftNo: 3, activeNo: 2 }));
+  assert.match(activationNotice(detail, detail.revisions[0]), /checked against r3.*r2 is retired.*still checked against r2/);
   assert.deepEqual(selectablePolicies([onboarding, cardBin, draftOnly]).map(item => item.policyCode), ['CLIENT_ONBOARDING_FORMAT', 'CARD_BIN_CSV']);
 });

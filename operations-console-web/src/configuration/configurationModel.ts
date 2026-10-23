@@ -1,4 +1,7 @@
+import { translator } from '../i18n/index.ts';
 import type { ManagedResource, ManagementProtection } from './types.ts';
+
+const t = translator('gateway');
 
 export interface ConfigurationCommand { path: string; method: 'POST' | 'PUT' | 'PATCH'; body: string; key: string }
 
@@ -31,8 +34,15 @@ export function visibleResourceIds(resources: ManagedResource[], keyword: string
   return included;
 }
 
+/** Console resource kind shown in the editor: a button, a page menu (has a component) or a directory. */
+export type ResourceKind = 'DIRECTORY' | 'PAGE' | 'BUTTON';
+export const resourceKinds: readonly ResourceKind[] = ['DIRECTORY', 'PAGE', 'BUTTON'];
+export function resourceKind(resource: Pick<ManagedResource, 'resourceType' | 'componentKey'>): ResourceKind {
+  return resource.resourceType === 'BUTTON' ? 'BUTTON' : resource.componentKey ? 'PAGE' : 'DIRECTORY';
+}
+/** Label of a resource kind: `gateway.enum.resourceKind.<kind>`. */
 export function resourceTypeLabel(resource: Pick<ManagedResource, 'resourceType' | 'componentKey'>) {
-  return resource.resourceType === 'BUTTON' ? '按钮' : resource.componentKey ? '页面菜单' : '目录';
+  return t('enum.resourceKind.' + resourceKind(resource));
 }
 
 /** 选择父级时剔除自身及其所有后代，最终结构仍由 Platform 判断。 */

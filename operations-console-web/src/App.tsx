@@ -7,7 +7,9 @@ import { Login } from './auth/Login';
 import { RequiredAction } from './auth/RequiredAction';
 import { useOperationsTools } from './auth/webmcp';
 import { useErrorNotification } from './feedback/useErrorNotification';
-import { buildMenuTree, menuPages, pageRoutePaths } from './navigation/menu';
+import { LanguageSwitcher } from './i18n/LanguageSwitcher';
+import { useT } from './i18n/react';
+import { buildMenuTree, menuPages, pageRoutePaths, resourceLabel } from './navigation/menu';
 import { menuTrail } from './navigation/menuTrail';
 import { useTrailTitleHeading } from './navigation/useTrailTitleHeading';
 import { NavigationCollapseControl } from './navigation/NavigationCollapseControl';
@@ -20,6 +22,7 @@ import { ConsolePage } from './navigation/ConsolePage';
 const LegacyIntegrationRedirect = lazy(() => import('./channel/ChannelResolve').then(m => ({ default: m.LegacyIntegrationRedirect })));
 export function App() {
   const notifyError = useErrorNotification();
+  const t = useT('auth'), tCommon = useT('common');
   const [context, setContext] = useState<SessionContextResponseBody | null>(null);
   const [initializing, setInitializing] = useState(true);
   const [initializationFailed, setInitializationFailed] = useState(false);
@@ -32,23 +35,25 @@ export function App() {
     session.context().then(value => { if (active) setContext(value); }).catch(error => {
       if (active && !(error instanceof ApiError && error.status === 401)) {
         setInitializationFailed(true);
-        notifyError(error, '会话恢复失败');
+        notifyError(error, t('session.restoreFailed'));
       }
     }).finally(() => { if (active) setInitializing(false); });
     return () => { active = false; session.onExpired = () => {}; };
+  // 只随重试重新恢复会话；t 在语言包到达时会换新，不应重复请求。
   }, [initializationAttempt, notifyError]);
-  if (initializing) return <div className="full-loading"><Spin size="large" tip="正在检查登录…"><div /></Spin></div>;
-  if (initializationFailed) return <div className="full-loading"><Result status="warning" title="暂时无法确认登录状态"
-    subTitle="请稍后重试。" extra={<Button type="primary" onClick={() => setInitializationAttempt(value => value + 1)}>重试</Button>} /></div>;
+  if (initializing) return <div className="full-loading"><Spin size="large" tip={t('session.checking')}><div /></Spin></div>;
+  if (initializationFailed) return <div className="full-loading"><Result status="warning" title={t('session.unavailableTitle')}
+    subTitle={t('session.unavailableHint')} extra={<Button type="primary" onClick={() => setInitializationAttempt(value => value + 1)}>{tCommon('action.retry')}</Button>} /></div>;
   if (!context) return <Login onLogin={setContext} initialMessage={loginMessage} />;
   if (context.passwordChangeRequired || context.bootstrapAdministratorRequired) {
-    return <RequiredAction context={context} onComplete={() => { setContext(null); setLoginMessage('操作已完成，请使用新密码或新管理员账号登录。'); }} />;
+    return <RequiredAction context={context} onComplete={() => { setContext(null); setLoginMessage(t('session.actionCompleted')); }} />;
   }
   return <Console context={context} />;
 }
 
 function Console({ context }: { context: SessionContextResponseBody }) {
   const notifyError = useErrorNotification();
+  const t = useT('nav'), tAuth = useT('auth'), tCommon = useT('common');
   const location = useLocation();
   const navigate = useNavigate();
   const [resources, setResources] = useState<ConsoleResource[]>([]);
@@ -72,7 +77,7 @@ function Console({ context }: { context: SessionContextResponseBody }) {
       }).catch(error => {
         if (!controller.signal.aborted) {
           setNavigationFailed(true);
-          notifyError(error, '菜单加载失败');
+          notifyError(error, t('menu.loadFailed'));
         }
       }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
@@ -81,12 +86,13 @@ function Console({ context }: { context: SessionContextResponseBody }) {
   const menuTree = useMemo(() => buildMenuTree(resources), [resources]);
   const menus = useMemo(() => menuPages(menuTree), [menuTree]);
   const trail = useMemo(() => menuTrail(menuTree, location.pathname), [menuTree, location.pathname]);
-  useTrailTitleHeading(trail.at(-1)?.displayName);
+  const current = trail.at(-1);
+  useTrailTitleHeading(current ? resourceLabel(t, current) : undefined);
   useOperationsTools(menus, navigate);
   async function logout() {
     setLoggingOut(true);
     try { await session.logout(); }
-    catch (error) { notifyError(error, '退出会话未确认'); }
+    catch (error) { notifyError(error, tAuth('logout.unconfirmed')); }
     finally { setLoggingOut(false); }
   }
   function toggleNavigation() {
@@ -102,16 +108,17 @@ function Console({ context }: { context: SessionContextResponseBody }) {
       {!viewportCollapsed && <NavigationCollapseControl collapsed={userCollapsed} onToggle={toggleNavigation} />}
     </Layout.Sider>
     <Layout>
-      <Layout.Header className="console-header"><nav className="console-trail" aria-label="当前位置"><span className="workspace-title">运营平台</span>
-        {trail.map((item, index) => <span key={item.resourceId} className={index === trail.length - 1 ? 'console-trail-current' : 'console-trail-item'}>{item.displayName}</span>)}</nav>
-        <div className="header-account">{context.integrationMode !== 'PRODUCTION' && <Tag className="environment-tag">开发环境</Tag>}
-          <span>{context.emailMasked || '管理员'}</span><Button type="text" onClick={() => void logout()} loading={loggingOut}>退出</Button></div>
+      <Layout.Header className="console-header"><nav className="console-trail" aria-label={t('header.trail')}><span className="workspace-title">{t('header.workspace')}</span>
+        {trail.map((item, index) => <span key={item.resourceId} className={index === trail.length - 1 ? 'console-trail-current' : 'console-trail-item'}>{resourceLabel(t, item)}</span>)}</nav>
+        <div className="header-account">{context.integrationMode !== 'PRODUCTION' && <Tag className="environment-tag">{t('header.environment')}</Tag>}
+          <LanguageSwitcher />
+          <span>{context.emailMasked || t('header.administrator')}</span><Button type="text" onClick={() => void logout()} loading={loggingOut}>{tAuth('logout.button')}</Button></div>
       </Layout.Header>
       <Layout.Content className="console-content">
-        {navigationLoaded && navigationFailed && <Alert type="warning" showIcon title="权限刷新失败，当前页面已保留。请重试确认最新权限。"
-          action={<Button onClick={() => setReload(value => value + 1)}>重试</Button>} />}
-        {!navigationLoaded && navigationFailed ? <Result status="warning" title="暂时无法加载菜单"
-          extra={<Button onClick={() => setReload(value => value + 1)}>重试</Button>} />
+        {navigationLoaded && navigationFailed && <Alert type="warning" showIcon title={t('header.permissionRefreshFailed')}
+          action={<Button onClick={() => setReload(value => value + 1)}>{tCommon('action.retry')}</Button>} />}
+        {!navigationLoaded && navigationFailed ? <Result status="warning" title={t('menu.unavailable')}
+          extra={<Button onClick={() => setReload(value => value + 1)}>{tCommon('action.retry')}</Button>} />
           : !navigationLoaded && loading ? <div className="content-loading"><Spin /></div>
           : <Suspense fallback={<div className="content-loading"><Spin /></div>}>
             <Routes>
@@ -127,4 +134,7 @@ function Console({ context }: { context: SessionContextResponseBody }) {
     </Layout>
   </Layout>;
 }
-function NoAccess() { return <Result status="403" title="暂无访问权限" subTitle="如需使用此功能，请联系平台管理员分配权限。" />; }
+function NoAccess() {
+  const t = useT('nav');
+  return <Result status="403" title={t('noAccess.title')} subTitle={t('noAccess.hint')} />;
+}

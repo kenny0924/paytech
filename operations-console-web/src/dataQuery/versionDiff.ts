@@ -1,5 +1,8 @@
-import { maskLabels, pagingModeLabels, typeLabel } from './templateModel.ts';
+import { maskLabel, pagingModeLabel, typeLabel } from './templateModel.ts';
 import type { ParameterDeclaration, QueryColumn, QueryConstraints, TemplateVersion } from './templateModel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('data-query');
 
 export interface DiffLine { kind: 'same' | 'removed' | 'added'; text: string; leftNo: number | null; rightNo: number | null }
 
@@ -74,34 +77,35 @@ const stable = (value: unknown) => JSON.stringify(value, (_, v: unknown) => v &&
 function parameterChanges(before: ParameterDeclaration, after: ParameterDeclaration): string[] {
   const changes: string[] = [];
   const typeBefore = typeLabel(before.type, before.elementType); const typeAfter = typeLabel(after.type, after.elementType);
-  if (typeBefore !== typeAfter) changes.push(`类型 ${typeBefore} → ${typeAfter}`);
-  if ((before.required === true) !== (after.required === true)) changes.push(after.required ? '改为必填' : '改为可选');
-  if (stable(before.default) !== stable(after.default)) changes.push(`默认值 ${stable(before.default) ?? '无'} → ${stable(after.default) ?? '无'}`);
+  const none = t('diff.none');
+  if (typeBefore !== typeAfter) changes.push(t('diff.type', { before: typeBefore, after: typeAfter }));
+  if ((before.required === true) !== (after.required === true)) changes.push(after.required ? t('diff.nowRequired') : t('diff.nowOptional'));
+  if (stable(before.default) !== stable(after.default)) changes.push(t('diff.default', { before: stable(before.default) ?? none, after: stable(after.default) ?? none }));
   const choicesBefore = before.choices ?? {}; const choicesAfter = after.choices ?? {};
   for (const [key, fragment] of Object.entries(choicesAfter)) {
-    if (!(key in choicesBefore)) changes.push(`片段取值新增 ${key} → ${fragment}`);
-    else if (choicesBefore[key] !== fragment) changes.push(`片段 ${key}：${choicesBefore[key]} → ${fragment}`);
+    if (!(key in choicesBefore)) changes.push(t('diff.choiceAdded', { key, fragment }));
+    else if (choicesBefore[key] !== fragment) changes.push(t('diff.choiceChanged', { key, before: choicesBefore[key], after: fragment }));
   }
-  for (const key of Object.keys(choicesBefore)) if (!(key in choicesAfter)) changes.push(`片段取值删除 ${key}`);
+  for (const key of Object.keys(choicesBefore)) if (!(key in choicesAfter)) changes.push(t('diff.choiceRemoved', { key }));
   for (const key of ['maxLength', 'min', 'max', 'maxSize', 'allowedValues', 'fields'] as const) {
-    if (stable(before[key]) !== stable(after[key])) changes.push(`${key} ${stable(before[key]) ?? '无'} → ${stable(after[key]) ?? '无'}`);
+    if (stable(before[key]) !== stable(after[key])) changes.push(`${key} ${stable(before[key]) ?? none} → ${stable(after[key]) ?? none}`);
   }
   return changes;
 }
 
-const constraintLabels: Readonly<Record<keyof QueryConstraints, string>> = {
-  maxRows: '最大行数', timeoutSeconds: '超时', pagingMode: '分页方式', maxPageSize: '页大小上限', countAllowed: '允许总数', cursorColumns: '游标列',
-};
+/** 参与比较的约束，按展示顺序；名称为 `diff.constraint.<键>`。 */
+const constraintKeys: readonly (keyof QueryConstraints)[] = ['maxRows', 'timeoutSeconds', 'pagingMode', 'maxPageSize', 'countAllowed', 'cursorColumns'];
 function constraintText(key: keyof QueryConstraints, value: unknown): string {
-  if (value === null || value === undefined) return '无';
+  if (value === null || value === undefined) return t('diff.none');
   if (key === 'timeoutSeconds') return `${String(value)} s`;
-  if (key === 'pagingMode') return pagingModeLabels[value as QueryConstraints['pagingMode']] ?? String(value);
-  if (key === 'countAllowed') return value ? '是' : '否';
-  if (Array.isArray(value)) return value.join(', ') || '无';
+  if (key === 'pagingMode') return pagingModeLabel(String(value));
+  if (key === 'countAllowed') return value ? t('diff.yes') : t('diff.no');
+  if (Array.isArray(value)) return value.join(', ') || t('diff.none');
   return String(value);
 }
-const columnText = (column: QueryColumn) => `${column.label || column.name} · ${maskLabels[column.mask ?? 'NONE']}`
-  + (column.mask === 'KEEP_EDGES' ? `（首 ${column.keepStart ?? 0} 尾 ${column.keepEnd ?? 0}）` : '');
+const columnText = (column: QueryColumn) => column.mask === 'KEEP_EDGES'
+  ? t('diff.columnKeepEdges', { label: column.label || column.name, mask: maskLabel(column.mask), start: column.keepStart ?? 0, end: column.keepEnd ?? 0 })
+  : `${column.label || column.name} · ${maskLabel(column.mask ?? 'NONE')}`;
 
 /** 参数 / 约束 / 列 / 数据源的差异（before → after），按参数、约束、列、数据源顺序。 */
 export function declarationChanges(before: TemplateVersion, after: TemplateVersion): DeclarationChange[] {
@@ -109,24 +113,26 @@ export function declarationChanges(before: TemplateVersion, after: TemplateVersi
   const beforeParams = new Map(before.parameters.map(p => [p.name, p])); const afterParams = new Map(after.parameters.map(p => [p.name, p]));
   for (const [name, declaration] of afterParams) {
     const previous = beforeParams.get(name);
-    if (!previous) result.push({ subject: `参数 ${name}`, change: `新增 ${typeLabel(declaration.type, declaration.elementType)}${declaration.required ? '（必填）' : ''}` });
-    else parameterChanges(previous, declaration).forEach(change => result.push({ subject: `参数 ${name}`, change }));
+    const subject = t('diff.parameter', { name });
+    if (!previous) result.push({ subject, change: declaration.required ? t('diff.addedRequired', { type: typeLabel(declaration.type, declaration.elementType) })
+      : t('diff.added', { item: typeLabel(declaration.type, declaration.elementType) }) });
+    else parameterChanges(previous, declaration).forEach(change => result.push({ subject, change }));
   }
-  for (const name of beforeParams.keys()) if (!afterParams.has(name)) result.push({ subject: `参数 ${name}`, change: '删除' });
+  for (const name of beforeParams.keys()) if (!afterParams.has(name)) result.push({ subject: t('diff.parameter', { name }), change: t('diff.removed') });
   const beforeOrder = before.parameters.map(p => p.name).filter(name => afterParams.has(name));
   const afterOrder = after.parameters.map(p => p.name).filter(name => beforeParams.has(name));
-  if (beforeOrder.join('\n') !== afterOrder.join('\n')) result.push({ subject: '参数顺序', change: `${beforeOrder.join(', ')} → ${afterOrder.join(', ')}` });
-  for (const key of Object.keys(constraintLabels) as (keyof QueryConstraints)[]) {
+  if (beforeOrder.join('\n') !== afterOrder.join('\n')) result.push({ subject: t('diff.parameterOrder'), change: `${beforeOrder.join(', ')} → ${afterOrder.join(', ')}` });
+  for (const key of constraintKeys) {
     const x = constraintText(key, before.constraints[key]); const y = constraintText(key, after.constraints[key]);
-    if (x !== y) result.push({ subject: `约束 ${constraintLabels[key]}`, change: `${x} → ${y}` });
+    if (x !== y) result.push({ subject: t('diff.constraint', { name: t('diff.constraintName.' + key) }), change: `${x} → ${y}` });
   }
   const beforeColumns = new Map(before.columns.map(c => [c.name, c])); const afterColumns = new Map(after.columns.map(c => [c.name, c]));
   for (const [name, column] of afterColumns) {
     const previous = beforeColumns.get(name);
-    if (!previous) result.push({ subject: `列 ${name}`, change: `新增 ${columnText(column)}` });
-    else if (columnText(previous) !== columnText(column)) result.push({ subject: `列 ${name}`, change: `${columnText(previous)} → ${columnText(column)}` });
+    if (!previous) result.push({ subject: t('diff.column', { name }), change: t('diff.added', { item: columnText(column) }) });
+    else if (columnText(previous) !== columnText(column)) result.push({ subject: t('diff.column', { name }), change: `${columnText(previous)} → ${columnText(column)}` });
   }
-  for (const name of beforeColumns.keys()) if (!afterColumns.has(name)) result.push({ subject: `列 ${name}`, change: '删除' });
-  if (before.dataSourceId !== after.dataSourceId) result.push({ subject: '数据源', change: `${before.dataSourceCode} → ${after.dataSourceCode}` });
+  for (const name of beforeColumns.keys()) if (!afterColumns.has(name)) result.push({ subject: t('diff.column', { name }), change: t('diff.removed') });
+  if (before.dataSourceId !== after.dataSourceId) result.push({ subject: t('diff.dataSource'), change: `${before.dataSourceCode} → ${after.dataSourceCode}` });
   return result;
 }

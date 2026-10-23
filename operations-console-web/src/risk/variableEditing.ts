@@ -2,24 +2,27 @@ import type { RuleAuthoringContext, RuleOperand, RuleSetDetail } from './riskApi
 import type { FlowContext, FlowExpression, FlowGraph } from './decisionFlow.ts';
 import { variableApi, variableOperand } from './riskVariable.ts';
 import type { VariableOperand, VariableSummary } from './riskVariable.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('risk');
 
 /** 仅为编辑建立新草稿；映射来自 Owner 返回的系统变量，不按业务字段猜编码。 */
 export function convertLegacyOperands(operands:readonly RuleOperand[],resolve:(field:string)=>VariableSummary):VariableOperand[] {
   const context=operands.find(o=>o.sourceType==='CONTEXT');
-  if(!context?.fieldCode)throw new Error('旧条件缺少准确来源字段');
+  if(!context?.fieldCode)throw new Error(t('variableEditing.missingSourceField'));
   const variable=resolve(context.fieldCode),binding=variableOperand(variable,context.operandRole);
   return operands.map(o=>o.sourceType==='CONTEXT'?{...binding,valueSequence:o.valueSequence}:{...binding,...o,sourceType:'LITERAL',variableCode:null,fieldCode:null,numericUnit:variable.numericUnit,currencyCode:variable.currencyCode,currencyVariableCode:variable.currencyVariableCode});
 }
 type EditingCatalog = Pick<typeof variableApi, 'list' | 'context'>;
 async function definitions(codes:string[],signal:AbortSignal|undefined,api:EditingCatalog) {
   const result=new Map<string,VariableSummary>();const unique=[...new Set(codes)];
-  for(let i=0;i<unique.length;i+=100){const r=await api.list({codes:unique.slice(i,i+100).join(',')},signal);if(r.missingCodes?.length)throw new Error('缺少旧来源的系统变量映射，请检查变量库');r.items.forEach(v=>result.set(v.variableCode,v));}
+  for(let i=0;i<unique.length;i+=100){const r=await api.list({codes:unique.slice(i,i+100).join(',')},signal);if(r.missingCodes?.length)throw new Error(t('variableEditing.missingMapping'));r.items.forEach(v=>result.set(v.variableCode,v));}
   return result;
 }
-function selected(map:Map<string,VariableSummary>,code:string|undefined|null):VariableSummary {const v=code?map.get(code):undefined;if(!v||v.status!=='ACTIVE')throw new Error('来源变量缺失或已停用，无法转换旧配置');return v;}
+function selected(map:Map<string,VariableSummary>,code:string|undefined|null):VariableSummary {const v=code?map.get(code):undefined;if(!v||v.status!=='ACTIVE')throw new Error(t('variableEditing.sourceInactive'));return v;}
 export async function ruleForVariableEditing(detail:RuleSetDetail,context:RuleAuthoringContext,signal?:AbortSignal,api:EditingCatalog=variableApi):Promise<RuleSetDetail> {
   if(detail.operandFormat==='VARIABLE_REFERENCE')return detail;
-  if(context.operandFormat!=='VARIABLE_REFERENCE')throw new Error('变量编辑目录尚未就绪');
+  if(context.operandFormat!=='VARIABLE_REFERENCE')throw new Error(t('variableEditing.catalogNotReady'));
   const map=await definitions(context.fields.map(f=>f.variableCode).filter((v):v is string=>!!v),signal,api);
   const source=(field:string)=>selected(map,context.fields.find(f=>f.fieldCode===field)?.variableCode);
   const engineering=detail.rules.some(r=>r.additionalActions.length)?await api.context(signal):null;
@@ -27,7 +30,7 @@ export async function ruleForVariableEditing(detail:RuleSetDetail,context:RuleAu
     const role=context.targetBindings.find(t=>t.bindingCode===action.targetBindingCode)?.subjectSemanticRole;
     const contract=engineering?.contracts.find(c=>c.contractCode===context.point.inputContractCode&&c.contractVersion===context.point.inputContractVersion&&c.pointCode===context.point.pointCode);
     const field=contract?.fields.find(f=>f.semanticRole===role&&f.allowedUsages.includes('ACTION_PARAMETER'));
-    if(!field)throw new Error('动作主体缺少准确变量映射');return {...action,subjectVariableCode:source(field.fieldKey).variableCode};
+    if(!field)throw new Error(t('variableEditing.subjectMapping'));return {...action,subjectVariableCode:source(field.fieldKey).variableCode};
   })}));
   return {...detail,operandFormat:'VARIABLE_REFERENCE',rules,currentVariables:[...map.values()]};
 }

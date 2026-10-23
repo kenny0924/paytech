@@ -67,8 +67,8 @@ test('渠道流水查询：只取已知键并去空白；日期格式与先后�
   assert.deepEqual(channelLineQuery({ clearingAccountId: '12', externalTransactionId: ' NI-ORD-0001 ', statementStatus: '', foo: 'bar' }),
     { filters: { clearingAccountId: '12', externalTransactionId: 'NI-ORD-0001' }, error: null });
   assert.equal(channelLineQuery({ referenceType: 'NI_ORDER_REF' }).error, null);
-  assert.equal(channelLineQuery({ transactionDateFrom: '2026/10/01' }).error, '交易日期格式为 YYYY-MM-DD');
-  assert.equal(channelLineQuery({ transactionDateFrom: '2026-10-21', transactionDateTo: '2026-10-01' }).error, '交易日期起不能晚于止');
+  assert.equal(channelLineQuery({ transactionDateFrom: '2026/10/01' }).error, 'Transaction dates must be YYYY-MM-DD.');
+  assert.equal(channelLineQuery({ transactionDateFrom: '2026-10-21', transactionDateTo: '2026-10-01' }).error, "The transaction date from can't be later than the date to.");
   assert.equal(channelLineQuery({ transactionDateFrom: '2026-10-01', transactionDateTo: '2026-10-01' }).error, null);
 });
 

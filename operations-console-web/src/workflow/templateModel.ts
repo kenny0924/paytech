@@ -4,6 +4,9 @@ import type {
 import { cleanFieldRules, fieldProblems } from './formModel.ts';
 import { uploadRequired } from './fileModel.ts';
 import { isInternalRoute } from './runtimeModel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('workflow');
 
 export const templateCodePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
 export const instructionLimit = 2000;
@@ -24,30 +27,30 @@ export function configProblems(type: ActionType, config: ActionConfig): string[]
   switch (type) {
     case 'FORM': {
       const form = config as FormDefinition;
-      if (!form.fields?.length) problems.push('表单至少需要一个字段');
+      if (!form.fields?.length) problems.push(t('config.formNoFields'));
       problems.push(...fieldProblems(form).values());
       break;
     }
     case 'FILE_UPLOAD': {
       const file = config as FileUploadConfig;
-      if ((file.instruction ?? '').length > instructionLimit) problems.push(`执行说明不能超过 ${instructionLimit} 字`);
+      if ((file.instruction ?? '').length > instructionLimit) problems.push(t('config.instructionTooLong', { max: instructionLimit }));
       break;
     }
     case 'PAGE_TASK': {
       const page = config as PageTaskConfig;
-      if (!page.pageRoute) problems.push('请选择或填写目标页面');
-      else if (!isInternalRoute(page.pageRoute)) problems.push('目标页面只允许以 / 开头的控制台内部路由，不接受外部地址');
+      if (!page.pageRoute) problems.push(t('config.pageRouteRequired'));
+      else if (!isInternalRoute(page.pageRoute)) problems.push(t('config.pageRouteInternal'));
       const keys = (page.parameters ?? []).map(item => item.key);
-      if (keys.some(key => !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(key))) problems.push('跳转参数名以字母开头，只能包含字母、数字和下划线');
-      if (new Set(keys).size !== keys.length) problems.push('跳转参数名重复');
-      if ((page.parameters ?? []).some(item => !item.label.trim())) problems.push('请填写跳转参数的说明');
+      if (keys.some(key => !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(key))) problems.push(t('config.parameterKeyPattern'));
+      if (new Set(keys).size !== keys.length) problems.push(t('config.parameterKeyDuplicate'));
+      if ((page.parameters ?? []).some(item => !item.label.trim())) problems.push(t('config.parameterLabelRequired'));
       break;
     }
     case 'MANUAL_CONFIRM':
-      if (!(config as ManualConfirmConfig).instruction?.trim()) problems.push('请填写执行说明');
+      if (!(config as ManualConfirmConfig).instruction?.trim()) problems.push(t('config.instructionRequired'));
       break;
     case 'DATA_QUERY':
-      if (!(config as DataQueryConfig).queryCode?.trim()) problems.push('请填写查询编码');
+      if (!(config as DataQueryConfig).queryCode?.trim()) problems.push(t('config.queryCodeRequired'));
       break;
   }
   return problems;
@@ -92,7 +95,7 @@ export function configDiff(type: ActionType, before: ActionConfig | null, after:
   if (!before || !after) return [];
   if (type === 'FORM') {
     const left = (before as FormDefinition).fields ?? []; const right = (after as FormDefinition).fields ?? [];
-    const describe = (field: FormDefinition['fields'][number]) => `${field.label} ${field.key} · ${field.type}${field.required ? ' · 必填' : ''}`;
+    const describe = (field: FormDefinition['fields'][number]) => `${field.label} ${field.key} · ${field.type}${field.required ? ' · ' + t('config.diffRequired') : ''}`;
     return [
       ...right.filter(field => !left.some(item => item.key === field.key)).map(field => ({ kind: 'added' as const, label: field.label || field.key, before: '—', after: describe(field) })),
       ...left.filter(field => !right.some(item => item.key === field.key)).map(field => ({ kind: 'removed' as const, label: field.label || field.key, before: describe(field), after: '—' })),

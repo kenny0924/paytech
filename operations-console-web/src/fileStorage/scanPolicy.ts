@@ -1,6 +1,9 @@
 import { ApiError } from '../api/session.ts';
 import { accessLevels, decodeMutation, instanceCodePattern, scanPolicyCodePattern, sourceSystemPattern, defaultSourceSystem, storageAdminPath } from './fileStorage.ts';
 import type { AccessLevel, StorageMutation } from './fileStorage.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('file');
 
 /** 检查策略列表路径；修订、激活与停用都挂在策略代码下。 */
 export const scanPolicyPath = `${storageAdminPath}/scan-policies`;
@@ -11,9 +14,10 @@ export const policyStatuses = ['ACTIVE', 'DRAFT', 'RETIRED'] as const;
 export const revisionStatuses = ['DRAFT', 'ACTIVE', 'RETIRED'] as const;
 export type PolicyStatus = typeof policyStatuses[number];
 export type RevisionStatus = typeof revisionStatuses[number];
-export const policyStatusLabels: Readonly<Record<PolicyStatus, string>> = { ACTIVE: '启用', DRAFT: '草稿', RETIRED: '已停用' };
-export const revisionStatusLabels: Readonly<Record<RevisionStatus, string>> = { DRAFT: '草稿', ACTIVE: '生效中', RETIRED: '已停用' };
-export const scanTypeLabels: Readonly<Record<string, string>> = { FORMAT: '格式检查' };
+/** 显示名在 `file` 命名空间：`enum.policyStatus`、`enum.revisionStatus`、`enum.scanType`（未知检查类型原样显示）。 */
+export const policyStatusLabel = (value: string) => enumLabel(t, 'enum.policyStatus', value);
+export const revisionStatusLabel = (value: string) => enumLabel(t, 'enum.revisionStatus', value);
+export const scanTypeLabel = (value: string) => enumLabel(t, 'enum.scanType', value);
 /** 最大字节数范围：1 字节到 100 MiB，与浏览器直传和单次 PUT 的能力一致。 */
 export const maxSizeRange = { min: 1, max: 100 * 1024 * 1024 } as const;
 const mib = 1024 * 1024;
@@ -134,7 +138,7 @@ export function byteSizeLabel(bytes: string | number): string {
 /** 表单中的最大大小以 MB 录入（最多两位小数），提交时换算为字节字符串。 */
 export function megabytesToBytes(megabytes: number | null | undefined): string {
   const bytes = Math.round(Number(megabytes) * mib);
-  if (!Number.isSafeInteger(bytes) || bytes < maxSizeRange.min || bytes > maxSizeRange.max) throw new Error('最大大小须在 1 字节到 100 MB 之间');
+  if (!Number.isSafeInteger(bytes) || bytes < maxSizeRange.min || bytes > maxSizeRange.max) throw new Error(t('policy.maxSizeRange'));
   return String(bytes);
 }
 export const bytesToMegabytes = (bytes: string) => Math.round(Number(bytes) / mib * 100) / 100;
@@ -144,8 +148,8 @@ export interface PolicyFormValues { policyCode?: string; allowedMimeTypes?: stri
 /** 允许类型：去重并按可识别类型的顺序排列；为空或含不可识别类型时拒绝。 */
 function allowedTypes(values: PolicyFormValues, supported: readonly string[]): string[] {
   const selected = [...new Set(values.allowedMimeTypes ?? [])];
-  if (!selected.length) throw new Error('至少选择一种允许类型');
-  if (unsupportedMimeTypes(selected, supported).length) throw new Error('只能选择格式检查可识别的类型');
+  if (!selected.length) throw new Error(t('policy.allowedTypesRequired'));
+  if (unsupportedMimeTypes(selected, supported).length) throw new Error(t('policy.allowedTypesUnsupported'));
   return supported.filter(type => selected.includes(type));
 }
 
@@ -173,15 +177,15 @@ export function revisionSlots(detail: ScanPolicyDetail) {
 /** 新建修订的前置：需要有生效修订作模板且没有草稿；返回不满足的原因，满足时返回 null。 */
 export function newRevisionBlocker(detail: ScanPolicyDetail): string | null {
   const { active, draft } = revisionSlots(detail);
-  if (draft) return `已有草稿 r${draft.revisionNo}，先激活或废弃后才能新建修订`;
-  if (!active) return '没有生效修订可作模板';
+  if (draft) return t('policy.newRevisionBlocker.draft', { revisionNo: draft.revisionNo });
+  if (!active) return t('policy.newRevisionBlocker.noActive');
   return null;
 }
 
 /** 停用的前置：需要有生效修订，且没有写入规则引用该策略。 */
 export function retireBlocker(detail: ScanPolicyDetail): string | null {
-  if (!revisionSlots(detail).active) return '没有生效修订';
-  if (detail.routes.length) return `被 ${detail.routes.length} 条写入规则引用，不能停用`;
+  if (!revisionSlots(detail).active) return t('policy.retireBlocker.noActive');
+  if (detail.routes.length) return t('policy.retireBlocker.referenced', { count: detail.routes.length });
   return null;
 }
 
@@ -189,8 +193,8 @@ export function retireBlocker(detail: ScanPolicyDetail): string | null {
 export function activationNotice(detail: ScanPolicyDetail, draft: ScanPolicyRevision): string {
   const active = revisionSlots(detail).active;
   return active
-    ? `激活 r${draft.revisionNo} 后：之后的新上传按 r${draft.revisionNo} 检查，r${active.revisionNo} 改为已停用；已开始、尚未完成的上传仍按 r${active.revisionNo} 检查。`
-    : `激活 r${draft.revisionNo} 后，写入规则可以选择该策略，之后的新上传按 r${draft.revisionNo} 检查。`;
+    ? t('policy.activationNotice.replace', { draftNo: draft.revisionNo, activeNo: active.revisionNo })
+    : t('policy.activationNotice.first', { draftNo: draft.revisionNo });
 }
 
 /** 写入规则可选的策略：只列有生效修订的策略。 */

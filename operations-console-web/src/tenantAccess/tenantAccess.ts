@@ -26,10 +26,15 @@ export interface MemberPermission {
 export interface PermissionSource extends RoleGrant { rolePermissionId: string; rolePermissionStatus: 'ACTIVE' | 'REVOKED' }
 export interface EvaluatedPage<T> extends PagingResponseBody<T> { evaluatedAt: string }
 export interface SecurityMutation { tenantId: string; securityStatus: SecurityStatus; version: number }
-export const ownerLabels = { PENDING: '待激活', ACTIVE: '正常', SUSPENDED: '已停用', TERMINATED: '已终止' };
-export const securityLabels = { ACTIVE: '正常', SUSPENDED: '已暂停' };
-export const memberLabels = { OWNER: '所有者', ADMIN: '管理员', MEMBER: '成员' };
-export const stateLabels: Record<string, string> = { ACTIVE: '有效', INACTIVE: '已停用', SUSPENDED: '已暂停', REVOKED: '已撤销', EXPIRED: '已过期', PENDING_VERIFICATION: '待验证', DISABLED: '已停用', CLOSED: '已关闭' };
+/**
+ * Status / type codes in display order. Labels are `access.enum.<type>.<code>` (tenantType, tenantOwnerStatus,
+ * tenantSecurityStatus, memberType, memberStatus, iamState), read with enumLabel at render time.
+ */
+export const tenantTypes = ['CLIENT', 'PARTNER'] as const;
+export const ownerStatuses = ['PENDING', 'ACTIVE', 'SUSPENDED', 'TERMINATED'] as const;
+export const securityStatuses = ['ACTIVE', 'SUSPENDED'] as const;
+export const memberTypes = ['OWNER', 'ADMIN', 'MEMBER'] as const;
+export const memberStatuses = ['ACTIVE', 'SUSPENDED', 'REVOKED'] as const;
 export const reasonCodes = ['TENANT_OWNER_INACTIVE', 'TENANT_SECURITY_SUSPENDED', 'ACCOUNT_INACTIVE', 'MEMBER_INACTIVE', 'ROLE_INACTIVE', 'GRANT_REVOKED', 'GRANT_NOT_STARTED', 'GRANT_EXPIRED', 'ROLE_PERMISSION_REVOKED', 'PERMISSION_INACTIVE'];
 export const isId = (v: unknown): v is string => typeof v === 'string' && /^[1-9][0-9]{0,18}$/.test(v) && BigInt(v) <= 9223372036854775807n;
 const version = (v: number) => Number.isInteger(v) && v > 0 && v <= 2147483647;
@@ -55,7 +60,7 @@ function reasons(value: unknown, effective: boolean): Reason[] {
 export function decodeTenant(value: unknown, expectedId?: string): Tenant {
   const v = value as Tenant;
   require(v && isId(v.tenantId) && (!expectedId || expectedId === v.tenantId) && isId(v.ownerRefId) && text(v.tenantName, 255)
-    && oneOf(v.tenantType, ['CLIENT', 'PARTNER']) && oneOf(v.ownerStatus, Object.keys(ownerLabels)) && oneOf(v.securityStatus, Object.keys(securityLabels))
+    && oneOf(v.tenantType, tenantTypes) && oneOf(v.ownerStatus, ownerStatuses) && oneOf(v.securityStatus, securityStatuses)
     && version(v.version) && instant(v.createdAt) && instant(v.updatedAt)
     && v.tenantAccessAllowed === (v.ownerStatus === 'ACTIVE' && v.securityStatus === 'ACTIVE'));
   const restrictionReasons = reasons(v.restrictionReasons, v.tenantAccessAllowed); require(restrictionReasons.every(r => reasonCodes.indexOf(r.code) < 2));
@@ -65,8 +70,8 @@ export function decodeTenant(value: unknown, expectedId?: string): Tenant {
 export function decodeMember(value: unknown, tenantId: string, memberId?: string): Member {
   const v = value as Member;
   require(v && v.tenantId === tenantId && isId(v.memberId) && (!memberId || v.memberId === memberId) && isId(v.accountId)
-    && (v.emailMasked === null || text(v.emailMasked, 255)) && oneOf(v.memberType, Object.keys(memberLabels))
-    && oneOf(v.memberStatus, ['ACTIVE', 'SUSPENDED', 'REVOKED']) && oneOf(v.accountStatus, ['PENDING_VERIFICATION', 'ACTIVE', 'DISABLED', 'CLOSED'])
+    && (v.emailMasked === null || text(v.emailMasked, 255)) && oneOf(v.memberType, memberTypes)
+    && oneOf(v.memberStatus, memberStatuses) && oneOf(v.accountStatus, ['PENDING_VERIFICATION', 'ACTIVE', 'DISABLED', 'CLOSED'])
     && instant(v.createdAt) && instant(v.updatedAt));
   return { tenantId: v.tenantId, memberId: v.memberId, accountId: v.accountId, emailMasked: v.emailMasked, memberType: v.memberType,
     memberStatus: v.memberStatus, accountStatus: v.accountStatus, createdAt: v.createdAt, updatedAt: v.updatedAt };

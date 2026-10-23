@@ -2,12 +2,16 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ApiError } from '../api/session.ts';
 import { pageCapabilities } from '../navigation/pageCapabilities.ts';
-import { auditActions, auditResourceTypes } from '../pages/auditView.ts';
+import { auditActionCodes, auditResourceTypeCodes } from '../pages/auditView.ts';
+import { testT } from '../i18n/testing.ts';
 import {
   activeQuickFilter, applyQuickFilter, canDownloadFileRecord, currentVersion, decodeDownloadGrant, decodeFileRecordDetail, decodeFileRecordPage,
   downloadFileRecord, fileRecordDetailPath, fileRecordDownloadPath, fileRecordFilters, fileRecordPath, filtersFromQuery, formValuesFromFilters,
   previewableImage, quickFilters, versionDownloadable,
 } from './fileRecords.ts';
+import { enumLabel } from '../i18n/index.ts';
+
+const t = testT('file');
 import type { FileRecordDetail, FileRecordSummary, FileVersionRecord } from './fileRecords.ts';
 
 const time = '2026-10-22T12:31:00.123456Z';
@@ -101,12 +105,12 @@ test('筛选参数：时间范围必填、默认近 7 天、最长 31 天、转 
     fileId: '239061120044503040', sourceSystem: 'client-console-bff', reasonCode: 'MERCHANT_LOGO', accessLevel: 'PUBLIC', scanStatus: 'AVAILABLE',
     hasPendingReplacement: 'true' });
   assert.equal(filters.createdFrom, new Date('2026-10-01T00:00:00').toISOString());
-  assert.throws(() => fileRecordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-09-01T00:00:00', end: '2026-10-22T00:00:00' } }, now), /31 天/);
-  assert.throws(() => fileRecordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-22T00:00:00', end: '2026-10-01T00:00:00' } }, now), /晚于/);
-  assert.throws(() => fileRecordFilters({ timeRange: { preset: 'CUSTOM' } }, now), /完整/);
-  assert.throws(() => fileRecordFilters({ fileId: 'abc' }, now), /数字/);
-  assert.throws(() => fileRecordFilters({ sourceSystem: 'Client Console' }, now), /服务名/);
-  assert.throws(() => fileRecordFilters({ reasonCode: 'merchant logo' }, now), /大写/);
+  assert.throws(() => fileRecordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-09-01T00:00:00', end: '2026-10-22T00:00:00' } }, now), { message: t('filters.rangeTooLong', { days: 31 }) });
+  assert.throws(() => fileRecordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-22T00:00:00', end: '2026-10-01T00:00:00' } }, now), { message: t('filters.endBeforeStart') });
+  assert.throws(() => fileRecordFilters({ timeRange: { preset: 'CUSTOM' } }, now), { message: t('filters.incompleteRange') });
+  assert.throws(() => fileRecordFilters({ fileId: 'abc' }, now), { message: t('filters.fileIdInvalid') });
+  assert.throws(() => fileRecordFilters({ sourceSystem: 'Client Console' }, now), { message: t('filters.sourceSystemInvalid') });
+  assert.throws(() => fileRecordFilters({ reasonCode: 'merchant logo' }, now), { message: t('filters.reasonCodeInvalid') });
   assert.equal('hasPendingReplacement' in fileRecordFilters({ hasPendingReplacement: false }, now), false);
 });
 
@@ -124,7 +128,7 @@ test('URL 筛选：合法范围原样保留，缺失或超过 31 天回到默认
 
 test('快捷筛选：每项只设一个条件并保留时间范围与其他条件；不显示计数', () => {
   const base = { createdFrom: 'a', createdTo: 'b', sourceSystem: 'card-service' };
-  assert.deepEqual(quickFilters.map(item => item.label), ['全部', '检查中', '检查未通过', '有替换进行中', '公开文件']);
+  assert.deepEqual(quickFilters.map(item => enumLabel(t, 'records.quick', item.key)), ['All', 'Checking', 'Check Failed', 'Replacement in Progress', 'Public Files']);
   assert.equal(activeQuickFilter(base), 'all');
   const rejected = applyQuickFilter({ ...base, accessLevel: 'PUBLIC' }, 'rejected');
   assert.deepEqual(rejected, { ...base, scanStatus: 'REJECTED' });
@@ -139,7 +143,8 @@ test('审计中文名：补齐存储管理、检查策略、文件记录与下�
   for (const action of ['OPERATIONS_FILE_STORAGE_BUCKET_UPDATE', 'OPERATIONS_FILE_SCAN_POLICIES', 'OPERATIONS_FILE_SCAN_POLICY_CREATE',
     'OPERATIONS_FILE_SCAN_POLICY_REVISION_CREATE', 'OPERATIONS_FILE_SCAN_POLICY_REVISION_UPDATE', 'OPERATIONS_FILE_SCAN_POLICY_REVISION_DISCARD',
     'OPERATIONS_FILE_SCAN_POLICY_ACTIVATE', 'OPERATIONS_FILE_SCAN_POLICY_RETIRE', 'OPERATIONS_FILE_RECORDS', 'FILE_DOWNLOAD_AUTHORIZE']) {
-    assert.ok(auditActions[action], action);
+    assert.ok((auditActionCodes as readonly string[]).includes(action) && testT('access').has('enum.auditAction.' + action), action);
   }
-  assert.equal(auditResourceTypes.FILE_SCAN_POLICY, '检查策略'); assert.equal(auditResourceTypes.FILE, '文件');
+  assert.ok((auditResourceTypeCodes as readonly string[]).includes('FILE_SCAN_POLICY') && auditResourceTypeCodes.includes('FILE'));
+  assert.equal(testT('access')('enum.auditResourceType.FILE_SCAN_POLICY'), 'Scan Policy'); assert.equal(testT('access')('enum.auditResourceType.FILE'), 'File');
 });

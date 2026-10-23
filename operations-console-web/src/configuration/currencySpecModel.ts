@@ -1,5 +1,9 @@
 import { ApiError } from '../api/session.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
 import type { ConfigurationMutation } from './types.ts';
+
+/** Non-component code takes text through `translator` at call time (never at module load). */
+const t = translator('currency');
 
 /** Operations BFF 币种维护路径；Platform 为币种唯一 Owner。 */
 export const currencySpecPath = '/currency-admin/v1/currency-specs';
@@ -15,9 +19,8 @@ export interface CurrencySpec {
   currency: string; minorUnit: number; roundingMode: RoundingMode; status: CurrencySpecStatus; version: number; updateTime: string;
 }
 
-export const currencyStatusLabels: Readonly<Record<CurrencySpecStatus, string>> = { DRAFT: '草稿', ACTIVE: '启用', INACTIVE: '停用' };
+/** 状态与舍入方式的显示名是 `currency.enum.status.<值>`、`currency.enum.roundingMode.<值>`，用 enumLabel 取。 */
 export const currencyStatusColors: Readonly<Record<CurrencySpecStatus, string>> = { DRAFT: 'gold', ACTIVE: 'green', INACTIVE: 'default' };
-export const roundingModeLabels: Readonly<Record<RoundingMode, string>> = { HALF_UP: '四舍五入（HALF_UP）' };
 export const currencyCodePattern = /^[A-Z]{3}$/;
 export const maxMinorUnit = 8;
 
@@ -75,11 +78,11 @@ export const editableCurrencySpec = (spec: CurrencySpec) => spec.status === 'DRA
 
 export interface CurrencyStatusChange { target: CurrencySpecStatus; verb: string; notice: string }
 
-/** 状态动作：草稿与停用可启用，启用可停用。 */
+/** 状态动作：草稿与停用可启用，启用可停用。文案在调用时按当前语言取得。 */
 export function currencyStatusChange(spec: CurrencySpec): CurrencyStatusChange {
   if (spec.status === 'ACTIVE') {
-    return { target: 'INACTIVE', verb: '停用', notice: '已有账簿与计费事实照常处理，只拦截新建账簿等新用途。' };
+    return { target: 'INACTIVE', verb: t('statusChange.disable'), notice: t('statusChange.disableNotice') };
   }
-  return { target: 'ACTIVE', verb: '启用', notice: `请再次核对：小数位 ${spec.minorUnit}，舍入方式 ${roundingModeLabels[spec.roundingMode]}。`
-    + '启用后小数位与舍入方式不可修改，币种代码也无法换一个重建。' };
+  return { target: 'ACTIVE', verb: t('statusChange.enable'), notice: t('statusChange.enableNotice', {
+    minorUnit: spec.minorUnit, roundingMode: enumLabel(t, 'enum.roundingMode', spec.roundingMode) }) };
 }

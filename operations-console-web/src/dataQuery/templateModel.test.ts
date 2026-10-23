@@ -7,6 +7,9 @@ import {
   problemDiagnostics, problemTarget, templateLimits, trialFields, trialPaging, trialParams, updateTemplateBody,
 } from './templateModel.ts';
 import type { ParameterDeclaration, QueryConstraints, TemplateProblem } from './templateModel.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('data-query');
 
 const declarations: ParameterDeclaration[] = [
   { name: 'clientId', type: 'INTEGER', min: '1' },
@@ -38,8 +41,8 @@ test('参数声明 ↔ 表单行往返一致，只输出当前类型适用的属
 test('参数提示与排序', () => {
   const rows = parameterRows(declarations);
   assert.equal(parameterHint(rows[0]), '≥ 1');
-  assert.equal(parameterHint(rows[1]), '最多 20 个 · PAID / REFUNDED');
-  assert.equal(parameterHint(rows[5]), '默认 NEWEST · 2 个取值');
+  assert.equal(parameterHint(rows[1]), 'Up to 20 · PAID / REFUNDED');
+  assert.equal(parameterHint(rows[5]), 'Default NEWEST · 2 choices');
   assert.deepEqual(moveRow(['a', 'b', 'c'], 0, 2), ['b', 'c', 'a']);
   assert.deepEqual(moveRow(['a', 'b'], 0, 5), ['a', 'b']);
 });
@@ -49,7 +52,7 @@ test('参数摘要：* 必填、[] 集合、⟨片段⟩', () => {
     { name: 'orderId', type: 'STRING', required: true }, { name: 'statuses', type: 'LIST', required: false },
     { name: 'midIds', type: 'LIST', required: true }, { name: 'sortBy', type: 'FRAGMENT', required: false },
   ]);
-  assert.deepEqual(tags.map(tag => tag.text), ['orderId*', 'statuses[]', 'midIds[]*', 'sortBy⟨片段⟩']);
+  assert.deepEqual(tags.map(tag => tag.text), ['orderId*', 'statuses[]', 'midIds[]*', `sortBy${t('summary.fragmentSuffix')}`]);
   assert.deepEqual(tags.map(tag => tag.kind), ['value', 'list', 'list', 'fragment']);
 });
 
@@ -92,6 +95,7 @@ test('自动补全：值参数、对象字段、片段名、标签与系统参�
   assert.deepEqual(labels('fragment'), ['sortBy']);
   assert.ok(labels('tag').includes('#join'));
   assert.ok(labels('system').includes('__operator.accountId'));
+  assert.equal(words.find(word => word.label === 'conditions.minAmount')?.detail, t('completion.loopField', { type: 'DECIMAL' }));
 });
 
 test('试运行表单：按声明生成控件，未填参数不传，数字按字符串传，JSON 集合必须是数组', () => {
@@ -100,12 +104,12 @@ test('试运行表单：按声明生成控件，未填参数不传，数字按�
   assert.deepEqual(fields[1].options, ['PAID', 'REFUNDED']);
   assert.deepEqual(fields[5].options, ['NEWEST', 'OLDEST']);
   assert.equal(fields[5].required, true);
-  assert.equal(fields[6].placeholder, '默认 USD');
+  assert.equal(fields[6].placeholder, 'Default USD');
   const result = trialParams(fields, { clientId: 1234567890123456789, statuses: [], conditions: '[{"channel":"NI"}]', from: '2026-10-01T00:00:00',
     enabled: false, sortBy: 'OLDEST', currency: '' });
   assert.deepEqual(result.params, { clientId: '1234567890123456800', conditions: [{ channel: 'NI' }], from: '2026-10-01T00:00:00', enabled: false, sortBy: 'OLDEST' });
-  assert.deepEqual(trialParams(fields, { conditions: '{"a":1}' }).errors, [{ name: 'conditions', message: '请输入 JSON 数组' }]);
-  assert.deepEqual(trialParams(fields, { conditions: '[' }).errors, [{ name: 'conditions', message: 'JSON 格式不正确' }]);
+  assert.deepEqual(trialParams(fields, { conditions: '{"a":1}' }).errors, [{ name: 'conditions', message: t('trial.jsonArrayRequired') }]);
+  assert.deepEqual(trialParams(fields, { conditions: '[' }).errors, [{ name: 'conditions', message: t('trial.jsonInvalid') }]);
 });
 
 test('试运行分页：只发送当前分页方式适用的字段', () => {

@@ -4,6 +4,9 @@ import type {
 } from './riskApiModels.ts';
 import type { AuthoringCatalog } from './riskAuthoringCatalog.ts';
 import { CHECKOUT_PREPARE_AUTHORING_V1 } from './riskAuthoringCatalog.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('risk');
 
 export type EditorCondition =
   | { id: string; kind: 'ALL' | 'ANY' | 'NOT'; children: EditorCondition[] }
@@ -55,14 +58,14 @@ function matches(value: unknown, pattern: RegExp): value is string {
 
 export function canonicalDecimal(value: string): string {
   if (!matches(value, /^-?(?:0|[1-9][0-9]{0,15})(?:\.[0-9]{1,8})?$/) || /^-0(?:\.0+)?$/.test(value)) {
-    return fail('金额须为最多 16 位整数、8 位小数的十进制文本，不能使用负零。');
+    return fail(t('ruleBuilder.amountFormat'));
   }
   const [integer, fraction = ''] = value.split('.');
   return `${integer}.${fraction.padEnd(8, '0')}`;
 }
 
 function authoringField(fieldCode: string) {
-  return fields.get(fieldCode) ?? fail('请选择当前版本支持的字段。');
+  return fields.get(fieldCode) ?? fail(t('ruleBuilder.fieldUnsupported'));
 }
 
 export function operatorsForField(fieldCode: string): readonly OperatorCode[] {
@@ -71,26 +74,26 @@ export function operatorsForField(fieldCode: string): readonly OperatorCode[] {
 
 export function canonicalFieldValue(fieldCode: string, value: string): string {
   const field = authoringField(fieldCode);
-  if (typeof value !== 'string') return fail('条件值必须使用文本。');
+  if (typeof value !== 'string') return fail(t('ruleBuilder.valueText'));
   switch (field.widget) {
     case 'DECIMAL': return canonicalDecimal(value);
     case 'COUNTRY_CODE':
-      if (!matches(value, /^[A-Z]{2}$/)) return fail('国家/地区须为两位大写字母。');
+      if (!matches(value, /^[A-Z]{2}$/)) return fail(t('ruleBuilder.countryFormat'));
       break;
     case 'UPPER_CODE':
-      if (!matches(value, codePattern)) return fail('行业代码须为 1–64 位大写字母、数字或下划线，并以字母开头。');
+      if (!matches(value, codePattern)) return fail(t('ruleBuilder.industryFormat'));
       break;
     case 'MCC':
-      if (!matches(value, /^[0-9]{4}$/)) return fail('MCC 须为四位数字。');
+      if (!matches(value, /^[0-9]{4}$/)) return fail(t('ruleBuilder.mccFormat'));
       break;
     case 'CURRENCY':
-      if (!matches(value, /^[A-Z]{3}$/)) return fail('币种须为三位大写字母。');
+      if (!matches(value, /^[A-Z]{3}$/)) return fail(t('ruleBuilder.currencyFormat'));
       break;
     case 'ENTITY_SOURCE':
-      if (!['PLATFORM', 'CLIENT', 'PARTNER'].includes(value)) return fail('请选择有效的经营主体来源。');
+      if (!['PLATFORM', 'CLIENT', 'PARTNER'].includes(value)) return fail(t('ruleBuilder.entitySource'));
       break;
     case 'LOCALE': {
-      const message = '语言区域须为一个有效的 BCP 47 标签。';
+      const message = t('ruleBuilder.localeFormat');
       if (value.length === 0 || value.length > 512 || value.trim() !== value) return fail(message);
       try {
         const locales = Intl.getCanonicalLocales(value);
@@ -160,20 +163,20 @@ function canonicalText(value: string, maximum: number, message: string): string 
 }
 
 function code(value: string): string {
-  return matches(value, codePattern) ? value : fail('编码须为 1–64 位大写字母、数字或下划线，并以字母开头。');
+  return matches(value, codePattern) ? value : fail(t('ruleBuilder.codeFormat'));
 }
 
 function predicateOperands(condition: EditorPredicate): { operator: OperatorCode; operands: RuleOperand[] } {
   if(condition.operands)return {operator:condition.operator as OperatorCode,operands:prepareOperands(condition.operator,condition.operands)};
-  if (condition.fieldSide !== 'LEFT' && condition.fieldSide !== 'RIGHT') return fail('请选择条件字段所在的比较方向。');
+  if (condition.fieldSide !== 'LEFT' && condition.fieldSide !== 'RIGHT') return fail(t('ruleBuilder.fieldSide'));
   const allowed = operatorsForField(condition.fieldCode);
-  if (!(allowed as readonly string[]).includes(condition.operator)) return fail('该字段不支持所选运算符。');
+  if (!(allowed as readonly string[]).includes(condition.operator)) return fail(t('ruleBuilder.operatorUnsupported'));
   const operator = condition.operator as OperatorCode;
   const nullary = operator === 'IS_NULL' || operator === 'IS_NOT_NULL';
   const set = operator === 'IN' || operator === 'NOT_IN';
   const values = condition.values;
   if (!Array.isArray(values) || (nullary ? values.length !== 0 : set ? values.length < 1 || values.length > 100
-    : values.length !== (operator === 'BETWEEN' ? 2 : 1))) return fail('条件值数量不符合所选运算符要求。');
+    : values.length !== (operator === 'BETWEEN' ? 2 : 1))) return fail(t('ruleBuilder.valueCount'));
   const valueType = authoringField(condition.fieldCode).widget === 'DECIMAL' ? 'NUMBER' : 'STRING';
   return { operator, operands: [
     { operandRole: condition.fieldSide, valueSequence: 1, sourceType: 'CONTEXT', fieldCode: condition.fieldCode, valueType, literalValue: null },
@@ -192,22 +195,22 @@ function conditionToWire(condition: EditorCondition, budget: StructureBudget): R
   // Check depth while walking, before traversing descendants; even an accidentally deep editor stays bounded.
   while (pending.length > 0) {
     const { condition: current, parentNodeKey, sequenceNo, depth } = pending.pop()!;
-    if (depth > 12) return fail('条件嵌套最多支持 12 层。');
-    if (++budget.nodes > 2000) return fail('每个规则集最多支持 2,000 个条件和条件组。');
+    if (depth > 12) return fail(t('ruleBuilder.maxDepth'));
+    if (++budget.nodes > 2000) return fail(t('ruleBuilder.maxNodes'));
     const nodeKey = `n${nodes.length + 1}`;
     if (current.kind === 'CONDITION') {
       const { operator, operands } = predicateOperands(current);
       budget.operands += operands.length;
-      if (budget.operands > 10000) return fail('每个规则集最多支持 10,000 个字段和值。');
+      if (budget.operands > 10000) return fail(t('ruleBuilder.maxOperands'));
       nodes.push({ nodeKey, parentNodeKey, sequenceNo, nodeType: 'PREDICATE', groupOperator: null,
         comparisonOperator: operator, operands });
       continue;
     }
     if (!['ALL', 'ANY', 'NOT'].includes(current.kind) || !Array.isArray(current.children)
       || (current.kind === 'NOT' ? current.children.length !== 1 : current.children.length < 2)) {
-      return fail('满足全部/任一至少需要两个子条件，不满足需要恰好一个子条件。');
+      return fail(t('ruleBuilder.groupChildren'));
     }
-    if (budget.nodes + pending.length + current.children.length > 2000) return fail('每个规则集最多支持 2,000 个条件和条件组。');
+    if (budget.nodes + pending.length + current.children.length > 2000) return fail(t('ruleBuilder.maxNodes'));
     nodes.push({ nodeKey, parentNodeKey, sequenceNo, nodeType: 'GROUP', groupOperator: current.kind === 'ALL' ? 'AND' : current.kind === 'ANY' ? 'OR' : 'NOT',
       comparisonOperator: null, operands: [] });
     for (let index = current.children.length - 1; index >= 0; index--) {
@@ -218,29 +221,29 @@ function conditionToWire(condition: EditorCondition, budget: StructureBudget): R
 }
 
 export function editorToCreateRequest(editor: RuleSetEditorModel, base: RuleSetBase, catalog: AuthoringCatalog = CHECKOUT_PREPARE_AUTHORING_V1): CreateRuleSetVersionRequest {
-  if (editor.pointCode !== 'CHECKOUT_PREPARE' && catalog.operandFormat !== 'VARIABLE_REFERENCE') return fail('该风控点只支持统一变量格式的规则，请刷新编辑目录。');
+  if (editor.pointCode !== 'CHECKOUT_PREPARE' && catalog.operandFormat !== 'VARIABLE_REFERENCE') return fail(t('ruleBuilder.variableFormatOnly'));
   if (base !== null && (!base || !matches(base.ruleSetVersionId, /^[1-9][0-9]{0,29}$/)
-    || !matches(base.contentHash, /^[0-9a-f]{64}$/))) return fail('基础版本信息无效，请重新读取版本。');
-  if (!Array.isArray(editor.rules) || editor.rules.length < 1 || editor.rules.length > 200) return fail('规则集须包含 1–200 条规则。');
+    || !matches(base.contentHash, /^[0-9a-f]{64}$/))) return fail(t('ruleBuilder.baseVersionInvalid'));
+  if (!Array.isArray(editor.rules) || editor.rules.length < 1 || editor.rules.length > 200) return fail(t('ruleBuilder.ruleCount'));
   const ruleSetCode = code(editor.ruleSetCode);
-  const ruleSetName = canonicalText(editor.ruleSetName, 255, '规则集名称须为 1–255 个字符。');
-  const changeReason = canonicalText(editor.changeReason, 500, '变更原因须为 1–500 个字符。');
+  const ruleSetName = canonicalText(editor.ruleSetName, 255, t('ruleBuilder.ruleSetNameLength'));
+  const changeReason = canonicalText(editor.changeReason, 500, t('ruleBuilder.changeReasonLength'));
   const seenCodes = new Set<string>();
   const budget: StructureBudget = { nodes: 0, operands: 0 };
   const rules = editor.rules.map((rule, index): RuleDefinition => {
     const ruleCode = code(rule.ruleCode);
-    if (seenCodes.has(ruleCode)) return fail('同一规则集中的规则编码不能重复。');
+    if (seenCodes.has(ruleCode)) return fail(t('ruleBuilder.duplicateRuleCode'));
     seenCodes.add(ruleCode);
-    if (typeof rule.enabled !== 'boolean') return fail('请选择规则启用状态。');
+    if (typeof rule.enabled !== 'boolean') return fail(t('ruleBuilder.enabledRequired'));
     if (rule.actionCode && (!catalog.actions.some(action => action.actionCode === rule.actionCode) || rule.actionVersionNo !== 1)) {
-      return fail('请选择当前版本支持的规则动作。');
+      return fail(t('ruleBuilder.actionUnsupported'));
     }
-    if (typeof rule.reasonCode !== 'string') return fail('原因编码必须使用文本。');
+    if (typeof rule.reasonCode !== 'string') return fail(t('ruleBuilder.reasonCodeText'));
     const additionalActions = additionalToWire(rule.additionalActions ?? [], catalog);
-    const reasonMessage = rule.reasonMessage?.trim() ? canonicalText(rule.reasonMessage, 500, '拒绝文案须为 1–500 个字符。') : null;
-    if (isDenyAction(rule.actionCode) && (!rule.reasonCode || !reasonMessage)) return fail('拒绝规则须手工填写原因编码和拒绝文案。');
-    if (!isDenyAction(rule.actionCode) && reasonMessage) return fail('只有拒绝规则可以填写拒绝文案。');
-    return { ruleCode, ruleName: canonicalText(rule.ruleName, 255, '规则名称须为 1–255 个字符。'),
+    const reasonMessage = rule.reasonMessage?.trim() ? canonicalText(rule.reasonMessage, 500, t('ruleBuilder.reasonMessageLength')) : null;
+    if (isDenyAction(rule.actionCode) && (!rule.reasonCode || !reasonMessage)) return fail(t('ruleBuilder.denyReasonRequired'));
+    if (!isDenyAction(rule.actionCode) && reasonMessage) return fail(t('ruleBuilder.reasonMessageDenyOnly'));
+    return { ruleCode, ruleName: canonicalText(rule.ruleName, 255, t('ruleBuilder.ruleNameLength')),
       priorityNo: (index + 1) * 10, enabledFlag: rule.enabled, reasonCode: rule.reasonCode.trim() === '' ? null : code(rule.reasonCode),
       conditionNodes: conditionToWire(rule.condition, budget), action: rule.actionCode ? { actionCode: rule.actionCode, actionVersionNo: rule.actionVersionNo } : null,
       reasonMessage, additionalActions,
@@ -251,21 +254,21 @@ export function editorToCreateRequest(editor: RuleSetEditorModel, base: RuleSetB
 }
 
 function additionalToWire(actions: readonly EditorAdditionalAction[], catalog: AuthoringCatalog): AdditionalAction[] {
-  if (actions.length > 16) return fail('每条规则最多支持 16 个附加动作。');
+  if (actions.length > 16) return fail(t('ruleBuilder.maxAdditionalActions'));
   return actions.map((action, index) => {
     const descriptor = catalog.additionalActions.find(item => item.actionCode === action.actionCode && item.versionNo === action.actionVersionNo);
-    if (!descriptor || !catalog.targetBindings.some(target => target.bindingCode === action.targetBindingCode)) return fail('请选择当前决策点支持的动作和主体。');
-    if(catalog.operandFormat&&!action.subjectVariableCode)return fail('请选择动作主体变量。');
+    if (!descriptor || !catalog.targetBindings.some(target => target.bindingCode === action.targetBindingCode)) return fail(t('ruleBuilder.actionTargetUnsupported'));
+    if(catalog.operandFormat&&!action.subjectVariableCode)return fail(t('ruleBuilder.subjectVariableRequired'));
     const definitions = catalog.actionParameters.filter(item => item.actionCode === action.actionCode && item.actionVersionNo === action.actionVersionNo && !item.targetParameterFlag);
-    if (action.parameters.length !== definitions.length || new Set(action.parameters.map(parameter => parameter.parameterCode)).size !== definitions.length) return fail('附加动作参数不完整。');
+    if (action.parameters.length !== definitions.length || new Set(action.parameters.map(parameter => parameter.parameterCode)).size !== definitions.length) return fail(t('ruleBuilder.actionParametersIncomplete'));
     const parameters = definitions.flatMap(definition => {
       const parameter = action.parameters.find(item => item.parameterCode === definition.parameterCode);
-      if (!parameter || parameter.valueType !== definition.valueType || !parameter.values.length || parameter.values.length > definition.maxValues) return fail('请按动作定义填写参数。');
+      if (!parameter || parameter.valueType !== definition.valueType || !parameter.values.length || parameter.values.length > definition.maxValues) return fail(t('ruleBuilder.actionParameters'));
       const values = parameter.values.map(value => {
         if (definition.valueType === 'DURATION') {
-          if (!/^[1-9][0-9]*$/.test(value) || value.length > 30) return fail('冷却时长须为正整数字符串（毫秒）。');
+          if (!/^[1-9][0-9]*$/.test(value) || value.length > 30) return fail(t('ruleBuilder.cooldownFormat'));
           const duration = BigInt(value);
-          if ((definition.minimumValue && duration < BigInt(definition.minimumValue)) || (definition.maximumValue && duration > BigInt(definition.maximumValue))) return fail('冷却时长超出 Risk 定义的范围。');
+          if ((definition.minimumValue && duration < BigInt(definition.minimumValue)) || (definition.maximumValue && duration > BigInt(definition.maximumValue))) return fail(t('ruleBuilder.cooldownRange'));
           return value;
         }
         return code(value);

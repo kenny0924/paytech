@@ -2,81 +2,86 @@ import { ApiError } from '../api/session.ts';
 import type { AuditDetailResponseBody } from '../api/types.ts';
 import { resolveTimeRange } from '../components/timeRange.ts';
 import type { TimeRangeValue } from '../components/timeRange.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('access');
 
 export interface AuditFilterValues {
   timeRange?: TimeRangeValue; actorId?: string;
   actionCode?: string; result?: string; requestId?: string; resourceType?: string; resourceId?: string;
 }
-export const auditActions: Record<string, string> = {
-  CHANGE_TENANT_SECURITY_STATUS: '变更租户安全状态',
-  OPERATIONS_NOTIFICATION_TEMPLATE_CREATE: '新建通知模板', OPERATIONS_NOTIFICATION_TEMPLATE_STATUS_CHANGE: '启停通知模板',
-  OPERATIONS_NOTIFICATION_CONTENT_SAVE: '保存通知内容', OPERATIONS_NOTIFICATION_ROUTE_SAVE: '保存通知路由',
-  OPERATIONS_NOTIFICATION_ROUTE_STATUS_CHANGE: '启停通知路由', OPERATIONS_NOTIFICATION_PROVIDER_STATUS_CHANGE: '启停发送账号',
-  OPERATIONS_NOTIFICATION_PROVIDER_CREATE: '新建发送账号', OPERATIONS_NOTIFICATION_PROVIDER_UPDATE: '修改发送账号',
-  OPERATIONS_NOTIFICATION_PROVIDER_CREDENTIAL_REPLACE: '更换发送账号密钥', OPERATIONS_NOTIFICATION_PROVIDER_TEST_SEND: '发送账号测试发送',
-  OPERATIONS_WEBHOOK_CLIENTS: '查询 Webhook Client', OPERATIONS_WEBHOOK_ENDPOINTS: '查询 Webhook 端点',
-  OPERATIONS_WEBHOOK_ENDPOINT_CREATE: '新建 Webhook 端点', OPERATIONS_WEBHOOK_ENDPOINT_UPDATE: '修改 Webhook 端点',
-  OPERATIONS_WEBHOOK_ENDPOINT_STATUS_CHANGE: '启停 Webhook 端点', OPERATIONS_WEBHOOK_SECRET_ROTATE: '轮换 Webhook 密钥',
-  OPERATIONS_WEBHOOK_ENDPOINT_TEST: '发送 Webhook 测试事件', OPERATIONS_WEBHOOK_DELIVERIES: '查询 Webhook 投递',
-  OPERATIONS_WEBHOOK_DELIVERY: '查看 Webhook 投递', OPERATIONS_WEBHOOK_DELIVERY_REPLAY: 'Replay Webhook 投递',
-  OPERATIONS_API_CREDENTIAL_REVOKE: '紧急撤销凭证', OPERATIONS_API_SCOPE_CREATE: '新增 API Scope', OPERATIONS_API_SCOPE_UPDATE: '编辑 API Scope',
-  OPERATIONS_ACCOUNT_CREATE: '创建人员', OPERATIONS_ACCOUNT_DELETE: '删除人员', OPERATIONS_ACCOUNT_DISABLE: '停用人员',
-  OPERATIONS_ACCOUNT_ENABLE: '启用人员', OPERATIONS_ACCOUNT_ROLES: '分配角色',
-  OPERATIONS_ROLE_CREATE: '创建角色', OPERATIONS_ROLE_UPDATE: '更新角色', OPERATIONS_ROLE_DELETE: '删除角色',
-  OPERATIONS_PASSWORD_CHANGE: '修改密码', OPERATIONS_LOGIN: '账号登录', OPERATIONS_LOGOUT: '退出登录',
-  OPERATIONS_REFRESH: '刷新会话', OPERATIONS_AUTHORIZATION: '访问授权', OPERATIONS_BOOTSTRAP_COMPLETE: '创建首位管理员',
-  OPERATIONS_ACCOUNT_LIST: '查询人员', OPERATIONS_AUDIT_LIST: '查询审计日志', OPERATIONS_AUDIT_DETAIL: '查看审计详情',
-  OPERATIONS_NAVIGATION: '查询导航', OPERATIONS_ROLE_LIST: '查询角色', OPERATIONS_ROLE_DETAIL: '查看角色详情',
-  OPERATIONS_ROLE_EMPLOYEE_COUNTS: '查询角色关联人数', OPERATIONS_ROLE_PERMISSIONS: '查询角色权限', OPERATIONS_ROLE_RESOURCES: '查询角色资源',
-  OPERATIONS_FILE_STORAGE_INSTANCES: '查询存储实例', OPERATIONS_FILE_STORAGE_INSTANCE_CREATE: '新建存储实例',
-  OPERATIONS_FILE_STORAGE_INSTANCE_UPDATE: '修改存储实例', OPERATIONS_FILE_STORAGE_CREDENTIAL_REPLACE: '更换存储密钥',
-  OPERATIONS_FILE_STORAGE_INSTANCE_STATUS: '启停存储实例', OPERATIONS_FILE_STORAGE_BUCKET_REGISTER: '登记存储桶',
-  OPERATIONS_FILE_STORAGE_BUCKET_UPDATE: '修改桶对外地址', OPERATIONS_FILE_STORAGE_BUCKET_CHECK: '检查存储桶',
-  OPERATIONS_FILE_STORAGE_BUCKET_STATUS: '变更存储桶状态', OPERATIONS_FILE_STORAGE_ROUTES: '查询写入规则',
-  OPERATIONS_FILE_STORAGE_ROUTE_CREATE: '新建写入规则', OPERATIONS_FILE_STORAGE_ROUTE_UPDATE: '修改写入规则',
-  OPERATIONS_FILE_STORAGE_ROUTE_DELETE: '删除写入规则', OPERATIONS_FILE_SCAN_POLICIES: '查询检查策略',
-  OPERATIONS_FILE_SCAN_POLICY_CREATE: '新建检查策略', OPERATIONS_FILE_SCAN_POLICY_REVISION_CREATE: '新建检查策略修订',
-  OPERATIONS_FILE_SCAN_POLICY_REVISION_UPDATE: '修改检查策略草稿', OPERATIONS_FILE_SCAN_POLICY_REVISION_DISCARD: '废弃检查策略草稿',
-  OPERATIONS_FILE_SCAN_POLICY_ACTIVATE: '激活检查策略修订', OPERATIONS_FILE_SCAN_POLICY_RETIRE: '停用检查策略',
-  OPERATIONS_FILE_RECORDS: '查询文件记录', FILE_DOWNLOAD_AUTHORIZE: '授权文件下载',
-};
-export const auditResults: Record<string, string> = { SUCCEEDED: '成功', DENIED: '拒绝', FAILED: '失败' };
-export const auditResourceTypes: Record<string, string> = { ACCESS_TENANT: '访问租户', API_CREDENTIAL: 'API 凭证', API_SCOPE: 'API Scope', GATEWAY_ROUTE: 'API 路由', USER_ACCOUNT: '人员账号', AUTH_SESSION: '登录会话', NOTIFICATION_TEMPLATE: '通知模板', NOTIFICATION_CONTENT: '通知内容', NOTIFICATION_ROUTE: '通知路由', NOTIFICATION_PROVIDER: '发送账号', WEBHOOK_CLIENT: 'Webhook Client', WEBHOOK_ENDPOINT: 'Webhook 端点', WEBHOOK_DELIVERY: 'Webhook 投递', ROUTE: '接口权限', ROLE: '角色', AUDIT_EVENT: '审计记录', FILE_STORAGE_INSTANCE: '存储实例', FILE_STORAGE_BUCKET: '存储桶', FILE_STORAGE_ROUTE: '写入规则', FILE_STORAGE_CATALOG: '存储目录', FILE_SCAN_POLICY: '检查策略', FILE: '文件' };
+/** Known action codes in display order; labels are `access.enum.auditAction.<code>`, unknown codes show as is. */
+export const auditActionCodes = [
+  'CHANGE_TENANT_SECURITY_STATUS', 'OPERATIONS_NOTIFICATION_TEMPLATE_CREATE', 'OPERATIONS_NOTIFICATION_TEMPLATE_STATUS_CHANGE',
+  'OPERATIONS_NOTIFICATION_CONTENT_SAVE', 'OPERATIONS_NOTIFICATION_ROUTE_SAVE', 'OPERATIONS_NOTIFICATION_ROUTE_STATUS_CHANGE',
+  'OPERATIONS_NOTIFICATION_PROVIDER_STATUS_CHANGE', 'OPERATIONS_NOTIFICATION_PROVIDER_CREATE',
+  'OPERATIONS_NOTIFICATION_PROVIDER_UPDATE', 'OPERATIONS_NOTIFICATION_PROVIDER_CREDENTIAL_REPLACE',
+  'OPERATIONS_NOTIFICATION_PROVIDER_TEST_SEND', 'OPERATIONS_WEBHOOK_CLIENTS', 'OPERATIONS_WEBHOOK_ENDPOINTS',
+  'OPERATIONS_WEBHOOK_ENDPOINT_CREATE', 'OPERATIONS_WEBHOOK_ENDPOINT_UPDATE', 'OPERATIONS_WEBHOOK_ENDPOINT_STATUS_CHANGE',
+  'OPERATIONS_WEBHOOK_SECRET_ROTATE', 'OPERATIONS_WEBHOOK_ENDPOINT_TEST', 'OPERATIONS_WEBHOOK_DELIVERIES',
+  'OPERATIONS_WEBHOOK_DELIVERY', 'OPERATIONS_WEBHOOK_DELIVERY_REPLAY', 'OPERATIONS_API_CREDENTIAL_REVOKE',
+  'OPERATIONS_API_SCOPE_CREATE', 'OPERATIONS_API_SCOPE_UPDATE', 'OPERATIONS_ACCOUNT_CREATE', 'OPERATIONS_ACCOUNT_DELETE',
+  'OPERATIONS_ACCOUNT_DISABLE', 'OPERATIONS_ACCOUNT_ENABLE', 'OPERATIONS_ACCOUNT_ROLES', 'OPERATIONS_ROLE_CREATE',
+  'OPERATIONS_ROLE_UPDATE', 'OPERATIONS_ROLE_DELETE', 'OPERATIONS_PASSWORD_CHANGE', 'OPERATIONS_LOGIN', 'OPERATIONS_LOGOUT',
+  'OPERATIONS_REFRESH', 'OPERATIONS_AUTHORIZATION', 'OPERATIONS_BOOTSTRAP_COMPLETE', 'OPERATIONS_ACCOUNT_LIST',
+  'OPERATIONS_AUDIT_LIST', 'OPERATIONS_AUDIT_DETAIL', 'OPERATIONS_NAVIGATION', 'OPERATIONS_ROLE_LIST', 'OPERATIONS_ROLE_DETAIL',
+  'OPERATIONS_ROLE_EMPLOYEE_COUNTS', 'OPERATIONS_ROLE_PERMISSIONS', 'OPERATIONS_ROLE_RESOURCES',
+  'OPERATIONS_FILE_STORAGE_INSTANCES', 'OPERATIONS_FILE_STORAGE_INSTANCE_CREATE', 'OPERATIONS_FILE_STORAGE_INSTANCE_UPDATE',
+  'OPERATIONS_FILE_STORAGE_CREDENTIAL_REPLACE', 'OPERATIONS_FILE_STORAGE_INSTANCE_STATUS',
+  'OPERATIONS_FILE_STORAGE_BUCKET_REGISTER', 'OPERATIONS_FILE_STORAGE_BUCKET_UPDATE', 'OPERATIONS_FILE_STORAGE_BUCKET_CHECK',
+  'OPERATIONS_FILE_STORAGE_BUCKET_STATUS', 'OPERATIONS_FILE_STORAGE_ROUTES', 'OPERATIONS_FILE_STORAGE_ROUTE_CREATE',
+  'OPERATIONS_FILE_STORAGE_ROUTE_UPDATE', 'OPERATIONS_FILE_STORAGE_ROUTE_DELETE', 'OPERATIONS_FILE_SCAN_POLICIES',
+  'OPERATIONS_FILE_SCAN_POLICY_CREATE', 'OPERATIONS_FILE_SCAN_POLICY_REVISION_CREATE',
+  'OPERATIONS_FILE_SCAN_POLICY_REVISION_UPDATE', 'OPERATIONS_FILE_SCAN_POLICY_REVISION_DISCARD',
+  'OPERATIONS_FILE_SCAN_POLICY_ACTIVATE', 'OPERATIONS_FILE_SCAN_POLICY_RETIRE', 'OPERATIONS_FILE_RECORDS',
+  'FILE_DOWNLOAD_AUTHORIZE',
+] as const;
+/** Labels: `access.enum.auditResult.<code>`. */
+export const auditResultCodes = [
+  'SUCCEEDED', 'DENIED', 'FAILED',
+] as const;
+/** Labels: `access.enum.auditResourceType.<code>`. */
+export const auditResourceTypeCodes = [
+  'ACCESS_TENANT', 'API_CREDENTIAL', 'API_SCOPE', 'GATEWAY_ROUTE', 'USER_ACCOUNT', 'AUTH_SESSION', 'NOTIFICATION_TEMPLATE',
+  'NOTIFICATION_CONTENT', 'NOTIFICATION_ROUTE', 'NOTIFICATION_PROVIDER', 'WEBHOOK_CLIENT', 'WEBHOOK_ENDPOINT',
+  'WEBHOOK_DELIVERY', 'ROUTE', 'ROLE', 'AUDIT_EVENT', 'FILE_STORAGE_INSTANCE', 'FILE_STORAGE_BUCKET', 'FILE_STORAGE_ROUTE',
+  'FILE_STORAGE_CATALOG', 'FILE_SCAN_POLICY', 'FILE',
+] as const;
 
 /** 时间范围在提交时按浏览器本地时区解析，传输时转换 UTC。 */
 export function auditFilters(values: AuditFilterValues, now = new Date()): Record<string, string> {
   const filters: Record<string, string> = {};
   const range = resolveTimeRange(values.timeRange, now);
   if (values.timeRange?.preset === 'CUSTOM' && (!range.start || !range.end)) {
-    throw new Error('请选择完整的开始和结束时间');
+    throw new Error(t('audit.error.incompleteRange'));
   }
   for (const [key, value] of [['occurredFrom', range.start], ['occurredTo', range.end]] as const) {
     if (!value) continue;
     const instant = new Date(value);
-    if (!Number.isFinite(instant.getTime())) throw new Error('请输入有效时间');
+    if (!Number.isFinite(instant.getTime())) throw new Error(t('audit.error.invalidTime'));
     filters[key] = instant.toISOString();
   }
   if (filters.occurredFrom && filters.occurredTo && filters.occurredFrom >= filters.occurredTo) {
-    throw new Error('结束时间必须晚于开始时间');
+    throw new Error(t('audit.error.endBeforeStart'));
   }
   for (const key of ['actorId', 'actionCode', 'result', 'requestId', 'resourceType', 'resourceId'] as const) {
     const value = values[key]?.trim();
     if (value) filters[key] = value;
   }
-  if (filters.resourceId && !filters.resourceType) throw new Error('请同时指定对象类型');
+  if (filters.resourceId && !filters.resourceType) throw new Error(t('audit.error.resourceTypeRequired'));
   return filters;
 }
 
 export function auditValue(value: string | null): string {
-  return value === null ? '已隐藏' : value === '' ? '（空字符串）' : value;
+  return value === null ? t('audit.value.hidden') : value === '' ? t('audit.value.emptyString') : value;
 }
 
 /** 不推导或补全历史属性，仅检查详情身份和可安全展示的集合形状。 */
 export function validateAuditDetail(detail: AuditDetailResponseBody, eventId: string): void {
   const values = (items: unknown) => Array.isArray(items) && items.every(value => value === null || typeof value === 'string');
   if (!detail || detail.event?.auditEventId !== eventId || !Array.isArray(detail.changes) || !Array.isArray(detail.attributes)
-    || detail.changes.some(change => !change || typeof change.key !== 'string' || typeof change.label !== 'string'
+    || detail.changes.some(change => !change || typeof change.key !== 'string'
       || !values(change.before) || !values(change.after))
-    || detail.attributes.some(attribute => !attribute || typeof attribute.key !== 'string' || typeof attribute.label !== 'string'
+    || detail.attributes.some(attribute => !attribute || typeof attribute.key !== 'string'
       || !values(attribute.values))) throw new ApiError(502, 'INVALID_RESPONSE');
 }

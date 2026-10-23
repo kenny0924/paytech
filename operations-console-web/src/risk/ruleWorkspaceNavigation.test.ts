@@ -1,3 +1,4 @@
+import { testT } from '../i18n/testing.ts';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -27,7 +28,7 @@ for (const component of ['RuleSetEditor', 'ReadRuleSetWorkspace']) {
   test(`${component} compact navigation retains visible names and summaries, supports selection and has no page back controls`, () => {
     const state: unknown[] = []; let index = 0;
     const dependencies = { Fragment: 'Fragment', ...builder, ...presentation, ...commands, CHECKOUT_PREPARE_AUTHORING_V1,
-      catalog: CHECKOUT_PREPARE_AUTHORING_V1, ruleSetStatusLabels: { DRAFT: '草稿' }, formatRiskTime: (value: string) => value,
+      catalog: CHECKOUT_PREPARE_AUTHORING_V1, ruleSetStatusLabel: (value: string) => value, formatRiskTime: (value: string) => value, useT: testT,
       App: { useApp: () => ({ modal: { confirm() {} } }) },
       useState(initial: unknown) { const slot = index++; if (!(slot in state)) state[slot] = initial; return [state[slot], (value: unknown) => { state[slot] = value; }]; },
       useRef: (value: unknown) => ({ current: value }), useMemo: (fn: () => unknown) => fn(), useEffect() {},
@@ -41,17 +42,17 @@ for (const component of ['RuleSetEditor', 'ReadRuleSetWorkspace']) {
     const render = () => { index = 0; return renderComponent({ editor, base: ruleSetDetail, catalog: CHECKOUT_PREPARE_AUTHORING_V1, disabled: false,
       saving: false, commandPending: false, fieldErrors: [], onChange() {}, onSave() {}, onCancel() {} }); };
     let tree = render();
-    const collapse = nodes(tree).find(node => node.props['aria-label'] === '收起规则列表'); assert.ok(collapse);
+    const collapse = nodes(tree).find(node => node.props['aria-label'] === 'Collapse rule list'); assert.ok(collapse);
     (collapse.props.onClick as () => void)(); tree = render();
     const summaries = nodes(tree).filter(node => node.props.className === 'risk-rule-summary');
     assert.equal(summaries.length, 2);
     for (const [position, summary] of summaries.entries()) {
       assert.ok(text(summary).includes(editor.rules[position]!.ruleName));
-      assert.ok(text(summary).includes('个条件'));
+      assert.ok(text(summary).includes('condition'));
     }
     const entries = nodes(tree).filter(node => node.props.className === 'risk-rule-select');
     (entries[1]!.props.onClick as () => void)(); tree = render();
     assert.equal(nodes(tree).filter(node => node.props.className === 'risk-rule-select')[1]!.props['aria-current'], 'true');
-    assert.equal(nodes(tree).filter(node => node.type === 'Button' && /^(返回|返回列表|返回来源页|规则配置)$/.test(text(node))).length, 0);
+    assert.equal(nodes(tree).filter(node => node.type === 'Button' && /^(Back|Back to List|Back to Source|Rule Configuration)$/.test(text(node))).length, 0);
   });
 }

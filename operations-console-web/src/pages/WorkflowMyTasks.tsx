@@ -17,13 +17,16 @@ import {
 import type { BatchMode, TaskGroup } from '../workflow/taskModel';
 import { failureText, sendWorkflowCommand, useWorkflowCommand, workflowCommand } from '../workflow/useWorkflowCommand';
 import { decodeHandledTask, decodeInstanceDetail, decodeMutation, decodePage, decodeTask, workflowPaths } from '../workflow/workflowApi';
-import { instanceStatusLabels } from '../workflow/workflowLabels';
+import { instanceStatusLabel } from '../workflow/workflowLabels';
+import { enumLabel, translator } from '../i18n/index';
+import { useT } from '../i18n/react';
 import type { HandledTask, InstanceDetail, Task } from '../workflow/workflowTypes';
 import { LoadFailed, Spinner, canOpenInstances, useLoad } from '../workflow/WorkflowParts';
 import { DETAIL_PRIORITY, DetailQueue, DetailRequestCancelled, planBatchFill, planPrefetch, retryAfterMillis } from '../workflow/prefetchModel';
 import '../workflow/workflow.css';
 
 interface Props { resources: ConsoleResource[]; actorId: string; onAuthorizationChanged: () => void }
+const tw = translator('workflow');
 type TaskType = 'ALL' | 'ACTION' | 'APPROVAL';
 /** 实例详情 429：会话层不透出 Retry-After，按默认短退避重试一次。 */
 function detailRetryDelay(error: unknown): number | null {
@@ -56,7 +59,7 @@ function useAllTasks(keyword: string) {
       }
       return { items: [...items.values()], truncated: total > items.size };
     })().then(result => { if (!controller.signal.aborted) setState({ ...result, loading: false, error: '' }); })
-      .catch(error => { if (!controller.signal.aborted) setState(current => ({ ...current, loading: false, error: error instanceof Error ? error.message : '待办加载失败' })); });
+      .catch(error => { if (!controller.signal.aborted) setState(current => ({ ...current, loading: false, error: error instanceof Error ? error.message : tw('myTasks.loadFailed') })); });
     return () => controller.abort();
   }, [keyword, reload]);
   return { ...state, refresh: useCallback(() => setReload(value => value + 1), []) };
@@ -65,32 +68,33 @@ const autoNextKey = 'workflow.my-tasks.auto-next';
 function readAutoNext() { try { return window.localStorage.getItem(autoNextKey) !== '0'; } catch { return true; } }
 function saveAutoNext(value: boolean) { try { window.localStorage.setItem(autoNextKey, value ? '1' : '0'); } catch { /* 偏好可丢失 */ } }
 
-const shortcutRows: [string[], string][] = [[['J', 'K'], '下一条 / 上一条'], [['A'], '选中「同意」'], [['R'], '选中「退回修改」并填写意见'], [['T'], '转交'],
-  [['Ctrl', 'Enter'], '完成动作 / 提交选中的审批决定']];
+/** 快捷键与说明 key（workflow.myTasks.shortcut.<key>）。 */
+const shortcutRows: [string[], string][] = [[['J', 'K'], 'NAVIGATE'], [['A'], 'APPROVE'], [['R'], 'RETURN'], [['T'], 'TRANSFER'], [['Ctrl', 'Enter'], 'SUBMIT']];
 
 /** 我的待办（原型 01—04）：一组页签「待办 N / 已办」，右上 ⚙ 设置与 ? 快捷键浮层。 */
 export function WorkflowMyTasks({ resources, actorId, onAuthorizationChanged }: Props) {
+  const t = useT('workflow'), tNav = useT('nav');
   const canOpenInstance = canOpenInstances(resources);
   const [tab, setTab] = useState<'TODO' | 'HANDLED'>('TODO');
   const [todoTotal, setTodoTotal] = useState<number | null>(null);
   const [autoNext, setAutoNext] = useState(readAutoNext);
   const settings = <div className="wf-popover">
-    <label className="wf-popover-row"><span><strong>处理完自动打开下一条</strong><div className="muted">完成或审批后直接进入列表中的下一项</div></span>
+    <label className="wf-popover-row"><span><strong>{t('myTasks.autoNext')}</strong><div className="muted">{t('myTasks.autoNextHint')}</div></span>
       <Switch checked={autoNext} onChange={value => { setAutoNext(value); saveAutoNext(value); }} /></label>
-    <div className="wf-popover-row"><span><strong>超时标记阈值</strong><div className="muted">超过阈值的待办在列表中以红色时长标出</div></span><span>{OVERDUE_HOURS} 小时</span></div>
+    <div className="wf-popover-row"><span><strong>{t('myTasks.overdueThreshold')}</strong><div className="muted">{t('myTasks.overdueHint')}</div></span><span>{t('duration.hours', { count: OVERDUE_HOURS })}</span></div>
   </div>;
   const shortcuts = <div className="wf-popover">{shortcutRows.map(([keys, label]) => <div key={label} className="wf-popover-row">
-    <span>{keys.map(key => <kbd key={key}>{key}</kbd>)}</span><span className="muted">{label}</span></div>)}
-    <div className="muted">输入框内只响应 Ctrl + Enter。</div></div>;
+    <span>{keys.map(key => <kbd key={key}>{key}</kbd>)}</span><span className="muted">{enumLabel(t, 'myTasks.shortcut', label)}</span></div>)}
+    <div className="muted">{t('myTasks.shortcutInputHint')}</div></div>;
   return <div className="wf-page">
-    <div className="wf-page-head"><h1>我的待办</h1>
+    <div className="wf-page-head"><h1>{tNav('resource.OPERATIONS_WORKFLOW_MY_TASKS')}</h1>
       <nav className="wf-tabs">
-        <button type="button" className={`wf-tab${tab === 'TODO' ? ' is-active' : ''}`} onClick={() => setTab('TODO')}>待办{todoTotal !== null && <span className="wf-tab-count">{todoTotal}</span>}</button>
-        <button type="button" className={`wf-tab${tab === 'HANDLED' ? ' is-active' : ''}`} onClick={() => setTab('HANDLED')}>已办</button>
+        <button type="button" className={`wf-tab${tab === 'TODO' ? ' is-active' : ''}`} onClick={() => setTab('TODO')}>{t('myTasks.tab.todo')}{todoTotal !== null && <span className="wf-tab-count">{todoTotal}</span>}</button>
+        <button type="button" className={`wf-tab${tab === 'HANDLED' ? ' is-active' : ''}`} onClick={() => setTab('HANDLED')}>{t('myTasks.tab.handled')}</button>
       </nav>
       <span className="wf-grow" />
-      <Popover trigger="click" placement="bottomRight" title="待办设置" content={settings}><Button className="wf-icon-btn" aria-label="待办设置" icon={<SettingOutlined />} /></Popover>
-      <Popover trigger="click" placement="bottomRight" title="键盘快捷键" content={shortcuts}><Button className="wf-icon-btn" aria-label="键盘快捷键" icon={<QuestionCircleOutlined />} /></Popover>
+      <Popover trigger="click" placement="bottomRight" title={t('myTasks.settings')} content={settings}><Button className="wf-icon-btn" aria-label={t('myTasks.settings')} icon={<SettingOutlined />} /></Popover>
+      <Popover trigger="click" placement="bottomRight" title={t('myTasks.shortcuts')} content={shortcuts}><Button className="wf-icon-btn" aria-label={t('myTasks.shortcuts')} icon={<QuestionCircleOutlined />} /></Popover>
     </div>
     {tab === 'TODO' ? <TodoWorkspace actorId={actorId} canOpenInstance={canOpenInstance} autoNext={autoNext} onTotal={setTodoTotal} onAuthorizationChanged={onAuthorizationChanged} />
       : <HandledWorkspace canOpenInstance={canOpenInstance} />}
@@ -100,6 +104,7 @@ export function WorkflowMyTasks({ resources, actorId, onAuthorizationChanged }: 
 function TodoWorkspace({ actorId, canOpenInstance, autoNext, onTotal, onAuthorizationChanged }: {
   actorId: string; canOpenInstance: boolean; autoNext: boolean; onTotal: (total: number | null) => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('workflow');
   const { message } = App.useApp();
   const [params, setParams] = useSearchParams();
   const [taskType, setTaskType] = useState<TaskType>('ALL');
@@ -217,7 +222,7 @@ function TodoWorkspace({ actorId, canOpenInstance, autoNext, onTotal, onAuthoriz
       event.preventDefault();
       if (action === 'NEXT' || action === 'PREVIOUS') {
         const next = neighborGroup(visible, selectedGroup?.key ?? null, action === 'NEXT' ? 1 : -1);
-        if (next) select(next); else void message.info(action === 'NEXT' ? '已经是最后一条' : '已经是第一条');
+        if (next) select(next); else void message.info(action === 'NEXT' ? t('myTasks.last') : t('myTasks.first'));
       }
       if (action === 'SUBMIT') handles.current.submit?.();
       if (action === 'APPROVE') handles.current.approve?.();
@@ -226,14 +231,14 @@ function TodoWorkspace({ actorId, canOpenInstance, autoNext, onTotal, onAuthoriz
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [visible, selected, selectedGroup, select, batch.active, message]);
+  }, [visible, selected, selectedGroup, select, batch.active, message, t]);
 
   let panel;
   if (batch.active) panel = <BatchPanel tasks={frozenBatch?.tasks ?? batchTasks} details={details} statuses={frozenBatch?.statuses ?? statuses}
     results={batchResults} running={batchRunning} comment={batchComment} untouched={Math.max(0, groups.length - batchTasks.length)}
     onComment={setBatchComment} onRemove={taskId => setBatch(current => ({ ...current, checked: current.checked.filter(id => id !== taskId) }))}
     onRun={() => void runBatchApprove()} onCancel={leaveBatch} onFinish={leaveBatch} />;
-  else if (!selected || !selectedGroup) panel = <div className="wf-detail wf-detail-empty"><Empty description={all.loading ? '加载中' : '没有待处理的事项'} /></div>;
+  else if (!selected || !selectedGroup) panel = <div className="wf-detail wf-detail-empty"><Empty description={all.loading ? t('batch.loading') : t('myTasks.emptyTodo')} /></div>;
   else if (detailFailure) panel = <div className="wf-detail wf-detail-empty"><LoadFailed failure={detailFailure}
     retry={() => { setDetailFailure(undefined); loadDetail(selected.instanceId, true).catch(setDetailFailure); }} /></div>;
   else if (!detail) panel = <div className="wf-detail wf-detail-empty"><Spinner /></div>;
@@ -247,50 +252,52 @@ function TodoWorkspace({ actorId, canOpenInstance, autoNext, onTotal, onAuthoriz
     onKeyDown={event => { if (event.key === 'Enter' && !batchRunning) setBatch(current => ({ ...current, checked: toggleChecked(current.checked, task.taskId, eligibleIds) })); }}>
     <Checkbox checked={batch.checked.includes(task.taskId)} disabled={batchRunning} onClick={event => event.stopPropagation()}
       onChange={() => setBatch(current => ({ ...current, checked: toggleChecked(current.checked, task.taskId, eligibleIds) }))} />
-    <span className="wf-inbox-icon is-approval" title="审批"><CheckOutlined /></span>
+    <span className="wf-inbox-icon is-approval" title={t('panel.tab.approval')}><CheckOutlined /></span>
     <div className="wf-inbox-body">
       <strong className="wf-ellipsis">{task.instanceTitle}</strong>
-      <span className="muted wf-ellipsis">{[task.definitionName, task.nodeName || task.nodeKey].filter(Boolean).join(' · ')}{task.roundNo > 1 ? ` · 第 ${task.roundNo} 轮` : ''}</span>
+      <span className="muted wf-ellipsis">{[task.definitionName, task.nodeName || task.nodeKey].filter(Boolean).join(' · ')}{task.roundNo > 1 ? ` · ${t('instance.round', { round: task.roundNo })}` : ''}</span>
     </div>
     <TaskTime since={task.waitingSince} />
   </div>;
   return <div className="wf-inbox">
     <aside className="wf-inbox-list">
       {batch.active ? <>
-        <div className="wf-batch-strip"><span><UnorderedListOutlined /> 批量审批 · 已选 {batch.checked.length} / {eligibleIds.length} 可批量</span><span className="wf-grow" />
+        <div className="wf-batch-strip"><span><UnorderedListOutlined /> {t('myTasks.batchStrip', { checked: batch.checked.length, eligible: eligibleIds.length })}</span><span className="wf-grow" />
           <Button size="small" type="text" className="wf-on-primary" disabled={batchRunning || !eligibleIds.length}
             onClick={() => setBatch(current => ({ ...current, checked: toggleAll(current.checked, eligibleIds) }))}>
-            {eligibleIds.length && eligibleIds.every(id => batch.checked.includes(id)) ? '全不选' : '全选'}</Button>
-          <Button size="small" ghost disabled={batchRunning} icon={<CloseOutlined />} onClick={leaveBatch}>退出批量</Button></div>
-        <div className="wf-batch-note"><InfoCircleOutlined /> 只列出无需填写、可直接同意的审批；其余 {Math.max(0, groups.length - candidates.eligible.length)} 项暂时隐藏{candidates.checking ? `，${candidates.checking} 项正在检查` : ''}</div>
+            {eligibleIds.length && eligibleIds.every(id => batch.checked.includes(id)) ? t('myTasks.selectNone') : t('myTasks.selectAll')}</Button>
+          <Button size="small" ghost disabled={batchRunning} icon={<CloseOutlined />} onClick={leaveBatch}>{t('myTasks.exitBatch')}</Button></div>
+        <div className="wf-batch-note"><InfoCircleOutlined /> {candidates.checking ? t('myTasks.batchNoteChecking', { hidden: Math.max(0, groups.length - candidates.eligible.length), checking: candidates.checking })
+          : t('myTasks.batchNote', { hidden: Math.max(0, groups.length - candidates.eligible.length) })}</div>
       </> : <div className="wf-inbox-tools">
         <Segmented size="small" value={taskType} onChange={value => setTaskType(value as TaskType)}
-          options={[{ value: 'ALL', label: `全部${count(counts.ALL)}` }, { value: 'ACTION', label: `填写${count(counts.ACTION)}` }, { value: 'APPROVAL', label: `审批${count(counts.APPROVAL)}` }]} />
+          options={[{ value: 'ALL', label: `${t('catalog.all')}${count(counts.ALL)}` }, { value: 'ACTION', label: `${t('myTasks.type.ACTION')}${count(counts.ACTION)}` },
+            { value: 'APPROVAL', label: `${t('panel.tab.approval')}${count(counts.APPROVAL)}` }]} />
         <span className="wf-grow" />
-        <Button type="text" size="small" aria-label="搜索" icon={<SearchOutlined />} onClick={() => setSearching(!searching)} />
-        <Button type="link" size="small" icon={<UnorderedListOutlined />} onClick={startBatch}>批量审批</Button>
+        <Button type="text" size="small" aria-label={t('started.searchLabel')} icon={<SearchOutlined />} onClick={() => setSearching(!searching)} />
+        <Button type="link" size="small" icon={<UnorderedListOutlined />} onClick={startBatch}>{t('myTasks.batch')}</Button>
       </div>}
-      {searching && !batch.active && <div className="wf-inbox-search"><Input.Search allowClear autoFocus placeholder="搜索实例标题" value={keyword}
+      {searching && !batch.active && <div className="wf-inbox-search"><Input.Search allowClear autoFocus placeholder={t('started.search')} value={keyword}
         onChange={event => setKeyword(event.target.value)} onSearch={value => setAppliedKeyword(value.trim())} /></div>}
-      {all.error && <Alert type="warning" showIcon title="待办加载失败" action={<Button size="small" onClick={all.refresh}>重试</Button>} />}
+      {all.error && <Alert type="warning" showIcon title={t('myTasks.loadFailed')} action={<Button size="small" onClick={all.refresh}>{t('action.retry')}</Button>} />}
       <div className="wf-inbox-items">
         {batch.active ? candidates.eligible.map(itemOf) : visible.map(group => {
           const isSelected = group.key === selectedGroup?.key;
           const many = group.tasks.length > 1;
           return <div key={group.key} role="button" tabIndex={0} className={`wf-inbox-item${isSelected ? ' is-selected' : ''}`}
             onClick={() => select(group)} onKeyDown={event => { if (event.key === 'Enter') select(group); }}>
-            <span className={`wf-inbox-icon is-${group.taskType.toLowerCase()}`} title={group.taskType === 'ACTION' ? '填写' : '审批'}>
+            <span className={`wf-inbox-icon is-${group.taskType.toLowerCase()}`} title={group.taskType === 'ACTION' ? t('myTasks.type.ACTION') : t('panel.tab.approval')}>
               {group.taskType === 'ACTION' ? <EditOutlined /> : <CheckOutlined />}</span>
             <div className="wf-inbox-body">
               <strong className="wf-ellipsis">{group.instanceTitle}</strong>
               <span className="muted wf-ellipsis">{[group.definitionName, group.nodeName || group.nodeKey].filter(Boolean).join(' · ')}
-                {group.roundNo > 1 ? ` · 第 ${group.roundNo} 轮` : ''}{many ? ` · ${group.tasks.length} 个动作` : ''}</span>
+                {group.roundNo > 1 ? ` · ${t('instance.round', { round: group.roundNo })}` : ''}{many ? ` · ${t('launch.preview.actions', { count: group.tasks.length })}` : ''}</span>
             </div>
             <TaskTime since={group.waitingSince} />
           </div>;
         })}
-        {!all.loading && !(batch.active ? candidates.eligible : visible).length && <Empty description={batch.active ? (candidates.checking ? '正在检查哪些审批可以批量同意' : '没有可批量同意的审批') : '没有符合条件的待办'} />}
-        {all.truncated && <div className="muted wf-inbox-note">待办较多，只显示最早的 {TASK_PAGE_SIZE * TASK_MAX_PAGES} 条（按动作 / 审批计），计数也只统计这些</div>}
+        {!all.loading && !(batch.active ? candidates.eligible : visible).length && <Empty description={batch.active ? (candidates.checking ? t('myTasks.batchChecking') : t('myTasks.batchEmpty')) : t('myTasks.noMatch')} />}
+        {all.truncated && <div className="muted wf-inbox-note">{t('myTasks.truncated', { count: TASK_PAGE_SIZE * TASK_MAX_PAGES })}</div>}
       </div>
     </aside>
     {panel}
@@ -307,6 +314,7 @@ const decodeHandled = decodePage(decodeHandledTask);
 
 /** 已办（原型 04）：列表同待办风格，带我的处理结果；点击在右侧只读打开。 */
 function HandledWorkspace({ canOpenInstance }: { canOpenInstance: boolean }) {
+  const t = useT('workflow');
   const [taskType, setTaskType] = useState<TaskType>('ALL');
   const [keyword, setKeyword] = useState(''); const [searching, setSearching] = useState(false);
   const paging = usePaging<HandledTask>(workflowPaths.handledTasks, decodeHandled);
@@ -323,10 +331,10 @@ function HandledWorkspace({ canOpenInstance }: { canOpenInstance: boolean }) {
     <aside className="wf-inbox-list">
       <div className="wf-inbox-tools">
         <Segmented size="small" value={taskType} onChange={value => { setTaskType(value as TaskType); query(value as TaskType, keyword); }}
-          options={[{ value: 'ALL', label: '全部' }, { value: 'ACTION', label: '填写' }, { value: 'APPROVAL', label: '审批' }]} />
-        <span className="wf-grow" /><Button type="text" size="small" aria-label="搜索" icon={<SearchOutlined />} onClick={() => setSearching(!searching)} />
+          options={[{ value: 'ALL', label: t('catalog.all') }, { value: 'ACTION', label: t('myTasks.type.ACTION') }, { value: 'APPROVAL', label: t('panel.tab.approval') }]} />
+        <span className="wf-grow" /><Button type="text" size="small" aria-label={t('started.searchLabel')} icon={<SearchOutlined />} onClick={() => setSearching(!searching)} />
       </div>
-      {searching && <div className="wf-inbox-search"><Input.Search allowClear autoFocus placeholder="搜索实例标题" value={keyword}
+      {searching && <div className="wf-inbox-search"><Input.Search allowClear autoFocus placeholder={t('started.search')} value={keyword}
         onChange={event => setKeyword(event.target.value)} onSearch={value => query(taskType, value)} /></div>}
       <div className="wf-inbox-items">
         {items.map(row => {
@@ -337,14 +345,14 @@ function HandledWorkspace({ canOpenInstance }: { canOpenInstance: boolean }) {
             <div className="wf-inbox-body"><strong className="wf-ellipsis">{row.instanceTitle}</strong>
               <span className="muted wf-ellipsis">{row.nodeName ?? row.nodeKey} · {relativeTime(row.handledTime)}</span></div>
             <div className="wf-inbox-result"><Tag color={result.color}>{result.label}</Tag>
-              <span className="muted">实例{instanceStatusLabels[row.instanceStatus] ?? row.instanceStatus}</span></div>
+              <span className="muted">{t('myTasks.instanceStatus', { status: instanceStatusLabel(row.instanceStatus) })}</span></div>
           </div>;
         })}
-        {!paging.loading && !items.length && <Empty description="还没有处理过的事项" />}
+        {!paging.loading && !items.length && <Empty description={t('myTasks.emptyHandled')} />}
       </div>
       {paging.data.total > paging.data.size && <div className="wf-inbox-pager"><Pagination size="small" simple {...paging.pagination} /></div>}
     </aside>
-    {!selected ? <div className="wf-detail wf-detail-empty"><Empty description={paging.loading ? '加载中' : '选择左侧一项查看'} /></div>
+    {!selected ? <div className="wf-detail wf-detail-empty"><Empty description={paging.loading ? t('batch.loading') : t('myTasks.selectHint')} /></div>
       : detail.failure ? <div className="wf-detail wf-detail-empty"><LoadFailed failure={detail.failure} retry={detail.refresh} /></div>
       : !loaded ? <div className="wf-detail wf-detail-empty"><Spinner /></div>
       : <HandledDetail key={keyOf(selected)} detail={loaded} handled={selected} canOpenInstance={canOpenInstance} />}

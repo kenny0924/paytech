@@ -3,6 +3,7 @@ import type { FormInstance } from 'antd';
 import { ApiError } from '../api/session';
 import type { ConfigurationCommand } from '../configuration/configurationModel';
 import { useErrorNotification } from '../feedback/useErrorNotification';
+import { useT } from '../i18n/react';
 import { channelCommand, channelErrorMessage, fieldPath, sendChannelCommand } from './channel';
 import type { CommandMethod } from './channel';
 
@@ -11,6 +12,7 @@ import type { CommandMethod } from './channel';
  * 其余交给通用通知。同一目标与正文的重试复用 Idempotency-Key；body 为 undefined 时不发送请求体（提交审批）。
  */
 export function useChannelCommand(onAuthorizationChanged: () => void, form?: FormInstance) {
+  const t = useT('channel');
   const notify = useErrorNotification();
   const [saving, setSaving] = useState(false); const [conflict, setConflict] = useState(false);
   const [conflictDetail, setConflictDetail] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export function useChannelCommand(onAuthorizationChanged: () => void, form?: For
         return null;
       }
       if (error instanceof ApiError && error.fieldErrors.length) {
-        setFormError(error.fieldErrors.map(item => `${item.field}：${item.message}`).join('；'));
+        setFormError(error.fieldErrors.map(item => t('error.fieldItem', { field: item.field, message: item.message })).join(t('error.fieldSeparator')));
         return null;
       }
       const message = channelErrorMessage(error);

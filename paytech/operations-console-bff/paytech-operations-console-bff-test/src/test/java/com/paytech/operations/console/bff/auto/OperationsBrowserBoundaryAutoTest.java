@@ -53,6 +53,7 @@ import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.web.logging.HttpRequestResponseLoggingFilter;
 import com.paytech.foundation.web.request.RequestIdFilter;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
+import com.paytech.operations.console.bff.service.RolePermissionTree;
 import com.paytech.operations.console.bff.test.base.OperationsBffHttpTestBase;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.RecordedRequest;
@@ -1167,8 +1168,9 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         JsonNode body = json.readTree(response.body());
         assertEquals(Set.of("nodes"), body.propertyNames());
         JsonNode root = body.path("nodes").get(0);
-        assertEquals(Set.of("nodeId", "displayName", "permissionId", "children"), root.propertyNames());
+        assertEquals(Set.of("nodeId", "code", "displayName", "permissionId", "children"), root.propertyNames());
         assertEquals("resource:root", root.path("nodeId").asString());
+        assertEquals("OPERATIONS_SYSTEM", root.path("code").asString());
         assertEquals("p_menu", root.path("permissionId").asString());
         JsonNode roleActions = root.path("children").get(0).path("children");
         assertEquals(3, roleActions.size());
@@ -1183,7 +1185,10 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         assertEquals(ACCOUNT_ASSIGN_ROLES_PERMISSION_ID, accountActions.get(2).path("permissionId").asString());
         assertEquals(ACCOUNT_DELETE_PERMISSION_ID, accountActions.get(3).path("permissionId").asString());
         assertEquals(ACCOUNT_ENABLE_PERMISSION_ID, accountActions.get(4).path("permissionId").asString());
-        assertEquals("permission:p_unbound", body.path("nodes").get(1).path("children").get(0).path("nodeId").asString());
+        JsonNode other = body.path("nodes").get(1);
+        assertEquals(RolePermissionTree.OTHER_PERMISSIONS, other.path("code").asString());
+        assertEquals(RolePermissionTree.OTHER_PERMISSIONS, other.path("displayName").asString());
+        assertEquals("permission:p_unbound", other.path("children").get(0).path("nodeId").asString());
         assertEquals(List.of(AUTHORIZE_PATH, "/operations/v1/role-permissions", "/operations/v1/role-resources"), calledPaths());
         assertMetadataEvent("/iam/**", 200);
     }
@@ -1637,10 +1642,12 @@ class OperationsBrowserBoundaryAutoTest extends OperationsBffHttpTestBase {
         assertEquals("UNKNOWN", body.path("event").path("actorId").asString());
         assertEquals(json.readTree("[\"p1\",\"p2\",\"p1\"]"), body.path("changes").get(0).path("before"));
         assertEquals(json.readTree("[null]"), body.path("changes").get(0).path("after"));
-        assertEquals("权限 ID", body.path("changes").get(0).path("label").asString());
+        assertEquals(Set.of("key", "before", "after"), body.path("changes").get(0).propertyNames());
+        assertEquals("permissionId", body.path("changes").get(0).path("key").asString());
         assertEquals(json.readTree("[]"), body.path("changes").get(1).path("after"));
         assertEquals(1, body.path("attributes").size());
-        assertEquals("futureKey", body.path("attributes").get(0).path("label").asString());
+        assertEquals(Set.of("key", "values"), body.path("attributes").get(0).propertyNames());
+        assertEquals("futureKey", body.path("attributes").get(0).path("key").asString());
         assertEquals(json.readTree("[\"历史未知属性\",null]"), body.path("attributes").get(0).path("values"));
         assertEquals(List.of(AUTHORIZE_PATH, "/operations/v1/audit-events/audit_10001"), calledPaths());
         assertMetadataEvent("/audit/**", 200);

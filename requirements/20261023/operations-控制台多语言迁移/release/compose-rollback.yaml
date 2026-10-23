@@ -1,0 +1,9 @@
+# 运营控制台多语言迁移：mor-test 回滚覆盖文件 = 阶段 6（2026-10-23）时 2 个运行容器的 .Image。
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261023/operations-控制台多语言迁移/release/compose-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service...>
+# 只换镜像，环境变量同主 compose（渲染结果与运行容器逐键、逐值相同）。
+services:
+  operations-console-bff:
+    image: sha256:e4d913e0948bcd92e82eb813050cede96dd28b4f935c03b37e3d286394c3349c  # mor-test/operations-console-bff:i18n-20261023a（JAR d52e541baf7a163b）
+  operations-console-web:
+    image: sha256:9fb809dfef26268c18d0713c542aeebe3ad039572df1961576f48ee25319b33b  # mor-test/operations-console-web:billb-f1-20261023（= main 9f210b5c 构建，dist 215 个文件）

@@ -7,6 +7,9 @@ import {
 } from './graphModel.ts';
 import { parseGraph } from './workflowApi.ts';
 import type { ActionTemplate, DefinitionDetail, VersionBody, WorkflowGraph } from './workflowTypes.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('workflow');
 
 function edgeOrFail(result: ReturnType<typeof connect>) {
   if ('error' in result) throw new Error(result.error);
@@ -32,10 +35,10 @@ test('新建节点 key 不与节点、连线、动作重复，连线规则拒绝
   assert.deepEqual(graph.nodes.map(node => node.key), ['start', 'end', 'task1', 'gateway1', 'task2']);
   assert.deepEqual(graph.edges.map(edge => edge.key), ['e1', 'e2', 'e3', 'e4', 'e5']);
   assert.equal('error' in connect(graph, 'task1', 'task1'), true);
-  assert.match((connect(graph, 'task2', 'task1') as { error: string }).error, /只能有一条出边/);
-  assert.match((connect(graph, 'gateway1', 'task1') as { error: string }).error, /不能有环/);
-  assert.match((connect(graph, 'task1', 'start') as { error: string }).error, /开始节点不能有入边/);
-  assert.match((connect(graph, 'end', 'task1') as { error: string }).error, /结束节点不能有出边/);
+  assert.match((connect(graph, 'task2', 'task1') as { error: string }).error, /can have only one outgoing connection/);
+  assert.match((connect(graph, 'gateway1', 'task1') as { error: string }).error, /can't contain a cycle/);
+  assert.match((connect(graph, 'task1', 'start') as { error: string }).error, /start node can't have incoming connections/);
+  assert.match((connect(graph, 'end', 'task1') as { error: string }).error, /end node can't have outgoing connections/);
 });
 
 test('排他网关第一条出边为默认出口，后续出边按顺序成为条件出口；删除连线同步清理条件', () => {
@@ -67,11 +70,11 @@ test('调整条件出口优先级并删除节点时去掉相连连线', () => {
 
 test('graph_json 与画布互转：节点类型映射、条件标签、拖动位置写回、序列化保持结构', () => {
   let graph = setEdgeClauses(sampleGraph(), 'gateway1', 'e4', [{ variable: 'start.paymentMethod', operator: 'CONTAINS', value: 'APPLE_PAY' }]);
-  const canvas = toCanvas(graph, () => [{ name: 'start.paymentMethod', label: '支付方式', type: 'TEXT', source: '启动表单' }], 'task1');
+  const canvas = toCanvas(graph, () => [{ name: 'start.paymentMethod', label: '支付方式', type: 'TEXT', source: t('graph.startForm') }], 'task1');
   assert.deepEqual(canvas.nodes.map(node => [node.id, node.type]), [['start', 'circle'], ['end', 'circle'], ['task1', 'task'], ['gateway1', 'gateway'], ['task2', 'task']]);
   assert.equal(canvas.nodes.find(node => node.id === 'task1')!.selected, true);
-  assert.equal(canvas.edges.find(edge => edge.id === 'e3')!.label, '默认');
-  assert.equal(canvas.edges.find(edge => edge.id === 'e4')!.label, '支付方式 包含 APPLE_PAY');
+  assert.equal(canvas.edges.find(edge => edge.id === 'e3')!.label, 'Default');
+  assert.equal(canvas.edges.find(edge => edge.id === 'e4')!.label, '支付方式 contains APPLE_PAY');
   assert.equal(canvas.edges.find(edge => edge.id === 'e1')!.label, undefined);
   graph = applyPositions(graph, [{ id: 'task1', position: { x: 210.6, y: 40.2 } }, { id: 'end' }]);
   assert.deepEqual(graph.nodes.find(node => node.key === 'task1')!.position, { x: 211, y: 40 });
@@ -91,8 +94,8 @@ test('判空条件保存时不带值，修改节点 key 同步连线', () => {
   if ('error' in renamed) throw new Error(renamed.error);
   graph = renamed.graph;
   assert.deepEqual(graph.edges.filter(edge => edge.from === 'approve' || edge.to === 'approve').map(edge => edge.key), ['e1', 'e2']);
-  assert.match((renameNode(graph, 'approve', 'e1') as { error: string }).error, /已被使用/);
-  assert.match((renameNode(graph, 'approve', '1bad') as { error: string }).error, /字母开头/);
+  assert.match((renameNode(graph, 'approve', 'e1') as { error: string }).error, /already in use/);
+  assert.match((renameNode(graph, 'approve', '1bad') as { error: string }).error, /must start with a letter/);
 });
 
 test('条件组编辑：换比较符转换值形态，换变量保留可用比较符，文件只能判空', () => {
@@ -129,8 +132,8 @@ test('本地检查与服务端同码同文：缺审批人且无动作、默认�
     description: null, status: 'ACTIVE', version: 1, updatedBy: null, updateTime: '', config: null }]]);
   const problems = localProblems(withQuery, templates);
   const find = (code: string) => problems.find(problem => problem.code === code);
-  assert.deepEqual(find('TASK_EMPTY'), { code: 'TASK_EMPTY', message: '任务节点至少需要一个审批人或一个动作', nodeKey: 'task1', edgeKey: null, itemKey: null });
-  assert.equal(find('CONDITION_EMPTY')?.message, '出边 e4 的条件组没有任何子句');
+  assert.deepEqual(find('TASK_EMPTY'), { code: 'TASK_EMPTY', message: t('graph.problem.TASK_EMPTY'), nodeKey: 'task1', edgeKey: null, itemKey: null });
+  assert.equal(find('CONDITION_EMPTY')?.message, 'The condition group of connection e4 has no clauses.');
   assert.equal(find('CONDITION_EMPTY')?.edgeKey, 'e4');
   assert.equal(find('TEMPLATE_RESERVED_TYPE')?.itemKey, 'ready');
   const broken = addNode(graph, 'TASK', { x: 0, y: 300 }).graph;
@@ -139,12 +142,12 @@ test('本地检查与服务端同码同文：缺审批人且无动作、默认�
   assert.ok(brokenCodes.includes('NODE_CANNOT_REACH_END:task3'));
   assert.ok(brokenCodes.includes('TASK_OUTGOING:task3'));
   assert.deepEqual(localProblems({ nodes: [], edges: [] }, new Map()).map(problem => [problem.code, problem.message]),
-    [['START_COUNT', '开始节点必须恰好一个，当前为 0 个'], ['END_MISSING', '至少需要一个结束节点']]);
+    [['START_COUNT', 'There must be exactly one start node; there are 0.'], ['END_MISSING', 'At least one end node is required.']]);
   // 排他网关缺默认出口 / 不带条件的出边
   const noDefault = { ...graph, nodes: graph.nodes.map(node => node.key === 'gateway1' ? { ...node, defaultEdgeKey: undefined } : node) };
   const gatewayProblems = localProblems(noDefault, new Map()).filter(problem => problem.nodeKey === 'gateway1');
   assert.deepEqual(gatewayProblems.map(problem => problem.code).sort(), ['CONDITION_EMPTY', 'EXCLUSIVE_DEFAULT_MISSING', 'EXCLUSIVE_EDGE_UNUSED']);
-  assert.equal(gatewayProblems.find(problem => problem.code === 'EXCLUSIVE_DEFAULT_MISSING')!.message, '排他网关必须指定一条默认出边');
+  assert.equal(gatewayProblems.find(problem => problem.code === 'EXCLUSIVE_DEFAULT_MISSING')!.message, t('graph.problem.EXCLUSIVE_DEFAULT_MISSING'));
 });
 
 test('本地检查：动作缺执行人、节点缺名称、已停用的通知触发', () => {
@@ -152,7 +155,7 @@ test('本地检查：动作缺执行人、节点缺名称、已停用的通知�
   graph = { ...graph, nodes: graph.nodes.map(node => node.key === 'task1' ? { ...node, name: ' ', approval: { mode: 'ANY' as const, approverIds: ['7'] },
     actions: [{ key: 'profile', templateId: '1', required: true }], notifications: [{ trigger: 'VERIFICATION_FAILED' as const, type: 'NOTIFY' as const, recipients: ['STARTER' as const] }] } : node) };
   const problems = localProblems(graph, new Map());
-  assert.ok(problems.some(problem => problem.code === 'EXECUTOR_MISSING' && problem.itemKey === 'profile' && problem.message === '动作必须指定默认执行人'));
+  assert.ok(problems.some(problem => problem.code === 'EXECUTOR_MISSING' && problem.itemKey === 'profile' && problem.message === t('graph.problem.EXECUTOR_MISSING')));
   assert.ok(problems.some(problem => problem.code === 'NODE_NAME_MISSING' && problem.nodeKey === 'task1'));
   assert.ok(problems.some(problem => problem.code === 'NOTIFICATION_TRIGGER_INVALID' && problem.itemKey === 'notifications[0]'));
   assert.equal(problems.some(problem => problem.code === 'TASK_EMPTY' && problem.nodeKey === 'task1'), false);
@@ -187,7 +190,7 @@ test('本地检查：并行分叉与汇合配对、分支内结束节点', () =>
   split = { ...split, edges: split.edges.map(item => item.key === edge.key ? { ...item, to: other.key } : item) };
   split = edgeOrFail(connect(split, other.key, 'end')).graph;
   const message = localProblems(split, new Map()).find(problem => problem.code === 'PARALLEL_UNPAIRED' && problem.nodeKey === 'fork1')?.message;
-  assert.equal(message, '并行分叉的全部分支必须汇入同一个并行汇合，当前汇入 [join1, join2]');
+  assert.equal(message, 'All branches of a parallel split must lead into the same parallel join; they currently lead into [join1, join2].');
 });
 
 test('本地检查：条件与输入映射引用不可用的变量；模板详情未读到时跳过', () => {
@@ -196,7 +199,7 @@ test('本地检查：条件与输入映射引用不可用的变量；模板详�
   const unavailable = localProblems(graph, new Map(), form).filter(problem => problem.code === 'VARIABLE_UNAVAILABLE');
   assert.equal(unavailable.length, 1);
   assert.equal(unavailable[0].edgeKey, 'e4');
-  assert.equal(unavailable[0].message, '变量 start.country 在节点 gateway1 不可用：须来自启动表单，或来自每条到达路径上必经的上游动作输出（并行分支之间不可互相引用）');
+  assert.equal(unavailable[0].message, t('graph.problem.VARIABLE_UNAVAILABLE', { name: 'start.country', node: 'gateway1' }));
   // 上游动作的模板还没读到详情：profile.* 跳过
   graph = setEdgeClauses(graph, 'gateway1', 'e4', [{ variable: 'profile.currency', operator: 'EQ', value: 'USD' }]);
   graph = { ...graph, nodes: graph.nodes.map(node => node.key === 'task1' ? { ...node, actions: [{ key: 'profile', templateId: '1', required: true, executorId: '1' }] } : node) };
@@ -244,7 +247,7 @@ test('连线上插入节点：排他网关的新出边成为默认出口；两�
   assert.equal(x('task1'), 560);
   assert.equal(x('gateway1'), 760);
   assert.equal(inserted.position.y, -8);
-  assert.match((insertOnEdge(graph, 'e1', 'END') as { error: string }).error, /只能插入/);
+  assert.match((insertOnEdge(graph, 'e1', 'END') as { error: string }).error, /Only task nodes or gateways can be inserted/);
 });
 
 test('连线上插入节点：间距足够时放中点且不移动；不同行时取中点；终点不在右侧时不移动其他节点', () => {
@@ -271,7 +274,7 @@ test('连线上插入节点：间距足够时放中点且不移动；不同行�
   if ('error' in back) throw new Error(back.error);
   assert.equal(position(back.graph, back.key).x, 770);
   assert.deepEqual(back.graph.nodes.filter(node => node.key !== back.key).map(node => node.position), graph.nodes.map(node => node.position));
-  assert.match((insertOnEdge(graph, 'nope', 'TASK') as { error: string }).error, /不存在/);
+  assert.match((insertOnEdge(graph, 'nope', 'TASK') as { error: string }).error, /doesn't exist/);
 });
 
 test('自动布局按层从左到右，撤销与重做恢复图', () => {

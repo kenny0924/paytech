@@ -2,8 +2,12 @@ import { useRef, useState } from 'react';
 import { AutoComplete, Form, Input, Modal, Select, Space } from 'antd';
 import type { RegisteredFunction, ValidationIssue } from './editorModel';
 import type { Binding, BindingKind } from './integrationApiModel';
+import { enumLabel } from '../i18n/index';
+import type { Translate } from '../i18n/index';
+import { useT } from '../i18n/react';
 
-const kindLabels: Record<BindingKind, string> = { PATH: '路径', EXPRESSION: '表达式', FUNCTION: '函数' };
+/** 取值方式文案（channel.enum.bindingKind.<值>）。 */
+export const kindLabel = (t: Translate, kind: BindingKind) => enumLabel(t, 'enum.bindingKind', kind);
 
 /** 新建某种取值时的空白值。 */
 export function emptyBinding(kind: BindingKind): Binding {
@@ -20,23 +24,24 @@ export function BindingInput({ value, onChange, kinds, paths = [], functions = [
   value?: Binding; onChange: (next: Binding) => void; kinds: BindingKind[]; paths?: string[];
   functions?: RegisteredFunction[]; disabled?: boolean; placeholder?: string;
 }) {
+  const t = useT('channel');
   const current = value ?? emptyBinding(kinds[0]);
   const pure = functions.filter(item => item.kind === 'PURE');
   const declared = current.kind === 'FUNCTION' ? pure.find(item => item.functionCode === current.function) : undefined;
   return <div className="external-api-binding">
     <Space.Compact block>
       {kinds.length > 1 && <Select style={{ width: 96 }} value={current.kind} disabled={disabled}
-        options={kinds.map(kind => ({ value: kind, label: kindLabels[kind] }))}
+        options={kinds.map(kind => ({ value: kind, label: kindLabel(t, kind) }))}
         onChange={(kind: BindingKind) => onChange(emptyBinding(kind))} />}
       {current.kind === 'PATH' && <AutoComplete style={{ flex: 1 }} value={current.path} disabled={disabled}
-        placeholder={placeholder ?? '选择或输入路径'}
+        placeholder={placeholder ?? t('binding.pathPlaceholder')}
         options={paths.filter(path => path.includes(current.path)).slice(0, 50).map(path => ({ value: path }))}
         onChange={path => onChange({ kind: 'PATH', path })} />}
       {current.kind === 'EXPRESSION' && <Input style={{ flex: 1 }} value={current.expression} disabled={disabled} maxLength={4096}
-        placeholder={placeholder ?? "表达式，常量写成 'text' 或 100"} className="external-api-code-input"
+        placeholder={placeholder ?? t('binding.expressionPlaceholder')} className="external-api-code-input"
         onChange={event => onChange({ kind: 'EXPRESSION', expression: event.target.value })} />}
       {current.kind === 'FUNCTION' && <Select style={{ flex: 1 }} value={current.function || undefined} disabled={disabled}
-        placeholder="选择注册函数" options={pure.map(item => ({ value: item.functionCode, label: item.functionCode }))}
+        placeholder={t('binding.functionPlaceholder')} options={pure.map(item => ({ value: item.functionCode, label: item.functionCode }))}
         onChange={(code: string) => onChange({ kind: 'FUNCTION', function: code, args: {}, result: 'result' })} />}
     </Space.Compact>
     {current.kind === 'FUNCTION' && declared && <div className="external-api-binding-args">
@@ -45,7 +50,7 @@ export function BindingInput({ value, onChange, kinds, paths = [], functions = [
         <BindingInput value={current.args[param.name]} kinds={['PATH', 'EXPRESSION']} paths={paths} disabled={disabled}
           onChange={next => onChange({ ...current, args: { ...current.args, [param.name]: next } })} />
       </div>)}
-      <div className="external-api-binding-arg"><span className="muted">结果</span>
+      <div className="external-api-binding-arg"><span className="muted">{t('binding.result')}</span>
         <Input value={current.result} disabled={disabled} className="external-api-code-input" placeholder="result"
           onChange={event => onChange({ ...current, result: event.target.value })} /></div>
     </div>}
@@ -56,17 +61,18 @@ export function BindingInput({ value, onChange, kinds, paths = [], functions = [
 export function ValidationPanel({ issues, onLocate, stale }: {
   issues: ValidationIssue[] | null; onLocate: (issue: ValidationIssue) => void; stale?: boolean;
 }) {
+  const t = useT('channel');
   if (issues === null || issues.length === 0) return null;
   const errors = issues.filter(issue => issue.severity === 'ERROR').length;
   const warnings = issues.length - errors;
-  const title = errors ? `校验结果 · ${errors} 个错误${warnings ? `，${warnings} 个提示` : ''}`
-    : warnings ? `校验通过 · ${warnings} 个提示` : '校验通过';
+  const title = errors ? warnings ? t('validationPanel.errorsAndWarnings', { errors, warnings }) : t('validationPanel.errors', { errors })
+    : warnings ? t('validationPanel.passedWithWarnings', { warnings }) : t('validationPanel.passed');
   return <section className={`xapi-validation${errors ? '' : ' ok'}`} aria-live="polite">
-    <div className="xapi-validation-title">{title}{stale && <span className="xapi-field-hint">（内容已修改，结果可能过期）</span>}</div>
+    <div className="xapi-validation-title">{title}{stale && <span className="xapi-field-hint">{t('validationPanel.stale')}</span>}</div>
     {issues.map((issue, index) => <div key={`${issue.location}:${index}`} className="xapi-validation-item">
       <span>{issue.severity === 'ERROR' ? '⊗' : 'ⓘ'}</span>
       <span>{issue.message}<small>{issue.location} · {issue.code}</small></span>
-      <button type="button" className="xapi-link" onClick={() => onLocate(issue)}>定位</button></div>)}
+      <button type="button" className="xapi-link" onClick={() => onLocate(issue)}>{t('validationPanel.locate')}</button></div>)}
   </section>;
 }
 
@@ -74,13 +80,14 @@ export function ValidationPanel({ issues, onLocate, stale }: {
 export function ReasonDialog({ open, saving, onCancel, onConfirm }: {
   open: boolean; saving: boolean; onCancel: () => void; onConfirm: (reason: string) => void;
 }) {
+  const t = useT('channel'), tCommon = useT('common');
   const [form] = Form.useForm<{ reason: string }>();
   const [submitted, setSubmitted] = useState(false);
-  return <Modal open={open} title="保存配置" okText="保存" okButtonProps={{ loading: saving }} onCancel={onCancel}
+  return <Modal open={open} title={t('reasonDialog.title')} okText={tCommon('action.save')} okButtonProps={{ loading: saving }} onCancel={onCancel}
     onOk={() => form.submit()} destroyOnHidden afterOpenChange={visible => { if (visible) setSubmitted(false); }}>
-    <p className="muted">保存后对新调用立即生效。</p>
+    <p className="muted">{t('reasonDialog.hint')}</p>
     <Form form={form} layout="vertical" requiredMark={false} onFinish={values => { if (!submitted) { setSubmitted(true); onConfirm(values.reason.trim()); } }}>
-      <Form.Item name="reason" label="变更原因" rules={[{ required: true, whitespace: true, message: '请填写变更原因' }]}>
+      <Form.Item name="reason" label={t('reasonDialog.reason')} rules={[{ required: true, whitespace: true, message: t('reasonDialog.reasonRequired') }]}>
         <Input.TextArea rows={3} maxLength={500} showCount autoFocus /></Form.Item>
     </Form>
   </Modal>;
@@ -116,9 +123,10 @@ export function bindingText(binding: Binding | undefined): string {
 }
 
 /** 取值的只读展示：灰底小标签“路径 / 表达式 / 函数” + 蓝色等宽文字；没有取值时显示占位文字。 */
-export function BindingView({ binding, empty = '未赋值' }: { binding?: Binding; empty?: string }) {
-  if (!binding) return <span className="xapi-field-hint">{empty}</span>;
-  return <span><span className="xapi-kind">{kindLabels[binding.kind]}</span>
+export function BindingView({ binding, empty }: { binding?: Binding; empty?: string }) {
+  const t = useT('channel');
+  if (!binding) return <span className="xapi-field-hint">{empty ?? t('binding.unassigned')}</span>;
+  return <span><span className="xapi-kind">{kindLabel(t, binding.kind)}</span>
     <code className="xapi-mono xapi-mono-ref">{breakAtDots(bindingText(binding))}</code></span>;
 }
 

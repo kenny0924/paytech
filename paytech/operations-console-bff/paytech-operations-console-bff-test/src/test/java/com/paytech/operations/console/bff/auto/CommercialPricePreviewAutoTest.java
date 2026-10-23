@@ -22,6 +22,8 @@ import com.paytech.operations.console.bff.ext.rest.CommercialPricePreviewControl
 import com.paytech.operations.console.bff.test.base.CommercialBrowserAutoTestBase;
 import com.paytech.operations.console.bff.test.simulator.CommercialOwnerSimulator;
 
+import com.paytech.operations.console.bff.service.model.CommercialPricePreviewModels.IllustrationNoteCode;
+
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -63,15 +65,18 @@ class CommercialPricePreviewAutoTest extends CommercialBrowserAutoTestBase {
             () -> assertEquals(2, body.path("illustration").path("fractionDigits").asInt()),
             () -> assertEquals(List.of(DISPUTED, CAPTURED, REFUNDED), names(events)),
             () -> assertEquals("20.00", component(events, DISPUTED, 0).path("amount").asString()),
-            () -> assertEquals("累进 2 档", component(events, DISPUTED, 0).path("note").asString()),
+            () -> assertEquals(notes(IllustrationNoteCode.PROGRESSIVE_BANDS, "count", "2"), component(events, DISPUTED, 0).path("notes")),
             () -> assertFalse(component(events, DISPUTED, 1).path("computed").asBoolean()),
+            () -> assertEquals(notes(IllustrationNoteCode.BASE_DEPENDS_ON_FEE, "base", CalculationBase.ACTUAL_CLIENT_FEE.getCode()),
+                component(events, DISPUTED, 1).path("notes")),
+            () -> assertEquals(JSON.createArrayNode(), component(events, CAPTURED, 0).path("notes")),
             () -> assertEquals("20.00", event(events, DISPUTED).path("totalAmount").asString()),
             () -> assertEquals("29.00", component(events, CAPTURED, 0).path("amount").asString()),
             () -> assertEquals("29.00000000", component(events, CAPTURED, 0).path("rawAmount").asString()),
             () -> assertEquals("0.30", component(events, CAPTURED, 1).path("amount").asString()),
             () -> assertEquals("29.30", event(events, CAPTURED).path("totalAmount").asString()),
             () -> assertEquals("20.00", component(events, REFUNDED, 0).path("amount").asString()),
-            () -> assertEquals("命中第 2 档", component(events, REFUNDED, 0).path("note").asString()));
+            () -> assertEquals(notes(IllustrationNoteCode.BAND_HIT, "bandNo", "2"), component(events, REFUNDED, 0).path("notes")));
         assertForwardedResolution(body);
     }
 
@@ -82,10 +87,10 @@ class CommercialPricePreviewAutoTest extends CommercialBrowserAutoTestBase {
         var small = JSON.readTree(send("POST", SIMULATE_PATH, SIMULATE_ROUTE, simulation("10")).body());
         var events = small.path("illustration").path("feeEvents");
         assertAll(() -> assertEquals("0.50", component(events, CAPTURED, 0).path("amount").asString()),
-            () -> assertEquals("按最低金额 0.50", component(events, CAPTURED, 0).path("note").asString()),
+            () -> assertEquals(notes(IllustrationNoteCode.MIN_APPLIED, "amount", "0.50"), component(events, CAPTURED, 0).path("notes")),
             () -> assertEquals("0.80", event(events, CAPTURED).path("totalAmount").asString()),
             () -> assertEquals("0.30", component(events, REFUNDED, 0).path("amount").asString()),
-            () -> assertEquals("命中第 1 档", component(events, REFUNDED, 0).path("note").asString()),
+            () -> assertEquals(notes(IllustrationNoteCode.BAND_HIT, "bandNo", "1"), component(events, REFUNDED, 0).path("notes")),
             () -> assertEquals("0.30", component(events, DISPUTED, 0).path("amount").asString()));
 
         resetBetweenCalls();
@@ -271,5 +276,12 @@ class CommercialPricePreviewAutoTest extends CommercialBrowserAutoTestBase {
 
     private static JsonNode component(JsonNode events, String feeEventCode, int index) {
         return event(events, feeEventCode).path("components").get(index);
+    }
+
+    /** 只有一条说明的 notes 数组：{code, params:{name:value}}。 */
+    private static JsonNode notes(IllustrationNoteCode code, String name, String value) {
+        var notes = JSON.createArrayNode();
+        notes.addObject().put("code", code.name()).putObject("params").put(name, value);
+        return notes;
     }
 }

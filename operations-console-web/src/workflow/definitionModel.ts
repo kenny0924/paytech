@@ -1,5 +1,8 @@
 import { clausesText, gatewayExits, nodeOf, publishedBaseVersionNo } from './graphModel.ts';
 import type { ActionTemplate, DefinitionDetail, DefinitionSummary, FormDefinition, GraphNode, Problem, WorkflowGraph } from './workflowTypes.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('workflow');
 
 // ---------- 流程定义列表（需求 D1，原型 09） ----------
 export type CardStatusKind = 'INACTIVE' | 'PUBLISHED_WITH_DRAFT' | 'DRAFT_ONLY' | 'PUBLISHED';
@@ -7,12 +10,12 @@ export interface CardStatus { kind: CardStatusKind; label: string; tone: 'muted'
 
 /** 卡片只显示一个状态，按顺序取第一个成立的：已停用 > 已发布 vN · 有未发布修改 > 草稿 · 未发布 > 已发布 vN。 */
 export function definitionCardStatus(summary: Pick<DefinitionSummary, 'status' | 'currentVersionNo' | 'draftVersionNo'>): CardStatus {
-  if (summary.status === 'INACTIVE') return { kind: 'INACTIVE', label: '已停用', tone: 'muted' };
+  if (summary.status === 'INACTIVE') return { kind: 'INACTIVE', label: t('definitions.card.inactive'), tone: 'muted' };
   if (summary.currentVersionNo && summary.draftVersionNo) {
-    return { kind: 'PUBLISHED_WITH_DRAFT', label: `已发布 v${summary.currentVersionNo} · 有未发布修改`, tone: 'warn' };
+    return { kind: 'PUBLISHED_WITH_DRAFT', label: t('definitions.card.publishedWithDraft', { version: summary.currentVersionNo }), tone: 'warn' };
   }
-  if (!summary.currentVersionNo) return { kind: 'DRAFT_ONLY', label: '草稿 · 未发布', tone: 'draft' };
-  return { kind: 'PUBLISHED', label: `已发布 v${summary.currentVersionNo}`, tone: 'ok' };
+  if (!summary.currentVersionNo) return { kind: 'DRAFT_ONLY', label: t('definitions.card.draftOnly'), tone: 'draft' };
+  return { kind: 'PUBLISHED', label: t('definitions.card.published', { version: summary.currentVersionNo }), tone: 'ok' };
 }
 
 /** 列表状态筛选：已发布含「有未发布修改」，草稿只含未发布过的流程。 */
@@ -97,10 +100,10 @@ export async function loadThumbnail(summary: Pick<DefinitionSummary, 'definition
 // ---------- 编辑器页头（需求 D2） ----------
 /** 页头状态药丸。 */
 export function editorStatusText(input: { currentVersionNo: number | null; hasDraft: boolean; dirty: boolean; viewingVersion?: number }): string {
-  if (input.viewingVersion) return `v${input.viewingVersion} · 只读`;
-  if (!input.currentVersionNo) return '新建 · 未发布';
-  if (input.hasDraft || input.dirty) return `草稿 · 基于 v${input.currentVersionNo}，未发布`;
-  return `与 v${input.currentVersionNo} 相同`;
+  if (input.viewingVersion) return t('editor.status.readOnly', { version: input.viewingVersion });
+  if (!input.currentVersionNo) return t('editor.status.new');
+  if (input.hasDraft || input.dirty) return t('editor.status.draft', { version: input.currentVersionNo });
+  return t('editor.status.same', { version: input.currentVersionNo });
 }
 
 /** 问题清单里的位置名：节点名、连线「A → B」、启动表单或「流程」。 */
@@ -110,8 +113,8 @@ export function problemTarget(problem: Problem, graph: WorkflowGraph): string {
     if (edge) return `${nodeLabel(graph, edge.from)} → ${nodeLabel(graph, edge.to)}`;
   }
   if (problem.nodeKey) return nodeLabel(graph, problem.nodeKey);
-  if (problem.code === 'STRUCTURE_INVALID' && problem.itemKey) return '启动表单';
-  return '流程';
+  if (problem.code === 'STRUCTURE_INVALID' && problem.itemKey) return t('graph.startForm');
+  return t('problems.process');
 }
 const nodeLabel = (graph: WorkflowGraph, key: string) => { const node = nodeOf(graph, key); return node?.name || node?.key || key; };
 
@@ -134,13 +137,13 @@ export function versionChanges(base: VersionContent, draft: VersionContent, temp
   const draftNodes = new Map(draft.graph.nodes.map(node => [node.key, node]));
   for (const node of draft.graph.nodes) {
     const previous = baseNodes.get(node.key);
-    if (!previous) changes.push({ kind: 'ADDED', area: 'GRAPH', action: '新增节点', subject: node.name || node.key, nodeKey: node.key });
+    if (!previous) changes.push({ kind: 'ADDED', area: 'GRAPH', action: t('publish.change.nodeAdded'), subject: node.name || node.key, nodeKey: node.key });
     else if ((previous.name || '') !== (node.name || '')) {
-      changes.push({ kind: 'CHANGED', area: 'GRAPH', action: '节点改名', subject: `${previous.name || previous.key} → ${node.name || node.key}`, nodeKey: node.key });
+      changes.push({ kind: 'CHANGED', area: 'GRAPH', action: t('publish.change.nodeRenamed'), subject: `${previous.name || previous.key} → ${node.name || node.key}`, nodeKey: node.key });
     }
   }
   for (const node of base.graph.nodes) {
-    if (!draftNodes.has(node.key)) changes.push({ kind: 'REMOVED', area: 'GRAPH', action: '删除节点', subject: node.name || node.key });
+    if (!draftNodes.has(node.key)) changes.push({ kind: 'REMOVED', area: 'GRAPH', action: t('publish.change.nodeRemoved'), subject: node.name || node.key });
   }
   changes.push(...edgeChanges(base.graph, draft.graph, baseNodes, draftNodes));
   for (const node of draft.graph.nodes) {
@@ -150,10 +153,10 @@ export function versionChanges(base: VersionContent, draft: VersionContent, temp
   const baseFields = new Map(base.startForm.fields.map(field => [field.key, field]));
   const draftFields = new Set(draft.startForm.fields.map(field => field.key));
   for (const field of draft.startForm.fields) {
-    if (!baseFields.has(field.key)) changes.push({ kind: 'ADDED', area: 'START_FORM', action: '启动表单新增字段', subject: field.label || field.key });
+    if (!baseFields.has(field.key)) changes.push({ kind: 'ADDED', area: 'START_FORM', action: t('publish.change.fieldAdded'), subject: field.label || field.key });
   }
   for (const field of base.startForm.fields) {
-    if (!draftFields.has(field.key)) changes.push({ kind: 'REMOVED', area: 'START_FORM', action: '启动表单删除字段', subject: field.label || field.key });
+    if (!draftFields.has(field.key)) changes.push({ kind: 'REMOVED', area: 'START_FORM', action: t('publish.change.fieldRemoved'), subject: field.label || field.key });
   }
   return changes;
 }
@@ -170,13 +173,14 @@ function edgeChanges(base: WorkflowGraph, draft: WorkflowGraph, baseNodes: Map<s
   for (const edge of draft.edges) {
     if (!kept(edge)) continue;
     const previous = baseEdges.get(pairOf(edge));
-    if (!previous) { changes.push({ kind: 'ADDED', area: 'GRAPH', action: '新增连线', subject: `${name(edge.from)} → ${name(edge.to)}`, edgeKey: edge.key }); continue; }
+    if (!previous) { changes.push({ kind: 'ADDED', area: 'GRAPH', action: t('publish.change.edgeAdded'), subject: `${name(edge.from)} → ${name(edge.to)}`, edgeKey: edge.key }); continue; }
     if (draftNodes.get(edge.from)?.type !== 'EXCLUSIVE') continue;
     const before = exitText(base, previous.from, previous.key); const after = exitText(draft, edge.from, edge.key);
-    if (before !== after) changes.push({ kind: 'CHANGED', area: 'GRAPH', action: '修改连线条件', subject: `${name(edge.from)} → ${name(edge.to)}：${exitText(draft, edge.from, edge.key, false)}`, edgeKey: edge.key });
+    if (before !== after) changes.push({ kind: 'CHANGED', area: 'GRAPH', action: t('publish.change.edgeCondition'),
+      subject: t('publish.change.edgeConditionSubject', { from: name(edge.from), to: name(edge.to), condition: exitText(draft, edge.from, edge.key, false) }), edgeKey: edge.key });
   }
   for (const edge of base.edges) {
-    if (kept(edge) && !draftPairs.has(pairOf(edge))) changes.push({ kind: 'REMOVED', area: 'GRAPH', action: '删除连线', subject: `${name(edge.from)} → ${name(edge.to)}` });
+    if (kept(edge) && !draftPairs.has(pairOf(edge))) changes.push({ kind: 'REMOVED', area: 'GRAPH', action: t('publish.change.edgeRemoved'), subject: `${name(edge.from)} → ${name(edge.to)}` });
   }
   return changes;
 }
@@ -185,8 +189,8 @@ function edgeChanges(base: WorkflowGraph, draft: WorkflowGraph, baseNodes: Map<s
 function exitText(graph: WorkflowGraph, gatewayKey: string, edgeKey: string, withPriority = true): string {
   const exit = gatewayExits(graph, gatewayKey).find(item => item.edge.key === edgeKey);
   if (!exit) return '—';
-  if (exit.isDefault) return '默认';
-  return `${withPriority && exit.priority ? `优先级 ${exit.priority} · ` : ''}${clausesText(exit.clauses)}`;
+  if (exit.isDefault) return t('graph.defaultEdge');
+  return `${withPriority && exit.priority ? t('publish.change.priority', { priority: exit.priority }) : ''}${clausesText(exit.clauses)}`;
 }
 
 function taskChanges(previous: GraphNode, node: GraphNode, templateName: (templateId: string) => string): VersionChange[] {
@@ -194,12 +198,12 @@ function taskChanges(previous: GraphNode, node: GraphNode, templateName: (templa
   const label = node.name || node.key;
   const before = (previous.actions ?? []).map(action => action.templateId);
   const after = (node.actions ?? []).map(action => action.templateId);
-  for (const id of multisetMinus(after, before)) changes.push({ kind: 'ADDED', area: 'GRAPH', action: `「${label}」新增动作`, subject: templateName(id), nodeKey: node.key });
-  for (const id of multisetMinus(before, after)) changes.push({ kind: 'REMOVED', area: 'GRAPH', action: `「${label}」移除动作`, subject: templateName(id), nodeKey: node.key });
+  for (const id of multisetMinus(after, before)) changes.push({ kind: 'ADDED', area: 'GRAPH', action: t('publish.change.actionAdded', { node: label }), subject: templateName(id), nodeKey: node.key });
+  for (const id of multisetMinus(before, after)) changes.push({ kind: 'REMOVED', area: 'GRAPH', action: t('publish.change.actionRemoved', { node: label }), subject: templateName(id), nodeKey: node.key });
   const approversBefore = [...(previous.approval?.approverIds ?? [])].sort().join(',');
   const approversAfter = [...(node.approval?.approverIds ?? [])].sort().join(',');
   const modeChanged = (previous.approval?.approverIds.length ? previous.approval.mode : '') !== (node.approval?.approverIds.length ? node.approval.mode : '');
-  if (approversBefore !== approversAfter || modeChanged) changes.push({ kind: 'CHANGED', area: 'GRAPH', action: '修改审批人', subject: label, nodeKey: node.key });
+  if (approversBefore !== approversAfter || modeChanged) changes.push({ kind: 'CHANGED', area: 'GRAPH', action: t('publish.change.approvers'), subject: label, nodeKey: node.key });
   return changes;
 }
 
@@ -214,8 +218,8 @@ function multisetMinus(left: string[], right: string[]): string[] {
  */
 export function runningInstanceNote(count: number | null, currentVersionNo: number | null, nextVersionNo: number): string | null {
   if (count === null || !currentVersionNo || count <= 0) return null;
-  const running = currentVersionNo === 1 ? '按 v1 ' : '按各自发起时的版本';
-  return `已发起的 ${count} 个运行中实例继续${running}运行，新发起的使用 v${nextVersionNo}`;
+  return currentVersionNo === 1 ? t('publish.runningNoteV1', { count, next: nextVersionNo })
+    : t('publish.runningNote', { count, next: nextVersionNo });
 }
 
 /** 节点动作卡上的说明首行（原型 16）：上传 / 页面任务 / 人工确认取执行说明，表单取动作描述；只取第一行。 */

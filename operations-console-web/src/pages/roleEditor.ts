@@ -1,5 +1,11 @@
 import type { CreateRoleRequestBody, PermissionNode, RoleResponseBody, UpdateRoleRequestBody } from '../api/types.ts';
 import { ApiError } from '../api/session.ts';
+import { translator } from '../i18n/index.ts';
+import { resourceLabel } from '../navigation/menu.ts';
+
+const tNav = translator('nav'), tAccess = translator('access');
+/** BFF code of the structural group that holds permissions without a console resource. */
+export const otherPermissionsGroup = 'OTHER_PERMISSIONS';
 
 export interface PermissionTreeItem {
   key: string; title: string; permissionId: string | null; children: PermissionTreeItem[];
@@ -7,18 +13,27 @@ export interface PermissionTreeItem {
 export interface RoleFormValues { roleCode: string; roleName: string; reason: string }
 export interface RoleCommand { path: string; method: 'POST' | 'PUT'; payload: string; key: string }
 
+/**
+ * Tree title: resource nodes use the menu name (`nav.resource.<code>`, falling back to the Platform display name),
+ * the "other permissions" group uses `access.permissionTree.other`, and permissions without a resource show their code.
+ */
+export function permissionNodeTitle(node: Pick<PermissionNode, 'code' | 'displayName'>): string {
+  if (node.code === otherPermissionsGroup) return tAccess('permissionTree.other');
+  return resourceLabel(tNav, { resourceCode: node.code, displayName: node.displayName });
+}
+
 export function permissionTree(nodes: PermissionNode[]): PermissionTreeItem[] {
   const keys = new Set<string>();
   function items(values: PermissionNode[]): PermissionTreeItem[] {
     if (!Array.isArray(values)) throw new ApiError(502, 'INVALID_RESPONSE');
     return values.map(node => {
       if (!node || typeof node.nodeId !== 'string' || !node.nodeId || keys.has(node.nodeId)
-        || typeof node.displayName !== 'string'
+        || typeof node.code !== 'string' || !node.code || typeof node.displayName !== 'string'
         || (node.permissionId !== null && (typeof node.permissionId !== 'string' || !node.permissionId))) {
         throw new ApiError(502, 'INVALID_RESPONSE');
       }
       keys.add(node.nodeId);
-      return { key: node.nodeId, title: node.displayName, permissionId: node.permissionId,
+      return { key: node.nodeId, title: permissionNodeTitle(node), permissionId: node.permissionId,
         children: items(node.children) };
     });
   }

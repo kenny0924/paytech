@@ -14,14 +14,14 @@ test('评估查询页登记为风控只读页面并懒加载', () => {
 
 test('页面状态：格式错误不发请求，404 显示空状态，403 刷新授权，影子评估隐藏影子分区并链接基线', () => {
   assert.match(page, /if \(!validId\) \{ setOutcome\(\{ state: 'invalid' \}\); return; \}/);
-  assert.match(page, /if \(!id\) \{ setDraftError\(ID_FORMAT_MESSAGE\); return; \}/);
-  assert.match(page, /description="没有找到该评估"/);
+  assert.match(page, /if \(!id\) \{ setDraftError\(idFormatMessage\(\)\); return; \}/);
+  assert.match(page, /description=\{t\('evaluationPage\.notFound'\)\}/);
   assert.match(page, /status === 403\) onAuthorizationChanged\(\)/);
   assert.match(page, /\.\.\.\(shadow \? \[\] : \[\{ key: 'shadows'/);
-  assert.match(page, /查看基线评估/);
-  assert.match(page, /PATH_UNAVAILABLE/);
-  assert.match(page, /CURRENT_VALUE_NOTE/);
-  assert.match(page, /条件结构暂不可用，仍显示命中结果/);
+  assert.match(page, /evaluationPage\.viewBaseline/);
+  assert.match(page, /pathUnavailableText\(\)/);
+  assert.match(page, /currentValueNote\(\)/);
+  assert.match(page, /evaluationPage\.conditionUnavailable/);
 });
 
 test('查询条件只经地址栏传递，页面不使用浏览器存储或控制台输出受限输入', () => {

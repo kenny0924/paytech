@@ -8,6 +8,9 @@ import {
 import { changeSummary, diffOutputs, duplicateField, fieldProblems, moveField, newField, outputOf, valueProblems } from './formModel.ts';
 import { configDiff, configProblems, defaultConfig, frozenConfig, normalizeConfig, referenceSummary } from './templateModel.ts';
 import type { ActionRun, Approval, InstanceDetail, NodeRun, Task, WorkflowGraph } from './workflowTypes.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('workflow');
 
 const run = (nodeKey: string, roundNo: number, status: NodeRun['status'], extra: Partial<NodeRun> = {}): NodeRun => ({
   nodeRunId: `${nodeKey}-${roundNo}`, nodeKey, nodeType: 'TASK', roundNo, branchKey: null, previousNodeRunId: null, status,
@@ -52,7 +55,7 @@ test('节点着色取最新一轮；排他网关只点亮选中的出口；进�
   assert.deepEqual(progressOf(value), { completed: 1, active: 1, pending: 1, total: 3 });
   assert.deepEqual(currentHandlers(value).map(item => [item.nodeKey, item.stage, item.people]), [['risk', 'ACTION', ['ops.wang']]]);
   // 我发起的时间线：本人显示为“你”
-  assert.deepEqual(currentHandlers(value, '7')[0].people, ['你']);
+  assert.deepEqual(currentHandlers(value, '7')[0].people, ['you']);
   assert.deepEqual(currentHandlers(value, '99')[0].people, ['ops.wang']);
 });
 
@@ -79,8 +82,8 @@ test('退回修改后的新一轮能找到上一轮输出与退回意见，并�
   assert.equal(revision.approval.comment, '补充阈值说明');
   const changes = diffOutputs({ note: '规则集已发布', files: ['1'] }, { note: '规则集已发布，新增阈值', files: ['2'] });
   assert.deepEqual(changes.map(item => [item.key, item.kind]), [['note', 'changed'], ['files', 'changed']]);
-  assert.equal(changeSummary(changes, { note: '确认说明', files: '文件' }), '确认说明已修改 · 文件 +1 −1');
-  assert.equal(changeSummary([]), '与上一轮相同');
+  assert.equal(changeSummary(changes, { note: 'Confirmation note', files: 'Files' }), 'Confirmation note changed · Files +1 −1');
+  assert.equal(changeSummary([]), 'Same as the previous round');
   assert.equal(revisionOf(value, value.nodeRuns[0]), null);
 });
 
@@ -91,42 +94,42 @@ test('审批决定可用性：同一人限制、纯审批不能退回修改、�
   assert.deepEqual(enabled(decisionOptions({ ...base, nodeRun: run('risk', 2, 'APPROVING', { rejectKind: 'PREVIOUS_TASK' }) })), [true, true, true]);
   const branchFirst = decisionOptions({ ...base, nodeRun: run('risk', 2, 'APPROVING', { rejectKind: 'BRANCH_FIRST_NODE' }) });
   assert.deepEqual(enabled(branchFirst), [true, true, false]);
-  assert.match(branchFirst.options[2].reason, /并行分支的第一个节点/);
+  assert.equal(branchFirst.options[2].reason, t('decision.reject.branchFirstNode'));
   const pureApproval = decisionOptions({ ...base, hasActions: false, nodeRun: run('approve', 1, 'APPROVING', { rejectKind: 'FIRST_TASK' }) });
   assert.deepEqual(enabled(pureApproval), [true, false, false]);
-  assert.match(pureApproval.options[1].reason, /纯审批节点/);
+  assert.equal(pureApproval.options[1].reason, t('decision.return.noActions'));
   const self = decisionOptions({ ...base, submittedByMe: true, nodeRun: run('risk', 2, 'APPROVING') });
   assert.deepEqual(enabled(self), [false, false, false]);
   const join = decisionOptions({ ...base, nodeRun: run('review', 1, 'APPROVING', { rejectKind: 'CHOOSE_BRANCH', rejectTargets: ['risk', 'channel'] }) });
   assert.deepEqual(join.rejectTargets, ['risk', 'channel']);
-  assert.equal(decisionError(join, 'REJECT', '有问题'), '请选择驳回到哪一条分支');
+  assert.equal(decisionError(join, 'REJECT', '有问题'), 'Select the branch to reject to.');
   assert.equal(decisionError(join, 'REJECT', '有问题', 'risk'), null);
-  assert.equal(decisionError(join, 'RETURN', ' '), '退回修改和驳回必须填写意见');
+  assert.equal(decisionError(join, 'RETURN', ' '), 'Enter a comment to return for changes or reject.');
   assert.equal(decisionError(join, 'APPROVE', ''), null);
-  assert.equal(decisionError(pureApproval, 'RETURN', '意见'), '本节点没有动作，纯审批节点不能退回修改');
+  assert.equal(decisionError(pureApproval, 'RETURN', '意见'), t('decision.return.noActions'));
 });
 
 test('批量同意只收无动作的待审批，逐项调用并逐项返回结果', async () => {
   const task = (taskId: string, nodeKey: string): Task => ({ taskType: 'APPROVAL', taskId, instanceId: '1', instanceTitle: 't', nodeKey, roundNo: 1, actionKey: null, waitingSince: '' });
   const value = detail({ approvals: [{ ...approval('approve-1', 'PENDING'), approvalId: 'a1' }, { ...approval('risk-1', 'PENDING'), approvalId: 'a2' }] });
   assert.deepEqual(batchEligibility(task('a1', 'approve'), value, '8'), { eligible: true, reason: '' });
-  assert.match(batchEligibility(task('a2', 'risk'), value, '8').reason, /含 1 个动作/);
+  assert.equal(batchEligibility(task('a2', 'risk'), value, '8').reason, 'Has 1 action; review it individually');
   assert.equal(batchEligibility(task('a1', 'approve'), undefined, '8').eligible, false);
   assert.equal(batchEligibility({ ...task('a1', 'approve'), taskType: 'ACTION' }, value, '8').eligible, false);
-  assert.deepEqual(batchStatus(task('a1', 'approve'), undefined, '8', false), { state: 'CHECKING', reason: '检查中' });
-  assert.deepEqual(batchStatus(task('a1', 'approve'), undefined, '8', true), { state: 'UNCHECKABLE', reason: '无法检查，请单独处理' });
+  assert.deepEqual(batchStatus(task('a1', 'approve'), undefined, '8', false), { state: 'CHECKING', reason: 'Checking' });
+  assert.deepEqual(batchStatus(task('a1', 'approve'), undefined, '8', true), { state: 'UNCHECKABLE', reason: "Can't be checked; handle it individually" });
   assert.deepEqual(batchStatus(task('a1', 'approve'), value, '8', false), { state: 'ELIGIBLE', reason: '' });
   assert.equal(batchStatus(task('a1', 'approve'), value, '8', true).state, 'ELIGIBLE');
   assert.equal(batchStatus(task('a2', 'risk'), value, '8', false).state, 'INELIGIBLE');
   assert.equal(batchStatus({ ...task('a1', 'approve'), taskType: 'ACTION' }, value, '8', false).state, 'INELIGIBLE');
-  const statuses = new Map([['t1', { state: 'ELIGIBLE' as const, reason: '' }], ['t2', { state: 'CHECKING' as const, reason: '检查中' }],
-    ['t3', { state: 'UNCHECKABLE' as const, reason: '无法检查，请单独处理' }], ['t4', { state: 'INELIGIBLE' as const, reason: '已被处理' }]]);
+  const statuses = new Map([['t1', { state: 'ELIGIBLE' as const, reason: '' }], ['t2', { state: 'CHECKING' as const, reason: t('batch.checking') }],
+    ['t3', { state: 'UNCHECKABLE' as const, reason: t('batch.uncheckable') }], ['t4', { state: 'INELIGIBLE' as const, reason: t('batch.handled') }]]);
   assert.deepEqual(batchSubmission(['t1', 't2', 't3', 't4'], statuses), { ready: false, checking: ['t2'], submit: ['t1'], excluded: ['t3', 't4'] });
   assert.equal(batchSubmission(['t1', 't3'], statuses).ready, true);
   assert.equal(batchSubmission(['t3', 't4'], statuses).ready, false);
   assert.deepEqual(batchSubmission(['t9'], statuses).checking, ['t9']);
   // 汇总按冻结列表与结果计数：列表刷新后已同意项消失也不会出现负数。
-  const frozenResults = new Map([['t1', { taskId: 't1', ok: true, message: '已同意' }], ['t2', { taskId: 't2', ok: false, message: '已被他人处理' }]]);
+  const frozenResults = new Map([['t1', { taskId: 't1', ok: true, message: t('batch.approved') }], ['t2', { taskId: 't2', ok: false, message: '已被他人处理' }]]);
   assert.deepEqual(batchSummary(['t1', 't2', 't3', 't4'], frozenResults), { approved: 1, failed: 1, skipped: 2 });
   assert.deepEqual(batchSummary(['t1'], frozenResults), { approved: 1, failed: 0, skipped: 0 });
   assert.deepEqual(batchSummary([], frozenResults), { approved: 0, failed: 0, skipped: 0 });
@@ -135,7 +138,7 @@ test('批量同意只收无动作的待审批，逐项调用并逐项返回结�
     error => (error as Error).message, result => seen.push(result.taskId));
   assert.deepEqual(calls, ['a1', 'a3', 'a4']);
   assert.deepEqual(seen, ['a1', 'a3', 'a4']);
-  assert.deepEqual(results.map(item => [item.taskId, item.ok, item.message]), [['a1', true, '已同意'], ['a3', false, '已被他人处理'], ['a4', true, '已同意']]);
+  assert.deepEqual(results.map(item => [item.taskId, item.ok, item.message]), [['a1', true, 'Approved'], ['a3', false, '已被他人处理'], ['a4', true, 'Approved']]);
 });
 
 test('待办切换与快捷键', () => {
@@ -161,8 +164,8 @@ test('待办切换与快捷键', () => {
   assert.equal(key('Enter'), null);
   assert.equal(key('r', { metaKey: true }), null);
   assert.equal(key('t', { taskType: null }), null);
-  assert.equal(waitingText('2026-10-20T00:00:00Z', Date.parse('2026-10-22T01:00:00Z')), '2 天');
-  assert.equal(waitingText('2026-10-22T00:00:00Z', Date.parse('2026-10-22T05:10:00Z')), '5 小时');
+  assert.equal(waitingText('2026-10-20T00:00:00Z', Date.parse('2026-10-22T01:00:00Z')), '2 days');
+  assert.equal(waitingText('2026-10-22T00:00:00Z', Date.parse('2026-10-22T05:10:00Z')), '5 hours');
 });
 
 test('发起预览：按启动值选择排他分支，条件引用动作输出时标为运行时决定', () => {
@@ -189,25 +192,25 @@ test('表单字段设计与填写校验', () => {
   ] };
   // 需求 E1：旧配置的长度、范围与小数位不再检查，只查必填与平台技术保护（类型、平台长度上限）。
   assert.deepEqual(valueProblems(form, { name: '超过五个字符了', days: '120', currency: 'EUR', goLive: '2026/11/15', refund: 'yes' }),
-    { currency: '不是可选值', goLive: '必须是 YYYY-MM-DD 日期', refund: '必须是是或否' });
-  assert.deepEqual(valueProblems(form, { name: '', days: 'abc' }), { name: '必填', days: '必须是数字' });
-  assert.deepEqual(valueProblems(form, { name: 'x'.repeat(256), days: '1.5' }), { name: '不能超过 255 个字符' });
+    { currency: 'Not an available option', goLive: 'Must be a YYYY-MM-DD date', refund: 'Must be yes or no' });
+  assert.deepEqual(valueProblems(form, { name: '', days: 'abc' }), { name: 'Required', days: 'Must be a number' });
+  assert.deepEqual(valueProblems(form, { name: 'x'.repeat(256), days: '1.5' }), { name: "Can't exceed 255 characters" });
   assert.deepEqual(valueProblems(form, { name: 'ok', days: '30', refund: false }), {});
   assert.deepEqual(outputOf(form, { name: 'ok', days: '30', currency: '', refund: false }), { name: 'ok', days: '30', refund: false });
   const duplicated = duplicateField({ fields: [form.fields[0], { ...form.fields[0], key: 'name' }] }, 0);
   assert.deepEqual(duplicated.fields.map(field => field.key), ['name', 'name2', 'name']);
-  assert.match(fieldProblems(duplicated).get(2)!, /重复/);
+  assert.match(fieldProblems(duplicated).get(2)!, /is duplicated/);
   assert.deepEqual(moveField(form, 0, 1).fields.map(field => field.key).slice(0, 2), ['days', 'name']);
   const files = { fields: [{ key: 'f', label: '合同', type: 'FILE' as const, required: true, rules: { minFiles: 2, maxFiles: 3 } }] };
   assert.deepEqual(valueProblems(files, { f: ['/files/v1/11'] }), {}, '旧配置 minFiles 不再检查');
-  assert.deepEqual(valueProblems(files, { f: ['/files/v1/11', '12'] }), { f: '文件地址无效，请重新上传' });
-  assert.deepEqual(valueProblems(files, { f: ['/files/v1/11', '/files/v1/11'] }), { f: '文件重复' });
+  assert.deepEqual(valueProblems(files, { f: ['/files/v1/11', '12'] }), { f: 'Invalid file address. Upload again.' });
+  assert.deepEqual(valueProblems(files, { f: ['/files/v1/11', '/files/v1/11'] }), { f: 'Duplicate file' });
   assert.deepEqual(valueProblems(files, { f: ['/files/v1/11', '/files/v1/12'] }), {});
-  assert.deepEqual(valueProblems(files, {}), { f: '必填' });
+  assert.deepEqual(valueProblems(files, {}), { f: 'Required' });
 });
 
 test('动作模板配置校验、引用汇总与配置对比', () => {
-  assert.deepEqual(configProblems('PAGE_TASK', { pageRoute: 'https://x.test', parameters: [] }), ['目标页面只允许以 / 开头的控制台内部路由，不接受外部地址']);
+  assert.deepEqual(configProblems('PAGE_TASK', { pageRoute: 'https://x.test', parameters: [] }), [t('config.pageRouteInternal')]);
   assert.deepEqual(configProblems('FILE_UPLOAD', { minFiles: 3, maxFiles: 2, mimeTypes: ['pdf'] }), [], '数量与类型不再配置');
   assert.deepEqual(configProblems('MANUAL_CONFIRM', { instruction: '确认' }), []);
   assert.deepEqual(normalizeConfig('FILE_UPLOAD', { minFiles: 1, maxFiles: 3, mimeTypes: ['application/pdf'], instruction: '上传执照' }), { required: true, instruction: '上传执照' });

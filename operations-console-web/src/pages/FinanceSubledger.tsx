@@ -11,6 +11,7 @@ import { SubledgerAccountList, SubledgerSearchForm } from '../finance/SubledgerA
 import { SubledgerEntries } from '../finance/SubledgerEntries';
 import { SubledgerPostingDrawer } from '../finance/SubledgerPostingDrawer';
 import { useCurrencies } from '../finance/useFinanceData';
+import { useT } from '../i18n/react';
 import '../configuration/configuration.css';
 import '../finance/finance.css';
 
@@ -23,6 +24,7 @@ interface DrillState { account?: OwnerAccountRef }
  * <li>总账分录行「流水 …」跳转只带 posting / entry：先经批次详情定位，再从抽屉进入所属账户流水。</li>
  */
 export function FinanceSubledger({ onAuthorizationChanged }: { onAuthorizationChanged: () => void }) {
+  const t = useT('finance'), tNav = useT('nav');
   const location = useLocation(); const navigate = useNavigate();
   const query = readSubledgerQuery(new URLSearchParams(location.search));
   const state = (location.state ?? {}) as DrillState;
@@ -39,25 +41,25 @@ export function FinanceSubledger({ onAuthorizationChanged }: { onAuthorizationCh
       accountId: entry.accountId, accountNo: entry.accountNo, accountCode: entry.accountCode, ownerType: entry.ownerType, ownerId: entry.ownerId,
       balanceBucket: entry.balanceBucket } });
   };
-  return <div className="configuration-page finance-page"><div className="page-heading"><h1>明细账查询</h1></div>
+  return <div className="configuration-page finance-page"><div className="page-heading"><h1>{tNav('resource.OPERATIONS_FINANCE_SUBLEDGER')}</h1></div>
     <SubledgerBreadcrumb query={query} account={account} onLevel={level => go(subledgerLevelSearch(location.search, level))} />
     {query.level !== 'entries' && <SubledgerSearchForm key={JSON.stringify([query.scope, query.accountFilters])} scope={query.scope}
       filters={query.accountFilters} currencies={currencies.items}
       onSearch={filters => go(subledgerQuerySearch(location.search, 'accounts', filters, { page: 1, size: query.accountPaging.size }))} />}
     {query.level === 'idle' && <div className="finance-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE}
-      description="选择主体类型并填写主体标识与币种后查询 Owner 账户" /></div>}
+      description={t('subledger.idle')} /></div>}
     {query.level === 'accounts' && query.scope && <>
       <SubledgerAccountList key={JSON.stringify([query.scope, query.accountFilters, query.accountPaging])} scope={query.scope}
         filters={query.accountFilters} paging={query.accountPaging} minorUnit={minorUnit} onSelect={openAccount}
         onQueryChange={next => go(subledgerQuerySearch(location.search, 'accounts', next.filters, next.paging), state, true)} />
-      <FinanceNote>明细账只读：Owner 账户按主体 + 币种 + 科目 + Owner + 余额桶唯一，余额只由 account 流水维护；点击账户行进入流水。总账分录行的流水 ID 可跳转到对应流水。</FinanceNote>
+      <FinanceNote>{t('subledger.accountsNote')}</FinanceNote>
     </>}
     {query.level === 'entries' && account && <>
       <SubledgerEntries key={JSON.stringify([query.account, query.entryPaging])} account={account} currency={query.scope?.currency}
         paging={query.entryPaging} minorUnit={minorUnit}
         onQueryChange={next => go(subledgerQuerySearch(location.search, 'entries', next.filters, next.paging), state, true)}
         onOpenPosting={(posting, entry) => go(replaceQuery(location.search, { posting, entry }), state)} />
-      <FinanceNote>流水按批次序号、行号升序；桶移动不产生总账分录；冲回列指向被替代事实的原流水。点击批次序号打开入账批次。</FinanceNote>
+      <FinanceNote>{t('subledger.entriesNote')}</FinanceNote>
     </>}
     {query.posting && <SubledgerPostingDrawer postingId={query.posting} highlightEntryId={query.entry} minorUnits={currencies.minorUnits}
       onOpenAccount={openFromPosting} onClose={() => go(replaceQuery(location.search, { posting: null, entry: null }), state)}
@@ -88,12 +90,13 @@ function useAccountSummary(scope: SubledgerScope | null, account: OwnerAccountRe
 function SubledgerBreadcrumb({ query, account, onLevel }: {
   query: SubledgerQuery; account: OwnerAccountRef | null; onLevel: (level: 'idle' | 'accounts') => void;
 }) {
+  const t = useT('finance');
   if (!query.scope) return null;
   const scope = `${query.scope.entityType} · ${query.scope.entityId} / ${query.scope.currency}`;
   return <Breadcrumb className="finance-breadcrumb" items={[
-    { title: <a onClick={() => onLevel('idle')}>明细账</a> },
+    { title: <a onClick={() => onLevel('idle')}>{t('subledger.breadcrumb')}</a> },
     { title: account ? <a onClick={() => onLevel('accounts')}>{scope}</a> : <strong>{scope}</strong> },
     ...(account ? [{ title: <strong>{account.accountCode
-      ? [account.accountCode, `${account.ownerType} ${account.ownerId}`, account.balanceBucket].join(' · ') : `账户 ${account.accountId}`}</strong> }] : []),
+      ? [account.accountCode, `${account.ownerType} ${account.ownerId}`, account.balanceBucket].join(' · ') : t('ledger.accountById', { accountId: account.accountId })}</strong> }] : []),
   ]} />;
 }

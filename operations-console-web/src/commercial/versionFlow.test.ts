@@ -38,7 +38,7 @@ test('签署状态与破标列：历史免签 / 客户已签署 / 待客户签�
   assert.equal(signatureState({ status: 'CLIENT_SIGNED', signatureExempt: false }), 'SIGNED');
   assert.equal(signatureState({ status: 'APPROVED', signatureExempt: false }), 'PENDING');
   assert.equal(signatureState({ status: 'DRAFT', signatureExempt: false }), null);
-  assert.deepEqual([belowStandardText(3), belowStandardText(0), belowStandardText(null)], ['破标 3', '—', null]);
+  assert.deepEqual([belowStandardText(3), belowStandardText(0), belowStandardText(null)], ['Below Standard 3', '—', null]);
 });
 
 test('AC-05 生成方式三选一：Partner 与模板自身不能基于模板，无来源不能复制；请求字段互斥', () => {
@@ -72,7 +72,10 @@ test('AC-08 签署表单：签署方从合同 CLIENT / LOCAL_PARTNER 参与方�
   assert.equal(commercialPaths.versionAcceptance(versionId), `/commercial-admin/v1/commercial-terms/versions/${versionId}/acceptance`);
   assert.deepEqual(signatureIssues(values, signatureParties(parties, false)), []);
   assert.deepEqual(signatureIssues({ ...values, partyId: '202', contentHash: 'x', fileId: '0', acceptedAt: '2999-01-01T00:00:00Z' }, signatureParties(parties, false)),
-    ['签署方必须是合同的签约参与方', '签署时刻不能晚于现在', '价格附件文件 ID 必须是正十进制整数', 'SHA-256 必须是 64 位十六进制']);
+    ['The signer must be a signing party of the agreement.', "The signing time can't be later than now.",
+      'The price attachment file ID must be a positive decimal integer.', 'SHA-256 must be 64 hexadecimal characters.']);
+  assert.deepEqual(signatureIssues({ ...values, acceptanceMethod: undefined, acceptedAt: '', acceptanceReference: '-' }, signatureParties(parties, false)),
+    ['Select a signing method.', 'Select the signing time.', 'The signing reference format is invalid.']);
 });
 
 test('版本读模型新字段：破标数、来源、标准价已更新、免签、签署记录、相关性提示；缺省兼容写回执', () => {

@@ -3,9 +3,10 @@ import test from 'node:test';
 import { ApiError } from '../api/session.ts';
 import { commercialPaths } from './commercial.ts';
 import {
-  capabilityLabel, cutoffTime, dashboardMetrics, decodeDashboard, decodeRateCard, decodeSimulation, limitConditions, priceErrorLabels, rateCardPath, simulationBody,
-  simulationErrorMessage, simulationFieldName,
+  capabilityLabel, cutoffTime, dashboardMetrics, decodeDashboard, decodeRateCard, decodeSimulation, illustrationNotesText, illustrationNoteText, limitConditions,
+  priceErrorLabel, rateCardPath, simulationBody, simulationErrorMessage, simulationFieldName,
 } from './commercialPreview.ts';
+import { testT } from '../i18n/testing.ts';
 import type { SimulationFormValues } from './commercialPreview.ts';
 
 const clientId = '7300000000000000011';
@@ -84,7 +85,7 @@ test('费率卡查询路径：空值不带参数，币种转大写', () => {
 });
 
 test('显示辅助：开通项名称与截止时刻', () => {
-  assert.equal(capabilityLabel(rateCard.agreements[0].capabilities[0]), 'CARD_VISA（CARD · CARD_BRAND=VISA）');
+  assert.equal(capabilityLabel(rateCard.agreements[0].capabilities[0]), 'CARD_VISA (CARD · CARD_BRAND=VISA)');
   assert.equal(capabilityLabel({ capabilityCode: 'PAYOUT', paymentMethodCode: null, dimensionCode: null, dimensionValue: null }), 'PAYOUT');
   assert.equal(cutoffTime(0), '00:00:00');
   assert.equal(cutoffTime(64800), '18:00:00');
@@ -106,9 +107,12 @@ test('试算结果：命中价格须与请求的版本、OE、币种一致；示
   const request = { termVersionId: '7319000000000000601', entityNo: 'AE001', currency: 'USD' };
   const illustration = { amount: '1000.00', currency: 'USD', fractionDigits: 2, feeEvents: [{ feeEventCode: 'PAYMENT_CAPTURED', totalAmount: '29.00',
     components: [{ componentNo: 1, componentCode: 'MDR', componentType: 'PERCENTAGE', calculationBase: 'GROSS_AMOUNT', computed: true,
-      rawAmount: '29.00000000', amount: '29.00', note: null }] }] };
+      rawAmount: '29.00000000', amount: '29.00', notes: [{ code: 'MIN_APPLIED', params: { amount: '0.50' } }] }] }] };
   const result = decodeSimulation(request)({ price, illustration });
   assert.equal(result.illustration?.feeEvents[0].totalAmount, '29.00');
+  assert.deepEqual(result.illustration?.feeEvents[0].components[0].notes, [{ code: 'MIN_APPLIED', params: { amount: '0.50' } }]);
+  assert.throws(() => decodeSimulation(request)({ price, illustration: { ...illustration, feeEvents: [{ ...illustration.feeEvents[0],
+    components: [{ ...illustration.feeEvents[0].components[0], notes: [{ code: 'MIN_APPLIED', params: { amount: 0.5 } }] }] }] } }), ApiError);
   assert.equal(decodeSimulation(request)({ price, illustration: null }).illustration, null);
   assert.throws(() => decodeSimulation({ ...request, currency: 'AED' })({ price, illustration: null }), ApiError);
   assert.throws(() => decodeSimulation(request)({ price, illustration: { ...illustration, feeEvents: [{ ...illustration.feeEvents[0],
@@ -117,12 +121,33 @@ test('试算结果：命中价格须与请求的版本、OE、币种一致；示
 
 test('试算失败说明：命中失败带错误码与 commercial 原因；业务拒绝显示原因；其他交给通用通知', () => {
   const notFound = simulationErrorMessage(new ApiError(422, 'PRICE_NOT_FOUND', 'r', 'AE001/USD/CARD 下没有价格'));
-  assert.equal(notFound, `${priceErrorLabels.PRICE_NOT_FOUND}。commercial：AE001/USD/CARD 下没有价格（PRICE_NOT_FOUND）`);
-  assert.match(simulationErrorMessage(new ApiError(409, 'PRICE_AMBIGUOUS')) ?? '', /歧义.*（PRICE_AMBIGUOUS）$/);
-  assert.equal(simulationErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'r', '版本不是时点适用版本')), '业务校验未通过：版本不是时点适用版本');
-  assert.equal(simulationErrorMessage(new ApiError(404, 'NOT_FOUND')), '条款版本不存在。');
+  assert.equal(notFound, `${priceErrorLabel('PRICE_NOT_FOUND')}. commercial: AE001/USD/CARD 下没有价格 (PRICE_NOT_FOUND)`);
+  assert.match(notFound ?? '', /^No price matched/);
+  assert.match(simulationErrorMessage(new ApiError(409, 'PRICE_AMBIGUOUS')) ?? '', /Ambiguous.* \(PRICE_AMBIGUOUS\)$/);
+  assert.equal(simulationErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'r', '版本不是时点适用版本')), 'Business check failed: 版本不是时点适用版本');
+  assert.equal(simulationErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED')), 'Business check failed: Check your input');
+  assert.equal(simulationErrorMessage(new ApiError(404, 'NOT_FOUND')), "The term version doesn't exist.");
+  assert.equal(priceErrorLabel('NOT_FOUND'), null);
   assert.equal(simulationErrorMessage(new ApiError(503, 'DEPENDENCY_UNAVAILABLE')), null);
   assert.equal(simulationErrorMessage(new Error('x')), null);
+});
+
+test('试算说明：按编码与参数翻译，count 走复数，多条按分句连接，未知编码显示编码与参数', () => {
+  const t = testT('commercial');
+  assert.equal(illustrationNoteText({ code: 'BAND_HIT', params: { bandNo: '2' } }), 'Matched tier 2');
+  assert.equal(illustrationNoteText({ code: 'PROGRESSIVE_BANDS', params: { count: '1' } }), 'Progressive across 1 tier');
+  assert.equal(illustrationNoteText({ code: 'PROGRESSIVE_BANDS', params: { count: '3' } }), 'Progressive across 3 tiers');
+  assert.equal(illustrationNoteText({ code: 'BAND_NONE', params: {} }), t('simulator.note.BAND_NONE'));
+  assert.equal(illustrationNoteText({ code: 'MIN_APPLIED', params: { amount: '0.50' } }), 'Minimum amount 0.50 applied');
+  assert.equal(illustrationNoteText({ code: 'MAX_APPLIED', params: { amount: '5.00' } }), 'Maximum amount 5.00 applied');
+  assert.equal(illustrationNoteText({ code: 'BASE_DEPENDS_ON_FEE', params: { base: 'ACTUAL_CLIENT_FEE' } }),
+    'Calculation base ACTUAL_CLIENT_FEE depends on other fee results; not calculated');
+  assert.equal(illustrationNoteText({ code: 'COMPONENT_UNSUPPORTED', params: { type: 'X' } }), t('simulator.note.COMPONENT_UNSUPPORTED', { type: 'X' }));
+  assert.equal(illustrationNoteText({ code: 'BAND_BASIS_PERIODIC', params: { basis: 'PERIOD_VOLUME' } }), t('simulator.note.BAND_BASIS_PERIODIC', { basis: 'PERIOD_VOLUME' }));
+  assert.equal(illustrationNoteText({ code: 'BAND_MODE_UNSUPPORTED', params: { mode: 'RETROACTIVE' } }), t('simulator.note.BAND_MODE_UNSUPPORTED', { mode: 'RETROACTIVE' }));
+  assert.equal(illustrationNoteText({ code: 'NEW_CODE', params: { a: '1' } }), 'NEW_CODE 1');
+  assert.equal(illustrationNotesText([{ code: 'BAND_HIT', params: { bandNo: '1' } }, { code: 'MIN_APPLIED', params: { amount: '0.50' } }]),
+    'Matched tier 1; Minimum amount 0.50 applied');
 });
 
 test('试算字段错误定位：Owner 字段映射到表单字段，维度事实不定位', () => {

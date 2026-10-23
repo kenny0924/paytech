@@ -15,8 +15,11 @@ import com.paytech.operations.console.bff.service.model.RoleModels.GrantablePerm
 import com.paytech.operations.console.bff.service.model.RoleModels.PermissionNode;
 import com.paytech.operations.console.bff.service.model.RoleModels.PermissionResource;
 
-/** 将已授权权限及资源绑定转成页面树，不推导或补授任何权限。 @author Codex */
+/** 将已授权权限及资源绑定转成页面树，不推导或补授任何权限；节点名称由前端按 code 翻译。 @author Codex */
 public final class RolePermissionTree {
+    /** 未挂资源的权限所在分组的编码，同时作为该分组的回退名称。 */
+    public static final String OTHER_PERMISSIONS = "OTHER_PERMISSIONS";
+
     private RolePermissionTree() {
     }
 
@@ -31,9 +34,11 @@ public final class RolePermissionTree {
             .filter(permission -> !boundPermissions.contains(permission.permissionId()))
             .sorted(Comparator.comparing(GrantablePermission::permissionCode).thenComparing(GrantablePermission::permissionId))
             .map(permission -> new PermissionNode("permission:" + permission.permissionId(), permission.permissionCode(),
-                permission.permissionId(), List.of()))
+                permission.permissionCode(), permission.permissionId(), List.of()))
             .toList();
-        if (!unbound.isEmpty()) roots.add(new PermissionNode("group:other", "其他权限", null, unbound));
+        if (!unbound.isEmpty()) {
+            roots.add(new PermissionNode("group:other", OTHER_PERMISSIONS, OTHER_PERMISSIONS, null, unbound));
+        }
         return List.copyOf(roots);
     }
 
@@ -53,7 +58,7 @@ public final class RolePermissionTree {
         for (PermissionResource resource : resources) {
             require(resource != null && hasText(resource.resourceId()) && hasText(resource.permissionId()));
             if (!permissions.contains(resource.permissionId())) continue;
-            require(hasText(resource.displayName()));
+            require(hasText(resource.displayName()) && hasText(resource.resourceCode()));
             require(result.putIfAbsent(resource.resourceId(), resource) == null);
         }
         return result;
@@ -85,7 +90,8 @@ public final class RolePermissionTree {
     private static List<PermissionNode> nodes(List<PermissionResource> resources,
                                              Map<String, List<PermissionResource>> children) {
         return resources.stream().map(resource -> new PermissionNode("resource:" + resource.resourceId(),
-            resource.displayName(), resource.permissionId(), nodes(children.getOrDefault(resource.resourceId(), List.of()), children)))
+            resource.resourceCode(), resource.displayName(), resource.permissionId(),
+            nodes(children.getOrDefault(resource.resourceId(), List.of()), children)))
             .toList();
     }
 

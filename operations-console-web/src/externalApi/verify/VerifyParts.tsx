@@ -6,6 +6,7 @@ import { useErrorNotification } from '../../feedback/useErrorNotification';
 import { decodeRunStart, verifyPath } from './verifyModel';
 import { workspaceRoutes } from '../../channel/channelWorkspace';
 import type { Tone } from './verifyModel';
+import { useT } from '../../i18n/react';
 
 /** 状态标签：中性灰、运行中蓝、通过绿、未通过红、需重新验证 / 已中断橙。 */
 export function VerifyTag({ label, tone }: { label: string; tone: Tone }) {
@@ -26,6 +27,7 @@ export function JsonBlock({ value, empty = '—' }: { value: unknown; empty?: st
 export function StartRunDialog({ channelId, integrationCode, caseCode, onClose, onAuthorizationChanged }: {
   channelId: string; integrationCode: string; caseCode: string; onClose: () => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('channel'), tCommon = useT('common');
   const [form] = Form.useForm<{ reason: string }>();
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate(); const notify = useErrorNotification();
@@ -39,15 +41,15 @@ export function StartRunDialog({ channelId, integrationCode, caseCode, onClose, 
       void navigate(workspaceRoutes(channelId).verifyRun(run.runCode));
     } catch (error) {
       if (error instanceof ApiError && error.status === 403) onAuthorizationChanged();
-      notify(error, '运行未发起');
+      notify(error, t('verify.run.failed'));
     } finally { setSaving(false); }
   }
-  return <Modal open centered title={`运行验证用例 ${caseCode}`} okText="运行" okButtonProps={{ loading: saving }}
-    cancelText="取消" onCancel={onClose} onOk={() => form.submit()} destroyOnHidden>
-    <p className="xapi-desc">将使用用例绑定的验证账号，真实调用渠道标记为沙箱的出站地址；未标记沙箱时不会发出请求。运行在后台执行，结果与报文证据会保存。</p>
+  return <Modal open centered title={t('verify.run.title', { code: caseCode })} okText={t('verify.run.ok')} okButtonProps={{ loading: saving }}
+    cancelText={tCommon('action.cancel')} onCancel={onClose} onOk={() => form.submit()} destroyOnHidden>
+    <p className="xapi-desc">{t('verify.run.hint')}</p>
     <Form form={form} layout="vertical" requiredMark={false} onFinish={values => void submit(values)}>
-      <Form.Item name="reason" label="运行原因" rules={[{ required: true, whitespace: true, message: '请填写运行原因' }]}>
-        <Input.TextArea rows={2} maxLength={500} showCount autoFocus placeholder="例如：渠道升级后回归" disabled={saving} />
+      <Form.Item name="reason" label={t('verify.run.reason')} rules={[{ required: true, whitespace: true, message: t('verify.run.reasonRequired') }]}>
+        <Input.TextArea rows={2} maxLength={500} showCount autoFocus placeholder={t('verify.run.reasonPlaceholder')} disabled={saving} />
       </Form.Item>
     </Form>
   </Modal>;

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { ConsoleResource } from '../api/types.ts';
-import { pageRoutePaths, buildMenuTree, menuPages, menuAncestors } from './menu.ts';
+import { testT } from '../i18n/testing.ts';
+import { pageRoutePaths, buildMenuTree, menuPages, menuAncestors, resourceLabel } from './menu.ts';
 
 function resource(resourceId: string, values: Partial<ConsoleResource> = {}): ConsoleResource {
   return { resourceId, resourceCode: resourceId, resourceType: 'MENU', parentResourceId: null,
@@ -109,4 +110,11 @@ test('卡 BIN 库：平台配置下注册 /card-bin-library 单一路由，维�
   assert.deepEqual(menuPages(tree).map(item => item.frontendRoute), ['/card-bin-library']);
   assert.deepEqual(pageRoutePaths(page), ['/card-bin-library']);
   assert.deepEqual(buildMenuTree([platform, { ...page, frontendRoute: '/card-bin' }]), []);
+});
+
+test('menu, breadcrumb and title labels use nav.resource.<resourceCode>; a code without a key falls back to display_name', () => {
+  const t = testT('nav');
+  assert.equal(resourceLabel(t, { resourceCode: 'OPERATIONS_ACCOUNTS', displayName: '人员管理' }), 'Users');
+  assert.equal(resourceLabel(t, { resourceCode: 'OPERATIONS_FINANCE_RECON', displayName: '对账' }), 'Reconciliation');
+  assert.equal(resourceLabel(t, { resourceCode: 'OPERATIONS_NOT_YET_TRANSLATED', displayName: '新页面' }), '新页面');
 });

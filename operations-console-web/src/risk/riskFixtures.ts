@@ -17,7 +17,7 @@ export const passedChecks: ReleaseStaticCheck[] = checkCodes.map((checkCode, ind
 
 export const ruleSetDetail = { ...ruleSetSummary, rules: [rule] };
 export const createRuleSetRequest: CreateRuleSetVersionRequest = {
-  pointCode: 'CHECKOUT_PREPARE', ruleSetCode: 'RULE_SET', ruleSetName: '规则集', baseRuleSetVersionId: null,
+  pointCode: 'CHECKOUT_PREPARE', ruleSetCode: 'RULE_SET', ruleSetName: 'Rule Set', baseRuleSetVersionId: null,
   baseContentHash: null, changeReason: 'Initial version', rules: [rule],
 };
 export const freezeRuleSetRequest: FreezeRuleSetVersionRequest = { expectedContentHash: hex };
@@ -90,12 +90,12 @@ export const configurationContext: RuleAuthoringContext = {
   ...authoringContext,
   fields: [{ fieldCode: 'client_id', valueType: 'STRING', requiredFlag: true, dataClassification: 'INTERNAL', ruleReferenceFlag: false, actionParameterFlag: true }, ...authoringContext.fields],
   actions: [
-    { actionCode: 'ADD_RISK_TAG', actionName: '添加主体标签', actionCategory: 'TAG', versionNo: 1, terminalFlag: false, decisionCode: null, mergePolicy: 'UNION', shadowSupportedFlag: false, status: 'CONFIGURATION_ONLY' },
+    { actionCode: 'ADD_RISK_TAG', actionName: 'Add Subject Tag', actionCategory: 'TAG', versionNo: 1, terminalFlag: false, decisionCode: null, mergePolicy: 'UNION', shadowSupportedFlag: false, status: 'CONFIGURATION_ONLY' },
     authoringContext.actions[0]!,
-    { actionCode: 'APPLY_COOLDOWN', actionName: '冷却', actionCategory: 'RESTRICTION', versionNo: 1, terminalFlag: false, decisionCode: null, mergePolicy: 'MAX', shadowSupportedFlag: false, status: 'CONFIGURATION_ONLY' },
+    { actionCode: 'APPLY_COOLDOWN', actionName: 'Cooldown', actionCategory: 'RESTRICTION', versionNo: 1, terminalFlag: false, decisionCode: null, mergePolicy: 'MAX', shadowSupportedFlag: false, status: 'CONFIGURATION_ONLY' },
     ...authoringContext.actions.slice(1),
   ],
-  targetBindings: [{ bindingCode: 'CURRENT_CLIENT_V1', displayName: '当前 Client', subjectType: 'CLIENT', requiredFields: [{ role: 'SUBJECT_ID', fieldCode: 'client_id' }] }],
+  targetBindings: [{ bindingCode: 'CURRENT_CLIENT_V1', displayName: 'Current Client', subjectType: 'CLIENT', requiredFields: [{ role: 'SUBJECT_ID', fieldCode: 'client_id' }] }],
   actionParameters: ['APPLY_COOLDOWN', 'ADD_RISK_TAG'].flatMap(actionCode => [
     { actionCode, actionVersionNo: 1, parameterCode: 'SUBJECT_ID', valueType: 'STRING', requiredFlag: true, allowedSourceType: 'CONTEXT', targetParameterFlag: true, maxValues: 1, minimumValue: null, maximumValue: null, valuePattern: null },
     { actionCode, actionVersionNo: 1, parameterCode: actionCode === 'APPLY_COOLDOWN' ? 'DURATION' : 'TAG', valueType: actionCode === 'APPLY_COOLDOWN' ? 'DURATION' : 'STRING', requiredFlag: true, allowedSourceType: 'LITERAL', targetParameterFlag: false, maxValues: actionCode === 'APPLY_COOLDOWN' ? 1 : 32, minimumValue: actionCode === 'APPLY_COOLDOWN' ? '1' : null, maximumValue: actionCode === 'APPLY_COOLDOWN' ? '31536000000' : null, valuePattern: actionCode === 'ADD_RISK_TAG' ? '[A-Z][A-Z0-9_]{0,63}' : null },

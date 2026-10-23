@@ -1,4 +1,7 @@
 import type { UploadAuthorization } from './binLibrary';
+import { translator } from '../i18n/index';
+
+const t = translator('card');
 
 /** 浏览器不允许脚本设置的请求头，由浏览器自行生成。 */
 const browserManagedHeaders = new Set(['content-length', 'host', 'connection']);
@@ -18,9 +21,9 @@ export function putFile(authorization: UploadAuthorization, file: Blob, onProgre
     }
     request.upload.onprogress = event => onProgress(event.loaded, event.lengthComputable ? event.total : file.size);
     request.onload = () => request.status >= 200 && request.status < 300 ? resolve()
-      : reject(new Error(`对象存储拒绝上传（HTTP ${request.status}）`));
-    request.onerror = () => reject(new Error('上传连接失败，请检查网络后重试'));
-    request.onabort = () => reject(new DOMException('上传已取消', 'AbortError'));
+      : reject(new Error(t('upload.rejected', { status: request.status })));
+    request.onerror = () => reject(new Error(t('upload.connectionFailed')));
+    request.onabort = () => reject(new DOMException(t('upload.cancelled'), 'AbortError'));
     if (signal.aborted) { request.abort(); return; }
     signal.addEventListener('abort', () => request.abort(), { once: true });
     request.send(file);

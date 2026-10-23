@@ -1,9 +1,10 @@
 import type { RiskDecisionApi } from './riskDecisionApi.ts';
 import type { RuleSetDetail, RuleSetVersionSummary } from './riskApiModels.ts';
+import { translator } from '../i18n/index.ts';
 
 export class ObservedHeadChangedError extends Error {
   constructor() {
-    super('规则集版本信息已变化，请刷新后重试。');
+    super(translator('risk')('ruleSet.headChanged'));
     this.name = 'ObservedHeadChangedError';
   }
 }

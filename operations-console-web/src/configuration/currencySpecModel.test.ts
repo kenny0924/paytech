@@ -1,12 +1,16 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ApiError } from '../api/session.ts';
+import { enumLabel } from '../i18n/index.ts';
+import { testT } from '../i18n/testing.ts';
 import { pageCapabilities } from '../navigation/pageCapabilities.ts';
 import {
   createCurrencySpecBody, currencySpecPath, currencyStatusChange, decodeCurrencySpecList, decodeCurrencySpecMutation, editableCurrencySpec,
   manageCurrencySpecs, updateCurrencySpecBody,
 } from './currencySpecModel.ts';
 import type { CurrencySpec } from './currencySpecModel.ts';
+
+const t = testT('currency');
 
 const usd: CurrencySpec = { currency: 'USD', minorUnit: 2, roundingMode: 'HALF_UP', status: 'ACTIVE', version: 2, updateTime: '2026-10-20T01:02:03.123456Z' };
 const aed: CurrencySpec = { ...usd, currency: 'AED', status: 'DRAFT', version: 1 };
@@ -52,13 +56,21 @@ test('请求体：新建去除空白并只发合同字段；修改带原版本�
   assert.equal('currency' in update, false);
 });
 
-test('只有草稿可编辑；草稿与停用可启用，启用可停用，确认文案说明冻结与停用影响', () => {
+test('只有草稿可编辑；草稿与停用可启用，启用可停用，确认文案说明冻结与停用影响（以英文基准断言）', () => {
   assert.deepEqual([aed, usd, jpy].map(editableCurrencySpec), [true, false, false]);
   assert.deepEqual([aed, usd, jpy].map(spec => [currencyStatusChange(spec).target, currencyStatusChange(spec).verb]),
-    [['ACTIVE', '启用'], ['INACTIVE', '停用'], ['ACTIVE', '启用']]);
+    [['ACTIVE', 'Enable'], ['INACTIVE', 'Disable'], ['ACTIVE', 'Enable']]);
   const activate = currencyStatusChange(aed).notice;
-  assert.match(activate, /小数位 2/); assert.match(activate, /HALF_UP/);
-  assert.match(activate, /启用后小数位与舍入方式不可修改，币种代码也无法换一个重建/);
-  assert.match(currencyStatusChange(jpy).notice, /小数位 0/);
-  assert.equal(currencyStatusChange(usd).notice, '已有账簿与计费事实照常处理，只拦截新建账簿等新用途。');
+  assert.equal(activate, t('statusChange.enableNotice', { minorUnit: 2, roundingMode: 'Round half up (HALF_UP)' }));
+  assert.match(activate, /^Check again: 2 decimal places, rounding mode Round half up \(HALF_UP\)\./);
+  assert.match(currencyStatusChange({ ...aed, minorUnit: 1 }).notice, /: 1 decimal place,/);
+  assert.match(currencyStatusChange(jpy).notice, /: 0 decimal places,/);
+  assert.equal(currencyStatusChange(usd).notice, t('statusChange.disableNotice'));
+});
+
+test('枚举显示名：已知值取 currency.enum.*，未知值原样显示', () => {
+  assert.equal(enumLabel(t, 'enum.status', 'ACTIVE'), 'Enabled');
+  assert.equal(enumLabel(t, 'enum.roundingMode', 'HALF_UP'), 'Round half up (HALF_UP)');
+  assert.equal(enumLabel(t, 'enum.status', 'ARCHIVED'), 'ARCHIVED');
+  assert.equal(enumLabel(t, 'enum.status', null), '');
 });

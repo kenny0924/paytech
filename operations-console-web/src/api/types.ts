@@ -17,8 +17,13 @@ export interface ConsoleResource {
 export interface NavigationResponseBody { resources: ConsoleResource[] }
 export interface Role { roleId: string; roleCode: string; roleName: string; systemRole: boolean }
 export interface RoleListItem extends Role { version: number; employeeCount: number }
+/**
+ * Role permission tree node. `code` is what the page translates: a resource node carries its resource code
+ * (`nav.resource.<code>`), a permission without a resource carries its permission code (shown as is), and the
+ * "other permissions" group is `OTHER_PERMISSIONS`. `displayName` is the Platform name (or the code), only a fallback.
+ */
 export interface PermissionNode {
-  nodeId: string; displayName: string; permissionId: string | null; children: PermissionNode[];
+  nodeId: string; code: string; displayName: string; permissionId: string | null; children: PermissionNode[];
 }
 export interface RolePermissionOptionsResponseBody { nodes: PermissionNode[] }
 export interface RoleResponseBody extends Role { version: number; permissionIds: string[] }
@@ -36,8 +41,10 @@ export interface AuditEvent {
   auditEventId: string; actorId: string; actionCode: string; resourceType: string;
   resourceId: string; result: string; requestId: string; occurredTime: string; reason: string;
 }
-export interface AuditChange { key: string; label: string; before: (string | null)[]; after: (string | null)[] }
-export interface AuditAttribute { key: string; label: string; values: (string | null)[] }
+/** Field change; the page translates the field name from `key` and shows unknown keys as they are. */
+export interface AuditChange { key: string; before: (string | null)[]; after: (string | null)[] }
+/** Other recorded attribute; the name is translated from `key` the same way. */
+export interface AuditAttribute { key: string; values: (string | null)[] }
 export interface AuditDetailResponseBody { event: AuditEvent; changes: AuditChange[]; attributes: AuditAttribute[] }
 
 export type GatewayConfigurationStatus = 'ACTIVE' | 'DISABLED';

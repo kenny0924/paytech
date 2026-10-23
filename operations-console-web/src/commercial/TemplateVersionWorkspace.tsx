@@ -5,10 +5,12 @@ import { session } from '../api/session';
 import type { ConsoleResource } from '../api/types';
 import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessView';
 import {
-  commercialButtons, commercialPaths, commercialRoutes, hasButton, localTime, priceMatrix, versionBasisLabel, versionStatusLabels,
+  commercialButtons, commercialPaths, commercialRoutes, hasButton, joinList, localTime, priceMatrix, versionBasisLabel,
 } from './commercial';
 import type { VersionAction } from './commercial';
-import { catalogLabel, catalogTermTypeLabels } from './catalogTree';
+import { catalogTermTypeLabel } from './catalogTree';
+import { enumLabel } from '../i18n/index';
+import { useT } from '../i18n/react';
 import { CommercialNote, StatusTag } from './CommercialParts';
 import { consolePaths, consoleRoutes, decodeTermVersionPage } from './commercialConsole';
 import type { TermVersionListItem } from './commercialConsole';
@@ -28,6 +30,7 @@ type Dialog = { kind: Exclude<VersionAction, 'schedule'> } | { kind: 'schedule' 
  * <li>版本读返回合同价目版本时转到价目版本编辑器。</li>
  */
 export function TemplateVersionWorkspace({ versionId, resources, onAuthorizationChanged }: Props) {
+  const t = useT('commercial'), tCommon = useT('common');
   const navigate = useNavigate();
   const decode = useMemo(() => decodeVersionWorkspace(versionId), [versionId]);
   const read = useDetail(commercialPaths.version(versionId), decode);
@@ -45,37 +48,38 @@ export function TemplateVersionWorkspace({ versionId, resources, onAuthorization
   const done = () => { setDialog(null); detail.refresh(); };
   const base = { onClose: close, onReload: done, onAuthorizationChanged };
   return <div className="configuration-page commercial-page">
-    <div className="page-heading"><h1>{plan?.templateName ?? '标准价目'} · v{version.versionNo}</h1>
+    <div className="page-heading"><h1>{plan?.templateName ?? t('source.standardTemplate')} · v{version.versionNo}</h1>
       <div className="commercial-actions">
-        <Button onClick={() => void navigate(templateRoutes.list)}>返回</Button>
-        <Button onClick={detail.refresh} loading={detail.loading}>刷新</Button>
+        <Button onClick={() => void navigate(templateRoutes.list)}>{t('shared.back')}</Button>
+        <Button onClick={detail.refresh} loading={detail.loading}>{tCommon('action.refresh')}</Button>
         {versions.length > 1 && <Select className="commercial-compare-select" value={version.versionId}
           onChange={(next: string) => void navigate(templateRoutes.version(next))}
-          options={versions.map(item => ({ value: item.versionId, label: `v${item.versionNo}（${versionStatusLabels[item.status]}）` }))} />}
-        <Button onClick={() => void navigate(consoleRoutes.history('COMMERCIAL_TERM_PLAN', version.planId))}>变更历史</Button>
-        {actions.editPrices && <Button onClick={() => setDialog({ kind: 'edit' })}>编辑价格</Button>}
-        {actions.submit && <Button type="primary" disabled={prices.length === 0} onClick={() => setDialog({ kind: 'submit' })}>提交复核</Button>}
-        {actions.approve && <Button type="primary" onClick={() => setDialog({ kind: 'approve' })}>复核通过</Button>}
-        {actions.reject && <Button danger onClick={() => setDialog({ kind: 'reject' })}>驳回</Button>}
-        {actions.schedule && <Button type="primary" onClick={() => setDialog({ kind: 'schedule' })}>排期</Button>}
-        {actions.activate && <Button onClick={() => setDialog({ kind: 'activate' })}>立即激活</Button>}
-        {actions.copy && <Button onClick={() => setDialog({ kind: 'copy' })}>新建版本</Button>}
+          options={versions.map(item => ({ value: item.versionId, label: t('version.option', { versionNo: item.versionNo, status: enumLabel(t, 'enum.versionStatus', item.status) }) }))} />}
+        <Button onClick={() => void navigate(consoleRoutes.history('COMMERCIAL_TERM_PLAN', version.planId))}>{t('shared.changeHistory')}</Button>
+        {actions.editPrices && <Button onClick={() => setDialog({ kind: 'edit' })}>{t('version.action.editPrices')}</Button>}
+        {actions.submit && <Button type="primary" disabled={prices.length === 0} onClick={() => setDialog({ kind: 'submit' })}>{t('template.action.submit')}</Button>}
+        {actions.approve && <Button type="primary" onClick={() => setDialog({ kind: 'approve' })}>{t('template.action.approve')}</Button>}
+        {actions.reject && <Button danger onClick={() => setDialog({ kind: 'reject' })}>{t('version.action.reject')}</Button>}
+        {actions.schedule && <Button type="primary" onClick={() => setDialog({ kind: 'schedule' })}>{t('version.action.schedule')}</Button>}
+        {actions.activate && <Button onClick={() => setDialog({ kind: 'activate' })}>{t('version.action.activateNow')}</Button>}
+        {actions.copy && <Button onClick={() => setDialog({ kind: 'copy' })}>{t('version.action.newVersion')}</Button>}
       </div>
     </div>
     <dl className="commercial-summary">
-      <div><dt>状态</dt><dd><StatusTag status={version.status} labels={versionStatusLabels} /></dd></div>
-      <div><dt>模板编号</dt><dd className="mono">{plan?.planCode ?? version.planId}</dd></div>
-      <div><dt>条款类型</dt><dd>{catalogLabel(catalogTermTypeLabels, version.termType)}</dd></div>
-      <div><dt>OE</dt><dd>{entityNos.join('、') || '—'}</dd></div>
-      <div><dt>生效</dt><dd>{['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(version.status) ? '排期时确定'
-        : `${localTime(version.effectiveFrom)} ～ ${version.effectiveTo ? localTime(version.effectiveTo) : '未定'}`}</dd></div>
-      <div><dt>口径</dt><dd>{versionBasisLabel(version.pricingModel, version.feeTaxTreatment)} · {version.roundingMode}</dd></div>
-      <div><dt>版本令牌</dt><dd>{version.changeVersion}</dd></div>
+      <div><dt>{t('shared.column.status')}</dt><dd><StatusTag status={version.status} kind="versionStatus" /></dd></div>
+      <div><dt>{t('template.field.code')}</dt><dd className="mono">{plan?.planCode ?? version.planId}</dd></div>
+      <div><dt>{t('shared.column.termType')}</dt><dd>{catalogTermTypeLabel(version.termType)}</dd></div>
+      <div><dt>OE</dt><dd>{joinList(entityNos) || '—'}</dd></div>
+      <div><dt>{t('shared.column.effective')}</dt><dd>{['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(version.status) ? t('version.field.setOnSchedule')
+        : t('shared.period', { from: localTime(version.effectiveFrom), to: version.effectiveTo ? localTime(version.effectiveTo) : t('shared.openEnded') })}</dd></div>
+      <div><dt>{t('shared.column.basis')}</dt><dd>{versionBasisLabel(version.pricingModel, version.feeTaxTreatment)} · {version.roundingMode}</dd></div>
+      <div><dt>{t('version.field.token')}</dt><dd>{version.changeVersion}</dd></div>
     </dl>
-    <div className="commercial-section-head"><h2>价格矩阵</h2><Tag>{prices.length} 条价格</Tag><Tag>{priceMatrix(prices).events.length} 个计费事件</Tag></div>
+    <div className="commercial-section-head"><h2>{t('version.matrix.title')}</h2><Tag>{t('matrix.priceCount', { count: prices.length })}</Tag>
+      <Tag>{t('version.matrix.eventCount', { count: priceMatrix(prices).events.length })}</Tag></div>
     <PriceMatrixView prices={prices} settlement templateLabel={null}
-      emptyText={actions.editPrices ? '还没有价格，点击「编辑价格」添加' : '该版本没有价格'} />
-    <CommercialNote>标准价目覆盖平台可售的全部支付方式与功能，不受合同开通约束；合同新版本「基于标准价目」生成时只取合同已开通的部分。模板出新版本后，引用旧版本的合同显示「标准价已更新」，合同价格不变。</CommercialNote>
+      emptyText={actions.editPrices ? t('version.matrix.emptyEditable') : t('version.matrix.empty')} />
+    <CommercialNote>{t('template.workspace.note')}</CommercialNote>
     {dialog?.kind === 'edit' && <PriceEditorDrawer version={version} entityNos={entityNos} prices={prices} savePath={templatePaths.prices(version.versionId)}
       onClose={close} onSaved={done} onAuthorizationChanged={onAuthorizationChanged} />}
     {(dialog?.kind === 'submit' || dialog?.kind === 'approve' || dialog?.kind === 'reject' || dialog?.kind === 'activate')

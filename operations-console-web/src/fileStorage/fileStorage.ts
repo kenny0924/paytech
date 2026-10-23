@@ -1,4 +1,7 @@
 import { ApiError, session } from '../api/session.ts';
+import { enumLabel, i18n, translator } from '../i18n/index.ts';
+
+const t = translator('file');
 
 /** Operations BFF 存储管理路径；实例、桶与写入规则的唯一 Owner 是 Platform。 */
 export const storageAdminPath = '/storage-admin/v1';
@@ -27,29 +30,26 @@ export type BucketStatus = typeof bucketStatuses[number];
 export type CheckResult = typeof checkResults[number];
 export type AccessLevel = typeof accessLevels[number];
 
-export const storageTypeLabels: Readonly<Record<StorageType, string>> = { MINIO: 'MinIO', S3: 'Amazon S3' };
-export const credentialModeLabels: Readonly<Record<CredentialMode, string>> = { STATIC: '固定密钥（Vault）', IAM_ROLE: 'IAM 角色' };
-export const instanceStatusLabels: Readonly<Record<InstanceStatus, string>> = { DRAFT: '草稿', ACTIVE: '启用', DISABLED: '停用' };
-export const bucketStatusLabels: Readonly<Record<BucketStatus, string>> = { DRAFT: '草稿', ACTIVE: '启用', READ_ONLY: '只读', DISABLED: '停用' };
+/**
+ * 显示名在 `file` 命名空间（`enum.storageType`、`enum.credentialMode`、`enum.instanceStatus`、`enum.bucketStatus`、
+ * `enum.checkResult`、`enum.accessLevel`），由下面的函数在调用时按当前语言取；这里的常量只保留代码与颜色。
+ */
+export const storageTypeLabel = (value: string) => enumLabel(t, 'enum.storageType', value);
+export const credentialModeLabel = (value: string) => enumLabel(t, 'enum.credentialMode', value);
+export const instanceStatusLabel = (value: string) => enumLabel(t, 'enum.instanceStatus', value);
+export const bucketStatusLabel = (value: string) => enumLabel(t, 'enum.bucketStatus', value);
+export const checkResultLabel = (value: string) => enumLabel(t, 'enum.checkResult', value);
+export const accessLevelLabel = (value: string) => enumLabel(t, 'enum.accessLevel', value);
+/** 按当前语言连接并列项：zh-CN 用顿号，en 用逗号。 */
+export const joinList = (items: readonly string[]) => new Intl.ListFormat(i18n.locale(), { style: 'narrow', type: 'conjunction' }).format(items);
 export const statusColors: Readonly<Record<string, string>> = { DRAFT: 'gold', ACTIVE: 'green', READ_ONLY: 'blue', DISABLED: 'default' };
-export const checkResultLabels: Readonly<Record<CheckResult, string>> = {
-  OK: '检查通过',
-  NOT_FOUND: '桶不存在，请先由基础设施创建',
-  VERSIONING_DISABLED: '未开启版本控制',
-  ENCRYPTION_DISABLED: '未开启默认加密',
-  ACCESS_DENIED: '凭据无权读写该桶',
-  UNAVAILABLE: '存储或 Vault 暂时无法访问',
-  PUBLIC_ACCESS_ALLOWED: '桶允许匿名访问',
-  PUBLIC_READ_FAILED: '对外地址不可访问',
-};
-export const accessLevelLabels: Readonly<Record<AccessLevel, string>> = { PRIVATE: '私有', PUBLIC: '公开' };
 export const accessLevelColors: Readonly<Record<AccessLevel, string>> = { PRIVATE: 'default', PUBLIC: 'blue' };
 /** 公开桶检查未通过时的静态排查指引；平台不修改桶策略，只给出 AWS 控制台中的公开只读示例。 */
-export const publicReadGuidance = '常见原因：桶仍开着「阻止公共访问」、没有公开只读的桶策略、CDN 未回源到该桶，或使用了 SSE-KMS 加密（匿名请求无法解密）。';
+export const publicReadGuidance = () => t('check.publicReadGuidance');
 export const publicReadPolicyExample = (bucketName: string) =>
   `{ "Effect": "Allow", "Principal": "*", "Action": "s3:GetObject", "Resource": "arn:aws:s3:::${bucketName}/*" }`;
 /** 私有桶检查未通过（允许匿名访问）时的指引。 */
-export const privateAccessGuidance = '私有桶不能被匿名读取：请开启「阻止公共访问」并移除公开读的桶策略或对象 ACL 后重新检查。';
+export const privateAccessGuidance = () => t('check.privateAccessGuidance');
 
 export const instanceCodePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
 export const sourceSystemPattern = /^[a-z][a-z0-9-]{0,63}$/;
@@ -176,8 +176,8 @@ export function routeMatrix(routes: readonly StorageRoute[]): RouteMatrixRow[] {
 /** 未配置格的说明：精确来源回落到同级别默认规则；同级别默认规则也没有时，该级别上传返回 503。 */
 export function missingRouteNotice(routes: readonly StorageRoute[], sourceSystem: string, accessLevel: AccessLevel): string {
   const fallback = routes.some(route => route.sourceSystem === defaultSourceSystem && route.accessLevel === accessLevel);
-  if (sourceSystem !== defaultSourceSystem && fallback) return `未配置，使用默认${accessLevelLabels[accessLevel]}规则`;
-  return `未配置：${sourceSystem === defaultSourceSystem ? '没有精确规则的来源' : '该来源'}的${accessLevelLabels[accessLevel]}上传将返回 503`;
+  if (sourceSystem !== defaultSourceSystem && fallback) return t('routes.missing.fallback', { level: accessLevel });
+  return sourceSystem === defaultSourceSystem ? t('routes.missing.default', { level: accessLevel }) : t('routes.missing.source', { level: accessLevel });
 }
 
 export interface StorageMutation { objectType: string; objectId: string; objectCode: string; status: string | null; version: number }
@@ -227,7 +227,7 @@ export function filterBucketRows(rows: readonly BucketRow[], accessLevel?: Acces
 export const editablePublicBaseUrl = (bucket: StorageBucket) => bucket.status === 'DRAFT' && bucket.accessLevel === 'PUBLIC';
 
 /** 来源系统展示：默认规则显示为"默认"。 */
-export const sourceSystemLabel = (sourceSystem: string) => sourceSystem === defaultSourceSystem ? '默认' : sourceSystem;
+export const sourceSystemLabel = (sourceSystem: string) => sourceSystem === defaultSourceSystem ? t('routes.defaultSource') : sourceSystem;
 
 /** 默认私有规则（*, PRIVATE）不可删除，其余规则可删除。 */
 export const deletableRoute = (route: StorageRoute) => !(route.sourceSystem === defaultSourceSystem && route.accessLevel === 'PRIVATE');
@@ -237,28 +237,28 @@ export interface StatusAction<S extends string> { target: S; verb: string; dange
 /** 实例状态动作：草稿与停用可启用，启用可停用。 */
 export function instanceStatusAction(instance: StorageInstance): StatusAction<InstanceStatus> {
   return instance.status === 'ACTIVE'
-    ? { target: 'DISABLED', verb: '停用', danger: true }
-    : { target: 'ACTIVE', verb: '启用', danger: false };
+    ? { target: 'DISABLED', verb: t('statusAction.disable'), danger: true }
+    : { target: 'ACTIVE', verb: t('statusAction.enable'), danger: false };
 }
 
 /** 实例启停前的提示；启用要求至少一个启用的桶，停用时被写入规则引用会被 Platform 拒绝。 */
 export function instanceStatusNotice(instance: StorageInstance): string {
   if (instance.status === 'ACTIVE') {
     return instance.routeCount > 0
-      ? `该实例被 ${instance.routeCount} 条写入规则引用，需先把这些规则改到其他桶，否则停用会被拒绝。`
-      : '停用后该实例上的文件读写都返回不可用，已有记录保留。';
+      ? t('instanceStatus.referenced', { count: instance.routeCount })
+      : t('instanceStatus.disableNotice');
   }
   return instance.buckets.some(bucket => bucket.status === 'ACTIVE')
-    ? '启用后该实例可被写入规则引用。'
-    : '该实例还没有启用的桶，启用会被拒绝；请先登记并检查、启用一个桶。';
+    ? t('instanceStatus.enableNotice')
+    : t('instanceStatus.noActiveBucket');
 }
 
 /** 桶的可用状态动作：草稿与只读可启用，启用可设为只读，启用与只读可停用；停用为终态。 */
 export function bucketStatusActions(bucket: StorageBucket): StatusAction<BucketStatus>[] {
   const actions: StatusAction<BucketStatus>[] = [];
-  if (bucket.status === 'DRAFT' || bucket.status === 'READ_ONLY') actions.push({ target: 'ACTIVE', verb: '启用', danger: false });
-  if (bucket.status === 'ACTIVE') actions.push({ target: 'READ_ONLY', verb: '只读', danger: false });
-  if (bucket.status === 'ACTIVE' || bucket.status === 'READ_ONLY') actions.push({ target: 'DISABLED', verb: '停用', danger: true });
+  if (bucket.status === 'DRAFT' || bucket.status === 'READ_ONLY') actions.push({ target: 'ACTIVE', verb: t('statusAction.enable'), danger: false });
+  if (bucket.status === 'ACTIVE') actions.push({ target: 'READ_ONLY', verb: t('statusAction.readOnly'), danger: false });
+  if (bucket.status === 'ACTIVE' || bucket.status === 'READ_ONLY') actions.push({ target: 'DISABLED', verb: t('statusAction.disable'), danger: true });
   return actions;
 }
 
@@ -268,10 +268,10 @@ export function bucketStatusActions(bucket: StorageBucket): StatusAction<BucketS
  * <li>被写入规则引用的桶不能设为只读或停用。</li>
  */
 export function bucketStatusBlocker(bucket: StorageBucket, target: BucketStatus, now = Date.now()): string | null {
-  if (target !== 'ACTIVE') return bucket.routeCount > 0 ? `被 ${bucket.routeCount} 条写入规则引用，需先修改规则` : null;
+  if (target !== 'ACTIVE') return bucket.routeCount > 0 ? t('bucketStatus.referenced', { count: bucket.routeCount }) : null;
   if (bucket.status !== 'DRAFT') return null;
-  if (bucket.lastCheckResult !== 'OK' || !bucket.lastCheckTime) return '启用前需要先检查通过';
-  if (now - Date.parse(bucket.lastCheckTime) > bucketCheckValidMillis) return '最近一次检查已超过 10 分钟，请重新检查';
+  if (bucket.lastCheckResult !== 'OK' || !bucket.lastCheckTime) return t('bucketStatus.checkRequired');
+  if (now - Date.parse(bucket.lastCheckTime) > bucketCheckValidMillis) return t('bucketStatus.checkExpired', { minutes: bucketCheckValidMillis / 60_000 });
   return null;
 }
 

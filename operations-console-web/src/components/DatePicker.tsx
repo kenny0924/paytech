@@ -1,10 +1,9 @@
 import { DatePicker as AntDatePicker } from 'antd';
 import type { DatePickerProps as AntDatePickerProps } from 'antd';
-import zhCN from 'antd/es/date-picker/locale/zh_CN';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useState } from 'react';
-import 'dayjs/locale/zh-cn';
+import { useT } from '../i18n/react';
 import './DatePicker.css';
 
 dayjs.extend(customParseFormat);
@@ -17,12 +16,13 @@ export type DatePickerProps = Pick<AntDatePickerProps,
   showTime?: boolean;
 };
 
-/** 统一中文日历、24 小时时间与字符串表单值；清空后返回 undefined。 */
+/** 统一日历（语言随 ConfigProvider 与 dayjs 全局语言）、24 小时时间与字符串表单值；清空后返回 undefined。 */
 export function DatePicker({ value, onChange, showTime = false, placeholder, className, ...props }: DatePickerProps) {
+  const t = useT('common');
   const [open, setOpen] = useState(false);
   const valueFormat = showTime ? 'YYYY-MM-DD[T]HH:mm:ss' : 'YYYY-MM-DD';
   const displayFormat = showTime ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD';
-  const selected = value ? dayjs(value, valueFormat, true).locale('zh-cn') : null;
+  const selected = value ? dayjs(value, valueFormat, true) : null;
   return <AntDatePicker {...props} value={selected?.isValid() ? selected : null}
     onChange={date => onChange?.(date?.format(valueFormat))}
     onKeyDown={event => {
@@ -37,11 +37,10 @@ export function DatePicker({ value, onChange, showTime = false, placeholder, cla
       setOpen(false);
     }}
     open={open} onOpenChange={setOpen}
-    locale={zhCN}
     format={displayFormat}
     showTime={showTime ? { format: 'HH:mm:ss', use12Hours: false, defaultOpenValue: dayjs().startOf('day') } : false}
     needConfirm={showTime} showNow={false} allowClear
-    placeholder={placeholder ?? (showTime ? '选择日期和时间' : '选择日期')}
+    placeholder={placeholder ?? t(showTime ? 'datePicker.selectDateTime' : 'datePicker.selectDate')}
     className={['shared-date-picker', className].filter(Boolean).join(' ')}
     classNames={{ popup: { root: 'shared-date-picker-popup' } }} />;
 }

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  businessModeScopeLabels, capabilityGroupNote, capabilityKindLabels, catalogExpansion, catalogGaps, catalogKeys, catalogLabel, catalogSummary,
-  catalogTermTypeLabels, catalogTermTypeOptions, eventGroupNote, groupCatalog, groupExpandedByDefault, mergeFeeEvents, productExpandedByDefault,
+  businessModeScopeLabels, capabilityGroupNote, capabilityKindLabel, catalogExpansion, catalogGaps, catalogKeys, catalogLabel, catalogSummary,
+  catalogTermTypeLabel, catalogTermTypeOptions, eventGroupNote, groupCatalog, groupExpandedByDefault, mergeFeeEvents, productExpandedByDefault,
 } from './catalogTree.ts';
 import type { CatalogProductNode } from './catalogTree.ts';
 import type { CatalogCapability, CatalogFeeEvent, CatalogProduct } from './commercialConsole.ts';
@@ -96,14 +96,14 @@ test('AC-04 筛选 Partner 分润：只剩 ACQUIRING 的四个事件，可开通
 test('AC-04 筛选 Partner 底价：未登记事件，主表为空，筛选项计数为 0', () => {
   assert.deepEqual(groupCatalog(products, capabilities, feeEvents, 'PARTNER_BUY_RATE'), []);
   const option = catalogTermTypeOptions(feeEvents).find(item => item.termType === 'PARTNER_BUY_RATE');
-  assert.deepEqual(option, { termType: 'PARTNER_BUY_RATE', label: 'Partner 底价', eventCount: 0 });
+  assert.deepEqual(option, { termType: 'PARTNER_BUY_RATE', label: 'Partner Buy Rate', eventCount: 0 });
 });
 
 test('条款类型筛选项：目录出现顺序加页面已知类型，计数为合并后行数', () => {
   assert.deepEqual(catalogTermTypeOptions(feeEvents).map(item => [item.termType, item.label, item.eventCount]), [
-    ['CLIENT_PRICING', 'Client 定价', 6], ['PARTNER_SHARE', 'Partner 分润', 4], ['PLATFORM_SERVICE_CHARGE', '平台服务费', 4],
-    ['PAYOUT_FEE', '出款费', 2], ['FX_SPREAD', '外汇点差', 1], ['DISPUTE_FEE', '争议费', 1], ['PLATFORM_FEE', '平台费', 3],
-    ['PARTNER_BUY_RATE', 'Partner 底价', 0],
+    ['CLIENT_PRICING', 'Client Pricing', 6], ['PARTNER_SHARE', 'Partner Share', 4], ['PLATFORM_SERVICE_CHARGE', 'Platform Service Charge', 4],
+    ['PAYOUT_FEE', 'Payout Fee', 2], ['FX_SPREAD', 'FX Spread', 1], ['DISPUTE_FEE', 'Dispute Fee', 1], ['PLATFORM_FEE', 'Platform Fee', 3],
+    ['PARTNER_BUY_RATE', 'Partner Buy Rate', 0],
   ]);
   const withBuyRate = catalogTermTypeOptions([...feeEvents, feeEvent('ACQUIRING', 'AUTH', 'PARTNER_BUY_RATE', 'PAYMENT')]);
   assert.equal(withBuyRate.filter(item => item.termType === 'PARTNER_BUY_RATE').length, 1);
@@ -123,15 +123,15 @@ test('筛选时缺口产品无命中事件，不进入主表；未命中的其�
   assert.ok(clientPricing.every(node => !node.gap));
 });
 
-test('AC-06 中文标签与未知值回退原代码', () => {
-  assert.equal(catalogLabel(catalogTermTypeLabels, 'PAYOUT_FEE'), '出款费');
-  assert.equal(catalogLabel(catalogTermTypeLabels, 'FX_SPREAD'), '外汇点差');
-  assert.equal(catalogLabel(catalogTermTypeLabels, 'DISPUTE_FEE'), '争议费');
-  assert.equal(catalogLabel(catalogTermTypeLabels, 'PLATFORM_FEE'), '平台费');
-  assert.equal(catalogLabel(catalogTermTypeLabels, 'CLIENT_PRICING'), 'Client 定价');
-  assert.equal(catalogLabel(catalogTermTypeLabels, 'NEW_TERM'), 'NEW_TERM');
-  assert.deepEqual(['PAYMENT_METHOD', 'PAYOUT_RAIL', 'FX', 'DISPUTE', 'PERIODIC_SERVICE', 'NEW_KIND'].map(code => catalogLabel(capabilityKindLabels, code)),
-    ['支付方式', '出款通道', '外汇', '争议', '周期服务', 'NEW_KIND']);
+test('AC-06 标签与未知值回退原代码', () => {
+  assert.equal(catalogTermTypeLabel('PAYOUT_FEE'), 'Payout Fee');
+  assert.equal(catalogTermTypeLabel('FX_SPREAD'), 'FX Spread');
+  assert.equal(catalogTermTypeLabel('DISPUTE_FEE'), 'Dispute Fee');
+  assert.equal(catalogTermTypeLabel('PLATFORM_FEE'), 'Platform Fee');
+  assert.equal(catalogTermTypeLabel('CLIENT_PRICING'), 'Client Pricing');
+  assert.equal(catalogTermTypeLabel('NEW_TERM'), 'NEW_TERM');
+  assert.deepEqual(['PAYMENT_METHOD', 'PAYOUT_RAIL', 'FX', 'DISPUTE', 'PERIODIC_SERVICE', 'NEW_KIND'].map(capabilityKindLabel),
+    ['Payment Method', 'Payout Rail', 'FX', 'Dispute', 'Periodic Service', 'NEW_KIND']);
   assert.deepEqual(['BOTH', 'MOR_ONLY', 'PSP_ONLY', 'OTHER'].map(code => catalogLabel(businessModeScopeLabels, code)), ['MOR / PSP', 'MOR', 'PSP', 'OTHER']);
 });
 
@@ -146,14 +146,14 @@ test('AC-09 默认展开：有子项或缺口的产品展开，TAX_INVOICE 收�
 
 test('分组为空时的原因文案', () => {
   const nodes = groupCatalog(products, capabilities, feeEvents);
-  assert.deepEqual(capabilityGroupNote(byCode(nodes, 'PLATFORM')), { text: '基础产品默认具备，无需开通', warning: false });
-  assert.deepEqual(eventGroupNote(byCode(nodes, 'TAX_INVOICE')), { text: '无事件费用', warning: false });
-  assert.deepEqual(eventGroupNote(byCode(nodes, 'DATA_ANALYTICS')), { text: '⚠ 未登记计费事件，开通后不会产生费用', warning: true });
+  assert.deepEqual(capabilityGroupNote(byCode(nodes, 'PLATFORM')), { text: 'Included with the base product by default; no enablement needed', warning: false });
+  assert.deepEqual(eventGroupNote(byCode(nodes, 'TAX_INVOICE')), { text: 'No event fees', warning: false });
+  assert.deepEqual(eventGroupNote(byCode(nodes, 'DATA_ANALYTICS')), { text: "⚠ No billing events registered; enabling it won't generate fees", warning: true });
   assert.equal(capabilityGroupNote(byCode(nodes, 'ACQUIRING')), null);
   assert.equal(eventGroupNote(byCode(nodes, 'PLATFORM')), null);
   const empty = groupCatalog([product(8, 'EMPTY', 'Empty')], [], []);
-  assert.deepEqual(capabilityGroupNote(empty[0]), { text: '暂无可开通项', warning: false });
-  assert.deepEqual(eventGroupNote(empty[0]), { text: '暂无计费事件', warning: false });
+  assert.deepEqual(capabilityGroupNote(empty[0]), { text: 'No capabilities to enable yet', warning: false });
+  assert.deepEqual(eventGroupNote(empty[0]), { text: 'No billing events yet', warning: false });
   assert.equal(empty[0].gap, false);
 });
 

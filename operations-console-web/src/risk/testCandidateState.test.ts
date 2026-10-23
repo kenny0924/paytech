@@ -64,7 +64,7 @@ test('an impossible internal state throws a fixed invariant error without disclo
   const impossible = { ...candidateDetail(), status: 'PRIVATE_UNREACHABLE_STATE', releaseId: 'PRIVATE_RELEASE', contentHash: 'PRIVATE_HASH' } as unknown as TestCandidateDetail;
   assert.throws(() => classifyTestCandidate(impossible, 'PRIVATE_ACTOR'), error => {
     assert.ok(error instanceof Error);
-    assert.equal(error.message, '候选版本状态无法识别，请刷新后重试。');
+    assert.equal(error.message, "The candidate version status isn't recognized. Refresh and try again.");
     assert.equal('cause' in error, false);
     assert.equal('status' in error, false);
     assert.doesNotMatch(String(error), /PRIVATE/);

@@ -7,7 +7,7 @@ import { usePaging } from '../hooks/usePaging';
 import { QueryFailure } from '../tenantAccess/TenantAccessView';
 import { CreatePlanModal } from '../commercial/AgreementModals';
 import {
-  codePattern, commercialButtons, commercialRoutes, hasButton, idPattern, isId, localTime, termTypeLabels, termTypes, versionStatuses, versionStatusLabels,
+  codePattern, commercialButtons, commercialRoutes, hasButton, idPattern, isId, localTime, termTypes, versionStatuses,
 } from '../commercial/commercial';
 import type { TermPlan } from '../commercial/commercial';
 import { consolePaths, consoleRoutes, decodeTermPlanPage, decodeTermVersionPage, listFilters } from '../commercial/commercialConsole';
@@ -17,6 +17,8 @@ import { BelowStandardTag, CommercialNote, SignatureTag, StatusTag } from '../co
 import { CreateVersionModal } from '../commercial/TermModals';
 import { TermVersionEditor } from '../commercial/TermVersionEditor';
 import { VersionCompare } from '../commercial/VersionCompare';
+import { enumLabel } from '../i18n/index';
+import { useT } from '../i18n/react';
 import '../configuration/configuration.css';
 import '../commercial/commercial.css';
 
@@ -38,6 +40,7 @@ export function CommercialTerms(props: Props) {
 
 /** 价目总览：方案页签（当前 / 已排期版本）与版本页签（多选状态、选两版对比）。 */
 function TermsHome({ resources, onAuthorizationChanged }: Props) {
+  const t = useT('commercial'), tNav = useT('nav');
   const navigate = useNavigate();
   const [tab, setTab] = useState<'plans' | 'versions'>('plans');
   const [versionFilters, setVersionFilters] = useState<{ planId?: string }>({});
@@ -45,12 +48,12 @@ function TermsHome({ resources, onAuthorizationChanged }: Props) {
   const canManage = hasButton(resources, commercialButtons.termManage);
   const showVersions = (planId: string) => { setVersionFilters({ planId }); setTab('versions'); };
   return <div className="configuration-page commercial-page">
-    <div className="page-heading"><h1>价目</h1></div>
-    <Tabs activeKey={tab} onChange={key => setTab(key as 'plans' | 'versions')} tabBarExtraContent={canManage && <Button type="primary" onClick={() => setStep({ kind: 'plan' })}>新建条款方案</Button>} items={[
-      { key: 'plans', label: '条款方案', children: <PlanList onShowVersions={showVersions} /> },
-      { key: 'versions', label: '版本', children: <VersionList key={versionFilters.planId ?? 'all'} planId={versionFilters.planId} /> },
+    <div className="page-heading"><h1>{tNav('resource.OPERATIONS_COMMERCIAL_TERMS')}</h1></div>
+    <Tabs activeKey={tab} onChange={key => setTab(key as 'plans' | 'versions')} tabBarExtraContent={canManage && <Button type="primary" onClick={() => setStep({ kind: 'plan' })}>{t('agreement.detail.createPlan')}</Button>} items={[
+      { key: 'plans', label: t('terms.tab.plans'), children: <PlanList onShowVersions={showVersions} /> },
+      { key: 'versions', label: t('terms.tab.versions'), children: <VersionList key={versionFilters.planId ?? 'all'} planId={versionFilters.planId} /> },
     ]} />
-    <CommercialNote>状态流：草稿 → 待审批 → 已批准 → 客户已签署（历史版本免签）→ 已排期 → 生效 → 已替代 / 已到期。在版本页签勾选同一方案的两个版本可进入价格对比。标准价目在「标准价目」页维护。</CommercialNote>
+    <CommercialNote>{t('terms.note')}</CommercialNote>
     {step?.kind === 'plan' && <CreatePlanModal onClose={() => setStep(null)} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={plan => setStep({ kind: 'version', plan })} />}
     {step?.kind === 'version' && <CreateVersionModal planId={step.plan.planId} termType={step.plan.termType} expectedChangeVersion={step.plan.changeVersion}
@@ -64,6 +67,7 @@ interface PlanFilterValues { agreementId?: string; clientId?: string; termType?:
 
 /** 方案列表：合同 / Client / 条款类型 / 方案状态筛选；每行显示当前与已排期版本。 */
 function PlanList({ onShowVersions }: { onShowVersions: (planId: string) => void }) {
+  const t = useT('commercial');
   const navigate = useNavigate();
   const [form] = Form.useForm<PlanFilterValues>();
   const page = usePaging<TermPlanListItem, PagingFilters>(consolePaths.plans, decodeTermPlanPage, {}, { notifyOnError: false });
@@ -72,29 +76,29 @@ function PlanList({ onShowVersions }: { onShowVersions: (planId: string) => void
   return <>
     <Form form={form} name="commercial-plan-filter" layout="vertical" onFinish={(values: PlanFilterValues) => page.applyFilters(listFilters({ ...values }))}>
       <div className="commercial-filters">
-        <Form.Item name="agreementId" label="合同 ID" rules={[{ pattern: idPattern, message: '正十进制整数' }]}><Input allowClear maxLength={19} /></Form.Item>
-        <Form.Item name="clientId" label="Client ID" rules={[{ pattern: idPattern, message: '正十进制整数' }]}><Input allowClear maxLength={19} /></Form.Item>
-        <Form.Item name="termType" label="条款类型" rules={[{ pattern: codePattern, message: '大写代码' }]}>
-          <Select allowClear options={termTypes.map(value => ({ value, label: termTypeLabels[value] ?? value }))} /></Form.Item>
-        <Form.Item name="status" label="方案状态"><Select allowClear options={['DRAFT', 'ACTIVE', 'RETIRED'].map(value => ({ value, label: value }))} /></Form.Item>
-        <div className="commercial-filter-actions"><Button type="primary" htmlType="submit">查询</Button>
-          <Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>重置</Button></div>
+        <Form.Item name="agreementId" label={t('plan.field.agreementId')} rules={[{ pattern: idPattern, message: t('form.idPattern') }]}><Input allowClear maxLength={19} /></Form.Item>
+        <Form.Item name="clientId" label="Client ID" rules={[{ pattern: idPattern, message: t('form.idPattern') }]}><Input allowClear maxLength={19} /></Form.Item>
+        <Form.Item name="termType" label={t('shared.column.termType')} rules={[{ pattern: codePattern, message: t('catalogDrawer.upperCode') }]}>
+          <Select allowClear options={termTypes.map(value => ({ value, label: enumLabel(t, 'enum.termType', value) }))} /></Form.Item>
+        <Form.Item name="status" label={t('templates.planStatus')}><Select allowClear options={['DRAFT', 'ACTIVE', 'RETIRED'].map(value => ({ value, label: value }))} /></Form.Item>
+        <div className="commercial-filter-actions"><Button type="primary" htmlType="submit">{t('list.search')}</Button>
+          <Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>{t('list.reset')}</Button></div>
       </div>
     </Form>
     {page.failure ? <QueryFailure failure={page.failure} retry={page.refresh} />
       : <Table<TermPlanListItem> rowKey="planId" size="middle" loading={page.loading} dataSource={page.data.items} pagination={page.pagination}
-        scroll={{ x: 1200 }} locale={{ emptyText: '没有符合条件的方案' }} columns={[
-          { title: '方案', width: 200, render: (_, row) => <div className="commercial-cell"><span className="mono">{row.planCode}</span>
-            <span className="commercial-cell-meta">{termTypeLabels[row.termType] ?? row.termType}</span></div> },
-          { title: '合同', width: 180, render: (_, row) => row.agreementId
+        scroll={{ x: 1200 }} locale={{ emptyText: t('terms.plansEmpty') }} columns={[
+          { title: t('terms.column.plan'), width: 200, render: (_, row) => <div className="commercial-cell"><span className="mono">{row.planCode}</span>
+            <span className="commercial-cell-meta">{enumLabel(t, 'enum.termType', row.termType)}</span></div> },
+          { title: t('version.field.agreement'), width: 180, render: (_, row) => row.agreementId
             ? <Button type="link" size="small" onClick={() => void navigate(commercialRoutes.agreement(row.agreementId!))}>{row.agreementId}</Button> : '—' },
           { title: 'Client / Partner', width: 180, render: (_, row) => <span className="mono">{row.clientId ?? row.localPartnerId ?? '—'}</span> },
-          { title: '状态', width: 90, render: (_, row) => <StatusTag status={row.status} /> },
-          { title: '当前版本', width: 220, render: (_, row) => versionLink(row.activeVersionId, row.activeVersionNo, row.activeEffectiveFrom) },
-          { title: '已排期', width: 220, render: (_, row) => versionLink(row.scheduledVersionId, row.scheduledVersionNo, row.scheduledEffectiveFrom) },
-          { title: '操作', width: 160, render: (_, row) => <span className="commercial-actions">
-            <Button size="small" onClick={() => onShowVersions(row.planId)}>版本</Button>
-            <Button size="small" onClick={() => void navigate(consoleRoutes.history('COMMERCIAL_TERM_PLAN', row.planId))}>历史</Button></span> },
+          { title: t('shared.column.status'), width: 90, render: (_, row) => <StatusTag status={row.status} /> },
+          { title: t('terms.column.currentVersion'), width: 220, render: (_, row) => versionLink(row.activeVersionId, row.activeVersionNo, row.activeEffectiveFrom) },
+          { title: enumLabel(t, 'enum.versionStatus', 'SCHEDULED'), width: 220, render: (_, row) => versionLink(row.scheduledVersionId, row.scheduledVersionNo, row.scheduledEffectiveFrom) },
+          { title: t('shared.column.actions'), width: 160, render: (_, row) => <span className="commercial-actions">
+            <Button size="small" onClick={() => onShowVersions(row.planId)}>{t('terms.tab.versions')}</Button>
+            <Button size="small" onClick={() => void navigate(consoleRoutes.history('COMMERCIAL_TERM_PLAN', row.planId))}>{t('profiles.history')}</Button></span> },
         ]} />}
   </>;
 }
@@ -103,6 +107,7 @@ interface VersionFilterValues { planId?: string; agreementId?: string; status?: 
 
 /** 版本列表：方案 / 合同 / 状态（多选）筛选；勾选同一方案的两个版本进入对比（较小版本号为基准）。 */
 function VersionList({ planId }: { planId?: string }) {
+  const t = useT('commercial');
   const navigate = useNavigate();
   const [form] = Form.useForm<VersionFilterValues>();
   const initial: PagingFilters = planId ? { planId } : {};
@@ -117,33 +122,33 @@ function VersionList({ planId }: { planId?: string }) {
     <Form form={form} name="commercial-version-filter" layout="vertical" initialValues={{ planId }}
       onFinish={(values: VersionFilterValues) => { setSelected([]); page.applyFilters(listFilters({ ...values })); }}>
       <div className="commercial-filters">
-        <Form.Item name="planId" label="方案 ID" rules={[{ pattern: idPattern, message: '正十进制整数' }]}><Input allowClear maxLength={19} /></Form.Item>
-        <Form.Item name="agreementId" label="合同 ID" rules={[{ pattern: idPattern, message: '正十进制整数' }]}><Input allowClear maxLength={19} /></Form.Item>
-        <Form.Item name="status" label="版本状态"><Select mode="multiple" allowClear maxTagCount="responsive"
-          options={versionStatuses.map(value => ({ value, label: versionStatusLabels[value] }))} /></Form.Item>
-        <div className="commercial-filter-actions"><Button type="primary" htmlType="submit">查询</Button>
-          <Button onClick={() => { form.resetFields(); form.setFieldsValue({ planId: undefined }); setSelected([]); page.applyFilters({}); }}>重置</Button>
-          <Button disabled={!comparable} onClick={compare}>对比所选</Button></div>
+        <Form.Item name="planId" label={t('terms.field.planId')} rules={[{ pattern: idPattern, message: t('form.idPattern') }]}><Input allowClear maxLength={19} /></Form.Item>
+        <Form.Item name="agreementId" label={t('plan.field.agreementId')} rules={[{ pattern: idPattern, message: t('form.idPattern') }]}><Input allowClear maxLength={19} /></Form.Item>
+        <Form.Item name="status" label={t('terms.field.versionStatus')}><Select mode="multiple" allowClear maxTagCount="responsive"
+          options={versionStatuses.map(value => ({ value, label: enumLabel(t, 'enum.versionStatus', value) }))} /></Form.Item>
+        <div className="commercial-filter-actions"><Button type="primary" htmlType="submit">{t('list.search')}</Button>
+          <Button onClick={() => { form.resetFields(); form.setFieldsValue({ planId: undefined }); setSelected([]); page.applyFilters({}); }}>{t('list.reset')}</Button>
+          <Button disabled={!comparable} onClick={compare}>{t('terms.compareSelected')}</Button></div>
       </div>
     </Form>
-    {selected.length === 2 && !comparable && <CommercialNote tone="warning">只能对比同一方案的两个版本。</CommercialNote>}
+    {selected.length === 2 && !comparable && <CommercialNote tone="warning">{t('terms.compareSamePlan')}</CommercialNote>}
     {page.failure ? <QueryFailure failure={page.failure} retry={page.refresh} />
       : <Table<TermVersionListItem> rowKey="versionId" size="middle" loading={page.loading} dataSource={page.data.items} pagination={page.pagination}
-        scroll={{ x: 1460 }} locale={{ emptyText: '没有符合条件的版本' }}
+        scroll={{ x: 1460 }} locale={{ emptyText: t('terms.versionsEmpty') }}
         rowSelection={{ selectedRowKeys: selected.map(item => item.versionId), onChange: (_, rows) => setSelected(rows.slice(-2)), hideSelectAll: true }}
         onRow={row => ({ className: 'clickable-row', onDoubleClick: () => void navigate(commercialRoutes.version(row.versionId)) })} columns={[
-          { title: '方案', width: 200, render: (_, row) => <div className="commercial-cell"><span className="mono">{row.planCode}</span>
-            <span className="commercial-cell-meta">{termTypeLabels[row.termType] ?? row.termType}</span></div> },
-          { title: '版本', width: 70, render: (_, row) => `v${row.versionNo}` },
-          { title: '状态', width: 100, render: (_, row) => <StatusTag status={row.status} labels={versionStatusLabels} /> },
-          { title: '生效区间', width: 250, render: (_, row) => ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(row.status) ? '排期时确定'
-            : `${localTime(row.effectiveFrom)} ～ ${row.effectiveTo ? localTime(row.effectiveTo) : '未定'}` },
-          { title: '价格数', width: 80, render: (_, row) => <Tag>{row.priceCount}</Tag> },
-          { title: '破标', width: 90, render: (_, row) => <BelowStandardTag count={row.belowStandardCount} /> },
-          { title: '签署', width: 110, render: (_, row) => <SignatureTag row={row} /> },
+          { title: t('terms.column.plan'), width: 200, render: (_, row) => <div className="commercial-cell"><span className="mono">{row.planCode}</span>
+            <span className="commercial-cell-meta">{enumLabel(t, 'enum.termType', row.termType)}</span></div> },
+          { title: t('shared.column.version'), width: 70, render: (_, row) => `v${row.versionNo}` },
+          { title: t('shared.column.status'), width: 100, render: (_, row) => <StatusTag status={row.status} kind="versionStatus" /> },
+          { title: t('agreement.field.effectiveRange'), width: 250, render: (_, row) => ['DRAFT', 'PENDING_APPROVAL', 'APPROVED'].includes(row.status) ? t('version.field.setOnSchedule')
+            : t('shared.period', { from: localTime(row.effectiveFrom), to: row.effectiveTo ? localTime(row.effectiveTo) : t('shared.openEnded') }) },
+          { title: t('terms.column.priceCount'), width: 80, render: (_, row) => <Tag>{row.priceCount}</Tag> },
+          { title: t('benchmark.below'), width: 90, render: (_, row) => <BelowStandardTag count={row.belowStandardCount} /> },
+          { title: t('agreement.party.signing'), width: 110, render: (_, row) => <SignatureTag row={row} /> },
           { title: 'Maker / Checker', width: 200, render: (_, row) => <span className="mono">{row.makerAccountId ?? '—'} / {row.checkerAccountId ?? '—'}</span> },
-          { title: '提交时刻', width: 150, render: (_, row) => localTime(row.submittedTime) },
-          { title: '操作', width: 90, render: (_, row) => <Button size="small" onClick={() => void navigate(commercialRoutes.version(row.versionId))}>打开</Button> },
+          { title: t('terms.column.submittedAt'), width: 150, render: (_, row) => localTime(row.submittedTime) },
+          { title: t('shared.column.actions'), width: 90, render: (_, row) => <Button size="small" onClick={() => void navigate(commercialRoutes.version(row.versionId))}>{t('terms.open')}</Button> },
         ]} />}
   </>;
 }

@@ -3,8 +3,11 @@ import test from 'node:test';
 import {
   accessKeyPattern, attentionStatus, decodeMutation, decodeProvider, decodeRequestDetail, decodeTemplateDetail,
   decodeTemplateSummary, decodeTestSend, eventQueuePattern, eventReceiving, regionPattern, secretKeyPattern, testSendHint,
-  missingRequired, notificationCommand, placeholders, recordFilters,
+  missingConfigurationText, missingRequired, notificationCommand, placeholders, recordFilters,
 } from './notification.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('notification');
 
 const time = '2026-10-15T08:00:00Z';
 
@@ -25,9 +28,9 @@ test('发送记录筛选默认最近 7 天，转 UTC，拒绝超过 31 天或倒
   const filters = recordFilters({ sourceSystem: ' payment ', deliveryStatus: 'FAILED', templateCode: '' }, now);
   assert.equal(filters.sourceSystem, 'payment'); assert.equal(filters.deliveryStatus, 'FAILED'); assert.equal(filters.templateCode, undefined);
   assert.equal(new Date(filters.createdTo).getTime() - new Date(filters.createdFrom).getTime(), 7 * 86_400_000);
-  assert.throws(() => recordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-08-01T00:00:00', end: '2026-10-01T00:00:00' } }, now), /31 天/);
-  assert.throws(() => recordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-02T00:00:00', end: '2026-10-01T00:00:00' } }, now), /晚于/);
-  assert.throws(() => recordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-02T00:00:00' } }, now), /完整/);
+  assert.throws(() => recordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-08-01T00:00:00', end: '2026-10-01T00:00:00' } }, now), { message: t('filters.rangeTooLong', { days: 31 }) });
+  assert.throws(() => recordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-02T00:00:00', end: '2026-10-01T00:00:00' } }, now), { message: t('filters.endBeforeStart') });
+  assert.throws(() => recordFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-02T00:00:00' } }, now), { message: t('filters.incompleteRange') });
 });
 
 test('同一目标与正文重试复用 Idempotency-Key，改草稿换新 Key', () => {
@@ -69,11 +72,15 @@ test('解码器拒绝缺字段、编码不一致或非法状态', () => {
   assert.throws(() => decodeProvider({ ...provider, credentialConfigured: undefined }));
   assert.equal(decodeTestSend({ outcome: 'REJECTED', resultCode: 'SES_CREDENTIAL_REJECTED' }).outcome, 'REJECTED');
   assert.throws(() => decodeTestSend({ outcome: 'SENT', resultCode: 'SES_ACCEPTED' }));
-  assert.match(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_CREDENTIAL_REJECTED' }), /IAM 策略/);
-  assert.match(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_MESSAGE_REJECTED' }), /沙箱/);
-  assert.match(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_CLIENT_ERROR' }), /IAM 权限/);
-  assert.match(testSendHint({ outcome: 'UNKNOWN', resultCode: 'TIMEOUT' }), /查看收件箱/);
-  assert.match(testSendHint({ outcome: 'ACCEPTED', resultCode: 'SES_ACCEPTED' }), /已接受/);
+  assert.equal(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_CREDENTIAL_REJECTED' }), t('testSendHint.SES_CREDENTIAL_REJECTED'));
+  assert.match(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_CREDENTIAL_REJECTED' }), /IAM policy/);
+  assert.match(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_MESSAGE_REJECTED' }), /sandbox/);
+  assert.equal(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_CLIENT_ERROR' }), t('testSendHint.outcome.REJECTED'));
+  assert.match(testSendHint({ outcome: 'REJECTED', resultCode: 'SES_CLIENT_ERROR' }), /IAM permissions/);
+  assert.equal(testSendHint({ outcome: 'UNKNOWN', resultCode: 'TIMEOUT' }), t('testSendHint.outcome.UNKNOWN'));
+  assert.equal(testSendHint({ outcome: 'ACCEPTED', resultCode: 'SES_ACCEPTED' }), t('testSendHint.outcome.ACCEPTED'));
+  assert.equal(testSendHint({ outcome: 'ACCEPTED', resultCode: 'SES_THROTTLED' }), t('testSendHint.outcome.ACCEPTED'));
+  assert.equal(missingConfigurationText(['region', 'fromAddress', 'credential', 'futureField']), 'region, from address, credentials, futureField');
   assert.throws(() => decodeTestSend({ outcome: 'ACCEPTED', resultCode: 'bad code' }));
   assert.ok(regionPattern.test('me-central-1') && !regionPattern.test('Middle East'));
   assert.ok(accessKeyPattern.test('AKIASYNTHETIC0000001') && !accessKeyPattern.test('akia'));

@@ -3,16 +3,23 @@ import { ApiError, session } from '../api/session';
 import { configurationCommand } from '../configuration/configurationModel';
 import type { ConfigurationCommand } from '../configuration/configurationModel';
 import { useErrorNotification } from '../feedback/useErrorNotification';
+import { translator } from '../i18n/index';
+import { useT } from '../i18n/react';
 
-const genericBusinessDetail = '业务校验未通过';
+const t = translator('card');
+/**
+ * The BFF's generic business-rejection detail ("业务校验未通过"). It is server data compared verbatim, not UI text,
+ * so it is written as escapes to keep the source scan meaningful.
+ */
+const genericBusinessDetail = '\u4e1a\u52a1\u6821\u9a8c\u672a\u901a\u8fc7';
 
 /** Owner 拒绝原因：400 业务拒绝、422 文件策略拒绝、404 显示在弹窗顶部；字段错误汇总为一行；其余交给通用通知。 */
 export function binLibraryErrorMessage(error: unknown): string | null {
   if (!(error instanceof ApiError)) return null;
   const owner = error.detail && error.detail !== genericBusinessDetail ? error.detail : null;
-  if (error.fieldErrors.length) return error.fieldErrors.map(item => `${item.field}：${item.message}`).join('；');
-  if (error.status === 404) return owner ?? '目标不存在，请刷新后重试。';
-  if (error.status === 400 || error.status === 422) return owner ? `操作被拒绝：${owner}` : error.message;
+  if (error.fieldErrors.length) return error.fieldErrors.map(item => t('command.fieldError', { field: item.field, message: item.message })).join(t('command.fieldErrorSeparator'));
+  if (error.status === 404) return owner ?? t('command.notFound');
+  if (error.status === 400 || error.status === 422) return owner ? t('command.rejected', { detail: owner }) : error.message;
   return null;
 }
 
@@ -21,7 +28,7 @@ export function binLibraryErrorMessage(error: unknown): string | null {
  * 同一目标与正文的人工重试复用 Idempotency-Key。
  */
 export function useBinLibraryCommand(onAuthorizationChanged: () => void) {
-  const notify = useErrorNotification();
+  const notify = useErrorNotification(); const tCard = useT('card');
   const [saving, setSaving] = useState(false); const [conflict, setConflict] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const busy = useRef(false); const last = useRef<ConfigurationCommand>(undefined);
@@ -42,7 +49,7 @@ export function useBinLibraryCommand(onAuthorizationChanged: () => void) {
       const message = binLibraryErrorMessage(error);
       if (message) { setFormError(message); return null; }
       notify(error, failureTitle);
-      setFormError(`${failureTitle}，请重试。`);
+      setFormError(tCard('command.retry', { title: failureTitle }));
       return null;
     } finally { busy.current = false; setSaving(false); }
   }

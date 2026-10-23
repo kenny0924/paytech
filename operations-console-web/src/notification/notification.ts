@@ -4,6 +4,9 @@ import { resolveTimeRange } from '../components/timeRange.ts';
 import type { TimeRangeValue } from '../components/timeRange.ts';
 import { configurationCommand } from '../configuration/configurationModel.ts';
 import type { ConfigurationCommand } from '../configuration/configurationModel.ts';
+import { enumLabel, i18n, translator } from '../i18n/index.ts';
+
+const t = translator('notification');
 
 /** 通知管理接口前缀（BFF）。 */
 export const notificationAdminPath = '/notification-admin/v1';
@@ -14,10 +17,18 @@ export const manageProviders = 'OPERATIONS_NOTIFICATION_PROVIDER_MANAGE';
 export const editProviders = 'OPERATIONS_NOTIFICATION_PROVIDER_EDIT';
 /** 录入密钥与测试发送的按钮资源。 */
 export const credentialProviders = 'OPERATIONS_NOTIFICATION_PROVIDER_CREDENTIAL';
-/** 本期可新建的服务商类型。 */
-export const providerTypeLabels: Record<string, string> = { AMAZON_SES: 'Amazon SES' };
-/** 缺失配置字段的显示名。 */
-export const missingConfigurationLabels: Record<string, string> = { region: '区域', fromAddress: '发件地址', credential: '密钥' };
+/** 本期可新建的服务商类型；显示名为 `notification.enum.providerType.<值>`。 */
+export const providerTypes = ['AMAZON_SES'] as const;
+
+/** 按当前语言连接并列项：zh-CN 用顿号（区域、密钥），en 用逗号（region, credentials）。 */
+export function joinList(items: readonly string[]): string {
+  return new Intl.ListFormat(i18n.locale(), { style: 'narrow', type: 'conjunction' }).format(items);
+}
+
+/** 缺失配置字段的显示名（`missingConfiguration.<字段>`，未知字段原样显示），按当前语言连接。 */
+export function missingConfigurationText(fields: readonly string[]): string {
+  return joinList(fields.map(field => enumLabel(t, 'missingConfiguration', field)));
+}
 /** 区域格式，与 Platform 一致，如 me-central-1。 */
 export const regionPattern = /^[a-z]{2}(-[a-z]+)+-[0-9]{1,2}$/;
 /** Configuration Set 格式，可空。 */
@@ -70,17 +81,16 @@ export interface RequestDetail {
   defaultLocale: string; parameterKeys: string[]; routeId: string; createTime: string; deliveries: Delivery[];
 }
 
-export const statusLabels: Record<string, string> = { ACTIVE: '启用', DISABLED: '停用' };
-export const deliveryStatusLabels: Record<string, string> = {
-  PENDING: '待发送', PROCESSING: '处理中', RETRY_WAIT: '等待重试', SENT: '已发送', DELIVERED: '已送达', FAILED: '失败', UNKNOWN: '结果未知',
-};
+/**
+ * 显示名在 `notification` 命名空间，用 enumLabel 取：`enum.status`、`enum.deliveryStatus`、`enum.attemptStatus`、
+ * `enum.resolutionSource`、`enum.eventOutcome`；这里只保留代码、顺序与颜色。
+ */
+export const configStatuses: readonly ConfigStatus[] = ['ACTIVE', 'DISABLED'];
+export const deliveryStatuses = ['PENDING', 'PROCESSING', 'RETRY_WAIT', 'SENT', 'DELIVERED', 'FAILED', 'UNKNOWN'] as const;
 export const deliveryStatusColors: Record<string, string> = {
   PENDING: 'blue', PROCESSING: 'blue', RETRY_WAIT: 'blue', SENT: 'green', DELIVERED: 'green', FAILED: 'red', UNKNOWN: 'orange',
 };
-export const attemptStatusLabels: Record<string, string> = { PROCESSING: '处理中', ACCEPTED: '已受理', FAILED: '失败', UNKNOWN: '结果未知' };
 export const attemptStatusColors: Record<string, string> = { PROCESSING: 'blue', ACCEPTED: 'green', FAILED: 'red', UNKNOWN: 'orange' };
-export const resolutionSourceLabels: Record<string, string> = { SEND_RESPONSE: '发送响应', PROVIDER_QUERY: '供应商查询', PROVIDER_EVENT: '投递事件' };
-export const eventOutcomeLabels: Record<string, string> = { DELIVERED: '已送达', SOFT_BOUNCE: '软退信', HARD_BOUNCE: '硬退信', REJECTED: '被拒发' };
 export const eventOutcomeColors: Record<string, string> = { DELIVERED: 'green', SOFT_BOUNCE: 'orange', HARD_BOUNCE: 'red', REJECTED: 'red' };
 
 /** 发送账号的投递事件接收状态，供列表显示。 */
@@ -163,28 +173,16 @@ export function decodePreview(value: unknown): Preview {
 /** 测试发送结果；ACCEPTED 只表示服务商受理。 */
 export interface TestSendResult { outcome: 'ACCEPTED' | 'REJECTED' | 'UNKNOWN'; resultCode: string }
 
-/** 测试发送结果码对应的处理建议；未列出的结果码按结果类型给通用建议。 */
-const testSendHints: Record<string, string> = {
-  SES_CREDENTIAL_REJECTED: '密钥无效、已停用，或 IAM 策略未授予 ses:SendEmail。沙箱期间策略须同时覆盖收件人身份（如 identity/*）；修改 IAM 策略后约 1–2 分钟生效。',
-  SES_SENDER_NOT_VERIFIED: '发件地址所在域名未在该区域的 SES 中验证，请核对区域与发件地址。',
-  SES_MESSAGE_REJECTED: 'SES 拒绝了这封邮件。账户仍在沙箱时，收件邮箱须先在 SES 中验证。',
-  SES_CONFIGURATION_NOT_FOUND: '填写的 Configuration Set 在该区域不存在，请核对或清空。',
-  SES_QUOTA_EXCEEDED: '已达到 SES 发送配额（沙箱为每天 200 封），请稍后再试或申请提高配额。',
-  SES_THROTTLED: '发送过快被 SES 限流，请稍后再试。',
-  SES_ACCOUNT_PAUSED: 'SES 账户发送已暂停，请在 AWS 控制台查看账户状态。',
-  SES_ACCOUNT_SUSPENDED: 'SES 账户已被暂停，请在 AWS 控制台查看账户状态。',
-  SES_BAD_REQUEST: 'SES 认为请求无效，请核对发件地址与收件邮箱。',
-};
-
-const outcomeHints: Record<TestSendResult['outcome'], string> = {
-  ACCEPTED: '服务商已接受发送请求；是否送达以收件箱为准。',
-  REJECTED: '请根据结果码检查区域、发件地址、密钥或 IAM 权限。',
-  UNKNOWN: '请求可能已发出，请查看收件箱后再决定是否重试。',
-};
+/** 有专门处理建议（`testSendHint.<结果码>`）的测试发送结果码；未列出的结果码按结果类型给通用建议（`testSendHint.outcome.<类型>`）。 */
+const testSendHintCodes: readonly string[] = [
+  'SES_CREDENTIAL_REJECTED', 'SES_SENDER_NOT_VERIFIED', 'SES_MESSAGE_REJECTED', 'SES_CONFIGURATION_NOT_FOUND', 'SES_QUOTA_EXCEEDED',
+  'SES_THROTTLED', 'SES_ACCOUNT_PAUSED', 'SES_ACCOUNT_SUSPENDED', 'SES_BAD_REQUEST',
+];
 
 /** 测试发送结果的处理建议。 */
 export function testSendHint(result: TestSendResult): string {
-  return result.outcome === 'ACCEPTED' ? outcomeHints.ACCEPTED : testSendHints[result.resultCode] ?? outcomeHints[result.outcome];
+  if (result.outcome !== 'ACCEPTED' && testSendHintCodes.includes(result.resultCode)) return t('testSendHint.' + result.resultCode);
+  return t('testSendHint.outcome.' + result.outcome);
 }
 
 /** 校验发送账号列表项。 */
@@ -243,11 +241,11 @@ export interface RecordFilterValues {
 /** 发送记录筛选：时间范围必填（默认最近 7 天），转为 UTC，跨度不超过 31 天。 */
 export function recordFilters(values: RecordFilterValues, now = new Date()): Record<string, string> {
   const range = resolveTimeRange(values.timeRange ?? { preset: 'LAST_7_DAYS' }, now);
-  if (!range.start || !range.end) throw new Error('请选择完整的开始和结束时间');
+  if (!range.start || !range.end) throw new Error(t('filters.incompleteRange'));
   const from = new Date(range.start); const to = new Date(range.end);
-  if (!Number.isFinite(from.getTime()) || !Number.isFinite(to.getTime())) throw new Error('请输入有效时间');
-  if (from >= to) throw new Error('结束时间必须晚于开始时间');
-  if (to.getTime() - from.getTime() > maxRecordDays * 86_400_000) throw new Error(`时间跨度不能超过 ${maxRecordDays} 天`);
+  if (!Number.isFinite(from.getTime()) || !Number.isFinite(to.getTime())) throw new Error(t('filters.invalidTime'));
+  if (from >= to) throw new Error(t('filters.endBeforeStart'));
+  if (to.getTime() - from.getTime() > maxRecordDays * 86_400_000) throw new Error(t('filters.rangeTooLong', { days: maxRecordDays }));
   const filters: Record<string, string> = { createdFrom: from.toISOString(), createdTo: to.toISOString() };
   for (const key of ['sourceSystem', 'sourceEventKey', 'templateCode', 'deliveryStatus'] as const) {
     const value = values[key]?.trim();

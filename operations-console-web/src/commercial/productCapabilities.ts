@@ -1,4 +1,6 @@
+import { joinList } from './commercial.ts';
 import type { Agreement, AgreementCapability } from './commercial.ts';
+import { translator } from '../i18n/index.ts';
 import type { CatalogCapability, CatalogProduct } from './commercialConsole.ts';
 
 // ---------- 合同详情「产品与开通」：按订阅产品分组开通项 ----------
@@ -34,9 +36,11 @@ export function productSections(productCodes: readonly string[], capabilities: r
   return rest.length ? [...sections, { key: otherKey, productCode: null, productName: null, capabilities: rest, availableNames: [], other: true }] : sections;
 }
 
+const t = translator('commercial');
+
 /** 区块标题：中文名 + 代码；目录读取失败时只有代码；「其他」区块固定文字。 */
 export function sectionTitle(section: Pick<ProductSection, 'productCode' | 'productName' | 'other'>): string {
-  if (section.other) return '其他（归属产品无法从目录判定）';
+  if (section.other) return t('product.otherSection');
   return section.productName && section.productName !== section.productCode ? `${section.productName} ${section.productCode}` : section.productCode ?? '';
 }
 
@@ -49,8 +53,9 @@ export function productFootnote(productCodes: readonly string[], products: reado
   const name = (product: CatalogProduct) => product.productName || product.productCode;
   const unsubscribed = products.filter(product => product.status === 'ACTIVE' && !product.baseProduct && !productCodes.includes(product.productCode)).map(name);
   const base = products.filter(product => product.baseProduct).map(name);
-  const parts = [unsubscribed.length ? `未订阅：${unsubscribed.join('、')}` : null, base.length ? `默认具备：${base.join('、')}` : null].filter(Boolean);
-  return parts.length ? parts.join('；') : null;
+  const parts = [unsubscribed.length ? t('product.footnote.unsubscribed', { products: joinList(unsubscribed) }) : null,
+    base.length ? t('product.footnote.base', { products: joinList(base) }) : null].filter((part): part is string => !!part);
+  return parts.length ? joinList(parts, 'clauses') : null;
 }
 
 /** OE 列：只在 PARTNER 合同覆盖多个 OE 时显示（CLIENT 合同只有一个 OE）。 */

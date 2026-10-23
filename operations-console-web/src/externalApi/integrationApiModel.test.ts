@@ -45,7 +45,7 @@ test('新建默认定义可直接序列化，参数说明为空时省略', () =>
 test('路径变量与 PATH 字段双向提示', () => {
   assert.deepEqual(pathVariables('/a/{x}/b/{y}/{x}'), ['x', 'y']);
   assert.deepEqual(pathVariableHints('/outlets/{storeRef}/orders', [field('PATH', 'outletRef'), field('BODY', 'storeRef')]),
-    ['路径变量 {storeRef} 没有对应的 PATH 字段', 'PATH 字段 outletRef 未出现在路径模板中']);
+    ['Path variable {storeRef} has no matching PATH field', "PATH field outletRef doesn't appear in the path template"]);
   assert.deepEqual(pathVariableHints('/outlets/{outletRef}', [field('PATH', 'outletRef')]), []);
 });
 
@@ -98,8 +98,8 @@ test('能力目录与脚本详情解码', () => {
 });
 
 test('脚本可用对象按阶段区分读写', () => {
-  assert.deepEqual(scriptObjects('REQUEST').filter(item => item.access === '读写').map(item => item.path), ['http.requestHeaders', 'http.requestBody']);
-  assert.ok(scriptObjects('RESPONSE').some(item => item.path === 'http.responseStatus' && item.access === '只读'));
+  assert.deepEqual(scriptObjects('REQUEST').filter(item => item.access === 'READ_WRITE').map(item => item.path), ['http.requestHeaders', 'http.requestBody']);
+  assert.ok(scriptObjects('RESPONSE').some(item => item.path === 'http.responseStatus' && item.access === 'READ_ONLY'));
 });
 
 test('decimalEncoding：缺省按 STRING 编辑且保存时省略，NUMBER 原样保存', () => {

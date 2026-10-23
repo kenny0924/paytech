@@ -219,3 +219,20 @@ h1, h2 { font-weight: 600; }
 .ant-modal .ant-modal-header, .ant-modal .ant-modal-footer { flex-shrink: 0; }
 .ant-modal .ant-modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-inline: -6px; padding-inline: 6px; }
 .ant-modal-centered .ant-modal .ant-modal-container { max-height: calc(100vh - 48px); }
+
+/* Interface language switcher (header and login page) */
+.language-switcher { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid #dfe3e8; border-radius: 5px; background: #fff; color: #272b32; font: inherit; font-size: 12px; cursor: pointer; }
+.language-switcher:hover, .language-switcher[aria-expanded="true"] { border-color: #315dca; color: #315dca; background: #f5f8ff; }
+.language-switcher:focus-visible { outline: 2px solid #315dca; outline-offset: 1px; }
+.language-switcher-arrow { font-size: 10px; color: #69717d; }
+.login-language { position: absolute; top: 20px; right: 24px; }
+.language-menu { min-width: 216px; padding: 6px; background: #fff; border-radius: 8px; box-shadow: 0 6px 16px rgba(15, 23, 42, .12), 0 0 0 1px rgba(15, 23, 42, .06); }
+.language-menu .ant-dropdown-menu { box-shadow: none; padding: 0; }
+.language-menu-title { padding: 4px 8px 6px; color: #69717d; font-size: 11px; }
+.language-menu-hint { margin-top: 4px; padding: 8px 8px 4px; border-top: 1px solid #edf0f2; color: #69717d; font-size: 11px; line-height: 1.5; max-width: 216px; }
+.language-option { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.language-option-name { display: block; font-size: 13px; }
+.language-option-code { display: block; color: #8a919c; font-size: 11px; }
+.language-option-check { color: #315dca; }
+.console-sidebar .ant-menu-title-content > span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.console-sidebar .ant-menu-submenu-title > span[title] { display: block; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

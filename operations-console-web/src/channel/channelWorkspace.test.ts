@@ -7,6 +7,9 @@ import {
   endpointReferences, endpointRowErrors, endpointsBody, grantMatrix, grantView, isCallerService, legacyIntegrationTarget, parseChannelPath,
   parseLegacyIntegrationPath, protocolSection, typeCountsSequentially, typeSegmentSearch, workspaceRoutes,
 } from './channelWorkspace.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('channel');
 
 const time = '2026-10-22T01:00:00Z';
 const grant = (callGrantId: string, callerService: string, standardApiCode: string, grantStatus: 'ACTIVE' | 'DISABLED' = 'ACTIVE'): CallGrant => ({
@@ -117,7 +120,7 @@ test('调用方候选：已有调用方并入预置名单，带已有条数；�
   const options = callerOptions([grant('1', 'counterparty-service', 'A'), grant('2', 'counterparty-service', 'B'), grant('3', 'billing-service', 'A')]);
   assert.deepEqual(options.map(option => option.callerService), ['acquiring-service', 'billing-service', 'client-master-service', 'commerce-service',
     'counterparty-service', 'payment-service', 'risk-service']);
-  assert.deepEqual(options.find(option => option.callerService === 'counterparty-service'), { callerService: 'counterparty-service', label: '交易对手', grantCount: 2 });
+  assert.deepEqual(options.find(option => option.callerService === 'counterparty-service'), { callerService: 'counterparty-service', label: t('caller.counterparty-service'), grantCount: 2 });
   assert.equal(options.find(option => option.callerService === 'billing-service')?.label, null);
   assert.ok(isCallerService('risk-service'));
   assert.ok(!isCallerService('Risk-service'));
@@ -133,7 +136,7 @@ test('出站地址：引用汇总、输入校验、Owner 错误定位到行、�
   const rows = [{ endpointCode: 'NI', baseUrl: 'https://a.example.com' }, { endpointCode: 'NI_API', baseUrl: 'https://api.example.com' },
     { endpointCode: 'NI_INTERNAL', baseUrl: 'https://10.20.4.17:8443' }];
   assert.deepEqual([...endpointDraftIssues([{ endpointCode: '', baseUrl: 'x' }, { endpointCode: 'A', baseUrl: '' }, { endpointCode: 'B', baseUrl: 'u' },
-    { endpointCode: 'B', baseUrl: 'u' }]).entries()], [[0, '请填写地址编码'], [1, '请填写 Base URL'], [3, '地址编码 B 重复']]);
+    { endpointCode: 'B', baseUrl: 'u' }]).entries()], [[0, 'Enter an endpoint code.'], [1, 'Enter a Base URL.'], [3, 'Endpoint code B is a duplicate.']]);
   const byField = endpointRowErrors(rows, [{ field: 'endpoints[2].baseUrl', message: '地址落在私网' }, { field: 'endpoints', message: '最多 16 个' }]);
   assert.deepEqual([...byField.rows.entries()], [[2, ['地址落在私网']]]);
   assert.deepEqual(byField.general, ['最多 16 个']);

@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation } from 'react-router-dom';
 import { Result } from 'antd';
 import { requestAllPages } from '../api/paging';
 import { Loading, QueryFailure } from '../tenantAccess/TenantAccessView';
+import { useT } from '../i18n/react';
 import { channelPaths, channelRoutes, decodeChannelPage } from './channel';
 import { legacyIntegrationTarget, parseLegacyIntegrationPath } from './channelWorkspace';
 
@@ -28,8 +29,9 @@ function useChannelIdByCode(channelCode: string | null): [Resolution, () => void
 }
 
 function ChannelMissing({ channelCode }: { channelCode: string }) {
-  return <Result status="404" title="渠道不存在" subTitle={`没有编码为 ${channelCode} 的渠道。原接入方已并入渠道，请在渠道列表中确认编码。`}
-    extra={<Link to={channelRoutes.channels}>返回渠道列表</Link>} />;
+  const t = useT('channel');
+  return <Result status="404" title={t('resolve.missingTitle')} subTitle={t('resolve.missingDetail', { code: channelCode })}
+    extra={<Link to={channelRoutes.channels}>{t('resolve.backToList')}</Link>} />;
 }
 
 /** /channel/channels/code/:channelCode[子路径]：解析后 replace 到渠道详情的同一页面。 */
@@ -47,10 +49,11 @@ export function ChannelCodeRedirect({ channelCode, suffix }: { channelCode: stri
  * 列表与新建地址回到渠道列表；查不到时显示「渠道不存在」。
  */
 export function LegacyIntegrationRedirect() {
+  const t = useT('channel');
   const location = useLocation();
   const legacy = parseLegacyIntegrationPath(location.pathname);
   const [resolution, retry] = useChannelIdByCode(legacy?.code ?? null);
-  if (!legacy) return <Result status="404" title="页面不存在" />;
+  if (!legacy) return <Result status="404" title={t('resolve.pageMissing')} />;
   if (legacy.code === null) return <Navigate replace to={channelRoutes.channels} />;
   if (resolution.state === 'loading') return <Loading />;
   if (resolution.state === 'failed') return <QueryFailure failure={resolution.failure} retry={retry} />;

@@ -155,12 +155,12 @@ test('组件摘要与费率显示：不做浮点舍入', () => {
     '2.9% (min 0.50 USD)');
   assert.equal(componentSummary({ componentType: 'FIXED', rate: null, fixedAmount: '0.30', currency: 'USD', minAmount: null, maxAmount: null, bands: [], bandMode: null }), '0.30 USD');
   assert.equal(componentSummary({ componentType: 'TIERED', rate: null, fixedAmount: null, currency: 'USD', minAmount: null, maxAmount: null, bandMode: 'WHOLE_BASE',
-    bands: [{ bandId: '1', bandNo: 1, lowerBound: '0', upperBound: '1000', rate: '0.01', fixedAmount: null, currency: 'USD' }] }), '阶梯 1 档 · WHOLE_BASE');
+    bands: [{ bandId: '1', bandNo: 1, lowerBound: '0', upperBound: '1000', rate: '0.01', fixedAmount: null, currency: 'USD' }] }), 'Tiered, 1 tier · WHOLE_BASE');
 });
 
 test('覆盖提示：ENABLED 开通项的每个 CURRENCY 条件币种都应有同 OE 价格，暂停项与非币种条件不计', () => {
   const capabilities = [capability('AE001', ['USD', 'AED']), capability('AE001', ['EUR'], 'SUSPENDED')] as AgreementCapability[];
-  assert.deepEqual(coverageGaps(capabilities, [{ entityNo: 'AE001', currency: 'USD' }]), ['AE001/AED（CARD_VISA）']);
+  assert.deepEqual(coverageGaps(capabilities, [{ entityNo: 'AE001', currency: 'USD' }]), ['AE001/AED (CARD_VISA)']);
   assert.deepEqual(coverageGaps(capabilities, [{ entityNo: 'AE001', currency: 'USD' }, { entityNo: 'AE001', currency: 'AED' }]), []);
 });
 
@@ -192,12 +192,12 @@ test('新价格默认草稿：Client 条款带结算四字段，Partner 条款�
 test('档位检查：首档 0、连续、末档无上界、费率与金额恰好一个、累进只允许费率', () => {
   const band = (lowerBound: string, upperBound: string | null, rate: string | null, fixedAmount: string | null = null) => ({ lowerBound, upperBound, rate, fixedAmount });
   assert.deepEqual(bandIssues([band('0', '1000', '0.01'), band('1000', null, '0.005')], 'WHOLE_BASE'), []);
-  assert.deepEqual(bandIssues([], 'WHOLE_BASE'), ['阶梯组件至少一档']);
-  assert.deepEqual(bandIssues([band('10', null, '0.01')], 'WHOLE_BASE'), ['首档下界必须为 0']);
-  assert.deepEqual(bandIssues([band('0', '1000', '0.01'), band('1500', null, '0.005')], 'WHOLE_BASE'), ['第 1 档上界必须等于第 2 档下界']);
-  assert.deepEqual(bandIssues([band('0', '1000', '0.01'), band('1000', '2000', '0.005')], 'WHOLE_BASE'), ['末档上界必须为空']);
-  assert.deepEqual(bandIssues([band('0', null, '0.01', '1')], 'WHOLE_BASE'), ['第 1 档费率与固定金额必须恰好填一个']);
-  assert.deepEqual(bandIssues([band('0', null, null, '1')], 'PROGRESSIVE'), ['累进模式第 1 档只允许费率']);
+  assert.deepEqual(bandIssues([], 'WHOLE_BASE'), ['A tiered component needs at least one tier.']);
+  assert.deepEqual(bandIssues([band('10', null, '0.01')], 'WHOLE_BASE'), ["The first tier's lower bound must be 0."]);
+  assert.deepEqual(bandIssues([band('0', '1000', '0.01'), band('1500', null, '0.005')], 'WHOLE_BASE'), ["Tier 1's upper bound must equal tier 2's lower bound."]);
+  assert.deepEqual(bandIssues([band('0', '1000', '0.01'), band('1000', '2000', '0.005')], 'WHOLE_BASE'), ["The last tier's upper bound must be empty."]);
+  assert.deepEqual(bandIssues([band('0', null, '0.01', '1')], 'WHOLE_BASE'), ['Tier 1 needs exactly one of a rate or a fixed amount.']);
+  assert.deepEqual(bandIssues([band('0', null, null, '1')], 'PROGRESSIVE'), ['In progressive mode, tier 1 allows a rate only.']);
   assert.deepEqual(bandIssues([band('0', '1000.00', '0.01'), band('1000', null, '0.005')], 'WHOLE_BASE'), [], '数值相等即连续');
 });
 
@@ -220,7 +220,7 @@ test('签署、保证金成组、画像与方案请求的条件字段', () => {
   assert.deepEqual([click.acceptedByActorId, click.executedDocument], ['9', null]);
   const esign = acceptanceBody(3, { acceptanceReference: 'R-2', acceptanceMethod: 'E_SIGNATURE', acceptedByActorId: '9', acceptedAt: '2026-10-19T10:00:00Z', fileId: '1', contentHash: 'AB' });
   assert.deepEqual([esign.acceptedByActorId, esign.executedDocument], [null, { fileId: '1', contentHash: 'ab' }]);
-  assert.equal(reserveError('0.1', null), '保证金比例与天数必须同时填写或同时留空');
+  assert.equal(reserveError('0.1', null), 'Enter both the reserve rate and days, or leave both empty.');
   assert.equal(reserveError('0.1', 90), null);
   assert.equal(reserveError(undefined, undefined), null);
   assert.deepEqual(profileBody({ pricingProfileCode: ' card_visa ', profileKind: 'FX_PAIR', profileName: ' FX ', paymentMethodCode: 'CARD',
@@ -241,12 +241,12 @@ test('排期时刻：本地时间转换为 UTC RFC 3339（Z 结尾、无毫秒�
 });
 
 test('错误提示：409 提示重新加载，BUSINESS_CHECK_FAILED 按场景给出可操作说明，其他错误交给通用通知', () => {
-  assert.match(commercialErrorMessage(new ApiError(409, 'CONCURRENT_REQUEST'), 'version') ?? '', /重新加载/);
-  assert.match(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED'), 'version') ?? '', /Checker 不能与 Maker 相同/);
-  assert.match(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'r', '业务校验未通过'), 'version') ?? '', /Checker 不能与 Maker 相同/);
+  assert.match(commercialErrorMessage(new ApiError(409, 'CONCURRENT_REQUEST'), 'version') ?? '', /Reload and try again/);
+  assert.match(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED'), 'version') ?? '', /Checker can't be the Maker.*\(BUSINESS_CHECK_FAILED\)$/);
+  assert.match(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'r', '业务校验未通过'), 'version') ?? '', /Checker can't be the Maker/, '服务端公共默认说明视同无原因');
   assert.equal(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'r', '激活校验：开通项 AE001/APPLE_PAY/AED 无价格'), 'version'),
-    '业务校验未通过：激活校验：开通项 AE001/APPLE_PAY/AED 无价格');
-  assert.match(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED'), 'agreement') ?? '', /签署文件/);
+    'Business check failed: 激活校验：开通项 AE001/APPLE_PAY/AED 无价格');
+  assert.match(commercialErrorMessage(new ApiError(400, 'BUSINESS_CHECK_FAILED'), 'agreement') ?? '', /signing document/);
   assert.equal(commercialErrorMessage(new ApiError(503, 'DEPENDENCY_UNAVAILABLE'), 'profile'), null);
   assert.equal(commercialErrorMessage(new Error('x'), 'profile'), null);
 });

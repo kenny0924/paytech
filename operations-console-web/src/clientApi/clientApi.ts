@@ -19,7 +19,8 @@ export type ReferenceKind = 'NONE' | 'ROUTE' | 'CREDENTIAL';
 export interface ScopePage { scope: ScopeDetail; references: null | { kind: 'ROUTE'; page: PagingResponseBody<GatewayRouteSummaryResponseBody> } | { kind: 'CREDENTIAL'; page: PagingResponseBody<Credential> } }
 export interface CredentialSearch { clientMode?: string; client?: string; credentialMode?: string; credential?: string; status?: string; scopeCode?: string }
 export const scopeCodePattern = /^[a-z][a-z0-9]*(?:[.:-][a-z0-9]+)*$/;
-export const statusLabels: Record<string, string> = { ACTIVE: '有效', EXPIRED: '已过期', REVOKED: '已撤销', PENDING: '待生效' };
+/** Credential / grant statuses; labels are `gateway.enum.credentialStatus.<status>`. */
+export const credentialStatuses = ['ACTIVE', 'EXPIRED', 'REVOKED'] as const;
 export function credentialFilters(values: CredentialSearch): Record<string, string> {
   const result: Record<string, string> = {};
   if (values.client?.trim()) result[values.clientMode === 'clientId' ? 'clientId' : 'clientName'] = values.client.trim();

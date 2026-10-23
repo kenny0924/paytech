@@ -47,13 +47,18 @@ public final class RoleModels {
     public record RolePermissionOptionsResponseBody(List<PermissionNode> nodes) {
     }
 
-    public record PermissionNode(String nodeId, String displayName, String permissionId, List<PermissionNode> children) {
+    /**
+     * 权限树节点；{@code code} 供前端翻译：资源节点为资源编码，未挂资源的权限为权限编码，"其他权限"分组为
+     * {@code OTHER_PERMISSIONS}。{@code displayName} 是 Platform 资源名（中文）或编码，仅作前端缺少翻译时的回退。
+     */
+    public record PermissionNode(String nodeId, String code, String displayName, String permissionId,
+                                 List<PermissionNode> children) {
     }
 
     public record GrantablePermission(String permissionId, String permissionCode) {
     }
 
-    public record PermissionResource(String resourceId, String parentResourceId, String displayName,
+    public record PermissionResource(String resourceId, String resourceCode, String parentResourceId, String displayName,
                                      String permissionId, int sortOrder) {
     }
 }

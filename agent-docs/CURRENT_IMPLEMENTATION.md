@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## operations 运营控制台多语言迁移（2026-10-23，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [需求](<../requirements/20261023/operations-控制台多语言迁移/requirement.md>)、[技术方案](<../requirements/20261023/operations-控制台多语言迁移/technique.md>)、[交付记录](<../requirements/20261023/operations-控制台多语言迁移/delivery.md>)、[发布记录](<../requirements/20261023/operations-控制台多语言迁移/release/release.md>)、[英文术语表](<../requirements/20261023/operations-控制台多语言迁移/glossary.md>)。多语言管理 R9 的"另立需求"：operations-console-web 全部既有页面接入；服务端报错文案、业务内容多语言不在范围。
+- **Implemented：** ops-web 全部界面文案改为 key（21 个命名空间、8523 key，`en` 基准 + `zh-CN` 种子逐字等于原中文）；默认英文、页头 / 登录页语言切换（整页刷新）、本地缓存 manifest 与语言包（启动直接用缓存、后台核对新发布、断网可用）；antd / dayjs / `<html lang>` 跟随；菜单、面包屑、页面标题、权限树按 `nav.resource.<资源编码>`，缺 key 回退 Platform `display_name`；租户访问原因按编码翻译；全量禁中文守卫测试（白名单仅 `navigation/pageCapabilities.ts`）。ops-bff 三处：权限树节点带 `code`（"其他权限"为 `OTHER_PERMISSIONS`）、审计详情去掉中文 `label`、价格试算说明改为 `notes[{code, params}]`。开发约定第 10 节与决定 `2026-10-22-ui-text-localization.md` 已更新。
+- **Verified：** 基于 main `9f210b5c`：ops-web 1481/1481、tsc、build；ops-bff 2345/0；本地中文零变化比对 70 页 + 48 个详情无迁移差异；缓存 / 断网 / 发布刷新 10/10；英文逐词断行检测与 104 张截图人工审阅（加宽 11 列）。
+- **Deployed：** mor-test 2026-10-23 19:54—20:45Z：ops-bff `3751638e…`、ops-web `d228e3c8…`（tag `opsi18n-20261023a`）；Platform `operations-console` 默认语言 `en`、21 个命名空间、发布 #3（#4 为 AC-07 临时版本）；接口 65/65、浏览器 28 + 1 预期、AC-07 11/11、中文零变化复核通过。
+- **Pending / 遗留：** 推送另行授权。Foundation `SnowflakeIdGenerator` 同毫秒序列（4096）用尽即抛 `ID_GENERATION_ERROR`，本次 8114 个 key 以累积分批导入规避，公共库修正另立。只在 Platform 注册而前端未登记的新资源在英文界面显示中文名。阶段 4 的 218 张英文走查截图未入库，存本机备份 `~/Code-MoR-backups/20261023-ops-i18n/local-en-screenshots`。
+
 ## platform-support 多语言管理（前端界面文案，2026-10-22—23，已部署 mor-test，已本地提交，未推送）
 
 - **范围：** [需求](<../requirements/20261022/platform-support-多语言管理/requirement.md>)、[技术方案](<../requirements/20261022/platform-support-多语言管理/technique.md>)、[交付记录](<../requirements/20261022/platform-support-多语言管理/delivery.md>)、[发布记录](<../requirements/20261022/platform-support-多语言管理/release/release.md>)、[决定](./decisions/2026-10-22-ui-text-localization.md)；前置为文件公开桶。只处理第一类文案（前端界面文案）；服务端报错文案、业务内容多语言另立。

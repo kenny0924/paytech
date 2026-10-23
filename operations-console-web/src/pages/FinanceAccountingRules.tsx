@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import { Button, Empty, Table, Tag } from 'antd';
 import { useSearchParams } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
+import { useT } from '../i18n/react';
 import { localTime, replaceQuery } from '../finance/finance';
 import {
-  decodeRuleBundle, decodeRuleBundleList, financeActions, hasAction, hasVersionInProgress, ruleBundleName, ruleVersionStatusLabels, standardChartCode, workflowPaths,
+  decodeRuleBundle, decodeRuleBundleList, financeActions, hasAction, hasVersionInProgress, ruleBundleName, standardChartCode, workflowPaths,
 } from '../finance/financeWorkflow';
 import type { RuleBundle, RuleBundleSummary, RuleVersionSummary } from '../finance/financeWorkflow';
 import { FinanceNote, LoadFailure } from '../finance/FinanceParts';
@@ -25,6 +26,7 @@ const versionPattern = /^[1-9][0-9]{0,18}$/;
  * <li>新建需 …_ACCOUNTING_RULES_MANAGE 且没有草稿或待审批版本；审批 / 驳回需 …_APPROVE 且不是制单人。</li>
  */
 export function FinanceAccountingRules({ resources, actorId, onAuthorizationChanged }: Props) {
+  const t = useT('finance'), tNav = useT('nav');
   const [params, setParams] = useSearchParams();
   const canManage = hasAction(resources, financeActions.rulesManage);
   const canApprove = hasAction(resources, financeActions.rulesApprove);
@@ -32,45 +34,45 @@ export function FinanceAccountingRules({ resources, actorId, onAuthorizationChan
   const bundleCode = bundleParam && bundleCodePattern.test(bundleParam) ? bundleParam : null;
   const bundleVer = bundleCode && verParam && versionPattern.test(verParam) ? verParam : null;
   const go = (updates: Record<string, string | null>) => setParams(new URLSearchParams(replaceQuery(params.toString(), updates)));
-  const bundles = useDetail<RuleBundleSummary[]>(workflowPaths.ruleBundles, decodeRuleBundleList, onAuthorizationChanged, '规则包加载失败');
+  const bundles = useDetail<RuleBundleSummary[]>(workflowPaths.ruleBundles, decodeRuleBundleList, onAuthorizationChanged, t('rules.bundlesLoadFailed'));
   const decodeBundle = useMemo(() => decodeRuleBundle(bundleCode ?? ''), [bundleCode]);
-  const bundle = useDetail<RuleBundle>(bundleCode ? workflowPaths.ruleBundle(bundleCode) : null, decodeBundle, onAuthorizationChanged, '规则包详情加载失败');
+  const bundle = useDetail<RuleBundle>(bundleCode ? workflowPaths.ruleBundle(bundleCode) : null, decodeBundle, onAuthorizationChanged, t('rules.bundleLoadFailed'));
   const chartAccounts = useChartAccounts(standardChartCode, {}, onAuthorizationChanged);
   const accountMap = useMemo(() => new Map(chartAccounts.items.map(item => [item.accountCode, item])), [chartAccounts.items]);
   const [creating, setCreating] = useState(false);
   const refresh = () => { bundle.reload(); bundles.reload(); };
   const current = bundle.item;
   const canCreate = canManage && !!current && !hasVersionInProgress(current.versions);
-  return <div className="configuration-page finance-page"><div className="page-heading"><h1>记账规则</h1></div>
+  return <div className="configuration-page finance-page"><div className="page-heading"><h1>{tNav('resource.OPERATIONS_FINANCE_ACCOUNTING_RULES')}</h1></div>
     {bundles.error ? <LoadFailure message={bundles.error} onRetry={bundles.reload} /> : <section className="table-panel">
       <Table<RuleBundleSummary> rowKey="bundleCode" tableLayout="fixed" dataSource={bundles.item ?? []} loading={bundles.loading} pagination={false}
         rowClassName={row => row.bundleCode === bundleCode ? 'finance-row-selected' : ''}
         onRow={row => ({ onClick: () => go({ bundle: row.bundleCode, ver: null }), className: 'clickable-row' })}
-        locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="还没有规则包（规则包由初始化数据定义）" /> }} columns={[
-          { title: '规则包', render: (_, row) => <span>{ruleBundleName(row.bundleCode)}<div className="cell-meta mono">{row.bundleCode}</div></span> },
-          { title: '状态', width: 100, render: (_, row) => <WorkflowTag status={row.status} /> },
-          { title: '当前生效版本', width: 140, render: (_, row) => row.currentBundleVer ?? <span className="muted">无</span> },
-          { title: '生效时间', width: 180, render: (_, row) => row.currentEffectiveFrom ? localTime(row.currentEffectiveFrom) : '—' },
+        locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('rules.bundlesEmpty')} /> }} columns={[
+          { title: t('rules.field.bundle'), render: (_, row) => <span>{ruleBundleName(row.bundleCode)}<div className="cell-meta mono">{row.bundleCode}</div></span> },
+          { title: t('field.status'), width: 100, render: (_, row) => <WorkflowTag status={row.status} /> },
+          { title: t('rules.column.currentVersion'), width: 140, render: (_, row) => row.currentBundleVer ?? <span className="muted">{t('rules.none')}</span> },
+          { title: t('rules.field.effectiveFrom'), width: 180, render: (_, row) => row.currentEffectiveFrom ? localTime(row.currentEffectiveFrom) : '—' },
         ]} />
     </section>}
-    {!bundleCode ? <div className="finance-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="选择规则包后查看版本" /></div>
+    {!bundleCode ? <div className="finance-empty"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('rules.selectBundle')} /></div>
       : <section className="finance-section">
-        <div className="finance-section-head"><h2>{ruleBundleName(bundleCode)} · 版本</h2><span className="finance-spacer" />
-          {canManage && current && (canCreate ? <Button type="primary" onClick={() => setCreating(true)}>新建版本</Button>
-            : <Tag color="gold">已有草稿或待审批版本，处理后才能新建</Tag>)}</div>
+        <div className="finance-section-head"><h2>{t('rules.versionsTitle', { bundle: ruleBundleName(bundleCode) })}</h2><span className="finance-spacer" />
+          {canManage && current && (canCreate ? <Button type="primary" onClick={() => setCreating(true)}>{t('rules.createVersion')}</Button>
+            : <Tag color="gold">{t('rules.inProgress')}</Tag>)}</div>
         {bundle.error ? <LoadFailure message={bundle.error} onRetry={bundle.reload} /> : <div className="table-panel">
           <Table<RuleVersionSummary> rowKey="versionId" tableLayout="fixed" dataSource={current?.versions ?? []} loading={bundle.loading} pagination={false}
             onRow={row => ({ onClick: () => go({ ver: row.bundleVer }), className: 'clickable-row' })}
-            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="该规则包还没有版本" /> }} columns={[
-              { title: '版本', width: 100, render: (_, row) => <a className="mono">{row.bundleVer}</a> },
-              { title: '状态', width: 120, render: (_, row) => <span><WorkflowTag status={row.status} labels={ruleVersionStatusLabels} />
-                {row.bundleVer === current?.currentBundleVer && <Tag color="green">当前</Tag>}</span> },
-              { title: '生效时间', render: (_, row) => localTime(row.effectiveFrom) },
-              { title: '失效时间', render: (_, row) => row.effectiveTo ? localTime(row.effectiveTo) : '—' },
+            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('rules.versionsEmpty')} /> }} columns={[
+              { title: t('rules.column.version'), width: 100, render: (_, row) => <a className="mono">{row.bundleVer}</a> },
+              { title: t('field.status'), width: 120, render: (_, row) => <span><WorkflowTag status={row.status} enumType="ruleVersionStatus" />
+                {row.bundleVer === current?.currentBundleVer && <Tag color="green">{t('rules.current')}</Tag>}</span> },
+              { title: t('rules.field.effectiveFrom'), render: (_, row) => localTime(row.effectiveFrom) },
+              { title: t('rules.field.effectiveTo'), render: (_, row) => row.effectiveTo ? localTime(row.effectiveTo) : '—' },
             ]} />
         </div>}
       </section>}
-    <FinanceNote>规则只影响生效后的新事实，不重算历史分录。审批时生效时间已过则按审批时间立即生效、旧版本退役；迟到的事实按其业务时间所在的版本记账；未来生效的版本为「待生效」，由定时任务每分钟切换。{!canManage && ' 当前账号没有制单权限。'}{!canApprove && ' 当前账号没有复核权限。'}</FinanceNote>
+    <FinanceNote>{t('rules.pageNote')}{!canManage && ' ' + t('adjustments.noMakerPermission')}{!canApprove && ' ' + t('adjustments.noCheckerPermission')}</FinanceNote>
     {creating && current && <CreateRuleVersionDrawer bundleCode={current.bundleCode} currentBundleVer={current.currentBundleVer} chartAccounts={chartAccounts.items}
       accounts={accountMap} onClose={() => setCreating(false)} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={version => { setCreating(false); refresh(); go({ ver: version.bundleVer }); }} />}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decodeGraph, initialGraph, outputDeclarations, outputsForDecision, outputValue, PAYMENT_OUTPUT_FALLBACK, toWireGraph } from './decisionFlow.ts';
+import { decodeGraph, initialGraph, outputDeclarations, outputsForDecision, outputValue, paymentOutputFallback, toWireGraph } from './decisionFlow.ts';
 import type { FlowGraph } from './decisionFlow.ts';
 import { decodeFlowContext } from './decisionFlowApi.ts';
 
@@ -30,11 +30,11 @@ test('output decoding rejects empty, oversized and non-code entries', () => {
 
 test('changing decision keeps only outputs allowed for the new decision', () => {
   const outputs = { AUTHENTICATION_REQUIREMENT: 'THREE_DS_REQUIRED' };
-  assert.deepEqual(outputsForDecision(outputs, 'ALLOW', PAYMENT_OUTPUT_FALLBACK), outputs);
-  assert.equal(outputsForDecision(outputs, 'DENY', PAYMENT_OUTPUT_FALLBACK), undefined);
-  assert.equal(outputsForDecision(outputs, 'REVIEW', PAYMENT_OUTPUT_FALLBACK), undefined);
-  assert.equal(outputValue({}, PAYMENT_OUTPUT_FALLBACK[0]!), 'NOT_REQUIRED');
-  assert.equal(outputValue({ outputs }, PAYMENT_OUTPUT_FALLBACK[0]!), 'THREE_DS_REQUIRED');
+  assert.deepEqual(outputsForDecision(outputs, 'ALLOW', paymentOutputFallback()), outputs);
+  assert.equal(outputsForDecision(outputs, 'DENY', paymentOutputFallback()), undefined);
+  assert.equal(outputsForDecision(outputs, 'REVIEW', paymentOutputFallback()), undefined);
+  assert.equal(outputValue({}, paymentOutputFallback()[0]!), 'NOT_REQUIRED');
+  assert.equal(outputValue({ outputs }, paymentOutputFallback()[0]!), 'THREE_DS_REQUIRED');
 });
 
 const baseContext = { supportedPoints: [{ pointCode: 'PAYMENT_ATTEMPT_RISK', pointName: '支付尝试' }], pointCode: 'PAYMENT_ATTEMPT_RISK', inputContractCode: 'PAYMENT_ATTEMPT', inputContractVersion: 1, graphSchemaVersion: 1, fields: [], nodeOutputs: [],
@@ -44,7 +44,7 @@ test('authoring context declarations come from Risk when present, otherwise paym
   const declared = decodeFlowContext({ ...baseContext, outputs: [{ outputCode: 'AUTHENTICATION_REQUIREMENT', name: '认证要求',
     allowedValues: [{ value: 'NOT_REQUIRED', name: '无需认证' }, { value: 'THREE_DS_REQUIRED', name: '需要 3DS' }], defaultValue: 'NOT_REQUIRED', allowedEndDecisions: ['ALLOW'] }] });
   assert.equal(outputDeclarations(declared)[0]!.allowedValues[1]!.name, '需要 3DS');
-  assert.deepEqual(outputDeclarations(decodeFlowContext(baseContext)), PAYMENT_OUTPUT_FALLBACK);
+  assert.deepEqual(outputDeclarations(decodeFlowContext(baseContext)), paymentOutputFallback());
   assert.deepEqual(outputDeclarations(decodeFlowContext({ ...baseContext, pointCode: 'CHECKOUT_PREPARE' })), []);
   assert.throws(() => decodeFlowContext({ ...baseContext, outputs: [{ outputCode: 'AUTHENTICATION_REQUIREMENT', name: '认证要求', allowedValues: [], defaultValue: 'NOT_REQUIRED', allowedEndDecisions: ['ALLOW'] }] }));
   assert.throws(() => decodeFlowContext({ ...baseContext, outputs: [{ outputCode: 'AUTHENTICATION_REQUIREMENT', name: '认证要求',

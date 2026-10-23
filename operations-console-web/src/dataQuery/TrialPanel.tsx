@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Alert, Button, Checkbox, Input, InputNumber, Select, Table } from 'antd';
 import { DatePicker } from '../components/DatePicker';
 import { dataQueryPaths } from './dataQueryCommon';
-import { cellText, contentBody, decodeTrialResult, pagingModeLabels, trialFields, trialPaging, trialParams } from './templateModel';
+import { cellText, contentBody, decodeTrialResult, pagingModeLabel, trialFields, trialPaging, trialParams } from './templateModel';
 import type { ResultCell, TemplateDraft, TrialField, TrialResult, TrialValue } from './templateModel';
+import { useT } from '../i18n/react';
 import { Note } from './DataQueryParts';
+import { richText } from '../i18n/richText';
 import { useDataQueryCommand } from './useDataQueryCommand';
 
 /**
@@ -14,7 +16,7 @@ import { useDataQueryCommand } from './useDataQueryCommand';
 export function TrialPanel({ draft, canRun, onAuthorizationChanged, onResultColumns }: {
   draft: TemplateDraft; canRun: boolean; onAuthorizationChanged: () => void; onResultColumns: (names: string[]) => void;
 }) {
-  const command = useDataQueryCommand(onAuthorizationChanged);
+  const command = useDataQueryCommand(onAuthorizationChanged); const t = useT('data-query');
   const fields = trialFields(draft.parameters);
   const constraints = draft.constraints;
   const [values, setValues] = useState<Record<string, TrialValue>>({});
@@ -28,36 +30,37 @@ export function TrialPanel({ draft, canRun, onAuthorizationChanged, onResultColu
     if (params.errors.length || !draft.dataSourceId) return;
     const targetPage = next.page ?? page;
     const paging = trialPaging(constraints, { page: targetPage, size: size ?? undefined, withTotal, cursor: next.cursor });
-    const value = await command.run(dataQueryPaths.trials, 'POST', { ...contentBody(draft), params: params.params, ...paging }, decodeTrialResult, '试运行失败');
+    const value = await command.run(dataQueryPaths.trials, 'POST', { ...contentBody(draft), params: params.params, ...paging }, decodeTrialResult, t('trial.failed'));
     if (value) { setResult({ value, page: targetPage, cursorUsed: !!next.cursor }); setPage(targetPage); onResultColumns(value.columns.map(column => column.name)); }
   }
   const belongs = (field: string, name: string) => field === `params.${name}` || field.startsWith(`params.${name}[`) || field.startsWith(`params.${name}.`);
   const errorsFor = (name: string) => [...localErrors.filter(error => error.name === name).map(error => error.message),
-    ...command.fieldErrors.filter(error => belongs(error.field, name)).map(error => `${error.field.replace(/^params\./, '')}：${error.message}`)];
+    ...command.fieldErrors.filter(error => belongs(error.field, name)).map(error => t('error.fieldError', { field: error.field.replace(/^params\./, ''), message: error.message }))];
   const otherErrors = command.fieldErrors.filter(error => !fields.some(field => belongs(error.field, field.name)));
 
   return <div className="dq-trial">
     <div className="dq-trial-form">
-      <div className="dq-trial-hint muted">按参数声明生成，不保存草稿也能试</div>
-      {fields.length === 0 && <span className="muted">模板没有声明参数。</span>}
+      <div className="dq-trial-hint muted">{t('trial.hint')}</div>
+      {fields.length === 0 && <span className="muted">{t('trial.noParameters')}</span>}
       {fields.map(field => <div key={field.name} className="dq-trial-field">
         <span className="mono">{field.name}{field.required ? ' *' : ''}<small className="muted"> {field.label}</small></span>
         <TrialInput field={field} value={values[field.name]} onChange={value => setValues(current => ({ ...current, [field.name]: value }))} />
         {errorsFor(field.name).map(message => <div key={message} className="dq-text-error">{message}</div>)}
       </div>)}
       <div className="dq-trial-paging">
-        <span className="muted">{pagingModeLabels[constraints.pagingMode]}</span>
-        {constraints.pagingMode === 'OFFSET' && <>第 <InputNumber size="small" min={1} precision={0} value={page} onChange={value => setPage(value ?? 1)} /> 页</>}
-        {constraints.pagingMode !== 'NONE' && <><span>每页</span><InputNumber size="small" min={1} max={constraints.maxPageSize ?? undefined} precision={0}
+        <span className="muted">{pagingModeLabel(constraints.pagingMode)}</span>
+        {constraints.pagingMode === 'OFFSET' && <span>{richText(t, 'trial.pageInput', {
+          input: <InputNumber size="small" min={1} precision={0} value={page} onChange={value => setPage(value ?? 1)} /> })}</span>}
+        {constraints.pagingMode !== 'NONE' && <><span>{t('trial.pageSize')}</span><InputNumber size="small" min={1} max={constraints.maxPageSize ?? undefined} precision={0}
           placeholder={String(constraints.maxPageSize ?? '')} value={size} onChange={value => setSize(value)} /></>}
         {constraints.pagingMode === 'OFFSET' && <Checkbox checked={withTotal} disabled={constraints.countAllowed !== true}
-          onChange={event => setWithTotal(event.target.checked)}>返回总数</Checkbox>}
+          onChange={event => setWithTotal(event.target.checked)}>{t('trial.withTotal')}</Checkbox>}
         <Button type="primary" onClick={() => void run({ page: constraints.pagingMode === 'OFFSET' ? page : 1 })} loading={command.saving}
-          disabled={!canRun || !draft.dataSourceId}>▶ 试运行</Button>
+          disabled={!canRun || !draft.dataSourceId}>{t('template.trial')}</Button>
       </div>
-      {!draft.dataSourceId && <Note tone="warning">请先在顶栏选择数据源。</Note>}
+      {!draft.dataSourceId && <Note tone="warning">{t('trial.selectDataSource')}</Note>}
       {otherErrors.length > 0 && <Alert type="error" showIcon className="dq-banner"
-        title={otherErrors.map(error => `${error.field}：${error.message}`).join('；')} />}
+        title={otherErrors.map(error => t('error.fieldError', { field: error.field, message: error.message })).join(t('error.fieldErrorSeparator'))} />}
       {command.formError && !command.fieldErrors.length && <Alert type="error" showIcon className="dq-banner" title={command.formError} />}
     </div>
     {result && <TrialOutput result={result.value} page={result.page} constraints={constraints} loading={command.saving}
@@ -86,29 +89,30 @@ function TrialOutput({ result, page, constraints, loading, onPage, onNext }: {
   result: TrialResult; page: number; constraints: TemplateDraft['constraints']; loading: boolean;
   onPage: (page: number) => void; onNext: (cursor: string) => void;
 }) {
-  const limit = constraints.pagingMode === 'NONE' ? `最多 ${constraints.maxRows} 行` : `每页 ≤ ${constraints.maxPageSize ?? '—'}`;
+  const t = useT('data-query');
+  const limit = constraints.pagingMode === 'NONE' ? t('trial.limitRows', { count: constraints.maxRows }) : t('trial.limitPageSize', { size: constraints.maxPageSize ?? '—' });
   return <div className="dq-trial-output">
     <div className="dq-trial-summary">
-      <span className="dq-ok">成功</span>
-      <span>{result.rows.length} 行{result.hasMore ? ' · 还有更多' : ''}</span>
-      {result.total !== null && <span>总数 {result.total}</span>}
-      <span>耗时 {result.elapsedMillis} ms</span>
-      <span className="muted">上限：{limit} · 超时 {constraints.timeoutSeconds} s</span>
+      <span className="dq-ok">{t('trial.succeeded')}</span>
+      <span>{result.hasMore ? t('trial.rowsMore', { count: result.rows.length }) : t('trial.rows', { count: result.rows.length })}</span>
+      {result.total !== null && <span>{t('trial.total', { total: result.total })}</span>}
+      <span>{t('trial.elapsed', { millis: result.elapsedMillis })}</span>
+      <span className="muted">{t('trial.limits', { limit, seconds: constraints.timeoutSeconds })}</span>
     </div>
     <pre className="dq-sql">{result.sql}</pre>
     {result.countSql && <pre className="dq-sql is-count">{result.countSql}</pre>}
-    <div className="dq-bindings">绑定：{result.bindings.length ? result.bindings.map((binding, index) => <span key={index}>[{index + 1}] {binding}</span>) : '无'}</div>
+    <div className="dq-bindings">{t('trial.bindings')}{result.bindings.length ? result.bindings.map((binding, index) => <span key={index}>[{index + 1}] {binding}</span>) : t('diff.none')}</div>
     <Table<ResultCell[]> size="small" loading={loading} rowKey={(_, index) => String(index)} pagination={false} scroll={{ x: 'max-content', y: 360 }}
-      dataSource={result.rows} locale={{ emptyText: '没有返回行' }}
+      dataSource={result.rows} locale={{ emptyText: t('trial.noRows') }}
       columns={result.columns.map((column, index) => ({ key: column.name, title: column.label ?? column.name, ellipsis: true,
         render: (_: unknown, row: ResultCell[]) => <span className={row[index] === null ? 'muted' : 'mono'}>{cellText(row[index])}</span> }))} />
     <div className="dq-trial-foot">
-      <span className="muted">数值与 64 位 ID 以字符串返回；时间按库中原值显示</span>
+      <span className="muted">{t('trial.valuesNote')}</span>
       {constraints.pagingMode === 'OFFSET' && <span>
-        <Button size="small" disabled={page <= 1 || loading} onClick={() => onPage(page - 1)}>‹ 上一页</Button>
-        <span className="dq-page-no">第 {page} 页</span>
-        <Button size="small" disabled={!result.hasMore || loading} onClick={() => onPage(page + 1)}>下一页 ›</Button></span>}
-      {constraints.pagingMode === 'CURSOR' && <Button size="small" disabled={!result.nextCursor || loading} onClick={() => onNext(result.nextCursor!)}>下一页 ›</Button>}
+        <Button size="small" disabled={page <= 1 || loading} onClick={() => onPage(page - 1)}>{t('trial.previous')}</Button>
+        <span className="dq-page-no">{t('trial.pageNo', { page })}</span>
+        <Button size="small" disabled={!result.hasMore || loading} onClick={() => onPage(page + 1)}>{t('trial.next')}</Button></span>}
+      {constraints.pagingMode === 'CURSOR' && <Button size="small" disabled={!result.nextCursor || loading} onClick={() => onNext(result.nextCursor!)}>{t('trial.next')}</Button>}
     </div>
   </div>;
 }

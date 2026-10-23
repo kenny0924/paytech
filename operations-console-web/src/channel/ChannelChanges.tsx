@@ -5,6 +5,7 @@ import { changeTargetLabel, idPattern } from './channel';
 import type { CallGrant, Channel, ChangeTargetType, ChannelAccountSummary } from './channel';
 import { workspaceRoutes } from './channelWorkspace';
 import { ChangeList, ChannelNote } from './ChannelParts';
+import { useT } from '../i18n/react';
 
 /** 按渠道类型可选的变更对象类型；协议对象的行 ID 由 Owner 管理，需手工输入。 */
 const changeFilterTypes: Record<Channel['channelType'], ChangeTargetType[]> = {
@@ -18,6 +19,7 @@ const manualIdTypes: readonly string[] = ['CHANNEL_API', 'CHANNEL_SCRIPT', 'CHAN
  * 渠道、技术账号 / 凭据与调用授权从本渠道数据中选择；协议对象按 Owner 行 ID 查询。
  */
 export function ChannelChanges({ channel, accounts, grants }: { channel: Channel; accounts: ChannelAccountSummary[] | undefined; grants: CallGrant[] | undefined }) {
+  const t = useT('channel');
   const location = useLocation(); const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
   const types = changeFilterTypes[channel.channelType];
@@ -34,18 +36,18 @@ export function ChannelChanges({ channel, accounts, grants }: { channel: Channel
       ? (grants ?? []).map(grant => ({ value: grant.callGrantId, label: `${grant.callerService} → ${grant.standardApiCode} · ${grant.callGrantId}` }))
       : [];
   return <>
-    <div className="channel-section-head"><h2>变更记录</h2><span className="channel-spacer" />
-      <Select aria-label="目标类型" value={targetType} style={{ width: 180 }} options={types.map(value => ({ value, label: changeTargetLabel(value) }))}
+    <div className="channel-section-head"><h2>{t('workspace.tab.changes')}</h2><span className="channel-spacer" />
+      <Select aria-label={t('changes.targetType')} value={targetType} style={{ width: 180 }} options={types.map(value => ({ value, label: changeTargetLabel(value) }))}
         onChange={value => { setManualId(''); apply(value, null); }} />
-      {(targetType === 'CHANNEL_ACCOUNT' || targetType === 'CHANNEL_CALL_GRANT') && <Select aria-label="对象" showSearch optionFilterProp="label"
-        value={targetId ?? undefined} placeholder="选择对象" style={{ width: 320 }} options={objectOptions} onChange={value => apply(targetType, value)} />}
-      {manualIdTypes.includes(targetType) && <Input.Search aria-label="对象 ID" value={manualId} placeholder="输入对象 ID" style={{ width: 260 }}
-        onChange={event => setManualId(event.target.value.trim())} enterButton="查询"
+      {(targetType === 'CHANNEL_ACCOUNT' || targetType === 'CHANNEL_CALL_GRANT') && <Select aria-label={t('changes.object')} showSearch optionFilterProp="label"
+        value={targetId ?? undefined} placeholder={t('changes.selectObject')} style={{ width: 320 }} options={objectOptions} onChange={value => apply(targetType, value)} />}
+      {manualIdTypes.includes(targetType) && <Input.Search aria-label={t('changes.objectId')} value={manualId} placeholder={t('changes.objectIdPlaceholder')} style={{ width: 260 }}
+        onChange={event => setManualId(event.target.value.trim())} enterButton={t('changes.search')}
         onSearch={value => idPattern.test(value.trim()) && apply(targetType, value.trim())} />}
-      {targetType !== 'CHANNEL' && <Button onClick={() => apply('CHANNEL', null)}>查看渠道记录</Button>}
+      {targetType !== 'CHANNEL' && <Button onClick={() => apply('CHANNEL', null)}>{t('changes.viewChannel')}</Button>}
     </div>
     {targetId ? <ChangeList key={`${targetType}:${targetId}`} targetType={targetType} targetId={targetId} />
-      : <ChannelNote>请选择或输入要查看的对象。</ChannelNote>}
-    {manualIdTypes.includes(targetType) && <ChannelNote>原子 API、公共脚本与标准 API 实现的变更按 Owner 行 ID 查询；协议列表只显示编码，暂不提供 ID 选择。</ChannelNote>}
+      : <ChannelNote>{t('changes.pickObject')}</ChannelNote>}
+    {manualIdTypes.includes(targetType) && <ChannelNote>{t('changes.manualIdNote')}</ChannelNote>}
   </>;
 }

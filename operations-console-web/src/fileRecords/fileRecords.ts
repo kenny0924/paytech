@@ -4,6 +4,9 @@ import { resolveTimeRange } from '../components/timeRange.ts';
 import type { TimeRangeValue } from '../components/timeRange.ts';
 import { accessLevels, instanceCodePattern, scanPolicyCodePattern, sourceSystemPattern, storageAdminPath } from '../fileStorage/fileStorage.ts';
 import type { AccessLevel } from '../fileStorage/fileStorage.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('file');
 
 /** 文件记录接口（Platform 存储管理合同 /storage-admin/v1/files，经 Operations BFF 同路径转发）。 */
 export const fileRecordPath = `${storageAdminPath}/files`;
@@ -27,23 +30,20 @@ export type ObjectStatus = typeof objectStatuses[number];
 export type VersionStatus = typeof versionStatuses[number];
 export type UploadKind = typeof uploadKinds[number];
 
-export const scanStatusLabels: Readonly<Record<ScanStatus, string>> = {
-  PENDING_SCAN: '待检查', SCANNING: '检查中', AVAILABLE: '检查通过', QUARANTINED: '已隔离', REJECTED: '未通过',
-};
+/**
+ * 显示名在 `file` 命名空间（`enum.scanStatus`、`enum.objectStatus`、`enum.versionStatus`、`enum.uploadKind`、`enum.uploadStatus`），
+ * 由下面的函数在调用时取；未知取值原样展示。
+ */
+export const scanStatusLabel = (value: string) => enumLabel(t, 'enum.scanStatus', value);
+export const objectStatusLabel = (value: string) => enumLabel(t, 'enum.objectStatus', value);
+export const versionStatusLabel = (value: string) => enumLabel(t, 'enum.versionStatus', value);
+export const uploadKindLabel = (value: string) => enumLabel(t, 'enum.uploadKind', value);
+export const uploadStatusLabel = (value: string) => enumLabel(t, 'enum.uploadStatus', value);
 export const scanStatusColors: Readonly<Record<ScanStatus, string>> = {
   PENDING_SCAN: 'gold', SCANNING: 'gold', AVAILABLE: 'green', QUARANTINED: 'red', REJECTED: 'red',
 };
-export const objectStatusLabels: Readonly<Record<ObjectStatus, string>> = { ACTIVE: '正常', UNAVAILABLE: '不可用', RETIRED: '已下线' };
-export const versionStatusLabels: Readonly<Record<VersionStatus, string>> = {
-  CANDIDATE: '候选', CURRENT: '当前', SUPERSEDED: '已替换', REJECTED: '已拒绝',
-};
 export const versionStatusColors: Readonly<Record<VersionStatus, string>> = {
   CANDIDATE: 'gold', CURRENT: 'green', SUPERSEDED: 'default', REJECTED: 'red',
-};
-export const uploadKindLabels: Readonly<Record<UploadKind, string>> = { ORIGINAL: '首次上传', REPLACEMENT: '替换' };
-/** 上传状态：已知取值给中文名，未知取值原样展示。 */
-export const uploadStatusLabels: Readonly<Record<string, string>> = {
-  CREATED: '已开始', UPLOADING: '上传中', COMPLETED: '已完成', EXPIRED: '已过期', CANCELLED: '已作废',
 };
 
 export interface FileRecordSummary {
@@ -177,13 +177,13 @@ export function decodeDownloadGrant(value: unknown, now = Date.now()): FileDownl
   return v;
 }
 
-/** 快捷筛选：每项只设置一个条件，其余快捷条件清空；不显示计数（没有统计接口）。 */
+/** 快捷筛选：每项只设置一个条件，其余快捷条件清空；不显示计数（没有统计接口）。按钮文字为 `records.quick.<key>`。 */
 export const quickFilters = [
-  { key: 'all', label: '全部', filters: {} },
-  { key: 'scanning', label: '检查中', filters: { scanStatus: 'SCANNING' } },
-  { key: 'rejected', label: '检查未通过', filters: { scanStatus: 'REJECTED' } },
-  { key: 'replacing', label: '有替换进行中', filters: { hasPendingReplacement: 'true' } },
-  { key: 'public', label: '公开文件', filters: { accessLevel: 'PUBLIC' } },
+  { key: 'all', filters: {} },
+  { key: 'scanning', filters: { scanStatus: 'SCANNING' } },
+  { key: 'rejected', filters: { scanStatus: 'REJECTED' } },
+  { key: 'replacing', filters: { hasPendingReplacement: 'true' } },
+  { key: 'public', filters: { accessLevel: 'PUBLIC' } },
 ] as const;
 const quickKeys = ['scanStatus', 'accessLevel', 'hasPendingReplacement'] as const;
 
@@ -217,16 +217,16 @@ export const defaultRange = (): TimeRangeValue => ({ preset: 'LAST_7_DAYS' });
  */
 export function fileRecordFilters(values: FileRecordFilterValues, now = new Date()): Record<string, string> {
   const range = resolveTimeRange(values.timeRange ?? defaultRange(), now);
-  if (!range.start || !range.end) throw new Error('请选择完整的开始和结束时间');
+  if (!range.start || !range.end) throw new Error(t('filters.incompleteRange'));
   const from = new Date(range.start); const to = new Date(range.end);
-  if (!Number.isFinite(from.getTime()) || !Number.isFinite(to.getTime())) throw new Error('请输入有效时间');
-  if (from >= to) throw new Error('结束时间必须晚于开始时间');
-  if (to.getTime() - from.getTime() > maxRangeDays * 86_400_000) throw new Error(`时间跨度不能超过 ${maxRangeDays} 天`);
+  if (!Number.isFinite(from.getTime()) || !Number.isFinite(to.getTime())) throw new Error(t('filters.invalidTime'));
+  if (from >= to) throw new Error(t('filters.endBeforeStart'));
+  if (to.getTime() - from.getTime() > maxRangeDays * 86_400_000) throw new Error(t('filters.rangeTooLong', { days: maxRangeDays }));
   const filters: Record<string, string> = { createdFrom: from.toISOString(), createdTo: to.toISOString() };
   const fileId = values.fileId?.trim(); const source = values.sourceSystem?.trim(); const reasonCode = values.reasonCode?.trim();
-  if (fileId) { if (!decimalId(fileId)) throw new Error('文件 ID 为数字'); filters.fileId = fileId; }
-  if (source) { if (!sourceSystem(source)) throw new Error('来源系统为小写字母开头的服务名'); filters.sourceSystem = source; }
-  if (reasonCode) { if (!/^[A-Z][A-Z0-9_]{0,63}$/.test(reasonCode)) throw new Error('原因代码为大写字母开头的代码'); filters.reasonCode = reasonCode; }
+  if (fileId) { if (!decimalId(fileId)) throw new Error(t('filters.fileIdInvalid')); filters.fileId = fileId; }
+  if (source) { if (!sourceSystem(source)) throw new Error(t('filters.sourceSystemInvalid')); filters.sourceSystem = source; }
+  if (reasonCode) { if (!/^[A-Z][A-Z0-9_]{0,63}$/.test(reasonCode)) throw new Error(t('filters.reasonCodeInvalid')); filters.reasonCode = reasonCode; }
   if (values.accessLevel) filters.accessLevel = values.accessLevel;
   if (values.scanStatus) filters.scanStatus = values.scanStatus;
   if (values.hasPendingReplacement) filters.hasPendingReplacement = 'true';

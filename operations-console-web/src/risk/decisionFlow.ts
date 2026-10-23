@@ -2,6 +2,7 @@ import { decodeVariableOperand, emptyOperand, literalOperand } from './riskVaria
 import type { VariableOperand, VariableProjection, VariableQueryContext } from './riskVariable.ts';
 import type { ConsoleResource } from '../api/types.ts';
 import { exact, invariant, id } from './riskDictionary.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
 
 export type FlowDecision = 'ALLOW' | 'REVIEW' | 'DENY';
 export type FlowExpression = { kind:'GROUP'; operator:'AND'|'OR'|'NOT'; children:FlowExpression[] }
@@ -23,25 +24,29 @@ export interface FlowField { variableCode?:string; fieldCode:string; label:strin
 export interface OutputDeclaration { outputCode:string; name:string; allowedValues:{value:string;name:string}[]; defaultValue:string; allowedEndDecisions:FlowDecision[] }
 export interface FlowContext { outputs?:OutputDeclaration[]; descriptorCode?:string;conditionSchemaVersion?:number;variableQueryContext?:VariableQueryContext; supportedPoints:{pointCode:string;pointName:string}[]; pointCode:string; inputContractCode:string; inputContractVersion:number; graphSchemaVersion:1; fields:FlowField[]; nodeOutputs:{variableCode?:string;nodeType:string;fieldCode:string;label:string;valueType:string;required:boolean;operators:string[]}[]; limits:{bodyBytes:number;nodes:number;edges:number;conditionBytes:number;conditionNodes:number;conditionDepth:number} }
 export interface LegacyFlow { sourceType:'LEGACY_POINT'; pointVersionId:string; pointCode:string; pointName:string; versionNo:number; inputContractCode:string; inputContractVersion:number; defaultDecision:FlowDecision; evaluationStrategy:string; failureStrategy:string; nodes:FlowNode[]; edges:FlowEdge[]; ruleSetReferences:FlowReference[] }
-export const decisionLabels = { ALLOW:'放行', REVIEW:'人工复核', DENY:'拒绝' };
+const t = translator('risk');
+/** 结束决定、节点类型与连线类型的显示名是 `risk.enum.flowDecision|flowNodeType|flowEdgeType.<值>`。 */
+export const flowDecisions:FlowDecision[] = ['ALLOW','REVIEW','DENY'];
+export function decisionLabel(decision:string):string { return enumLabel(t,'enum.flowDecision',decision); }
 /** Risk 上下文未返回声明时的过渡值，与支付点合同一致；上下文带 outputs 后以上下文为准。 */
-export const PAYMENT_OUTPUT_FALLBACK:OutputDeclaration[] = [{outputCode:'AUTHENTICATION_REQUIREMENT',name:'认证要求',allowedValues:[{value:'NOT_REQUIRED',name:'无需认证'},{value:'THREE_DS_REQUIRED',name:'需要 3DS'}],defaultValue:'NOT_REQUIRED',allowedEndDecisions:['ALLOW']}];
-export function outputDeclarations(context:Pick<FlowContext,'pointCode'|'outputs'>|null):OutputDeclaration[] { if(!context)return []; return context.outputs ?? (context.pointCode==='PAYMENT_ATTEMPT_RISK'?PAYMENT_OUTPUT_FALLBACK:[]); }
+export function paymentOutputFallback():OutputDeclaration[] { return [{outputCode:'AUTHENTICATION_REQUIREMENT',name:t('flow.output.authentication'),allowedValues:[{value:'NOT_REQUIRED',name:t('flow.output.notRequired')},{value:'THREE_DS_REQUIRED',name:t('flow.output.threeDsRequired')}],defaultValue:'NOT_REQUIRED',allowedEndDecisions:['ALLOW']}]; }
+export function outputDeclarations(context:Pick<FlowContext,'pointCode'|'outputs'>|null):OutputDeclaration[] { if(!context)return []; return context.outputs ?? (context.pointCode==='PAYMENT_ATTEMPT_RISK'?paymentOutputFallback():[]); }
 /** 改结束决定时只保留该决定允许的输出；空映射不上送。 */
 export function outputsForDecision(outputs:Record<string,string>|undefined,decision:FlowDecision|null,declarations:readonly OutputDeclaration[]):Record<string,string>|undefined {
   if(!outputs||!decision)return undefined; const kept=Object.fromEntries(Object.entries(outputs).filter(([k])=>declarations.some(d=>d.outputCode===k&&d.allowedEndDecisions.includes(decision)))); return Object.keys(kept).length?kept:undefined; }
 /** 节点上的输出取值，未配置时为声明默认值。 */
 export function outputValue(node:Pick<FlowNode,'outputs'>,declaration:OutputDeclaration):string { return node.outputs?.[declaration.outputCode] ?? declaration.defaultValue; }
-export const nodeLabels = { START:'开始', RULE_SET:'规则集', END:'结束' };
-export const edgeLabels = { UNCONDITIONAL:'直接继续', CONDITIONAL:'满足条件', ELSE:'其他情况' };
+export function nodeTypeLabel(nodeType:string):string { return enumLabel(t,'enum.flowNodeType',nodeType); }
+export const edgeTypes:FlowEdge['type'][] = ['UNCONDITIONAL','CONDITIONAL','ELSE'];
+export function edgeLabel(edgeType:string):string { return enumLabel(t,'enum.flowEdgeType',edgeType); }
 export function hasFlowAction(resources:readonly ConsoleResource[], action:'SAVE'|'DELETE') {
   return resources.some(r => r.resourceType === 'BUTTON' && r.resourceCode === `OPERATIONS_RISK_DECISION_FLOW_${action}`);
 }
 export function newKey(prefix:string) { return `${prefix}_${crypto.randomUUID().replaceAll('-', '')}`; }
 export function initialGraph():FlowGraph { return { schemaVersion:1, nodes:[
-  { nodeKey:'start',type:'START',name:'开始',position:{x:'80',y:'180'},ruleSetVersionId:null,decisionCode:null,reasonCode:null,reasonMessage:null },
-  { nodeKey:'end',type:'END',name:'结束',position:{x:'440',y:'180'},ruleSetVersionId:null,decisionCode:null,reasonCode:null,reasonMessage:null }],
-  edges:[{edgeKey:'next',sourceNodeKey:'start',targetNodeKey:'end',type:'UNCONDITIONAL',priority:0,name:'继续',condition:null}] }; }
+  { nodeKey:'start',type:'START',name:nodeTypeLabel('START'),position:{x:'80',y:'180'},ruleSetVersionId:null,decisionCode:null,reasonCode:null,reasonMessage:null },
+  { nodeKey:'end',type:'END',name:nodeTypeLabel('END'),position:{x:'440',y:'180'},ruleSetVersionId:null,decisionCode:null,reasonCode:null,reasonMessage:null }],
+  edges:[{edgeKey:'next',sourceNodeKey:'start',targetNodeKey:'end',type:'UNCONDITIONAL',priority:0,name:t('flow.defaultEdgeName'),condition:null}] }; }
 export function toWireGraph(graph:FlowGraph):FlowGraph { return { schemaVersion:1,
   nodes:graph.nodes.map(n => ({nodeKey:n.nodeKey,type:n.type,name:n.name,position:{x:String(Math.round(Number(n.position.x))),y:String(Math.round(Number(n.position.y)))},ruleSetVersionId:n.ruleSetVersionId,decisionCode:n.decisionCode,reasonCode:n.reasonCode,reasonMessage:n.reasonMessage,...(n.type==='END'&&n.outputs&&Object.keys(n.outputs).length?{outputs:{...n.outputs}}:{})})),
   edges:graph.edges.map(e => ({edgeKey:e.edgeKey,sourceNodeKey:e.sourceNodeKey,targetNodeKey:e.targetNodeKey,type:e.type,priority:e.priority,name:e.name,condition:e.condition ? structuredClone(e.condition) : null})) }; }

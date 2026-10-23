@@ -142,11 +142,11 @@ test('变更历史：比较结果与摘要；NOT_COMPARED 必须没有变化字�
     data: { status: 'ACTIVE', products: ['ACQUIRING'] }, comparison: 'COMPARED', previousVersionNo: 2, previousData: { status: 'SIGNED', products: [] },
     changedFields: ['products', 'status'] };
   const [decoded] = decodeBusinessChangePage(page([entry])).items;
-  assert.equal(changeSummary(decoded), 'products [] → ["ACQUIRING"]；status SIGNED → ACTIVE');
+  assert.equal(changeSummary(decoded), 'products [] → ["ACQUIRING"]; status SIGNED → ACTIVE');
   const first = decodeBusinessChangePage(page([{ ...entry, comparison: 'FIRST_VERSION', previousVersionNo: null, previousData: null }])).items[0];
-  assert.equal(changeSummary(first), '首个快照：products、status');
+  assert.equal(changeSummary(first), 'First snapshot: products, status');
   const skipped = decodeBusinessChangePage(page([{ ...entry, comparison: 'NOT_COMPARED', previousVersionNo: null, previousData: null, changedFields: null }])).items[0];
-  assert.equal(changeSummary(skipped), '上一快照超出回溯范围，未比较');
+  assert.equal(changeSummary(skipped), "The previous snapshot is outside the lookback range and wasn't compared");
   assert.throws(() => decodeBusinessChangePage(page([{ ...entry, comparison: 'NOT_COMPARED' }])), ApiError);
   assert.throws(() => decodeBusinessChangePage(page([{ ...entry, comparison: 'GUESSED' }])), ApiError);
 });

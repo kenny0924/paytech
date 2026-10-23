@@ -1,5 +1,8 @@
 import { ApiError } from '../../api/session.ts';
 import { codePattern, integrationPath } from '../externalApiModel.ts';
+import { enumLabel, translator } from '../../i18n/index.ts';
+
+const t = translator('channel');
 
 /** 沙箱验证（沙箱验证技术方案第 4、5 节）：接口路径、响应解码、状态文案与编辑态转换。 */
 
@@ -10,24 +13,14 @@ export type VerifyRunStatus = 'RUNNING' | 'PASSED' | 'FAILED' | 'INTERRUPTED';
 export type VerifyStepStatus = 'PASSED' | 'FAILED' | 'SKIPPED';
 export type Tone = 'neutral' | 'running' | 'success' | 'error' | 'warning';
 
-export const caseStatusLabels: Record<VerifyCaseStatus, { label: string; tone: Tone }> = {
-  NOT_RUN: { label: '未运行', tone: 'neutral' },
-  RUNNING: { label: '运行中', tone: 'running' },
-  PASSED: { label: '通过', tone: 'success' },
-  FAILED: { label: '未通过', tone: 'error' },
-  STALE: { label: '需重新验证', tone: 'warning' },
-};
-export const runStatusLabels: Record<VerifyRunStatus, { label: string; tone: Tone }> = {
-  RUNNING: { label: '运行中', tone: 'running' },
-  PASSED: { label: '通过', tone: 'success' },
-  FAILED: { label: '未通过', tone: 'error' },
-  INTERRUPTED: { label: '已中断', tone: 'warning' },
-};
-export const stepStatusLabels: Record<VerifyStepStatus, { label: string; tone: Tone }> = {
-  PASSED: { label: '通过', tone: 'success' },
-  FAILED: { label: '未通过', tone: 'error' },
-  SKIPPED: { label: '已跳过', tone: 'neutral' },
-};
+/** 状态色调；文案为 channel.enum.verifyStatus.<值>，由 *StatusTag 调用时翻译。 */
+export const caseStatusTones: Record<VerifyCaseStatus, Tone> = { NOT_RUN: 'neutral', RUNNING: 'running', PASSED: 'success', FAILED: 'error', STALE: 'warning' };
+export const runStatusTones: Record<VerifyRunStatus, Tone> = { RUNNING: 'running', PASSED: 'success', FAILED: 'error', INTERRUPTED: 'warning' };
+export const stepStatusTones: Record<VerifyStepStatus, Tone> = { PASSED: 'success', FAILED: 'error', SKIPPED: 'neutral' };
+const statusTag = (tones: Readonly<Record<string, Tone>>, status: string) => ({ label: enumLabel(t, 'enum.verifyStatus', status), tone: tones[status] ?? 'neutral' });
+export const caseStatusTag = (status: VerifyCaseStatus) => statusTag(caseStatusTones, status);
+export const runStatusTag = (status: VerifyRunStatus) => statusTag(runStatusTones, status);
+export const stepStatusTag = (status: VerifyStepStatus) => statusTag(stepStatusTones, status);
 
 export interface VerifyAccountSummary {
   /** 服务渠道账号不绑定 OE 时为 null。 */
@@ -102,14 +95,14 @@ export function decodeAccount(value: unknown, expectedCode: string): VerifyAccou
 function decodeBrief(value: unknown): VerifyRunBrief | null {
   if (value === null || value === undefined) return null;
   const v = value as VerifyRunBrief;
-  require(runCode(v.runCode) && v.runStatus in runStatusLabels && instant(v.startTime) && nullableInstant(v.finishTime));
+  require(runCode(v.runCode) && v.runStatus in runStatusTones && instant(v.startTime) && nullableInstant(v.finishTime));
   return { runCode: v.runCode, runStatus: v.runStatus, startTime: v.startTime, finishTime: v.finishTime ?? null };
 }
 
 export function decodeCaseSummary(value: unknown): VerifyCaseSummary {
   const v = value as VerifyCaseSummary;
   require(v && code(v.caseCode) && text(v.caseName, 128) && (v.accountCode === null || code(v.accountCode))
-    && strings(v.standardApiCodes) && Number.isInteger(v.stepCount) && v.verifyStatus in caseStatusLabels
+    && strings(v.standardApiCodes) && Number.isInteger(v.stepCount) && v.verifyStatus in caseStatusTones
     && version(v.version) && instant(v.updateTime));
   return { caseCode: v.caseCode, caseName: v.caseName, accountCode: v.accountCode, standardApiCodes: [...v.standardApiCodes],
     stepCount: v.stepCount, verifyStatus: v.verifyStatus, latestRun: decodeBrief(v.latestRun), version: v.version,
@@ -119,7 +112,7 @@ export function decodeCaseSummary(value: unknown): VerifyCaseSummary {
 export function decodeCase(value: unknown, expectedCode: string): VerifyCaseDetail {
   const v = value as VerifyCaseDetail;
   require(v && v.caseCode === expectedCode && text(v.caseName, 128) && nullableText(v.description, 512)
-    && (v.accountCode === null || code(v.accountCode)) && Array.isArray(v.steps) && v.verifyStatus in caseStatusLabels
+    && (v.accountCode === null || code(v.accountCode)) && Array.isArray(v.steps) && v.verifyStatus in caseStatusTones
     && version(v.version) && instant(v.createTime) && instant(v.updateTime) && typeof v.updatedBy === 'string');
   return { caseCode: v.caseCode, caseName: v.caseName, description: v.description ?? null, accountCode: v.accountCode,
     steps: v.steps, verifyStatus: v.verifyStatus, latestRun: decodeBrief(v.latestRun), version: v.version,
@@ -128,7 +121,7 @@ export function decodeCase(value: unknown, expectedCode: string): VerifyCaseDeta
 
 export function decodeRunSummary(value: unknown): VerifyRunSummary {
   const v = value as VerifyRunSummary;
-  require(v && runCode(v.runCode) && code(v.caseCode) && text(v.caseName, 128) && v.runStatus in runStatusLabels
+  require(v && runCode(v.runCode) && code(v.caseCode) && text(v.caseName, 128) && v.runStatus in runStatusTones
     && nullableText(v.failureSummary, 512) && typeof v.startedBy === 'string' && instant(v.startTime)
     && nullableInstant(v.finishTime));
   return { runCode: v.runCode, caseCode: v.caseCode, caseName: v.caseName, runStatus: v.runStatus,
@@ -152,7 +145,7 @@ export function decodeRun(value: unknown, expectedCode: string): VerifyRunDetail
   });
   const steps = v.steps.map(step => {
     require(object(step) && Number.isInteger(step.stepNo) && typeof step.stepKey === 'string'
-      && code(step.standardApiCode) && (step.stepStatus as string) in stepStatusLabels
+      && code(step.standardApiCode) && (step.stepStatus as string) in stepStatusTones
       && (step.result === null || step.result === undefined || object(step.result))
       && (step.assertions === null || step.assertions === undefined || Array.isArray(step.assertions))
       && (step.trace === null || step.trace === undefined || object(step.trace)));
@@ -200,9 +193,7 @@ export function hasTemplateVariable(value: string): boolean {
   return /\$\{[^{}]*\}/.test(value);
 }
 
-export const matchLabels: Record<Match, string> = {
-  EQUALS: '等于', EXISTS: '存在', ABSENT: '不存在', REGEX: '正则匹配', ONE_OF: '属于其一',
-};
+export const matchLabel = (match: Match) => enumLabel(t, 'enum.match', match);
 export const executeStatuses = ['SUCCESS', 'FAIL', 'ERROR'] as const;
 
 /** 输出期望的编辑行：期望值以文本编辑，EQUALS / ONE_OF 按 JSON 解析（解析失败的 EQUALS 视为字符串）。 */
@@ -269,14 +260,14 @@ export function toSteps(drafts: StepDraft[]): { steps: unknown[]; problems: Draf
     let input: unknown = null;
     try {
       input = JSON.parse(draft.input);
-      if (!object(input)) problems.push({ step: index, field: 'input', message: '输入必须是 JSON 对象' });
+      if (!object(input)) problems.push({ step: index, field: 'input', message: t('verify.problem.inputObject') });
     } catch {
-      problems.push({ step: index, field: 'input', message: '输入不是合法 JSON' });
+      problems.push({ step: index, field: 'input', message: t('verify.problem.inputJson') });
     }
     let expect: Record<string, unknown>;
     if (draft.expect === 'PROBLEM') {
       const status = Number(draft.problemStatus);
-      if (!Number.isInteger(status)) problems.push({ step: index, field: 'problemStatus', message: '问题状态必须是整数' });
+      if (!Number.isInteger(status)) problems.push({ step: index, field: 'problemStatus', message: t('verify.problem.statusInteger') });
       expect = { problem: { status, ...(draft.problemCode.trim() ? { code: draft.problemCode.trim() } : {}) } };
     } else {
       expect = { executeStatus: draft.executeStatus,
@@ -297,12 +288,14 @@ export function issueStep(location: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
-/** 输入模板可用的变量，供编辑页提示。 */
-export const templateVariables = [
-  { name: '${run.code}', description: '本次运行编号（每次不同，适合拼接订单号）' },
-  { name: '${run.time}', description: '运行开始时间（UTC ISO-8601）' },
-  { name: '${random.digits(n)}', description: 'n 位随机数字，n 为 1～18' },
-  { name: '${account.identity}', description: '验证账号身份对象，只能整串使用（channelCode / channelAccountId / entityNo）' },
-  { name: '${steps.<步骤ID>.input.<路径>}', description: '前序步骤的实际输入' },
-  { name: '${steps.<步骤ID>.outputs.<路径>}', description: '前序步骤的实际输出' },
-];
+/** 输入模板可用的变量，供编辑页提示；调用时翻译。 */
+export function templateVariables(): { name: string; description: string }[] {
+  return [
+    { name: '${run.code}', description: t('verify.variable.runCode') },
+    { name: '${run.time}', description: t('verify.variable.runTime') },
+    { name: '${random.digits(n)}', description: t('verify.variable.randomDigits') },
+    { name: '${account.identity}', description: t('verify.variable.accountIdentity') },
+    { name: t('verify.variable.stepInputName'), description: t('verify.variable.stepInput') },
+    { name: t('verify.variable.stepOutputName'), description: t('verify.variable.stepOutput') },
+  ];
+}

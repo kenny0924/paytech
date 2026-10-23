@@ -32,10 +32,10 @@ test('连线：只能从节点连出，拒绝环与重复；首条为兜底，�
   const first = addEdge(flow, 'a', 'b');
   assert.ok('flow' in first); assert.deepEqual(first.edge, { from: 'a', to: 'b', default: true });
   flow = first.flow;
-  assert.deepEqual(addEdge(flow, 'b', 'a'), { error: '流程暂不支持环' });
-  assert.deepEqual(addEdge(flow, 'a', 'a'), { error: '流程暂不支持环' });
-  assert.deepEqual(addEdge(flow, 'a', 'b'), { error: '已存在相同的连线' });
-  assert.deepEqual(addEdge(flow, 'unknown', 'b'), { error: '只能从原子 API 节点连出' });
+  assert.deepEqual(addEdge(flow, 'b', 'a'), { error: "Flows don't support cycles yet" });
+  assert.deepEqual(addEdge(flow, 'a', 'a'), { error: "Flows don't support cycles yet" });
+  assert.deepEqual(addEdge(flow, 'a', 'b'), { error: 'This connection already exists' });
+  assert.deepEqual(addEdge(flow, 'unknown', 'b'), { error: 'Connections can only start from an atomic API node' });
   const second = addEdge(flow, 'a', 'unknown');
   assert.ok('flow' in second); assert.deepEqual(second.edge, { from: 'a', to: 'unknown', condition: '', priority: 1 });
 });

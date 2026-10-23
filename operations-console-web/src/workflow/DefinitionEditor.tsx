@@ -23,7 +23,9 @@ import { ActionTypePicker } from './TemplateEditors';
 import { WorkflowCanvas, paletteMime } from './WorkflowCanvas';
 import type { CanvasSelection } from './WorkflowCanvas';
 import { decodeDefinitionDetail, decodeDraft, decodeMutation, decodePage, decodeTemplate, decodeVersion, workflowPaths } from './workflowApi';
-import { instanceTriggers, nodeTypeLabels, operatorLabels } from './workflowLabels';
+import { instanceTriggers, nodeTypeLabel, operatorLabel } from './workflowLabels';
+import { enumLabel, translator } from '../i18n/index';
+import { useT } from '../i18n/react';
 import type { ActionTemplate, ActionType, DefinitionDetail, FormDefinition, GraphNode, NodeType, Problem, VersionBody, WorkflowGraph } from './workflowTypes';
 import { LoadFailed, Spinner, personName, useLoad, workflowRoutes } from './WorkflowParts';
 
@@ -34,10 +36,9 @@ const decodeTemplates = decodePage(decodeTemplate);
  */
 const templateQueue = new DetailQueue<ActionTemplate>(id => session.request(workflowPaths.template(id), {}, decodeTemplate),
   { retryDelay: error => error instanceof ApiError && error.status === 429 ? retryAfterMillis(null) : null });
-const palette: { type: NodeType; hint: string }[] = [
-  { type: 'TASK', hint: '动作 / 审批' }, { type: 'EXCLUSIVE', hint: '按条件走一条' },
-  { type: 'PARALLEL_SPLIT', hint: '同时开启多条分支' }, { type: 'PARALLEL_JOIN', hint: '等全部分支完成' }, { type: 'END', hint: '可有多个' },
-];
+const tw = translator('workflow');
+/** 工具条节点类型；悬停说明为 workflow.toolbar.hint.<类型>。 */
+const palette: NodeType[] = ['TASK', 'EXCLUSIVE', 'PARALLEL_SPLIT', 'PARALLEL_JOIN', 'END'];
 
 /** 动作模板缓存：列表（不含配置）+ 引用到的模板详情（含配置，用于变量、参数映射与说明首行）；就地新建的模板直接加入。 */
 function useTemplates(graph: WorkflowGraph | null) {
@@ -79,13 +80,14 @@ interface EditorProps {
 
 /** 流程编辑器路由入口：/workflow/definitions/:id（草稿）与 /:id/versions/:versionNo（已发布版本只读）。 */
 export function DefinitionEditor({ definitionId, versionNo, canManage, canManageTemplates, canReadInstances, onAuthorizationChanged }: EditorProps) {
+  const t = useT('workflow');
   const detail = useLoad<DefinitionDetail>(workflowPaths.definition(definitionId), decodeDefinitionDetail);
   // 详情里的版本列表不含流程图：只读查看某版本、或尚无草稿时以发布版本为底稿，都按接口 12 读取该版本全文。
   const baseVersionNo = versionNo ?? (detail.data ? publishedBaseVersionNo(detail.data) : undefined);
   const version = useLoad<VersionBody>(baseVersionNo !== undefined ? workflowPaths.version(definitionId, baseVersionNo) : null, decodeVersion);
-  if (!detail.data) return detail.failure ? <LoadFailed failure={detail.failure} retry={detail.refresh} title="流程定义加载失败" /> : <Spinner />;
+  if (!detail.data) return detail.failure ? <LoadFailed failure={detail.failure} retry={detail.refresh} title={t('editor.loadFailed')} /> : <Spinner />;
   if (baseVersionNo !== undefined && version.data?.versionNo !== baseVersionNo) {
-    return version.failure ? <LoadFailed failure={version.failure} retry={version.refresh} title={`版本 v${baseVersionNo} 加载失败`} /> : <Spinner />;
+    return version.failure ? <LoadFailed failure={version.failure} retry={version.refresh} title={t('editor.versionLoadFailed', { version: baseVersionNo })} /> : <Spinner />;
   }
   const value = detail.data;
   const viewing = versionNo !== undefined ? version.data : undefined;
@@ -101,6 +103,7 @@ function EditorWorkspace({ detail, base, readOnly, viewingVersion, canManageTemp
   detail: DefinitionDetail; base: VersionBody | null; readOnly: boolean; viewingVersion?: number; canManageTemplates: boolean; canReadInstances: boolean;
   onReload: () => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('workflow');
   const { message, modal } = App.useApp(); const navigate = useNavigate();
   const definition = detail.definition;
   const [graph, setGraph] = useState<WorkflowGraph>(() => base?.graph.nodes.length ? (needsLayout(base.graph) ? autoLayout(base.graph) : base.graph) : newGraph());
@@ -129,8 +132,8 @@ function EditorWorkspace({ detail, base, readOnly, viewingVersion, canManageTemp
   // 保存被拒（422 结构错误）时自动展开问题清单，便于定位。
   useEffect(() => { if (structural.length) setIssuesOpen(true); }, [structural.length]);
   const confirmLeave = useCallback(() => new Promise<boolean>(resolve => {
-    modal.confirm({ title: '离开流程编辑器？', content: '尚未保存的修改将丢失。', okText: '离开', cancelText: '继续编辑', onOk: () => resolve(true), onCancel: () => resolve(false) });
-  }), [modal]);
+    modal.confirm({ title: t('editor.leaveTitle'), content: t('templateEditor.leave.content'), okText: t('templateEditor.leave.ok'), cancelText: t('templateEditor.leave.cancel'), onOk: () => resolve(true), onCancel: () => resolve(false) });
+  }), [modal, t]);
   useUnsavedRuleGuard(dirty && !readOnly, confirmLeave);
 
   function change(next: WorkflowGraph, remember = true) {
@@ -185,10 +188,10 @@ function EditorWorkspace({ detail, base, readOnly, viewingVersion, canManageTemp
   }
   async function save(quiet = false): Promise<number | null> {
     const result = await command.run(workflowPaths.draft(definition.definitionId), 'PUT', { definitionName: name.trim() || definition.definitionName,
-      ...(description.trim() ? { description: description.trim() } : {}), graph: normalizeGraph(graph), startForm, expectedVersion }, decodeDraft, '草稿保存失败');
+      ...(description.trim() ? { description: description.trim() } : {}), graph: normalizeGraph(graph), startForm, expectedVersion }, decodeDraft, t('editor.saveFailed'));
     if (!result) return null;
     setExpectedVersion(result.version); setDraftNo(result.draftVersionNo || draftNo); setServerProblems(result.problems); setDirty(false);
-    if (!quiet) void message.success(result.problems.length ? `草稿已保存，发布前还需处理 ${result.problems.length} 个问题` : '草稿已保存，没有发现问题');
+    if (!quiet) void message.success(result.problems.length ? t('editor.savedWithProblems', { count: result.problems.length }) : t('editor.savedClean'));
     return result.version;
   }
   /** 发布：先保存草稿取服务端问题，再弹出确认（变更摘要 + 检查结果）。 */
@@ -197,8 +200,8 @@ function EditorWorkspace({ detail, base, readOnly, viewingVersion, canManageTemp
     setPublishing(true);
   }
   async function publish() {
-    const result = await command.run(workflowPaths.publication(definition.definitionId), 'POST', { expectedVersion }, decodeMutation, '发布失败');
-    if (result) { setPublishing(false); void message.success('已发布新版本；运行中的实例仍按原版本执行'); onReload(); return; }
+    const result = await command.run(workflowPaths.publication(definition.definitionId), 'POST', { expectedVersion }, decodeMutation, t('editor.publishFailed'));
+    if (result) { setPublishing(false); void message.success(t('editor.published')); onReload(); return; }
     // 校验不通过时后端返回 400；重新读取草稿问题列表，确认弹窗里显示。
     try {
       const fresh = await session.request(workflowPaths.definition(definition.definitionId), {}, decodeDefinitionDetail);
@@ -211,7 +214,7 @@ function EditorWorkspace({ detail, base, readOnly, viewingVersion, canManageTemp
     const current = graphRef.current; const node = nodeKey ? nodeOf(current, nodeKey) : undefined;
     if (!node) return;
     change(updateNode(current, node.key, { actions: [...(node.actions ?? []), { key: nextKey(current, 'action'), templateId: template.templateId, required: true }] }));
-    void message.success(`已新建「${template.templateName}」并加入「${node.name || node.key}」，记得保存草稿`);
+    void message.success(t('editor.actionCreated', { name: template.templateName, node: node.name || node.key }));
   }
   const problemByNode = useMemo(() => {
     const map = new Map<string, string>();
@@ -231,35 +234,35 @@ function EditorWorkspace({ detail, base, readOnly, viewingVersion, canManageTemp
   const selectedEdge = selection?.kind === 'edge' && graph.edges.some(edge => edge.key === selection.key) ? selection.key : undefined;
   const panelOpen = !!selectedNode || !!selectedEdge;
   const references = (field: { key: string }) => conditionReferences(graph, `start.${field.key}`)
-    .map(item => `排他网关「${item.node.name}」的条件：start.${field.key} ${operatorLabels[item.clause.operator]} ${Array.isArray(item.clause.value) ? item.clause.value.join(', ') : item.clause.value ?? ''}`);
+    .map(item => t('editor.conditionReference', { gateway: item.node.name, condition: `start.${field.key} ${operatorLabel(item.clause.operator)} ${Array.isArray(item.clause.value) ? item.clause.value.join(', ') : item.clause.value ?? ''}` }));
   const statusText = editorStatusText({ currentVersionNo: definition.currentVersionNo, hasDraft: draftNo !== null, dirty, viewingVersion });
   const nextVersionNo = draftNo ?? Math.max(definition.currentVersionNo ?? 0, ...detail.versions.map(item => item.versionNo)) + 1;
   return <div className="wf-page wf-editor">
     <div className="wf-editor-head">
-      <nav className="wf-editor-crumbs"><Link to={workflowRoutes.definitions}><LeftOutlined /> 流程定义</Link><span className="muted">/</span>
+      <nav className="wf-editor-crumbs"><Link to={workflowRoutes.definitions}><LeftOutlined /> {t('editor.definitions')}</Link><span className="muted">/</span>
         <strong title={definition.definitionCode}>{name || definition.definitionName}</strong></nav>
       <span className={`wf-status-pill ${viewingVersion ? 'is-ok' : 'is-draft'}`}>{statusText}</span>
-      {dirty && <span className="wf-warn-text wf-small">有未保存的修改</span>}
+      {dirty && <span className="wf-warn-text wf-small">{t('editor.unsaved')}</span>}
       {!readOnly && <Popover open={issuesOpen} onOpenChange={setIssuesOpen} trigger="click" placement="bottomLeft"
         content={<IssueList problems={problems} graph={graph} onLocate={locate} />}>
         <button type="button" className={`wf-issues-badge ${problems.length ? 'is-warn' : 'is-ok'}`}>
-          {problems.length ? <><WarningOutlined /> {problems.length} 个问题</> : <><CheckOutlined /> 0 个问题</>} <DownOutlined aria-hidden /></button>
+          {problems.length ? <><WarningOutlined /> {t('editor.problemCount', { count: problems.length })}</> : <><CheckOutlined /> {t('publish.noProblems')}</>} <DownOutlined aria-hidden /></button>
       </Popover>}
       <span className="wf-grow" />
-      <Segmented value={tab} onChange={value => setTab(value as EditorTab)} options={[{ value: 'graph', label: '流程图' }, { value: 'form', label: '启动表单' }, { value: 'settings', label: '流程设置' }]} />
+      <Segmented value={tab} onChange={value => setTab(value as EditorTab)} options={[{ value: 'graph', label: t('publish.area.graph') }, { value: 'form', label: t('graph.startForm') }, { value: 'settings', label: t('editor.settings') }]} />
       <span className="wf-grow" />
       {!readOnly && <Space>
-        <Button loading={command.saving && !publishing} onClick={() => void save()}>保存草稿</Button>
-        <Button type="primary" loading={command.saving && !publishing} onClick={() => void openPublish()}>发布</Button>
+        <Button loading={command.saving && !publishing} onClick={() => void save()}>{t('editor.saveDraft')}</Button>
+        <Button type="primary" loading={command.saving && !publishing} onClick={() => void openPublish()}>{t('editor.publish')}</Button>
       </Space>}
-      {viewingVersion && <Button onClick={() => void navigate(`${workflowRoutes.definitions}/${definition.definitionId}`)}>回到草稿</Button>}
+      {viewingVersion && <Button onClick={() => void navigate(`${workflowRoutes.definitions}/${definition.definitionId}`)}>{t('editor.backToDraft')}</Button>}
     </div>
-    {command.conflict && <Alert type="warning" showIcon title="草稿已被他人保存或发布，你的修改未保存"
-      description="可以先复制当前草稿 JSON，再重新加载最新内容后合并。" action={<Space>
-        <Typography.Text copyable={{ text: JSON.stringify({ graph: normalizeGraph(graph), startForm }, null, 2), tooltips: ['复制草稿 JSON', '已复制'] }}>草稿 JSON</Typography.Text>
-        <Button onClick={() => { setDirty(false); command.clearConflict(); onReload(); }}>重新加载</Button></Space>} />}
+    {command.conflict && <Alert type="warning" showIcon title={t('editor.conflict')}
+      description={t('editor.conflictHint')} action={<Space>
+        <Typography.Text copyable={{ text: JSON.stringify({ graph: normalizeGraph(graph), startForm }, null, 2), tooltips: [t('editor.copyJson'), t('editor.copied')] }}>{t('editor.draftJson')}</Typography.Text>
+        <Button onClick={() => { setDirty(false); command.clearConflict(); onReload(); }}>{t('templateEditor.reload')}</Button></Space>} />}
     {command.formError && !publishing && <Alert type="error" showIcon title={command.formError} closable={{ onClose: command.clearError }} />}
-    {readOnly && !viewingVersion && <Alert type="info" showIcon title="只读 · 没有“维护流程定义”权限" />}
+    {readOnly && !viewingVersion && <Alert type="info" showIcon title={t('editor.readOnlyNoPermission')} />}
     {tab === 'graph' && <div className={`wf-editor-stage${panelOpen ? ' has-panel' : ''}`}>
       <div className="wf-editor-canvas">
         {!readOnly && <NodeToolbar canUndo={history.past.length > 0} canRedo={history.future.length > 0} helpOpen={helpOpen} onHelp={setHelpOpen}
@@ -273,19 +276,19 @@ function EditorWorkspace({ detail, base, readOnly, viewingVersion, canManageTemp
           : selectedNode && <NodePanel key={selectedNode.key} node={selectedNode} context={context} />}
       </aside>}
     </div>}
-    {tab === 'form' && <FieldDesigner form={startForm} readOnly={readOnly} variablePrefix="start." previewTitle="发起人将看到这张表单"
+    {tab === 'form' && <FieldDesigner form={startForm} readOnly={readOnly} variablePrefix="start." previewTitle={t('editor.startFormPreview')}
       references={references} onChange={form => { setStartForm(form); setDirty(true); }} />}
     {tab === 'settings' && <div className="wf-settings">
-      <section className="wf-card"><div className="wf-card-title">基本信息</div>
-        <div className="wf-field"><div className="wf-field-label">流程编码</div><code>{definition.definitionCode}</code></div>
-        <div className="wf-field"><div className="wf-field-label">流程名称</div><Input value={name} maxLength={128} disabled={readOnly} onChange={event => { setName(event.target.value); setDirty(true); }} /></div>
-        <div className="wf-field"><div className="wf-field-label">说明</div><Input.TextArea rows={3} maxLength={512} value={description} disabled={readOnly}
+      <section className="wf-card"><div className="wf-card-title">{t('templateEditor.step.basic')}</div>
+        <div className="wf-field"><div className="wf-field-label">{t('editor.code')}</div><code>{definition.definitionCode}</code></div>
+        <div className="wf-field"><div className="wf-field-label">{t('editor.name')}</div><Input value={name} maxLength={128} disabled={readOnly} onChange={event => { setName(event.target.value); setDirty(true); }} /></div>
+        <div className="wf-field"><div className="wf-field-label">{t('editor.description')}</div><Input.TextArea rows={3} maxLength={512} value={description} disabled={readOnly}
           onChange={event => { setDescription(event.target.value); setDirty(true); }} /></div>
       </section>
-      <section className="wf-card"><div className="wf-card-title">实例级通知与回调</div>
+      <section className="wf-card"><div className="wf-card-title">{t('editor.instanceRules')}</div>
         <RulesEditor rules={graph.settings?.notifications ?? []} triggers={instanceTriggers} readOnly={readOnly}
           people={people} onChange={notifications => change({ ...graph, settings: { notifications } })}
-          note="实例发起、完成、终止时执行；规则随版本发布冻结。" /></section>
+          note={t('editor.instanceRulesNote')} /></section>
     </div>}
     {publishing && <PublishDialog definition={definition} nextVersionNo={nextVersionNo} draft={{ graph: normalizeGraph(graph), startForm }} problems={problems}
       templates={templates.map} canReadInstances={canReadInstances} saving={command.saving} error={command.formError}
@@ -305,20 +308,23 @@ function EditorWorkspace({ detail, base, readOnly, viewingVersion, canManageTemp
 /** 任务节点副标题：「2 个动作 · 审批 · 赵磊 等 2 人」；什么都没配置时提示。 */
 function taskSubtitle(node: GraphNode, people: Record<string, string>): string {
   const actions = node.actions?.length ?? 0; const approvers = node.approval?.approverIds ?? [];
-  const parts = [actions ? `${actions} 个动作` : '', approvers.length ? `审批 · ${personName(approvers[0], people)}${approvers.length > 1 ? ` 等 ${approvers.length} 人` : ''}` : ''];
-  return parts.filter(Boolean).join(' · ') || '未设置动作与审批人';
+  const approval = !approvers.length ? '' : approvers.length > 1 ? tw('editor.subtitle.approvers', { name: personName(approvers[0], people), count: approvers.length })
+    : tw('editor.subtitle.approver', { name: personName(approvers[0], people) });
+  const parts = [actions ? tw('launch.preview.actions', { count: actions }) : '', approval];
+  return parts.filter(Boolean).join(' · ') || tw('editor.subtitle.empty');
 }
 
 /** 问题清单浮层：「位置：说明」+ 定位（原型 10）。 */
 function IssueList({ problems, graph, onLocate }: { problems: Problem[]; graph: WorkflowGraph; onLocate: (problem: Problem) => void }) {
-  if (!problems.length) return <div className="wf-issue-list"><div className="wf-ok-text"><CheckOutlined /> 没有发现问题</div><div className="muted">保存草稿后以服务端检查结果为准</div></div>;
+  const t = useT('workflow');
+  if (!problems.length) return <div className="wf-issue-list"><div className="wf-ok-text"><CheckOutlined /> {t('editor.noProblems')}</div><div className="muted">{t('editor.serverAuthoritative')}</div></div>;
   return <div className="wf-issue-list">
-    <div className="wf-issue-title">发布前需要处理 {problems.length} 个问题</div>
+    <div className="wf-issue-title">{t('editor.problemsBeforePublish', { count: problems.length })}</div>
     {problems.map((problem, index) => <div key={index} className="wf-issue-row">
       <span className="wf-warn-text" aria-hidden><WarningOutlined /></span>
-      <span className="wf-grow"><strong>{problemTarget(problem, graph)}：</strong><span className="muted">{problem.message}</span></span>
+      <span className="wf-grow"><strong>{t('publish.problemTarget', { target: problemTarget(problem, graph) })}</strong><span className="muted">{problem.message}</span></span>
       {(problem.nodeKey || problem.edgeKey || problem.code === 'STRUCTURE_INVALID' && problem.itemKey) &&
-        <Button type="link" size="small" icon={<AimOutlined />} onClick={() => onLocate(problem)}>定位</Button>}
+        <Button type="link" size="small" icon={<AimOutlined />} onClick={() => onLocate(problem)}>{t('action.locate')}</Button>}
     </div>)}
   </div>;
 }
@@ -328,21 +334,22 @@ function NodeToolbar({ canUndo, canRedo, helpOpen, onHelp, onAdd, onUndo, onRedo
   canUndo: boolean; canRedo: boolean; helpOpen: boolean; onHelp: (open: boolean) => void; onAdd: (type: NodeType) => void;
   onUndo: () => void; onRedo: () => void; onLayout: () => void;
 }) {
-  return <div className="wf-node-toolbar" role="toolbar" aria-label="节点工具条">
-    {palette.map(item => <Tooltip key={item.type} placement="right" title={`${nodeTypeLabels[item.type]} · ${item.hint}（拖到画布或点击添加）`}>
-      <button type="button" className="wf-tool" draggable aria-label={nodeTypeLabels[item.type]}
-        onDragStart={event => { event.dataTransfer.setData(paletteMime, item.type); event.dataTransfer.effectAllowed = 'copy'; }}
-        onClick={() => onAdd(item.type)}><span className={`wf-tool-shape is-${item.type.toLowerCase()}`} /></button>
+  const t = useT('workflow');
+  return <div className="wf-node-toolbar" role="toolbar" aria-label={t('toolbar.label')}>
+    {palette.map(type => <Tooltip key={type} placement="right" title={t('toolbar.nodeTip', { type: nodeTypeLabel(type), hint: enumLabel(t, 'toolbar.hint', type) })}>
+      <button type="button" className="wf-tool" draggable aria-label={nodeTypeLabel(type)}
+        onDragStart={event => { event.dataTransfer.setData(paletteMime, type); event.dataTransfer.effectAllowed = 'copy'; }}
+        onClick={() => onAdd(type)}><span className={`wf-tool-shape is-${type.toLowerCase()}`} /></button>
     </Tooltip>)}
     <span className="wf-tool-divider" />
-    <Tooltip placement="right" title="撤销（⌘Z / Ctrl+Z）"><button type="button" className="wf-tool" aria-label="撤销" disabled={!canUndo} onClick={onUndo}><UndoOutlined /></button></Tooltip>
-    <Tooltip placement="right" title="重做（⇧⌘Z）"><button type="button" className="wf-tool" aria-label="重做" disabled={!canRedo} onClick={onRedo}><RedoOutlined /></button></Tooltip>
-    <Tooltip placement="right" title="自动布局"><button type="button" className="wf-tool" aria-label="自动布局" onClick={onLayout}><ApartmentOutlined /></button></Tooltip>
+    <Tooltip placement="right" title={t('toolbar.undoTip')}><button type="button" className="wf-tool" aria-label={t('toolbar.undo')} disabled={!canUndo} onClick={onUndo}><UndoOutlined /></button></Tooltip>
+    <Tooltip placement="right" title={t('toolbar.redoTip')}><button type="button" className="wf-tool" aria-label={t('toolbar.redo')} disabled={!canRedo} onClick={onRedo}><RedoOutlined /></button></Tooltip>
+    <Tooltip placement="right" title={t('toolbar.layout')}><button type="button" className="wf-tool" aria-label={t('toolbar.layout')} onClick={onLayout}><ApartmentOutlined /></button></Tooltip>
     <span className="wf-tool-divider" />
-    <Popover open={helpOpen} onOpenChange={onHelp} trigger="click" placement="rightTop" title="操作说明" content={<ul className="wf-plain-list">
-      <li>拖动图标到画布，或点击图标添加节点</li><li>从节点右侧连接点拖出连线</li><li>鼠标移到连线上点「+」，在这条线上插入节点</li>
-      <li>选中节点或连线在右侧编辑；Esc 关闭面板</li><li>开始节点固定一个；结束节点可有多个</li><li>Delete 删除 · ⌘Z / Ctrl+Z 撤销</li></ul>}>
-      <button type="button" className="wf-tool" aria-label="操作说明"><QuestionCircleOutlined /></button>
+    <Popover open={helpOpen} onOpenChange={onHelp} trigger="click" placement="rightTop" title={t('toolbar.help')} content={<ul className="wf-plain-list">
+      <li>{t('toolbar.help1')}</li><li>{t('toolbar.help2')}</li><li>{t('toolbar.help3')}</li>
+      <li>{t('toolbar.help4')}</li><li>{t('toolbar.help5')}</li><li>{t('toolbar.help6')}</li></ul>}>
+      <button type="button" className="wf-tool" aria-label={t('toolbar.help')}><QuestionCircleOutlined /></button>
     </Popover>
   </div>;
 }

@@ -1,17 +1,19 @@
-import { termTypeLabels } from './commercial.ts';
+import { enumLabel, tOr, translator } from '../i18n/index.ts';
 import type { CatalogCapability, CatalogFeeEvent, CatalogProduct } from './commercialConsole.ts';
+
+const t = translator('commercial');
 
 // ---------- 目录页标签 ----------
 
-/** 目录页条款类型标签：在 termTypeLabels 基础上补齐目录里登记的出款、外汇、争议与平台费类型。 */
-export const catalogTermTypeLabels: Readonly<Record<string, string>> = {
-  ...termTypeLabels, PAYOUT_FEE: '出款费', FX_SPREAD: '外汇点差', DISPUTE_FEE: '争议费', PLATFORM_FEE: '平台费',
-};
+/** 目录页条款类型标签：enum.termType 之外补齐目录里登记的出款、外汇、争议与平台费类型（enum.catalogTermType），未知值返回原代码。 */
+export function catalogTermTypeLabel(code: string): string {
+  return tOr(t, 'enum.termType.' + code, enumLabel(t, 'enum.catalogTermType', code));
+}
 
-/** 可开通项种类标签。 */
-export const capabilityKindLabels: Readonly<Record<string, string>> = {
-  PAYMENT_METHOD: '支付方式', FEATURE: '功能', PAYOUT_RAIL: '出款通道', FX: '外汇', DISPUTE: '争议', PERIODIC_SERVICE: '周期服务',
-};
+/** 可开通项种类标签（enum.capabilityKind），未知值返回原代码。 */
+export function capabilityKindLabel(code: string): string {
+  return enumLabel(t, 'enum.capabilityKind', code);
+}
 
 /** 产品适用业务模式范围标签。 */
 export const businessModeScopeLabels: Readonly<Record<string, string>> = { BOTH: 'MOR / PSP', MOR_ONLY: 'MOR', PSP_ONLY: 'PSP' };
@@ -19,7 +21,7 @@ export const businessModeScopeLabels: Readonly<Record<string, string>> = { BOTH:
 /** 页面已知、目录可能尚未登记事件的条款类型；筛选项里始终保留，用于暴露缺口。 */
 const knownTermTypes = ['PARTNER_BUY_RATE'] as const;
 
-/** 取中文标签，未知值返回原代码。 */
+/** 取标签，未知值返回原代码。 */
 export function catalogLabel(labels: Readonly<Record<string, string>>, code: string): string {
   return labels[code] ?? code;
 }
@@ -83,7 +85,7 @@ export function groupCatalog(products: readonly CatalogProduct[], capabilities: 
 export function catalogTermTypeOptions(feeEvents: readonly CatalogFeeEvent[]): CatalogTermTypeOption[] {
   const rows = mergeFeeEvents(feeEvents);
   const termTypes = [...new Set([...feeEvents.map(event => event.termType), ...knownTermTypes])];
-  return termTypes.map(termType => ({ termType, label: catalogLabel(catalogTermTypeLabels, termType),
+  return termTypes.map(termType => ({ termType, label: catalogTermTypeLabel(termType),
     eventCount: rows.filter(row => row.termTypes.includes(termType)).length }));
 }
 
@@ -125,15 +127,15 @@ export interface GroupNote { text: string; warning: boolean }
 /** 可开通项为空时的原因：基础产品默认具备，非基础产品暂无。 */
 export function capabilityGroupNote(node: CatalogProductNode): GroupNote | null {
   if (node.capabilities.length > 0) return null;
-  return { text: node.product.baseProduct ? '基础产品默认具备，无需开通' : '暂无可开通项', warning: false };
+  return { text: node.product.baseProduct ? t('catalog.note.baseProductDefault') : t('catalog.note.noCapabilities'), warning: false };
 }
 
 /** 计费事件为空时的原因：基础产品无事件费用；非基础产品有可开通项为缺口，否则暂无。 */
 export function eventGroupNote(node: CatalogProductNode): GroupNote | null {
   if (node.events.length > 0) return null;
-  if (node.product.baseProduct) return { text: '无事件费用', warning: false };
-  if (node.capabilities.length > 0) return { text: '⚠ 未登记计费事件，开通后不会产生费用', warning: true };
-  return { text: '暂无计费事件', warning: false };
+  if (node.product.baseProduct) return { text: t('catalog.note.noEventFees'), warning: false };
+  if (node.capabilities.length > 0) return { text: t('catalog.note.eventsMissing'), warning: true };
+  return { text: t('catalog.note.noEvents'), warning: false };
 }
 
 /** 全部展开 / 全部收起：产品行与两组分组的键一次性置为同一值。 */

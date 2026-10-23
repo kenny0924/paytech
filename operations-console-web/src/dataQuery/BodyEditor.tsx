@@ -8,6 +8,7 @@ import { lintGutter, setDiagnostics } from '@codemirror/lint';
 import { Compartment, EditorSelection, EditorState, RangeSetBuilder } from '@codemirror/state';
 import { Decoration, EditorView, highlightActiveLine, keymap, lineNumbers, ViewPlugin } from '@codemirror/view';
 import type { DecorationSet, ViewUpdate } from '@codemirror/view';
+import { useT } from '../i18n/react';
 import type { CompletionWord, EditorDiagnostic } from './templateModel';
 
 /** MySQL 方言，但关闭 # 行注释：模板值标记 #{…} 以 # 开头，不能被当成注释。 */
@@ -68,7 +69,7 @@ export function BodyEditor({ value, onChange, diagnostics, completions, readOnly
   value: string; onChange: (value: string) => void; diagnostics: readonly EditorDiagnostic[]; completions: readonly CompletionWord[];
   readOnly: boolean; onReady?: (handle: BodyEditorHandle) => void;
 }) {
-  const host = useRef<HTMLDivElement>(null);
+  const host = useRef<HTMLDivElement>(null); const t = useT('data-query');
   const view = useRef<EditorView | null>(null);
   const readOnlyCompartment = useRef(new Compartment());
   const words = useRef(completions); words.current = completions;
@@ -121,5 +122,5 @@ export function BodyEditor({ value, onChange, diagnostics, completions, readOnly
     })));
   }, [diagnostics]);
 
-  return <div ref={host} className="dq-code" aria-label="模板正文" />;
+  return <div ref={host} className="dq-code" aria-label={t('template.bodyLabel')} />;
 }

@@ -2,8 +2,12 @@ import { ApiError, session } from '../api/session.ts';
 import type { ConsoleResource } from '../api/types.ts';
 import { configurationCommand } from '../configuration/configurationModel.ts';
 import type { ConfigurationCommand } from '../configuration/configurationModel.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
 import { decodeBenchmark, decodeCapabilityCondition, decodeVersionReview } from './termReview.ts';
 import type { CapabilityCondition, ComponentBenchmark, VersionReview } from './termReview.ts';
+
+/** 非组件代码在调用时通过 translator 取文案。 */
+const t = translator('commercial');
 
 // ---------- 路径与权限 ----------
 
@@ -114,31 +118,18 @@ export type VersionStatus = typeof versionStatuses[number];
 export type AgreementStatus = typeof agreementStatuses[number];
 export type VersionAction = 'submit' | 'approve' | 'reject' | 'schedule' | 'activate';
 
-export const agreementStatusLabels: Record<AgreementStatus, string> = {
-  DRAFT: '草稿', PENDING_SIGNATURE: '待签署', SIGNED: '已签署', ACTIVE: '生效', EXPIRED: '已到期', TERMINATED: '已终止', CANCELLED: '已取消',
-};
-export const versionStatusLabels: Record<VersionStatus, string> = {
-  DRAFT: '草稿', PENDING_APPROVAL: '待审批', APPROVED: '已批准', CLIENT_SIGNED: '客户已签署', SCHEDULED: '已排期', ACTIVE: '生效', SUPERSEDED: '已替代', EXPIRED: '已到期',
-};
-export const profileStatusLabels: Record<ProfileStatus, string> = { DRAFT: '草稿', ACTIVE: '启用', RETIRED: '已退役' };
-export const capabilityStatusLabels: Record<CapabilityStatus, string> = { ENABLED: '开通', SUSPENDED: '暂停', DISABLED: '关闭' };
-export const agreementTypeLabels: Record<AgreementType, string> = { CLIENT: 'Client 合同', PARTNER: 'Partner 合同' };
-export const partyRoleLabels: Record<PartyRole, string> = {
-  CLIENT: 'Client', LOCAL_PARTNER: 'Local Partner', PLATFORM_SIGNATORY: '平台签署方', OPERATING_ENTITY: '经营主体',
-};
-export const acceptanceMethodLabels: Record<AcceptanceMethod, string> = { E_SIGNATURE: '电子签', CLICK_ACCEPTANCE: '点击接受', MANUAL_SIGNATURE: '线下签署' };
-export const profileKindLabels: Record<ProfileKind, string> = {
-  PAYMENT_METHOD: '支付方式', PAYOUT_RAIL: '出款通道', FX_PAIR: '换汇币对', DISPUTE: '争议', PERIODIC: '周期费',
-};
-export const pricingModelLabels: Readonly<Record<string, string>> = { BLENDED: '混合费率', INTERCHANGE_PLUS_PLUS: 'IC++' };
-export const feeTaxTreatmentLabels: Readonly<Record<string, string>> = { INCLUSIVE: '含税', EXCLUSIVE: '不含税' };
+/**
+ * 枚举显示名在 commercial 命名空间，用 enumLabel 取（未知代码原样显示）：enum.agreementStatus、enum.versionStatus、
+ * enum.profileStatus、enum.capabilityStatus、enum.agreementType、enum.partyRole、enum.acceptanceMethod、enum.profileKind、
+ * enum.pricingModel、enum.feeTaxTreatment、enum.componentType、enum.termType。
+ */
+/** 按当前语言连接若干段文本：kind=list 为并列项（、/ ,），kind=clauses 为分句（；/ ;）。 */
+export function joinList(items: readonly string[], kind: 'list' | 'clauses' = 'list'): string {
+  return items.reduce((head, tail) => t(kind === 'list' ? 'join.list' : 'join.clauses', { head, tail }));
+}
 /** 版本口径展示：定价模型 · 含税口径，未知代码原样显示。 */
 export const versionBasisLabel = (pricingModel: string, feeTaxTreatment: string) =>
-  `${pricingModelLabels[pricingModel] ?? pricingModel} · ${feeTaxTreatmentLabels[feeTaxTreatment] ?? feeTaxTreatment}`;
-export const componentTypeLabels: Record<ComponentType, string> = { PERCENTAGE: '百分比', FIXED: '固定额', TIERED: '阶梯' };
-export const termTypeLabels: Readonly<Record<string, string>> = {
-  CLIENT_PRICING: 'Client 定价', PARTNER_SHARE: 'Partner 分润', PLATFORM_SERVICE_CHARGE: '平台服务费', PARTNER_BUY_RATE: 'Partner 底价',
-};
+  `${enumLabel(t, 'enum.pricingModel', pricingModel)} · ${enumLabel(t, 'enum.feeTaxTreatment', feeTaxTreatment)}`;
 /** 状态标签色：生效 / 开通为绿，待办为橙或蓝，结束为灰，暂停为金。 */
 export const commercialStatusColors: Readonly<Record<string, string>> = {
   ACTIVE: 'green', ENABLED: 'green', SIGNED: 'cyan', APPROVED: 'cyan', CLIENT_SIGNED: 'cyan', SCHEDULED: 'blue', PENDING_SIGNATURE: 'orange', PENDING_APPROVAL: 'orange',
@@ -461,7 +452,7 @@ export function componentSummary(component: Pick<PriceComponent, 'componentType'
     return `${percent(component.rate)}${bounds ? ` (${bounds}${component.currency ? ` ${component.currency}` : ''})` : ''}`;
   }
   if (component.componentType === 'FIXED') return `${component.fixedAmount ?? '—'} ${component.currency ?? ''}`.trim();
-  return `阶梯 ${component.bands.length} 档${component.bandMode ? ` · ${component.bandMode}` : ''}`;
+  return `${t('component.tieredSummary', { count: component.bands.length })}${component.bandMode ? ` · ${component.bandMode}` : ''}`;
 }
 
 /** 0.029 → 2.9%；保留原始精度，不做浮点舍入。 */
@@ -485,7 +476,7 @@ export function coverageGaps(capabilities: readonly AgreementCapability[], price
     if (capability.status !== 'ENABLED') continue;
     for (const currency of capability.conditions.find(condition => condition.dimensionCode === 'CURRENCY')?.values ?? []) {
       const key = `${capability.entityNo}/${currency}`;
-      if (!priced.has(key)) gaps.add(`${key}（${capability.capabilityCode}）`);
+      if (!priced.has(key)) gaps.add(t('coverage.gap', { key, capabilityCode: capability.capabilityCode }));
     }
   }
   return [...gaps].sort();
@@ -573,20 +564,21 @@ export function pricesBody(expectedChangeVersion: string, drafts: readonly Price
 /** 档位前置检查（与 commercial 激活校验 4 一致）：首档下界 0、相邻连续、末档上界为空、每档费率与金额恰好一个。返回问题列表。 */
 export function bandIssues(bands: readonly BandDraft[], bandMode: string | null): string[] {
   const issues: string[] = [];
-  if (bands.length === 0) return ['阶梯组件至少一档'];
-  if (Number(bands[0].lowerBound) !== 0) issues.push('首档下界必须为 0');
+  if (bands.length === 0) return [t('band.issue.atLeastOne')];
+  if (Number(bands[0].lowerBound) !== 0) issues.push(t('band.issue.firstLowerZero'));
   bands.forEach((band, index) => {
     const last = index === bands.length - 1;
     const rate = blank(band.rate); const amount = blank(band.fixedAmount);
-    if (last && blank(band.upperBound) !== null) issues.push('末档上界必须为空');
+    const no = index + 1;
+    if (last && blank(band.upperBound) !== null) issues.push(t('band.issue.lastUpperEmpty'));
     if (!last) {
       const upper = blank(band.upperBound);
-      if (upper === null) issues.push(`第 ${index + 1} 档缺少上界`);
-      else if (Number(upper) !== Number(bands[index + 1].lowerBound)) issues.push(`第 ${index + 1} 档上界必须等于第 ${index + 2} 档下界`);
-      else if (Number(upper) <= Number(band.lowerBound)) issues.push(`第 ${index + 1} 档上界必须大于下界`);
+      if (upper === null) issues.push(t('band.issue.upperMissing', { no }));
+      else if (Number(upper) !== Number(bands[index + 1].lowerBound)) issues.push(t('band.issue.upperEqualsNext', { no, next: index + 2 }));
+      else if (Number(upper) <= Number(band.lowerBound)) issues.push(t('band.issue.upperGreater', { no }));
     }
-    if ((rate === null) === (amount === null)) issues.push(`第 ${index + 1} 档费率与固定金额必须恰好填一个`);
-    if (bandMode === 'PROGRESSIVE' && amount !== null) issues.push(`累进模式第 ${index + 1} 档只允许费率`);
+    if ((rate === null) === (amount === null)) issues.push(t('band.issue.rateOrAmount', { no }));
+    if (bandMode === 'PROGRESSIVE' && amount !== null) issues.push(t('band.issue.progressiveRateOnly', { no }));
   });
   return issues;
 }
@@ -632,7 +624,7 @@ export function acceptanceBody(expectedChangeVersion: number, values: Acceptance
 /** 保证金两字段必须成组；返回错误文案或 null。 */
 export function reserveError(rate: string | undefined | null, days: number | undefined | null): string | null {
   const hasRate = !!blank(rate); const hasDays = days !== undefined && days !== null;
-  return hasRate === hasDays ? null : '保证金比例与天数必须同时填写或同时留空';
+  return hasRate === hasDays ? null : t('reserve.bothOrNeither');
 }
 
 export interface ProfileFormValues { pricingProfileCode?: string; profileKind: ProfileKind; profileName: string; paymentMethodCode?: string; conditions?: ProfileCondition[] }
@@ -700,7 +692,8 @@ export function localTime(value: string | null): string {
 export type CommercialContext = 'agreement' | 'profile' | 'version' | 'catalog';
 
 /** commercial 原因未透传时 BFF 给出的公共说明（Foundation BUSINESS_CHECK_FAILED 默认消息）。 */
-const genericBusinessDetail = '业务校验未通过';
+// 服务端返回的原文（Foundation CommonErrorCode 的默认消息），是比对用的数据而非界面文案，故以 \u 转义保存
+const genericBusinessDetail = '\u4e1a\u52a1\u6821\u9a8c\u672a\u901a\u8fc7';
 
 /**
  * 商务写命令的错误说明：BFF 把 commercial 的业务拒绝原因作为 Problem detail 透传（F9），页面直接显示该原因，
@@ -709,18 +702,12 @@ const genericBusinessDetail = '业务校验未通过';
  */
 export function commercialErrorMessage(error: unknown, context: CommercialContext): string | null {
   if (!(error instanceof ApiError)) return null;
-  if (error.status === 409) return '数据已被其他操作修改，请重新加载后再试。';
-  if (error.status === 404) return '目标不存在。';
+  if (error.status === 409) return t('error.conflict');
+  if (error.status === 404) return t('error.notFound');
   if (error.status !== 400 || error.code !== 'BUSINESS_CHECK_FAILED') return null;
   const owner = ownerReason(error);
-  if (owner) return `业务校验未通过：${owner}`;
-  const hints = {
-    agreement: '合同状态、参与方、文件或开通项不满足 commercial 的业务规则（例如：提交签署需恰好一份签署文件，PARTNER 合同需覆盖至少一个 OE）。',
-    profile: '画像状态或条件不满足规则（例如：只有草稿可修改，维度须与画像种类相容）。',
-    version: '版本状态或激活校验未通过（例如：Checker 不能与 Maker 相同、画像须启用、OE 须被合同覆盖、开通项币种须全部有价格、阶梯须连续）。',
-    catalog: '目录状态或维度不满足规则（例如：代码不可重复、维度须可用于开通、支付方式开通项必须带支付方式代码、产品须启用）。',
-  } as const;
-  return `业务校验未通过：${hints[context]}（BUSINESS_CHECK_FAILED）`;
+  if (owner) return t('error.businessCheckReason', { reason: owner });
+  return t('error.businessCheckHint', { hint: t('error.hint.' + context) });
 }
 
 /** commercial 透传的具体原因；只有公共默认说明时返回 null。 */

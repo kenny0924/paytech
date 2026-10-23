@@ -1,5 +1,8 @@
 import type { GatewayGuardRuleResponseBody } from '../api/types.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
 import type { GatewayProfileCapability, ManagedRoute } from './types.ts';
+
+const t = translator('gateway');
 
 export function initialGuards(profile: GatewayProfileCapability): GatewayGuardRuleResponseBody[] {
   return profile.requiredGuardDimensions.flatMap(dimension => [
@@ -7,11 +10,10 @@ export function initialGuards(profile: GatewayProfileCapability): GatewayGuardRu
     { ruleType: 'CONCURRENCY', dimension, capacity: null, refillTokens: null, refillPeriodMillis: null, concurrencyLimit: 5 },
   ]);
 }
-const IDEMPOTENCY_MODE_LABELS: Record<string, string> = { NONE: '不启用', REQUIRED: '必须' };
-/** 请求幂等选项来自 Profile 能力；当前值不在能力内时仍保留，便于详情原样回显。 */
+/** 请求幂等选项来自 Profile 能力；当前值不在能力内时仍保留，便于详情原样回显。显示名为 `gateway.enum.idempotencyMode.<值>`。 */
 export function idempotencyOptions(modes: readonly string[] = [], current?: string | null) {
   const values = current && !modes.includes(current) ? [...modes, current] : [...modes];
-  return values.map(value => ({ value, label: IDEMPOTENCY_MODE_LABELS[value] ?? value }));
+  return values.map(value => ({ value, label: enumLabel(t, 'enum.idempotencyMode', value) }));
 }
 export function defaultIdempotencyMode(profile: GatewayProfileCapability): string {
   return profile.idempotencyModes.includes('NONE') ? 'NONE' : profile.idempotencyModes[0];

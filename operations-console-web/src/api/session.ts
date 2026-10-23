@@ -1,4 +1,7 @@
+import { translator } from '../i18n/index.ts';
 import type { SessionContextResponseBody, TokenGrantResponseBody } from './types.ts';
+
+const t = translator('common');
 
 const problemRequestId = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const legacyRequestId = /^[A-Za-z0-9._:-]{1,128}$/;
@@ -207,12 +210,12 @@ export class ApiError extends Error {
       || (status === 409 && code === 'CONCURRENT_REQUEST');
     const businessMessage = businessFailure && typeof responseMessage === 'string' && responseMessage.trim()
       ? responseMessage : undefined;
-    const message = businessMessage ?? (status === 401 ? '登录已失效，请重新登录。'
-      : status === 403 ? '你没有执行此操作的权限。'
-      : status === 409 ? '数据已发生变化，请刷新后重试。'
-      : status === 429 ? '操作过于频繁，请稍后再试。'
-      : status >= 500 ? '服务暂时不可用，请稍后重试。'
-      : '操作未完成，请检查输入后重试。');
+    const message = businessMessage ?? t(status === 401 ? 'apiError.sessionExpired'
+      : status === 403 ? 'apiError.forbidden'
+      : status === 409 ? 'apiError.conflict'
+      : status === 429 ? 'apiError.rateLimited'
+      : status >= 500 ? 'apiError.unavailable'
+      : 'apiError.notCompleted');
     super(message); this.status = status; this.code = code; this.requestId = requestId;
     this.detail = typeof responseMessage === 'string' ? responseMessage.trim() : ''; this.fieldErrors = copyFieldErrors(fieldErrors);
   }

@@ -1,6 +1,9 @@
 import { ApiError, session } from '../api/session.ts';
 import { resolveTimeRange } from '../components/timeRange.ts';
 import type { TimeRangeValue } from '../components/timeRange.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('vault');
 
 /** Vault 管理接口前缀（BFF）。 */
 export const vaultAdminPath = '/vault-admin/v1';
@@ -30,34 +33,26 @@ export interface VaultManualEvent {
   outcome: 'SUCCESS' | 'DENIED' | 'FAILED'; resultCode: string; createTime: string;
 }
 
-export const tokenModeLabels: Record<string, string> = { REFERENCE: '每次新 Token', STABLE: '同值同 Token' };
-export const dataClassLabels: Record<string, string> = { STANDARD: '普通敏感', SECRET: '密钥' };
-export const valueFormatLabels: Record<string, string> = { TEXT: '不限格式', JSON: 'JSON 对象', REGEX: '正则' };
-export const valueFormatOptions: { value: VaultValueFormat; label: string; description: string }[] = [
-  { value: 'TEXT', label: valueFormatLabels.TEXT, description: '不限格式' }, { value: 'JSON', label: valueFormatLabels.JSON, description: '必须是 JSON 对象' },
-  { value: 'REGEX', label: valueFormatLabels.REGEX, description: '按正则整值匹配' },
-];
-export const statusLabels: Record<string, string> = { ACTIVE: '启用', DISABLED: '停用' };
-export const actionLabels: Record<string, string> = { PROTECT: '加密', REVEAL: '解密' };
-export const outcomeLabels: Record<string, string> = { SUCCESS: '成功', DENIED: '拒绝', FAILED: '失败' };
-export const changeTypeLabels: Record<string, string> = {
-  SEED: '初始化', DATA_TYPE_CREATE: '新建数据类型', DATA_TYPE_UPDATE: '修改数据类型', RULE_CREATE: '新建访问规则', RULE_UPDATE: '修改访问规则',
-};
-export const targetTypeLabels: Record<string, string> = { POLICY: '整体策略', DATA_TYPE: '数据类型', ACCESS_RULE: '访问规则' };
-export const reasonCodeLabels: Record<string, string> = {
-  CUSTOMER_VERIFICATION: '核对客户信息', DATA_REPAIR: '数据修复', CHANNEL_CONFIGURATION: '渠道配置',
-  INCIDENT_INVESTIGATION: '事件调查', OTHER: '其他',
-};
-export const snapshotFieldLabels: Record<string, string> = {
-  dataTypeCode: '编码', tokenMode: 'Token 模式', dataClass: '数据级别', description: '用途说明', manualProtectEnabled: '允许人工加密',
-  manualRevealEnabled: '允许人工解密', status: '状态', callerService: '调用服务', action: '动作', purposeCode: '用途',
-  valueFormat: '值格式', valuePattern: '正则',
-};
-/** Vault 值格式相关错误码的固定说明；不回显原值、样例或正则编译器报错。 */
-export const valueFormatErrorMessages: Record<string, string> = {
-  VALUE_NOT_JSON_OBJECT: '值不是合法的JSON对象', VALUE_PATTERN_MISMATCH: '值不符合数据类型的正则',
-  VALUE_PATTERN_INVALID: '值格式与正则的组合无效或正则无法编译', SAMPLE_VALUE_INVALID: '测试样例缺失或不符合值格式',
-};
+/**
+ * 显示名均在 `vault` 命名空间，用 enumLabel 取：`enum.tokenMode`、`enum.dataClass`、`enum.valueFormat`、`enum.status`、`enum.action`、
+ * `enum.outcome`、`enum.changeType`、`enum.targetType`、`enum.reasonCode`、`snapshot.field`；这里只保留代码与顺序。
+ */
+export const tokenModes = ['REFERENCE', 'STABLE'] as const;
+export const dataClasses = ['STANDARD', 'SECRET'] as const;
+export const valueFormats: readonly VaultValueFormat[] = ['TEXT', 'JSON', 'REGEX'];
+export const vaultStatuses = ['ACTIVE', 'DISABLED'] as const;
+export const vaultActions = ['PROTECT', 'REVEAL'] as const;
+export const manualOutcomes = ['SUCCESS', 'DENIED', 'FAILED'] as const;
+export const changeTypes = ['SEED', 'DATA_TYPE_CREATE', 'DATA_TYPE_UPDATE', 'RULE_CREATE', 'RULE_UPDATE'] as const;
+export const targetTypes = ['POLICY', 'DATA_TYPE', 'ACCESS_RULE'] as const;
+export const reasonCodes = ['CUSTOMER_VERIFICATION', 'DATA_REPAIR', 'CHANNEL_CONFIGURATION', 'INCIDENT_INVESTIGATION', 'OTHER'] as const;
+/** Vault 值格式相关错误码；说明文字是固定文案（`valueFormatError.<code>`），不回显原值、样例或正则编译器报错。 */
+export const valueFormatErrorCodes: readonly string[] = ['VALUE_NOT_JSON_OBJECT', 'VALUE_PATTERN_MISMATCH', 'VALUE_PATTERN_INVALID', 'SAMPLE_VALUE_INVALID'];
+
+/** 值格式下拉选项：调用时按当前语言取名称与说明。 */
+export function valueFormatOptions(): { value: VaultValueFormat; label: string; description: string }[] {
+  return valueFormats.map(value => ({ value, label: enumLabel(t, 'enum.valueFormat', value), description: t('valueFormat.description.' + value) }));
+}
 
 export const codePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
 export const callerPattern = /^[a-z][a-z0-9-]{0,127}$/;
@@ -117,11 +112,11 @@ export function isJsonObjectText(text: string): boolean {
   } catch { return false; }
 }
 
-/** 值格式错误码换成固定中文说明，其余错误原样返回。 */
+/** 值格式错误码换成固定说明，其余错误原样返回。 */
 export function withValueFormatMessage(error: unknown): unknown {
-  if (!(error instanceof ApiError) || !valueFormatErrorMessages[error.code]) return error;
+  if (!(error instanceof ApiError) || !valueFormatErrorCodes.includes(error.code)) return error;
   const replaced = new ApiError(error.status, error.code, error.requestId, undefined, error.fieldErrors);
-  replaced.message = valueFormatErrorMessages[error.code];
+  replaced.message = t('valueFormatError.' + error.code);
   return replaced;
 }
 
@@ -173,10 +168,10 @@ export interface SnapshotRow { field: string; label: string; before: string; aft
 /** 变更前后快照逐字段对比；新建时变更前为空。 */
 export function snapshotRows(before: Record<string, unknown> | null | undefined, after: Record<string, unknown> | null | undefined): SnapshotRow[] {
   const fields = [...new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})])];
-  const text = (value: unknown) => value === undefined || value === null ? '—' : typeof value === 'boolean' ? (value ? '是' : '否') : String(value);
+  const text = (value: unknown) => value === undefined || value === null ? '—' : typeof value === 'boolean' ? (value ? t('snapshot.yes') : t('snapshot.no')) : String(value);
   return fields.map(field => {
     const b = text(before?.[field]); const a = text(after?.[field]);
-    return { field, label: snapshotFieldLabels[field] ?? field, before: b, after: a, changed: b !== a };
+    return { field, label: enumLabel(t, 'snapshot.field', field), before: b, after: a, changed: b !== a };
   });
 }
 
@@ -186,14 +181,14 @@ export interface ManualEventFilterValues { actorId?: string; action?: string; da
 export function manualEventFilters(values: ManualEventFilterValues, now = new Date()): Record<string, string> {
   const filters: Record<string, string> = {};
   const range = resolveTimeRange(values.timeRange, now);
-  if (values.timeRange?.preset === 'CUSTOM' && (!range.start || !range.end)) throw new Error('请选择完整的开始和结束时间');
+  if (values.timeRange?.preset === 'CUSTOM' && (!range.start || !range.end)) throw new Error(t('filters.incompleteRange'));
   for (const [key, value] of [['from', range.start], ['to', range.end]] as const) {
     if (!value) continue;
     const instant = new Date(value);
-    if (!Number.isFinite(instant.getTime())) throw new Error('请输入有效时间');
+    if (!Number.isFinite(instant.getTime())) throw new Error(t('filters.invalidTime'));
     filters[key] = instant.toISOString();
   }
-  if (filters.from && filters.to && filters.from >= filters.to) throw new Error('结束时间必须晚于开始时间');
+  if (filters.from && filters.to && filters.from >= filters.to) throw new Error(t('filters.endBeforeStart'));
   for (const key of ['actorId', 'action', 'dataTypeCode'] as const) {
     const value = values[key]?.trim();
     if (value) filters[key] = value;

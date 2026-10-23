@@ -4,6 +4,9 @@ import { resolveTimeRange } from '../components/timeRange.ts';
 import type { TimeRangeValue } from '../components/timeRange.ts';
 import { configurationCommand } from '../configuration/configurationModel.ts';
 import type { ConfigurationCommand } from '../configuration/configurationModel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('webhook');
 
 /** Webhook 管理接口前缀（BFF）。 */
 export const webhookAdminPath = '/webhook-admin/v1';
@@ -57,18 +60,15 @@ export interface DeliveryAttempt {
 export interface DeliveryDetail extends DeliverySummary { requestedBy: string | null; event: DeliveryEvent; attempts: DeliveryAttempt[] }
 export interface ReplayResult { deliveryId: string }
 
-export const endpointStatusLabels: Record<EndpointStatus, string> = { ACTIVE: '启用', DISABLED: '已停用' };
-export const deliveryStatusLabels: Record<DeliveryStatus, string> = {
-  CREATED: '待投递', PROCESSING: '处理中', RETRY_WAIT: '等待重试', SUCCEEDED: '已送达', DEAD: '已放弃', CANCELLED: '已取消',
-};
+/**
+ * 显示名在 `webhook` 命名空间，用 enumLabel 取：`enum.endpointStatus`、`enum.deliveryStatus`、`enum.attemptStatus`；
+ * 失败说明为 `failure.<code>`（HTTP_STATUS 带 {status}）。这里只保留代码、顺序与颜色。
+ */
+export const deliveryStatuses: readonly DeliveryStatus[] = ['CREATED', 'PROCESSING', 'RETRY_WAIT', 'SUCCEEDED', 'DEAD', 'CANCELLED'];
 export const deliveryStatusColors: Record<DeliveryStatus, string> = {
   CREATED: 'blue', PROCESSING: 'blue', RETRY_WAIT: 'geekblue', SUCCEEDED: 'green', DEAD: 'red', CANCELLED: 'default',
 };
-export const attemptStatusLabels: Record<AttemptStatus, string> = { PROCESSING: '发送中', SUCCEEDED: '成功', FAILED: '失败' };
-export const failureCodeLabels: Record<FailureCode, string> = {
-  HTTP_STATUS: '对方返回 HTTP {status}', TIMEOUT: '超时', CONNECT_FAILED: '连接失败', TLS_FAILED: 'TLS 握手失败',
-  DNS_FAILED: '域名无法解析', BLOCKED_ADDRESS: '地址解析到内网，已拦截', INTERRUPTED: '发送中断（结果未知）',
-};
+const failureCodes: readonly string[] = ['HTTP_STATUS', 'TIMEOUT', 'CONNECT_FAILED', 'TLS_FAILED', 'DNS_FAILED', 'BLOCKED_ADDRESS', 'INTERRUPTED'];
 /** 可 Replay 的已结束投递状态；进行中的投递不能 Replay。 */
 export const replayableStatuses: readonly DeliveryStatus[] = ['SUCCEEDED', 'DEAD', 'CANCELLED'];
 
@@ -85,8 +85,8 @@ const count = (v: unknown, min = 0) => Number.isSafeInteger(v) && Number(v) >= m
 const optionalCount = (v: unknown) => v === null || count(v);
 const version = (v: unknown) => Number.isInteger(v) && Number(v) >= 1 && Number(v) <= 2147483647;
 const eventType = (v: unknown) => (eventTypes as readonly unknown[]).includes(v);
-const deliveryStatus = (v: unknown) => typeof v === 'string' && Object.hasOwn(deliveryStatusLabels, v);
-const failureCode = (v: unknown) => typeof v === 'string' && Object.hasOwn(failureCodeLabels, v);
+const deliveryStatus = (v: unknown) => typeof v === 'string' && (deliveryStatuses as readonly string[]).includes(v);
+const failureCode = (v: unknown) => typeof v === 'string' && failureCodes.includes(v);
 const optionalFailure = (v: unknown) => v === null || failureCode(v);
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 /** 解码失败只给通用错误，不回显响应内容（可能含密钥明文）。 */
@@ -192,25 +192,30 @@ export function pageOf<T>(decode: (value: unknown) => T) {
   };
 }
 
-/** Client 平台访问状态的中文说明；两项都 ACTIVE 才算正常。 */
+/** Client 平台访问是否正常：两项都 ACTIVE。 */
+export function clientAccessOk(client: Pick<WebhookClient, 'ownerStatus' | 'securityStatus'>): boolean {
+  return client.ownerStatus === 'ACTIVE' && client.securityStatus === 'ACTIVE';
+}
+
+/** Client 平台访问状态的说明；两项都 ACTIVE 才算正常。 */
 export function clientAccessText(client: Pick<WebhookClient, 'ownerStatus' | 'securityStatus'>): string {
-  if (client.ownerStatus === 'PENDING') return '平台访问未开通';
-  if (client.ownerStatus === 'TERMINATED') return '平台访问已终止';
-  if (client.ownerStatus !== 'ACTIVE' || client.securityStatus !== 'ACTIVE') return '平台访问已暂停';
-  return '正常';
+  if (client.ownerStatus === 'PENDING') return t('clientAccess.pending');
+  if (client.ownerStatus === 'TERMINATED') return t('clientAccess.terminated');
+  if (!clientAccessOk(client)) return t('clientAccess.suspended');
+  return t('clientAccess.normal');
 }
 
 /** 尝试或测试的失败说明；HTTP_STATUS 带对方状态码。 */
 export function failureText(code: FailureCode | null, httpStatus: number | null): string {
   if (!code) return httpStatus === null ? '—' : `HTTP ${httpStatus}`;
-  return failureCodeLabels[code].replace('{status}', httpStatus === null ? '—' : String(httpStatus));
+  return t('failure.' + code, { status: httpStatus === null ? '—' : String(httpStatus) });
 }
 
 /** 测试事件结果的一行摘要。 */
 export function testResultText(result: TestResult): string {
   const duration = result.durationMs === null ? null : `${result.durationMs} ms`;
-  if (result.result === 'SUCCEEDED') return ['成功', result.httpStatus === null ? null : `HTTP ${result.httpStatus}`, duration].filter(Boolean).join(' · ');
-  return ['失败', failureText(result.failureCode, result.httpStatus), duration ? `耗时 ${duration}` : null].filter(Boolean).join(' · ');
+  if (result.result === 'SUCCEEDED') return [t('testResult.succeeded'), result.httpStatus === null ? null : `HTTP ${result.httpStatus}`, duration].filter(Boolean).join(' · ');
+  return [t('testResult.failed'), failureText(result.failureCode, result.httpStatus), duration ? t('testResult.duration', { duration }) : null].filter(Boolean).join(' · ');
 }
 
 export function isReplayable(status: DeliveryStatus): boolean {
@@ -258,17 +263,13 @@ export function testEndpointRequest(key: string = crypto.randomUUID()): RequestI
   return { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key } };
 }
 
-/** Platform 端点地址错误码（WebhookEndpointErrorCode）对应的字段提示，与 Owner 安全说明一致。 */
-const urlErrorMessages: Readonly<Record<string, string>> = {
-  WEBHOOK_URL_NOT_ALLOWED: '地址格式不正确或协议不允许',
-  WEBHOOK_URL_UNRESOLVABLE: '端点主机名无法解析',
-  WEBHOOK_URL_NOT_PUBLIC: '端点地址指向内网或保留地址',
-};
+/** Platform 端点地址错误码（WebhookEndpointErrorCode）；字段提示为 `urlError.<code>`，与 Owner 安全说明一致。 */
+const urlErrorCodes: readonly string[] = ['WEBHOOK_URL_NOT_ALLOWED', 'WEBHOOK_URL_UNRESOLVABLE', 'WEBHOOK_URL_NOT_PUBLIC'];
 
 /** 保存端点时按错误码把地址拒绝原因回填到地址字段；其他错误（含 BUSINESS_CHECK_FAILED）交给通用提示。 */
 export function urlErrorMessage(error: unknown): string | null {
   if (!(error instanceof ApiError) || error.status !== 400) return null;
-  return urlErrorMessages[error.code] ?? null;
+  return urlErrorCodes.includes(error.code) ? t('urlError.' + error.code) : null;
 }
 
 const twoDigits = (value: number) => String(value).padStart(2, '0');
@@ -288,11 +289,11 @@ export interface DeliveryFilterValues { timeRange?: TimeRangeValue; endpointId?:
 /** 投递筛选：Client 必填，时间范围转 UTC，跨度不超过 31 天；空的可选条件不发送。 */
 export function deliveryFilters(clientId: string, values: DeliveryFilterValues, now = new Date()): Record<string, string> {
   const range = resolveTimeRange(values.timeRange ?? defaultDeliveryRange(now), now);
-  if (!range.start || !range.end) throw new Error('请选择完整的开始和结束时间');
+  if (!range.start || !range.end) throw new Error(t('filters.incompleteRange'));
   const from = new Date(range.start); const to = new Date(range.end);
-  if (!Number.isFinite(from.getTime()) || !Number.isFinite(to.getTime())) throw new Error('请输入有效时间');
-  if (from >= to) throw new Error('结束时间必须晚于开始时间');
-  if (to.getTime() - from.getTime() > maxDeliveryDays * 86_400_000) throw new Error(`时间跨度不能超过 ${maxDeliveryDays} 天`);
+  if (!Number.isFinite(from.getTime()) || !Number.isFinite(to.getTime())) throw new Error(t('filters.invalidTime'));
+  if (from >= to) throw new Error(t('filters.endBeforeStart'));
+  if (to.getTime() - from.getTime() > maxDeliveryDays * 86_400_000) throw new Error(t('filters.rangeTooLong', { days: maxDeliveryDays }));
   const filters: Record<string, string> = { clientId, createdFrom: from.toISOString(), createdTo: to.toISOString() };
   for (const key of ['endpointId', 'eventType', 'status', 'eventId'] as const) {
     const value = values[key]?.trim();

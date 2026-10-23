@@ -1,5 +1,8 @@
 import { ApiError } from '../api/session.ts';
 import type { PagingResponseBody } from '../api/types.ts';
+import { enumLabel, i18n, translator } from '../i18n/index.ts';
+
+const t = translator('data-query');
 
 // ---------- 路径、路由与按钮 ----------
 
@@ -86,6 +89,9 @@ export function localTime(value: string | null | undefined): string {
   return `${date.getFullYear()}-${two(date.getMonth() + 1)}-${two(date.getDate())} ${two(date.getHours())}:${two(date.getMinutes())}`;
 }
 
+/** 按当前语言连接并列项：zh-CN 用顿号，en 用逗号。 */
+export const joinList = (items: readonly string[]) => new Intl.ListFormat(i18n.locale(), { style: 'narrow', type: 'conjunction' }).format(items);
+
 /** 只把非空筛选值放进 Query。 */
 export function listFilters(values: Readonly<Record<string, string | undefined>>): Record<string, string> {
   return Object.fromEntries(Object.entries(values).map(([k, v]) => [k, v?.trim() ?? '']).filter(([, v]) => v !== ''));
@@ -94,5 +100,6 @@ export function listFilters(values: Readonly<Record<string, string | undefined>>
 export const codePattern = /^[A-Z][A-Z0-9_]{1,63}$/;
 export const activeStatuses = ['ACTIVE', 'INACTIVE'] as const;
 export type ActiveStatus = typeof activeStatuses[number];
-export const activeStatusLabels: Readonly<Record<string, string>> = { ACTIVE: '启用', INACTIVE: '停用', DELETED: '已删除' };
+/** 状态显示名为 `data-query.enum.status.<值>`，调用时按当前语言取；未知值原样显示。 */
+export const activeStatusLabel = (value: string) => enumLabel(t, 'enum.status', value);
 export const activeStatusColors: Readonly<Record<string, string>> = { ACTIVE: 'green', INACTIVE: 'default', DELETED: 'red' };

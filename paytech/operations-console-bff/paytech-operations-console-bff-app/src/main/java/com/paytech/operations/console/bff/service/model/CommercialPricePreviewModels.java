@@ -397,7 +397,49 @@ public final class CommercialPricePreviewModels {
         /** 归整后的示例费用；未计算为 null */
         private String amount;
 
-        /** 说明：命中档位、上下限生效或未计算原因 */
-        private String note;
+        /**
+         * 计算说明，按出现顺序：已计算时为命中档位、累进档数、上下限生效；未计算时只有一条未计算原因。
+         * 前端按 code 翻译，params 为翻译参数。
+         */
+        private List<IllustrationNote> notes;
+    }
+
+    /**
+     * 示例费用的一条说明
+     *
+     * @param code 说明编码
+     * @param params 翻译参数（字符串），各编码的参数见 {@link IllustrationNoteCode}
+     */
+    public record IllustrationNote(IllustrationNoteCode code, Map<String, String> params) {
+    }
+
+    /** 示例费用说明编码；括号内为 params 的键。 */
+    public enum IllustrationNoteCode {
+        /** WHOLE_BASE 命中档位（bandNo） */
+        BAND_HIT,
+
+        /** WHOLE_BASE 没有命中的档位 */
+        BAND_NONE,
+
+        /** PROGRESSIVE 参与累进的档数（count） */
+        PROGRESSIVE_BANDS,
+
+        /** 按最低金额（amount） */
+        MIN_APPLIED,
+
+        /** 按最高金额（amount） */
+        MAX_APPLIED,
+
+        /** 未计算：计算基数依赖其他费用结果（base） */
+        BASE_DEPENDS_ON_FEE,
+
+        /** 未计算：组件类型不支持示例计算（type） */
+        COMPONENT_UNSUPPORTED,
+
+        /** 未计算：阶梯基数依赖周期累计量（basis） */
+        BAND_BASIS_PERIODIC,
+
+        /** 未计算：阶梯模式不支持单笔示例计算（mode） */
+        BAND_MODE_UNSUPPORTED
     }
 }

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Button, Form, Input, Select, Switch } from 'antd';
+import { enumLabel } from '../i18n/index';
+import { useT } from '../i18n/react';
 import {
   capabilityConditionIssues, capabilityDetailIssues, capabilityDetailsBody, channelPaths, decodeCapability, detailDrafts,
 } from './channel';
@@ -19,26 +21,25 @@ const conditionRule = (field: keyof CapabilityFormValues) => ({
   },
 });
 
-const valueTypeLabels: Record<string, string> = { BOOLEAN: '开关', DECIMAL: '数值', CODE: '代码' };
-
 /** 一行明细：代码从目录选择，值控件按目录类型渲染（BOOLEAN 开关、DECIMAL 输入、CODE 下拉）。 */
 function DetailRow({ draft, definitions, onChange, onRemove }: { draft: DetailDraft; definitions: CapabilityDefinition[]; onChange: (draft: DetailDraft) => void; onRemove: () => void }) {
+  const t = useT('channel');
   const definition = definitions.find(d => d.capabilityCode === draft.capabilityCode);
   return <div className="channel-detail-row">
-    <Select aria-label="能力代码" showSearch placeholder="选择能力代码" value={draft.capabilityCode || undefined}
+    <Select aria-label={t('capability.code')} showSearch placeholder={t('capability.selectCode')} value={draft.capabilityCode || undefined}
       options={definitions.map(d => ({ value: d.capabilityCode, label: d.capabilityCode }))}
       onChange={capabilityCode => onChange({ capabilityCode, booleanValue: definitions.find(d => d.capabilityCode === capabilityCode)?.valueType === 'BOOLEAN' ? true : undefined })} />
-    <span className="channel-detail-type">{definition ? valueTypeLabels[definition.valueType] ?? definition.valueType : '—'}</span>
+    <span className="channel-detail-type">{definition ? enumLabel(t, 'enum.valueType', definition.valueType) : '—'}</span>
     <div className="channel-detail-value">
-      {definition?.valueType === 'BOOLEAN' ? <Switch aria-label="是否支持" checked={draft.booleanValue === true} onChange={booleanValue => onChange({ ...draft, booleanValue })}
-        checkedChildren="支持" unCheckedChildren="不支持" />
-        : definition?.valueType === 'DECIMAL' ? <Input aria-label="数值" placeholder="十进制，如 10.00" maxLength={26} value={draft.decimalValue ?? ''}
+      {definition?.valueType === 'BOOLEAN' ? <Switch aria-label={t('capability.supported')} checked={draft.booleanValue === true} onChange={booleanValue => onChange({ ...draft, booleanValue })}
+        checkedChildren={t('capability.yes')} unCheckedChildren={t('capability.no')} />
+        : definition?.valueType === 'DECIMAL' ? <Input aria-label={t('capability.decimal')} placeholder={t('capability.decimalPlaceholder')} maxLength={26} value={draft.decimalValue ?? ''}
           onChange={e => onChange({ ...draft, decimalValue: e.target.value.trim() })} />
-        : definition?.valueType === 'CODE' ? <Select aria-label="代码值" placeholder="选择允许值" value={draft.codeValue}
+        : definition?.valueType === 'CODE' ? <Select aria-label={t('capability.codeValue')} placeholder={t('capability.selectAllowed')} value={draft.codeValue}
           options={definition.allowedCodes.map(value => ({ value, label: value }))} onChange={codeValue => onChange({ ...draft, codeValue })} />
-        : <span className="channel-cell-meta">先选择能力代码</span>}
+        : <span className="channel-cell-meta">{t('capability.pickCodeFirst')}</span>}
     </div>
-    <Button type="text" size="small" danger onClick={onRemove}>删除</Button>
+    <Button type="text" size="small" danger onClick={onRemove}>{t('endpointEditor.delete')}</Button>
   </div>;
 }
 
@@ -48,6 +49,7 @@ function DetailRow({ draft, definitions, onChange, onRemove }: { draft: DetailDr
  * <li>明细按能力目录渲染；每条只发送与目录类型一致的一个值。</li>
  */
 export function CapabilityEditor({ midId, definitions, capability, onSaved, onClose, onAuthorizationChanged }: Props) {
+  const t = useT('channel'), tCommon = useT('common');
   const [form] = Form.useForm<CapabilityFormValues>();
   const command = useChannelCommand(onAuthorizationChanged, form);
   const [drafts, setDrafts] = useState<DetailDraft[]>(capability ? detailDrafts(capability.details) : [{ capabilityCode: '' }]);
@@ -56,38 +58,38 @@ export function CapabilityEditor({ midId, definitions, capability, onSaved, onCl
     if (issue) return;
     const details = capabilityDetailsBody(drafts, definitions);
     if (capability) {
-      const saved = await command.run(channelPaths.capabilityDetails(capability.midCapabilityId), 'PUT', { details }, decodeCapability, '能力明细保存失败');
+      const saved = await command.run(channelPaths.capabilityDetails(capability.midCapabilityId), 'PUT', { details }, decodeCapability, t('capability.detailsSaveFailed'));
       if (saved) onSaved(saved);
       return;
     }
     const values = await form.validateFields();
-    const saved = await command.run(channelPaths.capabilities, 'POST', { midId, ...values, details }, decodeCapability, '能力组创建失败');
+    const saved = await command.run(channelPaths.capabilities, 'POST', { midId, ...values, details }, decodeCapability, t('capability.createFailed'));
     if (saved) onSaved(saved);
   };
   const upper = (value?: string) => value?.trim().toUpperCase();
-  return <CommandModal title={capability ? `编辑明细 · ${[capability.paymentMethodCode, capability.schemeCode, capability.countryCode, capability.currency, capability.mccCode].join(' / ')}`
-    : '新建能力组'} command={command} okText="保存" width={820} okDisabled={!!issue} onOk={() => void save()} onClose={onClose} onReload={onClose}>
+  return <CommandModal title={capability ? t('capability.editTitle', { condition: [capability.paymentMethodCode, capability.schemeCode, capability.countryCode, capability.currency, capability.mccCode].join(' / ') })
+    : t('capability.createTitle')} command={command} okText={tCommon('action.save')} width={820} okDisabled={!!issue} onOk={() => void save()} onClose={onClose} onReload={onClose}>
     {!capability && <Form form={form} name="channel-capability-create" layout="vertical" initialValues={{ schemeCode: '*', countryCode: '*', currency: '*' }}>
       <div className="channel-form-grid-3">
-        <Form.Item name="paymentMethodCode" label="支付方式" normalize={upper} rules={[{ required: true, message: '必填' }, conditionRule('paymentMethodCode')]}>
+        <Form.Item name="paymentMethodCode" label={t('capability.paymentMethod')} normalize={upper} rules={[{ required: true, message: t('form.required') }, conditionRule('paymentMethodCode')]}>
           <Input maxLength={64} placeholder="CARD" /></Form.Item>
-        <Form.Item name="schemeCode" label="卡组（可 *，非卡填 *）" normalize={upper} rules={[{ required: true, message: '必填' }, conditionRule('schemeCode')]}>
-          <Input maxLength={64} placeholder="VISA 或 *" /></Form.Item>
-        <Form.Item name="countryCode" label="国家（可 *）" normalize={upper} rules={[{ required: true, message: '必填' }, conditionRule('countryCode')]}>
-          <Input maxLength={2} placeholder="AE 或 *" /></Form.Item>
-        <Form.Item name="currency" label="币种（可 *）" normalize={upper} rules={[{ required: true, message: '必填' }, conditionRule('currency')]}>
-          <Input maxLength={3} placeholder="AED 或 *" /></Form.Item>
-        <Form.Item name="mccCode" label="MCC" rules={[{ required: true, message: '必填' }, conditionRule('mccCode')]}>
+        <Form.Item name="schemeCode" label={t('capability.scheme')} normalize={upper} rules={[{ required: true, message: t('form.required') }, conditionRule('schemeCode')]}>
+          <Input maxLength={64} placeholder={t('capability.schemePlaceholder')} /></Form.Item>
+        <Form.Item name="countryCode" label={t('capability.country')} normalize={upper} rules={[{ required: true, message: t('form.required') }, conditionRule('countryCode')]}>
+          <Input maxLength={2} placeholder={t('capability.countryPlaceholder')} /></Form.Item>
+        <Form.Item name="currency" label={t('capability.currency')} normalize={upper} rules={[{ required: true, message: t('form.required') }, conditionRule('currency')]}>
+          <Input maxLength={3} placeholder={t('capability.currencyPlaceholder')} /></Form.Item>
+        <Form.Item name="mccCode" label="MCC" rules={[{ required: true, message: t('form.required') }, conditionRule('mccCode')]}>
           <Input maxLength={4} placeholder="5816" /></Form.Item>
       </div>
     </Form>}
-    <div className="channel-kv-head"><strong>明细</strong><span>按能力目录渲染；ACTION.* 表示是否支持该动作，AMOUNT.MIN / MAX 为单笔上下限</span></div>
-    {drafts.length > 0 && <div className="channel-detail-row channel-detail-head"><span>能力代码</span><span>类型</span><span>值</span><span /></div>}
+    <div className="channel-kv-head"><strong>{t('capability.details')}</strong><span>{t('capability.detailsHint')}</span></div>
+    {drafts.length > 0 && <div className="channel-detail-row channel-detail-head"><span>{t('capability.code')}</span><span>{t('capability.type')}</span><span>{t('accountConfig.value')}</span><span /></div>}
     {drafts.map((draft, index) => <DetailRow key={index} draft={draft} definitions={definitions}
       onChange={next => setDrafts(drafts.map((d, i) => i === index ? next : d))} onRemove={() => setDrafts(drafts.filter((_, i) => i !== index))} />)}
     <Button className="channel-detail-add" type="dashed" block disabled={drafts.length >= 64}
-      onClick={() => setDrafts([...drafts, { capabilityCode: '' }])}>+ 添加明细</Button>
+      onClick={() => setDrafts([...drafts, { capabilityCode: '' }])}>{t('capability.addDetail')}</Button>
     {issue && <ul className="channel-issues"><li>{issue}</li></ul>}
-    <ChannelNote>{capability ? '保存会整组替换该能力组的全部明细。' : '新建后能力组为启用状态；六维组合在同一 MID 内唯一。'}</ChannelNote>
+    <ChannelNote>{capability ? t('capability.replaceNote') : t('capability.createNote')}</ChannelNote>
   </CommandModal>;
 }

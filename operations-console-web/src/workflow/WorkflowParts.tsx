@@ -9,6 +9,7 @@ import { displayValue } from './formModel';
 import { decodeCandidates, workflowPaths } from './workflowApi';
 import type { AssigneeCandidate, FormDefinition, FormField, WorkflowFile } from './workflowTypes';
 import { FileUploadField } from './WorkflowFiles';
+import { useT } from '../i18n/react';
 import './workflow.css';
 
 /** 读取一次详情；path 为 null 时不请求。失败由页面就地展示。 */
@@ -29,14 +30,15 @@ export function useLoad<T>(path: string | null, decode: (value: unknown) => T) {
 }
 
 /** 页面内的加载失败卡片：请求编号可复制，带重试。 */
-export function LoadFailed({ failure, retry, title = '加载失败' }: { failure: unknown; retry?: () => void; title?: string }) {
+export function LoadFailed({ failure, retry, title }: { failure: unknown; retry?: () => void; title?: string }) {
+  const t = useT('workflow');
   const notFound = failure instanceof ApiError && failure.status === 404;
   const forbidden = failure instanceof ApiError && failure.status === 403;
   const requestId = failure instanceof ApiError ? failure.requestId : '';
   return <Alert type="warning" showIcon className="wf-load-failed"
-    title={notFound ? '记录不存在，可能已被删除' : forbidden ? '没有查看权限' : title}
-    description={failure instanceof ApiError && failure.detail ? failure.detail : requestId ? <>请求编号 <Typography.Text copyable>{requestId}</Typography.Text></> : '服务暂时不可用，请稍后重试。'}
-    action={retry && !notFound ? <Button size="small" onClick={retry}>重试</Button> : undefined} />;
+    title={notFound ? t('parts.notFound') : forbidden ? t('parts.forbidden') : title ?? t('parts.loadFailed')}
+    description={failure instanceof ApiError && failure.detail ? failure.detail : requestId ? <>{t('parts.requestId')} <Typography.Text copyable>{requestId}</Typography.Text></> : t('parts.unavailable')}
+    action={retry && !notFound ? <Button size="small" onClick={retry}>{t('action.retry')}</Button> : undefined} />;
 }
 
 export const Spinner = () => <div className="content-loading"><Spin /></div>;
@@ -65,6 +67,7 @@ export function PersonSelect({ value, onChange, multiple, people, disabled, plac
   value?: string | string[]; onChange?: (value: never) => void; multiple?: boolean; people?: Record<string, string>; disabled?: boolean;
   placeholder?: string; disabledIds?: Record<string, string>; style?: React.CSSProperties;
 }) {
+  const t = useT('workflow');
   const [options, setOptions] = useState<AssigneeCandidate[]>([]); const [loading, setLoading] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined); const controller = useRef<AbortController>(undefined);
   useEffect(() => () => { clearTimeout(timer.current); controller.current?.abort(); }, []);
@@ -83,11 +86,11 @@ export function PersonSelect({ value, onChange, multiple, people, disabled, plac
   const merged = useMemo(() => {
     const map = new Map<string, string>(selected.map(id => [id, personName(id, people)]));
     for (const item of options) map.set(item.accountId, item.emailMasked && item.emailMasked !== item.displayName ? `${item.displayName} · ${item.emailMasked}` : item.displayName);
-    return [...map].map(([id, name]) => ({ value: id, label: disabledIds[id] ? `${name}（${disabledIds[id]}）` : name, disabled: !!disabledIds[id] }));
+    return [...map].map(([id, name]) => ({ value: id, label: disabledIds[id] ? t('parts.disabledPerson', { name, reason: disabledIds[id] }) : name, disabled: !!disabledIds[id] }));
   }, [options, selected.join(','), people, disabledIds]);
   return <Select mode={multiple ? 'multiple' : undefined} showSearch={{ filterOption: false, onSearch: search }} value={value as never}
-    onChange={onChange as never} options={merged} disabled={disabled} placeholder={placeholder ?? '搜索登录名或邮箱'} allowClear={!multiple}
-    notFoundContent={loading ? <Spin size="small" /> : '输入关键字搜索'} style={{ width: '100%', ...style }} />;
+    onChange={onChange as never} options={merged} disabled={disabled} placeholder={placeholder ?? t('parts.searchPerson')} allowClear={!multiple}
+    notFoundContent={loading ? <Spin size="small" /> : t('parts.typeToSearch')} style={{ width: '100%', ...style }} />;
 }
 
 /** 转交浮层：搜索选人，不能转给自己或同节点其他审批人，可写转交说明；未提交的填写不随转交带走。 */
@@ -95,19 +98,20 @@ export function TransferPopover({ title, open, onOpenChange, actorId, people, bl
   title: string; open: boolean; onOpenChange: (open: boolean) => void; actorId: string; people: Record<string, string>;
   blocked?: Record<string, string>; saving: boolean; error?: string | null; onConfirm: (toUserId: string, reason: string) => void; children: ReactNode;
 }) {
+  const t = useT('workflow');
   const [target, setTarget] = useState<string>(); const [reason, setReason] = useState('');
   useEffect(() => { if (!open) { setTarget(undefined); setReason(''); } }, [open]);
-  const disabledIds = { ...blocked, [actorId]: '不能转交给自己' };
+  const disabledIds = { ...blocked, [actorId]: t('transfer.notSelf') };
   const content = <div className="wf-transfer">
-    <p className="muted">转交后由对方执行，你不再看到这条待办；已填写但未提交的内容不会带过去。</p>
-    <PersonSelect value={target} onChange={value => setTarget(value)} people={people} disabledIds={disabledIds} placeholder="按登录名或邮箱搜索" />
-    <div className="wf-field-label">转交说明（选填，对方可见）</div>
+    <p className="muted">{t('transfer.hint')}</p>
+    <PersonSelect value={target} onChange={value => setTarget(value)} people={people} disabledIds={disabledIds} placeholder={t('transfer.search')} />
+    <div className="wf-field-label">{t('transfer.reason')}</div>
     <Input.TextArea rows={3} maxLength={512} value={reason} onChange={event => setReason(event.target.value)} />
     {error && <Alert type="error" showIcon title={error} />}
-    <div className="wf-transfer-foot"><span className="muted">对方会收到邮件和待办提醒</span>
-      <span><Button onClick={() => onOpenChange(false)}>取消</Button>
+    <div className="wf-transfer-foot"><span className="muted">{t('transfer.notice')}</span>
+      <span><Button onClick={() => onOpenChange(false)}>{t('action.cancel')}</Button>
         <Button type="primary" disabled={!target || !!disabledIds[target]} loading={saving}
-          onClick={() => target && onConfirm(target, reason.trim())}>转交{target ? `给 ${personName(target, people)}` : ''}</Button></span></div>
+          onClick={() => target && onConfirm(target, reason.trim())}>{target ? t('transfer.toPerson', { name: personName(target, people) }) : t('transfer.submit')}</Button></span></div>
   </div>;
   return <Popover open={open} onOpenChange={onOpenChange} trigger="click" placement="bottomRight" title={title} content={content} destroyOnHidden>{children}</Popover>;
 }
@@ -120,11 +124,12 @@ export function DynamicFields({ form, disabled, changed, previous, problems = {}
   /** 服务端已报告未通过安全检查的文件地址：FILE 字段内标红，须删除后重新上传。 */
   failedFiles?: ReadonlySet<string>;
 }) {
+  const t = useT('workflow');
   return <>{form.fields.map(field => <Form.Item key={field.key} name={field.key} label={<span>{field.label || field.key}
-    {changed?.has(field.key) && <Tag color="gold" className="wf-changed-tag">已修改</Tag>}</span>}
+    {changed?.has(field.key) && <Tag color="gold" className="wf-changed-tag">{t('parts.changed')}</Tag>}</span>}
     required={field.required} validateStatus={problems[field.key] ? 'error' : undefined} help={problems[field.key]}
     valuePropName={field.type === 'BOOLEAN' ? 'checked' : 'value'}
-    extra={previous && changed?.has(field.key) ? `上一轮：${displayValue(previous[field.key], field)}` : undefined}>
+    extra={previous && changed?.has(field.key) ? t('parts.previousRound', { value: displayValue(previous[field.key], field) }) : undefined}>
     {fieldInput(field, disabled, files, failedFiles)}
   </Form.Item>)}</>;
 }
@@ -147,10 +152,11 @@ function fieldInput(field: FormField, disabled?: boolean, files?: Map<string, Wo
 
 /** 只读展示一组输出（按表单定义取标签）。 */
 export function OutputView({ output, form, highlight }: { output: Record<string, unknown> | null | undefined; form?: FormDefinition; highlight?: Set<string> }) {
+  const t = useT('workflow');
   const entries = form ? form.fields.map(field => [field.key, field] as const) : Object.keys(output ?? {}).map(key => [key, undefined] as const);
-  if (!output || !Object.keys(output).length) return <span className="muted">尚未提交</span>;
+  if (!output || !Object.keys(output).length) return <span className="muted">{t('parts.notSubmitted')}</span>;
   return <dl className="wf-output">{entries.map(([key, field]) => <div key={key} className={highlight?.has(key) ? 'is-changed' : ''}>
-    <dt>{field?.label ?? (key === 'note' ? '确认说明' : key === 'files' ? '文件' : key)}</dt><dd>{displayValue(output[key], field)}</dd></div>)}</dl>;
+    <dt>{field?.label ?? (key === 'note' ? t('graph.output.note') : key === 'files' ? t('parts.files') : key)}</dt><dd>{displayValue(output[key], field)}</dd></div>)}</dl>;
 }
 
 /** 标签 + 内容。 */

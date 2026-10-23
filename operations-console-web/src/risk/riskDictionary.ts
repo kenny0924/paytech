@@ -3,6 +3,7 @@ import type { RequestClient } from '../api/session.ts';
 import { requestPage } from '../api/paging.ts';
 import type { PagingRequestBody } from '../api/paging.ts';
 import type { ConsoleResource, PagingResponseBody } from '../api/types.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
 export type DictionaryKind = 'rejection-reasons' | 'subject-tags';
 export type DictionaryStatus = 'ACTIVE' | 'DISABLED';
 export interface DictionaryEntry { code: string; name: string; description: string | null; defaultMessage?: string; status: DictionaryStatus; version: string; createdBy: string; updatedBy: string; createTime: string; updateTime: string }
@@ -11,7 +12,9 @@ export interface FlowReasonReference { sourceType:'FLOW_END'; pointCode:string; 
 export type ConfigurationReference = DictionaryReference | FlowReasonReference;
 export interface HistoryItem { ruleSetId: string; ruleSetVersionId: string; pointCode: string; ruleSetCode: string; ruleSetName: string; versionNo: number; status: 'DRAFT' | 'FROZEN' | 'RETIRED'; isCurrent: boolean; createdBy: string; changeReason: string; createTime: string }
 export interface ReleaseReference { releaseId: string; releaseNo: string; environmentCode: string; status: string; pointCode: string; pointVersionId: string; pointVersionNo: number; ruleSetVersionId: string; versionNo: number; activatedTime: string | null; supersededTime: string | null }
-export const releaseLabels: Record<string, string> = { DRAFT: '草稿', VALIDATING: '校验中', SHADOWING: '影子运行', REVIEW_PENDING: '待审核', APPROVED: '已批准', ACTIVE: '已生效', SUPERSEDED: '已替代', REJECTED: '已拒绝' };
+/** 规则集引用中执行发布的状态；显示名是 `risk.enum.ruleSetReleaseStatus.<值>`。 */
+export const releaseStatusCodes = ['DRAFT', 'VALIDATING', 'SHADOWING', 'REVIEW_PENDING', 'APPROVED', 'ACTIVE', 'SUPERSEDED', 'REJECTED'];
+export function releaseLabel(status: string): string { return enumLabel(translator('risk'), 'enum.ruleSetReleaseStatus', status); }
 export function invariant(value: unknown): asserts value { if (!value) throw new Error('invalid Risk response'); }
 export function exact(value: unknown, keys: string[]): Record<string, unknown> {
   invariant(value && typeof value === 'object' && !Array.isArray(value)); const row = value as Record<string, unknown>;
@@ -46,7 +49,7 @@ function decodeHistory(value: unknown): HistoryItem {
 }
 function decodeRelease(value: unknown): ReleaseReference {
   const r = exact(value,['releaseId','releaseNo','environmentCode','status','pointCode','pointVersionId','pointVersionNo','ruleSetVersionId','versionNo','activatedTime','supersededTime']);
-  const result = { releaseId:id(r.releaseId),releaseNo:text(r.releaseNo,64),environmentCode:oneOf(r.environmentCode,['TEST','PRODUCTION']),status:oneOf(r.status,Object.keys(releaseLabels)),pointCode:code(r.pointCode),pointVersionId:id(r.pointVersionId),pointVersionNo:positive(r.pointVersionNo),ruleSetVersionId:id(r.ruleSetVersionId),versionNo:positive(r.versionNo),activatedTime:nullable(r.activatedTime,time),supersededTime:nullable(r.supersededTime,time) };
+  const result = { releaseId:id(r.releaseId),releaseNo:text(r.releaseNo,64),environmentCode:oneOf(r.environmentCode,['TEST','PRODUCTION']),status:oneOf(r.status,releaseStatusCodes),pointCode:code(r.pointCode),pointVersionId:id(r.pointVersionId),pointVersionNo:positive(r.pointVersionNo),ruleSetVersionId:id(r.ruleSetVersionId),versionNo:positive(r.versionNo),activatedTime:nullable(r.activatedTime,time),supersededTime:nullable(r.supersededTime,time) };
   invariant(result.status !== 'ACTIVE' || (result.activatedTime !== null && result.supersededTime === null)); return result;
 }
 function decodeReference(value: unknown): DictionaryReference {

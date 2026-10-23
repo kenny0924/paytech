@@ -7,8 +7,11 @@ import {
   createInstanceBody, createRouteBody, credentialBody, decodeBucketCheck, decodeInstanceList, decodeMutation, decodeRouteList, deletableRoute,
   instancePath, instanceStatusAction, instanceStatusNotice, manageFileStorage, routePath, routeTargets, sourceSystemLabel, storageAdminPath,
   storageCommand, targetValue, updateInstanceBody, updateRouteBody, registerBucketBody, updateBucketBody, validPublicBaseUrl, routeKey, routeMatrix,
-  missingRouteNotice, routeObjectCode, editablePublicBaseUrl, filterBucketRows, checkResultLabels, publicReadPolicyExample,
+  missingRouteNotice, routeObjectCode, editablePublicBaseUrl, filterBucketRows, checkResultLabel, publicReadPolicyExample, accessLevelLabel, joinList,
 } from './fileStorage.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('file');
 import type { StorageBucket, StorageInstance, StorageRoute } from './fileStorage.ts';
 
 const time = '2026-10-22T01:02:03.123456Z';
@@ -88,13 +91,14 @@ test('写回执与检查结果：必须对应本次对象；桶以 {实例}/{桶
 test('存储实例页签：MinIO 只能固定密钥；启停动作与提示随状态、桶与引用变化', () => {
   assert.deepEqual(allowedCredentialModes('MINIO'), ['STATIC']);
   assert.deepEqual(allowedCredentialModes('S3'), ['STATIC', 'IAM_ROLE']);
-  assert.deepEqual(instanceStatusAction(minio), { target: 'DISABLED', verb: '停用', danger: true });
-  assert.deepEqual(instanceStatusAction(aws), { target: 'ACTIVE', verb: '启用', danger: false });
+  assert.deepEqual(instanceStatusAction(minio), { target: 'DISABLED', verb: 'Disable', danger: true });
+  assert.deepEqual(instanceStatusAction(aws), { target: 'ACTIVE', verb: 'Enable', danger: false });
   assert.deepEqual(instanceStatusAction({ ...minio, status: 'DISABLED' }).target, 'ACTIVE');
-  assert.match(instanceStatusNotice(minio), /1 条写入规则引用/);
-  assert.match(instanceStatusNotice({ ...minio, routeCount: 0 }), /读写都返回不可用/);
-  assert.match(instanceStatusNotice(aws), /可被写入规则引用/);
-  assert.match(instanceStatusNotice({ ...aws, buckets: [draftBucket] }), /启用会被拒绝/);
+  assert.equal(instanceStatusNotice(minio), t('instanceStatus.referenced', { count: 1 }));
+  assert.match(instanceStatusNotice(minio), /used by 1 write rule\b/);
+  assert.equal(instanceStatusNotice({ ...minio, routeCount: 0 }), t('instanceStatus.disableNotice'));
+  assert.equal(instanceStatusNotice(aws), t('instanceStatus.enableNotice'));
+  assert.equal(instanceStatusNotice({ ...aws, buckets: [draftBucket] }), t('instanceStatus.noActiveBucket'));
 });
 
 test('实例请求体：密钥原样发送、IAM 角色不发送密钥；编辑不带代码、类型与凭据', () => {
@@ -126,16 +130,18 @@ test('桶页签：按实例筛选展开；启用需 10 分钟内检查通过，�
   assert.deepEqual(bucketStatusActions({ ...activeBucket, status: 'READ_ONLY' }).map(a => a.target), ['ACTIVE', 'DISABLED']);
   assert.deepEqual(bucketStatusActions({ ...activeBucket, status: 'DISABLED' }), []);
   assert.equal(bucketStatusBlocker(draftBucket, 'ACTIVE', now), null);
-  assert.match(bucketStatusBlocker(draftBucket, 'ACTIVE', now + 10 * 60_000) ?? '', /超过 10 分钟/);
-  assert.match(bucketStatusBlocker({ ...draftBucket, lastCheckResult: 'ENCRYPTION_DISABLED' }, 'ACTIVE', now) ?? '', /先检查通过/);
-  assert.match(bucketStatusBlocker({ ...draftBucket, lastCheckResult: null, lastCheckTime: null }, 'ACTIVE', now) ?? '', /先检查通过/);
-  assert.match(bucketStatusBlocker(activeBucket, 'READ_ONLY', now) ?? '', /1 条写入规则引用/);
+  assert.equal(bucketStatusBlocker(draftBucket, 'ACTIVE', now + 10 * 60_000), t('bucketStatus.checkExpired', { minutes: 10 }));
+  assert.match(bucketStatusBlocker(draftBucket, 'ACTIVE', now + 10 * 60_000) ?? '', /more than 10 minutes ago/);
+  assert.equal(bucketStatusBlocker({ ...draftBucket, lastCheckResult: 'ENCRYPTION_DISABLED' }, 'ACTIVE', now), t('bucketStatus.checkRequired'));
+  assert.equal(bucketStatusBlocker({ ...draftBucket, lastCheckResult: null, lastCheckTime: null }, 'ACTIVE', now), t('bucketStatus.checkRequired'));
+  assert.equal(bucketStatusBlocker(activeBucket, 'READ_ONLY', now), t('bucketStatus.referenced', { count: 1 }));
+  assert.deepEqual(bucketStatusActions(activeBucket).map(a => a.verb), ['Read-Only', 'Disable']);
   assert.equal(bucketStatusBlocker({ ...activeBucket, routeCount: 0 }, 'DISABLED', now), null);
   assert.equal(bucketStatusBlocker({ ...activeBucket, status: 'READ_ONLY' }, 'ACTIVE', now), null, '只读恢复启用不要求重新检查');
 });
 
 test('写入规则页签：默认规则显示为默认且不可删除；目标只列启用实例下的启用桶；请求体拆分目标', () => {
-  assert.equal(sourceSystemLabel('*'), '默认'); assert.equal(sourceSystemLabel('payment'), 'payment');
+  assert.equal(sourceSystemLabel('*'), 'Default'); assert.equal(sourceSystemLabel('payment'), 'payment');
   assert.equal(deletableRoute(defaultRoute), false); assert.equal(deletableRoute(clientRoute), true);
   assert.deepEqual(routeTargets([minio, aws], 'PRIVATE'), [{ instanceCode: 'MINIO', bucketName: 'mor-platform-files' }]);
   assert.deepEqual(createRouteBody({ sourceSystem: ' platform-support ', accessLevel: 'PRIVATE', target: targetValue('MINIO', 'mor.files'), scanPolicyCode: ' CLIENT_ONBOARDING_FORMAT ',
@@ -167,8 +173,11 @@ test('桶访问级别：解码校验访问级别与对外地址一致；私有�
   for (const invalid of ['http://cdn.test', 'https://cdn.test/', 'https://cdn.test?x=1', 'https://cdn.test#a', 'cdn.test', '', `https://${'a'.repeat(250)}.test`]) {
     assert.equal(validPublicBaseUrl(invalid), false, invalid);
   }
-  assert.equal(checkResultLabels.PUBLIC_ACCESS_ALLOWED, '桶允许匿名访问');
-  assert.equal(checkResultLabels.PUBLIC_READ_FAILED, '对外地址不可访问');
+  assert.equal(checkResultLabel('PUBLIC_ACCESS_ALLOWED'), 'Bucket allows anonymous access');
+  assert.equal(checkResultLabel('PUBLIC_READ_FAILED'), t('enum.checkResult.PUBLIC_READ_FAILED'));
+  assert.equal(checkResultLabel('FUTURE_RESULT'), 'FUTURE_RESULT');
+  assert.equal(accessLevelLabel('PUBLIC'), 'Public');
+  assert.equal(joinList(['PDF', 'PNG']), 'PDF, PNG');
   assert.match(publicReadPolicyExample('mor-public-assets'), /arn:aws:s3:::mor-public-assets\/\*/);
 });
 
@@ -200,9 +209,10 @@ test('写入规则矩阵：键为来源 + 级别；默认私有规则不可删�
   assert.deepEqual(matrix.map(row => row.sourceSystem), ['*', 'card-service', 'client-master-service']);
   assert.equal(matrix[0].routes.PUBLIC, null); assert.equal(matrix[2].routes.PRIVATE, null);
   assert.equal(deletableRoute(defaultRoute), false); assert.equal(deletableRoute(publicDefault), true);
-  assert.match(missingRouteNotice([defaultRoute], 'card-service', 'PUBLIC'), /该来源的公开上传将返回 503/);
-  assert.match(missingRouteNotice([defaultRoute], '*', 'PUBLIC'), /没有精确规则的来源的公开上传将返回 503/);
-  assert.match(missingRouteNotice([defaultRoute, publicDefault], 'card-service', 'PUBLIC'), /使用默认公开规则/);
+  assert.equal(missingRouteNotice([defaultRoute], 'card-service', 'PUBLIC'), 'Not configured: public uploads from this source will return 503');
+  assert.equal(missingRouteNotice([defaultRoute], '*', 'PUBLIC'), 'Not configured: public uploads from sources without an exact rule will return 503');
+  assert.equal(missingRouteNotice([defaultRoute, publicDefault], 'card-service', 'PUBLIC'), 'Not configured; uses the default public rule');
+  assert.equal(missingRouteNotice([], 'card-service', 'PRIVATE'), t('routes.missing.source', { level: 'PRIVATE' }));
   assert.equal(decodeMutation({ ...mutation, objectCode: '*/PUBLIC' }, routeObjectCode('*', 'PUBLIC')).objectCode, '*/PUBLIC');
   assert.throws(() => decodeMutation({ ...mutation, objectCode: '*' }, routeObjectCode('*', 'PRIVATE')), ApiError);
 });

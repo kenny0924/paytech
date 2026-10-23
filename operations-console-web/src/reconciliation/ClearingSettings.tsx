@@ -1,4 +1,5 @@
 import { Form, Input, InputNumber, Select } from 'antd';
+import { useT } from '../i18n/react';
 import { positiveAmountError } from './reconModel';
 import type { CashAccount } from './reconModel';
 import { cashAccountLabel } from './useReconData';
@@ -19,16 +20,17 @@ export function settingsBody(values: ClearingSettingsValues) {
 
 /** 清算账户配置字段：新建抽屉与详情页共用。 */
 export function ClearingSettingsFields({ cash, entityNo, currency }: { cash: readonly CashAccount[]; entityNo?: string; currency?: string }) {
+  const t = useT('recon');
   const options = settlementAccounts(cash, entityNo, currency);
   return <div className="finance-form-grid">
-    <Form.Item name="settlementCashAccountId" label="到账银行账户" extra={options.length ? '为空时账单不能对平' : '没有同主体、同币种、渠道结算用途的有效银行账户'}>
-      <Select allowClear placeholder="选择银行账户" options={options.map(item => ({ value: item.cashAccountId, label: cashAccountLabel(item) }))} /></Form.Item>
-    <Form.Item name="unmatchedWaitDays" label="账单行等待天数" rules={[{ required: true, message: '请填写 0–365' }]} extra="期满仍未命中平台流水转为异常">
+    <Form.Item name="settlementCashAccountId" label={t('clearingSettings.settlementCashAccount')} extra={options.length ? t('clearingSettings.settlementCashAccountHint') : t('clearingSettings.noSettlementCashAccount')}>
+      <Select allowClear placeholder={t('clearingSettings.selectCashAccount')} options={options.map(item => ({ value: item.cashAccountId, label: cashAccountLabel(item) }))} /></Form.Item>
+    <Form.Item name="unmatchedWaitDays" label={t('clearingSettings.unmatchedWaitDays')} rules={[{ required: true, message: t('clearingSettings.daysRequired') }]} extra={t('clearingSettings.unmatchedWaitDaysHint')}>
       <InputNumber min={0} max={365} precision={0} style={{ width: '100%' }} /></Form.Item>
-    <Form.Item name="costToleranceAmount" label="渠道费容差" rules={[{ validator: async (_, value?: string) => {
-      if (value?.trim() === '0') return; const error = positiveAmountError(value); if (error) throw new Error(error); } }]} extra="实际费用与预估之差超过它开阻塞异常">
+    <Form.Item name="costToleranceAmount" label={t('clearingSettings.costTolerance')} rules={[{ validator: async (_, value?: string) => {
+      if (value?.trim() === '0') return; const error = positiveAmountError(value); if (error) throw new Error(error); } }]} extra={t('clearingSettings.costToleranceHint')}>
       <Input inputMode="decimal" placeholder="0.10" /></Form.Item>
-    <Form.Item name="cashGraceDays" label="到账宽限天数" rules={[{ required: true, message: '请填写 0–365' }]}>
+    <Form.Item name="cashGraceDays" label={t('clearingSettings.cashGraceDays')} rules={[{ required: true, message: t('clearingSettings.daysRequired') }]}>
       <InputNumber min={0} max={365} precision={0} style={{ width: '100%' }} /></Form.Item>
   </div>;
 }

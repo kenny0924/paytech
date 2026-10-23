@@ -7,6 +7,9 @@ import {
   decodeLookup, decodeUploadCompletion, decodeUploadStart, decodeVersion, decodeVersionPage, isQueryableBin, maxCsvBytes, previewCsv,
   rowDelta, splitCsvLine, versionAction, versionProgress,
 } from './binLibrary.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('card');
 
 const version = {
   versionNo: 4, status: 'VALID', active: false, fileAddress: '/files/v1/7409912387612', fileName: 'bin-2026-10-21.csv',
@@ -72,14 +75,14 @@ test('上传解码：PUT 授权地址必须是 http(s)，完成回执的文件�
 });
 
 test('版本动作：VALID 激活、RETIRED 回切，其余没有动作', () => {
-  assert.deepEqual(versionAction({ status: 'VALID' }), { kind: 'ACTIVATE', verb: '激活' });
-  assert.deepEqual(versionAction({ status: 'RETIRED' }), { kind: 'ROLLBACK', verb: '回切' });
+  assert.deepEqual(versionAction({ status: 'VALID' }), { kind: 'ACTIVATE', verb: 'Activate' });
+  assert.deepEqual(versionAction({ status: 'RETIRED' }), { kind: 'ROLLBACK', verb: 'Roll Back' });
   for (const status of ['VALIDATING', 'INVALID', 'ACTIVE'] as const) assert.equal(versionAction({ status }), null);
 });
 
 test('进度：总行数未知为不定进度，已知时向下取整且不超过 100', () => {
-  assert.deepEqual(versionProgress({ totalRows: null, processedRows: 0 }), { percent: null, label: '等待扫描 / 校验中' });
-  assert.deepEqual(versionProgress({ totalRows: 315902, processedRows: 128000 }), { percent: 40, label: '已写入 128,000 / 315,902 行' });
+  assert.deepEqual(versionProgress({ totalRows: null, processedRows: 0 }), { percent: null, label: t('progress.waiting') });
+  assert.deepEqual(versionProgress({ totalRows: 315902, processedRows: 128000 }), { percent: 40, label: 'Written 128,000 / 315,902 rows' });
   assert.equal(versionProgress({ totalRows: 10, processedRows: 12 }).percent, 100);
   assert.equal(rowDelta(312480, 315902), '+3,422');
   assert.equal(rowDelta(312480, 309115), '-3,365');
@@ -89,18 +92,18 @@ test('进度：总行数未知为不定进度，已知时向下取整且不超�
 
 test('BIN 输入：6～8 位数字可查询，非数字与超过 8 位（疑似卡号）即时提示', () => {
   assert.equal(binInputIssue(''), null);
-  assert.equal(binInputIssue('4111a'), '只能输入数字');
-  assert.equal(binInputIssue('41111'), '至少 6 位');
-  assert.match(binInputIssue('4111111111111111') ?? '', /不接受完整卡号/);
+  assert.equal(binInputIssue('4111a'), t('binInput.digitsOnly'));
+  assert.equal(binInputIssue('41111'), 'At least 6 digits');
+  assert.match(binInputIssue('4111111111111111') ?? '', /never a full card number/);
   assert.equal(isQueryableBin(' 41111111 '), true);
   assert.equal(isQueryableBin('411111111'), false);
 });
 
 test('CSV 文件检查：扩展名、空文件与 50 MB 上限', () => {
   assert.equal(csvFileIssue({ name: 'bin.CSV', size: 10 }), null);
-  assert.equal(csvFileIssue({ name: 'bin.xlsx', size: 10 }), '只接受 .csv 文件');
-  assert.equal(csvFileIssue({ name: 'bin.csv', size: 0 }), '文件为空');
-  assert.equal(csvFileIssue({ name: 'bin.csv', size: maxCsvBytes + 1 }), '文件超过 50 MB 上限');
+  assert.equal(csvFileIssue({ name: 'bin.xlsx', size: 10 }), t('csv.onlyCsv'));
+  assert.equal(csvFileIssue({ name: 'bin.csv', size: 0 }), t('csv.empty'));
+  assert.equal(csvFileIssue({ name: 'bin.csv', size: maxCsvBytes + 1 }), 'The file exceeds the 50 MB limit');
 });
 
 test('CSV 预检：去 BOM、兼容 CRLF、表头逐字匹配、引号转义与截断行', () => {
@@ -109,11 +112,12 @@ test('CSV 预检：去 BOM、兼容 CRLF、表头逐字匹配、引号转义与�
   assert.equal(preview.issue, null);
   assert.deepEqual(preview.rows[1], ['510510', 'MASTERCARD', 'DEBIT', '', 'CONSUMER', 'GB', 'EXAMPLE BANK, LTD']);
   assert.equal(previewCsv(`${csvHeader}\n411111,VISA`, false).rows.length, 0);
-  assert.equal(previewCsv(`${csvHeader}\n411111,VISA\n`, true).issue, '第 2 行列数不是 7 列');
+  assert.equal(previewCsv(`${csvHeader}\n411111,VISA\n`, true).issue, "Line 2 doesn't have 7 columns");
   const wrong = previewCsv('BIN,brand\n411111,VISA\n', true);
   assert.equal(wrong.headerValid, false);
-  assert.match(wrong.issue ?? '', /第 1 行必须逐字为/);
+  assert.equal(wrong.issue, t('csv.headerMismatch', { header: csvHeader }));
   assert.equal(previewCsv('a\0b', true).headerValid, false);
+  assert.equal(previewCsv('a\0b', true).issue, t('csv.nul'));
   assert.deepEqual(splitCsvLine('"a ""b""",c'), ['a "b"', 'c']);
   assert.equal(splitCsvLine('"open,c'), null);
 });

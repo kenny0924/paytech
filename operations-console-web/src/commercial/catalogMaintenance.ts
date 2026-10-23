@@ -1,9 +1,13 @@
 import { ApiError } from '../api/session.ts';
-import { capabilityKindLabels, catalogLabel } from './catalogTree.ts';
+import { translator } from '../i18n/index.ts';
+import { capabilityKindLabel } from './catalogTree.ts';
 import type { CatalogEventRow } from './catalogTree.ts';
 import { decodeCatalogCapability, decodeFeeEvent } from './commercialConsole.ts';
 import type { CapabilityDimension, CatalogCapability, CatalogFeeEvent } from './commercialConsole.ts';
+import { dimensionLabel } from './capabilityConditions.ts';
 import type { DimensionDefinition } from './capabilityConditions.ts';
+
+const t = translator('commercial');
 
 // ---------- 产品目录维护（开通项新增 / 编辑 / 停用 / 启用、计费事件挂接） ----------
 
@@ -65,7 +69,8 @@ export function updateCatalogCapabilityBody(expectedChangeVersion: number | stri
 
 /** 可选维度：维度清单中可用于开通的；读取失败时为空（表单退回手输）。 */
 export function acceptanceDimensionOptions(definitions: readonly DimensionDefinition[]) {
-  return definitions.filter(item => item.acceptanceAllowed).map(item => ({ value: item.dimensionCode, label: `${item.displayName} ${item.dimensionCode}` }));
+  return definitions.filter(item => item.acceptanceAllowed)
+    .map(item => ({ value: item.dimensionCode, label: `${dimensionLabel(item.dimensionCode, definitions)} ${item.dimensionCode}` }));
 }
 
 /** 目录表「可配维度」列：必填维度带 *。 */
@@ -94,9 +99,9 @@ export function attachChoice(event: Pick<CatalogFeeEvent, 'capabilityKind' | 'ca
 export function attachOptions(productCode: string, capabilities: readonly CatalogCapability[]) {
   const features = capabilities.filter(item => item.productCode === productCode && item.capabilityKind === 'FEATURE');
   return [
-    { value: noCapability, label: '无需开通（基础产品事件）' },
-    ...catalogCapabilityKinds.filter(kind => kind !== 'FEATURE').map(kind => ({ value: `KIND:${kind}`, label: `任一${catalogLabel(capabilityKindLabels, kind)}开通项` })),
-    ...features.map(item => ({ value: `FEATURE:${item.capabilityCode}`, label: `功能 · ${item.capabilityName} ${item.capabilityCode}` })),
+    { value: noCapability, label: t('attach.noneOption') },
+    ...catalogCapabilityKinds.filter(kind => kind !== 'FEATURE').map(kind => ({ value: `KIND:${kind}`, label: t('attach.anyKindOption', { kind: capabilityKindLabel(kind) }) })),
+    ...features.map(item => ({ value: `FEATURE:${item.capabilityCode}`, label: t('attach.feature', { feature: `${item.capabilityName} ${item.capabilityCode}` }) })),
   ];
 }
 
@@ -110,12 +115,12 @@ export function feeEventAttachBody(expectedChangeVersion: number | string, choic
 
 /** 挂接显示文字。 */
 export function attachLabel(event: Pick<CatalogFeeEvent, 'capabilityKind' | 'capabilityCode'>, capabilities: readonly CatalogCapability[] = []): string {
-  if (!event.capabilityKind) return '无需开通';
+  if (!event.capabilityKind) return t('attach.none');
   if (event.capabilityKind === 'FEATURE' && event.capabilityCode) {
     const name = capabilities.find(item => item.capabilityCode === event.capabilityCode)?.capabilityName;
-    return `功能 · ${name && name !== event.capabilityCode ? `${name} ` : ''}${event.capabilityCode}`;
+    return t('attach.feature', { feature: `${name && name !== event.capabilityCode ? `${name} ` : ''}${event.capabilityCode}` });
   }
-  return `任一${catalogLabel(capabilityKindLabels, event.capabilityKind)}`;
+  return t('attach.anyKind', { kind: capabilityKindLabel(event.capabilityKind) });
 }
 
 /** 合并行的挂接：各条登记的挂接去重；登记间不一致时全部列出。 */

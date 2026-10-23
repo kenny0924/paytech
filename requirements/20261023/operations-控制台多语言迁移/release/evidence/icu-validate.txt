@@ -1,0 +1,16 @@
+# 用 Platform 候选源码的 IcuMessageValidator（platform-support-localization domain/icu，icu4j 79.1）离线校验 i18n-bundles 两个文件
+# 每个 en 基准 validateSource、每条 zh-CN validateTranslation（语法、other 分支、参数名集合与基准一致）——与 Platform 导入时的校验相同
+# 运行：javac -cp icu4j-79.1.jar IcuMessageValidator.java IcuProblem.java；java -cp classes:icu4j Check.java pairs.tsv（pairs.tsv 由两个导出文件按 key 拼成）
+
+import com.paytech.platform.support.localization.domain.icu.*;
+import java.nio.file.*; import java.util.*;
+public class Check { public static void main(String[] a) throws Exception {
+  int n=0,src=0,tr=0; for (String line: Files.readAllLines(Path.of(a[0]))) { String[] p=line.split("\t",-1); n++;
+    String k=p[0], en=new String(Base64.getDecoder().decode(p[1]),"UTF-8"), zh=new String(Base64.getDecoder().decode(p[2]),"UTF-8");
+    var s=IcuMessageValidator.validateSource(en); if(!s.isEmpty()){src++; System.out.println("SRC "+k+" "+s.get(0).message());}
+    if (zh.isEmpty()) { tr++; System.out.println("EMPTY "+k); continue; }
+    var t=IcuMessageValidator.validateTranslation(en,zh); if(!t.isEmpty()){tr++; System.out.println("TR "+k+" "+t.get(0).message()+" | en="+en+" | zh="+zh);} }
+  System.out.println("keys="+n+" sourceProblems="+src+" translationProblems="+tr); } }
+
+# 结果（2026-10-23 阶段 6）
+keys=8523 sourceProblems=0 translationProblems=0

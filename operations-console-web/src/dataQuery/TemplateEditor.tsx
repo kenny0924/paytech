@@ -4,6 +4,7 @@ import { App, Alert, Button, Drawer, Input, Modal, Select, Tabs, Tag } from 'ant
 import { Link, useNavigate } from 'react-router-dom';
 import { ApiError, session } from '../api/session';
 import type { ConsoleResource } from '../api/types';
+import { useT } from '../i18n/react';
 import { useUnsavedRuleGuard } from '../risk/useUnsavedRuleGuard';
 import { Loading, QueryFailure } from '../tenantAccess/TenantAccessView';
 import { codePattern, dataQueryButtons, dataQueryPaths, dataQueryRoutes, decodeMutation, hasButton } from './dataQueryCommon';
@@ -30,10 +31,10 @@ interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => vo
  * 正文、参数、约束、列与问题是同一卡片里的标签页；试运行在右侧抽屉中进行，抽屉关闭后保留输入与结果。
  */
 export function TemplateEditor({ resources, onAuthorizationChanged, templateId }: Props) {
-  const canManage = hasButton(resources, dataQueryButtons.templateManage);
+  const canManage = hasButton(resources, dataQueryButtons.templateManage); const t = useT('data-query');
   const decode = useCallback((value: unknown) => decodeTemplateDetail(value, templateId ?? undefined), [templateId]);
-  const detail = useResource(templateId ? dataQueryPaths.template(templateId) : null, decode, '模板加载失败');
-  if (!templateId && !canManage) return <Alert type="warning" showIcon title="当前没有查询模板维护权限" />;
+  const detail = useResource(templateId ? dataQueryPaths.template(templateId) : null, decode, t('template.loadFailed'));
+  if (!templateId && !canManage) return <Alert type="warning" showIcon title={t('template.noPermission')} />;
   if (templateId && detail.loading && !detail.data) return <Loading />;
   if (templateId && !detail.data) return <QueryFailure failure={detail.failure} retry={detail.refresh} />;
   return <Workspace key={detail.data ? `${detail.data.templateId}:${detail.data.version}` : 'new'} detail={detail.data ?? null} canManage={canManage}
@@ -49,6 +50,7 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
   detail: TemplateDetail | null; canManage: boolean; onReload: () => void; onAuthorizationChanged: () => void;
 }) {
   const navigate = useNavigate(); const { modal, notification } = App.useApp();
+  const t = useT('data-query'), tNav = useT('nav');
   const sources = useDataSourceOptions();
   const [draft, setDraft] = useState<TemplateDraft>(() => detail ? draftFromDetail(detail) : emptyDraft());
   const [baseline, setBaseline] = useState(() => draftFingerprint(draft));
@@ -81,9 +83,9 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
   }, [draft.body, readOnly]);
 
   const confirmLeave = useCallback(() => new Promise<boolean>(resolve => {
-    modal.confirm({ title: '离开当前编辑？', content: '尚未保存的修改将丢失。', okText: '离开', cancelText: '继续编辑',
+    modal.confirm({ title: t('template.leave.title'), content: t('template.leave.content'), okText: t('template.leave.ok'), cancelText: t('template.leave.cancel'),
       onOk: () => resolve(true), onCancel: () => resolve(false) });
-  }), [modal]);
+  }), [modal, t]);
   useUnsavedRuleGuard(dirty && canManage, confirmLeave);
 
   // 输入停顿 500 ms 后调用校验接口；以服务端结果为准，前端不解析模板。
@@ -129,18 +131,20 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
   async function save(changeNote: string): Promise<boolean> {
     const result = detail
       ? await command.run(dataQueryPaths.template(detail.templateId), 'PUT', updateTemplateBody(draft, detail.version, changeNote),
-        value => decodeSaveResult(value, detail.templateId), '模板保存失败')
-      : await command.run(dataQueryPaths.templates, 'POST', createTemplateBody(draft, changeNote), value => decodeSaveResult(value), '模板创建失败');
+        value => decodeSaveResult(value, detail.templateId), t('template.saveFailed'))
+      : await command.run(dataQueryPaths.templates, 'POST', createTemplateBody(draft, changeNote), value => decodeSaveResult(value), t('template.createFailed'));
     if (!result) return false;
-    announce(result, detail ? '已保存' : '已创建');
+    announce(result, detail ? 'saved' : 'created');
     flushSync(() => setBaseline(fingerprint));
     if (detail) onReload(); else void navigate(dataQueryRoutes.template(result.templateId), { replace: true });
     return true;
   }
-  function announce(result: SaveResult, verb: string) {
-    const text = `${result.templateCode} ${verb}为 v${result.currentVersionNo}，已立即生效。`;
+  function announce(result: SaveResult, outcome: 'saved' | 'created' | 'restored') {
+    const params = { code: result.templateCode, versionNo: result.currentVersionNo };
+    const text = outcome === 'saved' ? t('template.announce.saved', params) : outcome === 'created' ? t('template.announce.created', params)
+      : t('template.announce.restored', params);
     if (result.warnings.length) notification.warning({ title: text, description: <ul className="dq-warning-list">{result.warnings.map((warning, index) =>
-      <li key={index}>{warning.line ? `第 ${warning.line} 行：` : ''}{warning.message}</li>)}</ul>, duration: 8 });
+      <li key={index}>{warning.line ? t('template.warningAtLine', { line: warning.line, message: warning.message }) : warning.message}</li>)}</ul>, duration: 8 });
     else notification.success({ title: text, duration: 4 });
   }
   // 保存失败的 422 字段错误进入问题面板（只在新的字段错误到达时同步）。
@@ -154,40 +158,40 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
   const stale = validation !== null && validation.fingerprint !== contentKey;
   return <div className="dq-editor">
     <header className="dq-editor-top">
-      <nav className="dq-crumbs"><Link to={dataQueryRoutes.templates}>查询模板</Link><span>/</span><span>{detail ? detail.templateCode : '新建模板'}</span></nav>
+      <nav className="dq-crumbs"><Link to={dataQueryRoutes.templates}>{tNav('resource.OPERATIONS_QUERY_TEMPLATES')}</Link><span>/</span><span>{detail ? detail.templateCode : t('template.new')}</span></nav>
       <div className="dq-editor-title">
         {detail ? <h1 className="mono">{detail.templateCode}</h1>
-          : <Input className="mono dq-code-input" value={draft.templateCode} placeholder="模板编码，如 PAY_REFUND_PENDING" maxLength={64}
+          : <Input className="mono dq-code-input" value={draft.templateCode} placeholder={t('template.codePlaceholder')} maxLength={64}
             status={draft.templateCode && !codePattern.test(draft.templateCode) ? 'error' : undefined}
             onChange={event => change({ templateCode: event.target.value.toUpperCase() })} />}
-        <Input className="dq-name-input" value={draft.templateName} placeholder="模板名称" maxLength={128} disabled={readOnly}
+        <Input className="dq-name-input" value={draft.templateName} placeholder={t('template.namePlaceholder')} maxLength={128} disabled={readOnly}
           onChange={event => change({ templateName: event.target.value })} />
-        <Select className={`dq-source-select${highlightSource ? ' is-focused' : ''}`} value={draft.dataSourceId ?? undefined} placeholder="选择数据源"
+        <Select className={`dq-source-select${highlightSource ? ' is-focused' : ''}`} value={draft.dataSourceId ?? undefined} placeholder={t('template.dataSourcePlaceholder')}
           loading={sources.loading} disabled={readOnly} showSearch optionFilterProp="label" popupMatchSelectWidth={false}
           options={templateSourceOptions(sources.items, [detail?.currentVersion.dataSourceId, draft.dataSourceId])}
           onChange={dataSourceId => change({ dataSourceId })} />
         {detail && <StatusTag status={detail.status} />}
-        {detail && <Tag>当前 v{detail.currentVersionNo}</Tag>}
-        {dirty && canManage && <Tag color="orange">未保存</Tag>}
+        {detail && <Tag>{t('template.currentVersion', { versionNo: detail.currentVersionNo })}</Tag>}
+        {dirty && canManage && <Tag color="orange">{t('template.unsaved')}</Tag>}
         <span className="dq-spacer" />
-        {detail && <Button onClick={() => setVersionsOpen(true)}>版本历史</Button>}
-        {canManage && <Button onClick={() => setTrialOpen(true)}>▶ 试运行</Button>}
-        {detail && canManage && <Button danger={detail.status === 'ACTIVE'} onClick={() => setStatusOpen(true)}>{detail.status === 'ACTIVE' ? '停用' : '启用'}</Button>}
-        {canManage && <Button type="primary" disabled={!dirty && !!detail} loading={command.saving} onClick={() => setSaving(true)}>保存为 v{nextVersion}</Button>}
+        {detail && <Button onClick={() => setVersionsOpen(true)}>{t('template.versionHistory')}</Button>}
+        {canManage && <Button onClick={() => setTrialOpen(true)}>{t('template.trial')}</Button>}
+        {detail && canManage && <Button danger={detail.status === 'ACTIVE'} onClick={() => setStatusOpen(true)}>{detail.status === 'ACTIVE' ? t('template.disable') : t('template.enable')}</Button>}
+        {canManage && <Button type="primary" disabled={!dirty && !!detail} loading={command.saving} onClick={() => setSaving(true)}>{t('template.saveAs', { versionNo: nextVersion })}</Button>}
       </div>
-      <Input className="dq-description-input" value={draft.description} placeholder="说明（可选）" maxLength={512} disabled={readOnly} variant="borderless"
+      <Input className="dq-description-input" value={draft.description} placeholder={t('template.descriptionPlaceholder')} maxLength={512} disabled={readOnly} variant="borderless"
         onChange={event => change({ description: event.target.value })} />
-      {command.conflict && <ConflictBanner subject="模板" onReload={() => { flushSync(() => setBaseline(fingerprint)); onReload(); }} />}
+      {command.conflict && <ConflictBanner subject="template" onReload={() => { flushSync(() => setBaseline(fingerprint)); onReload(); }} />}
       {command.formError && !command.fieldErrors.length && <Alert type="error" showIcon closable className="dq-banner" title={command.formError} onClose={command.clearError} />}
-      {source && source.status !== 'ACTIVE' && <Alert type="warning" showIcon className="dq-banner" title={`数据源 ${source.dataSourceCode} 已停用：保存与试运行会被拒绝，请先启用或改选数据源。`} />}
-      {readOnly && <Note>只读：没有查询模板维护权限，不进行实时校验与试运行。</Note>}
+      {source && source.status !== 'ACTIVE' && <Alert type="warning" showIcon className="dq-banner" title={t('template.dataSourceInactive', { code: source.dataSourceCode })} />}
+      {readOnly && <Note>{t('template.readOnly')}</Note>}
     </header>
     <section className="dq-editor-card">
       <Tabs activeKey={tab} onChange={key => setTab(key as EditorTab)} className="dq-editor-tabs" items={[
-        { key: 'body', label: '正文', forceRender: true, children: <div className="dq-code-card">
+        { key: 'body', label: t('template.tab.body'), forceRender: true, children: <div className="dq-code-card">
           <div className="dq-code-legend">
-            <span className="muted">{source ? `${engineLabels[source.engineType]} 方言` : '未选数据源'} · 统一模板语法</span>
-            <span className="dq-legend"><span className="dq-tpl-value">#{'{}'} 值</span><span className="dq-tpl-fragment">@{'{}'} 片段</span>
+            <span className="muted">{source ? t('template.dialect', { engine: engineLabels[source.engineType] }) : t('template.noDataSource')}</span>
+            <span className="dq-legend"><span className="dq-tpl-value">{t('template.legend.value', { marker: '#{}' })}</span><span className="dq-tpl-fragment">{t('template.legend.fragment', { marker: '@{}' })}</span>
               <span className="dq-tpl-tag">{'{{#if}} {{#each}} {{#join}} {{#part}}'}</span><span className="dq-tpl-comment">{'{{!-- --}}'}</span></span>
             <ValidationBadge enabled={canManage && !!draft.dataSourceId} validating={validating} stale={stale} errors={errors.length} warnings={warnings.length}
               onOpen={() => setTab('problems')} />
@@ -196,23 +200,23 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
           <BodyEditor value={draft.body} onChange={body => change({ body })} diagnostics={diagnostics} completions={words} readOnly={readOnly}
             onReady={handle => { editor.current = handle; }} />
         </div> },
-        { key: 'parameters', label: <span>参数 <Tag className="dq-tab-count">{draft.parameters.length}</Tag></span>,
+        { key: 'parameters', label: <span>{t('template.tab.parameters')} <Tag className="dq-tab-count">{draft.parameters.length}</Tag></span>,
           children: <ParameterList rows={draft.parameters} onChange={parameters => change({ parameters })} readOnly={readOnly} unreferenced={unreferenced}
             focusIndex={focus?.tab === 'parameters' ? focus.index : undefined} /> },
-        { key: 'constraints', label: '约束',
+        { key: 'constraints', label: t('template.tab.constraints'),
           children: <ConstraintsForm value={draft.constraints} onChange={constraints => change({ constraints })} readOnly={readOnly}
             focusField={focus?.tab === 'constraints' ? focus.field : undefined} /> },
-        { key: 'columns', label: <span>列 <Tag className="dq-tab-count">{draft.columns.length}</Tag></span>,
+        { key: 'columns', label: <span>{t('template.tab.columns')} <Tag className="dq-tab-count">{draft.columns.length}</Tag></span>,
           children: <ColumnList rows={draft.columns} onChange={columns => change({ columns })} readOnly={readOnly}
             focusIndex={focus?.tab === 'columns' ? focus.index : undefined} /> },
-        { key: 'problems', label: <span>问题 {errors.length ? <Tag color="red">{errors.length} 错误</Tag> : null}{warnings.length ? <Tag color="gold">{warnings.length} 警告</Tag> : null}</span>,
+        { key: 'problems', label: <span>{t('template.tab.problems')} {errors.length ? <Tag color="red">{t('problems.errorCount', { count: errors.length })}</Tag> : null}{warnings.length ? <Tag color="gold">{t('problems.warningCount', { count: warnings.length })}</Tag> : null}</span>,
           children: <ProblemPanel problems={problems} validating={validating} stale={stale} enabled={canManage && !!draft.dataSourceId} onLocate={locate} /> },
       ]} />
     </section>
-    {canManage && <Drawer open={trialOpen} rootClassName="dq-modal" size={960} title={`试运行 · ${draft.templateCode || '未命名模板'}`}
+    {canManage && <Drawer open={trialOpen} rootClassName="dq-modal" size={960} title={t('trial.drawerTitle', { code: draft.templateCode || t('trial.unnamed') })}
       onClose={() => setTrialOpen(false)}>
-      {errors.length > 0 && <Note tone="error">当前有 {errors.length} 个校验错误，修复后才能试运行。<button type="button" className="dq-link"
-        onClick={() => { setTrialOpen(false); setTab('problems'); }}>查看问题</button></Note>}
+      {errors.length > 0 && <Note tone="error">{t('trial.blockedByErrors', { count: errors.length })}<button type="button" className="dq-link"
+        onClick={() => { setTrialOpen(false); setTab('problems'); }}>{t('problems.view')}</button></Note>}
       <TrialPanel draft={draft} canRun={errors.length === 0} onAuthorizationChanged={onAuthorizationChanged}
         onResultColumns={names => setDraft(current => {
           const columns = mergeResultColumns(current.columns, names);
@@ -223,7 +227,7 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
       onClose={() => setSaving(false)} onSave={async note => { await save(note); setSaving(false); }} busy={command.saving} />}
     {versionsOpen && detail && <VersionDrawer templateId={detail.templateId} templateCode={detail.templateCode} currentVersionNo={detail.currentVersionNo}
       expectedVersion={detail.version} dirty={dirty && canManage} canManage={canManage} onClose={() => setVersionsOpen(false)}
-      onRestored={result => { announce(result, '已恢复'); setVersionsOpen(false); flushSync(() => setBaseline(fingerprint)); onReload(); }}
+      onRestored={result => { announce(result, 'restored'); setVersionsOpen(false); flushSync(() => setBaseline(fingerprint)); onReload(); }}
       onReload={() => { setVersionsOpen(false); flushSync(() => setBaseline(fingerprint)); onReload(); }} onAuthorizationChanged={onAuthorizationChanged} />}
     {statusOpen && detail && <TemplateStatusModal detail={detail} dirty={dirty} onClose={() => setStatusOpen(false)}
       onDone={() => { setStatusOpen(false); flushSync(() => setBaseline(fingerprint)); onReload(); }} onAuthorizationChanged={onAuthorizationChanged} />}
@@ -234,31 +238,33 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
 function ValidationBadge({ enabled, validating, stale, errors, warnings, onOpen }: {
   enabled: boolean; validating: boolean; stale: boolean; errors: number; warnings: number; onOpen: () => void;
 }) {
+  const t = useT('data-query');
   if (!enabled) return null;
-  if (validating || stale) return <span className="muted dq-validation">校验中…</span>;
-  if (!errors && !warnings) return <span className="dq-ok dq-validation">✓ 校验通过</span>;
+  if (validating || stale) return <span className="muted dq-validation">{t('problems.validating')}</span>;
+  if (!errors && !warnings) return <span className="dq-ok dq-validation">✓ {t('problems.passed')}</span>;
   return <button type="button" className="dq-link dq-validation" onClick={onOpen}>
-    {errors ? <Tag color="red">{errors} 错误</Tag> : null}{warnings ? <Tag color="gold">{warnings} 警告</Tag> : null}查看问题</button>;
+    {errors ? <Tag color="red">{t('problems.errorCount', { count: errors })}</Tag> : null}{warnings ? <Tag color="gold">{t('problems.warningCount', { count: warnings })}</Tag> : null}{t('problems.view')}</button>;
 }
 
 /** 问题面板：错误、警告与展开校验说明；点击定位到正文行列或右侧对应标签页。 */
 function ProblemPanel({ problems, validating, stale, enabled, onLocate }: {
   problems: TemplateProblem[]; validating: boolean; stale: boolean; enabled: boolean; onLocate: (problem: TemplateProblem) => void;
 }) {
-  if (!enabled) return <Note>选择数据源后，输入停顿 0.5 秒自动校验。</Note>;
+  const t = useT('data-query');
+  if (!enabled) return <Note>{t('problems.disabledHint')}</Note>;
   const sorted = [...problems].sort((a, b) => (a.level === b.level ? 0 : a.level === 'ERROR' ? -1 : 1));
   const errors = problems.some(problem => problem.level === 'ERROR');
   return <div className="dq-problems" aria-live="polite">
-    {(validating || stale) && <div className="muted dq-problem-status">{validating ? '校验中…' : '内容已修改，等待重新校验…'}</div>}
+    {(validating || stale) && <div className="muted dq-problem-status">{validating ? t('problems.validating') : t('problems.stale')}</div>}
     {sorted.map((problem, index) => <div key={index} className={`dq-problem is-${problem.level.toLowerCase()}`}>
-      <Tag color={problem.level === 'ERROR' ? 'red' : 'gold'}>{problem.level === 'ERROR' ? '错误' : '警告'}</Tag>
+      <Tag color={problem.level === 'ERROR' ? 'red' : 'gold'}>{problem.level === 'ERROR' ? t('problems.error') : t('problems.warning')}</Tag>
       <span className="mono dq-problem-at">{problemLocation(problem)}</span>
       <span className="dq-problem-message">{problem.message}</span>
-      <button type="button" className="dq-link" onClick={() => onLocate(problem)}>定位</button>
+      <button type="button" className="dq-link" onClick={() => onLocate(problem)}>{t('problems.locate')}</button>
     </div>)}
-    <div className="dq-problem is-info"><Tag color="blue">说明</Tag><span className="mono dq-problem-at">展开校验</span>
-      <span className="dq-problem-message">{errors ? '修复错误后，' : ''}按 if / 集合空与一个元素 / 片段取值列举组合，逐个检查只允许单条 SELECT；组合较多时按覆盖集校验。</span></div>
-    {!validating && !stale && problems.length === 0 && <div className="dq-ok">校验通过</div>}
+    <div className="dq-problem is-info"><Tag color="blue">{t('problems.info')}</Tag><span className="mono dq-problem-at">{t('problems.expansion')}</span>
+      <span className="dq-problem-message">{errors ? t('problems.expansionHintAfterFix') : t('problems.expansionHint')}</span></div>
+    {!validating && !stale && problems.length === 0 && <div className="dq-ok">{t('problems.passed')}</div>}
   </div>;
 }
 
@@ -267,36 +273,37 @@ function SaveModal({ nextVersion, creating, draft, warnings, errors, stale, busy
   nextVersion: number; creating: boolean; draft: TemplateDraft; warnings: TemplateProblem[]; errors: number; stale: boolean; busy: boolean;
   onClose: () => void; onSave: (note: string) => Promise<void>;
 }) {
-  const [note, setNote] = useState('');
-  const missing = creating && !codePattern.test(draft.templateCode) ? '模板编码格式不正确' : !draft.templateName.trim() ? '请填写模板名称'
-    : !draft.dataSourceId ? '请选择数据源' : null;
-  return <Modal open wrapClassName="dq-modal" title={`保存为 v${nextVersion}`} okText="保存并生效" cancelText="取消" confirmLoading={busy} okButtonProps={{ disabled: !!missing }}
+  const [note, setNote] = useState(''); const t = useT('data-query'), tCommon = useT('common');
+  const missing = creating && !codePattern.test(draft.templateCode) ? t('save.codeInvalid') : !draft.templateName.trim() ? t('save.nameRequired')
+    : !draft.dataSourceId ? t('save.dataSourceRequired') : null;
+  return <Modal open wrapClassName="dq-modal" title={t('template.saveAs', { versionNo: nextVersion })} okText={t('save.ok')} cancelText={tCommon('action.cancel')} confirmLoading={busy} okButtonProps={{ disabled: !!missing }}
     onOk={() => void onSave(note)} onCancel={() => { if (!busy) onClose(); }} destroyOnHidden>
-    <p>保存后立即生效，调用方下一次执行使用 v{nextVersion}。</p>
+    <p>{t('save.notice', { versionNo: nextVersion })}</p>
     {missing && <Note tone="error">{missing}</Note>}
-    {errors > 0 && <Note tone="error">当前有 {errors} 个错误，服务端会拒绝保存。</Note>}
-    {stale && <Note tone="warning">校验结果尚未更新，保存时服务端会重新校验。</Note>}
-    {warnings.length > 0 && <Note tone="warning">{warnings.length} 个警告（不阻止保存）：<ul className="dq-warning-list">{warnings.map((warning, index) =>
+    {errors > 0 && <Note tone="error">{t('save.errors', { count: errors })}</Note>}
+    {stale && <Note tone="warning">{t('save.stale')}</Note>}
+    {warnings.length > 0 && <Note tone="warning">{t('save.warnings', { count: warnings.length })}<ul className="dq-warning-list">{warnings.map((warning, index) =>
       <li key={index}>{warning.message}</li>)}</ul></Note>}
-    <Input.TextArea rows={3} maxLength={512} showCount value={note} onChange={event => setNote(event.target.value)} placeholder="变更说明（可选），例如：新增 AMOUNT 排序" autoFocus />
+    <Input.TextArea rows={3} maxLength={512} showCount value={note} onChange={event => setNote(event.target.value)} placeholder={t('save.notePlaceholder')} autoFocus />
   </Modal>;
 }
 
 function TemplateStatusModal({ detail, dirty, onClose, onDone, onAuthorizationChanged }: {
   detail: TemplateDetail; dirty: boolean; onClose: () => void; onDone: () => void; onAuthorizationChanged: () => void;
 }) {
-  const command = useDataQueryCommand(onAuthorizationChanged);
-  const target = detail.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'; const verb = target === 'ACTIVE' ? '启用' : '停用';
+  const command = useDataQueryCommand(onAuthorizationChanged); const t = useT('data-query'), tCommon = useT('common');
+  const target = detail.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'; const enabling = target === 'ACTIVE';
   const submit = async () => {
     const result = await command.run(dataQueryPaths.templateStatus(detail.templateId), 'POST', { status: target, expectedVersion: detail.version },
-      value => decodeMutation(value, 'QUERY_TEMPLATE', detail.templateId), `${verb}模板失败`);
+      value => decodeMutation(value, 'QUERY_TEMPLATE', detail.templateId), enabling ? t('templateStatus.enableFailed') : t('templateStatus.disableFailed'));
     if (result) onDone();
   };
-  return <Modal open wrapClassName="dq-modal" title={`${verb}模板 · ${detail.templateCode}`} okText={`确认${verb}`} cancelText="取消" confirmLoading={command.saving}
+  return <Modal open wrapClassName="dq-modal" title={enabling ? t('templateStatus.enableTitle', { code: detail.templateCode }) : t('templateStatus.disableTitle', { code: detail.templateCode })}
+    okText={enabling ? t('templateStatus.confirmEnable') : t('templateStatus.confirmDisable')} cancelText={tCommon('action.cancel')} confirmLoading={command.saving}
     okButtonProps={{ danger: target === 'INACTIVE', disabled: command.conflict }} onOk={() => void submit()} onCancel={() => { if (!command.saving) onClose(); }}>
-    {command.conflict && <ConflictBanner subject="模板" onReload={onDone} />}
+    {command.conflict && <ConflictBanner subject="template" onReload={onDone} />}
     {command.formError && <Note tone="error">{command.formError}</Note>}
-    <p>{target === 'INACTIVE' ? '停用后调用方无法执行此模板，版本与内容保留。' : `启用后调用方按当前版本 v${detail.currentVersionNo} 执行。`}</p>
-    {dirty && <Note tone="warning">编辑器中有未保存的修改，{verb}后会重新载入模板，未保存的修改将丢失。</Note>}
+    <p>{enabling ? t('templateStatus.enableNotice', { versionNo: detail.currentVersionNo }) : t('templateStatus.disableNotice')}</p>
+    {dirty && <Note tone="warning">{enabling ? t('templateStatus.dirtyEnable') : t('templateStatus.dirtyDisable')}</Note>}
   </Modal>;
 }

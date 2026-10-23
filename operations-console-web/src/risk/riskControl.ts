@@ -6,6 +6,9 @@ import type { ConsoleResource, PagingResponseBody } from '../api/types.ts';
 import { decodePage, exact, id, invariant } from './riskDictionary.ts';
 import { commandFailureSettlement, randomCommand } from './riskCommands.ts';
 import type { PendingCommand } from './riskCommands.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('risk');
 
 /** 风控名单；用途只用于展示，命中后的处置由规则决定。 */
 export interface RiskList { listId: string; listCode: string; listName: string; subjectType: string; purpose: 'BLOCK' | 'ALLOW'; active: boolean }
@@ -18,17 +21,19 @@ export interface StaticCheck { checkCode: string; checkStatus: string; errorCode
 export interface ShadowRun { shadowRunId: string; baselineReleaseId: string; status: string; sampleTarget: number; sampleCount: number; allowToReviewCount: number | null; allowToDenyCount: number | null; denyToAllowCount: number | null; actionChangeCount: number | null; featureMissingCount: number | null; failedCount: number | null; timedOutCount: number | null; p95Millis: number | null; p99Millis: number | null; checkStatus: string | null }
 export interface ExecutionRelease { releaseId: string; releaseNo: string; pointCode: string; flowVersionId: string; environment: string; status: string; version: number; contentHash: string; activatedTime: string | null; supersededTime: string | null; checks: StaticCheck[]; shadowRun: ShadowRun | null }
 
-export const listPurposeLabels: Record<RiskList['purpose'], string> = { BLOCK: '拦截', ALLOW: '放行' };
-export const entryStatusLabels: Record<string, string> = { ACTIVE: '生效中', EXPIRED: '已过期', RELEASED: '已失效', SUPERSEDED: '已替代' };
-export const releaseStatusLabels: Record<string, string> = { DRAFT: '草稿', VALIDATING: '校验中', SHADOWING: '待激活', REJECTED: '校验未通过', ACTIVE: '生效中', SUPERSEDED: '已替代' };
-export const checkLabels: Record<string, string> = { REFERENCE_INTEGRITY: '引用完整性', AST_SHAPE: '条件结构', AST_TYPES: '条件类型', FEATURE_DEPENDENCY: '特征依赖', HANDLER_HASH: '处理器摘要', ACTION_PARAMETERS: '动作参数', TERMINAL_ACTION: '终态动作（含认证要求输出）', SYSTEM_OBLIGATION: '系统义务' };
+/** 名单用途、成员状态、执行发布状态与静态检查项的显示名是 `risk.enum.<类型>.<值>`，未知值显示原代码。 */
+export const entryStatuses = ['ACTIVE', 'EXPIRED', 'RELEASED', 'SUPERSEDED'] as const;
+export const releaseStatuses = ['DRAFT', 'VALIDATING', 'SHADOWING', 'REJECTED', 'ACTIVE', 'SUPERSEDED'] as const;
+export function listPurposeLabel(purpose: string): string { return enumLabel(t, 'enum.listPurpose', purpose); }
+export function entryStatusLabel(status: string): string { return enumLabel(t, 'enum.listEntryStatus', status); }
+export function releaseStatusLabel(status: string): string { return enumLabel(t, 'enum.executionReleaseStatus', status); }
+export function checkLabel(checkCode: string): string { return enumLabel(t, 'enum.staticCheck', checkCode); }
 /** 支持执行发布的风控点；Risk 目录未下发运行期能力标记，由此常量控制入口，未列出的点由 Risk 返回 400。支付排第一，作为默认点。 */
 export const EXECUTION_POINTS = ['PAYMENT_ATTEMPT_RISK', 'CHECKOUT_PREPARE'];
 export const SHADOW_SAMPLE_DEFAULT = 200;
 export const SHADOW_SAMPLE_MAX = 2000;
 
 /** 未知状态原样显示，避免 Risk 新增或短暂状态让页面失败。 */
-export function statusLabel(labels: Record<string, string>, status: string): string { return labels[status] ?? status; }
 export function hasResource(resources: readonly ConsoleResource[], code: string): boolean { return resources.some(r => r.resourceCode === code); }
 
 function text(v: unknown, max = 512): string { invariant(typeof v === 'string' && v.length > 0 && [...v].length <= max); return v; }

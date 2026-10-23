@@ -2,6 +2,9 @@ import {
   activeStatuses, isId, isInstant, isInteger, isOneOf, isOptionalInteger, isOptionalText, isRecord, isText, isTextList, orNull, pageDecoder, require,
 } from './dataQueryCommon.ts';
 import type { ActiveStatus } from './dataQueryCommon.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('data-query');
 
 // ---------- 枚举 ----------
 
@@ -15,10 +18,11 @@ export const fieldTypes = ['STRING', 'INTEGER', 'DECIMAL', 'BOOLEAN', 'DATE', 'D
 export type FieldType = typeof fieldTypes[number];
 export const pagingModes = ['NONE', 'OFFSET', 'CURSOR'] as const;
 export type PagingMode = typeof pagingModes[number];
-export const pagingModeLabels: Readonly<Record<PagingMode, string>> = { NONE: '不分页', OFFSET: '偏移', CURSOR: '游标' };
+/** 分页方式与掩码方式的显示名为 `data-query.enum.pagingMode.<值>`、`data-query.enum.mask.<值>`，调用时取。 */
+export const pagingModeLabel = (value: string) => enumLabel(t, 'enum.pagingMode', value);
 export const maskModes = ['NONE', 'HIDE', 'FULL', 'KEEP_EDGES'] as const;
 export type MaskMode = typeof maskModes[number];
-export const maskLabels: Readonly<Record<MaskMode, string>> = { NONE: '不屏蔽', HIDE: '不返回', FULL: '全部掩码', KEEP_EDGES: '保留首尾' };
+export const maskLabel = (value: string) => enumLabel(t, 'enum.mask', value);
 export const problemLevels = ['ERROR', 'WARNING'] as const;
 export type ProblemLevel = typeof problemLevels[number];
 
@@ -168,11 +172,11 @@ export function decodeTrialResult(value: unknown): TrialResult {
 
 export interface SummaryTag { text: string; required: boolean; kind: 'value' | 'list' | 'fragment' }
 
-/** 参数摘要标签：必填加 *，集合加 []，片段写成 ⟨片段⟩。 */
+/** 参数摘要标签：必填加 *，集合加 []，片段写成 ⟨片段⟩（`summary.fragmentSuffix`）。 */
 export function parameterSummaryTags(parameters: readonly Pick<ParameterSummary, 'name' | 'type' | 'required'>[]): SummaryTag[] {
   return parameters.map(parameter => {
     const kind = parameter.type === 'LIST' ? 'list' : parameter.type === 'FRAGMENT' ? 'fragment' : 'value';
-    const suffix = kind === 'list' ? '[]' : kind === 'fragment' ? '⟨片段⟩' : '';
+    const suffix = kind === 'list' ? '[]' : kind === 'fragment' ? t('summary.fragmentSuffix') : '';
     return { text: `${parameter.name}${suffix}${parameter.required ? '*' : ''}`, required: parameter.required, kind };
   });
 }
@@ -296,11 +300,11 @@ export function parameterDeclarations(rows: readonly ParameterRow[]): ParameterD
 export function parameterHint(row: ParameterRow): string {
   const parts: string[] = [];
   const constrained = row.type === 'LIST' ? row.elementType : row.type;
-  if (row.defaultText.trim()) parts.push(`默认 ${row.defaultText.trim()}`);
-  if (row.type === 'FRAGMENT') parts.push(`${row.choices.length} 个取值`);
-  if (row.type === 'LIST' && row.maxSize) parts.push(`最多 ${row.maxSize} 个`);
-  if (row.type === 'LIST' && row.elementType === 'OBJECT') parts.push(`${row.fields.length} 个字段`);
-  if (constrained !== 'FRAGMENT' && constraintKinds(constrained).length && row.maxLength) parts.push(`长度 ≤ ${row.maxLength}`);
+  if (row.defaultText.trim()) parts.push(t('hint.default', { value: row.defaultText.trim() }));
+  if (row.type === 'FRAGMENT') parts.push(t('hint.choices', { count: row.choices.length }));
+  if (row.type === 'LIST' && row.maxSize) parts.push(t('hint.maxSize', { count: row.maxSize }));
+  if (row.type === 'LIST' && row.elementType === 'OBJECT') parts.push(t('hint.fields', { count: row.fields.length }));
+  if (constrained !== 'FRAGMENT' && constraintKinds(constrained).length && row.maxLength) parts.push(t('hint.maxLength', { length: row.maxLength }));
   if (constraintKinds(constrained).range && row.min.trim()) parts.push(`≥ ${row.min.trim()}`);
   if (constraintKinds(constrained).range && row.max.trim()) parts.push(`≤ ${row.max.trim()}`);
   if (constraintKinds(constrained).allowed && row.allowedValues.length) parts.push(row.allowedValues.join(' / '));
@@ -383,7 +387,8 @@ export const bodyBytes = (body: string) => new TextEncoder().encode(body).length
 
 // ---------- 问题 → 编辑器标记与定位 ----------
 
-const positionPrefix = /^第\s*(\d+)\s*行第\s*(\d+)\s*列[:：]\s*/;
+/** Platform 校验信息的位置前缀"第 N 行第 M 列："（服务端数据，按原文匹配；汉字写成转义以免被中文扫描误判）。 */
+const positionPrefix = /^\u7b2c\s*(\d+)\s*\u884c\u7b2c\s*(\d+)\s*\u5217[:\uff1a]\s*/;
 
 /** 422 字段错误 → 问题：body 的“第 N 行第 M 列：”前缀解析为行列。 */
 export function fieldErrorProblems(errors: readonly { field: string; message: string }[]): TemplateProblem[] {
@@ -459,10 +464,10 @@ export function completionWords(rows: readonly ParameterRow[]): CompletionWord[]
   return [
     ...named.filter(row => row.type !== 'FRAGMENT').map(row => ({ label: row.name.trim(), detail: typeLabel(row.type, row.elementType), kind: 'value' as const })),
     ...named.filter(row => row.type === 'LIST' && row.elementType === 'OBJECT')
-      .flatMap(row => row.fields.filter(field => field.name.trim()).map(field => ({ label: `${row.name.trim()}.${field.name.trim()}`, detail: `${field.type}（循环变量字段）`, kind: 'value' as const }))),
-    ...named.filter(row => row.type === 'FRAGMENT').map(row => ({ label: row.name.trim(), detail: '片段', kind: 'fragment' as const })),
-    ...templateTags.map(tag => ({ label: tag, detail: '标签', kind: 'tag' as const })),
-    ...systemParameters.map(name => ({ label: name, detail: '系统参数', kind: 'system' as const })),
+      .flatMap(row => row.fields.filter(field => field.name.trim()).map(field => ({ label: `${row.name.trim()}.${field.name.trim()}`, detail: t('completion.loopField', { type: field.type }), kind: 'value' as const }))),
+    ...named.filter(row => row.type === 'FRAGMENT').map(row => ({ label: row.name.trim(), detail: t('completion.fragment'), kind: 'fragment' as const })),
+    ...templateTags.map(tag => ({ label: tag, detail: t('completion.tag'), kind: 'tag' as const })),
+    ...systemParameters.map(name => ({ label: name, detail: t('completion.system'), kind: 'system' as const })),
   ];
 }
 
@@ -476,13 +481,13 @@ export function trialFields(rows: readonly ParameterRow[]): TrialField[] {
   return rows.filter(row => row.name.trim()).map(row => {
     const name = row.name.trim();
     const label = typeLabel(row.type, row.elementType);
-    const placeholder = row.defaultText.trim() ? `默认 ${row.defaultText.trim()}` : '不填';
+    const placeholder = row.defaultText.trim() ? t('hint.default', { value: row.defaultText.trim() }) : t('trial.empty');
     const base = { name, required: row.required, label, placeholder, options: [] as string[] };
     switch (row.type) {
       case 'FRAGMENT': return { ...base, control: 'select', options: row.choices.map(choice => choice.value.trim()).filter(Boolean) };
       case 'ENUM': return { ...base, control: 'select', options: [...row.allowedValues] };
       case 'STRING': return row.allowedValues.length ? { ...base, control: 'select', options: [...row.allowedValues] } : { ...base, control: 'text' };
-      case 'LIST': return row.elementType === 'OBJECT' ? { ...base, control: 'json', placeholder: '[{"字段": "值"}]' }
+      case 'LIST': return row.elementType === 'OBJECT' ? { ...base, control: 'json', placeholder: t('trial.jsonPlaceholder') }
         : { ...base, control: 'tags', options: [...row.allowedValues] };
       case 'INTEGER': return { ...base, control: 'integer' };
       case 'DECIMAL': return { ...base, control: 'decimal' };
@@ -510,8 +515,8 @@ export function trialParams(fields: readonly TrialField[], values: Readonly<Reco
     if (field.control === 'json') {
       try {
         const parsed: unknown = JSON.parse(String(value));
-        if (Array.isArray(parsed)) params[field.name] = parsed; else errors.push({ name: field.name, message: '请输入 JSON 数组' });
-      } catch { errors.push({ name: field.name, message: 'JSON 格式不正确' }); }
+        if (Array.isArray(parsed)) params[field.name] = parsed; else errors.push({ name: field.name, message: t('trial.jsonArrayRequired') });
+      } catch { errors.push({ name: field.name, message: t('trial.jsonInvalid') }); }
       continue;
     }
     if (field.control === 'integer' || field.control === 'decimal') { params[field.name] = String(value).trim(); continue; }

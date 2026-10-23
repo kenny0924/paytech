@@ -21,24 +21,27 @@ import {
 } from './flowModel';
 import type { ExecuteStatus, Flow, FlowEditorContext, ImplementationDetail } from './flowModel';
 import { ExternalApiFrame, Note, PageHeader } from './ui';
+import { translator } from '../i18n/index';
+import { useT } from '../i18n/react';
 
 /** integrationCode 为渠道编码（管理接口路径沿用 integrations/{code}），channelId 用于页面路由。 */
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; channelId: string; integrationCode: string; standardApiCode: string }
 const capabilityPath = `${externalApiBase}/editor-capabilities`;
-const noManage = '只读 · 无“外部 API 管理”权限';
+const tFlow = translator('channel');
 
 /** 校验问题所属对象的前缀，例如“出口 paid：”。 */
 function issueOwner(flow: Flow, location: string): string {
   const target = flowTarget(location);
-  if (target.kind === 'node') return flow.nodes[target.index] ? `节点 ${flow.nodes[target.index].id}：` : '';
-  if (target.kind === 'return') return flow.returns[target.index] ? `出口 ${flow.returns[target.index].id}：` : '';
-  if (target.kind === 'edge') return flow.edges[target.index] ? `${flow.edges[target.index].from} 的出口：` : '';
-  if (target.kind === 'initializer') return flow.initializers[target.index] ? `初始化项 ${flow.initializers[target.index].id}：` : '';
+  if (target.kind === 'node') return flow.nodes[target.index] ? tFlow('flow.owner.node', { id: flow.nodes[target.index].id }) : '';
+  if (target.kind === 'return') return flow.returns[target.index] ? tFlow('flow.owner.return', { id: flow.returns[target.index].id }) : '';
+  if (target.kind === 'edge') return flow.edges[target.index] ? tFlow('flow.owner.edge', { id: flow.edges[target.index].from }) : '';
+  if (target.kind === 'initializer') return flow.initializers[target.index] ? tFlow('flow.owner.initializer', { id: flow.initializers[target.index].id }) : '';
   return '';
 }
 
 /** 渠道标准 API 实现的流程编辑（/channel/channels/:channelId/protocol/implementations/:standardApiCode，?mode=create|edit）。 */
 export function FlowEditor({ resources, onAuthorizationChanged, channelId, integrationCode, standardApiCode }: Props) {
+  const t = useT('channel');
   const location = useLocation(); const mode = new URLSearchParams(location.search).get('mode');
   const canManage = hasButton(resources, manageProtocol); const creating = mode === 'create';
   const readOnly = !canManage || mode !== 'edit' && !creating;
@@ -48,10 +51,10 @@ export function FlowEditor({ resources, onAuthorizationChanged, channelId, integ
   const capabilities = useDetail<Capabilities>(capabilityPath, decodeCapabilities);
   const detail = useDetail<ImplementationDetail>(creating ? null : `${base}/implementations/${standardApiCode}`, decodeDetail);
   let page;
-  if (creating && !canManage) page = <Alert type="warning" showIcon title="当前没有协议配置维护权限" />;
+  if (creating && !canManage) page = <Alert type="warning" showIcon title={t('editor.noProtocolPermission')} />;
   else if (context.loading || capabilities.loading || detail.loading) page = <Loading />;
-  else if (!context.data) page = <LoadFailure title="流程编辑数据加载失败" failure={context.failure} retry={context.refresh} />;
-  else if (!creating && !detail.data) page = <LoadFailure title="标准 API 实现加载失败" failure={detail.failure} retry={detail.refresh} />;
+  else if (!context.data) page = <LoadFailure title={t('flow.contextLoadFailed')} failure={context.failure} retry={context.refresh} />;
+  else if (!creating && !detail.data) page = <LoadFailure title={t('protocol.implementationsLoadFailed')} failure={detail.failure} retry={detail.refresh} />;
   else page = <ReactFlowProvider><FlowWorkspace key={`${detail.data?.version}:${readOnly}`} channelId={channelId} integrationCode={integrationCode}
     standardApiCode={standardApiCode} context={context.data} functions={capabilities.data?.functions ?? []} detail={detail.data}
     readOnly={readOnly} canManage={canManage} onAuthorizationChanged={onAuthorizationChanged} onReload={detail.refresh} /></ReactFlowProvider>;
@@ -62,11 +65,12 @@ function FlowWorkspace({ channelId, integrationCode, standardApiCode, context, f
   channelId: string; integrationCode: string; standardApiCode: string; context: FlowEditorContext; functions: Capabilities['functions'];
   detail?: ImplementationDetail; readOnly: boolean; canManage: boolean; onAuthorizationChanged: () => void; onReload: () => void;
 }) {
+  const t = useT('channel'), tCommon = useT('common');
   const location = useLocation(); const navigate = useNavigate(); const notify = useErrorNotification(); const { message } = App.useApp();
   const copy = useCopyDraft();
   const [issues, setIssues] = useState<ValidationIssue[] | null>(null);
   const errorCount = issues?.filter(issue => issue.severity === 'ERROR').length ?? 0;
-  const editor = useEditorSave(onAuthorizationChanged, errorCount ? `当前流程还有 ${errorCount} 个校验错误，保存会失败并停留在本页。` : undefined);
+  const editor = useEditorSave(onAuthorizationChanged, errorCount ? t('flow.leaveErrors', { count: errorCount }) : undefined);
   const creating = !detail; const base = `${integrationPath}/${integrationCode}/implementations`;
   const [flow, setFlow] = useState<Flow>(() => detail ? toFlow(detail.flowDefinition) : newFlow());
   const [selection, setSelection] = useState<FlowSelection>(null);
@@ -80,7 +84,7 @@ function FlowWorkspace({ channelId, integrationCode, standardApiCode, context, f
   function select(next: FlowSelection) { setSelection(next); setFocusId(undefined); setValueTarget(null); }
   function connect(source: string, target: string) {
     if (source === startId) {
-      if (!flow.nodes.some(node => node.id === target)) { void message.warning('入口必须是原子 API 节点'); return; }
+      if (!flow.nodes.some(node => node.id === target)) { void message.warning(t('flow.entryMustBeApi')); return; }
       change({ ...flow, entry: target }); return;
     }
     const result = addEdge(flow, source, target);
@@ -113,8 +117,8 @@ function FlowWorkspace({ channelId, integrationCode, standardApiCode, context, f
       const result = await session.request(`${base}/validate`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ standardApiCode, flowDefinition: toFlowJson(flow), expectedVersion: detail?.version ?? null }) }, decodeValidation);
       setIssues(result.issues); setStale(false);
-      if (!result.issues.length) void message.success('校验通过，配置可以保存');
-    } catch (error) { notify(error, '校验未完成'); } finally { setValidating(false); }
+      if (!result.issues.length) void message.success(t('editor.validationPassed'));
+    } catch (error) { notify(error, t('editor.validationFailed')); } finally { setValidating(false); }
   }
   const reasonFlow = useReasonFlow(async reason => {
     const objectCode = `${integrationCode}/${standardApiCode}`;
@@ -144,13 +148,13 @@ function FlowWorkspace({ channelId, integrationCode, standardApiCode, context, f
   const panelProps = { flow, context, functions, readOnly: disabled, standardApiCode, onChange: change, onSelect: select };
   return <>
     <PageHeader crumbs={[...workspaceCrumbs(channelId, integrationCode, 'implementations'), { label: standardApiCode }]}
-      title={`${integrationCode} 实现 ${standardApiCode}`} readOnlyHint={!canManage ? noManage : undefined}
-      actions={<><span className="xapi-field-label">流程总预算</span>
+      title={t('flow.title', { channel: integrationCode, api: standardApiCode })} readOnlyHint={!canManage ? t('editor.noManage') : undefined}
+      actions={<><span className="xapi-field-label">{t('flow.budget')}</span>
         <InputNumber min={1} max={60000} value={flow.timeoutMs} disabled={disabled} className="xapi-mono-input xflow-budget" suffix="ms"
           onChange={value => change({ ...flow, timeoutMs: value ?? 1 })} />
-        {readOnly ? canManage && detail && <Button type="primary" onClick={() => void navigate(replaceQuery(location.search, { mode: 'edit' }))}>编辑</Button>
-          : <>{editor.dirty && <span className="xflow-dirty">有未保存的修改</span>}<Button loading={validating} onClick={() => void validate()}>校验</Button>
-            <Button type="primary" loading={editor.saving} onClick={() => void reasonFlow.start()}>保存</Button></>}</>} />
+        {readOnly ? canManage && detail && <Button type="primary" onClick={() => void navigate(replaceQuery(location.search, { mode: 'edit' }))}>{t('protocol.edit')}</Button>
+          : <>{editor.dirty && <span className="xflow-dirty">{t('flow.dirty')}</span>}<Button loading={validating} onClick={() => void validate()}>{t('editor.validate')}</Button>
+            <Button type="primary" loading={editor.saving} onClick={() => void reasonFlow.start()}>{tCommon('action.save')}</Button></>}</>} />
     {editor.conflict && detail && <ConflictBanner code={`${integrationCode}/${standardApiCode}`} baseVersion={detail.version} latest={latest}
       onReload={onReload} onCopy={() => copy(toFlowJson(flow))} />}
     <div className="xflow-workbench">
@@ -158,8 +162,7 @@ function FlowWorkspace({ channelId, integrationCode, standardApiCode, context, f
       <div className="xflow-center">
         <FlowCanvas flow={flow} apis={context.apis} standardApiCode={standardApiCode} readOnly={disabled} selection={selection} focusId={focusId}
           errors={vertexErrors} onSelect={select} onConnect={connect} />
-        <Note items={['保存后对新调用立即生效，无发布流程；进行中的调用使用已加载的配置。', '流程暂不支持环：拖回上游节点的连线会被拒绝；每个节点在一次调用中最多执行一次。',
-          '节点只能引用本渠道的原子 API；流程不编排冲正、撤销、退款等资金反向操作（人工评审）。']} />
+        <Note items={[t('flow.note.publish'), t('flow.note.noCycle'), t('flow.note.scope')]} />
       </div>
       {selection === null && <EmptySide />}
       {selection?.kind === 'start' && <StartSide flow={flow} standardApiCode={standardApiCode} />}

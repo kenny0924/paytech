@@ -1,11 +1,14 @@
 import type { VariableOptions } from './flowModel.ts';
 import type { Binding } from './integrationApiModel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('channel');
 
 /** 一个可赋值的目标：原子 API 请求字段、调用参数或标准 API 响应字段。 */
 export interface MappingTarget {
   /** 取值的键：请求字段 LOCATION:path，调用参数 PARAM:name，响应字段为字段路径。 */
   key: string;
-  /** 分组名：PATH / HEADER / QUERY / BODY / 调用参数 / 响应字段。 */
+  /** 分组代码：PATH / HEADER / QUERY / BODY / PARAMS（调用参数）/ RESPONSE（响应字段）；显示名见 channel.mapping.group.*。 */
   group: string;
   /** 组内路径；nested 为真时按“.”分层。 */
   path: string;
@@ -26,7 +29,7 @@ export type MappingRow =
   | { kind: 'object'; group: string; path: string; name: string; depth: number }
   | { kind: 'field'; target: MappingTarget; state: MappingState; name: string; depth: number };
 
-export const groupOrder = ['PATH', 'HEADER', 'QUERY', 'BODY', '调用参数', '响应字段'];
+export const groupOrder = ['PATH', 'HEADER', 'QUERY', 'BODY', 'PARAMS', 'RESPONSE'];
 
 const segments = (target: Pick<MappingTarget, 'path' | 'nested'>) => target.nested ? target.path.split('.') : [target.path];
 const lastSegment = (path: string) => path.slice(path.lastIndexOf('.') + 1);
@@ -104,7 +107,7 @@ export function typeHint(target: MappingTarget, binding: Binding | undefined, va
   if (!binding || binding.kind !== 'PATH' || target.handle) return null;
   const type = variableType(binding.path.trim(), variables);
   if (!type || type === target.dataType) return null;
-  return `类型不一致：变量是 ${type}，字段是 ${target.dataType}`;
+  return t('mapping.typeMismatch', { variableType: type, fieldType: target.dataType });
 }
 
 /**
@@ -151,7 +154,7 @@ export function variableTree(variables: VariableOptions, query = ''): VariableNo
   if (needle) {
     for (const path of variables.paths.filter(item => item.toLowerCase().includes(needle))) {
       const group = path.startsWith('input.') ? 'input' : path.startsWith('steps.') ? 'steps' : 'resources';
-      if (group === 'resources') leaf(group, `${path}.`, `${path}.<名称>`, 0, { runtime: true, type: variables.mapRoots?.[path] ?? null });
+      if (group === 'resources') leaf(group, `${path}.`, t('mapping.runtimeKey', { path }), 0, { runtime: true, type: variables.mapRoots?.[path] ?? null });
       else leaf(group, path, path, 0);
     }
     for (const path of (variables.handlePaths ?? []).filter(item => item.toLowerCase().includes(needle))) leaf('handle', path, `${path}*`, 0, { type: 'PROTECTED_HANDLE' });
@@ -174,7 +177,7 @@ export function variableTree(variables: VariableOptions, query = ''): VariableNo
   for (const path of variables.paths.filter(item => item.startsWith('resources.'))) {
     const parts = path.split('.');
     folder('resources', parts.slice(0, 2).join('.'), parts.slice(0, 2).join('.'), 0);
-    leaf('resources', `${path}.`, `${parts.slice(2).join('.')}.<名称>`, 1, { runtime: true, type: variables.mapRoots?.[path] ?? null });
+    leaf('resources', `${path}.`, t('mapping.runtimeKey', { path: parts.slice(2).join('.') }), 1, { runtime: true, type: variables.mapRoots?.[path] ?? null });
   }
   for (const path of variables.paths.filter(item => item.startsWith('steps.'))) {
     const parts = path.split('.');

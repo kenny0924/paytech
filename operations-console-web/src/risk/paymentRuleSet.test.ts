@@ -4,7 +4,7 @@ import { editorToCreateRequest, isDenyAction, terminalActionLabels } from './rul
 import type { RuleSetEditorModel } from './ruleBuilder.ts';
 import { CHECKOUT_PREPARE_AUTHORING_V1 } from './riskAuthoringCatalog.ts';
 import type { AuthoringCatalog } from './riskAuthoringCatalog.ts';
-import { KNOWN_POINTS, mergeRiskPoints } from './riskPoints.ts';
+import { knownPoints, mergeRiskPoints } from './riskPoints.ts';
 
 const paymentCatalog: AuthoringCatalog = { ...CHECKOUT_PREPARE_AUTHORING_V1, descriptorCode: 'RISK_VARIABLE_AUTHORING', operandFormat: 'VARIABLE_REFERENCE', fields: [],
   actions: [{ actionCode: 'ALLOW_PAYMENT', label: 'Allow Payment' }, { actionCode: 'REVIEW_PAYMENT', label: 'Review Payment' }, { actionCode: 'DENY_PAYMENT', label: 'Deny Payment' }],
@@ -25,20 +25,20 @@ test('payment point rule sets are built with the payment catalog and keep the se
 });
 
 test('deny rules on any point need reason code and message; non-deny rules cannot carry a message', () => {
-  assert.throws(() => editorToCreateRequest(editor('DENY_PAYMENT'), null, paymentCatalog), /拒绝规则须手工填写原因编码和拒绝文案/);
-  assert.throws(() => editorToCreateRequest(editor('ALLOW_PAYMENT', '', '不应出现'), null, paymentCatalog), /只有拒绝规则可以填写拒绝文案/);
+  assert.throws(() => editorToCreateRequest(editor('DENY_PAYMENT'), null, paymentCatalog), /reject rule needs a reason code and rejection message/);
+  assert.throws(() => editorToCreateRequest(editor('ALLOW_PAYMENT', '', '不应出现'), null, paymentCatalog), /Only reject rules can have a rejection message/);
   assert.equal(isDenyAction('DENY_CHECKOUT'), true);
   assert.equal(isDenyAction('REVIEW_PAYMENT'), false);
   assert.equal(terminalActionLabels.ALLOW_PAYMENT, 'PASS');
 });
 
 test('non-checkout points refuse the legacy field catalog', () => {
-  assert.throws(() => editorToCreateRequest(editor('ALLOW_PAYMENT'), null, CHECKOUT_PREPARE_AUTHORING_V1), /只支持统一变量格式/);
+  assert.throws(() => editorToCreateRequest(editor('ALLOW_PAYMENT'), null, CHECKOUT_PREPARE_AUTHORING_V1), /only supports rules in the unified variable format/);
 });
 
 test('risk point catalog comes from the variable context with Chinese names for known points', () => {
   assert.deepEqual(mergeRiskPoints([{ pointCode: 'CHECKOUT_PREPARE', pointName: 'CHECKOUT_PREPARE' }, { pointCode: 'PAYMENT_ATTEMPT_RISK', pointName: 'PAYMENT_ATTEMPT_RISK' },
-    { pointCode: 'PAYOUT_CREATION', pointName: 'Payout Creation' }]), [{ pointCode: 'CHECKOUT_PREPARE', pointName: '结账准备' },
-    { pointCode: 'PAYMENT_ATTEMPT_RISK', pointName: '支付尝试' }, { pointCode: 'PAYOUT_CREATION', pointName: 'Payout Creation' }]);
-  assert.equal(mergeRiskPoints([]), KNOWN_POINTS);
+    { pointCode: 'PAYOUT_CREATION', pointName: 'Payout Creation' }]), [{ pointCode: 'CHECKOUT_PREPARE', pointName: 'Checkout Preparation' },
+    { pointCode: 'PAYMENT_ATTEMPT_RISK', pointName: 'Payment Attempt' }, { pointCode: 'PAYOUT_CREATION', pointName: 'Payout Creation' }]);
+  assert.deepEqual(mergeRiskPoints([]), knownPoints());
 });

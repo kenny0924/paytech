@@ -1,6 +1,12 @@
 package com.paytech.operations.console.bff.service.processor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
@@ -21,6 +27,7 @@ import lombok.AllArgsConstructor;
  * <li>{@code before.} / {@code after.} 前缀的属性按字段合并为变更，同一字段的全部值与已隐藏的 null 都保留。</li>
  * <li>{@code reason} 已在事件本身展示，不重复列为属性；其余属性按 Key 合并全部取值。</li>
  * <li>回执事件 ID 不一致、属性序号重复或变更字段名为空，均视为上游无效响应，不返回部分详情。</li>
+ * <li>只返回字段与属性的 Key，展示名称由前端翻译。</li>
  *
  * @author Codex
  */
@@ -30,14 +37,6 @@ public class AuditEventDetailsProcessor extends AbstractProcessor<AuditEventDeta
     private static final String BEFORE_PREFIX = "before.";
     private static final String AFTER_PREFIX = "after.";
     private static final String REASON_KEY = "reason";
-    private static final Map<String,
-        String> LABELS = Map.ofEntries(Map.entry("CODE", "编码"), Map.entry("DISPLAY_NAME", "名称"),
-            Map.entry("DESCRIPTION", "说明"), Map.entry("STATUS", "状态"), Map.entry("SECURITY_STATUS", "安全状态"),
-            Map.entry("roleCode", "角色编码"), Map.entry("roleName", "角色名称"), Map.entry("roleId", "角色 ID"),
-            Map.entry("roleCount", "角色数量"), Map.entry("permissionId", "权限 ID"), Map.entry("permissionCount", "权限数量"),
-            Map.entry("version", "版本"), Map.entry("status", "状态"), Map.entry("accountStatus", "账号状态"),
-            Map.entry("accountVersion", "账号版本"), Map.entry("memberId", "成员 ID"), Map.entry("memberStatus", "成员状态"),
-            Map.entry("memberVersion", "成员版本"), Map.entry("authEpoch", "认证版本"));
 
     private final PlatformOperationsClient client;
 
@@ -81,20 +80,15 @@ public class AuditEventDetailsProcessor extends AbstractProcessor<AuditEventDeta
 
     /** 字段变更转为页面项，保持字段首次出现的顺序；取值中的 null 原样保留。 */
     static List<AuditChange> changeItems(Map<String, ChangeValues> changes) {
-        return changes.entrySet().stream().map(entry -> new AuditChange(entry.getKey(), label(entry.getKey()),
+        return changes.entrySet().stream().map(entry -> new AuditChange(entry.getKey(),
             entry.getValue().before.stream().toList(), entry.getValue().after.stream().toList())).toList();
     }
 
     /** 普通属性转为页面项，保持 Key 首次出现的顺序。 */
     static List<AuditProperty> propertyItems(Map<String, List<String>> attributes) {
         return attributes.entrySet().stream()
-            .map(entry -> new AuditProperty(entry.getKey(), label(entry.getKey()), entry.getValue().stream().toList()))
+            .map(entry -> new AuditProperty(entry.getKey(), entry.getValue().stream().toList()))
             .toList();
-    }
-
-    /** 已知 Key 显示中文名称，未知 Key 原样显示。 */
-    static String label(String key) {
-        return LABELS.getOrDefault(key, key);
     }
 
     /** 上游回执不满足合同时整页失败。 */

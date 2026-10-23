@@ -6,7 +6,7 @@ import {
   createCatalogCapabilityBody, decodeCatalogCapabilityWrite, decodeFeeEventWrite, dimensionBadges, feeEventAttachBody, newCatalogCapabilityForm,
   rowAttachLabels, updateCatalogCapabilityBody,
 } from './catalogMaintenance.ts';
-import { capabilityKindLabels, mergeFeeEvents } from './catalogTree.ts';
+import { capabilityKindLabel, mergeFeeEvents } from './catalogTree.ts';
 import { decodeCapabilities, decodeFeeEvents } from './commercialConsole.ts';
 import type { CatalogCapability, CatalogFeeEvent } from './commercialConsole.ts';
 
@@ -42,26 +42,29 @@ test('编辑开通项：读回表单往返，只提交名称 / 产品 / 维度�
   assert.equal(capabilityStatusAction('ACTIVE'), 'retire');
   assert.equal(capabilityStatusAction('RETIRED'), 'activate');
   assert.equal(capabilityStatusAction('UNKNOWN'), null);
-  assert.equal(capabilityKindLabels.FEATURE, '功能');
+  assert.equal(capabilityKindLabel('FEATURE'), 'Feature');
   assert.deepEqual(acceptanceDimensionOptions([{ dimensionCode: 'CURRENCY', displayName: '币种', factSource: 'ORDER', evaluationPoint: 'CHECKOUT',
     acceptanceAllowed: true, pricingAllowed: true }, { dimensionCode: 'THREE_DS_RESULT', displayName: '3DS 结果', factSource: 'THREE_DS',
-    evaluationPoint: 'AUTHENTICATION', acceptanceAllowed: false, pricingAllowed: true }]), [{ value: 'CURRENCY', label: '币种 CURRENCY' }], '只用于定价的维度不可开通');
+    evaluationPoint: 'AUTHENTICATION', acceptanceAllowed: false, pricingAllowed: true }]), [{ value: 'CURRENCY', label: 'Currency CURRENCY' }], '只用于定价的维度不可开通');
 });
 
 test('计费事件挂接：无需开通 / 任一种类 / 功能开通项三类选择 ↔ 请求体；合并行列出各登记挂接', () => {
   const catalog = [capability('CARD', 'PAYMENT_METHOD'), capability('TOKEN_STORAGE', 'FEATURE'), capability('PAYOUT_LOCAL', 'PAYOUT_RAIL', { productCode: 'PAYOUT' })];
   const options = attachOptions('ACQUIRING', catalog).map(option => option.value);
   assert.deepEqual(options, ['NONE', 'KIND:PAYMENT_METHOD', 'KIND:PAYOUT_RAIL', 'KIND:FX', 'KIND:DISPUTE', 'KIND:PERIODIC_SERVICE', 'FEATURE:TOKEN_STORAGE']);
+  assert.deepEqual(attachOptions('ACQUIRING', catalog).map(option => option.label).filter((_, index) => [0, 1, 6].includes(index)),
+    ['No enablement needed (base product event)', 'Any Payment Method enablement', 'Feature · 存卡 TOKEN_STORAGE']);
   assert.deepEqual(feeEventAttachBody(2, 'FEATURE:TOKEN_STORAGE'), { expectedChangeVersion: 2, capabilityKind: 'FEATURE', capabilityCode: 'TOKEN_STORAGE' });
   assert.deepEqual(feeEventAttachBody(2, 'KIND:PAYMENT_METHOD'), { expectedChangeVersion: 2, capabilityKind: 'PAYMENT_METHOD', capabilityCode: null });
   assert.deepEqual(feeEventAttachBody(2, 'NONE'), { expectedChangeVersion: 2, capabilityKind: null, capabilityCode: null });
   assert.equal(attachChoice(feeEvent('1', 'CLIENT_PRICING', 'FEATURE', 'TOKEN_STORAGE')), 'FEATURE:TOKEN_STORAGE');
   assert.equal(attachChoice(feeEvent('1', 'CLIENT_PRICING', 'PAYMENT_METHOD')), 'KIND:PAYMENT_METHOD');
   assert.equal(attachChoice(feeEvent('1', 'CLIENT_PRICING', null)), 'NONE');
-  assert.equal(attachLabel(feeEvent('1', 'CLIENT_PRICING', 'FEATURE', 'TOKEN_STORAGE'), catalog), '功能 · 存卡 TOKEN_STORAGE');
+  assert.equal(attachLabel(feeEvent('1', 'CLIENT_PRICING', 'FEATURE', 'TOKEN_STORAGE'), catalog), 'Feature · 存卡 TOKEN_STORAGE');
+  assert.equal(attachLabel(feeEvent('1', 'CLIENT_PRICING', 'PAYOUT_RAIL')), 'Any Payout Rail');
   const [row] = mergeFeeEvents([feeEvent('1', 'CLIENT_PRICING', 'FEATURE', 'TOKEN_STORAGE'), feeEvent('2', 'PARTNER_SHARE', null)]);
   assert.deepEqual(row.feeEvents.map(event => event.productFeeEventId), ['1', '2']);
-  assert.deepEqual(rowAttachLabels(row, catalog), ['功能 · 存卡 TOKEN_STORAGE', '无需开通']);
+  assert.deepEqual(rowAttachLabels(row, catalog), ['Feature · 存卡 TOKEN_STORAGE', 'No enablement needed']);
 });
 
 test('目录解码：新字段缺省兼容旧 BFF，存在时严格校验；写回执 ID 一致', () => {

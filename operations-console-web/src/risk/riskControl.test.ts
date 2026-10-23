@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { activationNeedsAcknowledgement, createExecutionReleaseApi, EXECUTION_POINTS, createRiskListApi, decodeExecutionItem, decodeExecutionRelease, decodeRiskListEntry, entryFilters, releaseActions, releaseStatusLabels, statusLabel } from './riskControl.ts';
+import { activationNeedsAcknowledgement, createExecutionReleaseApi, EXECUTION_POINTS, createRiskListApi, decodeExecutionItem, decodeExecutionRelease, decodeRiskListEntry, entryFilters, releaseActions, releaseStatusLabel } from './riskControl.ts';
 import type { ExecutionRelease } from './riskControl.ts';
 import type { RequestClient } from '../api/session.ts';
 import { ApiError } from '../api/session.ts';
@@ -21,8 +21,8 @@ test('list entries decode only the masked key and reject any raw subject field',
 
 test('unknown release and shadow statuses are kept and shown as their code', () => {
   assert.equal(decodeExecutionRelease({ ...releaseWire, status: 'REVIEW_PENDING' }).status, 'REVIEW_PENDING');
-  assert.equal(statusLabel(releaseStatusLabels, 'REVIEW_PENDING'), 'REVIEW_PENDING');
-  assert.equal(statusLabel(releaseStatusLabels, 'SUPERSEDED'), '已替代');
+  assert.equal(releaseStatusLabel('REVIEW_PENDING'), 'REVIEW_PENDING');
+  assert.equal(releaseStatusLabel('SUPERSEDED'), 'Superseded');
   const running = decodeExecutionRelease({ ...releaseWire, shadowRun: { ...completed, status: 'RUNNING', allowToReviewCount: null, allowToDenyCount: null, denyToAllowCount: null, actionChangeCount: null, featureMissingCount: null, failedCount: null, timedOutCount: null, p95Millis: null, p99Millis: null, checkStatus: null } });
   assert.equal(running.shadowRun!.denyToAllowCount, null);
   assert.throws(() => decodeExecutionRelease({ ...releaseWire, privateState: 'x' }));

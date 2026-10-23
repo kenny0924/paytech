@@ -75,3 +75,5 @@
   .finance-drawer .finance-line-row { grid-template-columns: minmax(0, 1fr); }
   .finance-drawer .finance-line-remove.is-first { margin-top: 0; }
 }
+/* English labels are longer: give the search / reset / create buttons two grid columns so they stay inside the page. */
+html[lang="en"] .finance-page .finance-search .configuration-actions { grid-column: span 2; }

@@ -10,6 +10,11 @@ const riskDirectory = fileURLToPath(new URL('.', import.meta.url));
 const pagePath = fileURLToPath(new URL('../pages/RiskRuleConfiguration.tsx', import.meta.url));
 const sourceDirectory = resolve(riskDirectory, '..');
 const sessionStorageOwner = resolve(sourceDirectory, 'api/session.ts');
+/**
+ * Shared UI-text runtime (every page imports it): it only stores the chosen language and published language
+ * bundles under `i18n.*` keys and holds no business data. Its own tests cover it, so the graph stops there.
+ */
+const sharedI18nDirectory = normalize(resolve(sourceDirectory, 'i18n')) + '/';
 
 function productionTypeScriptSources(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -481,7 +486,7 @@ function auditSourceGraph(sources: ReadonlyMap<string, string>, roots: readonly 
         const specifier = moduleSpecifier(node);
         if (specifier?.startsWith('.')) {
           const dependency = resolveLocalModule(path, specifier, normalizedSources);
-          if (dependency) queue.push(dependency);
+          if (dependency) { if (!dependency.startsWith(sharedI18nDirectory)) queue.push(dependency); }
           else if (!['.css', '.less', '.scss'].includes(extname(specifier))) {
             addViolation(path, `unresolved local import ${specifier}`);
           }

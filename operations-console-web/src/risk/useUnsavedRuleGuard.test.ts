@@ -22,6 +22,7 @@ import * as candidateState from './testCandidateState.ts';
 import { createRiskDecisionApi } from './riskDecisionApi.ts';
 import { ruleSet, ruleSetDetail, createRuleSetResponse } from './riskFixtures.ts';
 import * as unsavedGuard from './useUnsavedRuleGuard.ts';
+import { testT } from '../i18n/testing.ts';
 import { createBlockedNavigationController, installBeforeUnload, nextBlockedNavigation } from './useUnsavedRuleGuard.ts';
 import type { BeforeUnloadTarget, BlockedNavigation } from './useUnsavedRuleGuard.ts';
 
@@ -181,7 +182,7 @@ function saveNavigationHarness(postResult: ReturnType<typeof deferred<unknown>>,
   };
   const dependencies = {
     ...navigationModel, ...pageModel, ...head, ...commands, ...builder, ...catalog, ...candidateState,
-    ruleForVariableEditing: editHistoricalRule, ApiError, riskDecisionApi: api, Fragment: 'Fragment',
+    ruleForVariableEditing: editHistoricalRule, ApiError, riskDecisionApi: api, Fragment: 'Fragment', useT: testT,
     App: { useApp: () => ({ modal: { confirm() {} } }) },
     ...Object.fromEntries(['Alert', 'Button', 'Drawer', 'Input', 'Modal', 'Space', 'Spin', 'Tabs', 'RuleSetTab',
       'RuleSetDetails', 'ContentHash', 'RuleSetEditor', 'TestCandidateTab', 'TestCandidateDetails'].map(name => [name, name])),

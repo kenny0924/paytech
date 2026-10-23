@@ -1,5 +1,8 @@
 import { acceptanceMethods, offsetInstant, versionActions } from './commercial.ts';
 import type { AcceptanceMethod, AgreementParty, VersionStatus } from './commercial.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('commercial');
 
 // ---------- 版本流程：内部复核 → 客户签署 → 排期 → 生效 ----------
 
@@ -23,7 +26,7 @@ export function termVersionActions(version: { status: VersionStatus; signatureEx
 
 /** 签署列 / 状态：历史免签、客户已签署、待客户签署（已批准未签）；其余为空。 */
 export type SignatureState = 'EXEMPT' | 'SIGNED' | 'PENDING' | null;
-export const signatureStateLabels: Record<Exclude<SignatureState, null>, string> = { EXEMPT: '历史免签', SIGNED: '客户已签署', PENDING: '待客户签署' };
+/** 显示名为 commercial 命名空间的 enum.signatureState.<值>。 */
 export const signatureStateColors: Record<Exclude<SignatureState, null>, string> = { EXEMPT: 'default', SIGNED: 'cyan', PENDING: 'orange' };
 
 export function signatureState(item: { status: VersionStatus; signatureExempt: boolean; hasAcceptance?: boolean; acceptance?: unknown }): SignatureState {
@@ -35,14 +38,14 @@ export function signatureState(item: { status: VersionStatus; signatureExempt: b
 /** 列表破标列：数量 > 0 为红色「破标 N」，0 为「—」，旧 BFF 无字段为 null。 */
 export function belowStandardText(count: number | null): string | null {
   if (count === null) return null;
-  return count > 0 ? `破标 ${count}` : '—';
+  return count > 0 ? t('benchmark.belowCount', { count }) : '—';
 }
 
 // ---------- 新建版本：复制上一版本 / 基于标准价目 / 空白 ----------
 
 export const generationModes = ['COPY', 'TEMPLATE', 'BLANK'] as const;
 export type GenerationMode = typeof generationModes[number];
-export const generationModeLabels: Record<GenerationMode, string> = { COPY: '复制上一版本', TEMPLATE: '基于标准价目', BLANK: '空白' };
+/** 显示名为 commercial 命名空间的 enum.generationMode.<值>。 */
 
 /** 可选生成方式：Partner 条款与标准价目自身不能基于模板生成；没有来源版本时不能复制。 */
 export function availableGenerationModes(options: { partner: boolean; template: boolean; hasPrevious: boolean }): GenerationMode[] {
@@ -98,12 +101,12 @@ export function signatureBody(expectedChangeVersion: string, values: SignatureFo
 /** 签署表单前置检查：返回问题列表（字段规则之外的整体校验，最终以 commercial 为准）。 */
 export function signatureIssues(values: Partial<SignatureFormValues>, parties: readonly AgreementParty[]): string[] {
   const issues: string[] = [];
-  if (!values.partyId || !parties.some(party => party.partyId === values.partyId)) issues.push('签署方必须是合同的签约参与方');
-  if (!values.acceptanceMethod || !(acceptanceMethods as readonly string[]).includes(values.acceptanceMethod)) issues.push('请选择签署方式');
-  if (!values.acceptedAt || !Number.isFinite(Date.parse(values.acceptedAt))) issues.push('请选择签署时刻');
-  else if (Date.parse(values.acceptedAt) > Date.now() + 60_000) issues.push('签署时刻不能晚于现在');
-  if (!values.acceptanceReference?.trim() || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(values.acceptanceReference.trim())) issues.push('签署编号格式不正确');
-  if (!values.fileId?.trim() || !/^[1-9][0-9]{0,18}$/.test(values.fileId.trim())) issues.push('价格附件文件 ID 必须是正十进制整数');
-  if (!values.contentHash?.trim() || !/^[0-9a-fA-F]{64}$/.test(values.contentHash.trim())) issues.push('SHA-256 必须是 64 位十六进制');
+  if (!values.partyId || !parties.some(party => party.partyId === values.partyId)) issues.push(t('sign.issue.party'));
+  if (!values.acceptanceMethod || !(acceptanceMethods as readonly string[]).includes(values.acceptanceMethod)) issues.push(t('sign.issue.method'));
+  if (!values.acceptedAt || !Number.isFinite(Date.parse(values.acceptedAt))) issues.push(t('sign.issue.time'));
+  else if (Date.parse(values.acceptedAt) > Date.now() + 60_000) issues.push(t('sign.issue.future'));
+  if (!values.acceptanceReference?.trim() || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(values.acceptanceReference.trim())) issues.push(t('sign.issue.reference'));
+  if (!values.fileId?.trim() || !/^[1-9][0-9]{0,18}$/.test(values.fileId.trim())) issues.push(t('sign.issue.fileId'));
+  if (!values.contentHash?.trim() || !/^[0-9a-fA-F]{64}$/.test(values.contentHash.trim())) issues.push(t('sign.issue.hash'));
   return issues;
 }

@@ -6,10 +6,11 @@ import { localTime } from '../../finance/finance';
 import { FinanceNote } from '../../finance/FinanceParts';
 import { ActorText } from '../../finance/WorkflowParts';
 import { usePaging } from '../../hooks/usePaging';
+import { useT } from '../../i18n/react';
 import { DetailSection, ReconDetailPage } from '../ReconDetail';
 import {
-  channelLineMatchStatusLabels, decodeStatementDetail, decodeWithId, directionLabels, hasReconAction, lineMatchStatusLabels, lineTypeLabels, pageOf, reconActions, reconPaths,
-  statementStatusLabels,
+  channelLineMatchStatusEnum, decodeStatementDetail, decodeWithId, directionEnum, hasReconAction, lineMatchStatusEnum, lineTypeEnum, pageOf, reconActions, reconLabel,
+  reconOptions, reconPaths, statementStatusEnum,
 } from '../reconModel';
 import type { ChannelStatement, ChannelStatementDetail as StatementDetail, ChannelStatementLine, ReconcileGate } from '../reconModel';
 import { EmptyHint, Money, ReconCommandFeedback, ReconTag } from '../ReconParts';
@@ -21,18 +22,16 @@ interface Props { statementId: string; resources: ConsoleResource[]; actorId: st
 
 const linePage = pageOf(decodeWithId<ChannelStatementLine>('lineId'));
 const lineSize = 20;
-const options = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
 
-/** 对平门禁五项（AC-V3）：全部满足才对平。 */
-const gateItems: readonly [keyof ReconcileGate, string][] = [
-  ['transactionLinesMatched', '交易行都已匹配到平台流水'], ['adjustmentLinesClassified', '调整行与无交易号费用行都已归类'],
-  ['noBlockingException', '没有阻塞对平的开放异常'], ['totalsConsistent', '各行回放与账单头合计一致'],
-  ['settlementCashAccountConfigured', '清算账户已配置到账银行账户'],
+/** 对平门禁五项（AC-V3）：全部满足才对平；文案为 recon.gate.<项>。 */
+const gateItems: readonly (keyof ReconcileGate)[] = [
+  'transactionLinesMatched', 'adjustmentLinesClassified', 'noBlockingException', 'totalsConsistent', 'settlementCashAccountConfigured',
 ];
 
 function GateList({ gate }: { gate: ReconcileGate }) {
-  return <div className="recon-gate">{gateItems.map(([key, label]) => <div key={key} className={`recon-gate-item ${gate[key] ? 'is-pass' : 'is-fail'}`}>
-    <span aria-hidden="true">{gate[key] ? '✓' : '✗'}</span><span>{label}</span></div>)}</div>;
+  const t = useT('recon');
+  return <div className="recon-gate">{gateItems.map(key => <div key={key} className={`recon-gate-item ${gate[key] ? 'is-pass' : 'is-fail'}`}>
+    <span aria-hidden="true">{gate[key] ? '✓' : '✗'}</span><span>{t(`gate.${key}`)}</span></div>)}</div>;
 }
 
 /**
@@ -41,61 +40,64 @@ function GateList({ gate }: { gate: ReconcileGate }) {
  * <li>作废按「对账操作」按钮资源显示，只限接收中与匹配中。</li>
  */
 export function ChannelStatementDetail({ statementId, resources, actorId, onAuthorizationChanged }: Props) {
+  const t = useT('recon');
   const { message } = App.useApp();
   const location = useLocation();
   const canOperate = hasReconAction(resources, reconActions.operate);
   const valid = isReconId(statementId);
   const decode = useMemo(() => decodeStatementDetail(statementId), [statementId]);
-  const detail = useReconDetail<StatementDetail>(valid ? reconPaths.channelStatement(statementId) : null, decode, onAuthorizationChanged, '渠道账单详情加载失败');
+  const detail = useReconDetail<StatementDetail>(valid ? reconPaths.channelStatement(statementId) : null, decode, onAuthorizationChanged, t('statementDetail.loadFailed'));
   const command = useReconCommand(onAuthorizationChanged);
   const highlight = highlightLineNo(location.search);
   const item = detail.item; const statement = item?.statement;
   async function voidStatement() {
-    const result = await command.run(reconPaths.channelStatementVoid(statementId), 'POST', undefined, decodeWithId('statementId', statementId), '作废渠道账单失败');
+    const result = await command.run(reconPaths.channelStatementVoid(statementId), 'POST', undefined, decodeWithId('statementId', statementId), t('statementDetail.voidFailed'));
     if (!result) return;
-    void message.success('已作废，账单行的匹配与费用已释放'); detail.reload();
+    void message.success(t('statementDetail.voided')); detail.reload();
   }
   const voidAction = statement && canOperate && (statement.status === 'RECEIVING' || statement.status === 'MATCHING') && <Popconfirm
-    title="作废后本账单行的匹配和费用失效，平台流水回到未匹配，本账单的开放异常自动关闭。确认作废？" okText="作废" cancelText="取消"
-    okButtonProps={{ danger: true }} onConfirm={() => void voidStatement()}><Button danger loading={command.saving}>作废</Button></Popconfirm>;
-  return <ReconDetailPage list={{ label: '渠道账单', route: reconRoutes.statements }} objectLabel="渠道账单" state={detail} actions={voidAction}
-    title={statement ? <>渠道账单 · <span className="mono">{statement.channelBatchRef}</span>{statement.revision > 1 ? ` · v${statement.revision}` : ''}</> : null}>
+    title={t('statementDetail.confirmVoid')} okText={t('statementDetail.void')} cancelText={t('common.cancel')}
+    okButtonProps={{ danger: true }} onConfirm={() => void voidStatement()}><Button danger loading={command.saving}>{t('statementDetail.void')}</Button></Popconfirm>;
+  return <ReconDetailPage list={{ label: t('link.statements'), route: reconRoutes.statements }} objectLabel={t('statement.object')} state={detail} actions={voidAction}
+    title={statement ? <>{t('statementDetail.titlePrefix')}<span className="mono">{statement.channelBatchRef}</span>{statement.revision > 1 ? ` · v${statement.revision}` : ''}</> : null}>
     {current => <>
       <ReconCommandFeedback command={command} onReload={() => { command.clearConflict(); detail.reload(); }} />
-      {current.statement.status === 'REJECTED' && <Alert type="error" showIcon className="finance-banner" title={`整单被拒：${current.statement.rejectReason ?? ''}`} />}
+      {current.statement.status === 'REJECTED' && <Alert type="error" showIcon className="finance-banner" title={t('statement.rejected', { reason: current.statement.rejectReason ?? '' })} />}
       <StatementHead detail={current} actorId={actorId} />
-      {current.gate && <DetailSection title="对平门禁"><GateList gate={current.gate} /></DetailSection>}
+      {current.gate && <DetailSection title={t('statementDetail.gate')}><GateList gate={current.gate} /></DetailSection>}
       {/* 版本变化（作废等）后重新挂载账单行，读取最新匹配状态 */}
       <StatementLines key={current.statement.version} statement={current.statement} highlight={highlight} />
-      <FinanceNote>同一清算账户 + 批次号只允许一个未作废版本：要更正，先作废匹配中的版本再重新上传；已对平的账单不能更正或作废。{!canOperate && ' 当前账号没有对账操作权限。'}</FinanceNote>
+      <FinanceNote>{t('statementDetail.note')}{!canOperate && ' ' + t('permission.noOperate')}</FinanceNote>
     </>}
   </ReconDetailPage>;
 }
 
 function StatementHead({ detail, actorId }: { detail: StatementDetail; actorId: string }) {
+  const t = useT('recon');
   const statement = detail.statement;
   return <Descriptions size="small" column={3} items={[
-    { key: 'account', label: '清算账户', children: <Link className="mono" to={reconRoutes.clearingAccount(statement.clearingAccountId)}>{statement.clearingAccountCode}</Link> },
-    { key: 'date', label: '结算日', children: statement.settlementDate },
-    { key: 'status', label: '状态', children: <ReconTag status={statement.status} labels={statementStatusLabels} /> },
-    { key: 'gross', label: '总额', children: <><Money value={statement.grossAmount} /> {statement.currency}</> },
-    { key: 'fee', label: '费用', children: <Money value={statement.feeAmount} /> },
-    { key: 'net', label: '净额', children: <><Money value={statement.netAmount} /> {directionLabels[statement.cashDirection] ?? statement.cashDirection}</> },
-    { key: 'confirmed', label: '已到账', children: <Money value={statement.cashConfirmedAmount} /> },
-    { key: 'lines', label: '行（已匹配 / 未匹配 / 异常）', children: `${detail.matchedLineCount} / ${detail.unmatchedLineCount} / ${detail.exceptionLineCount}` },
-    { key: 'imported', label: '已导入 / 声明行数', children: `${statement.importedLineCount} / ${statement.declaredLineCount}` },
-    { key: 'exceptions', label: '开放异常', children: detail.openExceptionCount
-      ? <Link to={withQuery(reconRoutes.exceptions, { statementId: statement.statementId })}>{detail.openExceptionCount} 条，去处置</Link> : '0' },
-    { key: 'movement', label: '预期到账', children: detail.expectedMovementId ? <span className="mono">{detail.expectedMovementId}</span> : '—' },
-    { key: 'file', label: '文件', children: statement.fileName },
-    { key: 'maker', label: '上传人', children: <ActorText value={statement.makerId} actorId={actorId} /> },
-    { key: 'created', label: '上传时间', children: localTime(statement.createTime) },
-    { key: 'reconciled', label: '对平时间', children: statement.reconciledTime ? localTime(statement.reconciledTime) : '—' },
+    { key: 'account', label: t('field.clearingAccount'), children: <Link className="mono" to={reconRoutes.clearingAccount(statement.clearingAccountId)}>{statement.clearingAccountCode}</Link> },
+    { key: 'date', label: t('field.settlementDate'), children: statement.settlementDate },
+    { key: 'status', label: t('field.status'), children: <ReconTag status={statement.status} kind={statementStatusEnum} /> },
+    { key: 'gross', label: t('field.grossAmount'), children: <><Money value={statement.grossAmount} /> {statement.currency}</> },
+    { key: 'fee', label: t('field.feeAmount'), children: <Money value={statement.feeAmount} /> },
+    { key: 'net', label: t('field.netAmount'), children: <><Money value={statement.netAmount} /> {reconLabel(t, directionEnum, statement.cashDirection)}</> },
+    { key: 'confirmed', label: t('field.cashConfirmed'), children: <Money value={statement.cashConfirmedAmount} /> },
+    { key: 'lines', label: t('statementDetail.lineCounts'), children: `${detail.matchedLineCount} / ${detail.unmatchedLineCount} / ${detail.exceptionLineCount}` },
+    { key: 'imported', label: t('statementDetail.importedDeclared'), children: `${statement.importedLineCount} / ${statement.declaredLineCount}` },
+    { key: 'exceptions', label: t('statementDetail.openExceptions'), children: detail.openExceptionCount
+      ? <Link to={withQuery(reconRoutes.exceptions, { statementId: statement.statementId })}>{t('statementDetail.resolveExceptions', { count: detail.openExceptionCount })}</Link> : '0' },
+    { key: 'movement', label: t('statementDetail.expectedCash'), children: detail.expectedMovementId ? <span className="mono">{detail.expectedMovementId}</span> : '—' },
+    { key: 'file', label: t('field.file'), children: statement.fileName },
+    { key: 'maker', label: t('field.uploadedBy'), children: <ActorText value={statement.makerId} actorId={actorId} /> },
+    { key: 'created', label: t('field.uploadedAt'), children: localTime(statement.createTime) },
+    { key: 'reconciled', label: t('field.reconciledAt'), children: statement.reconciledTime ? localTime(statement.reconciledTime) : '—' },
   ]} />;
 }
 
 /** 全部账单行：分页、按匹配状态 / 行类型筛选；高亮行翻到所在页（行号从 1 连续）并滚动到可见。 */
 function StatementLines({ statement, highlight }: { statement: ChannelStatement; highlight: number | null }) {
+  const t = useT('recon');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const lines = usePaging<ChannelStatementLine>(reconPaths.channelStatementLines(statement.statementId), linePage, {},
     { initialPaging: { page: highlight ? linePageOf(highlight, lineSize) : 1, size: lineSize } });
@@ -107,29 +109,29 @@ function StatementLines({ statement, highlight }: { statement: ChannelStatement;
   useEffect(() => {
     if (highlighted) document.querySelector('.recon-line-highlight')?.scrollIntoView({ block: 'center' });
   }, [highlighted]);
-  return <DetailSection title={`账单行（${statement.importedLineCount}）`} extra={<span className="recon-filters">
-    <Select allowClear placeholder="匹配状态" style={{ width: 160 }} options={options(channelLineMatchStatusLabels)} onChange={value => setFilter('matchStatus', value)} />
-    <Select allowClear placeholder="行类型" style={{ width: 160 }} options={options(lineTypeLabels)} onChange={value => setFilter('lineType', value)} />
+  return <DetailSection title={t('statementDetail.linesTitle', { count: statement.importedLineCount })} extra={<span className="recon-filters">
+    <Select allowClear placeholder={t('field.matchStatus')} style={{ width: 160 }} options={reconOptions(t, channelLineMatchStatusEnum)} onChange={value => setFilter('matchStatus', value)} />
+    <Select allowClear placeholder={t('field.lineType')} style={{ width: 160 }} options={reconOptions(t, lineTypeEnum)} onChange={value => setFilter('lineType', value)} />
   </span>}>
-    {highlight && !highlighted && !lines.loading && <Alert type="info" showIcon className="finance-banner" title={`第 ${highlight} 行不在当前页或筛选结果中`} />}
+    {highlight && !highlighted && !lines.loading && <Alert type="info" showIcon className="finance-banner" title={t('statementDetail.highlightMissing', { lineNo: highlight })} />}
     <section className="table-panel"><Table<ChannelStatementLine> rowKey="lineId" size="small" tableLayout="fixed" dataSource={lines.data.items}
-      loading={lines.loading} scroll={{ x: 1180 }} pagination={{ ...lines.pagination, showTotal: total => `共 ${total} 行` }}
+      loading={lines.loading} scroll={{ x: 1180 }} pagination={{ ...lines.pagination, showTotal: total => t('common.totalLines', { total }) }}
       rowClassName={row => row.lineNo === highlight ? 'recon-line-highlight' : ''}
-      locale={{ emptyText: <EmptyHint text={Object.keys(filters).length ? '没有符合条件的账单行' : '这张账单还没有导入的行'} /> }} columns={[
-        { title: '行号', width: 70, dataIndex: 'lineNo' },
-        { title: '类型', width: 80, render: (_, row) => lineTypeLabels[row.lineType] ?? row.lineType },
-        { title: '方向', width: 90, render: (_, row) => directionLabels[row.direction] ?? row.direction },
-        { title: '金额', width: 120, align: 'right', render: (_, row) => <Money value={row.amount} /> },
-        { title: '行费用', width: 100, align: 'right', render: (_, row) => <Money value={row.feeAmount} /> },
-        { title: '交易日', width: 110, render: (_, row) => row.transactionDate ?? '—' },
-        { title: '外部交易号', width: 200, render: (_, row) => row.externalTransactionId
+      locale={{ emptyText: <EmptyHint text={Object.keys(filters).length ? t('statementDetail.linesEmptyFiltered') : t('statementDetail.linesEmpty')} /> }} columns={[
+        { title: t('field.lineNo'), width: 70, dataIndex: 'lineNo' },
+        { title: t('field.type'), width: 80, render: (_, row) => reconLabel(t, lineTypeEnum, row.lineType) },
+        { title: t('field.direction'), width: 90, render: (_, row) => reconLabel(t, directionEnum, row.direction) },
+        { title: t('field.amount'), width: 120, align: 'right', render: (_, row) => <Money value={row.amount} /> },
+        { title: t('field.lineFee'), width: 100, align: 'right', render: (_, row) => <Money value={row.feeAmount} /> },
+        { title: t('field.transactionDate'), width: 110, render: (_, row) => row.transactionDate ?? '—' },
+        { title: t('field.externalTransactionId'), width: 200, render: (_, row) => row.externalTransactionId
           ? <span className="mono">{row.externalTransactionId}<div className="cell-meta">{row.referenceType}</div></span> : <span className="muted">—</span> },
-        { title: '匹配状态', width: 100, render: (_, row) => <ReconTag status={row.matchStatus} labels={lineMatchStatusLabels} /> },
-        { title: '平台流水', width: 190, render: (_, row) => row.platformTxnId
+        { title: t('field.matchStatus'), width: 100, render: (_, row) => <ReconTag status={row.matchStatus} kind={lineMatchStatusEnum} /> },
+        { title: t('link.platformTxns'), width: 190, render: (_, row) => row.platformTxnId
           ? <Link className="mono" to={platformTxnsOfLine({ clearingAccountId: statement.clearingAccountId, externalTransactionId: row.externalTransactionId })}>
-            {row.platformTxnId}<div className="cell-meta">{row.matchMethod === 'MANUAL' ? '人工' : '自动'}</div></Link>
-          : row.resolutionId ? <span className="cell-meta">已归类（处置 {row.resolutionId}）</span> : <span className="muted">—</span> },
-        { title: '实际费用', width: 110, align: 'right', render: (_, row) => <Money value={row.actualFee} /> },
+            {row.platformTxnId}<div className="cell-meta">{row.matchMethod === 'MANUAL' ? t('match.manual') : t('match.auto')}</div></Link>
+          : row.resolutionId ? <span className="cell-meta">{t('statementDetail.classified', { resolutionId: row.resolutionId })}</span> : <span className="muted">—</span> },
+        { title: t('field.actualFee'), width: 110, align: 'right', render: (_, row) => <Money value={row.actualFee} /> },
       ]} /></section>
   </DetailSection>;
 }

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { transformWithOxc } from 'vite';
 import type { VariableProjection, VariableSummary } from './riskVariable.ts';
 import { variableDefinitions } from './variableFixtures.ts';
+import { testT } from '../i18n/testing.ts';
 
 type Node = { type: unknown; props: Record<string, unknown>; children: unknown[] };
 
@@ -45,7 +46,7 @@ async function projectionHost(list: (...args: unknown[]) => Promise<unknown>) {
       return { type, props: props ?? {}, children };
     },
     Fragment: 'Fragment', Button: 'Button', Alert: 'Alert', Tooltip: 'Tooltip', Tag: 'Tag', Space: 'Space',
-    window: new EventTarget(), variableApi: { list },
+    window: new EventTarget(), variableApi: { list }, useT: testT,
   };
   const component = new Function(...Object.keys(dependencies), `${code}\nreturn VariableProjectionPanel;`)(...Object.values(dependencies));
   return {

@@ -4,36 +4,37 @@ import test from 'node:test';
 import { transformWithOxc } from 'vite';
 import { ApiError } from '../api/session.ts';
 import type { PermissionNode, RoleResponseBody } from '../api/types.ts';
-import { permissionRemovalImpact, permissionSelection, permissionTree, roleCommand, togglePermissionNode } from './roleEditor.ts';
+import { testT } from '../i18n/testing.ts';
+import { permissionNodeTitle, permissionRemovalImpact, permissionSelection, permissionTree, roleCommand, togglePermissionNode } from './roleEditor.ts';
 
 const nodes: PermissionNode[] = [{
-  nodeId: 'resource:system', displayName: '系统管理', permissionId: '100', children: [{
-    nodeId: 'resource:accounts', displayName: '人员管理', permissionId: '101', children: [
-      { nodeId: 'resource:create', displayName: '创建人员', permissionId: '102', children: [] },
-      { nodeId: 'resource:disable', displayName: '禁用人员', permissionId: '103', children: [] },
-      { nodeId: 'resource:assign', displayName: '分配角色', permissionId: '104', children: [] },
+  nodeId: 'resource:system', code: 'SYSTEM', displayName: '系统管理', permissionId: '100', children: [{
+    nodeId: 'resource:accounts', code: 'ACCOUNTS', displayName: '人员管理', permissionId: '101', children: [
+      { nodeId: 'resource:create', code: 'CREATE', displayName: '创建人员', permissionId: '102', children: [] },
+      { nodeId: 'resource:disable', code: 'DISABLE', displayName: '禁用人员', permissionId: '103', children: [] },
+      { nodeId: 'resource:assign', code: 'ASSIGN', displayName: '分配角色', permissionId: '104', children: [] },
     ],
-  }, { nodeId: 'resource:roles', displayName: '角色管理', permissionId: '110', children: [
-    { nodeId: 'resource:role-create', displayName: '创建角色', permissionId: '111', children: [] },
-    { nodeId: 'resource:role-edit', displayName: '编辑角色', permissionId: '112', children: [] },
+  }, { nodeId: 'resource:roles', code: 'ROLES', displayName: '角色管理', permissionId: '110', children: [
+    { nodeId: 'resource:role-create', code: 'ROLE_CREATE', displayName: '创建角色', permissionId: '111', children: [] },
+    { nodeId: 'resource:role-edit', code: 'ROLE_EDIT', displayName: '编辑角色', permissionId: '112', children: [] },
   ] }],
-}, { nodeId: 'group:other', displayName: '其他权限', permissionId: null,
-  children: [{ nodeId: 'permission:200', displayName: '其他能力', permissionId: '200', children: [] }] }];
+}, { nodeId: 'group:other', code: 'OTHER_PERMISSIONS', displayName: '其他权限', permissionId: null,
+  children: [{ nodeId: 'permission:200', code: 'PERMISSION_200', displayName: '其他能力', permissionId: '200', children: [] }] }];
 const values = { roleCode: 'SUPPORT_TEAM', roleName: '  客服角色  ', reason: '  支持日常查询  ' };
 const role: RoleResponseBody = {
   roleId: '900000000000000777', roleCode: 'EXISTING_ROLE', roleName: '客服', systemRole: false, version: 7, permissionIds: ['101'],
 };
 const riskNodes: PermissionNode[] = [{
-  nodeId: 'resource:OPERATIONS_RISK_MANAGEMENT', displayName: '风控管理', permissionId: '900000000000000536', children: [{
-    nodeId: 'resource:OPERATIONS_RISK_RULE_CONFIGURATION', displayName: '规则配置', permissionId: '900000000000000536', children: [
-      { nodeId: 'resource:OPERATIONS_RISK_RULE_SET_SAVE', displayName: '保存为新版本', permissionId: '900000000000000537', children: [] },
-      { nodeId: 'resource:OPERATIONS_RISK_RULE_SET_FREEZE', displayName: '冻结版本', permissionId: '900000000000000538', children: [] },
-      { nodeId: 'resource:OPERATIONS_RISK_TEST_CANDIDATE_CREATE', displayName: '创建 TEST Candidate', permissionId: '900000000000000539', children: [] },
-      { nodeId: 'resource:OPERATIONS_RISK_TEST_CANDIDATE_VALIDATE', displayName: '执行静态校验', permissionId: '900000000000000540', children: [] },
+  nodeId: 'resource:OPERATIONS_RISK_MANAGEMENT', code: 'OPERATIONS_RISK_MANAGEMENT', displayName: '风控管理', permissionId: '900000000000000536', children: [{
+    nodeId: 'resource:OPERATIONS_RISK_RULE_CONFIGURATION', code: 'OPERATIONS_RISK_RULE_CONFIGURATION', displayName: '规则配置', permissionId: '900000000000000536', children: [
+      { nodeId: 'resource:OPERATIONS_RISK_RULE_SET_SAVE', code: 'OPERATIONS_RISK_RULE_SET_SAVE', displayName: '保存为新版本', permissionId: '900000000000000537', children: [] },
+      { nodeId: 'resource:OPERATIONS_RISK_RULE_SET_FREEZE', code: 'OPERATIONS_RISK_RULE_SET_FREEZE', displayName: '冻结版本', permissionId: '900000000000000538', children: [] },
+      { nodeId: 'resource:OPERATIONS_RISK_TEST_CANDIDATE_CREATE', code: 'OPERATIONS_RISK_TEST_CANDIDATE_CREATE', displayName: '创建 TEST Candidate', permissionId: '900000000000000539', children: [] },
+      { nodeId: 'resource:OPERATIONS_RISK_TEST_CANDIDATE_VALIDATE', code: 'OPERATIONS_RISK_TEST_CANDIDATE_VALIDATE', displayName: '执行静态校验', permissionId: '900000000000000540', children: [] },
     ],
   }],
 }, {
-  nodeId: 'resource:OPERATIONS_AUDIT', displayName: '审计日志', permissionId: '900000000000000600', children: [],
+  nodeId: 'resource:OPERATIONS_AUDIT', code: 'OPERATIONS_AUDIT', displayName: '审计日志', permissionId: '900000000000000600', children: [],
 }];
 const riskRead = '900000000000000536';
 const riskSave = '900000000000000537';
@@ -62,7 +63,7 @@ function rolePermissionHarness(initialPermissionIds: string[]) {
     usePaging: () => ({ data: { page: 1, size: 10, total: 0, items: [] }, loading: false, error: null,
       refresh() {}, pagination: { current: 1, pageSize: 10, onChange() {} } }),
     DeleteConfirmationModal: 'DeleteConfirmationModal', roleDeletionCommand: () => ({}),
-    permissionRemovalImpact, permissionSelection, permissionTree, roleCommand, togglePermissionNode,
+    permissionRemovalImpact, permissionSelection, permissionTree, roleCommand, togglePermissionNode, useT: testT,
     App: { useApp: () => ({ message: { success() {} }, modal: { confirm(value: ConfirmOptions) { confirmations.push(value); } } }) },
     Form, Input, Fragment: 'Fragment',
     ...Object.fromEntries(['Button', 'Drawer', 'Space', 'Spin', 'Table', 'Tag', 'Tooltip', 'Tree'].map(name => [name, name])),
@@ -163,7 +164,7 @@ test('structural groups batch select their permissions without submitting a grou
 });
 
 test('repeated permission IDs remain one actual grant across resource nodes', () => {
-  const aliases: PermissionNode[] = [nodes[0], { nodeId: 'resource:alias', displayName: '相同真实权限', permissionId: '102', children: [] }];
+  const aliases: PermissionNode[] = [nodes[0], { nodeId: 'resource:alias', code: 'ALIAS', displayName: '相同真实权限', permissionId: '102', children: [] }];
   const selected = togglePermissionNode(aliases, [], 'resource:create', true);
   assert.deepEqual(selected, ['100', '101', '102']);
   assert.deepEqual(permissionSelection(aliases, selected).checked, ['resource:create', 'resource:alias']);
@@ -262,9 +263,21 @@ test('Roles confirms descendant removal before the false toggle callback', () =>
     'only the confirmation callback contains an explicit destructive subtree toggle');
 });
 
+test('tree titles: resources use the menu name, the other-permissions group is translated, bare permissions show their code', () => {
+  const tree = permissionTree([...riskNodes, nodes[1]]);
+  assert.equal(tree[0].title, 'Risk', 'nav.resource.OPERATIONS_RISK_MANAGEMENT');
+  assert.equal(tree[0].children[0].title, 'Rules');
+  assert.equal(tree[1].title, 'Audit Log');
+  assert.equal(tree[2].title, testT('access')('permissionTree.other'));
+  assert.equal(tree[2].title, 'Other Permissions');
+  assert.equal(tree[2].children[0].title, '其他能力', 'no nav key: the BFF display name (the permission code for bare permissions)');
+  assert.equal(permissionNodeTitle({ code: 'RISK_CASE_READ', displayName: 'RISK_CASE_READ' }), 'RISK_CASE_READ');
+  assert.equal(permissionNodeTitle({ code: 'OPERATIONS_NOT_YET_IN_NAV', displayName: '新菜单' }), '新菜单');
+});
+
 test('invalid trees reject duplicate resource keys and malformed descendants before display', () => {
   for (const invalid of [null, [{ ...nodes[0], children: null }], [nodes[0], nodes[0]],
-    [{ ...nodes[0], permissionId: 100 }]]) {
+    [{ ...nodes[0], permissionId: 100 }], [{ ...nodes[0], code: '' }], [{ ...nodes[0], code: undefined }]]) {
     assert.throws(() => permissionTree(invalid as unknown as PermissionNode[]),
       (error: unknown) => error instanceof ApiError && error.code === 'INVALID_RESPONSE');
   }

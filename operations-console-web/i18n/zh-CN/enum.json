@@ -1,0 +1,10 @@
+{
+  "enum.locale_status.disabled": "已停用",
+  "enum.locale_status.enabled": "已启用",
+  "enum.release_display.checking": "检查中",
+  "enum.release_display.failed": "检查失败",
+  "enum.release_display.live": "线上",
+  "enum.release_display.offline": "已下线",
+  "enum.text_direction.ltr": "从左到右",
+  "enum.text_direction.rtl": "从右到左"
+}

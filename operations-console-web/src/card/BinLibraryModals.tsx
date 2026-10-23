@@ -3,8 +3,10 @@ import type { ChangeEvent } from 'react';
 import { Alert, Button, Checkbox, Modal, Progress, Steps, Table, Tag } from 'antd';
 import {
   activationConflictMessage, binLibraryPaths, csvColumns, csvFileIssue, csvTemplate, decodeActivation, decodeUploadCompletion, decodeUploadStart,
-  decodeVersion, formatCount, previewCsv, rowDelta, versionAction, versionStatusColors, versionStatusLabels,
+  decodeVersion, formatCount, previewCsv, rowDelta, versionAction, versionStatusColors,
 } from './binLibrary';
+import { enumLabel } from '../i18n/index';
+import { useT } from '../i18n/react';
 import type { BinLibraryVersion, CsvPreview, UploadCompletion } from './binLibrary';
 import { putFile } from './directUpload';
 import { useBinLibraryCommand } from './useBinLibraryCommand';
@@ -24,6 +26,7 @@ interface Picked { file: File; issue: string | null; preview: CsvPreview | null 
 export function ImportModal({ onClose, onCreated, onAuthorizationChanged }: {
   onClose: () => void; onCreated: (version: BinLibraryVersion) => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('card'), tCommon = useT('common');
   const command = useBinLibraryCommand(onAuthorizationChanged);
   const [picked, setPicked] = useState<Picked | null>(null);
   const [stage, setStage] = useState<Stage>('select');
@@ -57,24 +60,24 @@ export function ImportModal({ onClose, onCreated, onAuthorizationChanged }: {
       }
       setStage('create');
       const version = await command.run(binLibraryPaths.versions, { fileAddress: completion.current.fileAddress }, decodeVersion,
-        '创建版本失败', controller.signal);
+        t('import.createFailed'), controller.signal);
       if (version) onCreated(version);
     } finally { if (!controller.signal.aborted) setRunning(false); }
   }
 
   async function upload(file: File, signal: AbortSignal): Promise<UploadCompletion | null> {
     const started = await command.run(binLibraryPaths.uploads, { fileName: file.name, sizeBytes: String(file.size) }, decodeUploadStart,
-      '开始上传失败', signal);
+      t('import.startFailed'), signal);
     if (!started) return null;
     try {
       await putFile(started.authorization, file, (loaded, total) => setProgress({ loaded, total }), signal);
     } catch (error) {
-      if (!signal.aborted) setFailure(error instanceof Error ? error.message : '上传失败，请重试');
+      if (!signal.aborted) setFailure(error instanceof Error ? error.message : t('upload.failed'));
       return null;
     }
-    const done = await command.run(binLibraryPaths.uploadCompletion(started.uploadId), undefined, decodeUploadCompletion, '完成上传失败', signal);
+    const done = await command.run(binLibraryPaths.uploadCompletion(started.uploadId), undefined, decodeUploadCompletion, t('import.completeFailed'), signal);
     if (done && blockedScans.has(done.scanStatus)) {
-      setFailure('文件未通过安全扫描，请检查文件后重新选择。');
+      setFailure(t('import.scanBlocked'));
       return null;
     }
     return done;
@@ -89,37 +92,36 @@ export function ImportModal({ onClose, onCreated, onAuthorizationChanged }: {
   const percent = progress && progress.total > 0 ? Math.floor(progress.loaded * 100 / progress.total) : 0;
   const stepIndex = stage === 'select' ? 0 : stage === 'upload' ? 1 : 2;
   const error = failure ?? command.formError;
-  return <Modal open wrapClassName="dq-modal bin-modal" title="导入新版本" width={760} destroyOnHidden onCancel={close}
-    footer={[<Button key="cancel" onClick={close}>{running ? '取消上传' : '取消'}</Button>,
+  return <Modal open wrapClassName="dq-modal bin-modal" title={t('import.title')} width={760} destroyOnHidden onCancel={close}
+    footer={[<Button key="cancel" onClick={close}>{running ? t('import.cancelUpload') : tCommon('action.cancel')}</Button>,
       <Button key="start" type="primary" disabled={!ready} loading={running} onClick={() => void start()}>
-        {running ? (stage === 'upload' ? '上传中…' : '创建版本中…') : error ? '重试' : '开始导入'}</Button>]}>
+        {running ? (stage === 'upload' ? t('import.uploading') : t('import.creating')) : error ? tCommon('action.retry') : t('import.start')}</Button>]}>
     <Steps size="small" current={stepIndex} status={error ? 'error' : undefined} className="bin-steps"
-      items={[{ title: '选择文件' }, { title: '上传文件' }, { title: '创建版本并校验' }]} />
+      items={[{ title: t('import.step.select') }, { title: t('import.step.upload') }, { title: t('import.step.create') }]} />
     {error && <Alert type="error" showIcon className="dq-banner" title={error} />}
     <div className="bin-file-row">
       <label className="ant-btn ant-btn-default bin-file-button">
-        {picked ? '更换文件' : '选择 CSV 文件'}
+        {picked ? t('import.changeFile') : t('import.selectFile')}
         <input type="file" accept=".csv,text/csv" hidden disabled={running} onChange={event => void pick(event)} />
       </label>
       {picked && <span><span className="mono">{picked.file.name}</span>
         <span className="muted"> · {(picked.file.size / 1024 / 1024).toFixed(1)} MB</span></span>}
     </div>
-    {picked?.issue && <Alert type="error" showIcon className="dq-banner" title={`本地预检未通过：${picked.issue}`} />}
-    {picked && !picked.issue && <p className="muted">本地预检：表头正确，前 {picked.preview?.rows.length ?? 0} 行格式正确（完整校验在创建版本后进行）。</p>}
+    {picked?.issue && <Alert type="error" showIcon className="dq-banner" title={t('import.precheckFailed', { issue: picked.issue })} />}
+    {picked && !picked.issue && <p className="muted">{t('import.precheckPassed', { rows: picked.preview?.rows.length ?? 0 })}</p>}
     {picked?.preview?.headerValid && <Table size="small" pagination={false} rowKey={(_, index) => String(index)} tableLayout="fixed"
       scroll={{ x: 760 }} dataSource={picked.preview.rows.map(cells => ({ cells }))}
       columns={csvColumns.map((column, index) => ({ title: <span className="mono">{column}</span>, render: (_: unknown, row: { cells: string[] }) =>
         <span className="mono">{row.cells[index] || '—'}</span> }))} />}
     {stage !== 'select' && <div className="bin-upload-progress">
-      <span>{stage === 'upload' ? '正在直传到文件存储…' : '上传完成，正在创建版本…'}</span>
+      <span>{stage === 'upload' ? t('import.uploadingDirect') : t('import.uploadedCreating')}</span>
       <Progress percent={stage === 'create' ? 100 : percent} status={error ? 'exception' : running ? 'active' : undefined}
         format={value => progress && stage === 'upload' ? `${(progress.loaded / 1024 / 1024).toFixed(1)} / ${(progress.total / 1024 / 1024).toFixed(1)} MB · ${value}%` : `${value}%`} />
     </div>}
     <div className="dq-note">
-      文件不经过网关，直接上传到对象存储；上传完成后自动创建版本，并在后台完整校验。关闭对话框会中止上传。<br />
-      平台标准 CSV：UTF-8 · 逗号分隔 · 第 1 行为固定表头 · 文件 ≤ 50 MB、≤ 100 万行 · bin_prefix 6～8 位数字且同一前缀不得重复 ·
-      card_brand、issuer_country 必填 · 发卡区域按平台国家区域映射自动推导。{' '}
-      <a href={templateHref} download="card-bin-library-template.csv">下载示例模板</a>
+      {t('import.note.direct')}<br />
+      {t('import.note.format')}{' '}
+      <a href={templateHref} download="card-bin-library-template.csv">{t('import.note.template')}</a>
     </div>
   </Modal>;
 }
@@ -131,6 +133,7 @@ export function ImportModal({ onClose, onCreated, onAuthorizationChanged }: {
 export function ActivationModal({ target, active, onClose, onDone, onAuthorizationChanged }: {
   target: BinLibraryVersion; active: BinLibraryVersion | null; onClose: () => void; onDone: () => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('card'), tCommon = useT('common');
   const command = useBinLibraryCommand(onAuthorizationChanged);
   const [confirmed, setConfirmed] = useState(false);
   const action = versionAction(target);
@@ -138,44 +141,46 @@ export function ActivationModal({ target, active, onClose, onDone, onAuthorizati
   const rollback = action.kind === 'ROLLBACK';
   const submit = async () => {
     const result = await command.run(binLibraryPaths.activation(target.versionNo), { expectedActiveVersionNo: active?.versionNo ?? null },
-      decodeActivation, `${action.verb}失败`);
+      decodeActivation, rollback ? t('activation.rollbackFailed') : t('activation.activateFailed'));
     if (result) onDone();
   };
   const delta = rowDelta(active?.totalRows ?? null, target.totalRows);
-  return <Modal open wrapClassName="dq-modal bin-modal" title={rollback ? `回切到 v${target.versionNo}` : `激活版本 v${target.versionNo}`}
-    okText={rollback ? '确认回切' : '确认激活'} cancelText="取消" confirmLoading={command.saving} width={560} destroyOnHidden
+  const versionNo = target.versionNo;
+  return <Modal open wrapClassName="dq-modal bin-modal" title={rollback ? t('activation.rollbackTitle', { versionNo }) : t('activation.activateTitle', { versionNo })}
+    okText={rollback ? t('activation.confirmRollback') : t('activation.confirmActivate')} cancelText={tCommon('action.cancel')} confirmLoading={command.saving} width={560} destroyOnHidden
     okButtonProps={{ disabled: !confirmed || command.conflict, danger: rollback }} onOk={() => void submit()}
     onCancel={() => { if (!command.saving) onClose(); }} mask={{ closable: !command.saving }}>
-    {command.conflict && <Alert type="error" showIcon className="dq-banner" title={activationConflictMessage}
-      description={`页面看到的生效版本是 ${active ? `v${active.versionNo}` : '无'}。`} action={<Button size="small" onClick={onDone}>刷新</Button>} />}
+    {command.conflict && <Alert type="error" showIcon className="dq-banner" title={activationConflictMessage()}
+      description={t('activation.conflictSeen', { version: active ? `v${active.versionNo}` : t('version.none') })} action={<Button size="small" onClick={onDone}>{tCommon('action.refresh')}</Button>} />}
     {command.formError && <Alert type="error" showIcon className="dq-banner" title={command.formError} />}
     <div className="bin-compare">
-      <VersionBox version={active} caption="当前生效" />
+      <VersionBox version={active} caption={t('activation.currentActive')} />
       <span className="bin-compare-arrow">→</span>
-      <VersionBox version={target} caption={versionStatusLabels[target.status]} delta={delta} />
+      <VersionBox version={target} caption={enumLabel(t, 'enum.versionStatus', target.status)} delta={delta} />
     </div>
     <ul className="bin-impact">
       {rollback ? <>
-        <li>回切只影响之后新建的支付工具，已创建的交易保留原卡属性。</li>
-        {active && <li>v{active.versionNo} 变为已停用，之后仍可再次激活。</li>}
-        <li>回切会记录在激活历史中（操作人与时间）。</li>
+        <li>{t('activation.impact.rollbackNewOnly')}</li>
+        {active && <li>{t('activation.impact.rollbackRetires', { versionNo: active.versionNo })}</li>}
+        <li>{t('activation.impact.rollbackRecorded')}</li>
       </> : <>
-        <li>提交后所有实例立即按 v{target.versionNo} 查询，无需重启。</li>
-        <li>已创建的支付工具保留原卡属性，不受影响。</li>
-        <li>如页面打开后已有他人切换了生效版本，提交会被拒绝并提示刷新。</li>
+        <li>{t('activation.impact.activateImmediate', { versionNo })}</li>
+        <li>{t('activation.impact.activateExisting')}</li>
+        <li>{t('activation.impact.activateConflict')}</li>
       </>}
     </ul>
     <Checkbox checked={confirmed} onChange={event => setConfirmed(event.target.checked)}>
-      {rollback ? `我确认回切到 v${target.versionNo}，之后新交易按 v${target.versionNo} 识别`
-        : `我确认激活 v${target.versionNo}${active ? `，替换当前生效的 v${active.versionNo}` : ''}`}
+      {rollback ? t('activation.confirmRollbackCheck', { versionNo })
+        : active ? t('activation.confirmReplaceCheck', { versionNo, activeVersionNo: active.versionNo }) : t('activation.confirmActivateCheck', { versionNo })}
     </Checkbox>
   </Modal>;
 }
 
 function VersionBox({ version, caption, delta }: { version: BinLibraryVersion | null; caption: string; delta?: string }) {
-  if (!version) return <div className="bin-compare-box"><strong>无</strong><Tag>{caption}</Tag><span className="muted">尚未激活任何版本</span></div>;
+  const t = useT('card');
+  if (!version) return <div className="bin-compare-box"><strong>{t('version.none')}</strong><Tag>{caption}</Tag><span className="muted">{t('version.noneActivated')}</span></div>;
   return <div className="bin-compare-box">
     <strong>v{version.versionNo}</strong><Tag color={versionStatusColors[version.status]}>{caption}</Tag>
-    <span className="muted">{formatCount(version.totalRows)} 个号段{delta ? `（${delta}）` : ''}</span>
+    <span className="muted">{delta ? t('version.rangesWithDelta', { count: formatCount(version.totalRows), delta }) : t('version.ranges', { count: formatCount(version.totalRows) })}</span>
   </div>;
 }

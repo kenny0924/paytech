@@ -1,0 +1,37 @@
+PASS  基线 operations-console-bff .Image = 回滚文件 e4d913e0948b
+PASS  基线 operations-console-bff healthy / 重启 0
+PASS  基线 operations-console-web .Image = 回滚文件 9fb809dfef26
+PASS  基线 operations-console-web healthy / 重启 0
+PASS  候选覆盖文件镜像 = opsi18n_common.CANDIDATE
+PASS  候选 operations-console-bff 镜像存在 3751638e5f34
+PASS  候选 operations-console-bff 镜像配置与运行镜像相同
+PASS  候选 operations-console-web 镜像存在 d228e3c883fd
+PASS  候选 operations-console-web 镜像配置与运行镜像相同
+PASS  候选 operations-console-bff JAR SHA-256 3c7e6f647261115c
+PASS  compose-candidate.yaml 渲染
+PASS  环境 compose-candidate.yaml operations-console-bff 0 缺 0 多 0 不同（compose 14 / 运行 20 键）
+PASS  环境 compose-candidate.yaml operations-console-web 0 缺 0 多 0 不同（compose 0 / 运行 7 键）
+PASS  compose-rollback.yaml 渲染
+PASS  环境 compose-rollback.yaml operations-console-bff 0 缺 0 多 0 不同（compose 14 / 运行 20 键）
+PASS  环境 compose-rollback.yaml operations-console-web 0 缺 0 多 0 不同（compose 0 / 运行 7 键）
+PASS  SQL operations-console 应用行存在（ID 900000000000135011）
+PASS  SQL 应用 ENABLED
+PASS  SQL 默认语言 = zh-CN（第 ② 步前；现值 zh-CN，版本 1）
+PASS  SQL 必须语言 ["zh-CN"]、覆盖率阈值 100
+PASS  SQL 语言 en、zh-CN ENABLED
+PASS  SQL 命名空间 = 2 个（现有 ['enum', 'i18n-admin']）
+      记录 发布 [('1', 'READY', '409'), ('2', 'READY', '409')]；当前 #2
+PASS  SQL 当前发布存在且 READY
+PASS  SQL 当前发布 key 数 = 409
+PASS  SQL 无进行中的发布（PENDING_CHECK 等）
+PASS  SQL 线上 i18n-admin / enum 409 个 key 的英文基准与中文 = 本包输入（旧页面文案不受新发布影响）
+PASS  manifest ?locale=en 200、发布 #2 = 当前、命名空间 = 线上、no-store
+PASS  manifest ?locale=zh-CN 200、发布 #2 = 当前、命名空间 = 线上、no-store
+PASS  manifest 给出语言包公开地址
+PASS  公开桶语言包对 http://localhost:28080 200 + CORS 允许（TLS 只信任 test CA）
+PASS  公开桶对其他 Origin 不给 CORS 允许头
+PASS  本机输入 operations-console.en.json SHA256SUMS 一致
+PASS  本机输入 operations-console.zh-CN.json SHA256SUMS 一致
+PASS  浏览器（严格证书）从 http://localhost:28080 fetch 公开桶语言包 200
+
+== 只读预检：PASS 34，FAIL 0

@@ -10,12 +10,13 @@ import { AgreementDetail } from '../commercial/AgreementDetail';
 import { CreateAgreementModal } from '../commercial/AgreementModals';
 import { ClientIdInput } from '../commercial/ClientIdInput';
 import {
-  agreementStatuses, agreementStatusLabels, agreementTypeLabels, agreementTypes, commercialButtons, commercialRoutes, entityNoPattern, hasButton, idPattern,
-  isId, localTime,
+  agreementStatuses, agreementTypes, commercialButtons, commercialRoutes, entityNoPattern, hasButton, idPattern, isId, localTime,
 } from '../commercial/commercial';
 import { browserStorage, consolePaths, decodeAgreementPage, listFilters, rememberClient } from '../commercial/commercialConsole';
 import type { AgreementListItem } from '../commercial/commercialConsole';
 import { CommercialNote, StatusTag } from '../commercial/CommercialParts';
+import { enumLabel } from '../i18n/index';
+import { useT } from '../i18n/react';
 import '../configuration/configuration.css';
 import '../commercial/commercial.css';
 
@@ -32,6 +33,7 @@ export function CommercialAgreements(props: Props) {
 
 /** 合同列表：Client / 合同号前缀 / 类型 / 状态（多选）/ OE / Local Partner 筛选，按创建时间倒序分页；行点击进入详情。 */
 function AgreementList({ resources, onAuthorizationChanged }: Props) {
+  const t = useT('commercial'), tNav = useT('nav');
   const navigate = useNavigate();
   const [form] = Form.useForm<FilterValues>();
   const [creating, setCreating] = useState(false);
@@ -43,42 +45,43 @@ function AgreementList({ resources, onAuthorizationChanged }: Props) {
       status: values.status, entityNo: values.entityNo?.toUpperCase(), localPartnerId: values.localPartnerId }));
   };
   return <div className="configuration-page commercial-page">
-    <div className="page-heading"><h1>合同</h1></div>
+    <div className="page-heading"><h1>{tNav('resource.OPERATIONS_COMMERCIAL_AGREEMENTS')}</h1></div>
     <div className="commercial-toolbar">
       <Form form={form} name="commercial-agreement-filter" layout="vertical" onFinish={search}>
         <div className="commercial-filters">
-          <Form.Item name="clientId" label="Client" rules={[{ pattern: idPattern, message: 'Client ID 是正十进制整数' }]}><ClientIdInput /></Form.Item>
-          <Form.Item name="agreementNo" label="合同号（前缀）" rules={[{ pattern: /^[A-Za-z0-9._-]{1,64}$/, message: '字母数字及 . _ -' }]}>
+          <Form.Item name="clientId" label="Client" rules={[{ pattern: idPattern, message: t('list.clientIdPattern') }]}><ClientIdInput /></Form.Item>
+          <Form.Item name="agreementNo" label={t('agreements.filter.agreementNo')} rules={[{ pattern: /^[A-Za-z0-9._-]{1,64}$/, message: t('form.codePattern') }]}>
             <Input allowClear maxLength={64} placeholder="AGR-AE001" /></Form.Item>
-          <Form.Item name="agreementType" label="类型"><Select allowClear options={agreementTypes.map(value => ({ value, label: agreementTypeLabels[value] }))} /></Form.Item>
-          <Form.Item name="status" label="状态"><Select mode="multiple" allowClear maxTagCount="responsive"
-            options={agreementStatuses.map(value => ({ value, label: agreementStatusLabels[value] }))} /></Form.Item>
-          <Form.Item name="entityNo" label="OE" rules={[{ pattern: entityNoPattern, message: '如 AE001' }]} normalize={(v?: string) => v?.toUpperCase()}>
+          <Form.Item name="agreementType" label={t('agreement.field.type')}><Select allowClear options={agreementTypes.map(value => ({ value, label: enumLabel(t, 'enum.agreementType', value) }))} /></Form.Item>
+          <Form.Item name="status" label={t('shared.column.status')}><Select mode="multiple" allowClear maxTagCount="responsive"
+            options={agreementStatuses.map(value => ({ value, label: enumLabel(t, 'enum.agreementStatus', value) }))} /></Form.Item>
+          <Form.Item name="entityNo" label="OE" rules={[{ pattern: entityNoPattern, message: t('list.entityNoPattern') }]} normalize={(v?: string) => v?.toUpperCase()}>
             <Input allowClear maxLength={5} placeholder="AE001" /></Form.Item>
-          <Form.Item name="localPartnerId" label="Local Partner" rules={[{ pattern: idPattern, message: '正十进制整数' }]}><Input allowClear maxLength={19} /></Form.Item>
+          <Form.Item name="localPartnerId" label="Local Partner" rules={[{ pattern: idPattern, message: t('form.idPattern') }]}><Input allowClear maxLength={19} /></Form.Item>
           <div className="commercial-filter-actions">
-            <Button type="primary" htmlType="submit">查询</Button>
-            <Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>重置</Button>
+            <Button type="primary" htmlType="submit">{t('list.search')}</Button>
+            <Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>{t('list.reset')}</Button>
           </div>
         </div>
       </Form>
-      {canManage && <Button type="primary" onClick={() => setCreating(true)}>新建合同</Button>}</div>
+      {canManage && <Button type="primary" onClick={() => setCreating(true)}>{t('agreement.create.title')}</Button>}</div>
     {page.failure ? <QueryFailure failure={page.failure} retry={page.refresh} /> : <section className="table-panel">
       <Table<AgreementListItem> rowKey="agreementId" size="middle" loading={page.loading} dataSource={page.data.items} pagination={page.pagination}
         scroll={{ x: 1180 }} onRow={row => ({ className: 'clickable-row', onClick: () => void navigate(commercialRoutes.agreement(row.agreementId)) })}
-        locale={{ emptyText: '没有符合条件的合同' }} columns={[
-          { title: '合同号', width: 170, render: (_, row) => <span className="mono">{row.agreementNo}</span> },
-          { title: '名称', dataIndex: 'agreementName', ellipsis: true },
-          { title: '类型', width: 110, render: (_, row) => agreementTypeLabels[row.agreementType] },
-          { title: '模式', width: 200, render: (_, row) => row.businessMode ? `${row.businessMode} · ${row.fundMode ?? '—'}` : '—' },
+        locale={{ emptyText: t('agreements.empty') }} columns={[
+          { title: t('agreements.column.agreementNo'), width: 170, render: (_, row) => <span className="mono">{row.agreementNo}</span> },
+          { title: t('catalogDrawer.name'), dataIndex: 'agreementName', ellipsis: true },
+          { title: t('agreement.field.type'), width: 110, render: (_, row) => enumLabel(t, 'enum.agreementType', row.agreementType) },
+          { title: t('agreement.field.mode'), width: 200, render: (_, row) => row.businessMode ? `${row.businessMode} · ${row.fundMode ?? '—'}` : '—' },
           { title: 'Client / Partner', width: 190, render: (_, row) => <span className="mono">{row.clientId ?? row.localPartnerId ?? '—'}</span> },
           { title: 'OE', width: 80, render: (_, row) => row.entityNo ?? '—' },
-          { title: '状态', width: 100, render: (_, row) => <StatusTag status={row.status} labels={agreementStatusLabels} /> },
-          { title: '生效区间', width: 260, render: (_, row) => `${localTime(row.effectiveFrom)} ～ ${row.effectiveTo ? localTime(row.effectiveTo) : '未定'}` },
-          { title: '更新时间', width: 150, render: (_, row) => localTime(row.updateTime) },
+          { title: t('shared.column.status'), width: 100, render: (_, row) => <StatusTag status={row.status} kind="agreementStatus" /> },
+          { title: t('agreement.field.effectiveRange'), width: 260, render: (_, row) => t('shared.period', { from: localTime(row.effectiveFrom),
+            to: row.effectiveTo ? localTime(row.effectiveTo) : t('shared.openEnded') }) },
+          { title: t('shared.column.updatedAt'), width: 150, render: (_, row) => localTime(row.updateTime) },
         ]} />
     </section>}
-    <CommercialNote>Client 支持输入 ID、选择本机最近使用或审核通过的 Client；按名称搜索与 Party / OE 下拉待 client-master 提供运营查询接口。PARTNER 合同按 OE 筛选时匹配其覆盖 OE。</CommercialNote>
+    <CommercialNote>{t('agreements.note')}</CommercialNote>
     {creating && <CreateAgreementModal onClose={() => setCreating(false)} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={agreementId => { setCreating(false); void navigate(commercialRoutes.agreement(agreementId)); }} />}
   </div>;

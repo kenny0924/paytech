@@ -234,7 +234,7 @@ test('query rate limiting preserves the session without an automatic refresh or 
     await f.session.login('operator', 'synthetic-password');
     const saved = f.storage.getItem(sessionStorageKey);
     await assert.rejects(f.session.request('/authorization/v1/navigation'), (error: unknown) =>
-      error instanceof ApiError && error.status === 429 && error.message === '操作过于频繁，请稍后再试。');
+      error instanceof ApiError && error.status === 429 && error.message === "Too many requests. Please try again later.");
     assert.deepEqual(queryTokens, ['Bearer original']);
     assert.equal(rotations, 0); assert.equal(expired, 0);
     assert.deepEqual(await f.session.request('/authorization/v1/navigation'), { resources: [] });
@@ -814,14 +814,14 @@ test('common business errors preserve safe messages for form commands', async ()
 
 test('unknown codes, mismatched statuses and system failures never expose remote messages', async () => {
   for (const failure of [
-    { status: 400, code: 'UNRECOGNIZED_ERROR', expected: '操作未完成，请检查输入后重试。' },
-    { status: 400, code: 'CONCURRENT_REQUEST', expected: '操作未完成，请检查输入后重试。' },
-    { status: 409, code: 'BUSINESS_CHECK_FAILED', expected: '数据已发生变化，请刷新后重试。' },
-    { status: 401, code: 'BUSINESS_CHECK_FAILED', expected: '登录已失效，请重新登录。' },
-    { status: 403, code: 'INVALID_REQUEST', expected: '你没有执行此操作的权限。' },
-    { status: 500, code: 'BUSINESS_CHECK_FAILED', expected: '服务暂时不可用，请稍后重试。' },
-    { status: 502, code: 'INVALID_REQUEST', expected: '服务暂时不可用，请稍后重试。' },
-    { status: 503, code: 'CONCURRENT_REQUEST', expected: '服务暂时不可用，请稍后重试。' },
+    { status: 400, code: 'UNRECOGNIZED_ERROR', expected: "The action didn't complete. Check your input and try again." },
+    { status: 400, code: 'CONCURRENT_REQUEST', expected: "The action didn't complete. Check your input and try again." },
+    { status: 409, code: 'BUSINESS_CHECK_FAILED', expected: "The data has changed. Refresh and try again." },
+    { status: 401, code: 'BUSINESS_CHECK_FAILED', expected: "Your session has expired. Please sign in again." },
+    { status: 403, code: 'INVALID_REQUEST', expected: "You don't have permission to perform this action." },
+    { status: 500, code: 'BUSINESS_CHECK_FAILED', expected: "The service is temporarily unavailable. Please try again later." },
+    { status: 502, code: 'INVALID_REQUEST', expected: "The service is temporarily unavailable. Please try again later." },
+    { status: 503, code: 'CONCURRENT_REQUEST', expected: "The service is temporarily unavailable. Please try again later." },
   ]) {
     const f = await fixture((request, response) => {
       if (request.url === '/auth/v1/login') { json(response, tokens('operator')); return; }
@@ -855,7 +855,7 @@ test('empty, malformed and invalid-shaped error bodies safely fall back to an Ap
       await f.session.login('operator', 'synthetic-password');
       await assert.rejects(f.session.request('/iam/v1/accounts', { method: 'POST', body: '{}' }), (error: unknown) =>
         error instanceof ApiError && error.status === 400 && error.requestId === ''
-        && error.message === '操作未完成，请检查输入后重试。');
+        && error.message === "The action didn't complete. Check your input and try again.");
     } finally { await f.close(); }
   }
 });
@@ -895,8 +895,8 @@ test('login exposes safe input errors but never the credential rejection message
   for (const failure of [
     { status: 400, code: 'INVALID_REQUEST', message: '请输入有效邮箱', expected: '请输入有效邮箱' },
     { status: 400, code: 'BUSINESS_CHECK_FAILED', message: '请输入登录账号', expected: '请输入登录账号' },
-    { status: 401, code: 'OPERATIONS_SESSION_INVALID', message: 'synthetic-account-does-not-exist', expected: '登录已失效，请重新登录。' },
-    { status: 401, code: 'BUSINESS_CHECK_FAILED', message: 'synthetic-account-disabled', expected: '登录已失效，请重新登录。' },
+    { status: 401, code: 'OPERATIONS_SESSION_INVALID', message: 'synthetic-account-does-not-exist', expected: "Your session has expired. Please sign in again." },
+    { status: 401, code: 'BUSINESS_CHECK_FAILED', message: 'synthetic-account-disabled', expected: "Your session has expired. Please sign in again." },
   ]) {
     const f = await fixture((_request, response) =>
       legacy(response, failure.code, failure.message, failure.status));
@@ -964,7 +964,7 @@ test('invalid Problem and legacy responses never expose remote content or let an
     try {
       await assert.rejects(f.session.login('operator', 'synthetic-password'), (error: unknown) =>
         error instanceof ApiError && error.code === 'REQUEST_FAILED' && error.requestId === 'header-request'
-        && error.message === '操作未完成，请检查输入后重试。', failure.name);
+        && error.message === "The action didn't complete. Check your input and try again.", failure.name);
     } finally { await f.close(); }
   }
 });
@@ -1011,7 +1011,7 @@ test('legacy JSON requires all old producer fields, its old ID grammar, and a pa
     try {
       await assert.rejects(f.session.login('operator', 'synthetic-password'), (error: unknown) =>
         error instanceof ApiError && error.code === 'REQUEST_FAILED' && error.requestId === 'header-request'
-        && error.message === '操作未完成，请检查输入后重试。');
+        && error.message === "The action didn't complete. Check your input and try again.");
     } finally { await f.close(); }
   }
 });
@@ -1224,9 +1224,9 @@ for (const timestamp of ['2026-02-30T10:20:30.123456Z', '2026-09-06T24:20:30.123
 
 for (const [status, code, expected] of [
   [400, 'BUSINESS_CHECK_FAILED', 'safe Problem detail'], [400, 'INVALID_REQUEST', 'safe Problem detail'], [409, 'CONCURRENT_REQUEST', 'safe Problem detail'],
-  [401, 'BUSINESS_CHECK_FAILED', '登录已失效，请重新登录。'], [403, 'INVALID_REQUEST', '你没有执行此操作的权限。'],
-  [500, 'BUSINESS_CHECK_FAILED', '服务暂时不可用，请稍后重试。'], [400, 'UNKNOWN_CODE', '操作未完成，请检查输入后重试。'],
-  [409, 'BUSINESS_CHECK_FAILED', '数据已发生变化，请刷新后重试。'], [400, 'CONCURRENT_REQUEST', '操作未完成，请检查输入后重试。'],
+  [401, 'BUSINESS_CHECK_FAILED', "Your session has expired. Please sign in again."], [403, 'INVALID_REQUEST', "You don't have permission to perform this action."],
+  [500, 'BUSINESS_CHECK_FAILED', "The service is temporarily unavailable. Please try again later."], [400, 'UNKNOWN_CODE', "The action didn't complete. Check your input and try again."],
+  [409, 'BUSINESS_CHECK_FAILED', "The data has changed. Refresh and try again."], [400, 'CONCURRENT_REQUEST', "The action didn't complete. Check your input and try again."],
 ] as const) {
   test(`Problem safe detail display is bounded for ${status}/${code}`, async () => {
     const requestId = `safe-${status}-${code}`;

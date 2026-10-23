@@ -12,7 +12,7 @@ export const variableContext: RuleAuthoringContext = {
   actionParameters:configurationContext.actionParameters.map(p=>({...p,allowedSourceType:p.targetParameterFlag?'VARIABLE':p.allowedSourceType})),
 };
 export const variableDefinitions:VariableSummary[]=variableContext.fields.map(f=>({
-  variableCode:f.variableCode!,variableName:`目录名称 ${f.fieldCode}`,sourceType:'INPUT',valueType:f.valueType,
+  variableCode:f.variableCode!,variableName:`Catalog name ${f.fieldCode}`,sourceType:'INPUT',valueType:f.valueType,
   pointCode:'CHECKOUT_PREPARE',usages:f.actionParameterFlag?['ACTION_PARAMETER']:['RULE_CONDITION','FLOW_CONDITION'],
   systemManaged:true,status:'ACTIVE',version:'1',numericUnit:f.valueType==='NUMBER'?'SCALAR':null,
   currencyCode:null,currencyVariableCode:null,formatCode:f.valueType==='STRING'?'TEXT':'NONE',allowedValuesVariableCode:null,

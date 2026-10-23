@@ -4,7 +4,7 @@ import { ApiError } from '../api/session';
 import type { ConfigurationCommand } from '../configuration/configurationModel';
 import { useErrorNotification } from '../feedback/useErrorNotification';
 import { financeCommand, financeErrorTarget, financeErrorTargets, sendFinanceCommand } from './finance';
-import type { FinanceErrorTarget } from './finance';
+import type { FinanceErrorRule } from './finance';
 import { formFieldPath } from './financeWorkflow';
 
 /**
@@ -13,7 +13,7 @@ import { formFieldPath } from './financeWorkflow';
  * <li>字段清单中的列表路径（如 lines[0].amount）落到对应行；table 为错误码落点表，默认基础资料表。</li>
  */
 export function useFinanceCommand(onAuthorizationChanged: () => void, form?: FormInstance, formFields: readonly string[] = [],
-  table: Readonly<Record<string, FinanceErrorTarget>> = financeErrorTargets) {
+  table: Readonly<Record<string, FinanceErrorRule>> = financeErrorTargets) {
   const notify = useErrorNotification();
   const [saving, setSaving] = useState(false); const [conflict, setConflict] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);

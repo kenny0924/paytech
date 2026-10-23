@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ApiError, session } from '../api/session';
 import { useErrorNotification } from '../feedback/useErrorNotification';
+import { useT } from '../i18n/react';
 import { decodeDownloadGrant, fileRecordDownloadPath } from './fileRecords';
 import type { FileDownloadGrant } from './fileRecords';
 
@@ -15,7 +16,7 @@ export function authorizeFileDownload(fileId: string, versionNo?: number, signal
  * <li>403 刷新导航权限；版本不可下载（409）、审计不可用（503）按统一提示展示。</li>
  */
 export function useFileRecordDownload(onAuthorizationChanged: () => void) {
-  const notify = useErrorNotification();
+  const notify = useErrorNotification(); const t = useT('file');
   const [pending, setPending] = useState<string>();
   async function download(fileId: string, displayName: string, versionNo?: number) {
     if (pending) return;
@@ -27,7 +28,7 @@ export function useFileRecordDownload(onAuthorizationChanged: () => void) {
       document.body.appendChild(link); link.click(); link.remove();
     } catch (error) {
       if (error instanceof ApiError && error.status === 403) onAuthorizationChanged();
-      notify(error, error instanceof ApiError && error.status === 409 ? '该版本不可下载（检查中、未通过或已被替换前未通过检查）' : '文件下载未完成');
+      notify(error, error instanceof ApiError && error.status === 409 ? t('download.versionUnavailable') : t('download.failed'));
     } finally { setPending(undefined); }
   }
   return { pending, download, isPending: (fileId: string, versionNo?: number) => pending === `${fileId}:${versionNo ?? 'current'}` };

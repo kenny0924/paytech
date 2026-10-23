@@ -7,6 +7,9 @@ import {
   decodeDataSourcePage, deletionBlock, grantSegments, lastCheckLabel, saveGate, statusAction, updateDataSourceBody,
 } from './dataSourceModel.ts';
 import type { ConnectionTest, DataSource } from './dataSourceModel.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('data-query');
 
 const wire = {
   dataSourceId: '900000000000131001', dataSourceCode: 'PAYMENT_REPLICA', dataSourceName: '支付库从库', engineType: 'MYSQL', host: '10.0.12.21',
@@ -39,11 +42,12 @@ test('连接测试与写回执解码：grants / violations 缺省为空，回执
 
 test('地址与最后检查展示：没有默认库显示整个实例', () => {
   assert.equal(addressLabel(source()), '10.0.12.21:3306 / mor_payment');
-  assert.equal(addressLabel(source({ databaseName: null })), '10.0.12.21:3306 · 整个实例');
+  assert.equal(addressLabel(source({ databaseName: null })), '10.0.12.21:3306 · Entire instance');
   const format = (value: string | null) => value ? 'T' : '—';
-  assert.equal(lastCheckLabel(source({ lastCheckResult: null }), format), '未检查');
-  assert.equal(lastCheckLabel(source(), format), '通过 · T');
-  assert.equal(lastCheckLabel(source({ lastCheckResult: 'FAILED', lastCheckMessage: '账号含 INSERT' }), format), '失败 · 账号含 INSERT');
+  assert.equal(lastCheckLabel(source({ lastCheckResult: null }), format), 'Not checked');
+  assert.equal(lastCheckLabel(source(), format), 'Passed · T');
+  assert.equal(lastCheckLabel(source({ lastCheckResult: 'FAILED', lastCheckMessage: '账号含 INSERT' }), format), 'Failed · 账号含 INSERT');
+  assert.equal(lastCheckLabel(source({ lastCheckResult: 'FAILED', lastCheckMessage: null }), format), 'Failed · T');
 });
 
 test('SHOW GRANTS 违规权限标红：只允许 USAGE、SELECT、SHOW VIEW，角色授权整行违规', () => {
@@ -76,8 +80,10 @@ test('保存门槛：启用中的数据源必须用当前表单配置测试通�
   assert.equal(saveGate(null, null, fingerprint).allowed, true);
   assert.equal(saveGate(source({ status: 'INACTIVE' }), null, fingerprint).allowed, true);
   assert.equal(saveGate(source(), null, fingerprint).allowed, false);
+  assert.equal(saveGate(source(), null, fingerprint).reason, t('dataSource.saveGate.testRequired'));
   assert.equal(saveGate(source(), { fingerprint, result: passed }, fingerprint).allowed, true);
   assert.equal(saveGate(source(), { fingerprint, result: { ...passed, result: 'FAILED' } }, fingerprint).allowed, false);
+  assert.equal(saveGate(source(), { fingerprint, result: { ...passed, result: 'FAILED' } }, fingerprint).reason, t('dataSource.saveGate.testFailed'));
   const changed = connectionFingerprint({ ...values, username: 'other' });
   assert.equal(saveGate(source(), { fingerprint, result: passed }, changed).allowed, false);
   assert.equal(connectionFingerprint({ ...values, dataSourceName: '改名不影响' }), fingerprint);
@@ -87,8 +93,10 @@ test('状态动作与删除前置条件', () => {
   assert.equal(statusAction(source())?.target, 'INACTIVE');
   assert.equal(statusAction(source({ status: 'INACTIVE' }))?.target, 'ACTIVE');
   assert.equal(statusAction(source({ status: 'DELETED' })), null);
-  assert.match(deletionBlock(source()) ?? '', /先停用/);
-  assert.match(deletionBlock(source({ status: 'INACTIVE' })) ?? '', /6 个启用中的模板/);
+  assert.equal(deletionBlock(source()), t('dataSource.deletion.disableFirst'));
+  assert.equal(deletionBlock(source({ status: 'INACTIVE' })), t('dataSource.deletion.referenced', { count: 6 }));
+  assert.match(deletionBlock(source({ status: 'INACTIVE' })) ?? '', /^6 enabled templates still use/);
+  assert.equal(statusAction(source())?.verb, 'Disable');
   assert.equal(deletionBlock(source({ status: 'INACTIVE', activeTemplateCount: 0 })), null);
 });
 
@@ -97,5 +105,5 @@ test('模板编辑器数据源选项：只列启用中的；正在使用的停�
   const other = source({ dataSourceId: '3', dataSourceCode: 'OLD_REPLICA', status: 'INACTIVE' });
   assert.deepEqual(templateSourceOptions([active, inactive, other], [null]).map(option => option.value), ['900000000000131001']);
   assert.deepEqual(templateSourceOptions([active, inactive, other], ['2', undefined]).map(option => option.label),
-    ['PAYMENT_REPLICA · MySQL', 'RISK_REPLICA · MySQL（停用）']);
+    ['PAYMENT_REPLICA · MySQL', 'RISK_REPLICA · MySQL (Disabled)']);
 });

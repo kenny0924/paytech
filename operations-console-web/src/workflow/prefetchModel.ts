@@ -37,7 +37,7 @@ export const DETAIL_PRIORITY = { SELECTED: 0, BATCH: 1, PREFETCH: 2 } as const;
 
 /** 取消排队请求时给等待方的错误；调用方据此静默忽略。 */
 export class DetailRequestCancelled extends Error {
-  constructor() { super('实例详情请求已取消'); this.name = 'DetailRequestCancelled'; }
+  constructor() { super('Instance detail request cancelled'); this.name = 'DetailRequestCancelled'; }
 }
 
 /** 429 默认退避毫秒数；拿不到 Retry-After 时使用。 */

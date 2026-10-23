@@ -3,8 +3,8 @@ import test from 'node:test';
 import { bandIssues, componentTypes, priceDraft, pricesBody } from './commercial.ts';
 import type { ComponentType, Price, PriceComponent } from './commercial.ts';
 import {
-  bandModeLabels, calculationBaseLabels, componentCurrency, componentTypePatch, copiedComponentCode, copyComponentDraft, editableColumns, isEditable,
-  labeledOptions, percentInput, percentIssue, priceSummary, rateFromPercent, refundBehaviorLabels, tierSummary, toFormDrafts, toSubmitDrafts,
+  componentCurrency, componentTypePatch, copiedComponentCode, copyComponentDraft, editableColumns, isEditable,
+  labeledOptions, percentInput, percentIssue, priceSummary, rateFromPercent, tierSummary, toFormDrafts, toSubmitDrafts,
 } from './componentTable.ts';
 
 let componentNo = 0;
@@ -130,10 +130,10 @@ test('复制行：组件代码追加 _COPY，不超过 64 位；档位深拷贝'
 
 test('价格摘要与阶梯单元格文案', () => {
   const [draft] = toFormDrafts([demoPrices[0]]);
-  assert.equal(priceSummary(draft, 0), '价格 1 · AE001 · AED · CARD_VISA_CREDIT_DOMESTIC · 优先级 1 · 6 个组件');
-  assert.equal(priceSummary(undefined, 2), '价格 3 · — · — · — · 优先级 — · 0 个组件');
-  assert.equal(tierSummary(draft.components[0].bands, 'WHOLE_BASE'), '2 档 · 整笔适用');
-  assert.equal(tierSummary(null, null), '0 档 · 未选模式');
+  assert.equal(priceSummary(draft, 0), 'Price 1 · AE001 · AED · CARD_VISA_CREDIT_DOMESTIC · Priority 1 · 6 components');
+  assert.equal(priceSummary(undefined, 2), 'Price 3 · — · — · — · Priority — · 0 components');
+  assert.equal(tierSummary(draft.components[0].bands, 'WHOLE_BASE'), '2 tiers · Whole Base');
+  assert.equal(tierSummary(null, null), '0 tiers · No mode selected');
 });
 
 test('类型 → 可编辑列；切换为阶梯补齐默认档位', () => {
@@ -146,8 +146,9 @@ test('类型 → 可编辑列；切换为阶梯补齐默认档位', () => {
   assert.deepEqual(componentTypePatch('FIXED', { bands: null, bandBasis: null, bandMode: null }), {});
 });
 
-test('中文标签：计算基数、退款处理、阶梯模式；缺失时回退代码', () => {
-  assert.deepEqual(labeledOptions(['GROSS_AMOUNT', 'UNKNOWN'], calculationBaseLabels), [{ value: 'GROSS_AMOUNT', label: '交易总额' }, { value: 'UNKNOWN', label: 'UNKNOWN' }]);
-  assert.equal(refundBehaviorLabels.RETURN_PRORATA, '按比例退');
-  assert.equal(bandModeLabels.PROGRESSIVE, '分段累进');
+test('标签：计算基数、退款处理、阶梯基数与模式；缺失时回退代码', () => {
+  assert.deepEqual(labeledOptions(['GROSS_AMOUNT', 'UNKNOWN'], 'calculationBase'), [{ value: 'GROSS_AMOUNT', label: 'Gross Amount' }, { value: 'UNKNOWN', label: 'UNKNOWN' }]);
+  assert.deepEqual(labeledOptions(['RETURN_PRORATA'], 'refundBehavior'), [{ value: 'RETURN_PRORATA', label: 'Refund Pro Rata' }]);
+  assert.deepEqual(labeledOptions(['PERIOD_VOLUME'], 'bandBasis'), [{ value: 'PERIOD_VOLUME', label: 'Period Volume' }]);
+  assert.deepEqual(labeledOptions(['PROGRESSIVE'], 'bandMode'), [{ value: 'PROGRESSIVE', label: 'Progressive' }]);
 });

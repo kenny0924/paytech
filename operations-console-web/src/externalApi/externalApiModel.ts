@@ -1,5 +1,8 @@
 import { ApiError } from '../api/session.ts';
 import type { PagingResponseBody } from '../api/types.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('channel');
 
 /** 管理接口前缀；浏览器经 Gateway 访问时由会话加上 /api/operations。 */
 export const externalApiBase = '/external-api-admin/v1';
@@ -21,10 +24,9 @@ export type FieldDataType = 'STRING' | 'BOOLEAN' | 'INTEGER' | 'DECIMAL' | 'OBJE
 export type ScriptStage = 'REQUEST' | 'RESPONSE';
 export const fieldLocations: FieldLocation[] = ['HEADER', 'BODY', 'QUERY', 'PATH'];
 export const fieldDataTypes: FieldDataType[] = ['STRING', 'BOOLEAN', 'INTEGER', 'DECIMAL', 'OBJECT', 'ARRAY'];
-export const dataTypeLabels: Record<FieldDataType, string> = {
-  STRING: '字符串', BOOLEAN: '布尔', INTEGER: '整数', DECIMAL: '小数', OBJECT: '对象', ARRAY: '数组',
-};
-export const stageLabels: Record<ScriptStage, string> = { REQUEST: '请求阶段', RESPONSE: '响应阶段' };
+/** 字段类型与脚本阶段文案（channel.enum.dataType / scriptStage），调用时翻译。 */
+export const dataTypeLabel = (type: string) => enumLabel(t, 'enum.dataType', type);
+export const stageLabel = (stage: string) => enumLabel(t, 'enum.scriptStage', stage);
 
 export interface ApiField {
   fieldLocation: FieldLocation; fieldPath: string; fieldName: string; dataType: FieldDataType; required: boolean;
@@ -213,15 +215,15 @@ export function fieldHints(fields: ApiField[], allowed: FieldLocation[]): FieldH
   });
   fields.forEach((field, index) => {
     if (!allowed.includes(field.fieldLocation)) {
-      hints.push({ index, column: 'fieldLocation', message: `此处不允许 ${field.fieldLocation} 字段` });
+      hints.push({ index, column: 'fieldLocation', message: t('field.hint.locationNotAllowed', { location: field.fieldLocation }) });
       return;
     }
-    if (!validPath(field)) hints.push({ index, column: 'fieldPath', message: '路径格式不正确' });
+    if (!validPath(field)) hints.push({ index, column: 'fieldPath', message: t('field.hint.pathInvalid') });
     if (field.fieldLocation !== 'BODY' && (field.dataType === 'OBJECT' || field.dataType === 'ARRAY')) {
-      hints.push({ index, column: 'dataType', message: 'HEADER、QUERY、PATH 只能是标量类型' });
+      hints.push({ index, column: 'dataType', message: t('field.hint.scalarOnly') });
     }
     const identity = `${field.fieldLocation}:${field.fieldLocation === 'HEADER' ? field.fieldPath.toLowerCase() : field.fieldPath}`;
-    if (seen.has(identity)) hints.push({ index, column: 'fieldPath', message: '同一位置的字段路径重复' });
+    if (seen.has(identity)) hints.push({ index, column: 'fieldPath', message: t('field.hint.pathDuplicate') });
     seen.add(identity);
     if (field.fieldLocation === 'BODY' && validPath(field)) {
       const dot = field.fieldPath.lastIndexOf('.');
@@ -230,7 +232,7 @@ export function fieldHints(fields: ApiField[], allowed: FieldLocation[]): FieldH
         const array = parent.endsWith('[]');
         const parentPath = array ? parent.slice(0, -2) : parent;
         if (bodyTypes.get(parentPath) !== (array ? 'ARRAY' : 'OBJECT')) {
-          hints.push({ index, column: 'fieldPath', message: `父字段 ${parentPath} 需先定义为${array ? '数组' : '对象'}` });
+          hints.push({ index, column: 'fieldPath', message: t(array ? 'field.hint.parentArray' : 'field.hint.parentObject', { parent: parentPath }) });
         }
       }
     }

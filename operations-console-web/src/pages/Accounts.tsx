@@ -10,9 +10,12 @@ import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
 import { accountDeletionCommand, canDeleteAccount } from './accountDeletion';
 import { accountCommand } from './accountCommand';
 import type { AccountAction, AccountCommand } from './accountCommand';
+import { enumLabel } from '../i18n/index';
+import { useT } from '../i18n/react';
 
 export function Accounts({ resources, actorId }: { resources: ConsoleResource[]; actorId: string }) {
   const { message } = App.useApp();
+  const t = useT('access'), tCommon = useT('common'), tNav = useT('nav');
   const notifyError = useErrorNotification();
   const { data, loading, error, refresh, pagination } = usePaging<Account>('/iam/v1/accounts');
   const [edit, setEdit] = useState<{ action: AccountAction; account?: Account } | null>(null);
@@ -39,8 +42,8 @@ export function Accounts({ resources, actorId }: { resources: ConsoleResource[];
       if (!controller.signal.aborted) setRoles(roles);
     } catch (error) {
       if (!controller.signal.aborted) {
-        setRoleError('角色尚未加载，请重试。');
-        notifyError(error, '角色加载失败');
+        setRoleError(t('accounts.rolesNotLoaded'));
+        notifyError(error, t('accounts.rolesLoadFailed'));
       }
     } finally { if (!controller.signal.aborted) setRolesLoading(false); }
   }
@@ -74,74 +77,74 @@ export function Accounts({ resources, actorId }: { resources: ConsoleResource[];
         headers: { 'Idempotency-Key': command.current.key }, body: command.current.payload,
       });
       setEdit(null); form.resetFields(); command.current = null;
-      refresh(); void message.success('操作已完成，已记录审计。');
+      refresh(); void message.success(t('accounts.saved'));
     } catch (error) {
-      notifyError(error, '人员操作失败');
+      notifyError(error, t('accounts.actionFailed'));
       if (error instanceof ApiError && error.status === 409 && edit.action !== 'create') setConflicted(true);
       if (error instanceof ApiError && error.status === 403) refresh();
     } finally { inFlight.current = false; setSaving(false); }
   }
 
   return <>
-    <div className="page-heading"><h1>人员管理</h1>
-      {can('OPERATIONS_ACCOUNT_CREATE') && <Button type="primary" disabled={saving || !!deletingAccount} onClick={() => void open('create')}>＋ 创建人员</Button>}
+    <div className="page-heading"><h1>{tNav('resource.OPERATIONS_ACCOUNTS')}</h1>
+      {can('OPERATIONS_ACCOUNT_CREATE') && <Button type="primary" disabled={saving || !!deletingAccount} onClick={() => void open('create')}>{t('accounts.create')}</Button>}
     </div>
-    <section className="table-panel"><div className="table-toolbar"><span className="table-caption">共 {data.total} 位人员</span>
-      <Button size="small" disabled={!!deletingAccount} onClick={refresh} loading={loading}>刷新</Button></div>
+    <section className="table-panel"><div className="table-toolbar"><span className="table-caption">{t('accounts.total', { total: data.total })}</span>
+      <Button size="small" disabled={!!deletingAccount} onClick={refresh} loading={loading}>{tCommon('action.refresh')}</Button></div>
       <Table<Account> rowKey="accountId" dataSource={error ? [] : data.items} loading={loading}
         scroll={{ x: 950 }} pagination={pagination}
-        locale={{ emptyText: error ? '暂时无法加载人员' : '暂无人员' }} columns={[
-          { title: '账号', dataIndex: 'emailMasked', render: (value: string, row) => <div><span className="account-name">{value || '初始化账号'}</span><div className="cell-meta">{row.accountId}</div></div> },
-          { title: '角色', render: (_, row) => <span className="role-label">{row.roles.map(role => role.roleName).join('，')}</span> },
-          { title: '状态', render: (_, row) => <Space direction="vertical" size={2}>
-            <Tag color={row.status === 'ACTIVE' ? 'green' : 'default'}>{({ ACTIVE: '启用', DISABLED: '停用', CLOSED: '已关闭', PENDING_VERIFICATION: '待验证' } as Record<string, string>)[row.status] || row.status}</Tag>
-            {row.passwordChangeRequired && <span className="cell-meta">首次登录需改密</span>}
+        locale={{ emptyText: error ? t('accounts.unavailable') : t('accounts.empty') }} columns={[
+          { title: t('accounts.column.account'), dataIndex: 'emailMasked', render: (value: string, row) => <div><span className="account-name">{value || t('accounts.bootstrapAccount')}</span><div className="cell-meta">{row.accountId}</div></div> },
+          { title: t('accounts.column.roles'), render: (_, row) => <span className="role-label">{row.roles.map(role => role.roleName).join(t('accounts.roleSeparator'))}</span> },
+          { title: t('accounts.column.status'), render: (_, row) => <Space direction="vertical" size={2}>
+            <Tag color={row.status === 'ACTIVE' ? 'green' : 'default'}>{enumLabel(t, 'enum.accountStatus', row.status)}</Tag>
+            {row.passwordChangeRequired && <span className="cell-meta">{t('accounts.passwordChangeRequired')}</span>}
           </Space> },
-          { title: '操作', width: 230, render: (_, row) => <Space>
-            {can('OPERATIONS_ACCOUNT_ASSIGN_ROLES') && <Button type="link" size="small" disabled={saving || !!deletingAccount} onClick={() => void open('roles', row)}>分配角色</Button>}
+          { title: t('accounts.column.actions'), width: 230, render: (_, row) => <Space>
+            {can('OPERATIONS_ACCOUNT_ASSIGN_ROLES') && <Button type="link" size="small" disabled={saving || !!deletingAccount} onClick={() => void open('roles', row)}>{t('accounts.action.assignRoles')}</Button>}
             {can('OPERATIONS_ACCOUNT_DISABLE') && row.status === 'ACTIVE' && row.accountId !== actorId
-              && <Button type="link" danger size="small" disabled={saving || !!deletingAccount} onClick={() => void open('disable', row)}>停用</Button>}
+              && <Button type="link" danger size="small" disabled={saving || !!deletingAccount} onClick={() => void open('disable', row)}>{t('accounts.action.disable')}</Button>}
             {can('OPERATIONS_ACCOUNT_ENABLE') && row.status === 'DISABLED'
-              && <Button type="link" size="small" disabled={saving || !!deletingAccount} onClick={() => void open('enable', row)}>启用</Button>}
+              && <Button type="link" size="small" disabled={saving || !!deletingAccount} onClick={() => void open('enable', row)}>{t('accounts.action.enable')}</Button>}
             {can('OPERATIONS_ACCOUNT_DELETE') && canDeleteAccount(row, actorId)
-              && <Button type="link" danger size="small" disabled={saving || !!deletingAccount} onClick={() => openDelete(row)}>删除</Button>}
+              && <Button type="link" danger size="small" disabled={saving || !!deletingAccount} onClick={() => openDelete(row)}>{t('accounts.action.delete')}</Button>}
           </Space> },
         ]} />
     </section>
-    {deletingAccount && <DeleteConfirmationModal key={deletingAccount.accountId} subject="人员"
+    {deletingAccount && <DeleteConfirmationModal key={deletingAccount.accountId} subject={t('accounts.deleteSubject')}
       allowed={can('OPERATIONS_ACCOUNT_DELETE') && canDeleteAccount(deletingAccount, actorId)}
       buildCommand={(reason, previous) => accountDeletionCommand(deletingAccount, reason, previous)}
       onClose={() => setDeletingAccount(null)} onDeleted={deleted}
       onRefresh={() => { setDeletingAccount(null); refresh(); }}>
       <p>{deletingAccount.emailMasked} · {deletingAccount.accountId}</p>
-      <p>删除后，该人员不能再登录，角色关联会被解除，且不可恢复。</p>
+      <p>{t('accounts.deleteWarning')}</p>
     </DeleteConfirmationModal>}
     <Drawer open={!!edit} onClose={() => {
       if (!inFlight.current) { roleRequest.current?.abort(); setEdit(null); form.resetFields(); command.current = null; }
     }}
-      title={edit?.action === 'create' ? '创建内部人员' : edit?.action === 'roles' ? '分配角色' : edit?.action === 'enable' ? '启用人员' : '停用人员'} destroyOnHidden
+      title={edit?.action === 'create' ? t('accounts.drawer.createTitle') : edit?.action === 'roles' ? t('accounts.action.assignRoles') : edit?.action === 'enable' ? t('accounts.drawer.enableTitle') : t('accounts.drawer.disableTitle')} destroyOnHidden
       closable={!saving} keyboard={!saving} mask={{ closable: !saving }}
       extra={<Button type="primary" danger={edit?.action === 'disable'} onClick={() => form.submit()} loading={saving}
-        disabled={conflicted || rolesLoading || !!roleError}>{edit?.action === 'disable' ? '确认停用' : edit?.action === 'enable' ? '确认启用' : '保存'}</Button>}>
-      {roleError && <p className="muted">{roleError}<Button type="link" onClick={() => void loadRoles()}>重试</Button></p>}
-      {conflicted && <Alert type="warning" className="form-alert" showIcon title="人员已发生变化，请刷新列表获取最新版本后重新操作。"
-        action={<Button onClick={() => { roleRequest.current?.abort(); setEdit(null); form.resetFields(); command.current = null; refresh(); }}>刷新列表</Button>} />}
-      {edit?.action === 'disable' && <Alert type="warning" title="停用后，该人员的现有会话将被撤销。" className="form-alert" showIcon />}
-      {edit?.action === 'enable' && <Alert type="info" title="启用后，该人员需要重新登录。" className="form-alert" showIcon />}
+        disabled={conflicted || rolesLoading || !!roleError}>{edit?.action === 'disable' ? t('accounts.drawer.confirmDisable') : edit?.action === 'enable' ? t('accounts.drawer.confirmEnable') : tCommon('action.save')}</Button>}>
+      {roleError && <p className="muted">{roleError}<Button type="link" onClick={() => void loadRoles()}>{tCommon('action.retry')}</Button></p>}
+      {conflicted && <Alert type="warning" className="form-alert" showIcon title={t('accounts.drawer.conflict')}
+        action={<Button onClick={() => { roleRequest.current?.abort(); setEdit(null); form.resetFields(); command.current = null; refresh(); }}>{tCommon('action.refreshList')}</Button>} />}
+      {edit?.action === 'disable' && <Alert type="warning" title={t('accounts.drawer.disableWarning')} className="form-alert" showIcon />}
+      {edit?.action === 'enable' && <Alert type="info" title={t('accounts.drawer.enableHint')} className="form-alert" showIcon />}
       {edit?.account && <p className="muted">{edit.account.emailMasked} · {edit.account.accountId}</p>}
       <Form form={form} layout="vertical" onFinish={save} requiredMark={false} disabled={saving || conflicted}>
         {edit?.action === 'create' && <>
-          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: '请输入有效 Email' }]}><Input autoComplete="off" maxLength={320} /></Form.Item>
-          <Form.Item name="initialPassword" label="一次性初始密码" rules={passwordRules} extra="请通过安全方式交付。新人员首次登录必须修改密码。">
+          <Form.Item name="email" label={t('accounts.drawer.email')} rules={[{ required: true, type: 'email', message: t('accounts.drawer.emailInvalid') }]}><Input autoComplete="off" maxLength={320} /></Form.Item>
+          <Form.Item name="initialPassword" label={t('accounts.drawer.initialPassword')} rules={passwordRules()} extra={t('accounts.drawer.initialPasswordHint')}>
             <Input.Password autoComplete="new-password" maxLength={512} />
           </Form.Item>
         </>}
-        {(edit?.action === 'create' || edit?.action === 'roles') && <Form.Item name="roleIds" label="角色" rules={[{ required: true, type: 'array', min: 1, message: '请选择至少一个角色' }]}>
-          <Select mode="multiple" placeholder="选择角色" loading={rolesLoading} disabled={rolesLoading || !!roleError}
+        {(edit?.action === 'create' || edit?.action === 'roles') && <Form.Item name="roleIds" label={t('accounts.column.roles')} rules={[{ required: true, type: 'array', min: 1, message: t('accounts.drawer.rolesRequired') }]}>
+          <Select mode="multiple" placeholder={t('accounts.drawer.rolesPlaceholder')} loading={rolesLoading} disabled={rolesLoading || !!roleError}
             options={roles.map(role => ({ label: role.roleName, value: role.roleId }))} />
         </Form.Item>}
-        <Form.Item name="reason" label="操作原因" rules={[{ required: true, whitespace: true, message: '请填写操作原因' }]}>
-          <Input.TextArea rows={4} maxLength={500} showCount placeholder="说明本次人员或权限变更的原因" />
+        <Form.Item name="reason" label={tCommon('reason.label')} rules={[{ required: true, whitespace: true, message: tCommon('reason.required') }]}>
+          <Input.TextArea rows={4} maxLength={500} showCount placeholder={t('accounts.drawer.reasonPlaceholder')} />
         </Form.Item>
       </Form>
     </Drawer>

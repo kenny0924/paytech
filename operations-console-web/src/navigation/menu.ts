@@ -1,9 +1,19 @@
 import type { ConsoleResource } from '../api/types.ts';
+import { tOr } from '../i18n/index.ts';
+import type { Translate } from '../i18n/index.ts';
 
 import { pageCapabilities } from './pageCapabilities.ts';
 const componentRoutes: Record<string, string> = Object.fromEntries(pageCapabilities.map(page => [page.componentKey, page.frontendRoute]));
 
 export interface ConsoleMenu extends ConsoleResource { children: ConsoleMenu[] }
+
+/**
+ * 菜单、面包屑与页面标题共用的资源名称：`nav.resource.<resourceCode>` 有翻译时用翻译，
+ * 否则回退 Platform 返回的 display_name（新资源未建 key 时仍可用）。`t` 为 `useT('nav')`。
+ */
+export function resourceLabel(t: Translate, resource: Pick<ConsoleResource, 'resourceCode' | 'displayName'>): string {
+  return tOr(t, 'resource.' + resource.resourceCode, resource.displayName);
+}
 
 /** 只展示服务端授权资源及本地已部署页面，不补回缺失的父级或权限。 */
 export function buildMenuTree(resources: ConsoleResource[]): ConsoleMenu[] {

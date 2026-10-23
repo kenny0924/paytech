@@ -8,9 +8,11 @@ import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
 import { roleDeletionCommand } from './roleDeletion';
 import { permissionRemovalImpact, permissionSelection, permissionTree, roleCommand, togglePermissionNode } from './roleEditor';
 import type { PermissionTreeItem, RoleCommand, RoleFormValues } from './roleEditor';
+import { useT } from '../i18n/react';
 
 export function Roles({ resources, onSaved }: { resources: ConsoleResource[]; onSaved: () => void }) {
   const { message, modal } = App.useApp();
+  const t = useT('access'), tCommon = useT('common'), tNav = useT('nav');
   const notifyError = useErrorNotification();
   const { data, loading, error, refresh, pagination } = usePaging<RoleListItem>('/iam/v1/roles');
   const [edit, setEdit] = useState<{ roleId: string | null; viewOnly: boolean } | null>(null);
@@ -59,7 +61,7 @@ export function Roles({ resources, onSaved }: { resources: ConsoleResource[]; on
         }
       }
     } catch (failure) {
-      if (!controller.signal.aborted) { setEditorFailed(true); notifyError(failure, '角色配置加载失败'); }
+      if (!controller.signal.aborted) { setEditorFailed(true); notifyError(failure, t('roles.editorLoadFailed')); }
     } finally { if (!controller.signal.aborted) setEditorLoading(false); }
   }
 
@@ -92,9 +94,9 @@ export function Roles({ resources, onSaved }: { resources: ConsoleResource[]; on
         method: current.method, headers: { 'Idempotency-Key': current.key }, body: current.payload,
       });
       setEdit(null); form.resetFields(); command.current = null;
-      onSaved(); void message.success('角色配置已保存，已记录审计。');
+      onSaved(); void message.success(t('roles.saved'));
     } catch (failure) {
-      notifyError(failure, '角色保存失败');
+      notifyError(failure, t('roles.saveFailed'));
       if (failure instanceof ApiError && failure.status === 409 && role) setConflicted(true);
     } finally { setSaving(false); }
   }
@@ -109,69 +111,69 @@ export function Roles({ resources, onSaved }: { resources: ConsoleResource[]; on
       setPermissionIds(current => togglePermissionNode(nodes, current, nodeId, remove)); return;
     }
     modal.confirm({
-      title: '确认移除子项权限',
-      content: `取消该节点将同时移除 ${impact.removedDescendantPermissionIds.length} 项已选子项权限。`,
-      okText: '确认移除', cancelText: '保留权限', okButtonProps: { danger: true },
+      title: t('roles.removeChildren.title'),
+      content: t('roles.removeChildren.content', { count: impact.removedDescendantPermissionIds.length }),
+      okText: t('roles.removeChildren.confirm'), cancelText: t('roles.removeChildren.keep'), okButtonProps: { danger: true },
       onOk: () => setPermissionIds(current => togglePermissionNode(nodes, current, nodeId, false)),
     });
   }
 
   return <>
-    <div className="page-heading"><h1>角色管理</h1>
-      <Space><Button onClick={refresh} loading={loading} disabled={!!deletingRole}>刷新</Button>
-        {canCreate && <Button type="primary" disabled={saving || !!deletingRole} onClick={() => open(null)}>＋ 创建角色</Button>}</Space></div>
+    <div className="page-heading"><h1>{tNav('resource.OPERATIONS_ROLES')}</h1>
+      <Space><Button onClick={refresh} loading={loading} disabled={!!deletingRole}>{tCommon('action.refresh')}</Button>
+        {canCreate && <Button type="primary" disabled={saving || !!deletingRole} onClick={() => open(null)}>{t('roles.create')}</Button>}</Space></div>
     <section className="table-panel">
       <Table<RoleListItem> rowKey="roleId" dataSource={error ? [] : data.items} loading={loading} scroll={{ x: 900 }}
-        pagination={pagination} locale={{ emptyText: error ? '暂时无法加载角色' : '暂无可分配角色' }} columns={[
-          { title: '角色名称', dataIndex: 'roleName' },
-          { title: '角色编码', dataIndex: 'roleCode' },
-          { title: '类型', dataIndex: 'systemRole', render: (value: boolean) => <Tag>{value ? '系统角色' : '自定义角色'}</Tag> },
-          { title: <Tooltip title="关联员工数包含停用账号">关联员工数</Tooltip>, dataIndex: 'employeeCount', width: 130 },
-          { title: '操作', width: 170, render: (_, row) => row.systemRole ? canEdit
-            ? <Button type="link" disabled={saving || !!deletingRole} onClick={() => open(row.roleId, true)}>查看</Button>
-            : <span className="muted">系统内置</span>
+        pagination={pagination} locale={{ emptyText: error ? t('roles.unavailable') : t('roles.empty') }} columns={[
+          { title: t('roles.column.roleName'), dataIndex: 'roleName' },
+          { title: t('roles.column.roleCode'), dataIndex: 'roleCode' },
+          { title: t('roles.column.type'), dataIndex: 'systemRole', render: (value: boolean) => <Tag>{value ? t('roles.systemRole') : t('roles.customRole')}</Tag> },
+          { title: <Tooltip title={t('roles.column.userCountHint')}>{t('roles.column.userCount')}</Tooltip>, dataIndex: 'employeeCount', width: 130 },
+          { title: t('roles.column.actions'), width: 170, render: (_, row) => row.systemRole ? canEdit
+            ? <Button type="link" disabled={saving || !!deletingRole} onClick={() => open(row.roleId, true)}>{t('roles.action.view')}</Button>
+            : <span className="muted">{t('roles.builtIn')}</span>
             : <Space size={0}>
-              {canEdit && <Button type="link" disabled={saving || !!deletingRole} onClick={() => open(row.roleId)}>编辑</Button>}
-              {canDelete && <Tooltip title={row.employeeCount > 0 ? '请先去人员管理调整角色关联' : undefined}>
+              {canEdit && <Button type="link" disabled={saving || !!deletingRole} onClick={() => open(row.roleId)}>{t('roles.action.edit')}</Button>}
+              {canDelete && <Tooltip title={row.employeeCount > 0 ? t('roles.deleteBlocked') : undefined}>
                 <span><Button type="link" danger disabled={saving || !!deletingRole || row.employeeCount !== 0}
-                  onClick={() => openDelete(row)}>删除</Button></span></Tooltip>}
+                  onClick={() => openDelete(row)}>{t('roles.action.delete')}</Button></span></Tooltip>}
               {!canEdit && !canDelete && '—'}
             </Space> },
         ]} />
     </section>
-    {deletingRole && <DeleteConfirmationModal key={deletingRole.roleId} subject="角色"
+    {deletingRole && <DeleteConfirmationModal key={deletingRole.roleId} subject={t('roles.deleteSubject')}
       allowed={canDelete && !deletingRole.systemRole && deletingRole.employeeCount === 0}
       buildCommand={(reason, previous) => roleDeletionCommand(deletingRole, reason, previous)}
       onClose={() => setDeletingRole(null)} onDeleted={deleted}
       onRefresh={() => { setDeletingRole(null); refresh(); }}>
-      <p>删除角色“{deletingRole.roleName}”？删除后不可恢复，也不能再分配给人员。</p>
+      <p>{t('roles.deleteConfirm', { roleName: deletingRole.roleName })}</p>
     </DeleteConfirmationModal>}
-    <Drawer open={!!edit} onClose={close} title={viewing ? '查看角色' : edit?.roleId ? '编辑角色' : '创建角色'}
+    <Drawer open={!!edit} onClose={close} title={viewing ? t('roles.editor.viewTitle') : edit?.roleId ? t('roles.editor.editTitle') : t('roles.editor.createTitle')}
       className="role-editor" size={560} destroyOnHidden
       extra={editable && <Button type="primary" onClick={() => form.submit()} loading={saving}
-        disabled={editorLoading || editorFailed || conflicted}>保存</Button>}>
+        disabled={editorLoading || editorFailed || conflicted}>{tCommon('action.save')}</Button>}>
       {editorLoading ? <div className="content-loading"><Spin /></div>
-        : editorFailed ? <p className="muted">暂时无法加载角色配置。
-          <Button type="link" onClick={() => edit && void loadEditor(edit.roleId)}>重试</Button></p>
+        : editorFailed ? <p className="muted">{t('roles.editor.unavailable')}
+          <Button type="link" onClick={() => edit && void loadEditor(edit.roleId)}>{tCommon('action.retry')}</Button></p>
           : <Form form={form} layout="vertical" onFinish={save} requiredMark={false} disabled={saving || !editable}>
-            {viewing && <p className="muted">系统内置角色由平台维护，以下为当前权限配置。</p>}
-            {conflicted && <p className="muted">角色已更新，请重新加载后编辑。
-              <Button type="link" onClick={() => edit && void loadEditor(edit.roleId)}>重新加载</Button></p>}
-            <Form.Item name="roleName" label="角色名称" rules={[{ required: true, whitespace: true, message: '请输入角色名称' }]}>
+            {viewing && <p className="muted">{t('roles.editor.systemRoleHint')}</p>}
+            {conflicted && <p className="muted">{t('roles.editor.conflict')}
+              <Button type="link" onClick={() => edit && void loadEditor(edit.roleId)}>{t('roles.editor.reload')}</Button></p>}
+            <Form.Item name="roleName" label={t('roles.column.roleName')} rules={[{ required: true, whitespace: true, message: t('roles.editor.roleNameRequired') }]}>
               <Input maxLength={255} autoComplete="off" /></Form.Item>
-            <Form.Item name="roleCode" label="角色编码" extra={viewing ? undefined : edit?.roleId ? '创建后不可修改。' : '使用大写字母、数字和下划线，以字母开头。'}
-              rules={[{ required: true, pattern: /^[A-Z][A-Z0-9_]{0,63}$/, message: '请输入有效角色编码' }]}>
+            <Form.Item name="roleCode" label={t('roles.column.roleCode')} extra={viewing ? undefined : edit?.roleId ? t('roles.editor.roleCodeLocked') : t('roles.editor.roleCodeHint')}
+              rules={[{ required: true, pattern: /^[A-Z][A-Z0-9_]{0,63}$/, message: t('roles.editor.roleCodeInvalid') }]}>
               <Input maxLength={64} disabled={saving || !editable || !!edit?.roleId} autoComplete="off" /></Form.Item>
-            <Form.Item label={viewing ? '角色权限' : '权限配置'}>
-              {!viewing && <p className="role-permission-help">勾选目录会选择全部子项，勾选操作会自动保留上级访问权限。半选表示仅授权部分子项。</p>}
+            <Form.Item label={viewing ? t('roles.editor.rolePermissions') : t('roles.editor.permissionSettings')}>
+              {!viewing && <p className="role-permission-help">{t('roles.editor.treeHelp')}</p>}
               {nodes.length > 0 ? <Tree<PermissionTreeItem> checkable checkStrictly selectable={false} defaultExpandAll
                 disabled={saving || !editable || conflicted} treeData={treeData} checkedKeys={checkedKeys}
                 onCheck={editable ? (_, info) => changePermission(info.node.key) : undefined} />
-                : <p className="muted">暂无可配置权限。</p>}
-              <p className="role-permission-count">{viewing ? '已授予' : '已选择'} {new Set(permissionIds).size} 项权限</p>
+                : <p className="muted">{t('roles.editor.noPermissions')}</p>}
+              <p className="role-permission-count">{viewing ? t('roles.editor.grantedCount', { count: new Set(permissionIds).size }) : t('roles.editor.selectedCount', { count: new Set(permissionIds).size })}</p>
             </Form.Item>
-            {!viewing && <Form.Item name="reason" label="操作原因" rules={[{ required: true, whitespace: true, message: '请填写操作原因' }]}>
-              <Input.TextArea rows={3} maxLength={500} showCount placeholder="说明本次角色或权限变更的原因" /></Form.Item>}
+            {!viewing && <Form.Item name="reason" label={tCommon('reason.label')} rules={[{ required: true, whitespace: true, message: tCommon('reason.required') }]}>
+              <Input.TextArea rows={3} maxLength={500} showCount placeholder={t('roles.editor.reasonPlaceholder')} /></Form.Item>}
           </Form>}
     </Drawer>
   </>;

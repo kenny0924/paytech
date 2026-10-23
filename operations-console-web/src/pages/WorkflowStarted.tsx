@@ -12,7 +12,8 @@ import { ActivityTimeline, FullFlowModal } from '../workflow/TaskPanels';
 import { durationText, waitingForMe, waitingOn } from '../workflow/taskModel';
 import { WorkflowCanvas } from '../workflow/WorkflowCanvas';
 import { decodeDefinitionSummary, decodeInstanceDetail, decodeInstanceSummary, decodePage, workflowPaths, COUNT_PAGE_SIZE } from '../workflow/workflowApi';
-import { instanceStatusColors, instanceStatusLabels } from '../workflow/workflowLabels';
+import { instanceStatusColors, instanceStatusLabel } from '../workflow/workflowLabels';
+import { useT } from '../i18n/react';
 import type { DefinitionSummary, GraphNode, InstanceDetail, InstanceSummary } from '../workflow/workflowTypes';
 import { LoadFailed, Spinner, canOpenInstances, hasButton, personName, shortTime, useLoad, workflowButtons } from '../workflow/WorkflowParts';
 import '../workflow/workflow.css';
@@ -28,6 +29,7 @@ const decodeDefinitions = decodePage(decodeDefinitionSummary);
  * 数据来自实例列表 scope=MINE&startedBy=本人；撤回 = 终止实例（现有接口，发起人可在运行中终止）。
  */
 export function WorkflowStarted({ resources, actorId, onAuthorizationChanged }: Props) {
+  const t = useT('workflow'), tNav = useT('nav');
   const [params, setParams] = useSearchParams();
   const [tab, setTab] = useState<Tab>('RUNNING');
   const [ended, setEnded] = useState<Ended>('COMPLETED');
@@ -58,43 +60,43 @@ export function WorkflowStarted({ resources, actorId, onAuthorizationChanged }: 
   const canStart = hasButton(resources, workflowButtons.instanceStart);
   function refresh() { paging.refresh(); runningCount.refresh(); }
   return <div className="wf-page">
-    <div className="wf-page-head"><h1>我发起的</h1>
+    <div className="wf-page-head"><h1>{tNav('resource.OPERATIONS_WORKFLOW_STARTED')}</h1>
       <nav className="wf-tabs">
-        <button type="button" className={`wf-tab${tab === 'RUNNING' ? ' is-active' : ''}`} onClick={() => setTab('RUNNING')}>进行中
+        <button type="button" className={`wf-tab${tab === 'RUNNING' ? ' is-active' : ''}`} onClick={() => setTab('RUNNING')}>{t('started.tab.running')}
           {!runningCount.loading && !runningCount.error && <span className="wf-tab-count">{runningCount.data.total}</span>}</button>
-        <button type="button" className={`wf-tab${tab === 'ENDED' ? ' is-active' : ''}`} onClick={() => setTab('ENDED')}>已结束</button>
+        <button type="button" className={`wf-tab${tab === 'ENDED' ? ' is-active' : ''}`} onClick={() => setTab('ENDED')}>{t('started.tab.ended')}</button>
       </nav>
       <span className="wf-grow" />
-      {canStart && <Button type="primary" onClick={() => setParams(current => { const next = new URLSearchParams(current); next.set('launch', ''); return next; })} icon={<PlusOutlined />}>发起流程</Button>}
+      {canStart && <Button type="primary" onClick={() => setParams(current => { const next = new URLSearchParams(current); next.set('launch', ''); return next; })} icon={<PlusOutlined />}>{t('launch.title')}</Button>}
     </div>
     <div className="wf-started">
       <section className="wf-started-list">
         <div className="wf-inbox-tools">
-          <Select allowClear value={definitionId} onChange={setDefinitionId} style={{ width: 200 }} placeholder="全部流程"
+          <Select allowClear value={definitionId} onChange={setDefinitionId} style={{ width: 200 }} placeholder={t('started.allProcesses')}
             options={definitions.map(item => ({ value: item.definitionId, label: item.definitionName }))} />
           {tab === 'ENDED' && <Segmented size="small" value={ended} onChange={value => setEnded(value as Ended)}
-            options={[{ value: 'COMPLETED', label: '已完成' }, { value: 'TERMINATED', label: '已终止' }]} />}
+            options={[{ value: 'COMPLETED', label: instanceStatusLabel('COMPLETED') }, { value: 'TERMINATED', label: instanceStatusLabel('TERMINATED') }]} />}
           <span className="wf-grow" />
-          {searching ? <Input.Search allowClear autoFocus size="small" style={{ width: 220 }} placeholder="搜索实例标题" onSearch={setKeyword} />
-            : <Button type="text" size="small" aria-label="搜索" icon={<SearchOutlined />} onClick={() => setSearching(true)} />}
+          {searching ? <Input.Search allowClear autoFocus size="small" style={{ width: 220 }} placeholder={t('started.search')} onSearch={setKeyword} />
+            : <Button type="text" size="small" aria-label={t('started.searchLabel')} icon={<SearchOutlined />} onClick={() => setSearching(true)} />}
         </div>
-        <table className="wf-table wf-started-table"><thead><tr><th>实例</th><th>当前步骤</th><th>已用时长</th><th>状态</th></tr></thead>
+        <table className="wf-table wf-started-table"><thead><tr><th>{t('enum.activityType.INSTANCE')}</th><th>{t('started.column.step')}</th><th>{t('started.column.elapsed')}</th><th>{t('templateEditor.status')}</th></tr></thead>
           <tbody>{items.map(row => {
             const mine = waitingForMe(row, actorId);
             return <tr key={row.instanceId} className={selected?.instanceId === row.instanceId ? 'is-selected' : undefined} onClick={() => choose(row.instanceId)}>
-              <td><strong>{row.title}</strong><div className="muted">{row.definitionName ?? '—'} · {shortTime(row.startTime)} 发起</div></td>
+              <td><strong>{row.title}</strong><div className="muted">{row.definitionName ?? '—'} · {t('task.meta.startedAt', { time: shortTime(row.startTime) })}</div></td>
               <td>{waitingOn(row, actorId)}</td>
               <td>{durationText(row.startTime, row.endTime)}</td>
-              <td>{mine ? <Tag color="orange">待你处理</Tag> : <Tag color={instanceStatusColors[row.status]}>{instanceStatusLabels[row.status]}</Tag>}</td>
+              <td>{mine ? <Tag color="orange">{t('started.yourTurn')}</Tag> : <Tag color={instanceStatusColors[row.status]}>{instanceStatusLabel(row.status)}</Tag>}</td>
             </tr>;
           })}</tbody></table>
         {paging.loading && !items.length && <Spinner />}
-        {!paging.loading && !items.length && <Empty description={tab === 'RUNNING' ? '没有进行中的实例' : '没有已结束的实例'} />}
+        {!paging.loading && !items.length && <Empty description={tab === 'RUNNING' ? t('started.emptyRunning') : t('started.emptyEnded')} />}
         {paging.data.total > paging.data.size && <div className="wf-inbox-pager"><Pagination size="small" {...paging.pagination} /></div>}
       </section>
       {selected ? <StartedDetail key={selected.instanceId} instanceId={selected.instanceId} actorId={actorId} resources={resources}
         onAuthorizationChanged={onAuthorizationChanged} onChanged={refresh} />
-        : <aside className="wf-started-detail wf-detail-empty"><Empty description="选择左侧实例查看进度" /></aside>}
+        : <aside className="wf-started-detail wf-detail-empty"><Empty description={t('started.selectHint')} /></aside>}
     </div>
     {launching !== null && <LaunchModal initialDefinitionId={launching || null} onAuthorizationChanged={onAuthorizationChanged}
       onStarted={id => { setTab('RUNNING'); choose(id); refresh(); }}
@@ -106,6 +108,7 @@ export function WorkflowStarted({ resources, actorId, onAuthorizationChanged }: 
 function StartedDetail({ instanceId, actorId, resources, onAuthorizationChanged, onChanged }: {
   instanceId: string; actorId: string; resources: ConsoleResource[]; onAuthorizationChanged: () => void; onChanged: () => void;
 }) {
+  const t = useT('workflow');
   const detail = useLoad<InstanceDetail>(workflowPaths.instance(instanceId), decodeInstanceDetail);
   const [terminating, setTerminating] = useState(false);
   const [flow, setFlow] = useState(false);
@@ -116,20 +119,21 @@ function StartedDetail({ instanceId, actorId, resources, onAuthorizationChanged,
     state: node.type === 'START' && value?.nodeRuns.length ? 'done' as const : visualState(runs.get(node.key)) }), [runs, value]);
   const edgeState = useCallback((key: string) => edges.has(key) ? 'done' as const : 'pending' as const, [edges]);
   if (detail.loading && !value) return <aside className="wf-started-detail"><Spinner /></aside>;
-  if (!value) return <aside className="wf-started-detail"><LoadFailed failure={detail.failure} retry={detail.refresh} title="实例加载失败" /></aside>;
+  if (!value) return <aside className="wf-started-detail"><LoadFailed failure={detail.failure} retry={detail.refresh} title={t('instance.loadFailed')} /></aside>;
   // 现有终止规则：运行中，发起人本人或有管理实例权限的人。
   const canWithdraw = value.instance.status === 'RUNNING' && (value.instance.startedBy === actorId || hasButton(resources, workflowButtons.instanceManage));
   return <aside className="wf-started-detail">
     <div className="wf-detail-title"><h2>{value.instance.title}</h2><span className="wf-grow" />
-      {canWithdraw && <Button onClick={() => setTerminating(true)}>撤回（终止实例）</Button>}</div>
-    <div className="wf-meta">{value.definitionName} v{value.versionNo} · {shortTime(value.instance.startTime)} 发起 · {value.instance.endTime ? '历时' : '已用'} {durationText(value.instance.startTime, value.instance.endTime)}</div>
-    {value.instance.status === 'TERMINATED' && <div className="muted">已由 {personName(value.terminatedBy, value.people)} 终止{value.terminationReason ? `：${value.terminationReason}` : ''}</div>}
-    <section className="wf-section"><div className="wf-section-title">流程位置<span className="wf-grow" />
-      <Button type="link" size="small" className="wf-small-link" onClick={() => setFlow(true)}>完整详情</Button></div>
+      {canWithdraw && <Button onClick={() => setTerminating(true)}>{t('started.withdraw')}</Button>}</div>
+    <div className="wf-meta">{value.definitionName} v{value.versionNo} · {t('task.meta.startedAt', { time: shortTime(value.instance.startTime) })} · {value.instance.endTime
+      ? t('instance.took', { duration: durationText(value.instance.startTime, value.instance.endTime) }) : t('started.elapsed', { duration: durationText(value.instance.startTime, value.instance.endTime) })}</div>
+    {value.instance.status === 'TERMINATED' && <div className="muted">{t('instance.terminatedBy', { name: personName(value.terminatedBy, value.people) })}{value.terminationReason ? t('instance.drawer.transferReason', { reason: value.terminationReason }) : ''}</div>}
+    <section className="wf-section"><div className="wf-section-title">{t('started.position')}<span className="wf-grow" />
+      <Button type="link" size="small" className="wf-small-link" onClick={() => setFlow(true)}>{t('started.fullDetails')}</Button></div>
       <WorkflowCanvas graph={value.graph} editable={false} selection={null} onSelect={() => {}} decorate={decorate} edgeState={edgeState} height={220} /></section>
-    <section className="wf-section"><div className="wf-section-title">活动</div><ActivityTimeline detail={value} actorId={actorId} /></section>
+    <section className="wf-section"><div className="wf-section-title">{t('task.activity')}</div><ActivityTimeline detail={value} actorId={actorId} /></section>
     {flow && <FullFlowModal detail={value} canOpenInstance={canOpenInstances(resources)} onClose={() => setFlow(false)} />}
-    {terminating && <TerminateModal title="撤回（终止实例）" instanceId={instanceId} onAuthorizationChanged={onAuthorizationChanged}
+    {terminating && <TerminateModal title={t('started.withdraw')} instanceId={instanceId} onAuthorizationChanged={onAuthorizationChanged}
       onClose={() => setTerminating(false)} onDone={() => { setTerminating(false); detail.refresh(); onChanged(); }} />}
   </aside>;
 }

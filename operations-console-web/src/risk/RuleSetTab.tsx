@@ -8,7 +8,8 @@ import type { RiskNavigation } from './riskNavigation';
 import { ruleSetCodeError } from './riskNavigation';
 import { hasRiskAction } from './riskPageModel';
 import { decodeRuleSetPage } from './riskResponseValidation';
-import { formatRiskTime, ruleSetStatusLabels } from './RuleSetDetails';
+import { formatRiskTime, ruleSetStatusLabel, ruleSetStatuses } from './RuleSetDetails';
+import { useT } from '../i18n/react';
 import { useRiskPoints } from './riskPoints';
 
 export function RuleSetTab({ revision, disabled, navigation, resources, canEdit, onNavigate, onSelect, onEdit, onDelete, onHistory, onReferences, onFreeze, onReadFailure }: {
@@ -17,6 +18,7 @@ export function RuleSetTab({ revision, disabled, navigation, resources, canEdit,
   onHistory: (row: RuleSetListItem) => void; onReferences: (row: RuleSetListItem) => void; onFreeze: (row: RuleSetListItem) => void;
   onEdit: (row: RuleSetListItem) => void; onDelete: (row: RuleSetListItem) => void; onReadFailure: () => void;
 }) {
+  const t = useT('risk');
   const [form] = Form.useForm();
   const points = useRiskPoints();
   const invalidQuery = !!ruleSetCodeError(navigation.filters.ruleSetCode ?? '');
@@ -46,30 +48,30 @@ export function RuleSetTab({ revision, disabled, navigation, resources, canEdit,
     <Form form={form} layout="inline" className="risk-filters" initialValues={navigation.filters}
       onFinish={(values: RuleSetFilters) => applyFilters({ pointCode: values.pointCode || navigation.filters.pointCode || 'CHECKOUT_PREPARE',
         ...(values.ruleSetCode?.trim() ? { ruleSetCode: values.ruleSetCode.trim() } : {}), ...(values.status ? { status: values.status } : {}) })}>
-      <Form.Item label="风控点" name="pointCode"><Select aria-label="风控点" style={{ width: 160 }} disabled={disabled} options={points.map(p => ({ value: p.pointCode, label: p.pointName }))}
+      <Form.Item label={t('ruleSetList.point')} name="pointCode"><Select aria-label={t('ruleSetList.point')} style={{ width: 160 }} disabled={disabled} options={points.map(p => ({ value: p.pointCode, label: p.pointName }))}
         onChange={pointCode => applyFilters({ pointCode })} /></Form.Item>
-      <Form.Item label="规则集编码" name="ruleSetCode" rules={[{ validator: (_, value: string | undefined) => {
+      <Form.Item label={t('fieldError.ruleSetCode')} name="ruleSetCode" rules={[{ validator: (_, value: string | undefined) => {
         const message = ruleSetCodeError(value ?? ''); return message ? Promise.reject(new Error(message)) : Promise.resolve();
       } }]}><Input autoComplete="off" /></Form.Item>
-      <Form.Item label="状态" name="status"><Select allowClear placeholder="全部状态" options={Object.entries(ruleSetStatusLabels).filter(([value]) => value !== 'RETIRED').map(([value, label]) => ({ value, label }))} /></Form.Item>
-      <Button htmlType="submit" disabled={disabled}>查询</Button>
+      <Form.Item label={t('candidateList.status')} name="status"><Select allowClear placeholder={t('candidateList.allStatuses')} options={ruleSetStatuses.filter(value => value !== 'RETIRED').map(value => ({ value, label: ruleSetStatusLabel(value) }))} /></Form.Item>
+      <Button htmlType="submit" disabled={disabled}>{t('candidateList.search')}</Button>
     </Form>
-    <div className="table-toolbar"><span className="table-caption">共 {data.total} 个规则集</span><Button onClick={refresh} loading={loading} disabled={disabled || invalidQuery}>刷新</Button></div>
+    <div className="table-toolbar"><span className="table-caption">{t('ruleSetList.count', { count: data.total })}</span><Button onClick={refresh} loading={loading} disabled={disabled || invalidQuery}>{t('candidateList.refresh')}</Button></div>
     <Table<RuleSetListItem> rowKey="ruleSetId" dataSource={error || invalidQuery ? [] : data.items} loading={loading} pagination={pagination}
-      scroll={{ x: 1000 }} locale={{ emptyText: error ? '暂时无法加载规则集，请重试。' : '暂无规则集' }} columns={[
-        { title: '规则集', render: (_, row) => <><strong>{row.ruleSetName}</strong><div className="cell-meta">{row.ruleSetCode}</div></> },
-        { title: '状态', render: (_, row) => <Tag>{ruleSetStatusLabels[row.status]}</Tag> },
-        { title: '创建人 / 时间', render: (_, row) => <>{row.createdBy}<div className="cell-meta">{formatRiskTime(row.createTime)}</div></> },
-        { title: '冻结人 / 时间', render: (_, row) => <>{row.frozenBy ?? '—'}<div className="cell-meta">{formatRiskTime(row.frozenTime)}</div></> },
-        { title: '操作', render: (_, row) => <Dropdown autoFocus trigger={['click', 'hover']} menu={{ items: [
-          { key: 'detail', label: '详情', onClick: () => onSelect(row) },
-          ...(resources.some(resource => resource.resourceType === 'BUTTON' && resource.resourceCode === 'OPERATIONS_RISK_RULE_SET_HISTORY') ? [{ key: 'history', label: '历史版本', onClick: () => onHistory(row) }] : []),
-          ...(resources.some(resource => resource.resourceType === 'BUTTON' && resource.resourceCode === 'OPERATIONS_RISK_RULE_SET_REFERENCES') ? [{ key: 'references', label: '引用关系', onClick: () => onReferences(row) }] : []),
-          ...(hasRiskAction(resources, 'FREEZE') && row.status === 'DRAFT' ? [{ key: 'freeze', label: '冻结版本', disabled: !canEdit, onClick: () => onFreeze(row) }] : []),
-          ...(hasRiskAction(resources, 'SAVE') ? [{ key: 'edit', label: '编辑', disabled: !canEdit, onClick: () => onEdit(row) }] : []),
+      scroll={{ x: 1000 }} locale={{ emptyText: error ? t('ruleSetList.loadFailed') : t('ruleSetList.empty') }} columns={[
+        { title: t('ruleSetPicker.column.ruleSet'), render: (_, row) => <><strong>{row.ruleSetName}</strong><div className="cell-meta">{row.ruleSetCode}</div></> },
+        { title: t('candidateList.status'), render: (_, row) => <Tag>{ruleSetStatusLabel(row.status)}</Tag> },
+        { title: t('candidate.field.created'), render: (_, row) => <>{row.createdBy}<div className="cell-meta">{formatRiskTime(row.createTime)}</div></> },
+        { title: t('ruleSetDetails.frozen'), render: (_, row) => <>{row.frozenBy ?? '—'}<div className="cell-meta">{formatRiskTime(row.frozenTime)}</div></> },
+        { title: t('candidateList.column.actions'), render: (_, row) => <Dropdown autoFocus trigger={['click', 'hover']} menu={{ items: [
+          { key: 'detail', label: t('ruleSetList.action.detail'), onClick: () => onSelect(row) },
+          ...(resources.some(resource => resource.resourceType === 'BUTTON' && resource.resourceCode === 'OPERATIONS_RISK_RULE_SET_HISTORY') ? [{ key: 'history', label: t('ruleSetList.action.history'), onClick: () => onHistory(row) }] : []),
+          ...(resources.some(resource => resource.resourceType === 'BUTTON' && resource.resourceCode === 'OPERATIONS_RISK_RULE_SET_REFERENCES') ? [{ key: 'references', label: t('ruleSetList.action.references'), onClick: () => onReferences(row) }] : []),
+          ...(hasRiskAction(resources, 'FREEZE') && row.status === 'DRAFT' ? [{ key: 'freeze', label: t('ruleSetList.action.freeze'), disabled: !canEdit, onClick: () => onFreeze(row) }] : []),
+          ...(hasRiskAction(resources, 'SAVE') ? [{ key: 'edit', label: t('ruleSetList.action.edit'), disabled: !canEdit, onClick: () => onEdit(row) }] : []),
           ...(hasRiskAction(resources, 'DELETE') ? [{ key: 'delete', danger: true, disabled: row.inUse,
-            label: row.inUse ? <Tooltip title="规则集正在使用，不能删除"><span>删除</span></Tooltip> : '删除', onClick: () => onDelete(row) }] : []),
-        ] }} disabled={disabled}><Button type="link" aria-label={`操作 ${row.ruleSetCode}`} aria-haspopup="menu" disabled={disabled}>操作 ▾</Button></Dropdown> },
+            label: row.inUse ? <Tooltip title={t('ruleSetList.inUse')}><span>{t('ruleSetList.action.delete')}</span></Tooltip> : t('ruleSetList.action.delete'), onClick: () => onDelete(row) }] : []),
+        ] }} disabled={disabled}><Button type="link" aria-label={t('ruleSetList.actionsFor', { code: row.ruleSetCode })} aria-haspopup="menu" disabled={disabled}>{t('ruleSetList.actions')}</Button></Dropdown> },
       ]} />
   </section>;
 }

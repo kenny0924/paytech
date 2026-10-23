@@ -3,6 +3,9 @@ import { decodeFields } from './externalApiModel.ts';
 import type { ApiField } from './externalApiModel.ts';
 import type { RegisteredFunction } from './editorModel.ts';
 import type { Binding } from './integrationApiModel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('channel');
 
 export type ExecuteStatus = 'SUCCESS' | 'FAIL' | 'ERROR';
 export interface Initializer { id: string; function: string; args: Record<string, Binding>; required: boolean }
@@ -150,9 +153,9 @@ export type EdgeResult = { flow: Flow; edge: FlowEdge } | { error: string };
  * 新建连线：只能从节点出发；不能连回上游形成环。节点尚无出口时第一条为兜底连线，其后为条件连线（优先级递增、条件待填）。
  */
 export function addEdge(flow: Flow, from: string, to: string): EdgeResult {
-  if (!flow.nodes.some(node => node.id === from)) return { error: '只能从原子 API 节点连出' };
-  if (from === to || reachable(flow, to).has(from)) return { error: '流程暂不支持环' };
-  if (flow.edges.some(edge => edge.from === from && edge.to === to)) return { error: '已存在相同的连线' };
+  if (!flow.nodes.some(node => node.id === from)) return { error: t('flow.edge.fromApiOnly') };
+  if (from === to || reachable(flow, to).has(from)) return { error: t('flow.edge.noCycle') };
+  if (flow.edges.some(edge => edge.from === from && edge.to === to)) return { error: t('flow.edge.duplicate') };
   const existing = flow.edges.filter(edge => edge.from === from);
   const edge: FlowEdge = existing.length === 0 ? { from, to, default: true }
     : { from, to, condition: '', priority: Math.max(0, ...existing.map(item => item.priority ?? 0)) + 1 };

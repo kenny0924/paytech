@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react';
 import { Alert, App, Button, Checkbox, Descriptions, Drawer, Form, Input, Select, Spin, Table, Tag } from 'antd';
-import { localTime, sideLabels } from './finance';
+import { enumLabel } from '../i18n/index';
+import type { Translate } from '../i18n/index';
+import { useT } from '../i18n/react';
+import { localTime } from './finance';
 import type { ChartAccount } from './finance';
 import {
-  amountSourceLabels, chartAccountLabel, decodeRuleVersion, defaultEffectiveFrom, groupRuleLines, instructionTypeLabels, ledgerWorkflowErrorTargets,
-  ruleAccountOptions, ruleBundleName, ruleLinesError, ruleOwnerRoleLabels, ruleVersionActions, ruleVersionBody, ruleVersionStatusLabels, templateRuleLines,
+  amountSourceCodes, chartAccountLabel, decodeRuleVersion, defaultEffectiveFrom, groupRuleLines, instructionTypes, ledgerWorkflowErrorTargets,
+  ruleAccountOptions, ruleBundleName, ruleLinesError, ruleOwnerRoles, ruleVersionActions, ruleVersionBody, templateRuleLines,
   workflowPaths,
 } from './financeWorkflow';
 import type { RuleLine, RuleLineValues, RuleVersion, RuleVersionStatus } from './financeWorkflow';
@@ -13,35 +16,31 @@ import { useFinanceCommand } from './useFinanceCommand';
 import { ActorText, CommandFeedback, ReviewActions, useDetail, WorkflowTag } from './WorkflowParts';
 import type { ReviewAction } from './WorkflowParts';
 
-const labelled = (labels: Readonly<Record<string, string>>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
+const labelled = (t: Translate, type: string, values: readonly string[]) => values.map(value => ({ value, label: enumLabel(t, 'enum.' + type, value) }));
 const bucketOptions = ['NONE', 'PENDING', 'AVAILABLE', 'LOCKED'].map(value => ({ value, label: value }));
-const sideOptions = (['DEBIT', 'CREDIT'] as const).map(value => ({ value, label: sideLabels[value] }));
 const formFields = ['effectiveFrom', 'lines'];
 type VersionAction = 'submit' | 'approve' | 'reject' | 'void';
 const expectedStatus: Record<VersionAction, readonly RuleVersionStatus[]> = {
   submit: ['PENDING_APPROVAL'], approve: ['ACTIVE', 'APPROVED'], reject: ['REJECTED'], void: ['VOIDED'],
 };
-const actionTexts: Record<VersionAction, { label: string; confirm: string; done: string; failure: string }> = {
-  submit: { label: '提交审批', confirm: '提交后不能再修改，等待他人审批。确认提交？', done: '已提交，等待审批', failure: '提交规则版本失败' },
-  void: { label: '作废草稿', confirm: '作废后该草稿不能再提交，可重新新建版本。确认作废？', done: '草稿已作废', failure: '作废规则版本失败' },
-  reject: { label: '驳回', confirm: '驳回后制单人可重新新建版本。确认驳回？', done: '已驳回', failure: '驳回规则版本失败' },
-  approve: { label: '审批通过', confirm: '生效时间已过则按审批时间立即生效、旧版本退役；否则为待生效，到时自动切换。确认审批？', done: '', failure: '审批规则版本失败' },
-};
+/** 各命令的文案 key（finance.rules.action.<命令>.label / confirm / done / failure）；审批成功提示按生效状态另取。 */
+const actionText = (t: Translate, action: VersionAction, part: 'label' | 'confirm' | 'done' | 'failure') => t(`rules.action.${action}.${part}`);
 
 /** 规则行表格：按指令类型分组，科目显示编号 + 名称。 */
 export function RuleLinesTable({ lines, accounts }: { lines: readonly (RuleLine & { ruleLineId: string })[]; accounts: ReadonlyMap<string, ChartAccount> }) {
+  const t = useT('finance');
   return <>{groupRuleLines(lines).map(group => <section key={group.instructionType} className="finance-rule-group">
-    <h3 className="finance-subtitle">{instructionTypeLabels[group.instructionType] ?? group.instructionType} <span className="cell-meta mono">{group.instructionType}</span></h3>
+    <h3 className="finance-subtitle">{enumLabel(t, 'enum.instructionType', group.instructionType)} <span className="cell-meta mono">{group.instructionType}</span></h3>
     <div className="table-panel"><Table<RuleLine & { ruleLineId: string }> rowKey="ruleLineId" size="small" tableLayout="fixed" dataSource={group.lines}
       pagination={false} scroll={{ x: 900 }} columns={[
-        { title: '行号', dataIndex: 'lineNo', width: 56 },
-        { title: '行代码', width: 170, render: (_, row) => <span className="mono finance-code">{row.lineCode}</span> },
-        { title: '金额来源', width: 130, render: (_, row) => amountSourceLabels[row.amountSourceCode] ?? row.amountSourceCode },
-        { title: '核算对象', width: 130, render: (_, row) => ruleOwnerRoleLabels[row.ownerRole] ?? row.ownerRole },
-        { title: '科目', render: (_, row) => chartAccountLabel(row.accountCode, accounts) },
-        { title: '余额桶', width: 100, dataIndex: 'balanceBucket' },
-        { title: '方向', width: 56, render: (_, row) => sideLabels[row.entrySide] },
-        { title: '必需', width: 60, render: (_, row) => row.requiredFlag ? '是' : '否' },
+        { title: t('field.lineNo'), dataIndex: 'lineNo', width: 56 },
+        { title: t('rules.field.lineCode'), width: 170, render: (_, row) => <span className="mono finance-code">{row.lineCode}</span> },
+        { title: t('rules.field.amountSource'), width: 130, render: (_, row) => enumLabel(t, 'enum.amountSource', row.amountSourceCode) },
+        { title: t('field.accountingDimension'), width: 130, render: (_, row) => enumLabel(t, 'enum.ruleOwnerRole', row.ownerRole) },
+        { title: t('field.accountCode'), render: (_, row) => chartAccountLabel(row.accountCode, accounts) },
+        { title: t('field.balanceBucket'), width: 100, dataIndex: 'balanceBucket' },
+        { title: t('field.side'), width: 56, render: (_, row) => enumLabel(t, 'enum.side', row.entrySide) },
+        { title: t('rules.field.required'), width: 60, render: (_, row) => row.requiredFlag ? t('common.yes') : t('common.no') },
       ]} /></div>
   </section>)}</>;
 }
@@ -54,38 +53,39 @@ export function RuleVersionDrawer({ bundleCode, bundleVer, accounts, canManage, 
   bundleCode: string; bundleVer: string; accounts: ReadonlyMap<string, ChartAccount>; canManage: boolean; canApprove: boolean; actorId: string;
   onClose: () => void; onChanged: () => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('finance');
   const { message } = App.useApp();
   const decode = useMemo(() => decodeRuleVersion(bundleCode, bundleVer), [bundleCode, bundleVer]);
-  const detail = useDetail<RuleVersion>(workflowPaths.ruleVersion(bundleCode, bundleVer), decode, onAuthorizationChanged, '规则版本加载失败');
+  const detail = useDetail<RuleVersion>(workflowPaths.ruleVersion(bundleCode, bundleVer), decode, onAuthorizationChanged, t('rules.versionLoadFailed'));
   const command = useFinanceCommand(onAuthorizationChanged, undefined, [], ledgerWorkflowErrorTargets);
   const version = detail.item;
   async function act(action: VersionAction) {
     const result = await command.run(workflowPaths.ruleVersionAction(bundleCode, bundleVer, action), undefined,
-      decodeRuleVersion(bundleCode, bundleVer, expectedStatus[action]), actionTexts[action].failure);
+      decodeRuleVersion(bundleCode, bundleVer, expectedStatus[action]), actionText(t, action, 'failure'));
     if (!result) return;
-    void message.success(action === 'approve' ? (result.status === 'ACTIVE' ? '已审批并立即生效' : `已审批，将于 ${localTime(result.effectiveFrom)} 生效`)
-      : actionTexts[action].done);
+    void message.success(action === 'approve' ? (result.status === 'ACTIVE' ? t('rules.approvedActive') : t('rules.approvedScheduled', { time: localTime(result.effectiveFrom) }))
+      : actionText(t, action, 'done'));
     detail.reload(); onChanged();
   }
   const allowed = version ? ruleVersionActions(version, actorId, canManage, canApprove) : null;
   const actions: ReviewAction[] = allowed ? (['void', 'reject', 'submit', 'approve'] as const).filter(action => allowed[action]).map(action => ({
-    key: action, label: actionTexts[action].label, danger: action === 'void' || action === 'reject', primary: action === 'submit' || action === 'approve',
-    confirm: actionTexts[action].confirm, onConfirm: () => void act(action) })) : [];
-  const note = version && version.makerId === actorId && version.status === 'PENDING_APPROVAL' && canApprove ? '你是制单人，不能审批自己的版本'
-    : version && version.status === 'DRAFT' && version.makerId !== actorId && canManage ? '只有制单人可以提交或作废该草稿' : undefined;
+    key: action, label: actionText(t, action, 'label'), danger: action === 'void' || action === 'reject', primary: action === 'submit' || action === 'approve',
+    confirm: actionText(t, action, 'confirm'), onConfirm: () => void act(action) })) : [];
+  const note = version && version.makerId === actorId && version.status === 'PENDING_APPROVAL' && canApprove ? t('rules.selfReview')
+    : version && version.status === 'DRAFT' && version.makerId !== actorId && canManage ? t('rules.makerOnly') : undefined;
   return <Drawer open size={1080} rootClassName="finance-drawer finance-page" onClose={() => { if (!command.saving) onClose(); }} destroyOnHidden
-    title={`${ruleBundleName(bundleCode)} · 版本 ${bundleVer}`}>
+    title={t('rules.versionTitle', { bundle: ruleBundleName(bundleCode), bundleVer })}>
     {detail.error ? <Alert type="warning" showIcon title={detail.error} /> : !version ? <Spin /> : <>
       <CommandFeedback command={command} onReload={detail.reload} />
       <Descriptions column={2} size="small" className="finance-detail-head" items={[
-        { key: 'status', label: '状态', children: <WorkflowTag status={version.status} labels={ruleVersionStatusLabels} /> },
-        { key: 'bundle', label: '规则包', children: <span>{ruleBundleName(bundleCode)} <span className="cell-meta mono">{bundleCode}</span></span> },
-        { key: 'from', label: '生效时间', children: localTime(version.effectiveFrom) },
-        { key: 'to', label: '失效时间', children: version.effectiveTo ? localTime(version.effectiveTo) : '—' },
-        { key: 'maker', label: '制单人', children: <ActorText value={version.makerId} actorId={actorId} /> },
-        { key: 'checker', label: '复核人', children: <ActorText value={version.checkerId} actorId={actorId} /> },
-        { key: 'approved', label: '审批时间', children: version.approvedTime ? localTime(version.approvedTime) : '—' },
-        { key: 'lines', label: '规则行', children: `${version.lines.length} 行` },
+        { key: 'status', label: t('field.status'), children: <WorkflowTag status={version.status} enumType="ruleVersionStatus" /> },
+        { key: 'bundle', label: t('rules.field.bundle'), children: <span>{ruleBundleName(bundleCode)} <span className="cell-meta mono">{bundleCode}</span></span> },
+        { key: 'from', label: t('rules.field.effectiveFrom'), children: localTime(version.effectiveFrom) },
+        { key: 'to', label: t('rules.field.effectiveTo'), children: version.effectiveTo ? localTime(version.effectiveTo) : '—' },
+        { key: 'maker', label: t('workflow.maker'), children: <ActorText value={version.makerId} actorId={actorId} /> },
+        { key: 'checker', label: t('workflow.checker'), children: <ActorText value={version.checkerId} actorId={actorId} /> },
+        { key: 'approved', label: t('workflow.approvedAt'), children: version.approvedTime ? localTime(version.approvedTime) : '—' },
+        { key: 'lines', label: t('rules.field.lines'), children: t('rules.lineCount', { count: version.lines.length }) },
       ]} />
       <RuleLinesTable lines={version.lines} accounts={accounts} />
       <ReviewActions saving={command.saving} note={note} actions={actions} />
@@ -103,10 +103,11 @@ export function CreateRuleVersionDrawer({ bundleCode, currentBundleVer, chartAcc
   bundleCode: string; currentBundleVer: string | null; chartAccounts: readonly ChartAccount[]; accounts: ReadonlyMap<string, ChartAccount>;
   onClose: () => void; onCreated: (version: RuleVersion) => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('finance');
   const decode = useMemo(() => decodeRuleVersion(bundleCode, currentBundleVer ?? undefined), [bundleCode, currentBundleVer]);
-  const template = useDetail<RuleVersion>(currentBundleVer ? workflowPaths.ruleVersion(bundleCode, currentBundleVer) : null, decode, onAuthorizationChanged, '当前版本加载失败');
+  const template = useDetail<RuleVersion>(currentBundleVer ? workflowPaths.ruleVersion(bundleCode, currentBundleVer) : null, decode, onAuthorizationChanged, t('rules.currentLoadFailed'));
   const ready = !currentBundleVer || !!template.item;
-  return <Drawer open size="min(1280px, 100vw)" rootClassName="finance-drawer finance-page" title={`新建版本 · ${ruleBundleName(bundleCode)}`} onClose={onClose} destroyOnHidden>
+  return <Drawer open size="min(1280px, 100vw)" rootClassName="finance-drawer finance-page" title={t('rules.createTitle', { bundle: ruleBundleName(bundleCode) })} onClose={onClose} destroyOnHidden>
     {template.error ? <Alert type="warning" showIcon title={template.error} /> : !ready ? <Spin />
       : <RuleVersionEditor bundleCode={bundleCode} template={template.item ?? null} chartAccounts={chartAccounts} accounts={accounts}
         onClose={onClose} onCreated={onCreated} onAuthorizationChanged={onAuthorizationChanged} />}
@@ -117,8 +118,10 @@ function RuleVersionEditor({ bundleCode, template, chartAccounts, accounts, onCl
   bundleCode: string; template: RuleVersion | null; chartAccounts: readonly ChartAccount[]; accounts: ReadonlyMap<string, ChartAccount>;
   onClose: () => void; onCreated: (version: RuleVersion) => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('finance');
   const { message } = App.useApp();
   const [form] = Form.useForm<EditorValues>();
+  const sideOptions = useMemo(() => labelled(t, 'side', ['DEBIT', 'CREDIT']), [t]);
   const command = useFinanceCommand(onAuthorizationChanged, form, formFields, ledgerWorkflowErrorTargets);
   const [linesError, setLinesError] = useState<string | null>(null);
   const lineCount = ((Form.useWatch('lines', form) ?? []) as RuleLineValues[]).length;
@@ -126,8 +129,8 @@ function RuleVersionEditor({ bundleCode, template, chartAccounts, accounts, onCl
     const options = ruleAccountOptions(chartAccounts);
     // 模板中已不可选的科目仍显示原值，便于看出需要替换
     const missing = (template?.lines ?? []).map(line => line.accountCode).filter(code => !options.some(option => option.value === code));
-    return [...options, ...[...new Set(missing)].map(code => ({ value: code, label: `${chartAccountLabel(code, accounts)}（不可用）`, disabled: true }))];
-  }, [chartAccounts, template, accounts]);
+    return [...options, ...[...new Set(missing)].map(code => ({ value: code, label: t('rules.unavailableAccount', { account: chartAccountLabel(code, accounts) }), disabled: true }))];
+  }, [chartAccounts, template, accounts, t]);
   async function submit() {
     const values = await form.validateFields();
     const error = ruleLinesError(values.lines ?? []);
@@ -135,11 +138,11 @@ function RuleVersionEditor({ bundleCode, template, chartAccounts, accounts, onCl
     if (error) return;
     let body: ReturnType<typeof ruleVersionBody>;
     try { body = ruleVersionBody(values.effectiveFrom, values.lines); } catch (failure) {
-      form.setFields([{ name: 'effectiveFrom', errors: [failure instanceof Error ? failure.message : '生效时间无效'] }]); return;
+      form.setFields([{ name: 'effectiveFrom', errors: [failure instanceof Error ? failure.message : t('rules.effectiveFromInvalid')] }]); return;
     }
-    const created = await command.run(workflowPaths.ruleVersions(bundleCode), body, decodeRuleVersion(bundleCode, undefined, ['DRAFT']), '新建规则版本失败');
+    const created = await command.run(workflowPaths.ruleVersions(bundleCode), body, decodeRuleVersion(bundleCode, undefined, ['DRAFT']), t('rules.createFailed'));
     if (!created) return;
-    void message.success(`已保存草稿版本 ${created.bundleVer}`);
+    void message.success(t('rules.draftSaved', { bundleVer: created.bundleVer }));
     onCreated(created);
   }
   return <>
@@ -148,42 +151,42 @@ function RuleVersionEditor({ bundleCode, template, chartAccounts, accounts, onCl
     <Form form={form} name="finance-create-rule-version" layout="vertical" disabled={command.saving || command.conflict}
       initialValues={{ effectiveFrom: defaultEffectiveFrom(), lines: templateRuleLines(template) }}>
       <div className="finance-form-grid">
-        <Form.Item name="effectiveFrom" label="生效时间（本地时区）" rules={[{ required: true, message: '请填写生效时间' }]}
-          extra="必须晚于当前生效版本；审批时已过的生效时间按审批时间生效，未来时间审批后到时自动生效。"><Input type="datetime-local" step={1} /></Form.Item>
-        <Form.Item label="模板">{template ? `当前生效版本 ${template.bundleVer}（${template.lines.length} 行）` : '无生效版本，从空白开始'}</Form.Item>
+        <Form.Item name="effectiveFrom" label={t('rules.field.effectiveFromLocal')} rules={[{ required: true, message: t('rules.effectiveFromRequired') }]}
+          extra={t('rules.effectiveFromHint')}><Input type="datetime-local" step={1} /></Form.Item>
+        <Form.Item label={t('rules.field.template')}>{template ? t('rules.templateCurrent', { bundleVer: template.bundleVer, count: template.lines.length }) : t('rules.templateBlank')}</Form.Item>
       </div>
-      <h3 className="finance-subtitle">规则行</h3>
+      <h3 className="finance-subtitle">{t('rules.field.lines')}</h3>
       <Form.List name="lines">
         {(fields, { add, remove }) => <>
           {fields.map(field => { const first = field.name === 0;
             return <div key={field.key} className="finance-line-row finance-rule-line">
-              <Form.Item name={[field.name, 'instructionType']} label={first ? '指令类型' : undefined} rules={[{ required: true, message: '必填' }]}>
-                <Select options={labelled(instructionTypeLabels)} /></Form.Item>
-              <Form.Item name={[field.name, 'lineCode']} label={first ? '行代码' : undefined} rules={[{ required: true, whitespace: true, message: '必填' }]}>
+              <Form.Item name={[field.name, 'instructionType']} label={first ? t('journal.field.instructionType') : undefined} rules={[{ required: true, message: t('validation.required') }]}>
+                <Select options={labelled(t, 'instructionType', instructionTypes)} /></Form.Item>
+              <Form.Item name={[field.name, 'lineCode']} label={first ? t('rules.field.lineCode') : undefined} rules={[{ required: true, whitespace: true, message: t('validation.required') }]}>
                 <Input maxLength={64} /></Form.Item>
-              <Form.Item name={[field.name, 'amountSourceCode']} label={first ? '金额来源' : undefined} rules={[{ required: true, message: '必填' }]}>
-                <Select options={labelled(amountSourceLabels)} /></Form.Item>
-              <Form.Item name={[field.name, 'ownerRole']} label={first ? '核算对象' : undefined} rules={[{ required: true, message: '必填' }]}>
-                <Select options={labelled(ruleOwnerRoleLabels)} /></Form.Item>
-              <Form.Item name={[field.name, 'accountCode']} label={first ? '科目' : undefined} rules={[{ required: true, message: '必填' }]}>
-                <Select showSearch={{ optionFilterProp: 'label' }} options={accountOptions} placeholder="科目编号 / 名称" /></Form.Item>
-              <Form.Item name={[field.name, 'balanceBucket']} label={first ? '余额桶' : undefined} rules={[{ required: true, message: '必填' }]}>
+              <Form.Item name={[field.name, 'amountSourceCode']} label={first ? t('rules.field.amountSource') : undefined} rules={[{ required: true, message: t('validation.required') }]}>
+                <Select options={labelled(t, 'amountSource', amountSourceCodes)} /></Form.Item>
+              <Form.Item name={[field.name, 'ownerRole']} label={first ? t('field.accountingDimension') : undefined} rules={[{ required: true, message: t('validation.required') }]}>
+                <Select options={labelled(t, 'ruleOwnerRole', ruleOwnerRoles)} /></Form.Item>
+              <Form.Item name={[field.name, 'accountCode']} label={first ? t('field.accountCode') : undefined} rules={[{ required: true, message: t('validation.required') }]}>
+                <Select showSearch={{ optionFilterProp: 'label' }} options={accountOptions} placeholder={t('rules.accountPlaceholder')} /></Form.Item>
+              <Form.Item name={[field.name, 'balanceBucket']} label={first ? t('field.balanceBucket') : undefined} rules={[{ required: true, message: t('validation.required') }]}>
                 <Select options={bucketOptions} /></Form.Item>
-              <Form.Item name={[field.name, 'entrySide']} label={first ? '方向' : undefined} rules={[{ required: true, message: '必填' }]}>
+              <Form.Item name={[field.name, 'entrySide']} label={first ? t('field.side') : undefined} rules={[{ required: true, message: t('validation.required') }]}>
                 <Select options={sideOptions} /></Form.Item>
-              <Form.Item name={[field.name, 'requiredFlag']} label={first ? '必需' : undefined} valuePropName="checked"><Checkbox /></Form.Item>
-              <Button type="text" danger className={first ? 'finance-line-remove is-first' : 'finance-line-remove'} onClick={() => remove(field.name)}>删除</Button>
+              <Form.Item name={[field.name, 'requiredFlag']} label={first ? t('rules.field.required') : undefined} valuePropName="checked"><Checkbox /></Form.Item>
+              <Button type="text" danger className={first ? 'finance-line-remove is-first' : 'finance-line-remove'} onClick={() => remove(field.name)}>{t('workflow.remove')}</Button>
             </div>; })}
-          <Button type="dashed" disabled={fields.length >= 500} onClick={() => add({ balanceBucket: 'NONE', requiredFlag: true })}>添加规则行</Button>
+          <Button type="dashed" disabled={fields.length >= 500} onClick={() => add({ balanceBucket: 'NONE', requiredFlag: true })}>{t('rules.addLine')}</Button>
         </>}
       </Form.List>
     </Form>
     <div className="finance-drawer-footer finance-editor-footer">
-      <Tag>{lineCount} 行</Tag>
+      <Tag>{t('rules.lineCount', { count: lineCount })}</Tag>
       <span className="finance-spacer" />
-      <Button onClick={onClose} disabled={command.saving}>取消</Button>
-      <Button type="primary" loading={command.saving} disabled={command.conflict} onClick={() => void submit()}>保存草稿</Button>
+      <Button onClick={onClose} disabled={command.saving}>{t('common.cancel')}</Button>
+      <Button type="primary" loading={command.saving} disabled={command.conflict} onClick={() => void submit()}>{t('rules.saveDraft')}</Button>
     </div>
-    <FinanceNote>行号按指令类型内的顺序自动编号。保存后为草稿，制单人提交后由他人审批；有草稿或待审批版本时不能再新建。</FinanceNote>
+    <FinanceNote>{t('rules.editorNote')}</FinanceNote>
   </>;
 }

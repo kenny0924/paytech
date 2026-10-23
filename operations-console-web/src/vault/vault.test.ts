@@ -6,6 +6,9 @@ import {
   sampleValuesRequired, snapshotRows, ticketPattern, valueFormatBody, withValueFormatMessage,
 } from './vault.ts';
 import type { VaultDataType } from './vault.ts';
+import { testT } from '../i18n/testing.ts';
+
+const t = testT('vault');
 
 const type = (code: string, overrides: Partial<VaultDataType> = {}): VaultDataType => ({
   dataTypeCode: code, tokenMode: 'STABLE', dataClass: 'STANDARD', description: 'd', manualProtectEnabled: true,
@@ -35,10 +38,11 @@ test('decoders reject malformed or mismatched responses', () => {
   assert.throws(() => decodeReveal({ dataTypeCode: 'a', value: 'x' }));
 });
 
-test('snapshot rows mark changed fields and show booleans in Chinese', () => {
+test('snapshot rows mark changed fields and show booleans as Yes / No', () => {
   const rows = snapshotRows({ status: 'ACTIVE', manualRevealEnabled: false }, { status: 'DISABLED', manualRevealEnabled: false });
-  assert.deepEqual(rows.map(r => [r.label, r.before, r.after, r.changed]), [['状态', 'ACTIVE', 'DISABLED', true], ['允许人工解密', '否', '否', false]]);
+  assert.deepEqual(rows.map(r => [r.label, r.before, r.after, r.changed]), [['Status', 'ACTIVE', 'DISABLED', true], ['Manual Reveal Allowed', 'No', 'No', false]]);
   assert.equal(snapshotRows(null, { status: 'ACTIVE' })[0].before, '—');
+  assert.equal(snapshotRows(null, { unknownField: true })[0].label, 'unknownField');
 });
 
 test('ticket reference format', () => {
@@ -54,7 +58,9 @@ test('manual event filters convert the time range and trim values', () => {
   assert.equal(filters.actorId, '10001');
   assert.equal(filters.action, 'REVEAL');
   assert.ok(filters.from < filters.to);
-  assert.throws(() => manualEventFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-02T00:00:00', end: '2026-10-01T00:00:00' } }));
+  assert.throws(() => manualEventFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-02T00:00:00', end: '2026-10-01T00:00:00' } }),
+    { message: t('filters.endBeforeStart') });
+  assert.throws(() => manualEventFilters({ timeRange: { preset: 'CUSTOM', start: '2026-10-02T00:00:00' } }), { message: t('filters.incompleteRange') });
   assert.deepEqual(manualEventFilters({}), {});
 });
 
@@ -97,11 +103,12 @@ test('JSON precheck requires an object root', () => {
 
 test('value format error codes show fixed messages without echoing the response detail', () => {
   const mapped = withValueFormatMessage(new ApiError(400, 'VALUE_PATTERN_MISMATCH', 'req-1', 'raw value 13800000000')) as ApiError;
-  assert.deepEqual([mapped.message, mapped.code, mapped.requestId, mapped.status], ['值不符合数据类型的正则', 'VALUE_PATTERN_MISMATCH', 'req-1', 400]);
+  assert.deepEqual([mapped.message, mapped.code, mapped.requestId, mapped.status], [t('valueFormatError.VALUE_PATTERN_MISMATCH'), 'VALUE_PATTERN_MISMATCH', 'req-1', 400]);
+  assert.equal(mapped.message, "The value doesn't match the data type's regex.");
   const other = new ApiError(409, 'VERSION_CONFLICT');
   assert.equal(withValueFormatMessage(other), other);
 });
 
 test('snapshot rows label value format fields', () => {
-  assert.deepEqual(snapshotRows({ valueFormat: 'TEXT' }, { valueFormat: 'REGEX', valuePattern: '[0-9]+' }).map(r => r.label), ['值格式', '正则']);
+  assert.deepEqual(snapshotRows({ valueFormat: 'TEXT' }, { valueFormat: 'REGEX', valuePattern: '[0-9]+' }).map(r => r.label), ['Value Format', 'Regex']);
 });

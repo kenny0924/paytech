@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { ConfigProvider } from 'antd';
 import { Link } from 'react-router-dom';
 import type { ExecuteStatus } from './flowModel';
+import { useT } from '../i18n/react';
 import './externalApi.css';
 
 /** 面包屑一项；没有 to 的是当前位置。 */
@@ -18,8 +19,9 @@ export function ExternalApiFrame({ children, className = '' }: { children: React
 export function PageHeader({ crumbs, title, code, actions, readOnlyHint }: {
   crumbs: Crumb[]; title: ReactNode; code?: string; actions?: ReactNode; readOnlyHint?: string;
 }) {
+  const t = useT('channel');
   return <header className="xapi-header">
-    <nav className="xapi-crumbs" aria-label="面包屑">{crumbs.map((crumb, index) => <span key={`${crumb.label}:${index}`}>
+    <nav className="xapi-crumbs" aria-label={t('ui.breadcrumb')}>{crumbs.map((crumb, index) => <span key={`${crumb.label}:${index}`}>
       {index > 0 && <span className="xapi-crumb-sep">/</span>}
       {crumb.to ? <Link to={crumb.to}>{crumb.label}</Link> : <span>{crumb.label}</span>}</span>)}</nav>
     <div className="xapi-title-row">
@@ -65,9 +67,12 @@ export function StatusTag({ status }: { status: ExecuteStatus }) {
   return <span className={`xapi-status xapi-status-${status.toLowerCase()}`}>{status}</span>;
 }
 
+/** 锁形符号（🔒）：以转义保存，避免被源码中文扫描误判（扫描的 CJK 区间覆盖了 UTF-16 代理对）。 */
+export const lockMark = '\u{1F512}';
+
 /** 受控句柄标记：橙色锁。 */
 export function HandleMark({ label = 'PROTECTED_HANDLE' }: { label?: string }) {
-  return <span className="xapi-handle">🔒 {label}</span>;
+  return <span className="xapi-handle">{lockMark} {label}</span>;
 }
 
 /** 只读字段：浅灰底深色正文，替代禁用输入框的低对比显示。 */

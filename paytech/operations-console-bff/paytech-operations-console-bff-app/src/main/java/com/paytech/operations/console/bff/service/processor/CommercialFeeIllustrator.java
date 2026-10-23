@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Currency;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,6 +18,8 @@ import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.operations.console.bff.service.model.CommercialPricePreviewModels.ComponentIllustration;
 import com.paytech.operations.console.bff.service.model.CommercialPricePreviewModels.FeeEventIllustration;
 import com.paytech.operations.console.bff.service.model.CommercialPricePreviewModels.FeeIllustration;
+import com.paytech.operations.console.bff.service.model.CommercialPricePreviewModels.IllustrationNote;
+import com.paytech.operations.console.bff.service.model.CommercialPricePreviewModels.IllustrationNoteCode;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialPrice;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialPriceBand;
 import com.paytech.operations.console.bff.service.model.CommercialPricingModels.CommercialPriceComponent;
@@ -28,6 +31,7 @@ import com.paytech.operations.console.bff.service.model.CommercialPricingModels.
  * <li>约束前金额保留 8 位小数 HALF_UP；之后按组件最低 / 最高金额约束，再按币种精度 HALF_UP 归整（与 billing 渠道成本计算口径一致）。</li>
  * <li>ACTUAL_CLIENT_FEE、BUY_RATE_DIFFERENCE 依赖其他费用结果，PERIOD_VOLUME / RETROACTIVE 依赖周期累计量，均标为未计算。</li>
  * <li>commercial 价格中的金额或费率不是十进制字符串时，按上游无效响应处理。</li>
+ * <li>说明只返回编码与参数（{@link IllustrationNoteCode}），文案由前端翻译。</li>
  *
  * @author Claude
  */
@@ -98,43 +102,52 @@ final class CommercialFeeIllustrator {
         result.setComponentCode(component.getComponentCode());
         result.setComponentType(component.getComponentType());
         result.setCalculationBase(component.getCalculationBase());
-        String unsupported = unsupportedReason(component);
+        IllustrationNote unsupported = unsupportedReason(component);
         if (unsupported != null) {
-            result.setNote(unsupported);
+            result.setNotes(List.of(unsupported));
             return result;
         }
-        List<String> notes = new ArrayList<>();
+        List<IllustrationNote> notes = new ArrayList<>();
         BigDecimal raw = raw(component, basis, notes).setScale(RAW_SCALE, RoundingMode.HALF_UP);
         BigDecimal bounded = clamp(component, raw, notes);
         result.setComputed(true);
         result.setRawAmount(raw.toPlainString());
         result.setAmount(bounded.setScale(fractionDigits, RoundingMode.HALF_UP).toPlainString());
-        result.setNote(notes.isEmpty() ? null : String.join("；", notes));
+        result.setNotes(List.copyOf(notes));
         return result;
     }
 
-    /** 不能由单笔示例金额得到的组件说明；可计算时为 null。 */
-    static String unsupportedReason(CommercialPriceComponent component) {
+    /** 不能由单笔示例金额得到的组件的未计算原因；可计算时为 null。 */
+    static IllustrationNote unsupportedReason(CommercialPriceComponent component) {
         String base = component.getCalculationBase();
         if (CalculationBase.ACTUAL_CLIENT_FEE.getCode().equals(base)
             || CalculationBase.BUY_RATE_DIFFERENCE.getCode().equals(base)) {
-            return "计算基数 " + base + " 依赖其他费用结果，未计算";
+            return note(IllustrationNoteCode.BASE_DEPENDS_ON_FEE, "base", base);
         }
         String type = component.getComponentType();
         if (!PERCENTAGE.equals(type) && !FIXED.equals(type) && !TIERED.equals(type)) {
-            return "组件类型 " + type + " 不支持示例计算";
+            return note(IllustrationNoteCode.COMPONENT_UNSUPPORTED, "type", type);
         }
         if (TIERED.equals(type) && !BandBasis.TRANSACTION_AMOUNT.getCode().equals(component.getBandBasis())) {
-            return "阶梯基数 " + component.getBandBasis() + " 依赖周期累计量，未计算";
+            return note(IllustrationNoteCode.BAND_BASIS_PERIODIC, "basis", component.getBandBasis());
         }
         if (TIERED.equals(type) && !WHOLE_BASE.equals(component.getBandMode())
             && !PROGRESSIVE.equals(component.getBandMode())) {
-            return "阶梯模式 " + component.getBandMode() + " 不支持单笔示例计算";
+            return note(IllustrationNoteCode.BAND_MODE_UNSUPPORTED, "mode", component.getBandMode());
         }
         return null;
     }
 
-    private static BigDecimal raw(CommercialPriceComponent component, BigDecimal basis, List<String> notes) {
+    /** 一条说明；参数值为 null 时以空串返回，保证前端插值不出现 "null"。 */
+    static IllustrationNote note(IllustrationNoteCode code, String name, Object value) {
+        Map<String, String> params = new LinkedHashMap<>();
+        if (name != null) {
+            params.put(name, value == null ? "" : String.valueOf(value));
+        }
+        return new IllustrationNote(code, Map.copyOf(params));
+    }
+
+    private static BigDecimal raw(CommercialPriceComponent component, BigDecimal basis, List<IllustrationNote> notes) {
         return switch (component.getComponentType()) {
             case PERCENTAGE -> basis.multiply(decimal(component.getRate())).add(decimal(component.getFixedAmount()));
             case FIXED -> decimal(component.getFixedAmount());
@@ -144,19 +157,19 @@ final class CommercialFeeIllustrator {
     }
 
     /** WHOLE_BASE：命中档 [下界, 上界) 的费率乘完整基数，或取档位固定额。 */
-    static BigDecimal wholeBase(CommercialPriceComponent component, BigDecimal basis, List<String> notes) {
+    static BigDecimal wholeBase(CommercialPriceComponent component, BigDecimal basis, List<IllustrationNote> notes) {
         for (CommercialPriceBand band : bands(component)) {
             if (contains(band, basis)) {
-                notes.add("命中第 " + band.getBandNo() + " 档");
+                notes.add(note(IllustrationNoteCode.BAND_HIT, "bandNo", band.getBandNo()));
                 return band.getRate() != null ? basis.multiply(decimal(band.getRate())) : decimal(band.getFixedAmount());
             }
         }
-        notes.add("没有命中的档位");
+        notes.add(note(IllustrationNoteCode.BAND_NONE, null, null));
         return BigDecimal.ZERO;
     }
 
     /** PROGRESSIVE：每档取基数落在 [下界, 上界) 内的部分乘档位费率后相加。 */
-    static BigDecimal progressive(CommercialPriceComponent component, BigDecimal basis, List<String> notes) {
+    static BigDecimal progressive(CommercialPriceComponent component, BigDecimal basis, List<IllustrationNote> notes) {
         BigDecimal total = BigDecimal.ZERO;
         int used = 0;
         for (CommercialPriceBand band : bands(component)) {
@@ -168,18 +181,18 @@ final class CommercialFeeIllustrator {
             total = total.add(upper.subtract(lower).multiply(decimal(band.getRate())));
             used++;
         }
-        notes.add("累进 " + used + " 档");
+        notes.add(note(IllustrationNoteCode.PROGRESSIVE_BANDS, "count", used));
         return total;
     }
 
     /** 最低 / 最高金额约束。 */
-    static BigDecimal clamp(CommercialPriceComponent component, BigDecimal raw, List<String> notes) {
+    static BigDecimal clamp(CommercialPriceComponent component, BigDecimal raw, List<IllustrationNote> notes) {
         if (component.getMinAmount() != null && raw.compareTo(decimal(component.getMinAmount())) < 0) {
-            notes.add("按最低金额 " + component.getMinAmount());
+            notes.add(note(IllustrationNoteCode.MIN_APPLIED, "amount", component.getMinAmount()));
             return decimal(component.getMinAmount());
         }
         if (component.getMaxAmount() != null && raw.compareTo(decimal(component.getMaxAmount())) > 0) {
-            notes.add("按最高金额 " + component.getMaxAmount());
+            notes.add(note(IllustrationNoteCode.MAX_APPLIED, "amount", component.getMaxAmount()));
             return decimal(component.getMaxAmount());
         }
         return raw;

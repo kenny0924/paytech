@@ -62,5 +62,5 @@ test('错误原样抛出：404 供页面显示“没有找到该评估”，403 
   const forbidden = client(() => { throw new ApiError(403, 'FORBIDDEN', 'req-403'); });
   await assert.rejects(forbidden.api.get('1'), (e: unknown) => e instanceof ApiError && e.status === 403 && e.requestId === 'req-403');
   const upstream = client(() => { throw new ApiError(502, 'UPSTREAM_INVALID_RESPONSE', 'req-502'); });
-  await assert.rejects(upstream.api.explanation('1'), (e: unknown) => e instanceof ApiError && e.message === '服务暂时不可用，请稍后重试。');
+  await assert.rejects(upstream.api.explanation('1'), (e: unknown) => e instanceof ApiError && e.message === "The service is temporarily unavailable. Please try again later.");
 });

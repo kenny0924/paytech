@@ -1,7 +1,10 @@
 import type {
   ActionTemplate, ConditionClause, DefinitionDetail, EdgeCondition, FieldType, FormDefinition, GraphEdge, GraphNode, NodeType, Problem, WorkflowGraph,
 } from './workflowTypes.ts';
-import { operatorLabels } from './workflowLabels.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+import { operatorLabel } from './workflowLabels.ts';
+
+const t = translator('workflow');
 
 /** 节点、连线、动作 key 的格式（与后端 Pattern 一致）。 */
 export const keyPattern = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
@@ -10,9 +13,8 @@ export const graphLimits = { nodes: 100, actionsPerNode: 20, formFields: 50, gra
 /** JSON 序列化后的 UTF-8 字节数（与后端 graph_json / start_form_json 上限对应）。 */
 export const jsonBytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length;
 
-const defaultNames: Record<NodeType, string> = {
-  START: '开始', END: '结束', TASK: '新任务', EXCLUSIVE: '条件判断', PARALLEL_SPLIT: '并行分叉', PARALLEL_JOIN: '并行汇合',
-};
+/** 新节点的默认名称（成为流程数据，按创建时的语言取）。 */
+const defaultName = (type: NodeType) => enumLabel(t, 'graph.defaultName', type);
 const keyPrefixes: Record<NodeType, string> = {
   START: 'start', END: 'end', TASK: 'task', EXCLUSIVE: 'gateway', PARALLEL_SPLIT: 'fork', PARALLEL_JOIN: 'join',
 };
@@ -31,8 +33,8 @@ export function publishedBaseVersionNo(detail: DefinitionDetail): number | undef
 /** 新流程：一个开始、一个结束（与 API 8 新建草稿一致）。 */
 export function newGraph(): WorkflowGraph {
   return { nodes: [
-    { key: 'start', type: 'START', name: '开始', position: { x: 0, y: 0 } },
-    { key: 'end', type: 'END', name: '结束', position: { x: 440, y: 0 } },
+    { key: 'start', type: 'START', name: defaultName('START'), position: { x: 0, y: 0 } },
+    { key: 'end', type: 'END', name: defaultName('END'), position: { x: 440, y: 0 } },
   ], edges: [] };
 }
 
@@ -53,7 +55,7 @@ export const nodeOf = (graph: WorkflowGraph, key: string) => graph.nodes.find(no
 
 export function addNode(graph: WorkflowGraph, type: NodeType, position: { x: number; y: number }): { graph: WorkflowGraph; key: string } {
   const key = nextKey(graph, keyPrefixes[type]);
-  const node: GraphNode = { key, type, name: defaultNames[type], position: { x: Math.round(position.x), y: Math.round(position.y) },
+  const node: GraphNode = { key, type, name: defaultName(type), position: { x: Math.round(position.x), y: Math.round(position.y) },
     ...(type === 'TASK' ? { actions: [], notifications: [] } : {}), ...(type === 'EXCLUSIVE' ? { conditions: [] } : {}) };
   return { graph: { ...graph, nodes: [...graph.nodes, node] }, key };
 }
@@ -79,13 +81,13 @@ const singleOutgoing: NodeType[] = ['START', 'TASK', 'PARALLEL_JOIN'];
  */
 export function connect(graph: WorkflowGraph, from: string, to: string): { graph: WorkflowGraph; edgeKey: string } | { error: string } {
   const source = nodeOf(graph, from); const target = nodeOf(graph, to);
-  if (!source || !target) return { error: '节点不存在' };
-  if (from === to) return { error: '不能连到自身' };
-  if (target.type === 'START') return { error: '开始节点不能有入边' };
-  if (source.type === 'END') return { error: '结束节点不能有出边' };
-  if (graph.edges.some(edge => edge.from === from && edge.to === to)) return { error: '这两个节点之间已有连线' };
-  if (singleOutgoing.includes(source.type) && outgoing(graph, from).length) return { error: `${source.name || source.key} 只能有一条出边，请先删除原连线` };
-  if (reaches(graph, to, from)) return { error: '流程不能有环；驳回由运行时规则处理，不需要画回边' };
+  if (!source || !target) return { error: t('graph.error.nodeMissing') };
+  if (from === to) return { error: t('graph.error.selfLoop') };
+  if (target.type === 'START') return { error: t('graph.error.startIncoming') };
+  if (source.type === 'END') return { error: t('graph.error.endOutgoing') };
+  if (graph.edges.some(edge => edge.from === from && edge.to === to)) return { error: t('graph.error.edgeExists') };
+  if (singleOutgoing.includes(source.type) && outgoing(graph, from).length) return { error: t('graph.error.singleOutgoing', { node: source.name || source.key }) };
+  if (reaches(graph, to, from)) return { error: t('graph.error.cycle') };
   const edgeKey = nextKey(graph, 'e');
   const edges = [...graph.edges, { key: edgeKey, from, to }];
   const nodes = source.type !== 'EXCLUSIVE' ? graph.nodes : graph.nodes.map(node => node.key !== from ? node
@@ -135,10 +137,10 @@ const sameRowTolerance = 40;
  */
 export function insertOnEdge(graph: WorkflowGraph, edgeKey: string, type: NodeType): { graph: WorkflowGraph; key: string } | { error: string } {
   const edge = graph.edges.find(item => item.key === edgeKey);
-  if (!edge) return { error: '连线不存在' };
-  if (!insertableTypes.includes(type)) return { error: '连线上只能插入任务节点或网关' };
+  if (!edge) return { error: t('graph.error.edgeMissing') };
+  if (!insertableTypes.includes(type)) return { error: t('graph.error.insertType') };
   const source = nodeOf(graph, edge.from); const target = nodeOf(graph, edge.to);
-  if (!source || !target) return { error: '连线的端点不存在' };
+  if (!source || !target) return { error: t('graph.error.edgeEndMissing') };
   const gap = target.position.x - source.position.x;
   const shift = gap > 0 ? Math.max(0, 2 * insertSpacing - gap) : 0;
   const moved = shift ? graph.nodes.map(node => node.position.x >= target.position.x && node.key !== source.key
@@ -163,8 +165,8 @@ export function updateNode(graph: WorkflowGraph, key: string, patch: Partial<Gra
 /** 修改节点 key：同步连线两端；格式或重复时返回错误。 */
 export function renameNode(graph: WorkflowGraph, key: string, next: string): { graph: WorkflowGraph } | { error: string } {
   if (key === next) return { graph };
-  if (!keyPattern.test(next)) return { error: 'key 以字母开头，只能包含字母、数字和下划线，最长 64 位' };
-  if (usedKeys(graph).has(next)) return { error: `key ${next} 已被使用` };
+  if (!keyPattern.test(next)) return { error: t('graph.error.keyPattern') };
+  if (usedKeys(graph).has(next)) return { error: t('graph.error.keyUsed', { key: next }) };
   return { graph: { ...graph,
     nodes: graph.nodes.map(node => node.key === key ? { ...node, key: next } : node),
     edges: graph.edges.map(edge => ({ ...edge, from: edge.from === key ? next : edge.from, to: edge.to === key ? next : edge.to })) } };
@@ -248,8 +250,8 @@ export function actionOutputs(actionKey: string, template: Pick<ActionTemplate, 
   switch (template.actionType) {
     case 'FORM': return ((template.config as FormDefinition | null)?.fields ?? []).map(field => ({
       name: `${actionKey}.${field.key}`, label: field.label, type: field.type, options: field.rules?.options, source }));
-    case 'FILE_UPLOAD': return [{ name: `${actionKey}.files`, label: '上传的文件', type: 'FILE', source }];
-    case 'PAGE_TASK': case 'MANUAL_CONFIRM': return [{ name: `${actionKey}.note`, label: '确认说明', type: 'TEXT', source }];
+    case 'FILE_UPLOAD': return [{ name: `${actionKey}.files`, label: t('graph.output.files'), type: 'FILE', source }];
+    case 'PAGE_TASK': case 'MANUAL_CONFIRM': return [{ name: `${actionKey}.note`, label: t('graph.output.note'), type: 'TEXT', source }];
     default: return [];
   }
 }
@@ -260,7 +262,7 @@ export function actionOutputs(actionKey: string, template: Pick<ActionTemplate, 
  */
 export function variableCatalog(graph: WorkflowGraph, startForm: FormDefinition, templates: Map<string, ActionTemplate>, nodeKey: string): VariableInfo[] {
   const start = startForm.fields.map(field => ({ name: `start.${field.key}`, label: field.label, type: field.type,
-    options: field.rules?.options, source: '启动表单' }));
+    options: field.rules?.options, source: t('graph.startForm') }));
   const above = upstream(graph, nodeKey);
   const outputs = graph.nodes.filter(node => node.type === 'TASK' && above.has(node.key))
     .flatMap(node => (node.actions ?? []).flatMap(action => actionOutputs(action.key, templates.get(action.templateId))));
@@ -297,12 +299,12 @@ export function changeVariable(clause: ConditionClause, variable: VariableInfo):
 
 /** 条件文字：“支付方式 包含 APPLE_PAY 且 国家 属于 SA, AE”。 */
 export function clausesText(clauses: ConditionClause[], variables: VariableInfo[] = []): string {
-  if (!clauses.length) return '条件待填';
+  if (!clauses.length) return t('graph.conditionPending');
   return clauses.map(clause => {
     const label = variables.find(item => item.name === clause.variable)?.label ?? clause.variable;
     const value = Array.isArray(clause.value) ? clause.value.join(', ') : clause.value ?? '';
-    return `${label} ${operatorLabels[clause.operator]}${value ? ` ${value}` : ''}`;
-  }).join(' 且 ');
+    return `${label} ${operatorLabel(clause.operator)}${value ? ` ${value}` : ''}`;
+  }).join(t('graph.conditionAnd'));
 }
 
 /** 被条件引用的启动表单字段与枚举值（启动表单设计器提示用）。 */
@@ -369,23 +371,23 @@ type AddProblem = (code: string, message: string, nodeKey?: string | null, edgeK
 
 function checkShape(graph: WorkflowGraph, startForm: FormDefinition | undefined, add: AddProblem) {
   const starts = graph.nodes.filter(node => node.type === 'START');
-  if (starts.length !== 1) add('START_COUNT', `开始节点必须恰好一个，当前为 ${starts.length} 个`);
-  if (!graph.nodes.some(node => node.type === 'END')) add('END_MISSING', '至少需要一个结束节点');
-  if (graph.nodes.length > graphLimits.nodes) add('TOO_MANY_NODES', `节点有 ${graph.nodes.length} 个，超过上限 ${graphLimits.nodes} 个`);
+  if (starts.length !== 1) add('START_COUNT', t('graph.problem.START_COUNT', { count: starts.length }));
+  if (!graph.nodes.some(node => node.type === 'END')) add('END_MISSING', t('graph.problem.END_MISSING'));
+  if (graph.nodes.length > graphLimits.nodes) add('TOO_MANY_NODES', t('graph.problem.TOO_MANY_NODES', { count: graph.nodes.length, max: graphLimits.nodes }));
   const graphSize = jsonBytes(normalizeGraph(graph));
-  if (graphSize > graphLimits.graphBytes) add('GRAPH_TOO_LARGE', `流程图配置 ${(graphSize / 1024).toFixed(1)} KiB，超过 48 KiB 上限`);
+  if (graphSize > graphLimits.graphBytes) add('GRAPH_TOO_LARGE', t('graph.problem.GRAPH_TOO_LARGE', { size: (graphSize / 1024).toFixed(1) }));
   if (startForm) {
     const formSize = jsonBytes(startForm);
-    if (formSize > graphLimits.startFormBytes) add('START_FORM_TOO_LARGE', `启动表单配置 ${(formSize / 1024).toFixed(1)} KiB，超过 12 KiB 上限`);
+    if (formSize > graphLimits.startFormBytes) add('START_FORM_TOO_LARGE', t('graph.problem.START_FORM_TOO_LARGE', { size: (formSize / 1024).toFixed(1) }));
   }
   const seen = new Set<string>();
   for (const node of graph.nodes) {
-    if (seen.has(node.key)) add('NODE_KEY_DUPLICATE', `节点 key 重复：${node.key}`, node.key);
+    if (seen.has(node.key)) add('NODE_KEY_DUPLICATE', t('graph.problem.NODE_KEY_DUPLICATE', { key: node.key }), node.key);
     seen.add(node.key);
   }
   const actionKeys = new Set<string>();
   for (const node of graph.nodes) for (const action of node.actions ?? []) {
-    if (actionKeys.has(action.key) || seen.has(action.key)) add('ACTION_KEY_DUPLICATE', `动作 key 在流程内重复：${action.key}`, node.key, null, action.key);
+    if (actionKeys.has(action.key) || seen.has(action.key)) add('ACTION_KEY_DUPLICATE', t('graph.problem.ACTION_KEY_DUPLICATE', { key: action.key }), node.key, null, action.key);
     actionKeys.add(action.key);
   }
 }
@@ -396,40 +398,40 @@ function checkReachability(graph: WorkflowGraph, add: AddProblem) {
   const ends = graph.nodes.filter(node => node.type === 'END');
   if (starts.length === 1) {
     const fromStart = reachable(starts[0].key, edge => edge.to, key => outgoing(graph, key));
-    graph.nodes.filter(node => !fromStart.has(node.key)).forEach(node => add('NODE_UNREACHABLE', '节点从开始节点不可达', node.key));
+    graph.nodes.filter(node => !fromStart.has(node.key)).forEach(node => add('NODE_UNREACHABLE', t('graph.problem.NODE_UNREACHABLE'), node.key));
   }
   if (ends.length) {
     const toEnd = new Set<string>();
     for (const end of ends) for (const key of reachable(end.key, edge => edge.from, key => incoming(graph, key))) toEnd.add(key);
-    graph.nodes.filter(node => !toEnd.has(node.key)).forEach(node => add('NODE_CANNOT_REACH_END', '节点不能到达任何结束节点', node.key));
+    graph.nodes.filter(node => !toEnd.has(node.key)).forEach(node => add('NODE_CANNOT_REACH_END', t('graph.problem.NODE_CANNOT_REACH_END'), node.key));
   }
 }
 
 function checkNode(graph: WorkflowGraph, node: GraphNode, templates: Map<string, ActionTemplate>, add: AddProblem) {
   const out = outgoing(graph, node.key).length; const into = incoming(graph, node.key).length;
-  if ((node.type === 'TASK' || node.type === 'EXCLUSIVE') && !node.name.trim()) add('NODE_NAME_MISSING', '任务节点与排他网关必须填写名称', node.key);
+  if ((node.type === 'TASK' || node.type === 'EXCLUSIVE') && !node.name.trim()) add('NODE_NAME_MISSING', t('graph.problem.NODE_NAME_MISSING'), node.key);
   switch (node.type) {
     case 'START':
-      if (into) add('START_HAS_INCOMING', '开始节点不能有入边', node.key);
-      if (out !== 1) add('START_OUTGOING', '开始节点必须恰好有一条出边', node.key);
+      if (into) add('START_HAS_INCOMING', t('graph.problem.START_HAS_INCOMING'), node.key);
+      if (out !== 1) add('START_OUTGOING', t('graph.problem.START_OUTGOING'), node.key);
       break;
     case 'END':
-      if (out) add('END_HAS_OUTGOING', '结束节点不能有出边', node.key);
+      if (out) add('END_HAS_OUTGOING', t('graph.problem.END_HAS_OUTGOING'), node.key);
       break;
     case 'TASK':
-      if (out !== 1) add('TASK_OUTGOING', '任务节点必须恰好有一条出边', node.key);
+      if (out !== 1) add('TASK_OUTGOING', t('graph.problem.TASK_OUTGOING'), node.key);
       checkTask(node, templates, add);
       break;
     case 'EXCLUSIVE':
-      if (out < 2) add('EXCLUSIVE_OUTGOING', '排他网关至少需要两条出边', node.key);
+      if (out < 2) add('EXCLUSIVE_OUTGOING', t('graph.problem.EXCLUSIVE_OUTGOING'), node.key);
       checkExclusive(graph, node, add);
       break;
     case 'PARALLEL_SPLIT':
-      if (out < 2) add('PARALLEL_SPLIT_OUTGOING', '并行分叉至少需要两条出边', node.key);
+      if (out < 2) add('PARALLEL_SPLIT_OUTGOING', t('graph.problem.PARALLEL_SPLIT_OUTGOING'), node.key);
       break;
     case 'PARALLEL_JOIN':
-      if (into < 2) add('PARALLEL_JOIN_INCOMING', '并行汇合至少需要两条入边', node.key);
-      if (out !== 1) add('PARALLEL_JOIN_OUTGOING', '并行汇合必须恰好有一条出边', node.key);
+      if (into < 2) add('PARALLEL_JOIN_INCOMING', t('graph.problem.PARALLEL_JOIN_INCOMING'), node.key);
+      if (out !== 1) add('PARALLEL_JOIN_OUTGOING', t('graph.problem.PARALLEL_JOIN_OUTGOING'), node.key);
       break;
   }
 }
@@ -437,40 +439,40 @@ function checkNode(graph: WorkflowGraph, node: GraphNode, templates: Map<string,
 function checkTask(node: GraphNode, templates: Map<string, ActionTemplate>, add: AddProblem) {
   const actions = node.actions ?? [];
   const approvers = node.approval?.approverIds ?? [];
-  if (!actions.length && !approvers.length) add('TASK_EMPTY', '任务节点至少需要一个审批人或一个动作', node.key);
-  if (actions.length > graphLimits.actionsPerNode) add('TOO_MANY_ACTIONS', `节点有 ${actions.length} 个动作，超过上限 ${graphLimits.actionsPerNode} 个`, node.key);
+  if (!actions.length && !approvers.length) add('TASK_EMPTY', t('graph.problem.TASK_EMPTY'), node.key);
+  if (actions.length > graphLimits.actionsPerNode) add('TOO_MANY_ACTIONS', t('graph.problem.TOO_MANY_ACTIONS', { count: actions.length, max: graphLimits.actionsPerNode }), node.key);
   const seen = new Set<string>();
   for (const id of approvers) {
-    if (seen.has(id)) add('APPROVER_DUPLICATE', `审批人重复：${id}`, node.key, null, id);
+    if (seen.has(id)) add('APPROVER_DUPLICATE', t('graph.problem.APPROVER_DUPLICATE', { id }), node.key, null, id);
     seen.add(id);
   }
   for (const action of actions) {
     const template = templates.get(action.templateId);
-    if (!action.templateId) add('TEMPLATE_NOT_FOUND', '动作未选择动作模板', node.key, null, action.key);
-    else if (template?.actionType === 'DATA_QUERY') add('TEMPLATE_RESERVED_TYPE', '数据查询动作本期未开放，不能被发布的流程引用', node.key, null, action.key);
-    else if (template && template.status !== 'ACTIVE') add('TEMPLATE_INACTIVE', `动作引用的模板已停用：${template.templateName}`, node.key, null, action.key);
-    if (!action.executorId) add('EXECUTOR_MISSING', '动作必须指定默认执行人', node.key, null, action.key);
+    if (!action.templateId) add('TEMPLATE_NOT_FOUND', t('graph.problem.TEMPLATE_NOT_FOUND'), node.key, null, action.key);
+    else if (template?.actionType === 'DATA_QUERY') add('TEMPLATE_RESERVED_TYPE', t('graph.problem.TEMPLATE_RESERVED_TYPE'), node.key, null, action.key);
+    else if (template && template.status !== 'ACTIVE') add('TEMPLATE_INACTIVE', t('graph.problem.TEMPLATE_INACTIVE', { name: template.templateName }), node.key, null, action.key);
+    if (!action.executorId) add('EXECUTOR_MISSING', t('graph.problem.EXECUTOR_MISSING'), node.key, null, action.key);
   }
   (node.notifications ?? []).forEach((rule, index) => {
     if (rule.trigger === 'VERIFICATION_FAILED') {
-      add('NOTIFICATION_TRIGGER_INVALID', '「动作验证未通过」已停用（动作不再验证），请删除该通知规则', node.key, null, `notifications[${index}]`);
+      add('NOTIFICATION_TRIGGER_INVALID', t('graph.problem.NOTIFICATION_TRIGGER_INVALID'), node.key, null, `notifications[${index}]`);
     }
   });
 }
 
 function checkExclusive(graph: WorkflowGraph, node: GraphNode, add: AddProblem) {
   const exits = outgoing(graph, node.key).map(edge => edge.key);
-  if (!node.defaultEdgeKey) add('EXCLUSIVE_DEFAULT_MISSING', '排他网关必须指定一条默认出边', node.key);
-  else if (!exits.includes(node.defaultEdgeKey)) add('EXCLUSIVE_DEFAULT_INVALID', `默认出边 ${node.defaultEdgeKey} 不是本网关的出边`, node.key, node.defaultEdgeKey);
+  if (!node.defaultEdgeKey) add('EXCLUSIVE_DEFAULT_MISSING', t('graph.problem.EXCLUSIVE_DEFAULT_MISSING'), node.key);
+  else if (!exits.includes(node.defaultEdgeKey)) add('EXCLUSIVE_DEFAULT_INVALID', t('graph.problem.EXCLUSIVE_DEFAULT_INVALID', { edge: node.defaultEdgeKey }), node.key, node.defaultEdgeKey);
   const conditioned = new Set<string>();
   for (const condition of node.conditions ?? []) {
     if (!exits.includes(condition.edgeKey)) continue;
     conditioned.add(condition.edgeKey);
-    if (!condition.all.length) add('CONDITION_EMPTY', `出边 ${condition.edgeKey} 的条件组没有任何子句`, node.key, condition.edgeKey);
+    if (!condition.all.length) add('CONDITION_EMPTY', t('graph.problem.CONDITION_EMPTY', { edge: condition.edgeKey }), node.key, condition.edgeKey);
   }
   for (const edgeKey of exits) {
     if (!conditioned.has(edgeKey) && edgeKey !== node.defaultEdgeKey) {
-      add('EXCLUSIVE_EDGE_UNUSED', `出边 ${edgeKey} 既没有条件也不是默认边，永远不会被选中`, node.key, edgeKey);
+      add('EXCLUSIVE_EDGE_UNUSED', t('graph.problem.EXCLUSIVE_EDGE_UNUSED', { edge: edgeKey }), node.key, edgeKey);
     }
   }
 }
@@ -485,16 +487,16 @@ function checkParallelBlocks(graph: WorkflowGraph, add: AddProblem) {
     const joins = new Set<string>(); let everyBranchJoins = true; let blocked = false;
     for (const edge of outgoing(graph, split.key)) {
       const branch = exploreBranch(graph, edge.to);
-      if (nodeOf(graph, edge.to)?.type === 'PARALLEL_JOIN') add('PARALLEL_BRANCH_EMPTY', `并行分支 ${edge.key} 中没有任何节点`, split.key, edge.key);
-      branch.nested.forEach(inner => add('PARALLEL_NESTED', `不允许嵌套并行：该分叉位于并行分叉 ${split.key} 的分支内，可改为串联多个并行块`, inner));
-      branch.ends.forEach(end => add('PARALLEL_END_INSIDE', `结束节点不能位于并行分叉 ${split.key} 的分支内`, end));
+      if (nodeOf(graph, edge.to)?.type === 'PARALLEL_JOIN') add('PARALLEL_BRANCH_EMPTY', t('graph.problem.PARALLEL_BRANCH_EMPTY', { edge: edge.key }), split.key, edge.key);
+      branch.nested.forEach(inner => add('PARALLEL_NESTED', t('graph.problem.PARALLEL_NESTED', { split: split.key }), inner));
+      branch.ends.forEach(end => add('PARALLEL_END_INSIDE', t('graph.problem.PARALLEL_END_INSIDE', { split: split.key }), end));
       if (branch.nested.length || branch.ends.length) blocked = true;
       if (!branch.joins.size) everyBranchJoins = false;
       branch.joins.forEach(join => joins.add(join));
     }
     if (blocked) continue;
     if (joins.size !== 1 || !everyBranchJoins) {
-      add('PARALLEL_UNPAIRED', `并行分叉的全部分支必须汇入同一个并行汇合，当前汇入 [${[...joins].join(', ')}]`, split.key);
+      add('PARALLEL_UNPAIRED', t('graph.problem.PARALLEL_UNPAIRED_SPLIT', { joins: [...joins].join(', ') }), split.key);
       continue;
     }
     const join = [...joins][0];
@@ -502,7 +504,7 @@ function checkParallelBlocks(graph: WorkflowGraph, add: AddProblem) {
   }
   for (const join of graph.nodes.filter(node => node.type === 'PARALLEL_JOIN')) {
     const count = pairings.get(join.key) ?? 0;
-    if (count !== 1) add('PARALLEL_UNPAIRED', `并行汇合必须恰好与一个并行分叉成对，当前与 ${count} 个分叉成对`, join.key);
+    if (count !== 1) add('PARALLEL_UNPAIRED', t('graph.problem.PARALLEL_UNPAIRED_JOIN', { count }), join.key);
   }
 }
 
@@ -533,7 +535,7 @@ function checkVariables(graph: WorkflowGraph, startForm: FormDefinition, templat
   }).map(action => action.key));
   const skip = (name: string) => name.includes('.') && unresolved.has(name.slice(0, name.indexOf('.')));
   const message = (name: string, nodeKey: string) =>
-    `变量 ${name} 在节点 ${nodeKey} 不可用：须来自启动表单，或来自每条到达路径上必经的上游动作输出（并行分支之间不可互相引用）`;
+    t('graph.problem.VARIABLE_UNAVAILABLE', { name, node: nodeKey });
   for (const node of graph.nodes) {
     if (node.type !== 'EXCLUSIVE' && node.type !== 'TASK') continue;
     const available = new Set(variableCatalog(graph, startForm, templates, node.key).map(item => item.name));
@@ -604,7 +606,7 @@ export function toCanvas(graph: WorkflowGraph, variables: (gatewayKey: string) =
     if (source?.type !== 'EXCLUSIVE') return { id: edge.key, source: edge.from, target: edge.to, data: { isDefault: false, conditional: false } };
     const exit = gatewayExits(graph, edge.from).find(item => item.edge.key === edge.key);
     return { id: edge.key, source: edge.from, target: edge.to,
-      label: exit?.isDefault ? '默认' : clausesText(exit?.clauses ?? [], variables(edge.from)),
+      label: exit?.isDefault ? t('graph.defaultEdge') : clausesText(exit?.clauses ?? [], variables(edge.from)),
       data: { isDefault: !!exit?.isDefault, conditional: true } };
   });
   return { nodes, edges };

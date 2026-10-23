@@ -2,6 +2,9 @@ import type { FieldType, FormDefinition, FormField } from './workflowTypes.ts';
 import { keyPattern, graphLimits } from './graphModel.ts';
 import { fileAddressesOf } from './fileModel.ts';
 import { pinyin } from 'pinyin-pro';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('workflow');
 
 export const textLimit = 255;
 export const longTextLimit = 4000;
@@ -14,7 +17,7 @@ export function newField(form: FormDefinition, type: FieldType): FormField {
   const used = new Set(form.fields.map(field => field.key));
   let index = 1; while (used.has(`${prefix}${index}`)) index++;
   // 只保留必填与枚举选项（需求 E1）；不再写长度、范围、文件数量 / 类型等校验项。
-  const rules = type === 'ENUM' ? { options: [{ value: 'OPTION_1', label: '选项 1' }] } : undefined;
+  const rules = type === 'ENUM' ? { options: [{ value: 'OPTION_1', label: t('form.defaultOption', { index: 1 }) }] } : undefined;
   return { key: `${prefix}${index}`, label: '', type, required: false, ...(rules ? { rules } : {}) };
 }
 
@@ -66,7 +69,7 @@ export function duplicateField(form: FormDefinition, index: number): FormDefinit
   const used = new Set(form.fields.map(field => field.key));
   let copy = 2; while (used.has(`${source.key}${copy}`)) copy++;
   const fields = [...form.fields];
-  fields.splice(index + 1, 0, { ...structuredClone(source), key: `${source.key}${copy}`, label: `${source.label}（副本）` });
+  fields.splice(index + 1, 0, { ...structuredClone(source), key: `${source.key}${copy}`, label: t('form.copyLabel', { label: source.label }) });
   return { fields };
 }
 
@@ -76,15 +79,15 @@ export function fieldProblems(form: FormDefinition): Map<number, string> {
   const counts = new Map<string, number>();
   for (const field of form.fields) counts.set(field.key, (counts.get(field.key) ?? 0) + 1);
   form.fields.forEach((field, index) => {
-    const problem = !keyPattern.test(field.key) ? '字段键以字母开头，只能包含字母、数字和下划线'
-      : (counts.get(field.key) ?? 0) > 1 ? `字段键 ${field.key} 重复，保存前需要改名`
-      : !field.label.trim() ? '请填写显示名称'
-      : field.type === 'ENUM' && !(field.rules?.options?.length) ? '枚举至少需要一个选项'
-      : field.type === 'ENUM' && new Set(field.rules!.options!.map(option => option.value)).size !== field.rules!.options!.length ? '枚举选项值重复'
+    const problem = !keyPattern.test(field.key) ? t('form.problem.keyPattern')
+      : (counts.get(field.key) ?? 0) > 1 ? t('form.problem.keyDuplicate', { key: field.key })
+      : !field.label.trim() ? t('form.problem.labelRequired')
+      : field.type === 'ENUM' && !(field.rules?.options?.length) ? t('form.problem.noOptions')
+      : field.type === 'ENUM' && new Set(field.rules!.options!.map(option => option.value)).size !== field.rules!.options!.length ? t('form.problem.optionDuplicate')
       : null;
     if (problem) problems.set(index, problem);
   });
-  if (form.fields.length > graphLimits.formFields) problems.set(graphLimits.formFields, `每个表单最多 ${graphLimits.formFields} 个字段`);
+  if (form.fields.length > graphLimits.formFields) problems.set(graphLimits.formFields, t('form.problem.tooManyFields', { max: graphLimits.formFields }));
   return problems;
 }
 
@@ -98,21 +101,21 @@ export function valueProblems(form: FormDefinition, values: Record<string, unkno
   const problems: Record<string, string> = {};
   for (const field of form.fields) {
     const value = values[field.key];
-    if (isEmpty(value)) { if (field.required) problems[field.key] = '必填'; continue; }
+    if (isEmpty(value)) { if (field.required) problems[field.key] = t('form.value.required'); continue; }
     let problem: string | null = null;
     switch (field.type) {
       case 'TEXT': case 'LONG_TEXT': {
         const limit = field.type === 'TEXT' ? textLimit : longTextLimit;
-        problem = typeof value !== 'string' ? '必须是文本' : value.length > limit ? `不能超过 ${limit} 个字符` : null; break;
+        problem = typeof value !== 'string' ? t('form.value.text') : value.length > limit ? t('form.value.tooLong', { max: limit }) : null; break;
       }
-      case 'NUMBER': problem = typeof value === 'string' && decimalPattern.test(value) ? null : '必须是数字'; break;
-      case 'BOOLEAN': problem = typeof value === 'boolean' ? null : '必须是是或否'; break;
-      case 'ENUM': problem = (field.rules?.options ?? []).some(option => option.value === value) ? null : '不是可选值'; break;
-      case 'DATE': problem = typeof value === 'string' && datePattern.test(value) ? null : '必须是 YYYY-MM-DD 日期'; break;
+      case 'NUMBER': problem = typeof value === 'string' && decimalPattern.test(value) ? null : t('form.value.number'); break;
+      case 'BOOLEAN': problem = typeof value === 'boolean' ? null : t('form.value.boolean'); break;
+      case 'ENUM': problem = (field.rules?.options ?? []).some(option => option.value === value) ? null : t('form.value.option'); break;
+      case 'DATE': problem = typeof value === 'string' && datePattern.test(value) ? null : t('form.value.date'); break;
       case 'FILE': {
         const addresses = fileAddressesOf(value);
-        problem = !Array.isArray(value) || addresses.length !== value.length ? '文件地址无效，请重新上传'
-          : new Set(addresses).size !== addresses.length ? '文件重复' : null; break;
+        problem = !Array.isArray(value) || addresses.length !== value.length ? t('form.value.fileInvalid')
+          : new Set(addresses).size !== addresses.length ? t('form.value.fileDuplicate') : null; break;
       }
     }
     if (problem) problems[field.key] = problem;
@@ -160,22 +163,22 @@ export function fileDelta(before: unknown, after: unknown): { added: string[]; r
 
 /** 对比摘要：“确认说明已修改 · 文件 +1 −1”。 */
 export function changeSummary(changes: OutputChange[], labels: Record<string, string> = {}): string {
-  if (!changes.length) return '与上一轮相同';
+  if (!changes.length) return t('form.diff.same');
   return changes.map(change => {
     if (Array.isArray(change.before) || Array.isArray(change.after)) {
       const delta = fileDelta(change.before, change.after);
       return `${labels[change.key] ?? change.key} +${delta.added.length} −${delta.removed.length}`;
     }
     const label = labels[change.key] ?? change.key;
-    return change.kind === 'added' ? `${label}已填写` : change.kind === 'removed' ? `${label}已清空` : `${label}已修改`;
+    return change.kind === 'added' ? t('form.diff.added', { label }) : change.kind === 'removed' ? t('form.diff.removed', { label }) : t('form.diff.changed', { label });
   }).join(' · ');
 }
 
 /** 展示值：布尔是/否，数组逗号分隔，空为“—”。 */
 export function displayValue(value: unknown, field?: FormField): string {
   if (isEmpty(value)) return '—';
-  if (typeof value === 'boolean') return value ? '是' : '否';
-  if (Array.isArray(value)) return field?.type === 'FILE' ? `${value.length} 个文件` : value.join(', ');
+  if (typeof value === 'boolean') return value ? t('form.value.yes') : t('form.value.no');
+  if (Array.isArray(value)) return field?.type === 'FILE' ? t('form.value.fileCount', { count: value.length }) : value.join(', ');
   if (field?.type === 'ENUM') return field.rules?.options?.find(option => option.value === value)?.label ?? String(value);
   return typeof value === 'object' ? JSON.stringify(value) : String(value);
 }

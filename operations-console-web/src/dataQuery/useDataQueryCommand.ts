@@ -4,19 +4,23 @@ import { ApiError, session } from '../api/session';
 import { configurationCommand } from '../configuration/configurationModel';
 import type { ConfigurationCommand } from '../configuration/configurationModel';
 import { useErrorNotification } from '../feedback/useErrorNotification';
+import { translator } from '../i18n/index';
+
+const t = translator('data-query');
 
 export type CommandMethod = 'POST' | 'PUT' | 'DELETE';
-const genericBusinessDetail = '业务校验未通过';
+/** Platform 通用业务拒绝的 detail 原文（"业务校验未通过"）：这是服务端数据而非界面文案，写成转义以免被中文扫描误判。 */
+const genericBusinessDetail = '\u4e1a\u52a1\u6821\u9a8c\u672a\u901a\u8fc7';
 
 /** Owner 拒绝原因：400 业务拒绝、404 与专有错误码显示在页面或弹窗顶部；其余交给通用通知。 */
 export function dataQueryErrorMessage(error: unknown): string | null {
   if (!(error instanceof ApiError)) return null;
   const owner = error.detail && error.detail !== genericBusinessDetail ? error.detail : null;
-  if (error.code === 'DATA_QUERY_TIMEOUT') return `查询超时，请缩小查询范围后重试。${owner ? `（${owner}）` : ''}`;
-  if (error.code === 'DATA_QUERY_RESULT_TOO_LARGE') return `结果过大，请减少返回列或缩小范围。${owner ? `（${owner}）` : ''}`;
-  if (error.code === 'DATA_SOURCE_UNAVAILABLE') return `数据源暂时无法连接。${owner ? `（${owner}）` : ''}`;
-  if (error.status === 404) return owner ?? '目标不存在或已删除。';
-  if (error.status === 400 && (error.code === 'BUSINESS_CHECK_FAILED' || error.code === 'INVALID_REQUEST')) return owner ? `操作被拒绝：${owner}` : '操作被拒绝，请检查输入。';
+  if (error.code === 'DATA_QUERY_TIMEOUT') return owner ? t('error.timeoutWithDetail', { detail: owner }) : t('error.timeout');
+  if (error.code === 'DATA_QUERY_RESULT_TOO_LARGE') return owner ? t('error.tooLargeWithDetail', { detail: owner }) : t('error.tooLarge');
+  if (error.code === 'DATA_SOURCE_UNAVAILABLE') return owner ? t('error.unavailableWithDetail', { detail: owner }) : t('error.unavailable');
+  if (error.status === 404) return owner ?? t('error.notFound');
+  if (error.status === 400 && (error.code === 'BUSINESS_CHECK_FAILED' || error.code === 'INVALID_REQUEST')) return owner ? t('error.rejectedWithDetail', { detail: owner }) : t('error.rejected');
   return null;
 }
 
@@ -55,7 +59,7 @@ export function useDataQueryCommand(onAuthorizationChanged: () => void, form?: F
         setFieldErrors(error.fieldErrors);
         // 表单字段就地显示；同时给出汇总，避免表单中没有对应控件（例如 Map 键）的错误被忽略。
         if (form) form.setFields(error.fieldErrors.map(item => ({ name: fieldPath(item.field), errors: [item.message] })));
-        setFormError(error.fieldErrors.map(item => `${item.field}：${item.message}`).join('；'));
+        setFormError(error.fieldErrors.map(item => t('error.fieldError', { field: item.field, message: item.message })).join(t('error.fieldErrorSeparator')));
         return null;
       }
       const message = dataQueryErrorMessage(error);

@@ -4,6 +4,7 @@ import { Button, Form, Input, Segmented, Select, Switch, Table } from 'antd';
 import { fieldDataTypes, fieldDepth, fieldHints, fieldLocations } from './externalApiModel';
 import type { ApiField, FieldLocation, FieldHint } from './externalApiModel';
 import { Mono } from './ui';
+import { useT } from '../i18n/react';
 
 interface Props {
   value: ApiField[];
@@ -72,6 +73,7 @@ function lastSegment(field: ApiField): string {
  * 字段表：按层级顺序展示，BODY 路径只显示末段并缩进；编辑在表格右侧的浮层中完成（无遮罩），正在编辑的行高亮。
  */
 export function FieldTable({ value, onChange, locations, readOnly, hint, serverErrorRows = [], fixedValues, onSourceChange }: Props) {
+  const t = useT('channel');
   const [editing, setEditing] = useState<{ index: number | null; field: ApiField } | null>(null);
   const hints = useMemo(() => fieldHints(value, locations), [value, locations]);
   const hintsOf = (index: number) => hints.filter(item => item.index === index);
@@ -91,28 +93,28 @@ export function FieldTable({ value, onChange, locations, readOnly, hint, serverE
   const rows = order.map(index => ({ ...value[index], index }));
   return <div className="xapi-float-host">
     <div className="xapi-toolbar"><span className="xapi-desc">{hint}</span>
-      {!readOnly && <Button onClick={() => setEditing({ index: null, field: emptyField(locations.includes('BODY') ? 'BODY' : locations[0]) })}>添加字段</Button>}</div>
+      {!readOnly && <Button onClick={() => setEditing({ index: null, field: emptyField(locations.includes('BODY') ? 'BODY' : locations[0]) })}>{t('field.add')}</Button>}</div>
     <div className="xapi-table-wrap" style={{ marginTop: 12 }}>
       <Table rowKey="index" tableLayout="fixed" pagination={false} dataSource={rows}
         rowClassName={row => editing?.index === row.index ? 'xapi-row-active'
           : hintsOf(row.index).length || serverErrorRows.includes(row.index) ? 'xapi-row-error' : ''}
-        locale={{ emptyText: '暂无字段' }} columns={[
-          { title: '位置', dataIndex: 'fieldLocation', width: 90, render: (text: string) => <span className="xapi-mono-muted">{text}</span> },
-          { title: '字段路径', width: 280, render: (_, row) => <div style={{ paddingLeft: fieldDepth(row) * 18 }}>
+        locale={{ emptyText: t('field.empty') }} columns={[
+          { title: t('field.location'), dataIndex: 'fieldLocation', width: 90, render: (text: string) => <span className="xapi-mono-muted">{text}</span> },
+          { title: t('field.path'), width: 280, render: (_, row) => <div style={{ paddingLeft: fieldDepth(row) * 18 }}>
             <Mono>{lastSegment(row)}</Mono><FieldHints hints={hintsOf(row.index)} /></div> },
-          { title: '显示名称', dataIndex: 'fieldName', ellipsis: true },
-          { title: '类型', width: 110, render: (_, row) => <span className="xapi-mono-muted"><Mono>{row.dataType}</Mono></span> },
-          { title: '必填', width: 70, render: (_, row) => row.required ? '是' : '否' },
+          { title: t('field.displayName'), dataIndex: 'fieldName', ellipsis: true },
+          { title: t('capability.type'), width: 110, render: (_, row) => <span className="xapi-mono-muted"><Mono>{row.dataType}</Mono></span> },
+          { title: t('form.required'), width: 70, render: (_, row) => row.required ? t('field.yes') : t('field.no') },
           fixedValues
-            ? { title: '来源', width: 220, render: (_, row) => fixedValues.has(fieldKey(row))
-              ? readOnly ? <span className="xapi-source-fixed">固定 {fixedValues.get(fieldKey(row))}</span>
-                : <button type="button" className="xapi-source-fixed xapi-source-button" title="点击修改来源"
-                  onClick={() => setEditing({ index: row.index, field: value[row.index] })}>固定 {fixedValues.get(fieldKey(row))}</button>
-              : row.fieldPath.includes('[]') ? '—' : row.required ? '节点赋值' : '节点赋值（可省略）' }
-            : { title: '说明', dataIndex: 'description', ellipsis: true, render: (text: string | null) => text || '—' },
-          ...(readOnly ? [] : [{ title: '操作', width: 110, render: (_: unknown, row: ApiField & { index: number }) => <span className="xapi-ops">
-            <button type="button" className="xapi-link" onClick={() => setEditing({ index: row.index, field: value[row.index] })}>编辑</button>
-            <button type="button" className="xapi-link" onClick={() => remove(row.index)}>删除</button>
+            ? { title: t('field.source'), width: 220, render: (_, row) => fixedValues.has(fieldKey(row))
+              ? readOnly ? <span className="xapi-source-fixed">{t('field.fixedValue', { value: fixedValues.get(fieldKey(row)) ?? '' })}</span>
+                : <button type="button" className="xapi-source-fixed xapi-source-button" title={t('field.changeSource')}
+                  onClick={() => setEditing({ index: row.index, field: value[row.index] })}>{t('field.fixedValue', { value: fixedValues.get(fieldKey(row)) ?? '' })}</button>
+              : row.fieldPath.includes('[]') ? '—' : row.required ? t('field.source.node') : t('field.source.nodeOptional') }
+            : { title: t('mids.note'), dataIndex: 'description', ellipsis: true, render: (text: string | null) => text || '—' },
+          ...(readOnly ? [] : [{ title: t('grants.actions'), width: 110, render: (_: unknown, row: ApiField & { index: number }) => <span className="xapi-ops">
+            <button type="button" className="xapi-link" onClick={() => setEditing({ index: row.index, field: value[row.index] })}>{t('protocol.edit')}</button>
+            <button type="button" className="xapi-link" onClick={() => remove(row.index)}>{t('endpointEditor.delete')}</button>
           </span> }]),
         ]} />
     </div>
@@ -122,8 +124,9 @@ export function FieldTable({ value, onChange, locations, readOnly, hint, serverE
 }
 
 function FieldHints({ hints }: { hints: FieldHint[] }) {
+  const t = useT('channel');
   if (!hints.length) return null;
-  return <div className="xapi-inline-hint">{hints.map(item => item.message).join('；')}</div>;
+  return <div className="xapi-inline-hint">{hints.map(item => item.message).join(t('error.fieldSeparator'))}</div>;
 }
 
 /** 编辑字段浮层：位置与类型、字段路径（等宽）、显示名称、必填开关、说明；“应用”只更新页面草稿，保存时一并提交。 */
@@ -137,40 +140,41 @@ function FieldPanel({ field, locations, creating, fixed, onCancel, onApply }: {
   fixed?: string | null;
   onCancel: () => void; onApply: (field: ApiField, fixed: string | null) => void;
 }) {
+  const t = useT('channel'), tCommon = useT('common');
   const [form] = Form.useForm<ApiField>();
   const [source, setSource] = useState<'NODE' | 'FIXED'>(fixed ? 'FIXED' : 'NODE');
   const [expression, setExpression] = useState(fixed ?? '');
   const path = Form.useWatch('fieldPath', form) as string | undefined;
   const arrayElement = !!path?.includes('[]');
   const fixedInvalid = source === 'FIXED' && !arrayElement && !expression.trim();
-  return <div className="xapi-float" role="dialog" aria-label={creating ? '添加字段' : '编辑字段'}>
-    <h3>{creating ? '添加字段' : '编辑字段'}</h3>
+  return <div className="xapi-float" role="dialog" aria-label={creating ? t('field.add') : t('field.edit')}>
+    <h3>{creating ? t('field.add') : t('field.edit')}</h3>
     <Form form={form} layout="vertical" requiredMark={false} initialValues={field}
       onFinish={values => { if (!fixedInvalid) onApply({ ...field, ...values, fieldPath: values.fieldPath.trim(), fieldName: values.fieldName.trim(),
         description: values.description?.trim() ? values.description.trim() : null }, source === 'FIXED' && !arrayElement ? expression.trim() : null); }}>
       <div className="xapi-form-row">
-        <Form.Item name="fieldLocation" label="位置" rules={[{ required: true }]}>
+        <Form.Item name="fieldLocation" label={t('field.location')} rules={[{ required: true }]}>
           <Select disabled={locations.length === 1} options={fieldLocations.filter(item => locations.includes(item)).map(item => ({ value: item, label: item }))} /></Form.Item>
-        <Form.Item name="dataType" label="类型" rules={[{ required: true }]}>
+        <Form.Item name="dataType" label={t('capability.type')} rules={[{ required: true }]}>
           <Select options={fieldDataTypes.map(type => ({ value: type, label: type }))} /></Form.Item>
       </div>
-      <Form.Item name="fieldPath" label="字段路径" style={{ marginTop: 12 }} rules={[{ required: true, whitespace: true, message: '请填写字段路径' }]}>
+      <Form.Item name="fieldPath" label={t('field.path')} style={{ marginTop: 12 }} rules={[{ required: true, whitespace: true, message: t('field.pathRequired') }]}>
         <Input maxLength={512} className="xapi-mono-input" placeholder="paymentContext.amount.value" /></Form.Item>
-      <Form.Item name="fieldName" label="显示名称" style={{ marginTop: 12 }} rules={[{ required: true, whitespace: true, message: '请填写显示名称' }]}>
+      <Form.Item name="fieldName" label={t('field.displayName')} style={{ marginTop: 12 }} rules={[{ required: true, whitespace: true, message: t('field.displayNameRequired') }]}>
         <Input maxLength={128} /></Form.Item>
-      <div className="xapi-inline-switch"><Form.Item name="required" valuePropName="checked" noStyle><Switch size="small" /></Form.Item><span>必填</span></div>
-      <Form.Item name="description" label="说明" style={{ marginTop: 12 }}><Input maxLength={512} /></Form.Item>
-      {fixed !== undefined && <div className="xapi-field" style={{ marginTop: 12 }}><span className="xapi-field-label">来源</span>
-        <Segmented value={source} disabled={arrayElement} options={[{ value: 'NODE', label: '节点赋值' }, { value: 'FIXED', label: '固定值' }]}
+      <div className="xapi-inline-switch"><Form.Item name="required" valuePropName="checked" noStyle><Switch size="small" /></Form.Item><span>{t('form.required')}</span></div>
+      <Form.Item name="description" label={t('mids.note')} style={{ marginTop: 12 }}><Input maxLength={512} /></Form.Item>
+      {fixed !== undefined && <div className="xapi-field" style={{ marginTop: 12 }}><span className="xapi-field-label">{t('field.source')}</span>
+        <Segmented value={source} disabled={arrayElement} options={[{ value: 'NODE', label: t('field.source.node') }, { value: 'FIXED', label: t('field.source.fixed') }]}
           onChange={value => setSource(value as 'NODE' | 'FIXED')} />
-        {arrayElement ? <span className="xapi-field-hint">数组元素字段不能设固定值，由节点给整个数组赋值。</span>
+        {arrayElement ? <span className="xapi-field-hint">{t('field.source.arrayHint')}</span>
           : source === 'FIXED' ? <><Input value={expression} maxLength={4096} className="xapi-mono-input" status={fixedInvalid ? 'error' : undefined}
             placeholder="'application/json'" onChange={event => setExpression(event.target.value)} />
-            <span className="xapi-field-hint">常量表达式：字符串写成 'text'，数字直接写；不能引用 input、resources、steps 或 params。设置后流程节点不能再给它赋值。</span></>
-            : <span className="xapi-field-hint">由流程节点在请求字段里赋值{''}；非必填字段未赋值时省略。</span>}
+            <span className="xapi-field-hint">{t('field.source.fixedHint')}</span></>
+            : <span className="xapi-field-hint">{t('field.source.nodeHint')}</span>}
       </div>}
     </Form>
-    <p className="xapi-field-hint" style={{ margin: 0 }}>路径用点分隔层级，数组元素写 []（如 items[].sku）；同一位置下路径不能重复。金额等精确值用 STRING。</p>
-    <div className="xapi-float-foot"><Button onClick={onCancel}>取消</Button><Button type="primary" onClick={() => form.submit()}>应用</Button></div>
+    <p className="xapi-field-hint" style={{ margin: 0 }}>{t('field.pathHint')}</p>
+    <div className="xapi-float-foot"><Button onClick={onCancel}>{tCommon('action.cancel')}</Button><Button type="primary" onClick={() => form.submit()}>{t('field.apply')}</Button></div>
   </div>;
 }

@@ -1,3 +1,4 @@
+import { translator } from '../i18n/index.ts';
 import { decimalIdPattern } from './reconModel.ts';
 import type { ExpectedMovement, ReconException, SourceSummary } from './reconModel.ts';
 
@@ -97,6 +98,7 @@ export const channelLineFilterKeys = ['clearingAccountId', 'statementStatus', 'm
   'transactionDateFrom', 'transactionDateTo'] as const;
 
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+const t = translator('recon');
 
 /**
  * 渠道流水查询条件：只取已知键并去空白；外部交易号精确查询
@@ -106,10 +108,10 @@ const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 export function channelLineQuery(values: Readonly<Record<string, string | null | undefined>>): { filters: Record<string, string>; error: string | null } {
   const filters = compactFilters(Object.fromEntries(channelLineFilterKeys.map(key => [key, values[key]])));
   for (const key of ['transactionDateFrom', 'transactionDateTo'] as const) {
-    if (filters[key] && !datePattern.test(filters[key])) return { filters, error: '交易日期格式为 YYYY-MM-DD' };
+    if (filters[key] && !datePattern.test(filters[key])) return { filters, error: t('channelLines.dateFormat') };
   }
   if (filters.transactionDateFrom && filters.transactionDateTo && filters.transactionDateFrom > filters.transactionDateTo) {
-    return { filters, error: '交易日期起不能晚于止' };
+    return { filters, error: t('channelLines.dateRange') };
   }
   return { filters, error: null };
 }
@@ -155,7 +157,8 @@ export function exceptionSourceLink(exception: Pick<ReconException, 'sourceType'
       return isReconId(exception.sourceId) ? reconRoutes.statement(exception.sourceId) : null;
     case 'CHANNEL_STATEMENT_LINE': {
       if (!isReconId(exception.statementId ?? undefined)) return null;
-      const lineNo = source?.reference?.match(/第 ([1-9][0-9]*) 行$/)?.[1];
+      // 来源摘要是 reconciliation 返回的数据「批次号 第 N 行」，按其原文解析（\u7b2c = 第，\u884c = 行）
+      const lineNo = source?.reference?.match(/\u7b2c ([1-9][0-9]*) \u884c$/)?.[1];
       return reconRoutes.statement(exception.statementId!, lineNo ? Number(lineNo) : null);
     }
     case 'PLATFORM_TXN':
@@ -176,9 +179,11 @@ export function exceptionSourceLink(exception: Pick<ReconException, 'sourceType'
  * <li>新接口（银行对账单、银行流水）返回 404 *_NOT_FOUND；既有按主键读取接口不存在时仍为 400 BUSINESS_CHECK_FAILED，detail 为「…不存在: 主键」。</li>
  * <li>只在 detail 以「不存在: 当前主键」结尾时认定，避免把其他业务拒绝当成未找到。</li>
  */
+/** Owner 默认消息「…不存在: 主键」中的固定后缀，是服务端数据而非界面文案（\u4e0d\u5b58\u5728 = 不存在）。 */
+const notFoundSuffix = '\u4e0d\u5b58\u5728: ';
 export function isNotFoundFailure(failure: { status: number; code?: string; detail?: string | null }, id: string): boolean {
   if (failure.status === 404) return true;
-  return failure.status === 400 && failure.code === 'BUSINESS_CHECK_FAILED' && !!failure.detail && failure.detail.trim().endsWith(`不存在: ${id}`);
+  return failure.status === 400 && failure.code === 'BUSINESS_CHECK_FAILED' && !!failure.detail && failure.detail.trim().endsWith(`${notFoundSuffix}${id}`);
 }
 
 /** 列表 → 详情时带上来源地址；详情页「返回」只在来源是同一列表时用它，否则回到不带筛选的列表。 */

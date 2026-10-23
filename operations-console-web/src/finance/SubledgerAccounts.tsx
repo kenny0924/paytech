@@ -2,17 +2,17 @@ import { useMemo } from 'react';
 import { Button, Empty, Form, Input, Select, Table } from 'antd';
 import type { PagingRequestBody } from '../api/paging';
 import { usePaging } from '../hooks/usePaging';
+import { enumLabel } from '../i18n/index';
+import { useT } from '../i18n/react';
 import {
-  activeOnly, balanceBuckets, decodeOwnerAccount, entityTypeLabels, financeErrorTarget, financePaths, ledgerEntityTypes, ownerAccountNoPattern, ownerAccountStatusLabels,
-  pageOf, subledgerAccountNames, subledgerEntityIdError, subledgerErrorTargets, subledgerFilters, subledgerOwnerTypes,
+  activeOnly, balanceBuckets, decodeOwnerAccount, financeErrorTarget, financePaths, ledgerEntityTypes, ownerAccountNoPattern,
+  pageOf, subledgerAccountCodes, subledgerAccountName, subledgerEntityIdError, subledgerErrorTargets, subledgerFilters, subledgerOwnerTypes,
 } from './finance';
 import type { Currency, OwnerAccount, SubledgerScope } from './finance';
 import { Amount, LoadFailure, SideTag, StatusTag } from './FinanceParts';
 
 type Query = { paging: PagingRequestBody; filters: Readonly<Record<string, string>> };
-const entityTypeOptions = ledgerEntityTypes.map(value => ({ value, label: value, title: entityTypeLabels[value] }));
 const options = (values: readonly string[]) => values.map(value => ({ value, label: value }));
-const accountCodeOptions = Object.entries(subledgerAccountNames).map(([value, name]) => ({ value, label: `${value} · ${name}` }));
 
 /**
  * 明细账查询条件（画板 13）：主体类型 / 主体标识 / 币种必填一行，账户号 / 科目 / Owner 类型 / Owner ID / 余额桶筛选一行
@@ -22,7 +22,10 @@ export function SubledgerSearchForm({ scope, filters, currencies, onSearch }: {
   scope: SubledgerScope | null; filters: Readonly<Record<string, string>>; currencies: readonly Currency[];
   onSearch: (filters: Record<string, string>) => void;
 }) {
+  const t = useT('finance');
   const [form] = Form.useForm();
+  const entityTypeOptions = useMemo(() => ledgerEntityTypes.map(value => ({ value, label: value, title: enumLabel(t, 'enum.ledgerEntityType', value) })), [t]);
+  const accountCodeOptions = useMemo(() => subledgerAccountCodes.map(value => ({ value, label: `${value} · ${enumLabel(t, 'enum.subledgerAccount', value)}` })), [t]);
   const reset = () => {
     form.setFieldsValue({ accountNo: undefined, accountCode: undefined, ownerType: undefined, ownerId: undefined, balanceBucket: undefined });
     if (scope) onSearch(subledgerFilters(form.getFieldsValue()));
@@ -30,25 +33,25 @@ export function SubledgerSearchForm({ scope, filters, currencies, onSearch }: {
   return <Form form={form} name="finance-subledger-filters" layout="vertical" initialValues={{ entityType: 'OPERATING_ENTITY', ...scope, ...filters }}
     onFinish={values => onSearch(subledgerFilters(values))}>
     <div className="finance-search finance-subledger-scope">
-      <Form.Item name="entityType" label="主体类型" rules={[{ required: true, message: '请选择主体类型' }]}><Select options={entityTypeOptions} /></Form.Item>
-      <Form.Item name="entityId" label="主体标识" dependencies={['entityType']} normalize={(value: string) => value?.toUpperCase()}
+      <Form.Item name="entityType" label={t('field.entityType')} rules={[{ required: true, message: t('validation.entityTypeRequired') }]}><Select options={entityTypeOptions} /></Form.Item>
+      <Form.Item name="entityId" label={t('field.entityId')} dependencies={['entityType']} normalize={(value: string) => value?.toUpperCase()}
         rules={[({ getFieldValue }) => ({ validator: async (_, value) => {
           const message = subledgerEntityIdError(getFieldValue('entityType'), value);
           if (message) throw new Error(message);
-        } })]}><Input maxLength={19} placeholder="entityNo 或财务主体主键" /></Form.Item>
-      <Form.Item name="currency" label="币种" rules={[{ required: true, message: '请选择币种' }]}>
-        <Select placeholder="启用币种" options={activeOnly(currencies).map(item => ({ value: item.currency, label: item.currency }))} /></Form.Item>
+        } })]}><Input maxLength={19} placeholder={t('subledger.search.entityIdPlaceholder')} /></Form.Item>
+      <Form.Item name="currency" label={t('field.currency')} rules={[{ required: true, message: t('validation.currencyRequired') }]}>
+        <Select placeholder={t('placeholder.activeCurrency')} options={activeOnly(currencies).map(item => ({ value: item.currency, label: item.currency }))} /></Form.Item>
     </div>
     <div className="finance-search">
-      <Form.Item name="accountNo" label="账户号" normalize={(value: string) => value?.toUpperCase()}
-        rules={[{ pattern: ownerAccountNoPattern, message: '大写字母、数字与连字符，如 AE001-USD-22010101-S000001' }]}>
-        <Input allowClear maxLength={48} placeholder="精确匹配" /></Form.Item>
-      <Form.Item name="accountCode" label="科目"><Select allowClear placeholder="全部" options={accountCodeOptions} /></Form.Item>
-      <Form.Item name="ownerType" label="Owner 类型"><Select allowClear placeholder="全部" options={options(subledgerOwnerTypes)} /></Form.Item>
-      <Form.Item name="ownerId" label="Owner ID" rules={[{ pattern: /^[1-9][0-9]{0,18}$/, message: '必须是正十进制整数字符串' }]}>
-        <Input allowClear maxLength={19} placeholder="请输入标识" /></Form.Item>
-      <Form.Item name="balanceBucket" label="余额桶"><Select allowClear placeholder="全部" options={options(balanceBuckets)} /></Form.Item>
-      <div className="configuration-actions"><Button type="primary" htmlType="submit">查询</Button><Button onClick={reset}>重置</Button></div>
+      <Form.Item name="accountNo" label={t('field.accountNo')} normalize={(value: string) => value?.toUpperCase()}
+        rules={[{ pattern: ownerAccountNoPattern, message: t('validation.ownerAccountNoPattern') }]}>
+        <Input allowClear maxLength={48} placeholder={t('placeholder.exactMatch')} /></Form.Item>
+      <Form.Item name="accountCode" label={t('field.accountCode')}><Select allowClear placeholder={t('placeholder.all')} options={accountCodeOptions} /></Form.Item>
+      <Form.Item name="ownerType" label={t('field.ownerType')}><Select allowClear placeholder={t('placeholder.all')} options={options(subledgerOwnerTypes)} /></Form.Item>
+      <Form.Item name="ownerId" label={t('field.ownerId')} rules={[{ pattern: /^[1-9][0-9]{0,18}$/, message: t('validation.decimalId') }]}>
+        <Input allowClear maxLength={19} placeholder={t('placeholder.enterId')} /></Form.Item>
+      <Form.Item name="balanceBucket" label={t('field.balanceBucket')}><Select allowClear placeholder={t('placeholder.all')} options={options(balanceBuckets)} /></Form.Item>
+      <div className="configuration-actions"><Button type="primary" htmlType="submit">{t('common.search')}</Button><Button onClick={reset}>{t('common.reset')}</Button></div>
     </div>
   </Form>;
 }
@@ -58,6 +61,7 @@ export function SubledgerAccountList({ scope, filters, paging, minorUnit, onQuer
   scope: SubledgerScope; filters: Readonly<Record<string, string>>; paging: PagingRequestBody; minorUnit?: number;
   onQueryChange: (query: Query) => void; onSelect: (account: OwnerAccount) => void;
 }) {
+  const t = useT('finance');
   const decode = useMemo(() => pageOf(decodeOwnerAccount(scope.currency)), [scope.currency]);
   const page = usePaging<OwnerAccount>(financePaths.ownerAccounts, decode, { ...scope, ...filters },
     { initialPaging: paging, onQueryChange });
@@ -66,19 +70,19 @@ export function SubledgerAccountList({ scope, filters, paging, minorUnit, onQuer
   if (page.error) return <LoadFailure message={hint ?? page.error} onRetry={page.refresh} />;
   return <section className="table-panel">
     <Table<OwnerAccount> rowKey="accountId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 1340 }}
-      pagination={{ ...page.pagination, showTotal: total => `共 ${total} 条` }} onRow={row => ({ onClick: () => onSelect(row), className: 'clickable-row' })}
+      pagination={{ ...page.pagination, showTotal: total => t('common.total', { total }) }} onRow={row => ({ onClick: () => onSelect(row), className: 'clickable-row' })}
       locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description={Object.keys(filters).length ? '没有符合条件的 Owner 账户' : '该主体与币种下还没有 Owner 账户'} /> }} columns={[
-        { title: '账户号', width: 240, render: (_, row) => <span className="mono">{row.accountNo}</span> },
-        { title: '科目', width: 240, render: (_, row) => <div><div className="finance-code">{row.accountCode}</div>
-          {subledgerAccountNames[row.accountCode] && <div className="cell-meta">{subledgerAccountNames[row.accountCode]}</div>}</div> },
-        { title: 'Owner', width: 200, render: (_, row) => <div><div>{row.ownerType}</div><div className="cell-meta">{row.ownerId}</div></div> },
-        { title: '余额桶', dataIndex: 'balanceBucket', width: 110 },
-        { title: '方向', width: 70, render: (_, row) => <SideTag side={row.normalSide} /> },
-        { title: '状态', width: 80, render: (_, row) => <StatusTag status={row.accountStatus} labels={ownerAccountStatusLabels} /> },
-        { title: '借方合计', width: 140, align: 'right', render: (_, row) => amount(row.debitTotal) },
-        { title: '贷方合计', width: 140, align: 'right', render: (_, row) => amount(row.creditTotal) },
-        { title: '净余额', width: 160, align: 'right', render: (_, row) => amount(row.netBalance) },
+        description={Object.keys(filters).length ? t('subledger.accounts.emptyFiltered') : t('subledger.accounts.empty')} /> }} columns={[
+        { title: t('field.accountNo'), width: 240, render: (_, row) => <span className="mono">{row.accountNo}</span> },
+        { title: t('field.accountCode'), width: 240, render: (_, row) => { const name = subledgerAccountName(row.accountCode);
+          return <div><div className="finance-code">{row.accountCode}</div>{name && <div className="cell-meta">{name}</div>}</div>; } },
+        { title: t('field.owner'), width: 200, render: (_, row) => <div><div>{row.ownerType}</div><div className="cell-meta">{row.ownerId}</div></div> },
+        { title: t('field.balanceBucket'), dataIndex: 'balanceBucket', width: 110 },
+        { title: t('field.side'), width: 70, render: (_, row) => <SideTag side={row.normalSide} /> },
+        { title: t('field.status'), width: 80, render: (_, row) => <StatusTag status={row.accountStatus} enumType="ownerAccountStatus" /> },
+        { title: t('field.debitTotal'), width: 140, align: 'right', render: (_, row) => amount(row.debitTotal) },
+        { title: t('field.creditTotal'), width: 140, align: 'right', render: (_, row) => amount(row.creditTotal) },
+        { title: t('field.netBalance'), width: 160, align: 'right', render: (_, row) => amount(row.netBalance) },
       ]} />
   </section>;
 }

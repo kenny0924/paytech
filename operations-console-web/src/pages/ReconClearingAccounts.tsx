@@ -1,14 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, App, Button, Drawer, Form, Input, Select, Table } from 'antd';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
 import { localTime } from '../finance/finance';
 import { FinanceNote, LoadFailure } from '../finance/FinanceParts';
+import { useT } from '../i18n/react';
 import { ClearingSettingsFields, settingsBody } from '../reconciliation/ClearingSettings';
 import type { ClearingSettingsValues } from '../reconciliation/ClearingSettings';
 import { ClearingAccountDetail } from '../reconciliation/detail/ClearingAccountDetail';
 import { useOpenDetail } from '../reconciliation/ReconDetail';
-import { clearingStatusLabels, decodeClearingAccount, decodeWithId, hasReconAction, pageOf, reconActions, reconPaths } from '../reconciliation/reconModel';
+import { clearingStatusEnum, decodeClearingAccount, decodeWithId, hasReconAction, pageOf, reconActions, reconOptions, reconPaths } from '../reconciliation/reconModel';
 import type { CashAccount, ClearingAccountSummary } from '../reconciliation/reconModel';
 import { EmptyHint, ReconCommandFeedback, ReconTag } from '../reconciliation/ReconParts';
 import { compactFilters, isReconId, reconRoutes } from '../reconciliation/reconRoutes';
@@ -23,7 +24,6 @@ interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => vo
 interface CreateValues extends ClearingSettingsValues { clearingAccountCode: string; channelCode: string; entityNo: string; currency: string }
 
 const decodePage = pageOf(decodeWithId<ClearingAccountSummary>('clearingAccountId'));
-const statusOptions = Object.entries(clearingStatusLabels).map(([value, label]) => ({ value, label }));
 const filterKeys = ['entityNo', 'channelCode', 'currency', 'status'] as const;
 
 /**
@@ -40,47 +40,50 @@ export function ReconClearingAccounts(props: Props) {
 }
 
 function ClearingList({ resources, onAuthorizationChanged }: Props) {
+  const t = useT('recon'), tNav = useT('nav');
   const openDetail = useOpenDetail();
   const canOperate = hasReconAction(resources, reconActions.operate);
+  const statusOptions = useMemo(() => reconOptions(t, clearingStatusEnum), [t]);
   const [creating, setCreating] = useState(false);
   const page = useReconListQuery<ClearingAccountSummary>(reconPaths.clearingAccounts, decodePage, filterKeys);
   const unassigned = useUnassignedMids(onAuthorizationChanged);
   const cash = useCashAccounts(onAuthorizationChanged);
   const [form] = Form.useForm<Record<string, string | undefined>>();
-  return <div className="configuration-page finance-page"><div className="page-heading"><h1>清算账户</h1></div>
+  return <div className="configuration-page finance-page"><div className="page-heading"><h1>{tNav('resource.OPERATIONS_FINANCE_RECON_CLEARING')}</h1></div>
     {unassigned.items.length > 0 && <Alert type="warning" showIcon className="finance-banner"
-      title={`有 ${unassigned.items.length} 个已激活的 MID + 币种还没有归入清算账户，这些 MID 上的交易无法对账`}
-      description={unassigned.items.slice(0, 5).map(item => `${item.channelCode} · ${item.entityNo} · ${item.externalMidCode} · ${item.currency}`).join('；')
+      title={t('clearing.unassignedBanner', { count: unassigned.items.length })}
+      description={unassigned.items.slice(0, 5).map(item => `${item.channelCode} · ${item.entityNo} · ${item.externalMidCode} · ${item.currency}`).join(t('common.listSeparator'))
         + (unassigned.items.length > 5 ? ' …' : '')} />}
     <Form form={form} name="recon-clearing-filters" layout="vertical" initialValues={page.filters} onFinish={values => page.applyFilters(compactFilters(values))}>
       <div className="finance-search">
-        <Form.Item name="entityNo" label="经营主体"><Input allowClear placeholder="AE001" maxLength={5} /></Form.Item>
-        <Form.Item name="channelCode" label="渠道"><Input allowClear placeholder="NI" maxLength={64} /></Form.Item>
-        <Form.Item name="currency" label="币种"><Input allowClear placeholder="USD" maxLength={3} /></Form.Item>
-        <Form.Item name="status" label="状态"><Select allowClear placeholder="全部" options={statusOptions} /></Form.Item>
-        <div className="configuration-actions"><Button htmlType="submit">查询</Button>
-          <Button onClick={() => { resetForm(form); page.applyFilters({}); }}>重置</Button>
-          {canOperate && <Button type="primary" onClick={() => setCreating(true)}>新建清算账户</Button>}</div>
+        <Form.Item name="entityNo" label={t('field.operatingEntity')}><Input allowClear placeholder="AE001" maxLength={5} /></Form.Item>
+        <Form.Item name="channelCode" label={t('field.channel')}><Input allowClear placeholder="NI" maxLength={64} /></Form.Item>
+        <Form.Item name="currency" label={t('field.currency')}><Input allowClear placeholder="USD" maxLength={3} /></Form.Item>
+        <Form.Item name="status" label={t('field.status')}><Select allowClear placeholder={t('placeholder.all')} options={statusOptions} /></Form.Item>
+        <div className="configuration-actions"><Button htmlType="submit">{t('common.search')}</Button>
+          <Button onClick={() => { resetForm(form); page.applyFilters({}); }}>{t('common.reset')}</Button>
+          {canOperate && <Button type="primary" onClick={() => setCreating(true)}>{t('clearing.create')}</Button>}</div>
       </div>
     </Form>
     {page.error ? <LoadFailure message={page.error} onRetry={page.refresh} /> : <section className="table-panel">
       <Table<ClearingAccountSummary> rowKey="clearingAccountId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 980 }}
-        pagination={{ ...page.pagination, showTotal: total => `共 ${total} 条` }}
+        pagination={{ ...page.pagination, showTotal: total => t('common.total', { total }) }}
         onRow={row => ({ onClick: () => openDetail(reconRoutes.clearingAccount(row.clearingAccountId)), className: 'clickable-row' })}
-        locale={{ emptyText: <EmptyHint text={canOperate ? '还没有清算账户。新建后挂入 MID，平台流水和渠道账单才能归到它下面。' : '没有符合条件的清算账户'} /> }}
+        locale={{ emptyText: <EmptyHint text={canOperate ? t('clearing.empty') : t('clearing.emptyFiltered')} /> }}
         columns={[
-          { title: '编码', width: 200, render: (_, row) => <a className="mono">{row.clearingAccountCode}</a> },
-          { title: '渠道', width: 100, dataIndex: 'channelCode' },
-          { title: '经营主体', width: 100, dataIndex: 'entityNo' },
-          { title: '币种', width: 80, dataIndex: 'currency' },
-          { title: 'MID 数', width: 80, align: 'right', dataIndex: 'midCount' },
-          { title: '到账银行账户', width: 200, render: (_, row) => { const account = row.settlementCashAccountId ? cash.byId.get(row.settlementCashAccountId) : undefined;
-            return row.settlementCashAccountId ? (account ? `${account.accountName} · 尾号 ${account.accountLast4}` : row.settlementCashAccountId) : <span className="muted">未配置（不能对平）</span>; } },
-          { title: '状态', width: 90, render: (_, row) => <ReconTag status={row.status} labels={clearingStatusLabels} /> },
-          { title: '更新时间', width: 150, render: (_, row) => localTime(row.updateTime) },
+          { title: t('clearing.column.code'), width: 200, render: (_, row) => <a className="mono">{row.clearingAccountCode}</a> },
+          { title: t('field.channel'), width: 100, dataIndex: 'channelCode' },
+          { title: t('field.operatingEntity'), width: 100, dataIndex: 'entityNo' },
+          { title: t('field.currency'), width: 90, dataIndex: 'currency' },
+          { title: t('clearing.column.midCount'), width: 80, align: 'right', dataIndex: 'midCount' },
+          { title: t('clearingSettings.settlementCashAccount'), width: 200, render: (_, row) => { const account = row.settlementCashAccountId ? cash.byId.get(row.settlementCashAccountId) : undefined;
+            return row.settlementCashAccountId ? (account ? t('cash.nameWithLast4', { name: account.accountName, last4: account.accountLast4 }) : row.settlementCashAccountId)
+              : <span className="muted">{t('clearingDetail.noSettlementAccount')}</span>; } },
+          { title: t('field.status'), width: 90, render: (_, row) => <ReconTag status={row.status} kind={clearingStatusEnum} /> },
+          { title: t('field.updatedAt'), width: 150, render: (_, row) => localTime(row.updateTime) },
         ]} />
     </section>}
-    <FinanceNote>每个 MID + 币种只能属于一个清算账户；点行进入详情维护配置与 MID。{!canOperate && ' 当前账号没有对账操作权限。'}</FinanceNote>
+    <FinanceNote>{t('clearing.note')}{!canOperate && ' ' + t('permission.noOperate')}</FinanceNote>
     {creating && <CreateClearingDrawer cash={cash.items} onClose={() => setCreating(false)} onAuthorizationChanged={onAuthorizationChanged}
       onCreated={id => { setCreating(false); openDetail(reconRoutes.clearingAccount(id)); }} />}
   </div>;
@@ -89,6 +92,7 @@ function ClearingList({ resources, onAuthorizationChanged }: Props) {
 function CreateClearingDrawer({ cash, onClose, onCreated, onAuthorizationChanged }: {
   cash: readonly CashAccount[]; onClose: () => void; onCreated: (id: string) => void; onAuthorizationChanged: () => void;
 }) {
+  const t = useT('recon');
   const { message } = App.useApp();
   const [form] = Form.useForm<CreateValues>();
   const command = useReconCommand(onAuthorizationChanged, form);
@@ -97,27 +101,27 @@ function CreateClearingDrawer({ cash, onClose, onCreated, onAuthorizationChanged
     const values = await form.validateFields();
     const result = await command.run(reconPaths.clearingAccounts, 'POST', { clearingAccountCode: values.clearingAccountCode.trim(),
       channelCode: values.channelCode.trim(), entityNo: values.entityNo.trim(), currency: values.currency.trim(), ...settingsBody(values) },
-    decodeClearingAccount(), '新建清算账户失败');
+    decodeClearingAccount(), t('clearing.createFailed'));
     if (!result) return;
-    void message.success(`已新建清算账户 ${result.clearingAccountCode}`);
+    void message.success(t('clearing.created', { code: result.clearingAccountCode }));
     onCreated(result.clearingAccountId);
   }
-  return <Drawer open size="min(760px, 100vw)" rootClassName="finance-drawer finance-page" title="新建清算账户" destroyOnHidden
+  return <Drawer open size="min(760px, 100vw)" rootClassName="finance-drawer finance-page" title={t('clearing.create')} destroyOnHidden
     onClose={() => { if (!command.saving) onClose(); }} footer={<div className="finance-drawer-footer"><span className="finance-spacer" />
-      <Button onClick={onClose} disabled={command.saving}>取消</Button>
-      <Button type="primary" loading={command.saving} onClick={() => void submit()}>新建</Button></div>}>
+      <Button onClick={onClose} disabled={command.saving}>{t('common.cancel')}</Button>
+      <Button type="primary" loading={command.saving} onClick={() => void submit()}>{t('clearing.createButton')}</Button></div>}>
     <ReconCommandFeedback command={command} onReload={onClose} />
     <Form form={form} name="recon-create-clearing" layout="vertical" disabled={command.saving}
       initialValues={{ unmatchedWaitDays: 3, costToleranceAmount: '0.10', cashGraceDays: 2 }}>
       <div className="finance-form-grid">
-        <Form.Item name="clearingAccountCode" label="清算账户编码" extra="渠道账单文件头用它指明所属清算账户，创建后不可改"
-          rules={[{ required: true, pattern: /^[A-Z][A-Z0-9_-]{1,63}$/, message: '大写字母开头，2–64 位大写字母、数字、下划线或连字符' }]}>
+        <Form.Item name="clearingAccountCode" label={t('clearing.field.code')} extra={t('clearing.codeHint')}
+          rules={[{ required: true, pattern: /^[A-Z][A-Z0-9_-]{1,63}$/, message: t('clearing.codePattern') }]}>
           <Input placeholder="NI-AE001-USD" maxLength={64} /></Form.Item>
-        <Form.Item name="channelCode" label="渠道编码" rules={[{ required: true, pattern: /^[A-Z][A-Z0-9_]{1,63}$/, message: '渠道编码，如 NI' }]}>
+        <Form.Item name="channelCode" label={t('clearing.field.channelCode')} rules={[{ required: true, pattern: /^[A-Z][A-Z0-9_]{1,63}$/, message: t('clearing.channelCodePattern') }]}>
           <Input placeholder="NI" maxLength={64} /></Form.Item>
-        <Form.Item name="entityNo" label="经营主体" rules={[{ required: true, pattern: /^[A-Z]{2}[0-9]{3}$/, message: '两位大写字母加三位数字' }]}>
+        <Form.Item name="entityNo" label={t('field.operatingEntity')} rules={[{ required: true, pattern: /^[A-Z]{2}[0-9]{3}$/, message: t('validation.entityNo') }]}>
           <Input placeholder="AE001" maxLength={5} /></Form.Item>
-        <Form.Item name="currency" label="清算币种" rules={[{ required: true, pattern: /^[A-Z]{3}$/, message: '三位大写币种' }]}>
+        <Form.Item name="currency" label={t('clearing.field.currency')} rules={[{ required: true, pattern: /^[A-Z]{3}$/, message: t('validation.currency') }]}>
           <Input placeholder="USD" maxLength={3} /></Form.Item>
       </div>
       <ClearingSettingsFields cash={cash} entityNo={entityNo} currency={currency} />

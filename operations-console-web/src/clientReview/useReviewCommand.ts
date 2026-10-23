@@ -4,13 +4,14 @@ import { ApiError, session } from '../api/session';
 import { useErrorNotification } from '../feedback/useErrorNotification';
 import { configurationCommand } from '../configuration/configurationModel';
 import type { ConfigurationCommand } from '../configuration/configurationModel';
+import { useT } from '../i18n/react';
 
 /**
  * 审核命令：同一路径与内容重试沿用原 Idempotency-Key，内容变化才换新键
  * <li>403 刷新导航权限；409/422 保留在当前上下文由页面展示原因，不静默覆盖。</li>
  */
 export function useReviewCommand(onAuthorizationChanged: () => void) {
-  const { message } = App.useApp(); const notify = useErrorNotification();
+  const { message } = App.useApp(); const notify = useErrorNotification(); const t = useT('client-review');
   const [saving, setSaving] = useState(false); const [failure, setFailure] = useState<ApiError>();
   const last = useRef<ConfigurationCommand>(undefined); const busy = useRef(false);
   async function run<T>(path: string, method: ConfigurationCommand['method'], payload: unknown, decode: (value: unknown) => T, success: string) {
@@ -28,7 +29,7 @@ export function useReviewCommand(onAuthorizationChanged: () => void) {
         if (error.status === 403) onAuthorizationChanged();
         setFailure(error);
       }
-      notify(error, '操作未完成');
+      notify(error, t('command.failed'));
       return null;
     } finally { busy.current = false; setSaving(false); }
   }

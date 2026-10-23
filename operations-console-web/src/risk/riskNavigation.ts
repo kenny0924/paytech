@@ -1,5 +1,6 @@
 import { defaultPaging, pageSizeOptions } from '../api/paging.ts';
 import type { PagingRequestBody } from '../api/paging.ts';
+import { translator } from '../i18n/index.ts';
 
 export type RiskView = 'list' | 'detail' | 'edit' | 'create' | 'history' | 'version' | 'references';
 export interface RiskNavigation {
@@ -14,7 +15,7 @@ export interface RiskNavigation {
 const codePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
 export function ruleSetCodeError(value: string): string {
   const code = value.trim();
-  return !code || codePattern.test(code) ? '' : '编码须为 1–64 位大写字母、数字或下划线，并以字母开头。';
+  return !code || codePattern.test(code) ? '' : translator('risk')('ruleBuilder.codeFormat');
 }
 export function parseRiskNavigation(search: string): RiskNavigation {
   const query = new URLSearchParams(search);

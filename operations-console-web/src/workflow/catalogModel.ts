@@ -1,5 +1,8 @@
 import type { ActionConfig, ActionTemplate, ActionType, TemplateReferences } from './workflowTypes.ts';
 import { defaultConfig, normalizeConfig, templateCodePattern } from './templateModel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('workflow');
 
 // ---------- 动作目录列表（原型 06） ----------
 
@@ -26,7 +29,7 @@ export function filterTemplates<T extends Pick<ActionTemplate, 'actionType' | 't
 
 /** 「被引用」列：N 个流程；0 或后端未给出时为「—」。 */
 export function referenceText(count: number | null | undefined): string {
-  return typeof count === 'number' && count > 0 ? `${count} 个流程` : '—';
+  return typeof count === 'number' && count > 0 ? t('catalog.referenceCount', { count }) : '—';
 }
 
 /** 引用列表按流程定义分组：每个流程取当前发布版本那一行，另计只在历史版本中引用的版本数。 */
@@ -73,9 +76,9 @@ export interface EditorStepItem { key: EditorStep; label: string; count?: number
 
 /** 左侧步骤：基本信息 / 字段设计（表单）或说明（其他类型）/ 引用 N（仅已保存的动作）。 */
 export function editorSteps(type: ActionType, isNew: boolean, referenceCount?: number): EditorStepItem[] {
-  const steps: EditorStepItem[] = [{ key: 'basic', label: '基本信息' },
-    { key: 'config', label: type === 'FORM' ? '字段设计' : type === 'DATA_QUERY' ? '查询配置' : '说明' }];
-  return isNew ? steps : [...steps, { key: 'references', label: '引用', ...(referenceCount === undefined ? {} : { count: referenceCount }) }];
+  const steps: EditorStepItem[] = [{ key: 'basic', label: t('templateEditor.step.basic') },
+    { key: 'config', label: type === 'FORM' ? t('templateEditor.step.fields') : type === 'DATA_QUERY' ? t('templateEditor.step.query') : t('templateEditor.step.instruction') }];
+  return isNew ? steps : [...steps, { key: 'references', label: t('templateEditor.step.references'), ...(referenceCount === undefined ? {} : { count: referenceCount }) }];
 }
 
 /** 路由 /workflow/action-templates/new?type= 的类型：只接受可新建的四类，其余为 null（回列表重新选择）。 */

@@ -3,6 +3,9 @@ import type { FormInstance } from 'antd';
 import { ApiError, session } from '../api/session';
 import { useErrorNotification } from '../feedback/useErrorNotification';
 import { formFieldPath } from '../finance/financeWorkflow';
+import { translator } from '../i18n/index';
+
+const t = translator('recon');
 
 export type ReconMethod = 'POST' | 'PUT' | 'DELETE';
 interface ReconCommand { path: string; method: ReconMethod; body: string; key: string }
@@ -40,7 +43,7 @@ export function useReconCommand(onAuthorizationChanged: () => void, form?: FormI
         return null;
       }
       if (error instanceof ApiError && error.status === 400 && error.detail) {
-        setFormError(`${error.detail}（${error.code}）`);
+        setFormError(t('common.detailWithCode', { detail: error.detail, code: error.code }));
         return null;
       }
       notify(error, failureTitle);

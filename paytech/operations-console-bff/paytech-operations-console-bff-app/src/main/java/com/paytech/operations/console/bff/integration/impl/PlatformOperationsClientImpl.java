@@ -167,8 +167,8 @@ public final class PlatformOperationsClientImpl implements PlatformOperationsCli
         var result = management.roleResources(context.accountId(), context.sessionId());
         return requiredList(result.getResources()).stream().map(resource -> {
             requireValidResponse(resource != null);
-            return new PermissionResource(resource.getResourceId(), resource.getParentResourceId(), resource.getDisplayName(),
-                resource.getPermissionId(), resource.getSortOrder());
+            return new PermissionResource(resource.getResourceId(), resource.getResourceCode(), resource.getParentResourceId(),
+                resource.getDisplayName(), resource.getPermissionId(), resource.getSortOrder());
         }).toList();
     }
 

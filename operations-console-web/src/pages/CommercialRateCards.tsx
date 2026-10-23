@@ -3,16 +3,16 @@ import { Button, Empty, Form, Input, Table, Tag } from 'antd';
 import type { ConsoleResource } from '../api/types';
 import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessView';
 import {
-  capabilityStatusLabels, commercialPaths, componentSummary, currencyPattern, idPattern, localTime, termTypeLabels, utcInstant, versionBasisLabel,
-  versionStatusLabels,
+  commercialPaths, componentSummary, currencyPattern, idPattern, joinList, localTime, utcInstant, versionBasisLabel,
 } from '../commercial/commercial';
-import type { CapabilityStatus, VersionStatus } from '../commercial/commercial';
 import { capabilityLabel, cutoffTime, decodeRateCard, rateCardPath } from '../commercial/commercialPreview';
 import type { AgreementRateCard, CurrencyPrices, ProfilePrice, RateCard, RateCardCapability, RateCardQuery, TermVersionRateCard } from '../commercial/commercialPreview';
 import { conditionTags, require3dsTag, reserveText } from '../commercial/capabilityConditions';
 import { ClientIdInput } from '../commercial/ClientIdInput';
 import { browserStorage, rememberClient } from '../commercial/commercialConsole';
 import { CommercialNote, StatusTag } from '../commercial/CommercialParts';
+import { enumLabel } from '../i18n/index';
+import { useT } from '../i18n/react';
 import '../configuration/configuration.css';
 import '../commercial/commercial.css';
 
@@ -21,24 +21,25 @@ interface QueryForm { clientId: string; asOf?: string; currency?: string }
 
 /** 费率预览：按 Client 读取 commercial 费率卡（与 Client 门户同源），按合同 → 版本 → 开通项 → 币种分块展示。 */
 export function CommercialRateCards(_props: Props) {
+  const t = useT('commercial'), tNav = useT('nav');
   const [query, setQuery] = useState<RateCardQuery | null>(null);
   return <div className="configuration-page commercial-page">
-    <div className="page-heading"><h1>费率预览</h1></div>
+    <div className="page-heading"><h1>{tNav('resource.OPERATIONS_COMMERCIAL_RATE_CARDS')}</h1></div>
     <Form name="commercial-rate-card-query" layout="vertical" onFinish={(values: QueryForm) => {
       rememberClient(browserStorage(), values.clientId);
       setQuery({ clientId: values.clientId.trim(), asOf: values.asOf ? utcInstant(values.asOf) : null, currency: values.currency?.trim() || null });
     }}>
       <div className="commercial-open">
-        <Form.Item name="clientId" label="Client ID" rules={[{ required: true, whitespace: true, message: '请输入 Client ID' },
-          { pattern: idPattern, message: 'Client ID 是正十进制整数' }]}><ClientIdInput placeholder="输入或选择，例如 7300000000000000011" /></Form.Item>
-        <Form.Item name="asOf" label="时点（可选，默认当前）"><Input type="datetime-local" step={1} /></Form.Item>
-        <Form.Item name="currency" label="币种（可选）" normalize={(v: string) => v?.toUpperCase()}
-          rules={[{ pattern: currencyPattern, message: '三位大写币种' }]}><Input allowClear maxLength={3} placeholder="USD" /></Form.Item>
-        <Button type="primary" htmlType="submit">预览</Button>
+        <Form.Item name="clientId" label="Client ID" rules={[{ required: true, whitespace: true, message: t('rateCards.clientIdRequired') },
+          { pattern: idPattern, message: t('list.clientIdPattern') }]}><ClientIdInput placeholder={t('rateCards.clientIdPlaceholder')} /></Form.Item>
+        <Form.Item name="asOf" label={t('rateCards.asOf')}><Input type="datetime-local" step={1} /></Form.Item>
+        <Form.Item name="currency" label={t('rateCards.currency')} normalize={(v: string) => v?.toUpperCase()}
+          rules={[{ pattern: currencyPattern, message: t('simulator.field.currencyPattern') }]}><Input allowClear maxLength={3} placeholder="USD" /></Form.Item>
+        <Button type="primary" htmlType="submit">{t('rateCards.preview')}</Button>
       </div>
     </Form>
     {query ? <RateCardResult key={rateCardPath(commercialPaths.rateCards, query)} query={query} />
-      : <CommercialNote>输入 Client ID 预览其 ACTIVE 合同在时点的费率卡：订阅产品、开通项（约束与保证金）、当前与已排期版本的价格。Client 可选本机最近使用或审核通过的 Client；按名称搜索待 client-master 提供运营查询接口。</CommercialNote>}
+      : <CommercialNote>{t('rateCards.hint')}</CommercialNote>}
   </div>;
 }
 
@@ -51,76 +52,83 @@ function RateCardResult({ query }: { query: RateCardQuery }) {
 }
 
 function RateCardView({ card }: { card: RateCard }) {
+  const t = useT('commercial');
   return <>
     <dl className="commercial-summary">
       <div><dt>Client</dt><dd className="mono">{card.clientId}</dd></div>
-      <div><dt>时点</dt><dd>{localTime(card.asOf)}</dd></div>
-      <div><dt>币种</dt><dd>{card.currency ?? '全部'}</dd></div>
-      <div><dt>生效合同</dt><dd>{card.agreements.length}</dd></div>
+      <div><dt>{t('rateCards.field.asOf')}</dt><dd>{localTime(card.asOf)}</dd></div>
+      <div><dt>{t('matrix.column.currency')}</dt><dd>{card.currency ?? t('catalog.filter.all')}</dd></div>
+      <div><dt>{t('enum.dashboardMetric.ACTIVE_AGREEMENTS')}</dt><dd>{card.agreements.length}</dd></div>
     </dl>
     {card.agreements.length === 0
-      ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="该 Client 在时点没有 ACTIVE 的 CLIENT 合同" />
+      ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('rateCards.empty')} />
       : card.agreements.map(agreement => <AgreementCard key={agreement.agreementId} agreement={agreement} />)}
-    <CommercialNote>价格块内画像按具体度（条件维度数）降序、优先级升序排列，与 commercial 命中顺序一致；不含分润与平台服务费。</CommercialNote>
+    <CommercialNote>{t('rateCards.note')}</CommercialNote>
   </>;
 }
 
 function AgreementCard({ agreement }: { agreement: AgreementRateCard }) {
+  const t = useT('commercial');
   const capabilities = new Map(agreement.capabilities.map(capability => [capability.agreementCapabilityId, capability]));
   return <section className="commercial-block">
     <div className="commercial-block-head"><h3>{agreement.agreementNo}</h3><Tag>{agreement.entityNo}</Tag>
       {agreement.businessMode && <Tag color="blue">{agreement.businessMode}</Tag>}
-      <span className="commercial-cell-meta">生效 {localTime(agreement.effectiveFrom)} – {agreement.effectiveTo ? localTime(agreement.effectiveTo) : '长期'}</span>
-      <span className="commercial-cell-meta">订阅 {agreement.products.join('、') || '—'}</span>
+      <span className="commercial-cell-meta">{t('rateCards.effectiveRange', { from: localTime(agreement.effectiveFrom),
+        to: agreement.effectiveTo ? localTime(agreement.effectiveTo) : t('rateCards.indefinite') })}</span>
+      <span className="commercial-cell-meta">{t('rateCards.subscribed', { products: joinList(agreement.products) || '—' })}</span>
     </div>
-    <h4 className="commercial-subtitle">开通项</h4>
+    <h4 className="commercial-subtitle">{t('rateCards.capabilities')}</h4>
     <Table<RateCardCapability> size="small" rowKey="agreementCapabilityId" pagination={false} dataSource={agreement.capabilities} scroll={{ x: 820 }}
-      locale={{ emptyText: '没有开通项' }} columns={[
-        { title: '开通项', render: (_, row) => <span className="mono">{capabilityLabel(row)}</span> },
+      locale={{ emptyText: t('rateCards.noCapabilities') }} columns={[
+        { title: t('rateCards.capability'), render: (_, row) => <span className="mono">{capabilityLabel(row)}</span> },
         { title: 'OE', width: 80, dataIndex: 'entityNo' },
-        { title: '状态', width: 90, render: (_, row) => <StatusTag status={row.status} labels={capabilityStatusLabels as Record<CapabilityStatus, string>} /> },
-        { title: '接受条件', render: (_, row) => <div className="commercial-limits">{row.conditions.length || row.require3ds
-          ? conditionTags(row).map(tag => <Tag key={tag} color={tag === require3dsTag ? 'blue' : undefined}>{tag}</Tag>)
+        { title: t('shared.column.status'), width: 90, render: (_, row) => <StatusTag status={row.status} kind="capabilityStatus" /> },
+        { title: t('productSections.column.conditions'), render: (_, row) => <div className="commercial-limits">{row.conditions.length || row.require3ds
+          ? conditionTags(row).map(tag => <Tag key={tag} color={tag === require3dsTag() ? 'blue' : undefined}>{tag}</Tag>)
           : row.limits.map(limit => <Tag key={`${limit.limitCode}-${limit.limitValue}`}>{limit.limitCode}={limit.limitValue}</Tag>)}</div> },
-        { title: '保证金', width: 140, render: (_, row) => reserveText(row) },
+        { title: t('rateCards.reserve'), width: 140, render: (_, row) => reserveText(row) },
       ]} />
     {agreement.termVersions.length === 0
-      ? <CommercialNote tone="warning">该合同在时点没有适用或已排期的条款版本。</CommercialNote>
+      ? <CommercialNote tone="warning">{t('rateCards.noVersions')}</CommercialNote>
       : agreement.termVersions.map(version => <VersionBlock key={version.versionId} version={version} capabilities={capabilities} />)}
   </section>;
 }
 
 function VersionBlock({ version, capabilities }: { version: TermVersionRateCard; capabilities: Map<string, RateCardCapability> }) {
+  const t = useT('commercial');
   return <div>
     <div className="commercial-section-head">
-      <h2>{termTypeLabels[version.termType] ?? version.termType} · v{version.versionNo}</h2>
-      <Tag color={version.timing === 'CURRENT' ? 'green' : 'blue'}>{version.timing === 'CURRENT' ? '当前' : '已排期'}</Tag>
-      <StatusTag status={version.status} labels={versionStatusLabels as Record<VersionStatus, string>} />
-      <span className="commercial-cell-meta">生效 {localTime(version.effectiveFrom)}{version.effectiveTo ? ` – ${localTime(version.effectiveTo)}` : ''}</span>
+      <h2>{enumLabel(t, 'enum.termType', version.termType)} · v{version.versionNo}</h2>
+      <Tag color={version.timing === 'CURRENT' ? 'green' : 'blue'}>{version.timing === 'CURRENT' ? t('agreement.detail.current') : enumLabel(t, 'enum.versionStatus', 'SCHEDULED')}</Tag>
+      <StatusTag status={version.status} kind="versionStatus" />
+      <span className="commercial-cell-meta">{version.effectiveTo
+        ? t('rateCards.effectiveRange', { from: localTime(version.effectiveFrom), to: localTime(version.effectiveTo) })
+        : t('rateCards.effectiveFrom', { from: localTime(version.effectiveFrom) })}</span>
       <span className="commercial-cell-meta">{versionBasisLabel(version.pricingModel, version.feeTaxTreatment)}</span>
     </div>
     {version.capabilities.map(capability => <div key={capability.agreementCapabilityId}>
       <h4 className="commercial-subtitle">{capabilities.get(capability.agreementCapabilityId)
         ? capabilityLabel(capabilities.get(capability.agreementCapabilityId)!) : capability.capabilityCode}</h4>
-      {capability.currencies.length === 0 ? <CommercialNote tone="warning">该开通项没有价格。</CommercialNote>
+      {capability.currencies.length === 0 ? <CommercialNote tone="warning">{t('rateCards.noPrices')}</CommercialNote>
         : capability.currencies.map(block => <CurrencyBlock key={block.currency} block={block} />)}
     </div>)}
   </div>;
 }
 
 function CurrencyBlock({ block }: { block: CurrencyPrices }) {
+  const t = useT('commercial');
   return <div className="commercial-currency">
     <strong>{block.currency}</strong>
     <Table<ProfilePrice> size="small" rowKey="priceId" pagination={false} dataSource={block.profiles} scroll={{ x: 900 }} columns={[
-      { title: '画像', render: (_, row) => <div className="commercial-cell"><span className="mono">{row.pricingProfileCode}</span>
-        <span className="commercial-cell-meta">{row.profileName ?? ''} · 具体度 {row.specificity} · 优先级 {row.priorityNo}</span></div> },
-      { title: '条件', render: (_, row) => row.conditions.length ? <div className="commercial-limits">{row.conditions.map(c =>
-        <Tag key={`${c.dimensionCode}-${c.conditionValue}`}>{c.dimensionCode}={c.conditionValue}</Tag>)}</div> : <span className="commercial-cell-meta">无条件（兜底）</span> },
-      { title: '计费事件与组件', render: (_, row) => <div className="commercial-cell">{row.feeEvents.map(event =>
-        <span key={event.feeEventCode}><span className="mono">{event.feeEventCode}</span>：{event.components.map(componentSummary).join(' + ')}</span>)}</div> },
-      { title: '结算', width: 200, render: (_, row) => row.settlement ? <div className="commercial-cell">
+      { title: t('matrix.column.profile'), render: (_, row) => <div className="commercial-cell"><span className="mono">{row.pricingProfileCode}</span>
+        <span className="commercial-cell-meta">{t('rateCards.profileMeta', { name: row.profileName ?? '', specificity: row.specificity, priority: row.priorityNo })}</span></div> },
+      { title: t('profiles.column.conditions'), render: (_, row) => row.conditions.length ? <div className="commercial-limits">{row.conditions.map(c =>
+        <Tag key={`${c.dimensionCode}-${c.conditionValue}`}>{c.dimensionCode}={c.conditionValue}</Tag>)}</div> : <span className="commercial-cell-meta">{t('rateCards.noConditions')}</span> },
+      { title: t('rateCards.feeEvents'), render: (_, row) => <div className="commercial-cell">{row.feeEvents.map(event =>
+        <span key={event.feeEventCode}><span className="mono">{event.feeEventCode}</span>{t('compare.fieldSeparator')}{event.components.map(componentSummary).join(' + ')}</span>)}</div> },
+      { title: t('matrix.column.settlement'), width: 200, render: (_, row) => row.settlement ? <div className="commercial-cell">
         <span>T+{row.settlement.settlementBusinessDays} · {row.settlement.businessCalendarCode}</span>
-        <span className="commercial-cell-meta">{row.settlement.settlementTimezone} 截止 {cutoffTime(row.settlement.cutoffSecondOfDay)}</span></div> : '—' },
+        <span className="commercial-cell-meta">{t('rateCards.cutoff', { timezone: row.settlement.settlementTimezone, cutoff: cutoffTime(row.settlement.cutoffSecondOfDay) })}</span></div> : '—' },
     ]} />
   </div>;
 }

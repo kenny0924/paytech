@@ -26,14 +26,14 @@ test('F6 产品分组：目录产品顺序，开通项落到归属产品；空�
   assert.deepEqual(sections[1].availableNames, ['本地出款', 'SWIFT 出款'], '只列启用的可开通项');
   assert.deepEqual(sections[0].availableNames, [], '有开通项的区块不列');
   assert.equal(sections[2].other, true);
-  assert.deepEqual([sectionTitle(sections[0]), sectionTitle(sections[2])], ['收单 ACQUIRING', '其他（归属产品无法从目录判定）']);
+  assert.deepEqual([sectionTitle(sections[0]), sectionTitle(sections[2])], ['收单 ACQUIRING', "Other (product can't be determined from the catalog)"]);
   assert.deepEqual(productSections(['ACQUIRING'], [capability('2', 'CARD')], products, catalog).map(section => section.key), ['ACQUIRING'], '没有其他时不出现');
 });
 
 test('F6 目录读取失败：订阅产品只显示代码，开通项全部进「其他」，不丢', () => {
   const sections = productSections(['ACQUIRING', 'PAYOUT'], [capability('1', 'CARD')], [], []);
   assert.deepEqual(sections.map(section => [section.key, sectionTitle(section), section.capabilities.length]),
-    [['ACQUIRING', 'ACQUIRING', 0], ['PAYOUT', 'PAYOUT', 0], ['OTHER', '其他（归属产品无法从目录判定）', 1]]);
+    [['ACQUIRING', 'ACQUIRING', 0], ['PAYOUT', 'PAYOUT', 0], ['OTHER', "Other (product can't be determined from the catalog)", 1]]);
   assert.deepEqual(productSections(['NEW_PRODUCT', 'ACQUIRING'], [], products, catalog).map(section => section.key), ['ACQUIRING', 'NEW_PRODUCT'],
     '目录里没有的订阅产品追加在后');
   assert.equal(productFootnote(['ACQUIRING'], []), null);
@@ -41,8 +41,8 @@ test('F6 目录读取失败：订阅产品只显示代码，开通项全部进�
 });
 
 test('F6 页底与 OE 列：未订阅（启用的非基础产品）与默认具备（基础产品）；OE 列只在 PARTNER 多 OE 时显示', () => {
-  assert.equal(productFootnote(['ACQUIRING'], products), '未订阅：出款、外汇；默认具备：税票、平台', '停用产品不列为可订阅');
-  assert.equal(productFootnote(['ACQUIRING', 'PAYOUT', 'FX'], products), '默认具备：税票、平台');
+  assert.equal(productFootnote(['ACQUIRING'], products), 'Not subscribed: 出款, 外汇; Included by default: 税票, 平台', '停用产品不列为可订阅');
+  assert.equal(productFootnote(['ACQUIRING', 'PAYOUT', 'FX'], products), 'Included by default: 税票, 平台');
   assert.equal(showEntityColumn({ agreementType: 'PARTNER', operatingEntityNos: ['AE001', 'SA001'] }), true);
   assert.equal(showEntityColumn({ agreementType: 'PARTNER', operatingEntityNos: ['AE001'] }), false);
   assert.equal(showEntityColumn({ agreementType: 'CLIENT', operatingEntityNos: [] }), false);

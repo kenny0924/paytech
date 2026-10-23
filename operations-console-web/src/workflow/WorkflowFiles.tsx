@@ -2,12 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Modal, Space, Spin, Tag } from 'antd';
 import { EyeOutlined, FileImageOutlined, FileOutlined, FilePdfOutlined, SafetyCertificateOutlined, StopOutlined } from '@ant-design/icons';
 import {
-  decodeDownloadGrant, downloadable, fileIdOfAddress, previewKind, preCheckFiles, rulesHint, safeTransferUrl, SCAN_FAILED_TEXT, scanFailed, scanPending, scanStatusColors, scanStatusLabels, sizeText, uploadOne,
+  decodeDownloadGrant, downloadable, fileIdOfAddress, previewKind, preCheckFiles, rulesHint, safeTransferUrl, scanFailed, scanFailedText, scanPending, scanStatusColors, scanStatusLabel, sizeText, uploadOne,
 } from './fileModel';
 import type { FileDisposition, FileRules, UploadItem, WorkflowPost } from './fileModel';
 import { failureText, sendWorkflowCommand, workflowCommand } from './useWorkflowCommand';
 import { workflowPaths } from './workflowApi';
 import type { WorkflowFile } from './workflowTypes';
+import { translator } from '../i18n/index';
+import { useT } from '../i18n/react';
+
+const tw = translator('workflow');
 
 /** 工作流写请求（每次独立幂等键）。 */
 const post: WorkflowPost = (path, body, decode) => sendWorkflowCommand(workflowCommand(path, 'POST', body), decode);
@@ -19,7 +23,7 @@ const post: WorkflowPost = (path, body, decode) => sendWorkflowCommand(workflowC
 export async function fetchDownloadUrl(instanceId: string, address: string, disposition?: FileDisposition)
   : Promise<{ url: string; disposition: FileDisposition }> {
   const fileId = fileIdOfAddress(address);
-  if (!fileId) throw new Error('文件地址无效');
+  if (!fileId) throw new Error(tw('files.invalidAddress'));
   const grant = await post(workflowPaths.download(instanceId, fileId, disposition), undefined, decodeDownloadGrant);
   return { url: safeTransferUrl(grant), disposition: grant.disposition };
 }
@@ -35,6 +39,7 @@ export function FileUploadField({ value, onChange, rules = {}, disabled, known, 
   /** 服务端已报告未通过安全检查的文件地址（刚上传的文件没有扫描元数据）。 */
   failed?: ReadonlySet<string>;
 }) {
+  const t = useT('workflow');
   const ids = Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
   const [items, setItems] = useState<UploadItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +79,7 @@ export function FileUploadField({ value, onChange, rules = {}, disabled, known, 
     {!disabled && <div className="wf-upload-zone" role="button" tabIndex={0} onClick={() => !busy && input.current?.click()}
       onKeyDown={event => { if (event.key === 'Enter') input.current?.click(); }}
       onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (!busy) void choose(event.dataTransfer.files); }}>
-      拖入文件或点击上传（{rulesHint(rules)}）
+      {t('files.dropHint', { rules: rulesHint(rules) })}
       <input ref={input} type="file" multiple hidden accept={rules.mimeTypes?.join(',')} onChange={event => void choose(event.target.files)} />
     </div>}
     {error && <Alert type="error" showIcon title={error} />}
@@ -84,15 +89,15 @@ export function FileUploadField({ value, onChange, rules = {}, disabled, known, 
         const rejected = failed?.has(id) || scanFailed(file);
         return <li key={id} className={rejected ? 'is-scan-failed' : undefined}><span>{file?.displayName ?? mine?.name ?? <code>{id}</code>}
           <span className="muted"> · {sizeText(file?.sizeBytes ?? mine?.size)}</span></span>
-          <Space size={4}>{rejected ? <span className="wf-danger-text">{SCAN_FAILED_TEXT}</span>
-            : file?.scanStatus ? <Tag color={scanStatusColors[file.scanStatus]}>{scanStatusLabels[file.scanStatus]}</Tag>
-            : <span className="muted">已上传，安全检查在后台进行</span>}
-            {!disabled && <Button size="small" type="link" danger onClick={() => remove(id)}>移除</Button>}</Space></li>;
+          <Space size={4}>{rejected ? <span className="wf-danger-text">{scanFailedText()}</span>
+            : file?.scanStatus ? <Tag color={scanStatusColors[file.scanStatus]}>{scanStatusLabel(file.scanStatus)}</Tag>
+            : <span className="muted">{t('files.uploadedScanning')}</span>}
+            {!disabled && <Button size="small" type="link" danger onClick={() => remove(id)}>{t('files.remove')}</Button>}</Space></li>;
       })}
       {items.filter(item => item.phase !== 'DONE').map(item => <li key={item.localId}><span>{item.name}<span className="muted"> · {sizeText(item.size)}</span></span>
         {item.phase === 'FAILED' ? <Space size={4}><span className="wf-danger-text">{item.error}</span>
-          <Button size="small" type="link" onClick={() => setItems(current => current.filter(other => other.localId !== item.localId))}>关闭</Button></Space>
-          : <Space size={4}><Spin size="small" />{item.phase === 'COMPLETING' ? '登记中' : '上传中'}</Space>}</li>)}
+          <Button size="small" type="link" onClick={() => setItems(current => current.filter(other => other.localId !== item.localId))}>{t('files.close')}</Button></Space>
+          : <Space size={4}><Spin size="small" />{item.phase === 'COMPLETING' ? t('files.registering') : t('files.uploading')}</Space>}</li>)}
     </ul>
   </div>;
 }
@@ -101,8 +106,9 @@ export function FileUploadField({ value, onChange, rules = {}, disabled, known, 
 export function AttachmentList({ instanceId, addresses, known, onPreview, selected }: {
   instanceId: string; addresses: string[]; known: Map<string, WorkflowFile>; onPreview?: (file: WorkflowFile) => void; selected?: string;
 }) {
+  const t = useT('workflow');
   const [error, setError] = useState<string | null>(null);
-  if (!addresses.length) return <span className="muted">没有文件</span>;
+  if (!addresses.length) return <span className="muted">{t('files.none')}</span>;
   async function download(address: string) {
     setError(null);
     try { window.open((await fetchDownloadUrl(instanceId, address, 'ATTACHMENT')).url, '_blank', 'noopener'); } catch (failure) { setError(errorText(failure)); }
@@ -111,10 +117,10 @@ export function AttachmentList({ instanceId, addresses, known, onPreview, select
     const file = known.get(id);
     return <li key={id} className={selected === id ? 'is-selected' : undefined}>
       <span>{file?.displayName ?? <code>{id}</code>}<span className="muted"> · {sizeText(file?.sizeBytes)}{file?.mimeType ? ` · ${file.mimeType}` : ''}</span></span>
-      <Space size={4}>{file?.scanStatus ? <Tag color={scanStatusColors[file.scanStatus]}>{scanStatusLabels[file.scanStatus]}</Tag> : <Tag>未知</Tag>}
-        {onPreview && file && downloadable(file) && <Button size="small" type="link" onClick={() => onPreview(file)}>查看</Button>}
-        <Button size="small" type="link" disabled={!downloadable(file)} title={downloadable(file) ? undefined : '扫描通过后才能下载'}
-          onClick={() => void download(id)}>下载</Button></Space></li>;
+      <Space size={4}>{file?.scanStatus ? <Tag color={scanStatusColors[file.scanStatus]}>{scanStatusLabel(file.scanStatus)}</Tag> : <Tag>{t('files.unknown')}</Tag>}
+        {onPreview && file && downloadable(file) && <Button size="small" type="link" onClick={() => onPreview(file)}>{t('files.view')}</Button>}
+        <Button size="small" type="link" disabled={!downloadable(file)} title={downloadable(file) ? undefined : t('files.downloadAfterScan')}
+          onClick={() => void download(id)}>{t('files.download')}</Button></Space></li>;
   })}</ul>{error && <Alert type="error" showIcon title={error} />}</div>;
 }
 
@@ -128,8 +134,9 @@ const fileIcon = (mime: string | null | undefined) => {
  * 未通过的显示「未通过安全检查 · 不可下载」且不提供预览与下载，检查中的只提示稍后再看。
  */
 export function FileCards({ instanceId, addresses, known }: { instanceId: string; addresses: string[]; known: Map<string, WorkflowFile> }) {
+  const t = useT('workflow');
   const [previewing, setPreviewing] = useState<WorkflowFile | null>(null);
-  if (!addresses.length) return <span className="muted">没有文件</span>;
+  if (!addresses.length) return <span className="muted">{t('files.none')}</span>;
   return <>
     <div className="wf-file-cards">{addresses.map(id => {
       const file = known.get(id);
@@ -138,11 +145,11 @@ export function FileCards({ instanceId, addresses, known }: { instanceId: string
         <span className={`wf-file-card-icon is-${previewKind(file?.mimeType)}`} aria-hidden>{fileIcon(file?.mimeType)}</span>
         <div className="wf-file-card-body">
           <strong className="wf-ellipsis" title={file?.displayName ?? id}>{file?.displayName ?? <code>{id}</code>}</strong>
-          <span className="muted">{sizeText(file?.sizeBytes)}{downloadable(file) && <> · <SafetyCertificateOutlined className="wf-scan-ok" /> {scanStatusLabels.AVAILABLE}</>}</span>
+          <span className="muted">{sizeText(file?.sizeBytes)}{downloadable(file) && <> · <SafetyCertificateOutlined className="wf-scan-ok" /> {scanStatusLabel('AVAILABLE')}</>}</span>
         </div>
-        {failed ? <span className="wf-danger-text wf-file-card-state"><StopOutlined /> 未通过安全检查 · 不可下载</span>
-          : downloadable(file) ? <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => setPreviewing(file!)}>预览</Button>
-          : <span className="muted wf-file-card-state"><SafetyCertificateOutlined /> {scanPending(file) ? '安全检查中' : '暂不可查看'}</span>}
+        {failed ? <span className="wf-danger-text wf-file-card-state"><StopOutlined /> {t('files.scanFailedNoDownload')}</span>
+          : downloadable(file) ? <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => setPreviewing(file!)}>{t('files.preview')}</Button>
+          : <span className="muted wf-file-card-state"><SafetyCertificateOutlined /> {scanPending(file) ? t('files.scanning') : t('files.unavailable')}</span>}
       </div>;
     })}</div>
     {previewing && <Modal open width={880} title={previewing.displayName ?? previewing.fileId} footer={null} destroyOnHidden onCancel={() => setPreviewing(null)}>
@@ -156,6 +163,7 @@ export function FileCards({ instanceId, addresses, known }: { instanceId: string
  * 临时地址不保存、不改写；iframe 不加 sandbox（浏览器 PDF 查看器在 sandbox 中无法加载），只禁止 Referrer。
  */
 export function FilePreview({ instanceId, file }: { instanceId: string; file: WorkflowFile | undefined }) {
+  const t = useT('workflow');
   const requested = previewKind(file?.mimeType);
   const [state, setState] = useState<{ fileId: string; url?: string; degraded?: boolean; error?: string }>();
   const [opening, setOpening] = useState(false);
@@ -169,7 +177,7 @@ export function FilePreview({ instanceId, file }: { instanceId: string; file: Wo
     }).catch(failure => { if (active) setState({ fileId: file.fileId, error: errorText(failure) }); });
     return () => { active = false; };
   }, [instanceId, file?.fileId, requested]);
-  if (!file) return <span className="muted">选择左侧文件查看</span>;
+  if (!file) return <span className="muted">{t('files.selectToView')}</span>;
   // 切换文件后、新地址返回前，上一文件的状态不再使用。
   const current = state?.fileId === file.fileId ? state : undefined;
   const kind = current?.degraded ? 'other' : requested;
@@ -181,14 +189,14 @@ export function FilePreview({ instanceId, file }: { instanceId: string; file: Wo
     finally { setOpening(false); }
   }
   const info = <dl className="wf-output wf-file-info">
-    <div><dt>文件名</dt><dd>{file.displayName ?? file.fileId}</dd></div>
-    <div><dt>类型</dt><dd>{file.mimeType ?? '—'}</dd></div>
-    <div><dt>大小</dt><dd>{sizeText(file.sizeBytes)}</dd></div>
+    <div><dt>{t('files.info.name')}</dt><dd>{file.displayName ?? file.fileId}</dd></div>
+    <div><dt>{t('files.info.type')}</dt><dd>{file.mimeType ?? '—'}</dd></div>
+    <div><dt>{t('files.info.size')}</dt><dd>{sizeText(file.sizeBytes)}</dd></div>
   </dl>;
   if (kind === 'other') return <div className="wf-file-preview">{info}
     {current?.error && <Alert type="error" showIcon title={current.error} />}
-    <Button type="primary" loading={opening} disabled={!downloadable(file)} onClick={() => void open()}>下载查看</Button>
-    <div className="muted">该文件不支持内嵌预览；每次点击重新取 60 秒有效地址。</div></div>;
+    <Button type="primary" loading={opening} disabled={!downloadable(file)} onClick={() => void open()}>{t('files.downloadToView')}</Button>
+    <div className="muted">{t('files.noInlinePreview')}</div></div>;
   if (current?.error) return <Alert type="error" showIcon title={current.error} />;
   if (!current?.url) return <Spin />;
   return <div className="wf-file-preview">

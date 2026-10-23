@@ -1,5 +1,8 @@
 import { ApiError } from '../api/session.ts';
 import type { PagingResponseBody } from '../api/types.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('card');
 
 // ---------- 路径、路由与按钮（块 132） ----------
 
@@ -24,9 +27,7 @@ export const binLibraryManageButton = 'OPERATIONS_CARD_BIN_LIBRARY_MANAGE';
 
 export const versionStatuses = ['VALIDATING', 'VALID', 'INVALID', 'ACTIVE', 'RETIRED'] as const;
 export type VersionStatus = typeof versionStatuses[number];
-export const versionStatusLabels: Readonly<Record<VersionStatus, string>> = {
-  VALIDATING: '校验中', VALID: '可激活', INVALID: '校验失败', ACTIVE: '生效中', RETIRED: '已停用',
-};
+/** Status labels are `card.enum.versionStatus.<status>`; activation types `card.enum.activationType.<type>`. */
 export const versionStatusColors: Readonly<Record<VersionStatus, string>> = {
   VALIDATING: 'processing', VALID: 'blue', INVALID: 'red', ACTIVE: 'green', RETIRED: 'default',
 };
@@ -39,7 +40,6 @@ export interface BinLibraryVersion {
 
 export interface BinImportError { lineNo: number; columnName: string | null; errorCode: string; errorMessage: string; valueExcerpt: string | null }
 
-export const activationTypeLabels: Readonly<Record<string, string>> = { ACTIVATE: '激活', ROLLBACK: '回切' };
 export interface BinLibraryActivation {
   activationType: 'ACTIVATE' | 'ROLLBACK'; versionNo: number; previousVersionNo: number | null; operatorAccountId: string | null; activatedAt: string;
 }
@@ -137,16 +137,16 @@ export type VersionAction = { kind: 'ACTIVATE' | 'ROLLBACK'; verb: string };
 
 /** VALID 可激活、RETIRED 可回切；其余状态没有动作。 */
 export function versionAction(version: Pick<BinLibraryVersion, 'status'>): VersionAction | null {
-  if (version.status === 'VALID') return { kind: 'ACTIVATE', verb: '激活' };
-  if (version.status === 'RETIRED') return { kind: 'ROLLBACK', verb: '回切' };
+  if (version.status === 'VALID') return { kind: 'ACTIVATE', verb: t('enum.activationType.ACTIVATE') };
+  if (version.status === 'RETIRED') return { kind: 'ROLLBACK', verb: t('enum.activationType.ROLLBACK') };
   return null;
 }
 
 /** 校验中的进度：总行数未知时不定进度（等待扫描 / 校验中）；已知时为写入百分比（向下取整，至多 100）。 */
 export function versionProgress(version: Pick<BinLibraryVersion, 'totalRows' | 'processedRows'>): { percent: number | null; label: string } {
-  if (version.totalRows === null || version.totalRows <= 0) return { percent: null, label: '等待扫描 / 校验中' };
+  if (version.totalRows === null || version.totalRows <= 0) return { percent: null, label: t('progress.waiting') };
   const percent = Math.min(100, Math.floor(version.processedRows * 100 / version.totalRows));
-  return { percent, label: `已写入 ${formatCount(version.processedRows)} / ${formatCount(version.totalRows)} 行` };
+  return { percent, label: t('progress.written', { processed: formatCount(version.processedRows), total: formatCount(version.totalRows) }) };
 }
 
 /** 号段数差异：+3,422 / -3,365 / ±0；任一未知时为空串。 */
@@ -159,7 +159,7 @@ export function rowDelta(current: number | null, target: number | null): string 
 export const formatCount = (value: number | null | undefined) => value === null || value === undefined ? '—' : value.toLocaleString('en-US');
 
 /** 409：页面看到的生效版本已被他人切换。 */
-export const activationConflictMessage = '生效版本已被他人修改，请刷新后重试';
+export const activationConflictMessage = () => t('activation.conflict');
 
 // ---------- BIN 输入 ----------
 
@@ -167,9 +167,9 @@ export const activationConflictMessage = '生效版本已被他人修改，请�
 export function binInputIssue(input: string): string | null {
   const value = input.trim();
   if (!value) return null;
-  if (!/^[0-9]*$/.test(value)) return '只能输入数字';
-  if (value.length > 8) return '最多 8 位；只按 BIN 查询，不接受完整卡号';
-  if (value.length < 6) return '至少 6 位';
+  if (!/^[0-9]*$/.test(value)) return t('binInput.digitsOnly');
+  if (value.length > 8) return t('binInput.tooLong');
+  if (value.length < 6) return t('binInput.tooShort');
   return null;
 }
 
@@ -186,9 +186,9 @@ export const csvTemplate = `${csvHeader}\n41111111,VISA,CREDIT,CLASSIC,CONSUMER,
 
 /** 文件选择检查：.csv 扩展名、非空、不超过 50 MiB。 */
 export function csvFileIssue(file: { name: string; size: number }): string | null {
-  if (!/\.csv$/i.test(file.name)) return '只接受 .csv 文件';
-  if (file.size <= 0) return '文件为空';
-  if (file.size > maxCsvBytes) return '文件超过 50 MB 上限';
+  if (!/\.csv$/i.test(file.name)) return t('csv.onlyCsv');
+  if (file.size <= 0) return t('csv.empty');
+  if (file.size > maxCsvBytes) return t('csv.tooLarge');
   return null;
 }
 
@@ -218,13 +218,13 @@ export interface CsvPreview { headerValid: boolean; issue: string | null; rows: 
  */
 export function previewCsv(head: string, complete: boolean, rows = 3): CsvPreview {
   const text = head.startsWith('﻿') ? head.slice(1) : head;
-  if (text.includes('\0')) return { headerValid: false, issue: '文件含 NUL 字符，不是文本 CSV', rows: [] };
+  if (text.includes('\0')) return { headerValid: false, issue: t('csv.nul'), rows: [] };
   const lines = text.split(/\r?\n/);
   if (!complete) lines.pop();
-  if (lines[0] !== csvHeader) return { headerValid: false, issue: `第 1 行必须逐字为 ${csvHeader}`, rows: [] };
+  if (lines[0] !== csvHeader) return { headerValid: false, issue: t('csv.headerMismatch', { header: csvHeader }), rows: [] };
   const data = lines.slice(1).filter(line => line !== '').slice(0, rows);
   const parsed = data.map(splitCsvLine);
   const broken = parsed.findIndex(cells => cells === null || cells.length !== csvColumns.length);
-  return { headerValid: true, issue: broken >= 0 ? `第 ${broken + 2} 行列数不是 ${csvColumns.length} 列` : null,
+  return { headerValid: true, issue: broken >= 0 ? t('csv.columnCount', { line: broken + 2, columns: csvColumns.length }) : null,
     rows: parsed.filter((cells): cells is string[] => cells !== null) };
 }

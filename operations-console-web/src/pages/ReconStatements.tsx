@@ -5,10 +5,11 @@ import type { ConsoleResource } from '../api/types';
 import { localTime } from '../finance/finance';
 import { FinanceNote, LoadFailure } from '../finance/FinanceParts';
 import { ActorText } from '../finance/WorkflowParts';
+import { useT } from '../i18n/react';
 import { ChannelStatementDetail } from '../reconciliation/detail/ChannelStatementDetail';
 import { ImportDrawer } from '../reconciliation/ImportDrawer';
 import { useOpenDetail } from '../reconciliation/ReconDetail';
-import { decodeWithId, directionLabels, hasReconAction, pageOf, reconActions, reconPaths, statementStatusLabels } from '../reconciliation/reconModel';
+import { decodeWithId, directionEnum, hasReconAction, pageOf, reconActions, reconLabel, reconOptions, reconPaths, statementStatusEnum } from '../reconciliation/reconModel';
 import type { ChannelStatement } from '../reconciliation/reconModel';
 import { EmptyHint, Money, ReconTag } from '../reconciliation/ReconParts';
 import { compactFilters, isReconId, reconRoutes } from '../reconciliation/reconRoutes';
@@ -21,7 +22,6 @@ import '../reconciliation/recon.css';
 interface Props { resources: ConsoleResource[]; actorId: string; onAuthorizationChanged: () => void }
 
 const decodePage = pageOf(decodeWithId<ChannelStatement>('statementId'));
-const options = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
 const filterKeys = ['clearingAccountId', 'channelBatchRef', 'status', 'settlementDateFrom', 'settlementDateTo'] as const;
 
 /**
@@ -38,44 +38,45 @@ export function ReconStatements(props: Props) {
 }
 
 function StatementList({ resources, actorId, onAuthorizationChanged }: Props) {
+  const t = useT('recon'), tNav = useT('nav');
   const openDetail = useOpenDetail();
   const canOperate = hasReconAction(resources, reconActions.operate);
   const [uploading, setUploading] = useState(false);
   const clearing = useClearingAccounts(onAuthorizationChanged);
   const page = useReconListQuery<ChannelStatement>(reconPaths.channelStatements, decodePage, filterKeys);
   const [form] = Form.useForm<Record<string, string | undefined>>();
-  return <div className="configuration-page finance-page"><div className="page-heading"><h1>渠道账单</h1></div>
+  return <div className="configuration-page finance-page"><div className="page-heading"><h1>{tNav('resource.OPERATIONS_FINANCE_RECON_STATEMENTS')}</h1></div>
     <Form form={form} name="recon-statement-filters" layout="vertical" initialValues={page.filters} onFinish={values => page.applyFilters(compactFilters(values))}>
       <div className="finance-search">
-        <Form.Item name="clearingAccountId" label="清算账户"><Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder="全部" loading={clearing.loading}
+        <Form.Item name="clearingAccountId" label={t('field.clearingAccount')}><Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder={t('placeholder.all')} loading={clearing.loading}
           options={clearing.items.map(item => ({ value: item.clearingAccountId, label: item.clearingAccountCode }))} /></Form.Item>
-        <Form.Item name="channelBatchRef" label="批次号"><Input allowClear maxLength={128} /></Form.Item>
-        <Form.Item name="status" label="状态"><Select allowClear placeholder="全部" options={options(statementStatusLabels)} /></Form.Item>
-        <Form.Item name="settlementDateFrom" label="结算日起" rules={[{ pattern: /^\d{4}-\d{2}-\d{2}$/, message: 'YYYY-MM-DD' }]}><Input allowClear placeholder="YYYY-MM-DD" /></Form.Item>
-        <Form.Item name="settlementDateTo" label="结算日止" rules={[{ pattern: /^\d{4}-\d{2}-\d{2}$/, message: 'YYYY-MM-DD' }]}><Input allowClear placeholder="YYYY-MM-DD" /></Form.Item>
-        <div className="configuration-actions"><Button htmlType="submit">查询</Button>
-          <Button onClick={() => { resetForm(form); page.applyFilters({}); }}>重置</Button>
-          {canOperate && <Button type="primary" onClick={() => setUploading(true)}>上传渠道账单</Button>}</div>
+        <Form.Item name="channelBatchRef" label={t('field.batchRef')}><Input allowClear maxLength={128} /></Form.Item>
+        <Form.Item name="status" label={t('field.status')}><Select allowClear placeholder={t('placeholder.all')} options={reconOptions(t, statementStatusEnum)} /></Form.Item>
+        <Form.Item name="settlementDateFrom" label={t('statements.settlementDateFrom')} rules={[{ pattern: /^\d{4}-\d{2}-\d{2}$/, message: 'YYYY-MM-DD' }]}><Input allowClear placeholder="YYYY-MM-DD" /></Form.Item>
+        <Form.Item name="settlementDateTo" label={t('statements.settlementDateTo')} rules={[{ pattern: /^\d{4}-\d{2}-\d{2}$/, message: 'YYYY-MM-DD' }]}><Input allowClear placeholder="YYYY-MM-DD" /></Form.Item>
+        <div className="configuration-actions"><Button htmlType="submit">{t('common.search')}</Button>
+          <Button onClick={() => { resetForm(form); page.applyFilters({}); }}>{t('common.reset')}</Button>
+          {canOperate && <Button type="primary" onClick={() => setUploading(true)}>{t('import.channelTitle')}</Button>}</div>
       </div>
     </Form>
     {page.error ? <LoadFailure message={page.error} onRetry={page.refresh} /> : <section className="table-panel">
       <Table<ChannelStatement> rowKey="statementId" tableLayout="fixed" dataSource={page.data.items} loading={page.loading} scroll={{ x: 1180 }}
-        pagination={{ ...page.pagination, showTotal: total => `共 ${total} 条` }}
+        pagination={{ ...page.pagination, showTotal: total => t('common.total', { total }) }}
         onRow={row => ({ onClick: () => openDetail(reconRoutes.statement(row.statementId)), className: 'clickable-row' })}
-        locale={{ emptyText: <EmptyHint text={canOperate ? '还没有渠道账单。按标准 CSV 上传后，系统逐行匹配平台流水。' : '没有符合条件的渠道账单'} /> }}
+        locale={{ emptyText: <EmptyHint text={canOperate ? t('statements.empty') : t('statements.emptyFiltered')} /> }}
         columns={[
-          { title: '批次号', width: 200, render: (_, row) => <a className="mono">{row.channelBatchRef}{row.revision > 1 ? ` · v${row.revision}` : ''}</a> },
-          { title: '清算账户', width: 160, dataIndex: 'clearingAccountCode' },
-          { title: '结算日', width: 110, dataIndex: 'settlementDate' },
-          { title: '净额', width: 140, align: 'right', render: (_, row) => <><Money value={row.netAmount} /> {row.currency}</> },
-          { title: '方向', width: 90, render: (_, row) => directionLabels[row.cashDirection] ?? row.cashDirection },
-          { title: '行数', width: 110, align: 'right', render: (_, row) => `${row.importedLineCount} / ${row.declaredLineCount}` },
-          { title: '状态', width: 100, render: (_, row) => <ReconTag status={row.status} labels={statementStatusLabels} /> },
-          { title: '上传人', width: 160, render: (_, row) => <ActorText value={row.makerId} actorId={actorId} /> },
-          { title: '上传时间', width: 150, render: (_, row) => localTime(row.createTime) },
+          { title: t('field.batchRef'), width: 200, render: (_, row) => <a className="mono">{row.channelBatchRef}{row.revision > 1 ? ` · v${row.revision}` : ''}</a> },
+          { title: t('field.clearingAccount'), width: 160, dataIndex: 'clearingAccountCode' },
+          { title: t('field.settlementDate'), width: 110, dataIndex: 'settlementDate' },
+          { title: t('field.netAmount'), width: 140, align: 'right', render: (_, row) => <><Money value={row.netAmount} /> {row.currency}</> },
+          { title: t('field.direction'), width: 90, render: (_, row) => reconLabel(t, directionEnum, row.cashDirection) },
+          { title: t('statements.lineCount'), width: 110, align: 'right', render: (_, row) => `${row.importedLineCount} / ${row.declaredLineCount}` },
+          { title: t('field.status'), width: 100, render: (_, row) => <ReconTag status={row.status} kind={statementStatusEnum} /> },
+          { title: t('field.uploadedBy'), width: 160, render: (_, row) => <ActorText value={row.makerId} actorId={actorId} /> },
+          { title: t('field.uploadedAt'), width: 150, render: (_, row) => localTime(row.createTime) },
         ]} />
     </section>}
-    <FinanceNote>同一清算账户 + 批次号只允许一个未作废版本：要更正，先作废匹配中的版本再重新上传；已对平的账单不能更正或作废。{!canOperate && ' 当前账号没有对账操作权限。'}</FinanceNote>
+    <FinanceNote>{t('statementDetail.note')}{!canOperate && ' ' + t('permission.noOperate')}</FinanceNote>
     {uploading && <ImportDrawer kind="channel" onClose={() => setUploading(false)} onImported={page.refresh} onAuthorizationChanged={onAuthorizationChanged} />}
   </div>;
 }

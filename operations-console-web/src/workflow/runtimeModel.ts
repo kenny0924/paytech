@@ -3,6 +3,9 @@ import type {
   Task, WorkflowGraph,
 } from './workflowTypes.ts';
 import { gatewayExits, nodeOf, outgoing, topologicalOrder } from './graphModel.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('workflow');
 
 // ---------- 动作状态 ----------
 export type ActionState = 'PENDING' | 'COMPLETED' | 'CANCELLED';
@@ -84,7 +87,7 @@ export function currentHandlers(detail: InstanceDetail, actorId?: string): Handl
       ? [...new Set(actions.filter(isPendingAction).map(item => item.assigneeId))]
       : detail.approvals.filter(item => item.nodeRunId === run.nodeRunId && item.status === 'PENDING').map(item => item.approverId);
     return [{ nodeKey: node.key, nodeName: node.name || node.key, stage: run.status === 'ACTIVE' ? 'ACTION' : 'APPROVAL',
-      people: people.map(id => id === actorId ? '你' : detail.people[id] ?? id), waitingSince: run.activatedTime }];
+      people: people.map(id => id === actorId ? t('people.you') : detail.people[id] ?? id), waitingSince: run.activatedTime }];
   });
 }
 
@@ -181,18 +184,18 @@ export interface DecisionOptions { options: DecisionOption[]; blocked: string | 
  */
 export function decisionOptions(input: { approval: Approval; nodeRun: NodeRun; hasActions: boolean; submittedByMe: boolean; instanceRunning: boolean }): DecisionOptions {
   const { approval, nodeRun, hasActions, submittedByMe, instanceRunning } = input;
-  const blocked = !instanceRunning ? '实例已结束，只读'
-    : approval.status !== 'PENDING' ? '这条审批已处理'
-    : nodeRun.status !== 'APPROVING' ? '节点不在待审批状态'
-    : submittedByMe ? '你提交过本节点的动作，不能审批本节点'
+  const blocked = !instanceRunning ? t('decision.blocked.instanceEnded')
+    : approval.status !== 'PENDING' ? t('decision.blocked.handled')
+    : nodeRun.status !== 'APPROVING' ? t('decision.blocked.notApproving')
+    : submittedByMe ? t('decision.blocked.submittedByMe')
     : null;
-  const rejectReason = nodeRun.rejectKind === 'FIRST_TASK' ? '本节点是流程第一个任务节点，没有可驳回的上一节点；发起人可终止实例'
-    : nodeRun.rejectKind === 'BRANCH_FIRST_NODE' ? '本节点是并行分支的第一个节点，驳回会牵连其他分支'
-    : nodeRun.rejectKind === 'CHOOSE_BRANCH' && !(nodeRun.rejectTargets?.length) ? '没有可退回的分支'
+  const rejectReason = nodeRun.rejectKind === 'FIRST_TASK' ? t('decision.reject.firstTask')
+    : nodeRun.rejectKind === 'BRANCH_FIRST_NODE' ? t('decision.reject.branchFirstNode')
+    : nodeRun.rejectKind === 'CHOOSE_BRANCH' && !(nodeRun.rejectTargets?.length) ? t('decision.reject.noBranch')
     : '';
   const options: DecisionOption[] = [
     { decision: 'APPROVE', enabled: !blocked, reason: blocked ?? '', needsComment: false },
-    { decision: 'RETURN', enabled: !blocked && hasActions, reason: blocked ?? (hasActions ? '' : '本节点没有动作，纯审批节点不能退回修改'), needsComment: true },
+    { decision: 'RETURN', enabled: !blocked && hasActions, reason: blocked ?? (hasActions ? '' : t('decision.return.noActions')), needsComment: true },
     { decision: 'REJECT', enabled: !blocked && !rejectReason, reason: blocked ?? rejectReason, needsComment: true },
   ];
   return { options, blocked, rejectTargets: nodeRun.rejectKind === 'CHOOSE_BRANCH' ? nodeRun.rejectTargets ?? [] : [] };
@@ -201,23 +204,23 @@ export function decisionOptions(input: { approval: Approval; nodeRun: NodeRun; h
 /** 决定提交前的检查：退回修改与驳回必填意见；汇合后驳回必须选目标分支。 */
 export function decisionError(options: DecisionOptions, decision: ApprovalDecision, comment: string, target?: string): string | null {
   const option = options.options.find(item => item.decision === decision);
-  if (!option?.enabled) return option?.reason || '当前不可选';
-  if (option.needsComment && !comment.trim()) return '退回修改和驳回必须填写意见';
-  if (comment.length > 512) return '意见不能超过 512 个字符';
-  if (decision === 'REJECT' && options.rejectTargets.length && !target) return '请选择驳回到哪一条分支';
+  if (!option?.enabled) return option?.reason || t('decision.error.unavailable');
+  if (option.needsComment && !comment.trim()) return t('decision.error.commentRequired');
+  if (comment.length > 512) return t('decision.error.commentTooLong', { max: 512 });
+  if (decision === 'REJECT' && options.rejectTargets.length && !target) return t('decision.error.targetRequired');
   return null;
 }
 
 // ---------- 批量同意 ----------
 /** 只有没有动作的审批可批量同意（technique 第 8 节）；已决、本人提交过的不行。 */
 export function batchEligibility(task: Task, detail: InstanceDetail | undefined, actorId: string): { eligible: boolean; reason: string } {
-  if (task.taskType !== 'APPROVAL') return { eligible: false, reason: '不是审批' };
-  if (!detail) return { eligible: false, reason: '加载中' };
+  if (task.taskType !== 'APPROVAL') return { eligible: false, reason: t('batch.notApproval') };
+  if (!detail) return { eligible: false, reason: t('batch.loading') };
   const node = nodeOf(detail.graph, task.nodeKey);
-  if ((node?.actions?.length ?? 0) > 0) return { eligible: false, reason: `含 ${node!.actions!.length} 个动作，需逐条查看` };
+  if ((node?.actions?.length ?? 0) > 0) return { eligible: false, reason: t('batch.hasActions', { count: node!.actions!.length }) };
   const approval = detail.approvals.find(item => item.approvalId === task.taskId);
-  if (!approval || approval.status !== 'PENDING') return { eligible: false, reason: '已被处理' };
-  if (approval.approverId !== actorId) return { eligible: false, reason: '不是你的审批' };
+  if (!approval || approval.status !== 'PENDING') return { eligible: false, reason: t('batch.handled') };
+  if (approval.approverId !== actorId) return { eligible: false, reason: t('batch.notMine') };
   return { eligible: true, reason: '' };
 }
 
@@ -227,8 +230,8 @@ export interface BatchStatus { state: BatchState; reason: string }
 
 /** 单项资格：详情加载失败标为无法检查；没有详情为检查中；有详情按原规则判断。 */
 export function batchStatus(task: Task, detail: InstanceDetail | undefined, actorId: string, failed: boolean): BatchStatus {
-  if (task.taskType !== 'APPROVAL') return { state: 'INELIGIBLE', reason: '不是审批' };
-  if (!detail) return failed ? { state: 'UNCHECKABLE', reason: '无法检查，请单独处理' } : { state: 'CHECKING', reason: '检查中' };
+  if (task.taskType !== 'APPROVAL') return { state: 'INELIGIBLE', reason: t('batch.notApproval') };
+  if (!detail) return failed ? { state: 'UNCHECKABLE', reason: t('batch.uncheckable') } : { state: 'CHECKING', reason: t('batch.checking') };
   const result = batchEligibility(task, detail, actorId);
   return result.eligible ? { state: 'ELIGIBLE', reason: '' } : { state: 'INELIGIBLE', reason: result.reason };
 }
@@ -262,7 +265,7 @@ export async function runBatch(taskIds: string[], decide: (taskId: string) => Pr
   const results: BatchResult[] = [];
   for (const taskId of taskIds) {
     let result: BatchResult;
-    try { await decide(taskId); result = { taskId, ok: true, message: '已同意' }; }
+    try { await decide(taskId); result = { taskId, ok: true, message: t('batch.approved') }; }
     catch (error) { result = { taskId, ok: false, message: describe(error) }; }
     results.push(result); onResult?.(result);
   }
@@ -309,9 +312,9 @@ export function resolveShortcut(input: { key: string; ctrlKey: boolean; metaKey:
 export function waitingText(since: string, now = Date.now()): string {
   const minutes = Math.max(0, Math.floor((now - new Date(since).getTime()) / 60000));
   if (!Number.isFinite(minutes)) return '—';
-  if (minutes >= 1440) return `${Math.floor(minutes / 1440)} 天`;
-  if (minutes >= 60) return `${Math.floor(minutes / 60)} 小时`;
-  return `${minutes} 分钟`;
+  if (minutes >= 1440) return t('duration.days', { count: Math.floor(minutes / 1440) });
+  if (minutes >= 60) return t('duration.hours', { count: Math.floor(minutes / 60) });
+  return t('duration.minutes', { count: minutes });
 }
 export const overOneDay = (since: string, now = Date.now()) => now - new Date(since).getTime() > 86400000;
 
@@ -363,7 +366,7 @@ export function previewPath(graph: WorkflowGraph, startValues: Record<string, un
       if (!decidable) { steps.push({ kind: 'undecided', node }); break; }
       const chosen = exits.find(exit => !exit.isDefault && exit.clauses.length && exit.clauses.every(clause => evaluateClause(clause, variables[clause.variable])))
         ?? exits.find(exit => exit.isDefault);
-      reason = chosen && !chosen.isDefault ? `因为 ${node.name || node.key} 的条件成立` : undefined;
+      reason = chosen && !chosen.isDefault ? t('preview.conditionMet', { node: node.name || node.key }) : undefined;
       current = chosen?.edge.to; continue;
     }
     if (node.type === 'PARALLEL_SPLIT') {

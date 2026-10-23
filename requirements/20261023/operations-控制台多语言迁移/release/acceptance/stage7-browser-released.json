@@ -1,0 +1,609 @@
+{
+ "phase": "released",
+ "results": [
+  {
+   "step": "B1 默认英文：lang=en、标题 = auth.login.title、无本地选择",
+   "ok": true,
+   "note": "Sign in to Operations"
+  },
+  {
+   "step": "B1 登录页语言按钮可见（English）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "B2 选简体中文后整页刷新为中文",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "B2 中文标题、本地记录 i18n.locale=zh-CN",
+   "ok": true,
+   "note": "登录 Operations"
+  },
+  {
+   "step": "B2 语言包从公开桶直接拉取且全部 200（21 个请求）",
+   "ok": true,
+   "note": "[('/login', 200, 'https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/gateway/0f7dd89dcdf6f98a/cc9c80f6-5b95-47e4-8958-7eb7b833ed2a'), ('/login', 200, 'https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/auth/c23ad628c7baf23c/61055b1b-cfe1-4548-8a21-b0651cba604f')]"
+  },
+  {
+   "step": "B2 刷新后保持中文",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "B3 中文登录进入控制台",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "B3 页头语言按钮显示简体中文",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "B3 菜单为 nav.resource 中文",
+   "ok": true,
+   "note": "系统管理\n人员管理\n角色管理\n审计日志\n平台配置\n租户访问\n风控管理\n数据保护\n通知管理\n财务\n商务\n渠道\n工作流\n数据查询\n多语言\n客户入驻审核"
+  },
+  {
+   "step": "B4 zh-CN 权限树一级节点标题 = 资源名 / 其他权限 / 编码（15 个）",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "B4 zh-CN 权限树无裸 key",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "B5 zh-CN 页面收到的审计详情无 label 字段",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "B5 zh-CN 审计详情字段名按 key 翻译（5 个）、分区标题本语言",
+   "ok": true,
+   "note": "['字段变更']"
+  },
+  {
+   "step": "B5 zh-CN 审计详情无裸 key",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "B6 zh-CN 试算说明为本语言（['计算基数 ACTUAL_CLIENT_FEE 依赖其他费用结果，未计算']）",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "B6 zh-CN 试算页无裸 key",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "B7 页头切到 English 后整页刷新为英文",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "B4 en 权限树一级节点标题 = 资源名 / 其他权限 / 编码（15 个）",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "B4 en 权限树无裸 key",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "B5 en 页面收到的审计详情无 label 字段",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "B5 en 审计详情字段名按 key 翻译（5 个）、分区标题本语言",
+   "ok": true,
+   "note": "['Field Changes']"
+  },
+  {
+   "step": "B5 en 审计详情无裸 key",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "B6 en 试算说明为本语言（['Calculation base ACTUAL_CLIENT_FEE depends on other fee results; not calculated']）",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "B6 en 试算页无裸 key",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "B7 再切回简体中文",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "B8 断网刷新仍为中文（本地缓存），无白屏",
+   "ok": true,
+   "note": "角色管理"
+  },
+  {
+   "step": "控制台错误 0",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "4xx / 5xx / 失败请求 0",
+   "ok": false,
+   "note": "[('/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001', 'FAILED', 'GET', 'http://localhost:28080/api/operations/auth/v1/context'), ('/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=7"
+  },
+  {
+   "step": "只读阶段未拦截到写请求",
+   "ok": true,
+   "note": "[]"
+  }
+ ],
+ "console": [],
+ "network": [
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/auth/v1/context"
+  ]
+ ],
+ "blocked": [],
+ "storageRequests": [
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/gateway/95455453cc7fe850/296b5a2e-66cc-46a3-896a-86a80eb48c48"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/access/3acfb0e90c969bc8/b8a5b963-8fa6-4ee0-b454-c9b93b3bef4d"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/enum/02d525731244fdcb/9bd125a0-f2c6-4ca5-a7ec-22a22bedaf5b"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/nav/b67cfa8650886136/a579938c-e5e9-40da-9100-7611b40ab2e8"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/auth/e798d3e071f813ea/34b2fc74-f764-452e-b135-19f75b86184a"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/common/1ed667cb8c32c80e/0fce827a-674d-4b68-bdae-5aebbc9fc598"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/commercial/bdd8f7cb796c98dc/76d309fc-68f9-444f-99c9-b6e153e8d111"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/finance/a8f920751a9dc67b/28adb965-6b95-4ff7-96eb-25938b9e04aa"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/recon/ac982d0706d326fa/c3119481-dca9-4139-bed0-a9a2000f8b0d"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/channel/7aabb467dcf9dd2c/5ceabb99-e228-4d3a-b10d-10411ab8f75a"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/risk/6c7b196ed871a9ef/ed8c178f-33ae-486b-be04-ae81470655bc"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/workflow/82f4ad60f8357bb9/70e3387a-bdeb-47f4-a66c-787876641f0e"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/file/cb0302c5f6b576e7/e654129f-ef36-4577-9240-5cb152f0500d"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/data-query/4de51139c017f1d0/7b295454-b321-4606-97da-d24d39b6530b"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/notification/d705902bb254b2d1/d12baae6-5313-48d8-abe2-151fdf7c76fd"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/webhook/a8a677fe256bd8f9/6cdd4e68-52e6-4ab2-b7af-5b67f9a634c1"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/vault/6f06652b6a631810/0f15df97-93d3-4dfa-94a1-a9d47af0fef9"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/card/43da360d0372c465/2e4ea67b-f381-41c7-8784-543d2679063f"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/client-review/276a9ded084f87e8/b711822e-047b-4b17-8ec8-e41047b90eb3"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/currency/513462a1028ef41c/86662234-16f6-4851-bcef-aa2c86e52268"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/en/i18n-admin/e27674bd13e6cbf3/adda717a-2284-4654-862d-0e592ccbcafd"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/gateway/0f7dd89dcdf6f98a/cc9c80f6-5b95-47e4-8958-7eb7b833ed2a"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/auth/c23ad628c7baf23c/61055b1b-cfe1-4548-8a21-b0651cba604f"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/enum/ecd9af4c47c0e3f9/73190860-9ea3-463b-8fe1-7d15afb3ffc0"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/nav/8636e1346ccb9201/21fd6e21-5423-4ca2-b889-9d519b45e305"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/common/3aa0456c6dbcc709/d09eb78b-c069-409b-a3c8-4d8e5d21dc8c"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/access/12a90b30a0d1130a/3156005c-44ec-48f2-9f58-b0872286eb29"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/commercial/1f16d3ef220344bf/1e5b93aa-5f76-4613-92c6-77aa977b68b2"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/workflow/555b35f045fe9531/50b8f835-2352-44b7-9d9d-f243be439cc5"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/channel/a63f50e4788b6d88/0b059ff0-e7a4-4e63-ba15-62dbc51b4e3b"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/recon/23bf513e1c16deeb/0caef132-6bae-4002-83f5-9c6b29c39c82"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/finance/037cef36fc49835a/3ff07987-d804-4939-89f6-f74940a7af39"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/risk/51a7c1ce90c1a5ca/274e36e8-a83e-449f-aeda-1b1985330e8a"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/data-query/833e3488f6319887/c31979de-2229-4c35-b825-69b3c69f18b0"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/notification/7acca0117187a590/10023e1f-4b00-487a-81cb-ff5531aa947b"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/file/aaa7c4e3dbc1d194/fc0af74e-a70d-4c4c-bc9d-f7c42e58c05c"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/webhook/396fe61f16dc1ea9/e0e6aa3f-afd9-46cd-b4f3-8b0742a82180"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/vault/790cd4b162fcc59e/d8beee26-8fbe-4ab5-aa17-ce845005fbdc"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/card/a1e7f5de1b62c770/57e93541-2c5b-4bc4-a627-5c019a08cf99"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/client-review/c1e98b4580a4ef27/2b0973f4-0925-4ad2-8cc4-e2e3192f5a7b"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/currency/3a240c282f6a95b9/696b6e4a-49b6-4620-93f6-062c3f98f969"
+  ],
+  [
+   "/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/i18n-admin/07f8b889146f2168/e7cba21c-b767-4c23-bd32-f28e5798a565"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/common/3aa0456c6dbcc709/d09eb78b-c069-409b-a3c8-4d8e5d21dc8c"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/auth/c23ad628c7baf23c/61055b1b-cfe1-4548-8a21-b0651cba604f"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/enum/ecd9af4c47c0e3f9/73190860-9ea3-463b-8fe1-7d15afb3ffc0"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/access/12a90b30a0d1130a/3156005c-44ec-48f2-9f58-b0872286eb29"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/nav/8636e1346ccb9201/21fd6e21-5423-4ca2-b889-9d519b45e305"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/gateway/0f7dd89dcdf6f98a/cc9c80f6-5b95-47e4-8958-7eb7b833ed2a"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/channel/a63f50e4788b6d88/0b059ff0-e7a4-4e63-ba15-62dbc51b4e3b"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/commercial/1f16d3ef220344bf/1e5b93aa-5f76-4613-92c6-77aa977b68b2"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/finance/037cef36fc49835a/3ff07987-d804-4939-89f6-f74940a7af39"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/recon/23bf513e1c16deeb/0caef132-6bae-4002-83f5-9c6b29c39c82"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/risk/51a7c1ce90c1a5ca/274e36e8-a83e-449f-aeda-1b1985330e8a"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/workflow/555b35f045fe9531/50b8f835-2352-44b7-9d9d-f243be439cc5"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/data-query/833e3488f6319887/c31979de-2229-4c35-b825-69b3c69f18b0"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/file/aaa7c4e3dbc1d194/fc0af74e-a70d-4c4c-bc9d-f7c42e58c05c"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/notification/7acca0117187a590/10023e1f-4b00-487a-81cb-ff5531aa947b"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/webhook/396fe61f16dc1ea9/e0e6aa3f-afd9-46cd-b4f3-8b0742a82180"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/card/a1e7f5de1b62c770/57e93541-2c5b-4bc4-a627-5c019a08cf99"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/vault/790cd4b162fcc59e/d8beee26-8fbe-4ab5-aa17-ce845005fbdc"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/client-review/c1e98b4580a4ef27/2b0973f4-0925-4ad2-8cc4-e2e3192f5a7b"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/currency/3a240c282f6a95b9/696b6e4a-49b6-4620-93f6-062c3f98f969"
+  ],
+  [
+   "/commercial/price-simulator?termVersionId=238331037560672256&agreementId=238331036726005760&entityNo=AE001&currency=AED&termType=PARTNER_SHARE&clientId=770000001001",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/i18n-admin/07f8b889146f2168/e7cba21c-b767-4c23-bd32-f28e5798a565"
+  ]
+ ],
+ "screens": [
+  "b1-login-en.png",
+  "b2-login-zh-CN.png",
+  "b3-console-zh-CN.png",
+  "b4-roles-tree-zh-CN.png",
+  "b5-audit-detail-zh-CN.png",
+  "b6-simulator-zh-CN.png",
+  "b4-roles-tree-en.png",
+  "b5-audit-detail-en.png",
+  "b6-simulator-en.png",
+  "b8-offline-zh-CN.png"
+ ]
+}

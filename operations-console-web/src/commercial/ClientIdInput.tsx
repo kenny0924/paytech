@@ -3,6 +3,7 @@ import { AutoComplete } from 'antd';
 import { session } from '../api/session';
 import { decodeCasePage, reviewApi } from '../clientReview/clientReview';
 import { browserStorage, recentClients } from './commercialConsole';
+import { useT } from '../i18n/react';
 
 interface Props { value?: string; onChange?: (value: string) => void; placeholder?: string; allowClear?: boolean }
 interface ApprovedClient { clientId: string; caseNo: string }
@@ -12,7 +13,8 @@ interface ApprovedClient { clientId: string; caseNo: string }
  * <li>运营侧没有按名称搜索 Client 的接口（遗留给 client-master），选项只帮助回填 ID；审核列表无权限或失败时只显示最近使用。</li>
  * <li>使用后由调用方 rememberClient 记录。</li>
  */
-export function ClientIdInput({ value, onChange, placeholder = '输入或选择 Client ID', allowClear = true }: Props) {
+export function ClientIdInput({ value, onChange, placeholder, allowClear = true }: Props) {
+  const t = useT('commercial');
   const [approved, setApproved] = useState<ApprovedClient[]>([]);
   const loaded = useRef(false);
   const recent = useMemo(() => recentClients(browserStorage()), []);
@@ -26,10 +28,10 @@ export function ClientIdInput({ value, onChange, placeholder = '输入或选择 
   const keyword = (value ?? '').trim();
   const match = (clientId: string, extra = '') => !keyword || clientId.includes(keyword) || extra.includes(keyword);
   const options = [
-    { label: '最近使用', options: recent.filter(id => match(id)).map(id => ({ value: id, label: <span className="mono">{id}</span> })) },
-    { label: '审核通过的 Client', options: approved.filter(item => match(item.clientId, item.caseNo) && !recent.includes(item.clientId))
+    { label: t('clientInput.recent'), options: recent.filter(id => match(id)).map(id => ({ value: id, label: <span className="mono">{id}</span> })) },
+    { label: t('clientInput.approved'), options: approved.filter(item => match(item.clientId, item.caseNo) && !recent.includes(item.clientId))
       .map(item => ({ value: item.clientId, label: <span><span className="mono">{item.clientId}</span> · {item.caseNo}</span> })) },
   ].filter(group => group.options.length > 0);
   return <AutoComplete value={value} onChange={next => onChange?.(String(next ?? ''))} onFocus={loadApproved} options={options}
-    placeholder={placeholder} allowClear={allowClear} maxLength={19} />;
+    placeholder={placeholder ?? t('clientInput.placeholder')} allowClear={allowClear} maxLength={19} />;
 }

@@ -34,8 +34,11 @@ class RolePermissionTreeAutoTest {
             resource("hidden", null, "not-grantable", 10), resource("read", "hidden", "read", 20)));
 
         assertEquals(List.of("resource:read", "group:other"), nodes.stream().map(PermissionNode::nodeId).toList());
-        assertEquals(new PermissionNode("permission:unbound", "CODE_unbound", "unbound", List.of()),
+        assertEquals("RES_read", nodes.getFirst().code());
+        assertEquals(new PermissionNode("permission:unbound", "CODE_unbound", "CODE_unbound", "unbound", List.of()),
             nodes.getLast().children().getFirst());
+        assertEquals(RolePermissionTree.OTHER_PERMISSIONS, nodes.getLast().code());
+        assertEquals(RolePermissionTree.OTHER_PERMISSIONS, nodes.getLast().displayName());
         assertEquals(null, nodes.getLast().permissionId());
         assertTrue(nodes.stream().noneMatch(node -> node.displayName().contains("hidden")));
     }
@@ -54,6 +57,12 @@ class RolePermissionTreeAutoTest {
     }
 
     @Test
+    void test_resourceWithoutCodeCannotBeTranslatedAndFailsAsInvalidUpstreamResponse() {
+        assertThrows(ErrorException.class, () -> RolePermissionTree.assemble(List.of(permission("p")),
+            List.of(new PermissionResource("r", " ", null, "资源 r", "p", 10))));
+    }
+
+    @Test
     void test_cyclesFailRatherThanPublishingAnIncompletePermissionTree() {
         assertThrows(ErrorException.class, () -> RolePermissionTree.assemble(List.of(permission("p")),
             List.of(resource("a", "b", "p", 10), resource("b", "a", "p", 20))));
@@ -66,6 +75,6 @@ class RolePermissionTreeAutoTest {
     }
 
     private PermissionResource resource(String id, String parent, String permission, int order) {
-        return new PermissionResource(id, parent, "资源 " + id, permission, order);
+        return new PermissionResource(id, "RES_" + id, parent, "资源 " + id, permission, order);
     }
 }

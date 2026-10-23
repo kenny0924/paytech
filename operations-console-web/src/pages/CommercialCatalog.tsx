@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Alert, Button, Select, Table, Tag } from 'antd';
 import type { ConsoleResource } from '../api/types';
 import { QueryFailure } from '../tenantAccess/TenantAccessView';
-import { commercialButtons, hasButton } from '../commercial/commercial';
+import { commercialButtons, hasButton, joinList } from '../commercial/commercial';
 import type { CatalogCapability } from '../commercial/commercialConsole';
 import { CommercialNote, StatusTag } from '../commercial/CommercialParts';
 import { CapabilityStatusModal, CatalogCapabilityDrawer, FeeEventAttachModal } from '../commercial/CatalogModals';
@@ -11,10 +11,11 @@ import { capabilityStatusAction, dimensionBadges, rowAttachLabels } from '../com
 import type { CapabilityStatusAction } from '../commercial/catalogMaintenance';
 import { useCatalogCapabilities, useCatalogDimensions, useCatalogFeeEvents, useCatalogProducts } from '../commercial/useCatalog';
 import {
-  businessModeScopeLabels, capabilityGroupNote, capabilityKindLabels, catalogExpansion, catalogGaps, catalogKeys, catalogLabel, catalogSummary,
-  catalogTermTypeLabels, catalogTermTypeOptions, eventGroupNote, groupCatalog, groupExpandedByDefault, productExpandedByDefault,
+  businessModeScopeLabels, capabilityGroupNote, capabilityKindLabel, catalogExpansion, catalogGaps, catalogKeys, catalogLabel, catalogSummary,
+  catalogTermTypeLabel, catalogTermTypeOptions, eventGroupNote, groupCatalog, groupExpandedByDefault, productExpandedByDefault,
 } from '../commercial/catalogTree';
 import type { CatalogEventRow, CatalogProductNode, GroupNote } from '../commercial/catalogTree';
+import { useT } from '../i18n/react';
 import '../configuration/configuration.css';
 import '../commercial/commercial.css';
 import '../commercial/catalog.css';
@@ -63,40 +64,41 @@ function CatalogGroup({ title, count, note, open, onToggle, children }: {
 function CapabilityTable({ items, onEdit, onStatus }: {
   items: CatalogCapability[]; onEdit?: (item: CatalogCapability) => void; onStatus?: (item: CatalogCapability, action: CapabilityStatusAction) => void;
 }) {
+  const t = useT('commercial');
   return <Table<CatalogCapability> rowKey="productCapabilityId" size="small" pagination={false} dataSource={items} scroll={{ x: 860 }} columns={[
-    { title: '能力码 / 名称', render: (_, row) => <span className="catalog-name-cell">
+    { title: t('catalog.column.capability'), render: (_, row) => <span className="catalog-name-cell">
       <span className="mono catalog-code">{row.capabilityCode}</span><span className="commercial-cell-meta">{row.capabilityName}</span></span> },
-    { title: '种类', width: 110, render: (_, row) => catalogLabel(capabilityKindLabels, row.capabilityKind) },
-    { title: '支付方式', width: 130, render: (_, row) => row.paymentMethodCode ? <span className="mono">{row.paymentMethodCode}</span> : '—' },
-    { title: '可配维度', width: 260, render: (_, row) => row.dimensions.length
+    { title: t('catalogDrawer.kind'), width: 110, render: (_, row) => capabilityKindLabel(row.capabilityKind) },
+    { title: t('catalog.column.paymentMethod'), width: 130, render: (_, row) => row.paymentMethodCode ? <span className="mono">{row.paymentMethodCode}</span> : '—' },
+    { title: t('catalogDrawer.dimensions'), width: 260, render: (_, row) => row.dimensions.length
       ? <span className="catalog-tags">{dimensionBadges(row.dimensions).map(badge => <Tag key={badge}>{badge}</Tag>)}</span> : '—' },
-    { title: '状态', width: 100, render: (_, row) => <StatusTag status={row.status} labels={catalogStatusLabels} /> },
-    ...(onEdit && onStatus ? [{ title: '操作', width: 130, render: (_: unknown, row: CatalogCapability) => {
+    // 目录开通项状态：停用 = RETIRED
+    { title: t('shared.column.status'), width: 100, render: (_, row) => <StatusTag status={row.status} kind="catalogStatus" /> },
+    ...(onEdit && onStatus ? [{ title: t('shared.column.actions'), width: 130, render: (_: unknown, row: CatalogCapability) => {
       const action = capabilityStatusAction(row.status);
       return <span className="commercial-actions">
-        <Button size="small" type="link" onClick={() => onEdit(row)}>编辑</Button>
-        {action && <Button size="small" type="link" danger={action === 'retire'} onClick={() => onStatus(row, action)}>{action === 'retire' ? '停用' : '启用'}</Button>}
+        <Button size="small" type="link" onClick={() => onEdit(row)}>{t('shared.edit')}</Button>
+        {action && <Button size="small" type="link" danger={action === 'retire'} onClick={() => onStatus(row, action)}>
+          {action === 'retire' ? t('catalogStatus.retire') : t('catalogStatus.activate')}</Button>}
       </span>;
     } }] : []),
   ]} />;
 }
 
-/** 目录开通项状态：停用 = RETIRED。 */
-const catalogStatusLabels: Readonly<Record<string, string>> = { ACTIVE: '启用', RETIRED: '已停用', DRAFT: '草稿' };
-
 /** 计费事件子表：同产品同事件一行，条款类型为标签，命中筛选的标签高亮；挂接开通项可编辑。 */
 function EventTable({ rows, termType, capabilities, onAttach }: {
   rows: CatalogEventRow[]; termType?: string; capabilities: CatalogCapability[]; onAttach?: (row: CatalogEventRow) => void;
 }) {
+  const t = useT('commercial');
   return <Table<CatalogEventRow> rowKey="key" size="small" pagination={false} dataSource={rows} scroll={{ x: 860 }} columns={[
-    { title: '事件代码', width: 200, render: (_, row) => <span className="mono catalog-code">{row.feeEventCode}</span> },
-    { title: '可配价条款类型', render: (_, row) => <span className="catalog-tags">{row.termTypes.map(type =>
-      <Tag key={type} color={type === termType ? 'blue' : undefined}>{catalogLabel(catalogTermTypeLabels, type)}</Tag>)}</span> },
-    { title: '计费事实类型', width: 180, render: (_, row) => <span className="mono">{row.billingFactTypes.join(' / ')}</span> },
-    { title: '挂接开通项', width: 200, render: (_, row) => <span className="catalog-tags">{rowAttachLabels(row, capabilities).map(label =>
-      <Tag key={label} color={label === '无需开通' ? undefined : 'geekblue'}>{label}</Tag>)}</span> },
-    ...(onAttach ? [{ title: '操作', width: 80, render: (_: unknown, row: CatalogEventRow) =>
-      <Button size="small" type="link" onClick={() => onAttach(row)}>编辑</Button> }] : []),
+    { title: t('catalog.column.eventCode'), width: 200, render: (_, row) => <span className="mono catalog-code">{row.feeEventCode}</span> },
+    { title: t('catalog.column.termTypes'), render: (_, row) => <span className="catalog-tags">{row.termTypes.map(type =>
+      <Tag key={type} color={type === termType ? 'blue' : undefined}>{catalogTermTypeLabel(type)}</Tag>)}</span> },
+    { title: t('catalog.column.billingFactTypes'), width: 180, render: (_, row) => <span className="mono">{row.billingFactTypes.join(' / ')}</span> },
+    { title: t('attachModal.choice'), width: 200, render: (_, row) => <span className="catalog-tags">{rowAttachLabels(row, capabilities).map(label =>
+      <Tag key={label} color={label === t('attach.none') ? undefined : 'geekblue'}>{label}</Tag>)}</span> },
+    ...(onAttach ? [{ title: t('shared.column.actions'), width: 80, render: (_: unknown, row: CatalogEventRow) =>
+      <Button size="small" type="link" onClick={() => onAttach(row)}>{t('shared.edit')}</Button> }] : []),
   ]} />;
 }
 
@@ -107,6 +109,7 @@ function EventTable({ rows, termType, capabilities, onAttach }: {
  * <li>三接口任一失败整页显示统一失败，不显示半套；目录缺口在工具栏下方提示。</li>
  */
 export function CommercialCatalog({ resources, onAuthorizationChanged }: Props) {
+  const t = useT('commercial'), tNav = useT('nav');
   const [revision, setRevision] = useState(0);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const canManage = hasButton(resources, commercialButtons.catalogManage);
@@ -128,7 +131,8 @@ export function CommercialCatalog({ resources, onAuthorizationChanged }: Props) 
   const gaps = useMemo(() => catalogGaps(products.items, capabilities.items, feeEvents.items),
     [products.items, capabilities.items, feeEvents.items]);
   const loading = products.loading || capabilities.loading || feeEvents.loading;
-  const heading = <div className="page-heading"><h1>产品目录</h1><Tag>{canManage ? '运营维护' : '只读'}</Tag></div>;
+  const heading = <div className="page-heading"><h1>{tNav('resource.OPERATIONS_COMMERCIAL_CATALOG')}</h1>
+    <Tag>{canManage ? t('catalog.mode.manage') : t('catalog.mode.readOnly')}</Tag></div>;
   if (products.failed || capabilities.failed || feeEvents.failed) {
     return <div className="configuration-page commercial-page">{heading}<QueryFailure failure={undefined} /></div>;
   }
@@ -142,11 +146,11 @@ export function CommercialCatalog({ resources, onAuthorizationChanged }: Props) 
     const capabilityOpen = expansion.isOpen(capabilityKey, groupExpandedByDefault(node.capabilities.length));
     const eventOpen = expansion.isOpen(eventKey, groupExpandedByDefault(node.events.length));
     return <div className="catalog-expanded">
-      <CatalogGroup title={`可开通项 ${node.capabilities.length}`} count={node.capabilities.length} note={capabilityGroupNote(node)}
+      <CatalogGroup title={t('catalog.group.capabilities', { count: node.capabilities.length })} count={node.capabilities.length} note={capabilityGroupNote(node)}
         open={capabilityOpen} onToggle={() => expansion.set(capabilityKey, !capabilityOpen)}>
         <CapabilityTable items={node.capabilities} onEdit={canManage ? item => setDialog({ kind: 'capability', productCode: code, capability: item }) : undefined}
           onStatus={canManage ? (item, action) => setDialog({ kind: 'status', capability: item, action }) : undefined} /></CatalogGroup>
-      <CatalogGroup title={`计费事件 ${countText(node.eventCount, node.totalEventCount, filtered)}`} count={node.events.length}
+      <CatalogGroup title={t('catalog.group.events', { count: countText(node.eventCount, node.totalEventCount, filtered) })} count={node.events.length}
         note={eventGroupNote(node)} open={eventOpen} onToggle={() => expansion.set(eventKey, !eventOpen)}>
         <EventTable rows={node.events} termType={termType} capabilities={capabilities.items}
           onAttach={canManage ? row => setDialog({ kind: 'attach', row }) : undefined} /></CatalogGroup>
@@ -156,41 +160,42 @@ export function CommercialCatalog({ resources, onAuthorizationChanged }: Props) 
     {heading}
     <div className="catalog-toolbar">
       <span className="catalog-summary">
-        {`${total.products} 个产品 · ${total.capabilities} 个可开通项 · ${total.events} 个计费事件`}
-        {filtered && !loading && <span className="catalog-summary-hit">{` · 筛选命中 ${hit.products} 个产品 · ${hit.events} 个计费事件`}</span>}
+        {t('catalog.summary', { products: total.products, capabilities: total.capabilities, events: total.events })}
+        {filtered && !loading && <span className="catalog-summary-hit">{` · ${t('catalog.summaryHit', { products: hit.products, events: hit.events })}`}</span>}
       </span>
       <span className="commercial-spacer" />
-      <label className="catalog-filter"><span>条款类型</span>
-        <Select value={selected} onChange={setSelected} popupMatchSelectWidth={false} options={[{ value: allTermTypes, label: '全部' },
+      <label className="catalog-filter"><span>{t('shared.column.termType')}</span>
+        <Select value={selected} onChange={setSelected} popupMatchSelectWidth={false} options={[{ value: allTermTypes, label: t('catalog.filter.all') },
           ...options.map(option => ({ value: option.termType, label: `${option.label} ${option.eventCount}` }))]} /></label>
-      <Button onClick={() => expansion.setAll(catalogExpansion(all, true))}>全部展开</Button>
-      <Button onClick={() => expansion.setAll(catalogExpansion(all, false))}>全部收起</Button>
+      <Button onClick={() => expansion.setAll(catalogExpansion(all, true))}>{t('catalog.expandAll')}</Button>
+      <Button onClick={() => expansion.setAll(catalogExpansion(all, false))}>{t('catalog.collapseAll')}</Button>
     </div>
-    {!loading && gaps.length > 0 && <Alert type="warning" showIcon className="commercial-banner" title={`目录提示：${gaps
-      .map(gap => `${gap.productCode} 有 ${gap.capabilityCount} 个可开通项但没有计费事件`).join('；')}，开通后不会产生费用。`} />}
-    {!loading && unregistered && <Alert type="info" showIcon className="commercial-banner" title="该条款类型尚未登记计费事件，无法创建该类方案" />}
+    {!loading && gaps.length > 0 && <Alert type="warning" showIcon className="commercial-banner" title={t('catalog.gaps', { gaps: joinList(gaps
+      .map(gap => t('catalog.gap', { productCode: gap.productCode, count: gap.capabilityCount })), 'clauses') })} />}
+    {!loading && unregistered && <Alert type="info" showIcon className="commercial-banner" title={t('catalog.unregistered')} />}
     <Table<CatalogProductNode> rowKey={productKey} size="middle" pagination={false} loading={loading} dataSource={loading ? [] : nodes}
-      scroll={{ x: 900 }} rowClassName="clickable-row" locale={{ emptyText: filtered ? '没有命中该条款类型的产品' : '目录为空' }}
+      scroll={{ x: 900 }} rowClassName="clickable-row" locale={{ emptyText: filtered ? t('catalog.emptyFiltered') : t('catalog.empty') }}
       expandable={{
         expandRowByClick: true, expandedRowRender: renderGroups,
         expandedRowKeys: nodes.filter(node => expansion.isOpen(productKey(node), productExpandedByDefault(node))).map(productKey),
         onExpand: (open, node) => expansion.set(productKey(node), open),
         expandIcon: ({ expanded, onExpand, record }) => <button type="button" className="catalog-expand" aria-expanded={expanded}
-          aria-label={expanded ? '收起产品' : '展开产品'} onClick={event => { event.stopPropagation(); onExpand(record, event); }}>{expanded ? '▾' : '▸'}</button>,
+          aria-label={expanded ? t('catalog.collapseProduct') : t('catalog.expandProduct')} onClick={event => { event.stopPropagation(); onExpand(record, event); }}>{expanded ? '▾' : '▸'}</button>,
       }}
       columns={[
-        { title: '产品代码', width: 180, render: (_, row) => <span className="mono catalog-code">{row.product.productCode}</span> },
-        { title: '名称', render: (_, row) => row.product.productName },
-        { title: '业务模式', width: 110, render: (_, row) => catalogLabel(businessModeScopeLabels, row.product.businessModeScope) },
-        { title: '基础产品', width: 100, render: (_, row) => row.product.baseProduct ? <Tag color="blue">默认具备</Tag> : <Tag>可订阅</Tag> },
-        { title: '状态', width: 100, render: (_, row) => <StatusTag status={row.product.status} /> },
-        { title: '子项', width: 230, render: (_, row) => <span className={`catalog-counts${row.gap ? ' is-warning' : ''}`}>
-          {row.gap && '⚠ '}{`可开通项 ${row.capabilities.length} · 计费事件 ${countText(row.eventCount, row.totalEventCount, filtered)}`}</span> },
-        ...(canManage ? [{ title: '操作', width: 130, render: (_: unknown, row: CatalogProductNode) => !row.product.baseProduct && row.product.status === 'ACTIVE'
+        { title: t('catalog.column.productCode'), width: 180, render: (_, row) => <span className="mono catalog-code">{row.product.productCode}</span> },
+        { title: t('catalogDrawer.name'), render: (_, row) => row.product.productName },
+        { title: t('agreement.create.businessMode'), width: 110, render: (_, row) => catalogLabel(businessModeScopeLabels, row.product.businessModeScope) },
+        { title: t('catalog.column.baseProduct'), width: 100, render: (_, row) => row.product.baseProduct ? <Tag color="blue">{t('catalog.baseProduct.included')}</Tag>
+          : <Tag>{t('catalog.baseProduct.subscribable')}</Tag> },
+        { title: t('shared.column.status'), width: 100, render: (_, row) => <StatusTag status={row.product.status} /> },
+        { title: t('catalog.column.children'), width: 230, render: (_, row) => <span className={`catalog-counts${row.gap ? ' is-warning' : ''}`}>
+          {row.gap && '⚠ '}{t('catalog.children', { capabilities: row.capabilities.length, events: countText(row.eventCount, row.totalEventCount, filtered) })}</span> },
+        ...(canManage ? [{ title: t('shared.column.actions'), width: 130, render: (_: unknown, row: CatalogProductNode) => !row.product.baseProduct && row.product.status === 'ACTIVE'
           ? <Button size="small" onClick={event => { event.stopPropagation(); setDialog({ kind: 'capability', productCode: row.product.productCode }); }}>
-            + 新增开通项</Button> : null }] : []),
+            {t('catalog.addCapability')}</Button> : null }] : []),
       ]} />
-    <CommercialNote>可开通项决定合同能开通什么（可配维度即合同开通时可设置的接受条件）；计费事件挂到开通项种类或「无需开通」，价格相关性校验据此判断价格是否对应已开通项。停用开通项只影响新开通，不影响已开通合同与历史价格。</CommercialNote>
+    <CommercialNote>{t('catalog.note')}</CommercialNote>
     {dialog?.kind === 'capability' && <CatalogCapabilityDrawer products={products.items} productCode={dialog.productCode} capability={dialog.capability}
       definitions={dimensions.items} definitionsFailed={dimensions.failed} {...base} />}
     {dialog?.kind === 'status' && <CapabilityStatusModal capability={dialog.capability} action={dialog.action} {...base} />}

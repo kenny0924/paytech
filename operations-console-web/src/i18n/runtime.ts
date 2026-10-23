@@ -10,7 +10,9 @@ export type Manifest = {
   bundles: Record<string, Record<string, { hash: string; url: string }>>;
 };
 export type Params = Record<string, string | number | Date | boolean | null | undefined>;
-type KeyValueStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+export type KeyValueStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+/** Local cache of published manifests and bundles; needs key enumeration to drop stale bundles. */
+export type CacheStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem' | 'key' | 'length'>;
 
 export type I18nOptions = {
   builtin: Catalog;
@@ -30,10 +32,17 @@ export type I18nOptions = {
    * release, the base language is used silently (stored / URL preferences are kept but ignored) and `locales()` is empty.
    */
   publishedOnly?: boolean;
+  /**
+   * Keeps the last published manifest per locale and the bundles it references (immutable URLs) so the next start
+   * renders from the cache without waiting for the network, then checks for a newer release in the background.
+   * Release previews (`?release=`) never read or write it.
+   */
+  cache?: CacheStore | null;
 };
 export type StartInput = { search?: string; navigatorLanguages?: readonly string[] };
 
 const BASE = 'en', LOCALE_KEY = 'i18n.locale', SESSION_LOCALE_KEY = 'i18n.session-locale', RELEASE_KEY = 'i18n.release';
+const CACHE_PREFIX = 'i18n.cache.', MANIFEST_CACHE = CACHE_PREFIX + 'manifest.', BUNDLE_CACHE = CACHE_PREFIX + 'bundle.';
 
 function safeGet(store: KeyValueStore | null | undefined, key: string): string | null {
   try { return store?.getItem(key) ?? null; } catch { return null; }
@@ -66,6 +75,16 @@ export function resolveLocale(input: {
   return exactOnly(input.fallback) ?? input.enabled[0] ?? input.fallback;
 }
 
+function flatBundle(value: unknown): Record<string, string> | null {
+  if (!value || typeof value !== 'object') return null;
+  const flat: Record<string, string> = {};
+  for (const [key, entry] of Object.entries(value as Record<string, MessageEntry>)) {
+    const text = typeof entry === 'string' ? entry : entry?.text;
+    if (typeof text === 'string' && text) flat[key] = text;
+  }
+  return flat;
+}
+
 function readManifest(value: unknown): Manifest | null {
   const m = value as Manifest | null;
   if (!m || typeof m !== 'object' || !Array.isArray(m.locales) || !m.bundles || typeof m.bundles !== 'object') return null;
@@ -93,32 +112,75 @@ export function createI18n(options: I18nOptions) {
     return resolveLocale({ query, stored: safeGet(options.storage, LOCALE_KEY), navigatorLanguages, enabled, fallback });
   }
 
-  async function fetchManifest(code: string): Promise<Manifest | null> {
-    if (manifests.has(code)) return manifests.get(code)!;
+  // ---- local cache (never used for `?release=` previews) ----
+  const caching = () => !!options.cache && !releaseNo;
+  function cacheRead<T>(key: string): T | null {
+    try { const raw = options.cache?.getItem(key); return raw ? JSON.parse(raw) as T : null; } catch { return null; }
+  }
+  function cacheKeys(): string[] {
+    const keys: string[] = [];
+    try {
+      const store = options.cache!;
+      for (let index = 0; index < store.length; index++) { const key = store.key(index); if (key?.startsWith(CACHE_PREFIX)) keys.push(key); }
+    } catch { /* storage unavailable */ }
+    return keys;
+  }
+  function cacheClear(): void {
+    for (const key of cacheKeys()) { try { options.cache?.removeItem(key); } catch { /* storage unavailable */ } }
+  }
+  /** Writes one entry; a quota (or any) failure drops the whole cache and the runtime carries on from memory. */
+  function cacheWrite(key: string, value: unknown): void {
+    if (!caching()) return;
+    try { options.cache!.setItem(key, JSON.stringify(value)); } catch { cacheClear(); }
+  }
+  /** Drops cached bundles that no cached manifest references any more. */
+  function cachePrune(): void {
+    const keys = cacheKeys(), referenced = new Set<string>();
+    for (const key of keys.filter(item => item.startsWith(MANIFEST_CACHE))) {
+      const manifest = readManifest(cacheRead(key));
+      for (const byNamespace of Object.values(manifest?.bundles ?? {})) {
+        for (const entry of Object.values(byNamespace ?? {})) if (entry?.url) referenced.add(BUNDLE_CACHE + entry.url);
+      }
+    }
+    for (const key of keys) {
+      if (key.startsWith(BUNDLE_CACHE) && !referenced.has(key)) { try { options.cache?.removeItem(key); } catch { /* ignore */ } }
+    }
+  }
+  function cacheManifest(code: string, manifest: Manifest): void {
+    if (!caching()) return;
+    cacheWrite(MANIFEST_CACHE + code, manifest);
+    cachePrune();
+  }
+
+  async function requestManifest(code: string): Promise<Manifest | null> {
     const params = new URLSearchParams({ locale: code });
     if (releaseNo) params.set('releaseNo', releaseNo);
     try {
       const response = await transport(options.manifestUrl + '?' + params, { credentials: 'omit', headers: { Accept: 'application/json' } });
-      const manifest = response.ok ? readManifest(await response.json()) : null;
-      if (manifest) manifests.set(code, manifest); else manifestFailed = true;
-      return manifest;
-    } catch { manifestFailed = true; return null; }
+      return response.ok ? readManifest(await response.json()) : null;
+    } catch { return null; }
   }
-  function bundleUrl(code: string, namespace: string): string | undefined {
-    return manifests.get(locale)?.bundles?.[code]?.[namespace]?.url;
+  async function fetchManifest(code: string): Promise<Manifest | null> {
+    if (manifests.has(code)) return manifests.get(code)!;
+    const manifest = await requestManifest(code);
+    if (manifest) { manifests.set(code, manifest); cacheManifest(code, manifest); } else manifestFailed = true;
+    return manifest;
+  }
+  function bundleUrl(code: string, namespace: string, manifest = manifests.get(locale)): string | undefined {
+    return manifest?.bundles?.[code]?.[namespace]?.url;
+  }
+  /** Bundle URLs (base + `code`) the namespaces in use need under one manifest. */
+  function neededUrls(manifest: Manifest | undefined, code: string): string[] {
+    return [...needed].flatMap(ns => [bundleUrl(BASE, ns, manifest), bundleUrl(code, ns, manifest)]).filter((url): url is string => !!url);
   }
   function loadBundle(url: string): Promise<void> {
     if (bundles.has(url) || loading.has(url)) return loading.get(url) ?? Promise.resolve();
     const task = transport(url, { credentials: 'omit' })
       .then(response => (response.ok ? response.json() : null))
       .then((value: unknown) => {
-        if (!value || typeof value !== 'object') return;
-        const flat: Record<string, string> = {};
-        for (const [key, entry] of Object.entries(value as Record<string, MessageEntry>)) {
-          const text = typeof entry === 'string' ? entry : entry?.text;
-          if (typeof text === 'string' && text) flat[key] = text;
-        }
-        bundles.set(url, flat); notify();
+        const flat = flatBundle(value);
+        if (!flat) return;
+        bundles.set(url, flat); cacheWrite(BUNDLE_CACHE + url, flat); notify();
       })
       .catch(() => { /* fall back to base text */ })
       .finally(() => { loading.delete(url); });
@@ -127,8 +189,7 @@ export function createI18n(options: I18nOptions) {
   }
   /** Loads the base and current-locale bundles for every namespace in use; failures never block rendering. */
   function loadNeeded(): Promise<void> {
-    const urls = [...needed].flatMap(ns => [bundleUrl(BASE, ns), bundleUrl(locale, ns)]).filter((url): url is string => !!url);
-    return Promise.all(urls.map(loadBundle)).then(() => {});
+    return Promise.all(neededUrls(manifests.get(locale), locale).map(loadBundle)).then(() => {});
   }
 
   /** A locale is usable when the manifest has a release, lists it, and (besides the base) has bundles for it. */
@@ -161,6 +222,48 @@ export function createI18n(options: I18nOptions) {
       checked.add(item.code);
       if (published(await fetchManifest(item.code), item.code)) { verified.add(item.code); notify(); }
     }));
+  }
+
+  /**
+   * Starts from the cache when the chosen locale's manifest (published, when `publishedOnly`) and every bundle it
+   * needs are cached. Cached manifests count as verified, so the switcher works offline.
+   */
+  function startFromCache(code: string): boolean {
+    if (!caching()) return false;
+    const manifest = readManifest(cacheRead(MANIFEST_CACHE + code));
+    if (!manifest || (options.publishedOnly ? !published(manifest, code) : !manifest.locales.some(item => item.code === code))) return false;
+    const cached = new Map<string, Record<string, string>>();
+    for (const url of neededUrls(manifest, code)) {
+      const flat = flatBundle(cacheRead(BUNDLE_CACHE + url));
+      if (!flat) return false;
+      cached.set(url, flat);
+    }
+    cached.forEach((flat, url) => bundles.set(url, flat));
+    manifests.set(code, manifest);
+    locale = code; verified.add(BASE); verified.add(code);
+    for (const item of manifest.locales) {
+      const other = item.code === code ? manifest : readManifest(cacheRead(MANIFEST_CACHE + item.code));
+      if (other && published(other, item.code)) verified.add(item.code);
+    }
+    applyDocument(); notify();
+    return true;
+  }
+  /** After a cache start: reads the live manifest and swaps in new bundles only once they have loaded. */
+  async function refreshFromNetwork(code: string): Promise<void> {
+    const seq = activation;
+    const fresh = await requestManifest(code);
+    if (seq !== activation || locale !== code) return;
+    if (!fresh) { manifestFailed = true; return; }
+    if (options.publishedOnly && !published(fresh, code)) { manifests.delete(code); await activate(code); return; }
+    const current = manifests.get(code);
+    const changed = neededUrls(fresh, code).join('\n') !== neededUrls(current, code).join('\n') || fresh.releaseNo !== current?.releaseNo;
+    if (changed) {
+      await Promise.all(neededUrls(fresh, code).map(loadBundle));
+      if (seq !== activation || locale !== code) return;
+      manifests.set(code, fresh); notify();
+    }
+    cacheManifest(code, fresh);
+    void verifyOffered();
   }
 
   async function activate(code: string): Promise<void> {
@@ -218,7 +321,24 @@ export function createI18n(options: I18nOptions) {
       if (params.has('lang')) safeSet(options.session, SESSION_LOCALE_KEY, query);
       if (params.has('release')) safeSet(options.session, RELEASE_KEY, releaseNo);
       navigatorLanguages = input.navigatorLanguages ?? [];
-      await activate(pick(options.locales.map(item => item.code), options.defaultLocale));
+      const wanted = pick(options.locales.map(item => item.code), options.defaultLocale);
+      if (startFromCache(wanted)) { void refreshFromNetwork(wanted); return; }
+      await activate(wanted);
+    },
+    /**
+     * Fetches `code`'s manifest and every bundle the namespaces in use need into the cache, so a reload after a
+     * language switch renders from the cache. Never rejects; does nothing for release previews.
+     */
+    async prefetch(code: string): Promise<void> {
+      if (!caching()) return;
+      const manifest = await requestManifest(code);
+      if (!manifest) return;
+      await Promise.all(neededUrls(manifest, code).map(loadBundle));
+      cacheManifest(code, manifest);
+    },
+    /** Remembers an explicit choice for the next start without switching now (the console reloads instead). */
+    rememberLocale(code: string): void {
+      query = null; safeSet(options.session, SESSION_LOCALE_KEY, null); safeSet(options.storage, LOCALE_KEY, code);
     },
     /** Explicit user choice: remembered in localStorage and replaces any `?lang=` override. */
     async setLocale(code: string): Promise<void> {
@@ -233,6 +353,11 @@ export function createI18n(options: I18nOptions) {
       const full = namespace + '.' + key;
       if (!warned.has(full)) { warned.add(full); options.warn?.('i18n: missing key "' + full + '"'); }
       return full;
+    },
+    /** Whether `key` resolves to a text (runtime or built-in), without warning when it does not. */
+    has(namespace: string, key: string): boolean {
+      use(namespace);
+      return lookup(namespace, key) !== null;
     },
     locale: () => locale,
     locales: (): LocaleInfo[] => (options.publishedOnly ? known().filter(item => verified.has(item.code)) : known()),

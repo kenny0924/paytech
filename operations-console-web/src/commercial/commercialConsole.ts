@@ -2,9 +2,12 @@ import { ApiError } from '../api/session.ts';
 import type { PagingFilters } from '../api/paging.ts';
 import type { PagingResponseBody } from '../api/types.ts';
 import {
-  agreementStatuses, agreementTypes, componentSummary, currencyPattern, decodePrice, decodeVersion, entityNoPattern, idPattern, versionStatuses,
+  agreementStatuses, agreementTypes, componentSummary, currencyPattern, decodePrice, decodeVersion, entityNoPattern, idPattern, joinList, versionStatuses,
 } from './commercial.ts';
+import { translator } from '../i18n/index.ts';
 import type { AgreementStatus, AgreementType, Price, PriceComponent, TermVersion, VersionStatus } from './commercial.ts';
+
+const t = translator('commercial');
 
 // ---------- 路径与页面路由（第二切片 I2） ----------
 
@@ -24,9 +27,7 @@ export const consolePaths = {
 /** 聚合根类型（变更历史筛选）。 */
 export const aggregateRootTypes = ['AGREEMENT', 'COMMERCIAL_TERM_PLAN', 'PAYMENT_METHOD_PROFILE'] as const;
 export type AggregateRootType = typeof aggregateRootTypes[number];
-export const aggregateRootTypeLabels: Record<AggregateRootType, string> = {
-  AGREEMENT: '合同', COMMERCIAL_TERM_PLAN: '条款方案', PAYMENT_METHOD_PROFILE: '定价画像',
-};
+/** 显示名为 commercial 命名空间的 enum.aggregateRootType.<值>。 */
 
 /** 页面路由：版本对比与带筛选的变更历史。 */
 export const consoleRoutes = {
@@ -266,7 +267,7 @@ export function feeEventOptions(events: readonly CatalogFeeEvent[]): CodeOption[
 // ---------- 版本对比展示 ----------
 
 export type DiffChange = 'ADDED' | 'REMOVED' | 'CHANGED' | 'UNCHANGED';
-export const diffChangeLabels: Record<DiffChange, string> = { ADDED: '新增', REMOVED: '删除', CHANGED: '修改', UNCHANGED: '未变' };
+/** 显示名为 commercial 命名空间的 enum.diffChange.<值>。 */
 export const diffChangeColors: Record<DiffChange, string> = { ADDED: 'green', REMOVED: 'red', CHANGED: 'orange', UNCHANGED: 'default' };
 
 /** 对比表的一行：OE × 币种 × 画像 × 事件 × 组件；两侧组件摘要与变化类型。 */
@@ -332,12 +333,12 @@ export function snapshotValue(value: unknown): string {
 
 /** 一条快照的一行摘要：变化字段的前后值（最多 3 个），首版列出字段名，未比较说明原因。 */
 export function changeSummary(entry: BusinessChangeEntry): string {
-  if (entry.comparison === 'NOT_COMPARED') return '上一快照超出回溯范围，未比较';
+  if (entry.comparison === 'NOT_COMPARED') return t('history.notCompared');
   const fields = entry.changedFields ?? [];
-  if (entry.comparison === 'FIRST_VERSION') return `首个快照：${fields.slice(0, 6).join('、')}${fields.length > 6 ? ' …' : ''}`;
-  if (!fields.length) return '字段无变化';
-  const parts = fields.slice(0, 3).map(field => `${field} ${snapshotValue(entry.previousData?.[field])} → ${snapshotValue(entry.data[field])}`);
-  return `${parts.join('；')}${fields.length > 3 ? ` 等 ${fields.length} 项` : ''}`;
+  if (entry.comparison === 'FIRST_VERSION') return t('history.firstSnapshot', { fields: `${joinList(fields.slice(0, 6))}${fields.length > 6 ? ' …' : ''}` });
+  if (!fields.length) return t('history.noFieldChanges');
+  const parts = joinList(fields.slice(0, 3).map(field => `${field} ${snapshotValue(entry.previousData?.[field])} → ${snapshotValue(entry.data[field])}`), 'clauses');
+  return fields.length > 3 ? t('history.changesMore', { changes: parts, count: fields.length }) : parts;
 }
 
 // ---------- 最近使用的 Client ----------

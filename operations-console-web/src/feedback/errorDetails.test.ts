@@ -7,14 +7,14 @@ test('business failures retain the API boundary safe message and request correla
   const details = errorDetails(new ApiError(400, 'BUSINESS_CHECK_FAILED', 'request-17', '不能停用当前登录账号'));
   assert.deepEqual(details, { code: 'BUSINESS_CHECK_FAILED', message: '不能停用当前登录账号', requestId: 'request-17' });
   const system = errorDetails(new ApiError(503, 'SERVICE_UNAVAILABLE', 'request-18', 'password=do-not-display'));
-  assert.equal(system?.message, '服务暂时不可用，请稍后重试。');
+  assert.equal(system?.message, "The service is temporarily unavailable. Please try again later.");
 });
 
 test('unknown thrown values use a safe fallback without exposing messages or stacks', () => {
   for (const failure of [new Error('password=do-not-display'), 'secret-token',
     { code: 'INTERNAL', message: 'private payload', requestId: 'untrusted-id' }, undefined]) {
     assert.deepEqual(errorDetails(failure), {
-      code: 'REQUEST_FAILED', message: '请求未完成，请稍后重试。', requestId: '',
+      code: 'REQUEST_FAILED', message: "The request didn't complete. Please try again later.", requestId: '',
     });
   }
 });
@@ -38,7 +38,7 @@ test('deduplication uses request ID plus code, or code plus message when the ID 
 test('copy text contains exactly the three displayed fields with an explicit missing request ID', () => {
   const missing = errorDetails(new ApiError(429, 'RATE_LIMITED', '   '))!;
   assert.deepEqual(JSON.parse(copyableErrorDetails(missing)), {
-    code: 'RATE_LIMITED', message: '操作过于频繁，请稍后再试。', requestId: '未返回',
+    code: 'RATE_LIMITED', message: "Too many requests. Please try again later.", requestId: "Not returned",
   });
   const known = errorDetails(new ApiError(403, 'OPERATIONS_PERMISSION_DENIED', 'request-3'))!;
   assert.deepEqual(JSON.parse(copyableErrorDetails(known)), known);

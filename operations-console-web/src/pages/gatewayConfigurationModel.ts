@@ -1,6 +1,9 @@
 import { ApiError } from '../api/session.ts';
 import type { GatewayConfigurationKind, GatewayConfigurationStatus,
   GatewayRouteResponseBody, GatewayTargetResponseBody } from '../api/types.ts';
+import { translator } from '../i18n/index.ts';
+
+const t = translator('gateway');
 
 export interface GatewayStatusEntity {
   kind: GatewayConfigurationKind;
@@ -16,7 +19,8 @@ export interface GatewayStatusCommand {
   key: string;
 }
 
-export const gatewayStatusSavedMessage = 'Platform 当前配置已保存；此页面不确认 Gateway 实例刷新状态。';
+/** Success notice after a status change; read at call time so it follows the current language. */
+export const gatewayStatusSavedMessage = () => t('statusModal.saved');
 
 export type GatewayStatusFailureAction = 'STALE' | 'CONFLICT' | 'AUTHORIZATION_CHANGED' | 'RETRY';
 
@@ -25,9 +29,9 @@ export function gatewayRouteBreakGlassWarning(entity: GatewayStatusEntity): stri
     return null;
   }
   if (entity.code === 'operations-gateway-route-status') {
-    return '停用此路由后，控制台将无法再执行任何 Route 状态变更。请确认 Break-glass 恢复路径可用。';
+    return t('statusModal.routeStatusRouteWarning');
   }
-  return '该路由属于 API 路由管理自身的管理入口；停用可能削弱或切断本页面。请确认 Break-glass 恢复路径可用。';
+  return t('statusModal.managementRouteWarning');
 }
 
 export function gatewayStatusFailureAction(error: unknown): GatewayStatusFailureAction {

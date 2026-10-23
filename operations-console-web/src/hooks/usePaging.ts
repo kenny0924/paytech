@@ -3,6 +3,7 @@ import { changePaging, createPagingLoader, defaultPaging, pageSizeOptions } from
 import type { PageDecoder, PagingFilters, PagingRequestBody } from '../api/paging';
 import type { PagingResponseBody } from '../api/types';
 import { useErrorNotification } from '../feedback/useErrorNotification';
+import { useT } from '../i18n/react';
 
 /** 列表 Hook 的结果；F 为筛选类型，默认单值字符串，多选筛选可用 PagingFilters（数组展开为重复参数）。 */
 export interface UsePagingResult<T, F extends PagingFilters = Readonly<Record<string, string>>> {
@@ -19,6 +20,7 @@ export function usePaging<T, F extends PagingFilters = Readonly<Record<string, s
     onQueryChange?: (query: { paging: PagingRequestBody; filters: F }, replace?: boolean) => void;
   }): UsePagingResult<T, F> {
   const notifyError = useErrorNotification();
+  const t = useT('common');
   const loadPage = useMemo(() => createPagingLoader(path, decodePage), [path, decodePage]);
   const [{ paging, filters }, setQuery] = useState({ paging: options?.initialPaging ?? defaultPaging, filters: { ...initialFilters } });
   const [data, setData] = useState<PagingResponseBody<T>>({ ...defaultPaging, items: [], total: 0 });
@@ -37,8 +39,8 @@ export function usePaging<T, F extends PagingFilters = Readonly<Record<string, s
       .catch(error => {
         if (!controller.signal.aborted) {
           setFailure(error);
-          setError(error instanceof Error ? error.message : '暂时无法加载列表，请重试。');
-          if (options?.notifyOnError !== false) notifyError(error, '列表加载失败');
+          setError(error instanceof Error ? error.message : t('list.loadFailed'));
+          if (options?.notifyOnError !== false) notifyError(error, t('list.loadFailedTitle'));
         }
       }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();

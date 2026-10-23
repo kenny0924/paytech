@@ -1,0 +1,861 @@
+{
+ "target": "live",
+ "capturedAt": "2026-10-23T20:37:44Z",
+ "results": {
+  "__login": "简体中文\nP\nPAYTECH\n登录 Operations\n\n使用你的内部人员账号继续。\n\nEmail / 初始化账号\n密码\n登 录\n\n需要开通账号或重置密码？请联系平台管理员。\n\nPaytech Operations",
+  "/accounts": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n系统管理\n人员管理",
+    "main": "＋ 创建人员\n共 23 位人员\n刷 新\n账号\t角色\t状态\t操作\n\n账号\n\t\n角色\n\t\n状态\n\t\n操作\n\n\no***@example.test\n221546852372267008\n\t平台管理员\t\n启用\n\t\n分配角色\n\n\n1***@xx.com\n221592347010482176\n\t平台管理员\t\n启用\n首次登录需改密\n\t\n分配角色\n停用\n删除\n\n\na***@example.test\n221644001797816320\n\t独立编辑角色验收\t\n停用\n首次登录需改密\n\t\n分配角色\n启用\n删除\n\n\nr***@example.test\n221649980790751232\n\t运营只读人员\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nr***@example.test\n221672735552651264\n\t运营只读人员\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nc***@example.test\n238054066079481856\n\t商务审批验收 89BD2A\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nc***@example.test\n238175275450449920\n\t商务二期验收 CHECKER 395AEC\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nc***@example.test\n238175277623099392\n\t商务二期验收 PRICING_READER 395AEC\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nc***@example.test\n238202317793476608\n\t渠道控制台验收 CHECKER 0D659F\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nc***@example.test\n238202320268115968\n\t渠道控制台验收 READER 0D659F\t\n停用\n\t\n分配角色\n启用\n删除\n1\n2\n3\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n系统管理\n人员管理",
+    "main": "＋ 创建人员\n共 23 位人员\n刷 新\n账号\t角色\t状态\t操作\n\n账号\n\t\n角色\n\t\n状态\n\t\n操作\n\n\no***@example.test\n221546852372267008\n\t平台管理员\t\n启用\n\t\n分配角色\n\n\n1***@xx.com\n221592347010482176\n\t平台管理员\t\n启用\n首次登录需改密\n\t\n分配角色\n停用\n删除\n\n\na***@example.test\n221644001797816320\n\t独立编辑角色验收\t\n停用\n首次登录需改密\n\t\n分配角色\n启用\n删除\n\n\nr***@example.test\n221649980790751232\n\t运营只读人员\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nr***@example.test\n221672735552651264\n\t运营只读人员\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nc***@example.test\n238054066079481856\n\t商务审批验收 89BD2A\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nc***@example.test\n238175275450449920\n\t商务二期验收 CHECKER 395AEC\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nc***@example.test\n238175277623099392\n\t商务二期验收 PRICING_READER 395AEC\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nc***@example.test\n238202317793476608\n\t渠道控制台验收 CHECKER 0D659F\t\n停用\n\t\n分配角色\n启用\n删除\n\n\nc***@example.test\n238202320268115968\n\t渠道控制台验收 READER 0D659F\t\n停用\n\t\n分配角色\n启用\n删除\n1\n2\n3\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/roles": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n系统管理\n角色管理",
+    "main": "刷 新\n＋ 创建角色\n角色名称\t角色编码\t类型\t关联员工数\t操作\n\n角色名称\n\t\n角色编码\n\t\n类型\n\t\n关联员工数\n\t\n操作\n\n商务开通定价验收审批 20261020T211923Z\tCAP_STAGE7_CHECKER_20261020211923\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T212252Z\tCAP_STAGE7_CHECKER_20261020212252\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T212457Z\tCAP_STAGE7_CHECKER_20261020212457\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T214751Z\tCAP_STAGE7_CHECKER_20261020214751\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T214852Z\tCAP_STAGE7_CHECKER_20261020214852\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T214900Z\tCAP_STAGE7_CHECKER_20261020214900\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T215433Z\tCAP_STAGE7_CHECKER_20261020215433\t自定义角色\t1\t\n编辑\n删除\n\n商务演示审批 20261020T160201Z\tDEMO_COMMERCIAL_CHECKER_202610201602\t自定义角色\t1\t\n编辑\n删除\n\n商务演示审批 20261020T160349Z\tDEMO_COMMERCIAL_CHECKER_202610201603\t自定义角色\t1\t\n编辑\n删除\n\n对账演示复核人 202610210746\tDEMO_RECON_CHECKER_202610210746\t自定义角色\t1\t\n编辑\n删除\n1\n2\n3\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n系统管理\n角色管理",
+    "main": "刷 新\n＋ 创建角色\n角色名称\t角色编码\t类型\t关联员工数\t操作\n\n角色名称\n\t\n角色编码\n\t\n类型\n\t\n关联员工数\n\t\n操作\n\n商务开通定价验收审批 20261020T211923Z\tCAP_STAGE7_CHECKER_20261020211923\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T212252Z\tCAP_STAGE7_CHECKER_20261020212252\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T212457Z\tCAP_STAGE7_CHECKER_20261020212457\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T214751Z\tCAP_STAGE7_CHECKER_20261020214751\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T214852Z\tCAP_STAGE7_CHECKER_20261020214852\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T214900Z\tCAP_STAGE7_CHECKER_20261020214900\t自定义角色\t1\t\n编辑\n删除\n\n商务开通定价验收审批 20261020T215433Z\tCAP_STAGE7_CHECKER_20261020215433\t自定义角色\t1\t\n编辑\n删除\n\n商务演示审批 20261020T160201Z\tDEMO_COMMERCIAL_CHECKER_202610201602\t自定义角色\t1\t\n编辑\n删除\n\n商务演示审批 20261020T160349Z\tDEMO_COMMERCIAL_CHECKER_202610201603\t自定义角色\t1\t\n编辑\n删除\n\n对账演示复核人 202610210746\tDEMO_RECON_CHECKER_202610210746\t自定义角色\t1\t\n编辑\n删除\n1\n2\n3\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/audit": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n系统管理\n审计日志",
+    "main": "时间范围\n→\n操作者 ID\n操作类型\n结果\n全部结果\n对象类型\n全部类型\n对象 ID\nRequest ID\n快捷范围按本地自然日计算；结束时间不包含在内。\n重 置\n查 询\n共 3331 条记录\n时间\t操作者\t操作\t对象\t结果\t原因 / 请求编号\t详情\n\n时间\n\t\n操作者\n\t\n操作\n\t\n对象\n\t\n结果\n\t\n原因 / 请求编号\n\t\n详情\n\n2026/10/24 00:31:09\t221546852372267008\t账号登录\t\n登录会话\n239485822510907392\n\t成功\t\nPASSWORD_ACCEPTED\n2e64bf24-e114-4a33-8aea-04466d1745f3\n\t\n查看\n\n2026/10/24 00:24:28\t221546852372267008\t账号登录\t\n登录会话\n239484140058132480\n\t成功\t\nPASSWORD_ACCEPTED\n81d0db3b-5777-4c74-a137-9c4262e42309\n\t\n查看\n\n2026/10/24 00:23:09\t221546852372267008\t账号登录\t\n登录会话\n239483809265958912\n\t成功\t\nPASSWORD_ACCEPTED\ne132a9b7-590a-4f46-9061-9f18242b543d\n\t\n查看\n\n2026/10/24 00:18:15\t221546852372267008\t账号登录\t\n登录会话\n239482576190914560\n\t成功\t\nPASSWORD_ACCEPTED\nb0e713ef-2320-4b09-8caa-0b16d0dd5cc8\n\t\n查看\n\n2026/10/24 00:15:45\t221546852372267008\t账号登录\t\n登录会话\n239481945237569536\n\t成功\t\nPASSWORD_ACCEPTED\n63b0351d-603c-4aa9-9303-7f6c2622159a\n\t\n查看\n\n2026/10/24 00:15:33\t221546852372267008\t账号登录\t\n登录会话\n239481896759803904\n\t成功\t\nPASSWORD_ACCEPTED\ne7f74a69-3c9d-49c1-b0f0-befc93aaecc7\n\t\n查看\n\n2026/10/24 00:13:24\t221546852372267008\t账号登录\t\n登录会话\n239481357405863936\n\t成功\t\nPASSWORD_ACCEPTED\n9dc15900-e00f-464d-b8c4-0e250ca9d827\n\t\n查看\n\n2026/10/24 00:13:13\t221546852372267008\t账号登录\t\n登录会话\n239481309808902144\n\t成功\t\nPASSWORD_ACCEPTED\nb76350bb-161d-4c4f-9614-5cef2343ba47\n\t\n查看\n\n2026/10/24 00:12:17\t221546852372267008\t账号登录\t\n登录会话\n239481074860769280\n\t成功\t\nPASSWORD_ACCEPTED\ndb603295-6422-4a9d-92c6-d93db16f02ff\n\t\n查看\n\n2026/10/24 00:12:06\t221546852372267008\t账号登录\t\n登录会话\n239481027427385344\n\t成功\t\nPASSWORD_ACCEPTED\n6959acbf-bd7e-4393-ad35-9ff84cd70def\n\t\n查看\n1\n2\n3\n4\n5\n334\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n系统管理\n审计日志",
+    "main": "时间范围\n→\n操作者 ID\n操作类型\n结果\n全部结果\n对象类型\n全部类型\n对象 ID\nRequest ID\n快捷范围按本地自然日计算；结束时间不包含在内。\n重 置\n查 询\n共 3331 条记录\n时间\t操作者\t操作\t对象\t结果\t原因 / 请求编号\t详情\n\n时间\n\t\n操作者\n\t\n操作\n\t\n对象\n\t\n结果\n\t\n原因 / 请求编号\n\t\n详情\n\n2026/10/24 00:31:09\t221546852372267008\t账号登录\t\n登录会话\n239485822510907392\n\t成功\t\nPASSWORD_ACCEPTED\n2e64bf24-e114-4a33-8aea-04466d1745f3\n\t\n查看\n\n2026/10/24 00:24:28\t221546852372267008\t账号登录\t\n登录会话\n239484140058132480\n\t成功\t\nPASSWORD_ACCEPTED\n81d0db3b-5777-4c74-a137-9c4262e42309\n\t\n查看\n\n2026/10/24 00:23:09\t221546852372267008\t账号登录\t\n登录会话\n239483809265958912\n\t成功\t\nPASSWORD_ACCEPTED\ne132a9b7-590a-4f46-9061-9f18242b543d\n\t\n查看\n\n2026/10/24 00:18:15\t221546852372267008\t账号登录\t\n登录会话\n239482576190914560\n\t成功\t\nPASSWORD_ACCEPTED\nb0e713ef-2320-4b09-8caa-0b16d0dd5cc8\n\t\n查看\n\n2026/10/24 00:15:45\t221546852372267008\t账号登录\t\n登录会话\n239481945237569536\n\t成功\t\nPASSWORD_ACCEPTED\n63b0351d-603c-4aa9-9303-7f6c2622159a\n\t\n查看\n\n2026/10/24 00:15:33\t221546852372267008\t账号登录\t\n登录会话\n239481896759803904\n\t成功\t\nPASSWORD_ACCEPTED\ne7f74a69-3c9d-49c1-b0f0-befc93aaecc7\n\t\n查看\n\n2026/10/24 00:13:24\t221546852372267008\t账号登录\t\n登录会话\n239481357405863936\n\t成功\t\nPASSWORD_ACCEPTED\n9dc15900-e00f-464d-b8c4-0e250ca9d827\n\t\n查看\n\n2026/10/24 00:13:13\t221546852372267008\t账号登录\t\n登录会话\n239481309808902144\n\t成功\t\nPASSWORD_ACCEPTED\nb76350bb-161d-4c4f-9614-5cef2343ba47\n\t\n查看\n\n2026/10/24 00:12:17\t221546852372267008\t账号登录\t\n登录会话\n239481074860769280\n\t成功\t\nPASSWORD_ACCEPTED\ndb603295-6422-4a9d-92c6-d93db16f02ff\n\t\n查看\n\n2026/10/24 00:12:06\t221546852372267008\t账号登录\t\n登录会话\n239481027427385344\n\t成功\t\nPASSWORD_ACCEPTED\n6959acbf-bd7e-4393-ad35-9ff84cd70def\n\t\n查看\n1\n2\n3\n4\n5\n334\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/gateway-configuration": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\nAPI 路由管理",
+    "main": "路由\n目标服务\n路由编码\n目标服务编码\nAPI Scope\nChannel\n全部\n状态\n全部\n查 询\n重 置\n共 574 条配置\n＋ 新增路由\n路由编码\tMethod\t入口路径\t目标服务\tChannel\t状态\t版本\t操作\n\n路由编码\n\t\nMethod\n\t\n入口路径\n\t\n目标服务\n\t\nChannel\n\t\n状态\n\t\n版本\n\t\n操作\n\nchannel-payment-callback\tPOST\t/api/channel-callbacks/v1/{channelCode}/{channelAccountId}\tchannel-connector-service\tCHANNEL_CALLBACK\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-checkout-create\tPOST\t/api/v1/checkouts\tcommerce-client-api\tCLIENT_API\t启用\t3\t\n操作 ▾\n\nclient-api-commerce-order-cancel\tPOST\t/api/v1/orders/{orderNo}/cancel\tcommerce-client-api\tCLIENT_API\t启用\t3\t\n操作 ▾\n\nclient-api-commerce-order-read\tGET\t/api/v1/orders/{orderNo}\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-order-read-client-id\tGET\t/api/v1/orders\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-order-refunds-list\tGET\t/api/v1/orders/{orderNo}/refunds\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-refund-create\tPOST\t/api/v1/orders/{orderNo}/refunds\tcommerce-client-api\tCLIENT_API\t启用\t3\t\n操作 ▾\n\nclient-api-commerce-refund-read\tGET\t/api/v1/refunds/{refundRequestNo}\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-refund-read-client-id\tGET\t/api/v1/refunds\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-refundable-read\tGET\t/api/v1/orders/{orderNo}/refundable-amount\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n1\n2\n3\n4\n5\n58\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\nAPI 路由管理",
+    "main": "路由\n目标服务\n路由编码\n目标服务编码\nAPI Scope\nChannel\n全部\n状态\n全部\n查 询\n重 置\n共 574 条配置\n＋ 新增路由\n路由编码\tMethod\t入口路径\t目标服务\tChannel\t状态\t版本\t操作\n\n路由编码\n\t\nMethod\n\t\n入口路径\n\t\n目标服务\n\t\nChannel\n\t\n状态\n\t\n版本\n\t\n操作\n\nchannel-payment-callback\tPOST\t/api/channel-callbacks/v1/{channelCode}/{channelAccountId}\tchannel-connector-service\tCHANNEL_CALLBACK\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-checkout-create\tPOST\t/api/v1/checkouts\tcommerce-client-api\tCLIENT_API\t启用\t3\t\n操作 ▾\n\nclient-api-commerce-order-cancel\tPOST\t/api/v1/orders/{orderNo}/cancel\tcommerce-client-api\tCLIENT_API\t启用\t3\t\n操作 ▾\n\nclient-api-commerce-order-read\tGET\t/api/v1/orders/{orderNo}\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-order-read-client-id\tGET\t/api/v1/orders\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-order-refunds-list\tGET\t/api/v1/orders/{orderNo}/refunds\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-refund-create\tPOST\t/api/v1/orders/{orderNo}/refunds\tcommerce-client-api\tCLIENT_API\t启用\t3\t\n操作 ▾\n\nclient-api-commerce-refund-read\tGET\t/api/v1/refunds/{refundRequestNo}\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-refund-read-client-id\tGET\t/api/v1/refunds\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n\nclient-api-commerce-refundable-read\tGET\t/api/v1/orders/{orderNo}/refundable-amount\tcommerce-client-api\tCLIENT_API\t启用\t2\t\n操作 ▾\n1\n2\n3\n4\n5\n58\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/risk/rule-configuration": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n规则配置",
+    "main": "新建规则集\n风控点\n结账准备\n规则集编码\n状态\n全部状态\n查 询\n共 4 个规则集\n刷 新\n规则集\t状态\t创建人 / 时间\t冻结人 / 时间\t操作\n\n规则集\n\t\n状态\n\t\n创建人 / 时间\n\t\n冻结人 / 时间\n\t\n操作\n\n示例：决策流金额检查\nDEMO_FLOW_AMOUNT_CHECK\n\t草稿\t221546852372267008\n2026/9/13 09:20:07\n\t—\n—\n\t\n操作 ▾\n\n示例：美元订单放行\nDEMO_USD_ALLOW\n\t草稿\t221546852372267008\n2026/9/12 10:58:08\n\t—\n—\n\t\n操作 ▾\n\n示例：地区准入检查\nDEMO_REGION_GUARD\n\t草稿\t221546852372267008\n2026/9/12 10:58:03\n\t—\n—\n\t\n操作 ▾\n\n示例：大额订单与折扣检查\nDEMO_AMOUNT_GUARD\n\t草稿\t221546852372267008\n2026/9/12 10:58:01\n\t—\n—\n\t\n操作 ▾\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n规则配置",
+    "main": "新建规则集\n风控点\n结账准备\n规则集编码\n状态\n全部状态\n查 询\n共 4 个规则集\n刷 新\n规则集\t状态\t创建人 / 时间\t冻结人 / 时间\t操作\n\n规则集\n\t\n状态\n\t\n创建人 / 时间\n\t\n冻结人 / 时间\n\t\n操作\n\n示例：决策流金额检查\nDEMO_FLOW_AMOUNT_CHECK\n\t草稿\t221546852372267008\n2026/9/13 09:20:07\n\t—\n—\n\t\n操作 ▾\n\n示例：美元订单放行\nDEMO_USD_ALLOW\n\t草稿\t221546852372267008\n2026/9/12 10:58:08\n\t—\n—\n\t\n操作 ▾\n\n示例：地区准入检查\nDEMO_REGION_GUARD\n\t草稿\t221546852372267008\n2026/9/12 10:58:03\n\t—\n—\n\t\n操作 ▾\n\n示例：大额订单与折扣检查\nDEMO_AMOUNT_GUARD\n\t草稿\t221546852372267008\n2026/9/12 10:58:01\n\t—\n—\n\t\n操作 ▾\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/risk/decision-flows": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n决策流",
+    "main": "配置条件分支与结束决定\n\n刷 新\n＋ 新建决策流\n决策点\n结账准备\n流程编码\n名称\n查 询\n重 置\n流程名称\t流程编码\t配置版本\t规则集节点\t保存人\t更新时间\t操作\n\n流程名称\n\t\n流程编码\n\t\n配置版本\n\t\n规则集节点\n\t\n保存人\n\t\n更新时间\n\t\n操作\n\n\n结账默认放行基线\n\tCHECKOUT_BASELINE_ALLOW\t#1\t0\t70001\t2026/10/17 00:07:47\t\n操作 ▾\n\n\n示例：订单风控条件分流\n\tDEMO_CHECKOUT_BRANCH_FLOW\t#2\t1\t221546852372267008\t2026/9/13 09:20:07\t\n操作 ▾\n1\n10 条/页\n\n保存不会立即生效，需在【执行发布】中发布并激活后对该风控点的评估生效。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n决策流",
+    "main": "配置条件分支与结束决定\n\n刷 新\n＋ 新建决策流\n决策点\n结账准备\n流程编码\n名称\n查 询\n重 置\n流程名称\t流程编码\t配置版本\t规则集节点\t保存人\t更新时间\t操作\n\n流程名称\n\t\n流程编码\n\t\n配置版本\n\t\n规则集节点\n\t\n保存人\n\t\n更新时间\n\t\n操作\n\n\n结账默认放行基线\n\tCHECKOUT_BASELINE_ALLOW\t#1\t0\t70001\t2026/10/17 00:07:47\t\n操作 ▾\n\n\n示例：订单风控条件分流\n\tDEMO_CHECKOUT_BRANCH_FLOW\t#2\t1\t221546852372267008\t2026/9/13 09:20:07\t\n操作 ▾\n1\n10 条/页\n\n保存不会立即生效，需在【执行发布】中发布并激活后对该风控点的评估生效。",
+    "overlay": ""
+   }
+  },
+  "/risk/rejection-reasons": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n拒绝原因",
+    "main": "新增拒绝原因\n刷 新\n编码 / 名称\n状态\n全部\n查 询\n编码 / 名称\t默认文案\t状态\t更新人 / 时间\t操作\n\n编码 / 名称\n\t\n默认文案\n\t\n状态\n\t\n更新人 / 时间\n\t\n操作\n\n示例：订单金额超限\nDEMO_AMOUNT_LIMIT\n\t\n示例订单金额超过当前配置阈值，请人工确认。\n\t启用\t221546852372267008\n2026/9/12 10:57:53\n\t\n操作 ▾\n\n示例：折扣金额异常\nDEMO_DISCOUNT_ANOMALY\n\t\n示例折扣金额超过当前配置阈值，请人工确认。\n\t启用\t221546852372267008\n2026/9/12 10:57:55\n\t\n操作 ▾\n\n示例：地区准入限制\nDEMO_REGION_RESTRICTED\n\t\n示例地区代码不在当前支持范围内。\n\t启用\t221546852372267008\n2026/9/12 10:57:54\n\t\n操作 ▾\n\n支付被风控拒绝\nPAY_RISK_DECLINED\n\t\n支付被风控拒绝\n\t启用\t221546852372267008\n2026/10/15 20:01:51\n\t\n操作 ▾\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n拒绝原因",
+    "main": "新增拒绝原因\n刷 新\n编码 / 名称\n状态\n全部\n查 询\n编码 / 名称\t默认文案\t状态\t更新人 / 时间\t操作\n\n编码 / 名称\n\t\n默认文案\n\t\n状态\n\t\n更新人 / 时间\n\t\n操作\n\n示例：订单金额超限\nDEMO_AMOUNT_LIMIT\n\t\n示例订单金额超过当前配置阈值，请人工确认。\n\t启用\t221546852372267008\n2026/9/12 10:57:53\n\t\n操作 ▾\n\n示例：折扣金额异常\nDEMO_DISCOUNT_ANOMALY\n\t\n示例折扣金额超过当前配置阈值，请人工确认。\n\t启用\t221546852372267008\n2026/9/12 10:57:55\n\t\n操作 ▾\n\n示例：地区准入限制\nDEMO_REGION_RESTRICTED\n\t\n示例地区代码不在当前支持范围内。\n\t启用\t221546852372267008\n2026/9/12 10:57:54\n\t\n操作 ▾\n\n支付被风控拒绝\nPAY_RISK_DECLINED\n\t\n支付被风控拒绝\n\t启用\t221546852372267008\n2026/10/15 20:01:51\n\t\n操作 ▾\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/risk/subject-tags": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n主体标签",
+    "main": "新增主体标签\n刷 新\n编码 / 名称\n状态\n全部\n查 询\n编码 / 名称\t含义说明\t状态\t更新人 / 时间\t操作\n\n编码 / 名称\n\t\n含义说明\n\t\n状态\n\t\n更新人 / 时间\n\t\n操作\n\n示例：折扣人工核查\nDEMO_DISCOUNT_REVIEW\n\t\nDEMO 标签定义；规则示例配置目标为当前 Client，仅供人工验证。\n\t启用\t221546852372267008\n2026/9/12 10:57:59\n\t\n操作 ▾\n\n示例：大额订单关注\nDEMO_HIGH_VALUE\n\t\nDEMO 标签定义；规则示例配置目标为当前 Client，仅供人工验证。\n\t启用\t221546852372267008\n2026/9/12 10:57:56\n\t\n操作 ▾\n\n示例：地区准入关注\nDEMO_REGION_REVIEW\n\t\nDEMO 标签定义；规则示例配置目标为当前 Client，仅供人工验证。\n\t启用\t221546852372267008\n2026/9/12 10:57:57\n\t\n操作 ▾\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n主体标签",
+    "main": "新增主体标签\n刷 新\n编码 / 名称\n状态\n全部\n查 询\n编码 / 名称\t含义说明\t状态\t更新人 / 时间\t操作\n\n编码 / 名称\n\t\n含义说明\n\t\n状态\n\t\n更新人 / 时间\n\t\n操作\n\n示例：折扣人工核查\nDEMO_DISCOUNT_REVIEW\n\t\nDEMO 标签定义；规则示例配置目标为当前 Client，仅供人工验证。\n\t启用\t221546852372267008\n2026/9/12 10:57:59\n\t\n操作 ▾\n\n示例：大额订单关注\nDEMO_HIGH_VALUE\n\t\nDEMO 标签定义；规则示例配置目标为当前 Client，仅供人工验证。\n\t启用\t221546852372267008\n2026/9/12 10:57:56\n\t\n操作 ▾\n\n示例：地区准入关注\nDEMO_REGION_REVIEW\n\t\nDEMO 标签定义；规则示例配置目标为当前 Client，仅供人工验证。\n\t启用\t221546852372267008\n2026/9/12 10:57:57\n\t\n操作 ▾\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/risk/variables": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n变量管理",
+    "main": "刷 新\n新建变量\n名称 / 编码\n来源\n全部来源\n类型\n全部类型\n状态\n全部状态\n查 询\n共 38 个变量\n变量\t来源 / 类型\t当前值\t适用范围\t状态\t操作\n示例金额阈值\nDEMO_AMOUNT_THRESHOLD\n\t常量变量\n数值 · INPUT_CURRENCY\n\t8000.00000000\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n示例标准币种\nDEMO_STANDARD_CURRENCY\n\t常量变量\n文本\n\tUSD\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n实体来源可选值\nENTITY_SOURCE_VALUES系统\n\t集合变量\n文本\n\t3 项\t通用\n\t启用\t\n操作 ▾\n\nClient 标识\nINPUT_CLIENT_ID系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n动作主体、流程条件、规则条件\n\t启用\t\n操作 ▾\n\n国家/地区\nINPUT_COUNTRY_CODE系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n币种\nINPUT_CURRENCY系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n折扣金额\nINPUT_DISCOUNT_AMOUNT系统\n\t字段变量\n数值 · INPUT_CURRENCY\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n经营主体编号\nINPUT_ENTITY_NO系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n实体来源\nINPUT_ENTITY_SOURCE_TYPE系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n行业代码\nINPUT_INDUSTRY_CODE系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n明细行数\nINPUT_LINE_COUNT系统\n\t字段变量\n数值\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n语言地区\nINPUT_LOCALE系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t停用\t\n操作 ▾\n\nLocal Partner 标识\nINPUT_LOCAL_PARTNER_ID系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\nMCC\nINPUT_MCC_CODE系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n商品金额\nINPUT_MERCHANDISE_AMOUNT系统\n\t字段变量\n数值 · INPUT_CURRENCY\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n实付金额\nINPUT_NET_AMOUNT系统\n\t字段变量\n数值 · INPUT_CURRENCY\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n本节点处理结果\nNODE_DECISION系统\n\t节点输出\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件\n\t启用\t\n操作 ▾\n\n节点处理结果可选值\nNODE_DECISION_VALUES系统\n\t集合变量\n文本\n\t3 项\tCHECKOUT_PREPARE\n\t启用\t\n操作 ▾\n\n本节点是否命中\nNODE_MATCHED系统\n\t节点输出\n布尔\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件\n\t启用\t\n操作 ▾\n\n同卡 1 小时评估次数\nPAY_CARD_ATTEMPTS_1H\n\t实时累计\n数值\n\t运行时取值\tPAYMENT_ATTEMPT_RISK\n流程条件、规则条件\n\t启用\t\n操作 ▾\n1\n2",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n变量管理",
+    "main": "刷 新\n新建变量\n名称 / 编码\n来源\n全部来源\n类型\n全部类型\n状态\n全部状态\n查 询\n共 38 个变量\n变量\t来源 / 类型\t当前值\t适用范围\t状态\t操作\n示例金额阈值\nDEMO_AMOUNT_THRESHOLD\n\t常量变量\n数值 · INPUT_CURRENCY\n\t8000.00000000\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n示例标准币种\nDEMO_STANDARD_CURRENCY\n\t常量变量\n文本\n\tUSD\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n实体来源可选值\nENTITY_SOURCE_VALUES系统\n\t集合变量\n文本\n\t3 项\t通用\n\t启用\t\n操作 ▾\n\nClient 标识\nINPUT_CLIENT_ID系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n动作主体、流程条件、规则条件\n\t启用\t\n操作 ▾\n\n国家/地区\nINPUT_COUNTRY_CODE系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n币种\nINPUT_CURRENCY系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n折扣金额\nINPUT_DISCOUNT_AMOUNT系统\n\t字段变量\n数值 · INPUT_CURRENCY\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n经营主体编号\nINPUT_ENTITY_NO系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n实体来源\nINPUT_ENTITY_SOURCE_TYPE系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n行业代码\nINPUT_INDUSTRY_CODE系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n明细行数\nINPUT_LINE_COUNT系统\n\t字段变量\n数值\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n语言地区\nINPUT_LOCALE系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t停用\t\n操作 ▾\n\nLocal Partner 标识\nINPUT_LOCAL_PARTNER_ID系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\nMCC\nINPUT_MCC_CODE系统\n\t字段变量\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n商品金额\nINPUT_MERCHANDISE_AMOUNT系统\n\t字段变量\n数值 · INPUT_CURRENCY\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n实付金额\nINPUT_NET_AMOUNT系统\n\t字段变量\n数值 · INPUT_CURRENCY\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件、规则条件\n\t启用\t\n操作 ▾\n\n本节点处理结果\nNODE_DECISION系统\n\t节点输出\n文本\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件\n\t启用\t\n操作 ▾\n\n节点处理结果可选值\nNODE_DECISION_VALUES系统\n\t集合变量\n文本\n\t3 项\tCHECKOUT_PREPARE\n\t启用\t\n操作 ▾\n\n本节点是否命中\nNODE_MATCHED系统\n\t节点输出\n布尔\n\t运行时取值\tCHECKOUT_PREPARE\n流程条件\n\t启用\t\n操作 ▾\n\n同卡 1 小时评估次数\nPAY_CARD_ATTEMPTS_1H\n\t实时累计\n数值\n\t运行时取值\tPAYMENT_ATTEMPT_RISK\n流程条件、规则条件\n\t启用\t\n操作 ▾\n1\n2",
+    "overlay": ""
+   }
+  },
+  "/risk/lists": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n风控名单",
+    "main": "名单用于“名单命中”变量；命中后如何处置由规则决定，名单用途仅用于展示。\n\n刷 新\n＋ 新建名单\n名单名称 / 编码\t主体类型\t用途\t状态\t操作\n支付卡指纹黑名单\nPAY_CARD_BLOCK\n\t卡指纹\t拦截\t启用\t\n成员\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n风控名单",
+    "main": "名单用于“名单命中”变量；命中后如何处置由规则决定，名单用途仅用于展示。\n\n刷 新\n＋ 新建名单\n名单名称 / 编码\t主体类型\t用途\t状态\t操作\n支付卡指纹黑名单\nPAY_CARD_BLOCK\n\t卡指纹\t拦截\t启用\t\n成员\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/risk/execution-releases": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n执行发布",
+    "main": "把冻结的决策流发布到 TEST 运行：创建 → 校验 → 影子运行 → 激活。\n\n风控点：支付尝试\n刷 新\n＋ 新建发布\n当前生效：R-11 · PAY_ATTEMPT_FLOW #1\n支付尝试 · TEST · 激活人 221546852372267008 · 2026/10/15 20:01:52 · 内容摘要 7331…f988\n查看详情\n状态\n全部\n发布号\t决策流 / 版本\t状态\t创建人 / 时间\t激活人 / 时间\t操作\nR-11\tPAY_ATTEMPT_FLOW #1\t生效中\t221546852372267008\n2026/10/15 20:01:52\n\t221546852372267008\n2026/10/15 20:01:52\n\t\n详情\n1\n10 条/页\n回滚：在已替代的发布上点“以此版本新建”，用相同决策流版本新建发布并重新校验、影子运行、激活；不支持直接重新激活旧发布。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n执行发布",
+    "main": "把冻结的决策流发布到 TEST 运行：创建 → 校验 → 影子运行 → 激活。\n\n风控点：支付尝试\n刷 新\n＋ 新建发布\n当前生效：R-11 · PAY_ATTEMPT_FLOW #1\n支付尝试 · TEST · 激活人 221546852372267008 · 2026/10/15 20:01:52 · 内容摘要 7331…f988\n查看详情\n状态\n全部\n发布号\t决策流 / 版本\t状态\t创建人 / 时间\t激活人 / 时间\t操作\nR-11\tPAY_ATTEMPT_FLOW #1\t生效中\t221546852372267008\n2026/10/15 20:01:52\n\t221546852372267008\n2026/10/15 20:01:52\n\t\n详情\n1\n10 条/页\n回滚：在已替代的发布上点“以此版本新建”，用相同决策流版本新建发布并重新校验、影子运行、激活；不支持直接重新激活旧发布。",
+    "overlay": ""
+   }
+  },
+  "/risk/evaluations": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n风控管理\n评估查询",
+    "main": "输入支付尝试 ID、订单 ID 或评估 ID，查看风控结论及其解释。\n\n支付尝试 ID\n查 询\n\n输入支付尝试 ID、订单 ID 或评估 ID",
+    "overlay": ""
+   }
+  },
+  "/console-resources": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n菜单与按钮",
+    "main": "菜单资源\nOperations · 176 个资源\n刷 新\n＋ 新增资源\n资源结构\n收起全部\n全部状态\n系统管理\n···\n人员管理\n5\n···\n角色管理\n3\n···\n审计日志\n···\n平台配置\n···\nAPI 路由管理\n1\n···\n菜单与按钮\n1\n···\n权限目录\n1\n···\nAPI 凭证\n1\n···\nAPI Scope\n1\n···\nWebhook 管理\n1\n···\n币种\n1\n···\n存储管理\n1\n···\n文件记录\n1\n···\n卡 BIN 库\n1\n···\n租户访问\n2\n···\n安全暂停与恢复\n···\n查看成员权限\n···\n风控管理\n···\n规则配置\n7\n···\n拒绝原因\n3\n···\n主体标签\n3\n···\n决策流\n2\n···\n变量管理\n2\n···\n风控名单\n1\n···\n执行发布\n2\n···\n评估查询\n···\n数据保护\n···\n数据类型\n1\n···\n访问规则\n1\n···\n策略变更记录\n···\n手动加密\n1\n···\n手动解密\n1\n···\n人工操作记录\n···\n外部 API\n停用\n···\n通知管理\n···\n通知模板\n1\n···\n发送账号\n3\n···\n发送记录\n···\n财务\n···\n账务基础资料\n1\n···\n账本查询\n1\n···\n余额查询\n···\n明细账查询\n···\n调整\n2\n···\n期间关账\n2\n···\n记账规则\n2\n···\n对账\n···\n商务\n···\n工作台\n···\n合同\n1\n···\n价目\n3\n···\n费率预览\n···\n价格试算\n···\n标准价目\n2\n···\n定价画像\n1\n···\n产品目录\n1\n···\n变更历史\n···\n渠道\n···\n渠道\n3\n···\nMID 与能力\n1\n···\n渠道成本\n2\n···\n接入方\n1\n停用\n···\n标准 API\n1\n···\n工作流\n···\n我的待办\n···\n我发起的\n···\n流程实例\n3\n···\n流程定义\n1\n···\n动作目录\n1\n···\n数据查询\n···\n数据源\n1\n···\n查询模板\n1\n···\n多语言\n···\n翻译\n3\n···\n发布记录\n1\n···\n语言与应用\n3\n···\n客户入驻审核\n4\n···\n确认行业与 MCC\n···\n核验材料与检查\n···\n退回修改\n···\n批准或最终拒绝\n···\n选择一个资源\n\n在左侧查看目录、页面菜单和按钮。",
+    "overlay": ""
+   }
+  },
+  "/permissions": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n权限目录",
+    "main": "权限目录\n＋ 新增权限\n权限编码\n资源类型\n状态\n全部状态\n风险级别\n全部级别\n查 询\n重 置\n共 118 个权限\n刷 新\n权限编码\t资源类型\t动作\t风险级别\t状态\t操作\n\n权限编码\n\t\n资源类型\n\t\n动作\n\t\n风险级别\n\t\n状态\n\t\n操作\n\n\nAPI_CREDENTIAL_READ\n\tAPI_CREDENTIAL\tREAD\t低\t启用\t\n操作 ▾\n\n\nAPI_CREDENTIAL_REVOKE\n\tAPI_CREDENTIAL\tREVOKE\t严重\t启用\t\n操作 ▾\n\n\nAPI_SCOPE_MANAGE\n\tAPI_SCOPE\tMANAGE\t高\t启用\t\n操作 ▾\n\n\nAPI_SCOPE_READ\n\tAPI_SCOPE\tREAD\t低\t启用\t\n操作 ▾\n\n\nCARD_BIN_LIBRARY_MANAGE\n\tCARD_BIN_LIBRARY\tMANAGE\t高\t启用\t\n操作 ▾\n\n\nCARD_BIN_LIBRARY_READ\n\tCARD_BIN_LIBRARY\tREAD\t低\t启用\t\n操作 ▾\n\n\nCHANNEL_ACCOUNT_CREDENTIAL\n\tCHANNEL_CONFIG\tCREDENTIAL\t高\t启用\t\n操作 ▾\n\n\nCHANNEL_CALL_GRANT_MANAGE\n\tCHANNEL_CALL_GRANT\tMANAGE\t高\t启用\t\n操作 ▾\n\n\nCHANNEL_CHANGE_READ\n\tCHANNEL_CONFIG\tREAD_CHANGE\t低\t启用\t\n操作 ▾\n\n\nCHANNEL_CONFIG_MANAGE\n\tCHANNEL_CONFIG\tMANAGE\t高\t启用\t\n操作 ▾\n1\n2\n3\n4\n5\n12\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n权限目录",
+    "main": "权限目录\n＋ 新增权限\n权限编码\n资源类型\n状态\n全部状态\n风险级别\n全部级别\n查 询\n重 置\n共 118 个权限\n刷 新\n权限编码\t资源类型\t动作\t风险级别\t状态\t操作\n\n权限编码\n\t\n资源类型\n\t\n动作\n\t\n风险级别\n\t\n状态\n\t\n操作\n\n\nAPI_CREDENTIAL_READ\n\tAPI_CREDENTIAL\tREAD\t低\t启用\t\n操作 ▾\n\n\nAPI_CREDENTIAL_REVOKE\n\tAPI_CREDENTIAL\tREVOKE\t严重\t启用\t\n操作 ▾\n\n\nAPI_SCOPE_MANAGE\n\tAPI_SCOPE\tMANAGE\t高\t启用\t\n操作 ▾\n\n\nAPI_SCOPE_READ\n\tAPI_SCOPE\tREAD\t低\t启用\t\n操作 ▾\n\n\nCARD_BIN_LIBRARY_MANAGE\n\tCARD_BIN_LIBRARY\tMANAGE\t高\t启用\t\n操作 ▾\n\n\nCARD_BIN_LIBRARY_READ\n\tCARD_BIN_LIBRARY\tREAD\t低\t启用\t\n操作 ▾\n\n\nCHANNEL_ACCOUNT_CREDENTIAL\n\tCHANNEL_CONFIG\tCREDENTIAL\t高\t启用\t\n操作 ▾\n\n\nCHANNEL_CALL_GRANT_MANAGE\n\tCHANNEL_CALL_GRANT\tMANAGE\t高\t启用\t\n操作 ▾\n\n\nCHANNEL_CHANGE_READ\n\tCHANNEL_CONFIG\tREAD_CHANGE\t低\t启用\t\n操作 ▾\n\n\nCHANNEL_CONFIG_MANAGE\n\tCHANNEL_CONFIG\tMANAGE\t高\t启用\t\n操作 ▾\n1\n2\n3\n4\n5\n12\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/currency-specs": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n币种",
+    "main": "币种\n＋ 新建币种\n共 2 个币种\n刷 新\n币种\t小数位\t舍入方式\t状态\t最后更新\t操作\n\n币种\n\t\n小数位\n\t\n舍入方式\n\t\n状态\n\t\n最后更新\n\t\n操作\n\nAED\t2\t四舍五入（HALF_UP）\t启用\t2026/10/22 00:35:20\t\n停 用\n\nUSD\t2\t四舍五入（HALF_UP）\t启用\t2026/10/18 17:35:43\t\n停 用",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n币种",
+    "main": "币种\n＋ 新建币种\n共 2 个币种\n刷 新\n币种\t小数位\t舍入方式\t状态\t最后更新\t操作\n\n币种\n\t\n小数位\n\t\n舍入方式\n\t\n状态\n\t\n最后更新\n\t\n操作\n\nAED\t2\t四舍五入（HALF_UP）\t启用\t2026/10/22 00:35:20\t\n停 用\n\nUSD\t2\t四舍五入（HALF_UP）\t启用\t2026/10/18 17:35:43\t\n停 用",
+    "overlay": ""
+   }
+  },
+  "/file-storage": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n存储管理",
+    "main": "存储管理\n登记存储实例与桶，按来源系统和访问级别决定新上传写到哪里；检查策略决定允许的文件类型和大小。实例代码与桶名创建后不可修改； 桶由基础设施预先创建，Platform 只登记和检查，不建桶、不改桶策略。密钥保存在 Vault，录入后无法查看，只能更换。\n存储实例\n桶\n写入规则\n检查策略\n共 2 个实例\n＋ 新建实例\n代码\t类型\t地址\t区域\t凭据方式\t凭据已配置\t状态\t桶数\t被规则引用\t更新时间\t操作\n\n代码\n\t\n类型\n\t\n地址\n\t\n区域\n\t\n凭据方式\n\t\n凭据已配置\n\t\n状态\n\t\n桶数\n\t\n被规则引用\n\t\n更新时间\n\t\n操作\n\nMINIO\tMinIO\thttps://minio.mor-test.localhost:29400\tus-east-1\t固定密钥（Vault）\t\n已配置\n更换于 2026/10/22 08:47:05\n\t启用\t2\t3\t2026/10/22 08:47:05\t\n编辑\n更换密钥\n停用\n\nS3_TEST\tAmazon S3\t区域默认地址\tap-southeast-1\t固定密钥（Vault）\t\n已配置\n更换于 2026/10/22 19:30:45\n\t启用\t2\t3\t2026/10/22 19:38:52\t\n编辑\n更换密钥\n停用",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n存储管理",
+    "main": "存储管理\n登记存储实例与桶，按来源系统和访问级别决定新上传写到哪里；检查策略决定允许的文件类型和大小。实例代码与桶名创建后不可修改； 桶由基础设施预先创建，Platform 只登记和检查，不建桶、不改桶策略。密钥保存在 Vault，录入后无法查看，只能更换。\n存储实例\n桶\n写入规则\n检查策略\n共 2 个实例\n＋ 新建实例\n代码\t类型\t地址\t区域\t凭据方式\t凭据已配置\t状态\t桶数\t被规则引用\t更新时间\t操作\n\n代码\n\t\n类型\n\t\n地址\n\t\n区域\n\t\n凭据方式\n\t\n凭据已配置\n\t\n状态\n\t\n桶数\n\t\n被规则引用\n\t\n更新时间\n\t\n操作\n\nMINIO\tMinIO\thttps://minio.mor-test.localhost:29400\tus-east-1\t固定密钥（Vault）\t\n已配置\n更换于 2026/10/22 08:47:05\n\t启用\t2\t3\t2026/10/22 08:47:05\t\n编辑\n更换密钥\n停用\n\nS3_TEST\tAmazon S3\t区域默认地址\tap-southeast-1\t固定密钥（Vault）\t\n已配置\n更换于 2026/10/22 19:30:45\n\t启用\t2\t3\t2026/10/22 19:38:52\t\n编辑\n更换密钥\n停用",
+    "overlay": ""
+   }
+  },
+  "/file-records": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n文件记录",
+    "main": "查询各系统上传到平台的文件、版本和检查结果。只读：上传、替换由业务系统完成；下载会记录审计。\n创建时间\n→\n来源系统\n原因代码\n访问级别\n全部\n检查状态\n全部\n文件 ID\n有替换进行中\n查 询\n重 置\n快捷：\n全 部\n检查中\n检查未通过\n有替换进行中\n公开文件\n共 135 个文件\n按创建时间倒序 · 时间范围最长 31 天\n文件\t来源 / 原因\t访问\t版本\t检查\t大小\t创建时间\n\n文件\n\t\n来源 / 原因\n\t\n访问\n\t\n版本\n\t\n检查\n\t\n大小\n\t\n创建时间\n\n\nworkflow.json\n239478841716850688\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t60.1 KB\t2026/10/24 00:03:25\n\nwebhook.json\n239478841209339904\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t8.9 KB\t2026/10/24 00:03:25\n\nvault.json\n239478840479531008\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t10.7 KB\t2026/10/24 00:03:24\n\nrisk.json\n239478840030740480\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t68.2 KB\t2026/10/24 00:03:24\n\nrecon.json\n239478839565172736\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t32.3 KB\t2026/10/24 00:03:24\n\nnotification.json\n239478839141548032\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t19.6 KB\t2026/10/24 00:03:24\n\nnav.json\n239478838814392320\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t11.0 KB\t2026/10/24 00:03:24\n\ni18n-admin.json\n239478838457876480\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t25.4 KB\t2026/10/24 00:03:24\n\ngateway.json\n239478838109749248\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t14.3 KB\t2026/10/24 00:03:24\n\nfinance.json\n239478837635792896\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t53.8 KB\t2026/10/24 00:03:24\n\nfile.json\n239478837140865024\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t26.0 KB\t2026/10/24 00:03:24\n\nenum.json\n239478836750794752\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t335 B\t2026/10/24 00:03:23\n\ndata-query.json\n239478836268449792\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t23.5 KB\t2026/10/24 00:03:23\n\ncurrency.json\n239478835932905472\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t2.2 KB\t2026/10/24 00:03:23\n\ncommon.json\n239478835609944064\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t2.1 KB\t2026/10/24 00:03:23\n\ncommercial.json\n239478835228262400\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t53.9 KB\t2026/10/24 00:03:23\n\nclient-review.json\n239478834917883904\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t10.0 KB\t2026/10/24 00:03:23\n\nchannel.json\n239478834620088320\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t75.8 KB\t2026/10/24 00:03:23\n\ncard.json\n239478834284544000\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t8.2 KB\t2026/10/24 00:03:23\n\nauth.json\n239478833919639552\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t2.5 KB\t2026/10/24 00:03:23\n1\n2\n3\n4\n5\n6\n7\n20 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n文件记录",
+    "main": "查询各系统上传到平台的文件、版本和检查结果。只读：上传、替换由业务系统完成；下载会记录审计。\n创建时间\n→\n来源系统\n原因代码\n访问级别\n全部\n检查状态\n全部\n文件 ID\n有替换进行中\n查 询\n重 置\n快捷：\n全 部\n检查中\n检查未通过\n有替换进行中\n公开文件\n共 135 个文件\n按创建时间倒序 · 时间范围最长 31 天\n文件\t来源 / 原因\t访问\t版本\t检查\t大小\t创建时间\n\n文件\n\t\n来源 / 原因\n\t\n访问\n\t\n版本\n\t\n检查\n\t\n大小\n\t\n创建时间\n\n\nworkflow.json\n239478841716850688\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t60.1 KB\t2026/10/24 00:03:25\n\nwebhook.json\n239478841209339904\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t8.9 KB\t2026/10/24 00:03:25\n\nvault.json\n239478840479531008\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t10.7 KB\t2026/10/24 00:03:24\n\nrisk.json\n239478840030740480\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t68.2 KB\t2026/10/24 00:03:24\n\nrecon.json\n239478839565172736\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t32.3 KB\t2026/10/24 00:03:24\n\nnotification.json\n239478839141548032\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t19.6 KB\t2026/10/24 00:03:24\n\nnav.json\n239478838814392320\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t11.0 KB\t2026/10/24 00:03:24\n\ni18n-admin.json\n239478838457876480\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t25.4 KB\t2026/10/24 00:03:24\n\ngateway.json\n239478838109749248\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t14.3 KB\t2026/10/24 00:03:24\n\nfinance.json\n239478837635792896\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t53.8 KB\t2026/10/24 00:03:24\n\nfile.json\n239478837140865024\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t26.0 KB\t2026/10/24 00:03:24\n\nenum.json\n239478836750794752\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t335 B\t2026/10/24 00:03:23\n\ndata-query.json\n239478836268449792\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t23.5 KB\t2026/10/24 00:03:23\n\ncurrency.json\n239478835932905472\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t2.2 KB\t2026/10/24 00:03:23\n\ncommon.json\n239478835609944064\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t2.1 KB\t2026/10/24 00:03:23\n\ncommercial.json\n239478835228262400\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t53.9 KB\t2026/10/24 00:03:23\n\nclient-review.json\n239478834917883904\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t10.0 KB\t2026/10/24 00:03:23\n\nchannel.json\n239478834620088320\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t75.8 KB\t2026/10/24 00:03:23\n\ncard.json\n239478834284544000\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t8.2 KB\t2026/10/24 00:03:23\n\nauth.json\n239478833919639552\n\t\nplatform-support\nI18N_RELEASE_BUNDLE\n\t公开\t\nv1\n\t检查通过\t2.5 KB\t2026/10/24 00:03:23\n1\n2\n3\n4\n5\n6\n7\n20 条/页\nworkflow.json\n✕\n公开\n当前 v1 ·\n检查通过\nJSON\n公开地址\nhttps://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/3/zh-CN/workflow/555b35f045fe9531/50b8f835-2352-44b7-9d9d-f243be439cc5\n复 制\n打 开\n复制带版本地址（?v=1）\n文件 ID\n239478841716850688\n\n\n来源 / 原因\nplatform-support · I18N_RELEASE_BUNDLE\n\n\n存储\nMINIO / mor-platform-public\n\n\n大小 / 类型\n60.1 KB · application/json\n\n\n上传人\n—\n\n\n创建 / 更新\n2026/10/24 00:03:25 · 2026/10/24 00:03:25\n下载当前版本\n查看详情 →",
+    "overlay": ""
+   }
+  },
+  "/card-bin-library": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n卡 BIN 库",
+    "main": "＋ 导入新版本\n\n按卡 BIN 识别卡组织、借贷记、发卡国等属性。新版本导入并校验通过后由人工激活；每笔交易在创建支付工具时冻结当时的卡属性，回切不改已有交易。\n\n当前生效版本\nv1\n生效中\n2026-10-22 22:29 由 221546852372267008 激活\n生效号段数\n17\n最近导入\nv6\n可激活\n2026-10-23 12:56 由 221546852372267008 导入\n待处理版本\n2 个可激活\nBIN 查询\n当前生效\n查 询\n输入 6～8 位数字；只按 BIN 查询，不接受完整卡号\n版本列表\n全部\n校验中\n可激活\n校验失败\n生效中\n已停用\n版本\t状态\t文件名\t号段数\t错误行\t导入人\t创建时间\t操作\n\n版本\n\t\n状态\n\t\n文件名\n\t\n号段数\n\t\n错误行\n\t\n导入人\n\t\n创建时间\n\t\n操作\n\nv6\t可激活\tc3ds-bin-good.csv\t8\t0\t221546852372267008\t2026-10-23 12:56\t\n查看\n激 活\n\nv5\t已停用\tc3ds-bin-good2.csv\t8\t0\t221546852372267008\t2026-10-22 22:13\t\n查看\n回 切\n\nv4\t校验失败\tc3ds-bin-header.csv\t—\t0\t221546852372267008\t2026-10-22 22:13\t\n查看\n\nv3\t校验失败\tc3ds-bin-bad.csv\t—\t9\t221546852372267008\t2026-10-22 22:13\t\n查看\n\nv2\t可激活\tc3ds-bin-good.csv\t8\t0\t221546852372267008\t2026-10-22 22:13\t\n查看\n激 活\n\nv1\t生效中\t种子数据（初始化）\t17\t0\tsystem\t2026-10-22 21:58\t\n查看\n1\n10 条/页\n\n历史版本全部保留（本期不提供删除）。\n\n版本 v1\n种子数据（初始化）\n生效中\n文件\n—\n\n\n文件摘要\n—\n\n\n号段数\n17（错误 0）\n\n\n导入人\nsystem · 2026-10-22 21:58\n\n\n最近更新\n2026-10-22 22:29\n回切只影响之后新建的支付工具，已冻结的交易卡属性不变。\n激活历史\n时间\t类型\t版本\t操作人\n2026-10-22 22:29\t回切\tv1 ← v5\t221546852372267008\n2026-10-22 22:14\t激活\tv1 → v5\t221546852372267008\n2026-10-22 21:58\t激活\tv1\tsystem\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\n卡 BIN 库",
+    "main": "＋ 导入新版本\n\n按卡 BIN 识别卡组织、借贷记、发卡国等属性。新版本导入并校验通过后由人工激活；每笔交易在创建支付工具时冻结当时的卡属性，回切不改已有交易。\n\n当前生效版本\nv1\n生效中\n2026-10-22 22:29 由 221546852372267008 激活\n生效号段数\n17\n最近导入\nv6\n可激活\n2026-10-23 12:56 由 221546852372267008 导入\n待处理版本\n2 个可激活\nBIN 查询\n当前生效\n查 询\n输入 6～8 位数字；只按 BIN 查询，不接受完整卡号\n版本列表\n全部\n校验中\n可激活\n校验失败\n生效中\n已停用\n版本\t状态\t文件名\t号段数\t错误行\t导入人\t创建时间\t操作\n\n版本\n\t\n状态\n\t\n文件名\n\t\n号段数\n\t\n错误行\n\t\n导入人\n\t\n创建时间\n\t\n操作\n\nv6\t可激活\tc3ds-bin-good.csv\t8\t0\t221546852372267008\t2026-10-23 12:56\t\n查看\n激 活\n\nv5\t已停用\tc3ds-bin-good2.csv\t8\t0\t221546852372267008\t2026-10-22 22:13\t\n查看\n回 切\n\nv4\t校验失败\tc3ds-bin-header.csv\t—\t0\t221546852372267008\t2026-10-22 22:13\t\n查看\n\nv3\t校验失败\tc3ds-bin-bad.csv\t—\t9\t221546852372267008\t2026-10-22 22:13\t\n查看\n\nv2\t可激活\tc3ds-bin-good.csv\t8\t0\t221546852372267008\t2026-10-22 22:13\t\n查看\n激 活\n\nv1\t生效中\t种子数据（初始化）\t17\t0\tsystem\t2026-10-22 21:58\t\n查看\n1\n10 条/页\n\n历史版本全部保留（本期不提供删除）。\n\n版本 v6\nc3ds-bin-good.csv\n可激活\n文件\nc3ds-bin-good.csv\n\n\n文件摘要\nSHA-256 d2fc…c01b\n\n\n号段数\n8（错误 0）\n\n\n导入人\n221546852372267008 · 2026-10-23 12:56\n\n\n最近更新\n2026-10-23 12:56\n激 活\n激活历史\n时间\t类型\t版本\t操作人\n2026-10-22 22:29\t回切\tv1 ← v5\t221546852372267008\n2026-10-22 22:14\t激活\tv1 → v5\t221546852372267008\n2026-10-22 21:58\t激活\tv1\tsystem\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/api-credentials": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\nAPI 凭证",
+    "main": "Client\nClient 名称\n凭证\n密钥前缀\n状态\n全部状态\n查 询\n重 置\n共 88 条凭证\nClient\t密钥前缀\t状态\t到期时间\t操作\n\nClient\n\t\n密钥前缀\n\t\n状态\n\t\n到期时间\n\t\n操作\n\n\nClient 236927264720265217\n236927264720265217\n\tck-3AhogwEAXLQ0ZvyKXz1h\t已撤销\t2027/10/16 23:04:26\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-F1W9USHzxV3QOkkgtJcv\t已过期\t2026/10/17 00:04:31\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-pyxaZuaqB3iIx5IDDgTL\t已撤销\t2027/10/16 23:04:31\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-JuiBipKr3wr5fFpO487B\t有效\t2026/11/15 23:04:35\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-AKYWuvAb0vxdw2kLeJ13\t有效\t2026/11/15 23:04:35\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-94Xq8yoUYcqoN5AYQYA0\t有效\t2026/11/15 23:04:35\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-52X884vciUDkkLM3QKwX\t有效\t2026/11/15 23:04:35\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-30Ps51papYKwX6ws181t\t有效\t2026/11/15 23:04:36\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-0om5RREvX87uJXVO21aJ\t有效\t2026/11/15 23:04:36\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-YZ9nSFTp1EehkLS8hT9U\t有效\t2026/11/15 23:04:36\t\n操作 ▾\n1\n2\n3\n4\n5\n9\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\nAPI 凭证",
+    "main": "Client\nClient 名称\n凭证\n密钥前缀\n状态\n全部状态\n查 询\n重 置\n共 88 条凭证\nClient\t密钥前缀\t状态\t到期时间\t操作\n\nClient\n\t\n密钥前缀\n\t\n状态\n\t\n到期时间\n\t\n操作\n\n\nClient 236927264720265217\n236927264720265217\n\tck-3AhogwEAXLQ0ZvyKXz1h\t已撤销\t2027/10/16 23:04:26\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-F1W9USHzxV3QOkkgtJcv\t已过期\t2026/10/17 00:04:31\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-pyxaZuaqB3iIx5IDDgTL\t已撤销\t2027/10/16 23:04:31\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-JuiBipKr3wr5fFpO487B\t有效\t2026/11/15 23:04:35\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-AKYWuvAb0vxdw2kLeJ13\t有效\t2026/11/15 23:04:35\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-94Xq8yoUYcqoN5AYQYA0\t有效\t2026/11/15 23:04:35\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-52X884vciUDkkLM3QKwX\t有效\t2026/11/15 23:04:35\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-30Ps51papYKwX6ws181t\t有效\t2026/11/15 23:04:36\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-0om5RREvX87uJXVO21aJ\t有效\t2026/11/15 23:04:36\t\n操作 ▾\n\n\nClient 236927264720265217\n236927264720265217\n\tck-YZ9nSFTp1EehkLS8hT9U\t有效\t2026/11/15 23:04:36\t\n操作 ▾\n1\n2\n3\n4\n5\n9\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/api-scopes": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\nAPI Scope",
+    "main": "＋ 新增 Scope\n编码 / 名称\n查 询\n重 置\n共 5 个 Scope\n刷 新\nScope 编码\t名称\t说明\t操作\n\nScope 编码\n\t\n名称\n\t\n说明\n\t\n操作\n\ncheckouts.write\t创建结账\tClient API V1：创建 Hosted Checkout 订单\t\n操作 ▾\n\norders.cancel\t取消订单\tClient API V1：取消未支付订单\t\n操作 ▾\n\norders.read\t查询订单\tClient API V1：查询订单（验收夹具）\t\n操作 ▾\n\nrefunds.read\t查询退款\tClient API V1：查询可退金额与退款\t\n操作 ▾\n\nrefunds.write\t创建退款\tClient API V1：对已支付订单创建退款\t\n操作 ▾\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\nAPI Scope",
+    "main": "＋ 新增 Scope\n编码 / 名称\n查 询\n重 置\n共 5 个 Scope\n刷 新\nScope 编码\t名称\t说明\t操作\n\nScope 编码\n\t\n名称\n\t\n说明\n\t\n操作\n\ncheckouts.write\t创建结账\tClient API V1：创建 Hosted Checkout 订单\t\n操作 ▾\n\norders.cancel\t取消订单\tClient API V1：取消未支付订单\t\n操作 ▾\n\norders.read\t查询订单\tClient API V1：查询订单（验收夹具）\t\n操作 ▾\n\nrefunds.read\t查询退款\tClient API V1：查询可退金额与退款\t\n操作 ▾\n\nrefunds.write\t创建退款\tClient API V1：对已支付订单创建退款\t\n操作 ▾\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/tenant-access": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n租户访问",
+    "main": "刷 新\n租户类型\n全部类型\n名称\n来源业务状态\n全部状态\n安全状态\n全部状态\n查 询\n重 置\n租户 ID\n所属客户 / 合作伙伴 ID\n客户 / 合作伙伴\t类型\t来源业务状态\t安全状态\t租户访问条件\t操作\n\n客户 / 合作伙伴\n\t\n类型\n\t\n来源业务状态\n\t\n安全状态\n\t\n租户访问条件\n\t\n操作\n\n\nClient 236087245667409921\n租户 236087246036484096 · 主体 236087245667409921\n\t客户\t正常\t正常\t\n已满足\n\t\n操作 ▾\n\n\nClient 236585403778441217\n租户 236585404390785024 · 主体 236585403778441217\n\t客户\t正常\t正常\t\n已满足\n\t\n操作 ▾\n\n\nClient 236585635882835969\n租户 236585636100915200 · 主体 236585635882835969\n\t客户\t待激活\t正常\t\n未满足\n来源业务状态未允许访问\n\t\n操作 ▾\n\n\nClient 236585698872893441\n租户 236585699107749888 · 主体 236585698872893441\n\t客户\t待激活\t正常\t\n未满足\n来源业务状态未允许访问\n\t\n操作 ▾\n\n\nClient 236585875276931073\n租户 236585875784417280 · 主体 236585875276931073\n\t客户\t待激活\t正常\t\n未满足\n来源业务状态未允许访问\n\t\n操作 ▾\n\n\nClient 236585939751772161\n租户 236585939940491264 · 主体 236585939751772161\n\t客户\t待激活\t正常\t\n未满足\n来源业务状态未允许访问\n\t\n操作 ▾\n\n\nClient 236927057488093185\n租户 236927058368872448 · 主体 236927057488093185\n\t客户\t正常\t正常\t\n已满足\n\t\n操作 ▾\n\n\nClient 236927161318088705\n租户 236927161498419200 · 主体 236927161318088705\n\t客户\t待激活\t正常\t\n未满足\n来源业务状态未允许访问\n\t\n操作 ▾\n\n\nClient 236927264720265217\n租户 236927264908984320 · 主体 236927264720265217\n\t客户\t正常\t正常\t\n已满足\n\t\n操作 ▾\n\n\nClient 236927576776482817\n租户 236927576977784832 · 主体 236927576776482817\n\t客户\t正常\t正常\t\n已满足\n\t\n操作 ▾\n共 55 个租户\n1\n2\n3\n4\n5\n6\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n租户访问",
+    "main": "刷 新\n租户类型\n全部类型\n名称\n来源业务状态\n全部状态\n安全状态\n全部状态\n查 询\n重 置\n租户 ID\n所属客户 / 合作伙伴 ID\n客户 / 合作伙伴\t类型\t来源业务状态\t安全状态\t租户访问条件\t操作\n\n客户 / 合作伙伴\n\t\n类型\n\t\n来源业务状态\n\t\n安全状态\n\t\n租户访问条件\n\t\n操作\n\n\nClient 236087245667409921\n租户 236087246036484096 · 主体 236087245667409921\n\t客户\t正常\t正常\t\n已满足\n\t\n操作 ▾\n\n\nClient 236585403778441217\n租户 236585404390785024 · 主体 236585403778441217\n\t客户\t正常\t正常\t\n已满足\n\t\n操作 ▾\n\n\nClient 236585635882835969\n租户 236585636100915200 · 主体 236585635882835969\n\t客户\t待激活\t正常\t\n未满足\n来源业务状态未允许访问\n\t\n操作 ▾\n\n\nClient 236585698872893441\n租户 236585699107749888 · 主体 236585698872893441\n\t客户\t待激活\t正常\t\n未满足\n来源业务状态未允许访问\n\t\n操作 ▾\n\n\nClient 236585875276931073\n租户 236585875784417280 · 主体 236585875276931073\n\t客户\t待激活\t正常\t\n未满足\n来源业务状态未允许访问\n\t\n操作 ▾\n\n\nClient 236585939751772161\n租户 236585939940491264 · 主体 236585939751772161\n\t客户\t待激活\t正常\t\n未满足\n来源业务状态未允许访问\n\t\n操作 ▾\n\n\nClient 236927057488093185\n租户 236927058368872448 · 主体 236927057488093185\n\t客户\t正常\t正常\t\n已满足\n\t\n操作 ▾\n\n\nClient 236927161318088705\n租户 236927161498419200 · 主体 236927161318088705\n\t客户\t待激活\t正常\t\n未满足\n来源业务状态未允许访问\n\t\n操作 ▾\n\n\nClient 236927264720265217\n租户 236927264908984320 · 主体 236927264720265217\n\t客户\t正常\t正常\t\n已满足\n\t\n操作 ▾\n\n\nClient 236927576776482817\n租户 236927576977784832 · 主体 236927576776482817\n\t客户\t正常\t正常\t\n已满足\n\t\n操作 ▾\n共 55 个租户\n1\n2\n3\n4\n5\n6\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/external-api/standard-apis": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n渠道\n标准 API",
+    "main": "渠道/标准 API\n标准 API\n新建标准 API\n编码 / 名称\n查询\n编码\t名称\t请求字段\t响应字段\t已实现渠道\t更新时间\t操作\nAUTHORIZE\t预授权\t22\t8\tI_CYBS_NI、I_MPGS_NI\t2026-10-22 15:25\t···\nBALANCE_QUERY\t渠道余额查询\t6\t5\tPAYBY\t2026-10-14 17:29\t···\nCAPTURE\t请款\t12\t5\tI_CYBS_NI、I_MPGS_NI\t2026-10-22 17:15\t···\nPAY\t支付\t23\t8\tALIPAY_PLUS、DLOCAL、I_CYBS_NI、I_MPGS_NI、PAYERMAX、TOSS_PAY\t2026-10-22 22:37\t···\nPAY_CANCEL\t关闭未支付订单\t7\t4\tDLOCAL、PAYBY\t2026-10-14 17:29\t···\nPAY_QUERY\t支付查询\t7\t9\tALIPAY_PLUS、DLOCAL、I_CYBS_NI、I_MPGS_NI、PAYBY、PAYERMAX、TOSS_PAY\t2026-10-14 13:50\t···\nREFUND\t退款\t14\t5\tALIPAY_PLUS、DLOCAL、I_CYBS_NI、I_MPGS_NI、PAYBY、PAYERMAX、TOSS_PAY\t2026-10-22 17:15\t···\nREFUND_QUERY\t退款查询\t8\t8\tALIPAY_PLUS、DLOCAL、I_CYBS_NI、I_MPGS_NI、PAYBY、PAYERMAX、TOSS_PAY\t2026-10-16 11:56\t···\nS7P2_PING\t第二段 mor-test 验收探测\t1\t1\tS7P2_SVC\t2026-10-22 11:04\t···\n共 9 条\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n渠道\n渠道",
+    "main": "I_CYBS_NI · Cybersource（Network International）\n支付渠道\nDRAFT\n编 辑\n激 活\n关 闭\n返回列表\n渠道编码\nI_CYBS_NI\n类型\n支付渠道（不可修改）\n渠道 ID\n239008232893423616\n配置版本\nv2\n创建\n2026-10-22 16:53\n更新\n2026-10-22 16:53\n概览\n技术账号 0\nMID 0\n协议配置\n沙箱验证\n变更记录\n标准 API 实现\n6\n原子 API\n4\n公共脚本\n2\n\n原「接入方」页的三个页签迁入这里；编辑器原样复用。\n\n标准 API 实现\n每个标准 API 在本渠道有一个实现流程；删除前需先停用对应调用授权。\n新增实现\n标准 API\t流程\t总预算\t版本\t更新\t操作\nAUTHORIZE · 预授权\t5 个节点 · 13 个出口 · 初始化 channelAccount、card\t25000 ms\tv5\t2026-10-22 17:15\t\n编辑流程\n验证\n···\n\nCAPTURE · 请款\t5 个节点 · 8 个出口 · 初始化 channelAccount\t25000 ms\tv5\t2026-10-22 17:15\t\n编辑流程\n验证\n···\n\nPAY · 支付\t5 个节点 · 13 个出口 · 初始化 channelAccount、card\t25000 ms\tv5\t2026-10-22 17:15\t\n编辑流程\n验证\n···\n\nPAY_QUERY · 支付查询\t4 个节点 · 14 个出口 · 初始化 channelAccount\t20000 ms\tv5\t2026-10-22 17:15\t\n编辑流程\n验证\n···\n\nREFUND · 退款\t5 个节点 · 8 个出口 · 初始化 channelAccount\t25000 ms\tv5\t2026-10-22 17:15\t\n编辑流程\n验证\n···\n\nREFUND_QUERY · 退款查询\t4 个节点 · 14 个出口 · 初始化 channelAccount\t20000 ms\tv5\t2026-10-22 17:15\t\n编辑流程\n验证\n···\n原子 API 的出站地址从「概览 › 出站地址」中选择，不再单独维护接入方。\n支付渠道的标准 API 实现由支付入口（仅 Payment）执行。\n流程不编排冲正、撤销、退款等资金反向操作（人工评审）。",
+    "overlay": ""
+   }
+  },
+  "/client-onboarding/reviews": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n客户入驻审核",
+    "main": "刷 新\n申请编号\n客户类型\n全部类型\n处理状态\n全部状态\n查 询\n重 置\n审核任务\t客户类型\t状态\t提交时间\t结束时间\t操作\n\n审核任务\n\t\n客户类型\n\t\n状态\n\t\n提交时间\n\t\n结束时间\n\t\n操作\n\n\nDD239260421964550144\n申请 239260386824658944 · 客户 239260386824658945\n\t个人\t已通过\t2026/10/23 09:35:29\t2026/10/23 09:35:41\t\n审核\n\n\nDD239130533479698432\n申请 239130487124238336 · 客户 239130487124238337\n\t个人\t已通过\t2026/10/23 00:59:19\t2026/10/23 00:59:29\t\n审核\n\n\nDD237610171537412096\n申请 237610139979456512 · 客户 237610139979456513\n\t个人\t已通过\t2026/10/18 20:17:59\t2026/10/18 20:18:07\t\n审核\n\n\nDD237610142412165120\n申请 237610139979456512 · 客户 237610139979456513\n\t个人\t已退回\t2026/10/18 20:17:52\t2026/10/18 20:17:56\t\n审核\n\n\nDD237610034077487104\n申请 237610029350494208 · 客户 237610029350494209\n\t个人\t已退回\t2026/10/18 20:17:26\t2026/10/18 20:17:30\t\n审核\n\n\nDD237605267037081600\n申请 237605256547115008 · 客户 237605256547115009\n\t个人\t已退回\t2026/10/18 19:58:29\t2026/10/18 19:58:33\t\n审核\n\n\nDD237575209530544128\n申请 237575207592763392 · 客户 237575207592763393\n\t个人\t已通过\t2026/10/18 17:59:03\t2026/10/18 17:59:07\t\n审核\n\n\nDD237574766712705024\n申请 237574764993028096 · 客户 237574764993028097\n\t个人\t已通过\t2026/10/18 17:57:18\t2026/10/18 17:57:18\t\n审核\n\n\nDD237574563041497088\n申请 237574561367957504 · 客户 237574561367957505\n\t个人\t已通过\t2026/10/18 17:56:29\t2026/10/18 17:56:30\t\n审核\n\n\nDD237573701023944704\n申请 237573699337822208 · 客户 237573699337822209\n\t个人\t已通过\t2026/10/18 17:53:04\t2026/10/18 17:53:04\t\n审核\n\n\nDD237573477857611776\n申请 237573476041465856 · 客户 237573476041465857\n\t个人\t已通过\t2026/10/18 17:52:11\t2026/10/18 17:52:14\t\n审核\n\n\nDD237573383993282560\n申请 237573382420406272 · 客户 237573382420406273\n\t个人\t已通过\t2026/10/18 17:51:48\t2026/10/18 17:51:48\t\n审核\n\n\nDD237573283040579584\n申请 237573267559391232 · 客户 237573267559391233\n\t个人\t已通过\t2026/10/18 17:51:24\t2026/10/18 17:51:24\t\n审核\n\n\nDD237573041956179968\n申请 237573040244891648 · 客户 237573040244891649\n\t个人\t已通过\t2026/10/18 17:50:27\t2026/10/18 17:50:27\t\n审核\n\n\nDD237572963346534400\n申请 237572960934797312 · 客户 237572940726640641\n\t组织\t待审核\t2026/10/18 17:50:08\t—\t\n审核\n\n\nDD237572946661593088\n申请 237572940726640640 · 客户 237572940726640641\n\t组织\t已拒绝\t2026/10/18 17:50:04\t2026/10/18 17:50:07\t\n审核\n\n\nDD237572891330334720\n申请 237572886959857664 · 客户 237572886959857665\n\t个人\t待审核\t2026/10/18 17:49:51\t—\t\n审核\n\n\nDD237572889170268160\n申请 237572886959857664 · 客户 237572886959857665\n\t个人\t已退回\t2026/10/18 17:49:50\t2026/10/18 17:49:50\t\n审核\n\n\nDD237572779078176768\n申请 237572743950868480 · 客户 237572743950868481\n\t个人\t已通过\t2026/10/18 17:49:24\t2026/10/18 17:49:28\t\n审核\n\n\nDD237572749277646848\n申请 237572743950868480 · 客户 237572743950868481\n\t个人\t已退回\t2026/10/18 17:49:17\t2026/10/18 17:49:21\t\n审核\n共 54 个任务\n1\n2\n3\n20 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n客户入驻审核",
+    "main": "刷 新\n申请编号\n客户类型\n全部类型\n处理状态\n全部状态\n查 询\n重 置\n审核任务\t客户类型\t状态\t提交时间\t结束时间\t操作\n\n审核任务\n\t\n客户类型\n\t\n状态\n\t\n提交时间\n\t\n结束时间\n\t\n操作\n\n\nDD239260421964550144\n申请 239260386824658944 · 客户 239260386824658945\n\t个人\t已通过\t2026/10/23 09:35:29\t2026/10/23 09:35:41\t\n审核\n\n\nDD239130533479698432\n申请 239130487124238336 · 客户 239130487124238337\n\t个人\t已通过\t2026/10/23 00:59:19\t2026/10/23 00:59:29\t\n审核\n\n\nDD237610171537412096\n申请 237610139979456512 · 客户 237610139979456513\n\t个人\t已通过\t2026/10/18 20:17:59\t2026/10/18 20:18:07\t\n审核\n\n\nDD237610142412165120\n申请 237610139979456512 · 客户 237610139979456513\n\t个人\t已退回\t2026/10/18 20:17:52\t2026/10/18 20:17:56\t\n审核\n\n\nDD237610034077487104\n申请 237610029350494208 · 客户 237610029350494209\n\t个人\t已退回\t2026/10/18 20:17:26\t2026/10/18 20:17:30\t\n审核\n\n\nDD237605267037081600\n申请 237605256547115008 · 客户 237605256547115009\n\t个人\t已退回\t2026/10/18 19:58:29\t2026/10/18 19:58:33\t\n审核\n\n\nDD237575209530544128\n申请 237575207592763392 · 客户 237575207592763393\n\t个人\t已通过\t2026/10/18 17:59:03\t2026/10/18 17:59:07\t\n审核\n\n\nDD237574766712705024\n申请 237574764993028096 · 客户 237574764993028097\n\t个人\t已通过\t2026/10/18 17:57:18\t2026/10/18 17:57:18\t\n审核\n\n\nDD237574563041497088\n申请 237574561367957504 · 客户 237574561367957505\n\t个人\t已通过\t2026/10/18 17:56:29\t2026/10/18 17:56:30\t\n审核\n\n\nDD237573701023944704\n申请 237573699337822208 · 客户 237573699337822209\n\t个人\t已通过\t2026/10/18 17:53:04\t2026/10/18 17:53:04\t\n审核\n\n\nDD237573477857611776\n申请 237573476041465856 · 客户 237573476041465857\n\t个人\t已通过\t2026/10/18 17:52:11\t2026/10/18 17:52:14\t\n审核\n\n\nDD237573383993282560\n申请 237573382420406272 · 客户 237573382420406273\n\t个人\t已通过\t2026/10/18 17:51:48\t2026/10/18 17:51:48\t\n审核\n\n\nDD237573283040579584\n申请 237573267559391232 · 客户 237573267559391233\n\t个人\t已通过\t2026/10/18 17:51:24\t2026/10/18 17:51:24\t\n审核\n\n\nDD237573041956179968\n申请 237573040244891648 · 客户 237573040244891649\n\t个人\t已通过\t2026/10/18 17:50:27\t2026/10/18 17:50:27\t\n审核\n\n\nDD237572963346534400\n申请 237572960934797312 · 客户 237572940726640641\n\t组织\t待审核\t2026/10/18 17:50:08\t—\t\n审核\n\n\nDD237572946661593088\n申请 237572940726640640 · 客户 237572940726640641\n\t组织\t已拒绝\t2026/10/18 17:50:04\t2026/10/18 17:50:07\t\n审核\n\n\nDD237572891330334720\n申请 237572886959857664 · 客户 237572886959857665\n\t个人\t待审核\t2026/10/18 17:49:51\t—\t\n审核\n\n\nDD237572889170268160\n申请 237572886959857664 · 客户 237572886959857665\n\t个人\t已退回\t2026/10/18 17:49:50\t2026/10/18 17:49:50\t\n审核\n\n\nDD237572779078176768\n申请 237572743950868480 · 客户 237572743950868481\n\t个人\t已通过\t2026/10/18 17:49:24\t2026/10/18 17:49:28\t\n审核\n\n\nDD237572749277646848\n申请 237572743950868480 · 客户 237572743950868481\n\t个人\t已退回\t2026/10/18 17:49:17\t2026/10/18 17:49:21\t\n审核\n共 54 个任务\n1\n2\n3\n20 条/页",
+    "overlay": ""
+   }
+  },
+  "/vault/data-types": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据保护\n数据类型",
+    "main": "当前策略版本 20\n新建数据类型\n共 11 个数据类型\n刷 新\n编码\tToken 模式\t数据级别\t值格式\t人工加密\t人工解密\t状态\t更新时间\t操作\n\n编码\n\t\nToken 模式\n\t\n数据级别\n\t\n值格式\n\t\n人工加密\n\t\n人工解密\n\t\n状态\n\t\n更新时间\n\t\n操作\n\n\nCASH_ACCOUNT_NUMBER_V1\n平台银行账户账号（对账银行账户，4–34 位字母或数字，含 IBAN）\n\t每次新 Token\t普通敏感\t\n正则[A-Za-z0-9]{4,34}\n\t不允许\t不允许\t启用\t2026/10/21 07:12:42\t\n编 辑\n\n\nCHANNEL_ACCOUNT_CONFIG_V1\n渠道账号配置（标准 API 正式执行读取）\n\t每次新 Token\t密钥\tJSON 对象\t允许\t允许\t启用\t2026/10/15 22:09:39\t\n编 辑\n\n\nDATA_SOURCE_PASSWORD_V1\n数据查询数据源的只读账号密码（Platform data-query）\n\t每次新 Token\t密钥\t不限格式\t不允许\t不允许\t启用\t2026/10/22 09:48:57\t\n编 辑\n\n\nEMAIL_ADDRESS_V1\nEMAIL_ADDRESS_V1\n\t同值同 Token\t普通敏感\t\n正则[^\\s@\\p{Lu}]{1,64}@[^\\s@.\\p{Lu}]+(?:\\.[^\\s@.\\p{Lu}]+)+\n\t不允许\t不允许\t启用\t2026/10/15 22:09:39\t\n编 辑\n\n\nFILE_STORAGE_CREDENTIAL_V1\n文件存储实例访问密钥（Platform 存储管理，{\"accessKeyId\",\"secretAccessKey\"}）\n\t每次新 Token\t密钥\tJSON 对象\t不允许\t不允许\t启用\t2026/10/22 08:42:17\t\n编 辑\n\n\nNOTIFICATION_PROVIDER_CREDENTIAL_V1\n通知服务商凭据（SES 密钥对）\n\t每次新 Token\t密钥\tJSON 对象\t允许\t不允许\t启用\t2026/10/15 22:09:39\t\n编 辑\n\n\nPAYMENT_CARD_DEK\n支付卡数据加密密钥（card-service 存卡与用卡）\n\t每次新 Token\t密钥\t不限格式\t不允许\t不允许\t启用\t2026/10/18 17:35:43\t\n编 辑\n\n\nPHONE_E164_V1\nPHONE_E164_V1\n\t同值同 Token\t普通敏感\t\n正则\\+[1-9][0-9]{7,14}\n\t不允许\t不允许\t启用\t2026/10/15 22:09:39\t\n编 辑\n\n\nTEST_REFERENCE_V1\nTEST_REFERENCE_V1\n\t每次新 Token\t普通敏感\t不限格式\t不允许\t不允许\t启用\t2026/10/15 09:13:31\t\n编 辑\n\n\nTEST_STABLE_V1\nTEST_STABLE_V1\n\t同值同 Token\t普通敏感\t不限格式\t不允许\t不允许\t启用\t2026/10/15 09:13:31\t\n编 辑\n\n\nWEBHOOK_SIGNING_SECRET_V1\nClient Webhook 签名密钥（Platform 生成，发送前 Reveal 签名）\n\t每次新 Token\t密钥\t\n正则whsec_[A-Za-z0-9_-]{43}\n\t不允许\t不允许\t启用\t2026/10/16 01:13:32\t\n编 辑",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据保护\n数据类型",
+    "main": "当前策略版本 20\n新建数据类型\n共 11 个数据类型\n刷 新\n编码\tToken 模式\t数据级别\t值格式\t人工加密\t人工解密\t状态\t更新时间\t操作\n\n编码\n\t\nToken 模式\n\t\n数据级别\n\t\n值格式\n\t\n人工加密\n\t\n人工解密\n\t\n状态\n\t\n更新时间\n\t\n操作\n\n\nCASH_ACCOUNT_NUMBER_V1\n平台银行账户账号（对账银行账户，4–34 位字母或数字，含 IBAN）\n\t每次新 Token\t普通敏感\t\n正则[A-Za-z0-9]{4,34}\n\t不允许\t不允许\t启用\t2026/10/21 07:12:42\t\n编 辑\n\n\nCHANNEL_ACCOUNT_CONFIG_V1\n渠道账号配置（标准 API 正式执行读取）\n\t每次新 Token\t密钥\tJSON 对象\t允许\t允许\t启用\t2026/10/15 22:09:39\t\n编 辑\n\n\nDATA_SOURCE_PASSWORD_V1\n数据查询数据源的只读账号密码（Platform data-query）\n\t每次新 Token\t密钥\t不限格式\t不允许\t不允许\t启用\t2026/10/22 09:48:57\t\n编 辑\n\n\nEMAIL_ADDRESS_V1\nEMAIL_ADDRESS_V1\n\t同值同 Token\t普通敏感\t\n正则[^\\s@\\p{Lu}]{1,64}@[^\\s@.\\p{Lu}]+(?:\\.[^\\s@.\\p{Lu}]+)+\n\t不允许\t不允许\t启用\t2026/10/15 22:09:39\t\n编 辑\n\n\nFILE_STORAGE_CREDENTIAL_V1\n文件存储实例访问密钥（Platform 存储管理，{\"accessKeyId\",\"secretAccessKey\"}）\n\t每次新 Token\t密钥\tJSON 对象\t不允许\t不允许\t启用\t2026/10/22 08:42:17\t\n编 辑\n\n\nNOTIFICATION_PROVIDER_CREDENTIAL_V1\n通知服务商凭据（SES 密钥对）\n\t每次新 Token\t密钥\tJSON 对象\t允许\t不允许\t启用\t2026/10/15 22:09:39\t\n编 辑\n\n\nPAYMENT_CARD_DEK\n支付卡数据加密密钥（card-service 存卡与用卡）\n\t每次新 Token\t密钥\t不限格式\t不允许\t不允许\t启用\t2026/10/18 17:35:43\t\n编 辑\n\n\nPHONE_E164_V1\nPHONE_E164_V1\n\t同值同 Token\t普通敏感\t\n正则\\+[1-9][0-9]{7,14}\n\t不允许\t不允许\t启用\t2026/10/15 22:09:39\t\n编 辑\n\n\nTEST_REFERENCE_V1\nTEST_REFERENCE_V1\n\t每次新 Token\t普通敏感\t不限格式\t不允许\t不允许\t启用\t2026/10/15 09:13:31\t\n编 辑\n\n\nTEST_STABLE_V1\nTEST_STABLE_V1\n\t同值同 Token\t普通敏感\t不限格式\t不允许\t不允许\t启用\t2026/10/15 09:13:31\t\n编 辑\n\n\nWEBHOOK_SIGNING_SECRET_V1\nClient Webhook 签名密钥（Platform 生成，发送前 Reveal 签名）\n\t每次新 Token\t密钥\t\n正则whsec_[A-Za-z0-9_-]{43}\n\t不允许\t不允许\t启用\t2026/10/16 01:13:32\t\n编 辑",
+    "overlay": ""
+   }
+  },
+  "/vault/access-rules": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据保护\n访问规则",
+    "main": "新建访问规则\n数据类型\n全部\n调用服务\n动作\n全部\n状态\n全部\n查 询\n重 置\n共 31 条规则\n刷 新\n调用服务\t动作\t数据类型\t用途\t状态\t更新时间\t操作\n\n调用服务\n\t\n动作\n\t\n数据类型\n\t\n用途\n\t\n状态\n\t\n更新时间\n\t\n操作\n\nreconciliation-service\t加密\tCASH_ACCOUNT_NUMBER_V1\tRECON_CASH_ACCOUNT\t启用\t2026/10/21 07:12:42\t\n停 用\n\nchannel-connector-service\t加密\tCHANNEL_ACCOUNT_CONFIG_V1\tCHANNEL_CONFIGURATION\t启用\t2026/10/20 11:24:55\t\n停 用\n\nchannel-connector-service\t解密\tCHANNEL_ACCOUNT_CONFIG_V1\tCHANNEL_EXECUTION\t启用\t2026/10/18 17:35:43\t\n停 用\n\nplatform-support-service\t解密\tCHANNEL_ACCOUNT_CONFIG_V1\tCHANNEL_EXECUTION\t启用\t2026/10/15 11:00:26\t\n停 用\n\nplatform-support-service\t加密\tDATA_SOURCE_PASSWORD_V1\tDATA_SOURCE_CONFIGURATION\t启用\t2026/10/22 09:48:57\t\n停 用\n\nplatform-support-service\t解密\tDATA_SOURCE_PASSWORD_V1\tDATA_SOURCE_CONNECTION\t启用\t2026/10/22 09:48:57\t\n停 用\n\nclient-contract-service\t加密\tEMAIL_ADDRESS_V1\tCLIENT_ONBOARDING_CONTACT\t启用\t2026/10/15 09:13:31\t\n停 用\n\nclient-contract-service\t解密\tEMAIL_ADDRESS_V1\tCLIENT_ONBOARDING_CONTACT\t启用\t2026/10/15 09:13:31\t\n停 用\n\nclient-master-service\t加密\tEMAIL_ADDRESS_V1\tCLIENT_ONBOARDING_CONTACT\t启用\t2026/10/18 17:35:43\t\n停 用\n\nclient-master-service\t解密\tEMAIL_ADDRESS_V1\tCLIENT_ONBOARDING_CONTACT\t启用\t2026/10/18 17:35:43\t\n停 用\n1\n2\n3\n4\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据保护\n访问规则",
+    "main": "新建访问规则\n数据类型\n全部\n调用服务\n动作\n全部\n状态\n全部\n查 询\n重 置\n共 31 条规则\n刷 新\n调用服务\t动作\t数据类型\t用途\t状态\t更新时间\t操作\n\n调用服务\n\t\n动作\n\t\n数据类型\n\t\n用途\n\t\n状态\n\t\n更新时间\n\t\n操作\n\nreconciliation-service\t加密\tCASH_ACCOUNT_NUMBER_V1\tRECON_CASH_ACCOUNT\t启用\t2026/10/21 07:12:42\t\n停 用\n\nchannel-connector-service\t加密\tCHANNEL_ACCOUNT_CONFIG_V1\tCHANNEL_CONFIGURATION\t启用\t2026/10/20 11:24:55\t\n停 用\n\nchannel-connector-service\t解密\tCHANNEL_ACCOUNT_CONFIG_V1\tCHANNEL_EXECUTION\t启用\t2026/10/18 17:35:43\t\n停 用\n\nplatform-support-service\t解密\tCHANNEL_ACCOUNT_CONFIG_V1\tCHANNEL_EXECUTION\t启用\t2026/10/15 11:00:26\t\n停 用\n\nplatform-support-service\t加密\tDATA_SOURCE_PASSWORD_V1\tDATA_SOURCE_CONFIGURATION\t启用\t2026/10/22 09:48:57\t\n停 用\n\nplatform-support-service\t解密\tDATA_SOURCE_PASSWORD_V1\tDATA_SOURCE_CONNECTION\t启用\t2026/10/22 09:48:57\t\n停 用\n\nclient-contract-service\t加密\tEMAIL_ADDRESS_V1\tCLIENT_ONBOARDING_CONTACT\t启用\t2026/10/15 09:13:31\t\n停 用\n\nclient-contract-service\t解密\tEMAIL_ADDRESS_V1\tCLIENT_ONBOARDING_CONTACT\t启用\t2026/10/15 09:13:31\t\n停 用\n\nclient-master-service\t加密\tEMAIL_ADDRESS_V1\tCLIENT_ONBOARDING_CONTACT\t启用\t2026/10/18 17:35:43\t\n停 用\n\nclient-master-service\t解密\tEMAIL_ADDRESS_V1\tCLIENT_ONBOARDING_CONTACT\t启用\t2026/10/18 17:35:43\t\n停 用\n1\n2\n3\n4\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/vault/policy-changes": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据保护\n策略变更记录",
+    "main": "对象类型\n全部\n对象标识\n查 询\n重 置\n共 20 条变更\n刷 新\n版本\t变更类型\t对象\t操作人\t理由\t时间\t操作\n\n版本\n\t\n变更类型\n\t\n对象\n\t\n操作人\n\t\n理由\n\t\n时间\n\t\n操作\n\n20\t初始化\t\nPLATFORM_DATA_SOURCE_PASSWORD\n整体策略\n\tSYSTEM\t数据查询：Platform 在运营新建或修改数据源时 Protect 只读账号密码，建立连接前 Reveal（requirements/20261022/platform-support-数据查询服务）\t2026/10/22 09:48:57\t\n详 情\n\n19\t初始化\t\nPLATFORM_FILE_STORAGE_CREDENTIAL\n整体策略\n\tSYSTEM\t文件存储管理：Platform 在运营新建实例与更换密钥时 Protect 存储账号密钥，每次存储操作前 Reveal（requirements/20261022/platform-support-文件多存储并存）\t2026/10/22 08:42:17\t\n详 情\n\n18\t初始化\t\nRECONCILIATION_CASH_ACCOUNT_PROTECT\n整体策略\n\tSYSTEM\t对账银行账户：reconciliation 在银行账户新建入口 Protect 银行账号，只存令牌与末四位（requirements/20261020/reconciliation-渠道资金对账切片1）\t2026/10/21 07:12:42\t\n详 情\n\n17\t初始化\t\nCHANNEL_CONNECTOR_ACCOUNT_CONFIG_PROTECT\n整体策略\n\tSYSTEM\t渠道基础配置管理：channel-connector 在账号配置写入口 Protect 账号参数与凭据（requirements/20261020/channel-connector-运营控制台渠道成本与基础配置）\t2026/10/20 11:24:55\t\n详 情\n\n16\t初始化\t\nV2_CALLERS\n整体策略\n\tSYSTEM\tmor-test 切换到 V2：调用方改名与拆分（requirements/20261018/test-environment-V2部署与数据迁移）\t2026/10/18 17:35:43\t\n详 情\n\n15\t新建访问规则\t\nplatform-support-service|REVEAL|WEBHOOK_SIGNING_SECRET_V1|WEBHOOK_SIGNING\n访问规则\n\t221546852372267008\tClient Webhook 投递：Platform 保存与读取签名密钥\t2026/10/16 01:13:32\t\n详 情\n\n14\t新建访问规则\t\nplatform-support-service|PROTECT|WEBHOOK_SIGNING_SECRET_V1|WEBHOOK_SIGNING\n访问规则\n\t221546852372267008\tClient Webhook 投递：Platform 保存与读取签名密钥\t2026/10/16 01:13:32\t\n详 情\n\n13\t新建数据类型\t\nWEBHOOK_SIGNING_SECRET_V1\n数据类型\n\t221546852372267008\tClient Webhook 投递（requirements/20261015/platform-support-Webhook投递）\t2026/10/16 01:13:32\t\n详 情\n\n12\t新建访问规则\t\nplatform-support-service|PROTECT|NOTIFICATION_PROVIDER_CREDENTIAL_V1|NOTIFICATION_PROVIDER_SETUP\n访问规则\n\t221546852372267008\t通知发送账号维护：Platform 录入发送账号密钥（mor-test 阶段 7）\t2026/10/16 00:02:08\t\n详 情\n\n11\t修改数据类型\t\nNOTIFICATION_PROVIDER_CREDENTIAL_V1\n数据类型\n\t221546852372267008\t值格式约束：按需求第 7 节设置现有类型\t2026/10/15 22:09:39\t\n详 情\n1\n2\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据保护\n策略变更记录",
+    "main": "对象类型\n全部\n对象标识\n查 询\n重 置\n共 20 条变更\n刷 新\n版本\t变更类型\t对象\t操作人\t理由\t时间\t操作\n\n版本\n\t\n变更类型\n\t\n对象\n\t\n操作人\n\t\n理由\n\t\n时间\n\t\n操作\n\n20\t初始化\t\nPLATFORM_DATA_SOURCE_PASSWORD\n整体策略\n\tSYSTEM\t数据查询：Platform 在运营新建或修改数据源时 Protect 只读账号密码，建立连接前 Reveal（requirements/20261022/platform-support-数据查询服务）\t2026/10/22 09:48:57\t\n详 情\n\n19\t初始化\t\nPLATFORM_FILE_STORAGE_CREDENTIAL\n整体策略\n\tSYSTEM\t文件存储管理：Platform 在运营新建实例与更换密钥时 Protect 存储账号密钥，每次存储操作前 Reveal（requirements/20261022/platform-support-文件多存储并存）\t2026/10/22 08:42:17\t\n详 情\n\n18\t初始化\t\nRECONCILIATION_CASH_ACCOUNT_PROTECT\n整体策略\n\tSYSTEM\t对账银行账户：reconciliation 在银行账户新建入口 Protect 银行账号，只存令牌与末四位（requirements/20261020/reconciliation-渠道资金对账切片1）\t2026/10/21 07:12:42\t\n详 情\n\n17\t初始化\t\nCHANNEL_CONNECTOR_ACCOUNT_CONFIG_PROTECT\n整体策略\n\tSYSTEM\t渠道基础配置管理：channel-connector 在账号配置写入口 Protect 账号参数与凭据（requirements/20261020/channel-connector-运营控制台渠道成本与基础配置）\t2026/10/20 11:24:55\t\n详 情\n\n16\t初始化\t\nV2_CALLERS\n整体策略\n\tSYSTEM\tmor-test 切换到 V2：调用方改名与拆分（requirements/20261018/test-environment-V2部署与数据迁移）\t2026/10/18 17:35:43\t\n详 情\n\n15\t新建访问规则\t\nplatform-support-service|REVEAL|WEBHOOK_SIGNING_SECRET_V1|WEBHOOK_SIGNING\n访问规则\n\t221546852372267008\tClient Webhook 投递：Platform 保存与读取签名密钥\t2026/10/16 01:13:32\t\n详 情\n\n14\t新建访问规则\t\nplatform-support-service|PROTECT|WEBHOOK_SIGNING_SECRET_V1|WEBHOOK_SIGNING\n访问规则\n\t221546852372267008\tClient Webhook 投递：Platform 保存与读取签名密钥\t2026/10/16 01:13:32\t\n详 情\n\n13\t新建数据类型\t\nWEBHOOK_SIGNING_SECRET_V1\n数据类型\n\t221546852372267008\tClient Webhook 投递（requirements/20261015/platform-support-Webhook投递）\t2026/10/16 01:13:32\t\n详 情\n\n12\t新建访问规则\t\nplatform-support-service|PROTECT|NOTIFICATION_PROVIDER_CREDENTIAL_V1|NOTIFICATION_PROVIDER_SETUP\n访问规则\n\t221546852372267008\t通知发送账号维护：Platform 录入发送账号密钥（mor-test 阶段 7）\t2026/10/16 00:02:08\t\n详 情\n\n11\t修改数据类型\t\nNOTIFICATION_PROVIDER_CREDENTIAL_V1\n数据类型\n\t221546852372267008\t值格式约束：按需求第 7 节设置现有类型\t2026/10/15 22:09:39\t\n详 情\n1\n2\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/vault/manual-protect": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据保护\n手动加密",
+    "main": "加密结果的 Token 只显示一次，请复制后写入对应业务配置；本操作会记录操作人、理由与工单号。\n数据类型\n原值\n理由\n选择理由\n工单号\n字母、数字及 . _ # -，最长 64 位\n加 密",
+    "overlay": ""
+   }
+  },
+  "/vault/manual-reveal": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据保护\n手动解密",
+    "main": "本操作会记录操作人、理由与工单号。\nToken\n理由\n选择理由\n工单号\n字母、数字及 . _ # -，最长 64 位\n解 密",
+    "overlay": ""
+   }
+  },
+  "/vault/manual-events": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据保护\n人工操作记录",
+    "main": "操作人\n动作\n全部\n数据类型\n时间范围\n→\n查 询\n重 置\n共 0 条记录\n刷 新\n时间\t操作人\t动作\t数据类型\t理由\t工单号\t结果\n\n时间\n\t\n操作人\n\t\n动作\n\t\n数据类型\n\t\n理由\n\t\n工单号\n\t\n结果\n\n\n暂无数据",
+    "overlay": ""
+   }
+  },
+  "/notification-templates": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n通知管理\n通知模板",
+    "main": "新建模板\n模板编码\n状态\n全部\n查 询\n重 置\n共 4 个模板\n刷 新\n编码\t状态\t用途\t语言\t路由\t更新时间\n\n编码\n\t\n状态\n\t\n用途\n\t\n语言\n\t\n路由\n\t\n更新时间\n\nCLIENT_EMAIL_VERIFICATION\t启用\t认证\tzh-CN\t启用\t2026/10/15 22:11:45\nCLIENT_PASSWORD_RESET\t启用\t认证\tzh-CN\t启用\t2026/10/15 22:11:45\nCLIENT_TENANT_INVITATION\t启用\t认证\tzh-CN\t启用\t2026/10/17 13:43:18\nWORKFLOW_NOTIFICATION\t启用\t普通\tzh-CN\t启用\t2026/10/22 16:19:55\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n通知管理\n通知模板",
+    "main": "通知模板 / CLIENT_EMAIL_VERIFICATION\nCLIENT_EMAIL_VERIFICATION\n认证邮件\n启用\n版本 1\n刷 新\n停用模板\n注册邮箱验证邮件使用此模板。正文必须包含 ${link}；停用模板或路由后，用户将收不到注册邮箱验证邮件。\n发送路由\n修改路由\n停用路由\n主账号\nSES_PRIMARY\n\t\n备用账号\n—\n\t\n状态\n启用\n\t\n版本\n1\n\t\n更新时间\n2026/10/15 22:11:45\n语言内容\nzh-CN\n+ 新增语言\n标题模板\n正文模板\n占位符\n${link} 必填\n语法 ${name}；标题不可换行；正文最多 60000 字节\n修改原因\n预 览\n放弃修改\n保存 zh-CN",
+    "overlay": ""
+   }
+  },
+  "/notification-providers": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n通知管理\n发送账号",
+    "main": "+ 新建账号\n区域、发件地址与密钥在此维护；密钥保存在 Vault，录入后无法查看，只能更换。配置不完整的账号不能启用，路由到它的邮件无法发送。\n共 1 个账号\n刷 新\n编码\t类型\t状态\t区域 / 发件地址\t密钥 / 配置完整\t投递事件\t被引用\t操作\n\n编码\n\t\n类型\n\t\n状态\n\t\n区域 / 发件地址\n\t\n密钥 / 配置完整\n\t\n投递事件\n\t\n被引用\n\t\n操作\n\nSES_PRIMARY\tAmazon SES\t启用\t\nap-southeast-1\nnoreply@payorigo.com\n\t\n已录入\n更换于 2026/10/16 23:43:14\n配置完整\n\t\n接收正常\n最近拉取 2026/10/24 00:33:19\n最近事件 2026/10/17 14:06:31\n\t\nCLIENT_EMAIL_VERIFICATION（主）\nCLIENT_PASSWORD_RESET（主）\nCLIENT_TENANT_INVITATION（主）\nWORKFLOW_NOTIFICATION（主）\n\t\n编辑\n更换密钥\n测试发送\n停用\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n通知管理\n发送账号",
+    "main": "+ 新建账号\n区域、发件地址与密钥在此维护；密钥保存在 Vault，录入后无法查看，只能更换。配置不完整的账号不能启用，路由到它的邮件无法发送。\n共 1 个账号\n刷 新\n编码\t类型\t状态\t区域 / 发件地址\t密钥 / 配置完整\t投递事件\t被引用\t操作\n\n编码\n\t\n类型\n\t\n状态\n\t\n区域 / 发件地址\n\t\n密钥 / 配置完整\n\t\n投递事件\n\t\n被引用\n\t\n操作\n\nSES_PRIMARY\tAmazon SES\t启用\t\nap-southeast-1\nnoreply@payorigo.com\n\t\n已录入\n更换于 2026/10/16 23:43:14\n配置完整\n\t\n接收正常\n最近拉取 2026/10/24 00:33:19\n最近事件 2026/10/17 14:06:31\n\t\nCLIENT_EMAIL_VERIFICATION（主）\nCLIENT_PASSWORD_RESET（主）\nCLIENT_TENANT_INVITATION（主）\nWORKFLOW_NOTIFICATION（主）\n\t\n编辑\n更换密钥\n测试发送\n停用\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/notification-records": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n通知管理\n发送记录",
+    "main": "创建时间\n→\n来源系统\n来源事件键\n模板编码\n投递状态\n全部\n查 询\n重 置\n共 0 条记录 · 时间跨度最多 31 天\n刷 新\n时间\t来源 / 事件键\t模板\t收件人\t状态\t请求 ID\n\n时间\n\t\n来源 / 事件键\n\t\n模板\n\t\n收件人\n\t\n状态\n\t\n请求 ID\n\n\n暂无数据\n不显示收件邮箱和参数值；认证邮件（即时发送）不留发送记录，不会出现在此列表。多个收件人状态不同时，标签显示最需要关注的状态。",
+    "overlay": ""
+   }
+  },
+  "/webhooks": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n平台配置\nWebhook 管理",
+    "main": "Client\n按 Client ID 或名称搜索\n先选择一个 Client\n选择后查看该 Client 的 Webhook 端点和投递记录",
+    "overlay": ""
+   }
+  },
+  "/finance/setup": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n账务基础资料",
+    "main": "财务主体\n日历与期间\n账簿与账户\n科目表\n新建财务主体\n状态\n全部\n查 询\n代码\t显示名称\t法律 Party ID\t状态\t创建时间\n\n代码\n\t\n显示名称\n\t\n法律 Party ID\n\t\n状态\n\t\n创建时间\n\nPLATFORM_HQ\tPaytech 平台财务主体（演示）\t880000000701\t启用\t2026-10-20 19:37\n共 1 条\n1\n10 条/页\n财务主体是 Finance 内部核算身份，只能新建、不能修改或关闭；法律 Party ID 来自 CCT，本期手工输入并校验为正十进制。无维护权限的账号看不到「新建财务主体」按钮。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n账务基础资料",
+    "main": "财务主体\n日历与期间\n账簿与账户\n科目表\n新建财务主体\n状态\n全部\n查 询\n代码\t显示名称\t法律 Party ID\t状态\t创建时间\n\n代码\n\t\n显示名称\n\t\n法律 Party ID\n\t\n状态\n\t\n创建时间\n\nPLATFORM_HQ\tPaytech 平台财务主体（演示）\t880000000701\t启用\t2026-10-20 19:37\n共 1 条\n1\n10 条/页\n财务主体是 Finance 内部核算身份，只能新建、不能修改或关闭；法律 Party ID 来自 CCT，本期手工输入并校验为正十进制。无维护权限的账号看不到「新建财务主体」按钮。",
+    "overlay": ""
+   }
+  },
+  "/finance/ledger": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n账本查询",
+    "main": "账簿下钻\n试算平衡\n主体类型\n全部\n主体标识\n币种\n全部\n查 询\n重 置\n主体类型\t主体标识\t币种\t科目表\t状态\t操作\n\n主体类型\n\t\n主体标识\n\t\n币种\n\t\n科目表\n\t\n状态\n\t\n操作\n\n经营主体\tAE001\tUSD\tSTANDARD\tOPEN\t\n查看账户\n\n财务主体\t238324786164494336\tUSD\tSTANDARD\tOPEN\t\n查看账户\n共 2 条\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n账本查询",
+    "main": "账簿下钻\n试算平衡\n账簿\n/\nAE001 / USD · STANDARD\n账户号\n科目\n全部\n核算对象类型\n全部\n核算对象标识\n余额桶\n全部\n查 询\n重 置\n账户号\t科目\t核算对象\t余额桶\t方向\t状态\t借方合计\t贷方合计\t净余额\n\n账户号\n\t\n科目\n\t\n核算对象\n\t\n余额桶\n\t\n方向\n\t\n状态\n\t\n借方合计\n\t\n贷方合计\n\t\n净余额\n\nAE001-USD-22410101-0001\t\nCHANNEL_FEE_ACCRUAL\n渠道费用预提\n\t\nCHANNEL_ACCOUNT\n238508282463989760\n\tNONE\t贷\t启用\t0.00\t0.50\t0.50\nAE001-USD-50010101-0001\t\nCHANNEL_FEE_EXPENSE\n渠道成本\n\t\nOPERATING_ENTITY\nAE001\n\tNONE\t借\t启用\t0.50\t0.00\t0.50\nAE001-USD-11010101-0001\t\nCHANNEL_UNSETTLED_RECEIVABLE\n渠道待清算应收\n\t\nCHANNEL_ACCOUNT\n238508282463989760\n\tNONE\t借\t启用\t100.00\t0.00\t100.00\nAE001-USD-40010101-0001\t\nCLIENT_FEE_REVENUE\nClient 手续费收入\n\t\nOPERATING_ENTITY\nAE001\n\tNONE\t贷\t启用\t19.40\t22.40\t3.00\nAE001-USD-22010101-0001\t\nCLIENT_PAYABLE\nClient 应付款\n\t\nOPERATING_ENTITY\nAE001\n\tNONE\t贷\t启用\t14.40\t450.20\t435.80\nAE001-USD-31030101-0001\t\nCURRENT_PERIOD_RESULT\n本期损益\n\t\nOPERATING_ENTITY\nAE001\n\tNONE\t贷\t启用\t338.80\t0.00\t-338.80反向\nAE001-USD-51010201-0001\t\nRECON_ADJUSTMENT_EXPENSE\n对账调整损失\n\t\nOPERATING_ENTITY\nAE001\n\tNONE\t借\t启用\t358.20\t358.20\t0.00\n共 7 条\n1\n10 条/页\n点击账户行进入流水。总账只有以账簿主体为核算对象的控制账户（余额桶 NONE）；Client / Partner 明细与余额桶在「明细账查询」。账本查询只读，不显示新建按钮。",
+    "overlay": ""
+   }
+  },
+  "/finance/balances": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n余额查询",
+    "main": "Owner 类型\nClient\nLocal Partner\nOwner ID\n经营主体 entityNo\n币种\n启用币种\n查 询\n选择 Owner 类型并填写 Owner ID、entityNo 与币种后查询",
+    "overlay": ""
+   }
+  },
+  "/finance/subledger": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n明细账查询",
+    "main": "主体类型\nOPERATING_ENTITY\n主体标识\n币种\n启用币种\n账户号\n科目\n全部\nOwner 类型\n全部\nOwner ID\n余额桶\n全部\n查 询\n重 置\n选择主体类型并填写主体标识与币种后查询 Owner 账户",
+    "overlay": ""
+   }
+  },
+  "/finance/adjustments": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n调整",
+    "main": "人工调整\n计费事实\n账簿\n选择账簿\n选择账簿后查看人工调整\n人工调整只用于非 Owner 科目的总账调整（如重分类、计提）；影响 Client / Partner 余额的调整请在「计费事实」页签登记。提交后进入待复核，复核人不能是制单人，审批即过账。",
+    "overlay": ""
+   }
+  },
+  "/finance/period-close": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n期间关账",
+    "main": "财务日历\n选择财务日历\n选择财务日历后查看期间关账看板\n期间须按顺序关账：之前的期间都已关账时，最早的开放期间才能发起关账；只有最近一期已关账期间可以重开。复核人不能是发起人。",
+    "overlay": ""
+   }
+  },
+  "/finance/accounting-rules": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n记账规则",
+    "main": "规则包\t状态\t当前生效版本\t生效时间\n调整记账规则\nSTANDARD_ADJUSTMENT\n\tACTIVE\t3\t2026-10-20 10:14\n交易记账规则\nSTANDARD_TRANSACTION\n\tACTIVE\t1\t2000-01-01 04:00\n选择规则包后查看版本\n规则只影响生效后的新事实，不重算历史分录。审批时生效时间已过则按审批时间立即生效、旧版本退役；迟到的事实按其业务时间所在的版本记账；未来生效的版本为「待生效」，由定时任务每分钟切换。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n记账规则",
+    "main": "规则包\t状态\t当前生效版本\t生效时间\n调整记账规则\nSTANDARD_ADJUSTMENT\n\tACTIVE\t3\t2026-10-20 10:14\n交易记账规则\nSTANDARD_TRANSACTION\n\tACTIVE\t1\t2000-01-01 04:00\n调整记账规则 · 版本\n新建版本\n版本\t状态\t生效时间\t失效时间\n3\t生效中当前\t2026-10-20 10:14\t—\n2\t已作废\t2026-10-20 10:13\t—\n1\t已退役\t2000-01-01 04:00\t2026-10-20 10:14\n规则只影响生效后的新事实，不重算历史分录。审批时生效时间已过则按审批时间立即生效、旧版本退役；迟到的事实按其业务时间所在的版本记账；未来生效的版本为「待生效」，由定时任务每分钟切换。",
+    "overlay": ""
+   }
+  },
+  "/finance/reconciliation/clearing-accounts": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n清算账户",
+    "main": "有 1 个已激活的 MID + 币种还没有归入清算账户，这些 MID 上的交易无法对账\nDEMO_NI · AE001 · DEMO-NI-AE001-02 · *\n经营主体\n渠道\n币种\n状态\n全部\n查 询\n重 置\n新建清算账户\n编码\t渠道\t经营主体\t币种\tMID 数\t到账银行账户\t状态\t更新时间\n\n编码\n\t\n渠道\n\t\n经营主体\n\t\n币种\n\t\nMID 数\n\t\n到账银行账户\n\t\n状态\n\t\n更新时间\n\nNI-AE001-USD-B\tDEMO_NI\tAE001\tUSD\t1\tAE001 NI 结算户 · 尾号 6021\t启用\t2026-10-21 07:46\nNI-AE001-USD\tDEMO_NI\tAE001\tUSD\t1\tAE001 NI 结算户 · 尾号 6021\t启用\t2026-10-21 07:46\n共 2 条\n1\n10 条/页\n每个 MID + 币种只能属于一个清算账户；点行进入详情维护配置与 MID。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n清算账户",
+    "main": "财务\n/\n对账\n/\n清算账户\n/\n清算账户 · NI-AE001-USD-B\n清算账户 · NI-AE001-USD-B\n停 用\n返回列表\n渠道\nDEMO_NI\n\t\n经营主体\nAE001\n\t\n币种\nUSD\n\n\n状态\n启用\n\t\n到账银行账户\nAE001 NI 结算户 · 尾号 6021\n\t\n渠道费容差\n0.10\n\n\n主键\n238508282799534080\n\t\n版本\n2\n\t\n更新时间\n2026-10-21 07:46\n相关数据\n渠道账单\n渠道流水\n平台流水\n未结异常\n配置\n到账银行账户\nAE001 NI 结算户 · AE001 · USD · 尾号 6021\n为空时账单不能对平\n账单行等待天数\n期满仍未命中平台流水转为异常\n渠道费容差\n实际费用与预估之差超过它开阻塞异常\n到账宽限天数\n保存配置\nMID（1）\n没有同渠道、同主体、同币种的未归属 MID\n挂 入\n外部 MID\tMID 主键\tMID 状态\t挂入时间\t\nDEMO-NI-AE001-02\t238508278957580288\tACTIVE\t2026-10-21 07:46\t\n摘除\n每个 MID + 币种只能属于一个清算账户；挂 MID 时对账服务向渠道配置核对 MID 已激活、渠道与经营主体一致、能力组含清算币种。",
+    "overlay": ""
+   }
+  },
+  "/finance/reconciliation/cash-accounts": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n银行账户",
+    "main": "主体类型\n全部\n主体\n币种\n用途\n全部\n状态\n全部\n查 询\n重 置\n新建银行账户\n名称\t主体\t用途\t银行\t币种\t尾号\t状态\t提交人\n\n名称\n\t\n主体\n\t\n用途\n\t\n银行\n\t\n币种\n\t\n尾号\n\t\n状态\n\t\n提交人\n\nAE001 出款户（待复核）\t经营主体 · AE001\t出款\tENBD\tUSD\t7710\t待复核\t221546852372267008本人\nAE001 NI 结算户\t经营主体 · AE001\t渠道结算\tENBD\tUSD\t6021\t有效\t221546852372267008本人\n共 2 条\n1\n10 条/页\n同一主体 + 币种 + 用途只允许一个有效账户；换用途请关闭旧账户再新建。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n银行账户",
+    "main": "财务\n/\n对账\n/\n银行账户\n/\n银行账户 · AE001 出款户（待复核）\n银行账户 · AE001 出款户（待复核）\n返回列表\n主体\n经营主体 · AE001\n\t\n用途\n出款\n\t\n状态\n待复核\n\n\n开户银行\nENBD\n\t\n币种\nUSD\n\t\n账号末四位\n7710\n\n\n待复核变更\n新建\n\t\n提交内容摘要\n7ced3ac27486aeeb…\n\t\n主键\n238508282363326464\n\n\n提交人\n221546852372267008本人\n\t\n复核人\n—\n\t\n更新时间\n2026-10-21 07:46\n复核\n提交人不能复核自己的提交。\n同一主体 + 币种 + 用途只允许一个有效账户；换用途请关闭旧账户再新建。新建与关闭须经另一位有审批权限的同事复核。",
+    "overlay": ""
+   }
+  },
+  "/finance/reconciliation/statements": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n渠道账单",
+    "main": "清算账户\n全部\n批次号\n状态\n全部\n结算日起\n结算日止\n查 询\n重 置\n上传渠道账单\n批次号\t清算账户\t结算日\t净额\t方向\t行数\t状态\t上传人\t上传时间\n\n批次号\n\t\n清算账户\n\t\n结算日\n\t\n净额\n\t\n方向\n\t\n行数\n\t\n状态\n\t\n上传人\n\t\n上传时间\n\nNI-20261020-AE001-B\tNI-AE001-USD-B\t2026-10-20\t294.11 USD\t贷（收）\t2 / 2\t匹配中\t221546852372267008本人\t2026-10-21 07:47\nNI-20261020-AE001-A · v3\tNI-AE001-USD\t2026-10-20\t161.42 USD\t贷（收）\t3 / 3\t已对平\t221546852372267008本人\t2026-10-21 07:47\nNI-20261020-AE001-A · v2\tNI-AE001-USD\t2026-10-20\t156.92 USD\t贷（收）\t4 / 4\t已作废\t221546852372267008本人\t2026-10-21 07:47\nNI-20261020-AE001-A\tNI-AE001-USD\t2026-10-20\t171.42 USD\t贷（收）\t3 / 3\t已拒绝\t221546852372267008本人\t2026-10-21 07:47\nNI-20261019-AE001-A\tNI-AE001-USD\t2026-10-19\t678.07 USD\t贷（收）\t4 / 4\t匹配中\t221546852372267008本人\t2026-10-21 07:47\nNI-20261017-AE001-A\tNI-AE001-USD\t2026-10-17\t1,455.47 USD\t贷（收）\t4 / 4\t已对平\t221546852372267008本人\t2026-10-21 07:47\nNI-20261014-AE001-A\tNI-AE001-USD\t2026-10-14\t468.93 USD\t贷（收）\t5 / 5\t已到账\t221546852372267008本人\t2026-10-21 07:47\n共 7 条\n1\n10 条/页\n同一清算账户 + 批次号只允许一个未作废版本：要更正，先作废匹配中的版本再重新上传；已对平的账单不能更正或作废。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n渠道账单",
+    "main": "财务\n/\n对账\n/\n渠道账单\n/\n渠道账单 · NI-20261020-AE001-B\n渠道账单 · NI-20261020-AE001-B\n作 废\n返回列表\n清算账户\nNI-AE001-USD-B\n\t\n结算日\n2026-10-20\n\t\n状态\n匹配中\n\n\n总额\n295.00\nUSD\n\t\n费用\n0.89\n\t\n净额\n294.11\n贷（收）\n\n\n已到账\n0.00\n\t\n行（已匹配 / 未匹配 / 异常）\n1 / 0 / 1\n\t\n已导入 / 声明行数\n2 / 2\n\n\n开放异常\n1 条，去处置\n\t\n预期到账\n—\n\t\n文件\nNI-20261020-AE001-B-b1.csv\n\n\n上传人\n221546852372267008本人\n\t\n上传时间\n2026-10-21 07:47\n\t\n对平时间\n—\n对平门禁\n✗\n交易行都已匹配到平台流水\n✓\n调整行与无交易号费用行都已归类\n✗\n没有阻塞对平的开放异常\n✓\n各行回放与账单头合计一致\n✓\n清算账户已配置到账银行账户\n账单行（2）\n匹配状态\n行类型\n行号\t类型\t方向\t金额\t行费用\t交易日\t外部交易号\t匹配状态\t平台流水\t实际费用\n\n行号\n\t\n类型\n\t\n方向\n\t\n金额\n\t\n行费用\n\t\n交易日\n\t\n外部交易号\n\t\n匹配状态\n\t\n平台流水\n\t\n实际费用\n\n1\t收款\t贷（收）\t65.00\t0.20\t2026-10-19\tNI-ORD-1021-0014\nNI_ORDER_REF\n\t已匹配\t238508287564263424\n自动\n\t0.20\n2\t收款\t贷（收）\t230.00\t0.69\t2026-10-19\tNI-ORD-1021-B002\nNI_ORDER_REF\n\t异常\t—\t—\n共 2 行\n1\n20 条/页\n同一清算账户 + 批次号只允许一个未作废版本：要更正，先作废匹配中的版本再重新上传；已对平的账单不能更正或作废。",
+    "overlay": ""
+   }
+  },
+  "/finance/reconciliation/platform-txns": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n平台流水",
+    "main": "清算账户\n全部\n状态\n全部\n方向\n全部\n外部交易号\n业务日起\n业务日止\n查 询\n重 置\n外部交易号\t清算账户\t方向\t来源\t应清算\t已匹配\t预估 / 实际费用\t已结算\t状态\t业务时间\t\n\n外部交易号\n\t\n清算账户\n\t\n方向\n\t\n来源\n\t\n应清算\n\t\n已匹配\n\t\n预估 / 实际费用\n\t\n已结算\n\t\n状态\n\t\n业务时间\n\t\n \n\nSYN-BILLB-P-0001\nPAY\n\tNI-AE001-USD\t应收\tPAYMENT\t100.00 USD\t0.00\t0.50 / 0.00\t0.00\t未匹配\t2026-10-23 11:45\t\n开异常\n\nNI-ORD-1021-0013\nNI_ORDER_REF\n\tNI-AE001-USD\t应收\tPAYMENT\t18.00 USD\t0.00\t0.05 / 0.00\t0.00\t未匹配\t2026-10-21 19:45\t\n开异常\n\nNI-ORD-1021-0014\nNI_ORDER_REF · 渠道流水\n\tNI-AE001-USD-B\t应收\tPAYMENT\t65.00 USD\t65.00\t0.20 / 0.20\t0.00\t已匹配\t2026-10-19 20:52\t\n开异常\n\nNI-RFD-1021-0003\nNI_REFUND_REF · 渠道流水\n\tNI-AE001-USD\t应付\tREFUND\t30.00 USD\t30.00\t0.00 / 0.00\t30.00\t已结算\t2026-10-19 17:31\t\nNI-ORD-1021-0011\nNI_ORDER_REF · 渠道流水\n\tNI-AE001-USD\t应收\tPAYMENT\t42.00 USD\t42.00\t0.13 / 0.13\t42.00\t已结算\t2026-10-19 16:24\t\nNI-ORD-1021-0010\nNI_ORDER_REF · 渠道流水\n\tNI-AE001-USD\t应收\tPAYMENT\t150.00 USD\t150.00\t0.45 / 0.45\t150.00\t已结算\t2026-10-19 15:17\t\nNI-ORD-1021-0007\nNI_ORDER_REF\n\tNI-AE001-USD\t应收\tPAYMENT\t75.00 USD\t0.00\t0.23 / 0.00\t0.00\t未匹配\t2026-10-18 21:56\t\n开异常\n\nNI-ORD-1021-0009\nNI_ORDER_REF · 渠道流水\n\tNI-AE001-USD\t应收\tPAYMENT\t99.00 USD\t99.00\t0.30 / 0.30\t0.00\t已匹配\t2026-10-18 14:10\t\n开异常\n\nNI-ORD-1021-0008\nNI_ORDER_REF · 渠道流水\n\tNI-AE001-USD\t应收\tPAYMENT\t560.00 USD\t560.00\t1.68 / 2.40\t0.00\t已匹配\t2026-10-18 13:03\t\n开异常\n\nNI-RFD-1021-0002\nNI_REFUND_REF · 渠道流水\n\tNI-AE001-USD\t应付\tREFUND\t49.99 USD\t49.99\t0.00 / 0.00\t49.99\t已结算\t2026-10-16 20:49\t\n共 18 条\n1\n2\n10 条/页\n平台流水只由 billing 事实生成，页面不能新增或修改；长期未结算的流水可开异常，经处置「接受时间差」或「归类 RECON_DIFFERENCE」结案。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n平台流水",
+    "main": "清算账户\n全部\n状态\n全部\n方向\n全部\n外部交易号\n业务日起\n业务日止\n查 询\n重 置\n外部交易号\t清算账户\t方向\t来源\t应清算\t已匹配\t预估 / 实际费用\t已结算\t状态\t业务时间\t\n\n外部交易号\n\t\n清算账户\n\t\n方向\n\t\n来源\n\t\n应清算\n\t\n已匹配\n\t\n预估 / 实际费用\n\t\n已结算\n\t\n状态\n\t\n业务时间\n\t\n \n\nSYN-BILLB-P-0001\nPAY\n\tNI-AE001-USD\t应收\tPAYMENT\t100.00 USD\t0.00\t0.50 / 0.00\t0.00\t未匹配\t2026-10-23 11:45\t\n开异常\n\nNI-ORD-1021-0013\nNI_ORDER_REF\n\tNI-AE001-USD\t应收\tPAYMENT\t18.00 USD\t0.00\t0.05 / 0.00\t0.00\t未匹配\t2026-10-21 19:45\t\n开异常\n\nNI-ORD-1021-0014\nNI_ORDER_REF · 渠道流水\n\tNI-AE001-USD-B\t应收\tPAYMENT\t65.00 USD\t65.00\t0.20 / 0.20\t0.00\t已匹配\t2026-10-19 20:52\t\n开异常\n\nNI-RFD-1021-0003\nNI_REFUND_REF · 渠道流水\n\tNI-AE001-USD\t应付\tREFUND\t30.00 USD\t30.00\t0.00 / 0.00\t30.00\t已结算\t2026-10-19 17:31\t\nNI-ORD-1021-0011\nNI_ORDER_REF · 渠道流水\n\tNI-AE001-USD\t应收\tPAYMENT\t42.00 USD\t42.00\t0.13 / 0.13\t42.00\t已结算\t2026-10-19 16:24\t\nNI-ORD-1021-0010\nNI_ORDER_REF · 渠道流水\n\tNI-AE001-USD\t应收\tPAYMENT\t150.00 USD\t150.00\t0.45 / 0.45\t150.00\t已结算\t2026-10-19 15:17\t\nNI-ORD-1021-0007\nNI_ORDER_REF\n\tNI-AE001-USD\t应收\tPAYMENT\t75.00 USD\t0.00\t0.23 / 0.00\t0.00\t未匹配\t2026-10-18 21:56\t\n开异常\n\nNI-ORD-1021-0009\nNI_ORDER_REF · 渠道流水\n\tNI-AE001-USD\t应收\tPAYMENT\t99.00 USD\t99.00\t0.30 / 0.30\t0.00\t已匹配\t2026-10-18 14:10\t\n开异常\n\nNI-ORD-1021-0008\nNI_ORDER_REF · 渠道流水\n\tNI-AE001-USD\t应收\tPAYMENT\t560.00 USD\t560.00\t1.68 / 2.40\t0.00\t已匹配\t2026-10-18 13:03\t\n开异常\n\nNI-RFD-1021-0002\nNI_REFUND_REF · 渠道流水\n\tNI-AE001-USD\t应付\tREFUND\t49.99 USD\t49.99\t0.00 / 0.00\t49.99\t已结算\t2026-10-16 20:49\t\n共 18 条\n1\n2\n10 条/页\n平台流水只由 billing 事实生成，页面不能新增或修改；长期未结算的流水可开异常，经处置「接受时间差」或「归类 RECON_DIFFERENCE」结案。",
+    "overlay": ""
+   }
+  },
+  "/finance/reconciliation/channel-lines": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n渠道流水",
+    "main": "清算账户\n全部\n账单状态\n有效账单\n不选时不含已作废、已拒绝、接收中的账单\n匹配状态\n全部\n行类型\n全部\n交易号类型\n外部交易号\n精确匹配\n交易日起\n交易日止\n查 询\n重 置\n交易日\t清算账户\t渠道账单\t行号\t类型\t方向\t金额\t行费用\t外部交易号\t平台流水\t实际费用\t匹配状态\n\n交易日\n\t\n清算账户\n\t\n渠道账单\n\t\n行号\n\t\n类型\n\t\n方向\n\t\n金额\n\t\n行费用\n\t\n外部交易号\n\t\n平台流水\n\t\n实际费用\n\t\n匹配状态\n\n2026-10-19\tNI-AE001-USD-B\tNI-20261020-AE001-B\n匹配中 结算 2026-10-20\n\t2\t收款\t贷（收）\t230.00 USD\t0.69\tNI-ORD-1021-B002\nNI_ORDER_REF\n\t—\t—\t异常\n2026-10-19\tNI-AE001-USD-B\tNI-20261020-AE001-B\n匹配中 结算 2026-10-20\n\t1\t收款\t贷（收）\t65.00 USD\t0.20\tNI-ORD-1021-0014\nNI_ORDER_REF\n\t238508287564263424\n自动\n\t0.20\t已匹配\n2026-10-19\tNI-AE001-USD\tNI-20261020-AE001-A · v3\n已对平 结算 2026-10-20\n\t3\t退款\t借（付）\t30.00 USD\t0.00\tNI-RFD-1021-0003\nNI_REFUND_REF\n\t238508287505543168\n自动\n\t0.00\t已匹配\n2026-10-19\tNI-AE001-USD\tNI-20261020-AE001-A · v3\n已对平 结算 2026-10-20\n\t2\t收款\t贷（收）\t42.00 USD\t0.13\tNI-ORD-1021-0011\nNI_ORDER_REF\n\t238508287568457728\n自动\n\t0.13\t已匹配\n2026-10-19\tNI-AE001-USD\tNI-20261020-AE001-A · v3\n已对平 结算 2026-10-20\n\t1\t收款\t贷（收）\t150.00 USD\t0.45\tNI-ORD-1021-0010\nNI_ORDER_REF\n\t238508287513931776\n自动\n\t0.45\t已匹配\n2026-10-19\tNI-AE001-USD\tNI-20261019-AE001-A\n匹配中 结算 2026-10-19\n\t4\t调整\t借（付）\t56.00 USD\t0.00\t—\t—\t—\t异常\n2026-10-18\tNI-AE001-USD\tNI-20261019-AE001-A\n匹配中 结算 2026-10-19\n\t3\t收款\t贷（收）\t99.00 USD\t0.30\tNI-ORD-1021-0009\nNI_ORDER_REF\n\t238508287622983680\n自动\n\t0.30\t已匹配\n2026-10-18\tNI-AE001-USD\tNI-20261019-AE001-A\n匹配中 结算 2026-10-19\n\t2\t收款\t贷（收）\t560.00 USD\t2.40\tNI-ORD-1021-0008\nNI_ORDER_REF\n\t238508287430045696\n自动\n\t2.40\t已匹配\n2026-10-18\tNI-AE001-USD\tNI-20261019-AE001-A\n匹配中 结算 2026-10-19\n\t1\t收款\t贷（收）\t78.00 USD\t0.23\tNI-ORD-1021-0007\nNI_ORDER_REF\n\t—\t—\t异常\n2026-10-16\tNI-AE001-USD\tNI-20261017-AE001-A\n已对平 结算 2026-10-17\n\t4\t退款\t借（付）\t49.99 USD\t0.00\tNI-RFD-1021-0002\nNI_REFUND_REF\n\t238508287576846336\n自动\n\t0.00\t已匹配\n共 18 条，按交易日期从新到旧\n1\n2\n10 条/页\n渠道流水是各渠道账单中的行，只读；匹配、作废在所属渠道账单详情中进行。按外部交易号可找到它在哪张账单、匹配到哪笔平台流水。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n渠道账单",
+    "main": "财务\n/\n对账\n/\n渠道账单\n/\n渠道账单 · NI-20261020-AE001-B\n渠道账单 · NI-20261020-AE001-B\n作 废\n返回列表\n清算账户\nNI-AE001-USD-B\n\t\n结算日\n2026-10-20\n\t\n状态\n匹配中\n\n\n总额\n295.00\nUSD\n\t\n费用\n0.89\n\t\n净额\n294.11\n贷（收）\n\n\n已到账\n0.00\n\t\n行（已匹配 / 未匹配 / 异常）\n1 / 0 / 1\n\t\n已导入 / 声明行数\n2 / 2\n\n\n开放异常\n1 条，去处置\n\t\n预期到账\n—\n\t\n文件\nNI-20261020-AE001-B-b1.csv\n\n\n上传人\n221546852372267008本人\n\t\n上传时间\n2026-10-21 07:47\n\t\n对平时间\n—\n对平门禁\n✗\n交易行都已匹配到平台流水\n✓\n调整行与无交易号费用行都已归类\n✗\n没有阻塞对平的开放异常\n✓\n各行回放与账单头合计一致\n✓\n清算账户已配置到账银行账户\n账单行（2）\n匹配状态\n行类型\n行号\t类型\t方向\t金额\t行费用\t交易日\t外部交易号\t匹配状态\t平台流水\t实际费用\n\n行号\n\t\n类型\n\t\n方向\n\t\n金额\n\t\n行费用\n\t\n交易日\n\t\n外部交易号\n\t\n匹配状态\n\t\n平台流水\n\t\n实际费用\n\n1\t收款\t贷（收）\t65.00\t0.20\t2026-10-19\tNI-ORD-1021-0014\nNI_ORDER_REF\n\t已匹配\t238508287564263424\n自动\n\t0.20\n2\t收款\t贷（收）\t230.00\t0.69\t2026-10-19\tNI-ORD-1021-B002\nNI_ORDER_REF\n\t异常\t—\t—\n共 2 行\n1\n20 条/页\n同一清算账户 + 批次号只允许一个未作废版本：要更正，先作废匹配中的版本再重新上传；已对平的账单不能更正或作废。",
+    "overlay": ""
+   }
+  },
+  "/finance/reconciliation/bank": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n银行对账",
+    "main": "银行账户\n选择银行账户\n选择银行账户后查看流水、对账单与预期银行流水\n系统只给一对一匹配建议（金额相等、方向和币种一致、日期在窗口内）；一笔到账对应多笔预期时用人工多选匹配，带符号合计不能超过流水金额。",
+    "overlay": ""
+   }
+  },
+  "/finance/reconciliation/exceptions": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n对账异常",
+    "main": "状态\n未结\n不选时只看未结（待处置、待复核）\n类型\n全部\n对账层\n全部\n清算账户\n全部\n银行账户\n全部\n查 询\n重 置\n账龄\t类型\t对账层\t来源对象\t账户\t差异\t状态\t开立时间\n\n账龄\n\t\n类型\n\t\n对账层\n\t\n来源对象\n\t\n账户\n\t\n差异\n\t\n状态\n\t\n开立时间\n\n11 天\t平台流水未结算\t交易层\t平台流水\n238508287660732416\n\tNI-AE001-USD\t64.00 USD\t待处置\t2026-10-12 07:47\n7 天\t到账金额不符\t银行层\t预期银行流水\n238508541286100992\n\tAE001 NI 结算户\t0.20 USD\t待处置\t2026-10-16 07:47\n6 天\t银行流水未匹配\t银行层\t银行流水\n238508590262988801\n\tAE001 NI 结算户\t-25.00反向 USD\t待处置\t2026-10-17 07:47\n4 天\t金额超出阻塞对平\t交易层\t渠道账单行\n238508550085750784\n\tNI-AE001-USD\t77.77 USD\t待处置\t2026-10-19 07:47\n4 天\t调整行待归类阻塞对平\t交易层\t渠道账单行\n238508550085750787\n\tNI-AE001-USD\t-56.00反向 USD\t待复核\t2026-10-19 07:47\n4 天\t渠道费偏差阻塞对平\t交易层\t平台流水\n238508287430045696\n\tNI-AE001-USD\t0.72 USD\t待处置\t2026-10-19 07:47\n2 天\t账单行未命中阻塞对平\t交易层\t渠道账单行\n238508552023519233\n\tNI-AE001-USD-B\t229.31 USD\t待处置\t2026-10-21 07:47\n2 天\t对账单不连续\t银行层\t银行对账单\n238508590996992000\n\tAE001 NI 结算户\t47.68 USD\t待处置\t2026-10-21 07:47\n共 8 条，按账龄从长到短\n1\n10 条/页\n处置三种：重新匹配、接受时间差、归类；点行进入详情提交处置与复核。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n对账异常",
+    "main": "财务\n/\n对账\n/\n对账异常\n/\n对账异常 · 平台流水未结算\n对账异常 · 平台流水未结算\n提交处置\n返回列表\n状态\n待处置\n\t\n对账层\n交易层\n\t\n账龄\n11 天\n\n\n差异金额\n64.00\nUSD\n\t\n账户\nNI-AE001-USD · DEMO_NI\n\t\n主体\nAE001\n\n\n渠道账单\n—\n\t\n开立\n2026-10-12 07:47\n221546852372267008本人\n\t\n结案\n—\n\n\n说明\n平台流水 NI-ORD-1021-0012 预期 64.00000000，已结清 0.00000000\n来源对象\n查看平台流水\n类型\n平台流水\n\t\n引用\nNI-ORD-1021-0012\n\t\n状态\nOPEN\n\n\n方向\n应收\n\t\n金额\n64.00\n\t\n业务日期\n—\n处置记录\n#\t处置\t金额\t说明\t提交人\t复核人\t状态\t提交时间\n\n#\n\t\n处置\n\t\n金额\n\t\n说明\n\t\n提交人\n\t\n复核人\n\t\n状态\n\t\n提交时间\n\n\n还没有处置\n处置三种：重新匹配、接受时间差、归类。提交后由另一位有审批权限的同事复核，批准即应用；平台流水、预期银行流水与银行流水的归类会推送 billing 记账。",
+    "overlay": ""
+   }
+  },
+  "/finance/reconciliation/summary": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n财务\n对账\n在途汇总",
+    "main": "经营主体\n币种\n查 询\n选择币种（可选经营主体）后查看在途汇总\n金额为 所选币种 主单位；带符号金额贷方为正、借方为负。",
+    "overlay": ""
+   }
+  },
+  "/commercial/agreements": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n合同",
+    "main": "Client\n输入或选择 Client ID\n合同号（前缀）\n类型\n状态\nOE\nLocal Partner\n查 询\n重 置\n新建合同\n合同号\t名称\t类型\t模式\tClient / Partner\tOE\t状态\t生效区间\t更新时间\n\n合同号\n\t\n名称\n\t\n类型\n\t\n模式\n\t\nClient / Partner\n\t\nOE\n\t\n状态\n\t\n生效区间\n\t\n更新时间\n\nDEMO2-CL-901\t演示 2 · 校验反例（零开通 / 完整性 / 相关性，均不能生效）\tClient 合同\tMOR · SETTLE_THROUGH_PLATFORM\t237573040244891649\tAE001\t生效\t2026-10-20 01:22 ～ 未定\t2026-10-21 01:22\nDEMO2-PT-101\t演示 2 · Local Partner 分润（价格协议签署后生效）\tPartner 合同\t—\t770000001002\t—\t生效\t2026-10-20 01:22 ～ 未定\t2026-10-21 01:22\nDEMO2-CL-103\t演示 2 · 银行卡生效后新开 Google Pay（已开通待定价）\tClient 合同\tMOR · SETTLE_THROUGH_PLATFORM\t237573267559391233\tAE001\t生效\t2026-10-20 01:22 ～ 未定\t2026-10-21 01:22\nDEMO2-CL-102\t演示 2 · Apple Pay 限 Visa / MC + 银行卡全卡组织（基于优惠价、待客户签署）\tClient 合同\tMOR · SETTLE_THROUGH_PLATFORM\t237573382420406273\tAE001\t生效\t2026-10-20 01:22 ～ 未定\t2026-10-21 01:22\nDEMO2-CL-101\t演示 2 · 只收 Visa 借记卡 + 存卡（基于标准价、破标、已签署生效）\tClient 合同\tMOR · SETTLE_THROUGH_PLATFORM\t237573476041465857\tAE001\t生效\t2026-10-20 01:20 ～ 未定\t2026-10-21 01:20\nDEMO-CL-004\t演示 Client 4 合同草稿\tClient 合同\tMOR · SETTLE_THROUGH_PLATFORM\t237573699337822209\tAE001\t草稿\t2026-10-27 20:02 ～ 未定\t2026-10-20 20:02\nDEMO-CL-003\t演示 Client 3 收单合同（待 OE 签署）\tClient 合同\tMOR · SETTLE_THROUGH_PLATFORM\t237574561367957505\tAE001\t待签署\t2026-10-21 20:02 ～ 未定\t2026-10-20 20:02\nDEMO-CL-002\t演示 Client 2 收单合同（条款待复核）\tClient 合同\tMOR · SETTLE_THROUGH_PLATFORM\t237574764993028097\tAE001\t生效\t2026-10-18 20:02 ～ 未定\t2026-10-20 20:02\nDEMO-PT-001\t演示 Local Partner 合作合同\tPartner 合同\t—\t770000001001\t—\t生效\t2026-10-13 20:02 ～ 未定\t2026-10-20 20:02\nDEMO-CL-001\t演示 Client 1 收单与出款主合同\tClient 合同\tMOR · SETTLE_THROUGH_PLATFORM\t237575207592763393\tAE001\t生效\t2026-10-13 20:02 ～ 未定\t2026-10-20 20:02\n1\n2\n10 条/页\nClient 支持输入 ID、选择本机最近使用或审核通过的 Client；按名称搜索与 Party / OE 下拉待 client-master 提供运营查询接口。PARTNER 合同按 OE 筛选时匹配其覆盖 OE。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n合同",
+    "main": "演示 2 · 校验反例（零开通 / 完整性 / 相关性，均不能生效）\n返 回\n刷 新\n变更历史\n终 止\n合同编号\nDEMO2-CL-901\n类型\nClient 合同\n状态\n生效\nClient\n237573040244891649\nOE\nAE001\n模式\nMOR · SETTLE_THROUGH_PLATFORM · PLATFORM\n生效区间\n2026-10-20 01:22 ～ 未定\n签署 / 激活\n2026-10-21 01:20 / 2026-10-21 01:22\n版本\n8\n参与方与签署（2）\n产品与开通（2）\n条款版本\n角色\tParty / 资料版本\t签署\t操作\n\n角色\n\t\nParty / 资料版本\n\t\n签署\n\t\n操作\n\nClient\t\n237573040244891650\n237573040244891651\n\t\n点击接受2026-10-21 01:20\nACC-DEMO2-CL-901-237573040244891650\n\t\n经营主体\t\n880000000702\n881000000702\n\t\n点击接受2026-10-21 01:20\nACC-DEMO2-CL-901-880000000702\n\t\n合同文件\n用途\t文件 ID\tSHA-256\nSIGNING_DOCUMENT\t990000003901\t5d0bfcbeb3f7bd6c…",
+    "overlay": ""
+   }
+  },
+  "/commercial/pricing-profiles": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n定价画像",
+    "main": "种类\n全部\n状态\n全部\n查 询\n新建画像\n代码 / 名称\t种类\t支付方式\t条件\t状态\t操作\n\n代码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n条件\n\t\n状态\n\t\n操作\n\n\nCARD_VISA_CREDIT_DOMESTIC\nVisa 信用卡（本地发卡）\n\t支付方式\tCARD\t\nCARD_BRAND=VISA\nFUNDING_TYPE=CREDIT\nISSUER_REGION=DOMESTIC\n\t启用\t\n退 役\n历 史\n\n\nCARD_INTERNATIONAL\nVisa / Mastercard 境外卡\n\t支付方式\tCARD\t\nCARD_BRAND=MASTERCARD\nCARD_BRAND=VISA\nISSUER_REGION=INTERNATIONAL\n\t启用\t\n退 役\n历 史\n\n\nCARD_PREMIUM\n高端卡（白金 / 无限）\n\t支付方式\tCARD\t\nCARD_LEVEL=INFINITE\nCARD_LEVEL=PLATINUM\nCARD_LEVEL=SIGNATURE\nCARD_LEVEL=WORLD_ELITE\n\t启用\t\n退 役\n历 史\n\n\nCARD_AMEX\nAmerican Express\n\t支付方式\tCARD\t\nCARD_BRAND=AMEX\n\t启用\t\n退 役\n历 史\n\n\nCARD_STANDARD\n银行卡标准价（兜底）\n\t支付方式\tCARD\t无条件\t启用\t\n退 役\n历 史\n\n\nAPPLE_PAY_STANDARD\nApple Pay 标准价\n\t支付方式\tAPPLE_PAY\t无条件\t启用\t\n退 役\n历 史\n\n\nGOOGLE_PAY_STANDARD\nGoogle Pay 标准价\n\t支付方式\tGOOGLE_PAY\t无条件\t启用\t\n退 役\n历 史\n\n\nPAYOUT_LOCAL_AE\n阿联酋本地出款\n\t出款通道\t—\t\nDESTINATION_COUNTRY=AE\nPAYOUT_RAIL=LOCAL\n\t启用\t\n退 役\n历 史\n\n\nPAYOUT_STANDARD\n出款标准价（兜底）\n\t出款通道\t—\t无条件\t启用\t\n退 役\n历 史\n\n\nFX_USD_AED\nUSD/AED 换汇\n\t换汇币对\t—\t\nCURRENCY_PAIR=USD/AED\n\t启用\t\n退 役\n历 史\n\n\nDISPUTE_STANDARD\n争议处理标准价\n\t争议\t—\t无条件\t启用\t\n退 役\n历 史\n\n\nPLATFORM_SUBSCRIPTION\n平台月费 / 开户费\n\t周期费\t—\t无条件\t启用\t\n退 役\n历 史\n\n\nCARD_UNIONPAY_DRAFT\n银联卡（草稿，待定）\n\t支付方式\tCARD\t\nCARD_BRAND=UNIONPAY\n\t草稿\t\n编 辑\n启 用\n历 史\n\n\nCARD_VISA_LEGACY_2025\nVisa 旧版画像（已退役）\n\t支付方式\tCARD\t\nCARD_BRAND=VISA\n\t已退役\t\n历 史\n\n\nCARD_VISA_DEBIT\nVisa 借记卡\n\t支付方式\tCARD\t\nCARD_BRAND=VISA\nFUNDING_TYPE=DEBIT\n\t启用\t\n退 役\n历 史\n\n\nCARD_VISA\nVisa 卡（全部）\n\t支付方式\tCARD\t\nCARD_BRAND=VISA\n\t启用\t\n退 役\n历 史\n共 16 条\n1\n画像全局复用：启用后种类、支付方式与条件永久冻结；退役只阻止新价格引用，已引用的价格不受影响。同维度多值为 OR，异维度为 AND。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n定价画像",
+    "main": "种类\n全部\n状态\n全部\n查 询\n新建画像\n代码 / 名称\t种类\t支付方式\t条件\t状态\t操作\n\n代码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n条件\n\t\n状态\n\t\n操作\n\n\nCARD_VISA_CREDIT_DOMESTIC\nVisa 信用卡（本地发卡）\n\t支付方式\tCARD\t\nCARD_BRAND=VISA\nFUNDING_TYPE=CREDIT\nISSUER_REGION=DOMESTIC\n\t启用\t\n退 役\n历 史\n\n\nCARD_INTERNATIONAL\nVisa / Mastercard 境外卡\n\t支付方式\tCARD\t\nCARD_BRAND=MASTERCARD\nCARD_BRAND=VISA\nISSUER_REGION=INTERNATIONAL\n\t启用\t\n退 役\n历 史\n\n\nCARD_PREMIUM\n高端卡（白金 / 无限）\n\t支付方式\tCARD\t\nCARD_LEVEL=INFINITE\nCARD_LEVEL=PLATINUM\nCARD_LEVEL=SIGNATURE\nCARD_LEVEL=WORLD_ELITE\n\t启用\t\n退 役\n历 史\n\n\nCARD_AMEX\nAmerican Express\n\t支付方式\tCARD\t\nCARD_BRAND=AMEX\n\t启用\t\n退 役\n历 史\n\n\nCARD_STANDARD\n银行卡标准价（兜底）\n\t支付方式\tCARD\t无条件\t启用\t\n退 役\n历 史\n\n\nAPPLE_PAY_STANDARD\nApple Pay 标准价\n\t支付方式\tAPPLE_PAY\t无条件\t启用\t\n退 役\n历 史\n\n\nGOOGLE_PAY_STANDARD\nGoogle Pay 标准价\n\t支付方式\tGOOGLE_PAY\t无条件\t启用\t\n退 役\n历 史\n\n\nPAYOUT_LOCAL_AE\n阿联酋本地出款\n\t出款通道\t—\t\nDESTINATION_COUNTRY=AE\nPAYOUT_RAIL=LOCAL\n\t启用\t\n退 役\n历 史\n\n\nPAYOUT_STANDARD\n出款标准价（兜底）\n\t出款通道\t—\t无条件\t启用\t\n退 役\n历 史\n\n\nFX_USD_AED\nUSD/AED 换汇\n\t换汇币对\t—\t\nCURRENCY_PAIR=USD/AED\n\t启用\t\n退 役\n历 史\n\n\nDISPUTE_STANDARD\n争议处理标准价\n\t争议\t—\t无条件\t启用\t\n退 役\n历 史\n\n\nPLATFORM_SUBSCRIPTION\n平台月费 / 开户费\n\t周期费\t—\t无条件\t启用\t\n退 役\n历 史\n\n\nCARD_UNIONPAY_DRAFT\n银联卡（草稿，待定）\n\t支付方式\tCARD\t\nCARD_BRAND=UNIONPAY\n\t草稿\t\n编 辑\n启 用\n历 史\n\n\nCARD_VISA_LEGACY_2025\nVisa 旧版画像（已退役）\n\t支付方式\tCARD\t\nCARD_BRAND=VISA\n\t已退役\t\n历 史\n\n\nCARD_VISA_DEBIT\nVisa 借记卡\n\t支付方式\tCARD\t\nCARD_BRAND=VISA\nFUNDING_TYPE=DEBIT\n\t启用\t\n退 役\n历 史\n\n\nCARD_VISA\nVisa 卡（全部）\n\t支付方式\tCARD\t\nCARD_BRAND=VISA\n\t启用\t\n退 役\n历 史\n共 16 条\n1\n画像全局复用：启用后种类、支付方式与条件永久冻结；退役只阻止新价格引用，已引用的价格不受影响。同维度多值为 OR，异维度为 AND。",
+    "overlay": ""
+   }
+  },
+  "/commercial/terms": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n价目",
+    "main": "条款方案\n版本\n新建条款方案\n合同 ID\nClient ID\n条款类型\n方案状态\n查 询\n重 置\n方案\t合同\tClient / Partner\t状态\t当前版本\t已排期\t操作\n\n方案\n\t\n合同\n\t\nClient / Partner\n\t\n状态\n\t\n当前版本\n\t\n已排期\n\t\n操作\n\n\nDEMO2-CL-901-FX\nFX_SPREAD\n\t\n238411684283224064\n\t237573040244891649\tDRAFT\t—\t—\t\n版 本\n历 史\n\n\nDEMO2-CL-901-ACQ\nClient 定价\n\t\n238411684283224064\n\t237573040244891649\tDRAFT\t—\t—\t\n版 本\n历 史\n\n\nDEMO2-PT-101-SHARE\nPartner 分润\n\t—\t770000001002\tACTIVE\t\nv1 · 2026-10-21 01:23\n\t—\t\n版 本\n历 史\n\n\nDEMO2-CL-103-ACQ\nClient 定价\n\t\n238411681049415680\n\t237573267559391233\tACTIVE\t\nv1 · 2026-10-21 01:23\n\t—\t\n版 本\n历 史\n\n\nDEMO2-CL-102-ACQ\nClient 定价\n\t\n238411678889349120\n\t237573382420406273\tDRAFT\t—\t—\t\n版 本\n历 史\n\n\nDEMO2-CL-101-ACQ\nClient 定价\n\t\n238411008014618624\n\t237573476041465857\tACTIVE\t\nv2 · 2026-10-21 01:48\n\t—\t\n版 本\n历 史\n\n\nAA\nClient 定价\n\t\n238331041587204096\n\t237573699337822209\tDRAFT\t—\t—\t\n版 本\n历 史\n\n\nDEMO-CL-001-PLATFORM\nPLATFORM_FEE\n\t\n238331035912310784\n\t237575207592763393\tACTIVE\t\nv1 · 2026-10-20 20:04\n\t—\t\n版 本\n历 史\n\n\nDEMO-CL-001-PAYOUT\nPAYOUT_FEE\n\t\n238331035912310784\n\t237575207592763393\tACTIVE\t\nv1 · 2026-10-20 20:04\n\t—\t\n版 本\n历 史\n\n\nDEMO-CL-001-ACQ\nClient 定价\n\t\n238331035912310784\n\t237575207592763393\tACTIVE\t\nv1 · 2026-10-20 20:04\n\t\nv2 · 2026-11-19 20:04\n\t\n版 本\n历 史\n1\n2\n10 条/页\n状态流：草稿 → 待审批 → 已批准 → 客户已签署（历史版本免签）→ 已排期 → 生效 → 已替代 / 已到期。在版本页签勾选同一方案的两个版本可进入价格对比。标准价目在「标准价目」页维护。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n价目",
+    "main": "条款方案\n版本\n新建条款方案\n合同 ID\nClient ID\n条款类型\n方案状态\n查 询\n重 置\n方案\t合同\tClient / Partner\t状态\t当前版本\t已排期\t操作\n\n方案\n\t\n合同\n\t\nClient / Partner\n\t\n状态\n\t\n当前版本\n\t\n已排期\n\t\n操作\n\n\nDEMO2-CL-901-FX\nFX_SPREAD\n\t\n238411684283224064\n\t237573040244891649\tDRAFT\t—\t—\t\n版 本\n历 史\n\n\nDEMO2-CL-901-ACQ\nClient 定价\n\t\n238411684283224064\n\t237573040244891649\tDRAFT\t—\t—\t\n版 本\n历 史\n\n\nDEMO2-PT-101-SHARE\nPartner 分润\n\t—\t770000001002\tACTIVE\t\nv1 · 2026-10-21 01:23\n\t—\t\n版 本\n历 史\n\n\nDEMO2-CL-103-ACQ\nClient 定价\n\t\n238411681049415680\n\t237573267559391233\tACTIVE\t\nv1 · 2026-10-21 01:23\n\t—\t\n版 本\n历 史\n\n\nDEMO2-CL-102-ACQ\nClient 定价\n\t\n238411678889349120\n\t237573382420406273\tDRAFT\t—\t—\t\n版 本\n历 史\n\n\nDEMO2-CL-101-ACQ\nClient 定价\n\t\n238411008014618624\n\t237573476041465857\tACTIVE\t\nv2 · 2026-10-21 01:48\n\t—\t\n版 本\n历 史\n\n\nAA\nClient 定价\n\t\n238331041587204096\n\t237573699337822209\tDRAFT\t—\t—\t\n版 本\n历 史\n\n\nDEMO-CL-001-PLATFORM\nPLATFORM_FEE\n\t\n238331035912310784\n\t237575207592763393\tACTIVE\t\nv1 · 2026-10-20 20:04\n\t—\t\n版 本\n历 史\n\n\nDEMO-CL-001-PAYOUT\nPAYOUT_FEE\n\t\n238331035912310784\n\t237575207592763393\tACTIVE\t\nv1 · 2026-10-20 20:04\n\t—\t\n版 本\n历 史\n\n\nDEMO-CL-001-ACQ\nClient 定价\n\t\n238331035912310784\n\t237575207592763393\tACTIVE\t\nv1 · 2026-10-20 20:04\n\t\nv2 · 2026-11-19 20:04\n\t\n版 本\n历 史\n1\n2\n10 条/页\n状态流：草稿 → 待审批 → 已批准 → 客户已签署（历史版本免签）→ 已排期 → 生效 → 已替代 / 已到期。在版本页签勾选同一方案的两个版本可进入价格对比。标准价目在「标准价目」页维护。",
+    "overlay": ""
+   }
+  },
+  "/commercial/templates": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n标准价目",
+    "main": "刷 新\n新建标准价目\nOE\n条款类型\n方案状态\n查 询\n重 置\n名称\tOE\t条款类型\t方案状态\t生效版本\t最新版本\n\n名称\n\t\nOE\n\t\n条款类型\n\t\n方案状态\n\t\n生效版本\n\t\n最新版本\n\n\n外汇点差标准价 · AE001\nTPL-AE001-FX\n\tAE001\t外汇点差\tACTIVE\t\nv2\n\t\nv2\n生效\n\n\n平台费标准价 · AE001\nTPL-AE001-PLATFORM\n\tAE001\t平台费\tACTIVE\t\nv1\n\t\nv1\n生效\n\n\n优惠价 · AE001\nTPL-AE001-PROMO\n\tAE001\tClient 定价\tACTIVE\t\nv1\n\t\nv1\n生效\n\n\n标准价 · AE001\nTPL-AE001-STANDARD\n\tAE001\tClient 定价\tACTIVE\t\nv2\n\t\nv3\n草稿\n标准价目是平台拥有的价格方案（按 OE，可多套），复用版本、价格与复核流程，复核权限与合同价格分开；它不参与运行时取价，只作为合同新版本的生成来源与破标比较基准。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n标准价目",
+    "main": "外汇点差标准价 · AE001 · v2\n返 回\n刷 新\nv2（生效）\n变更历史\n新建版本\n状态\n生效\n模板编号\nTPL-AE001-FX\n条款类型\n外汇点差\nOE\nAE001\n生效\n2026-10-21 01:55 ～ 未定\n口径\n混合费率 · 不含税 · HALF_UP\n版本令牌\n13\n价格矩阵\n1 条价格\n1 个计费事件\nOE\t币种\t画像\tFX_DEAL\t结算\n\nOE\n\t\n币种\n\t\n画像\n\t\nFX_DEAL\n\t\n结算\n\nAE001\tUSD\t\nFX_USD_AED\n— · 优先级 1 · CURRENCY_PAIR=USD/AED\n\t\nFX_SPREAD_PCT\n0.5%\n无标准可比\n\tT+2 · UTC\n标准价目覆盖平台可售的全部支付方式与功能，不受合同开通约束；合同新版本「基于标准价目」生成时只取合同已开通的部分。模板出新版本后，引用旧版本的合同显示「标准价已更新」，合同价格不变。",
+    "overlay": ""
+   }
+  },
+  "/commercial/workbench": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n工作台",
+    "main": "商务工作台\n刷 新\n费率预览\n价格试算\n待审批版本\n1\n已排期待生效\n1\n草稿合同\n1\n待签署合同\n1\n生效合同\n9\n统计时点 2026-10-24 00:36\n待审批版本 1\n已排期待生效 1\n待签署合同 1\n方案 / 版本\t合同\tMaker\t提交时刻\t价格数\t破标\t状态\t操作\n\n方案 / 版本\n\t\n合同\n\t\nMaker\n\t\n提交时刻\n\t\n价格数\n\t\n破标\n\t\n状态\n\t\n操作\n\n\nDEMO-CL-002-ACQ · v1\nClient 定价\n\t\n238331040203083776\n\t221546852372267008\t2026-10-20 20:02\t3\t—\t待审批\t\n查 看\n批 准\n驳 回\n批准 / 驳回需要价目审批权限，且审批人不能是提交人（commercial 校验）。驳回后版本回到草稿；commercial 驳回接口目前不接收原因。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n工作台",
+    "main": "商务工作台\n刷 新\n费率预览\n价格试算\n待审批版本\n1\n已排期待生效\n1\n草稿合同\n1\n待签署合同\n1\n生效合同\n9\n统计时点 2026-10-24 00:36\n待审批版本 1\n已排期待生效 1\n待签署合同 1\n方案 / 版本\t合同\tMaker\t提交时刻\t价格数\t破标\t状态\t操作\n\n方案 / 版本\n\t\n合同\n\t\nMaker\n\t\n提交时刻\n\t\n价格数\n\t\n破标\n\t\n状态\n\t\n操作\n\n\nDEMO-CL-002-ACQ · v1\nClient 定价\n\t\n238331040203083776\n\t221546852372267008\t2026-10-20 20:02\t3\t—\t待审批\t\n查 看\n批 准\n驳 回\n批准 / 驳回需要价目审批权限，且审批人不能是提交人（commercial 校验）。驳回后版本回到草稿；commercial 驳回接口目前不接收原因。",
+    "overlay": ""
+   }
+  },
+  "/commercial/rate-cards": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n费率预览",
+    "main": "Client ID\n输入或选择，例如 7300000000000000011\n时点（可选，默认当前）\n币种（可选）\n预 览\n输入 Client ID 预览其 ACTIVE 合同在时点的费率卡：订阅产品、开通项（约束与保证金）、当前与已排期版本的价格。Client 可选本机最近使用或审核通过的 Client；按名称搜索待 client-master 提供运营查询接口。",
+    "overlay": ""
+   }
+  },
+  "/commercial/price-simulator": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n价格试算",
+    "main": "条款版本 ID\n合同 ID\n条款类型\nClient ID\nOE\n币种\n商业时点\n支付方式\n示例金额\n+ 维度事实\n试 算\n命中顺序：币种精确 → 支付方式精确 → 条件等值 → 维度数多者先 → 优先级小者先。示例费用由 BFF 按命中价格计算，仅供核对价目，不是计费结果。",
+    "overlay": ""
+   }
+  },
+  "/commercial/catalog": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n产品目录",
+    "main": "运营维护\n7 个产品 · 11 个可开通项 · 13 个计费事件\n条款类型\n全部\n全部展开\n全部收起\n目录提示：DATA_ANALYTICS 有 1 个可开通项但没有计费事件，开通后不会产生费用。\n\t产品代码\t名称\t业务模式\t基础产品\t状态\t子项\t操作\n\n \n\t\n产品代码\n\t\n名称\n\t\n业务模式\n\t\n基础产品\n\t\n状态\n\t\n子项\n\t\n操作\n\n▾\tACQUIRING\tAcquiring\tMOR / PSP\t可订阅\tACTIVE\t可开通项 6 · 计费事件 6\t\n+ 新增开通项\n\n\n▾\n可开通项 6\n能力码 / 名称\t种类\t支付方式\t可配维度\t状态\t操作\n\n能力码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n可配维度\n\t\n状态\n\t\n操作\n\n\nRECURRING\n周期扣款\n\t功能\t—\t—\t启用\t\n编辑\n停用\n\n\nSTC_PAY\nSTC Pay\n\t支付方式\tSTC_PAY\t\nCONSUMER_COUNTRY\nCURRENCY *\n\t启用\t\n编辑\n停用\n\n\nAPPLE_PAY\nApple Pay\n\t支付方式\tAPPLE_PAY\t\nCARD_BRAND\nCONSUMER_COUNTRY\nCURRENCY *\nFUNDING_TYPE\n\t启用\t\n编辑\n停用\n\n\nGOOGLE_PAY\nGoogle Pay\n\t支付方式\tGOOGLE_PAY\t\nCARD_BRAND\nCONSUMER_COUNTRY\nCURRENCY *\nFUNDING_TYPE\n\t启用\t\n编辑\n停用\n\n\nCARD\n银行卡\n\t支付方式\tCARD\t\nCARD_BRAND\nCARD_LEVEL\nCONSUMER_COUNTRY\nCURRENCY *\nFUNDING_TYPE\nISSUER_COUNTRY\nISSUER_REGION\n\t启用\t\n编辑\n停用\n\n\nTOKEN_STORAGE\n存卡\n\t功能\t—\t—\t启用\t\n编辑\n停用\n▾\n计费事件 6\n事件代码\t可配价条款类型\t计费事实类型\t挂接开通项\t操作\n\n事件代码\n\t\n可配价条款类型\n\t\n计费事实类型\n\t\n挂接开通项\n\t\n操作\n\nAUTH\t\nClient 定价\nPartner 分润\n平台服务费\n\tPAYMENT\t\n任一支付方式\n\t\n编辑\n\nCAPTURE\t\nClient 定价\nPartner 分润\n平台服务费\n\tPAYMENT\t\n任一支付方式\n\t\n编辑\n\nSALE\t\nClient 定价\nPartner 分润\n平台服务费\n\tPAYMENT\t\n任一支付方式\n\t\n编辑\n\nREFUND\t\nClient 定价\nPartner 分润\n平台服务费\n\tREFUND\t\n任一支付方式\n\t\n编辑\n\nCHARGEBACK\t\nClient 定价\n\tDISPUTE\t\n任一支付方式\n\t\n编辑\n\nTOKEN_STORED\t\nClient 定价\n\tPAYMENT\t\n功能 · 存卡 TOKEN_STORAGE\n\t\n编辑\n\n▾\tPAYOUT\tPayout\tMOR / PSP\t可订阅\tACTIVE\t可开通项 2 · 计费事件 2\t\n+ 新增开通项\n\n\n▾\n可开通项 2\n能力码 / 名称\t种类\t支付方式\t可配维度\t状态\t操作\n\n能力码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n可配维度\n\t\n状态\n\t\n操作\n\n\nPAYOUT_LOCAL\nLocal Payout\n\t出款通道\t—\t\nCURRENCY *\nDESTINATION_COUNTRY\n\t启用\t\n编辑\n停用\n\n\nPAYOUT_SWIFT\nSWIFT Payout\n\t出款通道\t—\t\nCURRENCY *\nDESTINATION_COUNTRY\n\t启用\t\n编辑\n停用\n▾\n计费事件 2\n事件代码\t可配价条款类型\t计费事实类型\t挂接开通项\t操作\n\n事件代码\n\t\n可配价条款类型\n\t\n计费事实类型\n\t\n挂接开通项\n\t\n操作\n\nPAYOUT_SUBMITTED\t\n出款费\n\tPAYOUT_FEE\t\n任一出款通道\n\t\n编辑\n\nPAYOUT_RETURNED\t\n出款费\n\tPAYOUT_FEE\t\n任一出款通道\n\t\n编辑\n\n▾\tFX\tFX\tMOR / PSP\t可订阅\tACTIVE\t可开通项 1 · 计费事件 1\t\n+ 新增开通项\n\n\n▾\n可开通项 1\n能力码 / 名称\t种类\t支付方式\t可配维度\t状态\t操作\n\n能力码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n可配维度\n\t\n状态\n\t\n操作\n\n\nFX_SPOT\nFX Spot\n\t外汇\t—\t\nCURRENCY_PAIR\n\t启用\t\n编辑\n停用\n▾\n计费事件 1\n事件代码\t可配价条款类型\t计费事实类型\t挂接开通项\t操作\n\n事件代码\n\t\n可配价条款类型\n\t\n计费事实类型\n\t\n挂接开通项\n\t\n操作\n\nFX_DEAL\t\n外汇点差\n\tFX_SELL\t\n任一外汇\n\t\n编辑\n\n▾\tDISPUTE\tDispute\tMOR / PSP\t可订阅\tACTIVE\t可开通项 1 · 计费事件 1\t\n+ 新增开通项\n\n\n▾\n可开通项 1\n能力码 / 名称\t种类\t支付方式\t可配维度\t状态\t操作\n\n能力码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n可配维度\n\t\n状态\n\t\n操作\n\n\nDISPUTE_HANDLING\nDispute Handling\n\t争议\t—\t—\t启用\t\n编辑\n停用\n▾\n计费事件 1\n事件代码\t可配价条款类型\t计费事实类型\t挂接开通项\t操作\n\n事件代码\n\t\n可配价条款类型\n\t\n计费事实类型\n\t\n挂接开通项\n\t\n操作\n\nCHARGEBACK\t\n争议费\n\tDISPUTE\t\n任一争议\n\t\n编辑\n\n▸\tTAX_INVOICE\tTax and Invoice\tMOR / PSP\t默认具备\tACTIVE\t可开通项 0 · 计费事件 0\t\n▾\tDATA_ANALYTICS\tData Analytics\tMOR / PSP\t可订阅\tACTIVE\t⚠ 可开通项 1 · 计费事件 0\t\n+ 新增开通项\n\n\n▾\n可开通项 1\n能力码 / 名称\t种类\t支付方式\t可配维度\t状态\t操作\n\n能力码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n可配维度\n\t\n状态\n\t\n操作\n\n\nANALYTICS_SUBSCRIPTION\nAnalytics Subscription\n\t周期服务\t—\t—\t启用\t\n编辑\n停用\n▸\n计费事件 0\n· ⚠ 未登记计费事件，开通后不会产生费用\n\n▾\tPLATFORM\tPlatform\tMOR / PSP\t默认具备\tACTIVE\t可开通项 0 · 计费事件 3\t\n\n▸\n可开通项 0\n· 基础产品默认具备，无需开通\n▾\n计费事件 3\n事件代码\t可配价条款类型\t计费事实类型\t挂接开通项\t操作\n\n事件代码\n\t\n可配价条款类型\n\t\n计费事实类型\n\t\n挂接开通项\n\t\n操作\n\nMONTHLY_CYCLE\t\n平台费\n\tPLATFORM_FEE\t\n无需开通\n\t\n编辑\n\nSETUP\t\n平台费\n\tPLATFORM_FEE\t\n无需开通\n\t\n编辑\n\nKYB_REVIEW\t\n平台费\n\tPLATFORM_FEE\t\n无需开通\n\t\n编辑\n可开通项决定合同能开通什么（可配维度即合同开通时可设置的接受条件）；计费事件挂到开通项种类或「无需开通」，价格相关性校验据此判断价格是否对应已开通项。停用开通项只影响新开通，不影响已开通合同与历史价格。",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n产品目录",
+    "main": "运营维护\n7 个产品 · 11 个可开通项 · 13 个计费事件\n条款类型\n全部\n全部展开\n全部收起\n目录提示：DATA_ANALYTICS 有 1 个可开通项但没有计费事件，开通后不会产生费用。\n\t产品代码\t名称\t业务模式\t基础产品\t状态\t子项\t操作\n\n \n\t\n产品代码\n\t\n名称\n\t\n业务模式\n\t\n基础产品\n\t\n状态\n\t\n子项\n\t\n操作\n\n▸\tACQUIRING\tAcquiring\tMOR / PSP\t可订阅\tACTIVE\t可开通项 6 · 计费事件 6\t\n+ 新增开通项\n\n▾\tPAYOUT\tPayout\tMOR / PSP\t可订阅\tACTIVE\t可开通项 2 · 计费事件 2\t\n+ 新增开通项\n\n\n▾\n可开通项 2\n能力码 / 名称\t种类\t支付方式\t可配维度\t状态\t操作\n\n能力码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n可配维度\n\t\n状态\n\t\n操作\n\n\nPAYOUT_LOCAL\nLocal Payout\n\t出款通道\t—\t\nCURRENCY *\nDESTINATION_COUNTRY\n\t启用\t\n编辑\n停用\n\n\nPAYOUT_SWIFT\nSWIFT Payout\n\t出款通道\t—\t\nCURRENCY *\nDESTINATION_COUNTRY\n\t启用\t\n编辑\n停用\n▾\n计费事件 2\n事件代码\t可配价条款类型\t计费事实类型\t挂接开通项\t操作\n\n事件代码\n\t\n可配价条款类型\n\t\n计费事实类型\n\t\n挂接开通项\n\t\n操作\n\nPAYOUT_SUBMITTED\t\n出款费\n\tPAYOUT_FEE\t\n任一出款通道\n\t\n编辑\n\nPAYOUT_RETURNED\t\n出款费\n\tPAYOUT_FEE\t\n任一出款通道\n\t\n编辑\n\n▾\tFX\tFX\tMOR / PSP\t可订阅\tACTIVE\t可开通项 1 · 计费事件 1\t\n+ 新增开通项\n\n\n▾\n可开通项 1\n能力码 / 名称\t种类\t支付方式\t可配维度\t状态\t操作\n\n能力码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n可配维度\n\t\n状态\n\t\n操作\n\n\nFX_SPOT\nFX Spot\n\t外汇\t—\t\nCURRENCY_PAIR\n\t启用\t\n编辑\n停用\n▾\n计费事件 1\n事件代码\t可配价条款类型\t计费事实类型\t挂接开通项\t操作\n\n事件代码\n\t\n可配价条款类型\n\t\n计费事实类型\n\t\n挂接开通项\n\t\n操作\n\nFX_DEAL\t\n外汇点差\n\tFX_SELL\t\n任一外汇\n\t\n编辑\n\n▾\tDISPUTE\tDispute\tMOR / PSP\t可订阅\tACTIVE\t可开通项 1 · 计费事件 1\t\n+ 新增开通项\n\n\n▾\n可开通项 1\n能力码 / 名称\t种类\t支付方式\t可配维度\t状态\t操作\n\n能力码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n可配维度\n\t\n状态\n\t\n操作\n\n\nDISPUTE_HANDLING\nDispute Handling\n\t争议\t—\t—\t启用\t\n编辑\n停用\n▾\n计费事件 1\n事件代码\t可配价条款类型\t计费事实类型\t挂接开通项\t操作\n\n事件代码\n\t\n可配价条款类型\n\t\n计费事实类型\n\t\n挂接开通项\n\t\n操作\n\nCHARGEBACK\t\n争议费\n\tDISPUTE\t\n任一争议\n\t\n编辑\n\n▸\tTAX_INVOICE\tTax and Invoice\tMOR / PSP\t默认具备\tACTIVE\t可开通项 0 · 计费事件 0\t\n▾\tDATA_ANALYTICS\tData Analytics\tMOR / PSP\t可订阅\tACTIVE\t⚠ 可开通项 1 · 计费事件 0\t\n+ 新增开通项\n\n\n▾\n可开通项 1\n能力码 / 名称\t种类\t支付方式\t可配维度\t状态\t操作\n\n能力码 / 名称\n\t\n种类\n\t\n支付方式\n\t\n可配维度\n\t\n状态\n\t\n操作\n\n\nANALYTICS_SUBSCRIPTION\nAnalytics Subscription\n\t周期服务\t—\t—\t启用\t\n编辑\n停用\n▸\n计费事件 0\n· ⚠ 未登记计费事件，开通后不会产生费用\n\n▾\tPLATFORM\tPlatform\tMOR / PSP\t默认具备\tACTIVE\t可开通项 0 · 计费事件 3\t\n\n▸\n可开通项 0\n· 基础产品默认具备，无需开通\n▾\n计费事件 3\n事件代码\t可配价条款类型\t计费事实类型\t挂接开通项\t操作\n\n事件代码\n\t\n可配价条款类型\n\t\n计费事实类型\n\t\n挂接开通项\n\t\n操作\n\nMONTHLY_CYCLE\t\n平台费\n\tPLATFORM_FEE\t\n无需开通\n\t\n编辑\n\nSETUP\t\n平台费\n\tPLATFORM_FEE\t\n无需开通\n\t\n编辑\n\nKYB_REVIEW\t\n平台费\n\tPLATFORM_FEE\t\n无需开通\n\t\n编辑\n可开通项决定合同能开通什么（可配维度即合同开通时可设置的接受条件）；计费事件挂到开通项种类或「无需开通」，价格相关性校验据此判断价格是否对应已开通项。停用开通项只影响新开通，不影响已开通合同与历史价格。",
+    "overlay": ""
+   }
+  },
+  "/commercial/history": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n商务\n变更历史",
+    "main": "聚合根类型\n合同 AGREEMENT\n聚合根 ID / 合同号\n查 询\n选择聚合根类型并输入 ID（合同也可输入合同号）后查询；从合同详情、版本编辑器与定价画像页可直接跳转。\n快照来自 commercial 业务变更记录（BCR），按聚合版本倒序；同一版本内合同 / 方案本身在前，开通项、版本等子记录随后。字段级变化由 BFF 与同一记录的上一快照比较得出。",
+    "overlay": ""
+   }
+  },
+  "/channel/channels": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n渠道\n渠道",
+    "main": "新建渠道\n全部 10\n支付渠道 9\n服务渠道 1\n全部状态\n查 询\n渠道编码\t名称\t类型\t状态\t出站地址\t账号 / MID\t调用授权\t更新时间\t操作\n\n渠道编码\n\t\n名称\n\t\n类型\n\t\n状态\n\t\n出站地址\n\t\n账号 / MID\n\t\n调用授权\n\t\n更新时间\n\t\n操作\n\n\nPAYERMAX\n\tPayerMax（PAYERMAX）\t支付\tACTIVE\t1 个\t1 / 1\t—\t2026-10-22 22:31\t\n详情\n暂停\n\n\nI_CYBS_NI\n\tCybersource（Network International）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-22 16:53\t\n详情\n激活\n\n\nS7P2_SVC\n\t第二段 mor-test 验收服务渠道\t服务\tCLOSED\t1 个\t凭据未配置\t0 条\t2026-10-22 11:12\t\n详情\n\n\nI_MPGS_NI\n\tMPGS（Network International）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-21 16:17\t\n详情\n激活\n\n\nDEMO_NI\n\t演示渠道 Network International\t支付\tACTIVE\t1 个\t1 / 2\t—\t2026-10-21 07:46\t\n详情\n暂停\n\n\nAAAA\n\taaa\t支付\tDRAFT\t未配置\t1 / 0\t—\t2026-10-20 23:11\t\n详情\n激活\n\n\nTOSS_PAY\n\tToss Pay（TOSS_PAY）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-17 09:36\t\n详情\n激活\n\n\nDLOCAL\n\tdLocal（DLOCAL）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-17 00:34\t\n详情\n激活\n\n\nALIPAY_PLUS\n\tAlipay+（ALIPAY_PLUS）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-16 11:57\t\n详情\n激活\n\n\nPAYBY\n\tPayBy（PAYBY）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-14 17:29\t\n详情\n激活\n共 10 条\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n渠道\n渠道",
+    "main": "新建渠道\n全部 10\n支付渠道 9\n服务渠道 1\n全部状态\n查 询\n渠道编码\t名称\t类型\t状态\t出站地址\t账号 / MID\t调用授权\t更新时间\t操作\n\n渠道编码\n\t\n名称\n\t\n类型\n\t\n状态\n\t\n出站地址\n\t\n账号 / MID\n\t\n调用授权\n\t\n更新时间\n\t\n操作\n\n\nPAYERMAX\n\tPayerMax（PAYERMAX）\t支付\tACTIVE\t1 个\t1 / 1\t—\t2026-10-22 22:31\t\n详情\n暂停\n\n\nI_CYBS_NI\n\tCybersource（Network International）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-22 16:53\t\n详情\n激活\n\n\nS7P2_SVC\n\t第二段 mor-test 验收服务渠道\t服务\tCLOSED\t1 个\t凭据未配置\t0 条\t2026-10-22 11:12\t\n详情\n\n\nI_MPGS_NI\n\tMPGS（Network International）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-21 16:17\t\n详情\n激活\n\n\nDEMO_NI\n\t演示渠道 Network International\t支付\tACTIVE\t1 个\t1 / 2\t—\t2026-10-21 07:46\t\n详情\n暂停\n\n\nAAAA\n\taaa\t支付\tDRAFT\t未配置\t1 / 0\t—\t2026-10-20 23:11\t\n详情\n激活\n\n\nTOSS_PAY\n\tToss Pay（TOSS_PAY）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-17 09:36\t\n详情\n激活\n\n\nDLOCAL\n\tdLocal（DLOCAL）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-17 00:34\t\n详情\n激活\n\n\nALIPAY_PLUS\n\tAlipay+（ALIPAY_PLUS）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-16 11:57\t\n详情\n激活\n\n\nPAYBY\n\tPayBy（PAYBY）\t支付\tDRAFT\t1 个\t0 / 0\t—\t2026-10-14 17:29\t\n详情\n激活\n共 10 条\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/channel/mids": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n渠道\nMID 与能力",
+    "main": "渠道\n全部\nOE\n状态\n全部\n外部 MID\n查 询\n重 置\n新建 MID\n外部 MID\t渠道\tOE\t当前账号\t状态\t能力组\t激活时间\t操作\n\n外部 MID\n\t\n渠道\n\t\nOE\n\t\n当前账号\n\t\n状态\n\t\n能力组\n\t\n激活时间\n\t\n操作\n\n\nPMX-UAT-AE001-10221831\nID 239093386823442432\n\tPAYERMAX\tAE001\t\nPayerMax UAT 卡直付 10221831\nID 239093383992287232\n\tSUSPENDED\t1 组 · 0 启用\t2026-10-22 22:31\t\n详情\n改绑账号\n恢复\n\n\nDEMO-NI-AE001-02\nID 238508278957580288\n\tDEMO_NI\tAE001\t\nAE001 NI 技术账号（演示）\nID 238508278357794816\n\tACTIVE\t2 组 · 2 启用\t2026-10-21 07:46\t\n详情\n改绑账号\n暂停\n\n\nDEMO-NI-AE001-01\nID 238508278684950528\n\tDEMO_NI\tAE001\t\nAE001 NI 技术账号（演示）\nID 238508278357794816\n\tACTIVE\t1 组 · 1 启用\t2026-10-21 07:46\t\n详情\n改绑账号\n暂停\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n渠道\nMID 与能力",
+    "main": "渠道\n全部\nOE\n状态\n全部\n外部 MID\n查 询\n重 置\n新建 MID\n外部 MID\t渠道\tOE\t当前账号\t状态\t能力组\t激活时间\t操作\n\n外部 MID\n\t\n渠道\n\t\nOE\n\t\n当前账号\n\t\n状态\n\t\n能力组\n\t\n激活时间\n\t\n操作\n\n\nPMX-UAT-AE001-10221831\nID 239093386823442432\n\tPAYERMAX\tAE001\t\nPayerMax UAT 卡直付 10221831\nID 239093383992287232\n\tSUSPENDED\t1 组 · 0 启用\t2026-10-22 22:31\t\n详情\n改绑账号\n恢复\n\n\nDEMO-NI-AE001-02\nID 238508278957580288\n\tDEMO_NI\tAE001\t\nAE001 NI 技术账号（演示）\nID 238508278357794816\n\tACTIVE\t2 组 · 2 启用\t2026-10-21 07:46\t\n详情\n改绑账号\n暂停\n\n\nDEMO-NI-AE001-01\nID 238508278684950528\n\tDEMO_NI\tAE001\t\nAE001 NI 技术账号（演示）\nID 238508278357794816\n\tACTIVE\t1 组 · 1 启用\t2026-10-21 07:46\t\n详情\n改绑账号\n暂停\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/channel/cost-plans": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n渠道\n渠道成本",
+    "main": "渠道\n全部\n方案状态\n全部\n查 询\n重 置\n新建方案\n方案代码\t渠道\t状态\t当前版本\t当前生效\t待审批\t更新时间\t操作\n\n方案代码\n\t\n渠道\n\t\n状态\n\t\n当前版本\n\t\n当前生效\n\t\n待审批\n\t\n更新时间\n\t\n操作\n\n\nDEMO_NI_COST\n\tDEMO_NI · 演示渠道 Network International\tACTIVE\tv1\t2026-10-23 11:42 起\t0\t2026-10-23 11:44\t\n详情\n新建版本\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n渠道\n渠道成本",
+    "main": "渠道\n全部\n方案状态\n全部\n查 询\n重 置\n新建方案\n方案代码\t渠道\t状态\t当前版本\t当前生效\t待审批\t更新时间\t操作\n\n方案代码\n\t\n渠道\n\t\n状态\n\t\n当前版本\n\t\n当前生效\n\t\n待审批\n\t\n更新时间\n\t\n操作\n\n\nDEMO_NI_COST\n\tDEMO_NI · 演示渠道 Network International\tACTIVE\tv1\t2026-10-23 11:42 起\t0\t2026-10-23 11:44\t\n详情\n新建版本\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/workflow/my-tasks": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n工作流\n我的待办",
+    "main": "我的待办\n待办\n3\n已办\n全部 3\n填写 1\n审批 2\n批量审批\nDEMO-CL-001 定价上线核对（待处理）\n客户定价上线核对 · 上线审批\n昨天 12:01\nDEMO-CL-001 合同变更复盘（待处理）\n合同变更复盘 · 变更复盘 · 2 个动作\n昨天 11:56\nWF-INLINE-20261022 内嵌预览实例\nWF-INLINE-20261022 内嵌预览流程 · 上传待审文件\n超时 1 天\nDEMO-CL-001 定价上线核对（待处理）\n客户定价上线核对 v1 · 发起人 o***@example.test · 10-23 11:56 发起 · 已在本节点停留 12 小时\n开始\n定价核对\n上线审批\n当前\n结束\n查看流程图\n背景\n启动信息 2 项\n展开\n237575207592763393 · 238331035912310784\n前序产出\n定价核对 · o***@example.test 完成于 10-23 12:01\n价格试算核对\n确认说明\n1\n确认合同原件已归档\n确认说明\n1\n动作与提交内容\n本节点没有动作，只需审批\n审批意见\n退回修改或驳回时必填，执行人可见\n0 / 512\n本节点 1 位审批人 · 任一人同意即放行\n更多\n驳回\n退回修改\n同 意",
+    "overlay": ""
+   }
+  },
+  "/workflow/started": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n工作流\n我发起的",
+    "main": "我发起的\n进行中\n3\n已结束\n发起流程\n全部流程\n实例\t当前步骤\t已用时长\t状态\nDEMO-CL-001 合同变更复盘（待处理）\n合同变更复盘 · 10-23 11:56 发起\n\t变更复盘 · 等待 你\t12 小时\t待你处理\nDEMO-CL-001 定价上线核对（待处理）\n客户定价上线核对 · 10-23 11:56 发起\n\t上线审批 · 等待 你\t12 小时\t待你处理\nWF-INLINE-20261022 内嵌预览实例\nWF-INLINE-20261022 内嵌预览流程 · 10-22 21:19 发起\n\t上传待审文件 · 等待 你\t1 天\t待你处理\nDEMO-CL-001 合同变更复盘（待处理）\n撤回（终止实例）\n合同变更复盘 v1 · 10-23 11:56 发起 · 已用 12 小时\n流程位置\n完整详情\n开始\n变更复盘\n结束\n活动\n变更复盘 等待 你 处理 · 已 12 小时\n10-23 11:56 起\n节点 · 「变更复盘」 待处理\n10-23 11:56",
+    "overlay": ""
+   }
+  },
+  "/workflow/instances": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n工作流\n流程实例",
+    "main": "流程实例\n运行中\n已完成\n已终止\n全部\n发起流程\n范围：我参与的\n流程：全部\n发起人：全部\n实例\t流程\t进度\t当前节点 · 处理人\t发起\t\n\nDEMO-CL-001 合同变更复盘（待处理）\nDEMO-CL-001\n\t合同变更复盘 · v1\t\n0 / 1 个任务节点已完成\n\t\nO*\n变更复盘\no***@example.test\n待处理\n\to***@example.test · 10-23 11:56\t\n\n\nDEMO-CL-001 定价上线核对（待处理）\nDEMO-CL-001\n\t客户定价上线核对 · v1\t\n1 / 2 个任务节点已完成\n\t\nO*\n上线审批\no***@example.test\n待审批\n\to***@example.test · 10-23 11:56\t\n\n\nWF-INLINE-20261022 内嵌预览实例\nWF-INLINE-20261022\n\tWF-INLINE-20261022 内嵌预览流程 · v1\t\n0 / 1 个任务节点已完成\n\t\nO*\n上传待审文件\no***@example.test\n待审批\n\to***@example.test · 10-22 21:19\t\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n工作流\n流程实例",
+    "main": "流程实例\n运行中\n已完成\n已终止\n全部\n发起流程\n范围：我参与的\n流程：全部\n发起人：全部\n实例\t流程\t进度\t当前节点 · 处理人\t发起\t\n\nDEMO-CL-001 合同变更复盘（待处理）\nDEMO-CL-001\n\t合同变更复盘 · v1\t\n0 / 1 个任务节点已完成\n\t\nO*\n变更复盘\no***@example.test\n待处理\n\to***@example.test · 10-23 11:56\t\n\n\nDEMO-CL-001 定价上线核对（待处理）\nDEMO-CL-001\n\t客户定价上线核对 · v1\t\n1 / 2 个任务节点已完成\n\t\nO*\n上线审批\no***@example.test\n待审批\n\to***@example.test · 10-23 11:56\t\n\n\nWF-INLINE-20261022 内嵌预览实例\nWF-INLINE-20261022\n\tWF-INLINE-20261022 内嵌预览流程 · v1\t\n0 / 1 个任务节点已完成\n\t\nO*\n上传待审文件\no***@example.test\n待审批\n\to***@example.test · 10-22 21:19\t\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/workflow/definitions": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n工作流\n流程定义",
+    "main": "流程定义\n新建流程\n全部 7\n已发布 7\n草稿 0\n已停用 0\n按最近修改排序\n合同变更复盘\n已发布 v1\n更新于 10-23 · 演示：页面任务带常量参数、可选人工确认\n发起\n客户定价上线核对\n已发布 v1\n更新于 10-23 · 演示：页面任务与人工确认\n发起\nWF-UX-20261023 多动作流程\n已发布 v1\n更新于 10-23 · mor-test 体验优化验收\n发起\nWF-INLINE-20261022-C 内嵌预览流程\n已发布 v1\n更新于 10-22 · mor-test 内嵌预览验收\n发起\nWF-INLINE-20261022-B 内嵌预览流程\n已发布 v1\n更新于 10-22 · mor-test 内嵌预览验收\n发起\nWF-INLINE-20261022 内嵌预览流程\n已发布 v1\n更新于 10-22 · mor-test 内嵌预览验收\n发起\nWF-SMOKE-20261022 冒烟流程\n已发布 v1\n更新于 10-22 · mor-test 写数据冒烟\n发起",
+    "overlay": ""
+   }
+  },
+  "/workflow/action-templates": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n工作流\n动作目录",
+    "main": "动作目录\n新建动作\n全部\n10\n表单\n2\n上传文件\n4\n页面任务\n2\n人工确认\n2\n名称\t类型\t被引用\t状态\t最近修改\n\n确认已通知客户成功经理\n演示：可选的人工确认\n\t\n人工确认\t1 个流程\t\n启用\to***@example.test 10-23 11:56\n\n确认合同原件已归档\n演示：线下动作的人工确认\n\t\n人工确认\t1 个流程\t\n启用\to***@example.test 10-23 11:56\n\n合同变更历史查看\n演示：跳到合同变更历史时间线\n\t\n页面任务\t1 个流程\t\n启用\to***@example.test 10-23 11:56\n\n价格试算核对\n演示：跳到价格试算页按客户 / 合同预填后试算\n\t\n页面任务\t1 个流程\t\n启用\to***@example.test 10-23 11:56\n\nWF-UX-20261023 资质文件\nmor-test 体验优化验收\n\t\n上传文件\t1 个流程\t\n启用\to***@example.test 10-23 11:38\n\nWF-UX-20261023 商户资料\nmor-test 体验优化验收\n\t\n表单\t1 个流程\t\n启用\to***@example.test 10-23 11:38\n\nWF-INLINE-20261022-C 内嵌预览上传\nmor-test 内嵌预览验收\n\t\n上传文件\t1 个流程\t\n启用\to***@example.test 10-22 22:16\n\nWF-INLINE-20261022-B 内嵌预览上传\nmor-test 内嵌预览验收\n\t\n上传文件\t1 个流程\t\n启用\to***@example.test 10-22 21:21\n\nWF-INLINE-20261022 内嵌预览上传\nmor-test 内嵌预览验收\n\t\n上传文件\t1 个流程\t\n启用\to***@example.test 10-22 21:19\n\nWF-SMOKE-20261022 冒烟表单\nmor-test 写数据冒烟\n\t\n表单\t1 个流程\t\n启用\to***@example.test 10-22 16:24",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n工作流\n动作目录",
+    "main": "动作目录\n新建动作\n全部\n10\n表单\n2\n上传文件\n4\n页面任务\n2\n人工确认\n2\n名称\t类型\t被引用\t状态\t最近修改\n\n确认已通知客户成功经理\n演示：可选的人工确认\n\t\n人工确认\t1 个流程\t\n启用\to***@example.test 10-23 11:56\n\n确认合同原件已归档\n演示：线下动作的人工确认\n\t\n人工确认\t1 个流程\t\n启用\to***@example.test 10-23 11:56\n\n合同变更历史查看\n演示：跳到合同变更历史时间线\n\t\n页面任务\t1 个流程\t\n启用\to***@example.test 10-23 11:56\n\n价格试算核对\n演示：跳到价格试算页按客户 / 合同预填后试算\n\t\n页面任务\t1 个流程\t\n启用\to***@example.test 10-23 11:56\n\nWF-UX-20261023 资质文件\nmor-test 体验优化验收\n\t\n上传文件\t1 个流程\t\n启用\to***@example.test 10-23 11:38\n\nWF-UX-20261023 商户资料\nmor-test 体验优化验收\n\t\n表单\t1 个流程\t\n启用\to***@example.test 10-23 11:38\n\nWF-INLINE-20261022-C 内嵌预览上传\nmor-test 内嵌预览验收\n\t\n上传文件\t1 个流程\t\n启用\to***@example.test 10-22 22:16\n\nWF-INLINE-20261022-B 内嵌预览上传\nmor-test 内嵌预览验收\n\t\n上传文件\t1 个流程\t\n启用\to***@example.test 10-22 21:21\n\nWF-INLINE-20261022 内嵌预览上传\nmor-test 内嵌预览验收\n\t\n上传文件\t1 个流程\t\n启用\to***@example.test 10-22 21:19\n\nWF-SMOKE-20261022 冒烟表单\nmor-test 写数据冒烟\n\t\n表单\t1 个流程\t\n启用\to***@example.test 10-22 16:24",
+    "overlay": ""
+   }
+  },
+  "/data-query/data-sources": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据查询\n数据源",
+    "main": "状态\n全部\n引擎\n全部\n编码 / 名称\n查 询\n重 置\n共 7 个数据源\n只读数据库连接；密码只存 Vault Token、不回显，启用前必须通过只读检查。\n＋ 新建数据源\n编码 / 名称\t引擎\t地址 / 默认库\t状态\t最后检查\t引用模板\n\n编码 / 名称\n\t\n引擎\n\t\n地址 / 默认库\n\t\n状态\n\t\n最后检查\n\t\n引用模板\n\n\nMOR_TEST_MYSQL_INSTANCE\nmor-test MySQL 整实例\n\tMySQL\tmysql:3306 · 整个实例\t启用\t通过 · 2026-10-22 20:45\t1\n\nMOR_CHANNEL_CONNECTOR_REPLICA\n渠道连接器从库\n\tMySQL\tmysql:3306 / mor_channel_connector\t停用\t未检查\t0\n\nMOR_RECONCILIATION_REPLICA\n对账从库\n\tMySQL\tmysql:3306 / mor_reconciliation\t启用\t通过 · 2026-10-22 20:26\t1\n\nMOR_LEDGER_REPLICA\n总账从库\n\tMySQL\tmysql:3306 / mor_ledger\t启用\t通过 · 2026-10-22 20:22\t1\n\nMOR_COMMERCIAL_REPLICA\n商务（Commercial）从库\n\tMySQL\tmysql:3306 / mor_commercial\t启用\t通过 · 2026-10-22 20:22\t1\n\nMOR_CLIENT_MASTER_REPLICA\n客户主数据从库\n\tMySQL\tmysql:3306 / mor_client_master\t启用\t通过 · 2026-10-22 20:22\t1\n\nMOR_ACQUIRING_REPLICA\n收单（Commerce）从库\n\tMySQL\tmysql:3306 / mor_acquiring\t启用\t通过 · 2026-10-22 20:22\t2\n1\n10 条/页",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据查询\n数据源",
+    "main": "状态\n全部\n引擎\n全部\n编码 / 名称\n查 询\n重 置\n共 7 个数据源\n只读数据库连接；密码只存 Vault Token、不回显，启用前必须通过只读检查。\n＋ 新建数据源\n编码 / 名称\t引擎\t地址 / 默认库\t状态\t最后检查\t引用模板\n\n编码 / 名称\n\t\n引擎\n\t\n地址 / 默认库\n\t\n状态\n\t\n最后检查\n\t\n引用模板\n\n\nMOR_TEST_MYSQL_INSTANCE\nmor-test MySQL 整实例\n\tMySQL\tmysql:3306 · 整个实例\t启用\t通过 · 2026-10-22 20:45\t1\n\nMOR_CHANNEL_CONNECTOR_REPLICA\n渠道连接器从库\n\tMySQL\tmysql:3306 / mor_channel_connector\t停用\t未检查\t0\n\nMOR_RECONCILIATION_REPLICA\n对账从库\n\tMySQL\tmysql:3306 / mor_reconciliation\t启用\t通过 · 2026-10-22 20:26\t1\n\nMOR_LEDGER_REPLICA\n总账从库\n\tMySQL\tmysql:3306 / mor_ledger\t启用\t通过 · 2026-10-22 20:22\t1\n\nMOR_COMMERCIAL_REPLICA\n商务（Commercial）从库\n\tMySQL\tmysql:3306 / mor_commercial\t启用\t通过 · 2026-10-22 20:22\t1\n\nMOR_CLIENT_MASTER_REPLICA\n客户主数据从库\n\tMySQL\tmysql:3306 / mor_client_master\t启用\t通过 · 2026-10-22 20:22\t1\n\nMOR_ACQUIRING_REPLICA\n收单（Commerce）从库\n\tMySQL\tmysql:3306 / mor_acquiring\t启用\t通过 · 2026-10-22 20:22\t2\n1\n10 条/页",
+    "overlay": ""
+   }
+  },
+  "/data-query/templates": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据查询\n查询模板",
+    "main": "数据源\n全部\n状态\n全部\n编码 / 名称\n查 询\n重 置\n共 7 个模板\n用统一语法书写只读 SQL，保存即生成新版本并立即生效；调用方按模板编码执行。\n＋ 新建模板\n编码 / 名称\t数据源\t参数\t分页\t当前版本\t状态\t最近修改\n\n编码 / 名称\n\t\n数据源\n\t\n参数\n\t\n分页\n\t\n当前版本\n\t\n状态\n\t\n最近修改\n\n\nDEMO_CLIENT_ORDER_SUMMARY\nClient 订单汇总（跨库）\n\tMOR_TEST_MYSQL_INSTANCE\t\ncurrency\n\t不分页\tv1\t启用\t221546852372267008 · 2026-10-22 20:22\n\nDEMO_RECON_EXCEPTIONS\n对账异常\n\tMOR_RECONCILIATION_REPLICA\t\nstatuses[]\nexceptionTypes[]\n\t偏移\tv1\t启用\t221546852372267008 · 2026-10-22 20:22\n\nDEMO_JOURNAL_LINES\n凭证分录\n\tMOR_LEDGER_REPLICA\t\nentrySide\npostingFrom\n\t偏移\tv1\t启用\t221546852372267008 · 2026-10-22 20:22\n\nDEMO_AGREEMENT_LIST\n协议列表\n\tMOR_COMMERCIAL_REPLICA\t\nagreementType\nstatuses[]\nsortBy⟨片段⟩*\n\t偏移\tv1\t启用\t221546852372267008 · 2026-10-22 20:22\n\nDEMO_CLIENT_LIST\nClient 列表\n\tMOR_CLIENT_MASTER_REPLICA\t\nstatus\npartyTypes[]\n\t偏移\tv1\t启用\t221546852372267008 · 2026-10-22 20:22\n\nDEMO_REFUND_REQUESTS\n退款申请查询\n\tMOR_ACQUIRING_REPLICA\t\nrefundStatus\n\t偏移\tv1\t停用\t221546852372267008 · 2026-10-22 20:22\n\nDEMO_ORDER_SEARCH\n订单查询\n\tMOR_ACQUIRING_REPLICA\t\nstatuses[]\nclientId\ncreatedFrom\nsortBy⟨片段⟩*\n\t偏移\tv1\t启用\t221546852372267008 · 2026-10-22 20:22\n1\n10 条/页\n参数带 * 为必填，[] 为集合，⟨片段⟩ 为片段参数",
+    "overlay": ""
+   },
+   "detail": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n数据查询\n查询模板",
+    "main": "查询模板\n/\nDEMO_CLIENT_ORDER_SUMMARY\nDEMO_CLIENT_ORDER_SUMMARY\nMOR_TEST_MYSQL_INSTANCE · MySQL\n启用\n当前 v1\n版本历史\n▶ 试运行\n停 用\n保存为 v2\n正文\n参数 1\n约束\n列 5\n问题\nMySQL 方言 · 统一模板语法\n#{} 值\n@{} 片段\n{{#if}} {{#each}} {{#join}} {{#part}}\n{{!-- --}}\n✓ 校验通过\n0.4 / 48 KB\n1\n2\n3\n4\n5\n6\n7\nSELECT c.client_no, o.client_id, COUNT(*) AS order_count,\n       SUM(CASE WHEN o.order_status = 'PAID' THEN o.total_amount ELSE 0 END) AS paid_amount, o.currency\nFROM mor_acquiring.t_commerce_order o\nLEFT JOIN mor_client_master.t_client c ON c.client_id = o.client_id\n{{#if currency}}WHERE o.currency = #{currency}{{/if}}\nGROUP BY c.client_no, o.client_id, o.currency\nORDER BY order_count DESC, o.client_id",
+    "overlay": ""
+   }
+  },
+  "/i18n/translations": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n多语言\n翻译",
+    "main": "翻译\nCheckout\n简体中文\n全部\n0\n未翻译\n0\n基准已变更\n0\n1 个问题\n导入 key\n发布\n这个应用还没有 key\n\n先创建命名空间，再导入开发从代码导出的英文基准文件\n\n导入 key",
+    "overlay": ""
+   }
+  },
+  "/i18n/releases": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n多语言\n发布记录",
+    "main": "发布记录\nCheckout\n尚未发布\n发布\t状态\t改动\t发布人\t时间\n还没有发布",
+    "overlay": ""
+   }
+  },
+  "/i18n/settings": {
+   "page": {
+    "lang": "zh-CN",
+    "trail": "运营平台\n多语言\n语言与应用",
+    "main": "语言与应用\n应用\n4\n语言\n2\n新建应用\n应用\t默认语言\t线上版本\t必须语言覆盖\t最近修改\nCheckout\ncheckout\n\tEnglish\t未发布\t—\t#1 10-23 12:22\nClient Console\nclient-console\n\tEnglish\t#1\t100%\t#1 10-23 12:38\nOperations Console\noperations-console\n\tEnglish\t#3\t100%\t#267008 10-24 00:03\nPartner Console\npartner-console\n\tEnglish\t未发布\t—\t#1 10-23 12:22",
+    "overlay": ""
+   }
+  }
+ },
+ "blocked": [
+  [
+   "POST",
+   "/api/operations/data-query-admin/v1/template-validations"
+  ]
+ ]
+}

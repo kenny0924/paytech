@@ -11,7 +11,8 @@ import { configProblems, normalizeConfig, templateCodePattern } from './template
 import { ActionTypeTag, ConfigEditor, DeactivateModal, ExecutorPreview, ReferencesView, useTemplateReferences } from './TemplateEditors';
 import { useWorkflowCommand } from './useWorkflowCommand';
 import { decodeMutation, decodePage, decodeTemplate, workflowPaths } from './workflowApi';
-import { actionTypeLabels, configStatusLabels } from './workflowLabels';
+import { actionTypeLabel, configStatusLabel } from './workflowLabels';
+import { useT } from '../i18n/react';
 import type { ActionTemplate, ActionType, FormDefinition } from './workflowTypes';
 import { Field, LoadFailed, Spinner, personName, shortTime, useLoad, workflowRoutes } from './WorkflowParts';
 
@@ -49,6 +50,7 @@ function LeaveGuard({ dirty, confirm }: { dirty: boolean; confirm: () => Promise
  */
 export function ActionTemplateEditor(props: ActionTemplateEditorProps) {
   const { mode, templateId, canManage, onAuthorizationChanged, onCreated, onSaved, onClose, onDirtyChange } = props;
+  const t = useT('workflow');
   const { message, modal } = App.useApp();
   const isNew = !templateId;
   const loaded = useLoad<ActionTemplate>(templateId ? workflowPaths.template(templateId) : null, decodeTemplate);
@@ -80,17 +82,17 @@ export function ActionTemplateEditor(props: ActionTemplateEditorProps) {
     setCreated(null); onCreated?.(created);
   }, [created, dirty, onCreated]);
   const confirmLeave = useCallback(() => new Promise<boolean>(resolve => {
-    modal.confirm({ title: '离开当前动作？', content: '尚未保存的修改将丢失。', okText: '离开', cancelText: '继续编辑', onOk: () => resolve(true), onCancel: () => resolve(false) });
-  }), [modal]);
+    modal.confirm({ title: t('templateEditor.leave.title'), content: t('templateEditor.leave.content'), okText: t('templateEditor.leave.ok'), cancelText: t('templateEditor.leave.cancel'), onOk: () => resolve(true), onCancel: () => resolve(false) });
+  }), [modal, t]);
   const problems = useMemo(() => configProblems(type, draft.config), [type, draft.config]);
   const code = isNew && !codeTouched ? suggestTemplateCode(draft.templateName, type, existingCodes) : draft.templateCode;
-  const codeProblem = !isNew ? null : !templateCodePattern.test(code) ? '编码以大写字母开头，只能包含大写字母、数字和下划线'
-    : existingCodes.has(code) ? `编码 ${code} 已被使用` : null;
-  const blocker = !draft.templateName.trim() ? '请填写名称' : codeProblem ?? problems[0] ?? null;
+  const codeProblem = !isNew ? null : !templateCodePattern.test(code) ? t('templateEditor.codePattern')
+    : existingCodes.has(code) ? t('templateEditor.codeUsed', { code }) : null;
+  const blocker = !draft.templateName.trim() ? t('templateEditor.nameRequired') : codeProblem ?? problems[0] ?? null;
 
   if (!isNew && loaded.loading && !template) return <Spinner />;
-  if (!isNew && !template) return <LoadFailed failure={loaded.failure} retry={loaded.refresh} title="动作加载失败" />;
-  if (isNew && type === 'DATA_QUERY') return <Alert type="info" showIcon title="数据查询即将支持，暂不能新建" />;
+  if (!isNew && !template) return <LoadFailed failure={loaded.failure} retry={loaded.refresh} title={t('templateEditor.loadFailed')} />;
+  if (isNew && type === 'DATA_QUERY') return <Alert type="info" showIcon title={t('templateEditor.dataQueryUnavailable')} />;
 
   const change = (patch: Partial<TemplateDraft>) => setDraft(current => ({ ...current, ...patch }));
   async function reload(id: string): Promise<ActionTemplate | null> {
@@ -101,26 +103,26 @@ export function ActionTemplateEditor(props: ActionTemplateEditorProps) {
     const body = { templateName: draft.templateName.trim(), ...(draft.description.trim() ? { description: draft.description.trim() } : {}),
       config: normalizeConfig(type, draft.config) };
     if (isNew) {
-      const result = await command.run(workflowPaths.templates, 'POST', { templateCode: code, actionType: type, ...body }, decodeMutation, '新建失败');
+      const result = await command.run(workflowPaths.templates, 'POST', { templateCode: code, actionType: type, ...body }, decodeMutation, t('templateEditor.createFailed'));
       if (!result) return;
-      void message.success('动作已创建');
+      void message.success(t('templateEditor.created'));
       setBaseline({ ...draft, templateCode: code }); setDraft(current => ({ ...current, templateCode: code }));
       const fresh = await reload(result.objectId);
       setCreated(fresh ?? { templateId: result.objectId, templateCode: code, templateName: body.templateName, actionType: type,
         description: body.description ?? null, config: body.config, status: 'ACTIVE', version: result.version, updatedBy: null, updateTime: new Date().toISOString() });
       return;
     }
-    const result = await command.run(workflowPaths.template(template!.templateId), 'PUT', { ...body, expectedVersion: template!.version }, decodeMutation, '保存失败');
+    const result = await command.run(workflowPaths.template(template!.templateId), 'PUT', { ...body, expectedVersion: template!.version }, decodeMutation, t('templateEditor.saveFailed'));
     if (!result) return;
-    void message.success('已保存；只影响之后新发布的流程版本');
+    void message.success(t('templateEditor.saved'));
     const fresh = await reload(template!.templateId);
     if (fresh) { loaded.setData(fresh); onSaved?.(fresh); }
   }
   async function changeStatus(status: 'ACTIVE' | 'INACTIVE') {
     if (!template) return;
-    const result = await command.run(workflowPaths.templateStatus(template.templateId), 'POST', { status, expectedVersion: template.version }, decodeMutation, '状态修改失败');
+    const result = await command.run(workflowPaths.templateStatus(template.templateId), 'POST', { status, expectedVersion: template.version }, decodeMutation, t('templateEditor.statusFailed'));
     if (!result) return;
-    setDeactivating(false); void message.success(status === 'ACTIVE' ? '已启用' : '已停用');
+    setDeactivating(false); void message.success(status === 'ACTIVE' ? t('templateEditor.enabled') : t('templateEditor.disabled'));
     const fresh = await reload(template.templateId);
     // 只更新状态与版本，保留未保存的修改。
     if (fresh) { loaded.setData(current => current ? { ...current, status: fresh.status, version: fresh.version, updatedBy: fresh.updatedBy,
@@ -134,29 +136,29 @@ export function ActionTemplateEditor(props: ActionTemplateEditorProps) {
 
   const referenceCount = references.data ? currentReferences(references.data).current.length : template?.referencedDefinitionCount ?? undefined;
   const steps = editorSteps(type, isNew, referenceCount);
-  const title = draft.templateName.trim() || template?.templateName || `新建${actionTypeLabels[type]}`;
+  const title = draft.templateName.trim() || template?.templateName || t('templateEditor.newTitle', { type: actionTypeLabel(type) });
   const head = <div className="wf-page-head wf-tpl-head">
     {mode === 'page' ? <h1>{title}</h1> : <h2>{title}</h2>}<ActionTypeTag type={type} />
-    {template?.status === 'INACTIVE' && <Tag>已停用</Tag>}
-    {dirty && <span className="wf-dirty">未保存的修改</span>}
+    {template?.status === 'INACTIVE' && <Tag>{t('definitions.card.inactive')}</Tag>}
+    {dirty && <span className="wf-dirty">{t('templateEditor.unsaved')}</span>}
     <span className="wf-grow" />
-    {canManage && <><Button disabled={!dirty} onClick={discard}>放弃修改</Button>
-      <Button type="primary" loading={command.saving} disabled={!dirty || !!blocker} title={blocker ?? undefined} onClick={() => void save()}>{isNew ? '创建' : '保存'}</Button></>}
-    {mode === 'drawer' && <Button type="text" aria-label="关闭" icon={<CloseOutlined />} onClick={() => void close()} />}
+    {canManage && <><Button disabled={!dirty} onClick={discard}>{t('templateEditor.discard')}</Button>
+      <Button type="primary" loading={command.saving} disabled={!dirty || !!blocker} title={blocker ?? undefined} onClick={() => void save()}>{isNew ? t('templateEditor.create') : t('templateEditor.save')}</Button></>}
+    {mode === 'drawer' && <Button type="text" aria-label={t('files.close')} icon={<CloseOutlined />} onClick={() => void close()} />}
   </div>;
   const body = <>
-    {command.conflict && <Alert type="warning" showIcon title="动作已被他人修改，你的修改未保存"
-      action={<Button size="small" onClick={() => { command.clearConflict(); loaded.refresh(); }}>重新加载</Button>} />}
+    {command.conflict && <Alert type="warning" showIcon title={t('templateEditor.conflict')}
+      action={<Button size="small" onClick={() => { command.clearConflict(); loaded.refresh(); }}>{t('templateEditor.reload')}</Button>} />}
     {command.formError && <Alert type="error" showIcon title={command.formError} />}
-    {isNew && mode === 'drawer' && <Alert type="info" showIcon title="动作创建后保存在动作目录；即使放弃流程草稿，它也会保留（可停用）" />}
+    {isNew && mode === 'drawer' && <Alert type="info" showIcon title={t('templateEditor.drawerHint')} />}
     <div className="wf-tpl-editor">
       <nav className="wf-tpl-steps">
         {steps.map(item => <button type="button" key={item.key} className={`wf-tpl-step${step === item.key ? ' is-active' : ''}`} onClick={() => setStep(item.key)}>
           <span className="wf-grow">{item.label}</span>
           {item.key === 'config' && problems.length > 0 && canManage && <span className="wf-tpl-step-alert" title={problems[0]}>{problems.length}</span>}
           {item.count !== undefined && <span className="wf-tpl-step-count">{item.count}</span>}</button>)}
-        <div className="wf-tpl-foot muted">{template ? `版本 ${template.version} · ${template.updatedByName ?? personName(template.updatedBy)} 修改于 ${shortTime(template.updateTime)}`
-          : '保存后生成版本 1'}</div>
+        <div className="wf-tpl-foot muted">{template ? t('templateEditor.footer', { version: template.version, name: template.updatedByName ?? personName(template.updatedBy), time: shortTime(template.updateTime) })
+          : t('templateEditor.footerNew')}</div>
       </nav>
       <div className="wf-tpl-body">
         {step === 'basic' && <BasicInfo draft={draft} change={change} type={type} template={template} readOnly={readOnly} isNew={isNew} code={code}
@@ -168,7 +170,7 @@ export function ActionTemplateEditor(props: ActionTemplateEditorProps) {
           : <div className="wf-tpl-instruction">
             <div><ConfigProblems problems={canManage ? problems : []} />
               <ConfigEditor type={type} config={draft.config} readOnly={readOnly} onChange={config => change({ config })} /></div>
-            <section><div className="wf-section-title">执行人看到的样子<span className="muted">只读预览</span></div>
+            <section><div className="wf-section-title">{t('templateEditor.executorView')}<span className="muted">{t('templateEditor.readOnlyPreview')}</span></div>
               <ExecutorPreview template={{ templateName: draft.templateName, actionType: type, config: draft.config }} /></section>
           </div>)}
         {step === 'references' && template && <ReferencesView template={template} state={references} />}
@@ -180,34 +182,37 @@ export function ActionTemplateEditor(props: ActionTemplateEditorProps) {
   if (mode === 'drawer') return <div className="wf-page wf-tpl-drawer">{head}{body}</div>;
   return <div className="wf-page wf-tpl-page">
     <LeaveGuard dirty={dirty} confirm={confirmLeave} />
-    <div className="wf-crumbs"><Link to={workflowRoutes.templates}>动作目录</Link> / {title}</div>
+    <div className="wf-crumbs"><Link to={workflowRoutes.templates}>{t('templateEditor.catalog')}</Link> / {title}</div>
     {head}{body}
   </div>;
 }
 
 function ConfigProblems({ problems }: { problems: string[] }) {
-  return problems.length ? <Alert type="warning" showIcon className="wf-tpl-problems" title={`还有 ${problems.length} 个问题：${problems.join('；')}`} /> : null;
+  const t = useT('workflow');
+  return problems.length ? <Alert type="warning" showIcon className="wf-tpl-problems"
+    title={t('templateEditor.problems', { count: problems.length, list: problems.join(t('list.semicolon')) })} /> : null;
 }
 
 function BasicInfo({ draft, change, type, template, readOnly, isNew, code, codeProblem, onCode, onStatus }: {
   draft: TemplateDraft; change: (patch: Partial<TemplateDraft>) => void; type: ActionType; template: ActionTemplate | undefined; readOnly: boolean;
   isNew: boolean; code: string; codeProblem: string | null; onCode: (value: string) => void; onStatus: (status: 'ACTIVE' | 'INACTIVE') => void;
 }) {
+  const t = useT('workflow');
   return <section className="wf-card wf-tpl-basic">
-    <Field label="名称 *" hint="执行人在待办里看到的名称"><Input value={draft.templateName} maxLength={128} disabled={readOnly} placeholder="如 商户资料表单"
+    <Field label={t('templateEditor.name')} hint={t('templateEditor.nameHint')}><Input value={draft.templateName} maxLength={128} disabled={readOnly} placeholder={t('templateEditor.namePlaceholder')}
       onChange={event => change({ templateName: event.target.value })} /></Field>
-    <Field label="编码" hint={isNew ? '根据名称自动建议（取英文与数字）；大写字母、数字、下划线，全局唯一，创建后不能修改' : '创建后不能修改'}>
+    <Field label={t('templateEditor.code')} hint={isNew ? t('templateEditor.codeHint') : t('templateEditor.immutable')}>
       {isNew ? <><Input value={code} maxLength={64} disabled={readOnly} status={codeProblem ? 'error' : undefined}
         onChange={event => onCode(event.target.value.toUpperCase())} />{codeProblem && <span className="wf-danger-text">{codeProblem}</span>}</>
         : <code>{template?.templateCode}</code>}</Field>
-    <Field label="描述" hint="列表中名称下方的说明；表单动作也显示在表单标题下"><Input.TextArea rows={3} maxLength={512} value={draft.description} disabled={readOnly}
+    <Field label={t('templateEditor.description')} hint={t('templateEditor.descriptionHint')}><Input.TextArea rows={3} maxLength={512} value={draft.description} disabled={readOnly}
       onChange={event => change({ description: event.target.value })} /></Field>
     <div className="wf-two-columns">
-      <Field label="类型"><span><ActionTypeTag type={type} /> <span className="muted">创建后不能修改</span></span></Field>
-      <Field label="状态">{template ? <span className="wf-inline"><span className={`wf-status-dot is-${template.status.toLowerCase()}`} />{configStatusLabels[template.status]}
-        {!readOnly && (template.status === 'ACTIVE' ? <Button size="small" danger onClick={() => onStatus('INACTIVE')}>停用</Button>
-          : <Button size="small" onClick={() => onStatus('ACTIVE')}>启用</Button>)}</span>
-        : <span className="muted">创建后为启用</span>}</Field>
+      <Field label={t('designer.type')}><span><ActionTypeTag type={type} /> <span className="muted">{t('templateEditor.immutable')}</span></span></Field>
+      <Field label={t('templateEditor.status')}>{template ? <span className="wf-inline"><span className={`wf-status-dot is-${template.status.toLowerCase()}`} />{configStatusLabel(template.status)}
+        {!readOnly && (template.status === 'ACTIVE' ? <Button size="small" danger onClick={() => onStatus('INACTIVE')}>{t('action.disable')}</Button>
+          : <Button size="small" onClick={() => onStatus('ACTIVE')}>{t('action.enable')}</Button>)}</span>
+        : <span className="muted">{t('templateEditor.enabledAfterCreate')}</span>}</Field>
     </div>
   </section>;
 }

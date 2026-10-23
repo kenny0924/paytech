@@ -1,7 +1,10 @@
 import { ApiError } from '../api/session.ts';
 import type { ConsoleResource } from '../api/types.ts';
 import { decodeAccountingPeriod, entityNoPattern, decimalIdPattern, sumDecimals } from './finance.ts';
-import type { AccountingPeriod, BalanceBucket, ChartAccount, FinanceErrorTarget, LedgerAccount, Side } from './finance.ts';
+import type { AccountingPeriod, BalanceBucket, ChartAccount, FinanceErrorRule, LedgerAccount, Side } from './finance.ts';
+import { enumLabel, translator } from '../i18n/index.ts';
+
+const t = translator('finance');
 
 /**
  * 财务控制台三页（调整、期间关账、记账规则）与试算发起的路径、解码、权限显示规则和纯函数
@@ -109,20 +112,16 @@ export interface RuleVersion {
 
 // ---------- 目录与显示名 ----------
 
-export const adjustmentStatusLabels: Record<AdjustmentStatus, string> = {
-  DRAFT: '草稿', SUBMITTED: '待复核', APPROVED: '已批准', REJECTED: '已驳回', POSTED: '已过账', CANCELLED: '已取消',
-};
-export const billingFactStatusLabels: Record<BillingFactStatus, string> = { DRAFT: '草稿', APPROVED: '已批准', SUPERSEDED: '已替代', VOIDED: '已作废' };
-export const periodCloseStatusLabels: Record<PeriodCloseStatus, string> = {
-  CREATED: '已创建', RUNNING: '执行中', PENDING_CHECK: '待复核', APPROVED: '已批准', REJECTED: '已驳回', COMPLETED: '已完成', FAILED: '失败',
-};
-export const periodCloseTypeLabels: Record<PeriodCloseType, string> = { CLOSE: '关账', REOPEN: '重开' };
-export const periodStatusLabels: Record<string, string> = { FUTURE: '未开始', OPEN: '开放', CLOSING: '关账中', CLOSED: '已关账', REOPENING: '重开中' };
-export const ruleVersionStatusLabels: Record<RuleVersionStatus, string> = {
-  DRAFT: '草稿', PENDING_APPROVAL: '待审批', APPROVED: '待生效', ACTIVE: '生效中', REJECTED: '已驳回', RETIRED: '已退役', VOIDED: '已作废',
-};
-export const approvalRoleLabels: Record<ApprovalRole, string> = { MAKER: '制单', CHECKER: '复核' };
-export const approvalDecisionLabels: Record<ApprovalDecision, string> = { APPROVED: '同意', REJECTED: '驳回' };
+/**
+ * 显示名在 finance.enum.<类型>.<值>（enumLabel 取值，未知值显示原代码）：adjustmentStatus、billingFactStatus、periodCloseStatus、
+ * periodCloseType、periodStatus、ruleVersionStatus、approvalRole、approvalDecision、adjustmentReason、reopenReason、closeStep、
+ * closeStepStatus、factComponent、factPartyRole、factDirection、factType、ruleBundle、instructionType、amountSource、ruleOwnerRole。
+ * 这里只保留代码顺序（下拉选项与解码白名单）。
+ */
+export const adjustmentStatuses: readonly AdjustmentStatus[] = ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'POSTED', 'CANCELLED'];
+export const billingFactStatuses: readonly BillingFactStatus[] = ['DRAFT', 'APPROVED', 'SUPERSEDED', 'VOIDED'];
+export const periodCloseStatuses: readonly PeriodCloseStatus[] = ['CREATED', 'RUNNING', 'PENDING_CHECK', 'APPROVED', 'REJECTED', 'COMPLETED', 'FAILED'];
+export const ruleVersionStatuses: readonly RuleVersionStatus[] = ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'ACTIVE', 'REJECTED', 'RETIRED', 'VOIDED'];
 /** 工作流状态标签色：待处理为金色，完成为绿色，驳回 / 失败为红色，作废 / 退役为灰色。 */
 export const workflowStatusColors: Record<string, string> = {
   SUBMITTED: 'gold', PENDING_CHECK: 'gold', PENDING_APPROVAL: 'gold', RUNNING: 'gold', CREATED: 'blue', DRAFT: 'orange', APPROVED: 'blue',
@@ -135,52 +134,33 @@ export const workflowStatusColors: Record<string, string> = {
  * 人工调整原因代码（ledger 目录非固定枚举，本期页面固定下拉；需求「不做」原因目录维护）
  * <li>外部单据号写在分录行说明中（需求 Q4：本期不做附件上传）。</li>
  */
-export const adjustmentReasonLabels: Readonly<Record<string, string>> = {
-  ACCOUNTING_CORRECTION: '会计更正', RECLASSIFICATION: '科目重分类', ACCRUAL: '计提 / 摊销', AUDIT_ADJUSTMENT: '审计调整', OTHER: '其他',
-};
-export const reopenReasonLabels: Readonly<Record<string, string>> = {
-  ACCOUNTING_CORRECTION: '会计更正', LATE_TRANSACTION: '晚到交易补记', AUDIT_ADJUSTMENT: '审计调整',
-};
-export const closeStepLabels: Readonly<Record<string, string>> = {
-  LOCK_SEQUENCE: '锁定水位', CHECK_ASYNC_AND_JOURNAL: '异步任务与分录检查', CHECK_ACCOUNT_POSTING_PROGRESS: '入账进度检查',
-  GENERATE_TRIAL_BALANCE: '生成试算', RESOLVE_EXCEPTIONS: '试算异常检查', POST_PROFIT_CLOSE: '损益结转', FINAL_TRIAL_BALANCE: '最终试算',
-  PLAN_REOPEN_REVERSAL: '规划重开冲回', POST_REOPEN_REVERSAL: '过账重开冲回',
-};
-export const closeStepStatusLabels: Readonly<Record<string, string>> = { PENDING: '未执行', RUNNING: '执行中', SUCCEEDED: '成功', FAILED: '失败', SKIPPED: '跳过' };
+export const adjustmentReasonCodes = ['ACCOUNTING_CORRECTION', 'RECLASSIFICATION', 'ACCRUAL', 'AUDIT_ADJUSTMENT', 'OTHER'] as const;
+export const reopenReasonCodes = ['ACCOUNTING_CORRECTION', 'LATE_TRANSACTION', 'AUDIT_ADJUSTMENT'] as const;
 
 /** 计费事实登记目录（billing FactComponentType / FactPartyRole / FactLineDirection，MANUAL_ADJUSTMENT 允许的子集）。 */
-export const factComponentLabels: Readonly<Record<string, string>> = {
-  CLIENT_PRINCIPAL: 'Client 本金', CLIENT_FEE: 'Client 手续费', PARTNER_SHARE: 'Partner 分润', PLATFORM_SERVICE_CHARGE: '平台服务费',
-  SELLER_TAX: 'Seller 实收税', CHANNEL_COST: '渠道成本',
-};
-export const factPartyRoleLabels: Readonly<Record<string, string>> = {
-  CLIENT: 'Client', LOCAL_PARTNER: 'Local Partner', CHANNEL: '渠道', OPERATING_ENTITY: '经营主体', FINANCE_ENTITY: '财务主体',
-  TAX_AUTHORITY: '税务机关', CASH_ACCOUNT: '平台银行账户', FX_ACCOUNT: '平台外汇账户',
-};
-export const factDirectionLabels: Readonly<Record<string, string>> = { CHARGE: '新增', REVERSAL: '冲回', ADJUSTMENT: '调整' };
+export const factComponentCodes = ['CLIENT_PRINCIPAL', 'CLIENT_FEE', 'PARTNER_SHARE', 'PLATFORM_SERVICE_CHARGE', 'SELLER_TAX', 'CHANNEL_COST'] as const;
+export const factPartyRoles = [
+  'CLIENT', 'LOCAL_PARTNER', 'CHANNEL', 'OPERATING_ENTITY', 'FINANCE_ENTITY', 'TAX_AUTHORITY', 'CASH_ACCOUNT', 'FX_ACCOUNT',
+] as const;
+export const factDirections = ['CHARGE', 'REVERSAL', 'ADJUSTMENT'] as const;
 export const factTargetBuckets = ['AVAILABLE', 'PENDING'] as const;
-export const factTypeLabels: Readonly<Record<string, string>> = {
-  PAYMENT: '支付', REFUND: '退款', DUPLICATE_CAPTURE: '重复扣款', DUPLICATE_COMPENSATION: '重复扣款补偿', DISPUTE: '争议', COST_ADJUSTMENT: '渠道成本调整',
-  CHANNEL_SETTLEMENT: '渠道结算', PAYOUT_SETTLED: '出款完成', TAX_PAID: '缴税完成', MANUAL_ADJUSTMENT: '人工调整', FX_SELL: '外汇卖出', FX_BUY: '外汇买入',
-};
+export const factTypes = [
+  'PAYMENT', 'REFUND', 'DUPLICATE_CAPTURE', 'DUPLICATE_COMPENSATION', 'DISPUTE', 'COST_ADJUSTMENT',
+  'CHANNEL_SETTLEMENT', 'PAYOUT_SETTLED', 'TAX_PAID', 'MANUAL_ADJUSTMENT', 'FX_SELL', 'FX_BUY',
+] as const;
 
-/** 规则包中文名由代码映射，未知代码显示代码本身。 */
-export const ruleBundleNames: Readonly<Record<string, string>> = { STANDARD_TRANSACTION: '交易记账规则', STANDARD_ADJUSTMENT: '调整记账规则' };
+/** 规则包显示名由代码映射（finance.enum.ruleBundle.*），未知代码显示代码本身。 */
 export function ruleBundleName(bundleCode: string): string {
-  return ruleBundleNames[bundleCode] ?? bundleCode;
+  return enumLabel(t, 'enum.ruleBundle', bundleCode);
 }
 /** ledger AutoInstructionType / AmountSource / RuleOwnerRole 目录。 */
-export const instructionTypeLabels: Readonly<Record<string, string>> = {
-  PAYMENT_SUCCEEDED: '支付成功', PLATFORM_SERVICE_CHARGE_PARTNER: '平台服务费（Partner 侧）', PLATFORM_SERVICE_CHARGE_PLATFORM: '平台服务费（平台侧）',
-  ECONOMIC_ADJUSTMENT: '人工调整计费事实', CHANNEL_COST_ADJUSTMENT: '渠道成本调整',
-};
-export const amountSourceLabels: Readonly<Record<string, string>> = {
-  GROSS_AMOUNT: '交易全额', CLIENT_PRINCIPAL: 'Client 本金', CLIENT_FEE: 'Client 手续费', SELLER_TAX: 'Seller 实收税', CHANNEL_COST: '渠道成本',
-  PARTNER_SHARE: 'Partner 分润', PLATFORM_SERVICE_CHARGE: '平台服务费',
-};
-export const ruleOwnerRoleLabels: Readonly<Record<string, string>> = {
-  BOOK_ENTITY: '账簿主体', CHANNEL_ACCOUNT: '渠道清算账户', PLATFORM_FINANCE_ENTITY: '平台财务主体', TRANSACTION_OE: '交易经营主体', TAX_AUTHORITY: '税务机关',
-};
+export const instructionTypes = [
+  'PAYMENT_SUCCEEDED', 'PLATFORM_SERVICE_CHARGE_PARTNER', 'PLATFORM_SERVICE_CHARGE_PLATFORM', 'ECONOMIC_ADJUSTMENT', 'CHANNEL_COST_ADJUSTMENT',
+] as const;
+export const amountSourceCodes = [
+  'GROSS_AMOUNT', 'CLIENT_PRINCIPAL', 'CLIENT_FEE', 'SELLER_TAX', 'CHANNEL_COST', 'PARTNER_SHARE', 'PLATFORM_SERVICE_CHARGE',
+] as const;
+export const ruleOwnerRoles = ['BOOK_ENTITY', 'CHANNEL_ACCOUNT', 'PLATFORM_FINANCE_ENTITY', 'TRANSACTION_OE', 'TAX_AUTHORITY'] as const;
 
 /** 规则行科目所在的科目表（ledger AccountingCodes.STANDARD_CHART_CODE）。 */
 export const standardChartCode = 'STANDARD';
@@ -193,32 +173,32 @@ export const controlAccountCodes: readonly string[] = [
 // ---------- 错误码（technique D4） ----------
 
 /** ledger LedgerErrorCode 的页面落点：字段名对应制单表单，其余在表单 / 抽屉顶部。 */
-export const ledgerWorkflowErrorTargets: Readonly<Record<string, FinanceErrorTarget>> = {
-  SELF_REVIEW_FORBIDDEN: { field: null, message: '制单人不能复核自己提交的单据' },
-  REVIEW_CONTENT_CHANGED: { field: null, message: '单据内容已变化，请刷新后重新复核' },
-  REVIEW_STATUS_INVALID: { field: null, message: '单据不在待复核状态' },
-  ADJUSTMENT_UNBALANCED: { field: 'lines', message: '分录借贷不平衡' },
-  ADJUSTMENT_PERIOD_NOT_OPEN: { field: 'accountingPeriodId', message: '会计期间未开放' },
-  ADJUSTMENT_ACCOUNT_INVALID: { field: 'lines', message: '账户不属于该账簿、已停用或不可记账' },
-  OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN: { field: 'lines', message: '人工调整不得涉及 Client 或 Local Partner 的控制科目，请经计费登记 MANUAL_ADJUSTMENT 计费事实' },
-  PERIOD_CLOSE_ORDER_INVALID: { field: null, message: '之前的期间尚未关账' },
-  PERIOD_NOT_OPEN: { field: null, message: '期间不是开放状态，不能关账' },
-  PERIOD_REOPEN_NOT_ALLOWED: { field: null, message: '只能重开最近一期已关账期间' },
-  RULE_VERSION_IN_PROGRESS: { field: null, message: '规则包已有草稿或待审批版本' },
-  RULE_VERSION_STATUS_INVALID: { field: null, message: '版本当前状态不允许该操作' },
-  RULE_SUBMITTER_NOT_MAKER: { field: null, message: '只有制单人可以提交或作废草稿' },
-  RULE_LINE_INVALID: { field: 'lines', message: '规则行不合法：科目、代码或借贷配置不符合要求' },
-  RULE_EFFECTIVE_FROM_INVALID: { field: 'effectiveFrom', message: '生效时间必须晚于当前生效版本' },
-  LEDGER_BOOK_NOT_FOUND: { field: null, message: '账簿不存在' },
-  ACCOUNTING_PERIOD_NOT_FOUND: { field: null, message: '会计期间不存在' },
+export const ledgerWorkflowErrorTargets: Readonly<Record<string, FinanceErrorRule>> = {
+  SELF_REVIEW_FORBIDDEN: { field: null, messageKey: 'error.ledgerWorkflow.SELF_REVIEW_FORBIDDEN' },
+  REVIEW_CONTENT_CHANGED: { field: null, messageKey: 'error.ledgerWorkflow.REVIEW_CONTENT_CHANGED' },
+  REVIEW_STATUS_INVALID: { field: null, messageKey: 'error.ledgerWorkflow.REVIEW_STATUS_INVALID' },
+  ADJUSTMENT_UNBALANCED: { field: 'lines', messageKey: 'error.ledgerWorkflow.ADJUSTMENT_UNBALANCED' },
+  ADJUSTMENT_PERIOD_NOT_OPEN: { field: 'accountingPeriodId', messageKey: 'error.ledgerWorkflow.ADJUSTMENT_PERIOD_NOT_OPEN' },
+  ADJUSTMENT_ACCOUNT_INVALID: { field: 'lines', messageKey: 'error.ledgerWorkflow.ADJUSTMENT_ACCOUNT_INVALID' },
+  OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN: { field: 'lines', messageKey: 'error.ledgerWorkflow.OWNER_ACCOUNT_ADJUSTMENT_FORBIDDEN' },
+  PERIOD_CLOSE_ORDER_INVALID: { field: null, messageKey: 'error.ledgerWorkflow.PERIOD_CLOSE_ORDER_INVALID' },
+  PERIOD_NOT_OPEN: { field: null, messageKey: 'error.ledgerWorkflow.PERIOD_NOT_OPEN' },
+  PERIOD_REOPEN_NOT_ALLOWED: { field: null, messageKey: 'error.ledgerWorkflow.PERIOD_REOPEN_NOT_ALLOWED' },
+  RULE_VERSION_IN_PROGRESS: { field: null, messageKey: 'error.ledgerWorkflow.RULE_VERSION_IN_PROGRESS' },
+  RULE_VERSION_STATUS_INVALID: { field: null, messageKey: 'error.ledgerWorkflow.RULE_VERSION_STATUS_INVALID' },
+  RULE_SUBMITTER_NOT_MAKER: { field: null, messageKey: 'error.ledgerWorkflow.RULE_SUBMITTER_NOT_MAKER' },
+  RULE_LINE_INVALID: { field: 'lines', messageKey: 'error.ledgerWorkflow.RULE_LINE_INVALID' },
+  RULE_EFFECTIVE_FROM_INVALID: { field: 'effectiveFrom', messageKey: 'error.ledgerWorkflow.RULE_EFFECTIVE_FROM_INVALID' },
+  LEDGER_BOOK_NOT_FOUND: { field: null, messageKey: 'error.ledgerWorkflow.LEDGER_BOOK_NOT_FOUND' },
+  ACCOUNTING_PERIOD_NOT_FOUND: { field: null, messageKey: 'error.ledgerWorkflow.ACCOUNTING_PERIOD_NOT_FOUND' },
 };
 
 /** billing BillingFactErrorCode 的页面落点。 */
-export const billingErrorTargets: Readonly<Record<string, FinanceErrorTarget>> = {
-  SELF_REVIEW_FORBIDDEN: { field: null, message: '制单人不能复核自己提交的计费事实' },
-  FACT_NOT_DRAFT: { field: null, message: '只能批准或作废草稿计费事实' },
-  FACT_LINE_INVALID: { field: 'lines', message: '明细行不合法：金额组件、收付方、目标余额桶或金额精度不符合规则' },
-  FACT_SUPERSEDE_INVALID: { field: 'supersedesFactId', message: '被替代的计费事实不存在或不可替代' },
+export const billingErrorTargets: Readonly<Record<string, FinanceErrorRule>> = {
+  SELF_REVIEW_FORBIDDEN: { field: null, messageKey: 'error.billing.SELF_REVIEW_FORBIDDEN' },
+  FACT_NOT_DRAFT: { field: null, messageKey: 'error.billing.FACT_NOT_DRAFT' },
+  FACT_LINE_INVALID: { field: 'lines', messageKey: 'error.billing.FACT_LINE_INVALID' },
+  FACT_SUPERSEDE_INVALID: { field: 'supersedesFactId', messageKey: 'error.billing.FACT_SUPERSEDE_INVALID' },
 };
 
 /** 服务端字段路径（如 lines[0].amount）转为 antd 表单名路径。 */
@@ -249,10 +229,9 @@ const array = (v: unknown): v is unknown[] => Array.isArray(v);
 /** 解码失败只给通用错误，不回显响应内容。 */
 const require = (valid: boolean) => { if (!valid) throw new ApiError(502, 'INVALID_RESPONSE'); };
 
-const adjustmentStatuses = Object.keys(adjustmentStatusLabels);
-const billingStatuses = Object.keys(billingFactStatusLabels);
-const closeStatuses = Object.keys(periodCloseStatusLabels);
-const ruleStatuses = Object.keys(ruleVersionStatusLabels);
+const billingStatuses = billingFactStatuses;
+const closeStatuses = periodCloseStatuses;
+const ruleStatuses = ruleVersionStatuses;
 const sides = ['DEBIT', 'CREDIT'];
 const buckets = ['PENDING', 'AVAILABLE', 'LOCKED', 'NONE'];
 
@@ -519,7 +498,8 @@ export function reopenablePeriodId(periods: readonly AccountingPeriod[]): string
 }
 
 /** 期间显示：财年 + 期号。 */
-export const periodLabel = (period: Pick<AccountingPeriod, 'fiscalYear' | 'periodNo'>) => `${period.fiscalYear} 年第 ${period.periodNo} 期`;
+export const periodLabel = (period: Pick<AccountingPeriod, 'fiscalYear' | 'periodNo'>) =>
+  t('period.label', { fiscalYear: String(period.fiscalYear), periodNo: String(period.periodNo) });
 
 export function sortedBoard(board: PeriodBoard): PeriodBoardItem[] {
   return [...board.periods].sort((left, right) => periodOrder(left.period, right.period));
@@ -556,10 +536,10 @@ const amountPattern = /^(0|[1-9][0-9]{0,15})(\.[0-9]{1,8})?$/;
 /** 金额校验：正数、主单位十进制、小数位不超过币种精度；返回错误文案或 null。 */
 export function amountError(amount: string | undefined, minorUnit?: number): string | null {
   const value = amount?.trim() ?? '';
-  if (!value) return '请填写金额';
-  if (!amountPattern.test(value)) return '金额为正的十进制数，如 100.00';
-  if (/^0(\.0+)?$/.test(value)) return '金额必须大于零';
-  if (minorUnit !== undefined && (value.split('.')[1] ?? '').length > minorUnit) return `小数位不能超过 ${minorUnit} 位`;
+  if (!value) return t('validation.amountRequired');
+  if (!amountPattern.test(value)) return t('validation.amountPattern');
+  if (/^0(\.0+)?$/.test(value)) return t('validation.amountPositive');
+  if (minorUnit !== undefined && (value.split('.')[1] ?? '').length > minorUnit) return t('validation.amountScale', { minorUnit });
   return null;
 }
 
@@ -608,11 +588,11 @@ export interface BillingFilterValues {
 }
 export function billingFilters(values: BillingFilterValues): Record<string, string> {
   const entityNo = values.entityNo?.trim().toUpperCase() ?? '';
-  if (!entityNoPattern.test(entityNo) || !currencyPattern.test(values.currency ?? '')) throw new Error('请填写经营主体（entityNo）并选择币种');
+  if (!entityNoPattern.test(entityNo) || !currencyPattern.test(values.currency ?? '')) throw new Error(t('validation.billingScope'));
   const filters: Record<string, string> = { entityNo, currency: values.currency! };
   const clientId = values.clientId?.trim();
   if (clientId) {
-    if (!decimalIdPattern.test(clientId)) throw new Error('Client ID 必须是正十进制整数字符串');
+    if (!decimalIdPattern.test(clientId)) throw new Error(t('validation.clientId'));
     filters.clientId = clientId;
   }
   if (values.status) filters.status = values.status;
@@ -620,10 +600,10 @@ export function billingFilters(values: BillingFilterValues): Record<string, stri
   for (const key of ['createdFrom', 'createdTo'] as const) {
     if (!values[key]) continue;
     const time = new Date(values[key]!);
-    if (!Number.isFinite(time.getTime())) throw new Error('请输入有效时间');
+    if (!Number.isFinite(time.getTime())) throw new Error(t('validation.time'));
     filters[key] = time.toISOString();
   }
-  if (filters.createdFrom && filters.createdTo && filters.createdFrom >= filters.createdTo) throw new Error('结束时间必须晚于开始时间');
+  if (filters.createdFrom && filters.createdTo && filters.createdFrom >= filters.createdTo) throw new Error(t('validation.timeRange'));
   return filters;
 }
 
@@ -649,19 +629,20 @@ export function resolvePartyId(role: string | undefined, inputId: string | undef
 
 /** 明细行登记规则（billing FACT_LINE_INVALID 的页面预检）：返回错误文案或 null；服务端仍以错误码兜底。 */
 export function factLineError(line: FactLineValues, header: FactHeaderValues, minorUnit?: number): string | null {
-  if (!line.componentType || !line.payerRole || !line.payeeRole || !line.direction) return '请完整选择金额组件、付方、收方与方向';
+  if (!line.componentType || !line.payerRole || !line.payeeRole || !line.direction) return t('validation.factLineIncomplete');
   const payerId = resolvePartyId(line.payerRole, line.payerId, header);
   const payeeId = resolvePartyId(line.payeeRole, line.payeeId, header);
   for (const [role, value] of [[line.payerRole, payerId], [line.payeeRole, payeeId]] as const) {
-    if (!value) return `${factPartyRoleLabels[role] ?? role} 标识缺失${headerBoundRoles[role] ? '（请先在头部填写）' : ''}`;
-    if (role === 'OPERATING_ENTITY' ? !entityNoPattern.test(value) : !decimalIdPattern.test(value)) return `${factPartyRoleLabels[role] ?? role} 标识格式不正确`;
+    const roleName = enumLabel(t, 'enum.factPartyRole', role);
+    if (!value) return t(headerBoundRoles[role] ? 'validation.partyIdMissingInHeader' : 'validation.partyIdMissing', { role: roleName });
+    if (role === 'OPERATING_ENTITY' ? !entityNoPattern.test(value) : !decimalIdPattern.test(value)) return t('validation.partyIdInvalid', { role: roleName });
   }
-  if (line.payerRole === line.payeeRole && payerId === payeeId) return '付方与收方不能相同';
-  if (line.targetBucket && line.payeeRole !== 'CLIENT' && line.payeeRole !== 'LOCAL_PARTNER') return '目标余额桶只用于收方为 Client 或 Local Partner 的行';
+  if (line.payerRole === line.payeeRole && payerId === payeeId) return t('validation.payerEqualsPayee');
+  if (line.targetBucket && line.payeeRole !== 'CLIENT' && line.payeeRole !== 'LOCAL_PARTNER') return t('validation.targetBucketPayee');
   if ((line.componentType === 'PARTNER_SHARE' || line.componentType === 'PLATFORM_SERVICE_CHARGE') && (!header.localPartnerId || !header.financeEntityId)) {
-    return '分润与平台服务费需要在头部填写 Local Partner 与财务主体';
+    return t('validation.partnerHeaderRequired');
   }
-  if (line.componentType === 'PLATFORM_SERVICE_CHARGE' && line.payeeRole !== 'FINANCE_ENTITY') return '平台服务费的收方必须是头部财务主体';
+  if (line.componentType === 'PLATFORM_SERVICE_CHARGE' && line.payeeRole !== 'FINANCE_ENTITY') return t('validation.serviceChargePayee');
   return amountError(line.amount, minorUnit);
 }
 
@@ -702,16 +683,16 @@ export function groupRuleLines<T extends Pick<RuleLine, 'instructionType' | 'lin
 
 /** 规则行集合预检：非空、每行完整、同指令类型内行代码唯一、每个指令类型借贷齐全；返回错误文案或 null。 */
 export function ruleLinesError(lines: readonly RuleLineValues[]): string | null {
-  if (!lines.length) return '至少需要一行规则';
+  if (!lines.length) return t('validation.ruleLinesRequired');
   const fields = ['instructionType', 'lineCode', 'amountSourceCode', 'ownerRole', 'accountCode', 'balanceBucket', 'entrySide'] as const;
   const incomplete = lines.findIndex(line => fields.some(field => !String(line[field] ?? '').trim()));
-  if (incomplete >= 0) return `第 ${incomplete + 1} 行未填写完整`;
+  if (incomplete >= 0) return t('validation.ruleLineIncomplete', { line: incomplete + 1 });
   for (const group of groupRuleLines(lines.map((line, index) => ({ ...line, instructionType: line.instructionType!, lineNo: index + 1 })))) {
     const codes = group.lines.map(line => line.lineCode!.trim());
     const duplicate = codes.find((value, index) => codes.indexOf(value) !== index);
-    if (duplicate) return `${instructionTypeLabels[group.instructionType] ?? group.instructionType} 中行代码 ${duplicate} 重复`;
+    if (duplicate) return t('validation.ruleLineCodeDuplicate', { instructionType: enumLabel(t, 'enum.instructionType', group.instructionType), lineCode: duplicate });
     if (!group.lines.some(line => line.entrySide === 'DEBIT') || !group.lines.some(line => line.entrySide === 'CREDIT')) {
-      return `${instructionTypeLabels[group.instructionType] ?? group.instructionType} 缺少借方或贷方行`;
+      return t('validation.ruleLineSideMissing', { instructionType: enumLabel(t, 'enum.instructionType', group.instructionType) });
     }
   }
   return null;
@@ -720,7 +701,7 @@ export function ruleLinesError(lines: readonly RuleLineValues[]): string | null 
 /** 新建版本请求体：生效时间按本地时区解析后转 UTC；行号按指令类型内的顺序从 1 编号。 */
 export function ruleVersionBody(effectiveFrom: string, lines: readonly RuleLineValues[]) {
   const time = new Date(effectiveFrom);
-  if (!Number.isFinite(time.getTime())) throw new Error('请输入有效的生效时间');
+  if (!Number.isFinite(time.getTime())) throw new Error(t('validation.effectiveFrom'));
   const counters = new Map<string, number>();
   return { effectiveFrom: time.toISOString(), lines: lines.map(line => {
     const lineNo = (counters.get(line.instructionType!) ?? 0) + 1; counters.set(line.instructionType!, lineNo);

@@ -63,9 +63,9 @@ test('字段即时提示：位置、路径格式、标量类型、重复与父�
   ], ['HEADER', 'BODY']);
   assert.deepEqual(hints.map(hint => `${hint.index}:${hint.column}`), [
     '0:fieldPath', '1:dataType', '2:fieldPath', '3:fieldLocation', '4:fieldPath']);
-  assert.equal(hints[0].message, '父字段 payment 需先定义为对象');
+  assert.equal(hints[0].message, 'Define parent field payment as an object first');
   const orders = fieldHints([field('BODY', 'orders', 'OBJECT'), field('BODY', 'orders[].id')], ['BODY']);
-  assert.deepEqual(orders.map(hint => `${hint.index}:${hint.message}`), ['1:父字段 orders 需先定义为数组']);
+  assert.deepEqual(orders.map(hint => `${hint.index}:${hint.message}`), ['1:Define parent field orders as an array first']);
 });
 
 test('新建实现只列出尚未实现的标准 API，按编码排序', () => {

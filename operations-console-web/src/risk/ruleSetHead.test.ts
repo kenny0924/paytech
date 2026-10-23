@@ -10,7 +10,7 @@ import { loadObservedRuleSetHead, ObservedHeadChangedError, requireSelectedObser
 
 const pointCode = 'CHECKOUT_PREPARE';
 const ruleSetCode = 'RULE_SET';
-const safeMessage = '规则集版本信息已变化，请刷新后重试。';
+const safeMessage = 'The rule set version has changed. Refresh and try again.';
 const page = (entries: RuleSetListItem[], total = entries.length, pageNo = 1): PagingResponseBody<RuleSetListItem> =>
   decodeRuleSetPage({ items: entries, page: pageNo, size: 10, total });
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { configurationCommand, descendants, visibleResourceIds } from './configurationModel.ts';
+import { configurationCommand, descendants, resourceTypeLabel, visibleResourceIds } from './configurationModel.ts';
 import { defaultIdempotencyMode, idempotencyOptions, initialGuards, routeWrite } from './gatewayEditorModel.ts';
 import { pageCapabilities } from '../navigation/pageCapabilities.ts';
 import type { ManagedResource, ManagedRoute } from './types.ts';
@@ -31,9 +31,14 @@ test('Route 请求幂等随写入发送，选项与默认值来自 Profile 能�
   assert.equal(updated.idempotencyMode, 'NONE');
   const profile = { securityProfileCode: 'CLIENT_API_CREDENTIAL', authorizationModes: [], requestCookieModes: [], responseCookieModes: [], idempotencyModes: ['NONE', 'REQUIRED'], allowedGuardDimensions: [], requiredGuardDimensions: [] };
   assert.equal(defaultIdempotencyMode(profile), 'NONE');
-  assert.deepEqual(idempotencyOptions(profile.idempotencyModes), [{ value: 'NONE', label: '不启用' }, { value: 'REQUIRED', label: '必须' }]);
-  assert.deepEqual(idempotencyOptions(['NONE'], 'REQUIRED'), [{ value: 'NONE', label: '不启用' }, { value: 'REQUIRED', label: '必须' }]);
-  assert.deepEqual(idempotencyOptions(undefined, 'NONE'), [{ value: 'NONE', label: '不启用' }]);
+  assert.deepEqual(idempotencyOptions(profile.idempotencyModes), [{ value: 'NONE', label: 'Off' }, { value: 'REQUIRED', label: 'Required' }]);
+  assert.deepEqual(idempotencyOptions(['NONE'], 'REQUIRED'), [{ value: 'NONE', label: 'Off' }, { value: 'REQUIRED', label: 'Required' }]);
+  assert.deepEqual(idempotencyOptions(undefined, 'NONE'), [{ value: 'NONE', label: 'Off' }]);
+  assert.deepEqual(idempotencyOptions(['OPTIONAL']), [{ value: 'OPTIONAL', label: 'OPTIONAL' }], 'unknown modes show their code');
+});
+test('资源类型显示名：按钮、页面菜单与目录（英文基准）', () => {
+  assert.deepEqual([resourceTypeLabel({ resourceType: 'BUTTON', componentKey: null }), resourceTypeLabel({ resourceType: 'MENU', componentKey: 'OPERATIONS_AUDIT' }),
+    resourceTypeLabel({ resourceType: 'MENU', componentKey: null })], ['Button', 'Page Menu', 'Directory']);
 });
 test('Guard 默认项只来自服务端必需维度，数值形状保持 Rate/Concurrency 互斥', () => {
   const values = initialGuards({ securityProfileCode: 'OPERATIONS_JWT', authorizationModes: [], requestCookieModes: [], responseCookieModes: [], idempotencyModes: ['NONE'], allowedGuardDimensions: ['SHARED_ROUTE', 'CLIENT_IP'], requiredGuardDimensions: ['SHARED_ROUTE', 'CLIENT_IP'] });
