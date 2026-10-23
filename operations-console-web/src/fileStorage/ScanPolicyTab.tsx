@@ -200,17 +200,17 @@ export function ScanPolicyTab({ policies, loading, failed, refresh, canManage, o
       <div className="table-toolbar"><span className="table-count"><span>共 {policies.items.length} 个策略</span>
         <RefreshButton onClick={refresh} loading={loading} failed={failed} /></span>
         {canManage && <Button type="primary" disabled={!supported.length} onClick={() => setCreating(true)}>＋ 新建策略</Button>}</div>
-      <Table<ScanPolicySummary> rowKey="policyCode" tableLayout="fixed" dataSource={policies.items} loading={loading} pagination={false} scroll={{ x: 760 }}
+      <Table<ScanPolicySummary> rowKey="policyCode" tableLayout="fixed" dataSource={policies.items} loading={loading} pagination={false} scroll={{ x: 680 }}
         rowClassName={row => row.policyCode === current?.policyCode ? 'is-selected clickable-row' : 'clickable-row'}
         onRow={row => ({ onClick: () => setSelected(row.policyCode) })} columns={[
-          { title: '策略代码', width: 240, ellipsis: true, render: (_, row) => <span className="mono">{row.policyCode}</span> },
-          { title: '当前修订', width: 100, render: (_, row) => <div>{row.activeRevisionNo ? `r${row.activeRevisionNo}` : '—'}
+          { title: '策略代码', width: 210, ellipsis: true, render: (_, row) => <span className="mono">{row.policyCode}</span> },
+          { title: '当前修订', width: 84, render: (_, row) => <div>{row.activeRevisionNo ? `r${row.activeRevisionNo}` : '—'}
             {row.draftRevisionNo && <div className="cell-meta">草稿 r{row.draftRevisionNo}</div>}</div> },
-          { title: '允许类型', width: 200, render: (_, row) => <div><MimeTags types={row.allowedMimeTypes} supported={supported} />
+          { title: '允许类型', render: (_, row) => <div><MimeTags types={row.allowedMimeTypes} supported={supported} />
             {unsupportedMimeTypes(row.allowedMimeTypes, supported).length > 0 && <div className="notification-missing">⚠ 含格式检查无法识别的类型</div>}</div> },
-          { title: '最大大小', width: 90, render: (_, row) => byteSizeLabel(row.maxSizeBytes) },
-          { title: '引用规则', width: 80, render: (_, row) => `${row.routeCount} 条` },
-          { title: '状态', width: 80, render: (_, row) => <Tag color={statusColors[row.status]}>{policyStatusLabels[row.status]}</Tag> },
+          { title: '最大大小', width: 84, render: (_, row) => byteSizeLabel(row.maxSizeBytes) },
+          { title: '引用规则', width: 76, render: (_, row) => `${row.routeCount} 条` },
+          { title: '状态', width: 76, fixed: 'right', render: (_, row) => <Tag color={statusColors[row.status]}>{policyStatusLabels[row.status]}</Tag> },
         ]} />
       <div className="notification-note">格式检查可识别：{supported.map(mimeTypeLabel).join('、') || '—'}。选择其他类型的文件将无法通过检查。
         同一策略最多一个生效修订和一个草稿；已开始的上传按开始时的修订检查。</div>

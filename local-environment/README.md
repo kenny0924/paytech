@@ -80,8 +80,10 @@ docker compose --env-file .env.local --profile storage run --rm minio-init   # i
 ```
 
 - S3 API `https://127.0.0.1:19400` (region `us-east-1`), console `https://127.0.0.1:19401`.
-- `minio-init` creates the versioned, SSE-S3 encrypted buckets `mor-platform-files` (local runs) and
-  `mor-platform-files-test` (auto tests) and the `platform-files` user limited to those buckets.
+- `minio-init` creates the versioned, SSE-S3 encrypted buckets `mor-platform-files` (local runs),
+  `mor-platform-files-test` (auto tests) and `mor-platform-public` (public file bucket: anonymous `GetObject` only,
+  no anonymous listing), and the `platform-files` user limited to those buckets. Registering a bucket in
+  存储管理 is still done through the Operations API, not by this script.
 - Credentials: `MOR_MINIO_*` in `.env.local` (see `.env.example`). Java clients trust
   `local-environment/minio/certs/public.crt`; a browser must trust it too before direct uploads work.
 - If compose interpolation stops on `PAYTECH_REDIS_PASSWORD`, export it from your existing Redis password first; the
