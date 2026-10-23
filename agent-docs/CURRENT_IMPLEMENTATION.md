@@ -35,7 +35,7 @@
 - **Deployed：** mor-test 2026-10-23 05:22—05:30Z（窗口 05:23:57—05:25:27Z）：card `810b6b72…`、client-master `2e495b40…`、client-console-bff `b8ecaaea…`、ops-bff `06d850d1…`、platform `68ba631f…`、ops-web `f8b5dc32…`（源 `22ede435` + 本需求，ops-web 另含当时 16 个未提交文件）；DDL、回填 70 行、块 130 / 134 已执行并激活；MinIO 公开测试桶 `mor-platform-public` 已登记为 PUBLIC 并保留；postcheck 23/23、验收 87/89（2 项为脚本问题，已补验 / 修正）。
 - **Pending / 遗留：** 推送另行授权；真实 AWS S3 公开桶与 CDN 未实测（需公开桶与 `S3_TEST` 复制权限）；`local-environment/minio/init/init.sh` 未纳入公开桶（重跑 minio-init 会覆盖 `platform-files` 策略）；检查策略表「状态」列在窄屏被详情面板遮挡；公开文件被外部改写且无待执行同步任务时，后续替换返回 409 需人工恢复。
 
-## acquiring 订单到期后的支付结果确认（2026-10-23，已部署 mor-test，已本地提交，未推送）
+## acquiring 订单到期后的支付结果确认（2026-10-23，已部署 mor-test，已本地提交 `a2b7f85a`，未推送；提交重建 JAR 与运行仅差多语言 API 新增类）
 
 - **范围：** [需求](<../requirements/20261022/acquiring-到期后支付结果确认/requirement.md>)、[技术方案](<../requirements/20261022/acquiring-到期后支付结果确认/technique.md>)、[交付记录](<../requirements/20261022/acquiring-到期后支付结果确认/delivery.md>)、[发布记录](<../requirements/20261022/acquiring-到期后支付结果确认/release/release.md>)。来源为订单过期收尾 F1；参照 Stripe（提交后会话不再过期）。无 DDL、无 Platform 注册、无配置项；[Client API v1 设计](../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md)第 6 节 Token 校验与第 8.2 节已按本需求修订。
 - **Implemented：** acquiring `GetCustomerPaymentProcessor`：到期检查从入口移到“无支付记录”与“Payment 未找到该提交”两个分支（到期 410 `CHECKOUT_EXPIRED`，未到期 404 `PAYMENT_SUBMISSION_NOT_FOUND`），删除响应前复查；已提交支付在订单到期（含已 EXPIRED）后仍刷新 Payment 并返回真实结果，Payment 不可用降级为处理中。写操作与查看收银台到期规则不变。
