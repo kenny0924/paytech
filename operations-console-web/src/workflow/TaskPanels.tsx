@@ -4,7 +4,7 @@ import { Alert, App, Button, Dropdown, Empty, Form, Input, Modal, Select, Tag } 
 import { CheckOutlined, CloseOutlined, DownOutlined, InfoCircleOutlined, RightOutlined, UpOutlined, WarningOutlined } from '@ant-design/icons';
 import { actionTypeIcons } from './workflowIcons';
 import type { TextAreaRef } from 'antd/es/input/TextArea';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { changeSummary, diffOutputs, displayValue, outputOf } from './formModel';
 import { nodeOf } from './graphModel';
 import {
@@ -257,6 +257,7 @@ function ActionRow({ detail, run, nodeRun, actorId, command, handles, open, onTo
   run: ActionRun; nodeRun: NodeRun; open: boolean; onToggle: () => void; onCompleted: (run: ActionRun) => void;
 }) {
   const { message } = App.useApp();
+  const navigate = useNavigate();
   const template = frozenTemplate(detail, run.actionKey);
   const config = template?.config;
   const located = nodeActionOf(detail.graph, run.actionKey);
@@ -274,7 +275,7 @@ function ActionRow({ detail, run, nodeRun, actorId, command, handles, open, onTo
   const submitting = useRef(false);
   const lastOutput = useRef<Record<string, unknown>>({});
   const [form] = Form.useForm();
-  const [opened, setOpened] = useState(() => readOpened(run.actionRunId));
+  const [opened] = useState(() => readOpened(run.actionRunId));
   const formDefinition = run.actionType === 'FORM' ? config as FormDefinition | undefined : undefined;
   const problems = completionProblems(run, template, values);
   const shown = { ...visibleProblems(problems, touched, attempted), ...server };
@@ -352,9 +353,11 @@ function ActionRow({ detail, run, nodeRun, actorId, command, handles, open, onTo
       {instruction && <p className="wf-instruction">{instruction}</p>}
       {run.actionType === 'PAGE_TASK' && <div className="wf-page-link">
         <div><strong>{(config as PageTaskConfig | undefined)?.pageRoute}</strong>
-          <div className="muted">{link ?? '目标页面不是站内路由，已拒绝跳转'}（参数来自实例变量）</div></div>
+          <div className="muted">{link ?? '目标页面不是站内路由，已拒绝跳转'}（参数来自实例变量）</div>
+          {link && <div className="muted">在当前标签页打开，处理完用浏览器「返回」回到这里点「完成」</div>}</div>
         {opened && <span className="wf-ok-text">{shortTime(opened)} 已打开过</span>}
-        <Button disabled={!link} onClick={() => { if (!link) return; window.open(link, '_blank', 'noopener'); writeOpened(run.actionRunId); setOpened(new Date().toISOString()); }}>打开页面</Button>
+        {/* 会话只存在本标签页（refresh token 轮换不跨标签页共享），新标签页会落到登录页，所以站内跳转。 */}
+        <Button disabled={!link} onClick={() => { if (!link) return; writeOpened(run.actionRunId); navigate(link); }}>打开页面</Button>
       </div>}
       {editing ? <>
         {run.actionType === 'FILE_UPLOAD' && <div className="wf-field">

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Alert, Button, Dropdown, Empty, Input, Modal, Radio, Segmented, Select, Space, Switch, Tabs, Tag } from 'antd';
 import type { ReactNode } from 'react';
-import { ArrowRightOutlined, CloseOutlined, DownOutlined, EllipsisOutlined, ExportOutlined, FileTextOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
+import { ArrowRightOutlined, CloseOutlined, DownOutlined, EllipsisOutlined, FileTextOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
 import { instructionLine } from './definitionModel';
 import {
   actionOutputs, changeOperator, changeVariable, clausesText, gatewayExits, keyPattern, nextKey, nodeOf, operatorsByType, renameNode, setDefaultExit,
@@ -169,7 +170,7 @@ function ActionCard({ node, action, context, dragging, onDragStart, onDragEnd, o
       {template && <ActionTypeIcon type={template.actionType} />}
       <strong className="wf-grow" title={action.key}>{template?.templateName ?? (action.templateId ? '读取中…' : '未选择动作')}
         {template && <span className="muted"> · {actionTypeLabels[template.actionType]}</span>}</strong>
-      {action.templateId && <a className="wf-link-small" href={`${workflowRoutes.templates}/${action.templateId}`} target="_blank" rel="noreferrer">在动作目录中编辑 <ExportOutlined /></a>}
+      {action.templateId && <Link className="wf-link-small" to={`${workflowRoutes.templates}/${action.templateId}`}>在动作目录中编辑 <ArrowRightOutlined /></Link>}
       {!context.readOnly && <Dropdown trigger={['click']} menu={{ items: [{ key: 'key', label: `修改动作 key（${action.key}）` }, { type: 'divider' }, { key: 'remove', label: '移除', danger: true }],
         onClick: ({ key }) => key === 'remove' ? onRemove() : onRename() }}><Button type="text" size="small" aria-label="更多" icon={<EllipsisOutlined />} /></Dropdown>}
     </div>
