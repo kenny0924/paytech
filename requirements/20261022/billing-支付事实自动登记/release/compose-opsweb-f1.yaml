@@ -1,0 +1,9 @@
+# billing 支付事实自动登记 · F1 补发 ops-web（2026-10-23，用户裁决 ops-web 放宽 sourceSystem 校验，main 37173818）。
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/billing-支付事实自动登记/release/compose-opsweb-f1.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 120 operations-console-web
+# 候选 = 现网 i18n-20261023b（code-mor-db 多语言管理：基线 ffdf872e + code-mor-55 数据查询 10 文件 + 多语言 38 路径 + SettingsPage 修复，
+#   构建目录 /Users/kenny/Desktop/Workspace/Code-MoR-i18n-rel/operations-console-web，复现 dist 215 文件与现网逐字节一致）
+#   + 37173818 的 src/finance/financeWorkflow.ts、financeWorkflow.test.ts。只换 operations-console-web 一个容器，不带环境变量。
+services:
+  operations-console-web:
+    image: sha256:9fb809dfef26268c18d0713c542aeebe3ad039572df1961576f48ee25319b33b  # mor-test/operations-console-web:billb-f1-20261023

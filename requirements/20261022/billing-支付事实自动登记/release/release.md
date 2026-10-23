@@ -260,6 +260,8 @@ PARTNER 场景本次不执行（Q-3）：[params-partner.json](./acceptance/para
 | 07:53:16 | 9b 合成验收：第二次发布（**通过**） | 载荷改为 `aggregateVersion 4`、`commercialContextTime 2026-10-23T07:40:00Z`、`paymentSucceededTime 2026-10-23T07:45:00Z`（≥ 成本版本生效时间），eventId `ORDER:999900000000000101:OrderPaymentSucceeded:4`，payloadHash `ec153bd4a79a2767c909e706f86ca549edadde30d0f968d3e8b6b74684ef61bd`。约 1 秒内全链完成，见第 8.1 节；四个 DLQ 不变（`billing.acquiring.dlq` 仍为 9a 那 1 条），补偿任务无新 FAILED（reconciliation 7、acquiring 10 为基线） |
 | 07:57–08:05 | 9c 控制台 | [acceptance/console_check.py](./acceptance/console_check.py)（Playwright，只读，截图 `$B/console/`）**10 / 11**：计费事实列表（类型 PAYMENT）有该行；明细账 Owner 账户 `CLIENT_PAYABLE / PENDING` 与流水 97.00；余额查询 PENDING 桶；账本下钻 AE001 / USD → `CLIENT_PAYABLE` → 2026-10-23 分录 12 贷 97.00 → 分录详情 PAYMENT_SUCCEEDED 借贷 100.50；平台流水 `SYN-BILLB-P-0001` 100.00 / 0.50 / 未匹配；无 5xx。**失败 1 项 = 发现 F1**（第 9 节）：计费事实详情抽屉报「服务暂不可用 INVALID_RESPONSE」 |
 | 08:05 | 10 记录与通知 | 本节、`delivery.md`；新镜像 ID 与源码基线已发 code-mor-bf、code-mor-6b |
+| 08:24 | 补：DLQ 清理 | 用户授权后管理 API purge `billing.acquiring.dlq`（1 → 0） |
+| 09:01 | 补：F1 ops-web | 用户裁决 (a)：main `37173818`；等 code-mor-db 多语言窗口结束后，以其现网 `fc3abaa7…` 的构建目录为基线复现（dist 215 文件逐字节一致）+ 两个文件 → 镜像 `9fb809df…`（[compose-opsweb-f1.yaml](./compose-opsweb-f1.yaml)，回滚 [compose-opsweb-rollback.yaml](./compose-opsweb-rollback.yaml)）；healthy、服务文件 = dist；`console_check.py` 11 / 11 |
 
 ### 8.1 链路核对结果（`$B/chain-platform.out`，与第 7.2 节期望逐项比较；时间项按 9b 载荷调整）
 
@@ -294,7 +296,7 @@ PARTNER 场景本次不执行（Q-3）：[params-partner.json](./acceptance/para
 - **R12 合成数据保留（Q-5）**：到期任务会在 **2026-10-27 23:59:59Z**（9b 载荷）后为合成事实写余额移动与分录；控制台与对账里可凭合成 ID 段和 `SYN-BILLB-P-0001` 辨认。
 - **R13 `billing.acquiring.dlq` 残留 1 条（阶段 7 新增）**：第 8 节 9a 被拒的 `ORDER:999900000000000101:OrderPaymentSucceeded:3`（载荷支付时间早于成本版本生效时间）。不要重放：重放会再次 400 → 再进 DLQ；即便成本能命中，同一来源键 `PAYMENT_ATTEMPT:999900000000000104` 已有事实，billing 会按幂等 / 并发冲突处理。清除该消息（管理 API purge 或单条 ack）需用户单独授权；留着只影响「DLQ = 0」这一监控基线。
 - **R14 发布清单编排教训（阶段 7 新增）**：渠道成本版本只能向后生效（新版本生效时间必须晚于当前版本），而 billing 以 `paymentSucceededTime` 命中成本。验收 / 演示载荷的支付时间必须不早于成本版本生效时间；`smoke_upstreams.py` 已改为用载荷的 `paymentSucceededTime` 作 `asOfTime`（与 billing 一致），不再用 `now()`。
-- **F1 控制台计费事实详情抽屉对 AUTO 事实报 INVALID_RESPONSE（阶段 7 发现，未修复）**：billing `GET /billing/v1/facts/{id}` 返回 200、内容完整（`$B` 内有抓取）；ops-bff 无异常；ops-web `finance/financeWorkflow.ts` `decodeBillingFact` 用 `code()`（`^[A-Z][A-Z0-9_]{0,63}$`）校验 `sourceSystem`，而本需求写的 `source_system = acquiring`（technique.md 第 6 节，与事件目录 / ledger `source_system = account` 的小写系统名一致）；人工调整事实为 `OPERATIONS`（大写）所以此前未暴露。列表页、明细账、余额、账本、对账四页不受影响。处置待用户决定：(a) ops-web 放宽为系统名文本（建议，一行改动，但需 ops-web 发布，属控制台切片）；(b) billing 改写 `ACQUIRING`（改常量 + 测试 + 文档 + 重建 billing，且 mor-test 已登记的事实行需同步改值）。阶段 8 记入 CURRENT_IMPLEMENTATION 已知缺口。
+- **F1 控制台计费事实详情抽屉对 AUTO 事实报 INVALID_RESPONSE（阶段 7 发现，未修复）**：billing `GET /billing/v1/facts/{id}` 返回 200、内容完整（`$B` 内有抓取）；ops-bff 无异常；ops-web `finance/financeWorkflow.ts` `decodeBillingFact` 用 `code()`（`^[A-Z][A-Z0-9_]{0,63}$`）校验 `sourceSystem`，而本需求写的 `source_system = acquiring`（technique.md 第 6 节，与事件目录 / ledger `source_system = account` 的小写系统名一致）；人工调整事实为 `OPERATIONS`（大写）所以此前未暴露。列表页、明细账、余额、账本、对账四页不受影响。处置待用户决定：(a) ops-web 放宽为系统名文本（建议，一行改动，但需 ops-web 发布，属控制台切片）；(b) billing 改写 `ACQUIRING`（改常量 + 测试 + 文档 + 重建 billing，且 mor-test 已登记的事实行需同步改值）。阶段 8 记入 CURRENT_IMPLEMENTATION 已知缺口。**用户裁决（2026-10-23）：(a)**，main `37173818`；mor-test ops-web 发布与复验见 delivery.md 第 4 节。R13 的 DLQ 残留消息已于 08:24Z purge。
 - 候选镜像（tag `billing-b-20261023`）保留；22ede435 / d3d39e40 基线构建在会话 scratchpad，阶段 7 结束后可删。
 
 **用户决定记录（2026-10-23）**

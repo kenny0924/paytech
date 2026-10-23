@@ -1,0 +1,6 @@
+# billing 支付事实自动登记 · F1 ops-web 回滚目标 = code-mor-db 多语言管理发布的现网镜像（2026-10-23 08:54Z 起运行）。
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/billing-支付事实自动登记/release/compose-opsweb-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 120 operations-console-web
+services:
+  operations-console-web:
+    image: sha256:fc3abaa711b8ed90b5f0b19f42501e5937b3fb3dff10eefdcb56d348a34b6bb1  # mor-test/operations-console-web:i18n-20261023b

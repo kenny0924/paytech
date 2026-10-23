@@ -51,9 +51,9 @@
 - **提交：** main `98210e0b`（2026-10-23，父 `dcd6f1a1`，未推送；推送另行授权）。范围：payment 6 / acquiring 30 / billing 74 / account 4 / ledger 11 / foundation 2 / test-environment 1 / 需求目录 21 / 共享文档 7。工作树 `Code-MoR-billing-b` 基于 `d3d39e40`，提交前核对 `d3d39e40..dcd6f1a1` 未触及本需求路径；工作树 `git diff` 带出的 3 个 platform-support 文件（内容与 `d3d39e40` 相同、非本需求）已从提交中排除。主工作区已按提交同步这 128 个代码路径，共享文档只建索引、保留其他会话的未提交改动。
 - **验证范围：** 阶段 5 本机全量（见第 3 节）+ 阶段 6 rebase 后 acquiring 853 / payment 111 + 阶段 7 mor-test 合成全链；提交后未在主工作区重新编译（提交树与工作树一致，基线差异不涉及本需求模块）。
 - **遗留：**
-  - **F1** 运营控制台计费事实详情抽屉对 AUTO 事实报 `INVALID_RESPONSE`（ops-web `decodeBillingFact` 校验 `sourceSystem` 为大写码，billing 写 `acquiring`）。待用户决定：ops-web 放宽（建议）或 billing 改 `ACQUIRING`（含 mor-test 已登记行）。
+  - **F1** 运营控制台计费事实详情抽屉对 AUTO 事实报 `INVALID_RESPONSE`（ops-web `decodeBillingFact` 校验 `sourceSystem` 为大写码，billing 写 `acquiring`）。用户 2026-10-23 决定走 ops-web 放宽：main `37173818`（`financeWorkflow.ts` 改为 `text(sourceSystem, 64)`，与 `finance.ts` 账本流水一致；测试增加 AUTO 事实用例，finance 43/43、tsc 通过）。mor-test ops-web 于 code-mor-db 多语言管理窗口结束后由本会话补发（2026-10-23 09:01:24Z）：以其现网镜像 `fc3abaa7…`（i18n-20261023b）的构建目录为基线在 scratchpad 复现 `npm run build`，dist 215 文件与现网逐字节一致，再叠加 `37173818` 的两个文件构建镜像 `sha256:9fb809dfef26268c18d0713c542aeebe3ad039572df1961576f48ee25319b33b`（tag `billb-f1-20261023`；`nginx.conf` / Entrypoint / User 与现网相同；全量测试 1452/1455，3 项失败与基线副本相同、因读取 ops-web 目录外文件，非回归）；覆盖文件 [release/compose-opsweb-f1.yaml](./release/compose-opsweb-f1.yaml)，回滚 [release/compose-opsweb-rollback.yaml](./release/compose-opsweb-rollback.yaml)。容器 healthy、重启 0、所服务文件与构建 dist 逐字节一致；`console_check.py` 复验 **11 / 11**（详情抽屉显示类型 AUTO、来源 acquiring、9 条引用与 4 行明细；截图 `console-f1/`）。
   - **需求 D（硬前置 P1）**：acquiring 商业事实固定 Mock；真实收银台支付成功在 mor-test 会产生 `billing.acquiring.dlq` 噪声（commercial 404），勿重放。GAP-ISSUER（CARD 价格发卡维度）、GAP-PARTNER（Partner 演示价格）同属其前置。
   - **需求 C**：对账四类事件消费。
-  - `billing.acquiring.dlq` 残留 1 条首发被拒消息（清除需授权）；IAM 合成复核人 `billb-checker-cb6e8a@example.test` 保留。
+  - `billing.acquiring.dlq` 残留的 1 条首发被拒消息已于 2026-10-23 08:24Z 经管理 API purge（用户授权），队列回到 0；IAM 合成复核人 `billb-checker-cb6e8a@example.test` 保留。
   - requirements-site E2E-05 时序仍写 payment → finance `PaymentSucceeded`（测试冻结 V5 时代设计），与 S13 不一致，待该时序整体修订。
   - 工作树 `/Users/kenny/Desktop/Workspace/Code-MoR-billing-b` 与候选镜像 tag `billing-b-20261023` 可删除（内容已全部提交 / 运行中）。

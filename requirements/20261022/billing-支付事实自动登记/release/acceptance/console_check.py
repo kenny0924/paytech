@@ -93,8 +93,9 @@ def billing_fact(page):
     drawer = page.locator(".ant-drawer:visible").last
     text = drawer.inner_text() if visible(drawer) else ""
     shot(page, "02-计费事实-详情")
-    check("计费事实详情：AUTO / 97.00 / 2.70 / 0.50 / SYN-BILLB-P-0001 / AE_BUSINESS_DAYS",
-          all(k in text for k in ("97.00", "2.70", "0.50", EXTERNAL_TXN)) and ("AUTO" in text or "自动" in text), text[:300])
+    # 抽屉展示头部（类型 AUTO、来源 acquiring）、引用 ID 与明细行；外部交易号与结算日历不在抽屉展示，由 check_chain.sql 核对
+    check("计费事实详情：AUTO / 来源 acquiring / 渠道交易引用 …105 / 行 2.70 / 0.30 / 97.00 / 0.50",
+          all(k in text for k in ("AUTO", "acquiring", "999900000000000105", "2.70", "0.30", "97.00", "0.50")), text[:300])
     page.keyboard.press("Escape")
 
 
