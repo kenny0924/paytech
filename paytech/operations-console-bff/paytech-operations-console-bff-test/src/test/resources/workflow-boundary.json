@@ -1045,7 +1045,9 @@
       "uploadId": "7300000000000000801",
       "fileId": "7300000000000000802",
       "fileAddress": "/files/v1/7300000000000000802",
-      "completedAt": "2026-10-22T00:01:00Z"
+      "completedAt": "2026-10-22T00:01:00Z",
+      "versionNo": 1,
+      "accessLevel": "PRIVATE"
     }
   },
   {

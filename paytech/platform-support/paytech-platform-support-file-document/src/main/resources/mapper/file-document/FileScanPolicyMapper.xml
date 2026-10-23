@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileScanPolicyMapper">
+
+    <sql id="columns">
+        policy_id AS policyId, policy_code AS policyCode, revision_no AS revisionNo,
+        rule_schema_version AS ruleSchemaVersion, allowed_mime_rules AS allowedMimeRules, max_size_bytes AS maxSizeBytes,
+        effective_from AS effectiveFrom, effective_to AS effectiveTo, status, active_slot AS activeSlot, version,
+        create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <select id="selectAll" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPolicyRevision">
+        SELECT <include refid="columns"/> FROM t_file_scan_policy ORDER BY policy_code, revision_no DESC
+    </select>
+
+    <select id="selectByCode" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPolicyRevision">
+        SELECT <include refid="columns"/> FROM t_file_scan_policy WHERE policy_code = #{policyCode}
+        ORDER BY revision_no DESC
+    </select>
+
+    <select id="lockByCode" useCache="false" flushCache="true"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPolicyRevision">
+        SELECT <include refid="columns"/> FROM t_file_scan_policy WHERE policy_code = #{policyCode}
+        ORDER BY revision_no DESC FOR UPDATE
+    </select>
+
+    <select id="selectById" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPolicyRevision">
+        SELECT <include refid="columns"/> FROM t_file_scan_policy WHERE policy_id = #{policyId}
+    </select>
+
+    <select id="lockActive" useCache="false" flushCache="true"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPolicyRevision">
+        SELECT <include refid="columns"/> FROM t_file_scan_policy
+        WHERE policy_code = #{policyCode} AND status = 'ACTIVE' AND active_slot = 1 FOR UPDATE
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_file_scan_policy (policy_id, policy_code, revision_no, rule_schema_version, allowed_mime_rules,
+            max_size_bytes, effective_from, effective_to, status, active_slot, version, create_time, update_time)
+        VALUES (#{row.policyId}, #{row.policyCode}, #{row.revisionNo}, #{row.ruleSchemaVersion}, #{row.allowedMimeRules},
+            #{row.maxSizeBytes}, #{row.effectiveFrom}, #{row.effectiveTo}, #{row.status}, #{row.activeSlot},
+            #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <update id="updateDraft">
+        UPDATE t_file_scan_policy
+        SET allowed_mime_rules = #{allowedMimeRules}, max_size_bytes = #{maxSizeBytes}, version = version + 1,
+            update_time = #{now}
+        WHERE policy_id = #{row.policyId} AND version = #{row.version} AND status = 'DRAFT'
+    </update>
+
+    <update id="updateStatus">
+        UPDATE t_file_scan_policy
+        SET status = #{status}, active_slot = #{activeSlot}, version = version + 1, update_time = #{now}
+        WHERE policy_id = #{row.policyId} AND version = #{row.version} AND status = #{row.status}
+    </update>
+
+    <delete id="deleteDraft">
+        DELETE FROM t_file_scan_policy WHERE policy_id = #{row.policyId} AND version = #{row.version} AND status = 'DRAFT'
+    </delete>
+</mapper>

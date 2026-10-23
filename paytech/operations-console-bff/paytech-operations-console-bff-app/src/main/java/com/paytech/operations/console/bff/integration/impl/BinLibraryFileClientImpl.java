@@ -37,11 +37,11 @@ public class BinLibraryFileClientImpl implements BinLibraryFileClient {
 
     private final InternalFileApi api;
 
-    /** 开始上传；回执须带上传 ID 与 PUT 授权。 */
+    /** 开始上传（不声明访问级别，按私有）；回执须带上传 ID 与 PUT 授权。 */
     @Override
     public FileUploadResponseBody startUpload(OperatorContext context, StartBinLibraryUploadRequestBody request) {
         var upload = api.startUpload(new StartFileUploadRequestBody(REASON_CODE, request.getFileName(), CSV_MIME_TYPE,
-            request.getSizeBytes(), context.accountId()));
+            request.getSizeBytes(), context.accountId(), null));
         require(upload != null && upload.getUploadId() != null && upload.getUploadId().matches(ID)
             && upload.getAuthorization() != null && upload.getAuthorization().getUrl() != null);
         return upload;

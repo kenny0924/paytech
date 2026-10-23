@@ -4,6 +4,7 @@ import java.net.URI;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -14,6 +15,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsManagementPolicyService;
@@ -25,8 +27,10 @@ import com.paytech.platform.support.auditsecurity.domain.audit.OperationsAuditFa
 import com.paytech.platform.support.auditsecurity.domain.audit.OperationsAuditFact.ConfigurationFieldChange;
 import com.paytech.platform.support.auditsecurity.domainservice.service.OperationsAuditService;
 import com.paytech.platform.support.filedocument.core.configuration.FileStorageProperties;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.storage.FileStorageChange;
 import com.paytech.platform.support.filedocument.domain.storage.StorageInstanceSettings;
+import com.paytech.platform.support.filedocument.integration.scanning.FormatFileScanner;
 import com.paytech.platform.support.filedocument.integration.storage.FileStorageRegistry;
 import com.paytech.platform.support.filedocument.integration.storage.StorageTrust;
 
@@ -49,6 +53,15 @@ public class FileStorageManagementSupport {
     /** 维护存储管理的权限。 */
     public static final String MANAGE_PERMISSION = "FILE_STORAGE_MANAGE";
 
+    /** 查看文件记录的权限。 */
+    public static final String RECORD_READ_PERMISSION = "FILE_RECORD_READ";
+
+    /** 下载文件记录的权限。 */
+    public static final String RECORD_DOWNLOAD_PERMISSION = "FILE_RECORD_DOWNLOAD";
+
+    /** 检查策略修订的最大字节数上限（100 MiB）。 */
+    static final long MAX_POLICY_SIZE_BYTES = 104_857_600L;
+
     private final Clock clock;
     private final OperationsAuditService audit;
     private final FileStorageRegistry registry;
@@ -61,9 +74,14 @@ public class FileStorageManagementSupport {
         return "file-storage:instance:" + instanceCode;
     }
 
-    /** 写入路由按来源系统协调。 */
+    /** 写入路由按来源系统协调；同一来源的两个访问级别共用一把锁（低频配置，沿用原锁名保持滚动发布互斥）。 */
     static String routeLockKey(String sourceSystem) {
         return "file-storage:route:" + sourceSystem;
+    }
+
+    /** 检查策略按代码协调，覆盖该代码的全部修订。 */
+    static String scanPolicyLockKey(String policyCode) {
+        return "file-scan-policy:" + policyCode;
     }
 
     /** TRY_LOCK 等待毫秒数。 */
@@ -95,10 +113,32 @@ public class FileStorageManagementSupport {
 
     /** 只读查询：查看或维护权限任一即可，权限与读取同一快照。 */
     <T> T read(String actor, String session, Supplier<T> query) {
+        return read(actor, session, query, READ_PERMISSION, MANAGE_PERMISSION);
+    }
+
+    /**
+     * 只读查询：持有任一所需权限，权限与读取同一快照
+     *
+     * @param permissions 至少满足一项的权限
+     */
+    <T> T read(String actor, String session, Supplier<T> query, String... permissions) {
         return readOnly().execute(status -> {
             audit.observeTransaction();
-            policy.requirePermission(actor, session, READ_PERMISSION, MANAGE_PERMISSION);
+            policy.requirePermission(actor, session, permissions);
             return query.get();
+        });
+    }
+
+    /**
+     * 外部步骤之前：只读事务内重检权限，返回操作人账号 ID（写入下载审计的主体）
+     *
+     * @param permission 所需权限
+     * @return 当前操作人账号 ID
+     */
+    long requireAccount(String actor, String session, String permission) {
+        return readOnly().execute(status -> {
+            audit.observeTransaction();
+            return policy.requirePermission(actor, session, permission).account().id();
         });
     }
 
@@ -170,6 +210,65 @@ public class FileStorageManagementSupport {
         boolean absent = accessKey == null && secretKey == null;
         if (mode == FileStorageCredentialMode.STATIC ? !provided : !absent) {
             throw new InvalidParameterException("STATIC 必须同时提供 accessKey 与 secretKey，IAM_ROLE 不能提供");
+        }
+    }
+
+    /**
+     * 对外基础地址规则：PUBLIC 必填，https:// 开头、有主机、不带用户信息、查询串与片段、不以 / 结尾；PRIVATE 必须为空。只依赖输入
+     *
+     * @param accessLevel 存储桶访问级别
+     * @param publicBaseUrl 去除首尾空白后的基础地址，可空
+     */
+    static void requirePublicBaseUrl(FileAccessLevel accessLevel, String publicBaseUrl) {
+        if (accessLevel == FileAccessLevel.PRIVATE) {
+            if (publicBaseUrl != null) {
+                throw new BizCheckFailException("私有存储桶不能登记对外基础地址");
+            }
+            return;
+        }
+        if (publicBaseUrl == null) {
+            throw new BizCheckFailException("公开存储桶必须登记对外基础地址");
+        }
+        if (!publicBase(publicBaseUrl)) {
+            throw new BizCheckFailException(
+                "对外基础地址必须为 https:// 开头、不带查询串、片段或用户信息且不以 / 结尾的地址: " + publicBaseUrl);
+        }
+    }
+
+    /** https、有主机，无用户信息、查询串与片段，不以 / 结尾。 */
+    static boolean publicBase(String value) {
+        if (value.endsWith("/") || value.contains("?") || value.contains("#")) {
+            return false;
+        }
+        try {
+            URI uri = URI.create(value);
+            return "https".equals(uri.getScheme()) && uri.getHost() != null && uri.getUserInfo() == null;
+        } catch (IllegalArgumentException invalid) {
+            return false;
+        }
+    }
+
+    /**
+     * 检查策略修订内容规则：允许类型非空、不重复、均为格式检查器能识别的类型；最大字节数 1—104857600。只依赖输入
+     *
+     * @param allowedMimeTypes 允许的规范 MIME
+     * @param maxSizeBytes 最大字节数
+     */
+    static void requireRevisionContent(List<String> allowedMimeTypes, long maxSizeBytes) {
+        if (allowedMimeTypes == null || allowedMimeTypes.isEmpty()) {
+            throw new BizCheckFailException("允许的类型不能为空");
+        }
+        if (new HashSet<>(allowedMimeTypes).size() != allowedMimeTypes.size()) {
+            throw new BizCheckFailException("允许的类型不能重复");
+        }
+        for (String type : allowedMimeTypes) {
+            if (!FormatFileScanner.SUPPORTED_MIME_TYPES.contains(type)) {
+                throw new BizCheckFailException("格式检查无法识别该类型: " + type + "，可选 "
+                    + String.join("、", FormatFileScanner.SUPPORTED_MIME_TYPES));
+            }
+        }
+        if (maxSizeBytes < 1 || maxSizeBytes > MAX_POLICY_SIZE_BYTES) {
+            throw new BizCheckFailException("最大字节数必须在 1—104857600（100 MiB）之间: " + maxSizeBytes);
         }
     }
 

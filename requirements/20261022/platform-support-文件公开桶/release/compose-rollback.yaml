@@ -1,0 +1,18 @@
+# 文件公开桶：mor-test 回滚覆盖文件 = 2026-10-23 阶段 6 核对时的六个运行镜像（code-mor-6b 卡 BIN + 3DS 与文件多存储第二段发布）。
+# 用法同 compose-candidate.yaml，只传本文件。回滚顺序与前提见 release.md 第 7 节：
+#   ops-web → Platform（先停用块 134、回退块 130 路径）→ 四个消费方（可不回滚，新消费方容忍旧 Platform）。
+# 环境变量由主 compose 提供，与现网逐键相同；本文件只钉镜像。
+# 注意：这些镜像的本机 tag 有的被写坏（如 mor-test/platform-support-serviceard3ds-20261022b），一律按 sha256 引用。
+services:
+  card-service:
+    image: sha256:c39a39908a69415a3f1e512f0f0b3767a2775e1e8d16aa1664afa7b25b233465  # card3ds-20261022b（JAR 221dd930caf4a95e，= 22ede435 构建 0 差异）
+  client-master-service:
+    image: sha256:e3fded0b701ddca6d2375b180f40c9d91e759f1f8773dc8457b67a3c1937aad0  # filestore-s2-20261022（JAR 41a647487f7df657）
+  client-console-bff:
+    image: sha256:105b962e775819d41933b41b673910ad768d511fd0ee06a8745aa40b8e4d5b7a  # filestore-s2-20261022（JAR 82398677c4278014）
+  operations-console-bff:
+    image: sha256:9c382db3d4985e0c1d8079d55ef36e3df93e535d65e277390879c9c8d0b750fa  # card3ds-20261022b（JAR 9a310cf3af3e53d3，= 22ede435 构建 0 差异）
+  platform-support-service:
+    image: sha256:96da579bb45a88f7a4639a75961ed1dd85b1858e6bdca77085fd7f7073b396c4  # card3ds-20261022b（JAR 8f35483745704c94，= 22ede435 构建 0 差异）
+  operations-console-web:
+    image: sha256:8bdbdd443f956e4e8548e41882cda15f07aa5d57919d7eed3fc76ac25b87ae66  # card3ds-20261022b（= 22ede435 + 主工作区 16 个文件，dist 逐字节一致）

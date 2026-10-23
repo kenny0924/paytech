@@ -12,7 +12,7 @@ import com.paytech.platform.support.service.processor.filestorage.request.Delete
 
 import lombok.AllArgsConstructor;
 
-/** 按原版本删除写入路由；默认路由 * 不能删除，删除后该来源的新上传使用默认路由。 */
+/** 按原版本删除写入路由；默认私有路由 (*, PRIVATE) 不能删除，删除后该来源在该级别的新上传使用同级别默认路由。 */
 @Component
 @AllArgsConstructor
 @ConditionalOnProperty(name = "operations.authentication.enabled", havingValue = "true")
@@ -32,6 +32,7 @@ public class DeleteStorageRouteProcessor extends AbstractLockProcessor<DeleteSto
     protected FileStorageChange processWithinLock(DeleteStorageRouteRequest request) {
         Instant now = support.now();
         return support.write(request.getActor(), request.getSession(), request.getReason(), now,
-            () -> management.deleteRoute(request.getSourceSystem(), request.getExpectedVersion()));
+            () -> management.deleteRoute(request.getSourceSystem(), request.getAccessLevel(),
+                request.getExpectedVersion()));
     }
 }

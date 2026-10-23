@@ -62,6 +62,8 @@ public class PersistenceConfiguration {
         registry.register(com.paytech.platform.support.api.enums.FileObjectStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.filedocument.domain.enums.FileScanType.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.filedocument.core.enums.FileAccessLevel.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.filedocument.core.enums.FileVersionStatus.class, CodeEnumTypeHandler.class);
         registry.register(FileStorageType.class, CodeEnumTypeHandler.class);
         registry.register(FileStorageCredentialMode.class, CodeEnumTypeHandler.class);
         registry.register(FileStorageInstanceStatus.class, CodeEnumTypeHandler.class);

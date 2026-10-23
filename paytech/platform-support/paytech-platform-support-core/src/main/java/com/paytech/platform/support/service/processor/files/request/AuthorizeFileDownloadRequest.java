@@ -4,6 +4,7 @@ import com.paytech.platform.support.api.enums.FileDisposition;
 import com.paytech.platform.support.filedocument.domain.file.FileSourceCodes;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 
 import lombok.Getter;
@@ -15,8 +16,11 @@ public class AuthorizeFileDownloadRequest {
     /** Platform 内部模块调用时没有 HTTP 请求 ID。 */
     private static final String UNKNOWN_REQUEST = "UNKNOWN";
 
-    /** 调用方服务名，取内部调用身份；Platform 内部模块为 platform-support。 */
-    @NotBlank(message = "调用方服务名必填")
+    /**
+     * 调用方服务名
+     * <li>内部 HTTP 取调用身份，Platform 内部模块为 platform-support；运营文件记录下载为空（审计不记 caller_service）。</li>
+     */
+    @Pattern(regexp = "[a-z][a-z0-9-]{0,63}", message = "调用方服务名必须为服务名")
     private final String callerService;
 
     /** 文件 ID。 */
@@ -41,13 +45,20 @@ public class AuthorizeFileDownloadRequest {
     private final String requestId;
 
     /**
+     * 下载的版本号
+     * <li>可空，取当前版本；指定时该版本须为 CURRENT 或 SUPERSEDED 且检查 AVAILABLE，审计记录 version_no。</li>
+     */
+    @Positive(message = "版本号必须为正整数")
+    private final Integer versionNo;
+
+    /**
      * Platform 内部模块的进程内入口：来源 platform-support，无人工操作人
      *
      * @param fileId 文件 ID
      * @param disposition 下载方式，可空按 ATTACHMENT
      */
     public AuthorizeFileDownloadRequest(long fileId, FileDisposition disposition) {
-        this(FileSourceCodes.PLATFORM_SUPPORT, fileId, disposition, null, UNKNOWN_REQUEST);
+        this(FileSourceCodes.PLATFORM_SUPPORT, fileId, disposition, null, UNKNOWN_REQUEST, null);
     }
 
     /**
@@ -58,13 +69,15 @@ public class AuthorizeFileDownloadRequest {
      * @param disposition 下载方式，可空按 ATTACHMENT
      * @param operatorAccountId 人工操作人账号 ID，可空
      * @param requestId 请求 ID
+     * @param versionNo 下载的版本号，可空取当前版本
      */
     public AuthorizeFileDownloadRequest(String callerService, long fileId, FileDisposition disposition,
-        Long operatorAccountId, String requestId) {
+        Long operatorAccountId, String requestId, Integer versionNo) {
         this.callerService = callerService;
         this.fileId = fileId;
         this.disposition = disposition;
         this.operatorAccountId = operatorAccountId;
         this.requestId = requestId;
+        this.versionNo = versionNo;
     }
 }

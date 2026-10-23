@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## platform-support 文件公开桶、同地址替换、检查策略与文件记录（2026-10-22—23，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [需求](<../requirements/20261022/platform-support-文件公开桶/requirement.md>)、[技术方案](<../requirements/20261022/platform-support-文件公开桶/technique.md>)、[交付记录](<../requirements/20261022/platform-support-文件公开桶/delivery.md>)、[发布记录](<../requirements/20261022/platform-support-文件公开桶/release/release.md>)；前置为文件多存储并存。
+- **Implemented：** 桶区分 `PRIVATE` / `PUBLIC`（公开桶登记 `public_base_url`，桶检查分别核对匿名不可读 / 对外地址可读）；写入路由键改为来源系统 + 访问级别，不跨级别回落（无同级别路由返回 503）；上传声明 `accessLevel`（缺省私有）；公开文件检查通过后返回 `publicUrl` / `versionedUrl`。同地址替换 `POST /internal/files/v1/files/{fileId}/replacements`：新表 `t_file_version`，`t_file_object` 保留文件身份并镜像当前版本，扫描按版本运行，候选通过后切换；同一文件同时一个替换；按"比基准新的版本恰好 1 个"核对（不依赖条件写）；公开文件补偿事件 `FILE_PUBLIC_SYNC` 在替换未通过 / 作废 / 过期后把当前版本复制回最新。检查策略管理 8 个接口（修订、激活、废弃、停用；允许类型取自格式检查器，现为 pdf / png / jpeg / csv），文件记录 3 个接口（分页查询、详情、按版本下载并写 `FILE_DOWNLOAD_AUTHORIZE` 审计）。`mor_platform`：新表 1，5 表加 10 列、3 个唯一键变宽、3 个索引；注册块 134（157 行），块 130 写入规则编辑 / 删除路径加 `/{accessLevel}`。Operations BFF 同路径转发，Web 存储管理新增「检查策略」页签、桶与写入规则按访问级别改造，新增「文件记录」页。已有响应新增字段为可空类型；内部 HTTP 客户端严格反序列化，**发布须先换消费方（card、client-master、client-console-bff、ops-bff）再换 Platform**。
+- **Verified：** 基于 main `92d2d1db` 合入后：全 Reactor `test-compile` 通过；Platform `auto` 242/242（文件 / 存储 / 替换 / 公开同步 / 策略冻结 / 文件记录 / 工作流 / 权限 / Gateway / 架构）；ops-bff 2272/2272；ops-web 1407/1407 与构建；arch-rules TableOwnership 通过；PDManer 失败项与 `92d2d1db` 基线一致。本机 `mor_platform` 已执行本需求 DDL / DML。
+- **Deployed：** mor-test 2026-10-23 05:22—05:30Z（窗口 05:23:57—05:25:27Z）：card `810b6b72…`、client-master `2e495b40…`、client-console-bff `b8ecaaea…`、ops-bff `06d850d1…`、platform `68ba631f…`、ops-web `f8b5dc32…`（源 `22ede435` + 本需求，ops-web 另含当时 16 个未提交文件）；DDL、回填 70 行、块 130 / 134 已执行并激活；MinIO 公开测试桶 `mor-platform-public` 已登记为 PUBLIC 并保留；postcheck 23/23、验收 87/89（2 项为脚本问题，已补验 / 修正）。
+- **Pending / 遗留：** 推送另行授权；真实 AWS S3 公开桶与 CDN 未实测（需公开桶与 `S3_TEST` 复制权限）；`local-environment/minio/init/init.sh` 未纳入公开桶（重跑 minio-init 会覆盖 `platform-files` 策略）；检查策略表「状态」列在窄屏被详情面板遮挡；公开文件被外部改写且无待执行同步任务时，后续替换返回 409 需人工恢复。
+
 ## acquiring 订单与会话过期收尾（2026-10-23，已部署 mor-test，已本地提交 `623916ac`，未推送；提交重建 JAR 与运行一致）
 
 - **范围：** [需求](<../requirements/20261022/acquiring-订单过期收尾/requirement.md>)、[技术方案](<../requirements/20261022/acquiring-订单过期收尾/technique.md>)、[交付记录](<../requirements/20261022/acquiring-订单过期收尾/delivery.md>)、[发布记录](<../requirements/20261022/acquiring-订单过期收尾/release/release.md>)。无 DDL、无 Platform 路由注册；过期终态时刻取 `expires_at`，原因码 `EXPIRY_REACHED` 登记到 [Commerce Order Status Reason Catalog](./database/COMMERCE_DATABASE.md)。

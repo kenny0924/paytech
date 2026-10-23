@@ -6,13 +6,14 @@ import {
   allowedCredentialModes, bucketObjectCode, bucketPath, bucketRows, bucketStatusActions, bucketStatusBlocker, canManageFileStorage,
   createInstanceBody, createRouteBody, credentialBody, decodeBucketCheck, decodeInstanceList, decodeMutation, decodeRouteList, deletableRoute,
   instancePath, instanceStatusAction, instanceStatusNotice, manageFileStorage, routePath, routeTargets, sourceSystemLabel, storageAdminPath,
-  storageCommand, targetValue, updateInstanceBody, updateRouteBody,
+  storageCommand, targetValue, updateInstanceBody, updateRouteBody, registerBucketBody, updateBucketBody, validPublicBaseUrl, routeKey, routeMatrix,
+  missingRouteNotice, routeObjectCode, editablePublicBaseUrl, filterBucketRows, checkResultLabels, publicReadPolicyExample,
 } from './fileStorage.ts';
 import type { StorageBucket, StorageInstance, StorageRoute } from './fileStorage.ts';
 
 const time = '2026-10-22T01:02:03.123456Z';
 const now = Date.parse('2026-10-22T01:05:00Z');
-const activeBucket: StorageBucket = { bucketName: 'mor-platform-files', status: 'ACTIVE', lastCheckTime: time, lastCheckResult: 'OK',
+const activeBucket: StorageBucket = { bucketName: 'mor-platform-files', accessLevel: 'PRIVATE', publicBaseUrl: null, status: 'ACTIVE', lastCheckTime: time, lastCheckResult: 'OK',
   routeCount: 1, version: 2, updateTime: time };
 const draftBucket: StorageBucket = { ...activeBucket, bucketName: 'mor-workflow-files', status: 'DRAFT', routeCount: 0, version: 1 };
 const minio: StorageInstance = { instanceCode: 'MINIO', storageType: 'MINIO', endpoint: 'https://minio.local.test:19400', region: 'us-east-1',
@@ -21,7 +22,9 @@ const minio: StorageInstance = { instanceCode: 'MINIO', storageType: 'MINIO', en
 const aws: StorageInstance = { ...minio, instanceCode: 'AWS_ME', storageType: 'S3', endpoint: null, region: 'me-central-1', pathStyleAccess: false,
   credentialMode: 'IAM_ROLE', credentialConfigured: false, credentialUpdateTime: null, status: 'DRAFT', version: 1, routeCount: 0,
   buckets: [{ ...activeBucket, bucketName: 'aws-files', routeCount: 0 }] };
-const defaultRoute: StorageRoute = { sourceSystem: '*', instanceCode: 'MINIO', bucketName: 'mor-platform-files',
+const publicBucket: StorageBucket = { ...activeBucket, bucketName: 'mor-public-assets', accessLevel: 'PUBLIC',
+  publicBaseUrl: 'https://cdn-test.example.com', routeCount: 0 };
+const defaultRoute: StorageRoute = { sourceSystem: '*', accessLevel: 'PRIVATE', instanceCode: 'MINIO', bucketName: 'mor-platform-files',
   scanPolicyCode: 'CLIENT_ONBOARDING_FORMAT', maxUploadSeconds: 300, version: 1, updateTime: time };
 const clientRoute: StorageRoute = { ...defaultRoute, sourceSystem: 'client-master-service', maxUploadSeconds: 600, version: 2 };
 const mutation = { objectType: 'FILE_STORAGE_INSTANCE', objectId: '7312345678901234567', objectCode: 'MINIO', status: 'ACTIVE', version: 4 };
@@ -33,7 +36,9 @@ test('页面注册：存储管理挂在 /file-storage，维护按钮与 Platform
   assert.equal(storageAdminPath, '/storage-admin/v1');
   assert.equal(instancePath('MINIO'), '/storage-admin/v1/instances/MINIO');
   assert.equal(bucketPath('MINIO', 'mor-platform-files'), '/storage-admin/v1/instances/MINIO/buckets/mor-platform-files');
-  assert.equal(routePath('*'), '/storage-admin/v1/routes/*', '默认规则按 * 原样作为路径段');
+  assert.equal(routePath('*', 'PRIVATE'), '/storage-admin/v1/routes/*/PRIVATE', '默认规则按 * 原样作为路径段，访问级别在其后');
+  assert.equal(routePath('client-console-bff', 'PUBLIC'), '/storage-admin/v1/routes/client-console-bff/PUBLIC');
+  assert.equal(routeObjectCode('*', 'PUBLIC'), '*/PUBLIC');
 });
 
 test('只读模式：只有维护按钮资源才显示写入口，菜单资源或其他按钮不算', () => {
@@ -132,9 +137,9 @@ test('桶页签：按实例筛选展开；启用需 10 分钟内检查通过，�
 test('写入规则页签：默认规则显示为默认且不可删除；目标只列启用实例下的启用桶；请求体拆分目标', () => {
   assert.equal(sourceSystemLabel('*'), '默认'); assert.equal(sourceSystemLabel('payment'), 'payment');
   assert.equal(deletableRoute(defaultRoute), false); assert.equal(deletableRoute(clientRoute), true);
-  assert.deepEqual(routeTargets([minio, aws]), [{ instanceCode: 'MINIO', bucketName: 'mor-platform-files' }]);
-  assert.deepEqual(createRouteBody({ sourceSystem: ' platform-support ', target: targetValue('MINIO', 'mor.files'), scanPolicyCode: ' CLIENT_ONBOARDING_FORMAT ',
-    maxUploadSeconds: 300, reason: ' 入驻 ' }), { sourceSystem: 'platform-support', instanceCode: 'MINIO', bucketName: 'mor.files',
+  assert.deepEqual(routeTargets([minio, aws], 'PRIVATE'), [{ instanceCode: 'MINIO', bucketName: 'mor-platform-files' }]);
+  assert.deepEqual(createRouteBody({ sourceSystem: ' platform-support ', accessLevel: 'PRIVATE', target: targetValue('MINIO', 'mor.files'), scanPolicyCode: ' CLIENT_ONBOARDING_FORMAT ',
+    maxUploadSeconds: 300, reason: ' 入驻 ' }), { sourceSystem: 'platform-support', accessLevel: 'PRIVATE', instanceCode: 'MINIO', bucketName: 'mor.files',
     scanPolicyCode: 'CLIENT_ONBOARDING_FORMAT', maxUploadSeconds: 300, reason: '入驻' });
   assert.deepEqual(updateRouteBody({ target: targetValue('MINIO', 'mor-workflow-files'), scanPolicyCode: 'CLIENT_ONBOARDING_FORMAT',
     maxUploadSeconds: 900, reason: '改桶' }, defaultRoute), { instanceCode: 'MINIO', bucketName: 'mor-workflow-files',
@@ -147,4 +152,57 @@ test('写命令：同一目标与正文重试复用 Idempotency-Key，改内容�
   assert.notEqual(storageCommand('/p', 'PUT', { a: 2 }, first).key, first.key);
   assert.notEqual(storageCommand('/p', 'DELETE', { a: 1 }, first).key, first.key);
   assert.equal(storageCommand('/check', 'POST', null).body, null);
+});
+
+test('桶访问级别：解码校验访问级别与对外地址一致；私有桶不得带地址，公开桶地址须为 HTTPS 根地址', () => {
+  const withPublic = { ...minio, buckets: [activeBucket, publicBucket] };
+  assert.deepEqual(decodeInstanceList({ items: [withPublic] })[0].buckets.map(bucket => bucket.accessLevel), ['PRIVATE', 'PUBLIC']);
+  for (const invalid of [{ ...publicBucket, publicBaseUrl: null }, { ...publicBucket, publicBaseUrl: 'http://cdn.test' },
+    { ...activeBucket, publicBaseUrl: 'https://cdn.test' }, { ...publicBucket, accessLevel: 'INTERNAL' }]) {
+    assert.throws(() => decodeInstanceList({ items: [{ ...minio, buckets: [invalid] }] }), ApiError, JSON.stringify(invalid));
+  }
+  for (const valid of ['https://cdn-test.example.com', 'https://bucket.s3.ap-southeast-1.amazonaws.com', 'https://minio.local:19400/mor-public']) {
+    assert.equal(validPublicBaseUrl(valid), true, valid);
+  }
+  for (const invalid of ['http://cdn.test', 'https://cdn.test/', 'https://cdn.test?x=1', 'https://cdn.test#a', 'cdn.test', '', `https://${'a'.repeat(250)}.test`]) {
+    assert.equal(validPublicBaseUrl(invalid), false, invalid);
+  }
+  assert.equal(checkResultLabels.PUBLIC_ACCESS_ALLOWED, '桶允许匿名访问');
+  assert.equal(checkResultLabels.PUBLIC_READ_FAILED, '对外地址不可访问');
+  assert.match(publicReadPolicyExample('mor-public-assets'), /arn:aws:s3:::mor-public-assets\/\*/);
+});
+
+test('桶请求体：私有桶不发送地址，公开桶裁剪地址；只有草稿公开桶可改地址；桶可按访问级别筛选', () => {
+  assert.deepEqual(registerBucketBody({ instanceCode: 'MINIO', bucketName: ' mor-files ', accessLevel: 'PRIVATE', publicBaseUrl: 'https://left.over', reason: ' 登记 ' }),
+    { bucketName: 'mor-files', accessLevel: 'PRIVATE', publicBaseUrl: null, reason: '登记' });
+  assert.deepEqual(registerBucketBody({ bucketName: 'mor-public', accessLevel: 'PUBLIC', publicBaseUrl: ' https://cdn.test ', reason: 'x' }),
+    { bucketName: 'mor-public', accessLevel: 'PUBLIC', publicBaseUrl: 'https://cdn.test', reason: 'x' });
+  assert.deepEqual(updateBucketBody({ publicBaseUrl: ' https://cdn2.test ', reason: ' 换域名 ' }, { ...publicBucket, version: 5 }),
+    { publicBaseUrl: 'https://cdn2.test', expectedVersion: 5, reason: '换域名' });
+  assert.equal(editablePublicBaseUrl({ ...publicBucket, status: 'DRAFT' }), true);
+  assert.equal(editablePublicBaseUrl(publicBucket), false, '启用后不能改');
+  assert.equal(editablePublicBaseUrl(draftBucket), false, '私有桶没有地址');
+  const rows = bucketRows([{ ...minio, buckets: [activeBucket, publicBucket] }]);
+  assert.deepEqual(filterBucketRows(rows, 'PUBLIC').map(row => row.bucketName), ['mor-public-assets']);
+  assert.equal(filterBucketRows(rows).length, 2);
+  assert.deepEqual(routeTargets([{ ...minio, buckets: [activeBucket, publicBucket] }], 'PUBLIC'),
+    [{ instanceCode: 'MINIO', bucketName: 'mor-public-assets' }], '规则只能指向同级别启用桶');
+});
+
+test('写入规则矩阵：键为来源 + 级别；默认私有规则不可删，默认公开规则可删；未配置格说明回落或 503', () => {
+  const publicDefault: StorageRoute = { ...defaultRoute, accessLevel: 'PUBLIC', bucketName: 'mor-public-assets' };
+  const clientPublic: StorageRoute = { ...clientRoute, accessLevel: 'PUBLIC' };
+  const routes = decodeRouteList({ items: [clientRoute, clientPublic, defaultRoute] });
+  assert.deepEqual(routes.map(routeKey), ['*/PRIVATE', 'client-master-service/PRIVATE', 'client-master-service/PUBLIC']);
+  assert.throws(() => decodeRouteList({ items: [clientRoute, { ...clientRoute }] }), ApiError, '同来源同级别重复');
+  assert.throws(() => decodeRouteList({ items: [{ ...clientRoute, accessLevel: 'BOTH' }] }), ApiError);
+  const matrix = routeMatrix([clientPublic, defaultRoute, { ...clientRoute, sourceSystem: 'card-service' }]);
+  assert.deepEqual(matrix.map(row => row.sourceSystem), ['*', 'card-service', 'client-master-service']);
+  assert.equal(matrix[0].routes.PUBLIC, null); assert.equal(matrix[2].routes.PRIVATE, null);
+  assert.equal(deletableRoute(defaultRoute), false); assert.equal(deletableRoute(publicDefault), true);
+  assert.match(missingRouteNotice([defaultRoute], 'card-service', 'PUBLIC'), /该来源的公开上传将返回 503/);
+  assert.match(missingRouteNotice([defaultRoute], '*', 'PUBLIC'), /没有精确规则的来源的公开上传将返回 503/);
+  assert.match(missingRouteNotice([defaultRoute, publicDefault], 'card-service', 'PUBLIC'), /使用默认公开规则/);
+  assert.equal(decodeMutation({ ...mutation, objectCode: '*/PUBLIC' }, routeObjectCode('*', 'PUBLIC')).objectCode, '*/PUBLIC');
+  assert.throws(() => decodeMutation({ ...mutation, objectCode: '*' }, routeObjectCode('*', 'PRIVATE')), ApiError);
 });

@@ -55,6 +55,14 @@ public class StartFileUploadRequestBody {
     @Pattern(regexp = "[1-9][0-9]{0,18}")
     private String uploaderAccountId;
 
+    /**
+     * 访问级别
+     * <li>{@code PRIVATE}（缺省）或 {@code PUBLIC}；PUBLIC 按来源系统的公开写入路由落到公开桶，检查通过后返回长期公开地址。</li>
+     * <li>没有对应级别的写入路由返回 503，不回落到另一级别；上传后不可修改。</li>
+     */
+    @Pattern(regexp = "PRIVATE|PUBLIC", message = "accessLevel 只能为 PRIVATE 或 PUBLIC")
+    private String accessLevel;
+
     /** 不记录可能包含个人信息的文件名。 */
     @Override
     public String toString() {

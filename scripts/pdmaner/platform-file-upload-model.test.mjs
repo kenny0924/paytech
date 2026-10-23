@@ -10,7 +10,8 @@ const entity = name => model.entities.find(item => item.defKey === name);
 test('upload persists the approved exact target and recovery facts without a second upload secret', () => {
   const upload = entity('t_file_upload');
   // 2026-10-22 文件多存储并存：第一段增加 source_system、reason_code（18 → 20 列）；第二段删除 owner_*（20 → 17 列），不记录业务归属。
-  assert.equal(upload.fields.length, 17);
+  // 2026-10-22 文件公开桶：增加 access_level 与替换的 replaces_file_id、replacement_no、base_object_version（17 → 21 列）。
+  assert.equal(upload.fields.length, 21);
   const ownerFields = ['owner_system', 'owner_type', 'owner_ref_id'];
   for (const expected of proposal.proposedUploadFields) {
     const actual = upload.fields.find(field => field.defKey === expected.name);
@@ -27,7 +28,7 @@ test('upload persists the approved exact target and recovery facts without a sec
   assert.ok(!upload.fields.some(field => field.defKey === 'upload_token_hash'));
   const target = upload.indexes.find(index => index.defKey === 'uk_upload_storage_target');
   assert.deepEqual(target.fields.map(ref => upload.fields.find(field => field.id === ref.fieldDefKey).defKey),
-    ['storage_provider', 'storage_container_ref', 'storage_object_ref']);
+    ['storage_provider', 'storage_container_ref', 'storage_object_ref', 'replacement_no']);
 });
 
 test('Platform scan recovery uses the Foundation fifteen-column identity and lease contract', () => {

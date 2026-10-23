@@ -57,7 +57,7 @@ public class PlatformMocker implements Clear {
     public synchronized StoredFileResponseBody mockCsvFile(String fileId, byte[] content) {
         StoredFileResponseBody file = new StoredFileResponseBody(fileId, FileAddress.of(Long.parseLong(fileId)).value(), BinLibrarySourceFile.SOURCE_SYSTEM,
             BinLibrarySourceFile.REASON_CODE, "bin-" + fileId + ".csv", BinLibrarySourceFile.CSV_MIME_TYPE,
-            Integer.toString(content.length), sha256(content), "AVAILABLE", "ACTIVE", "900000000000000123", null);
+            Integer.toString(content.length), sha256(content), "AVAILABLE", "ACTIVE", "900000000000000123", null, "PRIVATE", 1, null, null, null);
         files.put(fileId, file);
         contents.put(fileId, content.clone());
         return file;

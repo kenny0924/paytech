@@ -1,6 +1,9 @@
 package com.paytech.platform.support.service.processor.filestorage.request;
 
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
+
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +24,10 @@ public class SaveStorageRouteRequest {
     /** 来源系统或 *。 */
     @NotBlank(message = "来源系统必填")
     private final String sourceSystem;
+
+    /** 访问级别；与来源系统共同构成路由键。 */
+    @NotNull(message = "访问级别必填")
+    private final FileAccessLevel accessLevel;
 
     /** 实例代码。 */
     @NotBlank(message = "实例代码必填")

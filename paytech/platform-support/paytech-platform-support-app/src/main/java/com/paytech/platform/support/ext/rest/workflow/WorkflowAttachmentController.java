@@ -62,7 +62,8 @@ public class WorkflowAttachmentController implements WorkflowAttachmentApi {
         CompleteFileUploadResponse response = completeProcessor.process(new CompleteWorkflowAttachmentUploadRequest(
             actor, session, converter.id(uploadId, "uploadId")));
         return new FileUploadCompletionResponseBody(Long.toString(response.getUploadId()),
-            Long.toString(response.getFileId()), FileAddress.of(response.getFileId()).value(), response.getCompletedAt());
+            Long.toString(response.getFileId()), FileAddress.of(response.getFileId()).value(), response.getCompletedAt(),
+            response.getVersionNo(), response.getAccessLevel().getCode());
     }
 
     /** 签发实例附件的短时下载地址；响应带实际生效的下载方式。 */

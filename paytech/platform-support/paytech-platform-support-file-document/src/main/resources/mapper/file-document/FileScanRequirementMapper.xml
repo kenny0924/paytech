@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileScanRequirementMapper">
+
+    <select id="selectByPolicyIds" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPolicyRequirement">
+        SELECT requirement_id AS requirementId, policy_id AS policyId, requirement_no AS requirementNo,
+            scanner_code AS scannerCode, scan_type AS scanType, minimum_scanner_version AS minimumScannerVersion,
+            accepted_result_codes AS acceptedResultCodes, version, create_time AS createTime, update_time AS updateTime
+        FROM t_file_scan_requirement
+        WHERE policy_id IN
+        <foreach collection="policyIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY policy_id, requirement_no
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_file_scan_requirement (requirement_id, policy_id, requirement_no, scanner_code, scan_type,
+            minimum_scanner_version, accepted_result_codes, version, create_time, update_time)
+        VALUES (#{row.requirementId}, #{row.policyId}, #{row.requirementNo}, #{row.scannerCode}, #{row.scanType},
+            #{row.minimumScannerVersion}, #{row.acceptedResultCodes}, #{row.version}, #{row.createTime},
+            #{row.updateTime})
+    </insert>
+
+    <delete id="deleteByPolicy">
+        DELETE FROM t_file_scan_requirement WHERE policy_id = #{policyId}
+    </delete>
+</mapper>

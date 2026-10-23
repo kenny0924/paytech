@@ -1,0 +1,56 @@
+{
+  "results": [
+    {
+      "page": "登录",
+      "ok": true,
+      "note": "管理员登录"
+    },
+    {
+      "page": "存储管理/存储实例",
+      "ok": true,
+      "note": "MINIO 有、S3_TEST 有；页签 ['存储实例', '桶', '写入规则', '检查策略']"
+    },
+    {
+      "page": "存储管理/桶",
+      "ok": true,
+      "note": "私有桶标签正确；公开桶行：mor-platform-public\tMINIO\t公开\thttps://minio.mor-test.localhost:29400/mor-platform-public\t启用\t ✓ 检查通过 2026/10/23 09:25:50 \t1\t 检查 只读 停用"
+    },
+    {
+      "page": "存储管理/写入规则矩阵",
+      "ok": false,
+      "note": "行 {'默认': False, 'client-console-bff': True, 'operations-console-bff': True}；表头含私有 / 公开：否"
+    },
+    {
+      "page": "存储管理/检查策略",
+      "ok": false,
+      "note": "策略 {'CLIENT_ONBOARDING_FORMAT': False, 'CARD_BIN_CSV': False}；修订 / 检查要求未显示"
+    },
+    {
+      "page": "文件记录/列表",
+      "ok": true,
+      "note": "菜单可见；本页 20 行"
+    },
+    {
+      "page": "文件记录/详情",
+      "ok": true,
+      "note": "分区 {'版本历史': True, '检查结果': True, '上传记录': True}；公开地址可见"
+    },
+    {
+      "page": "审计日志",
+      "ok": true,
+      "note": "列表有记录"
+    }
+  ],
+  "consoleErrors": [],
+  "consoleWarnings": [],
+  "network": [],
+  "shots": [
+    "s01-instances.png",
+    "s02-buckets.png",
+    "s03-routes.png",
+    "s04-scan-policies.png",
+    "f01-file-records.png",
+    "f02-file-record-detail.png",
+    "a01-audit.png"
+  ]
+}

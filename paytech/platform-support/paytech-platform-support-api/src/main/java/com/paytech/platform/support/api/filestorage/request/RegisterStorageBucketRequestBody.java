@@ -23,6 +23,22 @@ public class RegisterStorageBucketRequestBody {
     private String bucketName;
 
     /**
+     * 访问级别
+     * <li>PRIVATE 或 PUBLIC；登记后不可修改。检查时私有桶必须拒绝匿名读取，公开桶必须能经基础地址匿名读取。</li>
+     */
+    @NotBlank
+    @Pattern(regexp = "PRIVATE|PUBLIC", message = "accessLevel 只能为 PRIVATE 或 PUBLIC")
+    private String accessLevel;
+
+    /**
+     * 对外基础地址
+     * <li>PUBLIC 必填：https:// 开头，不带查询串、片段或用户信息，不以 / 结尾；PRIVATE 必须为空。</li>
+     * <li>只在桶为 DRAFT 时可修改。</li>
+     */
+    @Size(max = 255)
+    private String publicBaseUrl;
+
+    /**
      * 操作原因
      * <li>必填，最多 500 字符；保存时去除首尾空白，写入审计。</li>
      */

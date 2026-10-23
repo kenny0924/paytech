@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileRecordMapper">
+
+    <sql id="filters">
+        FROM t_file_object f
+        WHERE f.create_time &gt;= #{query.createdFrom} AND f.create_time &lt; #{query.createdTo}
+        <if test="query.fileId != null">AND f.file_id = #{query.fileId}</if>
+        <if test="query.sourceSystem != null">AND f.source_system = #{query.sourceSystem}</if>
+        <if test="query.reasonCode != null">AND f.reason_code = #{query.reasonCode}</if>
+        <if test="query.accessLevel != null">AND f.access_level = #{query.accessLevel}</if>
+        <if test="query.scanStatus != null">AND f.scan_status = #{query.scanStatus}</if>
+        <if test="query.hasPendingReplacement != null">
+            AND <if test="!query.hasPendingReplacement">NOT</if> EXISTS (SELECT 1 FROM t_file_version p
+                WHERE p.file_id = f.file_id AND p.version_no &gt; f.current_version_no AND p.version_status = 'CANDIDATE')
+        </if>
+    </sql>
+
+    <select id="selectPage" useCache="false" resultType="com.paytech.platform.support.filedocument.domain.file.FileRecordView">
+        SELECT f.file_id AS fileId,
+            (SELECT COALESCE(cu.display_name, ou.display_name) FROM t_file_version cv
+                LEFT JOIN t_file_upload cu ON cu.upload_id = cv.upload_id
+                LEFT JOIN t_file_upload ou ON ou.upload_id = f.upload_id
+                WHERE cv.file_id = f.file_id AND cv.version_no = f.current_version_no) AS displayName,
+            f.source_system AS sourceSystem, f.reason_code AS reasonCode, f.access_level AS accessLevel,
+            f.current_version_no AS currentVersionNo,
+            (SELECT MAX(p.version_no) FROM t_file_version p WHERE p.file_id = f.file_id
+                AND p.version_no &gt; f.current_version_no AND p.version_status = 'CANDIDATE') AS pendingVersionNo,
+            f.scan_status AS scanStatus, f.object_status AS objectStatus, f.mime_type AS mimeType,
+            f.size_bytes AS sizeBytes, f.create_time AS createTime, f.update_time AS updateTime
+        <include refid="filters"/>
+        ORDER BY f.create_time DESC, f.file_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" useCache="false" resultType="long">
+        SELECT COUNT(*) <include refid="filters"/>
+    </select>
+
+    <select id="selectVersions" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.domain.file.FileRecordDetailView$Version">
+        SELECT v.version_no AS versionNo, v.version_status AS versionStatus, v.scan_status AS scanStatus,
+            u.display_name AS displayName, v.mime_type AS mimeType, v.size_bytes AS sizeBytes,
+            v.content_hash AS contentHash, v.upload_id AS uploadId, u.uploader_id AS uploaderId,
+            v.available_time AS availableTime, v.create_time AS createTime
+        FROM t_file_version v LEFT JOIN t_file_upload u ON u.upload_id = v.upload_id
+        WHERE v.file_id = #{fileId}
+        ORDER BY v.version_no DESC
+    </select>
+
+    <select id="selectScanResults" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.domain.file.FileRecordDetailView$ScanResult">
+        SELECT s.file_version_no AS versionNo, p.policy_code AS scanPolicyCode, p.revision_no AS revisionNo,
+            r.scanner_code AS scannerCode, r.scan_type AS scanType, s.result_code AS resultCode,
+            s.attempt_no AS attemptNo, s.scanned_time AS scannedTime
+        FROM t_file_scan_result s
+        JOIN t_file_scan_policy p ON p.policy_id = s.scan_policy_id
+        JOIN t_file_scan_requirement r ON r.requirement_id = s.scan_requirement_id
+        WHERE s.file_id = #{fileId}
+        ORDER BY s.file_version_no DESC, s.scanned_time DESC, s.scan_result_id DESC
+    </select>
+
+    <select id="selectUploads" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.domain.file.FileRecordDetailView$Upload">
+        SELECT u.upload_id AS uploadId, u.replaces_file_id AS replacesFileId, u.replacement_no AS replacementNo,
+            u.status, u.display_name AS displayName, u.expected_mime AS expectedMime, u.expected_size AS expectedSize,
+            u.uploader_id AS uploaderId, v.version_no AS resultVersionNo, u.expires_time AS expiresTime,
+            u.create_time AS createTime, u.update_time AS updateTime
+        FROM t_file_upload u LEFT JOIN t_file_version v ON v.upload_id = u.upload_id
+        WHERE u.upload_id = (SELECT f.upload_id FROM t_file_object f WHERE f.file_id = #{fileId})
+            OR u.replaces_file_id = #{fileId}
+        ORDER BY u.replacement_no DESC, u.upload_id DESC
+    </select>
+</mapper>

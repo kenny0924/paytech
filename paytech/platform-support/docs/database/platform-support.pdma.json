@@ -9866,7 +9866,7 @@
       },
       "defKey": "t_file_upload",
       "defName": "文件上传会话",
-      "comment": "保存受控上传的来源系统与原因、租户与上传人、展示名、原存储目标和冻结扫描策略；不记录业务归属，上传授权由存储适配器签发，不持久化临时 URL、签名或额外上传秘密",
+      "comment": "保存受控上传（首次上传或替换）的来源系统与原因、访问级别、租户与上传人、展示名、原存储目标、替换序号与冻结扫描策略；不记录业务归属，上传授权由存储适配器签发，不持久化临时 URL、签名或额外上传秘密",
       "properties": {
         "logicalTableKey": "file_upload",
         "compositeForeignKeys": []
@@ -10125,6 +10125,24 @@
           "id": "A7FDE0E9-BB9C-5135-843E-4057A66EA392"
         },
         {
+          "defKey": "access_level",
+          "defName": "访问级别",
+          "comment": "访问级别；开始上传时由调用方声明（缺省 PRIVATE）并按 (来源系统, 访问级别) 选择写入路由，替换上传沿用原文件的值，创建后不变。允许值：PRIVATE、PUBLIC。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'PRIVATE'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "DE81ED34-D826-5581-A75A-567556EE6434"
+        },
+        {
           "defKey": "expected_size",
           "defName": "预期文件大小",
           "comment": "预期文件大小的长整数值。",
@@ -10231,6 +10249,60 @@
           "extProps": {},
           "domain": "",
           "id": "5A71A56E-5410-5807-92BC-C4A394792DA9"
+        },
+        {
+          "defKey": "replaces_file_id",
+          "defName": "被替换文件",
+          "comment": "被替换内容的文件 ID；首次上传为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "5F6AD445-9979-53D9-B1BF-D4EAAEE19C63"
+        },
+        {
+          "defKey": "replacement_no",
+          "defName": "替换序号",
+          "comment": "替换序号；首次上传为 0，同一文件的第 n 次替换为 n。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "EAAAB5C5-AEBB-5D71-890A-C3619F7DEBB7"
+        },
+        {
+          "defKey": "base_object_version",
+          "defName": "替换基准版本",
+          "comment": "开始替换时存储中该对象最新版本的 versionId；完成时要求比它新的版本恰好 1 个。首次上传为空。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "4B5082DC-B728-5A1C-89AC-7DEBE1A19893"
         },
         {
           "defKey": "scan_policy_id",
@@ -10364,9 +10436,9 @@
       "indexes": [
         {
           "defKey": "uk_upload_storage_target",
-          "defName": "唯一索引 storage_provider、storage_container_ref、storage_object_ref",
+          "defName": "唯一索引 storage_provider、storage_container_ref、storage_object_ref、replacement_no",
           "unique": true,
-          "comment": "同一存储对象上传目标只归属一条 Upload，防止不同申请共享可写目标",
+          "comment": "同一存储对象的同一替换序号只归属一条 Upload，防止不同申请共享可写目标",
           "fields": [
             {
               "fieldDefKey": "664588F5-E91A-5394-B12D-5290A0E4D37C",
@@ -10382,6 +10454,11 @@
               "fieldDefKey": "5A71A56E-5410-5807-92BC-C4A394792DA9",
               "ascOrDesc": "A",
               "id": "5337F953-DFE6-5DD9-9629-02675890EE0A"
+            },
+            {
+              "fieldDefKey": "EAAAB5C5-AEBB-5D71-890A-C3619F7DEBB7",
+              "ascOrDesc": "A",
+              "id": "648B9CAD-0CD1-5529-B45A-D2592BAA8219"
             }
           ],
           "id": "E81FF010-B5D1-5638-AEFF-B04BE9E9D691"
@@ -10428,6 +10505,25 @@
             }
           ],
           "id": "C8BFD40A-6B67-5407-A69B-014EC1396949"
+        },
+        {
+          "defKey": "idx_file_upload_replaces",
+          "defName": "访问索引 replaces_file_id、status",
+          "unique": false,
+          "comment": "支持访问路径：replaces_file_id、status（判断文件是否有未结束的替换）",
+          "fields": [
+            {
+              "fieldDefKey": "5F6AD445-9979-53D9-B1BF-D4EAAEE19C63",
+              "ascOrDesc": "A",
+              "id": "9AFA62E2-0D2D-5BC3-9346-BCB12E72E4FB"
+            },
+            {
+              "fieldDefKey": "C6D84863-1C07-55A1-ADA9-209ECA5C70A4",
+              "ascOrDesc": "A",
+              "id": "6AD35202-29B6-5F0E-A7BA-00343C31A090"
+            }
+          ],
+          "id": "47FD8A9B-70BF-5E30-A10B-665B94F5DFC8"
         },
         {
           "defKey": "idx_file_upload_uploader_id",
@@ -11372,7 +11468,7 @@
       },
       "defKey": "t_file_object",
       "defName": "文件对象",
-      "comment": "保存不可变对象存储引用、内容摘要和创建时冻结的扫描策略修订",
+      "comment": "保存文件身份（来源、原因、访问级别、存储实例、桶与对象名）与当前版本镜像；地址按 file_id 不变，各版本见 t_file_version",
       "properties": {
         "logicalTableKey": "file_object",
         "compositeForeignKeys": []
@@ -11631,6 +11727,24 @@
           "id": "9855C4FE-53B1-5E8F-B635-644076312FE5"
         },
         {
+          "defKey": "access_level",
+          "defName": "访问级别",
+          "comment": "访问级别，上传时由调用方声明并复制到文件，之后不变；PUBLIC 文件位于公开桶，检查通过后提供长期公开地址。允许值：PRIVATE、PUBLIC。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'PRIVATE'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "8A6B52CD-0BDB-5A61-BE44-F492B84BC015"
+        },
+        {
           "defKey": "storage_provider",
           "defName": "存储提供方",
           "comment": "存储提供方的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。",
@@ -11669,7 +11783,7 @@
         {
           "defKey": "storage_object_ref",
           "defName": "存储对象引用",
-          "comment": "存储对象引用的业务值。",
+          "comment": "存储对象引用；各版本共用同一对象名，由桶的版本控制区分版本。",
           "type": "VARCHAR",
           "len": 255,
           "scale": "",
@@ -11685,9 +11799,27 @@
           "id": "580E9C63-A16B-52D8-BA30-1C114CA66A75"
         },
         {
+          "defKey": "current_version_no",
+          "defName": "当前版本号",
+          "comment": "当前对外提供的版本号，对应 t_file_version.version_no；替换内容检查通过后递增。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "61E72171-6321-515E-84B0-BFCFD0B82C17"
+        },
+        {
           "defKey": "object_version",
           "defName": "存储对象版本",
-          "comment": "存储对象版本的业务值。",
+          "comment": "当前版本在存储中的 versionId（镜像 t_file_version）；下载签发固定到该版本。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -11705,7 +11837,7 @@
         {
           "defKey": "content_hash",
           "defName": "文件内容哈希",
-          "comment": "文件内容哈希的 SHA-256 小写十六进制值。",
+          "comment": "当前版本内容的 SHA-256 小写十六进制值（镜像 t_file_version）。",
           "type": "CHAR",
           "len": 64,
           "scale": "",
@@ -11723,7 +11855,7 @@
         {
           "defKey": "size_bytes",
           "defName": "文件字节数",
-          "comment": "文件字节数的长整数值。",
+          "comment": "当前版本字节数（镜像 t_file_version）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -11741,7 +11873,7 @@
         {
           "defKey": "mime_type",
           "defName": "媒体类型",
-          "comment": "对象内容的规范媒体类型。取值来源：IANA Media Types 与 Platform 允许列表；非固定枚举。",
+          "comment": "当前版本内容的规范媒体类型（镜像 t_file_version）。取值来源：IANA Media Types 与 Platform 允许列表；非固定枚举。",
           "type": "VARCHAR",
           "len": 255,
           "scale": "",
@@ -11759,7 +11891,7 @@
         {
           "defKey": "storage_encryption_key_ref",
           "defName": "存储加密密钥引用",
-          "comment": "存储加密密钥引用的业务值。",
+          "comment": "当前版本的存储加密密钥引用（镜像 t_file_version）。",
           "type": "VARCHAR",
           "len": 255,
           "scale": "",
@@ -11795,7 +11927,7 @@
         {
           "defKey": "scan_policy_id",
           "defName": "冻结扫描策略修订",
-          "comment": "冻结扫描策略修订的稳定业务标识。",
+          "comment": "当前版本冻结扫描策略修订的稳定业务标识（镜像 t_file_version）。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -11813,7 +11945,7 @@
         {
           "defKey": "scan_status",
           "defName": "扫描状态",
-          "comment": "扫描状态的稳定业务代码。允许值：PENDING_SCAN、SCANNING、AVAILABLE、QUARANTINED、REJECTED。",
+          "comment": "当前版本的扫描状态（镜像 t_file_version；首次上传检查中即为 v1 的状态）。允许值：PENDING_SCAN、SCANNING、AVAILABLE、QUARANTINED、REJECTED。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -11849,7 +11981,7 @@
         {
           "defKey": "available_time",
           "defName": "文件可用时间",
-          "comment": "文件可用时间对应的 UTC 微秒时间。",
+          "comment": "当前版本检查通过的 UTC 微秒时间（镜像 t_file_version）。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -12065,6 +12197,20 @@
           "id": "1948848F-3E0C-5C18-ABF8-C40BE4080C80"
         },
         {
+          "defKey": "idx_file_create_time",
+          "defName": "访问索引 create_time",
+          "unique": false,
+          "comment": "支持访问路径：create_time（文件记录按时间范围倒序分页）",
+          "fields": [
+            {
+              "fieldDefKey": "02D4EB8A-1F24-5FC2-BBA1-ED5F70E6341B",
+              "ascOrDesc": "A",
+              "id": "AF37911F-9169-5E1D-81E9-E26894CBD41A"
+            }
+          ],
+          "id": "661864E4-1708-5AC0-8CAC-3998D9FDC5A7"
+        },
+        {
           "defKey": "idx_file_object_scan_policy_id",
           "defName": "访问索引 scan_policy_id",
           "unique": false,
@@ -12091,7 +12237,7 @@
       },
       "defKey": "t_file_scan_result",
       "defName": "文件扫描结果",
-      "comment": "追加保存文件对其冻结策略修订中每项扫描要求的运行版本与判定",
+      "comment": "追加保存文件各版本对其冻结策略修订中每项扫描要求的运行版本与判定",
       "properties": {
         "logicalTableKey": "file_scan_result",
         "compositeForeignKeys": [
@@ -12323,6 +12469,24 @@
           "id": "6291C711-A601-5169-91EB-C0D03056830E"
         },
         {
+          "defKey": "file_version_no",
+          "defName": "文件版本号",
+          "comment": "被检查的文件版本号，对应 t_file_version.version_no。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "467ED119-40CE-5417-9DA7-1C446A18A388"
+        },
+        {
           "defKey": "scan_requirement_id",
           "defName": "扫描要求",
           "comment": "扫描要求的稳定业务标识。",
@@ -12481,9 +12645,9 @@
       "indexes": [
         {
           "defKey": "uk_file_scan_attempt",
-          "defName": "唯一索引 file_id、scan_requirement_id、attempt_no",
+          "defName": "唯一索引 file_id、file_version_no、scan_requirement_id、attempt_no",
           "unique": true,
-          "comment": "保证业务唯一性：file_id、scan_requirement_id、attempt_no",
+          "comment": "保证业务唯一性：file_id、file_version_no、scan_requirement_id、attempt_no",
           "fields": [
             {
               "fieldDefKey": "6291C711-A601-5169-91EB-C0D03056830E",
@@ -12491,14 +12655,19 @@
               "id": "E88F757D-181F-5212-B35E-A3367A8E787B"
             },
             {
+              "fieldDefKey": "467ED119-40CE-5417-9DA7-1C446A18A388",
+              "ascOrDesc": "A",
+              "id": "F1B851AD-010C-5458-9484-553D0EEB42FF"
+            },
+            {
               "fieldDefKey": "9A892D87-FEB9-5417-84BC-38CD98D1F9F8",
               "ascOrDesc": "A",
-              "id": "BF471431-9F02-58E2-A924-46D449E9C362"
+              "id": "AEB259C4-F2D1-5B48-9A27-0168408DC7F0"
             },
             {
               "fieldDefKey": "C13D7D77-EA89-572B-9D27-4A459D9C36D2",
               "ascOrDesc": "A",
-              "id": "DF14F941-DB41-58F6-9D5D-EA14958A152A"
+              "id": "0EE38DEE-C773-5C2F-9C7E-0965430A83AD"
             }
           ],
           "id": "E908E032-0B2A-52CE-AFE3-203CFD540994"
@@ -12554,6 +12723,572 @@
             }
           ],
           "id": "106FE23E-BDFB-5951-A211-15F39667CCB6"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "D4BE13FF-472B-56B0-8795-84D1AEC8F579",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_file_version",
+      "defName": "文件版本",
+      "comment": "保存文件的每一次内容版本：存储 versionId、摘要、大小、类型、冻结策略、扫描状态与版本状态；文件地址不变，当前版本镜像在文件表",
+      "properties": {
+        "logicalTableKey": "file_version",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "version_id",
+          "defName": "文件版本标识",
+          "comment": "文件版本主键；回填的 v1 使用 file_id 的值，新版本使用服务端 Snowflake ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "7C585DDB-E5E7-565B-BDF0-BFF5B7DCACB0"
+        },
+        {
+          "defKey": "file_id",
+          "defName": "文件",
+          "comment": "所属文件 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "5A544FBC-B65E-5D36-B27A-EA75BA3D2522"
+        },
+        {
+          "defKey": "version_no",
+          "defName": "版本号",
+          "comment": "版本号；首次上传为 1，每次替换完成加 1，创建后不变。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "74F7A843-9EA4-5718-9C7E-EB913DEECAC3"
+        },
+        {
+          "defKey": "upload_id",
+          "defName": "文件上传",
+          "comment": "产生该版本的上传 ID；非上传来源的文件为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "1EA5C099-F985-5617-9543-F0FCB902941D"
+        },
+        {
+          "defKey": "object_version",
+          "defName": "存储对象版本",
+          "comment": "该版本在存储中的 versionId；读取与下载固定到该版本，不读取 latest。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "323F9DEE-C01F-59B9-BAD8-1CD913E7437A"
+        },
+        {
+          "defKey": "content_hash",
+          "defName": "内容哈希",
+          "comment": "该版本实际字节的 SHA-256 小写十六进制值。",
+          "type": "CHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {},
+          "domain": "",
+          "id": "2F567846-AB15-519E-986F-25E150C05CD6"
+        },
+        {
+          "defKey": "size_bytes",
+          "defName": "字节数",
+          "comment": "该版本实际字节数。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A62C9B10-DDC3-5056-A3F1-B0F8633B227A"
+        },
+        {
+          "defKey": "mime_type",
+          "defName": "媒体类型",
+          "comment": "服务端按文件头识别的该版本媒体类型。取值来源：IANA Media Types 与 Platform 允许列表；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "18E36D77-955D-5AED-9E72-834BAEB94C54"
+        },
+        {
+          "defKey": "storage_encryption_key_ref",
+          "defName": "存储加密密钥引用",
+          "comment": "该版本经存储验证的服务端加密保护引用。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "99A18EAE-8769-57AE-92C7-93E09EB61BB7"
+        },
+        {
+          "defKey": "scan_policy_id",
+          "defName": "冻结扫描策略修订",
+          "comment": "该版本在上传开始时冻结的扫描策略修订 ID。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "111A33F9-2975-5F5F-B0A7-2CDC28F80E2D"
+        },
+        {
+          "defKey": "scan_status",
+          "defName": "扫描状态",
+          "comment": "该版本的扫描状态。允许值：PENDING_SCAN、SCANNING、AVAILABLE、QUARANTINED、REJECTED。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "D9D1B438-786E-5AD1-9144-FCE0C7492044"
+        },
+        {
+          "defKey": "version_status",
+          "defName": "版本状态",
+          "comment": "版本状态；CANDIDATE 为检查中，CURRENT 为当前对外提供（每个文件最多一个），SUPERSEDED 为已被更新版本取代，REJECTED 为检查不通过。允许值：CANDIDATE、CURRENT、SUPERSEDED、REJECTED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "3BAC3532-D4AD-5DB0-8ACD-0C49E78B4664"
+        },
+        {
+          "defKey": "available_time",
+          "defName": "版本可用时间",
+          "comment": "该版本检查通过的 UTC 微秒时间；未通过为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "1C48FA0F-2EE3-5C27-B566-FD76C00E0A3B"
+        },
+        {
+          "defKey": "version",
+          "defName": "文件版本并发版本",
+          "comment": "乐观并发版本，新建为 1，每次成功修改递增 1。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "F7064A55-C00F-5405-889C-2093401CEAE6"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "9FC323BE-4466-515C-821A-D3674AAC8EEA"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "8CB52F35-4750-56CD-B0D6-B9D1BA12592C"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "EC702693-205D-5863-A519-8F5865A8AA8F",
+          "myField": "5A544FBC-B65E-5D36-B27A-EA75BA3D2522",
+          "refEntity": "234E7DDA-E9E5-5A31-996D-1E1F19241905",
+          "refField": "58070E91-E2AD-5BEE-8202-D4D8EFCDAEE0",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        },
+        {
+          "id": "9EEE8BAA-3F93-5796-B4E2-1D81D19BB9B4",
+          "myField": "1EA5C099-F985-5617-9543-F0FCB902941D",
+          "refEntity": "D12C51B5-3A11-5C29-8A0D-FA5701B6290B",
+          "refField": "C3B676FB-1E98-5FFC-B13D-EC557375D7D1",
+          "myRows": "1",
+          "refRows": "1",
+          "innerType": ""
+        },
+        {
+          "id": "33E2A2F7-03EC-578B-B390-4072E8FE9334",
+          "myField": "111A33F9-2975-5F5F-B0A7-2CDC28F80E2D",
+          "refEntity": "2DCB49EB-33B8-5D18-921E-E4E95A479427",
+          "refField": "90E47801-B9BB-50EA-8311-BE1035229115",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_file_version_no",
+          "defName": "唯一索引 file_id、version_no",
+          "unique": true,
+          "comment": "保证业务唯一性：file_id、version_no（同一文件的版本号不重复）",
+          "fields": [
+            {
+              "fieldDefKey": "5A544FBC-B65E-5D36-B27A-EA75BA3D2522",
+              "ascOrDesc": "A",
+              "id": "B8140376-D4CE-5B8B-990A-05DD15E00E90"
+            },
+            {
+              "fieldDefKey": "74F7A843-9EA4-5718-9C7E-EB913DEECAC3",
+              "ascOrDesc": "A",
+              "id": "39AEEB97-8042-5B28-B0AD-30A4CAB4F8A4"
+            }
+          ],
+          "id": "929FCAA0-F275-5773-95A3-A0BE07ED65A5"
+        },
+        {
+          "defKey": "uk_file_version_upload",
+          "defName": "唯一索引 upload_id",
+          "unique": true,
+          "comment": "保证业务唯一性：upload_id（一次上传最多产生一个版本）",
+          "fields": [
+            {
+              "fieldDefKey": "1EA5C099-F985-5617-9543-F0FCB902941D",
+              "ascOrDesc": "A",
+              "id": "E4B9530D-E6C4-58BA-AF2F-8A01479A78C5"
+            }
+          ],
+          "id": "713800F1-620F-54D0-BE2C-85B8074B388A"
+        },
+        {
+          "defKey": "idx_file_version_scan",
+          "defName": "访问索引 scan_status、create_time",
+          "unique": false,
+          "comment": "支持访问路径：scan_status、create_time（检查中版本排查）",
+          "fields": [
+            {
+              "fieldDefKey": "D9D1B438-786E-5AD1-9144-FCE0C7492044",
+              "ascOrDesc": "A",
+              "id": "CFA92E4B-6EDB-5F51-9D30-6B5890B023AB"
+            },
+            {
+              "fieldDefKey": "9FC323BE-4466-515C-821A-D3674AAC8EEA",
+              "ascOrDesc": "A",
+              "id": "6BED312B-081A-5210-9320-36E65F87CC2E"
+            }
+          ],
+          "id": "38D79CF8-F281-5C86-B801-C593C7E50477"
+        },
+        {
+          "defKey": "idx_file_version_scan_policy_id",
+          "defName": "访问索引 scan_policy_id",
+          "unique": false,
+          "comment": "支持访问路径：scan_policy_id",
+          "fields": [
+            {
+              "fieldDefKey": "111A33F9-2975-5F5F-B0A7-2CDC28F80E2D",
+              "ascOrDesc": "A",
+              "id": "997819CE-AAC9-57FE-8C71-AB62C2EC48DE"
+            }
+          ],
+          "id": "EEF8D998-4FE0-5A3F-94B5-72DE50E41A0C"
         }
       ],
       "type": "P"
@@ -16823,6 +17558,42 @@
           "id": "5C4CC7B0-D84D-5DE7-9859-5EAA001BBD07"
         },
         {
+          "defKey": "access_level",
+          "defName": "访问级别",
+          "comment": "访问级别，登记后不可修改；写入路由只能指向同级别的桶。允许值：PRIVATE、PUBLIC。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'PRIVATE'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "DDE5FC28-48FB-58E5-B246-5C4D78C2F750"
+        },
+        {
+          "defKey": "public_base_url",
+          "defName": "对外基础地址",
+          "comment": "对外基础地址（CDN 或桶公开地址）；PUBLIC 必填，https:// 开头、不带查询串与片段、不以 / 结尾，只在 DRAFT 时可修改；PRIVATE 为空。公开地址 = 基础地址 + / + 对象名。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E570D40A-D91D-5BEA-9528-B696EEE421CB"
+        },
+        {
           "defKey": "status",
           "defName": "存储桶状态",
           "comment": "存储桶状态；只有 ACTIVE 接受新上传，ACTIVE 与 READ_ONLY 可读，DISABLED 读写都返回不可用。允许值：DRAFT、ACTIVE、READ_ONLY、DISABLED。",
@@ -16861,7 +17632,7 @@
         {
           "defKey": "last_check_result",
           "defName": "最近检查结果",
-          "comment": "最近一次启用检查结果；从未检查为空。允许值：OK、NOT_FOUND、VERSIONING_DISABLED、ENCRYPTION_DISABLED、ACCESS_DENIED、UNAVAILABLE。",
+          "comment": "最近一次启用检查结果；从未检查或修改基础地址后为空。允许值：OK、NOT_FOUND、VERSIONING_DISABLED、ENCRYPTION_DISABLED、ACCESS_DENIED、UNAVAILABLE、PUBLIC_ACCESS_ALLOWED、PUBLIC_READ_FAILED。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -16975,7 +17746,7 @@
       },
       "defKey": "t_file_storage_route",
       "defName": "文件存储写入路由",
-      "comment": "保存按来源系统选择新上传存储桶、扫描策略与上传期限的写入路由；改路由只影响之后的新上传",
+      "comment": "保存按 (来源系统, 访问级别) 选择新上传存储桶、扫描策略与上传期限的写入路由；改路由只影响之后的新上传",
       "properties": {
         "logicalTableKey": "file_storage_route",
         "compositeForeignKeys": []
@@ -17164,7 +17935,7 @@
         {
           "defKey": "source_system",
           "defName": "来源系统",
-          "comment": "来源系统，即内部调用 Token 的服务名（[a-z][a-z0-9-]{0,63}）；* 表示默认路由，没有精确路由的来源使用默认路由。取值来源：内部调用身份的服务名；非固定枚举。",
+          "comment": "来源系统，即内部调用 Token 的服务名（[a-z][a-z0-9-]{0,63}）；* 表示默认路由，同级别没有精确路由的来源使用该级别的默认路由。取值来源：内部调用身份的服务名；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -17178,6 +17949,24 @@
           "extProps": {},
           "domain": "",
           "id": "B99A0993-9B25-50BB-882C-96E79E6EB7A5"
+        },
+        {
+          "defKey": "access_level",
+          "defName": "访问级别",
+          "comment": "访问级别；与来源系统共同构成路由键，只能指向同级别的桶，解析时不跨级别回落；创建后不可修改。允许值：PRIVATE、PUBLIC。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'PRIVATE'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "BAF2120F-B789-5B0D-BE82-38B119D07910"
         },
         {
           "defKey": "bucket_id",
@@ -17302,14 +18091,19 @@
       "indexes": [
         {
           "defKey": "uk_file_storage_route_source",
-          "defName": "唯一索引 source_system",
+          "defName": "唯一索引 source_system、access_level",
           "unique": true,
-          "comment": "保证业务唯一性：source_system",
+          "comment": "保证业务唯一性：source_system、access_level",
           "fields": [
             {
               "fieldDefKey": "B99A0993-9B25-50BB-882C-96E79E6EB7A5",
               "ascOrDesc": "A",
               "id": "612F79ED-84F5-5105-8264-75B5F1D85814"
+            },
+            {
+              "fieldDefKey": "BAF2120F-B789-5B0D-BE82-38B119D07910",
+              "ascOrDesc": "A",
+              "id": "94B4F4A1-BE4E-5CDE-AAD6-2DB79FEA9761"
             }
           ],
           "id": "13F27193-2756-59D5-BCDE-0D486449021C"
@@ -37757,7 +38551,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 526
+              "height": 548
             }
           },
           {
@@ -37802,22 +38596,22 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 548
+              "height": 592
             }
           },
           {
             "id": "2B663D25-96E4-54C0-9F6D-31E756456478",
             "shape": "table",
             "position": {
-              "x": 430,
-              "y": 608
+              "x": 0,
+              "y": 652
             },
             "count": 0,
             "originKey": "A650270C-F59B-551A-A3FF-BC3E644DCD4F",
             "type": "P",
             "size": {
               "width": 390,
-              "height": 284
+              "height": 306
             }
           },
           {
@@ -37825,7 +38619,7 @@
             "shape": "table",
             "position": {
               "x": 860,
-              "y": 608
+              "y": 652
             },
             "count": 0,
             "originKey": "808B9421-E000-5880-8AED-EAA81844C8BA",
@@ -37840,7 +38634,7 @@
             "shape": "table",
             "position": {
               "x": 1290,
-              "y": 608
+              "y": 652
             },
             "count": 0,
             "originKey": "F88D78E9-56C1-5DD4-B151-6C4D93DDC563",
@@ -37855,7 +38649,7 @@
             "shape": "table",
             "position": {
               "x": 0,
-              "y": 1018
+              "y": 1150
             },
             "count": 0,
             "originKey": "8EDE1520-C015-5D9C-B6AF-9148B49BB442",
@@ -37870,7 +38664,7 @@
             "shape": "table",
             "position": {
               "x": 430,
-              "y": 1018
+              "y": 1150
             },
             "count": 0,
             "originKey": "6EB6F465-C6E4-590F-9FA5-984A5B204B12",
@@ -37885,7 +38679,7 @@
             "shape": "table",
             "position": {
               "x": 860,
-              "y": 1018
+              "y": 1150
             },
             "count": 0,
             "originKey": "DC9D0FA3-E4EB-574C-AC9E-5E8A37771C07",
@@ -37900,7 +38694,7 @@
             "shape": "table",
             "position": {
               "x": 1290,
-              "y": 1018
+              "y": 1150
             },
             "count": 0,
             "originKey": "B9BB9CA1-4330-535A-B442-EE96433ECD4F",
@@ -37915,7 +38709,7 @@
             "shape": "table",
             "position": {
               "x": 0,
-              "y": 1714
+              "y": 1846
             },
             "count": 0,
             "originKey": "5E68DF47-6FEB-5C58-A6AE-B840D89584A7",
@@ -37930,14 +38724,14 @@
             "shape": "table",
             "position": {
               "x": 430,
-              "y": 1714
+              "y": 1846
             },
             "count": 0,
             "originKey": "253BB82C-97FF-5370-ABF1-8B5228B965F3",
             "type": "P",
             "size": {
               "width": 390,
-              "height": 284
+              "height": 328
             }
           },
           {
@@ -37945,14 +38739,14 @@
             "shape": "table",
             "position": {
               "x": 860,
-              "y": 1714
+              "y": 1846
             },
             "count": 0,
             "originKey": "1EA6E8B3-C297-59BE-BE1F-CC7C081DA847",
             "type": "P",
             "size": {
               "width": 390,
-              "height": 262
+              "height": 284
             }
           },
           {
@@ -37960,7 +38754,7 @@
             "shape": "table",
             "position": {
               "x": 1290,
-              "y": 1714
+              "y": 1846
             },
             "count": 0,
             "originKey": "4D93B5E9-A715-5801-81C9-8B9BDEA68DA3",
@@ -37975,7 +38769,7 @@
             "shape": "table",
             "position": {
               "x": 0,
-              "y": 2212
+              "y": 2344
             },
             "count": 0,
             "originKey": "677B1152-0ECC-56EB-81C5-5615075AAFBE",
@@ -37990,7 +38784,7 @@
             "shape": "table",
             "position": {
               "x": 430,
-              "y": 2212
+              "y": 2344
             },
             "count": 0,
             "originKey": "B0E48668-8FE5-5F7C-82C9-E52C1E9F761B",
@@ -38571,6 +39365,87 @@
               }
             },
             "isLock": true
+          },
+          {
+            "id": "D5B2E0B5-5156-5577-B745-576DD3FF2EAB",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 652
+            },
+            "count": 0,
+            "originKey": "D4BE13FF-472B-56B0-8795-84D1AEC8F579",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 438
+            }
+          },
+          {
+            "id": "6BA1E412-F03C-5D3A-8BC0-8BFE087FB9CE",
+            "shape": "erdRelation",
+            "originKey": "EC702693-205D-5863-A519-8F5865A8AA8F",
+            "source": {
+              "cell": "D5B2E0B5-5156-5577-B745-576DD3FF2EAB",
+              "port": "5A544FBC-B65E-5D36-B27A-EA75BA3D2522%out"
+            },
+            "target": {
+              "cell": "FA9156E3-9952-5167-9E6E-5AAAD99712A3",
+              "port": "58070E91-E2AD-5BEE-8202-D4D8EFCDAEE0%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "51E5C8BE-3155-5AD1-925E-EC8016BA7E57",
+            "shape": "erdRelation",
+            "originKey": "9EEE8BAA-3F93-5796-B4E2-1D81D19BB9B4",
+            "source": {
+              "cell": "D5B2E0B5-5156-5577-B745-576DD3FF2EAB",
+              "port": "1EA5C099-F985-5617-9543-F0FCB902941D%out"
+            },
+            "target": {
+              "cell": "6AD74203-6DC9-5BD0-9E53-06DCD7AB99B0",
+              "port": "C3B676FB-1E98-5FFC-B13D-EC557375D7D1%in"
+            },
+            "relation": "1:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "18ECB0CE-C169-5B6F-A42B-4A3EF395655B",
+            "shape": "erdRelation",
+            "originKey": "33E2A2F7-03EC-578B-B390-4072E8FE9334",
+            "source": {
+              "cell": "D5B2E0B5-5156-5577-B745-576DD3FF2EAB",
+              "port": "111A33F9-2975-5F5F-B0A7-2CDC28F80E2D%out"
+            },
+            "target": {
+              "cell": "16AA0043-4BC9-5B10-AAAA-48D2D0749F72",
+              "port": "90E47801-B9BB-50EA-8311-BE1035229115%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
           }
         ]
       },
@@ -38581,6 +39456,7 @@
           "t_file_scan_requirement",
           "t_file_object",
           "t_file_scan_result",
+          "t_file_version",
           "t_document_template",
           "t_document_template_translation",
           "t_consumer_document",

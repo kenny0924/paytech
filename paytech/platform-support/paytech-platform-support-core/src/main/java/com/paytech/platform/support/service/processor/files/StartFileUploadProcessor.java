@@ -11,6 +11,7 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.processor.AbstractProcessor;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.file.FileDisplayName;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Grant;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Start;
@@ -25,10 +26,11 @@ import com.paytech.platform.support.service.processor.files.response.StartFileUp
 import lombok.AllArgsConstructor;
 
 /**
- * 开始一次内部文件上传：按来源系统路由选择存储 → 登记上传 → 事务外签发 PUT 授权
+ * 开始一次内部文件上传：按 (来源系统, 访问级别) 路由选择存储 → 登记上传 → 事务外签发 PUT 授权
  * <li>内部 HTTP 入口与 Platform 内部模块（如工作流，来源系统 platform-support）共用；不做文件级权限，不记录业务归属。</li>
  * <li>每次请求新建上传，没有可比较的原业务操作身份；上传登记为单条插入，不需要显式事务。</li>
- * <li>没有可用路由、桶或实例返回 503 且不登记；类型或大小不符合路由扫描策略返回 400。</li>
+ * <li>未声明访问级别按 PRIVATE；没有该级别的可用路由、桶或实例返回 503 且不登记，不回落到另一级别；类型或大小不符合路由扫描策略
+ * 返回 422。</li>
  */
 @Component
 @AllArgsConstructor
@@ -56,13 +58,14 @@ public class StartFileUploadProcessor extends AbstractProcessor<StartFileUploadR
 
     @Override
     protected StartFileUploadResponse processRequest(StartFileUploadRequest request) {
-        // 按来源系统路由选择存储
-        StorageWriteTarget target = registry.forWrite(request.getSourceSystem());
+        // 按来源系统与访问级别路由选择存储
+        FileAccessLevel accessLevel = request.effectiveAccessLevel();
+        StorageWriteTarget target = registry.forWrite(request.getSourceSystem(), accessLevel);
 
         // 登记上传
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         Start start = new Start(null, request.getUploaderAccountId(), request.getSourceSystem(),
-            request.getReasonCode(), request.displayName(), request.getMimeType(), request.getSizeBytes());
+            request.getReasonCode(), request.displayName(), request.getMimeType(), request.getSizeBytes(), accessLevel);
         Upload upload = files.create(ids.nextId(), start, target, now);
 
         // 事务外签发上传授权

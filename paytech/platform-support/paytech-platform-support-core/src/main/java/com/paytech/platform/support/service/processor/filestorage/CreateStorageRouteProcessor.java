@@ -16,7 +16,7 @@ import lombok.AllArgsConstructor;
 
 /**
  * 新建写入路由
- * <li>按来源系统持资源锁；目标实例与存储桶的状态在事务内按实例 → 桶顺序行锁后核对，与停用互斥。</li>
+ * <li>按来源系统持资源锁；目标实例、存储桶与策略生效修订在事务内按实例 → 桶 → 策略顺序行锁后核对（含桶与路由同访问级别），与停用互斥。</li>
  */
 @Component
 @AllArgsConstructor
@@ -40,7 +40,7 @@ public class CreateStorageRouteProcessor extends AbstractLockProcessor<SaveStora
         long routeId = ids.nextId();
         return support.write(request.getActor(), request.getSession(), request.getReason(), now,
             () -> management.createRoute(new SaveStorageRouteCommand(routeId, request.getSourceSystem(),
-                request.getInstanceCode(), request.getBucketName(), request.getScanPolicyCode(),
+                request.getAccessLevel(), request.getInstanceCode(), request.getBucketName(), request.getScanPolicyCode(),
                 request.getMaxUploadSeconds(), 0, now)));
     }
 }

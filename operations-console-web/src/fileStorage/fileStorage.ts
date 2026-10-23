@@ -16,12 +16,16 @@ export const storageTypes = ['MINIO', 'S3'] as const;
 export const credentialModes = ['STATIC', 'IAM_ROLE'] as const;
 export const instanceStatuses = ['DRAFT', 'ACTIVE', 'DISABLED'] as const;
 export const bucketStatuses = ['DRAFT', 'ACTIVE', 'READ_ONLY', 'DISABLED'] as const;
-export const checkResults = ['OK', 'NOT_FOUND', 'VERSIONING_DISABLED', 'ENCRYPTION_DISABLED', 'ACCESS_DENIED', 'UNAVAILABLE'] as const;
+export const checkResults = ['OK', 'NOT_FOUND', 'VERSIONING_DISABLED', 'ENCRYPTION_DISABLED', 'ACCESS_DENIED', 'UNAVAILABLE',
+  'PUBLIC_ACCESS_ALLOWED', 'PUBLIC_READ_FAILED'] as const;
+/** 桶与写入规则的访问级别：私有只经临时地址读写，公开经登记的对外地址长期可读。 */
+export const accessLevels = ['PRIVATE', 'PUBLIC'] as const;
 export type StorageType = typeof storageTypes[number];
 export type CredentialMode = typeof credentialModes[number];
 export type InstanceStatus = typeof instanceStatuses[number];
 export type BucketStatus = typeof bucketStatuses[number];
 export type CheckResult = typeof checkResults[number];
+export type AccessLevel = typeof accessLevels[number];
 
 export const storageTypeLabels: Readonly<Record<StorageType, string>> = { MINIO: 'MinIO', S3: 'Amazon S3' };
 export const credentialModeLabels: Readonly<Record<CredentialMode, string>> = { STATIC: '固定密钥（Vault）', IAM_ROLE: 'IAM 角色' };
@@ -35,7 +39,17 @@ export const checkResultLabels: Readonly<Record<CheckResult, string>> = {
   ENCRYPTION_DISABLED: '未开启默认加密',
   ACCESS_DENIED: '凭据无权读写该桶',
   UNAVAILABLE: '存储或 Vault 暂时无法访问',
+  PUBLIC_ACCESS_ALLOWED: '桶允许匿名访问',
+  PUBLIC_READ_FAILED: '对外地址不可访问',
 };
+export const accessLevelLabels: Readonly<Record<AccessLevel, string>> = { PRIVATE: '私有', PUBLIC: '公开' };
+export const accessLevelColors: Readonly<Record<AccessLevel, string>> = { PRIVATE: 'default', PUBLIC: 'blue' };
+/** 公开桶检查未通过时的静态排查指引；平台不修改桶策略，只给出 AWS 控制台中的公开只读示例。 */
+export const publicReadGuidance = '常见原因：桶仍开着「阻止公共访问」、没有公开只读的桶策略、CDN 未回源到该桶，或使用了 SSE-KMS 加密（匿名请求无法解密）。';
+export const publicReadPolicyExample = (bucketName: string) =>
+  `{ "Effect": "Allow", "Principal": "*", "Action": "s3:GetObject", "Resource": "arn:aws:s3:::${bucketName}/*" }`;
+/** 私有桶检查未通过（允许匿名访问）时的指引。 */
+export const privateAccessGuidance = '私有桶不能被匿名读取：请开启「阻止公共访问」并移除公开读的桶策略或对象 ACL 后重新检查。';
 
 export const instanceCodePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
 export const sourceSystemPattern = /^[a-z][a-z0-9-]{0,63}$/;
@@ -46,10 +60,11 @@ export const scanPolicyCodePattern = /^[A-Z][A-Z0-9_]{0,63}$/;
 export const connectTimeoutRange = { min: 1000, max: 10_000, defaultValue: 2000 } as const;
 export const readTimeoutRange = { min: 1000, max: 60_000, defaultValue: 10_000 } as const;
 export const uploadSecondsRange = { min: 60, max: 900, defaultValue: 300 } as const;
+export const publicBaseUrlMaxLength = 255;
 
 export interface StorageBucket {
-  bucketName: string; status: BucketStatus; lastCheckTime: string | null; lastCheckResult: CheckResult | null; routeCount: number;
-  version: number; updateTime: string;
+  bucketName: string; accessLevel: AccessLevel; publicBaseUrl: string | null; status: BucketStatus; lastCheckTime: string | null;
+  lastCheckResult: CheckResult | null; routeCount: number; version: number; updateTime: string;
 }
 export interface StorageInstance {
   instanceCode: string; storageType: StorageType; endpoint: string | null; region: string; pathStyleAccess: boolean;
@@ -58,17 +73,18 @@ export interface StorageInstance {
   buckets: StorageBucket[];
 }
 export interface StorageRoute {
-  sourceSystem: string; instanceCode: string; bucketName: string; scanPolicyCode: string; maxUploadSeconds: number; version: number; updateTime: string;
+  sourceSystem: string; accessLevel: AccessLevel; instanceCode: string; bucketName: string; scanPolicyCode: string; maxUploadSeconds: number;
+  version: number; updateTime: string;
 }
 export interface BucketRow extends StorageBucket { instanceCode: string; instanceStatus: InstanceStatus }
 
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 const exactFields = (v: Record<string, unknown>, fields: readonly string[]) =>
   Object.keys(v).length === fields.length && fields.every(field => field in v);
-const bucketFields = ['bucketName', 'status', 'lastCheckTime', 'lastCheckResult', 'routeCount', 'version', 'updateTime'];
+const bucketFields = ['bucketName', 'accessLevel', 'publicBaseUrl', 'status', 'lastCheckTime', 'lastCheckResult', 'routeCount', 'version', 'updateTime'];
 const instanceFields = ['instanceCode', 'storageType', 'endpoint', 'region', 'pathStyleAccess', 'trustedCertificatePem', 'credentialMode',
   'credentialConfigured', 'credentialUpdateTime', 'connectTimeoutMs', 'readTimeoutMs', 'status', 'version', 'updateTime', 'routeCount', 'buckets'];
-const routeFields = ['sourceSystem', 'instanceCode', 'bucketName', 'scanPolicyCode', 'maxUploadSeconds', 'version', 'updateTime'];
+const routeFields = ['sourceSystem', 'accessLevel', 'instanceCode', 'bucketName', 'scanPolicyCode', 'maxUploadSeconds', 'version', 'updateTime'];
 const mutationFields = ['objectType', 'objectId', 'objectCode', 'status', 'version'];
 const checkFields = ['instanceCode', 'bucketName', 'result', 'checkedAt', 'version'];
 const text = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
@@ -77,13 +93,26 @@ const integer = (v: unknown, min: number, max = Number.MAX_SAFE_INTEGER) => Numb
 const oneOf = (values: readonly string[]) => (v: unknown) => typeof v === 'string' && values.includes(v);
 const instant = (v: unknown) => typeof v === 'string' && Number.isFinite(Date.parse(v));
 const optionalInstant = (v: unknown) => v === null || instant(v);
+/**
+ * 公开桶对外地址的前端预检，与 Platform 业务校验一致
+ * <li>HTTPS、不带查询串或片段、不以 / 结尾，最长 255 字符。</li>
+ */
+export function validPublicBaseUrl(value: unknown): value is string {
+  if (typeof value !== 'string' || !value || value.length > publicBaseUrlMaxLength || value.endsWith('/') || /[?#\s]/.test(value)) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !!url.hostname && !url.username && !url.password;
+  } catch { return false; }
+}
 /** 解码失败只给通用错误，不回显响应内容。 */
 const require = (valid: boolean) => { if (!valid) throw new ApiError(502, 'INVALID_RESPONSE'); };
 
 function decodeBucket(value: unknown): StorageBucket {
   require(object(value) && exactFields(value, bucketFields));
   const v = value as unknown as StorageBucket;
-  require(text(v.bucketName) && oneOf(bucketStatuses)(v.status) && optionalInstant(v.lastCheckTime)
+  require(text(v.bucketName) && oneOf(accessLevels)(v.accessLevel)
+    && (v.accessLevel === 'PUBLIC' ? validPublicBaseUrl(v.publicBaseUrl) : v.publicBaseUrl === null)
+    && oneOf(bucketStatuses)(v.status) && optionalInstant(v.lastCheckTime)
     && (v.lastCheckResult === null || oneOf(checkResults)(v.lastCheckResult)) && integer(v.routeCount, 0) && integer(v.version, 1)
     && instant(v.updateTime));
   return v;
@@ -114,17 +143,41 @@ function decodeRoute(value: unknown): StorageRoute {
   require(object(value) && exactFields(value, routeFields));
   const v = value as unknown as StorageRoute;
   require((v.sourceSystem === defaultSourceSystem || sourceSystemPattern.test(String(v.sourceSystem)))
+    && oneOf(accessLevels)(v.accessLevel)
     && instanceCodePattern.test(String(v.instanceCode)) && text(v.bucketName) && scanPolicyCodePattern.test(String(v.scanPolicyCode))
     && integer(v.maxUploadSeconds, uploadSecondsRange.min, uploadSecondsRange.max) && integer(v.version, 1) && instant(v.updateTime));
   return v;
 }
 
-/** 写入规则列表：来源系统不得重复，默认规则排在最前。 */
+/** 写入规则的唯一键：来源系统 + 访问级别。 */
+export const routeKey = (route: { sourceSystem: string; accessLevel: AccessLevel }) => `${route.sourceSystem}/${route.accessLevel}`;
+
+/** 写入规则列表：（来源系统, 访问级别）不得重复，默认规则排在最前。 */
 export function decodeRouteList(value: unknown): StorageRoute[] {
   require(object(value) && exactFields(value, ['items']) && Array.isArray(value.items));
   const items = (value as { items: unknown[] }).items.map(decodeRoute);
-  require(new Set(items.map(item => item.sourceSystem)).size === items.length);
+  require(new Set(items.map(routeKey)).size === items.length);
   return [...items].sort((a, b) => Number(b.sourceSystem === defaultSourceSystem) - Number(a.sourceSystem === defaultSourceSystem));
+}
+
+/** 写入规则矩阵的一行：一个来源系统的私有与公开规则，缺失为 null。 */
+export interface RouteMatrixRow { sourceSystem: string; routes: Readonly<Record<AccessLevel, StorageRoute | null>> }
+
+/** 来源系统 × 访问级别矩阵：默认规则在最前，其余来源按名称排序。 */
+export function routeMatrix(routes: readonly StorageRoute[]): RouteMatrixRow[] {
+  const sources = [...new Set(routes.map(route => route.sourceSystem))]
+    .sort((a, b) => Number(b === defaultSourceSystem) - Number(a === defaultSourceSystem) || a.localeCompare(b));
+  return sources.map(sourceSystem => ({ sourceSystem, routes: {
+    PRIVATE: routes.find(route => route.sourceSystem === sourceSystem && route.accessLevel === 'PRIVATE') ?? null,
+    PUBLIC: routes.find(route => route.sourceSystem === sourceSystem && route.accessLevel === 'PUBLIC') ?? null,
+  } }));
+}
+
+/** 未配置格的说明：精确来源回落到同级别默认规则；同级别默认规则也没有时，该级别上传返回 503。 */
+export function missingRouteNotice(routes: readonly StorageRoute[], sourceSystem: string, accessLevel: AccessLevel): string {
+  const fallback = routes.some(route => route.sourceSystem === defaultSourceSystem && route.accessLevel === accessLevel);
+  if (sourceSystem !== defaultSourceSystem && fallback) return `未配置，使用默认${accessLevelLabels[accessLevel]}规则`;
+  return `未配置：${sourceSystem === defaultSourceSystem ? '没有精确规则的来源' : '该来源'}的${accessLevelLabels[accessLevel]}上传将返回 503`;
 }
 
 export interface StorageMutation { objectType: string; objectId: string; objectCode: string; status: string | null; version: number }
@@ -158,17 +211,26 @@ export function bucketRows(instances: readonly StorageInstance[], instanceCode?:
     .flatMap(instance => instance.buckets.map(bucket => ({ ...bucket, instanceCode: instance.instanceCode, instanceStatus: instance.status })));
 }
 
-/** 写入规则可选的目标：启用实例下的启用桶。 */
-export function routeTargets(instances: readonly StorageInstance[]) {
+/** 写入规则可选的目标：启用实例下、与规则同一访问级别的启用桶。 */
+export function routeTargets(instances: readonly StorageInstance[], accessLevel: AccessLevel) {
   return instances.filter(instance => instance.status === 'ACTIVE').flatMap(instance => instance.buckets
-    .filter(bucket => bucket.status === 'ACTIVE').map(bucket => ({ instanceCode: instance.instanceCode, bucketName: bucket.bucketName })));
+    .filter(bucket => bucket.status === 'ACTIVE' && bucket.accessLevel === accessLevel)
+    .map(bucket => ({ instanceCode: instance.instanceCode, bucketName: bucket.bucketName })));
 }
+
+/** 桶页签的行，可按实例与访问级别筛选。 */
+export function filterBucketRows(rows: readonly BucketRow[], accessLevel?: AccessLevel) {
+  return rows.filter(row => !accessLevel || row.accessLevel === accessLevel);
+}
+
+/** 只有草稿状态的公开桶可以修改对外地址；启用后改地址会让已给出的公开地址失效。 */
+export const editablePublicBaseUrl = (bucket: StorageBucket) => bucket.status === 'DRAFT' && bucket.accessLevel === 'PUBLIC';
 
 /** 来源系统展示：默认规则显示为"默认"。 */
 export const sourceSystemLabel = (sourceSystem: string) => sourceSystem === defaultSourceSystem ? '默认' : sourceSystem;
 
-/** 默认规则不可删除，其余规则可删除。 */
-export const deletableRoute = (route: StorageRoute) => route.sourceSystem !== defaultSourceSystem;
+/** 默认私有规则（*, PRIVATE）不可删除，其余规则可删除。 */
+export const deletableRoute = (route: StorageRoute) => !(route.sourceSystem === defaultSourceSystem && route.accessLevel === 'PRIVATE');
 
 export interface StatusAction<S extends string> { target: S; verb: string; danger: boolean }
 
@@ -257,7 +319,9 @@ export function credentialBody(values: CredentialFormValues, instance: StorageIn
   };
 }
 
-export interface RouteFormValues { sourceSystem?: string; target?: string; scanPolicyCode?: string; maxUploadSeconds?: number; reason?: string }
+export interface RouteFormValues {
+  sourceSystem?: string; accessLevel?: AccessLevel; target?: string; scanPolicyCode?: string; maxUploadSeconds?: number; reason?: string;
+}
 
 /** 目标选择框的值：实例代码与桶名用 / 连接（实例代码不含 /）。 */
 export const targetValue = (instanceCode: string, bucketName: string) => `${instanceCode}/${bucketName}`;
@@ -269,11 +333,11 @@ function splitTarget(target?: string) {
 
 /** 新建写入规则请求体。 */
 export function createRouteBody(values: RouteFormValues) {
-  return { sourceSystem: (values.sourceSystem ?? '').trim(), ...splitTarget(values.target),
+  return { sourceSystem: (values.sourceSystem ?? '').trim(), accessLevel: values.accessLevel, ...splitTarget(values.target),
     scanPolicyCode: (values.scanPolicyCode ?? '').trim(), maxUploadSeconds: values.maxUploadSeconds, reason: (values.reason ?? '').trim() };
 }
 
-/** 修改写入规则请求体：来源系统在路径上。 */
+/** 修改写入规则请求体：来源系统与访问级别在路径上，不可修改。 */
 export function updateRouteBody(values: RouteFormValues, route: StorageRoute) {
   return { ...splitTarget(values.target), scanPolicyCode: (values.scanPolicyCode ?? '').trim(),
     maxUploadSeconds: values.maxUploadSeconds, expectedVersion: route.version, reason: (values.reason ?? '').trim() };
@@ -281,7 +345,23 @@ export function updateRouteBody(values: RouteFormValues, route: StorageRoute) {
 
 export const instancePath = (instanceCode: string) => `${storageAdminPath}/instances/${encodeURIComponent(instanceCode)}`;
 export const bucketPath = (instanceCode: string, bucketName: string) => `${instancePath(instanceCode)}/buckets/${encodeURIComponent(bucketName)}`;
-export const routePath = (sourceSystem: string) => `${storageAdminPath}/routes/${encodeURIComponent(sourceSystem)}`;
+export const routePath = (sourceSystem: string, accessLevel: AccessLevel) =>
+  `${storageAdminPath}/routes/${encodeURIComponent(sourceSystem)}/${accessLevel}`;
+/** 写入规则写回执的对象代码。 */
+export const routeObjectCode = (sourceSystem: string, accessLevel: AccessLevel) => `${sourceSystem}/${accessLevel}`;
+
+export interface BucketFormValues { instanceCode?: string; bucketName?: string; accessLevel?: AccessLevel; publicBaseUrl?: string; reason?: string }
+
+/** 登记桶请求体：私有桶不发送对外地址（null），公开桶发送裁剪后的地址。 */
+export function registerBucketBody(values: BucketFormValues) {
+  return { bucketName: (values.bucketName ?? '').trim(), accessLevel: values.accessLevel,
+    publicBaseUrl: values.accessLevel === 'PUBLIC' ? (values.publicBaseUrl ?? '').trim() : null, reason: (values.reason ?? '').trim() };
+}
+
+/** 修改草稿公开桶对外地址的请求体。 */
+export function updateBucketBody(values: { publicBaseUrl?: string; reason?: string }, bucket: StorageBucket) {
+  return { publicBaseUrl: (values.publicBaseUrl ?? '').trim(), expectedVersion: bucket.version, reason: (values.reason ?? '').trim() };
+}
 
 export type StorageCommandMethod = 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 /** 一次写命令；body 为 null 表示无请求体（桶检查）。 */

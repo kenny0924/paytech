@@ -13,12 +13,15 @@ import com.paytech.platform.support.filedocument.domain.storage.RecordStorageBuc
 import com.paytech.platform.support.filedocument.domain.storage.RegisterStorageBucketCommand;
 import com.paytech.platform.support.filedocument.domain.storage.ReplaceStorageCredentialCommand;
 import com.paytech.platform.support.filedocument.domain.storage.SaveStorageRouteCommand;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
+import com.paytech.platform.support.filedocument.domain.storage.UpdateStorageBucketCommand;
 import com.paytech.platform.support.filedocument.domain.storage.UpdateStorageInstanceCommand;
 
 /**
  * 存储实例、存储桶与写入路由的本库规则与保存；Owner 为 file-document
  * <li>写方法在调用方事务内锁定当前行、核对版本与状态规则后条件更新，返回审计差异；不访问 Vault 或存储。</li>
- * <li>锁定顺序固定为实例 → 存储桶 → 路由，跨表不变量（路由只指向 ACTIVE 桶与实例、有路由的桶与实例不能停用）由行锁串行。</li>
+ * <li>锁定顺序固定为实例 → 存储桶 → 检查策略 ACTIVE 修订 → 路由，跨表不变量（路由只指向同访问级别的 ACTIVE 桶与实例、有生效修订的
+ * 检查策略，有路由的桶与实例不能停用）由行锁串行。</li>
  */
 public interface FileStorageManagementService {
 
@@ -56,6 +59,9 @@ public interface FileStorageManagementService {
     /** 登记 DRAFT 存储桶。 */
     FileStorageChange registerBucket(RegisterStorageBucketCommand command);
 
+    /** 修改 DRAFT 公开桶的对外基础地址并清除最近检查结果。 */
+    FileStorageChange updateBucket(UpdateStorageBucketCommand command);
+
     /** 回写存储桶检查结果。 */
     FileStorageChange recordBucketCheck(RecordStorageBucketCheckCommand command);
 
@@ -68,6 +74,6 @@ public interface FileStorageManagementService {
     /** 修改写入路由。 */
     FileStorageChange updateRoute(SaveStorageRouteCommand command);
 
-    /** 删除写入路由；默认路由不能删除。 */
-    FileStorageChange deleteRoute(String sourceSystem, int expectedVersion);
+    /** 删除写入路由；默认私有路由 (*, PRIVATE) 不能删除。 */
+    FileStorageChange deleteRoute(String sourceSystem, FileAccessLevel accessLevel, int expectedVersion);
 }

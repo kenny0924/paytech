@@ -7,6 +7,7 @@ import java.util.HexFormat;
 
 import com.paytech.platform.support.api.enums.FileObjectStatus;
 import com.paytech.platform.support.api.enums.FileScanStatus;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
 import com.paytech.platform.support.filedocument.domain.file.FileSourceCodes;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
@@ -75,6 +76,7 @@ public final class FileBuilder {
     private Instant expiresAt;
     private long tenantId = OperationsCatalog.INTERNAL_TENANT_ID;
     private long uploaderId = OperatorBuilder.nextId();
+    private FileAccessLevel accessLevel = FileAccessLevel.PRIVATE;
 
     private FileBuilder(String provider, String container, String objectRef) {
         this.provider = provider;
@@ -137,6 +139,12 @@ public final class FileBuilder {
         return this;
     }
 
+    /** 访问级别；默认 PRIVATE。 */
+    public FileBuilder accessLevel(FileAccessLevel accessLevel) {
+        this.accessLevel = accessLevel;
+        return this;
+    }
+
     /** 上传授权期限。 */
     public FileBuilder expiresAt(Instant expiresAt) {
         this.expiresAt = expiresAt;
@@ -147,7 +155,7 @@ public final class FileBuilder {
     public Spec build() {
         return new Spec(fileId, uploadId, tenantId, uploaderId, displayName, provider, container, objectRef, mime,
             bytes.clone(), contentHash == null ? sha256(bytes) : contentHash, version, encryption, policyId, scanStatus,
-            objectStatus, expiresAt);
+            objectStatus, expiresAt, accessLevel);
     }
 
     /** 小写十六进制 SHA-256，与生产登记格式一致。 */
@@ -168,26 +176,41 @@ public final class FileBuilder {
     public record Spec(long fileId, long uploadId, long tenantId, long uploaderId,
         String displayName, String provider, String container, String objectRef, String mime, byte[] bytes,
         String contentHash, String version, String encryption, long policyId, FileScanStatus scanStatus,
-        FileObjectStatus objectStatus, Instant expiresAt) {
+        FileObjectStatus objectStatus, Instant expiresAt, FileAccessLevel accessLevel) {
 
         /** 存储端口使用的上传目标。 */
         public Upload upload() {
             return new Upload(uploadId, tenantId, uploaderId, FileSourceCodes.PLATFORM_SUPPORT,
                 REASON_CODE, displayName, bytes.length, mime, provider,
-                container, objectRef, policyId, expiresAt, FileUploadStatus.CREATED);
+                container, objectRef, policyId, expiresAt, FileUploadStatus.CREATED, accessLevel, null, 0, null);
+        }
+
+        /**
+         * 替换本文件内容的上传目标：同一对象，期望类型与大小取自替换字节
+         *
+         * @param replacementNo 替换序号
+         * @param baseObjectVersion 开始替换时的当前版本
+         * @param replacementBytes 替换内容
+         * @param replacementMime 替换声明类型
+         */
+        public Upload replacementUpload(int replacementNo, String baseObjectVersion, byte[] replacementBytes,
+            String replacementMime) {
+            return new Upload(uploadId + replacementNo, tenantId, uploaderId, FileSourceCodes.PLATFORM_SUPPORT,
+                REASON_CODE, displayName, replacementBytes.length, replacementMime, provider, container, objectRef,
+                policyId, expiresAt, FileUploadStatus.CREATED, accessLevel, fileId, replacementNo, baseObjectVersion);
         }
 
         /** 存储与扫描端口使用的已登记文件。 */
         public File file() {
             return new File(fileId, provider, container, objectRef,
-                new Verified(version, contentHash, bytes.length, mime, encryption), policyId, scanStatus, objectStatus);
+                new Verified(version, contentHash, bytes.length, mime, encryption), policyId, scanStatus, objectStatus, 1);
         }
 
         /** 同一材料改为存储实际生成的版本。 */
         public Spec withVersion(String objectVersion) {
             return new Spec(fileId, uploadId, tenantId, uploaderId, displayName, provider, container,
                 objectRef, mime, bytes, contentHash, objectVersion, encryption, policyId, scanStatus, objectStatus,
-                expiresAt);
+                expiresAt, accessLevel);
         }
 
         /** 实际字节数。 */

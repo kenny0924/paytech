@@ -8,6 +8,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingOwnerMocker;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
 import com.paytech.platform.support.api.files.InternalFileApi;
+import com.paytech.platform.support.api.files.request.StartFileReplacementRequestBody;
 import com.paytech.platform.support.api.files.request.StartFileUploadRequestBody;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
@@ -28,6 +29,12 @@ public class MockPlatformInternalFileApi implements InternalFileApi {
     /** CCT 不上传文件。 */
     @Override
     public FileUploadResponseBody startUpload(StartFileUploadRequestBody requestBody) {
+        throw MockPlatformAuthenticationApi.unexpected();
+    }
+
+    /** CCT 不替换文件内容。 */
+    @Override
+    public FileUploadResponseBody startReplacement(String fileId, StartFileReplacementRequestBody requestBody) {
         throw MockPlatformAuthenticationApi.unexpected();
     }
 

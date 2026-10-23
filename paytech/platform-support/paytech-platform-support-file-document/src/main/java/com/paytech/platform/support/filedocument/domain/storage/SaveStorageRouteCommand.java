@@ -2,6 +2,8 @@ package com.paytech.platform.support.filedocument.domain.storage;
 
 import java.time.Instant;
 
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -15,6 +17,9 @@ public class SaveStorageRouteCommand {
 
     /** 来源系统或 *。 */
     private final String sourceSystem;
+
+    /** 访问级别；与来源系统共同构成路由键，目标桶必须为同一级别。 */
+    private final FileAccessLevel accessLevel;
 
     /** 目标实例代码。 */
     private final String instanceCode;

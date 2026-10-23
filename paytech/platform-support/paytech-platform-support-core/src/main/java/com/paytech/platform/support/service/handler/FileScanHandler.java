@@ -16,7 +16,11 @@ import com.paytech.platform.support.filedocument.domain.file.FileModels.Result;
 import com.paytech.platform.support.filedocument.domainservice.service.FileLifecycleService;
 import com.paytech.platform.support.filedocument.integration.scanning.FileScanner;
 import com.paytech.platform.support.service.processor.OperationsTransactionExecutor;
-/** 持久化文件扫描入口；恢复同一次检查，不把补偿执行次数当作新的扫描尝试。 */
+/**
+ * 持久化文件扫描入口：按版本执行，恢复同一次检查，不把补偿执行次数当作新的扫描尝试
+ * <li>事件键：v1 为 {@code fileId}（存量兼容），替换版本为 {@code fileId:vN}。</li>
+ * <li>v1 的结论同时写入文件镜像；替换版本通过后在同一短事务提升为当前版本，不通过时只标记该版本，文件保持旧版本。</li>
+ */
 @Component
 @lombok.AllArgsConstructor
 @ConditionalOnProperty(name="files.enabled",havingValue="true")
@@ -27,10 +31,15 @@ public final class FileScanHandler implements CompensationEventHandler {
     private final ObjectProvider<FileScanner> scanners;
     private final IdGenerator ids;
     private final Clock clock;
-    /** 与 File 原子登记，只保存可恢复身份，不复制资料或存储信息。 */
-    public static CompensationEventRequest buildEvent(long fileId) {
-        if (fileId<=0) throw new IllegalArgumentException("Invalid file identity");
-        return new CompensationEventRequest(Long.toString(fileId),EVENT_TYPE,"-");
+    /** 替换版本事件键中版本号的分隔。 */
+    private static final String VERSION_SEPARATOR = ":v";
+    /** 与 File 或新版本原子登记，只保存可恢复身份，不复制资料或存储信息。 */
+    public static CompensationEventRequest buildEvent(long fileId, int versionNo) {
+        if (fileId<=0 || versionNo<1) {
+            throw new IllegalArgumentException("Invalid file identity");
+        }
+        String key = versionNo == 1 ? Long.toString(fileId) : fileId + VERSION_SEPARATOR + versionNo;
+        return new CompensationEventRequest(key,EVENT_TYPE,"-");
     }
     /** 固定持久化类型，不因类名修改而改变。 */
     @Override
@@ -48,10 +57,14 @@ public final class FileScanHandler implements CompensationEventHandler {
     public CompensationHandlerResult handle(CompensationEvent event) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) return invalid();
         try {
-            if (!event.eventKey().matches("[1-9][0-9]{0,18}") || event.payloadJson()!=null) return invalid();
-            long fileId=Long.parseLong(event.eventKey());
+            if (!event.eventKey().matches("[1-9][0-9]{0,18}(:v[1-9][0-9]{0,8})?") || event.payloadJson()!=null) {
+                return invalid();
+            }
+            int separator=event.eventKey().indexOf(VERSION_SEPARATOR);
+            long fileId=Long.parseLong(separator<0 ? event.eventKey() : event.eventKey().substring(0,separator));
+            int versionNo=separator<0 ? 1 : Integer.parseInt(event.eventKey().substring(separator+VERSION_SEPARATOR.length()));
             while (true) {
-                var scan=transactions.write(() -> files.beginScan(fileId,clock.instant()));
+                var scan=transactions.write(() -> files.beginScan(fileId,versionNo,clock.instant()));
                 if (scan.pending().isEmpty()) {
                     return CompensationHandlerResult.success();
                 }
@@ -63,7 +76,7 @@ public final class FileScanHandler implements CompensationEventHandler {
                 var adapter=matching.getFirst();
                 var result=adapter.recoverOrScan(scan.file(),requirement,1);
                 if (!valid(scan.file(),requirement,result) || !adapter.acceptsRuntime(requirement.minimumVersion(),result.runtimeVersion())) return retry();
-                transactions.write(() -> files.recordResult(ids.nextId(),result,clock.instant()));
+                transactions.write(() -> files.recordResult(ids.nextId(),versionNo,result,clock.instant()));
             }
         } catch (NumberFormatException invalid) {
             return invalid();

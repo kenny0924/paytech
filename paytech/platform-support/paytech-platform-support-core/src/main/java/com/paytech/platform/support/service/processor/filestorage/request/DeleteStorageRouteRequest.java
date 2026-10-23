@@ -1,6 +1,9 @@
 package com.paytech.platform.support.service.processor.filestorage.request;
 
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
+
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +24,10 @@ public class DeleteStorageRouteRequest {
     /** 来源系统或 *。 */
     @NotBlank(message = "来源系统必填")
     private final String sourceSystem;
+
+    /** 访问级别。 */
+    @NotNull(message = "访问级别必填")
+    private final FileAccessLevel accessLevel;
 
     /** 调用方读取的原版本。 */
     @Positive(message = "原版本必须为正整数")

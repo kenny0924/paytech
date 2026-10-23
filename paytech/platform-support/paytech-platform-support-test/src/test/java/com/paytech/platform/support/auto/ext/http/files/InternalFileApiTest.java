@@ -321,17 +321,17 @@ class InternalFileApiTest extends FileTestBase {
     /** 参数非法与策略不允许的类型、大小在登记前拒绝。 */
     @Test
     void test_invalidParameter() {
-        start(SOURCE, null, new StartFileUploadRequestBody("workflow", "a.pdf", "application/pdf", "10", null))
+        start(SOURCE, null, new StartFileUploadRequestBody("workflow", "a.pdf", "application/pdf", "10", null, null))
             .assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("reasonCode");
-        start(SOURCE, null, new StartFileUploadRequestBody(REASON, " .. ", "application/pdf", "10", null))
+        start(SOURCE, null, new StartFileUploadRequestBody(REASON, " .. ", "application/pdf", "10", null, null))
             .assertProblem(400, CommonErrorCode.INVALID_REQUEST);
-        start(SOURCE, null, new StartFileUploadRequestBody(REASON, ".", "application/pdf", "10", null))
+        start(SOURCE, null, new StartFileUploadRequestBody(REASON, ".", "application/pdf", "10", null, null))
             .assertProblem(400, CommonErrorCode.INVALID_REQUEST);
         start(SOURCE, null, new StartFileUploadRequestBody(REASON, "a".repeat(252) + ".pdf", "application/pdf", "10",
-            null)).assertProblem(400, CommonErrorCode.INVALID_REQUEST);
-        start(SOURCE, null, new StartFileUploadRequestBody(REASON, "a.txt", "text/plain", "10", null))
+            null, null)).assertProblem(400, CommonErrorCode.INVALID_REQUEST);
+        start(SOURCE, null, new StartFileUploadRequestBody(REASON, "a.txt", "text/plain", "10", null, null))
             .assertProblem(422, FileErrorCode.FILE_POLICY_REJECTED);
-        start(SOURCE, null, new StartFileUploadRequestBody(REASON, "a.pdf", "application/pdf", "10485761", null))
+        start(SOURCE, null, new StartFileUploadRequestBody(REASON, "a.pdf", "application/pdf", "10485761", null, null))
             .assertProblem(422, FileErrorCode.FILE_POLICY_REJECTED);
 
         assertTrue(storageData.uploadsFrom(SOURCE).isEmpty());
@@ -396,7 +396,8 @@ class InternalFileApiTest extends FileTestBase {
     private String uploadThroughGrant(String caller, String filename, String mimeType, byte[] bytes,
         String uploaderAccountId) {
         FileUploadResponseBody upload = start(caller, null, new StartFileUploadRequestBody(REASON, filename, mimeType,
-            Integer.toString(bytes.length), uploaderAccountId)).assertStatus(201).as(FileUploadResponseBody.class);
+            Integer.toString(bytes.length), uploaderAccountId, null)).assertStatus(201)
+            .as(FileUploadResponseBody.class);
         storage.track((String) fileData.uploadRow(Long.parseLong(upload.getUploadId())).get("storage_object_ref"));
         var authorization = upload.getAuthorization();
         assertEquals(200, storage.browserPut(authorization.getUrl(), authorization.getHeaders(), bytes).statusCode());
@@ -420,7 +421,7 @@ class InternalFileApiTest extends FileTestBase {
     /** 默认请求：PDF、上传人 42。 */
     private static StartFileUploadRequestBody body() {
         return new StartFileUploadRequestBody(REASON, "contract.pdf", "application/pdf",
-            Integer.toString(FileBuilder.PDF.length), "42");
+            Integer.toString(FileBuilder.PDF.length), "42", null);
     }
 
     /** 开始上传。 */

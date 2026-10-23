@@ -8,12 +8,16 @@ import java.security.GeneralSecurityException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.net.URI;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.platform.support.api.enums.FileStorageCheckResult;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.file.DownloadPresentation;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Grant;
@@ -30,8 +34,9 @@ import okhttp3.OkHttpClient;
 
 /**
  * MinIO 存储适配器：一个存储实例在一次操作中的客户端。
- * <li>存储桶必须开启版本控制和服务端加密；上传授权只允许对象不存在时写入</li>
- * <li>完成读取要求对象恰好只有一个版本，后续读取一律使用该版本</li>
+ * <li>存储桶必须开启版本控制和服务端加密；首次上传授权只允许对象不存在时写入，替换上传只签 Content-Type</li>
+ * <li>首次完成要求对象恰好只有一个版本，替换完成要求比基准新的版本恰好一个，后续读取一律使用核对过的版本</li>
+ * <li>匿名访问检查按路径风格地址（MinIO 总是支持）不带凭据读取</li>
  * <li>客户端由实例快照与本次密钥构建：有界超时、禁止重定向；登记了私有证书时只信任该证书</li>
  * <li>SDK 异常统一转为依赖不可用并保留原因，URL 与密钥不进入日志</li>
  */
@@ -42,8 +47,10 @@ public final class MinioFileStorage implements FileObjectStorage {
     private static final String SSE_KMS_KEY_HEADER = "x-amz-server-side-encryption-aws-kms-key-id";
     private final Clock clock;
     private final String instanceCode;
+    private final String endpoint;
     private final OkHttpClient http;
     private final MinioClient client;
+    private final AnonymousHttp anonymous;
 
     /**
      * 按实例构建本次使用的客户端
@@ -55,6 +62,7 @@ public final class MinioFileStorage implements FileObjectStorage {
     public MinioFileStorage(Clock clock, FileStorageInstance instance, StorageCredential credential) {
         this.clock = clock;
         this.instanceCode = instance.getInstanceCode();
+        this.endpoint = instance.getEndpoint();
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
             .connectTimeout(Duration.ofMillis(instance.getConnectTimeoutMs()))
             .readTimeout(Duration.ofMillis(instance.getReadTimeoutMs()))
@@ -67,6 +75,7 @@ public final class MinioFileStorage implements FileObjectStorage {
         this.http = builder.build();
         this.client = MinioClient.builder().endpoint(instance.getEndpoint()).region(instance.getRegion())
             .credentials(credential.accessKeyId(), credential.secretAccessKey()).httpClient(http).build();
+        this.anonymous = new AnonymousHttp(instance);
     }
 
     /** 实例代码。 */
@@ -80,13 +89,14 @@ public final class MinioFileStorage implements FileObjectStorage {
      *
      * @param upload
      *            已固定的上传目标
-     * @return 需原样携带 Content-Type 与 If-None-Match 的授权
+     * @return 需原样携带的请求头：首次上传为 Content-Type 与 If-None-Match，替换上传只有 Content-Type
      */
     @Override
     public Grant authorize(Upload upload) {
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         long seconds = presignSeconds(now, upload.expiresAt());
-        Map<String, String> headers = Map.of("Content-Type", upload.expectedMime(), "If-None-Match", "*");
+        Map<String, String> headers = upload.replacement() ? Map.of("Content-Type", upload.expectedMime())
+            : Map.of("Content-Type", upload.expectedMime(), "If-None-Match", "*");
         String url = call(() -> client
             .getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().method(Method.PUT).bucket(upload.containerRef())
                 .object(upload.objectRef()).expiry((int)seconds).extraHeaders(headers).build()));
@@ -106,6 +116,54 @@ public final class MinioFileStorage implements FileObjectStorage {
             .statObject(StatObjectArgs.builder().bucket(upload.containerRef()).object(upload.objectRef()).build()));
         String version = stat.versionId();
         requireSingleVersion(upload.containerRef(), upload.objectRef(), version);
+        return opened(upload, version, stat);
+    }
+
+    /**
+     * 列出比替换基准新的全部版本（含删除标记），最新在前；找不到基准版本时不可用。
+     *
+     * @param upload
+     *            替换上传
+     * @return 新版本 versionId
+     */
+    @Override
+    public List<String> newerVersions(Upload upload) {
+        List<String> newer = new ArrayList<>();
+        for (Result<Item> result : client.listObjects(ListObjectsArgs.builder().bucket(upload.containerRef())
+            .prefix(upload.objectRef()).includeVersions(true).build())) {
+            Item item = call(result::get);
+            if (!upload.objectRef().equals(item.objectName())) {
+                continue;
+            }
+            if (upload.baseObjectVersion().equals(item.versionId())) {
+                return newer;
+            }
+            newer.add(item.versionId());
+        }
+        throw new ServiceUnavailableException();
+    }
+
+    /**
+     * 打开已核对唯一性的替换版本。
+     *
+     * @param upload
+     *            替换上传
+     * @param version
+     *            准确版本
+     * @return 版本、服务端识别类型、加密引用与字节流
+     */
+    @Override
+    public Opened open(Upload upload, String version) {
+        StatObjectResponse stat = call(() -> client.statObject(StatObjectArgs.builder().bucket(upload.containerRef())
+            .object(upload.objectRef()).versionId(version).build()));
+        if (!version.equals(stat.versionId())) {
+            throw new ServiceUnavailableException();
+        }
+        return opened(upload, version, stat);
+    }
+
+    /** 核对加密后打开指定版本并识别类型。 */
+    private Opened opened(Upload upload, String version, StatObjectResponse stat) {
         String encryption = encryption(stat);
         BufferedInputStream bytes =
             StoredContentType.buffered(read(upload.containerRef(), upload.objectRef(), version));
@@ -168,7 +226,7 @@ public final class MinioFileStorage implements FileObjectStorage {
      * @return 第一项不满足的检查结果
      */
     @Override
-    public FileStorageCheckResult checkBucket(String bucketName) {
+    public FileStorageCheckResult checkBucket(String bucketName, FileAccessLevel accessLevel, String publicBaseUrl) {
         try {
             if (!client.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 return FileStorageCheckResult.NOT_FOUND;
@@ -178,7 +236,7 @@ public final class MinioFileStorage implements FileObjectStorage {
             if (versioning.status() != VersioningConfiguration.Status.ENABLED) {
                 return FileStorageCheckResult.VERSIONING_DISABLED;
             }
-            return checkProbe(bucketName, ProbeObject.next());
+            return checkProbe(bucketName, ProbeObject.next(), accessLevel, publicBaseUrl);
         } catch (ErrorResponseException rejected) {
             return ProbeObject.classify(rejected.errorResponse().code());
         } catch (MinioException | IOException | GeneralSecurityException | RuntimeException unavailable) {
@@ -186,9 +244,9 @@ public final class MinioFileStorage implements FileObjectStorage {
         }
     }
 
-    /** 写入探测对象后核对加密与内容，最后删除该版本。 */
-    FileStorageCheckResult checkProbe(String bucketName, ProbeObject probe)
-        throws MinioException, IOException, GeneralSecurityException {
+    /** 写入探测对象后核对加密、内容与匿名访问，最后删除该版本。 */
+    FileStorageCheckResult checkProbe(String bucketName, ProbeObject probe, FileAccessLevel accessLevel,
+        String publicBaseUrl) throws MinioException, IOException, GeneralSecurityException {
         String version = client.putObject(PutObjectArgs.builder().bucket(bucketName).object(probe.key())
             .stream(new ByteArrayInputStream(probe.bytes()), probe.bytes().length, -1).build()).versionId();
         try {
@@ -200,12 +258,63 @@ public final class MinioFileStorage implements FileObjectStorage {
             }
             try (InputStream bytes = client.getObject(
                 GetObjectArgs.builder().bucket(bucketName).object(probe.key()).versionId(version).build())) {
-                return probe.matches(bytes.readAllBytes()) ? FileStorageCheckResult.OK : FileStorageCheckResult.UNAVAILABLE;
+                if (!probe.matches(bytes.readAllBytes())) {
+                    return FileStorageCheckResult.UNAVAILABLE;
+                }
             }
+            FileStorageCheckResult anonymousResult = probe.anonymousResult(accessLevel,
+                anonymousRead(accessLevel == FileAccessLevel.PUBLIC ? URI.create(publicBaseUrl + "/" + probe.key())
+                    : URI.create(endpoint + "/" + bucketName + "/" + probe.key())));
+            return anonymousResult == null ? FileStorageCheckResult.OK : anonymousResult;
         } finally {
             client.removeObject(
                 RemoveObjectArgs.builder().bucket(bucketName).object(probe.key()).versionId(version).build());
         }
+    }
+
+    /** 不带凭据读取；连接或读取失败为空。 */
+    private AnonymousHttp.Response anonymousRead(URI uri) {
+        try {
+            return anonymous.get(uri);
+        } catch (IOException unreachable) {
+            return null;
+        }
+    }
+
+    /**
+     * 读取对象最新版本及 Platform 恢复复制写入的源版本元数据。
+     *
+     * @param container
+     *            存储桶
+     * @param objectRef
+     *            对象名
+     * @return 最新版本
+     */
+    @Override
+    public LatestVersion latest(String container, String objectRef) {
+        StatObjectResponse stat =
+            call(() -> client.statObject(StatObjectArgs.builder().bucket(container).object(objectRef).build()));
+        if (stat.versionId() == null || stat.versionId().isBlank()) {
+            throw new ServiceUnavailableException();
+        }
+        return LatestVersion.of(stat.versionId(), stat.userMetadata());
+    }
+
+    /**
+     * 服务端复制当前版本为最新版本：替换元数据，保留当前版本的 Content-Type 并记录源版本；默认加密由桶配置施加。
+     *
+     * @param current
+     *            文件当前版本坐标
+     */
+    @Override
+    public void restore(File current) {
+        String source = current.verified().objectVersion();
+        call(() -> client.copyObject(CopyObjectArgs.builder().bucket(current.container()).object(current.objectRef())
+            .source(CopySource.builder().bucket(current.container()).object(current.objectRef()).versionId(source)
+                .build())
+            .headers(Map.of("Content-Type", current.verified().mimeType()))
+            .userMetadata(Map.of(LatestVersion.RESTORED_FROM_METADATA, source))
+            .metadataDirective(Directive.REPLACE).build()));
     }
 
     /** 释放本次构建的 SDK 客户端、连接池与调度线程。 */
@@ -216,6 +325,7 @@ public final class MinioFileStorage implements FileObjectStorage {
         } catch (Exception ignored) {
             // 客户端未持有需要释放的独占资源时可忽略
         }
+        anonymous.close();
         http.dispatcher().executorService().shutdown();
         http.connectionPool().evictAll();
     }

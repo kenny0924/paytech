@@ -1,0 +1,63 @@
+-- executed 2026-10-22T20:51:02Z against mor-test-mysql-1 (root, read-only)
++-----------------------------------------------------------------------------------------------------------+--------+--------+
+| item                                                                                                      | actual | expect |
++-----------------------------------------------------------------------------------------------------------+--------+--------+
+| S01 t_file_version 尚不存在                                                                               |      0 |      0 |
+| S02 本需求 10 个新列都不存在                                                                              |      0 |      0 |
+| S03 新索引 idx_file_create_time / idx_file_upload_replaces 不存在                                         |      0 |      0 |
+| S04 uk_upload_storage_target = provider,container,object_ref                                              |      1 |      1 |
+| S05 uk_file_storage_route_source = source_system                                                          |      1 |      1 |
+| S06 uk_file_scan_attempt = file_id,scan_requirement_id,attempt_no                                         |      1 |      1 |
+| S07 DDL MODIFY 的 11 列类型 / 可空与 DDL 相同（只改注释）                                                 |     11 |     11 |
+| S08 ADD COLUMN ... AFTER 的 7 个锚点列存在                                                                |      7 |      7 |
+| S09 mor_platform 表数                                                                                     |     63 |     63 |
+| D01 文件全部 AVAILABLE / ACTIVE（回填后全为 CURRENT）                                                     |      0 |      0 |
+| D02 文件引用的策略修订都存在                                                                              |      0 |      0 |
+| D03 文件 upload_id 非空者不重复（uk_file_version_upload）                                                 |      0 |      0 |
+| D04 回填目标 version_id=file_id 与现有任何表无关（新表空），file_id 唯一                                  |      0 |      0 |
+| D05 进行中且未过期的上传                                                                                  |      0 |      0 |
+| D06 没有待执行的 FILE_SCAN 补偿事件（成功即删除；旧事件键 {fileId} 不跨版本）                             |      0 |      0 |
+| D07 写入路由 3 条：* / client-console-bff / operations-console-bff                                        |      3 |      3 |
+| D08 写入路由总数（回填为 PRIVATE 后 (来源, 级别) 仍唯一）                                                 |      3 |      3 |
+| D09 默认路由 * → MINIO / mor-platform-files / CLIENT_ONBOARDING_FORMAT                                    |      1 |      1 |
+| D10 client-console-bff → S3_TEST / mor-test-platform-files-k7q2                                           |      1 |      1 |
+| D11 operations-console-bff → MINIO / mor-platform-files / CARD_BIN_CSV（route 239087906591948800）        |      1 |      1 |
+| D12 实例 MINIO、S3_TEST 均 ACTIVE                                                                         |      2 |      2 |
+| D13 两个桶 ACTIVE 且最近检查 OK（回填为 PRIVATE）                                                         |      2 |      2 |
+| D14 桶总数                                                                                                |      2 |      2 |
+| D15 每条路由的策略代码都有 ACTIVE 修订                                                                    |      0 |      0 |
+| D16 策略修订 2 个：CLIENT_ONBOARDING_FORMAT r1、CARD_BIN_CSV r1 均 ACTIVE                                 |      2 |      2 |
+| D17 策略允许类型都在格式检查器可识别范围（pdf / png / jpeg / csv）                                        |      0 |      0 |
+| D18 每个策略修订恰好一条 PLATFORM_FORMAT / FORMAT 检查要求                                                |      0 |      0 |
+| G01 块 130 写入规则编辑 / 删除仍为旧路径且 ACTIVE                                                         |      2 |      2 |
+| G02 块 130 其余路由 ACTIVE（共 12）                                                                       |     12 |     12 |
+| G03 块 134 ID 段在 7 张表均未占用                                                                         |      0 |      0 |
+| G04 权限代码 FILE_RECORD_* 与资源动作 FILE_RECORD 未占用                                                  |      0 |      0 |
+| G05 控制台资源代码未占用                                                                                  |      0 |      0 |
+| G06 12 个路由代码未占用                                                                                   |      0 |      0 |
+| G07 12 个 (方法, 外部路径) 与 2 个新路径 (PUT/DELETE routes/{s}/{l}) 未占用                               |      0 |      0 |
+| G08 依赖行存在：ops-bff Target、平台配置菜单 562、PLATFORM_ADMIN、FILE_STORAGE_READ/MANAGE                |      5 |      5 |
+| G09 平台配置下 sort 85 空闲（文件记录插在存储管理 80 与卡 BIN 库 90 之间）                                |      0 |      0 |
+| G10 工作流附件内嵌预览 query_param 127030 仍在                                                            |      1 |      1 |
++-----------------------------------------------------------------------------------------------------------+--------+--------+
++------------------------------------------------------------+-------+
+| item                                                       | value |
++------------------------------------------------------------+-------+
+| R01 文件行数                                               |    69 |
+| R02 上传行数                                               |    70 |
+| R03 未完成上传（含已过期未收尾）                           |     1 |
+| R04 扫描结果行数                                           |    69 |
+| R05 PLATFORM_ADMIN 角色版本                                |    45 |
+| R06 块 130 两条路由的版本和                                |     4 |
+| R07 FILE_DOWNLOAD_AUTHORIZE 审计条数                       |     4 |
+| R08 存储管理审计条数（OPERATIONS_FILE_STORAGE%）           |    26 |
++------------------------------------------------------------+-------+
++------------------------+----------------------------+------------------------------+-------------+-------+
+| source_system          | reason_code                | storage_container_ref        | scan_status | files |
++------------------------+----------------------------+------------------------------+-------------+-------+
+| client-console-bff     | CLIENT_ONBOARDING_MATERIAL | mor-platform-files           | AVAILABLE   |     2 |
+| client-console-bff     | CLIENT_ONBOARDING_MATERIAL | mor-test-platform-files-k7q2 | AVAILABLE   |     3 |
+| operations-console-bff | CARD_BIN_LIBRARY_IMPORT    | mor-platform-files           | AVAILABLE   |     4 |
+| platform-support       | CLIENT_ONBOARDING_MATERIAL | mor-platform-files           | AVAILABLE   |    55 |
+| platform-support       | WORKFLOW_ATTACHMENT        | mor-platform-files           | AVAILABLE   |     5 |
++------------------------+----------------------------+------------------------------+-------------+-------+

@@ -3,27 +3,42 @@
 <mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileLifecycleMapper">
  <sql id="FileColumnsQuery">
  SELECT file_id,storage_provider AS provider,storage_container_ref AS container,storage_object_ref AS object_ref,
- object_version,content_hash,size_bytes,mime_type,storage_encryption_key_ref AS encryption_key_ref,scan_policy_id AS policy_id,scan_status,object_status
+ object_version,content_hash,size_bytes,mime_type,storage_encryption_key_ref AS encryption_key_ref,scan_policy_id AS policy_id,scan_status,object_status,
+ access_level,current_version_no,source_system,reason_code
  FROM t_file_object WHERE file_id=#{id}
  </sql>
  <select id="readFile" useCache="false" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileObject">
  <include refid="FileColumnsQuery"/>
  </select>
- <select id="completedFile" useCache="false" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.CompletedUploadFile">
- SELECT file_id,create_time FROM t_file_object WHERE upload_id=#{uploadId} AND creation_source='UPLOAD'
- </select>
  <sql id="UploadColumns">
  upload_id,tenant_id,uploader_id,source_system,reason_code,display_name,expected_size,expected_mime,storage_provider,
- storage_container_ref AS container_ref,storage_object_ref AS object_ref,scan_policy_id,expires_time AS expires_at,status
+ storage_container_ref AS container_ref,storage_object_ref AS object_ref,scan_policy_id,expires_time AS expires_at,status,
+ access_level,replaces_file_id,replacement_no,base_object_version
  </sql>
  <select id="lockSourceUpload" useCache="false" flushCache="true" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload">
  SELECT <include refid="UploadColumns"/> FROM t_file_upload WHERE upload_id=#{id} FOR UPDATE
  </select>
- <select id="describeFile" useCache="false" resultType="com.paytech.platform.support.filedocument.domain.file.StoredFileView">
- SELECT f.file_id AS fileId,f.source_system AS sourceSystem,f.reason_code AS reasonCode,u.display_name AS displayName,
+ <select id="describeFile" useCache="false" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileDescription">
+ SELECT f.file_id AS fileId,f.source_system AS sourceSystem,f.reason_code AS reasonCode,
+ COALESCE(cu.display_name,ou.display_name) AS displayName,
  f.mime_type AS mimeType,f.size_bytes AS sizeBytes,f.content_hash AS contentHash,f.scan_status AS scanStatus,
- f.object_status AS objectStatus,u.uploader_id AS uploaderId,f.create_time AS createTime
- FROM t_file_object f LEFT JOIN t_file_upload u ON u.upload_id=f.upload_id WHERE f.file_id=#{fileId}
+ f.object_status AS objectStatus,ou.uploader_id AS uploaderId,f.create_time AS createTime,f.update_time AS updateTime,
+ f.access_level AS accessLevel,f.current_version_no AS currentVersionNo,
+ (SELECT MAX(p.version_no) FROM t_file_version p WHERE p.file_id=f.file_id AND p.version_no &gt; f.current_version_no
+   AND p.version_status='CANDIDATE') AS pendingVersionNo,
+ f.storage_provider AS provider,f.storage_container_ref AS container,f.storage_object_ref AS objectRef,
+ b.public_base_url AS publicBaseUrl
+ FROM t_file_object f
+ LEFT JOIN t_file_upload ou ON ou.upload_id=f.upload_id
+ LEFT JOIN t_file_version cv ON cv.file_id=f.file_id AND cv.version_no=f.current_version_no
+ LEFT JOIN t_file_upload cu ON cu.upload_id=cv.upload_id
+ LEFT JOIN t_file_storage_instance i ON i.instance_code=f.storage_provider
+ LEFT JOIN t_file_storage_bucket b ON b.instance_id=i.instance_id AND b.bucket_name=f.storage_container_ref
+ WHERE f.file_id=#{fileId}
+ </select>
+ <select id="versionDisplayName" useCache="false" resultType="java.lang.String">
+ SELECT u.display_name FROM t_file_version v JOIN t_file_upload u ON u.upload_id=v.upload_id
+ WHERE v.file_id=#{fileId} AND v.version_no=#{versionNo}
  </select>
  <select id="lockFile" useCache="false" flushCache="true" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileObject">
  <include refid="FileColumnsQuery"/> FOR UPDATE
@@ -32,12 +47,13 @@
  SELECT r.requirement_id AS id,r.scanner_code,r.scan_type AS type,r.minimum_scanner_version AS minimum_version,
  r.accepted_result_codes AS accepted_codes,s.result_code
  FROM t_file_scan_requirement r JOIN t_file_scan_policy p ON p.policy_id=r.policy_id
- LEFT JOIN t_file_scan_result s ON s.file_id=#{fileId} AND s.scan_requirement_id=r.requirement_id AND s.scan_policy_id=r.policy_id AND s.attempt_no=1
+ LEFT JOIN t_file_scan_result s ON s.file_id=#{fileId} AND s.file_version_no=#{versionNo} AND s.scan_requirement_id=r.requirement_id
+   AND s.scan_policy_id=r.policy_id AND s.attempt_no=1
  WHERE r.policy_id=#{policyId} ORDER BY r.requirement_no
  </select>
  <insert id="insertFile">
- INSERT INTO t_file_object(file_id,creation_source,upload_id,source_system,reason_code,storage_provider,storage_container_ref,storage_object_ref,object_version,content_hash,size_bytes,mime_type,storage_encryption_key_ref,classification,scan_policy_id,scan_status,object_status,version,create_time,update_time)
- VALUES(#{id},'UPLOAD',#{upload.uploadId},#{upload.sourceSystem},#{upload.reasonCode},#{upload.storageProvider},#{upload.containerRef},#{upload.objectRef},#{proof.objectVersion},#{proof.contentHash},#{proof.sizeBytes},#{proof.mimeType},#{proof.encryptionKeyRef},'RESTRICTED',#{upload.scanPolicyId},'PENDING_SCAN','ACTIVE',1,#{now},#{now})
+ INSERT INTO t_file_object(file_id,creation_source,upload_id,source_system,reason_code,access_level,storage_provider,storage_container_ref,storage_object_ref,current_version_no,object_version,content_hash,size_bytes,mime_type,storage_encryption_key_ref,classification,scan_policy_id,scan_status,object_status,version,create_time,update_time)
+ VALUES(#{id},'UPLOAD',#{upload.uploadId},#{upload.sourceSystem},#{upload.reasonCode},#{upload.accessLevel},#{upload.storageProvider},#{upload.containerRef},#{upload.objectRef},1,#{proof.objectVersion},#{proof.contentHash},#{proof.sizeBytes},#{proof.mimeType},#{proof.encryptionKeyRef},'RESTRICTED',#{upload.scanPolicyId},'PENDING_SCAN','ACTIVE',1,#{now},#{now})
  </insert>
  <update id="completeUpload">
  UPDATE t_file_upload SET status='COMPLETED',version=version+1,update_time=#{now}
@@ -46,8 +62,15 @@
  <update id="scanState">
  UPDATE t_file_object SET scan_status=#{status},available_time=CASE WHEN #{status}='AVAILABLE' THEN #{now} ELSE NULL END,version=version+1,update_time=#{now} WHERE file_id=#{id}
  </update>
+ <update id="promote">
+ UPDATE t_file_object
+ SET current_version_no=#{version.versionNo},object_version=#{version.objectVersion},content_hash=#{version.contentHash},
+ size_bytes=#{version.sizeBytes},mime_type=#{version.mimeType},storage_encryption_key_ref=#{version.storageEncryptionKeyRef},
+ scan_policy_id=#{version.scanPolicyId},scan_status='AVAILABLE',available_time=#{now},version=version+1,update_time=#{now}
+ WHERE file_id=#{version.fileId} AND current_version_no=#{currentVersionNo}
+ </update>
  <insert id="insertResult">
- INSERT INTO t_file_scan_result(scan_result_id,file_id,scan_requirement_id,scan_policy_id,attempt_no,scanner_runtime_version,result_code,scanned_time,create_time)
- VALUES(#{id},#{result.fileId},#{result.requirementId},#{policyId},#{result.attemptNo},#{result.runtimeVersion},#{result.resultCode},#{result.scannedAt},#{now})
+ INSERT INTO t_file_scan_result(scan_result_id,file_id,file_version_no,scan_requirement_id,scan_policy_id,attempt_no,scanner_runtime_version,result_code,scanned_time,create_time)
+ VALUES(#{id},#{result.fileId},#{versionNo},#{result.requirementId},#{policyId},#{result.attemptNo},#{result.runtimeVersion},#{result.resultCode},#{result.scannedAt},#{now})
  </insert>
 </mapper>

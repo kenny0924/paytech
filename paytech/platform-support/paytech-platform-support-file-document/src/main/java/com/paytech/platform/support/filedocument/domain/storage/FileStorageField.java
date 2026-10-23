@@ -56,7 +56,22 @@ public enum FileStorageField implements CodeEnum {
     SCAN_POLICY,
 
     /** 路由上传期限秒数。 */
-    MAX_UPLOAD_SECONDS;
+    MAX_UPLOAD_SECONDS,
+
+    /** 存储桶或路由的访问级别。 */
+    ACCESS_LEVEL,
+
+    /** 公开桶的对外基础地址。 */
+    PUBLIC_BASE_URL,
+
+    /** 检查策略修订号。 */
+    REVISION_NO,
+
+    /** 检查策略修订允许的媒体类型，逗号分隔。 */
+    ALLOWED_MIME_TYPES,
+
+    /** 检查策略修订的最大字节数。 */
+    MAX_SIZE_BYTES;
 
     /** 稳定 Code。 */
     @Override

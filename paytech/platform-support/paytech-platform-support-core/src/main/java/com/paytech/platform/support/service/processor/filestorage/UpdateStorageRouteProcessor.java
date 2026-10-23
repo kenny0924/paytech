@@ -37,7 +37,7 @@ public class UpdateStorageRouteProcessor extends AbstractLockProcessor<SaveStora
         Instant now = support.now();
         return support.write(request.getActor(), request.getSession(), request.getReason(), now,
             () -> management.updateRoute(new SaveStorageRouteCommand(0, request.getSourceSystem(),
-                request.getInstanceCode(), request.getBucketName(), request.getScanPolicyCode(),
+                request.getAccessLevel(), request.getInstanceCode(), request.getBucketName(), request.getScanPolicyCode(),
                 request.getMaxUploadSeconds(), request.getExpectedVersion(), now)));
     }
 }

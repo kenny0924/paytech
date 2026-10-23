@@ -202,7 +202,7 @@ class CardBinLibraryBrowserAutoTest extends OperationsBffHttpTestBase {
     void test_uploadCompletion() throws Exception {
         platform.groupedResponses(Map.of(
             UPLOAD_PATH + "/" + UPLOAD_ID + "/completion",
-            "{\"uploadId\":\"%s\",\"fileId\":\"%s\",\"fileAddress\":\"%s\",\"completedAt\":\"2026-10-22T08:01:00Z\"}"
+            "{\"uploadId\":\"%s\",\"fileId\":\"%s\",\"fileAddress\":\"%s\",\"completedAt\":\"2026-10-22T08:01:00Z\",\"versionNo\":1,\"accessLevel\":\"PRIVATE\"}"
                 .formatted(UPLOAD_ID, FILE_ID, FileAddress.of(Long.parseLong(FILE_ID)).value()),
             "/internal/files/v1/files/" + FILE_ID, fileMetadata(FILE_ID, FileScanStatus.SCANNING.getCode())));
 
@@ -226,7 +226,7 @@ class CardBinLibraryBrowserAutoTest extends OperationsBffHttpTestBase {
     void test_uploadOwnerFailures() throws Exception {
         platform.groupedResponses(Map.of(
             UPLOAD_PATH + "/" + UPLOAD_ID + "/completion",
-            "{\"uploadId\":\"%s\",\"fileId\":\"%s\",\"fileAddress\":\"%s\",\"completedAt\":\"2026-10-22T08:01:00Z\"}"
+            "{\"uploadId\":\"%s\",\"fileId\":\"%s\",\"fileAddress\":\"%s\",\"completedAt\":\"2026-10-22T08:01:00Z\",\"versionNo\":1,\"accessLevel\":\"PRIVATE\"}"
                 .formatted(UPLOAD_ID, FILE_ID, FileAddress.of(Long.parseLong(FILE_ID)).value()),
             "/internal/files/v1/files/" + FILE_ID, fileMetadata("7409912387999", FileScanStatus.AVAILABLE.getCode())));
         var mismatched = send("POST", "/card-admin/v1/bin-library/uploads/" + UPLOAD_ID + "/completion",
@@ -236,14 +236,14 @@ class CardBinLibraryBrowserAutoTest extends OperationsBffHttpTestBase {
 
         resetBetweenCalls();
         platform.groupedResponses(Map.of(UPLOAD_PATH + "/" + UPLOAD_ID + "/completion",
-            "{\"uploadId\":\"%s\",\"fileId\":\"%s\",\"completedAt\":\"2026-10-22T08:01:00Z\"}".formatted(UPLOAD_ID, FILE_ID)));
+            "{\"uploadId\":\"%s\",\"fileId\":\"%s\",\"completedAt\":\"2026-10-22T08:01:00Z\",\"versionNo\":1,\"accessLevel\":\"PRIVATE\"}".formatted(UPLOAD_ID, FILE_ID)));
         var addressless = send("POST", "/card-admin/v1/bin-library/uploads/" + UPLOAD_ID + "/completion",
             "operations-card-bin-upload-complete", null);
         assertEquals(502, addressless.statusCode(), addressless.body());
 
         resetBetweenCalls();
         platform.groupedResponses(Map.of(UPLOAD_PATH + "/" + UPLOAD_ID + "/completion",
-            "{\"uploadId\":\"%s\",\"fileId\":\"%s\",\"fileAddress\":\"%s\",\"completedAt\":\"2026-10-22T08:01:00Z\"}"
+            "{\"uploadId\":\"%s\",\"fileId\":\"%s\",\"fileAddress\":\"%s\",\"completedAt\":\"2026-10-22T08:01:00Z\",\"versionNo\":1,\"accessLevel\":\"PRIVATE\"}"
                 .formatted(UPLOAD_ID, FILE_ID, FileAddress.of(7409912387999L).value())));
         var otherAddress = send("POST", "/card-admin/v1/bin-library/uploads/" + UPLOAD_ID + "/completion",
             "operations-card-bin-upload-complete", null);
@@ -381,7 +381,8 @@ class CardBinLibraryBrowserAutoTest extends OperationsBffHttpTestBase {
         return """
             {"fileId":"%s","sourceSystem":"operations-console-bff","reasonCode":"CARD_BIN_LIBRARY_IMPORT","displayName":"bin.csv",
              "mimeType":"text/csv","sizeBytes":"40265318","contentHash":"%s","scanStatus":"%s","objectStatus":"ACTIVE",
-             "uploaderAccountId":"%s","createTime":"2026-10-22T08:01:00Z"}
+             "uploaderAccountId":"%s","createTime":"2026-10-22T08:01:00Z",
+             "accessLevel":"PRIVATE","versionNo":1,"publicUrl":null,"versionedUrl":null,"pendingVersionNo":null}
             """.formatted(fileId, "c".repeat(64), scanStatus, ACTOR);
     }
 

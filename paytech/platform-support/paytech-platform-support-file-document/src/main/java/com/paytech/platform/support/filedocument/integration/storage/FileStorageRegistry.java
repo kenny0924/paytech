@@ -15,6 +15,7 @@ import com.paytech.platform.support.api.enums.FileStorageType;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageBucket;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.storage.FileStorageCatalog;
 import com.paytech.platform.support.filedocument.domain.storage.StorageWriteTarget;
 import com.paytech.platform.support.filedocument.domainservice.service.FileStorageManagementService;
@@ -24,7 +25,8 @@ import com.paytech.platform.support.filedocument.integration.storage.s3.S3FileSt
 /**
  * 存储实例、存储桶与写入路由的进程内快照，以及按记录坐标构建本次存储适配器的唯一入口
  * <li>快照不含密钥；首次使用时加载，此后由定时任务刷新，本进程的管理写入提交后立即刷新。刷新失败保留上一份。</li>
- * <li>写入按来源系统选择精确路由，否则使用默认路由 *；要求路由桶与实例均为 ACTIVE。</li>
+ * <li>写入按 (来源系统, 访问级别) 选择精确路由，否则使用该级别的默认路由 (*, 访问级别)，不跨级别回落；要求路由桶与实例均为
+ * ACTIVE，且桶与路由同访问级别。</li>
  * <li>读取只按记录上的实例代码与桶名定位，不受路由影响；实例 ACTIVE 且桶 ACTIVE / READ_ONLY 才可读。</li>
  * <li>不满足条件时返回不可用（503）且不发起存储或 Vault 调用；STATIC 实例每次构建前从 Vault 读取密钥，不缓存原值。</li>
  */
@@ -33,6 +35,9 @@ public class FileStorageRegistry {
 
     /** 默认路由的来源系统。 */
     public static final String DEFAULT_ROUTE = "*";
+
+    /** 上传授权有效秒数的上限，与写入路由的取值范围一致。 */
+    static final int MAX_UPLOAD_SECONDS = 900;
 
     private static final Logger LOG = LoggerFactory.getLogger(FileStorageRegistry.class);
 
@@ -53,24 +58,40 @@ public class FileStorageRegistry {
      * 新上传的写入目标
      *
      * @param sourceSystem 来源系统
-     * @return 实例代码、桶名、扫描策略与上传期限
+     * @param accessLevel 调用方声明的访问级别
+     * @return 实例代码、桶名、扫描策略与上传期限；没有该级别的可用路由返回不可用（503）
      */
-    public StorageWriteTarget forWrite(String sourceSystem) {
+    public StorageWriteTarget forWrite(String sourceSystem, FileAccessLevel accessLevel) {
         FileStorageCatalog current = catalog();
-        FileStorageRoute route = current.route(sourceSystem);
-        if (route == null) {
-            route = current.route(DEFAULT_ROUTE);
-        }
+        FileStorageRoute route = route(current, sourceSystem, accessLevel);
         if (route == null) {
             throw new ServiceUnavailableException();
         }
         FileStorageBucket bucket = current.bucket(route.getBucketId());
         FileStorageInstance instance = bucket == null ? null : current.instance(bucket.getInstanceId());
-        if (!writable(instance, bucket)) {
+        if (!writable(instance, bucket) || bucket.getAccessLevel() != accessLevel) {
             throw new ServiceUnavailableException();
         }
         return new StorageWriteTarget(instance.getInstanceCode(), bucket.getBucketName(), route.getScanPolicyCode(),
             route.getMaxUploadSeconds());
+    }
+
+    /**
+     * 替换上传的授权有效秒数：取来源系统在该级别的路由（精确或默认）的上传期限；路由已删除时取上限 900 秒
+     *
+     * @param sourceSystem 原文件的来源系统
+     * @param accessLevel 原文件的访问级别
+     * @return 上传授权有效秒数
+     */
+    public int replacementUploadSeconds(String sourceSystem, FileAccessLevel accessLevel) {
+        FileStorageRoute route = route(catalog(), sourceSystem, accessLevel);
+        return route == null ? MAX_UPLOAD_SECONDS : route.getMaxUploadSeconds();
+    }
+
+    /** 精确路由优先，其次同级别默认路由；都没有为空。 */
+    static FileStorageRoute route(FileStorageCatalog current, String sourceSystem, FileAccessLevel accessLevel) {
+        FileStorageRoute route = current.route(sourceSystem, accessLevel);
+        return route != null ? route : current.route(DEFAULT_ROUTE, accessLevel);
     }
 
     /** 为新上传签发写入授权：记录坐标的实例与桶必须仍可写。 */

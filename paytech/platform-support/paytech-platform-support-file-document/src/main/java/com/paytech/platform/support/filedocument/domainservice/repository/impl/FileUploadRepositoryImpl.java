@@ -19,4 +19,10 @@ public class FileUploadRepositoryImpl implements FileUploadRepository {
     @Override public List<FileScanPolicy> policies(String code, Instant now) { return mapper.policies(code, now); }
     /** 不自行开启事务。 */
     @Override public void insert(FileUpload upload, Instant now) { mapper.insert(upload, now); }
+    /** 未结束的替换上传数。 */
+    @Override public int countOpenReplacements(long fileId, Instant now) { return mapper.countOpenReplacements(fileId, now); }
+    /** 已有的最大替换序号。 */
+    @Override public int maxReplacementNo(long fileId) { return mapper.maxReplacementNo(fileId); }
+    /** 只作废仍未完成的上传。 */
+    @Override public boolean cancel(long id, Instant now) { return mapper.cancel(id, now) == 1; }
 }

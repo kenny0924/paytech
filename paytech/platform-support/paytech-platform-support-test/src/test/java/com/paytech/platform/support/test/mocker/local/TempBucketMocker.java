@@ -1,5 +1,6 @@
 package com.paytech.platform.support.test.mocker.local;
 
+import java.io.ByteArrayInputStream;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,17 +20,22 @@ import io.minio.BucketExistsArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import io.minio.RemoveBucketArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.Result;
+import io.minio.SetBucketEncryptionArgs;
+import io.minio.SetBucketPolicyArgs;
 import io.minio.SetBucketVersioningArgs;
 import io.minio.messages.Item;
+import io.minio.messages.SseConfiguration;
 import io.minio.messages.VersioningConfiguration;
 import okhttp3.OkHttpClient;
 
 /**
  * 以本机 MinIO 管理员账号临时创建用于存储桶检查负例的存储桶，并在每例结束删除
- * <li>只创建 ut-check- 前缀的随机桶：不开版本控制，或开版本控制但不配置默认加密；Platform 测试账号对这些桶没有权限。</li>
+ * <li>只创建 ut-check- 前缀的随机桶：不开版本控制，或开版本控制但不配置默认加密，或版本控制、SSE-S3 加密齐备且允许匿名只读
+ * （公开桶场景）；Platform 测试账号对这些桶没有权限，需要读写时使用管理员密钥的实例。</li>
  * <li>不修改仓库初始化的两个 Platform 存储桶；清理删除桶内全部版本后删除桶本身。</li>
  */
 @TestComponent
@@ -64,6 +70,58 @@ public class TempBucketMocker implements Clear {
     /** 新建开启版本控制、未配置默认加密的存储桶。 */
     public synchronized String unencrypted() {
         return create(true);
+    }
+
+    /**
+     * 新建版本控制与 SSE-S3 默认加密齐备、允许匿名读取对象（s3:GetObject）的桶，作为公开桶；登记为私有桶时用于匿名访问负例
+     *
+     * @return 桶名
+     */
+    public synchronized String publicReadable() {
+        String bucket = create(true);
+        try {
+            client().setBucketEncryption(SetBucketEncryptionArgs.builder().bucket(bucket)
+                .config(SseConfiguration.newConfigWithSseS3Rule()).build());
+            client().setBucketPolicy(SetBucketPolicyArgs.builder().bucket(bucket)
+                .config("{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"*\"]},"
+                    + "\"Action\":[\"s3:GetObject\"],\"Resource\":[\"arn:aws:s3:::" + bucket + "/*\"]}]}")
+                .build());
+            return bucket;
+        } catch (Exception failure) {
+            throw new IllegalStateException("配置本机 MinIO 公开测试桶失败", failure);
+        }
+    }
+
+    /** 公开桶的路径风格对外基础地址（本机 MinIO）。 */
+    public String publicBaseUrl(String bucket) {
+        return objects.endpoint() + "/" + bucket;
+    }
+
+    /** 以管理员身份读取对象全部非删除标记版本号，最新在前。 */
+    public List<String> versions(String bucket, String objectRef) {
+        List<String> versions = new ArrayList<>();
+        try {
+            for (Result<Item> result : client().listObjects(ListObjectsArgs.builder().bucket(bucket).prefix(objectRef)
+                .includeVersions(true).build())) {
+                Item item = result.get();
+                if (objectRef.equals(item.objectName()) && !item.isDeleteMarker()) {
+                    versions.add(item.versionId());
+                }
+            }
+        } catch (Exception failure) {
+            throw new IllegalStateException("列出本机 MinIO 临时桶对象版本失败", failure);
+        }
+        return versions;
+    }
+
+    /** 以管理员身份直接写入一个新版本，返回版本号；模拟授权外的写入或再次 PUT。 */
+    public String put(String bucket, String objectRef, byte[] bytes) {
+        try {
+            return client().putObject(PutObjectArgs.builder().bucket(bucket).object(objectRef)
+                .stream(new ByteArrayInputStream(bytes), bytes.length, -1).build()).versionId();
+        } catch (Exception failure) {
+            throw new IllegalStateException("写入本机 MinIO 临时桶对象失败", failure);
+        }
     }
 
     /** 不存在的随机桶名。 */

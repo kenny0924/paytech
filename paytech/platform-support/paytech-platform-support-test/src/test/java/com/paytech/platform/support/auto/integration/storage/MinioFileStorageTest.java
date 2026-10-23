@@ -18,6 +18,8 @@ import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload
 import com.paytech.platform.support.filedocument.integration.storage.*;
 import com.paytech.platform.support.filedocument.integration.storage.minio.MinioFileStorage;
 import com.paytech.platform.support.api.enums.FileStorageCheckResult;
+import com.paytech.platform.support.api.enums.FileStorageType;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.integration.storage.ProbeObject;
 import com.paytech.platform.support.test.base.FileStorageAdapterTestBase;
 import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
@@ -32,7 +34,10 @@ import com.paytech.platform.support.test.builder.FileBuilder.Spec;
  * @see CompletedUploadStorage#open(Upload)
  * @see FileDownloadStorage#authorize(File, Instant, com.paytech.platform.support.filedocument.domain.file.DownloadPresentation)
  * @see StoredFileReader#open(File)
- * @see FileObjectStorage#checkBucket(String)
+ * @see FileObjectStorage#checkBucket(String, FileAccessLevel, String)
+ * @see FileObjectStorage#latest(String, String)
+ * @see FileObjectStorage#restore(File)
+ * @see CompletedUploadStorage#newerVersions(Upload)
  */
 class MinioFileStorageTest extends FileStorageAdapterTestBase {
 
@@ -51,8 +56,10 @@ class MinioFileStorageTest extends FileStorageAdapterTestBase {
     /** 存储桶检查：测试存储桶全部满足；不存在的桶为 NOT_FOUND，Platform 账号无权访问的桶为 ACCESS_DENIED。 */
     @Test
     void test_checkBucket() {
-        assertAll(() -> assertEquals(FileStorageCheckResult.OK, adapter().checkBucket(storage.bucket())),
-            () -> assertEquals(FileStorageCheckResult.ACCESS_DENIED, adapter().checkBucket(tempBuckets.unversioned())));
+        assertAll(() -> assertEquals(FileStorageCheckResult.OK, adapter().checkBucket(storage.bucket(),
+            FileAccessLevel.PRIVATE, null)),
+            () -> assertEquals(FileStorageCheckResult.ACCESS_DENIED,
+                adapter().checkBucket(tempBuckets.unversioned(), FileAccessLevel.PRIVATE, null)));
         assertEquals(List.of(), storage.objectsUnder(ProbeObject.PREFIX), "探测对象应已删除");
     }
 
@@ -134,6 +141,18 @@ class MinioFileStorageTest extends FileStorageAdapterTestBase {
     @Test
     void test_downloadPresentation() {
         assertDownloadPresentation();
+    }
+
+    /** 替换上传：只签类型的授权、比基准新的版本（最新在前）与按准确版本打开；基准版本缺失不可用。 */
+    @Test
+    void test_replacementVersions() {
+        assertReplacementVersions();
+    }
+
+    /** 公开桶：匿名访问核对的三种结果，最新版本身份与恢复复制（源版本元数据、Content-Type、匿名读取）。 */
+    @Test
+    void test_publicBucket() {
+        assertPublicBucket("UT_ROOT_MINIO", FileStorageType.MINIO);
     }
 
     /** 不足 1 秒的期限拒绝签发；超过 7 天的期限截断为 7 天。 */

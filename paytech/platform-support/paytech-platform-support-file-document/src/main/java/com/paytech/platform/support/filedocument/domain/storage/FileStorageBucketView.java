@@ -13,6 +13,12 @@ public class FileStorageBucketView {
     /** 存储桶名称。 */
     private final String bucketName;
 
+    /** 访问级别 Code。 */
+    private final String accessLevel;
+
+    /** 对外基础地址；私有桶为空。 */
+    private final String publicBaseUrl;
+
     /** 状态 Code。 */
     private final String status;
 

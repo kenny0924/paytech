@@ -1,0 +1,28 @@
+.storage-level-notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.storage-level-notes > div { background: #f8fafc; border-radius: 6px; padding: 10px 14px; }
+.storage-level-notes p { margin: 4px 0 0; color: rgba(0, 0, 0, 0.55); font-size: 12px; }
+.storage-route-cell { display: flex; flex-direction: column; gap: 2px; }
+.storage-route-cell.is-missing { color: #b45309; }
+.storage-check-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.storage-check-guidance { margin-top: 12px; background: #fff7ed; border-radius: 6px; padding: 10px 14px; font-size: 13px; }
+.storage-check-guidance p { margin: 0 0 8px; }
+.storage-policy-example { background: #fff; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px 10px; margin: 6px 0 0 !important; font-size: 12px; }
+.scan-policy-layout { display: grid; grid-template-columns: minmax(0, 3fr) minmax(360px, 2fr); gap: 16px; align-items: start; }
+.scan-policy-layout .is-selected > td { background: #f0f7ff; }
+.scan-policy-side { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 18px; min-height: 240px; }
+.scan-policy-detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.scan-policy-title { font-size: 15px; font-weight: 600; }
+.scan-policy-subtitle { font-size: 14px; margin: 16px 0 8px; }
+.scan-policy-timeline { display: flex; flex-direction: column; gap: 10px; border-left: 2px solid #e5e7eb; padding-left: 14px; }
+.scan-policy-revision { border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px 12px; background: #fff; }
+.scan-policy-revision.is-draft { border-color: #f5c56b; background: #fffbeb; }
+.scan-policy-revision.is-retired { opacity: 0.75; }
+.scan-policy-revision-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.scan-policy-revision-body { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.scan-policy-draft-actions { margin-bottom: 6px; }
+.scan-policy-compare { margin: -12px 0 12px; font-size: 12px; }
+.scan-policy-routes { display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 1200px) {
+  .scan-policy-layout { grid-template-columns: minmax(0, 1fr); }
+  .storage-level-notes { grid-template-columns: minmax(0, 1fr); }
+}

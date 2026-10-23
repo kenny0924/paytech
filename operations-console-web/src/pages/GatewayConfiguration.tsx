@@ -10,6 +10,7 @@ import { gatewayFilters } from './gatewayConfigurationModel';
 import type { GatewayStatusEntity } from './gatewayConfigurationModel';
 import type { GatewayCapabilities, ManagementProtection } from '../configuration/types';
 import { GatewayEditor } from '../configuration/GatewayEditor';
+import { RefreshButton } from '../components/RefreshButton';
 import '../configuration/configuration.css';
 const statusOptions = [{ value: 'ACTIVE', label: '启用' }, { value: 'DISABLED', label: '停用' }];
 export interface GatewayPageProps { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
@@ -57,14 +58,15 @@ function GatewayList({ resources, onAuthorizationChanged, capabilities, kind }: 
     } },
   ];
   return <><Form form={form} layout="vertical" initialValues={filters} onFinish={values => page.applyFilters(gatewayFilters(values))}>
-    <div className="configuration-grid two">{kind === 'route' && <Form.Item name="routeCode" label="路由编码"><Input allowClear maxLength={128} placeholder="精确匹配" /></Form.Item>}
+    <div className={`gateway-filters ${kind}`}>{kind === 'route' && <Form.Item name="routeCode" label="路由编码"><Input allowClear maxLength={128} placeholder="精确匹配" /></Form.Item>}
       <Form.Item name="targetServiceCode" label="目标服务编码"><Input allowClear maxLength={128} placeholder="精确匹配" /></Form.Item>
+      {kind === 'route' && <Form.Item name="requiredScopeCode" label="API Scope"><Input allowClear maxLength={128} placeholder="精确 Scope 编码" /></Form.Item>}
       <Form.Item name="channel" label="Channel"><Select allowClear options={capabilities.channels.map(c => ({ value: c.channel, label: c.channel }))} placeholder="全部" /></Form.Item>
-      <Form.Item name="status" label="状态"><Select allowClear options={statusOptions} placeholder="全部" /></Form.Item></div>
-    {kind === 'route' && <Form.Item name="requiredScopeCode" label="API Scope"><Input allowClear maxLength={128} placeholder="精确 Scope 编码" /></Form.Item>}
-    <div className="configuration-actions"><Button type="primary" htmlType="submit">查询</Button><Button onClick={() => page.applyFilters({})}>重置</Button></div>
-  </Form><section className="table-panel" style={{ marginTop: 24 }}><div className="table-toolbar"><span>共 {page.data.total} 条配置</span><div className="configuration-actions">
-    <Button onClick={page.refresh} loading={page.loading}>刷新</Button>{canManage && <Button type="primary" onClick={() => open(null, 'create')}>＋ 新增{kind === 'target' ? '目标服务' : '路由'}</Button>}</div></div>
+      <Form.Item name="status" label="状态"><Select allowClear options={statusOptions} placeholder="全部" /></Form.Item>
+      <div className="configuration-actions gateway-filter-actions"><Button type="primary" htmlType="submit">查询</Button><Button onClick={() => page.applyFilters({})}>重置</Button></div></div>
+  </Form><section className="table-panel"><div className="table-toolbar"><span className="table-count"><span>共 {page.data.total} 条配置</span>
+    <RefreshButton onClick={page.refresh} loading={page.loading} failed={!!page.error} /></span>
+    {canManage && <Button type="primary" onClick={() => open(null, 'create')}>＋ 新增{kind === 'target' ? '目标服务' : '路由'}</Button>}</div>
     <Table rowKey={row => 'routeCode' in row ? row.routeCode : row.targetServiceCode} dataSource={page.error ? [] : page.data.items} loading={page.loading} pagination={page.pagination} scroll={{ x: kind === 'route' ? 1200 : 900 }} columns={[
       ...(kind === 'target' ? [{ title: '目标服务', dataIndex: 'targetServiceCode' }, { title: '服务发现名', dataIndex: 'discoveryServiceName' }] : [
         { title: '路由编码', dataIndex: 'routeCode', width: 240 }, { title: 'Method', dataIndex: 'httpMethod', width: 90 },

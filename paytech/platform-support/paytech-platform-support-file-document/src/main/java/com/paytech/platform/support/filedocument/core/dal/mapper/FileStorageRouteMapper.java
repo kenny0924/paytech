@@ -6,15 +6,23 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 
 /** t_file_storage_route 的 SQL 映射；SQL 位于 FileStorageRouteMapper.xml。 */
 public interface FileStorageRouteMapper {
 
-    /** 全部写入路由，按来源系统排序。 */
+    /** 全部写入路由，按来源系统与访问级别排序。 */
     List<FileStorageRoute> selectAll();
 
-    /** 按来源系统排他锁定当前行。 */
-    FileStorageRoute lockBySource(@Param("sourceSystem") String sourceSystem);
+    /** 按来源系统与访问级别排他锁定当前行。 */
+    FileStorageRoute lockBySource(@Param("sourceSystem") String sourceSystem,
+        @Param("accessLevel") FileAccessLevel accessLevel);
+
+    /** 统计引用某扫描策略代码的路由数。 */
+    int countByPolicyCode(@Param("policyCode") String policyCode);
+
+    /** 引用某扫描策略代码的路由，按来源系统与访问级别排序。 */
+    List<FileStorageRoute> selectByPolicyCode(@Param("policyCode") String policyCode);
 
     /** 统计指向某存储桶的路由数。 */
     int countByBucket(@Param("bucketId") long bucketId);

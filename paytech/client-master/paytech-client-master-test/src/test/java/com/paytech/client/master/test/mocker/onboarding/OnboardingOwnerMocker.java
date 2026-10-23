@@ -78,7 +78,7 @@ public class OnboardingOwnerMocker implements Clear {
     public synchronized void mockFile(long uploaderAccountId, long fileId, String contentHash, String scanStatus, String objectStatus) {
         files.put(Long.toString(fileId), new StoredFileResponseBody(Long.toString(fileId), FileAddress.of(fileId).value(), "client-console-bff",
             "CLIENT_ONBOARDING_MATERIAL", "material.pdf", "application/pdf", "1024", contentHash, scanStatus, objectStatus,
-            Long.toString(uploaderAccountId), Instant.parse("2026-10-22T00:00:00Z")));
+            Long.toString(uploaderAccountId), Instant.parse("2026-10-22T00:00:00Z"), "PRIVATE", 1, null, null, null));
     }
 
     /** 文件查询返回 Platform 的明确拒绝，例如 404 FILE_NOT_FOUND。 */

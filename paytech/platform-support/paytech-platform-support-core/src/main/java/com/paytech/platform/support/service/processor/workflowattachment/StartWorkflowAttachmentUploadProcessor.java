@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsManagementPolicyService;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.service.processor.files.StartFileUploadProcessor;
 import com.paytech.platform.support.service.processor.files.request.StartFileUploadRequest;
 import com.paytech.platform.support.service.processor.files.response.StartFileUploadResponse;
@@ -44,6 +45,6 @@ public class StartWorkflowAttachmentUploadProcessor
             throw new ServiceUnavailableException();
         }
         return processor.process(new StartFileUploadRequest(AttachmentRules.SOURCE_SYSTEM, AttachmentRules.REASON_CODE,
-            request.getFilename(), request.getMimeType(), request.getSizeBytes(), actor));
+            request.getFilename(), request.getMimeType(), request.getSizeBytes(), actor, FileAccessLevel.PRIVATE));
     }
 }

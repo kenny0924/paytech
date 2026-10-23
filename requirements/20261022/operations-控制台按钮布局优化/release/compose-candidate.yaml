@@ -1,0 +1,14 @@
+# ⚠ 已被取代（2026-10-22）：code-mor-55 以本镜像为基线叠加数据查询页面，现网 ops-web 为 sha256:5a9eb12d（dataquery-ux-20261022a），
+#   见 requirements/20261022/platform-support-数据查询服务/release-ux/compose-candidate.yaml。不要再叠本文件，否则会回退到 7551dc3b。
+# Operations 控制台按钮与筛选布局优化：mor-test 候选覆盖文件（2026-10-22）。
+# 叠在现网最新候选文件之后使用，只替换 operations-console-web。2026-10-22 起现网基线是文件多存储第二段
+# （platform a5b9a17c / ops-bff 7cb30402，release-s2/compose-candidate.yaml），不要再叠工作流候选文件，否则会回退第二段：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/platform-support-文件多存储并存/release-s2/compose-candidate.yaml" \
+#     -f "$PWD/requirements/20261022/operations-控制台按钮布局优化/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+# 基线 = 现网 c7646648（wf-20261022a，main 1d39cd94 构建，dist 逐字节一致）；本次只在其上加三处页面改动。
+# 回滚：把 operations-console-web 指回 sha256:c7646648b9d1fe1ebb53c92b5efa1f7f61361808e1d23546794b2207b46e2693。
+services:
+  operations-console-web:
+    # 审计日志去掉标题区刷新；审计 / API 凭证 / API 路由列表刷新改为条数旁的图标按钮；API 路由筛选压成一行。
+    image: sha256:7551dc3b3dd7cb48176bebb1863b7011cecc851897b190782b513c6969873180  # mor-test/operations-console-web:opsui-20261022a

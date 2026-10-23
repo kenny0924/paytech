@@ -18,6 +18,7 @@ import com.paytech.platform.support.api.enums.FileObjectStatus;
 import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.api.enums.FileStorageBucketStatus;
 import com.paytech.platform.support.api.enums.FileStorageInstanceStatus;
+import com.paytech.platform.support.filedocument.core.enums.FileVersionStatus;
 import com.paytech.platform.support.filedocument.integration.scanning.FormatFileScanner;
 import com.paytech.platform.support.filedocument.integration.storage.StoredContentType;
 import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
@@ -29,7 +30,8 @@ import com.paytech.platform.support.test.mocker.local.FileMocker.Policy;
 
 /**
  * 文件扫描补偿入口：经真实 Handler、文件生命周期服务、Platform 格式检查器与存储注册表按记录实例读取 MinIO 准确版本，
- * 追加终局结果并推进扫描状态；记录的实例或桶停用时不读取密钥、不调用存储。text/csv 另复核全文为不含 NUL 的 UTF-8。
+ * 追加终局结果并推进扫描状态；记录的实例或桶停用时不读取密钥、不调用存储。text/csv 另复核全文为不含 NUL 的 UTF-8。替换版本按版本行检查，
+ * 通过后提升为当前版本。
  *
  * @see FileScanHandler#handle(CompensationEvent)
  */
@@ -156,16 +158,85 @@ class FileScanHandlerTest extends FileTestBase {
         assertScan(spec, FileScanStatus.AVAILABLE, FormatFileScanner.VALID);
     }
 
+    /**
+     * 替换版本（事件键 fileId:v2）通过检查：在同一短事务中提升为当前版本——文件镜像改为 v2、当前版本号 2，原版本 SUPERSEDED；
+     * 结果记录在版本 2 上。
+     */
+    @Test
+    void test_replacementVersionPromoted() {
+        Spec spec = stored(material().scanStatus(FileScanStatus.AVAILABLE).build());
+        String replaced = storage.put(spec.objectRef(), FileBuilder.PNG);
+        fileMocker.version(spec, 2, null, replaced, FileBuilder.PNG, "image/png", policy.policyId(),
+            FileScanStatus.PENDING_SCAN, FileVersionStatus.CANDIDATE.getCode());
+
+        assertEquals(CompensationHandlerResult.success(), handle(spec.fileId(), 2));
+
+        var file = fileData.file(spec.fileId());
+        var versions = fileData.versions(spec.fileId());
+        var results = fileData.results(spec.fileId());
+        assertAll(() -> assertEquals(FileScanStatus.AVAILABLE.getCode(), file.get("scan_status")),
+            () -> assertEquals(2, ((Number) file.get("current_version_no")).intValue()),
+            () -> assertEquals(replaced, file.get("object_version")),
+            () -> assertEquals(FileBuilder.sha256(FileBuilder.PNG), file.get("content_hash")),
+            () -> assertEquals("image/png", file.get("mime_type")),
+            () -> assertEquals(FileVersionStatus.SUPERSEDED.getCode(), versions.getFirst().get("version_status")),
+            () -> assertEquals(FileVersionStatus.CURRENT.getCode(), versions.getLast().get("version_status")),
+            () -> assertEquals(FileScanStatus.AVAILABLE.getCode(), versions.getLast().get("scan_status")),
+            () -> assertEquals(1, results.size()),
+            () -> assertEquals(2, ((Number) results.getFirst().get("file_version_no")).intValue()),
+            () -> assertEquals(FormatFileScanner.VALID, results.getFirst().get("result_code")));
+        assertEquals(CompensationHandlerResult.success(), handle(spec.fileId(), 2), "重放不再追加结果");
+        assertEquals(1, fileData.results(spec.fileId()).size());
+    }
+
+    /** 替换版本检查不通过：只标记版本 REJECTED，文件保持原版本与 AVAILABLE。 */
+    @Test
+    void test_replacementVersionRejected() {
+        Spec spec = stored(material().scanStatus(FileScanStatus.AVAILABLE).build());
+        String replaced = storage.put(spec.objectRef(), FileBuilder.PNG);
+        fileMocker.version(spec, 2, null, replaced, FileBuilder.PNG, spec.mime(), policy.policyId(),
+            FileScanStatus.PENDING_SCAN, FileVersionStatus.CANDIDATE.getCode());
+
+        assertEquals(CompensationHandlerResult.success(), handle(spec.fileId(), 2));
+
+        var file = fileData.file(spec.fileId());
+        var candidate = fileData.versions(spec.fileId()).getLast();
+        assertAll(() -> assertEquals(FileScanStatus.AVAILABLE.getCode(), file.get("scan_status")),
+            () -> assertEquals(1, ((Number) file.get("current_version_no")).intValue()),
+            () -> assertEquals(spec.version(), file.get("object_version")),
+            () -> assertEquals(FileScanStatus.REJECTED.getCode(), candidate.get("scan_status")),
+            () -> assertEquals(FileVersionStatus.REJECTED.getCode(), candidate.get("version_status")),
+            () -> assertEquals(FileVersionStatus.CURRENT.getCode(),
+                fileData.versions(spec.fileId()).getFirst().get("version_status")));
+    }
+
+    /** 存量文件缺少版本行（未执行回填 DML）时可重试失败，不改写文件。 */
+    @Test
+    void test_missingVersionRow() {
+        Spec spec = stored(material().build());
+
+        assertRetryable(handle(spec.fileId(), 3));
+
+        assertEquals(FileScanStatus.PENDING_SCAN.getCode(), fileData.file(spec.fileId()).get("scan_status"));
+    }
+
     /** 损坏的任务身份为终局失败，不读取文件。 */
     @Test
     void test_invalidParameter() {
         Spec spec = stored(material().build());
-        CompensationEventRequest request = FileScanHandler.buildEvent(spec.fileId());
+        CompensationEventRequest request = FileScanHandler.buildEvent(spec.fileId(), 1);
 
         var malformedKey = handler.handle(new CompensationEvent(1L, "0" + spec.fileId(), request.eventType(),
             request.subEventType(), null, 1));
         var unexpectedPayload = handler.handle(new CompensationEvent(1L, request.eventKey(), request.eventType(),
             request.subEventType(), "{}", 1));
+        for (String key : new String[] {spec.fileId() + ":v0", spec.fileId() + ":2", spec.fileId() + ":vx"}) {
+            var malformedVersion = handler.handle(new CompensationEvent(1L, key, request.eventType(),
+                request.subEventType(), null, 1));
+            assertEquals(Outcome.TERMINAL_FAILURE, malformedVersion.outcome(), key);
+        }
+        assertThrows(IllegalArgumentException.class, () -> FileScanHandler.buildEvent(spec.fileId(), 0));
+        assertEquals(spec.fileId() + ":v3", FileScanHandler.buildEvent(spec.fileId(), 3).eventKey());
 
         assertAll(() -> assertEquals(Outcome.TERMINAL_FAILURE, malformedKey.outcome()),
             () -> assertEquals(IDENTITY_INVALID, malformedKey.errorCode()),
@@ -181,9 +252,14 @@ class FileScanHandlerTest extends FileTestBase {
             .objectStatus(FileObjectStatus.ACTIVE);
     }
 
-    /** 以 Handler 事件工厂构造的正常补偿事件执行一次。 */
+    /** 以 Handler 事件工厂构造的 v1 补偿事件执行一次。 */
     private CompensationHandlerResult handle(long fileId) {
-        CompensationEventRequest request = FileScanHandler.buildEvent(fileId);
+        return handle(fileId, 1);
+    }
+
+    /** 以 Handler 事件工厂构造的指定版本补偿事件执行一次。 */
+    private CompensationHandlerResult handle(long fileId, int versionNo) {
+        CompensationEventRequest request = FileScanHandler.buildEvent(fileId, versionNo);
         return handler.handle(new CompensationEvent(1L, request.eventKey(), request.eventType(),
             request.subEventType(), null, 1));
     }

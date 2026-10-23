@@ -3,6 +3,7 @@ package com.paytech.platform.support.auto.ext.http.filestorage;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Clock;
 import java.time.temporal.ChronoUnit;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
+import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.platform.support.api.configurationmanagement.response.ConfigurationMutationResponseBody;
 import com.paytech.platform.support.api.enums.FileStorageBucketStatus;
 import com.paytech.platform.support.api.enums.FileStorageInstanceStatus;
@@ -25,6 +27,7 @@ import com.paytech.platform.support.api.filestorage.response.StorageInstanceList
 import com.paytech.platform.support.api.filestorage.response.StorageRouteListResponseBody;
 import com.paytech.platform.support.api.filestorage.response.StorageRouteResponseBody;
 import com.paytech.platform.support.auditsecurity.domain.audit.AuditModels;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.storage.FileStorageChange;
 import com.paytech.platform.support.filedocument.domain.storage.StorageWriteTarget;
 import com.paytech.platform.support.filedocument.integration.storage.FileStorageRegistry;
@@ -35,12 +38,13 @@ import com.paytech.platform.support.test.mocker.local.FileMocker;
 import com.paytech.platform.support.test.mocker.local.StorageInstanceMocker;
 
 /**
- * 写入路由维护：目标资格（ACTIVE 桶与实例、有效扫描策略）、默认路由不可删、修改后新上传按新路由选择、引用保护与版本冲突。
+ * 写入路由维护：路由键 (来源系统, 访问级别)、目标资格（同级别的 ACTIVE 桶与实例、有效扫描策略）、默认私有路由不可删、修改后新上传
+ * 按新路由选择且不跨级别回落、引用保护与版本冲突。
  *
  * @see FileStorageManagementApi#listRoutes(String, String)
  * @see FileStorageManagementApi#createRoute(String, String, CreateStorageRouteRequestBody)
- * @see FileStorageManagementApi#updateRoute(String, String, String, UpdateStorageRouteRequestBody)
- * @see FileStorageManagementApi#deleteRoute(String, String, String, DeleteStorageRouteRequestBody)
+ * @see FileStorageManagementApi#updateRoute(String, String, String, String, UpdateStorageRouteRequestBody)
+ * @see FileStorageManagementApi#deleteRoute(String, String, String, String, DeleteStorageRouteRequestBody)
  */
 class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
 
@@ -49,6 +53,10 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
     private static final String S3 = StorageInstanceMocker.S3_INSTANCE;
 
     private static final String SOURCE = StorageInstanceMocker.SOURCE;
+
+    private static final String PRIVATE = FileAccessLevel.PRIVATE.getCode();
+
+    private static final String PUBLIC = FileAccessLevel.PUBLIC.getCode();
 
     @Autowired
     private FileStorageRegistry registry;
@@ -73,10 +81,10 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
     @Test
     void test_normalFlow() {
         assertMutation(post(BASE + "/routes", admin, create(StorageInstanceMocker.DEFAULT_ROUTE, MINIO)),
-            StorageInstanceMocker.DEFAULT_ROUTE, 1);
-        assertMutation(post(BASE + "/routes", admin, create(SOURCE, S3)), SOURCE, 1);
+            StorageInstanceMocker.DEFAULT_ROUTE + "/" + PRIVATE, 1);
+        assertMutation(post(BASE + "/routes", admin, create(SOURCE, S3)), SOURCE + "/" + PRIVATE, 1);
         var event = auditChecker.assertEvent(requestId, "OPERATIONS_FILE_STORAGE_ROUTE_CREATE",
-            AuditModels.Result.SUCCEEDED.getCode(), admin.actor(), FileStorageChange.ROUTE, SOURCE);
+            AuditModels.Result.SUCCEEDED.getCode(), admin.actor(), FileStorageChange.ROUTE, SOURCE + "/" + PRIVATE);
 
         assertTarget(SOURCE, S3);
         assertTarget(StorageInstanceMocker.PEER_SOURCE, MINIO);
@@ -86,6 +94,8 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
             () -> assertEquals(S3, routes.getLast().getInstanceCode()),
             () -> assertEquals(storage.bucket(), routes.getLast().getBucketName()),
             () -> assertEquals(FileMocker.POLICY_CODE, routes.getLast().getScanPolicyCode()),
+            () -> assertEquals(PRIVATE, routes.getLast().getAccessLevel()),
+            () -> assertEquals(PRIVATE, attributes(event).get("after.ACCESS_LEVEL")),
             () -> assertEquals(S3, attributes(event).get("after.STORAGE_INSTANCE")));
         var instances = get(BASE + "/instances", admin).assertOk().as(StorageInstanceListResponseBody.class).getItems();
         assertEquals(List.of(1, 1), instances.stream().map(i -> i.getRouteCount()).toList());
@@ -97,20 +107,69 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
         storageInstances.route(StorageInstanceMocker.DEFAULT_ROUTE, MINIO, FileMocker.POLICY_CODE);
         storageInstances.route(SOURCE, MINIO, FileMocker.POLICY_CODE);
 
-        assertMutation(put(BASE + "/routes/" + SOURCE, admin, update(S3, 600, 1)), SOURCE, 2);
+        String path = BASE + "/routes/" + SOURCE + "/" + PRIVATE;
+        String code = SOURCE + "/" + PRIVATE;
+        assertMutation(put(path, admin, update(S3, 600, 1)), code, 2);
         assertTarget(SOURCE, S3);
         assertEquals(600, intValue(storageData.route(SOURCE).get("max_upload_seconds")));
-        put(BASE + "/routes/" + SOURCE, admin, update(S3, 600, 1)).assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST);
-        assertMutation(put(BASE + "/routes/" + SOURCE, admin, update(S3, 600, 2)), SOURCE, 2);
+        put(path, admin, update(S3, 600, 1)).assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST);
+        assertMutation(put(path, admin, update(S3, 600, 2)), code, 2);
 
-        assertMutation(delete(BASE + "/routes/" + SOURCE, admin, new DeleteStorageRouteRequestBody(2, REASON)), SOURCE,
-            2);
+        assertMutation(delete(path, admin, new DeleteStorageRouteRequestBody(2, REASON)), code, 2);
         assertNull(storageData.route(SOURCE));
         assertTarget(SOURCE, MINIO);
-        delete(BASE + "/routes/*", admin, new DeleteStorageRouteRequestBody(1, REASON))
+        delete(BASE + "/routes/*/" + PRIVATE, admin, new DeleteStorageRouteRequestBody(1, REASON))
             .assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
-        delete(BASE + "/routes/ut-missing", admin, new DeleteStorageRouteRequestBody(1, REASON))
+        delete(BASE + "/routes/ut-missing/" + PRIVATE, admin, new DeleteStorageRouteRequestBody(1, REASON))
             .assertProblem(404, CommonErrorCode.NOT_FOUND);
+        delete(BASE + "/routes/" + SOURCE + "/SECRET", admin, new DeleteStorageRouteRequestBody(1, REASON))
+            .assertProblem(400, CommonErrorCode.INVALID_REQUEST);
+    }
+
+    /**
+     * 路由键为 (来源系统, 访问级别)：同一来源可同时有私有与公开路由，路由只能指向同级别的桶；解析不跨级别回落（没有公开路由时公开上传
+     * 不可用，即使有默认私有路由）；默认公开路由可以删除，默认私有路由不能删除。
+     */
+    @Test
+    void test_accessLevelRoutes() {
+        String publicBucket = "ut-route-public";
+        storageInstances.publicBucket(MINIO, publicBucket, "https://cdn.example.com/files", FileStorageBucketStatus.ACTIVE);
+        assertMutation(post(BASE + "/routes", admin, create(StorageInstanceMocker.DEFAULT_ROUTE, MINIO)),
+            StorageInstanceMocker.DEFAULT_ROUTE + "/" + PRIVATE, 1);
+
+        post(BASE + "/routes", admin, create(SOURCE, PUBLIC, MINIO, storage.bucket()))
+            .assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
+        post(BASE + "/routes", admin, create(SOURCE, PRIVATE, MINIO, publicBucket))
+            .assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
+        assertMutation(post(BASE + "/routes", admin, create(SOURCE, PUBLIC, MINIO, publicBucket)), SOURCE + "/" + PUBLIC,
+            1);
+        assertMutation(post(BASE + "/routes", admin, create(SOURCE, PRIVATE, S3, storage.bucket())),
+            SOURCE + "/" + PRIVATE, 1);
+        post(BASE + "/routes", admin, create(SOURCE, PUBLIC, MINIO, publicBucket))
+            .assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
+        put(BASE + "/routes/" + SOURCE + "/" + PUBLIC, admin, update(S3, 600, 1))
+            .assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
+
+        StorageWriteTarget publicTarget = registry.forWrite(SOURCE, FileAccessLevel.PUBLIC);
+        var routes = get(BASE + "/routes", admin).assertOk().as(StorageRouteListResponseBody.class).getItems();
+        assertAll(() -> assertEquals(publicBucket, publicTarget.getContainer()),
+            () -> assertEquals(S3, registry.forWrite(SOURCE, FileAccessLevel.PRIVATE).getProvider()),
+            () -> assertThrows(ServiceUnavailableException.class,
+                () -> registry.forWrite(StorageInstanceMocker.PEER_SOURCE, FileAccessLevel.PUBLIC), "不跨级别回落"),
+            () -> assertEquals(MINIO, registry.forWrite(StorageInstanceMocker.PEER_SOURCE, FileAccessLevel.PRIVATE)
+                .getProvider()),
+            () -> assertEquals(List.of(StorageInstanceMocker.DEFAULT_ROUTE + "/" + PRIVATE, SOURCE + "/" + PRIVATE,
+                SOURCE + "/" + PUBLIC), routes.stream().map(r -> r.getSourceSystem() + "/" + r.getAccessLevel()).toList()));
+
+        assertMutation(post(BASE + "/routes", admin, create(StorageInstanceMocker.DEFAULT_ROUTE, PUBLIC, MINIO,
+            publicBucket)), StorageInstanceMocker.DEFAULT_ROUTE + "/" + PUBLIC, 1);
+        assertEquals(publicBucket, registry.forWrite(StorageInstanceMocker.PEER_SOURCE, FileAccessLevel.PUBLIC)
+            .getContainer());
+        assertMutation(delete(BASE + "/routes/*/" + PUBLIC, admin, new DeleteStorageRouteRequestBody(1, REASON)),
+            StorageInstanceMocker.DEFAULT_ROUTE + "/" + PUBLIC, 1);
+        post(BASE + "/routes", admin, new CreateStorageRouteRequestBody(SOURCE, null, MINIO, publicBucket,
+            FileMocker.POLICY_CODE, 300, REASON)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
+            .assertFieldError("accessLevel");
     }
 
     /** 目标桶或实例未启用、扫描策略无有效修订、来源格式与期限非法时拒绝，不写库。 */
@@ -123,14 +182,14 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
         storageInstances.instanceStatus(MINIO, FileStorageInstanceStatus.ACTIVE);
         post(BASE + "/routes", admin, create(SOURCE, "UT_MISSING"))
             .assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
-        post(BASE + "/routes", admin, new CreateStorageRouteRequestBody(SOURCE, MINIO, "ut-unregistered-bucket",
+        post(BASE + "/routes", admin, new CreateStorageRouteRequestBody(SOURCE, PRIVATE, MINIO, "ut-unregistered-bucket",
             FileMocker.POLICY_CODE, 300, REASON)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
-        post(BASE + "/routes", admin, new CreateStorageRouteRequestBody(SOURCE, MINIO, storage.bucket(), "UT_NO_POLICY",
+        post(BASE + "/routes", admin, new CreateStorageRouteRequestBody(SOURCE, PRIVATE, MINIO, storage.bucket(), "UT_NO_POLICY",
             300, REASON)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
-        post(BASE + "/routes", admin, new CreateStorageRouteRequestBody("File_Test", MINIO, storage.bucket(),
+        post(BASE + "/routes", admin, new CreateStorageRouteRequestBody("File_Test", PRIVATE, MINIO, storage.bucket(),
             FileMocker.POLICY_CODE, 300, REASON)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
             .assertFieldError("sourceSystem");
-        post(BASE + "/routes", admin, new CreateStorageRouteRequestBody(SOURCE, MINIO, storage.bucket(),
+        post(BASE + "/routes", admin, new CreateStorageRouteRequestBody(SOURCE, PRIVATE, MINIO, storage.bucket(),
             FileMocker.POLICY_CODE, 59, REASON)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
             .assertFieldError("maxUploadSeconds");
 
@@ -175,14 +234,21 @@ class FileStorageRouteManagementTest extends FileStorageManagementTestBase {
 
     /** 本进程快照选择的写入目标。 */
     private void assertTarget(String source, String instanceCode) {
-        StorageWriteTarget target = registry.forWrite(source);
+        StorageWriteTarget target = registry.forWrite(source, FileAccessLevel.PRIVATE);
         assertAll(() -> assertEquals(instanceCode, target.getProvider()),
             () -> assertEquals(storage.bucket(), target.getContainer()));
     }
 
-    /** 新建路由请求，指向实例的测试存储桶与测试策略。 */
+    /** 新建指定访问级别的路由请求，指向实例的指定桶与测试策略。 */
+    private static CreateStorageRouteRequestBody create(String source, String accessLevel, String instanceCode,
+        String bucketName) {
+        return new CreateStorageRouteRequestBody(source, accessLevel, instanceCode, bucketName, FileMocker.POLICY_CODE,
+            StorageInstanceMocker.UPLOAD_SECONDS, REASON);
+    }
+
+    /** 新建私有路由请求，指向实例的测试存储桶与测试策略。 */
     private CreateStorageRouteRequestBody create(String source, String instanceCode) {
-        return new CreateStorageRouteRequestBody(source, instanceCode, storage.bucket(), FileMocker.POLICY_CODE,
+        return new CreateStorageRouteRequestBody(source, PRIVATE, instanceCode, storage.bucket(), FileMocker.POLICY_CODE,
             StorageInstanceMocker.UPLOAD_SECONDS, REASON);
     }
 

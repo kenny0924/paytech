@@ -28,12 +28,25 @@
           "buckets": [
             {
               "bucketName": "mor-platform-files",
+              "accessLevel": "PRIVATE",
+              "publicBaseUrl": null,
               "status": "ACTIVE",
               "lastCheckTime": "2026-10-22T01:00:00.000001Z",
               "lastCheckResult": "OK",
               "routeCount": 1,
               "version": 2,
               "updateTime": "2026-10-22T01:00:01.000001Z"
+            },
+            {
+              "bucketName": "mor-public-assets",
+              "accessLevel": "PUBLIC",
+              "publicBaseUrl": "https://cdn-test.example.com",
+              "status": "DRAFT",
+              "lastCheckTime": "2026-10-22T01:10:00.000001Z",
+              "lastCheckResult": "PUBLIC_READ_FAILED",
+              "routeCount": 0,
+              "version": 1,
+              "updateTime": "2026-10-22T01:10:01.000001Z"
             }
           ]
         },
@@ -163,6 +176,8 @@
     "routeCode": "operations-file-storage-bucket-create",
     "request": {
       "bucketName": "mor-workflow-files",
+      "accessLevel": "PRIVATE",
+      "publicBaseUrl": null,
       "reason": "工作流附件"
     },
     "response": {
@@ -221,6 +236,7 @@
       "items": [
         {
           "sourceSystem": "*",
+          "accessLevel": "PRIVATE",
           "instanceCode": "MINIO",
           "bucketName": "mor-platform-files",
           "scanPolicyCode": "CLIENT_ONBOARDING_FORMAT",
@@ -230,6 +246,7 @@
         },
         {
           "sourceSystem": "client-master-service",
+          "accessLevel": "PRIVATE",
           "instanceCode": "MINIO",
           "bucketName": "mor-platform-files",
           "scanPolicyCode": "CLIENT_ONBOARDING_FORMAT",
@@ -249,6 +266,7 @@
     "routeCode": "operations-file-storage-route-create",
     "request": {
       "sourceSystem": "platform-support",
+      "accessLevel": "PRIVATE",
       "instanceCode": "MINIO",
       "bucketName": "mor-platform-files",
       "scanPolicyCode": "CLIENT_ONBOARDING_FORMAT",
@@ -258,7 +276,7 @@
     "response": {
       "objectType": "FILE_STORAGE_ROUTE",
       "objectId": "7312345678901234569",
-      "objectCode": "platform-support",
+      "objectCode": "platform-support/PRIVATE",
       "status": null,
       "version": 1
     }
@@ -266,8 +284,8 @@
   {
     "id": "S11",
     "method": "PUT",
-    "path": "/storage-admin/v1/routes/*",
-    "ownerPath": "/storage-admin/v1/routes/*",
+    "path": "/storage-admin/v1/routes/*/PRIVATE",
+    "ownerPath": "/storage-admin/v1/routes/*/PRIVATE",
     "query": "",
     "routeCode": "operations-file-storage-route-update",
     "request": {
@@ -281,7 +299,7 @@
     "response": {
       "objectType": "FILE_STORAGE_ROUTE",
       "objectId": "7312345678901234570",
-      "objectCode": "*",
+      "objectCode": "*/PRIVATE",
       "status": null,
       "version": 2
     }
@@ -289,8 +307,8 @@
   {
     "id": "S12",
     "method": "DELETE",
-    "path": "/storage-admin/v1/routes/client-master-service",
-    "ownerPath": "/storage-admin/v1/routes/client-master-service",
+    "path": "/storage-admin/v1/routes/client-master-service/PUBLIC",
+    "ownerPath": "/storage-admin/v1/routes/client-master-service/PUBLIC",
     "query": "",
     "routeCode": "operations-file-storage-route-delete",
     "request": {
@@ -300,9 +318,411 @@
     "response": {
       "objectType": "FILE_STORAGE_ROUTE",
       "objectId": "7312345678901234571",
-      "objectCode": "client-master-service",
+      "objectCode": "client-master-service/PUBLIC",
       "status": null,
       "version": 2
+    }
+  },
+  {
+    "id": "S13",
+    "method": "PUT",
+    "path": "/storage-admin/v1/instances/MINIO/buckets/mor-public-assets",
+    "ownerPath": "/storage-admin/v1/instances/MINIO/buckets/mor-public-assets",
+    "query": "",
+    "routeCode": "operations-file-storage-bucket-update",
+    "request": {
+      "publicBaseUrl": "https://cdn2-test.example.com",
+      "expectedVersion": 1,
+      "reason": "换 CDN 域名"
+    },
+    "response": {
+      "objectType": "FILE_STORAGE_BUCKET",
+      "objectId": "7312345678901234580",
+      "objectCode": "MINIO/mor-public-assets",
+      "status": "DRAFT",
+      "version": 2
+    }
+  },
+  {
+    "id": "S14",
+    "method": "GET",
+    "path": "/storage-admin/v1/scan-policies",
+    "ownerPath": "/storage-admin/v1/scan-policies",
+    "query": "",
+    "routeCode": "operations-file-scan-policy-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "policyCode": "CLIENT_ONBOARDING_FORMAT",
+          "activeRevisionNo": 2,
+          "draftRevisionNo": 3,
+          "allowedMimeTypes": [
+            "application/pdf",
+            "image/png",
+            "image/jpeg"
+          ],
+          "maxSizeBytes": "10485760",
+          "routeCount": 2,
+          "status": "ACTIVE",
+          "updateTime": "2026-10-22T07:40:00.123456Z"
+        },
+        {
+          "policyCode": "MERCHANT_LOGO_PUBLIC",
+          "activeRevisionNo": null,
+          "draftRevisionNo": 1,
+          "allowedMimeTypes": [
+            "image/png",
+            "image/jpeg"
+          ],
+          "maxSizeBytes": "2097152",
+          "routeCount": 0,
+          "status": "DRAFT",
+          "updateTime": "2026-10-22T07:40:00.123456Z"
+        }
+      ],
+      "supportedMimeTypes": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg"
+      ]
+    }
+  },
+  {
+    "id": "S15",
+    "method": "GET",
+    "path": "/storage-admin/v1/scan-policies/CLIENT_ONBOARDING_FORMAT",
+    "ownerPath": "/storage-admin/v1/scan-policies/CLIENT_ONBOARDING_FORMAT",
+    "query": "",
+    "routeCode": "operations-file-scan-policy-detail",
+    "request": null,
+    "response": {
+      "policyCode": "CLIENT_ONBOARDING_FORMAT",
+      "routes": [
+        {
+          "sourceSystem": "*",
+          "accessLevel": "PRIVATE",
+          "instanceCode": "MINIO",
+          "bucketName": "mor-platform-files"
+        }
+      ],
+      "revisions": [
+        {
+          "revisionNo": 3,
+          "status": "DRAFT",
+          "allowedMimeTypes": [
+            "application/pdf",
+            "image/png",
+            "image/jpeg"
+          ],
+          "maxSizeBytes": "20971520",
+          "requirements": [
+            {
+              "scannerCode": "PLATFORM_FORMAT",
+              "scanType": "FORMAT",
+              "minimumScannerVersion": "1",
+              "acceptedResultCodes": [
+                "FORMAT_VALID"
+              ]
+            }
+          ],
+          "version": 2,
+          "createTime": "2026-10-22T07:40:00.123456Z",
+          "updateTime": "2026-10-22T07:40:00.123456Z"
+        },
+        {
+          "revisionNo": 2,
+          "status": "ACTIVE",
+          "allowedMimeTypes": [
+            "application/pdf",
+            "image/png",
+            "image/jpeg"
+          ],
+          "maxSizeBytes": "10485760",
+          "requirements": [
+            {
+              "scannerCode": "PLATFORM_FORMAT",
+              "scanType": "FORMAT",
+              "minimumScannerVersion": "1",
+              "acceptedResultCodes": [
+                "FORMAT_VALID"
+              ]
+            }
+          ],
+          "version": 3,
+          "createTime": "2026-10-22T07:40:00.123456Z",
+          "updateTime": "2026-10-22T07:40:00.123456Z"
+        },
+        {
+          "revisionNo": 1,
+          "status": "RETIRED",
+          "allowedMimeTypes": [
+            "application/pdf",
+            "image/png",
+            "image/jpeg"
+          ],
+          "maxSizeBytes": "10485760",
+          "requirements": [
+            {
+              "scannerCode": "PLATFORM_FORMAT",
+              "scanType": "FORMAT",
+              "minimumScannerVersion": "1",
+              "acceptedResultCodes": [
+                "FORMAT_VALID"
+              ]
+            }
+          ],
+          "version": 2,
+          "createTime": "2026-10-22T07:40:00.123456Z",
+          "updateTime": "2026-10-22T07:40:00.123456Z"
+        }
+      ]
+    }
+  },
+  {
+    "id": "S16",
+    "method": "POST",
+    "path": "/storage-admin/v1/scan-policies",
+    "ownerPath": "/storage-admin/v1/scan-policies",
+    "query": "",
+    "routeCode": "operations-file-scan-policy-create",
+    "request": {
+      "policyCode": "MERCHANT_LOGO_PUBLIC",
+      "allowedMimeTypes": [
+        "image/png",
+        "image/jpeg"
+      ],
+      "maxSizeBytes": "2097152",
+      "reason": "商户 Logo 公开展示"
+    },
+    "response": {
+      "objectType": "FILE_SCAN_POLICY",
+      "objectId": "7312345678901234581",
+      "objectCode": "MERCHANT_LOGO_PUBLIC/1",
+      "status": "DRAFT",
+      "version": 1
+    }
+  },
+  {
+    "id": "S17",
+    "method": "POST",
+    "path": "/storage-admin/v1/scan-policies/CLIENT_ONBOARDING_FORMAT/revisions",
+    "ownerPath": "/storage-admin/v1/scan-policies/CLIENT_ONBOARDING_FORMAT/revisions",
+    "query": "",
+    "routeCode": "operations-file-scan-policy-revision-create",
+    "request": {
+      "reason": "入驻材料放宽大小"
+    },
+    "response": {
+      "objectType": "FILE_SCAN_POLICY",
+      "objectId": "7312345678901234582",
+      "objectCode": "CLIENT_ONBOARDING_FORMAT/3",
+      "status": "DRAFT",
+      "version": 1
+    }
+  },
+  {
+    "id": "S18",
+    "method": "PUT",
+    "path": "/storage-admin/v1/scan-policies/CLIENT_ONBOARDING_FORMAT/revisions/3",
+    "ownerPath": "/storage-admin/v1/scan-policies/CLIENT_ONBOARDING_FORMAT/revisions/3",
+    "query": "",
+    "routeCode": "operations-file-scan-policy-revision-update",
+    "request": {
+      "allowedMimeTypes": [
+        "application/pdf",
+        "image/png",
+        "image/jpeg"
+      ],
+      "maxSizeBytes": "20971520",
+      "expectedVersion": 1,
+      "reason": "扫描件变大，放宽到 20 MB"
+    },
+    "response": {
+      "objectType": "FILE_SCAN_POLICY",
+      "objectId": "7312345678901234582",
+      "objectCode": "CLIENT_ONBOARDING_FORMAT/3",
+      "status": "DRAFT",
+      "version": 2
+    }
+  },
+  {
+    "id": "S19",
+    "method": "DELETE",
+    "path": "/storage-admin/v1/scan-policies/CLIENT_ONBOARDING_FORMAT/revisions/3",
+    "ownerPath": "/storage-admin/v1/scan-policies/CLIENT_ONBOARDING_FORMAT/revisions/3",
+    "query": "",
+    "routeCode": "operations-file-scan-policy-revision-discard",
+    "request": {
+      "expectedVersion": 2,
+      "reason": "不再需要"
+    },
+    "response": {
+      "objectType": "FILE_SCAN_POLICY",
+      "objectId": "7312345678901234582",
+      "objectCode": "CLIENT_ONBOARDING_FORMAT/3",
+      "status": null,
+      "version": 2
+    }
+  },
+  {
+    "id": "S20",
+    "method": "POST",
+    "path": "/storage-admin/v1/scan-policies/CLIENT_ONBOARDING_FORMAT/revisions/3/activation",
+    "ownerPath": "/storage-admin/v1/scan-policies/CLIENT_ONBOARDING_FORMAT/revisions/3/activation",
+    "query": "",
+    "routeCode": "operations-file-scan-policy-activate",
+    "request": {
+      "expectedVersion": 2,
+      "reason": "生效"
+    },
+    "response": {
+      "objectType": "FILE_SCAN_POLICY",
+      "objectId": "7312345678901234582",
+      "objectCode": "CLIENT_ONBOARDING_FORMAT/3",
+      "status": "ACTIVE",
+      "version": 3
+    }
+  },
+  {
+    "id": "S21",
+    "method": "POST",
+    "path": "/storage-admin/v1/scan-policies/WORKFLOW_ATTACHMENT/retirement",
+    "ownerPath": "/storage-admin/v1/scan-policies/WORKFLOW_ATTACHMENT/retirement",
+    "query": "",
+    "routeCode": "operations-file-scan-policy-retire",
+    "request": {
+      "expectedVersion": 3,
+      "reason": "工作流附件改用新策略"
+    },
+    "response": {
+      "objectType": "FILE_SCAN_POLICY",
+      "objectId": "7312345678901234583",
+      "objectCode": "WORKFLOW_ATTACHMENT/1",
+      "status": "RETIRED",
+      "version": 4
+    }
+  },
+  {
+    "id": "S22",
+    "method": "GET",
+    "path": "/storage-admin/v1/files",
+    "ownerPath": "/storage-admin/v1/files",
+    "query": "?createdFrom=2026-10-15T00:00:00Z&createdTo=2026-10-22T00:00:00Z&fileId=239061120044503040&sourceSystem=client-console-bff&reasonCode=MERCHANT_LOGO&accessLevel=PUBLIC&scanStatus=AVAILABLE&hasPendingReplacement=true&page=1&size=20",
+    "routeCode": "operations-file-record-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "fileId": "239061120044503040",
+          "fileAddress": "/files/v1/239061120044503040",
+          "displayName": "merchant-logo.png",
+          "sourceSystem": "client-console-bff",
+          "reasonCode": "MERCHANT_LOGO",
+          "accessLevel": "PUBLIC",
+          "currentVersionNo": 3,
+          "pendingVersionNo": 4,
+          "scanStatus": "AVAILABLE",
+          "objectStatus": "ACTIVE",
+          "mimeType": "image/png",
+          "sizeBytes": "86016",
+          "createTime": "2026-10-22T07:40:00.123456Z",
+          "updateTime": "2026-10-22T07:40:00.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 20,
+      "total": 1
+    }
+  },
+  {
+    "id": "S23",
+    "method": "GET",
+    "path": "/storage-admin/v1/files/239061120044503040",
+    "ownerPath": "/storage-admin/v1/files/239061120044503040",
+    "query": "",
+    "routeCode": "operations-file-record-detail",
+    "request": null,
+    "response": {
+      "fileId": "239061120044503040",
+      "fileAddress": "/files/v1/239061120044503040",
+      "displayName": "merchant-logo.png",
+      "sourceSystem": "client-console-bff",
+      "reasonCode": "MERCHANT_LOGO",
+      "accessLevel": "PUBLIC",
+      "currentVersionNo": 1,
+      "pendingVersionNo": null,
+      "scanStatus": "AVAILABLE",
+      "objectStatus": "ACTIVE",
+      "mimeType": "image/png",
+      "sizeBytes": "86016",
+      "createTime": "2026-10-22T07:40:00.123456Z",
+      "updateTime": "2026-10-22T07:40:00.123456Z",
+      "contentHash": "5be10000000000000000000000000000000000000000000000000000000009da",
+      "uploaderAccountId": "238877120983621632",
+      "instanceCode": "S3_TEST",
+      "bucketName": "mor-test-public-assets",
+      "objectRef": "7d1e9c42-5b1a-4f0e-9a3b-2c8e61f0d5a7",
+      "publicUrl": "https://cdn-test.example.com/7d1e9c42-5b1a-4f0e-9a3b-2c8e61f0d5a7",
+      "versionedUrl": "https://cdn-test.example.com/7d1e9c42-5b1a-4f0e-9a3b-2c8e61f0d5a7?v=1",
+      "versions": [
+        {
+          "versionNo": 1,
+          "versionStatus": "CURRENT",
+          "scanStatus": "AVAILABLE",
+          "displayName": "merchant-logo.png",
+          "mimeType": "image/png",
+          "sizeBytes": "86016",
+          "contentHash": "5be10000000000000000000000000000000000000000000000000000000009da",
+          "uploadId": "239061120044503041",
+          "uploaderAccountId": "238877120983621632",
+          "downloadable": true,
+          "availableTime": "2026-10-22T07:40:00.123456Z",
+          "createTime": "2026-10-22T07:40:00.123456Z"
+        }
+      ],
+      "scanResults": [
+        {
+          "versionNo": 1,
+          "scanPolicyCode": "MERCHANT_LOGO_PUBLIC",
+          "revisionNo": 1,
+          "scannerCode": "PLATFORM_FORMAT",
+          "scanType": "FORMAT",
+          "resultCode": "FORMAT_VALID",
+          "attemptNo": 1,
+          "scannedTime": "2026-10-22T07:40:00.123456Z"
+        }
+      ],
+      "uploads": [
+        {
+          "uploadId": "239061120044503041",
+          "kind": "ORIGINAL",
+          "replacementNo": 0,
+          "status": "COMPLETED",
+          "displayName": "merchant-logo.png",
+          "expectedMime": "image/png",
+          "expectedSize": "86016",
+          "uploaderAccountId": "238877120983621632",
+          "resultVersionNo": 1,
+          "expiresTime": "2026-10-22T07:40:00.123456Z",
+          "createTime": "2026-10-22T07:40:00.123456Z",
+          "updateTime": "2026-10-22T07:40:00.123456Z"
+        }
+      ]
+    }
+  },
+  {
+    "id": "S24",
+    "method": "POST",
+    "path": "/storage-admin/v1/files/239061120044503040/download",
+    "ownerPath": "/storage-admin/v1/files/239061120044503040/download",
+    "query": "?versionNo=1",
+    "routeCode": "operations-file-record-download",
+    "request": null,
+    "response": {
+      "url": "https://mor-test-public-assets.s3.ap-southeast-1.amazonaws.com/7d1e9c42?X-Amz-Signature=synthetic-download-canary",
+      "expiresAt": "2026-10-22T07:41:00.123456Z",
+      "disposition": "ATTACHMENT"
     }
   }
 ]

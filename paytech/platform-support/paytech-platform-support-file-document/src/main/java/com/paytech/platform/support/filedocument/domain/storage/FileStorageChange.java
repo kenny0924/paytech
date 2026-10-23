@@ -19,7 +19,10 @@ public class FileStorageChange {
     /** 写入路由对象类型。 */
     public static final String ROUTE = "FILE_STORAGE_ROUTE";
 
-    /** 对象类型：INSTANCE、BUCKET 或 ROUTE。 */
+    /** 检查策略修订对象类型。 */
+    public static final String SCAN_POLICY = "FILE_SCAN_POLICY";
+
+    /** 对象类型：INSTANCE、BUCKET、ROUTE 或 SCAN_POLICY。 */
     private final String objectType;
 
     /** 对象主键。 */
@@ -27,7 +30,7 @@ public class FileStorageChange {
 
     /**
      * 对象编码
-     * <li>实例为实例代码，桶为 {实例代码}/{桶名}，路由为来源系统。</li>
+     * <li>实例为实例代码，桶为 {实例代码}/{桶名}，路由为 {来源系统}/{访问级别}，检查策略为 {策略代码}/{修订号}。</li>
      */
     private final String objectCode;
 

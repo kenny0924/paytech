@@ -3,6 +3,7 @@ package com.paytech.platform.support.filedocument.integration.storage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * 按文件内容识别媒体类型；认可 PDF、PNG、JPEG 文件头与 UTF-8 文本（CSV），其他内容返回通用二进制类型。
@@ -10,10 +11,18 @@ import java.io.InputStream;
  * text/csv；全文是否合法由格式检查 {@code FormatFileScanner} 复核。</li>
  */
 public final class StoredContentType {
+    /** PDF 文件头识别结果。 */
+    public static final String PDF_TYPE = "application/pdf";
+    /** PNG 文件头识别结果。 */
+    public static final String PNG_TYPE = "image/png";
+    /** JPEG 文件头识别结果。 */
+    public static final String JPEG_TYPE = "image/jpeg";
     /** 无法识别的内容，不会出现在任何允许名单中。 */
     public static final String UNKNOWN = "application/octet-stream";
     /** UTF-8 文本内容，供卡 BIN 库等 CSV 上传使用。 */
     public static final String CSV = "text/csv";
+    /** {@link #detect} 能返回的全部规范 MIME（不含 {@link #UNKNOWN}），按 PDF、PNG、JPEG、CSV 顺序；检查策略只能从中选择。 */
+    public static final List<String> SUPPORTED = List.of(PDF_TYPE, PNG_TYPE, JPEG_TYPE, CSV);
     /** 识别所需的最长读取字节数：文件头与文本抽样共用。 */
     static final int SNIFF_BYTES = 8192;
     private static final byte[] PDF = {'%', 'P', 'D', 'F', '-'};
@@ -50,13 +59,13 @@ public final class StoredContentType {
      */
     static String detect(byte[] head, boolean truncated) {
         if (startsWith(head, PDF)) {
-            return "application/pdf";
+            return PDF_TYPE;
         }
         if (startsWith(head, PNG)) {
-            return "image/png";
+            return PNG_TYPE;
         }
         if (startsWith(head, JPEG)) {
-            return "image/jpeg";
+            return JPEG_TYPE;
         }
         if (head.length > 0 && Utf8TextInspector.isText(head, truncated)) {
             return CSV;

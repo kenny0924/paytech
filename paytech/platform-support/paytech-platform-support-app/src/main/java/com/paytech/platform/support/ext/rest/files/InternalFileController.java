@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.platform.support.api.files.InternalFileApi;
+import com.paytech.platform.support.api.files.request.StartFileReplacementRequestBody;
 import com.paytech.platform.support.api.files.request.StartFileUploadRequestBody;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
@@ -14,6 +15,7 @@ import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
 import com.paytech.platform.support.filedocument.domainservice.service.FileLifecycleService;
 import com.paytech.platform.support.service.processor.files.AuthorizeFileDownloadProcessor;
 import com.paytech.platform.support.service.processor.files.CompleteFileUploadProcessor;
+import com.paytech.platform.support.service.processor.files.StartFileReplacementProcessor;
 import com.paytech.platform.support.service.processor.files.StartFileUploadProcessor;
 
 import lombok.AllArgsConstructor;
@@ -29,12 +31,20 @@ public class InternalFileController implements InternalFileApi {
     private final StartFileUploadProcessor startProcessor;
     private final CompleteFileUploadProcessor completeProcessor;
     private final AuthorizeFileDownloadProcessor downloadProcessor;
+    private final StartFileReplacementProcessor replacementProcessor;
 
     /** 新建上传返回 201。 */
     @Override
     @ResponseStatus(HttpStatus.CREATED)
     public FileUploadResponseBody startUpload(StartFileUploadRequestBody requestBody) {
         return converter.upload(startProcessor.process(converter.start(requestBody)));
+    }
+
+    /** 开始替换文件内容返回 201。 */
+    @Override
+    @ResponseStatus(HttpStatus.CREATED)
+    public FileUploadResponseBody startReplacement(String fileId, StartFileReplacementRequestBody requestBody) {
+        return converter.upload(replacementProcessor.process(converter.replacement(fileId, requestBody)));
     }
 
     /** 完成上传；重复完成返回原回执。 */

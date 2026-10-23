@@ -271,3 +271,7 @@ POST 使用去重权限与幂等键，PUT 携带当前版本，每次保存只�
 ## 存储管理（2026-10-22）
 
 需求与设计见[技术方案](../requirements/20261022/platform-support-文件多存储并存/technique.md) 4.2。新增页面 `OPERATIONS_FILE_STORAGE → /file-storage`（父「平台配置」，按钮 `OPERATIONS_FILE_STORAGE_MANAGE`），由 `src/pages/FileStorage.tsx` 与 `src/fileStorage/` 实现，三个页签：存储实例（新建 / 编辑抽屉、更换密钥弹窗、启停）、桶（按实例筛选、登记、检查并显示 `OK` / `NOT_FOUND` / `VERSIONING_DISABLED` / `ENCRYPTION_DISABLED` / `ACCESS_DENIED` / `UNAVAILABLE` 的中文说明与检查时间、启用 / 只读 / 停用）、写入规则（默认规则 `*` 显示为「默认」且不可删除）。没有维护按钮时整页只读。密钥只在密码框中输入，提交后清空，不缓存、不回显；桶启用前要求 10 分钟内检查通过、被规则引用的桶不能只读或停用，这些前端预检不替代 Platform 判断，Platform 的拒绝原因由错误通知展示。桶检查请求不带 Body。
+
+## 文件公开桶、检查策略与文件记录（2026-10-22）
+
+需求与合同见 [requirements/20261022/platform-support-文件公开桶](../requirements/20261022/platform-support-文件公开桶/tasks/common.md)。存储管理页：桶与写入规则区分私有 / 公开（桶登记选访问级别，公开桶必填 HTTPS 对外地址，草稿公开桶可编辑对外地址；检查结果新增「桶允许匿名访问」「对外地址不可访问」并给出静态排查指引）；写入规则按「来源系统 × 访问级别」矩阵展示，编辑时来源与级别只读、桶只列同级别启用桶、检查策略为下拉（只列有生效修订的策略），路径为 `/routes/{sourceSystem}/{accessLevel}`；新增「检查策略」页签（`src/fileStorage/ScanPolicyTab.tsx`、`scanPolicy.ts`）：列表 + 右侧修订时间线，草稿就地编辑允许类型与最大大小，新建策略、新建修订、废弃、激活、停用均填原因。新增页面 `OPERATIONS_FILE_RECORDS → /file-records`（父「平台配置」，按钮 `OPERATIONS_FILE_RECORD_DOWNLOAD`），由 `src/pages/FileRecords.tsx` 与 `src/fileRecords/` 实现：一行筛选（创建时间必填，默认近 7 天，最长 31 天）、快捷筛选（不显示计数）、分页表格、右侧快速预览；`?file=<id>` 详情含摘要、公开地址条、版本历史（可下载版本需下载按钮）、检查结果、上传记录与嵌入审计的最近下载。下载与图片预览每次申请一次授权（Platform 写下载审计），地址不保存、不展示。

@@ -31,6 +31,10 @@ public interface FileStorageBucketMapper {
     int updateCheck(@Param("row") FileStorageBucket row, @Param("result") FileStorageCheckResult result,
         @Param("checkedAt") Instant checkedAt);
 
+    /** 按原版本修改 DRAFT 公开桶的对外基础地址并清除最近检查结果。 */
+    int updatePublicBaseUrl(@Param("row") FileStorageBucket row, @Param("publicBaseUrl") String publicBaseUrl,
+        @Param("now") Instant now);
+
     /** 按原版本与原状态切换状态。 */
     int updateStatus(@Param("row") FileStorageBucket row, @Param("status") FileStorageBucketStatus status,
         @Param("now") Instant now);

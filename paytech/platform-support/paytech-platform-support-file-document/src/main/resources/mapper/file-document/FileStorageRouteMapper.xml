@@ -3,22 +3,33 @@
 <mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileStorageRouteMapper">
 
     <sql id="columns">
-        route_id AS routeId, source_system AS sourceSystem, bucket_id AS bucketId, scan_policy_code AS scanPolicyCode,
+        route_id AS routeId, source_system AS sourceSystem, access_level AS accessLevel, bucket_id AS bucketId, scan_policy_code AS scanPolicyCode,
         max_upload_seconds AS maxUploadSeconds, version, create_time AS createTime, update_time AS updateTime
     </sql>
 
     <select id="selectAll" timeout="2"
             resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute">
-        SELECT <include refid="columns"/> FROM t_file_storage_route ORDER BY source_system
+        SELECT <include refid="columns"/> FROM t_file_storage_route ORDER BY source_system, access_level
     </select>
 
     <select id="lockBySource" flushCache="true" useCache="false"
             resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute">
-        SELECT <include refid="columns"/> FROM t_file_storage_route WHERE source_system = #{sourceSystem} FOR UPDATE
+        SELECT <include refid="columns"/> FROM t_file_storage_route
+        WHERE source_system = #{sourceSystem} AND access_level = #{accessLevel} FOR UPDATE
     </select>
 
     <select id="countByBucket" resultType="int">
         SELECT COUNT(*) FROM t_file_storage_route WHERE bucket_id = #{bucketId}
+    </select>
+
+    <select id="countByPolicyCode" resultType="int">
+        SELECT COUNT(*) FROM t_file_storage_route WHERE scan_policy_code = #{policyCode}
+    </select>
+
+    <select id="selectByPolicyCode" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute">
+        SELECT <include refid="columns"/> FROM t_file_storage_route WHERE scan_policy_code = #{policyCode}
+        ORDER BY source_system, access_level
     </select>
 
     <select id="countByInstance" resultType="int">
@@ -27,9 +38,10 @@
     </select>
 
     <insert id="insert">
-        INSERT INTO t_file_storage_route (route_id, source_system, bucket_id, scan_policy_code, max_upload_seconds,
-            version, create_time, update_time)
-        VALUES (#{row.routeId}, #{row.sourceSystem}, #{row.bucketId}, #{row.scanPolicyCode}, #{row.maxUploadSeconds},
+        INSERT INTO t_file_storage_route (route_id, source_system, access_level, bucket_id, scan_policy_code,
+            max_upload_seconds, version, create_time, update_time)
+        VALUES (#{row.routeId}, #{row.sourceSystem}, #{row.accessLevel}, #{row.bucketId}, #{row.scanPolicyCode},
+            #{row.maxUploadSeconds},
             #{row.version}, #{row.createTime}, #{row.updateTime})
     </insert>
 

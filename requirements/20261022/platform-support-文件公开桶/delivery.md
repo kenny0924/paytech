@@ -1,0 +1,29 @@
+# platform-support：文件公开桶与固定访问地址 · 交付记录
+
+| 日期 | 阶段 | 内容 | 状态 |
+|---|---|---|---|
+| 2026-10-22 | 来源 | 用户了解文件上传流程后提问：返回的是否是全路径 URL（需要对外展示）、桶是否区分公有私有；选方案 A（公开桶 + 固定地址），"需要支持公开桶"；并指出一个服务可能同时有公开和私有文件，问按服务一条路由是否够用 | 已登记 |
+| 2026-10-22 | 1 评审稿 v1 | [需求](./requirement.md)：R1—R7、规则 B1—B5、验收 AC-01—AC-09；待确认 Q1—Q6 | 已被 v2 取代 |
+| 2026-10-22 | 用户意见 | “需要支持能同名覆盖的功能，有时候会做文件更新”；“把其他的跟存储相关的页面本次也一起维护上吧” | 已采纳 |
+| 2026-10-22 | 1 评审稿 v2 | [需求](./requirement.md)：加 R8 覆盖更新、R7/R9—R11 页面；AC-10—AC-15；Q4 已按用户意见关闭，新增 Q7—Q10 | 已确认（用户“没问题，按照你的建议做”） |
+| 2026-10-22 | 基线 | code-mor-38 通知：mor-test 已执行文件多存储第二段删除 DDL（Platform Owner 列 / 表、CCT `file_id`）；本需求研发与发布的 platform 必须基于 main `73a2460d` 或之后 | 记录 |
+| 2026-10-22 | 2—3 评审稿 v1 | [技术方案](./technique.md)：现状差异、版本模型（新表 `t_file_version`）、替换流程与公开同步、策略管理、文件记录、接口（内部新 1 改 3，存储管理新 11 改 7）、数据（5 表加 10 列、3 个唯一键）、注册块 134、页面与研发计划；待确认 S1—S6 | 已确认（用户“继续”：S1—S6 按建议；S6 本机 SQL 到阶段 4 再单独授权） |
+| 2026-10-22 | 3 原型 | 按 S5 在 `operations-console-web/docs/operations-console.pen`（y=86700）画 5 个画板：检查策略、桶（公开桶检查弹窗）、写入规则矩阵与编辑抽屉、文件记录列表、文件记录详情；方案同步“候选版本检查中也不允许新替换” | 已确认（用户“继续”） |
+| 2026-10-22 | 4 研发 | 进入阶段 4；本机 SQL（S6）另行授权 | 进行中 |
+| 2026-10-22 | 4 SQL 授权 | 用户选“授权执行”：先备份本机 `mor_platform`，再执行本需求 DDL 与回填 DML；mor-test 不动，发布时另行授权 | 已授权 |
+| 2026-10-22 | 4 研发启动 | 公共合同 [tasks/common.md](./tasks/common.md)（替换冲突沿用 `FILE_STATE_CONFLICT`，不新增错误码）；[A Platform](./tasks/A-platform.md)（`Code-MoR-pubbucket-plat`）、[B Operations](./tasks/B-operations.md)（`Code-MoR-pubbucket-ops`，含按钮布局 6 文件）两卡并行，基于 main `42879401`；A 先交 api 合同，主会话复制给 B | 进行中 |
+| 2026-10-22 | 基线 | mor-test ops-web 现为 `11f1d24e`（code-mor-ae 工作流内嵌预览，源 = `42879401` + 16 个已上线未提交文件，含按钮布局 6 个与数据查询 UX）；本需求发布 ops-web 须以此为基线 | 记录 |
+| 2026-10-22 | 4 进度 | B 完成：块 134 共 157 行（未执行）、块 130 两条路由路径、Web（1345 通过、构建通过）、BFF 模块 2244 通过；见 [B 报告](./reports/B-operations-report.md)。发现内部客户端严格反序列化：已有响应新增字段改可空，发布须先消费方后 Platform（technique 4.4） | 进行中 |
+| 2026-10-22 | 基线 | code-mor-6b 卡 BIN + 3DS 已上 mor-test：ops-web `8bdbdd44`、platform `96da579b`、ops-bff `9c382db3`（覆盖文件 `requirements/20261022/payment-3DS全链路/release/compose-candidate.yaml`，待其提交后以其提交为基线）。mor-test `mor_platform` 新增写入路由 `operations-console-bff` → `mor-platform-files` / `CARD_BIN_CSV`（route_id 239087906591948800）；本需求 DDL 回填为 `PRIVATE`，与新唯一键 `(source_system, access_level)` 相容，发布时核对 | 记录 |
+| 2026-10-22 | 基线 | main 现为 `22ede435`（卡 BIN + 3DS 提交 `de4f7ba4`，格式检查新增 `text/csv`），与 A / B 改动文件有重叠：两卡改为在 `22ede435` 上 3-way 重放各自改动；`supportedMimeTypes` 改为取自格式检查器（含 CSV） | 进行中 |
+| 2026-10-22 | 协调 | code-mor-db（多语言管理，块 135）在本需求合入 main 后接入公开上传，并自行给格式检查加 `application/json`、新增 PUBLIC 写入规则与策略；**本需求提交后须把提交号发给 code-mor-db** | 待办 |
+| 2026-10-22 | 4 进度 | A 第一轮完成：Platform 相关 20 个测试类 171/171、TableOwnership 7/7；本机 `mor_platform` 已备份（`~/Code-MoR-backups/pubbucket-20261022T174356Z/`）并于 17:44Z 执行 DDL / DML（本机文件表为空，回填 0 行）；匿名检查改用 OkHttp（架构规则 R15）。第二轮进行中：换基线到 `22ede435`、已有响应新字段改可空、修其他消费方编译 | 进行中 |
+| 2026-10-22 | 事件 | A 在换基线后的表结构核对中误选容器 `mor-test-mysql-1`，执行一条只读 information_schema 查询，因权限拒绝（1045）未执行；随后在 `mor-local-mysql-1` 完成核对。mor-test 无任何变更；已要求此后按容器名指定本机 | 记录 |
+| 2026-10-22 | 5 集成 | A 第二轮完成（基线 `22ede435`，新字段可空，`supportedMimeTypes` 取自格式检查器含 CSV，整仓 test-compile 通过，Platform 20 类 179 通过）；集成目录 `Code-MoR-pubbucket-int`（`22ede435` + A 208 + B 72，重叠 32 个 api 文件一致，2 个 ops-bff 文件取 B）：整仓 test-compile 通过、Web 1358/1358、构建通过。补 AC-14 专项测试中 | 进行中 |
+| 2026-10-23 | 5 综合验证 | 集成目录 `Code-MoR-pubbucket-int`（`22ede435` + A 209 + B 72）：整仓 test-compile 通过；Platform 24 个测试类 218/218（文件 / 存储 / 替换 / 公开同步 / 策略冻结 AC-14 / 文件记录 / 工作流附件 / 权限与角色 / Gateway 路由 / 架构规则；首轮因其他会话并发占用共享测试库失败，空闲后重跑全过）；BFF 模块 2272/2272；Web 1358/1358、构建通过。未做：真实 AWS S3 / CDN 实测、页面视觉验收（留到 mor-test 阶段 7） | 已确认（用户“继续”；下载权限动作按建议用 `DOWNLOAD`） |
+| 2026-10-23 | 6 发布准备 | [任务卡 C](./tasks/C-release.md)：基线证明、消费方清单（含 card）、候选镜像、执行顺序、只读预检、AWS / MinIO 前提、验收脚本；只准备不变更环境 | 完成，见下行 |
+| 2026-10-23 | 6 发布包 | [release.md](./release/release.md)：基线证明 6 个服务与现网 0 差异（ops-web dist 191 文件一致）；消费方 4 个（card、client-master、client-console-bff、ops-bff）；候选镜像 tag `pubbucket-20261023a`（6 个 sha256）；环境变量 0 缺 0 多；只读预检 37/37；顺序：窗口外 DDL / 回填 / 块 134 休眠注册 / 换三个消费方，窗口内 ops-bff → Platform → 回填补跑 → 块 130 改路径 → 块 134 激活 → ops-web，存储管理页约 3—4 分钟不可用；公开桶验收方案 A（mor-test MinIO `mor-platform-public`）/ B（AWS） | 待确认 |
+| 2026-10-23 | 7 授权 | 用户“可以”：按建议确认（公开桶用 mor-test MinIO `mor-platform-public`、验收登记的公开桶与公开写入规则保留、验收测试文件删除）；授权按 release.md 第 6 节在 mor-test 执行：备份并执行 DDL / 回填 / 块 130 / 块 134、MinIO 建公开测试桶、替换 6 个服务、验收与清理；提交不在授权内 | 已授权 |
+| 2026-10-23 | 7 mor-test 部署与验收 | 按 [release.md](./release/release.md) 第 6 节执行，记录见第 10 节：备份 `/Users/kenny/Code-MoR-backups/20261023T052124Z-pubbucket-mor-test`；DDL / 回填 / 块 130 / 块 134；MinIO 公开桶 `mor-platform-public`；6 个服务替换（窗口约 1.5 分钟）；postcheck 23/23；验收 87/89（2 项为脚本问题，已补验 / 修正）；浏览器冒烟页面正确（2 项选择器问题；检查策略表状态列被遮挡为遗留界面问题）；清理完成。遗留：k7q2 上 1 个回归测试对象；MinIO `init.sh` 未纳入公开桶 | 待确认 |
+| 2026-10-23 | 提交前提 | code-mor-ae：本地 main 已有工作流 UX 提交 `f707f2da` + `92d2d1db`（基于 `d3d39e40`），与本需求重叠：ops-web `pageCapabilities.ts` / `ConsolePage.tsx` / `configurationModel.test.ts`（页面数 65→66 需合并）、ops-bff `workflow-boundary.json`、Platform `WorkflowAttachmentController.java`、`platform-support-initial-data.sql`（块 127 现 405 行）、`platform-support.pdma.json`（注释）；提交须以最新 main 为底合并，提交后发提交号给 code-mor-ae / code-mor-db | 记录 |
+| 2026-10-23 | 8 提交 | 用户“提交”：在 main `92d2d1db`（含工作流体验优化 `f707f2da` / `92d2d1db`）上 3-way 合入集成目录改动；冲突 2 处（`configurationModel.test.ts` 页面数 67、`platform-support.pdma.json` 以 main 手工版为底换入本需求 6 张表与 `file_document` 关系图尺寸）；同时提交按钮布局优化 6 个文件；不含数据查询 10 个未提交文件。提交前复验：全 Reactor test-compile、Platform 242/242、ops-bff 2272/2272、ops-web 1407/1407 与构建、TableOwnership、PDManer 失败项与基线一致 | 已提交（未推送） |

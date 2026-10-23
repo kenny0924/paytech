@@ -212,7 +212,22 @@ public sealed interface OperationsAuditFact permits OperationsAuditFact.Outcome,
         SCAN_POLICY,
 
         /** 文件写入路由的上传期限秒数。 */
-        MAX_UPLOAD_SECONDS
+        MAX_UPLOAD_SECONDS,
+
+        /** 文件存储桶或写入路由的访问级别。 */
+        ACCESS_LEVEL,
+
+        /** 公开存储桶的对外基础地址。 */
+        PUBLIC_BASE_URL,
+
+        /** 文件检查策略修订号。 */
+        REVISION_NO,
+
+        /** 文件检查策略修订允许的媒体类型，逗号分隔。 */
+        ALLOWED_MIME_TYPES,
+
+        /** 文件检查策略修订的最大字节数。 */
+        MAX_SIZE_BYTES
     }
 
     /** 集合使用规范化指纹，防止完整子集合突破既有审计属性容量。 */

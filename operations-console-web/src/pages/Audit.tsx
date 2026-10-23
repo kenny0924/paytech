@@ -8,6 +8,7 @@ import { usePaging } from '../hooks/usePaging';
 import { useErrorNotification } from '../feedback/useErrorNotification';
 import { auditActions, auditFilters, auditResourceTypes, auditResults, auditValue, validateAuditDetail } from './auditView';
 import type { AuditFilterValues } from './auditView';
+import { RefreshButton } from '../components/RefreshButton';
 
 function ResultTag({ result }: { result: string }) {
   return <Tag color={result === 'SUCCEEDED' ? 'green' : result === 'DENIED' ? 'orange' : 'red'}>{auditResults[result] || result}</Tag>;
@@ -82,8 +83,7 @@ export function Audit({ objectFilter, embedded = false }: { objectFilter?: { res
   }
 
   return <>
-    <div className="page-heading">{embedded ? <h2>操作记录</h2> : <h1>审计日志</h1>}
-      <Button onClick={refresh} loading={loading}>刷新</Button></div>
+    <div className="page-heading">{embedded ? <h2>操作记录</h2> : <h1>审计日志</h1>}</div>
     <Form form={form} layout="vertical" className="audit-filters" requiredMark={false}
       initialValues={objectFilter} onFinish={submitFilters}>
       <div className="audit-filter-grid">
@@ -106,8 +106,8 @@ export function Audit({ objectFilter, embedded = false }: { objectFilter?: { res
         <Space><Button onClick={() => { form.resetFields(); applyFilters(objectFilter || {}); }}>重置</Button><Button type="primary" htmlType="submit">查询</Button></Space>
       </div>
     </Form>
-    <section className="table-panel"><div className="table-toolbar"><span className="table-caption">共 {data.total} 条记录</span>
-      {error && <Button size="small" onClick={refresh}>重试</Button>}</div>
+    <section className="table-panel"><div className="table-toolbar"><span className="table-count"><span className="table-caption">共 {data.total} 条记录</span>
+      <RefreshButton onClick={refresh} loading={loading} failed={!!error} /></span></div>
       <Table<AuditEvent> rowKey="auditEventId" dataSource={error ? [] : data.items} loading={loading} scroll={{ x: 1180 }}
         pagination={pagination}
         locale={{ emptyText: error ? '暂时无法加载审计记录' : '暂无审计记录' }} columns={[

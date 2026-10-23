@@ -1,4 +1,4 @@
--- Current Platform Support schema (63 approved tables). Apply manually to an EMPTY database only.
+-- Current Platform Support schema (64 approved tables). Apply manually to an EMPTY database only.
 -- Business invariants and associations are enforced by application code; retain PK, UNIQUE and NOT NULL.
 SET NAMES utf8mb4;
 
@@ -558,9 +558,11 @@ CREATE TABLE `t_file_storage_bucket` (
   `bucket_id` BIGINT NOT NULL COMMENT '存储桶主键。',
   `instance_id` BIGINT NOT NULL COMMENT '所属存储实例 ID。',
   `bucket_name` VARCHAR(255) NOT NULL COMMENT '存储桶名称，即文件与上传记录上的 storage_container_ref；创建后不可修改，被记录引用后不可删除。',
+  `access_level` VARCHAR(16) NOT NULL DEFAULT 'PRIVATE' COMMENT '访问级别，登记后不可修改；写入路由只能指向同级别的桶。允许值：PRIVATE、PUBLIC。',
+  `public_base_url` VARCHAR(255) NULL COMMENT '对外基础地址（CDN 或桶公开地址）；PUBLIC 必填，https:// 开头、不带查询串与片段、不以 / 结尾，只在 DRAFT 时可修改；PRIVATE 为空。公开地址 = 基础地址 + / + 对象名。',
   `status` VARCHAR(16) NOT NULL COMMENT '存储桶状态；只有 ACTIVE 接受新上传，ACTIVE 与 READ_ONLY 可读，DISABLED 读写都返回不可用。允许值：DRAFT、ACTIVE、READ_ONLY、DISABLED。',
   `last_check_time` DATETIME(6) NULL COMMENT '最近一次启用检查的 UTC 微秒时间；从未检查为空。',
-  `last_check_result` VARCHAR(64) NULL COMMENT '最近一次启用检查结果；从未检查为空。允许值：OK、NOT_FOUND、VERSIONING_DISABLED、ENCRYPTION_DISABLED、ACCESS_DENIED、UNAVAILABLE。',
+  `last_check_result` VARCHAR(64) NULL COMMENT '最近一次启用检查结果；从未检查或修改基础地址后为空。允许值：OK、NOT_FOUND、VERSIONING_DISABLED、ENCRYPTION_DISABLED、ACCESS_DENIED、UNAVAILABLE、PUBLIC_ACCESS_ALLOWED、PUBLIC_READ_FAILED。',
   `version` INT NOT NULL COMMENT '乐观并发版本，新建为 1，每次成功修改递增 1。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
@@ -570,7 +572,8 @@ CREATE TABLE `t_file_storage_bucket` (
 
 CREATE TABLE `t_file_storage_route` (
   `route_id` BIGINT NOT NULL COMMENT '写入路由主键。',
-  `source_system` VARCHAR(64) NOT NULL COMMENT '来源系统，即内部调用 Token 的服务名（[a-z][a-z0-9-]{0,63}）；* 表示默认路由，没有精确路由的来源使用默认路由。取值来源：内部调用身份的服务名；非固定枚举。',
+  `source_system` VARCHAR(64) NOT NULL COMMENT '来源系统，即内部调用 Token 的服务名（[a-z][a-z0-9-]{0,63}）；* 表示默认路由，同级别没有精确路由的来源使用该级别的默认路由。取值来源：内部调用身份的服务名；非固定枚举。',
+  `access_level` VARCHAR(16) NOT NULL DEFAULT 'PRIVATE' COMMENT '访问级别；与来源系统共同构成路由键，只能指向同级别的桶，解析时不跨级别回落；创建后不可修改。允许值：PRIVATE、PUBLIC。',
   `bucket_id` BIGINT NOT NULL COMMENT '新上传写入的存储桶 ID；保存时必须为 ACTIVE 桶且所属实例 ACTIVE。',
   `scan_policy_code` VARCHAR(64) NOT NULL COMMENT '新上传冻结的扫描策略代码；保存时必须存在 ACTIVE 修订，上传开始时冻结当前 ACTIVE 修订。取值来源：t_file_scan_policy.policy_code；非固定枚举。',
   `max_upload_seconds` INT NOT NULL COMMENT '新上传的授权有效秒数，60—900。',
@@ -578,9 +581,9 @@ CREATE TABLE `t_file_storage_route` (
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`route_id`),
-  UNIQUE KEY `uk_file_storage_route_source` (`source_system`) COMMENT '保证业务唯一性：source_system',
+  UNIQUE KEY `uk_file_storage_route_source` (`source_system`, `access_level`) COMMENT '保证业务唯一性：source_system、access_level',
   KEY `idx_file_storage_route_bucket` (`bucket_id`) COMMENT '支持访问路径：bucket_id（停用实例或桶前检查引用路由）'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存按来源系统选择新上传存储桶、扫描策略与上传期限的写入路由；改路由只影响之后的新上传';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存按 (来源系统, 访问级别) 选择新上传存储桶、扫描策略与上传期限的写入路由；改路由只影响之后的新上传';
 
 CREATE TABLE `t_file_upload` (
   `upload_id` BIGINT NOT NULL COMMENT '文件上传会话的稳定业务标识。',
@@ -588,12 +591,16 @@ CREATE TABLE `t_file_upload` (
   `uploader_id` BIGINT NULL COMMENT '上传人账号 ID；调用方有人工操作人时传入并原样记录，纯系统上传为空，Platform 不核对其真实性。',
   `source_system` VARCHAR(64) NOT NULL COMMENT '上传来源系统，即开始上传时内部调用身份的服务名；Platform 自行发起的上传为 platform-support。创建后不变。取值来源：内部调用身份的服务名；非固定枚举。',
   `reason_code` VARCHAR(64) NOT NULL COMMENT '来源系统声明的上传原因代码，格式 [A-Z][A-Z0-9_]{0,63}，用于反查文件为什么上传；创建后不变。取值来源：来源系统自定义；非固定枚举。',
+  `access_level` VARCHAR(16) NOT NULL DEFAULT 'PRIVATE' COMMENT '访问级别；开始上传时由调用方声明（缺省 PRIVATE）并按 (来源系统, 访问级别) 选择写入路由，替换上传沿用原文件的值，创建后不变。允许值：PRIVATE、PUBLIC。',
   `expected_size` BIGINT NOT NULL COMMENT '预期文件大小的长整数值。',
   `expected_mime` VARCHAR(255) NOT NULL COMMENT '预期媒体类型的业务值。',
   `display_name` VARCHAR(255) NOT NULL COMMENT '去除路径和控制字符后的文件展示名，最大 255 Unicode 字符；仅授权页面展示，不作为对象存储 Key 或鉴权依据。',
   `storage_provider` VARCHAR(64) NOT NULL COMMENT '此次上传使用的对象存储适配器代码，来自受控配置；创建后固定，恢复不得改用当前默认适配器。',
   `storage_container_ref` VARCHAR(255) NOT NULL COMMENT '此次上传的目标存储容器引用；不含凭据，创建后固定，完成和恢复必须使用原容器。',
   `storage_object_ref` VARCHAR(255) NOT NULL COMMENT 'Platform 创建的高熵上传对象引用，不含原始文件名或个人资料；与适配器和容器组成上传目标，不能由浏览器替换。',
+  `replaces_file_id` BIGINT NULL COMMENT '被替换内容的文件 ID；首次上传为空。',
+  `replacement_no` INT NOT NULL DEFAULT 0 COMMENT '替换序号；首次上传为 0，同一文件的第 n 次替换为 n。',
+  `base_object_version` VARCHAR(128) NULL COMMENT '开始替换时存储中该对象最新版本的 versionId；完成时要求比它新的版本恰好 1 个。首次上传为空。',
   `scan_policy_id` BIGINT NOT NULL COMMENT '本次上传在开始时冻结的 Platform File Scan Policy 修订 ID；完成后由 File 继承，不因等待期间默认策略变化而重选。',
   `expires_time` DATETIME(6) NOT NULL COMMENT '上传到期时间对应的 UTC 微秒时间。',
   `status` VARCHAR(64) NOT NULL COMMENT '上传状态的稳定业务代码。允许值：CREATED、UPLOADING、COMPLETED、EXPIRED、CANCELLED。',
@@ -601,11 +608,12 @@ CREATE TABLE `t_file_upload` (
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
   PRIMARY KEY (`upload_id`),
-  UNIQUE KEY `uk_upload_storage_target` (`storage_provider`, `storage_container_ref`, `storage_object_ref`) COMMENT '同一存储对象上传目标只归属一条 Upload，防止不同申请共享可写目标',
+  UNIQUE KEY `uk_upload_storage_target` (`storage_provider`, `storage_container_ref`, `storage_object_ref`, `replacement_no`) COMMENT '同一存储对象的同一替换序号只归属一条 Upload，防止不同申请共享可写目标',
   KEY `idx_file_upload_tenant` (`tenant_id`, `status`, `create_time`) COMMENT '支持访问路径：tenant_id、status、create_time',
   KEY `idx_file_upload_due` (`status`, `expires_time`) COMMENT '支持访问路径：status、expires_time',
+  KEY `idx_file_upload_replaces` (`replaces_file_id`, `status`) COMMENT '支持访问路径：replaces_file_id、status（判断文件是否有未结束的替换）',
   KEY `idx_file_upload_uploader_id` (`uploader_id`) COMMENT '支持访问路径：uploader_id'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存受控上传的来源系统与原因、租户与上传人、展示名、原存储目标和冻结扫描策略；不记录业务归属，上传授权由存储适配器签发，不持久化临时 URL、签名或额外上传秘密';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存受控上传（首次上传或替换）的来源系统与原因、访问级别、租户与上传人、展示名、原存储目标、替换序号与冻结扫描策略；不记录业务归属，上传授权由存储适配器签发，不持久化临时 URL、签名或额外上传秘密';
 
 CREATE TABLE `t_file_scan_policy` (
   `policy_id` BIGINT NOT NULL COMMENT '文件扫描策略修订的稳定业务标识。',
@@ -650,19 +658,21 @@ CREATE TABLE `t_file_object` (
   `upload_id` BIGINT NULL COMMENT '文件上传的稳定业务标识。',
   `source_system` VARCHAR(64) NOT NULL COMMENT '文件来源系统，完成上传时从上传记录复制，用于反查文件来源。取值来源：内部调用身份的服务名；非固定枚举。',
   `reason_code` VARCHAR(64) NOT NULL COMMENT '来源系统声明的上传原因代码，完成上传时从上传记录复制。取值来源：来源系统自定义；非固定枚举。',
+  `access_level` VARCHAR(16) NOT NULL DEFAULT 'PRIVATE' COMMENT '访问级别，上传时由调用方声明并复制到文件，之后不变；PUBLIC 文件位于公开桶，检查通过后提供长期公开地址。允许值：PRIVATE、PUBLIC。',
   `storage_provider` VARCHAR(64) NOT NULL COMMENT '存储提供方的稳定业务代码。取值来源：Platform Support 受控代码目录；非固定枚举。',
   `storage_container_ref` VARCHAR(255) NOT NULL COMMENT '存储容器引用的业务值。',
-  `storage_object_ref` VARCHAR(255) NOT NULL COMMENT '存储对象引用的业务值。',
-  `object_version` VARCHAR(128) NOT NULL COMMENT '存储对象版本的业务值。',
-  `content_hash` CHAR(64) NOT NULL COMMENT '文件内容哈希的 SHA-256 小写十六进制值。',
-  `size_bytes` BIGINT NOT NULL COMMENT '文件字节数的长整数值。',
-  `mime_type` VARCHAR(255) NOT NULL COMMENT '对象内容的规范媒体类型。取值来源：IANA Media Types 与 Platform 允许列表；非固定枚举。',
-  `storage_encryption_key_ref` VARCHAR(255) NOT NULL COMMENT '存储加密密钥引用的业务值。',
+  `storage_object_ref` VARCHAR(255) NOT NULL COMMENT '存储对象引用；各版本共用同一对象名，由桶的版本控制区分版本。',
+  `current_version_no` INT NOT NULL DEFAULT 1 COMMENT '当前对外提供的版本号，对应 t_file_version.version_no；替换内容检查通过后递增。',
+  `object_version` VARCHAR(128) NOT NULL COMMENT '当前版本在存储中的 versionId（镜像 t_file_version）；下载签发固定到该版本。',
+  `content_hash` CHAR(64) NOT NULL COMMENT '当前版本内容的 SHA-256 小写十六进制值（镜像 t_file_version）。',
+  `size_bytes` BIGINT NOT NULL COMMENT '当前版本字节数（镜像 t_file_version）。',
+  `mime_type` VARCHAR(255) NOT NULL COMMENT '当前版本内容的规范媒体类型（镜像 t_file_version）。取值来源：IANA Media Types 与 Platform 允许列表；非固定枚举。',
+  `storage_encryption_key_ref` VARCHAR(255) NOT NULL COMMENT '当前版本的存储加密密钥引用（镜像 t_file_version）。',
   `classification` VARCHAR(64) NOT NULL COMMENT '文件分类的稳定业务代码。允许值：PUBLIC、INTERNAL、CONFIDENTIAL、RESTRICTED。',
-  `scan_policy_id` BIGINT NOT NULL COMMENT '冻结扫描策略修订的稳定业务标识。',
-  `scan_status` VARCHAR(64) NOT NULL COMMENT '扫描状态的稳定业务代码。允许值：PENDING_SCAN、SCANNING、AVAILABLE、QUARANTINED、REJECTED。',
+  `scan_policy_id` BIGINT NOT NULL COMMENT '当前版本冻结扫描策略修订的稳定业务标识（镜像 t_file_version）。',
+  `scan_status` VARCHAR(64) NOT NULL COMMENT '当前版本的扫描状态（镜像 t_file_version；首次上传检查中即为 v1 的状态）。允许值：PENDING_SCAN、SCANNING、AVAILABLE、QUARANTINED、REJECTED。',
   `object_status` VARCHAR(64) NOT NULL COMMENT '对象状态的稳定业务代码。允许值：ACTIVE、UNAVAILABLE、RETIRED。',
-  `available_time` DATETIME(6) NULL COMMENT '文件可用时间对应的 UTC 微秒时间。',
+  `available_time` DATETIME(6) NULL COMMENT '当前版本检查通过的 UTC 微秒时间（镜像 t_file_version）。',
   `version` INT NOT NULL COMMENT '文件并发版本的整数值。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
@@ -672,13 +682,15 @@ CREATE TABLE `t_file_object` (
   UNIQUE KEY `uk_file_content_owner` (`file_id`, `content_hash`) COMMENT '保证业务唯一性：file_id、content_hash',
   UNIQUE KEY `uk_file_policy_owner` (`file_id`, `scan_policy_id`) COMMENT '保证业务唯一性：file_id、scan_policy_id',
   KEY `idx_file_scan_status` (`scan_status`, `create_time`) COMMENT '支持访问路径：scan_status、create_time',
-  KEY `idx_file_object_scan_policy_id` (`scan_policy_id`) COMMENT '支持访问路径：scan_policy_id',
-  KEY `idx_file_source` (`source_system`, `reason_code`, `create_time`) COMMENT '支持访问路径：source_system、reason_code、create_time（按来源与原因反查文件）'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存不可变对象存储引用、内容摘要和创建时冻结的扫描策略修订';
+  KEY `idx_file_source` (`source_system`, `reason_code`, `create_time`) COMMENT '支持访问路径：source_system、reason_code、create_time（按来源与原因反查文件）',
+  KEY `idx_file_create_time` (`create_time`) COMMENT '支持访问路径：create_time（文件记录按时间范围倒序分页）',
+  KEY `idx_file_object_scan_policy_id` (`scan_policy_id`) COMMENT '支持访问路径：scan_policy_id'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存文件身份（来源、原因、访问级别、存储实例、桶与对象名）与当前版本镜像；地址按 file_id 不变，各版本见 t_file_version';
 
 CREATE TABLE `t_file_scan_result` (
   `scan_result_id` BIGINT NOT NULL COMMENT '文件扫描结果的稳定业务标识。',
   `file_id` BIGINT NOT NULL COMMENT '文件的稳定业务标识。',
+  `file_version_no` INT NOT NULL DEFAULT 1 COMMENT '被检查的文件版本号，对应 t_file_version.version_no。',
   `scan_requirement_id` BIGINT NOT NULL COMMENT '扫描要求的稳定业务标识。',
   `scan_policy_id` BIGINT NOT NULL COMMENT '冻结扫描策略修订的稳定业务标识。',
   `attempt_no` INT NOT NULL COMMENT '扫描尝试序号的整数值。',
@@ -687,11 +699,34 @@ CREATE TABLE `t_file_scan_result` (
   `scanned_time` DATETIME(6) NOT NULL COMMENT '扫描完成时间对应的 UTC 微秒时间。',
   `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
   PRIMARY KEY (`scan_result_id`),
-  UNIQUE KEY `uk_file_scan_attempt` (`file_id`, `scan_requirement_id`, `attempt_no`) COMMENT '保证业务唯一性：file_id、scan_requirement_id、attempt_no',
+  UNIQUE KEY `uk_file_scan_attempt` (`file_id`, `file_version_no`, `scan_requirement_id`, `attempt_no`) COMMENT '保证业务唯一性：file_id、file_version_no、scan_requirement_id、attempt_no',
   KEY `idx_scan_file_policy` (`file_id`, `scan_policy_id`) COMMENT '支持访问路径：file_id、scan_policy_id',
   KEY `idx_scan_req_policy` (`scan_requirement_id`, `scan_policy_id`) COMMENT '支持访问路径：scan_requirement_id、scan_policy_id',
   KEY `idx_file_scan_re_scan_policy_id` (`scan_policy_id`) COMMENT '支持访问路径：scan_policy_id'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='追加保存文件对其冻结策略修订中每项扫描要求的运行版本与判定';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='追加保存文件各版本对其冻结策略修订中每项扫描要求的运行版本与判定';
+CREATE TABLE `t_file_version` (
+  `version_id` BIGINT NOT NULL COMMENT '文件版本主键；回填的 v1 使用 file_id 的值，新版本使用服务端 Snowflake ID。',
+  `file_id` BIGINT NOT NULL COMMENT '所属文件 ID。',
+  `version_no` INT NOT NULL COMMENT '版本号；首次上传为 1，每次替换完成加 1，创建后不变。',
+  `upload_id` BIGINT NULL COMMENT '产生该版本的上传 ID；非上传来源的文件为空。',
+  `object_version` VARCHAR(128) NOT NULL COMMENT '该版本在存储中的 versionId；读取与下载固定到该版本，不读取 latest。',
+  `content_hash` CHAR(64) NOT NULL COMMENT '该版本实际字节的 SHA-256 小写十六进制值。',
+  `size_bytes` BIGINT NOT NULL COMMENT '该版本实际字节数。',
+  `mime_type` VARCHAR(255) NOT NULL COMMENT '服务端按文件头识别的该版本媒体类型。取值来源：IANA Media Types 与 Platform 允许列表；非固定枚举。',
+  `storage_encryption_key_ref` VARCHAR(255) NOT NULL COMMENT '该版本经存储验证的服务端加密保护引用。',
+  `scan_policy_id` BIGINT NOT NULL COMMENT '该版本在上传开始时冻结的扫描策略修订 ID。',
+  `scan_status` VARCHAR(64) NOT NULL COMMENT '该版本的扫描状态。允许值：PENDING_SCAN、SCANNING、AVAILABLE、QUARANTINED、REJECTED。',
+  `version_status` VARCHAR(16) NOT NULL COMMENT '版本状态；CANDIDATE 为检查中，CURRENT 为当前对外提供（每个文件最多一个），SUPERSEDED 为已被更新版本取代，REJECTED 为检查不通过。允许值：CANDIDATE、CURRENT、SUPERSEDED、REJECTED。',
+  `available_time` DATETIME(6) NULL COMMENT '该版本检查通过的 UTC 微秒时间；未通过为空。',
+  `version` INT NOT NULL COMMENT '乐观并发版本，新建为 1，每次成功修改递增 1。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`version_id`),
+  UNIQUE KEY `uk_file_version_no` (`file_id`, `version_no`) COMMENT '保证业务唯一性：file_id、version_no（同一文件的版本号不重复）',
+  UNIQUE KEY `uk_file_version_upload` (`upload_id`) COMMENT '保证业务唯一性：upload_id（一次上传最多产生一个版本）',
+  KEY `idx_file_version_scan` (`scan_status`, `create_time`) COMMENT '支持访问路径：scan_status、create_time（检查中版本排查）',
+  KEY `idx_file_version_scan_policy_id` (`scan_policy_id`) COMMENT '支持访问路径：scan_policy_id'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='保存文件的每一次内容版本：存储 versionId、摘要、大小、类型、冻结策略、扫描状态与版本状态；文件地址不变，当前版本镜像在文件表';
 
 
 CREATE TABLE `t_compensation_event` (

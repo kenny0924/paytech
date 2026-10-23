@@ -3,7 +3,8 @@
 <mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileStorageBucketMapper">
 
     <sql id="columns">
-        bucket_id AS bucketId, instance_id AS instanceId, bucket_name AS bucketName, status,
+        bucket_id AS bucketId, instance_id AS instanceId, bucket_name AS bucketName, access_level AS accessLevel,
+        public_base_url AS publicBaseUrl, status,
         last_check_time AS lastCheckTime, last_check_result AS lastCheckResult, version, create_time AS createTime,
         update_time AS updateTime
     </sql>
@@ -30,9 +31,10 @@
     </select>
 
     <insert id="insert">
-        INSERT INTO t_file_storage_bucket (bucket_id, instance_id, bucket_name, status, last_check_time,
-            last_check_result, version, create_time, update_time)
-        VALUES (#{row.bucketId}, #{row.instanceId}, #{row.bucketName}, #{row.status}, #{row.lastCheckTime},
+        INSERT INTO t_file_storage_bucket (bucket_id, instance_id, bucket_name, access_level, public_base_url, status,
+            last_check_time, last_check_result, version, create_time, update_time)
+        VALUES (#{row.bucketId}, #{row.instanceId}, #{row.bucketName}, #{row.accessLevel}, #{row.publicBaseUrl},
+            #{row.status}, #{row.lastCheckTime},
             #{row.lastCheckResult}, #{row.version}, #{row.createTime}, #{row.updateTime})
     </insert>
 
@@ -41,6 +43,13 @@
         SET last_check_time = #{checkedAt}, last_check_result = #{result}, version = version + 1,
             update_time = #{checkedAt}
         WHERE bucket_id = #{row.bucketId} AND version = #{row.version}
+    </update>
+
+    <update id="updatePublicBaseUrl">
+        UPDATE t_file_storage_bucket
+        SET public_base_url = #{publicBaseUrl}, last_check_time = NULL, last_check_result = NULL, version = version + 1,
+            update_time = #{now}
+        WHERE bucket_id = #{row.bucketId} AND version = #{row.version} AND status = 'DRAFT' AND access_level = 'PUBLIC'
     </update>
 
     <update id="updateStatus">

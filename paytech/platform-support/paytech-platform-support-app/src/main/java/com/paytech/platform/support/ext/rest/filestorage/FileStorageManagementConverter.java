@@ -17,6 +17,7 @@ import com.paytech.platform.support.api.filestorage.request.CreateStorageRouteRe
 import com.paytech.platform.support.api.filestorage.request.DeleteStorageRouteRequestBody;
 import com.paytech.platform.support.api.filestorage.request.RegisterStorageBucketRequestBody;
 import com.paytech.platform.support.api.filestorage.request.ReplaceStorageCredentialRequestBody;
+import com.paytech.platform.support.api.filestorage.request.UpdateStorageBucketRequestBody;
 import com.paytech.platform.support.api.filestorage.request.UpdateStorageInstanceRequestBody;
 import com.paytech.platform.support.api.filestorage.request.UpdateStorageRouteRequestBody;
 import com.paytech.platform.support.api.filestorage.response.StorageBucket;
@@ -25,6 +26,7 @@ import com.paytech.platform.support.api.filestorage.response.StorageInstanceList
 import com.paytech.platform.support.api.filestorage.response.StorageInstanceResponseBody;
 import com.paytech.platform.support.api.filestorage.response.StorageRouteListResponseBody;
 import com.paytech.platform.support.api.filestorage.response.StorageRouteResponseBody;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.storage.FileStorageChange;
 import com.paytech.platform.support.filedocument.domain.storage.FileStorageInstanceView;
 import com.paytech.platform.support.filedocument.domain.storage.FileStorageRouteView;
@@ -38,6 +40,7 @@ import com.paytech.platform.support.service.processor.filestorage.request.ListSt
 import com.paytech.platform.support.service.processor.filestorage.request.RegisterStorageBucketRequest;
 import com.paytech.platform.support.service.processor.filestorage.request.ReplaceStorageCredentialRequest;
 import com.paytech.platform.support.service.processor.filestorage.request.SaveStorageRouteRequest;
+import com.paytech.platform.support.service.processor.filestorage.request.UpdateStorageBucketRequest;
 import com.paytech.platform.support.service.processor.filestorage.request.UpdateStorageInstanceRequest;
 import com.paytech.platform.support.service.processor.filestorage.response.StorageBucketCheckOutcome;
 
@@ -98,7 +101,14 @@ public class FileStorageManagementConverter {
     RegisterStorageBucketRequest bucket(String actor, String session, String instanceCode,
         RegisterStorageBucketRequestBody body) {
         return new RegisterStorageBucketRequest(actor, session, instanceCode, body.getBucketName(),
-            text(body.getReason()));
+            accessLevel(body.getAccessLevel()), blankToNull(body.getPublicBaseUrl()), text(body.getReason()));
+    }
+
+    /** 修改 DRAFT 公开桶的对外基础地址。 */
+    UpdateStorageBucketRequest updateBucket(String actor, String session, String instanceCode, String bucketName,
+        UpdateStorageBucketRequestBody body) {
+        return new UpdateStorageBucketRequest(actor, session, instanceCode, bucketName,
+            blankToNull(body.getPublicBaseUrl()), body.getExpectedVersion(), text(body.getReason()));
     }
 
     /** 检查存储桶。 */
@@ -116,22 +126,29 @@ public class FileStorageManagementConverter {
 
     /** 新建路由。 */
     SaveStorageRouteRequest createRoute(String actor, String session, CreateStorageRouteRequestBody body) {
-        return new SaveStorageRouteRequest(actor, session, body.getSourceSystem(), body.getInstanceCode(),
-            body.getBucketName(), text(body.getReason()), body.getScanPolicyCode(), body.getMaxUploadSeconds(), 0);
+        return new SaveStorageRouteRequest(actor, session, body.getSourceSystem(), accessLevel(body.getAccessLevel()),
+            body.getInstanceCode(), body.getBucketName(), text(body.getReason()), body.getScanPolicyCode(),
+            body.getMaxUploadSeconds(), 0);
     }
 
-    /** 修改路由；来源系统取 Path。 */
-    SaveStorageRouteRequest updateRoute(String actor, String session, String sourceSystem,
+    /** 修改路由；来源系统与访问级别取 Path。 */
+    SaveStorageRouteRequest updateRoute(String actor, String session, String sourceSystem, String accessLevel,
         UpdateStorageRouteRequestBody body) {
-        return new SaveStorageRouteRequest(actor, session, sourceSystem, body.getInstanceCode(), body.getBucketName(),
-            text(body.getReason()), body.getScanPolicyCode(), body.getMaxUploadSeconds(), body.getExpectedVersion());
+        return new SaveStorageRouteRequest(actor, session, sourceSystem, accessLevel(accessLevel),
+            body.getInstanceCode(), body.getBucketName(), text(body.getReason()), body.getScanPolicyCode(),
+            body.getMaxUploadSeconds(), body.getExpectedVersion());
     }
 
-    /** 删除路由。 */
-    DeleteStorageRouteRequest deleteRoute(String actor, String session, String sourceSystem,
+    /** 删除路由；来源系统与访问级别取 Path。 */
+    DeleteStorageRouteRequest deleteRoute(String actor, String session, String sourceSystem, String accessLevel,
         DeleteStorageRouteRequestBody body) {
-        return new DeleteStorageRouteRequest(actor, session, sourceSystem, body.getExpectedVersion(),
-            text(body.getReason()));
+        return new DeleteStorageRouteRequest(actor, session, sourceSystem, accessLevel(accessLevel),
+            body.getExpectedVersion(), text(body.getReason()));
+    }
+
+    /** 访问级别 Code；不认识的值转换为空，由内部请求注解拒绝。 */
+    static FileAccessLevel accessLevel(String code) {
+        return EnumUtils.getEnumByCode(FileAccessLevel.class, code);
     }
 
     /** 保存结果：主键输出十进制字符串，状态输出稳定 Code（路由为空）。 */
@@ -154,7 +171,8 @@ public class FileStorageManagementConverter {
     /** 路由列表。 */
     StorageRouteListResponseBody routes(List<FileStorageRouteView> views) {
         return new StorageRouteListResponseBody(views.stream()
-            .map(view -> new StorageRouteResponseBody(view.getSourceSystem(), view.getInstanceCode(),
+            .map(view -> new StorageRouteResponseBody(view.getSourceSystem(), view.getAccessLevel(),
+                view.getInstanceCode(),
                 view.getBucketName(), view.getScanPolicyCode(), view.getMaxUploadSeconds(), view.getVersion(),
                 view.getUpdateTime()))
             .toList());
@@ -163,7 +181,8 @@ public class FileStorageManagementConverter {
     /** 实例与其存储桶。 */
     StorageInstanceResponseBody instance(FileStorageInstanceView view) {
         List<StorageBucket> buckets = view.getBuckets().stream()
-            .map(bucket -> new StorageBucket(bucket.getBucketName(), bucket.getStatus(), bucket.getLastCheckTime(),
+            .map(bucket -> new StorageBucket(bucket.getBucketName(), bucket.getAccessLevel(), bucket.getPublicBaseUrl(),
+                bucket.getStatus(), bucket.getLastCheckTime(),
                 bucket.getLastCheckResult(), bucket.getRouteCount(), bucket.getVersion(), bucket.getUpdateTime()))
             .toList();
         return new StorageInstanceResponseBody(view.getInstanceCode(), view.getStorageType(), view.getEndpoint(),

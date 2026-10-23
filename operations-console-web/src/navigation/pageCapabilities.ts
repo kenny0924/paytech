@@ -235,6 +235,17 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_FILE_RECORDS",
+    "displayName": "文件记录",
+    "frontendRoute": "/file-records",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FILE_RECORD_DOWNLOAD",
+        "displayName": "下载"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_CARD_BIN_LIBRARY",
     "displayName": "卡 BIN 库",
     "frontendRoute": "/card-bin-library",

@@ -28,6 +28,9 @@ public interface FileStorageBucketRepository {
     /** 回写检查结果并递增版本。 */
     void updateCheck(FileStorageBucket bucket, FileStorageCheckResult result, Instant checkedAt);
 
+    /** 按原版本修改 DRAFT 公开桶的对外基础地址并清除最近检查结果。 */
+    void updatePublicBaseUrl(FileStorageBucket bucket, String publicBaseUrl, Instant now);
+
     /** 按原版本与原状态切换状态。 */
     void updateStatus(FileStorageBucket bucket, FileStorageBucketStatus status, Instant now);
 }

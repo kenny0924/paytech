@@ -70,6 +70,17 @@ public class FileStorageBucketRepositoryImpl implements FileStorageBucketReposit
         bucket.setUpdateTime(checkedAt);
     }
 
+    /** 条件更新成功后同步基础地址、清除的检查结果、版本与时间。 */
+    @Override
+    public void updatePublicBaseUrl(FileStorageBucket bucket, String publicBaseUrl, Instant now) {
+        requireSaved(mapper.updatePublicBaseUrl(bucket, publicBaseUrl, now), bucket.getBucketName());
+        bucket.setPublicBaseUrl(publicBaseUrl);
+        bucket.setLastCheckTime(null);
+        bucket.setLastCheckResult(null);
+        bucket.setVersion(bucket.getVersion() + 1);
+        bucket.setUpdateTime(now);
+    }
+
     /** 条件更新成功后同步状态、版本与时间。 */
     @Override
     public void updateStatus(FileStorageBucket bucket, FileStorageBucketStatus status, Instant now) {

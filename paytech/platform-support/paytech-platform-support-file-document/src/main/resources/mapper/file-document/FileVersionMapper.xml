@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.filedocument.core.dal.mapper.FileVersionMapper">
+
+    <sql id="columns">
+        version_id AS versionId, file_id AS fileId, version_no AS versionNo, upload_id AS uploadId,
+        object_version AS objectVersion, content_hash AS contentHash, size_bytes AS sizeBytes, mime_type AS mimeType,
+        storage_encryption_key_ref AS storageEncryptionKeyRef, scan_policy_id AS scanPolicyId, scan_status AS scanStatus,
+        version_status AS versionStatus, available_time AS availableTime, version, create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_file_version (version_id, file_id, version_no, upload_id, object_version, content_hash, size_bytes,
+            mime_type, storage_encryption_key_ref, scan_policy_id, scan_status, version_status, available_time, version,
+            create_time, update_time)
+        VALUES (#{row.versionId}, #{row.fileId}, #{row.versionNo}, #{row.uploadId}, #{row.objectVersion},
+            #{row.contentHash}, #{row.sizeBytes}, #{row.mimeType}, #{row.storageEncryptionKeyRef}, #{row.scanPolicyId},
+            #{row.scanStatus}, #{row.versionStatus}, #{row.availableTime}, #{row.version}, #{row.createTime},
+            #{row.updateTime})
+    </insert>
+
+    <select id="select" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileVersion">
+        SELECT <include refid="columns"/> FROM t_file_version WHERE file_id = #{fileId} AND version_no = #{versionNo}
+    </select>
+
+    <select id="lock" useCache="false" flushCache="true"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileVersion">
+        SELECT <include refid="columns"/> FROM t_file_version WHERE file_id = #{fileId} AND version_no = #{versionNo}
+        FOR UPDATE
+    </select>
+
+    <select id="selectByFile" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileVersion">
+        SELECT <include refid="columns"/> FROM t_file_version WHERE file_id = #{fileId} ORDER BY version_no DESC
+    </select>
+
+    <select id="selectCompleted" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.CompletedUploadFile">
+        SELECT file_id, version_no, create_time FROM t_file_version WHERE upload_id = #{uploadId}
+    </select>
+
+    <select id="maxVersionNo" useCache="false" resultType="int">
+        SELECT COALESCE(MAX(version_no), 0) FROM t_file_version WHERE file_id = #{fileId}
+    </select>
+
+    <select id="pendingVersionNo" useCache="false" resultType="java.lang.Integer">
+        SELECT MAX(version_no) FROM t_file_version
+        WHERE file_id = #{fileId} AND version_no &gt; #{currentVersionNo} AND version_status = 'CANDIDATE'
+    </select>
+
+    <update id="updateScan">
+        UPDATE t_file_version
+        SET scan_status = #{scanStatus}, version_status = #{versionStatus}, available_time = #{availableTime},
+            version = version + 1, update_time = #{now}
+        WHERE version_id = #{row.versionId} AND version = #{row.version} AND version_status = #{row.versionStatus}
+    </update>
+
+    <update id="supersede">
+        UPDATE t_file_version SET version_status = 'SUPERSEDED', version = version + 1, update_time = #{now}
+        WHERE file_id = #{fileId} AND version_no = #{versionNo} AND version_status = 'CURRENT'
+    </update>
+</mapper>

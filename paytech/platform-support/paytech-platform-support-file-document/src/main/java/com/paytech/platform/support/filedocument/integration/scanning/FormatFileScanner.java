@@ -7,6 +7,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.util.HexFormat;
+import java.util.List;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,10 @@ public final class FormatFileScanner implements FileScanner {
     public static final String SCANNER_CODE = "PLATFORM_FORMAT";
     /** 当前检查规则版本，整数递增。 */
     static final int RUNTIME_VERSION = 1;
+    /** 新建检查策略修订时写入的最低运行版本。 */
+    public static final String MINIMUM_RUNTIME_VERSION = "1";
+    /** 本检查器能识别的规范 MIME；检查策略的允许类型只能从中选择。 */
+    public static final List<String> SUPPORTED_MIME_TYPES = StoredContentType.SUPPORTED;
     /** 类型一致。 */
     public static final String VALID = "FORMAT_VALID";
     /** 类型不一致。 */

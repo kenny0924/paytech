@@ -7,14 +7,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** 文件原版本的短时只读下载地址。 */
+/** 文件某一已核对版本的短时只读下载地址。 */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class FileDownloadResponseBody {
 
-    /** 临时 HTTPS 下载地址，以附件方式返回原版本字节。 */
+    /** 临时 HTTPS 下载地址，返回所签版本的字节（固定存储 versionId）。 */
     private String url;
 
     /**

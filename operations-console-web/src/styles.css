@@ -63,6 +63,11 @@ h1, h2 { font-weight: 600; }
 .table-panel { min-width: 0; background: #fff; }
 .table-toolbar { display: flex; justify-content: space-between; align-items: center; min-height: 38px; padding: 0 0 10px; }
 .table-caption { color: #69717d; font-size: 11px; }
+.table-count { display: inline-flex; align-items: center; gap: 4px; }
+.refresh-button.ant-btn { color: #69717d; }
+.refresh-icon { display: block; }
+.refresh-icon.is-spinning { animation: refresh-spin .8s linear infinite; }
+@keyframes refresh-spin { to { transform: rotate(360deg); } }
 .account-name { font-weight: 500; }
 .role-label { color: #515c6b; font-size: 11px; }
 .cell-meta { margin-top: 4px; color: #69717d; font-size: 11px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; max-width: 260px; }

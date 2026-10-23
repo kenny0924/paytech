@@ -4,9 +4,9 @@
  <sql id="UploadColumns">
   upload_id,tenant_id,uploader_id,source_system,reason_code,display_name,expected_size,expected_mime,
    storage_provider,storage_container_ref AS container_ref,storage_object_ref AS object_ref,
-   scan_policy_id,expires_time AS expires_at,status
+   scan_policy_id,expires_time AS expires_at,status,access_level,replaces_file_id,replacement_no,base_object_version
  </sql>
- <select id="findById" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload">
+ <select id="findById" useCache="false" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload">
   SELECT <include refid="UploadColumns"/> FROM t_file_upload WHERE upload_id=#{id}
  </select>
  <select id="policies" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPolicy">
@@ -17,11 +17,23 @@
    AND (p.effective_to IS NULL OR p.effective_to &gt; #{now})
  </select>
  <insert id="insert">
-  INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,source_system,reason_code,expected_size,expected_mime,
-   display_name,storage_provider,storage_container_ref,storage_object_ref,
-   scan_policy_id,expires_time,status,version,create_time,update_time)
+  INSERT INTO t_file_upload(upload_id,tenant_id,uploader_id,source_system,reason_code,access_level,expected_size,
+   expected_mime,display_name,storage_provider,storage_container_ref,storage_object_ref,replaces_file_id,
+   replacement_no,base_object_version,scan_policy_id,expires_time,status,version,create_time,update_time)
   VALUES(#{upload.uploadId},#{upload.tenantId},#{upload.uploaderId},#{upload.sourceSystem},#{upload.reasonCode},
-   #{upload.expectedSize},#{upload.expectedMime},#{upload.displayName},#{upload.storageProvider},
-   #{upload.containerRef},#{upload.objectRef},#{upload.scanPolicyId},#{upload.expiresAt},'CREATED',1,#{now},#{now})
+   #{upload.accessLevel},#{upload.expectedSize},#{upload.expectedMime},#{upload.displayName},#{upload.storageProvider},
+   #{upload.containerRef},#{upload.objectRef},#{upload.replacesFileId},#{upload.replacementNo},
+   #{upload.baseObjectVersion},#{upload.scanPolicyId},#{upload.expiresAt},'CREATED',1,#{now},#{now})
  </insert>
+ <select id="countOpenReplacements" useCache="false" resultType="int">
+  SELECT COUNT(*) FROM t_file_upload
+  WHERE replaces_file_id=#{fileId} AND status IN ('CREATED','UPLOADING') AND expires_time &gt; #{now}
+ </select>
+ <select id="maxReplacementNo" useCache="false" resultType="int">
+  SELECT COALESCE(MAX(replacement_no),0) FROM t_file_upload WHERE replaces_file_id=#{fileId}
+ </select>
+ <update id="cancel">
+  UPDATE t_file_upload SET status='CANCELLED',version=version+1,update_time=#{now}
+  WHERE upload_id=#{id} AND status IN ('CREATED','UPLOADING')
+ </update>
 </mapper>

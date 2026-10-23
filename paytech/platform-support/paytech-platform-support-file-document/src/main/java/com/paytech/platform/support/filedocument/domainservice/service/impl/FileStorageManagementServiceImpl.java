@@ -29,6 +29,7 @@ import com.paytech.platform.support.api.enums.FileStorageType;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageBucket;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.storage.ChangeStorageBucketStatusCommand;
 import com.paytech.platform.support.filedocument.domain.storage.ChangeStorageInstanceStatusCommand;
 import com.paytech.platform.support.filedocument.domain.storage.CreateStorageInstanceCommand;
@@ -44,7 +45,9 @@ import com.paytech.platform.support.filedocument.domain.storage.RegisterStorageB
 import com.paytech.platform.support.filedocument.domain.storage.ReplaceStorageCredentialCommand;
 import com.paytech.platform.support.filedocument.domain.storage.SaveStorageRouteCommand;
 import com.paytech.platform.support.filedocument.domain.storage.StorageInstanceSettings;
+import com.paytech.platform.support.filedocument.domain.storage.UpdateStorageBucketCommand;
 import com.paytech.platform.support.filedocument.domain.storage.UpdateStorageInstanceCommand;
+import com.paytech.platform.support.filedocument.domainservice.repository.FileScanPolicyRepository;
 import com.paytech.platform.support.filedocument.domainservice.repository.FileStorageBucketRepository;
 import com.paytech.platform.support.filedocument.domainservice.repository.FileStorageInstanceRepository;
 import com.paytech.platform.support.filedocument.domainservice.repository.FileStorageRouteRepository;
@@ -71,6 +74,7 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
     private final FileUploadRepository uploads;
     private final FileStorageRouteRepository routes;
     private final FileStorageBucketRepository buckets;
+    private final FileScanPolicyRepository policies;
     private final FileStorageInstanceRepository instances;
 
     /** 实例与存储桶按代码、名称排序，路由数按桶统计后汇总到实例。 */
@@ -96,7 +100,8 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
         return routes.findAll().stream().map(route -> {
             FileStorageBucket bucket = bucketsById.get(route.getBucketId());
             FileStorageInstance instance = bucket == null ? null : instancesById.get(bucket.getInstanceId());
-            return new FileStorageRouteView(route.getSourceSystem(), instance == null ? null : instance.getInstanceCode(),
+            return new FileStorageRouteView(route.getSourceSystem(), route.getAccessLevel().getCode(),
+                instance == null ? null : instance.getInstanceCode(),
                 bucket == null ? null : bucket.getBucketName(), route.getScanPolicyCode(), route.getMaxUploadSeconds(),
                 route.getVersion(), route.getUpdateTime());
         }).toList();
@@ -212,14 +217,41 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
         bucket.setBucketId(command.getBucketId());
         bucket.setInstanceId(instance.getInstanceId());
         bucket.setBucketName(command.getBucketName());
+        bucket.setAccessLevel(command.getAccessLevel());
+        bucket.setPublicBaseUrl(command.getPublicBaseUrl());
         bucket.setStatus(FileStorageBucketStatus.DRAFT);
         bucket.setVersion(1);
         bucket.setCreateTime(command.getNow());
         bucket.setUpdateTime(command.getNow());
         buckets.insert(bucket);
-        return bucketChange(instance, bucket, 0, List.of(
-            new FileStorageFieldChange(FileStorageField.BUCKET_NAME, null, bucket.getBucketName()),
-            new FileStorageFieldChange(FileStorageField.STATUS, null, bucket.getStatus().getCode())));
+        var changes = new ArrayList<FileStorageFieldChange>();
+        changes.add(new FileStorageFieldChange(FileStorageField.BUCKET_NAME, null, bucket.getBucketName()));
+        changes.add(new FileStorageFieldChange(FileStorageField.ACCESS_LEVEL, null, bucket.getAccessLevel().getCode()));
+        diff(changes, FileStorageField.PUBLIC_BASE_URL, null, bucket.getPublicBaseUrl());
+        changes.add(new FileStorageFieldChange(FileStorageField.STATUS, null, bucket.getStatus().getCode()));
+        return bucketChange(instance, bucket, 0, changes);
+    }
+
+    /** 只允许 DRAFT 且 PUBLIC 的桶；地址变化时清除最近检查结果，需重新检查才能启用。无变化时不递增版本。 */
+    @Override
+    public FileStorageChange updateBucket(UpdateStorageBucketCommand command) {
+        FileStorageInstance instance = lockInstance(command.getInstanceCode(), null);
+        FileStorageBucket bucket = lockBucket(instance, command.getBucketName(), command.getExpectedVersion());
+        if (bucket.getAccessLevel() != FileAccessLevel.PUBLIC) {
+            throw new BizCheckFailException("只有公开存储桶可以修改对外基础地址: " + code(instance, bucket));
+        }
+        if (bucket.getStatus() != FileStorageBucketStatus.DRAFT) {
+            throw new BizCheckFailException("对外基础地址只能在存储桶为 DRAFT 时修改: " + code(instance, bucket));
+        }
+        int before = bucket.getVersion();
+        var changes = new ArrayList<FileStorageFieldChange>();
+        diff(changes, FileStorageField.PUBLIC_BASE_URL, bucket.getPublicBaseUrl(), command.getPublicBaseUrl());
+        if (!changes.isEmpty()) {
+            String previousCheck = bucket.getLastCheckResult() == null ? null : bucket.getLastCheckResult().getCode();
+            buckets.updatePublicBaseUrl(bucket, command.getPublicBaseUrl(), command.getNow());
+            diff(changes, FileStorageField.CHECK_RESULT, previousCheck, null);
+        }
+        return bucketChange(instance, bucket, before, changes);
     }
 
     /** 检查结果与时间覆盖上一次结果，版本递增。 */
@@ -254,13 +286,14 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
             List.of(new FileStorageFieldChange(FileStorageField.STATUS, from.getCode(), to.getCode())));
     }
 
-    /** 目标桶与实例须为 ACTIVE、扫描策略须有 ACTIVE 修订；来源系统唯一。 */
+    /** 目标桶与实例须为 ACTIVE 且桶与路由同访问级别、扫描策略须有 ACTIVE 修订；来源系统与访问级别唯一。 */
     @Override
     public FileStorageChange createRoute(SaveStorageRouteCommand command) {
         FileStorageBucket bucket = lockRouteTarget(command);
         FileStorageRoute route = new FileStorageRoute();
         route.setRouteId(command.getRouteId());
         route.setSourceSystem(command.getSourceSystem());
+        route.setAccessLevel(command.getAccessLevel());
         route.setBucketId(bucket.getBucketId());
         route.setScanPolicyCode(command.getScanPolicyCode());
         route.setMaxUploadSeconds(command.getMaxUploadSeconds());
@@ -275,7 +308,8 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
     @Override
     public FileStorageChange updateRoute(SaveStorageRouteCommand command) {
         FileStorageBucket bucket = lockRouteTarget(command);
-        FileStorageRoute route = lockRoute(command.getSourceSystem(), command.getExpectedVersion());
+        FileStorageRoute route = lockRoute(command.getSourceSystem(), command.getAccessLevel(),
+            command.getExpectedVersion());
         FileStorageRoute target = new FileStorageRoute();
         target.setBucketId(bucket.getBucketId());
         target.setScanPolicyCode(command.getScanPolicyCode());
@@ -288,15 +322,15 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
         return routeChange(route, before, changes);
     }
 
-    /** 默认路由不能删除；删除不影响已创建的上传。 */
+    /** 默认私有路由不能删除；删除不影响已创建的上传。 */
     @Override
-    public FileStorageChange deleteRoute(String sourceSystem, int expectedVersion) {
-        if (DEFAULT_ROUTE.equals(sourceSystem)) {
-            throw new BizCheckFailException("默认写入路由不能删除");
+    public FileStorageChange deleteRoute(String sourceSystem, FileAccessLevel accessLevel, int expectedVersion) {
+        if (DEFAULT_ROUTE.equals(sourceSystem) && accessLevel == FileAccessLevel.PRIVATE) {
+            throw new BizCheckFailException("默认私有写入路由不能删除");
         }
-        FileStorageRoute route = lockRoute(sourceSystem, expectedVersion);
+        FileStorageRoute route = lockRoute(sourceSystem, accessLevel, expectedVersion);
         routes.delete(route);
-        return new FileStorageChange(FileStorageChange.ROUTE, route.getRouteId(), sourceSystem, null,
+        return new FileStorageChange(FileStorageChange.ROUTE, route.getRouteId(), routeCode(route), null,
             route.getVersion(), route.getVersion(), List.of(
                 new FileStorageFieldChange(FileStorageField.SCAN_POLICY, route.getScanPolicyCode(), null),
                 new FileStorageFieldChange(FileStorageField.MAX_UPLOAD_SECONDS,
@@ -328,16 +362,16 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
     }
 
     /** 锁定路由并核对版本；不存在返回 404。 */
-    FileStorageRoute lockRoute(String sourceSystem, int expectedVersion) {
-        FileStorageRoute route = routes.lockBySource(sourceSystem);
+    FileStorageRoute lockRoute(String sourceSystem, FileAccessLevel accessLevel, int expectedVersion) {
+        FileStorageRoute route = routes.lockBySource(sourceSystem, accessLevel);
         if (route == null) {
             throw new FailException(CommonErrorCode.NOT_FOUND);
         }
-        requireVersion(route.getVersion(), expectedVersion, "写入路由", sourceSystem);
+        requireVersion(route.getVersion(), expectedVersion, "写入路由", routeCode(route));
         return route;
     }
 
-    /** 按实例 → 桶顺序锁定路由目标，并核对状态与扫描策略。 */
+    /** 按实例 → 桶 → 策略 ACTIVE 修订顺序锁定路由目标，并核对状态、访问级别与扫描策略；策略行锁与停用互斥。 */
     FileStorageBucket lockRouteTarget(SaveStorageRouteCommand command) {
         FileStorageInstance instance = instances.lockByCode(command.getInstanceCode());
         if (instance == null || instance.getStatus() != FileStorageInstanceStatus.ACTIVE) {
@@ -348,7 +382,13 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
             throw new BizCheckFailException(
                 "写入路由只能指向已启用的存储桶: " + command.getInstanceCode() + "/" + command.getBucketName());
         }
-        if (uploads.policies(command.getScanPolicyCode(), command.getNow()).size() != 1) {
+        if (bucket.getAccessLevel() != command.getAccessLevel()) {
+            throw new BizCheckFailException("写入路由只能指向同访问级别的存储桶: " + command.getInstanceCode() + "/"
+                + command.getBucketName() + " 为 " + bucket.getAccessLevel().getCode() + "，路由为 "
+                + command.getAccessLevel().getCode());
+        }
+        if (policies.lockActive(command.getScanPolicyCode()) == null
+            || uploads.policies(command.getScanPolicyCode(), command.getNow()).size() != 1) {
             throw new BizCheckFailException("扫描策略没有唯一的有效修订: " + command.getScanPolicyCode());
         }
         return bucket;
@@ -458,6 +498,8 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
         var changes = new ArrayList<FileStorageFieldChange>();
         if (before == null) {
             changes.add(new FileStorageFieldChange(FileStorageField.CODE, null, command.getSourceSystem()));
+            changes.add(new FileStorageFieldChange(FileStorageField.ACCESS_LEVEL, null,
+                command.getAccessLevel().getCode()));
         }
         if (before == null || !Objects.equals(before.getBucketId(), after.getBucketId())) {
             changes.add(new FileStorageFieldChange(FileStorageField.STORAGE_INSTANCE, null, command.getInstanceCode()));
@@ -506,8 +548,13 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
 
     /** 路由变更结果。 */
     FileStorageChange routeChange(FileStorageRoute route, int before, List<FileStorageFieldChange> changes) {
-        return new FileStorageChange(FileStorageChange.ROUTE, route.getRouteId(), route.getSourceSystem(), null, before,
+        return new FileStorageChange(FileStorageChange.ROUTE, route.getRouteId(), routeCode(route), null, before,
             route.getVersion(), changes);
+    }
+
+    /** 路由的审计编码：{来源系统}/{访问级别}。 */
+    static String routeCode(FileStorageRoute route) {
+        return route.getSourceSystem() + "/" + route.getAccessLevel().getCode();
     }
 
     /** 存储桶的审计编码。 */
@@ -520,7 +567,8 @@ public class FileStorageManagementServiceImpl implements FileStorageManagementSe
         Map<Long, Long> routeCounts) {
         List<FileStorageBucketView> bucketViews = ownBuckets.stream()
             .sorted(Comparator.comparing(FileStorageBucket::getBucketName))
-            .map(bucket -> new FileStorageBucketView(bucket.getBucketName(), bucket.getStatus().getCode(),
+            .map(bucket -> new FileStorageBucketView(bucket.getBucketName(), bucket.getAccessLevel().getCode(),
+                bucket.getPublicBaseUrl(), bucket.getStatus().getCode(),
                 bucket.getLastCheckTime(),
                 bucket.getLastCheckResult() == null ? null : bucket.getLastCheckResult().getCode(),
                 Math.toIntExact(routeCounts.getOrDefault(bucket.getBucketId(), 0L)), bucket.getVersion(),

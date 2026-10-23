@@ -2,6 +2,8 @@ package com.paytech.platform.support.filedocument.core.dal.dataobject;
 
 import java.time.Instant;
 
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,6 +20,9 @@ public class FileStorageRoute {
      * <li>内部调用身份的服务名，或 * 表示默认路由。</li>
      */
     private String sourceSystem;
+
+    /** 访问级别；与来源系统共同构成路由键。 */
+    private FileAccessLevel accessLevel;
 
     /** 新上传写入的存储桶 ID。 */
     private Long bucketId;

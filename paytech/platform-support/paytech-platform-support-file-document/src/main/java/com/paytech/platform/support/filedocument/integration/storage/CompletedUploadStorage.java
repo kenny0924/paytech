@@ -1,6 +1,7 @@
 package com.paytech.platform.support.filedocument.integration.storage;
 
 import java.io.InputStream;
+import java.util.List;
 
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
 /** 完成适配器必须以 uploadId 幂等固定原目标；同一 Upload 的恢复永远打开同一版本。
@@ -12,6 +13,13 @@ public interface CompletedUploadStorage {
     String providerCode();
     /** 在事务外固定并打开准确版本；未知结果须按原 Upload 恢复，不得重新选择 latest。 */
     Opened open(Upload upload);
+    /**
+     * 替换上传：列出存储中该对象比 base_object_version 新的全部版本（含删除标记），最新在前
+     * <li>找不到基准版本时视为不可用，不能把所有版本都当作新版本。</li>
+     */
+    List<String> newerVersions(Upload upload);
+    /** 替换上传：打开已核对唯一性的准确版本，返回其服务端识别类型、加密引用与字节流。 */
+    Opened open(Upload upload,String version);
     /**
      * @param version 非空不可变版本
      * @param detectedMime 服务端识别结果

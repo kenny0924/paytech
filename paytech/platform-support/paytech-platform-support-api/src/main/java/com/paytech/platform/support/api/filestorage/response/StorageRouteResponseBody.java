@@ -17,6 +17,12 @@ public class StorageRouteResponseBody {
     /** 来源系统，或 * 表示默认路由。 */
     private String sourceSystem;
 
+    /**
+     * 访问级别
+     * <li>PRIVATE 或 PUBLIC；与来源系统共同构成路由键，只指向同级别的桶。</li>
+     */
+    private String accessLevel;
+
     /** 目标实例代码。 */
     private String instanceCode;
 

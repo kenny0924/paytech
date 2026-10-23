@@ -118,11 +118,15 @@ public class PlatformClientConfiguration {
             .createClient(CurrencySpecManagementApi.class);
     }
 
-    /** 存储管理沿用配置写操作的发现与字段错误解码，外显 Platform 业务拒绝原因（如被写入路由引用不能停用），读取超时放宽到 9 秒。 */
+    /**
+     * 存储管理与文件记录沿用配置写操作的发现与字段错误解码，外显 Platform 业务拒绝原因（如被写入路由引用不能停用），读取超时放宽到 9 秒
+     * <li>额外登记 Platform 文件错误码（文件不存在、版本不可下载），否则未登记的 Code 会被当作上游无效响应 502。</li>
+     */
     @Bean
     FileStorageManagementApi fileStorageManagementApi(Environment environment, PlatformDiscoveryInterceptor discovery,
         @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
-        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, FILE_STORAGE_READ_TIMEOUT)
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, FILE_STORAGE_READ_TIMEOUT,
+            FileErrorCode.values())
             .createClient(FileStorageManagementApi.class);
     }
 

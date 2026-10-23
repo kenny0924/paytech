@@ -58,7 +58,8 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
         + "\"sourceSystem\":\"client-console-bff\",\"reasonCode\":\"CLIENT_ONBOARDING_MATERIAL\",\"displayName\":\"registration.pdf\","
         + "\"mimeType\":\"application/pdf\",\"sizeBytes\":\"1024\",\"contentHash\":\"" + "a".repeat(64) + "\","
         + "\"scanStatus\":\"AVAILABLE\",\"objectStatus\":\"ACTIVE\",\"uploaderAccountId\":\"8601\","
-        + "\"createTime\":\"2026-10-13T00:00:00Z\"}";
+        + "\"createTime\":\"2026-10-13T00:00:00Z\",\"accessLevel\":\"PRIVATE\",\"versionNo\":1,\"publicUrl\":null,"
+        + "\"versionedUrl\":null,\"pendingVersionNo\":null}";
     private static final String DOWNLOAD = "{\"url\":\"https://storage.local.test/obj?sig=1\",\"expiresAt\":\"2026-10-14T00:01:00Z\",\"disposition\":\"ATTACHMENT\"}";
     private static final String COMMAND = "{\"caseId\":\"7001\",\"status\":\"RETURNED\",\"accepted\":true,\"processing\":false}";
 

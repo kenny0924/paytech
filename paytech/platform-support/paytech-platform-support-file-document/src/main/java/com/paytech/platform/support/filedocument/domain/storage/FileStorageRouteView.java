@@ -13,6 +13,9 @@ public class FileStorageRouteView {
     /** 来源系统或 *。 */
     private final String sourceSystem;
 
+    /** 访问级别 Code。 */
+    private final String accessLevel;
+
     /** 目标实例代码。 */
     private final String instanceCode;
 

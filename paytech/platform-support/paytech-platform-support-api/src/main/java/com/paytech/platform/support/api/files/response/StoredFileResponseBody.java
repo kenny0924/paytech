@@ -31,7 +31,7 @@ public class StoredFileResponseBody {
 
     /**
      * 展示文件名
-     * <li>清除路径与控制字符后的名称；非上传来源为空。</li>
+     * <li>当前版本上传时清除路径与控制字符后的名称；非上传来源为空。</li>
      */
     private String displayName;
 
@@ -56,11 +56,42 @@ public class StoredFileResponseBody {
      */
     private String objectStatus;
 
-    /** 上传人账号 ID，十进制字符串；纯系统上传为空。 */
+    /** 首次上传的上传人账号 ID，十进制字符串；纯系统上传为空。 */
     private String uploaderAccountId;
 
     /** 文件登记时间（UTC）。 */
     private Instant createTime;
+
+    /**
+     * 访问级别
+     * <li>PRIVATE 或 PUBLIC；上传时声明，之后不变。</li>
+     */
+    private String accessLevel;
+
+    /**
+     * 当前对外提供的版本号
+     * <li>从 1 开始；替换内容检查通过后递增。元数据（类型、大小、摘要、扫描状态）均为该版本的值。</li>
+     * <li>Platform 总是返回；声明为包装类型，便于先升级的消费方兼容尚未升级的 Platform。</li>
+     */
+    private Integer versionNo;
+
+    /**
+     * 长期公开地址
+     * <li>{@code 公开桶基础地址/对象名}；只有 PUBLIC 且当前版本 AVAILABLE 时返回，否则为空。替换后地址不变。</li>
+     */
+    private String publicUrl;
+
+    /**
+     * 带版本参数的公开地址
+     * <li>{@code publicUrl?v=versionNo}，用于需要绕开 CDN 缓存的场景；与 publicUrl 同时为空或非空。</li>
+     */
+    private String versionedUrl;
+
+    /**
+     * 检查中的替换版本号
+     * <li>有已完成上传、尚在检查的替换版本时返回；没有时为空。</li>
+     */
+    private Integer pendingVersionNo;
 
     /** 展示名可能包含个人信息。 */
     @Override

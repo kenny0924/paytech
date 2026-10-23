@@ -19,6 +19,7 @@ import com.paytech.platform.support.filedocument.domain.file.UploadModels.Comple
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
 import com.paytech.platform.support.filedocument.domainservice.service.FileLifecycleService;
 import com.paytech.platform.support.filedocument.integration.storage.CompletedUploadVerifier;
+import com.paytech.platform.support.filedocument.integration.storage.CompletedUploadVerifier.Replacement;
 import com.paytech.platform.support.service.handler.FileScanHandler;
 import com.paytech.platform.support.service.processor.files.request.CompleteFileUploadRequest;
 import com.paytech.platform.support.service.processor.files.response.CompleteFileUploadResponse;
@@ -26,11 +27,13 @@ import com.paytech.platform.support.service.processor.files.response.CompleteFil
 import lombok.AllArgsConstructor;
 
 /**
- * 完成内部文件上传：核对来源 → 已完成返回原回执 → 事务外核对存储 → 登记文件与扫描任务
+ * 完成内部文件上传（首次上传或替换）：核对来源 → 已完成返回原回执 → 事务外核对存储 → 登记文件或新版本与扫描任务
  * <li>资源锁按 uploadId（Key 沿用 {@code file:upload:complete:<uploadId>}，滚动发布期间新旧实例互斥）；上传行当前读与状态 CAS
  * 继续保护锁租约失效后的竞争。</li>
  * <li>只有开始上传的来源系统可以完成，其他来源按不存在处理，防止误完成别的服务的上传。</li>
  * <li>存储核对按上传记录上的实例与桶读取，在事务外；文件登记与 FILE_SCAN 补偿任务在同一短事务提交。</li>
+ * <li>替换上传要求存储中比开始时新的版本恰好 1 个：0 个返回 409 且不改状态；多于 1 个先以短事务作废本次替换再返回 409。
+ * 新版本作为候选单独检查（FILE_SCAN 事件键 {@code fileId:vN}），文件当前版本不变。</li>
  */
 @Component
 @AllArgsConstructor
@@ -71,29 +74,52 @@ public class CompleteFileUploadProcessor
         // 已完成返回原回执
         Completed completed = files.completedFile(upload);
         if (completed != null) {
-            return response(request, completed.fileId(), completed.completedAt());
+            return response(request, completed);
         }
         files.requireOpen(upload, clock.instant());
 
         // 事务外核对存储
-        Verified verified = verifier.verify(upload);
+        Verified verified = upload.replacement() ? verifyReplacement(upload) : verifier.verify(upload);
 
         // 登记文件与扫描任务
         return transactions.write(() -> register(request, verified));
     }
 
-    /** 事务内：当前读锁定原上传，并发下已完成则返回原回执，否则登记文件并注册扫描任务。 */
+    /** 替换上传：比开始时新的版本恰好一个才继续；多余写入先作废本次替换。 */
+    Verified verifyReplacement(Upload upload) {
+        Replacement check = verifier.verifyReplacement(upload);
+        if (check.newerVersions() == 0) {
+            throw new FailException(FileErrorCode.FILE_STATE_CONFLICT, "未检测到替换内容的上传，请先按授权上传再完成");
+        }
+        if (check.newerVersions() > 1) {
+            Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+            transactions.write(() -> {
+                files.cancelReplacement(upload, now);
+                return null;
+            });
+            throw new FailException(FileErrorCode.FILE_STATE_CONFLICT, "检测到多次写入，本次替换已作废，请重新开始替换");
+        }
+        return check.verified();
+    }
+
+    /** 事务内：当前读锁定原上传，并发下已完成则返回原回执，否则登记文件或新版本并注册扫描任务。 */
     CompleteFileUploadResponse register(CompleteFileUploadRequest request, Verified verified) {
         Upload current = requireSource(files.lockSourceUpload(request.getUploadId()), request);
         Completed completed = files.completedFile(current);
         if (completed != null) {
-            return response(request, completed.fileId(), completed.completedAt());
+            return response(request, completed);
         }
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
+        if (current.replacement()) {
+            int versionNo = files.completeReplacement(ids.nextId(), current, verified, now);
+            events.register(FileScanHandler.buildEvent(current.replacesFileId(), versionNo));
+            return new CompleteFileUploadResponse(request.getUploadId(), current.replacesFileId(), now, versionNo,
+                current.accessLevel());
+        }
         long fileId = ids.nextId();
         files.complete(fileId, current, verified, now);
-        events.register(FileScanHandler.buildEvent(fileId));
-        return response(request, fileId, now);
+        events.register(FileScanHandler.buildEvent(fileId, 1));
+        return new CompleteFileUploadResponse(request.getUploadId(), fileId, now, 1, current.accessLevel());
     }
 
     /** 来源系统不一致按不存在处理。 */
@@ -105,7 +131,8 @@ public class CompleteFileUploadProcessor
     }
 
     /** 完成操作身份即 uploadId，首次与重复完成返回同一组值。 */
-    CompleteFileUploadResponse response(CompleteFileUploadRequest request, long fileId, Instant completedAt) {
-        return new CompleteFileUploadResponse(request.getUploadId(), fileId, completedAt);
+    CompleteFileUploadResponse response(CompleteFileUploadRequest request, Completed completed) {
+        return new CompleteFileUploadResponse(request.getUploadId(), completed.fileId(), completed.completedAt(),
+            completed.versionNo(), completed.accessLevel());
     }
 }

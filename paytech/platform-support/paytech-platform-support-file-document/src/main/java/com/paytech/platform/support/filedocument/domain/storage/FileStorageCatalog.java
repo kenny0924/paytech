@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageBucket;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 
 /**
  * 一次读取的存储实例、存储桶与写入路由全集；只在 file-document 模块内使用，不含密钥原值
@@ -32,7 +33,8 @@ public final class FileStorageCatalog {
         this.buckets = buckets.stream()
             .collect(Collectors.toUnmodifiableMap(FileStorageBucket::getBucketId, Function.identity()));
         this.routes = routes.stream()
-            .collect(Collectors.toUnmodifiableMap(FileStorageRoute::getSourceSystem, Function.identity()));
+            .collect(Collectors.toUnmodifiableMap(route -> routeKey(route.getSourceSystem(), route.getAccessLevel()),
+                Function.identity()));
         this.loadedAt = loadedAt;
     }
 
@@ -58,9 +60,14 @@ public final class FileStorageCatalog {
         return buckets.get(bucketId);
     }
 
-    /** 来源系统的精确路由；不存在为空。 */
-    public FileStorageRoute route(String sourceSystem) {
-        return routes.get(sourceSystem);
+    /** 来源系统在该访问级别的精确路由；不存在为空。 */
+    public FileStorageRoute route(String sourceSystem, FileAccessLevel accessLevel) {
+        return routes.get(routeKey(sourceSystem, accessLevel));
+    }
+
+    /** 路由索引键：来源系统与访问级别。 */
+    private static String routeKey(String sourceSystem, FileAccessLevel accessLevel) {
+        return sourceSystem + "|" + accessLevel.getCode();
     }
 
     /** 加载时间。 */

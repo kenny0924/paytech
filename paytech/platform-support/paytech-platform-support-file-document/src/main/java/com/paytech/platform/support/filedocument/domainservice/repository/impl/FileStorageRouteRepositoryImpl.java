@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.core.dal.mapper.FileStorageRouteMapper;
 import com.paytech.platform.support.filedocument.domainservice.repository.FileStorageRouteRepository;
 
@@ -27,10 +28,22 @@ public class FileStorageRouteRepositoryImpl implements FileStorageRouteRepositor
         return mapper.selectAll();
     }
 
-    /** 按来源系统排他锁定。 */
+    /** 按来源系统与访问级别排他锁定。 */
     @Override
-    public FileStorageRoute lockBySource(String sourceSystem) {
-        return mapper.lockBySource(sourceSystem);
+    public FileStorageRoute lockBySource(String sourceSystem, FileAccessLevel accessLevel) {
+        return mapper.lockBySource(sourceSystem, accessLevel);
+    }
+
+    /** 引用策略代码的路由数。 */
+    @Override
+    public int countByPolicyCode(String policyCode) {
+        return mapper.countByPolicyCode(policyCode);
+    }
+
+    /** 引用策略代码的路由。 */
+    @Override
+    public List<FileStorageRoute> findByPolicyCode(String policyCode) {
+        return mapper.selectByPolicyCode(policyCode);
     }
 
     /** 指向存储桶的路由数。 */
@@ -54,7 +67,8 @@ public class FileStorageRouteRepositoryImpl implements FileStorageRouteRepositor
             if (!String.valueOf(failure.getMostSpecificCause().getMessage()).contains("uk_file_storage_route_source")) {
                 throw failure;
             }
-            throw new BizCheckFailException("写入路由已存在: " + route.getSourceSystem(), failure);
+            throw new BizCheckFailException(
+                "写入路由已存在: " + route.getSourceSystem() + "/" + route.getAccessLevel().getCode(), failure);
         }
     }
 

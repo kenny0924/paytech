@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.file.FileDisplayName;
 
 import lombok.AllArgsConstructor;
@@ -49,6 +50,17 @@ public class StartFileUploadRequest {
     /** 上传人账号；可空，Platform 不核对真实性。 */
     @Positive(message = "上传人账号必须为正整数")
     private final Long uploaderAccountId;
+
+    /**
+     * 调用方声明的访问级别
+     * <li>可空，按 PRIVATE；PUBLIC 按来源系统的公开写入路由落到公开桶，不回落到私有路由。</li>
+     */
+    private final FileAccessLevel accessLevel;
+
+    /** 访问级别；未声明按 PRIVATE。 */
+    public FileAccessLevel effectiveAccessLevel() {
+        return accessLevel == null ? FileAccessLevel.PRIVATE : accessLevel;
+    }
 
     /** 清理后的展示名。 */
     public String displayName() {

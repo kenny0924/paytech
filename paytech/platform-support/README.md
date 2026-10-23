@@ -328,6 +328,40 @@ The unique Scope code and database row/version checks remain the final concurren
 - 增量 SQL（均未执行）：`docs/database/sql/changes/2026-10-22-file-storage-management.sql`（第一段）、
   `docs/database/sql/changes/2026-10-22-file-owner-removal.sql`（第二段删除 Owner 列与表，新链路验收后执行，执行前备份）。
 
+## File public bucket, replacement and records（文件公开桶，2026-10-22）
+
+需求与方案：[requirement](../../requirements/20261022/platform-support-文件公开桶/requirement.md)、
+[technique](../../requirements/20261022/platform-support-文件公开桶/technique.md)、
+[接口合同](../../requirements/20261022/platform-support-文件公开桶/tasks/common.md)。
+
+- **访问级别**：`StartFileUploadRequestBody.accessLevel`（`PRIVATE` 缺省 / `PUBLIC`）。写入路由键为 `(sourceSystem, accessLevel)`，
+  没有精确路由时用同级别的 `*`，不跨级别回落；路由只能指向同级别的桶，桶登记时声明级别，`PUBLIC` 桶必须登记 `publicBaseUrl`
+  （https、不带查询串与片段、不以 `/` 结尾，只在 DRAFT 时经 `PUT /storage-admin/v1/instances/{code}/buckets/{bucket}` 修改）。
+  路由维护路径改为 `/storage-admin/v1/routes/{sourceSystem}/{accessLevel}`。
+- **桶检查**：在原有检查之后不带凭据读取探测对象——私有桶必须被拒绝（否则 `PUBLIC_ACCESS_ALLOWED`），公开桶必须经对外基础地址
+  读回原字节（否则 `PUBLIC_READ_FAILED`）。匿名读取使用实例的超时与私有证书（未登记时用 JDK 信任库），走本模块已登记的 OkHttp。
+  公开桶需桶策略允许匿名 `s3:GetObject`；Platform 账号另需 `s3:ListBucketVersions`、`s3:GetObjectVersion`（替换核对）与
+  CopyObject 所需权限（公开恢复）。浏览器 CORS 需允许不带 `If-None-Match` 的 `PUT`（替换上传）。
+- **公开地址**：PUBLIC 文件只在当前版本 `AVAILABLE` 后于完成回执与元数据中返回 `publicUrl = publicBaseUrl + "/" + objectRef`
+  与 `versionedUrl = publicUrl + "?v={versionNo}"`；私有文件两者为空。
+- **替换**：`POST /internal/files/v1/files/{fileId}/replacements`（只有原来源系统；跨来源 404；请求体带 `accessLevel` / `reasonCode`
+  为 422）。`StartFileReplacementProcessor` 以 TRY_LOCK `file:replace:{fileId}` 锁定文件，要求文件 AVAILABLE、没有未结束的替换、
+  公开文件的存储最新版本仍对外提供当前版本，否则 409；冻结路由当前的检查策略修订和存储最新 versionId，授权期限取路由上传期限
+  （无路由时 900 秒），只签 `Content-Type`。公开文件在同一事务登记 `FILE_PUBLIC_SYNC`。完成时比基准新的版本为 0 时 409、多于 1 个时
+  作废该替换并 409；恰好 1 个时登记候选版本并登记 `FILE_SCAN`（键 `{fileId}:v{n}`）。检查通过才把候选切为当前版本，此前查询、下载
+  都返回旧版本，`pendingVersionNo` 为候选版本号。
+- **`FILE_PUBLIC_SYNC`**（键 `{fileId}:{uploadId}`，提交后首次执行，处理超时 25 秒，最多 30 次，30 秒退避至 5 分钟）：替换未结束（授权未到期或候选检查中）
+  或替换锁被占用时可重试；之后已开始新替换时直接完成；存储最新版本不是当前版本（或其恢复复制）时把当前版本复制为最新版本并写
+  `platform-restored-from` 元数据。
+- **检查策略管理**（`/storage-admin/v1/scan-policies`，读 `FILE_STORAGE_READ`、写 `FILE_STORAGE_MANAGE`）：新建（修订 1 草稿与标准格式
+  检查要求）、以 ACTIVE 为模板新建修订、修改 / 废弃草稿、激活（旧 ACTIVE 改 RETIRED）、停用（被路由引用时拒绝）。路由冻结策略代码，
+  上传冻结开始时 ACTIVE 的修订，新修订只影响之后的上传；锁 `file-scan-policy:{code}`。
+- **文件记录**（`/storage-admin/v1/files`，查看 `FILE_RECORD_READ`，下载 `FILE_RECORD_DOWNLOAD`）：按创建时间范围（必填，最长 31 天）
+  与文件 ID、来源系统、原因、访问级别、检查状态、是否有替换进行中分页查询；详情含存储位置、公开地址、版本历史、检查结果与上传记录；
+  下载当前或指定 `versionNo` 的版本（候选 / 被拒绝版本 409），按附件签发并写 `FILE_DOWNLOAD_AUTHORIZE` 审计（属性 `version_no`）。
+- 增量 SQL：`docs/database/sql/changes/2026-10-22-file-public-bucket.sql`（新表 `t_file_version` 与五表变更），回填存量 v1 版本行的 DML
+  在[需求目录](../../requirements/20261022/platform-support-文件公开桶/db/dml.sql)（可重跑）。
+
 ## Health
 
 The same private HTTP listener exposes:

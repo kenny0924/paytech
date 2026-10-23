@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Alert, Button, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch } from 'antd';
+import { Alert, Button, Drawer, Form, Input, InputNumber, Modal, Radio, Select, Space, Switch, Tag, Typography } from 'antd';
 import {
-  allowedCredentialModes, bucketCheckValidMillis, bucketObjectCode, bucketNamePattern, bucketPath, checkResultLabels, connectTimeoutRange, createInstanceBody,
-  createRouteBody, credentialBody, credentialModeLabels, decodeBucketCheck, decodeMutation, defaultSourceSystem, instanceCodePattern,
-  instancePath, readTimeoutRange, regionPattern, routePath, scanPolicyCodePattern, routeTargets, sourceSystemLabel, sourceSystemPattern, storageAdminPath, storageTypeLabels,
-  storageTypes, targetValue, updateInstanceBody, updateRouteBody, uploadSecondsRange,
+  accessLevelLabels, accessLevels, allowedCredentialModes, bucketCheckValidMillis, bucketObjectCode, bucketNamePattern, bucketPath, checkResultLabels,
+  connectTimeoutRange, createInstanceBody, createRouteBody, credentialBody, credentialModeLabels, decodeBucketCheck, decodeMutation, defaultSourceSystem,
+  instanceCodePattern, instancePath, privateAccessGuidance, publicBaseUrlMaxLength, publicReadGuidance, publicReadPolicyExample, readTimeoutRange,
+  regionPattern, registerBucketBody, routeObjectCode, routePath, routeTargets, sourceSystemLabel, sourceSystemPattern, storageAdminPath,
+  storageTypeLabels, storageTypes, targetValue, updateBucketBody, updateInstanceBody, updateRouteBody, uploadSecondsRange, validPublicBaseUrl,
 } from './fileStorage';
 import type {
-  BucketCheck, CredentialFormValues, InstanceFormValues, RouteFormValues, StorageInstance, StorageMutation, StorageRoute, StorageType,
+  AccessLevel, BucketCheck, BucketFormValues, BucketRow, CredentialFormValues, InstanceFormValues, RouteFormValues, StorageInstance, StorageMutation,
+  StorageRoute, StorageType,
 } from './fileStorage';
+import { byteSizeLabel, mimeTypeLabel, selectablePolicies } from './scanPolicy';
+import type { ScanPolicyList } from './scanPolicy';
 import { useStorageCommand } from './useStorageCommand';
 
 const date = (value: string) => new Date(value).toLocaleString('zh-CN', { hour12: false });
@@ -145,37 +149,84 @@ export function StatusModal({ title, path, code, target, version, notice, onClos
   </Modal>;
 }
 
-/** 登记桶：桶由基础设施预先创建，这里只登记名称；登记后为草稿，检查通过后才能启用。 */
+const publicBaseUrlRules = [{ required: true, whitespace: true, message: '请填写对外地址' }, { validator: async (_: unknown, value?: string) => {
+  if (value?.trim() && !validPublicBaseUrl(value.trim())) throw new Error('HTTPS 地址，不带查询串或片段，不以 / 结尾');
+} }];
+
+/** 登记桶：桶由基础设施预先创建，这里只登记名称与访问级别；公开桶须登记对外地址。登记后为草稿，检查通过后才能启用。 */
 export function BucketModal({ instances, defaultInstance, onClose, onDone, onAuthorizationChanged }: CommandProps & {
   instances: StorageInstance[]; defaultInstance?: string;
 }) {
-  const [form] = Form.useForm<{ instanceCode: string; bucketName: string; reason: string }>(); const command = useStorageCommand(onAuthorizationChanged, form);
+  const [form] = Form.useForm<BucketFormValues>(); const command = useStorageCommand(onAuthorizationChanged, form);
   const selectable = instances.filter(instance => instance.status !== 'DISABLED');
+  const accessLevel = Form.useWatch('accessLevel', form) as AccessLevel | undefined;
   async function submit() {
     const values = await form.validateFields();
-    const bucketName = values.bucketName.trim();
-    const result = await command.run(`${instancePath(values.instanceCode)}/buckets`, 'POST', { bucketName, reason: values.reason.trim() },
-      value => decodeMutation(value, bucketObjectCode(values.instanceCode, bucketName)), '登记桶失败');
+    const body = registerBucketBody(values);
+    const result = await command.run(`${instancePath(values.instanceCode ?? '')}/buckets`, 'POST', body,
+      value => decodeMutation(value, bucketObjectCode(values.instanceCode ?? '', body.bucketName)), '登记桶失败');
     if (result) onDone();
   }
   return <Modal open title="登记桶" okText="登记" cancelText="取消" confirmLoading={command.saving} onOk={() => void submit()}
     onCancel={() => { if (!command.saving) onClose(); }} mask={{ closable: !command.saving }} destroyOnHidden>
-    <div className="notification-note">桶由基础设施预先创建并开启版本控制与默认加密，这里只登记和检查。桶名登记后不可修改。</div>
-    <Form form={form} layout="vertical" disabled={command.saving} initialValues={{ instanceCode: defaultInstance, reason: '' }}>
+    <div className="notification-note">桶由基础设施预先创建并开启版本控制与默认加密，这里只登记和检查。桶名与访问级别登记后不可修改。</div>
+    <Form form={form} layout="vertical" disabled={command.saving} initialValues={{ instanceCode: defaultInstance, accessLevel: 'PRIVATE', reason: '' }}>
       <Form.Item name="instanceCode" label="存储实例" rules={[{ required: true, message: '请选择存储实例' }]}>
         <Select options={selectable.map(instance => ({ value: instance.instanceCode, label: instance.instanceCode }))} /></Form.Item>
       <Form.Item name="bucketName" label="桶名" rules={[{ required: true, message: '请填写桶名' },
         { pattern: bucketNamePattern, message: '3—63 位小写字母、数字、点或连字符，首尾为字母或数字' }]}>
         <Input maxLength={63} className="mono" /></Form.Item>
+      <Form.Item name="accessLevel" label="访问级别" extra={accessLevel === 'PUBLIC'
+        ? '公开桶中的文件通过对外地址长期可读；只放本来就打算公开的内容' : '私有桶只通过平台签发的临时地址读写'}>
+        <Radio.Group options={accessLevels.map(value => ({ value, label: accessLevelLabels[value] }))} /></Form.Item>
+      {accessLevel === 'PUBLIC' && <Form.Item name="publicBaseUrl" label="对外地址" rules={publicBaseUrlRules}
+        extra="CDN 或桶的公开地址；文件地址为「对外地址/对象名」。草稿期间可修改，启用后不能再改">
+        <Input maxLength={publicBaseUrlMaxLength} placeholder="https://" className="mono" /></Form.Item>}
       {reasonItem}
     </Form>
+    {conflictBanner(command.conflict)}
   </Modal>;
 }
 
-/** 桶检查：事务外访问存储，结果写回桶并显示在弹窗内；检查通过后 10 分钟内可启用。 */
-export function BucketCheckModal({ instanceCode, bucketName, onClose, onDone, onAuthorizationChanged }: CommandProps & {
-  instanceCode: string; bucketName: string;
+/** 修改草稿公开桶的对外地址；改完需要重新检查才能启用。 */
+export function BucketUrlModal({ bucket, onClose, onDone, onAuthorizationChanged }: CommandProps & { bucket: BucketRow }) {
+  const [form] = Form.useForm<{ publicBaseUrl: string; reason: string }>(); const command = useStorageCommand(onAuthorizationChanged, form);
+  async function submit() {
+    const values = await form.validateFields();
+    const result = await command.run(bucketPath(bucket.instanceCode, bucket.bucketName), 'PUT', updateBucketBody(values, bucket),
+      value => decodeMutation(value, bucketObjectCode(bucket.instanceCode, bucket.bucketName)), '保存对外地址失败');
+    if (result) onDone();
+  }
+  return <Modal open title={`编辑对外地址 · ${bucket.instanceCode} / ${bucket.bucketName}`} okText="保存" cancelText="取消" confirmLoading={command.saving}
+    okButtonProps={{ disabled: command.conflict }} onOk={() => void submit()} onCancel={() => { if (!command.saving) onClose(); }}
+    mask={{ closable: !command.saving }} destroyOnHidden>
+    <div className="notification-note">只有草稿状态的公开桶可以修改对外地址；保存后请重新检查，检查通过后再启用。</div>
+    <Form form={form} layout="vertical" disabled={command.saving || command.conflict} initialValues={{ publicBaseUrl: bucket.publicBaseUrl ?? '', reason: '' }}>
+      <Form.Item name="publicBaseUrl" label="对外地址" rules={publicBaseUrlRules}>
+        <Input maxLength={publicBaseUrlMaxLength} placeholder="https://" className="mono" /></Form.Item>
+      {reasonItem}
+    </Form>
+    {conflictBanner(command.conflict)}
+  </Modal>;
+}
+
+/** 检查未通过时的排查指引（静态文案）：公开桶给出 AWS 公开只读桶策略示例，私有桶说明须关闭匿名读取。 */
+function CheckGuidance({ bucket, result }: { bucket: BucketRow; result: BucketCheck }) {
+  if (result.result === 'PUBLIC_READ_FAILED') return <div className="storage-check-guidance">
+    <p>{publicReadGuidance}</p>
+    <div className="muted">AWS S3 公开只读桶策略示例（在 AWS 控制台配置，平台不修改桶策略）</div>
+    <Typography.Paragraph className="mono storage-policy-example" copyable={{ text: publicReadPolicyExample(bucket.bucketName), tooltips: ['复制', '已复制'] }}>
+      {publicReadPolicyExample(bucket.bucketName)}</Typography.Paragraph>
+  </div>;
+  if (result.result === 'PUBLIC_ACCESS_ALLOWED') return <div className="storage-check-guidance"><p>{privateAccessGuidance}</p></div>;
+  return null;
+}
+
+/** 桶检查：事务外访问存储，结果写回桶并显示在弹窗内；检查通过后 10 分钟内可启用。未通过时给出排查指引。 */
+export function BucketCheckModal({ bucket, onEditUrl, onClose, onDone, onAuthorizationChanged }: CommandProps & {
+  bucket: BucketRow; onEditUrl?: () => void;
 }) {
+  const { instanceCode, bucketName } = bucket;
   const command = useStorageCommand(onAuthorizationChanged); const [result, setResult] = useState<BucketCheck | null>(null);
   async function check() {
     setResult(null);
@@ -183,70 +234,103 @@ export function BucketCheckModal({ instanceCode, bucketName, onClose, onDone, on
       value => decodeBucketCheck(value, instanceCode, bucketName), '桶检查失败');
     if (checked) { setResult(checked); onDone(); }
   }
-  return <Modal open title={`检查桶 · ${instanceCode} / ${bucketName}`} onCancel={() => { if (!command.saving) onClose(); }}
+  const failed = result && result.result !== 'OK';
+  return <Modal open title={`检查桶 · ${instanceCode} / ${bucketName}`} width={640} onCancel={() => { if (!command.saving) onClose(); }}
     mask={{ closable: !command.saving }} destroyOnHidden footer={[
       <Button key="close" disabled={command.saving} onClick={onClose}>关闭</Button>,
+      ...(failed && onEditUrl && result.result === 'PUBLIC_READ_FAILED'
+        ? [<Button key="url" disabled={command.saving} onClick={onEditUrl}>编辑对外地址</Button>] : []),
       <Button key="check" type="primary" loading={command.saving} onClick={() => void check()}>{result ? '重新检查' : '开始检查'}</Button>]}>
-    <div className="muted" style={{ marginBottom: 12 }}>依次确认桶存在、已开启版本控制与默认加密，并写入、读取、删除一个探测对象。实例为草稿时也可检查。</div>
-    {result && <Alert type={result.result === 'OK' ? 'success' : 'error'} showIcon title={checkResultLabels[result.result]}
-      description={`检查时间 ${date(result.checkedAt)}${result.result === 'OK' ? `，${bucketCheckValidMillis / 60_000} 分钟内可启用` : ''}`} />}
+    <div className="storage-check-head"><Tag color={bucket.accessLevel === 'PUBLIC' ? 'blue' : 'default'}>{accessLevelLabels[bucket.accessLevel]}</Tag>
+      {bucket.publicBaseUrl && <span className="muted">对外地址 <span className="mono">{bucket.publicBaseUrl}</span></span>}</div>
+    <div className="muted" style={{ marginBottom: 12 }}>依次检查桶存在、版本控制、默认加密，写入、读取、删除一个探测对象，
+      {bucket.accessLevel === 'PUBLIC' ? '再用对外地址匿名读取该对象' : '并确认不带凭据访问被拒绝'}。实例为草稿时也可检查。</div>
+    {result && <Alert type={result.result === 'OK' ? 'success' : 'error'} showIcon
+      title={result.result === 'OK' ? checkResultLabels.OK : `检查未通过：${checkResultLabels[result.result]}${bucket.status === 'DRAFT' ? '。桶保持草稿，不能启用。' : ''}`}
+      description={`检查时间 ${date(result.checkedAt)}${result.result === 'OK' ? `，${bucketCheckValidMillis / 60_000} 分钟内可启用` : ' · 结果已记录到桶'}`} />}
+    {result && <CheckGuidance bucket={bucket} result={result} />}
   </Modal>;
 }
 
-/** 新建（route 为空）或修改写入规则；默认规则的来源系统固定为「默认」。 */
-export function RouteModal({ route, instances, onClose, onDone, onAuthorizationChanged }: CommandProps & {
-  route: StorageRoute | null; instances: StorageInstance[];
+/**
+ * 新建（route 为空）或修改写入规则
+ * <li>编辑时来源系统与访问级别只读；要换级别请新建规则。</li>
+ * <li>目标桶只列同一访问级别的启用桶；检查策略只列有生效修订的策略。</li>
+ */
+export function RouteModal({ route, sourceSystem, accessLevel, instances, policies, onClose, onDone, onAuthorizationChanged }: CommandProps & {
+  route: StorageRoute | null; sourceSystem?: string; accessLevel?: AccessLevel; instances: StorageInstance[]; policies: ScanPolicyList;
 }) {
   const [form] = Form.useForm<RouteFormValues>(); const command = useStorageCommand(onAuthorizationChanged, form);
-  const targets = routeTargets(instances);
+  const level = (Form.useWatch('accessLevel', form) as AccessLevel | undefined) ?? route?.accessLevel ?? accessLevel ?? 'PRIVATE';
+  const targets = routeTargets(instances, level);
+  const selectable = selectablePolicies(policies.items);
+  const values = Form.useWatch([], form) as RouteFormValues | undefined;
+  const chosenPolicy = policies.items.find(item => item.policyCode === values?.scanPolicyCode);
   async function submit() {
-    const values = await form.validateFields();
+    const current = await form.validateFields();
     const result = route
-      ? await command.run(routePath(route.sourceSystem), 'PUT', updateRouteBody(values, route),
-        value => decodeMutation(value, route.sourceSystem), '保存写入规则失败')
-      : await command.run(`${storageAdminPath}/routes`, 'POST', createRouteBody(values),
-        value => decodeMutation(value, (values.sourceSystem ?? '').trim()), '新建写入规则失败');
+      ? await command.run(routePath(route.sourceSystem, route.accessLevel), 'PUT', updateRouteBody(current, route),
+        value => decodeMutation(value, routeObjectCode(route.sourceSystem, route.accessLevel)), '保存写入规则失败')
+      : await command.run(`${storageAdminPath}/routes`, 'POST', createRouteBody(current),
+        value => decodeMutation(value, routeObjectCode((current.sourceSystem ?? '').trim(), current.accessLevel ?? 'PRIVATE')), '新建写入规则失败');
     if (result) onDone();
   }
-  return <Modal open title={route ? `修改写入规则 · ${sourceSystemLabel(route.sourceSystem)}` : '新建写入规则'} okText="保存" cancelText="取消"
-    confirmLoading={command.saving} okButtonProps={{ disabled: command.conflict }} onOk={() => void submit()}
+  const policyOptions = [
+    ...(route && !selectable.some(item => item.policyCode === route.scanPolicyCode)
+      ? [{ value: route.scanPolicyCode, label: `${route.scanPolicyCode}（当前，没有生效修订）`, disabled: true }] : []),
+    ...policies.items.map(item => ({ value: item.policyCode, disabled: item.activeRevisionNo === null,
+      label: item.activeRevisionNo === null ? `${item.policyCode}（没有生效修订，不能选择）`
+        : `${item.policyCode} r${item.activeRevisionNo} · ${item.allowedMimeTypes.map(mimeTypeLabel).join('、')} · ≤ ${byteSizeLabel(item.maxSizeBytes)}` })),
+  ];
+  const target = values?.target ? values.target.replace('/', ' / ') : null;
+  return <Modal open title={route ? `编辑写入规则 · ${sourceSystemLabel(route.sourceSystem)} · ${accessLevelLabels[route.accessLevel]}` : '新建写入规则'}
+    okText="保存" cancelText="取消" width={600} confirmLoading={command.saving} okButtonProps={{ disabled: command.conflict }} onOk={() => void submit()}
     onCancel={() => { if (!command.saving) onClose(); }} mask={{ closable: !command.saving }} destroyOnHidden>
-    <div className="notification-note">写入规则只影响之后的新上传；已上传的文件始终从原实例和桶读取。</div>
+    <div className="notification-note">写入规则只影响之后开始的上传；已上传的文件始终从原实例和桶读取。</div>
     <Form form={form} layout="vertical" disabled={command.saving || command.conflict} initialValues={{
-      sourceSystem: route?.sourceSystem, target: route ? targetValue(route.instanceCode, route.bucketName) : undefined,
-      scanPolicyCode: route?.scanPolicyCode ?? '', maxUploadSeconds: route?.maxUploadSeconds ?? uploadSecondsRange.defaultValue, reason: '' }}>
+      sourceSystem: route?.sourceSystem ?? sourceSystem, accessLevel: route?.accessLevel ?? accessLevel ?? 'PRIVATE',
+      target: route ? targetValue(route.instanceCode, route.bucketName) : undefined,
+      scanPolicyCode: route?.scanPolicyCode, maxUploadSeconds: route?.maxUploadSeconds ?? uploadSecondsRange.defaultValue, reason: '' }}>
       {route
-        ? <div className="muted" style={{ marginBottom: 16 }}>来源系统：{sourceSystemLabel(route.sourceSystem)}</div>
-        : <Form.Item name="sourceSystem" label="来源系统" extra="内部调用身份中的服务名，例如 client-master-service"
-          rules={[{ required: true, message: '请填写来源系统' }, { validator: async (_, value?: string) => {
-            if (value && value.trim() !== defaultSourceSystem && !sourceSystemPattern.test(value.trim())) throw new Error('小写字母开头，只能包含小写字母、数字或连字符');
-          } }]}><Input maxLength={64} className="mono" /></Form.Item>}
-      <Form.Item name="target" label="目标桶" extra="只能选择启用实例下的启用桶" rules={[{ required: true, message: '请选择目标桶' }]}>
-        <Select options={targets.map(t => ({ value: targetValue(t.instanceCode, t.bucketName), label: `${t.instanceCode} / ${t.bucketName}` }))} /></Form.Item>
-      <Form.Item name="scanPolicyCode" label="检查策略" extra="必须有启用中的修订，例如 CLIENT_ONBOARDING_FORMAT"
-        rules={[{ required: true, whitespace: true, message: '请填写检查策略' }, { pattern: scanPolicyCodePattern, message: '大写字母开头，只能包含大写字母、数字或下划线' }]}>
-        <Input maxLength={64} className="mono" /></Form.Item>
-      <Form.Item name="maxUploadSeconds" label="上传期限（秒）" rules={[{ required: true, message: '请填写上传期限' }]}>
+        ? <div className="muted" style={{ marginBottom: 16 }}>来源系统：<span className="mono">{sourceSystemLabel(route.sourceSystem)}</span> · 访问级别：
+          {accessLevelLabels[route.accessLevel]}。编辑时不能改来源和访问级别；要换级别请新建规则。</div>
+        : <>
+          <Form.Item name="sourceSystem" label="来源系统" extra="内部调用身份中的服务名，例如 client-master-service；* 为默认规则"
+            rules={[{ required: true, message: '请填写来源系统' }, { validator: async (_, value?: string) => {
+              if (value && value.trim() !== defaultSourceSystem && !sourceSystemPattern.test(value.trim())) throw new Error('小写字母开头，只能包含小写字母、数字或连字符');
+            } }]}><Input maxLength={64} className="mono" disabled={!!sourceSystem} /></Form.Item>
+          <Form.Item name="accessLevel" label="访问级别">
+            <Radio.Group disabled={!!accessLevel} onChange={() => form.setFieldValue('target', undefined)}
+              options={accessLevels.map(value => ({ value, label: accessLevelLabels[value] }))} /></Form.Item>
+        </>}
+      <Form.Item name="target" label="存储桶" extra={`只能选择同为${accessLevelLabels[level]}、已启用的桶`} rules={[{ required: true, message: '请选择存储桶' }]}>
+        <Select options={targets.map(t => ({ value: targetValue(t.instanceCode, t.bucketName), label: `${t.instanceCode} / ${t.bucketName}` }))}
+          notFoundContent={`没有${accessLevelLabels[level]}的启用桶`} /></Form.Item>
+      <Form.Item name="scanPolicyCode" label="检查策略" extra="只能选择有生效修订的策略" rules={[{ required: true, message: '请选择检查策略' }]}>
+        <Select showSearch options={policyOptions} notFoundContent="没有可选的检查策略" /></Form.Item>
+      <Form.Item name="maxUploadSeconds" label="上传期限（秒）" extra={`${uploadSecondsRange.min}—${uploadSecondsRange.max} 秒`} rules={[{ required: true, message: '请填写上传期限' }]}>
         <InputNumber min={uploadSecondsRange.min} max={uploadSecondsRange.max} precision={0} style={{ width: 200 }} /></Form.Item>
       {reasonItem}
     </Form>
+    {target && chosenPolicy?.activeRevisionNo && <div className="notification-note">保存后：{sourceSystemLabel((values?.sourceSystem ?? route?.sourceSystem ?? '').trim())}
+      的{accessLevelLabels[level]}上传 → {target}，按 {chosenPolicy.policyCode} r{chosenPolicy.activeRevisionNo} 检查，上传期限 {values?.maxUploadSeconds ?? '—'} 秒。</div>}
     {conflictBanner(command.conflict)}
   </Modal>;
 }
 
-/** 删除写入规则：默认规则不提供删除入口；删除后该来源的新上传落到默认规则。 */
+/** 删除写入规则：默认私有规则不提供删除入口；删除后该来源该级别的新上传落到同级别默认规则（没有时返回 503）。 */
 export function DeleteRouteModal({ route, onClose, onDone, onAuthorizationChanged }: CommandProps & { route: StorageRoute }) {
   const [form] = Form.useForm<{ reason: string }>(); const command = useStorageCommand(onAuthorizationChanged, form);
   async function submit() {
     const { reason } = await form.validateFields();
-    const result = await command.run(routePath(route.sourceSystem), 'DELETE', { expectedVersion: route.version, reason: reason.trim() },
-      (value): StorageMutation => decodeMutation(value, route.sourceSystem), '删除写入规则失败');
+    const result = await command.run(routePath(route.sourceSystem, route.accessLevel), 'DELETE', { expectedVersion: route.version, reason: reason.trim() },
+      (value): StorageMutation => decodeMutation(value, routeObjectCode(route.sourceSystem, route.accessLevel)), '删除写入规则失败');
     if (result) onDone();
   }
-  return <Modal open title={`删除写入规则 · ${route.sourceSystem}`} okText="确认删除" cancelText="取消" confirmLoading={command.saving}
+  return <Modal open title={`删除写入规则 · ${sourceSystemLabel(route.sourceSystem)} · ${accessLevelLabels[route.accessLevel]}`} okText="确认删除" cancelText="取消" confirmLoading={command.saving}
     okButtonProps={{ danger: true, disabled: command.conflict }} onOk={() => void submit()}
     onCancel={() => { if (!command.saving) onClose(); }} mask={{ closable: !command.saving }} destroyOnHidden>
-    <p>删除后，{route.sourceSystem} 的新上传将使用默认写入规则；已上传的文件不受影响。</p>
+    <p>删除后，{sourceSystemLabel(route.sourceSystem)} 的{accessLevelLabels[route.accessLevel]}上传将使用同级别默认规则（没有时返回 503）；已上传的文件不受影响。</p>
     <Form form={form} layout="vertical" disabled={command.saving || command.conflict}>{reasonItem}</Form>
     {conflictBanner(command.conflict)}
   </Modal>;

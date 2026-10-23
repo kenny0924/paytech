@@ -48,7 +48,7 @@ public class PlatformDataCleaner implements Clear {
         "t_role_permission", "t_role", "t_console_resource", "t_permission", "t_jwt_signing_key",
         "t_api_scope", "t_gateway_guard_rule", "t_gateway_route_header", "t_gateway_route_query_param",
         "t_gateway_route", "t_gateway_target", "t_command_idempotency",
-        "t_file_scan_result", "t_file_upload", "t_file_object",
+        "t_file_scan_result", "t_file_version", "t_file_upload", "t_file_object",
         "t_file_storage_route", "t_file_storage_bucket", "t_file_storage_instance", "t_security_event",
         "t_audit_event_attr", "t_audit_event", "t_audit_chain",
         "t_webhook_attempt", "t_webhook_delivery", "t_webhook_event", "t_webhook_signing_secret", "t_webhook_endpoint",

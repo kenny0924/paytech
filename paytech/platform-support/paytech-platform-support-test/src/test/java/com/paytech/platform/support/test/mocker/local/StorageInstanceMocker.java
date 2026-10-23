@@ -16,6 +16,7 @@ import com.paytech.platform.support.api.enums.FileStorageCheckResult;
 import com.paytech.platform.support.api.enums.FileStorageCredentialMode;
 import com.paytech.platform.support.api.enums.FileStorageInstanceStatus;
 import com.paytech.platform.support.api.enums.FileStorageType;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.integration.storage.FileStorageRegistry;
 import com.paytech.platform.support.test.builder.OperatorBuilder;
 import com.paytech.platform.support.test.dal.FileStorageTestMapper;
@@ -56,10 +57,17 @@ public class StorageInstanceMocker implements Clear {
     /** 标准上传期限秒数。 */
     public static final int UPLOAD_SECONDS = 900;
 
+    /** 使用本机 MinIO 管理员密钥的实例代码（公开桶场景：Platform 测试账号对临时桶没有权限）。 */
+    public static final String ROOT_INSTANCE = "UT_ROOT";
+
+    /** 管理员实例的密钥 Token。 */
+    public static final String ROOT_TOKEN = StorageVaultMocker.token("storage-ut-root");
+
     private final Clock clock;
     private final FileStorageTestMapper mapper;
     private final StorageVaultMocker vault;
     private final StorageObjectMocker objects;
+    private final TempBucketMocker tempBuckets;
     private final FileStorageRegistry registry;
     private final Map<String, Long> instances = new HashMap<>();
     private final Map<String, Long> buckets = new HashMap<>();
@@ -84,6 +92,18 @@ public class StorageInstanceMocker implements Clear {
         return instance(code, type, FileStorageCredentialMode.STATIC, token, pathStyle, FileStorageInstanceStatus.ACTIVE);
     }
 
+    /** 使用本机 MinIO 管理员密钥的 ACTIVE MINIO 实例，可访问本例创建的临时桶。 */
+    public long rootInstance() {
+        return rootInstance(ROOT_INSTANCE, FileStorageType.MINIO);
+    }
+
+    /** 使用本机 MinIO 管理员密钥、指定适配器类型的 ACTIVE 实例（路径风格），可访问本例创建的临时桶。 */
+    public long rootInstance(String code, FileStorageType type) {
+        vault.credential(ROOT_TOKEN, tempBuckets.rootUser(), tempBuckets.rootPassword());
+        return instance(code, type, FileStorageCredentialMode.STATIC, ROOT_TOKEN, true,
+            FileStorageInstanceStatus.ACTIVE);
+    }
+
     /** 插入一个指向本机 MinIO 的实例。 */
     public long instance(String code, FileStorageType type, FileStorageCredentialMode mode, String token,
         boolean pathStyle, FileStorageInstanceStatus status) {
@@ -94,20 +114,39 @@ public class StorageInstanceMocker implements Clear {
         return id;
     }
 
-    /** 插入实例下的存储桶；ACTIVE 时同时登记一次 OK 检查。 */
+    /** 插入实例下的私有存储桶；ACTIVE 时同时登记一次 OK 检查。 */
     public long bucket(String instanceCode, String bucketName, FileStorageBucketStatus status) {
+        return bucket(instanceCode, bucketName, FileAccessLevel.PRIVATE, null, status);
+    }
+
+    /** 插入实例下的公开存储桶；ACTIVE 时同时登记一次 OK 检查。 */
+    public long publicBucket(String instanceCode, String bucketName, String publicBaseUrl,
+        FileStorageBucketStatus status) {
+        return bucket(instanceCode, bucketName, FileAccessLevel.PUBLIC, publicBaseUrl, status);
+    }
+
+    /** 插入实例下的存储桶。 */
+    private long bucket(String instanceCode, String bucketName, FileAccessLevel level, String publicBaseUrl,
+        FileStorageBucketStatus status) {
         long id = OperatorBuilder.nextId();
         boolean checked = status != FileStorageBucketStatus.DRAFT;
-        assertEquals(1, mapper.insertBucket(id, instances.get(instanceCode), bucketName, status.getCode(),
-            checked ? now() : null, checked ? FileStorageCheckResult.OK.getCode() : null, now()));
+        assertEquals(1, mapper.insertBucket(id, instances.get(instanceCode), bucketName, level.getCode(),
+            publicBaseUrl, status.getCode(), checked ? now() : null,
+            checked ? FileStorageCheckResult.OK.getCode() : null, now()));
         buckets.put(instanceCode + "/" + bucketName, id);
         return id;
     }
 
-    /** 插入指向实例测试存储桶的路由，上传期限为标准值。 */
+    /** 插入指向实例测试存储桶的私有路由，上传期限为标准值。 */
     public void route(String source, String instanceCode, String policyCode) {
-        assertEquals(1, mapper.insertRoute(OperatorBuilder.nextId(), source, bucketId(instanceCode, objects.bucket()),
-            policyCode, UPLOAD_SECONDS, now()));
+        route(source, FileAccessLevel.PRIVATE, instanceCode, objects.bucket(), policyCode);
+    }
+
+    /** 插入指定访问级别、指向实例某存储桶的路由，上传期限为标准值。 */
+    public void route(String source, FileAccessLevel level, String instanceCode, String bucketName,
+        String policyCode) {
+        assertEquals(1, mapper.insertRoute(OperatorBuilder.nextId(), source, level.getCode(),
+            bucketId(instanceCode, bucketName), policyCode, UPLOAD_SECONDS, now()));
     }
 
     /** 直接改写实例测试存储桶的状态并刷新快照。 */

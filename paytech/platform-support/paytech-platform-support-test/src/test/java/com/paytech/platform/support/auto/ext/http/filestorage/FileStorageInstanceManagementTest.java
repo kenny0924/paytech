@@ -326,7 +326,7 @@ class FileStorageInstanceManagementTest extends FileStorageManagementTestBase {
         patch(BASE + "/instances/" + MINIO + "/status", admin, status(FileStorageBucketStatus.READ_ONLY.getCode(), 1))
             .assertProblem(400, CommonErrorCode.INVALID_REQUEST);
         String untimed = "ut-untimed-check";
-        assertEquals(1, storageData.insertBucket(OperatorBuilder.nextId(), instanceId(MINIO), untimed,
+        assertEquals(1, storageData.insertBucket(OperatorBuilder.nextId(), instanceId(MINIO), untimed, "PRIVATE", null,
             FileStorageBucketStatus.DRAFT.getCode(), null, FileStorageCheckResult.OK.getCode(), clock.instant()));
         patch(BASE + "/instances/" + MINIO + "/buckets/" + untimed + "/status", admin,
             status(FileStorageBucketStatus.ACTIVE.getCode(), 1)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
@@ -343,7 +343,7 @@ class FileStorageInstanceManagementTest extends FileStorageManagementTestBase {
         storageInstances.staticInstance(MINIO, FileStorageType.MINIO, MINIO_TOKEN, false);
         register(MINIO, storage.bucket());
         post(BASE + "/instances/" + MINIO + "/buckets", admin,
-            new RegisterStorageBucketRequestBody(storage.bucket(), REASON)).assertProblem(400,
+            new RegisterStorageBucketRequestBody(storage.bucket(), "PRIVATE", null, REASON)).assertProblem(400,
                 CommonErrorCode.BUSINESS_CHECK_FAILED);
         check(MINIO, "ut-unregistered-bucket").assertProblem(404, CommonErrorCode.NOT_FOUND);
         check(MISSING, storage.bucket()).assertProblem(404, CommonErrorCode.NOT_FOUND);
@@ -509,7 +509,7 @@ class FileStorageInstanceManagementTest extends FileStorageManagementTestBase {
     /** 登记 DRAFT 存储桶。 */
     private void register(String code, String bucket) {
         assertMutation(post(BASE + "/instances/" + code + "/buckets", admin,
-            new RegisterStorageBucketRequestBody(bucket, REASON)), FileStorageChange.BUCKET, code + "/" + bucket,
+            new RegisterStorageBucketRequestBody(bucket, "PRIVATE", null, REASON)), FileStorageChange.BUCKET, code + "/" + bucket,
             FileStorageBucketStatus.DRAFT.getCode(), 1);
     }
 

@@ -11,15 +11,18 @@ import com.paytech.foundation.internalauth.api.CallerIdentityHolder;
 import com.paytech.foundation.internalauth.api.InternalTokenInvalidException;
 import com.paytech.platform.support.api.enums.FileDisposition;
 import com.paytech.platform.support.api.files.FileAddress;
+import com.paytech.platform.support.api.files.request.StartFileReplacementRequestBody;
 import com.paytech.platform.support.api.files.request.StartFileUploadRequestBody;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadAuthorization;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadResponseBody;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.file.StoredFileView;
 import com.paytech.platform.support.service.processor.files.request.AuthorizeFileDownloadRequest;
 import com.paytech.platform.support.service.processor.files.request.CompleteFileUploadRequest;
+import com.paytech.platform.support.service.processor.files.request.StartFileReplacementRequest;
 import com.paytech.platform.support.service.processor.files.request.StartFileUploadRequest;
 import com.paytech.platform.support.service.processor.files.response.AuthorizeFileDownloadResponse;
 import com.paytech.platform.support.service.processor.files.response.CompleteFileUploadResponse;
@@ -49,10 +52,19 @@ public class InternalFileConverter {
         return identity.caller();
     }
 
-    /** 开始上传：来源系统取调用身份，数值字段已由 Body 注解约束为规范正整数。 */
+    /** 开始上传：来源系统取调用身份，数值字段与访问级别已由 Body 注解约束，访问级别缺省为 PRIVATE。 */
     StartFileUploadRequest start(StartFileUploadRequestBody body) {
         Long uploader = body.getUploaderAccountId() == null ? null : Long.parseLong(body.getUploaderAccountId());
         return new StartFileUploadRequest(callerService(), body.getReasonCode(), body.getFilename(),
+            body.getMimeType(), Long.parseLong(body.getSizeBytes()), uploader,
+            FileAccessLevel.fromNullableCode(body.getAccessLevel()));
+    }
+
+    /** 开始替换：来源系统取调用身份，文件 ID 按规范正整数解析。 */
+    StartFileReplacementRequest replacement(String fileId, StartFileReplacementRequestBody body) {
+        String caller = callerService();
+        Long uploader = body.getUploaderAccountId() == null ? null : Long.parseLong(body.getUploaderAccountId());
+        return new StartFileReplacementRequest(caller, id(fileId, "文件 ID 必须为规范正整数"), body.getFilename(),
             body.getMimeType(), Long.parseLong(body.getSizeBytes()), uploader);
     }
 
@@ -67,7 +79,7 @@ public class InternalFileConverter {
         Long operator = operatorAccountId == null ? null : id(operatorAccountId, "操作人账号 ID 必须为规范正整数");
         String requestId = MDC.get(ApiProblemProfile.REQUEST_ID_MDC_KEY);
         return new AuthorizeFileDownloadRequest(caller, id(fileId, "文件 ID 必须为规范正整数"), disposition(disposition),
-            operator, requestId == null ? UNKNOWN_REQUEST : requestId);
+            operator, requestId == null ? UNKNOWN_REQUEST : requestId, null);
     }
 
     /** 下载方式：缺省或为空按附件，未知 Code 拒绝。 */
@@ -102,20 +114,22 @@ public class InternalFileConverter {
             response.getExpiresAt());
     }
 
-    /** 完成回执：文件 ID 同时输出文件地址。 */
+    /** 完成回执：文件 ID 同时输出文件地址，附本次版本号与访问级别。 */
     FileUploadCompletionResponseBody completion(CompleteFileUploadResponse response) {
         return new FileUploadCompletionResponseBody(Long.toString(response.getUploadId()),
             Long.toString(response.getFileId()), FileAddress.of(response.getFileId()).value(),
-            response.getCompletedAt());
+            response.getCompletedAt(), response.getVersionNo(), response.getAccessLevel().getCode());
     }
 
-    /** 文件元数据：ID 与大小输出十进制字符串并附文件地址，状态输出稳定 Code。 */
+    /** 文件元数据：ID 与大小输出十进制字符串并附文件地址，状态与访问级别输出稳定 Code。 */
     StoredFileResponseBody file(StoredFileView view) {
         return new StoredFileResponseBody(view.getFileId().toString(), FileAddress.of(view.getFileId()).value(),
             view.getSourceSystem(), view.getReasonCode(),
             view.getDisplayName(), view.getMimeType(), view.getSizeBytes().toString(), view.getContentHash(),
             view.getScanStatus().getCode(), view.getObjectStatus().getCode(),
-            view.getUploaderId() == null ? null : view.getUploaderId().toString(), view.getCreateTime());
+            view.getUploaderId() == null ? null : view.getUploaderId().toString(), view.getCreateTime(),
+            view.getAccessLevel().getCode(), view.getVersionNo(), view.getPublicUrl(), view.getVersionedUrl(),
+            view.getPendingVersionNo());
     }
 
     /** 下载授权与实际生效的下载方式。 */

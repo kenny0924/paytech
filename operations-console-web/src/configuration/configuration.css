@@ -49,3 +49,11 @@
 .configuration-inline-meta { color: #8a95a7; font-size: 11px; }
 @media (max-width: 1250px) { .resource-workspace { grid-template-columns: 290px minmax(0, 1fr); padding: 14px; gap: 14px; } .configuration-editor { padding: 22px 20px 0; } .configuration-grid.resource-basics { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 900px) { .resource-workspace { grid-template-columns: 1fr; } .resource-tree-panel { min-height: 0; max-height: 380px; overflow: auto; } .configuration-grid.two,.configuration-grid.three { grid-template-columns: 1fr; } }
+.gateway-filters { display: grid; gap: 0 16px; align-items: end; margin-bottom: 8px; }
+.gateway-filters.route { grid-template-columns: repeat(3, minmax(0, 1.2fr)) repeat(2, minmax(0, .8fr)) auto; }
+.gateway-filters.target { grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)) auto; }
+.gateway-filters .ant-form-item { margin-bottom: 16px; }
+.gateway-filter-actions { margin-bottom: 16px; }
+@media (max-width: 1250px) { .gateway-filters.route { grid-template-columns: repeat(3, minmax(0, 1fr)); } .gateway-filter-actions { justify-content: flex-end; } }
+@media (max-width: 900px) { .gateway-filters.route, .gateway-filters.target { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .gateway-filters.route, .gateway-filters.target { grid-template-columns: minmax(0, 1fr); } }

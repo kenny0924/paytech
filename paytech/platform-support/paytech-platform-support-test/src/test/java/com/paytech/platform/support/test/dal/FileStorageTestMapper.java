@@ -30,24 +30,32 @@ public interface FileStorageTestMapper {
         @Param("certificate") String certificate, @Param("mode") String mode, @Param("token") String token,
         @Param("status") String status, @Param("now") Instant now);
 
-    /** 插入存储桶；检查结果可空。 */
+    /** 插入存储桶；检查结果与对外基础地址可空。 */
     @Insert("""
-        INSERT INTO t_file_storage_bucket(bucket_id,instance_id,bucket_name,status,last_check_time,last_check_result,
-            version,create_time,update_time)
-        VALUES(#{id},#{instanceId},#{name},#{status},#{checkTime},#{checkResult},1,#{now},#{now})
+        INSERT INTO t_file_storage_bucket(bucket_id,instance_id,bucket_name,access_level,public_base_url,status,
+            last_check_time,last_check_result,version,create_time,update_time)
+        VALUES(#{id},#{instanceId},#{name},#{accessLevel},#{baseUrl},#{status},#{checkTime},#{checkResult},1,#{now},
+            #{now})
         """)
     int insertBucket(@Param("id") long id, @Param("instanceId") long instanceId, @Param("name") String name,
+        @Param("accessLevel") String accessLevel, @Param("baseUrl") String baseUrl,
         @Param("status") String status, @Param("checkTime") Instant checkTime, @Param("checkResult") String checkResult,
         @Param("now") Instant now);
 
-    /** 插入写入路由。 */
+    /** 插入私有写入路由。 */
+    default int insertRoute(long id, String source, long bucketId, String policy, int seconds, Instant now) {
+        return insertRoute(id, source, "PRIVATE", bucketId, policy, seconds, now);
+    }
+
+    /** 插入指定访问级别的写入路由。 */
     @Insert("""
-        INSERT INTO t_file_storage_route(route_id,source_system,bucket_id,scan_policy_code,max_upload_seconds,version,
-            create_time,update_time)
-        VALUES(#{id},#{source},#{bucketId},#{policy},#{seconds},1,#{now},#{now})
+        INSERT INTO t_file_storage_route(route_id,source_system,access_level,bucket_id,scan_policy_code,
+            max_upload_seconds,version,create_time,update_time)
+        VALUES(#{id},#{source},#{accessLevel},#{bucketId},#{policy},#{seconds},1,#{now},#{now})
         """)
-    int insertRoute(@Param("id") long id, @Param("source") String source, @Param("bucketId") long bucketId,
-        @Param("policy") String policy, @Param("seconds") int seconds, @Param("now") Instant now);
+    int insertRoute(@Param("id") long id, @Param("source") String source, @Param("accessLevel") String accessLevel,
+        @Param("bucketId") long bucketId, @Param("policy") String policy, @Param("seconds") int seconds,
+        @Param("now") Instant now);
 
     /** 直接删除来源系统的路由（含默认路由），构造没有可用路由的场景。 */
     @Delete("DELETE FROM t_file_storage_route WHERE source_system=#{source}")
@@ -76,9 +84,14 @@ public interface FileStorageTestMapper {
         """)
     Map<String, Object> bucket(@Param("code") String code, @Param("bucket") String bucket);
 
-    /** 读取路由全部列。 */
-    @Select("SELECT * FROM t_file_storage_route WHERE source_system=#{source}")
-    Map<String, Object> route(String source);
+    /** 读取私有路由全部列。 */
+    default Map<String, Object> route(String source) {
+        return route(source, "PRIVATE");
+    }
+
+    /** 读取指定访问级别路由的全部列。 */
+    @Select("SELECT * FROM t_file_storage_route WHERE source_system=#{source} AND access_level=#{accessLevel}")
+    Map<String, Object> route(@Param("source") String source, @Param("accessLevel") String accessLevel);
 
     /** 三张表全部行的全部文本列，用于检查没有密钥原值。 */
     @Select("""
@@ -96,7 +109,7 @@ public interface FileStorageTestMapper {
     /** 按来源系统读取上传。 */
     @Select("""
         SELECT upload_id,source_system,reason_code,uploader_id,tenant_id,storage_provider,
-            storage_container_ref,storage_object_ref,display_name,expires_time
+            storage_container_ref,storage_object_ref,display_name,expires_time,access_level
         FROM t_file_upload WHERE source_system=#{source} ORDER BY upload_id
         """)
     List<Map<String, Object>> uploadsFrom(String source);

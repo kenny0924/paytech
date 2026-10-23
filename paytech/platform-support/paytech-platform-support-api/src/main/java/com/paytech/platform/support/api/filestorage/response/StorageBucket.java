@@ -18,6 +18,18 @@ public class StorageBucket {
     private String bucketName;
 
     /**
+     * 访问级别
+     * <li>PRIVATE 或 PUBLIC；登记后不可修改，写入路由只能指向同级别的桶。</li>
+     */
+    private String accessLevel;
+
+    /**
+     * 对外基础地址
+     * <li>PUBLIC 桶的 HTTPS 基础地址（CDN 或桶公开地址，不以 / 结尾）；PRIVATE 桶为空。公开地址 = 基础地址 + / + 对象名。</li>
+     */
+    private String publicBaseUrl;
+
+    /**
      * 状态
      * <li>{@code FileStorageBucketStatus} Code：DRAFT、ACTIVE、READ_ONLY、DISABLED。</li>
      */

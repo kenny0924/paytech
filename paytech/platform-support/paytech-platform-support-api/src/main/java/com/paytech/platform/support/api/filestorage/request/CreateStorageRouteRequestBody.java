@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** 新建写入路由：来源系统的新上传写入指定存储桶并冻结扫描策略。 */
+/** 新建写入路由：来源系统在该访问级别的新上传写入指定存储桶并冻结扫描策略。 */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,6 +21,14 @@ public class CreateStorageRouteRequestBody {
     @NotBlank
     @Pattern(regexp = "\\*|[a-z][a-z0-9-]{0,63}")
     private String sourceSystem;
+
+    /**
+     * 访问级别
+     * <li>PRIVATE 或 PUBLIC；与来源系统共同构成路由键，创建后不可修改；目标桶必须为同一级别。</li>
+     */
+    @NotBlank
+    @Pattern(regexp = "PRIVATE|PUBLIC", message = "accessLevel 只能为 PRIVATE 或 PUBLIC")
+    private String accessLevel;
 
     /** 目标实例代码；实例必须为 ACTIVE。 */
     @NotBlank

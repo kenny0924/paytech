@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import com.paytech.platform.support.api.enums.FileStorageBucketStatus;
 import com.paytech.platform.support.api.enums.FileStorageCheckResult;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +25,15 @@ public class FileStorageBucket {
      * <li>即文件与上传记录上的 storage_container_ref；创建后不可修改。</li>
      */
     private String bucketName;
+
+    /** 访问级别；登记后不可修改。 */
+    private FileAccessLevel accessLevel;
+
+    /**
+     * 对外基础地址
+     * <li>PUBLIC 必填，HTTPS、不以 / 结尾；PRIVATE 为空。</li>
+     */
+    private String publicBaseUrl;
 
     /** 存储桶状态。 */
     private FileStorageBucketStatus status;

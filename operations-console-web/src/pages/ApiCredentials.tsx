@@ -10,6 +10,7 @@ import { buildMenuTree, menuPages } from '../navigation/menu';
 import { credentialFilters, revokeMutation, statusLabels, validateCredential } from '../clientApi/clientApi';
 import type { Credential, CredentialDetail, CredentialGrant, CredentialSearch } from '../clientApi/clientApi';
 import { Audit } from './Audit';
+import { RefreshButton } from '../components/RefreshButton';
 import '../configuration/configuration.css';
 import '../clientApi/clientApi.css';
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
@@ -42,7 +43,7 @@ function CredentialList({ resources, onAuthorizationChanged }: Props) {
         <div className="configuration-actions"><Button type="primary" htmlType="submit">查询</Button><Button onClick={() => page.applyFilters({})}>重置</Button></div></div>
     </Form>
     {filters.scopeCode && <Tag closable onClose={() => { const { scopeCode: _, ...rest } = filters; page.applyFilters(rest); }}>Scope：{filters.scopeCode}</Tag>}
-    <section className="table-panel"><div className="table-toolbar"><span>共 {page.data.total} 条凭证</span><Button onClick={page.refresh} loading={page.loading}>{page.error ? '重试' : '刷新'}</Button></div>
+    <section className="table-panel"><div className="table-toolbar"><span className="table-count"><span>共 {page.data.total} 条凭证</span><RefreshButton onClick={page.refresh} loading={page.loading} failed={!!page.error} /></span></div>
       <Table<Credential> rowKey="credentialId" tableLayout="fixed" dataSource={page.error ? [] : page.data.items} loading={page.loading} scroll={{ x: 980 }} pagination={{ ...page.pagination, pageSizeOptions: [10, 20, 50, 100] }} columns={[
         { title: 'Client', width: 260, ellipsis: true, render: (_, row) => <div title={row.clientName}><div className="client-api-ellipsis">{row.clientName}</div><div className="cell-meta">{row.clientId}</div></div> },
         { title: '密钥前缀', dataIndex: 'keyPrefix', width: 260, ellipsis: true },

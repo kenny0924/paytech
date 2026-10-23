@@ -6,9 +6,12 @@ import java.io.InputStream;
 import java.time.Clock;
 import java.time.Duration;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -17,6 +20,7 @@ import javax.net.ssl.TrustManager;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.platform.support.api.enums.FileStorageCheckResult;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance;
+import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.file.DownloadPresentation;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.File;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Grant;
@@ -34,6 +38,10 @@ import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.BucketVersioningStatus;
+import software.amazon.awssdk.services.s3.model.DeleteMarkerEntry;
+import software.amazon.awssdk.services.s3.model.GetUrlRequest;
+import software.amazon.awssdk.services.s3.model.MetadataDirective;
+import software.amazon.awssdk.services.s3.model.ObjectVersion;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -46,8 +54,10 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 
 /**
  * AWS S3（及兼容 S3 的存储）适配器：一个存储实例在一次操作中的客户端。
- * <li>存储桶必须开启版本控制和默认服务端加密（推荐 SSE-KMS）；上传授权签入 Content-Type 与 If-None-Match</li>
- * <li>完成读取要求对象恰好只有一个版本，后续读取一律使用该版本</li>
+ * <li>存储桶必须开启版本控制和默认服务端加密（推荐 SSE-KMS）；首次上传授权签入 Content-Type 与 If-None-Match，替换上传只签
+ * Content-Type</li>
+ * <li>首次完成要求对象恰好只有一个版本，替换完成要求比基准新的版本恰好一个，后续读取一律使用核对过的版本</li>
+ * <li>匿名访问检查按 SDK 对该实例生成的对象地址（路径或虚拟主机风格）不带凭据读取</li>
  * <li>客户端由实例快照与本次凭据构建：JDK 连接、有界超时；STATIC 使用本次密钥，IAM_ROLE 使用默认凭据链</li>
  * <li>SDK 异常统一转为依赖不可用并保留原因，URL 与凭据不进入日志</li>
  */
@@ -58,6 +68,7 @@ public final class S3FileStorage implements FileObjectStorage {
     private final String instanceCode;
     private final S3Client client;
     private final S3Presigner presigner;
+    private final AnonymousHttp anonymous;
 
     /**
      * 按实例构建本次使用的客户端与签名器
@@ -82,6 +93,7 @@ public final class S3FileStorage implements FileObjectStorage {
         }
         this.client = clientBuilder.build();
         this.presigner = presignerBuilder.build();
+        this.anonymous = new AnonymousHttp(instance);
     }
 
     /** 静态密钥时使用本次密钥，否则走默认凭据链（推荐生产使用 IAM 角色）。 */
@@ -124,8 +136,7 @@ public final class S3FileStorage implements FileObjectStorage {
         long seconds = presignSeconds(now, upload.expiresAt());
         PresignedPutObjectRequest presigned =
             call(() -> presigner.presignPutObject(request -> request.signatureDuration(Duration.ofSeconds(seconds))
-                .putObjectRequest(PutObjectRequest.builder().bucket(upload.containerRef()).key(upload.objectRef())
-                    .contentType(upload.expectedMime()).ifNoneMatch("*").build())));
+                .putObjectRequest(putRequest(upload))));
         Map<String, String> headers = new LinkedHashMap<>();
         presigned.signedHeaders().forEach((name, values) -> {
             if (!"host".equalsIgnoreCase(name)) {
@@ -133,6 +144,13 @@ public final class S3FileStorage implements FileObjectStorage {
             }
         });
         return new Grant(presigned.url().toString(), headers, expiration(presigned.expiration(), now, seconds));
+    }
+
+    /** 首次上传只允许对象不存在时写入；替换上传写新版本，由版本控制保留旧版本。 */
+    static PutObjectRequest putRequest(Upload upload) {
+        var request = PutObjectRequest.builder().bucket(upload.containerRef()).key(upload.objectRef())
+            .contentType(upload.expectedMime());
+        return upload.replacement() ? request.build() : request.ifNoneMatch("*").build();
     }
 
     /**
@@ -148,6 +166,61 @@ public final class S3FileStorage implements FileObjectStorage {
             call(() -> client.headObject(request -> request.bucket(upload.containerRef()).key(upload.objectRef())));
         String version = head.versionId();
         requireSingleVersion(upload.containerRef(), upload.objectRef(), version);
+        return opened(upload, version, head);
+    }
+
+    /**
+     * 列出比替换基准新的全部版本与删除标记，最新在前；找不到基准版本时不可用。
+     *
+     * @param upload
+     *            替换上传
+     * @return 新版本 versionId
+     */
+    @Override
+    public List<String> newerVersions(Upload upload) {
+        String key = upload.objectRef();
+        List<String> newer = new ArrayList<>();
+        List<DeleteMarkerEntry> markers = new ArrayList<>();
+        var pages = call(() -> client.listObjectVersionsPaginator(request -> request.bucket(upload.containerRef())
+            .prefix(key)));
+        for (var page : pages) {
+            page.deleteMarkers().stream().filter(marker -> key.equals(marker.key())).forEach(markers::add);
+            for (ObjectVersion item : page.versions()) {
+                if (!key.equals(item.key())) {
+                    continue;
+                }
+                if (upload.baseObjectVersion().equals(item.versionId())) {
+                    markers.stream().filter(marker -> marker.lastModified().isAfter(item.lastModified()))
+                        .forEach(marker -> newer.add(marker.versionId()));
+                    return newer;
+                }
+                newer.add(item.versionId());
+            }
+        }
+        throw new ServiceUnavailableException();
+    }
+
+    /**
+     * 打开已核对唯一性的替换版本。
+     *
+     * @param upload
+     *            替换上传
+     * @param version
+     *            准确版本
+     * @return 版本、服务端识别类型、加密引用与字节流
+     */
+    @Override
+    public Opened open(Upload upload, String version) {
+        HeadObjectResponse head = call(() -> client.headObject(request -> request.bucket(upload.containerRef())
+            .key(upload.objectRef()).versionId(version)));
+        if (!version.equals(head.versionId())) {
+            throw new ServiceUnavailableException();
+        }
+        return opened(upload, version, head);
+    }
+
+    /** 核对加密后打开指定版本并识别类型。 */
+    private Opened opened(Upload upload, String version, HeadObjectResponse head) {
         String encryption = encryption(head);
         BufferedInputStream bytes =
             StoredContentType.buffered(read(upload.containerRef(), upload.objectRef(), version));
@@ -203,7 +276,7 @@ public final class S3FileStorage implements FileObjectStorage {
      * @return 第一项不满足的检查结果
      */
     @Override
-    public FileStorageCheckResult checkBucket(String bucketName) {
+    public FileStorageCheckResult checkBucket(String bucketName, FileAccessLevel accessLevel, String publicBaseUrl) {
         try {
             client.headBucket(request -> request.bucket(bucketName));
             BucketVersioningStatus versioning =
@@ -211,7 +284,7 @@ public final class S3FileStorage implements FileObjectStorage {
             if (versioning != BucketVersioningStatus.ENABLED) {
                 return FileStorageCheckResult.VERSIONING_DISABLED;
             }
-            return checkProbe(bucketName, ProbeObject.next());
+            return checkProbe(bucketName, ProbeObject.next(), accessLevel, publicBaseUrl);
         } catch (S3Exception rejected) {
             return classify(rejected);
         } catch (SdkException | IOException unavailable) {
@@ -219,8 +292,9 @@ public final class S3FileStorage implements FileObjectStorage {
         }
     }
 
-    /** 写入探测对象后核对加密与内容，最后删除该版本。 */
-    FileStorageCheckResult checkProbe(String bucketName, ProbeObject probe) throws IOException {
+    /** 写入探测对象后核对加密、内容与匿名访问，最后删除该版本。 */
+    FileStorageCheckResult checkProbe(String bucketName, ProbeObject probe, FileAccessLevel accessLevel,
+        String publicBaseUrl) throws IOException {
         String version = client.putObject(request -> request.bucket(bucketName).key(probe.key()),
             RequestBody.fromBytes(probe.bytes())).versionId();
         try {
@@ -231,8 +305,14 @@ public final class S3FileStorage implements FileObjectStorage {
             }
             try (InputStream bytes = client.getObject(
                 GetObjectRequest.builder().bucket(bucketName).key(probe.key()).versionId(version).build())) {
-                return probe.matches(bytes.readAllBytes()) ? FileStorageCheckResult.OK : FileStorageCheckResult.UNAVAILABLE;
+                if (!probe.matches(bytes.readAllBytes())) {
+                    return FileStorageCheckResult.UNAVAILABLE;
+                }
             }
+            URI target = accessLevel == FileAccessLevel.PUBLIC ? URI.create(publicBaseUrl + "/" + probe.key())
+                : objectUri(bucketName, probe.key());
+            FileStorageCheckResult anonymousResult = probe.anonymousResult(accessLevel, anonymousRead(target));
+            return anonymousResult == null ? FileStorageCheckResult.OK : anonymousResult;
         } finally {
             client.deleteObject(request -> request.bucket(bucketName).key(probe.key()).versionId(version));
         }
@@ -250,11 +330,64 @@ public final class S3FileStorage implements FileObjectStorage {
         return ProbeObject.classify(code);
     }
 
-    /** 释放本次构建的客户端与签名器。 */
+    /** SDK 按实例地址与路径风格生成的对象地址（不签名）。 */
+    URI objectUri(String bucketName, String key) {
+        try {
+            return client.utilities().getUrl(GetUrlRequest.builder().bucket(bucketName).key(key).build()).toURI();
+        } catch (URISyntaxException invalid) {
+            throw new ServiceUnavailableException(invalid);
+        }
+    }
+
+    /** 不带凭据读取；连接或读取失败为空。 */
+    private AnonymousHttp.Response anonymousRead(URI uri) {
+        try {
+            return anonymous.get(uri);
+        } catch (IOException unreachable) {
+            return null;
+        }
+    }
+
+    /**
+     * 读取对象最新版本及 Platform 恢复复制写入的源版本元数据。
+     *
+     * @param container
+     *            存储桶
+     * @param objectRef
+     *            对象名
+     * @return 最新版本
+     */
+    @Override
+    public LatestVersion latest(String container, String objectRef) {
+        HeadObjectResponse head = call(() -> client.headObject(request -> request.bucket(container).key(objectRef)));
+        if (head.versionId() == null || head.versionId().isBlank()) {
+            throw new ServiceUnavailableException();
+        }
+        return LatestVersion.of(head.versionId(), head.metadata());
+    }
+
+    /**
+     * 服务端复制当前版本为最新版本：替换元数据，保留当前版本的 Content-Type 并记录源版本；默认加密由桶配置施加。
+     *
+     * @param current
+     *            文件当前版本坐标
+     */
+    @Override
+    public void restore(File current) {
+        String source = current.verified().objectVersion();
+        call(() -> client.copyObject(request -> request.sourceBucket(current.container())
+            .sourceKey(current.objectRef()).sourceVersionId(source).destinationBucket(current.container())
+            .destinationKey(current.objectRef()).metadataDirective(MetadataDirective.REPLACE)
+            .contentType(current.verified().mimeType())
+            .metadata(Map.of(LatestVersion.RESTORED_FROM_METADATA, source))));
+    }
+
+    /** 释放本次构建的客户端、签名器与匿名读取客户端。 */
     @Override
     public void close() {
         client.close();
         presigner.close();
+        anonymous.close();
     }
 
     /** 对象必须恰好存在一个版本且没有删除标记；被重复写入的对象视为不可用。 */
