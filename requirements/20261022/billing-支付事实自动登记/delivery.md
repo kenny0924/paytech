@@ -12,8 +12,8 @@
 | 4. 研发实现 | 已确认（用户"继续"，2026-10-23） | 2026-10-22—23 | 独立工作树 `../Code-MoR-billing-b`（detached，基于 main `54d6efc4`）；T0（acquiring / ledger 接口、事件目录）与 B（account 白名单）并行由 Opus 5.5 agent 执行；A（billing）在 T0 之后；payment 两字段等 card BIN 会话提交后再做。进度：T0 完成（acquiring 814 / ledger 344 / 目录 12 / arch-rules 68 全过；两处差异 S12）、B 完成（account 67/67）；工作树 HEAD 挪到 main `22ede435`（含 card BIN / 3DS 提交，`events.yaml` 注释冲突已合并）；A（billing）与 P（payment）并行进行。阶段 4 新增决定 **S11**（用户 2026-10-22 确认）：税务快照只记引用、不生成税行、不重试。**S13**（用户 2026-10-22 确认）：A 线发现 billing 调 acquiring 违反 D08 / arch-rules R3（领域层不得依赖流程层 `-api`），阶段 3 的 acquiring 只读接口作废，改为 acquiring 在支付成功落实事务内登记补偿事件、提交后发布 `OrderPaymentSucceeded`（订单冻结商业字段 + 支付事实），billing 消费该事件；T0 重新执行 acquiring 部分，A 按新输入合同继续。四线结果：T0 重做完成（acquiring 820 / messaging 73 / arch-rules 68 全过）、B 完成（account 67/67）、P 完成（payment 相关 55/55）、A 完成（billing 142/142）。独立评审（Opus agent，只读）无阻塞项，发现零手续费与 ledger 必需行不一致 → 用户确认 **S14**（billing 拒绝 Σ CLIENT_FEE = 0），修复后 billing 143/143；文档过期项（4.5 / 4.10 / AC-01 / AC-06）已同步。compose 变量（billing 四个 URL、acquiring `PAYTECH_INSTANCE_ID`）已在工作树加入。待用户确认后进入阶段 5 |
 | 5. 综合验证与本地验收 | 已确认（用户"继续"） | 2026-10-23 | 串行重跑 payment / acquiring / ledger / account / billing 五个 `-test` 模块 auto 全量 + messaging + arch-rules + 全 reactor test-compile；acquiring 载荷 ↔ billing 读取器字段静态交叉核对；真实跨服务串跑按 Q15 留到 mor-test |
 | 6. test 发布准备 | 已确认（用户"按建议执行"：确认发布卡、复核方式 A、授权阶段 7 动作） | 2026-10-23 | 发布卡 [release/release.md](./release/release.md)：五个候选镜像已构建并钉 ID（billing / account / ledger 基于 `22ede435`，payment / acquiring 基于 bf 提交 `d3d39e40`，D1 基线复现 0 差异；rebase 后 acquiring 853/0、payment 111/0）；只读预检发现 4 个缺口，用户决定：S15 加 `AE_BUSINESS_DAYS` 日历（一条 DML）、阶段 7 建 DEMO_NI 成本方案、验收用 APPLE_PAY 无 Partner、合成数据保留为演示数据 |
-| 7. test 部署与环境验收 | 已执行，待确认 | 2026-10-23 07:38–08:05Z | 全部记录在 [release/release.md 第 8 节](./release/release.md)。五个容器已换为候选镜像（healthy、重启 0、无 ERROR）；SQL-1 在 mor-test 与本机各执行一次；DEMO_NI 成本方案经 IAM 合成复核人（方式 A，账号 `billb-checker-cb6e8a@example.test` / `239292995902455808`，保留）批准 ACTIVE；合成 `OrderPaymentSucceeded` 第一次发布因载荷支付时间早于成本版本生效时间被拒进 DLQ（发布清单编排缺陷，未写数据），改载荷时间与版本后第二次发布 **全链通过**：billing 事实 `239295097391407104`（4 行 2.70 / 0.30 / 97.00 / 0.50，到期 2026-10-27 23:59:59Z）→ account PENDING 贷 97.00 → ledger PAYMENT_SUCCEEDED 分录借贷 100.50 → reconciliation 平台流水 OPEN 100.00 / 0.50；控制台 10 / 11。**遗留**：F1 控制台计费事实详情抽屉对 AUTO 事实报 INVALID_RESPONSE（ops-web 校验 `sourceSystem` 要求大写，billing 写 `acquiring`；待用户定 ops-web 放宽或 billing 改值）；`billing.acquiring.dlq` 残留 1 条被拒消息（清除需授权）；X1 基线 acquiring FAILED 10（既有退款提交任务） |
-| 8. 代码提交与交付归档 | 未开始 | | |
+| 7. test 部署与环境验收 | 已确认（用户"继续"） | 2026-10-23 07:38–08:05Z | 全部记录在 [release/release.md 第 8 节](./release/release.md)。五个容器已换为候选镜像（healthy、重启 0、无 ERROR）；SQL-1 在 mor-test 与本机各执行一次；DEMO_NI 成本方案经 IAM 合成复核人（方式 A，账号 `billb-checker-cb6e8a@example.test` / `239292995902455808`，保留）批准 ACTIVE；合成 `OrderPaymentSucceeded` 第一次发布因载荷支付时间早于成本版本生效时间被拒进 DLQ（发布清单编排缺陷，未写数据），改载荷时间与版本后第二次发布 **全链通过**：billing 事实 `239295097391407104`（4 行 2.70 / 0.30 / 97.00 / 0.50，到期 2026-10-27 23:59:59Z）→ account PENDING 贷 97.00 → ledger PAYMENT_SUCCEEDED 分录借贷 100.50 → reconciliation 平台流水 OPEN 100.00 / 0.50；控制台 10 / 11。**遗留**：F1 控制台计费事实详情抽屉对 AUTO 事实报 INVALID_RESPONSE（ops-web 校验 `sourceSystem` 要求大写，billing 写 `acquiring`；待用户定 ops-web 放宽或 billing 改值）；`billing.acquiring.dlq` 残留 1 条被拒消息（清除需授权）；X1 基线 acquiring FAILED 10（既有退款提交任务） |
+| 8. 代码提交与交付归档 | 已执行 | 2026-10-23 | main `98210e0b`（父 `dcd6f1a1`，155 文件，私有索引 + `commit-tree`，未推送）；文档：CURRENT_IMPLEMENTATION 新条目、design-discuss/billing 第 9 节状态、对账决定 Schema 版本修订、requirements-site 事件声明与时序（E2E-05 仍保留 V5 时代的 payment → finance 口径，其测试冻结旧设计，另行处理）、README 行；`npm --prefix requirements-site test` 失败项与 main 基线相同（10 项既有，与本需求无关）。本记录在提交后补写，随后续文档提交 |
 
 ## 2. 数据库变更
 
@@ -48,4 +48,12 @@
 
 ## 4. 提交与遗留
 
-待阶段 8 填写。
+- **提交：** main `98210e0b`（2026-10-23，父 `dcd6f1a1`，未推送；推送另行授权）。范围：payment 6 / acquiring 30 / billing 74 / account 4 / ledger 11 / foundation 2 / test-environment 1 / 需求目录 21 / 共享文档 7。工作树 `Code-MoR-billing-b` 基于 `d3d39e40`，提交前核对 `d3d39e40..dcd6f1a1` 未触及本需求路径；工作树 `git diff` 带出的 3 个 platform-support 文件（内容与 `d3d39e40` 相同、非本需求）已从提交中排除。主工作区已按提交同步这 128 个代码路径，共享文档只建索引、保留其他会话的未提交改动。
+- **验证范围：** 阶段 5 本机全量（见第 3 节）+ 阶段 6 rebase 后 acquiring 853 / payment 111 + 阶段 7 mor-test 合成全链；提交后未在主工作区重新编译（提交树与工作树一致，基线差异不涉及本需求模块）。
+- **遗留：**
+  - **F1** 运营控制台计费事实详情抽屉对 AUTO 事实报 `INVALID_RESPONSE`（ops-web `decodeBillingFact` 校验 `sourceSystem` 为大写码，billing 写 `acquiring`）。待用户决定：ops-web 放宽（建议）或 billing 改 `ACQUIRING`（含 mor-test 已登记行）。
+  - **需求 D（硬前置 P1）**：acquiring 商业事实固定 Mock；真实收银台支付成功在 mor-test 会产生 `billing.acquiring.dlq` 噪声（commercial 404），勿重放。GAP-ISSUER（CARD 价格发卡维度）、GAP-PARTNER（Partner 演示价格）同属其前置。
+  - **需求 C**：对账四类事件消费。
+  - `billing.acquiring.dlq` 残留 1 条首发被拒消息（清除需授权）；IAM 合成复核人 `billb-checker-cb6e8a@example.test` 保留。
+  - requirements-site E2E-05 时序仍写 payment → finance `PaymentSucceeded`（测试冻结 V5 时代设计），与 S13 不一致，待该时序整体修订。
+  - 工作树 `/Users/kenny/Desktop/Workspace/Code-MoR-billing-b` 与候选镜像 tag `billing-b-20261023` 可删除（内容已全部提交 / 运行中）。
