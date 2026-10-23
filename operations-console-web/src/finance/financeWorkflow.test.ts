@@ -125,6 +125,13 @@ test('解码：计费事实列表、详情与命令回执（草稿无复核人�
   invalid(() => decodeBillingFact('7500000000000000002')(fact));
   invalid(() => decodeBillingFact()({ ...fact, checkerId: checker }));
   invalid(() => decodeBillingFact()({ ...fact, lines: [{ ...factLine, targetBucket: 'LOCKED' }] }));
+  // AUTO 事实的来源系统是小写系统名（billing 自动登记写 acquiring，与事件目录一致），不是大写码
+  const autoFact = { ...fact, factType: 'PAYMENT', originType: 'AUTO', status: 'APPROVED', sourceSystem: 'acquiring',
+    sourceEventKey: 'PAYMENT_ATTEMPT:999900000000000104', makerId: null, approvedTime: time, publishedAt: time,
+    lines: [{ ...factLine, componentType: 'CLIENT_FEE', payerRole: 'CHANNEL', payerId: '238508282463989760', payeeRole: 'OPERATING_ENTITY',
+      payeeId: 'AE001', direction: 'CHARGE', postedAmount: '2.70', targetBucket: null }] };
+  assert.equal(decodeBillingFact(fact.factId)(autoFact).sourceSystem, 'acquiring');
+  invalid(() => decodeBillingFact()({ ...autoFact, sourceSystem: '' }));
   assert.equal(decodeBillingFactResult('DRAFT')(fact).factId, fact.factId);
   invalid(() => decodeBillingFactResult('VOIDED', fact.factId)(fact));
   assert.equal(decodeBillingFactResult('APPROVED', fact.factId)({ ...fact, status: 'APPROVED', checkerId: checker, approvedTime: time }).checkerId, checker);

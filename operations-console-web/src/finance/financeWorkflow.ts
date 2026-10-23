@@ -346,7 +346,7 @@ export function decodeBillingFact(factId?: string) {
   return (value: unknown): BillingFact => {
     const v = value as BillingFact;
     require(object(v) && id(v.factId) && (!factId || v.factId === factId) && digits(v.factVersion) && optional(id)(v.supersedesFactId)
-      && optional(id)(v.parentFactId) && code(v.factType) && code(v.originType) && oneOf(billingStatuses)(v.status) && code(v.sourceSystem)
+      && optional(id)(v.parentFactId) && code(v.factType) && code(v.originType) && oneOf(billingStatuses)(v.status) && text(v.sourceSystem, 64)
       && text(v.sourceEventKey, 128) && instant(v.businessTime) && optional(instant)(v.recordedTime) && optional(id)(v.clientId)
       && typeof v.entityNo === 'string' && entityNoPattern.test(v.entityNo) && optional(id)(v.localPartnerId) && optional(id)(v.financeEntityId)
       && typeof v.currency === 'string' && currencyPattern.test(v.currency) && decimal(v.grossAmount) && optional(id)(v.makerId) && optional(id)(v.checkerId)
