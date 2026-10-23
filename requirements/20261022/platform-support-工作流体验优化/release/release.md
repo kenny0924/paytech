@@ -180,3 +180,7 @@ up() { ./test-environment/compose.sh -f "$O" up -d --no-deps --no-build --pull n
 | 06:07 | 冒烟 | `acceptance/wfux_smoke.py` 15/15（导航含「我发起的」、工作流读接口、数据查询 / 存储 / 渠道回归）；platform / ops-bff / ops-web / api-gateway 自 06:04 起 ERROR 0 |
 | 06:07 | 通知 | code-mor-42、code-mor-6b 已通知新基线；未包含 code-mor-42 的 bfb17bc9（ScanPolicyTab 列宽）——其 ops-web 需另行发布并以本包镜像为回滚基线 |
 | — | 写数据验收 | `acceptance/wfux_mortest.mjs` 未执行：需在 mor-test 新建 IAM 角色 `QA_WFUX_APPROVER` 与测试账号（审批人与执行人须不同），待用户确认 |
+
+### 8.x 写数据验收（2026-10-23 07:38–07:39Z）
+
+用户同意后运行 `acceptance/wfux_mortest.mjs`，结果 **17/17 PASS**，网络 ≥400 与页面错误均为 0，实例走完两级审批后为 COMPLETED。合成角色 `239291461131124736`（`QA_WFUX_APPROVER`）保留，审批人账号 `239291462418776064` 已停用。造数 ID 见 `acceptance/wfux-mortest-state.json`，截图见 `acceptance/screenshots/wfux-01…10`。
