@@ -24,6 +24,7 @@
     "@xyflow/react": "12.11.6",
     "antd": "6.6.2",
     "dayjs": "1.11.23",
+    "pinyin-pro": "3.29.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-router-dom": "7.18.3"

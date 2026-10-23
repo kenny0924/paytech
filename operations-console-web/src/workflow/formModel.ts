@@ -1,6 +1,7 @@
 import type { FieldType, FormDefinition, FormField } from './workflowTypes.ts';
 import { keyPattern, graphLimits } from './graphModel.ts';
 import { fileAddressesOf } from './fileModel.ts';
+import { pinyin } from 'pinyin-pro';
 
 export const textLimit = 255;
 export const longTextLimit = 4000;
@@ -29,11 +30,13 @@ export function insertField(form: FormDefinition, type: FieldType, index: number
 }
 
 /**
- * 按显示名称建议字段键：取名称中的英文与数字，转为小写下划线（如 “Company Name” → company_name），以字母开头、最长 64 位，
- * 与其他字段重复时加 _2、_3。名称中没有英文或数字（如纯中文）时保留 fallback（按类型编号的默认键）。
+ * 按显示名称建议字段键：汉字先转为不带声调的拼音，再取英文与数字转为小写下划线
+ * （如 “Company Name” → company_name、“公司名称” → gong_si_ming_cheng），以字母开头、最长 64 位，
+ * 与其他字段重复时加 _2、_3。名称中没有可用字符时保留 fallback（按类型编号的默认键）。
  */
 export function fieldKeyFromLabel(label: string, otherKeys: ReadonlySet<string>, fallback: string): string {
-  const words = label.match(/[A-Za-z0-9]+/g);
+  const spelled = label.replace(/\p{Script=Han}+/gu, han => ` ${pinyin(han, { toneType: 'none', separator: ' ', v: true })} `);
+  const words = spelled.match(/[A-Za-z0-9]+/g);
   if (!words) return fallback;
   let base = words.join('_').toLowerCase();
   if (!/^[a-z]/.test(base)) base = `f_${base}`;

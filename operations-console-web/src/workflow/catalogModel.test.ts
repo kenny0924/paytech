@@ -92,13 +92,18 @@ test('编码建议：英文与数字转大写下划线；纯中文用「类型_�
   assert.match(suggestTemplateCode('a'.repeat(100), 'FORM', new Set()), /^[A-Z][A-Z0-9_]{0,63}$/);
 });
 
-test('字段键随显示名称生成：英文与数字转小写下划线，重复加序号，纯中文保留默认键', () => {
+test('字段键随显示名称生成：汉字转拼音，英文与数字转小写下划线，重复加序号，无可用字符保留默认键', () => {
   assert.equal(fieldKeyFromLabel('Company Name', new Set(), 'text1'), 'company_name');
   assert.equal(fieldKeyFromLabel('Company Name', new Set(['company_name']), 'text1'), 'company_name_2');
   assert.equal(fieldKeyFromLabel('Company Name', new Set(['company_name', 'company_name_2']), 'text1'), 'company_name_3');
-  assert.equal(fieldKeyFromLabel('公司注册名称', new Set(), 'text1'), 'text1');
-  assert.equal(fieldKeyFromLabel('MID 数量', new Set(), 'number1'), 'mid');
-  assert.equal(fieldKeyFromLabel('2026 预算', new Set(), 'number1'), 'f_2026');
+  assert.equal(fieldKeyFromLabel('公司注册名称', new Set(), 'text1'), 'gong_si_zhu_ce_ming_cheng');
+  assert.equal(fieldKeyFromLabel('公司注册名称', new Set(['gong_si_zhu_ce_ming_cheng']), 'text1'), 'gong_si_zhu_ce_ming_cheng_2');
+  assert.equal(fieldKeyFromLabel('MID 数量', new Set(), 'number1'), 'mid_shu_liang');
+  assert.equal(fieldKeyFromLabel('MID数量', new Set(), 'number1'), 'mid_shu_liang');
+  assert.equal(fieldKeyFromLabel('2026 预算', new Set(), 'number1'), 'f_2026_yu_suan');
+  assert.equal(fieldKeyFromLabel('绿色通道', new Set(), 'flag1'), 'lv_se_tong_dao');
+  assert.equal(fieldKeyFromLabel('（）、。', new Set(), 'text1'), 'text1');
+  assert.match(fieldKeyFromLabel('中'.repeat(100), new Set(), 'text1'), /^[a-z][a-z0-9_]{0,63}$/);
   assert.match(fieldKeyFromLabel('x'.repeat(100), new Set(), 'text1'), /^[A-Za-z][A-Za-z0-9_]{0,63}$/);
 });
 
