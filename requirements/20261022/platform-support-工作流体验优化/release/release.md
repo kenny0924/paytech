@@ -184,3 +184,7 @@ up() { ./test-environment/compose.sh -f "$O" up -d --no-deps --no-build --pull n
 ### 8.x 写数据验收（2026-10-23 07:38–07:39Z）
 
 用户同意后运行 `acceptance/wfux_mortest.mjs`，结果 **17/17 PASS**，网络 ≥400 与页面错误均为 0，实例走完两级审批后为 COMPLETED。合成角色 `239291461131124736`（`QA_WFUX_APPROVER`）保留，审批人账号 `239291462418776064` 已停用。造数 ID 见 `acceptance/wfux-mortest-state.json`，截图见 `acceptance/screenshots/wfux-01…10`。
+
+### 8.y ops-web 追加发布（2026-10-23 07:49:58Z）
+
+只换 operations-console-web：`a8bb58d7` → `sha256:4861cd0dc3b65badb1f724a7722de4f59b0318ead9a0b7de4551eafe52b99ad3`（`mor-test/operations-console-web:wfux-20261023b`）。构建源 main `069dca04` + 10 个数据查询未提交文件（sha 同 `ops-web-uncommitted-10.sha256`）；与上次构建源只差 `ScanPolicyTab.tsx`（公开桶 `bfb17bc9`）、`formModel.ts` / `catalogModel.test.ts` / `package.json` / `package-lock.json`（字段键拼音，新增依赖 `pinyin-pro@3.29.4`）。发布前核对现网 dist 与上次构建逐字节一致；镜像 dist = 构建、nginx.conf 与镜像配置同现网。healthy、重启 0，只读冒烟 15/15。覆盖文件：[ops-web-20261023b/](./ops-web-20261023b/)；回滚 `compose.sh -f ops-web-20261023b/compose-rollback.yaml up -d --no-deps --no-build --pull never --wait operations-console-web`。今后 ops-web 候选须基于 `069dca04` 或之后，并继续带上 10 个数据查询文件直到其提交。
