@@ -40,6 +40,11 @@ import com.paytech.platform.support.api.enums.WebhookEndpointErrorCode;
 import com.paytech.platform.support.api.files.InternalFileApi;
 import com.paytech.platform.support.api.filestorage.FileStorageManagementApi;
 import com.paytech.platform.support.api.gatewayconfiguration.management.GatewayConfigurationManagementApi;
+import com.paytech.platform.support.api.enums.LocalizationErrorCode;
+import com.paytech.platform.support.api.localization.LocalizationCatalogApi;
+import com.paytech.platform.support.api.localization.LocalizationContentApi;
+import com.paytech.platform.support.api.localization.LocalizationDeliveryApi;
+import com.paytech.platform.support.api.localization.LocalizationReleaseApi;
 import com.paytech.platform.support.api.operations.OperationsManagementApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecQueryApi;
@@ -168,6 +173,44 @@ public class PlatformClientConfiguration {
         return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, FILE_STORAGE_READ_TIMEOUT,
             FileErrorCode.values())
             .createClient(com.paytech.platform.support.api.workflow.WorkflowAttachmentApi.class);
+    }
+
+    /**
+     * 多语言四个合同的共用代理
+     * <li>登记 LocalizationErrorCode：覆盖率不足、命名空间不存在（422，errors 原样保留）与导入预览过期、文案已变（409）到达页面；
+     * 开启字段错误投影与 Owner detail 外显。</li>
+     * <li>发布在 Platform 事务外生成并上传语言包，读取超时沿用文件存储的 9 秒（小于 Gateway 路由响应超时上限 10 秒）。</li>
+     */
+    @Bean
+    HttpServiceProxyFactory operationsLocalizationPlatformProxyFactory(Environment environment,
+        PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, FILE_STORAGE_READ_TIMEOUT,
+            LocalizationErrorCode.values());
+    }
+
+    /** 多语言语言、应用与命名空间维护。 */
+    @Bean
+    LocalizationCatalogApi localizationCatalogApi(HttpServiceProxyFactory operationsLocalizationPlatformProxyFactory) {
+        return operationsLocalizationPlatformProxyFactory.createClient(LocalizationCatalogApi.class);
+    }
+
+    /** 多语言 key 导入与翻译。 */
+    @Bean
+    LocalizationContentApi localizationContentApi(HttpServiceProxyFactory operationsLocalizationPlatformProxyFactory) {
+        return operationsLocalizationPlatformProxyFactory.createClient(LocalizationContentApi.class);
+    }
+
+    /** 多语言发布。 */
+    @Bean
+    LocalizationReleaseApi localizationReleaseApi(HttpServiceProxyFactory operationsLocalizationPlatformProxyFactory) {
+        return operationsLocalizationPlatformProxyFactory.createClient(LocalizationReleaseApi.class);
+    }
+
+    /** 匿名 manifest。 */
+    @Bean
+    LocalizationDeliveryApi localizationDeliveryApi(HttpServiceProxyFactory operationsLocalizationPlatformProxyFactory) {
+        return operationsLocalizationPlatformProxyFactory.createClient(LocalizationDeliveryApi.class);
     }
 
     /** 数据源维护复用数据查询专用代理：测试连接与启用检查需要连接被查库。 */

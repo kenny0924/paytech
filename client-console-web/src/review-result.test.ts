@@ -7,20 +7,20 @@ test("returned shows section, public note and resubmission hint", () => {
     review: { outcome: "RETURNED", returnSection: "BUSINESS", publicNote: "请补充经营地址", decidedAt: "2026-10-13T00:00:00.000000Z" } });
   assert.equal(banner?.tone, "warning");
   assert.equal(banner?.anchor, "business");
-  assert.deepEqual(banner?.lines, ["需要修改：经营资料", "请补充经营地址", "修改完成后，请在页面底部重新提交审核。"]);
+  assert.deepEqual(banner?.lines, ["Needs changes: Business details", "请补充经营地址", "After making the changes, resubmit for review at the bottom of the page."]);
 });
 
 test("approved never claims the workspace is ready", () => {
   const banner = resultBanner({ status: "APPROVED", reviewStatus: "AVAILABLE",
     review: { outcome: "APPROVED", returnSection: null, publicNote: null, decidedAt: null } });
-  assert.equal(banner?.title, "审核已通过");
-  assert.ok(banner?.lines.some(line => line.includes("正在开通")));
+  assert.equal(banner?.title, "Application approved");
+  assert.ok(banner?.lines.some(line => line.includes("being set up")));
 });
 
 test("rejected without note uses a safe generic message", () => {
   const banner = resultBanner({ status: "REJECTED", reviewStatus: "AVAILABLE",
     review: { outcome: "REJECTED", returnSection: null, publicNote: "  ", decidedAt: null } });
-  assert.equal(banner?.lines[0], "如有疑问，请联系客服。");
+  assert.equal(banner?.lines[0], "If you have any questions, please contact customer support.");
 });
 
 test("unavailable or mismatched result falls back without inventing a reason", () => {
@@ -30,7 +30,7 @@ test("unavailable or mismatched result falls back without inventing a reason", (
   ]) {
     const banner = resultBanner(app);
     assert.equal(banner?.anchor, null);
-    assert.ok(banner?.lines.includes("审核说明暂时无法读取，请稍后刷新页面。"));
+    assert.ok(banner?.lines.includes("We can't load the review notes right now. Please refresh the page later."));
     assert.ok(!banner?.lines.includes("旧结果"));
   }
 });

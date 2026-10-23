@@ -20,6 +20,10 @@ import { fallbackText, readWorkspaces, workspaceName, workspaceSubtitle } from "
 import type { Workspaces } from "./workspace.ts";
 import type { SubmissionCheck } from "./submission.ts";
 import type { createAuthClient } from "./auth.ts";
+import { enumCodes, enumLabel } from "./enum-label.ts";
+import { translator } from "./i18n/index.ts";
+import { useLocale, useT } from "./i18n/react.tsx";
+import { LocaleSwitcher } from "./LocaleSwitcher.tsx";
 import {
   base,
   files,
@@ -32,8 +36,6 @@ import {
   runUpload,
   readCheckpoint,
   downloadUrl,
-  statuses,
-  scanLabels,
   resultBanner,
 } from "./onboarding.ts";
 import type {
@@ -46,82 +48,81 @@ import type {
   Upload,
 } from "./onboarding.ts";
 type Client = ReturnType<typeof createAuthClient>;
-type Field = [string, string, string?, number?];
+const to = translator("onboarding");
+/** 字段：资料路径、控件类型、长度上限；标签在 `onboarding.field.<路径小写下划线>`。 */
+type Field = [string, string?, number?];
 const individual: Field[] = [
-  ["individual.givenName", "名", "text", 64],
-  ["individual.middleName", "中间名（选填）", "text", 64],
-  ["individual.familyName", "姓", "text", 64],
-  ["individual.birthDate", "出生日期", "date"],
-  ["individual.nationalityCountry", "国籍", "country"],
-  ["individual.residenceCountry", "居住国家 / 地区", "country"],
+  ["individual.givenName", "text", 64],
+  ["individual.middleName", "text", 64],
+  ["individual.familyName", "text", 64],
+  ["individual.birthDate", "date"],
+  ["individual.nationalityCountry", "country"],
+  ["individual.residenceCountry", "country"],
 ];
 const organization: Field[] = [
-  ["organization.legalName", "组织法定名称", "text", 64],
-  ["organization.tradeName", "组织简称（选填）", "text", 64],
-  ["organization.incorporationCountry", "注册国家 / 地区", "country"],
-  ["organization.organizationType", "组织类型", "catalog", 64],
-  ["organization.incorporationDate", "成立日期", "date"],
+  ["organization.legalName", "text", 64],
+  ["organization.tradeName", "text", 64],
+  ["organization.incorporationCountry", "country"],
+  ["organization.organizationType", "catalog", 64],
+  ["organization.incorporationDate", "date"],
 ];
 const address: Field[] = [
-  ["address.addressLine1", "地址第一行", "text", 255],
-  ["address.addressLine2", "地址第二行（选填）", "text", 255],
-  ["address.city", "城市", "text", 128],
-  ["address.stateOrProvince", "州 / 省", "text", 128],
-  ["address.postalCode", "邮政编码", "text", 32],
-  ["address.countryCode", "地址所在国家 / 地区", "country"],
+  ["address.addressLine1", "text", 255],
+  ["address.addressLine2", "text", 255],
+  ["address.city", "text", 128],
+  ["address.stateOrProvince", "text", 128],
+  ["address.postalCode", "text", 32],
+  ["address.countryCode", "country"],
 ];
 const identifier: Field[] = [
-  ["identifier.identifierType", "证件 / 登记证明类型", "catalog", 64],
-  ["identifier.identifierValue", "证件 / 注册编号", "text", 128],
-  ["identifier.issuingCountry", "签发国家 / 地区", "issuer-country"],
-  ["identifier.validFrom", "有效期开始", "date"],
-  ["identifier.validTo", "有效期结束（不含当日，无固定期限可留空）", "date"],
+  ["identifier.identifierType", "catalog", 64],
+  ["identifier.identifierValue", "text", 128],
+  ["identifier.issuingCountry", "issuer-country"],
+  ["identifier.validFrom", "date"],
+  ["identifier.validTo", "date"],
 ];
 const business: Field[] = [
-  ["business.businessModelCode", "经营模式", "catalog", 64],
-  ["business.websiteUrl", "网站地址（选填）", "url", 2048],
-  ["business.expectedVolume", "预计月交易额", "text", 25],
-  ["business.expectedTicket", "预计客单价", "text", 25],
-  ["business.currency", "交易币种", "currency"],
-  ["contact.email", "业务联系邮箱", "email", 320],
-  ["contact.phone", "业务联系电话（含国际区号）", "tel", 32],
-  ["business.businessDescription", "业务说明", "textarea", 2000],
+  ["business.businessModelCode", "catalog", 64],
+  ["business.websiteUrl", "url", 2048],
+  ["business.expectedVolume", "text", 25],
+  ["business.expectedTicket", "text", 25],
+  ["business.currency", "currency"],
+  ["contact.email", "email", 320],
+  ["contact.phone", "tel", 32],
+  ["business.businessDescription", "textarea", 2000],
 ];
-const fieldLabels: Record<string, string> = Object.fromEntries(
-  [...individual, ...organization, ...address, ...identifier, ...business].map(
-    ([key, label]) => [key, label],
-  ),
-);
+const allFields = [...individual, ...organization, ...address, ...identifier, ...business].map(([key]) => key);
+/** 资料路径到标签 key 后缀，如 `individual.givenName` → `field.individual.given_name`。 */
+export function fieldLabelKey(key: string): string {
+  return "field." + key.replace(/[A-Z]/g, (letter) => "_" + letter.toLowerCase());
+}
+/** 当前语言下的全部字段标签，供提交核对定位问题。 */
+function fieldLabels(): Record<string, string> {
+  return Object.fromEntries(allFields.map((key) => [key, to(fieldLabelKey(key))]));
+}
 const countryCodes =
   "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW".split(
     " ",
   );
-const regionNames = new Intl.DisplayNames(["zh-Hans"], { type: "region" });
-const countries = countryCodes
-  .map((code) => [code, regionNames.of(code) ?? code])
-  .sort((a, b) => a[1].localeCompare(b[1], "zh"));
-const relationNames: Record<string, string> = {
-  OWNERSHIP: "股东",
-  CONTROL: "控制人",
-  DIRECTOR: "董事",
-  SIGNATORY: "授权签字人",
-  UBO: "最终受益人",
-};
-const materialNames: Record<string, string> = {
-  PASSPORT: "护照",
-  IDENTITY_DOCUMENT: "身份证明",
-  IDENTITY: "身份证明",
-  REGISTRATION_CERTIFICATE: "组织注册证明",
-  ADDRESS_PROOF: "地址证明",
-  PROOF_OF_ADDRESS: "地址证明",
-  OWNERSHIP_STRUCTURE: "股权 / 控制结构",
-  AUTHORIZATION_LETTER: "授权书",
-  SUPPORTING_DOCUMENT: "其他补充材料",
-};
+/** 国家 / 地区名称按当前语言显示并排序，每种语言只计算一次。 */
+const countriesByLocale = new Map<string, string[][]>();
+function countries(locale: string): string[][] {
+  let list = countriesByLocale.get(locale);
+  if (!list) {
+    const regionNames = new Intl.DisplayNames([locale], { type: "region" });
+    list = countryCodes
+      .map((code) => [code, regionNames.of(code) ?? code])
+      .sort((a, b) => a[1].localeCompare(b[1], locale));
+    countriesByLocale.set(locale, list);
+  }
+  return list;
+}
+const materialName = (type: string) => enumLabel("material", type) ?? type;
 /** 审核结果：退回原因与定位分区、通过后开通中或进入工作区、最终拒绝；内容只来自公开说明。 */
 function ReviewResultBanner({ app, workspaces, enter, entering }: {
   app: Application; workspaces: Workspaces | null; enter: (memberId: string) => void; entering: boolean;
 }) {
+  const t = useT("onboarding");
   const banner = resultBanner(app, workspaces);
   if (!banner) return null;
   return (
@@ -132,12 +133,12 @@ function ReviewResultBanner({ app, workspaces, enter, entering }: {
       ))}
       {banner.anchor && (
         <a className="secondary" href={"#" + banner.anchor}>
-          前往修改
+          {t("review.go_fix")}
         </a>
       )}
       {banner.enterMemberId && (
         <button className="secondary" disabled={entering} onClick={() => enter(banner.enterMemberId!)}>
-          {entering ? "正在进入…" : "进入工作区"}
+          {entering ? t("workspace.entering") : t("workspace.enter")}
         </button>
       )}
     </div>
@@ -147,25 +148,26 @@ function ReviewResultBanner({ app, workspaces, enter, entering }: {
 function WorkspaceList({ workspaces, entering, enter }: {
   workspaces: Workspaces; entering: string | null; enter: (memberId: string) => void;
 }) {
+  const t = useT("onboarding");
   return (
     <section className="workspace-list" aria-labelledby="workspace-heading">
-      <h2 id="workspace-heading">我的工作区</h2>
-      {workspaces.status === "UNAVAILABLE" && <p className="notice">工作区暂时无法读取，请稍后刷新页面。</p>}
+      <h2 id="workspace-heading">{t("workspaces.title")}</h2>
+      {workspaces.status === "UNAVAILABLE" && <p className="notice">{t("workspaces.unavailable")}</p>}
       {workspaces.status === "AVAILABLE" && workspaces.items.length === 0 && (
-        <p className="workspace-empty">审核通过后，您的工作区会显示在这里。</p>
+        <p className="workspace-empty">{t("workspaces.empty")}</p>
       )}
       {workspaces.items.map((item) => (
         <div className={"workspace-row" + (item.state === "RESTRICTED" ? " restricted" : "")} key={item.memberId}>
           <div>
             <strong>{workspaceName(item)}</strong>
-            <small>{[workspaceSubtitle(item), item.current ? "当前工作区" : ""].filter(Boolean).join(" · ")}</small>
+            <small>{[workspaceSubtitle(item), item.current ? t("workspaces.current") : ""].filter(Boolean).join(" · ")}</small>
           </div>
           {item.state === "ACCESSIBLE" ? (
             <button className="secondary" disabled={entering !== null} onClick={() => enter(item.memberId)}>
-              {entering === item.memberId ? "正在进入…" : "进入工作区"}
+              {entering === item.memberId ? t("workspace.entering") : t("workspace.enter")}
             </button>
           ) : (
-            <span className="workspace-reason">{item.reasonText ?? "工作区暂时不可访问"}</span>
+            <span className="workspace-reason">{item.reasonText ?? t("workspaces.restricted")}</span>
           )}
         </div>
       ))}
@@ -174,7 +176,7 @@ function WorkspaceList({ workspaces, entering, enter }: {
 }
 
 function Failure({ error }: { error: Error | null }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null), tc = useT("common");
   useEffect(() => {
     if (
       error &&
@@ -188,7 +190,7 @@ function Failure({ error }: { error: Error | null }) {
     <div className="notice error" role="alert" tabIndex={-1} ref={ref}>
       {error.message}
       {error instanceof RequestFailure && error.requestId && (
-        <small>请求编号：{error.requestId}</small>
+        <small>{tc("request_id", { requestId: error.requestId })}</small>
       )}
     </div>
   ) : null;
@@ -211,6 +213,7 @@ function SubmissionPanel({
   const [check, setCheck] = useState<SubmissionCheck | null>(null),
     [working, setWorking] = useState(false),
     [error, setError] = useState<Error | null>(null);
+  const t = useT("onboarding");
   const path = base + "/" + app.applicationId;
   async function runCheck() {
     setWorking(true);
@@ -219,20 +222,20 @@ function SubmissionPanel({
       setCheck(readCheck(await client.request<unknown>(path + "/submission-check")));
     } catch (failure) {
       setCheck(null);
-      setError(failure instanceof Error ? failure : new Error("提交核对暂时不可用"));
+      setError(failure instanceof Error ? failure : new Error(to("submit.check_failed")));
     } finally {
       setWorking(false);
     }
   }
   async function submit() {
-    if (!window.confirm("提交后，审核期间不能修改资料。确认提交审核？")) return;
+    if (!window.confirm(to("submit.confirm"))) return;
     setWorking(true);
     setError(null);
     try {
       await client.request(path + "/submissions", { method: "POST" });
       await submitted();
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error("提交未完成"));
+      setError(failure instanceof Error ? failure : new Error(to("submit.failed")));
       if (failure instanceof RequestFailure && failure.code === "SUBMISSION_INCOMPLETE") {
         setWorking(false);
         await runCheck();
@@ -242,23 +245,23 @@ function SubmissionPanel({
       setWorking(false);
     }
   }
-  const ctx = { app, labels: fieldLabels, subjectName, materialName: (type: string) => materialNames[type] ?? type };
+  const ctx = { app, labels: fieldLabels(), subjectName, materialName };
   return (
     <section id="submission" className="form-section">
-      <h2>提交审核</h2>
-      <p>提交前先核对资料和材料。提交后，审核期间不能修改；材料是否充分由审核人员判断，可能会要求补充。</p>
+      <h2>{t("submit.title")}</h2>
+      <p>{t("submit.intro")}</p>
       <Failure error={error} />
-      {dirty && <p className="notice">请先保存当前修改，再核对或提交。</p>}
-      {check && check.ready && <p className="notice">资料和基础必需材料已齐全，可以提交。</p>}
+      {dirty && <p className="notice">{t("submit.save_first")}</p>}
+      {check && check.ready && <p className="notice">{t("submit.ready")}</p>}
       {check && !check.ready && (
         <div className="notice" role="status">
-          <strong>还有 {check.issues.length} 项需要处理</strong>
+          <strong>{t("submit.issue_count", { count: check.issues.length })}</strong>
           <ul>
             {check.issues.map((issue) => {
               const text = describeIssue(issue, ctx);
               return (
                 <li key={issue.field}>
-                  {text.where}：{text.message}
+                  {t("submit.issue", { where: text.where, message: text.message })}
                 </li>
               );
             })}
@@ -267,10 +270,10 @@ function SubmissionPanel({
       )}
       <div className="inline-actions">
         <button className="secondary" disabled={locked || dirty || working} onClick={() => void runCheck()}>
-          {working ? "正在处理…" : "提交前核对"}
+          {working ? t("submit.working") : t("submit.check")}
         </button>
         <button disabled={locked || dirty || working || !check?.ready} onClick={() => void submit()}>
-          提交审核
+          {t("submit.submit")}
         </button>
       </div>
     </section>
@@ -283,6 +286,7 @@ function Shell({
   children: ReactNode;
   protect?: boolean;
 }) {
+  const t = useT("onboarding");
   return (
     <>
       <div
@@ -292,7 +296,7 @@ function Shell({
             protect &&
             event.target instanceof Element &&
             event.target.closest("a") &&
-            !window.confirm("离开当前申请？未保存的修改将丢失。")
+            !window.confirm(to("leave.confirm"))
           ) {
             event.preventDefault();
             event.stopPropagation();
@@ -300,9 +304,12 @@ function Shell({
         }}
       >
         <Link to="/onboarding" className="console-brand">
-          PAYTECH <span>/ 客户控制台</span>
+          PAYTECH <span>/ {t("shell.console_name")}</span>
         </Link>
-        <Link to="/account">账号</Link>
+        <div className="console-actions">
+          <LocaleSwitcher />
+          <Link to="/account">{t("shell.account")}</Link>
+        </div>
       </div>
       <main className="onboarding">{children}</main>
     </>
@@ -335,7 +342,7 @@ function useFormCatalog(client: Client, type: Application["clientType"]) {
           !Array.isArray(data.businessModels) ||
           !Array.isArray(data.identifierTypes)
         ) {
-          throw new Error("表单选项暂时不可用");
+          throw new Error(to("catalog.unavailable"));
         }
         if (current) setState({ key, data, error: null });
       })
@@ -358,23 +365,24 @@ function CatalogNotice({
 }: {
   catalog: ReturnType<typeof useFormCatalog>;
 }) {
+  const t = useT("onboarding");
   if (catalog.loading)
     return (
       <p className="hint" role="status">
-        正在读取表单选项…
+        {t("catalog.loading")}
       </p>
     );
   if (catalog.data?.catalogStatus === "AVAILABLE") return null;
   return (
     <div className="notice" role="status">
-      部分表单选项暂未开放，已有资料会保留，其他内容可以继续保存。
+      {t("catalog.partial")}
       {catalog.error && <small>{catalog.error.message}</small>}
       <button
         type="button"
         className="secondary compact"
         onClick={catalog.retry}
       >
-        重新读取选项
+        {t("catalog.retry")}
       </button>
     </div>
   );
@@ -392,6 +400,7 @@ function Fields({
 }) {
   const prefix = useId();
   const catalog = useContext(FormCatalog);
+  const t = useT("onboarding"), { locale } = useLocale();
   // 服务端字段提示：标红控件并以 aria-describedby 关联说明。
   const invalid = (key: string) =>
     issues[key]
@@ -399,12 +408,12 @@ function Fields({
       : {};
   return (
     <div className="form-grid">
-      {items.map(([key, label, kind = "text", max = 64]) => (
+      {items.map(([key, kind = "text", max = 64]) => (
         <div
           className={"field " + (kind === "textarea" ? "wide" : "")}
           key={key}
         >
-          <label htmlFor={prefix + key}>{label}</label>
+          <label htmlFor={prefix + key}>{t(fieldLabelKey(key))}</label>
           {kind === "catalog" ? (
             <select
               id={prefix + key}
@@ -415,15 +424,15 @@ function Fields({
             >
               <option value="">
                 {catalogChoices(key, values, catalog).length
-                  ? "请选择"
-                  : "暂无可选项"}
+                  ? t("select.placeholder")
+                  : t("select.none")}
               </option>
               {values[key] &&
                 !catalogChoices(key, values, catalog).some(
                   (option) => option.code === values[key],
                 ) && (
                   <option value={values[key]} disabled>
-                    原值：{values[key]}（待确认）
+                    {t("select.legacy", { value: values[key] })}
                   </option>
                 )}
               {catalogChoices(key, values, catalog).map((option) => (
@@ -434,7 +443,7 @@ function Fields({
             </select>
           ) : kind === "issuer-country" &&
             issuingCountryMode(values, catalog) === "NONE" ? (
-            <input id={prefix + key} readOnly value="全球标识，无需签发国" />
+            <input id={prefix + key} readOnly value={t("field.global_identifier")} />
           ) : kind === "country" ||
             kind === "issuer-country" ||
             kind === "currency" ? (
@@ -444,9 +453,9 @@ function Fields({
               value={values[key] ?? ""}
               onChange={(event) => set(key, event.target.value)}
             >
-              <option value="">请选择</option>
+              <option value="">{t("select.placeholder")}</option>
               {(kind !== "currency"
-                ? countries
+                ? countries(locale)
                 : Intl.supportedValuesOf("currency").map((code) => [code, code])
               ).map(([code, name]) => (
                 <option key={code} value={code}>
@@ -501,12 +510,13 @@ function Profile({
     [message, setMessage] = useState(""),
     [issues, setIssues] = useState<Record<string, string>>({});
   const catalog = useFormCatalog(client, app.clientType);
+  const t = useT("onboarding");
   useEffect(() => {
     const next = flatten(app.values);
     if (JSON.stringify(next) !== JSON.stringify(before)) {
       setBefore(next);
       setValues(next);
-      setMessage("资料已同步");
+      setMessage(to("profile.synced"));
     }
   }, [app.values]);
   const changes = patch(before, values),
@@ -535,10 +545,10 @@ function Profile({
       const next = flatten(updated.values);
       setBefore(next);
       setValues(next);
-      setMessage("资料已保存");
+      setMessage(to("profile.saved"));
     } catch (failure) {
       /* 页面统一显示可重试错误；字段级问题同时标在对应表单项。 */
-      setIssues(fieldIssues(failure, Object.keys(fieldLabels)));
+      setIssues(fieldIssues(failure, allFields));
     }
   }
   return (
@@ -548,7 +558,7 @@ function Profile({
         <fieldset disabled={!app.editable || busy}>
           <section id="profile" className="form-section">
             <h2>
-              {app.clientType === "ORGANIZATION" ? "组织资料" : "个人资料"}
+              {app.clientType === "ORGANIZATION" ? t("profile.organization_title") : t("profile.individual_title")}
             </h2>
             <Fields
               items={
@@ -559,25 +569,25 @@ function Profile({
               issues={issues}
             />
             <h3>
-              {app.clientType === "ORGANIZATION" ? "注册地址" : "居住地址"}
+              {app.clientType === "ORGANIZATION" ? t("profile.registered_address") : t("profile.residential_address")}
             </h3>
             <Fields items={address} values={values} set={set} issues={issues} />
-            <h3>身份证明</h3>
+            <h3>{t("profile.identification")}</h3>
             <Fields items={identifier} values={values} set={set} issues={issues} />
           </section>
           <section id="business" className="form-section">
-            <h2>经营资料</h2>
-            <p>描述实际销售的商品或提供的服务，便于审核人员了解业务。</p>
+            <h2>{t("section.business")}</h2>
+            <p>{t("profile.business_intro")}</p>
             <Fields items={business} values={values} set={set} issues={issues} />
           </section>
         </fieldset>
         {app.editable && (
           <div className="form-actions">
             <span role="status">
-              {message || (dirty ? "有未保存的修改" : "资料已同步")}
+              {message || (dirty ? t("profile.unsaved") : t("profile.synced"))}
             </span>
             <button className="primary compact" disabled={busy || !dirty}>
-              保存资料
+              {t("profile.save")}
             </button>
           </div>
         )}
@@ -601,7 +611,7 @@ function Modal({
   close: () => void;
 }) {
   const feedback = useContext(CommandFeedback);
-  const ref = useRef<HTMLDialogElement>(null);
+  const ref = useRef<HTMLDialogElement>(null), t = useT("onboarding");
   useEffect(() => {
     const node = ref.current;
     node?.showModal();
@@ -623,9 +633,9 @@ function Modal({
           type="button"
           className="secondary"
           onClick={close}
-          aria-label="关闭编辑"
+          aria-label={t("modal.close_label")}
         >
-          关闭
+          {t("modal.close")}
         </button>
       </div>
       {children}
@@ -636,7 +646,7 @@ function Modal({
           disabled={feedback.busy}
           onClick={feedback.retry}
         >
-          重试原操作
+          {t("command.retry")}
         </button>
       )}
     </dialog>
@@ -649,10 +659,11 @@ function RelationFields({
   values: Flat;
   set: (key: string, value: string) => void;
 }) {
+  const t = useT("onboarding");
   return (
     <>
       <div className="field">
-        <label htmlFor="relationType">与组织的关系</label>
+        <label htmlFor="relationType">{t("relation.type")}</label>
         <select
           id="relationType"
           value={values.relationType ?? ""}
@@ -662,10 +673,10 @@ function RelationFields({
             set("ownershipPercentage", "");
           }}
         >
-          <option value="">请选择</option>
-          {Object.entries(relationNames).map(([key, label]) => (
+          <option value="">{t("select.placeholder")}</option>
+          {enumCodes.relation_type.map((key) => (
             <option key={key} value={key}>
-              {label}
+              {enumLabel("relation_type", key)}
             </option>
           ))}
         </select>
@@ -673,7 +684,7 @@ function RelationFields({
       <div className="form-grid">
         {["OWNERSHIP", "UBO"].includes(values.relationType) && (
           <div className="field">
-            <label htmlFor="ownershipPercentage">持有比例（%）</label>
+            <label htmlFor="ownershipPercentage">{t("relation.ownership")}</label>
             <input
               id="ownershipPercentage"
               type="text"
@@ -684,7 +695,7 @@ function RelationFields({
           </div>
         )}
         <div className="field">
-          <label htmlFor="effectiveFrom">生效日期</label>
+          <label htmlFor="effectiveFrom">{t("relation.effective_from")}</label>
           <input
             id="effectiveFrom"
             type="date"
@@ -694,7 +705,7 @@ function RelationFields({
           />
         </div>
         <div className="field">
-          <label htmlFor="effectiveTo">结束日期（选填）</label>
+          <label htmlFor="effectiveTo">{t("relation.effective_to")}</label>
           <input
             id="effectiveTo"
             type="date"
@@ -732,9 +743,10 @@ function PersonEditor({
       effectiveFrom: "",
     });
   const catalog = useFormCatalog(client, "INDIVIDUAL");
+  const t = useT("onboarding");
   const dirty = patch(before, values).dirtyFields.length > 0;
   const exit = () => {
-    if (!busy && (!dirty || window.confirm("放弃尚未保存的人员修改？")))
+    if (!busy && (!dirty || window.confirm(to("person.discard_confirm"))))
       close();
   };
   async function submit(event: FormEvent) {
@@ -751,7 +763,7 @@ function PersonEditor({
     }
   }
   return (
-    <Modal title={person ? "编辑人员" : "添加人员"} close={exit}>
+    <Modal title={person ? t("person.edit") : t("person.add")} close={exit}>
       <FormCatalog.Provider value={catalog.data}>
         <CatalogNotice catalog={catalog} />
         <form onSubmit={submit}>
@@ -765,7 +777,7 @@ function PersonEditor({
                 )
               }
             />
-            <h3>居住地址</h3>
+            <h3>{t("profile.residential_address")}</h3>
             <Fields
               items={address}
               values={values}
@@ -775,7 +787,7 @@ function PersonEditor({
                 )
               }
             />
-            <h3>身份证明</h3>
+            <h3>{t("profile.identification")}</h3>
             <Fields
               items={identifier}
               values={values}
@@ -787,7 +799,7 @@ function PersonEditor({
             />
             {!person && (
               <>
-                <h3>组织关系</h3>
+                <h3>{t("person.relation_title")}</h3>
                 <RelationFields
                   values={relation}
                   set={(key, value) =>
@@ -801,7 +813,7 @@ function PersonEditor({
             className="primary"
             disabled={busy || !dirty || person?.editable === false}
           >
-            保存人员
+            {t("person.save")}
           </button>
         </form>
       </FormCatalog.Provider>
@@ -828,6 +840,7 @@ function RelationEditor({
     effectiveTo: relation?.effectiveTo?.slice(0, 10) ?? "",
   };
   const [values, setValues] = useState(initial);
+  const t = useT("onboarding");
   const changed = relationPatch(relationBody(initial), relationBody(values));
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -844,7 +857,7 @@ function RelationEditor({
   }
   return (
     <Modal
-      title={relation ? "编辑关系" : "添加关系"}
+      title={relation ? t("relation.edit") : t("relation.add")}
       close={() => {
         if (!busy) close();
       }}
@@ -860,7 +873,7 @@ function RelationEditor({
           className="primary"
           disabled={busy || (!!relation && !changed.dirtyFields.length)}
         >
-          保存关系
+          {t("relation.save")}
         </button>
       </form>
     </Modal>
@@ -900,7 +913,7 @@ function UploadEditor({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<Error | null>(null),
     [phase, setPhase] = useState(state.phase);
-  const guard = useRef(false);
+  const guard = useRef(false), t = useT("onboarding"), tc = useT("common");
   const checkpoint = (value: Upload) => {
     setPhase(value.phase);
     try {
@@ -923,7 +936,7 @@ function UploadEditor({
             client.current()?.context.accountId !== account ||
             client.current()?.context.sessionId !== session
           )
-            throw new RequestFailure(401, "登录状态已变更，请重新打开申请");
+            throw new RequestFailure(401, to("upload.session_changed"));
           return client.request<T>(path, options);
         },
         file,
@@ -944,20 +957,20 @@ function UploadEditor({
   }
   return (
     <Modal
-      title="上传申请材料"
+      title={t("upload.title")}
       close={() => {
         if (!busy) close();
       }}
     >
       <p>
-        {materialNames[requirement.documentType] ?? requirement.documentType}
+        {materialName(requirement.documentType)}
       </p>
       <p className="notice">
-        文件安全扫描通过后才会关联到申请。您可以稍后回来继续处理。
+        {t("upload.scan_notice")}
       </p>
       {phase === "PUT" && (
         <div className="field">
-          <label htmlFor="material-file">选择文件</label>
+          <label htmlFor="material-file">{t("upload.choose")}</label>
           <input
             id="material-file"
             type="file"
@@ -968,18 +981,18 @@ function UploadEditor({
       )}
       <p role="status">
         {busy
-          ? "处理中…"
+          ? tc("status.processing")
           : phase === "SCAN"
-            ? "文件已上传，等待扫描结果"
+            ? t("upload.phase.scan")
             : phase === "COMPLETE"
-              ? "等待确认文件上传完成"
+              ? t("upload.phase.complete")
               : phase === "ASSOCIATE"
-                ? "文件可用，等待关联到申请"
+                ? t("upload.phase.associate")
                 : phase === "DONE"
-                  ? "材料已关联"
+                  ? t("upload.phase.done")
                   : file
-                    ? "文件已选择"
-                    : "请选择文件"}
+                    ? t("upload.selected")
+                    : t("upload.select_prompt")}
       </p>
       <Failure error={error} />
       <button
@@ -988,26 +1001,24 @@ function UploadEditor({
         disabled={busy || (phase === "PUT" && !file)}
       >
         {phase === "SCAN"
-          ? "检查扫描结果并关联"
+          ? t("upload.check_scan")
           : error
-            ? "重试原操作"
-            : "继续"}
+            ? t("command.retry")
+            : t("upload.continue")}
       </button>
       {!busy && (
         <button
           className="secondary full"
           onClick={() => {
             if (
-              window.confirm(
-                "放弃这次未完成的材料处理？已关联的材料不会被删除。",
-              )
+              window.confirm(to("upload.discard_confirm"))
             ) {
               sessionStorage.removeItem(storageKey);
               close();
             }
           }}
         >
-          放弃本次处理
+          {t("upload.discard")}
         </button>
       )}
     </Modal>
@@ -1028,6 +1039,7 @@ export function OnboardingPage({ client }: { client: Client }) {
     [notice] = useState(() => fallbackText(client.takeFallback()));
   const command = useRef<ReturnType<typeof createCommand> | null>(null),
     guard = useRef(false);
+  const t = useT("onboarding"), tc = useT("common");
   const [editor, setEditor] = useState<{
       kind: "person" | "relation";
       party?: string;
@@ -1043,13 +1055,13 @@ export function OnboardingPage({ client }: { client: Client }) {
     /^[1-9][0-9]{0,18}$/.test(applicationId) &&
     BigInt(applicationId) <= 9223372036854775807n;
   async function reload() {
-    if (!validId) throw Error("申请不存在");
+    if (!validId) throw Error(to("page.not_found"));
     const value = await client.request<Application>(base + "/" + applicationId);
     setApp(value);
     return value;
   }
   function fail(failure: unknown) {
-    const value = failure instanceof Error ? failure : new Error("操作未完成");
+    const value = failure instanceof Error ? failure : new Error(to("page.action_failed"));
     if (value instanceof RequestFailure && value.status === 401) {
       client.clear();
       navigate("/login", { replace: true });
@@ -1069,7 +1081,7 @@ export function OnboardingPage({ client }: { client: Client }) {
     const request = applicationId
       ? validId
         ? client.request<Application>(base + "/" + applicationId)
-        : Promise.reject(Error("申请不存在"))
+        : Promise.reject(Error(to("page.not_found")))
       : client.request<Start>("/onboarding/v1/start");
     request
       .then((value) => {
@@ -1129,7 +1141,7 @@ export function OnboardingPage({ client }: { client: Client }) {
     method: "POST" | "PATCH" | "DELETE",
     body?: unknown,
   ): Promise<Application> {
-    if (guard.current) throw Error("请等待当前操作完成");
+    if (guard.current) throw Error(to("page.wait"));
     guard.current = true;
     setBusy(true);
     setError(null);
@@ -1211,7 +1223,7 @@ export function OnboardingPage({ client }: { client: Client }) {
         },
         resume: state,
       });
-    else setError(new Error("没有可恢复的材料处理记录"));
+    else setError(new Error(to("upload.nothing_to_resume")));
   }
   function beginUpload(subject: string, requirement: Requirement) {
     const storageKey =
@@ -1227,9 +1239,7 @@ export function OnboardingPage({ client }: { client: Client }) {
     }
     if (
       existing &&
-      !window.confirm(
-        "存在一份尚未完成的材料。开始新上传将替换本页的恢复记录，是否继续？",
-      )
+      !window.confirm(to("upload.replace_confirm"))
     )
       return;
     setUpload({ subject, requirement });
@@ -1254,7 +1264,7 @@ export function OnboardingPage({ client }: { client: Client }) {
   const personName = (person: Person) =>
     [person.values.individual?.givenName, person.values.individual?.familyName]
       .filter(Boolean)
-      .join(" ") || "待补充姓名";
+      .join(" ") || to("person.name_missing");
   return (
     <CommandFeedback.Provider
       value={{ error, pending, busy, retry: () => void retry() }}
@@ -1264,67 +1274,68 @@ export function OnboardingPage({ client }: { client: Client }) {
           <div>
             <h1>
               {app
-                ? (app.clientType === "ORGANIZATION" ? "组织" : "个人") +
-                  "入驻申请"
-                : "我的工作区与申请"}
+                ? app.clientType === "ORGANIZATION"
+                  ? t("page.title_organization")
+                  : t("page.title_individual")
+                : t("page.title_start")}
             </h1>
             <p>
               {app
-                ? "填写后可保存，稍后继续补充资料。"
-                : "进入已开通的工作区，或继续您的入驻申请。"}
+                ? t("page.intro_application")
+                : t("page.intro_start")}
             </p>
           </div>
           {app && (
             <span className="status">
-              {statuses[app.status] ?? "状态待确认"}
+              {enumLabel("application_status", app.status) ?? t("page.status_unconfirmed")}
             </span>
           )}
         </div>
         {app && (
           <nav className="section-nav">
-            <a href="#profile">基础资料</a>
-            <a href="#business">经营资料</a>
+            <a href="#profile">{t("section.basic")}</a>
+            <a href="#business">{t("section.business")}</a>
             {app.clientType === "ORGANIZATION" && (
-              <a href="#people">相关人员</a>
+              <a href="#people">{t("section.people")}</a>
             )}
-            <a href="#materials">申请材料</a>
+            <a href="#materials">{t("section.materials")}</a>
             <Link
               to="/onboarding"
               onClick={(event) => {
                 if (
                   (dirty || pending) &&
-                  !window.confirm("离开当前申请？未保存的修改将丢失。")
+                  !window.confirm(to("leave.confirm"))
                 )
                   event.preventDefault();
               }}
             >
-              返回申请列表
+              {t("page.back_to_list")}
             </Link>
           </nav>
         )}
         <Failure error={error} />
         {pending && (
           <div className="notice" role="status">
-            上次操作结果尚未确认，请重试原操作。
+            {t("command.unconfirmed")}
             <button className="secondary" disabled={busy} onClick={retry}>
-              重试原操作
+              {t("command.retry")}
             </button>
           </div>
         )}
-        {loading && <p role="status">正在读取…</p>}
+        {loading && <p role="status">{tc("status.loading")}</p>}
         {!loading && error && !app && !start && (
           <button
             className="secondary"
             onClick={() => window.location.reload()}
           >
-            重新读取
+            {t("page.reload")}
           </button>
         )}
         {notice && !app && <p className="notice" role="status">{notice}</p>}
         {start && (
           <>
             {workspaces && <WorkspaceList workspaces={workspaces} entering={entering} enter={(id) => void enterWorkspace(id)} />}
-            <h2 className="section-title">我的入驻申请</h2>
+            <h2 className="section-title">{t("start.applications_title")}</h2>
             <div className="application-list">
               {start.applications.map((row) => (
                 <Link
@@ -1334,15 +1345,15 @@ export function OnboardingPage({ client }: { client: Client }) {
                 >
                   <div>
                     <strong>
-                      {row.clientType === "ORGANIZATION" ? "组织" : "个人"}入驻
+                      {row.clientType === "ORGANIZATION" ? t("start.row_organization") : t("start.row_individual")}
                     </strong>
                     <small>{row.applicationNo}</small>
                   </div>
-                  <span>{statuses[row.status] ?? "查看申请"} →</span>
+                  <span>{t("start.row_status", { status: enumLabel("application_status", row.status) ?? t("start.view") })}</span>
                 </Link>
               ))}
             </div>
-            {start.hasMore && <p>这里只展示最近 20 份申请。</p>}
+            {start.hasMore && <p>{t("start.has_more")}</p>}
             {!start.activeApplicationId && (
               <div className="type-choices">
                 {(["INDIVIDUAL", "ORGANIZATION"] as const).map((type) => (
@@ -1358,15 +1369,15 @@ export function OnboardingPage({ client }: { client: Client }) {
                   >
                     <strong>
                       {type === "INDIVIDUAL"
-                        ? "以个人身份入驻"
-                        : "以组织身份入驻"}
+                        ? t("start.individual_title")
+                        : t("start.organization_title")}
                     </strong>
                     <span>
                       {type === "INDIVIDUAL"
-                        ? "填写个人身份与经营资料"
-                        : "填写组织资料、经营资料及相关人员"}
+                        ? t("start.individual_desc")
+                        : t("start.organization_desc")}
                     </span>
-                    <b>开始填写 →</b>
+                    <b>{t("start.begin")}</b>
                   </button>
                 ))}
               </div>
@@ -1379,8 +1390,8 @@ export function OnboardingPage({ client }: { client: Client }) {
             {!app.editable && !resultBanner(app) && (
               <p className="notice">
                 {["SUBMITTED", "UNDER_REVIEW"].includes(app.status)
-                  ? "资料已提交，正在审核中。审核期间不能修改。"
-                  : "当前申请为只读状态。审核通过或最终拒绝后不能修改。"}
+                  ? t("page.under_review")
+                  : t("page.read_only")}
               </p>
             )}
             <Profile
@@ -1395,10 +1406,10 @@ export function OnboardingPage({ client }: { client: Client }) {
             />
             {app.clientType === "ORGANIZATION" && (
               <section id="people" className="form-section">
-                <h2>相关人员</h2>
-                <p>补充与组织有关的自然人及其关系。同一人员可以有多种关系。</p>
+                <h2>{t("section.people")}</h2>
+                <p>{t("people.intro")}</p>
                 {dirty && (
-                  <p className="notice">请先保存基础资料，再管理人员与关系。</p>
+                  <p className="notice">{t("people.save_first")}</p>
                 )}
                 {app.people.map((person) => (
                   <div className="person-row" key={person.partyId}>
@@ -1413,8 +1424,8 @@ export function OnboardingPage({ client }: { client: Client }) {
                           }
                         >
                           {person.editable && app.editable
-                            ? "编辑人员"
-                            : "查看人员"}
+                            ? t("person.edit")
+                            : t("person.view")}
                         </button>
                         {app.editable && (
                           <button
@@ -1427,7 +1438,7 @@ export function OnboardingPage({ client }: { client: Client }) {
                               })
                             }
                           >
-                            添加关系
+                            {t("relation.add")}
                           </button>
                         )}
                       </div>
@@ -1437,12 +1448,13 @@ export function OnboardingPage({ client }: { client: Client }) {
                       .map((relation) => (
                         <div className="relation-row" key={relation.relationId}>
                           <span>
-                            {relationNames[relation.relationType] ??
-                              relation.relationType}
-                            {relation.ownershipPercentage
-                              ? " · " + relation.ownershipPercentage + "%"
-                              : ""}
-                            {relation.status === "REMOVED" ? " · 已移除" : ""}
+                            {[
+                              enumLabel("relation_type", relation.relationType) ?? relation.relationType,
+                              relation.ownershipPercentage
+                                ? t("relation.ownership_value", { value: relation.ownershipPercentage })
+                                : null,
+                              relation.status === "REMOVED" ? t("relation.removed") : null,
+                            ].filter(Boolean).join(" · ")}
                           </span>
                           {app.editable && relation.editable && (
                             <div className="inline-actions">
@@ -1457,16 +1469,14 @@ export function OnboardingPage({ client }: { client: Client }) {
                                   })
                                 }
                               >
-                                编辑关系
+                                {t("relation.edit")}
                               </button>
                               <button
                                 className="text-button"
                                 disabled={locked || dirty}
                                 onClick={() => {
                                   if (
-                                    window.confirm(
-                                      "移除此人员在当前申请中的这条关系？",
-                                    )
+                                    window.confirm(to("relation.remove_confirm"))
                                   )
                                     void execute(
                                       base +
@@ -1478,7 +1488,7 @@ export function OnboardingPage({ client }: { client: Client }) {
                                     ).catch(() => {});
                                 }}
                               >
-                                移除
+                                {t("action.remove")}
                               </button>
                             </div>
                           )}
@@ -1492,32 +1502,32 @@ export function OnboardingPage({ client }: { client: Client }) {
                     disabled={locked || dirty}
                     onClick={() => setEditor({ kind: "person" })}
                   >
-                    ＋ 添加人员
+                    {t("people.add")}
                   </button>
                 )}
               </section>
             )}
             <section id="materials" className="form-section">
               <div className="row-heading">
-                <h2>申请材料</h2>
+                <h2>{t("section.materials")}</h2>
                 {app.editable && (
                   <button
                     className="text-button"
                     disabled={locked || dirty}
                     onClick={resumeUpload}
                   >
-                    继续未完成的上传
+                    {t("materials.resume")}
                   </button>
                 )}
               </div>
               <p>
-                请先上传基础必需材料；材料是否充分由审核人员判断，可能会要求补充。文件通过安全扫描后才可使用。
+                {t("materials.intro")}
               </p>
               {app.materialSubjects.map((subject) => (
                 <div className="material-subject" key={subject.subjectPartyId}>
                   <h3>
                     {subject.subjectPartyId === app.subjectPartyId
-                      ? "主体材料"
+                      ? t("materials.subject")
                       : personName(
                           app.people.find(
                             (p) => p.partyId === subject.subjectPartyId,
@@ -1526,7 +1536,7 @@ export function OnboardingPage({ client }: { client: Client }) {
                   </h3>
                   {subject.requirementsStatus !== "AVAILABLE" ? (
                     <p className="notice">
-                      材料要求暂时不可用，请稍后重新读取。
+                      {t("materials.requirements_unavailable")}
                     </p>
                   ) : (
                     subject.requirements.map((requirement) => (
@@ -1535,10 +1545,9 @@ export function OnboardingPage({ client }: { client: Client }) {
                         key={requirement.requirementCode}
                       >
                         <span>
-                          {materialNames[requirement.documentType] ??
-                            requirement.documentType}
+                          {materialName(requirement.documentType)}
                           <small>
-                            {requirement.requiredFlag ? "基础必需" : "按需提供"}
+                            {requirement.requiredFlag ? t("materials.required") : t("materials.optional")}
                           </small>
                         </span>
                         {app.editable && (
@@ -1549,7 +1558,7 @@ export function OnboardingPage({ client }: { client: Client }) {
                               beginUpload(subject.subjectPartyId, requirement)
                             }
                           >
-                            上传文件
+                            {t("materials.upload")}
                           </button>
                         )}
                       </div>
@@ -1560,15 +1569,16 @@ export function OnboardingPage({ client }: { client: Client }) {
               {app.documents.map((doc) => (
                 <div className="document-row" key={doc.documentId}>
                   <div>
-                    <strong>{doc.file?.displayName ?? "材料文件"}</strong>
+                    <strong>{doc.file?.displayName ?? t("materials.file_fallback")}</strong>
                     <small>
-                      {!doc.subjectInScope ? "人员已不在申请范围 · " : ""}
-                      {doc.fileStatus !== "AVAILABLE"
-                        ? "文件状态暂不可用"
-                        : doc.file?.objectStatus !== "ACTIVE"
-                          ? "文件不可用"
-                          : (scanLabels[doc.file?.scanStatus ?? ""] ??
-                            "状态待确认")}
+                      {[
+                        !doc.subjectInScope ? t("materials.out_of_scope") : null,
+                        doc.fileStatus !== "AVAILABLE"
+                          ? t("materials.file_status_unavailable")
+                          : doc.file?.objectStatus !== "ACTIVE"
+                            ? t("materials.file_unavailable")
+                            : (enumLabel("scan_status", doc.file?.scanStatus) ?? t("page.status_unconfirmed")),
+                      ].filter(Boolean).join(" · ")}
                     </small>
                   </div>
                   <div className="inline-actions">
@@ -1579,7 +1589,7 @@ export function OnboardingPage({ client }: { client: Client }) {
                           className="text-button"
                           onClick={() => void download(doc.fileId)}
                         >
-                          查看
+                          {t("materials.view")}
                         </button>
                       )}
                     {app.editable && (
@@ -1587,7 +1597,7 @@ export function OnboardingPage({ client }: { client: Client }) {
                         className="text-button"
                         disabled={locked || dirty}
                         onClick={() => {
-                          if (window.confirm("从当前申请移除这份材料？"))
+                          if (window.confirm(to("materials.remove_confirm")))
                             void execute(
                               base +
                                 "/" +
@@ -1598,7 +1608,7 @@ export function OnboardingPage({ client }: { client: Client }) {
                             ).catch(() => {});
                         }}
                       >
-                        移除
+                        {t("action.remove")}
                       </button>
                     )}
                   </div>
@@ -1609,7 +1619,7 @@ export function OnboardingPage({ client }: { client: Client }) {
                 disabled={locked || dirty}
                 onClick={() => void reload().catch(fail)}
               >
-                重新读取材料状态
+                {t("materials.reload")}
               </button>
             </section>
             {app.editable && (
@@ -1620,9 +1630,9 @@ export function OnboardingPage({ client }: { client: Client }) {
                 locked={locked}
                 dirty={dirty}
                 subjectName={(partyId) => {
-                  if (partyId === app.subjectPartyId) return "主体";
+                  if (partyId === app.subjectPartyId) return to("submit.subject");
                   const person = app.people.find((p) => p.partyId === partyId);
-                  return person ? personName(person) : "人员";
+                  return person ? personName(person) : to("submit.person");
                 }}
                 submitted={reload}
               />

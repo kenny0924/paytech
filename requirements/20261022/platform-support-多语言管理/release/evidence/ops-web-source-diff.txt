@@ -1,0 +1,12 @@
+# ops-web 候选源码相对现网基线（ffdf872e + code-mor-55 数据查询 10 个未提交文件）的差异：只有本需求 38 个 ops-web 路径
+Files operations-console-web/.gitignore and operations-console-web/.gitignore differ
+Only in operations-console-web: i18n
+Files operations-console-web/package-lock.json and operations-console-web/package-lock.json differ
+Files operations-console-web/package.json and operations-console-web/package.json differ
+Only in operations-console-web: scripts
+Files operations-console-web/src/configuration/configurationModel.test.ts and operations-console-web/src/configuration/configurationModel.test.ts differ
+Only in operations-console-web/src: i18n
+Only in operations-console-web/src: localization
+Files operations-console-web/src/navigation/ConsolePage.tsx and operations-console-web/src/navigation/ConsolePage.tsx differ
+Files operations-console-web/src/navigation/pageCapabilities.ts and operations-console-web/src/navigation/pageCapabilities.ts differ
+Files operations-console-web/tsconfig.json and operations-console-web/tsconfig.json differ

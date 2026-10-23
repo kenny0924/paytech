@@ -36,11 +36,22 @@ public class FileUploadServiceImpl implements FileUploadService {
         FileScanPolicy policy = admit(target.getScanPolicyCode(), start.mimeType(), start.sizeBytes(), now);
         var value = new FileUpload(id, start.tenantId(), start.uploaderId(), start.sourceSystem(), start.reasonCode(),
             start.displayName(), start.sizeBytes(), start.mimeType(), target.getProvider(),
-            target.getContainer(), UUID.randomUUID().toString(), policy.policyId(),
+            target.getContainer(), objectRef(start.objectKeyPrefix()), policy.policyId(),
             now.plusSeconds(target.getMaxUploadSeconds()), FileUploadStatus.CREATED, start.accessLevel(), null, 0,
             null);
         repository.insert(value, now);
         return result(value);
+    }
+
+    /**
+     * 新上传的对象名：可选前缀加 Platform 生成的随机部分，保证每次上传写到从未使用过的对象名
+     *
+     * @param prefix 进程内调用方指定的前缀，可空；格式已由入口校验
+     * @return 对象名
+     */
+    static String objectRef(String prefix) {
+        String random = UUID.randomUUID().toString();
+        return prefix == null ? random : prefix + "/" + random;
     }
 
     /** 新内容按原文件策略代码当前的 ACTIVE 修订核对类型与大小，写到原对象名。 */

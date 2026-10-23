@@ -4,16 +4,14 @@ import type { createAuthClient } from "./auth.ts";
 import {
   canCloseSecret,
   credentialFormIssues,
-  credentialStatusLabels,
   defaultGraceMinutes,
   defaultValidityDays,
   deliveryQuery,
-  deliveryStatusLabels,
   displayTime,
   emptyDeliveryFilter,
   endpointFormIssues,
-  endpointStatusLabels,
-  failureLabels,
+  eventTypeLabel,
+  testEventType,
   graceOptions,
   maxEndpoints,
   readCredentials,
@@ -24,17 +22,23 @@ import {
 } from "./developer.ts";
 import { canReplay, replayRejectedText } from "./developer.ts";
 import type { Credential, DeliveryFilter, Endpoint, Scope } from "./developer.ts";
+import { enumCodes, enumLabel } from "./enum-label.ts";
+import { translator } from "./i18n/index.ts";
+import { useT } from "./i18n/react.tsx";
+
+const td = translator("developer");
 
 type Client = ReturnType<typeof createAuthClient>;
 const base = "/developer/v1";
 
 /** 错误提示：带请求编号，便于客户反馈。 */
 function ErrorNote({ error }: { error: Error | null }) {
+  const tc = useT("common");
   if (!error) return null;
   return (
     <div className="notice error" role="alert">
       {error.message}
-      {error instanceof RequestFailure && error.requestId && <small>请求编号：{error.requestId}</small>}
+      {error instanceof RequestFailure && error.requestId && <small>{tc("request_id", { requestId: error.requestId })}</small>}
     </div>
   );
 }
@@ -45,7 +49,7 @@ function ErrorNote({ error }: { error: Error | null }) {
  * <li>必须勾选“我已安全保存”才能关闭。</li>
  */
 export function SecretModal({ title, secret, onClose }: { title: string; secret: string; onClose: () => void }) {
-  const [acknowledged, setAcknowledged] = useState(false), [copied, setCopied] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false), [copied, setCopied] = useState(false), t = useT("developer");
   async function copy() {
     try {
       await navigator.clipboard.writeText(secret);
@@ -59,17 +63,17 @@ export function SecretModal({ title, secret, onClose }: { title: string; secret:
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="secret-title"
         onKeyDown={(event) => { if (event.key === "Escape" && canCloseSecret(acknowledged)) onClose(); }}>
         <h2 id="secret-title">{title}</h2>
-        <p className="notice error" role="note">请立即复制并妥善保存。关闭后无法再次查看，遗失只能轮换重新生成。</p>
-        <code className="secret-value" aria-label="密钥">{secret}</code>
+        <p className="notice error" role="note">{t("secret.warning")}</p>
+        <code className="secret-value" aria-label={t("secret.label")}>{secret}</code>
         <div className="actions">
-          <button type="button" className="secondary compact" onClick={() => void copy()}>{copied ? "已复制" : "复制"}</button>
+          <button type="button" className="secondary compact" onClick={() => void copy()}>{copied ? t("secret.copied") : t("secret.copy")}</button>
         </div>
         <label className="checkline">
           <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} />
-          我已安全保存
+          {t("secret.acknowledge")}
         </label>
         <div className="actions">
-          <button type="button" className="primary compact" disabled={!canCloseSecret(acknowledged)} onClick={onClose}>关闭</button>
+          <button type="button" className="primary compact" disabled={!canCloseSecret(acknowledged)} onClick={onClose}>{t("action.close")}</button>
         </div>
       </div>
     </div>
@@ -80,6 +84,7 @@ export function SecretModal({ title, secret, onClose }: { title: string; secret:
 function Confirm({ title, text, confirmText, busy, onConfirm, onCancel, children }: {
   title: string; text: string; confirmText: string; busy: boolean; onConfirm: () => void; onCancel: () => void; children?: React.ReactNode;
 }) {
+  const t = useT("developer"), tc = useT("common");
   return (
     <div className="modal-backdrop" role="presentation">
       <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
@@ -87,8 +92,8 @@ function Confirm({ title, text, confirmText, busy, onConfirm, onCancel, children
         <p>{text}</p>
         {children}
         <div className="actions">
-          <button type="button" className="secondary" disabled={busy} onClick={onCancel}>取消</button>
-          <button type="button" className="danger" disabled={busy} onClick={onConfirm}>{busy ? "处理中…" : confirmText}</button>
+          <button type="button" className="secondary" disabled={busy} onClick={onCancel}>{t("action.cancel")}</button>
+          <button type="button" className="danger" disabled={busy} onClick={onConfirm}>{busy ? tc("status.processing") : confirmText}</button>
         </div>
       </div>
     </div>
@@ -105,16 +110,17 @@ export function ApiKeysPanel({ client, canManage }: { client: Client; canManage:
   const [rotating, setRotating] = useState<Credential | null>(null), [grace, setGrace] = useState(defaultGraceMinutes);
   const [revoking, setRevoking] = useState<Credential | null>(null);
   const [secret, setSecret] = useState<{ title: string; value: string } | null>(null);
+  const t = useT("developer");
 
   async function load() {
     setLoadError(null);
     try {
       const value = readCredentials(await client.request<unknown>(base + "/credentials"));
-      if (!value) throw new Error("凭证列表暂时无法读取");
+      if (!value) throw new Error(td("credentials.load_failed"));
       setItems(value);
     } catch (failure) {
       setItems(null);
-      setLoadError(failure instanceof Error ? failure : new Error("凭证列表暂时无法读取"));
+      setLoadError(failure instanceof Error ? failure : new Error(td("credentials.load_failed")));
     }
   }
   useEffect(() => { void load(); }, []);
@@ -130,7 +136,7 @@ export function ApiKeysPanel({ client, canManage }: { client: Client; canManage:
       setForm((current) => ({ ...current, scopeCodes: list.map((s) => s.scopeCode) }));
       setCreating(true);
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error("权限范围暂时无法读取"));
+      setError(failure instanceof Error ? failure : new Error(td("credentials.scopes_failed")));
     }
   }
   async function submitCreate() {
@@ -145,12 +151,12 @@ export function ApiKeysPanel({ client, canManage }: { client: Client; canManage:
       });
       const key = readSecret(value, "secret");
       setCreating(false);
-      if (key) setSecret({ title: "新凭证已创建", value: key });
-      else setError(new Error("凭证已创建，但响应中没有可显示的密钥，请撤销后重新创建"));
+      if (key) setSecret({ title: td("credentials.created_title"), value: key });
+      else setError(new Error(td("credentials.created_without_secret")));
       await load();
     } catch (failure) {
       if (failure instanceof RequestFailure && Object.keys(failure.fields).length) setIssues(failure.fields);
-      setError(failure instanceof Error ? failure : new Error("创建未完成"));
+      setError(failure instanceof Error ? failure : new Error(td("credentials.create_failed")));
     } finally {
       setBusy(false);
     }
@@ -165,11 +171,11 @@ export function ApiKeysPanel({ client, canManage }: { client: Client; canManage:
       });
       const key = readSecret(value, "secret");
       setRotating(null);
-      if (key) setSecret({ title: "凭证已轮换", value: key });
-      else setError(new Error("轮换已完成，但响应中没有可显示的密钥"));
+      if (key) setSecret({ title: td("credentials.rotated_title"), value: key });
+      else setError(new Error(td("rotation.done_without_secret")));
       await load();
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error("轮换未完成"));
+      setError(failure instanceof Error ? failure : new Error(td("credentials.rotate_failed")));
       await load();
     } finally {
       setBusy(false);
@@ -186,7 +192,7 @@ export function ApiKeysPanel({ client, canManage }: { client: Client; canManage:
       setRevoking(null);
       await load();
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error("撤销未完成"));
+      setError(failure instanceof Error ? failure : new Error(td("credentials.revoke_failed")));
       await load();
     } finally {
       setBusy(false);
@@ -197,38 +203,38 @@ export function ApiKeysPanel({ client, canManage }: { client: Client; canManage:
     <section aria-labelledby="api-keys-title">
       <div className="page-heading">
         <div>
-          <h1 id="api-keys-title">API 凭证</h1>
-          <p>用于服务端调用平台 API。密钥只在创建或轮换时显示一次。</p>
+          <h1 id="api-keys-title">{t("credentials.title")}</h1>
+          <p>{t("credentials.intro")}</p>
         </div>
-        {canManage && <button type="button" className="primary compact" onClick={() => void openCreate()}>新建凭证</button>}
+        {canManage && <button type="button" className="primary compact" onClick={() => void openCreate()}>{t("credentials.new")}</button>}
       </div>
       <ErrorNote error={error} />
       {loadError && (
         <div className="notice error" role="alert">
           {loadError.message}
-          <button type="button" className="text-button" onClick={() => void load()}>重试</button>
+          <button type="button" className="text-button" onClick={() => void load()}>{t("action.retry")}</button>
         </div>
       )}
-      {!items && !loadError && <p role="status">正在读取凭证…</p>}
-      {items && items.length === 0 && <p className="empty">还没有 API 凭证。{canManage ? "点击“新建凭证”创建第一个。" : ""}</p>}
+      {!items && !loadError && <p role="status">{t("credentials.loading")}</p>}
+      {items && items.length === 0 && <p className="empty">{canManage ? t("credentials.empty_manage") : t("credentials.empty")}</p>}
       {items && items.length > 0 && (
         <div className="table-wrap">
           <table>
-            <thead><tr><th>名称</th><th>前缀</th><th>权限范围</th><th>状态</th><th>到期</th>{canManage && <th>操作</th>}</tr></thead>
+            <thead><tr><th>{t("credentials.col.name")}</th><th>{t("credentials.col.prefix")}</th><th>{t("credentials.col.scopes")}</th><th>{t("credentials.col.status")}</th><th>{t("credentials.col.expires")}</th>{canManage && <th>{t("credentials.col.actions")}</th>}</tr></thead>
             <tbody>
               {items.map((item) => (
                 <tr key={item.credentialId}>
-                  <td>{item.name ?? "（未命名）"}</td>
+                  <td>{item.name ?? t("credentials.unnamed")}</td>
                   <td><code>{item.keyPrefix}</code></td>
                   <td>{item.scopeCodes.join(", ") || "—"}</td>
-                  <td>{credentialStatusLabels[item.status] ?? item.status}</td>
+                  <td>{enumLabel("credential_status", item.status) ?? item.status}</td>
                   <td>{displayTime(item.expiresAt)}</td>
                   {canManage && (
                     <td className="row-actions">
                       {item.status === "ACTIVE" && (
                         <>
-                          <button type="button" className="text-button" onClick={() => { setGrace(defaultGraceMinutes); setRotating(item); }}>轮换</button>
-                          <button type="button" className="text-button" onClick={() => setRevoking(item)}>撤销</button>
+                          <button type="button" className="text-button" onClick={() => { setGrace(defaultGraceMinutes); setRotating(item); }}>{t("credentials.rotate")}</button>
+                          <button type="button" className="text-button" onClick={() => setRevoking(item)}>{t("credentials.revoke")}</button>
                         </>
                       )}
                     </td>
@@ -241,16 +247,16 @@ export function ApiKeysPanel({ client, canManage }: { client: Client; canManage:
       )}
       {creating && (
         <div className="modal-backdrop" role="presentation">
-          <form className="modal" role="dialog" aria-modal="true" aria-label="新建凭证"
+          <form className="modal" role="dialog" aria-modal="true" aria-label={t("credentials.new")}
             onSubmit={(event) => { event.preventDefault(); void submitCreate(); }}>
-            <h2>新建凭证</h2>
-            <label>名称
+            <h2>{t("credentials.new")}</h2>
+            <label>{t("credentials.form.name")}
               <input value={form.name} maxLength={64} onChange={(event) => setForm({ ...form, name: event.target.value })} />
             </label>
             {issues.name && <small className="field-error">{issues.name}</small>}
             <fieldset>
-              <legend>权限范围</legend>
-              {scopes.length === 0 && <p className="empty">暂无可用的权限范围</p>}
+              <legend>{t("credentials.form.scopes")}</legend>
+              {scopes.length === 0 && <p className="empty">{t("credentials.form.no_scopes")}</p>}
               {scopes.map((scope) => (
                 <label key={scope.scopeCode} className="checkline">
                   <input type="checkbox" checked={form.scopeCodes.includes(scope.scopeCode)}
@@ -263,22 +269,22 @@ export function ApiKeysPanel({ client, canManage }: { client: Client; canManage:
               ))}
             </fieldset>
             {issues.scopeCodes && <small className="field-error">{issues.scopeCodes}</small>}
-            <label>有效期
+            <label>{t("credentials.form.validity")}
               <select value={form.validityDays} onChange={(event) => setForm({ ...form, validityDays: Number(event.target.value) })}>
-                {validityOptions.map((days) => <option key={days} value={days}>{days} 天</option>)}
+                {validityOptions.map((days) => <option key={days} value={days}>{t("credentials.form.days", { days })}</option>)}
               </select>
             </label>
             <div className="actions">
-              <button type="button" className="secondary" disabled={busy} onClick={() => setCreating(false)}>取消</button>
-              <button type="submit" className="primary compact" disabled={busy}>{busy ? "正在创建…" : "创建"}</button>
+              <button type="button" className="secondary" disabled={busy} onClick={() => setCreating(false)}>{t("action.cancel")}</button>
+              <button type="submit" className="primary compact" disabled={busy}>{busy ? t("credentials.form.creating") : t("credentials.form.create")}</button>
             </div>
           </form>
         </div>
       )}
       {rotating && (
-        <Confirm title="轮换凭证" confirmText="生成新密钥" busy={busy} onConfirm={() => void submitRotate()} onCancel={() => setRotating(null)}
-          text={"将为“" + (rotating.name ?? rotating.keyPrefix) + "”生成新密钥，沿用名称和权限范围。旧密钥按下面的选择失效。"}>
-          <label>旧密钥失效时间
+        <Confirm title={t("credentials.rotate_title")} confirmText={t("credentials.generate_key")} busy={busy} onConfirm={() => void submitRotate()} onCancel={() => setRotating(null)}
+          text={t("credentials.rotate_body", { name: rotating.name ?? rotating.keyPrefix })}>
+          <label>{t("credentials.grace_label")}
             <select value={grace} onChange={(event) => setGrace(Number(event.target.value))}>
               {graceOptions.map((option) => <option key={option.minutes} value={option.minutes}>{option.label}</option>)}
             </select>
@@ -286,8 +292,8 @@ export function ApiKeysPanel({ client, canManage }: { client: Client; canManage:
         </Confirm>
       )}
       {revoking && (
-        <Confirm title="撤销凭证" confirmText="撤销" busy={busy} onConfirm={() => void submitRevoke()} onCancel={() => setRevoking(null)}
-          text={"撤销后“" + (revoking.name ?? revoking.keyPrefix) + "”立即失效，使用它的请求都会被拒绝，且无法恢复。"} />
+        <Confirm title={t("credentials.revoke_title")} confirmText={t("credentials.revoke")} busy={busy} onConfirm={() => void submitRevoke()} onCancel={() => setRevoking(null)}
+          text={t("credentials.revoke_body", { name: revoking.name ?? revoking.keyPrefix })} />
       )}
       {secret && <SecretModal title={secret.title} secret={secret.value} onClose={() => setSecret(null)} />}
     </section>
@@ -317,28 +323,29 @@ export function WebhooksPanel({ client, canManage }: { client: Client; canManage
   const [deliveries, setDeliveries] = useState<{ items: DeliveryItem[]; total: number | null } | null>(null);
   const [deliveryError, setDeliveryError] = useState<Error | null>(null);
   const [detail, setDetail] = useState<{ id: string; status: string | null; value: DeliveryDetail } | null>(null);
+  const t = useT("developer"), tc = useT("common");
 
   async function loadEndpoints() {
     setLoadError(null);
     try {
       const value = readEndpoints(await client.request<unknown>(base + "/webhook-endpoints"));
-      if (!value) throw new Error("端点列表暂时无法读取");
+      if (!value) throw new Error(td("webhooks.endpoints_failed"));
       setEndpoints(value);
       setSelected((current) => current ? value.find((e) => e.endpointId === current.endpointId) ?? null : null);
     } catch (failure) {
       setEndpoints(null);
-      setLoadError(failure instanceof Error ? failure : new Error("端点列表暂时无法读取"));
+      setLoadError(failure instanceof Error ? failure : new Error(td("webhooks.endpoints_failed")));
     }
   }
   async function loadDeliveries(next: DeliveryFilter = filter) {
     setDeliveryError(null);
     try {
       const value = await client.request<{ items?: DeliveryItem[]; total?: number }>(base + "/webhook-deliveries?" + deliveryQuery(next));
-      if (!Array.isArray(value?.items)) throw new Error("投递记录暂时无法读取");
+      if (!Array.isArray(value?.items)) throw new Error(td("webhooks.deliveries_failed"));
       setDeliveries({ items: value.items, total: typeof value.total === "number" ? value.total : null });
     } catch (failure) {
       setDeliveries(null);
-      setDeliveryError(failure instanceof Error ? failure : new Error("投递记录暂时无法读取"));
+      setDeliveryError(failure instanceof Error ? failure : new Error(td("webhooks.deliveries_failed")));
     }
   }
   useEffect(() => { void loadEndpoints(); void loadDeliveries(); }, []);
@@ -359,8 +366,8 @@ export function WebhooksPanel({ client, canManage }: { client: Client; canManage
       if (editing === "new") {
         const value = await client.request<unknown>(base + "/webhook-endpoints", { method: "POST", body: { url: form.url.trim(), eventTypes: form.eventTypes } });
         const key = readSecret(value, "signingSecret");
-        if (key) setSecret({ title: "端点已创建，签名密钥如下", value: key });
-        else setError(new Error("端点已创建，但响应中没有可显示的签名密钥，请轮换密钥"));
+        if (key) setSecret({ title: td("webhooks.created_title"), value: key });
+        else setError(new Error(td("webhooks.created_without_secret")));
       } else {
         await client.request<unknown>(base + "/webhook-endpoints/" + encodeURIComponent(editing.endpointId), {
           method: "PUT", body: { url: form.url.trim(), eventTypes: form.eventTypes, expectedVersion: editing.version },
@@ -370,7 +377,7 @@ export function WebhooksPanel({ client, canManage }: { client: Client; canManage
       await loadEndpoints();
     } catch (failure) {
       if (failure instanceof RequestFailure && Object.keys(failure.fields).length) setIssues(failure.fields);
-      setError(failure instanceof Error ? failure : new Error("保存未完成"));
+      setError(failure instanceof Error ? failure : new Error(td("webhooks.save_failed")));
     } finally {
       setBusy(false);
     }
@@ -389,18 +396,19 @@ export function WebhooksPanel({ client, canManage }: { client: Client; canManage
       } else if (action === "rotate") {
         const value = await client.request<unknown>(path + "/secret-rotation", { method: "POST", body: { immediate } });
         const key = readSecret(value, "signingSecret");
-        if (key) setSecret({ title: "签名密钥已轮换", value: key });
-        else setError(new Error("轮换已完成，但响应中没有可显示的密钥"));
+        if (key) setSecret({ title: td("webhooks.secret_rotated_title"), value: key });
+        else setError(new Error(td("rotation.done_without_secret")));
       } else {
         const value = await client.request<{ result?: string; httpStatus?: number | null; failureCode?: string | null }>(path + "/test-events", { method: "POST" });
-        setNote(value?.result === "SUCCEEDED" ? "测试事件已送达（HTTP " + (value.httpStatus ?? "—") + "）。"
-          : "测试事件未送达：" + (value?.failureCode ? failureLabels[value.failureCode] ?? value.failureCode : "请查看投递记录") + "。");
+        setNote(value?.result === "SUCCEEDED" ? td("webhooks.test_delivered", { httpStatus: value.httpStatus ?? "—" })
+          : value?.failureCode ? td("webhooks.test_failed", { reason: enumLabel("webhook_failure", value.failureCode) ?? value.failureCode })
+            : td("webhooks.test_failed_unknown"));
         await loadDeliveries();
       }
       setConfirm(null);
       await loadEndpoints();
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error("操作未完成"));
+      setError(failure instanceof Error ? failure : new Error(td("webhooks.action_failed")));
       await loadEndpoints();
     } finally {
       setBusy(false);
@@ -411,7 +419,7 @@ export function WebhooksPanel({ client, canManage }: { client: Client; canManage
     try {
       setDetail({ id, status, value: await client.request<DeliveryDetail>(base + "/webhook-deliveries/" + encodeURIComponent(id)) });
     } catch (failure) {
-      setError(failure instanceof Error ? failure : new Error("投递详情暂时无法读取"));
+      setError(failure instanceof Error ? failure : new Error(td("webhooks.detail_failed")));
     }
   }
   async function replay(id: string) {
@@ -420,12 +428,12 @@ export function WebhooksPanel({ client, canManage }: { client: Client; canManage
     setError(null);
     try {
       await client.request<unknown>(base + "/webhook-deliveries/" + encodeURIComponent(id) + "/replay", { method: "POST" });
-      setNote("已重新发送，结果请在投递记录中查看。");
+      setNote(td("webhooks.replayed"));
       setDetail(null);
       await loadDeliveries();
     } catch (failure) {
-      setError(failure instanceof RequestFailure && failure.status === 400 ? new Error(replayRejectedText)
-        : failure instanceof Error ? failure : new Error("重发未完成"));
+      setError(failure instanceof RequestFailure && failure.status === 400 ? new Error(replayRejectedText())
+        : failure instanceof Error ? failure : new Error(td("webhooks.replay_failed")));
     } finally {
       setBusy(false);
     }
@@ -440,32 +448,32 @@ export function WebhooksPanel({ client, canManage }: { client: Client; canManage
     <section aria-labelledby="webhooks-title">
       <div className="page-heading">
         <div>
-          <h1 id="webhooks-title">Webhook</h1>
-          <p>平台在事件发生时向您的 HTTPS 地址发送签名通知。目前只会收到测试事件，业务事件上线后自动开始发送。</p>
+          <h1 id="webhooks-title">{t("webhooks.title")}</h1>
+          <p>{t("webhooks.intro")}</p>
         </div>
-        {canManage && <button type="button" className="primary compact" disabled={full} title={full ? "最多 " + maxEndpoints + " 个端点（含已停用）" : undefined} onClick={() => openForm("new")}>新建端点</button>}
+        {canManage && <button type="button" className="primary compact" disabled={full} title={full ? t("webhooks.limit", { max: maxEndpoints }) : undefined} onClick={() => openForm("new")}>{t("webhooks.new_endpoint")}</button>}
       </div>
       <ErrorNote error={error} />
       {note && <p className="notice" role="status">{note}</p>}
       {loadError && (
         <div className="notice error" role="alert">
           {loadError.message}
-          <button type="button" className="text-button" onClick={() => void loadEndpoints()}>重试</button>
+          <button type="button" className="text-button" onClick={() => void loadEndpoints()}>{t("action.retry")}</button>
         </div>
       )}
-      {!endpoints && !loadError && <p role="status">正在读取端点…</p>}
-      {endpoints && endpoints.length === 0 && <p className="empty">还没有 Webhook 端点。</p>}
+      {!endpoints && !loadError && <p role="status">{t("webhooks.endpoints_loading")}</p>}
+      {endpoints && endpoints.length === 0 && <p className="empty">{t("webhooks.endpoints_empty")}</p>}
       {endpoints && endpoints.length > 0 && (
         <div className="table-wrap">
           <table>
-            <thead><tr><th>地址</th><th>订阅事件</th><th>状态</th><th></th></tr></thead>
+            <thead><tr><th>{t("webhooks.col.url")}</th><th>{t("webhooks.col.events")}</th><th>{t("webhooks.col.status")}</th><th></th></tr></thead>
             <tbody>
               {endpoints.map((endpoint) => (
                 <tr key={endpoint.endpointId}>
                   <td className="break">{endpoint.url}</td>
-                  <td>{endpoint.eventTypes.length} 种</td>
-                  <td>{endpointStatusLabels[endpoint.status] ?? endpoint.status}</td>
-                  <td><button type="button" className="text-button" onClick={() => { setNote(null); setSelected(endpoint); }}>详情</button></td>
+                  <td>{t("webhooks.event_count", { count: endpoint.eventTypes.length })}</td>
+                  <td>{enumLabel("endpoint_status", endpoint.status) ?? endpoint.status}</td>
+                  <td><button type="button" className="text-button" onClick={() => { setNote(null); setSelected(endpoint); }}>{t("action.details")}</button></td>
                 </tr>
               ))}
             </tbody>
@@ -473,40 +481,40 @@ export function WebhooksPanel({ client, canManage }: { client: Client; canManage
         </div>
       )}
 
-      <h2>投递记录</h2>
+      <h2>{t("deliveries.title")}</h2>
       <form className="filters" onSubmit={(event) => { event.preventDefault(); applyFilter({ ...filter, page: 1 }); }}>
-        <select aria-label="端点" value={filter.endpointId} onChange={(event) => setFilter({ ...filter, endpointId: event.target.value })}>
-          <option value="">全部端点</option>
+        <select aria-label={t("deliveries.filter.endpoint")} value={filter.endpointId} onChange={(event) => setFilter({ ...filter, endpointId: event.target.value })}>
+          <option value="">{t("deliveries.filter.all_endpoints")}</option>
           {endpoints?.map((e) => <option key={e.endpointId} value={e.endpointId}>{e.url}</option>)}
         </select>
-        <select aria-label="事件类型" value={filter.eventType} onChange={(event) => setFilter({ ...filter, eventType: event.target.value })}>
-          <option value="">全部事件</option>
-          <option value="webhook.ping">测试事件</option>
+        <select aria-label={t("deliveries.filter.event_type")} value={filter.eventType} onChange={(event) => setFilter({ ...filter, eventType: event.target.value })}>
+          <option value="">{t("deliveries.filter.all_events")}</option>
+          <option value={testEventType}>{t("webhooks.test_event")}</option>
           {webhookEventTypes.map((e) => <option key={e.code} value={e.code}>{e.label}</option>)}
         </select>
-        <select aria-label="状态" value={filter.status} onChange={(event) => setFilter({ ...filter, status: event.target.value })}>
-          <option value="">全部状态</option>
-          {Object.entries(deliveryStatusLabels).map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+        <select aria-label={t("deliveries.filter.status")} value={filter.status} onChange={(event) => setFilter({ ...filter, status: event.target.value })}>
+          <option value="">{t("deliveries.filter.all_statuses")}</option>
+          {enumCodes.delivery_status.map((code) => <option key={code} value={code}>{enumLabel("delivery_status", code)}</option>)}
         </select>
-        <input aria-label="开始时间" type="datetime-local" value={filter.from} onChange={(event) => setFilter({ ...filter, from: event.target.value })} />
-        <input aria-label="结束时间" type="datetime-local" value={filter.to} onChange={(event) => setFilter({ ...filter, to: event.target.value })} />
-        <button type="submit" className="secondary">查询</button>
+        <input aria-label={t("deliveries.filter.from")} type="datetime-local" value={filter.from} onChange={(event) => setFilter({ ...filter, from: event.target.value })} />
+        <input aria-label={t("deliveries.filter.to")} type="datetime-local" value={filter.to} onChange={(event) => setFilter({ ...filter, to: event.target.value })} />
+        <button type="submit" className="secondary">{t("deliveries.filter.search")}</button>
       </form>
       {deliveryError && <div className="notice error" role="alert">{deliveryError.message}</div>}
-      {!deliveries && !deliveryError && <p role="status">正在读取投递记录…</p>}
-      {deliveries && deliveries.items.length === 0 && <p className="empty">没有符合条件的投递记录。</p>}
+      {!deliveries && !deliveryError && <p role="status">{t("deliveries.loading")}</p>}
+      {deliveries && deliveries.items.length === 0 && <p className="empty">{t("deliveries.empty")}</p>}
       {deliveries && deliveries.items.length > 0 && (
         <div className="table-wrap">
           <table>
-            <thead><tr><th>事件</th><th>状态</th><th>尝试次数</th><th>创建时间</th><th></th></tr></thead>
+            <thead><tr><th>{t("deliveries.col.event")}</th><th>{t("deliveries.col.status")}</th><th>{t("deliveries.col.attempts")}</th><th>{t("deliveries.col.created")}</th><th></th></tr></thead>
             <tbody>
               {deliveries.items.map((item) => (
                 <tr key={item.deliveryId}>
-                  <td>{webhookEventTypes.find((e) => e.code === item.eventType)?.label ?? (item.eventType === "webhook.ping" ? "测试事件" : item.eventType)}</td>
-                  <td>{deliveryStatusLabels[item.status] ?? item.status}</td>
+                  <td>{eventTypeLabel(item.eventType)}</td>
+                  <td>{enumLabel("delivery_status", item.status) ?? item.status}</td>
                   <td>{item.attemptCount}</td>
                   <td>{displayTime(item.createTime)}</td>
-                  <td><button type="button" className="text-button" onClick={() => void openDetail(item.deliveryId, item.status)}>详情</button></td>
+                  <td><button type="button" className="text-button" onClick={() => void openDetail(item.deliveryId, item.status)}>{t("action.details")}</button></td>
                 </tr>
               ))}
             </tbody>
@@ -514,24 +522,24 @@ export function WebhooksPanel({ client, canManage }: { client: Client; canManage
         </div>
       )}
       <div className="actions">
-        <button type="button" className="secondary" disabled={filter.page <= 1} onClick={() => applyFilter({ ...filter, page: filter.page - 1 })}>上一页</button>
-        <span>第 {filter.page} 页</span>
+        <button type="button" className="secondary" disabled={filter.page <= 1} onClick={() => applyFilter({ ...filter, page: filter.page - 1 })}>{t("pager.previous")}</button>
+        <span>{t("pager.page", { page: filter.page })}</span>
         <button type="button" className="secondary" disabled={!deliveries || deliveries.items.length < filter.size}
-          onClick={() => applyFilter({ ...filter, page: filter.page + 1 })}>下一页</button>
+          onClick={() => applyFilter({ ...filter, page: filter.page + 1 })}>{t("pager.next")}</button>
       </div>
 
       {editing && (
         <div className="modal-backdrop" role="presentation">
-          <form className="modal" role="dialog" aria-modal="true" aria-label={editing === "new" ? "新建端点" : "修改端点"}
+          <form className="modal" role="dialog" aria-modal="true" aria-label={editing === "new" ? t("endpoint.new_title") : t("endpoint.edit_title")}
             onSubmit={(event) => { event.preventDefault(); void submitForm(); }}>
-            <h2>{editing === "new" ? "新建端点" : "修改端点"}</h2>
-            <label>接收地址（HTTPS）
+            <h2>{editing === "new" ? t("endpoint.new_title") : t("endpoint.edit_title")}</h2>
+            <label>{t("endpoint.form.url")}
               <input value={form.url} inputMode="url" onChange={(event) => setForm({ ...form, url: event.target.value })} />
             </label>
             {issues.url && <small className="field-error">{issues.url}</small>}
             <fieldset>
-              <legend>订阅事件</legend>
-              <p className="hint">业务事件暂未开始发送，目前只能收到测试事件。</p>
+              <legend>{t("endpoint.form.events")}</legend>
+              <p className="hint">{t("endpoint.form.events_hint")}</p>
               {webhookEventTypes.map((event) => (
                 <label key={event.code} className="checkline">
                   <input type="checkbox" checked={form.eventTypes.includes(event.code)}
@@ -545,72 +553,72 @@ export function WebhooksPanel({ client, canManage }: { client: Client; canManage
             </fieldset>
             {issues.eventTypes && <small className="field-error">{issues.eventTypes}</small>}
             <div className="actions">
-              <button type="button" className="secondary" disabled={busy} onClick={() => setEditing(null)}>取消</button>
-              <button type="submit" className="primary compact" disabled={busy}>{busy ? "正在保存…" : "保存"}</button>
+              <button type="button" className="secondary" disabled={busy} onClick={() => setEditing(null)}>{t("action.cancel")}</button>
+              <button type="submit" className="primary compact" disabled={busy}>{busy ? t("action.saving") : t("action.save")}</button>
             </div>
           </form>
         </div>
       )}
 
       {selected && (
-        <aside className="drawer" role="dialog" aria-label="端点详情">
+        <aside className="drawer" role="dialog" aria-label={t("endpoint.detail_title")}>
           <div className="drawer-head">
-            <h2>端点详情</h2>
-            <button type="button" className="text-button" onClick={() => setSelected(null)}>关闭</button>
+            <h2>{t("endpoint.detail_title")}</h2>
+            <button type="button" className="text-button" onClick={() => setSelected(null)}>{t("action.close")}</button>
           </div>
           <dl className="account">
-            <dt>地址</dt><dd className="break">{selected.url}</dd>
-            <dt>状态</dt><dd>{endpointStatusLabels[selected.status] ?? selected.status}</dd>
-            <dt>订阅事件</dt><dd>{selected.eventTypes.map((code) => webhookEventTypes.find((e) => e.code === code)?.label ?? code).join("、") || "—"}</dd>
-            <dt>密钥轮换次数</dt><dd>{selected.rotationNo ?? "—"}</dd>
-            {selected.previousValidUntil && <><dt>旧密钥有效至</dt><dd>{displayTime(selected.previousValidUntil)}</dd></>}
+            <dt>{t("endpoint.field.url")}</dt><dd className="break">{selected.url}</dd>
+            <dt>{t("endpoint.field.status")}</dt><dd>{enumLabel("endpoint_status", selected.status) ?? selected.status}</dd>
+            <dt>{t("endpoint.field.events")}</dt><dd>{selected.eventTypes.map(eventTypeLabel).join(t("endpoint.event_separator")) || "—"}</dd>
+            <dt>{t("endpoint.field.rotations")}</dt><dd>{selected.rotationNo ?? "—"}</dd>
+            {selected.previousValidUntil && <><dt>{t("endpoint.field.previous_valid_until")}</dt><dd>{displayTime(selected.previousValidUntil)}</dd></>}
           </dl>
           {canManage && (
             <div className="actions wrap">
-              <button type="button" className="secondary" disabled={busy} onClick={() => openForm(selected)}>修改</button>
-              <button type="button" className="secondary" disabled={busy} onClick={() => setConfirm("status")}>{selected.status === "ACTIVE" ? "停用" : "启用"}</button>
-              <button type="button" className="secondary" disabled={busy} onClick={() => { setImmediate(false); setConfirm("rotate"); }}>轮换密钥</button>
-              <button type="button" className="primary compact" disabled={busy || selected.status !== "ACTIVE"} onClick={() => void endpointAction("test")}>{busy ? "处理中…" : "发送测试事件"}</button>
+              <button type="button" className="secondary" disabled={busy} onClick={() => openForm(selected)}>{t("endpoint.edit")}</button>
+              <button type="button" className="secondary" disabled={busy} onClick={() => setConfirm("status")}>{selected.status === "ACTIVE" ? t("endpoint.disable") : t("endpoint.enable")}</button>
+              <button type="button" className="secondary" disabled={busy} onClick={() => { setImmediate(false); setConfirm("rotate"); }}>{t("endpoint.rotate_secret")}</button>
+              <button type="button" className="primary compact" disabled={busy || selected.status !== "ACTIVE"} onClick={() => void endpointAction("test")}>{busy ? tc("status.processing") : t("endpoint.send_test")}</button>
             </div>
           )}
         </aside>
       )}
       {selected && confirm === "status" && (
-        <Confirm title={selected.status === "ACTIVE" ? "停用端点" : "启用端点"} confirmText={selected.status === "ACTIVE" ? "停用" : "启用"} busy={busy}
+        <Confirm title={selected.status === "ACTIVE" ? t("endpoint.disable_title") : t("endpoint.enable_title")} confirmText={selected.status === "ACTIVE" ? t("endpoint.disable") : t("endpoint.enable")} busy={busy}
           onConfirm={() => void endpointAction("status")} onCancel={() => setConfirm(null)}
-          text={selected.status === "ACTIVE" ? "停用后不再向该地址发送事件，尚未发送的投递将被取消；重新启用不会补发。" : "启用后新产生的事件会发送到该地址。"} />
+          text={selected.status === "ACTIVE" ? t("endpoint.disable_body") : t("endpoint.enable_body")} />
       )}
       {selected && confirm === "rotate" && (
-        <Confirm title="轮换签名密钥" confirmText="生成新密钥" busy={busy} onConfirm={() => void endpointAction("rotate")} onCancel={() => setConfirm(null)}
-          text="生成新签名密钥。默认 1 小时内同时用新旧密钥签名，方便您切换验签。">
+        <Confirm title={t("endpoint.rotate_title")} confirmText={t("credentials.generate_key")} busy={busy} onConfirm={() => void endpointAction("rotate")} onCancel={() => setConfirm(null)}
+          text={t("endpoint.rotate_body")}>
           <label className="checkline">
             <input type="checkbox" checked={immediate} onChange={(event) => setImmediate(event.target.checked)} />
-            旧密钥立即作废（之后的通知只用新密钥签名）
+            {t("endpoint.rotate_immediate")}
           </label>
         </Confirm>
       )}
       {detail && (
-        <aside className="drawer" role="dialog" aria-label="投递详情">
+        <aside className="drawer" role="dialog" aria-label={t("delivery.detail_title")}>
           <div className="drawer-head">
-            <h2>投递详情</h2>
-            <button type="button" className="text-button" onClick={() => setDetail(null)}>关闭</button>
+            <h2>{t("delivery.detail_title")}</h2>
+            <button type="button" className="text-button" onClick={() => setDetail(null)}>{t("action.close")}</button>
           </div>
           <dl className="account">
-            <dt>事件 ID</dt><dd className="break">{detail.value.event?.eventId ?? "—"}</dd>
-            <dt>事件类型</dt><dd>{detail.value.event?.eventType ?? "—"}</dd>
+            <dt>{t("delivery.event_id")}</dt><dd className="break">{detail.value.event?.eventId ?? "—"}</dd>
+            <dt>{t("delivery.event_type")}</dt><dd>{detail.value.event?.eventType ?? "—"}</dd>
           </dl>
-          <h3>发送尝试</h3>
-          {(detail.value.attempts ?? []).length === 0 && <p className="empty">尚未发送。</p>}
+          <h3>{t("delivery.attempts_title")}</h3>
+          {(detail.value.attempts ?? []).length === 0 && <p className="empty">{t("delivery.not_sent")}</p>}
           <ol className="attempts">
             {(detail.value.attempts ?? []).map((attempt) => (
               <li key={attempt.attemptNo}>
-                第 {attempt.attemptNo} 次 · {displayTime(attempt.startedTime)} · {attempt.httpStatus ? "HTTP " + attempt.httpStatus : "无响应"}
-                {attempt.failureCode && " · " + (failureLabels[attempt.failureCode] ?? attempt.failureCode)}
+                {t("delivery.attempt_no", { attemptNo: attempt.attemptNo })} · {displayTime(attempt.startedTime)} · {attempt.httpStatus ? "HTTP " + attempt.httpStatus : t("delivery.no_response")}
+                {attempt.failureCode && " · " + (enumLabel("webhook_failure", attempt.failureCode) ?? attempt.failureCode)}
                 {typeof attempt.durationMs === "number" && " · " + attempt.durationMs + " ms"}
               </li>
             ))}
           </ol>
-          {canManage && canReplay(detail.status) && <div className="actions"><button type="button" className="primary compact" disabled={busy} onClick={() => void replay(detail.id)}>{busy ? "处理中…" : "重新发送"}</button></div>}
+          {canManage && canReplay(detail.status) && <div className="actions"><button type="button" className="primary compact" disabled={busy} onClick={() => void replay(detail.id)}>{busy ? tc("status.processing") : t("delivery.resend")}</button></div>}
         </aside>
       )}
       {secret && <SecretModal title={secret.title} secret={secret.value} onClose={() => setSecret(null)} />}

@@ -143,7 +143,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
                 "/data-query-admin/v1/data-sources", "/data-query-admin/v1/data-source-connection-tests",
                 "/data-query-admin/v1/template-trials", "/data-query/v1",
                 "/channel-admin/v1/channel-accounts", "/finance/reconciliation/v1/cash-accounts", "/workflow-admin", "/workflow",
-                "/card-admin/v1/bin-library/uploads"),
+                "/card-admin/v1/bin-library/uploads", "/localization-admin/v1/uploads"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
         Set<String> routes = applicationContext.getBean(
@@ -269,6 +269,32 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /card-admin/v1/bin-library/uploads/{uploadId}/completion",
             "POST /card-admin/v1/bin-library/versions",
             "POST /card-admin/v1/bin-library/versions/{versionNo}/activation",
+            "GET /localization-admin/v1/locales",
+            "POST /localization-admin/v1/locales",
+            "PUT /localization-admin/v1/locales/{localeCode}",
+            "GET /localization-admin/v1/applications",
+            "GET /localization-admin/v1/applications/{applicationCode}",
+            "POST /localization-admin/v1/applications",
+            "PUT /localization-admin/v1/applications/{applicationCode}",
+            "GET /localization-admin/v1/applications/{applicationCode}/namespaces",
+            "POST /localization-admin/v1/applications/{applicationCode}/namespaces",
+            "PUT /localization-admin/v1/applications/{applicationCode}/namespaces/{namespaceCode}",
+            "DELETE /localization-admin/v1/applications/{applicationCode}/namespaces/{namespaceCode}",
+            "POST /localization-admin/v1/uploads",
+            "POST /localization-admin/v1/uploads/{uploadId}/completion",
+            "POST /localization-admin/v1/applications/{applicationCode}/key-imports/previews",
+            "POST /localization-admin/v1/applications/{applicationCode}/key-imports",
+            "GET /localization-admin/v1/applications/{applicationCode}/translations",
+            "POST /localization-admin/v1/applications/{applicationCode}/translations/batch",
+            "GET /localization-admin/v1/applications/{applicationCode}/translations/export",
+            "POST /localization-admin/v1/applications/{applicationCode}/translations/imports",
+            "GET /localization-admin/v1/applications/{applicationCode}/release-precheck",
+            "POST /localization-admin/v1/applications/{applicationCode}/releases",
+            "GET /localization-admin/v1/applications/{applicationCode}/releases",
+            "GET /localization-admin/v1/applications/{applicationCode}/releases/{releaseNo}",
+            "GET /localization-admin/v1/applications/{applicationCode}/releases/{releaseNo}/diff",
+            "POST /localization-admin/v1/applications/{applicationCode}/current-release",
+            "GET /i18n/v1/manifest",
             "GET /data-query-admin/v1/data-sources",
             "GET /data-query-admin/v1/data-sources/{dataSourceId}",
             "POST /data-query-admin/v1/data-sources",
@@ -591,7 +617,8 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
         assertEquals(RiskDecisionConfigurationClientImpl.class, clients.values().iterator().next().getClass());
         var factories = applicationContext.getBeansOfType(HttpServiceProxyFactory.class);
         assertEquals(Set.of("operationsPlatformProxyFactory", "operationsConfigurationPlatformProxyFactory", "operationsRiskProxyFactory",
-            "operationsRiskFlowProxyFactory", "operationsDataQueryPlatformProxyFactory"), factories.keySet());
+            "operationsRiskFlowProxyFactory", "operationsDataQueryPlatformProxyFactory",
+            "operationsLocalizationPlatformProxyFactory"), factories.keySet());
         assertNotSame(factories.get("operationsPlatformProxyFactory"), factories.get("operationsRiskProxyFactory"));
         assertNotSame(factories.get("operationsRiskProxyFactory"), factories.get("operationsRiskFlowProxyFactory"));
         assertTrue(applicationContext.getBeansOfType(DataSource.class).isEmpty(), "无状态 BFF 不得装配数据库");

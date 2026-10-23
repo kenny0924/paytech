@@ -9,6 +9,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.paytech.operations.console.bff.ext.rest.LocalizationManifestController;
 import com.paytech.operations.console.bff.ext.rest.OperationsRequestInterceptor;
 import com.paytech.operations.console.bff.ext.rest.OperatorContextArgumentResolver;
 
@@ -26,10 +27,11 @@ public class OperationsWebConfiguration implements WebMvcConfigurer {
         this.contextResolver = contextResolver;
     }
 
+    /** 多语言 manifest 是 Gateway PUBLIC 路由，没有操作人，不经 PLT-I02 与 Origin 校验。 */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(requestInterceptor).addPathPatterns("/**")
-            .excludePathPatterns("/actuator/**", "/error");
+            .excludePathPatterns("/actuator/**", "/error", LocalizationManifestController.PATH);
     }
 
     @Override

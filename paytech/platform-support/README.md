@@ -73,6 +73,7 @@ V2 骨架（第 02a 步）下本服务位于 `paytech/platform-support/`，由�
 | `paytech-platform-support-audit-security` | core（业务模块） | 不可变审计事实、审计查询与独立提交的审计写入 |
 | `paytech-platform-support-file-document` | core（业务模块） | 文件持久化、上传策略、扫描规则与存储端口 |
 | `paytech-platform-support-delivery` | core（业务模块） | 通知与 Webhook 投递 |
+| `paytech-platform-support-localization` | core（业务模块） | 多语言：语言目录、应用与命名空间、key 导入、翻译与 ICU 校验、不可变发布与 manifest（`t_i18n_*` 七表，Processor 与上线补偿 Handler 在本模块） |
 | `paytech-platform-support-core` | core（应用编排层） | 原 web 的 `core`、`service` 包与出站适配（`core.integration`）：跨业务模块 Processor、审计生命周期、存量命令幂等、内部 Token 签发 |
 | `paytech-platform-support-app` | app | 启动类、`configuration`、`ext`（Controller、审计切面）、`application.yml`；唯一 `spring-boot-maven-plugin` |
 | `paytech-platform-support-test` | test | 全部 auto / manual 测试与 `ArchitectureAutoTest`（R1–R12） |
@@ -359,6 +360,13 @@ The unique Scope code and database row/version checks remain the final concurren
 - **文件记录**（`/storage-admin/v1/files`，查看 `FILE_RECORD_READ`，下载 `FILE_RECORD_DOWNLOAD`）：按创建时间范围（必填，最长 31 天）
   与文件 ID、来源系统、原因、访问级别、检查状态、是否有替换进行中分页查询；详情含存储位置、公开地址、版本历史、检查结果与上传记录；
   下载当前或指定 `versionNo` 的版本（候选 / 被拒绝版本 409），按附件签发并写 `FILE_DOWNLOAD_AUTHORIZE` 审计（属性 `version_no`）。
+- **JSON 格式检查（2026-10-23 多语言集成）**：`StoredContentType` 把首个非空白字节为左花括号的 UTF-8 文本识别为 `application/json`
+  （带 BOM 的按 CSV 识别，声明 JSON 时完成上传即被拒绝）；格式检查对 JSON 另以流式解析复核全文恰好是一个 JSON 对象，`supportedMimeTypes`
+  随之出现 `application/json`。
+- **Platform 进程内上传**：`StartFileUploadRequest.objectKeyPrefix`（仅进程内模块可用，内部 HTTP 入口恒为空）让对象名为“前缀/随机部分”；
+  `FileStorageRegistry.putThroughGrant` 按签发的 PUT 授权写入字节（实例超时与信任设置，OkHttp）。多语言语言包经
+  `core.integration.localization.FileServiceReleaseBundleStore` 走 开始上传 → 授权写入 → 完成上传，来源 `platform-support`、`PUBLIC`、
+  原因 `I18N_RELEASE_BUNDLE`，对象名 `i18n/应用/发布号/语言/命名空间/摘要前 16 位/随机部分`。
 - 增量 SQL：`docs/database/sql/changes/2026-10-22-file-public-bucket.sql`（新表 `t_file_version` 与五表变更），回填存量 v1 版本行的 DML
   在[需求目录](../../requirements/20261022/platform-support-文件公开桶/db/dml.sql)（可重跑）。
 

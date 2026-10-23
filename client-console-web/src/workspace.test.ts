@@ -30,18 +30,18 @@ test("an item missing CCT summary degrades alone instead of hiding the whole lis
     { ...item, memberId: "14", clientId: "24", clientNo: "CL-24", displayName: null, clientType: undefined }] });
   assert.equal(list.status, "AVAILABLE");
   assert.equal(list.items.length, 3);
-  assert.equal(workspaceName(list.items[1]), "名称暂不可用");
+  assert.equal(workspaceName(list.items[1]), "Name unavailable");
   assert.equal(workspaceSubtitle(list.items[1]), "");
   assert.equal(workspaceName(list.items[2]), "CL-24");
   assert.equal(workspaceSubtitle(list.items[2]), "CL-24");
-  assert.equal(workspaceSubtitle(list.items[0]), "组织 · CL-21");
+  assert.equal(workspaceSubtitle(list.items[0]), "Organization · CL-21");
 });
 
 test("fallback reason maps to public text and unknown codes stay generic", () => {
   assert.equal(fallbackText(null), null);
-  assert.equal(fallbackText("TENANT_SUSPENDED"), "已退出工作区：工作区已暂停。");
-  assert.equal(fallbackText("MEMBER_INACTIVE"), "已退出工作区：您的成员资格已失效。");
-  assert.equal(fallbackText("SOMETHING_INTERNAL"), "已退出工作区：工作区暂时不可访问。");
+  assert.equal(fallbackText("TENANT_SUSPENDED"), "You've left the workspace: it has been suspended.");
+  assert.equal(fallbackText("MEMBER_INACTIVE"), "You've left the workspace: your membership is no longer active.");
+  assert.equal(fallbackText("SOMETHING_INTERNAL"), "You've left the workspace: it is temporarily unavailable.");
 });
 
 test("approved banner offers entry only for an accessible workspace of the same client", () => {
@@ -49,12 +49,12 @@ test("approved banner offers entry only for an accessible workspace of the same 
   const ready = readWorkspaces({ status: "AVAILABLE", items: [item] });
   const enter = resultBanner(approved, ready);
   assert.equal(enter?.enterMemberId, "11");
-  assert.ok(enter?.lines.includes("客户工作区已开通，可以进入。"));
+  assert.ok(enter?.lines.includes("Your client workspace is ready. You can enter it now."));
   for (const workspaces of [null, readWorkspaces({ status: "AVAILABLE", items: [{ ...item, state: "RESTRICTED" }] }),
     readWorkspaces({ status: "AVAILABLE", items: [{ ...item, clientId: "99" }] }), readWorkspaces(undefined)]) {
     const banner = resultBanner(approved, workspaces);
     assert.equal(banner?.enterMemberId, null);
-    assert.ok(banner?.lines.some((line) => line.includes("正在开通")));
+    assert.ok(banner?.lines.some((line) => line.includes("being set up")));
   }
   assert.equal(enterableWorkspace(undefined, ready), null);
 });
@@ -67,6 +67,6 @@ test("home response is validated before rendering", () => {
   assert.equal(readHome({ workspace: { clientId: "bad" }, profile: {} }), null);
   const partial = readHome({ workspace: { clientId: "21", clientNo: null, displayName: null, clientType: null, clientStatus: null }, profile: {} });
   assert.equal(partial?.workspace.clientNo, null);
-  assert.equal(partial && workspaceName(partial.workspace), "名称暂不可用");
+  assert.equal(partial && workspaceName(partial.workspace), "Name unavailable");
   assert.equal(readHome(null), null);
 });

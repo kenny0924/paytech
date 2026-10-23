@@ -26,6 +26,7 @@ import com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode;
 import com.paytech.platform.support.api.enums.ClientTeamErrorCode;
 import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.api.files.InternalFileApi;
+import com.paytech.platform.support.api.localization.LocalizationDeliveryApi;
 import com.paytech.foundation.common.enums.CodeMessageEnum;
 import java.util.stream.Stream;
 
@@ -77,6 +78,12 @@ public class PlatformClientConfiguration {
     InternalFileApi internalFileApi(Environment env, PlatformDiscoveryInterceptor discovery,
         @Value("${client.platform-test-base-url:}") String testUrl, ObjectProvider<InternalTokenSupplier> tokens) {
         return create(env, discovery, testUrl, tokens, InternalFileApi.class, FileErrorCode.values());
+    }
+
+    /** 匿名 manifest（多语言交付）；不携带身份，只有公共错误码。 */
+    @Bean LocalizationDeliveryApi localizationDeliveryApi(Environment env, PlatformDiscoveryInterceptor discovery,
+        @Value("${client.platform-test-base-url:}") String testUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return create(env, discovery, testUrl, tokens, LocalizationDeliveryApi.class);
     }
 
     /** 团队与邀请接口同时使用认证类与团队类错误码（会话、权限、工作区不可用沿用认证类）。 */

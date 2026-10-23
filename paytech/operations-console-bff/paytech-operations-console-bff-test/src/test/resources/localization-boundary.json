@@ -1,0 +1,944 @@
+[
+ {
+  "id": "C01",
+  "method": "GET",
+  "path": "/localization-admin/v1/locales",
+  "query": "",
+  "ownerQuery": "",
+  "request": null,
+  "response": {
+   "items": [
+    {
+     "localeCode": "zh-CN",
+     "nativeName": "简体中文",
+     "englishName": "Chinese (Simplified)",
+     "textDirection": "LTR",
+     "status": "ENABLED",
+     "sortOrder": 20,
+     "version": 2,
+     "updatedBy": "10001",
+     "updateTime": "2026-10-23T08:00:00.123456Z"
+    }
+   ]
+  },
+  "routeCode": "operations-i18n-locale-list",
+  "ownerPath": "/internal/localization/v1/locales",
+  "status": 200
+ },
+ {
+  "id": "C02",
+  "method": "POST",
+  "path": "/localization-admin/v1/locales",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "localeCode": "zh-CN",
+   "nativeName": "简体中文",
+   "englishName": "Chinese (Simplified)",
+   "textDirection": "LTR",
+   "sortOrder": 20
+  },
+  "response": {
+   "localeCode": "zh-CN",
+   "nativeName": "简体中文",
+   "englishName": "Chinese (Simplified)",
+   "textDirection": "LTR",
+   "status": "ENABLED",
+   "sortOrder": 20,
+   "version": 1,
+   "updatedBy": "10001",
+   "updateTime": "2026-10-23T08:00:00.123456Z"
+  },
+  "routeCode": "operations-i18n-locale-create",
+  "ownerPath": "/internal/localization/v1/locales",
+  "status": 200
+ },
+ {
+  "id": "C03",
+  "method": "PUT",
+  "path": "/localization-admin/v1/locales/zh-CN",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "expectedVersion": 1,
+   "nativeName": "简体中文",
+   "englishName": "Chinese (Simplified)",
+   "textDirection": "LTR",
+   "status": "ENABLED",
+   "sortOrder": 20
+  },
+  "response": {
+   "localeCode": "zh-CN",
+   "nativeName": "简体中文",
+   "englishName": "Chinese (Simplified)",
+   "textDirection": "LTR",
+   "status": "ENABLED",
+   "sortOrder": 20,
+   "version": 2,
+   "updatedBy": "10001",
+   "updateTime": "2026-10-23T08:00:00.123456Z"
+  },
+  "routeCode": "operations-i18n-locale-update",
+  "ownerPath": "/internal/localization/v1/locales/zh-CN",
+  "status": 200
+ },
+ {
+  "id": "C04",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications",
+  "query": "",
+  "ownerQuery": "",
+  "request": null,
+  "response": {
+   "items": [
+    {
+     "applicationCode": "client-console",
+     "applicationName": "Client Console",
+     "defaultLocale": "en",
+     "requiredLocales": [
+      "zh-CN"
+     ],
+     "coverageThresholdPercent": 100,
+     "status": "ENABLED",
+     "currentReleaseNo": 7,
+     "keySetRevision": 12,
+     "contentRevision": 40,
+     "pendingChangeCount": 5,
+     "version": 3,
+     "updatedBy": "10001",
+     "updateTime": "2026-10-23T08:00:00.123456Z"
+    }
+   ]
+  },
+  "routeCode": "operations-i18n-application-list",
+  "ownerPath": "/internal/localization/v1/applications",
+  "status": 200
+ },
+ {
+  "id": "C05",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications/client-console",
+  "query": "",
+  "ownerQuery": "",
+  "request": null,
+  "response": {
+   "application": {
+    "applicationCode": "client-console",
+    "applicationName": "Client Console",
+    "defaultLocale": "en",
+    "requiredLocales": [
+     "zh-CN"
+    ],
+    "coverageThresholdPercent": 100,
+    "status": "ENABLED",
+    "currentReleaseNo": 7,
+    "keySetRevision": 12,
+    "contentRevision": 40,
+    "pendingChangeCount": 5,
+    "version": 3,
+    "updatedBy": "10001",
+    "updateTime": "2026-10-23T08:00:00.123456Z"
+   },
+   "currentRelease": {
+    "releaseNo": 7,
+    "status": "READY",
+    "current": true,
+    "keyCount": 120,
+    "releaseNote": "十月文案",
+    "failureReason": "无",
+    "createdBy": "10001",
+    "createTime": "2026-10-23T08:00:00.123456Z",
+    "readyTime": "2026-10-23T08:00:00.123456Z",
+    "changeSummary": {
+     "baseReleaseNo": 6,
+     "addedKeyCount": 1,
+     "addedKeys": [
+      "team.invite.title"
+     ],
+     "deprecatedKeyCount": 1,
+     "deprecatedKeys": [
+      "team.legacy"
+     ],
+     "sourceChangedKeyCount": 1,
+     "sourceChangedKeys": [
+      "team.title"
+     ],
+     "translationChanges": [
+      {
+       "locale": "zh-CN",
+       "changedCount": 2,
+       "sampleKeys": [
+        "team.invite.title",
+        "team.title"
+       ]
+      }
+     ]
+    }
+   },
+   "activeKeyCount": 120,
+   "deprecatedKeyCount": 3,
+   "namespaceCount": 6,
+   "coverage": [
+    {
+     "locale": "zh-CN",
+     "required": true,
+     "totalKeys": 120,
+     "translatedKeys": 118,
+     "sourceChangedKeys": 1,
+     "coveragePercent": 98,
+     "satisfied": false
+    }
+   ]
+  },
+  "routeCode": "operations-i18n-application-detail",
+  "ownerPath": "/internal/localization/v1/applications/client-console",
+  "status": 200
+ },
+ {
+  "id": "C06",
+  "method": "POST",
+  "path": "/localization-admin/v1/applications",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "applicationCode": "client-console",
+   "applicationName": "Client Console",
+   "defaultLocale": "en",
+   "requiredLocales": [
+    "zh-CN"
+   ],
+   "coverageThresholdPercent": 100
+  },
+  "response": {
+   "applicationCode": "client-console",
+   "applicationName": "Client Console",
+   "defaultLocale": "en",
+   "requiredLocales": [
+    "zh-CN"
+   ],
+   "coverageThresholdPercent": 100,
+   "status": "ENABLED",
+   "currentReleaseNo": null,
+   "keySetRevision": 0,
+   "contentRevision": 0,
+   "pendingChangeCount": 5,
+   "version": 1,
+   "updatedBy": "10001",
+   "updateTime": "2026-10-23T08:00:00.123456Z"
+  },
+  "routeCode": "operations-i18n-application-create",
+  "ownerPath": "/internal/localization/v1/applications",
+  "status": 200
+ },
+ {
+  "id": "C07",
+  "method": "PUT",
+  "path": "/localization-admin/v1/applications/client-console",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "expectedVersion": 2,
+   "applicationName": "Client Console",
+   "defaultLocale": "en",
+   "requiredLocales": [
+    "zh-CN"
+   ],
+   "coverageThresholdPercent": 100
+  },
+  "response": {
+   "applicationCode": "client-console",
+   "applicationName": "Client Console",
+   "defaultLocale": "en",
+   "requiredLocales": [
+    "zh-CN"
+   ],
+   "coverageThresholdPercent": 100,
+   "status": "ENABLED",
+   "currentReleaseNo": 7,
+   "keySetRevision": 12,
+   "contentRevision": 40,
+   "pendingChangeCount": 5,
+   "version": 3,
+   "updatedBy": "10001",
+   "updateTime": "2026-10-23T08:00:00.123456Z"
+  },
+  "routeCode": "operations-i18n-application-update",
+  "ownerPath": "/internal/localization/v1/applications/client-console",
+  "status": 200
+ },
+ {
+  "id": "C08",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications/client-console/namespaces",
+  "query": "",
+  "ownerQuery": "",
+  "request": null,
+  "response": {
+   "items": [
+    {
+     "namespaceCode": "team",
+     "namespaceName": "团队",
+     "description": "团队成员与邀请",
+     "sortOrder": 10,
+     "activeKeyCount": 42,
+     "deprecatedKeyCount": 1,
+     "version": 2,
+     "updatedBy": "10001",
+     "updateTime": "2026-10-23T08:00:00.123456Z"
+    }
+   ]
+  },
+  "routeCode": "operations-i18n-namespace-list",
+  "ownerPath": "/internal/localization/v1/applications/client-console/namespaces",
+  "status": 200
+ },
+ {
+  "id": "C09",
+  "method": "POST",
+  "path": "/localization-admin/v1/applications/client-console/namespaces",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "namespaceCode": "team",
+   "namespaceName": "团队",
+   "description": "团队成员与邀请",
+   "sortOrder": 10
+  },
+  "response": {
+   "namespaceCode": "team",
+   "namespaceName": "团队",
+   "description": "团队成员与邀请",
+   "sortOrder": 10,
+   "activeKeyCount": 0,
+   "deprecatedKeyCount": 0,
+   "version": 1,
+   "updatedBy": "10001",
+   "updateTime": "2026-10-23T08:00:00.123456Z"
+  },
+  "routeCode": "operations-i18n-namespace-create",
+  "ownerPath": "/internal/localization/v1/applications/client-console/namespaces",
+  "status": 200
+ },
+ {
+  "id": "C10",
+  "method": "PUT",
+  "path": "/localization-admin/v1/applications/client-console/namespaces/team",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "expectedVersion": 1,
+   "namespaceName": "团队",
+   "description": "团队成员与邀请",
+   "sortOrder": 10
+  },
+  "response": {
+   "namespaceCode": "team",
+   "namespaceName": "团队",
+   "description": "团队成员与邀请",
+   "sortOrder": 10,
+   "activeKeyCount": 42,
+   "deprecatedKeyCount": 1,
+   "version": 2,
+   "updatedBy": "10001",
+   "updateTime": "2026-10-23T08:00:00.123456Z"
+  },
+  "routeCode": "operations-i18n-namespace-update",
+  "ownerPath": "/internal/localization/v1/applications/client-console/namespaces/team",
+  "status": 200
+ },
+ {
+  "id": "C11",
+  "method": "DELETE",
+  "path": "/localization-admin/v1/applications/client-console/namespaces/legacy",
+  "query": "?expectedVersion=3",
+  "ownerQuery": "?expectedVersion=3",
+  "request": null,
+  "response": null,
+  "routeCode": "operations-i18n-namespace-delete",
+  "ownerPath": "/internal/localization/v1/applications/client-console/namespaces/legacy",
+  "status": 200
+ },
+ {
+  "id": "T01",
+  "method": "POST",
+  "path": "/localization-admin/v1/applications/client-console/key-imports/previews",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "fileId": "7409912387650"
+  },
+  "response": {
+   "importable": false,
+   "previewDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+   "keySetRevision": 12,
+   "added": [
+    {
+     "namespaceCode": "team",
+     "keyCode": "team.invite.title",
+     "sourceText": "Invite {name}",
+     "previousSourceText": "Invite member",
+     "description": "邀请弹窗标题"
+    }
+   ],
+   "sourceChanged": [
+    {
+     "namespaceCode": "team",
+     "keyCode": "team.invite.title",
+     "sourceText": "Invite {name}",
+     "previousSourceText": "Invite member",
+     "description": "邀请弹窗标题"
+    }
+   ],
+   "deprecated": [
+    {
+     "namespaceCode": "team",
+     "keyCode": "team.invite.title",
+     "sourceText": "Invite {name}",
+     "previousSourceText": "Invite member",
+     "description": "邀请弹窗标题"
+    }
+   ],
+   "restored": [
+    {
+     "namespaceCode": "team",
+     "keyCode": "team.invite.title",
+     "sourceText": "Invite {name}",
+     "previousSourceText": "Invite member",
+     "description": "邀请弹窗标题"
+    }
+   ],
+   "unchangedCount": 110,
+   "missingNamespaces": [
+    "billing"
+   ],
+   "problems": [
+    {
+     "field": "namespaces.team.team.invite.title",
+     "message": "第 8 个字符：缺少 other 分支"
+    }
+   ]
+  },
+  "routeCode": "operations-i18n-key-import-preview",
+  "ownerPath": "/internal/localization/v1/applications/client-console/key-imports/previews",
+  "status": 200
+ },
+ {
+  "id": "T02",
+  "method": "POST",
+  "path": "/localization-admin/v1/applications/client-console/key-imports",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "fileId": "7409912387650",
+   "previewDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "response": {
+   "addedCount": 2,
+   "sourceChangedCount": 1,
+   "deprecatedCount": 1,
+   "restoredCount": 0,
+   "descriptionChangedCount": 3,
+   "keySetRevision": 13,
+   "contentRevision": 41
+  },
+  "routeCode": "operations-i18n-key-import-confirm",
+  "ownerPath": "/internal/localization/v1/applications/client-console/key-imports",
+  "status": 200
+ },
+ {
+  "id": "T03",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications/client-console/translations",
+  "query": "?locale=zh-CN&namespaceCode=team&state=SOURCE_CHANGED&keyword=invite&page=1&size=20",
+  "ownerQuery": "?locale=zh-CN&namespaceCode=team&state=SOURCE_CHANGED&keyword=invite&page=1&size=20",
+  "request": null,
+  "response": {
+   "items": [
+    {
+     "namespaceCode": "team",
+     "keyCode": "team.invite.title",
+     "sourceText": "Invite {name}",
+     "description": "邀请弹窗标题",
+     "parameters": [
+      "name"
+     ],
+     "text": "邀请 {name}",
+     "version": 3,
+     "sourceChanged": true,
+     "updatedBy": "10001",
+     "updateTime": "2026-10-23T08:00:00.123456Z"
+    }
+   ],
+   "page": 1,
+   "size": 20,
+   "total": 1
+  },
+  "routeCode": "operations-i18n-translation-list",
+  "ownerPath": "/internal/localization/v1/applications/client-console/translations",
+  "status": 200
+ },
+ {
+  "id": "T03D",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications/client-console/translations",
+  "query": "?locale=zh-CN",
+  "ownerQuery": "?locale=zh-CN&page=1&size=10",
+  "request": null,
+  "response": {
+   "items": [],
+   "page": 1,
+   "size": 10,
+   "total": 0
+  },
+  "routeCode": "operations-i18n-translation-list",
+  "ownerPath": "/internal/localization/v1/applications/client-console/translations",
+  "status": 200
+ },
+ {
+  "id": "T04",
+  "method": "POST",
+  "path": "/localization-admin/v1/applications/client-console/translations/batch",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "locale": "zh-CN",
+   "translations": [
+    {
+     "keyCode": "team.invite.title",
+     "text": "邀请 {name}",
+     "expectedVersion": 2
+    }
+   ]
+  },
+  "response": {
+   "translations": [
+    {
+     "keyCode": "team.invite.title",
+     "version": 3
+    }
+   ],
+   "contentRevision": 42
+  },
+  "routeCode": "operations-i18n-translation-save",
+  "ownerPath": "/internal/localization/v1/applications/client-console/translations/batch",
+  "status": 200
+ },
+ {
+  "id": "T05",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications/client-console/translations/export",
+  "query": "?locale=zh-CN",
+  "ownerQuery": "?locale=zh-CN",
+  "request": null,
+  "response": {
+   "format": "code-mor-i18n-translations/1",
+   "application": "client-console",
+   "locale": "zh-CN",
+   "namespaces": {
+    "team": {
+     "team.invite.title": "邀请 {name}"
+    }
+   }
+  },
+  "routeCode": "operations-i18n-translation-export",
+  "ownerPath": "/internal/localization/v1/applications/client-console/translations/export",
+  "status": 200
+ },
+ {
+  "id": "T06",
+  "method": "POST",
+  "path": "/localization-admin/v1/applications/client-console/translations/imports",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "fileId": "7409912387651",
+   "locale": "zh-CN"
+  },
+  "response": {
+   "updatedCount": 5,
+   "unchangedCount": 100,
+   "emptyCount": 15,
+   "contentRevision": 43
+  },
+  "routeCode": "operations-i18n-translation-import",
+  "ownerPath": "/internal/localization/v1/applications/client-console/translations/imports",
+  "status": 200
+ },
+ {
+  "id": "R01",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications/client-console/release-precheck",
+  "query": "",
+  "ownerQuery": "",
+  "request": null,
+  "response": {
+   "publishable": false,
+   "contentRevision": 43,
+   "nextReleaseNo": 8,
+   "activeKeyCount": 120,
+   "coverage": [
+    {
+     "locale": "zh-CN",
+     "required": true,
+     "totalKeys": 120,
+     "translatedKeys": 118,
+     "sourceChangedKeys": 1,
+     "coveragePercent": 98,
+     "satisfied": false
+    }
+   ],
+   "missing": [
+    {
+     "locale": "zh-CN",
+     "keyCode": "team.invite.title"
+    }
+   ],
+   "missingTotal": 2,
+   "sourceChanged": [
+    {
+     "locale": "zh-CN",
+     "keyCode": "team.invite.title"
+    }
+   ],
+   "sourceChangedTotal": 1,
+   "changeSummary": {
+    "baseReleaseNo": 6,
+    "addedKeyCount": 1,
+    "addedKeys": [
+     "team.invite.title"
+    ],
+    "deprecatedKeyCount": 1,
+    "deprecatedKeys": [
+     "team.legacy"
+    ],
+    "sourceChangedKeyCount": 1,
+    "sourceChangedKeys": [
+     "team.title"
+    ],
+    "translationChanges": [
+     {
+      "locale": "zh-CN",
+      "changedCount": 2,
+      "sampleKeys": [
+       "team.invite.title",
+       "team.title"
+      ]
+     }
+    ]
+   },
+   "problems": [
+    {
+     "field": "namespaces.team.team.invite.title",
+     "message": "第 8 个字符：缺少 other 分支"
+    }
+   ]
+  },
+  "routeCode": "operations-i18n-release-precheck",
+  "ownerPath": "/internal/localization/v1/applications/client-console/release-precheck",
+  "status": 200
+ },
+ {
+  "id": "R02",
+  "method": "POST",
+  "path": "/localization-admin/v1/applications/client-console/releases",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "releaseNote": "十月文案"
+  },
+  "response": {
+   "releaseNo": 8,
+   "status": "PENDING_CHECK",
+   "current": false,
+   "keyCount": 120,
+   "releaseNote": "十月文案",
+   "failureReason": "无",
+   "createdBy": "10001",
+   "createTime": "2026-10-23T08:00:00.123456Z",
+   "readyTime": "2026-10-23T08:00:00.123456Z",
+   "changeSummary": {
+    "baseReleaseNo": 6,
+    "addedKeyCount": 1,
+    "addedKeys": [
+     "team.invite.title"
+    ],
+    "deprecatedKeyCount": 1,
+    "deprecatedKeys": [
+     "team.legacy"
+    ],
+    "sourceChangedKeyCount": 1,
+    "sourceChangedKeys": [
+     "team.title"
+    ],
+    "translationChanges": [
+     {
+      "locale": "zh-CN",
+      "changedCount": 2,
+      "sampleKeys": [
+       "team.invite.title",
+       "team.title"
+      ]
+     }
+    ]
+   }
+  },
+  "routeCode": "operations-i18n-release-publish",
+  "ownerPath": "/internal/localization/v1/applications/client-console/releases",
+  "status": 200
+ },
+ {
+  "id": "R03",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications/client-console/releases",
+  "query": "?page=2&size=20",
+  "ownerQuery": "?page=2&size=20",
+  "request": null,
+  "response": {
+   "items": [
+    {
+     "releaseNo": 7,
+     "status": "READY",
+     "current": true,
+     "keyCount": 120,
+     "releaseNote": "十月文案",
+     "failureReason": "无",
+     "createdBy": "10001",
+     "createTime": "2026-10-23T08:00:00.123456Z",
+     "readyTime": "2026-10-23T08:00:00.123456Z",
+     "changeSummary": {
+      "baseReleaseNo": 6,
+      "addedKeyCount": 1,
+      "addedKeys": [
+       "team.invite.title"
+      ],
+      "deprecatedKeyCount": 1,
+      "deprecatedKeys": [
+       "team.legacy"
+      ],
+      "sourceChangedKeyCount": 1,
+      "sourceChangedKeys": [
+       "team.title"
+      ],
+      "translationChanges": [
+       {
+        "locale": "zh-CN",
+        "changedCount": 2,
+        "sampleKeys": [
+         "team.invite.title",
+         "team.title"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "page": 2,
+   "size": 20,
+   "total": 21
+  },
+  "routeCode": "operations-i18n-release-list",
+  "ownerPath": "/internal/localization/v1/applications/client-console/releases",
+  "status": 200
+ },
+ {
+  "id": "R03D",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications/client-console/releases",
+  "query": "",
+  "ownerQuery": "?page=1&size=10",
+  "request": null,
+  "response": {
+   "items": [
+    {
+     "releaseNo": 7,
+     "status": "READY",
+     "current": true,
+     "keyCount": 120,
+     "releaseNote": "十月文案",
+     "failureReason": "无",
+     "createdBy": "10001",
+     "createTime": "2026-10-23T08:00:00.123456Z",
+     "readyTime": "2026-10-23T08:00:00.123456Z",
+     "changeSummary": {
+      "baseReleaseNo": 6,
+      "addedKeyCount": 1,
+      "addedKeys": [
+       "team.invite.title"
+      ],
+      "deprecatedKeyCount": 1,
+      "deprecatedKeys": [
+       "team.legacy"
+      ],
+      "sourceChangedKeyCount": 1,
+      "sourceChangedKeys": [
+       "team.title"
+      ],
+      "translationChanges": [
+       {
+        "locale": "zh-CN",
+        "changedCount": 2,
+        "sampleKeys": [
+         "team.invite.title",
+         "team.title"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "page": 1,
+   "size": 10,
+   "total": 1
+  },
+  "routeCode": "operations-i18n-release-list",
+  "ownerPath": "/internal/localization/v1/applications/client-console/releases",
+  "status": 200
+ },
+ {
+  "id": "R04",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications/client-console/releases/7",
+  "query": "",
+  "ownerQuery": "",
+  "request": null,
+  "response": {
+   "release": {
+    "releaseNo": 7,
+    "status": "READY",
+    "current": true,
+    "keyCount": 120,
+    "releaseNote": "十月文案",
+    "failureReason": "无",
+    "createdBy": "10001",
+    "createTime": "2026-10-23T08:00:00.123456Z",
+    "readyTime": "2026-10-23T08:00:00.123456Z",
+    "changeSummary": {
+     "baseReleaseNo": 6,
+     "addedKeyCount": 1,
+     "addedKeys": [
+      "team.invite.title"
+     ],
+     "deprecatedKeyCount": 1,
+     "deprecatedKeys": [
+      "team.legacy"
+     ],
+     "sourceChangedKeyCount": 1,
+     "sourceChangedKeys": [
+      "team.title"
+     ],
+     "translationChanges": [
+      {
+       "locale": "zh-CN",
+       "changedCount": 2,
+       "sampleKeys": [
+        "team.invite.title",
+        "team.title"
+       ]
+      }
+     ]
+    }
+   },
+   "basedOnContentRevision": 40,
+   "coverage": [
+    {
+     "locale": "zh-CN",
+     "required": true,
+     "totalKeys": 120,
+     "translatedKeys": 118,
+     "sourceChangedKeys": 1,
+     "coveragePercent": 98,
+     "satisfied": false
+    }
+   ],
+   "report": {
+    "missing": [
+     {
+      "locale": "zh-CN",
+      "keyCode": "team.invite.title"
+     }
+    ],
+    "sourceChanged": [
+     {
+      "locale": "zh-CN",
+      "keyCode": "team.invite.title"
+     }
+    ]
+   },
+   "checkProgress": {
+    "total": 4,
+    "available": 3,
+    "pending": 1,
+    "rejected": 0
+   },
+   "bundles": [
+    {
+     "locale": "zh-CN",
+     "namespaceCode": "team",
+     "fileAddress": "/files/v1/7409912387700",
+     "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+     "byteSize": 2048
+    }
+   ]
+  },
+  "routeCode": "operations-i18n-release-detail",
+  "ownerPath": "/internal/localization/v1/applications/client-console/releases/7",
+  "status": 200
+ },
+ {
+  "id": "R05",
+  "method": "GET",
+  "path": "/localization-admin/v1/applications/client-console/releases/7/diff",
+  "query": "?baseReleaseNo=5",
+  "ownerQuery": "?baseReleaseNo=5",
+  "request": null,
+  "response": {
+   "releaseNo": 7,
+   "baseReleaseNo": 5,
+   "added": [
+    {
+     "locale": "zh-CN",
+     "keyCode": "team.invite.title",
+     "before": "",
+     "after": "邀请 {name}"
+    }
+   ],
+   "changed": [
+    {
+     "locale": "en",
+     "keyCode": "team.title",
+     "before": "Team",
+     "after": "Members"
+    }
+   ],
+   "removed": [
+    {
+     "locale": "zh-CN",
+     "keyCode": "team.legacy",
+     "before": "旧",
+     "after": ""
+    }
+   ]
+  },
+  "routeCode": "operations-i18n-release-diff",
+  "ownerPath": "/internal/localization/v1/applications/client-console/releases/7/diff",
+  "status": 200
+ },
+ {
+  "id": "R06",
+  "method": "POST",
+  "path": "/localization-admin/v1/applications/client-console/current-release",
+  "query": "",
+  "ownerQuery": "",
+  "request": {
+   "releaseNo": 6,
+   "reason": "第 7 版文案有误，切回"
+  },
+  "response": {
+   "applicationCode": "client-console",
+   "releaseNo": 6
+  },
+  "routeCode": "operations-i18n-release-activate",
+  "ownerPath": "/internal/localization/v1/applications/client-console/current-release",
+  "status": 200
+ }
+]

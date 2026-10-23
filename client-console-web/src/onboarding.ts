@@ -2,6 +2,9 @@ import { RequestFailure } from "./auth.ts";
 import type { ApiOptions, ApiRequest } from "./auth.ts";
 import { enterableWorkspace } from "./workspace.ts";
 import type { Workspaces } from "./workspace.ts";
+import { translator } from "./i18n/index.ts";
+
+const to = translator("onboarding");
 export type Values = Record<string, Record<string, string | null>>;
 export type Flat = Record<string, string>;
 export type Requirement = {
@@ -68,12 +71,12 @@ export type ReviewResult = {
   publicNote: string | null;
   decidedAt: string | null;
 };
-/** 退回分区对应的页面位置。 */
-export const returnSections: Record<string, { label: string; anchor: string }> = {
-  BASIC: { label: "基础资料", anchor: "profile" },
-  BUSINESS: { label: "经营资料", anchor: "business" },
-  PEOPLE: { label: "相关人员", anchor: "people" },
-  MATERIALS: { label: "申请材料", anchor: "materials" },
+/** 退回分区对应的页面位置；分区名称在 `onboarding.section.*`。 */
+export const returnSections: Record<string, { section: string; anchor: string }> = {
+  BASIC: { section: "basic", anchor: "profile" },
+  BUSINESS: { section: "business", anchor: "business" },
+  PEOPLE: { section: "people", anchor: "people" },
+  MATERIALS: { section: "materials", anchor: "materials" },
 };
 export type ResultBanner = {
   tone: "warning" | "success" | "error" | "info";
@@ -91,16 +94,16 @@ export function resultBanner(app: Pick<Application, "status" | "reviewStatus" | 
   workspaces: Workspaces | null = null): ResultBanner | null {
   const review = app.reviewStatus === "AVAILABLE" && app.review?.outcome === app.status ? app.review : null;
   const note = review?.publicNote?.trim() || null;
-  const unavailable = "审核说明暂时无法读取，请稍后刷新页面。";
+  const unavailable = to("review.unavailable");
   if (app.status === "RETURNED") {
     const section = review?.returnSection ? returnSections[review.returnSection] : undefined;
     return {
       tone: "warning",
-      title: "申请需要修改后重新提交",
+      title: to("review.returned_title"),
       lines: [
-        ...(section ? ["需要修改：" + section.label] : []),
+        ...(section ? [to("review.returned_section", { section: to("section." + section.section) })] : []),
         ...(note ? [note] : review ? [] : [unavailable]),
-        "修改完成后，请在页面底部重新提交审核。",
+        to("review.resubmit_hint"),
       ],
       anchor: section?.anchor ?? null,
     };
@@ -109,8 +112,8 @@ export function resultBanner(app: Pick<Application, "status" | "reviewStatus" | 
     const entry = enterableWorkspace(app.clientId, workspaces);
     return {
       tone: "success",
-      title: "审核已通过",
-      lines: [...(note ? [note] : []), entry ? "客户工作区已开通，可以进入。" : "客户工作区正在开通，开通完成后即可进入。"],
+      title: to("review.approved_title"),
+      lines: [...(note ? [note] : []), entry ? to("review.workspace_ready") : to("review.workspace_pending")],
       anchor: null,
       enterMemberId: entry?.memberId ?? null,
     };
@@ -118,8 +121,8 @@ export function resultBanner(app: Pick<Application, "status" | "reviewStatus" | 
   if (app.status === "REJECTED") {
     return {
       tone: "error",
-      title: "申请未通过",
-      lines: [note ?? (review ? "如有疑问，请联系客服。" : unavailable), "此申请不能再修改；如需继续，请重新发起申请。"],
+      title: to("review.rejected_title"),
+      lines: [note ?? (review ? to("review.contact_support") : unavailable), to("review.rejected_final")],
       anchor: null,
     };
   }
@@ -139,21 +142,6 @@ export type Start = {
 };
 export const base = "/onboarding/v1/applications";
 export const files = "/onboarding-files/v1";
-export const statuses: Record<string, string> = {
-  DRAFT: "填写中",
-  RETURNED: "退回修改",
-  SUBMITTED: "已提交",
-  UNDER_REVIEW: "审核中",
-  APPROVED: "已通过",
-  REJECTED: "已拒绝",
-};
-export const scanLabels: Record<string, string> = {
-  PENDING_SCAN: "等待扫描",
-  SCANNING: "正在扫描",
-  AVAILABLE: "可用",
-  QUARANTINED: "已隔离",
-  REJECTED: "不可用",
-};
 export function flatten(values: Values): Flat {
   return Object.fromEntries(
     Object.entries(values).flatMap(([group, fields]) =>
@@ -247,7 +235,7 @@ export function downloadUrl(grant: { url: string; expiresAt: string }): string {
     grant.url.length > 8192 ||
     !(Date.parse(grant.expiresAt) > Date.now())
   )
-    throw new Error("文件授权已过期或无效，请重新获取");
+    throw new Error(to("file.grant_invalid"));
   return url.href;
 }
 const id = (value: unknown): value is string =>
@@ -315,7 +303,7 @@ export async function runUpload(
   checkpoint: (state: Upload) => void = () => {},
 ) {
   if (state.phase === "PUT") {
-    if (!file || file.size === 0) throw new Error("请选择非空文件");
+    if (!file || file.size === 0) throw new Error(to("file.empty"));
     const grant = await api<{
       uploadId: string;
       authorization: {
@@ -334,13 +322,13 @@ export async function runUpload(
       },
     });
     if (!id(grant.uploadId) || grant.authorization.method !== "PUT")
-      throw new Error("上传授权无效");
+      throw new Error(to("file.upload_grant_invalid"));
     const url = downloadUrl(grant.authorization);
     const headers = new Headers(grant.authorization.headers);
     // 不转发浏览器会话或代理身份，即使依赖响应出现异常。
     for (const name of headers.keys())
       if (/^(authorization|cookie|proxy-|x-gateway-|x-caller-)/i.test(name))
-        throw new Error("上传授权包含不允许的请求头");
+        throw new Error(to("file.upload_grant_headers"));
     let response: Response;
     try {
       response = await transport(url, {
@@ -352,10 +340,10 @@ export async function runUpload(
         referrerPolicy: "no-referrer",
       });
     } catch {
-      throw new RequestFailure(0, "文件传输未确认，请重试原文件");
+      throw new RequestFailure(0, to("file.transfer_unconfirmed"));
     }
     if (!response.ok)
-      throw new RequestFailure(response.status, "文件传输失败，请重试");
+      throw new RequestFailure(response.status, to("file.transfer_failed"));
     state.uploadId = grant.uploadId;
     state.phase = "COMPLETE";
     checkpoint(state);
@@ -374,7 +362,7 @@ export async function runUpload(
       !id(receipt.fileId) ||
       !fileAddress(receipt.fileAddress, receipt.fileId)
     )
-      throw new Error("文件完成响应无效");
+      throw new Error(to("file.completion_invalid"));
     state.fileId = receipt.fileId;
     state.fileAddress = receipt.fileAddress;
     state.phase = "SCAN";
@@ -383,10 +371,10 @@ export async function runUpload(
   if (state.phase === "SCAN") {
     const meta = await api<FileInfo>(files + "/files/" + state.fileId);
     if (meta.fileId !== state.fileId || meta.objectStatus !== "ACTIVE")
-      throw new Error("文件已不可用，请重新上传");
+      throw new Error(to("file.unavailable"));
     if (["PENDING_SCAN", "SCANNING"].includes(meta.scanStatus)) return;
     if (meta.scanStatus !== "AVAILABLE")
-      throw new Error("文件未通过安全检查，请选择其他文件");
+      throw new Error(to("file.scan_rejected"));
     state.phase = "ASSOCIATE";
     checkpoint(state);
   }

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.localization.core.dal.mapper.I18nReleaseMapper">
+
+    <sql id="columns">
+        release_id AS releaseId, application_id AS applicationId, release_no AS releaseNo,
+        based_on_content_revision AS basedOnContentRevision, status, key_count AS keyCount,
+        coverage AS coverageJson, report AS reportJson, release_note AS releaseNote,
+        failure_reason AS failureReason, ready_time AS readyTime, created_by AS createdBy,
+        create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_i18n_release (release_id, application_id, release_no, based_on_content_revision, status, key_count, coverage, report, release_note, failure_reason, ready_time, created_by, create_time, update_time)
+        VALUES (#{row.releaseId}, #{row.applicationId}, #{row.releaseNo}, #{row.basedOnContentRevision}, #{row.status}, #{row.keyCount}, #{row.coverageJson}, #{row.reportJson}, #{row.releaseNote}, #{row.failureReason}, #{row.readyTime}, #{row.createdBy}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nRelease">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_release
+        WHERE release_id = #{releaseId}
+    </select>
+
+    <select id="selectByNo" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nRelease">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_release
+        WHERE application_id = #{applicationId} AND release_no = #{releaseNo}
+    </select>
+
+    <select id="selectMaxNo" resultType="java.lang.Integer">
+        SELECT MAX(release_no)
+        FROM t_i18n_release
+        WHERE application_id = #{applicationId}
+    </select>
+
+    <select id="selectPreviousNo" resultType="java.lang.Integer">
+        SELECT MAX(release_no)
+        FROM t_i18n_release
+        WHERE application_id = #{applicationId} AND release_no &lt; #{releaseNo}
+    </select>
+
+    <select id="selectPage" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nRelease">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_release
+        WHERE application_id = #{applicationId}
+        ORDER BY release_no DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM t_i18n_release
+        WHERE application_id = #{applicationId}
+    </select>
+
+    <update id="markReady">
+        UPDATE t_i18n_release
+        SET status = 'READY', ready_time = #{now}, update_time = #{now}
+        WHERE release_id = #{releaseId} AND status = 'PENDING_CHECK'
+    </update>
+
+    <update id="markFailed">
+        UPDATE t_i18n_release
+        SET status = 'FAILED', failure_reason = #{reason}, update_time = #{now}
+        WHERE release_id = #{releaseId} AND status = 'PENDING_CHECK'
+    </update>
+</mapper>

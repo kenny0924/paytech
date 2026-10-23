@@ -53,6 +53,12 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case DATA_SOURCE_UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
             };
         }
+        if (errorCode instanceof com.paytech.platform.support.api.enums.LocalizationErrorCode localization) {
+            return switch (localization) {
+                case I18N_COVERAGE_INSUFFICIENT, I18N_NAMESPACE_NOT_FOUND, I18N_MESSAGE_INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
+                case I18N_IMPORT_PREVIEW_STALE, I18N_CONTENT_CHANGED, I18N_IMPORT_FILE_NOT_READY -> HttpStatus.CONFLICT;
+            };
+        }
         if (errorCode instanceof GatewayConfigurationErrorCode gatewayCode) {
             return switch (gatewayCode) {
                 case GATEWAY_CONFIGURATION_NOT_FOUND -> HttpStatus.NOT_FOUND;

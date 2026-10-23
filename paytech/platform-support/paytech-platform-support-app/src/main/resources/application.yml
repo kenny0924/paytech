@@ -320,6 +320,15 @@ workflow:
   event-source-service: platform-support
   event-instance-id: "${PAYTECH_INSTANCE_ID:main}"
 
+# 多语言（paytech-platform-support-localization）：Operations 维护 /internal/localization/v1，manifest 匿名读取。
+# 需先手工执行 docs/database/sql/changes/2026-10-23-localization.sql 与注册块 135；语言包经 Platform 文件入口以 platform-support × PUBLIC
+# 写入路由上传到公开桶（原因码 I18N_RELEASE_BUNDLE，检查策略 I18N_BUNDLE_JSON），files.enabled 关闭时发布与 manifest 返回 503。
+# 资源锁 localization:application:{编码}、localization:locale:{代码}。
+localization:
+  lock-wait-time: 500ms # TRY_LOCK 等待，超时返回 409。
+  lock-lease-time: 120s # 发布在锁内生成并上传语言包；版本与修订号 CAS 仍为最终保护。
+  import-max-file-bytes: 2097152 # key 导入与翻译导入文件上限（2 MiB），与上传原因码的大小上限一致。
+
 # Foundation paytech-messaging 发布端：声明 platform-support.events（Durable Fanout）并提供 DomainEventPublisher，
 # 只发布工作流业务回调 WorkflowCallbackRaised（事件目录 catalog/events.yaml）。目前没有订阅方，不可路由按 ACK_AND_WARN
 # 视为发布成功并告警；有订阅方后改为 FAIL。Platform 不消费事件，不设置 consumer.service。

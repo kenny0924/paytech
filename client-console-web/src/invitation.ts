@@ -1,5 +1,8 @@
 import { readEmailLink } from "./auth.ts";
 import type { EmailLink } from "./auth.ts";
+import { translator } from "./i18n/index.ts";
+
+const tc = translator("common"), ti = translator("invitation");
 
 /** 接受邀请页的固定站内路径；登录后的 return-to 只允许这一条。 */
 export const invitationAcceptPath = "/invitations/accept";
@@ -91,7 +94,7 @@ export function readAcceptance(value: unknown): InvitationAcceptance | null {
 
 /** 详情页显示的工作区名称：名称 → 客户编号 → 固定提示。 */
 export function invitationWorkspaceName(details: Pick<InvitationDetails, "workspaceName" | "clientNo">): string {
-  return details.workspaceName ?? details.clientNo ?? "名称暂不可用";
+  return details.workspaceName ?? details.clientNo ?? tc("name_unavailable");
 }
 
 /** 只有待接受与已接受（同一账号再次打开，幂等返回已加入）可以继续接受。 */
@@ -112,9 +115,7 @@ export function invitationProblem(code: string): InvitationProblem {
   }
 }
 
-export const invitationProblemTexts: Record<"invalid" | "closed" | "unavailable" | "missing", string> = {
-  invalid: "邀请链接无效，请重新打开邀请邮件中的链接，或联系工作区管理员重新邀请。",
-  closed: "该邀请已过期或已撤销，请联系工作区管理员重新邀请。",
-  unavailable: "该工作区当前不可用，暂时无法接受邀请。",
-  missing: "邀请链接缺失或已失效，请重新打开邀请邮件中的链接。",
-};
+/** 页面状态对应的说明文案。 */
+export function invitationProblemText(problem: "invalid" | "closed" | "unavailable" | "missing"): string {
+  return ti("problem." + problem);
+}

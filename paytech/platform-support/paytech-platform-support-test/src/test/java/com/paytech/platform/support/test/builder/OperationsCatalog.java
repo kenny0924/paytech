@@ -89,7 +89,10 @@ public final class OperationsCatalog {
         new Permission(900000000000131102L, "DATA_SOURCE_MANAGE", "DATA_SOURCE", "MANAGE", "HIGH", false),
         new Permission(900000000000131103L, "DATA_QUERY_TEMPLATE_MANAGE", "DATA_QUERY_TEMPLATE", "MANAGE", "HIGH",
             false),
-        new Permission(900000000000131104L, "DATA_QUERY_EXECUTE", "DATA_QUERY", "EXECUTE", "LOW", false));
+        new Permission(900000000000131104L, "DATA_QUERY_EXECUTE", "DATA_QUERY", "EXECUTE", "LOW", false),
+        new Permission(900000000000135101L, "I18N_VIEW", "I18N", "VIEW", "LOW", true),
+        new Permission(900000000000135102L, "I18N_EDIT", "I18N", "EDIT", "HIGH", false),
+        new Permission(900000000000135103L, "I18N_PUBLISH", "I18N", "PUBLISH", "HIGH", false));
 
     private OperationsCatalog() {
     }

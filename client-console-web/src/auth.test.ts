@@ -10,10 +10,10 @@ test('email secret is accepted only from the exact fragment contract', () => {
   assert.equal(readEmailLink('#challengeNo='+id+'&secret=short'),null);
 });
 test('password rules preserve whitespace and count Unicode characters', () => {
-  assert.equal(passwordIssue('a'.repeat(14)), '密码至少需要 15 个字符');
+  assert.equal(passwordIssue('a'.repeat(14)), 'Password must be at least 15 characters');
   assert.equal(passwordIssue('a'.repeat(15)), null);
   assert.equal(passwordIssue('🌊'.repeat(15)), null);
-  assert.equal(passwordIssue('a'.repeat(129)), '密码不能超过 128 个字符');
+  assert.equal(passwordIssue('a'.repeat(129)), "Password can't be longer than 128 characters");
 });
 test('concurrent restore rotates once and logout cannot restore late credentials', async () => {
   let refreshes=0, release: ((response: Response)=>void)|undefined;
@@ -64,14 +64,14 @@ test('late business response is discarded after logout and arbitrary outbound UR
  let release:((response:Response)=>void)|undefined;
  const grant={context:{accountId:'1',sessionId:'2',emailMasked:'a***@example.test',emailVerified:true,contextType:'ACCOUNT',tenantId:null,memberId:null,allowedActions:['ONBOARDING']},accessToken:'fixture',expiresAt:'2099-01-01T00:00:00.000000Z'};
  const client=createAuthClient(async(input)=>String(input).endsWith('/refresh')?Response.json(grant):new Promise<Response>(resolve=>{release=resolve;}));
- await client.restore();const pending=client.request('/onboarding/v1/start');client.clear();release!(Response.json({applications:[]}));await assert.rejects(pending,/登录账号已变更/);
- await assert.rejects(client.request('https://evil.test/onboarding/v1/start'),/请求路径无效/);
+ await client.restore();const pending=client.request('/onboarding/v1/start');client.clear();release!(Response.json({applications:[]}));await assert.rejects(pending,/signed-in account has changed/);
+ await assert.rejects(client.request('https://evil.test/onboarding/v1/start'),/Invalid request path/);
 });
 
 test('refresh changing the account cannot execute an existing account command',async()=>{
  const context={accountId:'1',sessionId:'2',emailMasked:'a***@example.test',emailVerified:true,contextType:'ACCOUNT',tenantId:null,memberId:null,allowedActions:['ONBOARDING']};let refresh=0,writes=0;
  const client=createAuthClient(async(input)=>{if(String(input).endsWith('/refresh'))return Response.json({context:{...context,accountId:++refresh===1?'1':'3'},accessToken:'fixture',expiresAt:'2000-01-01T00:00:00.000000Z'});writes++;return Response.json({});});
- await client.restore();await assert.rejects(client.request('/onboarding/v1/applications',{method:'POST',body:{clientType:'INDIVIDUAL'}}),/账号已变更/);assert.equal(writes,0);
+ await client.restore();await assert.rejects(client.request('/onboarding/v1/applications',{method:'POST',body:{clientType:'INDIVIDUAL'}}),/account has changed/);assert.equal(writes,0);
 });
 
 test('anonymous session restoration fails before any onboarding data request',async()=>{
@@ -113,13 +113,13 @@ test('switching context invalidates in-flight business requests',async()=>{
  const pending=client.request('/onboarding/v1/start');
  await client.selectWorkspace('8');
  release!(Response.json({applications:[]}));
- await assert.rejects(pending,/登录账号已变更/);
+ await assert.rejects(pending,/signed-in account has changed/);
 });
 test('back to account returns an account grant; failed switch keeps the original grant',async()=>{
 
  const client=createAuthClient(async(input)=>{const url=String(input);
   if(url.endsWith('/refresh'))return Response.json({context:tenantContext,accessToken:'tenant',expiresAt:'2099-01-01T00:00:00.000000Z'});
-  if(url.endsWith('/workspace-context'))return Response.json({code:'CLIENT_WORKSPACE_UNAVAILABLE',detail:'工作区暂时不可访问'},{status:403});
+  if(url.endsWith('/workspace-context'))return Response.json({code:'CLIENT_WORKSPACE_UNAVAILABLE',detail:'This workspace is temporarily unavailable'},{status:403});
   return Response.json({context:accountContext,accessToken:'account',expiresAt:'2099-01-01T00:00:00.000000Z'});});
  await client.restore();
  await assert.rejects(client.selectWorkspace('9'),(error:unknown)=>error instanceof Error&&'code' in error&&error.code==='CLIENT_WORKSPACE_UNAVAILABLE');
@@ -141,7 +141,7 @@ test('workspace paths are allowed and malformed fallback reasons are rejected',a
  await client.request('/workspace/v1/home');
  assert.ok(urls.includes('/api/client/workspace/v1/home'));
  const bad=createAuthClient(async()=>Response.json({context:{...accountContext,fallbackReason:'<script>'},accessToken:'x',expiresAt:'2099-01-01T00:00:00.000000Z'}));
- await assert.rejects(bad.restore(),/登录状态响应异常/);
+ await assert.rejects(bad.restore(),/Unexpected sign-in response/);
 });
 test('team and invitation paths use the protected helper and preview is sent without credentials',async()=>{
  const calls:{url:string;init:RequestInit}[]=[];
@@ -159,6 +159,6 @@ test('team and invitation paths use the protected helper and preview is sent wit
  assert.equal(new Headers(calls[0].init.headers).get('Authorization'),null);
  assert.equal(calls[0].init.method,'POST');
  assert.equal(calls[0].init.body,JSON.stringify({challengeNo:'c',secret:'s'}));
- assert.throws(()=>anonymous.publicRequest('/invitations/v1/acceptance' as '/invitations/v1/preview',{}),/请求路径无效/);
- await assert.rejects(client.request('/invitations-admin/v1/x'),/请求路径无效/);
+ assert.throws(()=>anonymous.publicRequest('/invitations/v1/acceptance' as '/invitations/v1/preview',{}),/Invalid request path/);
+ await assert.rejects(client.request('/invitations-admin/v1/x'),/Invalid request path/);
 });

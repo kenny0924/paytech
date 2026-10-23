@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.localization.core.dal.mapper.I18nTranslationMapper">
+
+    <sql id="columns">
+        translation_id AS translationId, key_id AS keyId, locale_code AS localeCode, text,
+        based_on_source_revision AS basedOnSourceRevision, version, created_by AS createdBy,
+        updated_by AS updatedBy, create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <sql id="joinedColumns">
+        t.translation_id AS translationId, t.key_id AS keyId, t.locale_code AS localeCode, t.text,
+        t.based_on_source_revision AS basedOnSourceRevision, t.version, t.created_by AS createdBy,
+        t.updated_by AS updatedBy, t.create_time AS createTime, t.update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_i18n_translation (translation_id, key_id, locale_code, text, based_on_source_revision, version, created_by, updated_by, create_time, update_time)
+        VALUES (#{row.translationId}, #{row.keyId}, #{row.localeCode}, #{row.text}, #{row.basedOnSourceRevision}, #{row.version}, #{row.createdBy}, #{row.updatedBy}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <update id="update">
+        UPDATE t_i18n_translation
+        SET text = #{next.text}, based_on_source_revision = #{next.basedOnSourceRevision}, version = version + 1,
+            updated_by = #{next.updatedBy}, update_time = #{next.updateTime}
+        WHERE translation_id = #{row.translationId} AND version = #{row.version}
+    </update>
+
+    <select id="selectByKeys" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nTranslation">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_translation
+        WHERE locale_code = #{locale} AND key_id IN
+        <foreach collection="keyIds" item="keyId" open="(" separator="," close=")">#{keyId}</foreach>
+    </select>
+
+    <select id="selectActiveByApplication" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nTranslation">
+        SELECT <include refid="joinedColumns"/>
+        FROM t_i18n_translation t
+        JOIN t_i18n_key k ON k.key_id = t.key_id
+        WHERE k.application_id = #{applicationId} AND k.status = 'ACTIVE'
+    </select>
+</mapper>

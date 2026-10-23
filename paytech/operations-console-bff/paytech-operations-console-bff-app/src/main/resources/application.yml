@@ -128,3 +128,5 @@ web:
       - /workflow
       # BIN 库上传开始的响应含对象存储的临时 PUT 授权，只记元数据。
       - /card-admin/v1/bin-library/uploads
+      # 多语言导入文件上传开始的响应含对象存储的临时 PUT 授权，只记元数据。
+      - /localization-admin/v1/uploads

@@ -38,6 +38,8 @@
         <minio.version>8.5.17</minio.version>
         <aws-sdk.version>2.31.50</aws-sdk.version>
         <jsqlparser.version>5.4</jsqlparser.version>
+        <!-- Platform 多语言模块只用 MessagePattern 校验 ICU MessageFormat 语法（2026-10-22 多语言管理技术方案 S2）。 -->
+        <icu4j.version>79.1</icu4j.version>
         <archunit.version>1.4.2</archunit.version>
         <!-- Same version Spring Security 7.0 OAuth2 JOSE uses; Spring Boot 4.0 BOM does not manage it directly. -->
         <nimbus-jose-jwt.version>10.4</nimbus-jose-jwt.version>
@@ -61,6 +63,11 @@
                 <groupId>com.github.jsqlparser</groupId>
                 <artifactId>jsqlparser</artifactId>
                 <version>${jsqlparser.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ibm.icu</groupId>
+                <artifactId>icu4j</artifactId>
+                <version>${icu4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.tngtech.archunit</groupId>

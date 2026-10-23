@@ -1,3 +1,7 @@
+import { translator } from './i18n/index.ts';
+
+const tc = translator('common'), ta = translator('auth');
+
 export type AccountContext = {
   accountId: string; sessionId: string; emailMasked: string; emailVerified: boolean;
   contextType: 'ACCOUNT' | 'TENANT'; tenantId: string | null; memberId: string | null; allowedActions: string[];
@@ -28,9 +32,9 @@ export function readEmailLink(fragment: string): EmailLink | null {
 }
 export function passwordIssue(password: string): string | null {
   const normalized = password.normalize('NFC'), count = Array.from(normalized).length;
-  if (count < 15) return '密码至少需要 15 个字符';
-  if (count > 128) return '密码不能超过 128 个字符';
-  if (new TextEncoder().encode(normalized).length > 512) return '密码内容过长，请调整后重试';
+  if (count < 15) return ta('password.too_short', {min: 15});
+  if (count > 128) return ta('password.too_long', {max: 128});
+  if (new TextEncoder().encode(normalized).length > 512) return ta('password.too_large');
   return null;
 }
 function validGrant(value: unknown): value is Grant {
@@ -62,13 +66,13 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
       });
       // HttpOnly Cookie 跨标签共享，所有会更换它的请求使用同一 Origin 锁。
       response = await (['login', 'refresh', 'logout', 'workspace-context', 'account-context'].includes(path) ? sessionLock(send) : send());
-    } catch { throw new RequestFailure(0, '网络连接失败，请检查连接后重试'); }
+    } catch { throw new RequestFailure(0, tc('error.network_connection')); }
     if (response.status === 204) return undefined as T;
     let value: unknown;
-    try { value = await response.json(); } catch { throw new RequestFailure(response.status, '服务响应异常，请稍后重试'); }
+    try { value = await response.json(); } catch { throw new RequestFailure(response.status, tc('error.bad_response')); }
     if (!response.ok) {
       const problem = value as {code?: unknown; detail?: unknown; requestId?: unknown; errors?: {field?: string; message?: string}[]};
-      const message = typeof problem?.detail === 'string' && problem.detail.length <= 1024 ? problem.detail : '请求未完成，请稍后重试';
+      const message = typeof problem?.detail === 'string' && problem.detail.length <= 1024 ? problem.detail : tc('error.request_incomplete');
       const fields: Record<string,string> = {};
       if (Array.isArray(problem?.errors)) for (const error of problem.errors) {
         if (typeof error.field === 'string' && typeof error.message === 'string') fields[error.field] = error.message;
@@ -81,7 +85,7 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
     if (flight) return flight;
     const started = generation;
     flight = call<unknown>('refresh', {}).then(value => {
-      if (!validGrant(value)) throw new RequestFailure(502, '登录状态响应异常，请重新登录');
+      if (!validGrant(value)) throw new RequestFailure(502, ta('session.bad_grant'));
       if (started !== generation) return null;
       if (value.context.fallbackReason) fallback = value.context.fallbackReason;
       active = value; publish(); return active;
@@ -99,7 +103,7 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
     if (!active || Date.parse(active.expiresAt) <= Date.now() + 30_000) await restore();
     const started = ++generation;
     const value = await call<unknown>(path, body, true);
-    if (!validGrant(value)) throw new RequestFailure(502, '登录状态响应异常，请重新登录');
+    if (!validGrant(value)) throw new RequestFailure(502, ta('session.bad_grant'));
     if (started === generation) { active = value; publish(); }
     return value.context;
   }
@@ -110,20 +114,20 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
     /** 读取并清除最近一次刷新降级的原因码，供开始页提示一次。 */
     takeFallback: () => { const reason = fallback; fallback = null; return reason; },
     async request<T>(path: string, options: ApiOptions = {}): Promise<T> {
-      if (!/^\/(onboarding|onboarding-files|workspace|developer|team|invitations)\/v1\//.test(path) || /[\\#]/.test(path) || path.includes('..')) throw new Error('请求路径无效');
+      if (!/^\/(onboarding|onboarding-files|workspace|developer|team|invitations)\/v1\//.test(path) || /[\\#]/.test(path) || path.includes('..')) throw new Error(tc('error.invalid_path'));
       const started = generation, expectedAccount = active?.context.accountId;
       if (!active || Date.parse(active.expiresAt) <= Date.now() + 30_000) await restore();
-      if (!active || started !== generation || (expectedAccount && active.context.accountId !== expectedAccount)) throw new RequestFailure(401, '登录账号已变更，请重新登录');
+      if (!active || started !== generation || (expectedAccount && active.context.accountId !== expectedAccount)) throw new RequestFailure(401, ta('session.account_changed'));
       let result: T;
       try { result = await call<T>(path, options.body, true, options); }
       catch (error) {
         if (!(error instanceof RequestFailure) || error.status !== 401) throw error;
         if (started !== generation) throw error;
         await restore();
-        if (!active || started !== generation || (expectedAccount && active.context.accountId !== expectedAccount)) throw new RequestFailure(401, '登录账号已变更，请重新登录');
+        if (!active || started !== generation || (expectedAccount && active.context.accountId !== expectedAccount)) throw new RequestFailure(401, ta('session.account_changed'));
         result = await call<T>(path, options.body, true, options);
       }
-      if (started !== generation) throw new RequestFailure(401, '登录账号已变更，请重新读取资料');
+      if (started !== generation) throw new RequestFailure(401, ta('session.account_changed_reload'));
       return result;
     },
     /**
@@ -131,14 +135,14 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
      * <li>只允许邀请预览这一条固定路径。</li>
      */
     publicRequest<T>(path: '/invitations/v1/preview', body: unknown): Promise<T> {
-      if (path !== '/invitations/v1/preview') throw new Error('请求路径无效');
+      if (path !== '/invitations/v1/preview') throw new Error(tc('error.invalid_path'));
       return call<T>(path, body, false, {method: 'POST', body});
     },
     subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; },
     async login(email: string, password: string) {
       const started = ++generation;
       const value = await call<unknown>('login', {email, password});
-      if (!validGrant(value)) throw new RequestFailure(502, '登录状态响应异常，请重新登录');
+      if (!validGrant(value)) throw new RequestFailure(502, ta('session.bad_grant'));
       if (started === generation) { active = value; publish(); }
     },
     async logout() { await call('logout', {}, true); clear(); },

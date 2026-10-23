@@ -1,0 +1,38 @@
+{
+ "phase": "no-release",
+ "strictTls": true,
+ "results": [
+  {
+   "step": "C0 无发布：切换器隐藏、英文、lang=en",
+   "ok": false,
+   "note": "lang=zh-CN"
+  },
+  {
+   "step": "O0 管理员登录",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O1 翻译页可打开（标题“Translations”）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "控制台错误 0",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "4xx / 5xx / 失败请求 0",
+   "ok": true,
+   "note": "[]"
+  }
+ ],
+ "console": [],
+ "network": [],
+ "storageRequests": [],
+ "screens": [
+  "c00-login-no-release.png",
+  "o00-translations-no-release.png"
+ ]
+}

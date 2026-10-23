@@ -48,6 +48,7 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | JSON 规范化 | RFC 8785 + Code-MoR JSON Object Profile | `io.github.erdtman:java-json-canonicalization:1.1` | BOM 固定；Foundation 严格前置验证并只对受限 Object/Number Profile 背书，第三方类型不进公共 API，升级必须通过逐字节门禁 |
 | 配置表达式与脚本 | AviatorScript | `com.googlecode.aviator:aviator:5.3.3` | 只用于 Platform 外部 API 配置的条件、取值表达式与公共脚本；版本暂由 Platform 根 POM 固定，其他服务需要时先上移到统一 BOM。必须经 `ExpressionEngine` 的白名单剖面解释执行：禁用模块/use/new/静态调用/Lambda/fn/while/正则匹配，不开放任何 Java 类，循环次数有上限；5.3.3 无求值超时，不得作为通用规则引擎或在其他场景直接使用 |
 | SQL 只读校验 | JSqlParser | `com.github.jsqlparser:jsqlparser:5.4`，由 `paytech-dependencies` 固定 | 只用于 Platform data-query 模块 `engine` 包：`ReadOnlySqlGuard` 解析渲染后的 SQL，只放行单条只读查询并拒绝系统库引用；`SqlPagingRewriter` 在语法树上追加 LIMIT/OFFSET 与生成计数查询；不用于生成或改写其他业务 SQL，第三方类型不出该包（[2026-10-22 决定](./decisions/2026-10-22-data-query-into-platform-support.md)） |
+| ICU 文案语法校验 | ICU4J | `com.ibm.icu:icu4j`，版本由 `paytech-dependencies` 固定 | 只用于 Platform 多语言模块 `paytech-platform-support-localization`：以 `MessagePattern` 校验翻译与基准文案的 ICU MessageFormat 语法、参数集合和 `other` 分支；不在服务端格式化文案，不用于其他模块，第三方类型不出该模块（[2026-10-22 决定](./decisions/2026-10-22-ui-text-localization.md)） |
 | 对象存储适配 | MinIO Java SDK / AWS SDK for Java v2（S3） | `io.minio:minio:8.5.17`；`software.amazon.awssdk:bom:2.31.50` | 统一 BOM 固定；只出现在 Platform 文件模块 `integration/storage` 的对应适配器，不进入 Domain/Processor。存储实例（类型 `MINIO` / `S3`、地址、区域、私有证书、凭据方式）、存储桶与写入路由在运营「存储管理」中维护（`t_file_storage_*`，静态密钥只存 Vault `FILE_STORAGE_CREDENTIAL_V1`），多个实例可同时可用：写入按来源系统路由选择，读取按记录上的实例与桶；每次存储操作按实例构建客户端并在用完后关闭，不在进程中保存带密钥的客户端（2026-10-22 起，配置文件不再有存储键）。本机服务端 MinIO 用 Chainguard 源码构建镜像（RELEASE.2026-09-22，按 `cgr.dev/chainguard/minio@sha256:2136d593…` 摘要固定；官方社区镜像已下架），HTTPS 自签名证书只用于本机 |
 | 邮件发送适配 | AWS SDK for Java v2（SES v2，`sesv2` + `url-connection-client`） | `software.amazon.awssdk:bom:2.31.50` | 统一 BOM 固定；只出现在 Platform Delivery 模块 `integration/provider/ses` 的 `EmailProvider` 适配器，`notification.enabled` 与 `notification.ses.enabled` 同时开启才装配；关闭 SDK 内置重试，不进入 Domain/Processor；IAM 用户密钥对存 Vault，每次发送前读取并只用于该次请求签名。Client 认证邮件经 Delivery 即时发送复用同一适配器，Spring Mail SMTP 已移除（2026-10-15） |
 | 数据库 | MySQL LTS | 8.4；本地固定 8.4.11 | 早期允许一个实例承载多数据库，但每系统独立数据库和账号 |
@@ -68,7 +69,7 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 
 OpenTelemetry、Prometheus、Loki、Tempo、Grafana 和 Alertmanager 的产品组合已经确认。它们发布频繁，实际创建 Compose 时固定经过同一次兼容验证的明确补丁版本和镜像摘要，而不是在架构文档中永久冻结一个很快失效的补丁号。
 
-本表只登记服务端技术；前端依赖由各前端工程的 `package.json` 与锁文件固定。例外登记：operations-console-web 的 data-query 模板编辑器使用 CodeMirror 6（`@codemirror/*`）提供高亮与错误定位，只在模板编辑器页面懒加载，不进入其他页面的首屏包（[2026-10-22 决定](./decisions/2026-10-22-data-query-into-platform-support.md)）。
+本表只登记服务端技术；前端依赖由各前端工程的 `package.json` 与锁文件固定。例外登记：operations-console-web 的 data-query 模板编辑器使用 CodeMirror 6（`@codemirror/*`）提供高亮与错误定位，只在模板编辑器页面懒加载，不进入其他页面的首屏包（[2026-10-22 决定](./decisions/2026-10-22-data-query-into-platform-support.md)）。client-console-web 与 operations-console-web 的 i18n 运行时使用 `intl-messageformat` 解析 ICU MessageFormat 文案，精确版本以各自锁文件为准；日期与数字格式化使用浏览器 `Intl`，不另引入格式化库（[2026-10-22 决定](./decisions/2026-10-22-ui-text-localization.md)）。
 
 ## 4. Java 与虚拟线程
 

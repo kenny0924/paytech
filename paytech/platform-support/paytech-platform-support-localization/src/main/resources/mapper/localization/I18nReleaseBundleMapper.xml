@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.localization.core.dal.mapper.I18nReleaseBundleMapper">
+
+    <sql id="columns">
+        bundle_id AS bundleId, release_id AS releaseId, locale_code AS localeCode,
+        namespace_code AS namespaceCode, file_address AS fileAddress, content_hash AS contentHash,
+        byte_size AS byteSize, create_time AS createTime
+    </sql>
+
+    <insert id="insertBatch">
+        INSERT INTO t_i18n_release_bundle (bundle_id, release_id, locale_code, namespace_code, file_address, content_hash, byte_size, create_time)
+        VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.bundleId}, #{row.releaseId}, #{row.localeCode}, #{row.namespaceCode}, #{row.fileAddress}, #{row.contentHash}, #{row.byteSize}, #{row.createTime})
+        </foreach>
+    </insert>
+
+    <select id="selectByRelease" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nReleaseBundle">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_release_bundle
+        WHERE release_id = #{releaseId}
+        ORDER BY locale_code, namespace_code
+    </select>
+</mapper>

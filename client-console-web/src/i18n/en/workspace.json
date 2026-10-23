@@ -1,0 +1,33 @@
+{
+  "workspace.action.back_to_account": "Back to account",
+  "workspace.action.returning": "Returning…",
+  "workspace.action.sign_out": "Sign out",
+  "workspace.action.switch": "Switch workspace",
+  "workspace.default_name": "Workspace",
+  "workspace.error.back_failed": "We couldn't return you to your account",
+  "workspace.error.home_read": "We can't load the workspace details right now",
+  "workspace.error.home_read_retry": "We can't load the workspace details right now. Please refresh the page later.",
+  "workspace.error.logout_failed": "Sign-out didn't finish",
+  "workspace.fallback.member_inactive": "You've left the workspace: your membership is no longer active.",
+  "workspace.fallback.tenant_security_suspended": "You've left the workspace: it is temporarily unavailable.",
+  "workspace.fallback.tenant_suspended": "You've left the workspace: it has been suspended.",
+  "workspace.fallback.tenant_terminated": "You've left the workspace: it has been terminated.",
+  "workspace.fallback.unknown": "You've left the workspace: it is temporarily unavailable.",
+  "workspace.field.approved_at": "Approved on",
+  "workspace.field.business_model": "Business model",
+  "workspace.field.incorporation_country": "Country of incorporation",
+  "workspace.field.residence_country": "Country of residence",
+  "workspace.loading": "Loading workspace…",
+  "workspace.menu": "Menu",
+  "workspace.nav.api_keys": "API credentials",
+  "workspace.nav.developer": {
+    "text": "Developers",
+    "description": "Navigation group heading"
+  },
+  "workspace.nav.home": "Workspace home",
+  "workspace.nav.label": "Workspace navigation",
+  "workspace.nav.team": "Team",
+  "workspace.nav.webhooks": "Webhooks",
+  "workspace.no_access": "You don't have permission to view this page.",
+  "workspace.notice.payments_not_yet_enabled": "Having access to the workspace doesn't mean payments are enabled yet."
+}

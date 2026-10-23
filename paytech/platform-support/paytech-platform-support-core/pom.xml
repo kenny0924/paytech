@@ -46,6 +46,10 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
+            <artifactId>paytech-platform-support-localization</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
             <artifactId>paytech-common-core</artifactId>
         </dependency>
         <dependency>

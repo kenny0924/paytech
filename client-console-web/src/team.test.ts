@@ -20,10 +20,10 @@ test("capabilities decide team menu, member list and management visibility", () 
 });
 
 test("role labels cover the four workspace roles and only three are assignable", () => {
-  assert.deepEqual(["TENANT_OWNER", "TENANT_ADMIN", "TENANT_DEVELOPER", "TENANT_VIEWER"].map(roleLabel), ["所有者", "管理员", "开发者", "只读成员"]);
+  assert.deepEqual(["TENANT_OWNER", "TENANT_ADMIN", "TENANT_DEVELOPER", "TENANT_VIEWER"].map(roleLabel), ["Owner", "Admin", "Developer", "Viewer"]);
   assert.equal(roleLabel("TENANT_SECRET"), "—");
   assert.deepEqual(assignableRoles.map((role) => role.code), ["TENANT_ADMIN", "TENANT_DEVELOPER", "TENANT_VIEWER"]);
-  assert.equal(assignableRoles[0].description, "管理员可管理团队、API 凭证与 Webhook");
+  assert.equal(assignableRoles[0].description, "Admins can manage the team, API credentials and webhooks");
 });
 
 test("owner and self rows never show actions and read-only members see none", () => {
@@ -57,19 +57,19 @@ test("member and invitation pages are validated as a whole", () => {
 test("invite form checks email format and role, and queries carry status and paging", () => {
   assert.deepEqual(inviteFormIssues({ email: " d@example.test ", roleCode: "TENANT_ADMIN" }), {});
   assert.deepEqual(Object.keys(inviteFormIssues({ email: "", roleCode: "TENANT_OWNER" })).sort(), ["email", "roleCode"]);
-  assert.equal(inviteFormIssues({ email: "not-an-email", roleCode: "TENANT_VIEWER" }).email, "邮箱格式不正确");
+  assert.equal(inviteFormIssues({ email: "not-an-email", roleCode: "TENANT_VIEWER" }).email, "The email format is invalid");
   assert.equal(teamQuery(2, "EXPIRED"), "status=EXPIRED&page=2&size=20");
   assert.equal(teamQuery(0), "page=1&size=20");
-  assert.equal(emailFailedText, "邀请已创建，邮件未发出，可稍后重发");
-  assert.match(teamErrorText("CLIENT_INVITATION_DUPLICATE", "x"), /重发/);
+  assert.equal(emailFailedText(), "The invitation was created, but the email wasn't sent. You can resend it later.");
+  assert.match(teamErrorText("CLIENT_INVITATION_DUPLICATE", "x"), /Resend it/);
   assert.equal(teamErrorText("UNKNOWN", "服务端说明"), "服务端说明");
 });
 
 test("expiry text counts remaining days and marks past expiry", () => {
   const now = Date.parse("2026-10-17T00:00:00Z");
-  assert.equal(expiryText("2026-10-24T00:00:00Z", now), "7 天后到期");
-  assert.equal(expiryText("2026-10-17T05:30:00Z", now), "5 小时后到期");
-  assert.equal(expiryText("2026-10-16T00:00:00Z", now), "已过期");
+  assert.equal(expiryText("2026-10-24T00:00:00Z", now), "Expires in 7 days");
+  assert.equal(expiryText("2026-10-17T05:30:00Z", now), "Expires in 5 hours");
+  assert.equal(expiryText("2026-10-16T00:00:00Z", now), "Expired");
   assert.equal(expiryText(null, now), "—");
 });
 

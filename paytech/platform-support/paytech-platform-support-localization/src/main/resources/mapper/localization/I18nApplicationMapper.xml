@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.localization.core.dal.mapper.I18nApplicationMapper">
+
+    <sql id="columns">
+        application_id AS applicationId, application_code AS applicationCode,
+        application_name AS applicationName, default_locale AS defaultLocale,
+        required_locales AS requiredLocalesJson, coverage_threshold_percent AS coverageThresholdPercent,
+        current_release_id AS currentReleaseId, key_set_revision AS keySetRevision,
+        content_revision AS contentRevision, status, version, created_by AS createdBy, updated_by AS updatedBy,
+        create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_i18n_application (application_id, application_code, application_name, default_locale, required_locales, coverage_threshold_percent, current_release_id, key_set_revision, content_revision, status, version, created_by, updated_by, create_time, update_time)
+        VALUES (#{row.applicationId}, #{row.applicationCode}, #{row.applicationName}, #{row.defaultLocale}, #{row.requiredLocalesJson}, #{row.coverageThresholdPercent}, #{row.currentReleaseId}, #{row.keySetRevision}, #{row.contentRevision}, #{row.status}, #{row.version}, #{row.createdBy}, #{row.updatedBy}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectByCode" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nApplication">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_application
+        WHERE application_code = #{applicationCode}
+    </select>
+
+    <select id="selectByIdForUpdate" flushCache="true" useCache="false" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nApplication">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_application
+        WHERE application_id = #{applicationId}
+        FOR UPDATE
+    </select>
+
+    <select id="selectAll" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nApplication">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_application
+        ORDER BY application_code
+    </select>
+
+    <select id="selectCodesUsingLocale" resultType="string">
+        SELECT application_code
+        FROM t_i18n_application
+        WHERE default_locale = #{localeCode} OR JSON_CONTAINS(required_locales, JSON_QUOTE(#{localeCode}))
+        ORDER BY application_code
+    </select>
+
+    <update id="updateSettings">
+        UPDATE t_i18n_application
+        SET application_name = #{next.applicationName}, default_locale = #{next.defaultLocale},
+            required_locales = #{next.requiredLocalesJson},
+            coverage_threshold_percent = #{next.coverageThresholdPercent}, version = version + 1,
+            updated_by = #{next.updatedBy}, update_time = #{next.updateTime}
+        WHERE application_id = #{row.applicationId} AND version = #{row.version}
+    </update>
+
+    <update id="advanceKeySet">
+        UPDATE t_i18n_application
+        SET key_set_revision = key_set_revision + 1, content_revision = content_revision + 1, update_time = #{now}
+        WHERE application_id = #{applicationId} AND key_set_revision = #{keySetRevision}
+    </update>
+
+    <update id="advanceContent">
+        UPDATE t_i18n_application
+        SET content_revision = content_revision + 1, update_time = #{now}
+        WHERE application_id = #{applicationId} AND content_revision = #{contentRevision}
+    </update>
+
+    <update id="updateCurrentRelease">
+        UPDATE t_i18n_application
+        SET current_release_id = #{releaseId}, update_time = #{now}
+        WHERE application_id = #{applicationId}
+        <choose>
+            <when test="expectedReleaseId == null">AND current_release_id IS NULL</when>
+            <otherwise>AND current_release_id = #{expectedReleaseId}</otherwise>
+        </choose>
+    </update>
+</mapper>

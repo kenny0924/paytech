@@ -37388,6 +37388,3039 @@
         }
       ],
       "type": "P"
+    },
+    {
+      "id": "CBEA83CB-3EE3-5509-9D5A-04E79966589A",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_i18n_locale",
+      "defName": "界面语言",
+      "comment": "保存系统支持的界面语言目录：BCP 47 代码、显示名、文字方向与启停状态；en 为全系统基准语言且不可停用。",
+      "properties": {
+        "logicalTableKey": "i18n_locale",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "type": "P",
+      "fields": [
+        {
+          "defKey": "locale_id",
+          "defName": "语言标识",
+          "comment": "服务侧生成的语言 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "D177482E-B626-5CBF-BD32-64C4CA2C8AE7"
+        },
+        {
+          "defKey": "locale_code",
+          "defName": "语言代码",
+          "comment": "BCP 47 语言代码，如 en、zh-CN；全局唯一，创建后不可修改。取值来源：IETF BCP 47；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 35,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "8AC36F55-C97E-5124-8090-77A8BE665480"
+        },
+        {
+          "defKey": "native_name",
+          "defName": "本语言名称",
+          "comment": "本语言的自称，如“简体中文”，用于语言切换显示。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E0F209C2-3719-56DC-B5A6-A528E39EA70C"
+        },
+        {
+          "defKey": "english_name",
+          "defName": "英文名称",
+          "comment": "语言的英文名称，如 Simplified Chinese。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "D9A55BD2-717D-5F27-A175-F19D593E095A"
+        },
+        {
+          "defKey": "text_direction",
+          "defName": "文字方向",
+          "comment": "文字方向；本期只登记 LTR 语言，RTL 仅预留。允许值：LTR、RTL。",
+          "type": "VARCHAR",
+          "len": 8,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "A27850DE-6B3F-5544-AC88-47F68008D39C"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "comment": "语言状态；DISABLED 的语言不能被选为默认或必须覆盖语言，也不出现在 manifest 中，en 不能停用。允许值：ENABLED、DISABLED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "30A136FE-642E-5A2C-9B22-106499309F5D"
+        },
+        {
+          "defKey": "sort_order",
+          "defName": "排序值",
+          "comment": "显示排序值，升序排列，取值 0 至 9999。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "2D71B7D2-F321-598D-9A86-275962ACCE40"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "语言乐观并发版本，从 1 开始，每次修改加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "D239B1D8-23BA-5742-BE83-5968C0897BDE"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建人",
+          "comment": "创建该记录的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "072870F1-7C72-5091-993F-5DD4D52B415E"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "最后修改人",
+          "comment": "最后修改该记录的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "357DAD7F-531B-5652-912D-F1DAD74B1B67"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "6D67F2CE-2C11-5EB6-9BFF-550B74C35FC6"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "9A3CBEFB-C0D8-5636-9566-D5CAEEBD528D"
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_i18n_locale_code",
+          "defName": "唯一索引 locale_code",
+          "unique": true,
+          "comment": "保证业务唯一性：locale_code",
+          "fields": [
+            {
+              "fieldDefKey": "8AC36F55-C97E-5124-8090-77A8BE665480",
+              "ascOrDesc": "A",
+              "id": "4C4A94AF-430A-543E-8908-66BC8C5E5F5C"
+            }
+          ],
+          "id": "249BC1BA-D397-5E05-B2BF-CC2254C01860"
+        }
+      ],
+      "correlations": []
+    },
+    {
+      "id": "891D83D1-86BB-5314-8886-544CD68482E4",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_i18n_application",
+      "defName": "多语言应用",
+      "comment": "保存语言包消费方应用：默认语言、必须覆盖语言与发布阈值、当前发布指针以及 key 集合与文案修订号；应用与前端渠道一一对应。",
+      "properties": {
+        "logicalTableKey": "i18n_application",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "type": "P",
+      "fields": [
+        {
+          "defKey": "application_id",
+          "defName": "应用标识",
+          "comment": "服务侧生成的应用 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "A7AF2646-6664-536A-84B0-9D978E475671"
+        },
+        {
+          "defKey": "application_code",
+          "defName": "应用编码",
+          "comment": "全局唯一的应用编码，如 client-console；小写字母开头的小写字母、数字与连字符，创建后不可修改。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "48A1AC31-5DEE-5E58-9FBD-BC3A9C66A159"
+        },
+        {
+          "defKey": "application_name",
+          "defName": "应用名称",
+          "comment": "在 Operations 页面显示的应用名称。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "91073749-4CB4-5060-BD86-5950258383DF"
+        },
+        {
+          "defKey": "default_locale",
+          "defName": "默认语言",
+          "comment": "应用默认语言，取值为 ENABLED 的 t_i18n_locale.locale_code；取代需求中的渠道默认语言。",
+          "type": "VARCHAR",
+          "len": 35,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "36AAC5C0-E0DB-534B-AAB2-6307E2CB11F7"
+        },
+        {
+          "defKey": "required_locales",
+          "defName": "必须覆盖语言",
+          "comment": "必须覆盖的语言代码 JSON 数组，元素为 ENABLED 的 t_i18n_locale.locale_code、不重复、最多 20 个；发布时这些语言的覆盖率须达到阈值，可为空数组。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "68857C92-D522-50E1-A8B8-80A50D433C4F"
+        },
+        {
+          "defKey": "coverage_threshold_percent",
+          "defName": "覆盖率阈值",
+          "comment": "必须覆盖语言的翻译覆盖率阈值百分比，取值 0 至 100；translated × 100 ≥ 阈值 × total 才能发布。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "529F8BF5-DF6C-52B9-B7F3-160C2E30B40C"
+        },
+        {
+          "defKey": "current_release_id",
+          "defName": "当前发布",
+          "comment": "当前发布，取值为状态 READY 的 t_i18n_release.release_id；NULL 表示还没有上线的发布，前端只用构建内置文案。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "D8AAF600-F44E-5F7B-AF4B-C63E75DCC925"
+        },
+        {
+          "defKey": "key_set_revision",
+          "defName": "key 集合修订号",
+          "comment": "key 集合修订号，从 0 开始，每次确认 key 导入加一；导入预览摘要依据它判断预览是否过期。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "A00F9E82-55C7-5A57-B56F-D1A62C380EAD"
+        },
+        {
+          "defKey": "content_revision",
+          "defName": "文案修订号",
+          "comment": "文案修订号，从 0 开始，每次导入 key、保存或导入翻译加一；发布登记时核对生成语言包期间它没有变化。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "17AA9BB0-CD48-5D06-9B1D-F25890BEF5FE"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "comment": "应用状态；DISABLED 时不提供 manifest。允许值：ENABLED、DISABLED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "CEC6F2B0-5FE7-58A5-ACCC-73126A75BCE2"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "应用设置的乐观并发版本，从 1 开始，修改名称、默认语言、必须覆盖语言或阈值时加一；修订号与当前发布变化不改变它。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "3ECD542A-F705-5744-892E-E61A8FF8DA15"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建人",
+          "comment": "创建该记录的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "8EF153D7-2922-5068-A587-6DABE6D75071"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "最后修改人",
+          "comment": "最后修改该记录的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "67E26C2D-49D2-5046-9493-EDCDF5C8C5A7"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "0FCFEE8A-94C2-5B93-9C22-86E4613688B7"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "EE936890-0428-50A1-B21C-94212D32CBCE"
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_i18n_app_code",
+          "defName": "唯一索引 application_code",
+          "unique": true,
+          "comment": "保证业务唯一性：application_code",
+          "fields": [
+            {
+              "fieldDefKey": "48A1AC31-5DEE-5E58-9FBD-BC3A9C66A159",
+              "ascOrDesc": "A",
+              "id": "820203BB-F6FF-5385-8448-CDE468BE5CA3"
+            }
+          ],
+          "id": "FDCECE35-659A-533D-83B3-089D9692DB68"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "482C997B-BA6F-5D09-9ED8-E79163F72D5C",
+          "myField": "D8AAF600-F44E-5F7B-AF4B-C63E75DCC925",
+          "refEntity": "B4146D9E-8777-56EB-9038-B146F18DA865",
+          "refField": "AED0DE5F-DD30-5D19-B704-1FE6E1E34E12",
+          "myRows": "1",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ]
+    },
+    {
+      "id": "4021DC9A-A47C-5CFC-B779-D5DE832DF91D",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_i18n_namespace",
+      "defName": "命名空间",
+      "comment": "保存应用内的命名空间：前端懒加载与语言包文件的粒度，在后台创建与维护；其下 key 必须以“编码.”开头。",
+      "properties": {
+        "logicalTableKey": "i18n_namespace",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "type": "P",
+      "fields": [
+        {
+          "defKey": "namespace_id",
+          "defName": "命名空间标识",
+          "comment": "服务侧生成的命名空间 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "A60631D0-00CD-5223-B519-27F30151C516"
+        },
+        {
+          "defKey": "application_id",
+          "defName": "应用标识",
+          "comment": "所属应用，取值为 t_i18n_application.application_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "D6A319E9-EB58-5285-ACE4-2610310A62FC"
+        },
+        {
+          "defKey": "namespace_code",
+          "defName": "命名空间编码",
+          "comment": "应用内唯一的命名空间编码，小写字母开头的小写字母、数字与连字符，不含点号，创建后不可修改。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "F36422FB-4732-5D0F-813A-A864C84D8CFA"
+        },
+        {
+          "defKey": "namespace_name",
+          "defName": "命名空间名称",
+          "comment": "在 Operations 页面显示的命名空间名称。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "75FFDB8A-3CED-53F6-8B80-91B8712A68A2"
+        },
+        {
+          "defKey": "description",
+          "defName": "说明",
+          "comment": "命名空间用途说明；NULL 表示未填写。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E7B8C698-D5D5-5BC2-BE04-6C09A9C8CD21"
+        },
+        {
+          "defKey": "sort_order",
+          "defName": "排序值",
+          "comment": "显示排序值，升序排列，取值 0 至 9999。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "BE6C862F-9741-511C-A3F5-F51ED5094C6A"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "命名空间乐观并发版本，从 1 开始，每次修改加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "174D760D-348E-5F0A-836F-0196D6C77629"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建人",
+          "comment": "创建该记录的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "2406A668-7172-54B8-971F-207E0791D2E4"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "最后修改人",
+          "comment": "最后修改该记录的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "8C1D8F61-6E20-54AF-A8F3-14A4E2B37DE2"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "D943175A-D0FB-51A3-9513-B0E3B18C8F6A"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "EE60D23F-973F-5DDC-A590-1D3F2364F7B4"
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_i18n_namespace",
+          "defName": "唯一索引 application_id、namespace_code",
+          "unique": true,
+          "comment": "保证业务唯一性：application_id、namespace_code",
+          "fields": [
+            {
+              "fieldDefKey": "D6A319E9-EB58-5285-ACE4-2610310A62FC",
+              "ascOrDesc": "A",
+              "id": "2D4696D0-83DB-5C86-9238-9775AB5D4BDE"
+            },
+            {
+              "fieldDefKey": "F36422FB-4732-5D0F-813A-A864C84D8CFA",
+              "ascOrDesc": "A",
+              "id": "698DAA07-11DC-5FCA-A4D8-27318DA4F447"
+            }
+          ],
+          "id": "9E7A8CAF-8326-522E-9641-E44F74B2818F"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "D1DEAE83-D483-5105-A76B-6B08EACCBAB5",
+          "myField": "D6A319E9-EB58-5285-ACE4-2610310A62FC",
+          "refEntity": "891D83D1-86BB-5314-8886-544CD68482E4",
+          "refField": "A7AF2646-6664-536A-84B0-9D978E475671",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ]
+    },
+    {
+      "id": "8F56655D-7A5C-5722-86CC-D0C01B02BEB6",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_i18n_key",
+      "defName": "文案 key",
+      "comment": "保存由代码导入的文案 key 与英文基准；导入文件中没有的 key 标为废弃而不删除，重新出现时恢复并保留原翻译。",
+      "properties": {
+        "logicalTableKey": "i18n_key",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "type": "P",
+      "fields": [
+        {
+          "defKey": "key_id",
+          "defName": "key 标识",
+          "comment": "服务侧生成的 key Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "3336EA60-C7FC-5EBB-AA4C-E3A65493B6D1"
+        },
+        {
+          "defKey": "application_id",
+          "defName": "应用标识",
+          "comment": "所属应用，取值为 t_i18n_application.application_id；与命名空间所属应用一致。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "66DF39E2-6D86-5AF4-878F-2ECEB9FE37C2"
+        },
+        {
+          "defKey": "namespace_id",
+          "defName": "命名空间标识",
+          "comment": "所属命名空间，取值为 t_i18n_namespace.namespace_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "7678C773-5038-5B59-A525-0501AF7CAA5C"
+        },
+        {
+          "defKey": "key_code",
+          "defName": "完整 key",
+          "comment": "完整 key，如 team.invite.submit；必须以所属命名空间编码加点号开头。",
+          "type": "VARCHAR",
+          "len": 191,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "26E00181-CEBD-5661-9B54-3D359F2D8CDA"
+        },
+        {
+          "defKey": "source_text",
+          "defName": "英文基准",
+          "comment": "英文基准文案，ICU MessageFormat；由导入写入，运营不能修改。",
+          "type": "TEXT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "EAF43312-60A0-51D4-854C-4F2CBA5FA8FA"
+        },
+        {
+          "defKey": "description",
+          "defName": "说明",
+          "comment": "开发者说明，由导入写入；NULL 表示未提供。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "AC706C40-584E-5F73-8A30-23CCEFD36C6F"
+        },
+        {
+          "defKey": "source_revision",
+          "defName": "基准修订号",
+          "comment": "英文基准修订号，从 1 开始，基准文案变化时加一；翻译依据的修订号小于它即为基准已变更。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "6F828D2E-BEC5-5A61-9F42-22B2E8F1829C"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "comment": "key 状态；只有 ACTIVE 参与翻译与发布。允许值：ACTIVE、DEPRECATED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "A43FCBCA-2A69-58F5-BCED-EA5EEDD23926"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "key 乐观并发版本，从 1 开始，每次导入修改该行时加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "FEED4A32-40FD-5209-95AF-AF3348C3BF9C"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建人",
+          "comment": "创建该记录的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "E0713F0D-B754-50F3-83E3-9B7ECBA6EF01"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "最后修改人",
+          "comment": "最后修改该记录的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "1492E474-810D-5337-AC9D-3F713548223E"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "9A59D4B4-C120-500F-AC39-7000B395CD8B"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "01D5CCA7-0D98-5D9D-9F69-FA0B65036777"
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_i18n_key",
+          "defName": "唯一索引 namespace_id、key_code",
+          "unique": true,
+          "comment": "保证业务唯一性：namespace_id、key_code",
+          "fields": [
+            {
+              "fieldDefKey": "7678C773-5038-5B59-A525-0501AF7CAA5C",
+              "ascOrDesc": "A",
+              "id": "C4322403-DD49-5DB8-BBBE-75F20A42D344"
+            },
+            {
+              "fieldDefKey": "26E00181-CEBD-5661-9B54-3D359F2D8CDA",
+              "ascOrDesc": "A",
+              "id": "77BCD80E-E19A-5E0E-A161-B1F20A91D3A8"
+            }
+          ],
+          "id": "BC5CEB70-ADC0-5BBB-8D3F-75BB4AC85E69"
+        },
+        {
+          "defKey": "idx_i18n_key_app",
+          "defName": "普通索引 application_id、status、key_code",
+          "unique": false,
+          "comment": "支持访问路径：application_id、status、key_code",
+          "fields": [
+            {
+              "fieldDefKey": "66DF39E2-6D86-5AF4-878F-2ECEB9FE37C2",
+              "ascOrDesc": "A",
+              "id": "093D8ECC-216B-5255-86BE-FB467CE9B72B"
+            },
+            {
+              "fieldDefKey": "A43FCBCA-2A69-58F5-BCED-EA5EEDD23926",
+              "ascOrDesc": "A",
+              "id": "F48695E0-A0D2-5FB5-BEAC-C911AF9C02E9"
+            },
+            {
+              "fieldDefKey": "26E00181-CEBD-5661-9B54-3D359F2D8CDA",
+              "ascOrDesc": "A",
+              "id": "08586DC7-81F7-553F-926F-ED46BF4943D7"
+            }
+          ],
+          "id": "5C301439-52CF-52D9-9953-935B226E5E27"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "114349C1-DB11-5226-A1FA-E2D5E799BE64",
+          "myField": "66DF39E2-6D86-5AF4-878F-2ECEB9FE37C2",
+          "refEntity": "891D83D1-86BB-5314-8886-544CD68482E4",
+          "refField": "A7AF2646-6664-536A-84B0-9D978E475671",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        },
+        {
+          "id": "20A32D2D-77B5-5EE0-AC8B-4F69C7734110",
+          "myField": "7678C773-5038-5B59-A525-0501AF7CAA5C",
+          "refEntity": "4021DC9A-A47C-5CFC-B779-D5DE832DF91D",
+          "refField": "A60631D0-00CD-5223-B519-27F30151C516",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ]
+    },
+    {
+      "id": "25C4F016-29DB-5222-9FC0-D5C71D20AFC5",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_i18n_translation",
+      "defName": "翻译",
+      "comment": "保存 key 在一个非英文语言下的翻译；不存状态，基准已变更由翻译依据的修订号与 key 当前修订号比较得出。en 不在本表存储。",
+      "properties": {
+        "logicalTableKey": "i18n_translation",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "type": "P",
+      "fields": [
+        {
+          "defKey": "translation_id",
+          "defName": "翻译标识",
+          "comment": "服务侧生成的翻译 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "34260EF7-C2EF-55B0-B076-792E8EBA3F2C"
+        },
+        {
+          "defKey": "key_id",
+          "defName": "key 标识",
+          "comment": "所属 key，取值为 t_i18n_key.key_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "49A6FC01-0B49-565D-BF5C-204F6C08E943"
+        },
+        {
+          "defKey": "locale_code",
+          "defName": "语言代码",
+          "comment": "翻译语言，取值为 t_i18n_locale.locale_code，不为 en。",
+          "type": "VARCHAR",
+          "len": 35,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "CEB5FA5D-9A37-5415-A327-E070AAE53A15"
+        },
+        {
+          "defKey": "text",
+          "defName": "翻译文案",
+          "comment": "翻译文案，ICU MessageFormat；参数名集合与英文基准一致，保存与导入时校验。",
+          "type": "TEXT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "5EB17A01-4B14-56A1-920C-31B526DB2390"
+        },
+        {
+          "defKey": "based_on_source_revision",
+          "defName": "依据的基准修订号",
+          "comment": "保存该翻译时 key 的英文基准修订号；小于 t_i18n_key.source_revision 表示基准已变更。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "AEB3155B-0868-560E-9809-846B79F89CDE"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "翻译乐观并发版本，从 1 开始，每次修改加一；批量保存按它逐条 CAS。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "C853410D-F322-59EF-9C68-B5A3C654D771"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建人",
+          "comment": "创建该记录的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "3FA14D73-8B3F-5B7F-BFD3-4E9A794E98BE"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "最后修改人",
+          "comment": "最后修改该记录的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "512BFEA6-C85D-537D-9321-E66C2F83500A"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "51839B62-38F1-5063-85E9-D772AFD34953"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "BF349D01-0347-524A-B6B1-A469D5714C1A"
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_i18n_translation",
+          "defName": "唯一索引 key_id、locale_code",
+          "unique": true,
+          "comment": "保证业务唯一性：key_id、locale_code",
+          "fields": [
+            {
+              "fieldDefKey": "49A6FC01-0B49-565D-BF5C-204F6C08E943",
+              "ascOrDesc": "A",
+              "id": "8FB71991-9CF7-5990-8472-554C9D4AE0EF"
+            },
+            {
+              "fieldDefKey": "CEB5FA5D-9A37-5415-A327-E070AAE53A15",
+              "ascOrDesc": "A",
+              "id": "54469400-A366-56E7-BBD0-0ABA1E254569"
+            }
+          ],
+          "id": "7A074391-9571-593B-B779-3931BB01139F"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "0D8E427D-49C5-5FC3-9CF8-A8C68F422A37",
+          "myField": "49A6FC01-0B49-565D-BF5C-204F6C08E943",
+          "refEntity": "8F56655D-7A5C-5722-86CC-D0C01B02BEB6",
+          "refField": "3336EA60-C7FC-5EBB-AA4C-E3A65493B6D1",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ]
+    },
+    {
+      "id": "B4146D9E-8777-56EB-9038-B146F18DA865",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_i18n_release",
+      "defName": "多语言发布",
+      "comment": "保存应用的不可变发布：发布号、依据的文案修订号、覆盖率与发布报告；文案在语言包文件中，状态只从 PENDING_CHECK 走到 READY 或 FAILED。",
+      "properties": {
+        "logicalTableKey": "i18n_release",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "type": "P",
+      "fields": [
+        {
+          "defKey": "release_id",
+          "defName": "发布标识",
+          "comment": "服务侧生成的发布 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "AED0DE5F-DD30-5D19-B704-1FE6E1E34E12"
+        },
+        {
+          "defKey": "application_id",
+          "defName": "应用标识",
+          "comment": "所属应用，取值为 t_i18n_application.application_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "AE834B0B-91B1-5DC0-A8F2-0D6711522AA3"
+        },
+        {
+          "defKey": "release_no",
+          "defName": "发布号",
+          "comment": "应用内发布号，从 1 开始，按应用内最大值加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "2ECE576E-EFDB-5AB1-84E9-73296328EFA6"
+        },
+        {
+          "defKey": "based_on_content_revision",
+          "defName": "依据的文案修订号",
+          "comment": "生成语言包时应用的文案修订号；登记时与应用当前修订号一致。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "92BA3CE6-94C1-5B8A-8913-D06E62B95BB5"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "comment": "发布状态；PENDING_CHECK 等待语言包文件检查，READY 可作为当前发布，FAILED 有文件被拒绝。允许值：PENDING_CHECK、READY、FAILED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "91BB9BA1-25ED-596B-A5B4-FAA7399350AF"
+        },
+        {
+          "defKey": "key_count",
+          "defName": "key 数",
+          "comment": "发布包含的 ACTIVE key 数。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "EE2C8628-439B-56B1-92EB-AD3205BB0896"
+        },
+        {
+          "defKey": "coverage",
+          "defName": "覆盖率",
+          "comment": "发布时各语言覆盖率 JSON 数组，每项含 locale、required、totalKeys、translatedKeys、sourceChangedKeys、coveragePercent、satisfied。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "F0A6FC1B-722D-5C3A-A489-18767F567D74"
+        },
+        {
+          "defKey": "report",
+          "defName": "发布报告",
+          "comment": "发布报告 JSON 对象，含 missing（未翻译而回退英文）与 sourceChanged（基准已变更仍沿用旧翻译），各为 {locale, keyCode} 数组。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "2E33CA49-2D22-5889-A1CB-208F6AFC1F96"
+        },
+        {
+          "defKey": "release_note",
+          "defName": "发布说明",
+          "comment": "发布说明；NULL 表示未填写。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E947A5EE-E54B-51D6-A5CE-146EDE80EC2C"
+        },
+        {
+          "defKey": "failure_reason",
+          "defName": "失败原因",
+          "comment": "检查失败原因；非 FAILED 时为 NULL。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "3633757B-ED89-55A0-ACDB-56B8BDE3EE16"
+        },
+        {
+          "defKey": "ready_time",
+          "defName": "上线时间",
+          "comment": "检查通过变为 READY 的 UTC 微秒时间；未通过时为 NULL。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "B7366268-6D3A-5BC3-B88C-9896F64C09F3"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建人",
+          "comment": "发布人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "479F09DA-059F-5136-B402-EE667B8DEE73"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "发布登记的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "FB18F281-3391-5290-A468-39F7C704391D"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该记录最后一次持久化更新（状态变化）的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "40721004-0707-5D1A-9720-F4121297ACBB"
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_i18n_release",
+          "defName": "唯一索引 application_id、release_no",
+          "unique": true,
+          "comment": "保证业务唯一性：application_id、release_no",
+          "fields": [
+            {
+              "fieldDefKey": "AE834B0B-91B1-5DC0-A8F2-0D6711522AA3",
+              "ascOrDesc": "A",
+              "id": "14286199-AC72-5893-817A-7297F25AA982"
+            },
+            {
+              "fieldDefKey": "2ECE576E-EFDB-5AB1-84E9-73296328EFA6",
+              "ascOrDesc": "A",
+              "id": "8BD6BE86-3812-5A02-94A7-EA74866C103A"
+            }
+          ],
+          "id": "EE48E2F9-7A26-510E-B01B-09E06F0B6D91"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "B32F2A77-2337-5186-9C4E-FCCFB0B46A3A",
+          "myField": "AE834B0B-91B1-5DC0-A8F2-0D6711522AA3",
+          "refEntity": "891D83D1-86BB-5314-8886-544CD68482E4",
+          "refField": "A7AF2646-6664-536A-84B0-9D978E475671",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ]
+    },
+    {
+      "id": "C36F5329-6EAC-57E0-8095-A7366E9FFE01",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_i18n_release_bundle",
+      "defName": "发布语言包",
+      "comment": "保存发布中每个语言 × 命名空间的语言包文件地址与内容摘要；不存语言包正文，创建后不修改。",
+      "properties": {
+        "logicalTableKey": "i18n_release_bundle",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "type": "P",
+      "fields": [
+        {
+          "defKey": "bundle_id",
+          "defName": "语言包标识",
+          "comment": "服务侧生成的语言包 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "CB45E174-FE36-51B4-96B3-C1058A28DA97"
+        },
+        {
+          "defKey": "release_id",
+          "defName": "发布标识",
+          "comment": "所属发布，取值为 t_i18n_release.release_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "863045C8-0366-5006-845D-E9A4AE978F2E"
+        },
+        {
+          "defKey": "locale_code",
+          "defName": "语言代码",
+          "comment": "语言包语言，取值为 t_i18n_locale.locale_code。",
+          "type": "VARCHAR",
+          "len": 35,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "3FD6E510-042F-5EEF-AD24-F6E7427B1EA4"
+        },
+        {
+          "defKey": "namespace_code",
+          "defName": "命名空间编码",
+          "comment": "语言包命名空间编码，发布时的 t_i18n_namespace.namespace_code。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "32E2073B-0C48-5968-B8A4-4338D4EFFF18"
+        },
+        {
+          "defKey": "file_address",
+          "defName": "文件地址",
+          "comment": "文件服务地址 /files/v1/{fileId}；文件位于公开桶，公开地址由文件服务在读取时计算，不落库。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "BC3D27C2-A4F7-5655-9A67-1B583626119F"
+        },
+        {
+          "defKey": "content_hash",
+          "defName": "内容摘要",
+          "comment": "语言包内容 SHA-256，小写十六进制。",
+          "type": "CHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "366AC231-19B0-532C-9043-D5B7E3E19E17"
+        },
+        {
+          "defKey": "byte_size",
+          "defName": "字节数",
+          "comment": "语言包字节数。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "4021AE3E-7B43-5DF4-BB8B-F1AF82829256"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间；创建后不可变，没有更新时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "B4EF18DC-62BD-5151-8B4F-162638D253F8"
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_i18n_bundle",
+          "defName": "唯一索引 release_id、locale_code、namespace_code",
+          "unique": true,
+          "comment": "保证业务唯一性：release_id、locale_code、namespace_code",
+          "fields": [
+            {
+              "fieldDefKey": "863045C8-0366-5006-845D-E9A4AE978F2E",
+              "ascOrDesc": "A",
+              "id": "679CD235-46B6-59CD-B1CA-4E9B01BF76C1"
+            },
+            {
+              "fieldDefKey": "3FD6E510-042F-5EEF-AD24-F6E7427B1EA4",
+              "ascOrDesc": "A",
+              "id": "915B8B5D-2597-5D69-9296-E7876FF07C01"
+            },
+            {
+              "fieldDefKey": "32E2073B-0C48-5968-B8A4-4338D4EFFF18",
+              "ascOrDesc": "A",
+              "id": "87A94798-9042-5D3C-B295-8261204C75C8"
+            }
+          ],
+          "id": "6C67C4DB-FF8C-55B6-BA89-40C8475C6D27"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "CA20DF2B-443A-5303-B110-751170D48218",
+          "myField": "863045C8-0366-5006-845D-E9A4AE978F2E",
+          "refEntity": "B4146D9E-8777-56EB-9038-B146F18DA865",
+          "refField": "AED0DE5F-DD30-5D19-B704-1FE6E1E34E12",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ]
     }
   ],
   "views": [],
@@ -41463,6 +44496,288 @@
       },
       "id": "60D12CF7-5B71-5EF3-84B5-0B8B59DE872D",
       "comment": "数据查询边界关系图"
+    },
+    {
+      "defKey": "localization",
+      "defName": "多语言",
+      "relationType": "field",
+      "properties": {
+        "primaryTables": [
+          "t_i18n_locale",
+          "t_i18n_application",
+          "t_i18n_namespace",
+          "t_i18n_key",
+          "t_i18n_translation",
+          "t_i18n_release",
+          "t_i18n_release_bundle"
+        ],
+        "referenceTables": []
+      },
+      "id": "5C604744-5536-58A2-B91F-3971B5C94042",
+      "comment": "多语言边界关系图",
+      "canvasData": {
+        "cells": [
+          {
+            "id": "3A92E9A3-E46C-57A5-8383-BF05232376E0",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "CBEA83CB-3EE3-5509-9D5A-04E79966589A",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 340
+            }
+          },
+          {
+            "id": "BD06CEA3-B098-5DC8-B1E3-5219804620D0",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "891D83D1-86BB-5314-8886-544CD68482E4",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 412
+            }
+          },
+          {
+            "id": "783D3551-F6FF-51EB-A3DD-EBE44D5344F5",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "4021DC9A-A47C-5CFC-B779-D5DE832DF91D",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 316
+            }
+          },
+          {
+            "id": "AB851B1D-1A71-54FB-93CE-78A1A97F5ED8",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "8F56655D-7A5C-5722-86CC-D0C01B02BEB6",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 364
+            }
+          },
+          {
+            "id": "AE656CF2-26B2-58BB-8949-B998FAB0B049",
+            "shape": "table",
+            "position": {
+              "x": 0,
+              "y": 600
+            },
+            "count": 0,
+            "originKey": "25C4F016-29DB-5222-9FC0-D5C71D20AFC5",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 292
+            }
+          },
+          {
+            "id": "E8FB659C-5C2F-5BFB-9AA2-90B8A4D79448",
+            "shape": "table",
+            "position": {
+              "x": 430,
+              "y": 600
+            },
+            "count": 0,
+            "originKey": "B4146D9E-8777-56EB-9038-B146F18DA865",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 388
+            }
+          },
+          {
+            "id": "08F5454B-CC90-5911-A468-85F47CBA4A60",
+            "shape": "table",
+            "position": {
+              "x": 860,
+              "y": 600
+            },
+            "count": 0,
+            "originKey": "C36F5329-6EAC-57E0-8095-A7366E9FFE01",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 244
+            }
+          },
+          {
+            "id": "F9892539-3CA7-54B1-B8F9-AEB97129C91C",
+            "shape": "erdRelation",
+            "originKey": "482C997B-BA6F-5D09-9ED8-E79163F72D5C",
+            "source": {
+              "cell": "BD06CEA3-B098-5DC8-B1E3-5219804620D0",
+              "port": "D8AAF600-F44E-5F7B-AF4B-C63E75DCC925%out"
+            },
+            "target": {
+              "cell": "E8FB659C-5C2F-5BFB-9AA2-90B8A4D79448",
+              "port": "AED0DE5F-DD30-5D19-B704-1FE6E1E34E12%in"
+            },
+            "relation": "1:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "36C98D2A-826E-5021-957D-48964CBCE143",
+            "shape": "erdRelation",
+            "originKey": "D1DEAE83-D483-5105-A76B-6B08EACCBAB5",
+            "source": {
+              "cell": "783D3551-F6FF-51EB-A3DD-EBE44D5344F5",
+              "port": "D6A319E9-EB58-5285-ACE4-2610310A62FC%out"
+            },
+            "target": {
+              "cell": "BD06CEA3-B098-5DC8-B1E3-5219804620D0",
+              "port": "A7AF2646-6664-536A-84B0-9D978E475671%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "E3D6B29B-5F43-538E-8F39-2F429C64971E",
+            "shape": "erdRelation",
+            "originKey": "114349C1-DB11-5226-A1FA-E2D5E799BE64",
+            "source": {
+              "cell": "AB851B1D-1A71-54FB-93CE-78A1A97F5ED8",
+              "port": "66DF39E2-6D86-5AF4-878F-2ECEB9FE37C2%out"
+            },
+            "target": {
+              "cell": "BD06CEA3-B098-5DC8-B1E3-5219804620D0",
+              "port": "A7AF2646-6664-536A-84B0-9D978E475671%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "DC3EEEC2-9AD7-5236-A2A5-FFD255C8C645",
+            "shape": "erdRelation",
+            "originKey": "20A32D2D-77B5-5EE0-AC8B-4F69C7734110",
+            "source": {
+              "cell": "AB851B1D-1A71-54FB-93CE-78A1A97F5ED8",
+              "port": "7678C773-5038-5B59-A525-0501AF7CAA5C%out"
+            },
+            "target": {
+              "cell": "783D3551-F6FF-51EB-A3DD-EBE44D5344F5",
+              "port": "A60631D0-00CD-5223-B519-27F30151C516%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "F12C88DF-EBAF-58AD-A665-D229D7F5044C",
+            "shape": "erdRelation",
+            "originKey": "0D8E427D-49C5-5FC3-9CF8-A8C68F422A37",
+            "source": {
+              "cell": "AE656CF2-26B2-58BB-8949-B998FAB0B049",
+              "port": "49A6FC01-0B49-565D-BF5C-204F6C08E943%out"
+            },
+            "target": {
+              "cell": "AB851B1D-1A71-54FB-93CE-78A1A97F5ED8",
+              "port": "3336EA60-C7FC-5EBB-AA4C-E3A65493B6D1%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "4C7D08DD-87BF-54E4-BA09-C66FA3268422",
+            "shape": "erdRelation",
+            "originKey": "B32F2A77-2337-5186-9C4E-FCCFB0B46A3A",
+            "source": {
+              "cell": "E8FB659C-5C2F-5BFB-9AA2-90B8A4D79448",
+              "port": "AE834B0B-91B1-5DC0-A8F2-0D6711522AA3%out"
+            },
+            "target": {
+              "cell": "BD06CEA3-B098-5DC8-B1E3-5219804620D0",
+              "port": "A7AF2646-6664-536A-84B0-9D978E475671%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "E00F2C7A-0786-5734-8CEC-9F10EC9BE78E",
+            "shape": "erdRelation",
+            "originKey": "CA20DF2B-443A-5303-B110-751170D48218",
+            "source": {
+              "cell": "08F5454B-CC90-5911-A468-85F47CBA4A60",
+              "port": "863045C8-0366-5006-845D-E9A4AE978F2E%out"
+            },
+            "target": {
+              "cell": "E8FB659C-5C2F-5BFB-9AA2-90B8A4D79448",
+              "port": "AED0DE5F-DD30-5D19-B704-1FE6E1E34E12%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          }
+        ]
+      }
     }
   ],
   "standardFields": [],

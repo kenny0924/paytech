@@ -1,0 +1,8 @@
+# 现网 client-console-bff（b8ecaaea）相对 bfb17bc9 构建的差异（全部来自已提交的 f707f2da）
+entries a=849 b=849 removed=0 added=0 changed=6
+~ lib:paytech-http-client-support!com/paytech/foundation/httpclient/api/HttpRequestValidationException.class
+~ lib:paytech-http-client-support!com/paytech/foundation/httpclient/core/error/HttpServiceClientInterceptor.class
+~ lib:paytech-platform-support-api!com/paytech/platform/support/api/workflow/WorkflowInstanceApi.class
+~ lib:paytech-platform-support-api!com/paytech/platform/support/api/workflow/response/WorkflowActionTemplateResponseBody.class
+~ lib:paytech-platform-support-api!com/paytech/platform/support/api/workflow/response/WorkflowActivityBody.class
+~ lib:paytech-platform-support-api!com/paytech/platform/support/api/workflow/response/WorkflowSubmissionResponseBody.class

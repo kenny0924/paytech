@@ -7,7 +7,7 @@ import {
   defaultStartPath,
   invitationOpen,
   invitationProblem,
-  invitationProblemTexts,
+  invitationProblemText,
   invitationWorkspaceName,
   readAcceptance,
   readDetails,
@@ -16,6 +16,11 @@ import {
 } from "./invitation.ts";
 import type { InvitationDetails, InvitationPreview } from "./invitation.ts";
 import { displayDate, roleLabel } from "./team.ts";
+import { translator } from "./i18n/index.ts";
+import { useT } from "./i18n/react.tsx";
+import { LocaleSwitcher } from "./LocaleSwitcher.tsx";
+
+const ti = translator("invitation");
 
 type Client = ReturnType<typeof createAuthClient>;
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
@@ -38,7 +43,7 @@ export function InvitationPage({ client, store, memoryLink }: { client: Client; 
   const [view, setView] = useState<View>({ kind: "loading" }), [busy, setBusy] = useState<"accept" | "logout" | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const link = useRef<EmailLink | null>(readStoredInvitation(store) ?? memoryLink);
-  const heading = useRef<HTMLHeadingElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null), t = useT("invitation"), tc = useT("common"), ta = useT("auth");
 
   function close(text: string) {
     clearStoredInvitation(store);
@@ -49,7 +54,7 @@ export function InvitationPage({ client, store, memoryLink }: { client: Client; 
     if (!(failure instanceof RequestFailure)) return false;
     const problem = invitationProblem(failure.code);
     if (problem === "invalid" || problem === "closed" || problem === "unavailable") {
-      close(invitationProblemTexts[problem]);
+      close(invitationProblemText(problem));
       return true;
     }
     if (problem === "mismatch") {
@@ -62,11 +67,11 @@ export function InvitationPage({ client, store, memoryLink }: { client: Client; 
   async function loadPreview(current: EmailLink) {
     try {
       const preview = readPreview(await client.publicRequest<unknown>("/invitations/v1/preview", current));
-      if (!preview) throw new Error("邀请信息暂时无法读取，请稍后刷新页面。");
-      if (!invitationOpen(preview.status)) close(invitationProblemTexts.closed);
+      if (!preview) throw new Error(ti("error.read_retry"));
+      if (!invitationOpen(preview.status)) close(invitationProblemText("closed"));
       else setView({ kind: "anonymous", preview });
     } catch (failure) {
-      if (!handleProblem(failure, null)) setView({ kind: "error", error: failure instanceof Error ? failure : new Error("邀请信息暂时无法读取") });
+      if (!handleProblem(failure, null)) setView({ kind: "error", error: failure instanceof Error ? failure : new Error(ti("error.read")) });
     }
   }
 
@@ -87,7 +92,7 @@ export function InvitationPage({ client, store, memoryLink }: { client: Client; 
     const current = link.current;
     setActionError(null);
     if (!current) {
-      setView({ kind: "problem", text: invitationProblemTexts.missing });
+      setView({ kind: "problem", text: invitationProblemText("missing") });
       return;
     }
     setView({ kind: "loading" });
@@ -96,23 +101,23 @@ export function InvitationPage({ client, store, memoryLink }: { client: Client; 
         await client.restore();
       } catch (failure) {
         if (failure instanceof RequestFailure && failure.status === 401) return loadPreview(current);
-        setView({ kind: "error", error: failure instanceof Error ? failure : new Error("登录状态暂时无法读取") });
+        setView({ kind: "error", error: failure instanceof Error ? failure : new Error(ti("error.session")) });
         return;
       }
       if (!client.current()) return loadPreview(current);
     }
     try {
       const details = await readDetailsInAccountContext(current);
-      if (!details) throw new Error("邀请信息暂时无法读取，请稍后刷新页面。");
+      if (!details) throw new Error(ti("error.read_retry"));
       if (!details.emailMatches) setView({ kind: "mismatch", emailMasked: details.emailMasked });
-      else if (!invitationOpen(details.status)) close(invitationProblemTexts.closed);
+      else if (!invitationOpen(details.status)) close(invitationProblemText("closed"));
       else setView({ kind: "ready", details, accountEmail: client.current()?.context.emailMasked ?? "—" });
     } catch (failure) {
       if (failure instanceof RequestFailure && failure.status === 401) {
         client.clear();
         return loadPreview(current);
       }
-      if (!handleProblem(failure, null)) setView({ kind: "error", error: failure instanceof Error ? failure : new Error("邀请信息暂时无法读取") });
+      if (!handleProblem(failure, null)) setView({ kind: "error", error: failure instanceof Error ? failure : new Error(ti("error.read")) });
     }
   }
   useEffect(() => { void load(); }, []);
@@ -126,7 +131,7 @@ export function InvitationPage({ client, store, memoryLink }: { client: Client; 
     try {
       if (client.current()?.context.contextType === "TENANT") await client.backToAccount();
       const result = readAcceptance(await client.request<unknown>("/invitations/v1/acceptance", { method: "POST", body: current }));
-      if (!result) throw new Error("接受结果暂时无法确认，请回到“我的工作区”查看。");
+      if (!result) throw new Error(ti("error.accept_unconfirmed"));
       clearStoredInvitation(store);
       link.current = null;
       navigate(defaultStartPath, { replace: true });
@@ -135,7 +140,7 @@ export function InvitationPage({ client, store, memoryLink }: { client: Client; 
         client.clear();
         navigate("/login", { replace: true });
       } else if (!handleProblem(failure, view.details.emailMasked)) {
-        setActionError(failure instanceof Error ? failure.message : "接受未完成，请稍后重试");
+        setActionError(failure instanceof Error ? failure.message : ti("error.accept_failed"));
       }
     } finally {
       setBusy(null);
@@ -150,57 +155,57 @@ export function InvitationPage({ client, store, memoryLink }: { client: Client; 
       await client.logout();
       navigate("/login", { replace: true });
     } catch (failure) {
-      setActionError(failure instanceof Error ? failure.message : "退出未完成，请稍后重试");
+      setActionError(failure instanceof Error ? failure.message : ti("error.logout_failed"));
     } finally {
       setBusy(null);
     }
   }
 
-  const title = view.kind === "ready" ? "接受邀请" : view.kind === "mismatch" ? "账号与受邀邮箱不一致"
-    : view.kind === "problem" ? "邀请不可用" : "加入 Client 工作区";
+  const title = view.kind === "ready" ? t("title.accept") : view.kind === "mismatch" ? t("title.mismatch")
+    : view.kind === "problem" ? t("title.problem") : t("title.join");
   return (
     <main className="auth-shell">
       <section className="auth invitation" aria-labelledby="invitation-title" aria-busy={view.kind === "loading"}>
         <span className="brand">PAYTECH</span>
         <header><h1 id="invitation-title" tabIndex={-1} ref={heading}>{title}</h1></header>
-        {view.kind === "loading" && <p role="status">正在读取邀请…</p>}
+        {view.kind === "loading" && <p role="status">{t("loading")}</p>}
         {view.kind === "anonymous" && (
           <>
-            <p>你被邀请加入一个 Client 工作区。请使用受邀邮箱登录；还没有账号时先注册并完成邮箱验证。</p>
+            <p>{t("anonymous.intro")}</p>
             <dl className="account">
-              <dt>角色</dt><dd>{roleLabel(view.preview.roleCode)}</dd>
-              <dt>受邀邮箱</dt><dd className="break">{view.preview.emailMasked}</dd>
-              <dt>到期</dt><dd>{displayDate(view.preview.expiresAt)}</dd>
+              <dt>{t("field.role")}</dt><dd>{roleLabel(view.preview.roleCode)}</dd>
+              <dt>{t("field.invited_email")}</dt><dd className="break">{view.preview.emailMasked}</dd>
+              <dt>{t("field.expires")}</dt><dd>{displayDate(view.preview.expiresAt)}</dd>
             </dl>
-            <Link className="primary link-button" to="/login">登录</Link>
-            <Link className="secondary link-button" to="/register">注册</Link>
-            <p className="hint">登录后会自动回到本页。如在新标签页完成邮箱验证并登录，请重新打开邀请邮件中的链接。</p>
+            <Link className="primary link-button" to="/login">{t("action.login")}</Link>
+            <Link className="secondary link-button" to="/register">{t("action.register")}</Link>
+            <p className="hint">{t("anonymous.hint")}</p>
           </>
         )}
         {view.kind === "ready" && (
           <>
             <dl className="account">
-              <dt>工作区</dt><dd className="break">{invitationWorkspaceName(view.details)}</dd>
-              <dt>角色</dt><dd>{roleLabel(view.details.roleCode)}</dd>
-              <dt>当前账号</dt><dd className="break">{view.accountEmail}</dd>
-              {view.details.status === "PENDING" && <><dt>到期</dt><dd>{displayDate(view.details.expiresAt)}</dd></>}
+              <dt>{t("field.workspace")}</dt><dd className="break">{invitationWorkspaceName(view.details)}</dd>
+              <dt>{t("field.role")}</dt><dd>{roleLabel(view.details.roleCode)}</dd>
+              <dt>{t("field.current_account")}</dt><dd className="break">{view.accountEmail}</dd>
+              {view.details.status === "PENDING" && <><dt>{t("field.expires")}</dt><dd>{displayDate(view.details.expiresAt)}</dd></>}
             </dl>
-            {view.details.status === "ACCEPTED" && <p className="notice">该邀请已被接受，确认后回到“我的工作区”。</p>}
+            {view.details.status === "ACCEPTED" && <p className="notice">{t("ready.already_accepted")}</p>}
             {actionError && <p className="notice error" role="alert">{actionError}</p>}
             <button type="button" className="primary" disabled={busy !== null} onClick={() => void accept()}>
-              {busy === "accept" ? "处理中…" : "接受邀请"}
+              {busy === "accept" ? tc("status.processing") : t("action.accept")}
             </button>
-            <Link to={defaultStartPath}>暂不接受，返回我的工作区</Link>
+            <Link to={defaultStartPath}>{t("action.not_now")}</Link>
           </>
         )}
         {view.kind === "mismatch" && (
           <>
             <p className="notice error" role="alert">
-              当前登录账号不是受邀邮箱，请退出后{view.emailMasked ? "用 " + view.emailMasked + " " : "用受邀邮箱"}登录。
+              {view.emailMasked ? t("mismatch.with_email", { email: view.emailMasked }) : t("mismatch.without_email")}
             </p>
             {actionError && <p className="notice error" role="alert">{actionError}</p>}
             <button type="button" className="primary" disabled={busy !== null} onClick={() => void switchAccount()}>
-              {busy === "logout" ? "正在退出…" : "退出并切换账号"}
+              {busy === "logout" ? ta("action.signing_out") : t("action.switch_account")}
             </button>
           </>
         )}
@@ -208,7 +213,7 @@ export function InvitationPage({ client, store, memoryLink }: { client: Client; 
           <>
             <p className="notice" role="alert">{view.text}</p>
             <Link className="primary link-button" to={client.current() ? defaultStartPath : "/login"}>
-              {client.current() ? "返回我的工作区" : "前往登录"}
+              {client.current() ? t("action.back_to_workspaces") : ta("action.go_to_login")}
             </Link>
           </>
         )}
@@ -216,12 +221,12 @@ export function InvitationPage({ client, store, memoryLink }: { client: Client; 
           <>
             <div className="notice error" role="alert">
               {view.error.message}
-              {view.error instanceof RequestFailure && view.error.requestId && <small>请求编号：{view.error.requestId}</small>}
+              {view.error instanceof RequestFailure && view.error.requestId && <small>{tc("request_id", { requestId: view.error.requestId })}</small>}
             </div>
-            <button type="button" className="primary" onClick={() => void load()}>重试</button>
+            <button type="button" className="primary" onClick={() => void load()}>{t("action.retry")}</button>
           </>
         )}
-        <footer>PAYTECH Client Console</footer>
+        <footer><span>PAYTECH Client Console</span><LocaleSwitcher /></footer>
       </section>
     </main>
   );

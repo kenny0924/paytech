@@ -46,7 +46,8 @@ public class FileMocker implements Clear {
     public static final String MANAGED_POLICY_PREFIX = "UT_MGMT_";
 
     /** 测试策略允许的类型规则。 */
-    static final String MIME_RULES = "{\"mimeTypes\":[\"application/pdf\",\"image/png\",\"image/jpeg\",\"text/csv\"]}";
+    static final String MIME_RULES =
+        "{\"mimeTypes\":[\"application/pdf\",\"image/png\",\"image/jpeg\",\"text/csv\",\"application/json\"]}";
 
     /** 本组件等待与回收的补偿任务类型。 */
     static final List<String> TASK_TYPES = List.of(FileScanHandler.EVENT_TYPE, FilePublicSyncHandler.EVENT_TYPE);
@@ -56,7 +57,7 @@ public class FileMocker implements Clear {
     private final List<Long> policyIds = new ArrayList<>();
 
     /**
-     * 插入只含一项 FORMAT 要求的 ACTIVE 策略：允许 PDF、PNG、JPEG 与 CSV，检查器 PLATFORM_FORMAT，只接受 FORMAT_VALID。
+     * 插入只含一项 FORMAT 要求的 ACTIVE 策略：允许 PDF、PNG、JPEG、CSV 与 JSON，检查器 PLATFORM_FORMAT，只接受 FORMAT_VALID。
      *
      * @return 策略与要求标识
      */

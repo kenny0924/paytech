@@ -1,0 +1,452 @@
+{
+ "phase": "released",
+ "strictTls": true,
+ "results": [
+  {
+   "step": "C1 有发布：/login 显示语言切换器",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "C1 切换器选项 English / 简体中文",
+   "ok": true,
+   "note": "['English', '简体中文']"
+  },
+  {
+   "step": "C1 选简体中文：标题“欢迎回来”、lang=zh-CN、localStorage 记录",
+   "ok": true,
+   "note": "lang=zh-CN stored=zh-CN"
+  },
+  {
+   "step": "C1 刷新后保持简体中文",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "C1 语言包从公开桶直接拉取且全部 200（证书与 CORS 通过）",
+   "ok": true,
+   "note": "8 个请求：[('client:/login', 200, 'https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763'), ('client:/login', 200, 'https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8')]"
+  },
+  {
+   "step": "C2 /login zh-CN 1280px 无横向溢出、无裸 key、lang 正确",
+   "ok": true,
+   "note": "overflow=0 keys=[]"
+  },
+  {
+   "step": "C2 /register zh-CN 1280px 无横向溢出、无裸 key、lang 正确",
+   "ok": true,
+   "note": "overflow=0 keys=[]"
+  },
+  {
+   "step": "C2 /login en 1280px 无横向溢出、无裸 key、lang 正确",
+   "ok": true,
+   "note": "overflow=0 keys=[]"
+  },
+  {
+   "step": "C2 /register en 1280px 无横向溢出、无裸 key、lang 正确",
+   "ok": true,
+   "note": "overflow=0 keys=[]"
+  },
+  {
+   "step": "C2 /login zh-CN 390px 无横向溢出、无裸 key、lang 正确",
+   "ok": true,
+   "note": "overflow=0 keys=[]"
+  },
+  {
+   "step": "C2 /register zh-CN 390px 无横向溢出、无裸 key、lang 正确",
+   "ok": true,
+   "note": "overflow=0 keys=[]"
+  },
+  {
+   "step": "C2 /login en 390px 无横向溢出、无裸 key、lang 正确",
+   "ok": true,
+   "note": "overflow=0 keys=[]"
+  },
+  {
+   "step": "C2 /register en 390px 无横向溢出、无裸 key、lang 正确",
+   "ok": true,
+   "note": "overflow=0 keys=[]"
+  },
+  {
+   "step": "C1 切回 English",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "C3 manifest 503：英文渲染、切换器隐藏、无裸 key",
+   "ok": true,
+   "note": "lang=en"
+  },
+  {
+   "step": "O0 管理员登录",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O1 翻译页可打开（标题“翻译”）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O1 新页面文案来自公开桶语言包（i18n-admin、enum，200）",
+   "ok": true,
+   "note": "[('ops:/i18n/translations?app=operations-console', 200, 'https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/en/enum/02d525731244fdcb/71fa1227-7653-473e-b578-340fd4817483'), ('ops:/i18n/translations?app=operations-console', 200, 'https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/en/i18n-admin/e27674bd13e6cbf3/85a6d422-f976-4b92-857b-d31cf3c508f3')]"
+  },
+  {
+   "step": "O1 页面无裸 key（工作台中的 key 编码列除外）",
+   "ok": true,
+   "note": "[]"
+  },
+  {
+   "step": "O2 输入错误 ICU 后编辑区显示校验错误、保存不可用",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O2 还原输入框内容（未保存）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O3 批量粘贴检查：1 条无变化、无可保存条目（未保存）",
+   "ok": true,
+   "note": "enum.locale_status.disabled"
+  },
+  {
+   "step": "O4 导入 key 弹窗（03）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O5 发布确认弹窗（04，未确认）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O6 发布记录页（05）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O7 切回确认弹窗（06，未确认）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O8 语言与应用（07）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O9 新建应用弹窗（08，未提交）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O10 新建命名空间弹窗（09，未提交）",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "O11 ?lang=en 英文界面",
+   "ok": true,
+   "note": ""
+  },
+  {
+   "step": "控制台错误 0",
+   "ok": false,
+   "note": "[('client:/login(manifest-503)', 'error', 'Failed to load resource: the server responded with a status of 503 (Service Unavailable)')]"
+  },
+  {
+   "step": "4xx / 5xx / 失败请求 0",
+   "ok": false,
+   "note": "[('ops:/i18n/releases?app=operations-console', 'FAILED', 'GET', 'http://localhost:28080/api/operations/localization-admin/v1/applications/operations-console/releases/1/diff net::ERR_ABORTED')]"
+  }
+ ],
+ "console": [
+  [
+   "client:/login(manifest-503)",
+   "error",
+   "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ]
+ ],
+ "network": [
+  [
+   "ops:/i18n/releases?app=operations-console",
+   "FAILED",
+   "GET",
+   "http://localhost:28080/api/operations/localization-admin/v1/applications/operations-console/releases/1/diff net::ERR_ABORTED"
+  ]
+ ],
+ "storageRequests": [
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/auth/3d345b84c84c13f6/d608a96f-b1cf-4da1-a65e-2cdc8afbad66"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/common/6144e121f6284c9b/0b4a7845-88d5-4b4e-8c72-7fdc7b56cdba"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/auth/3d345b84c84c13f6/d608a96f-b1cf-4da1-a65e-2cdc8afbad66"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/common/6144e121f6284c9b/0b4a7845-88d5-4b4e-8c72-7fdc7b56cdba"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/auth/3d345b84c84c13f6/d608a96f-b1cf-4da1-a65e-2cdc8afbad66"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/common/6144e121f6284c9b/0b4a7845-88d5-4b4e-8c72-7fdc7b56cdba"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/auth/3d345b84c84c13f6/d608a96f-b1cf-4da1-a65e-2cdc8afbad66"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/common/6144e121f6284c9b/0b4a7845-88d5-4b4e-8c72-7fdc7b56cdba"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/auth/3d345b84c84c13f6/d608a96f-b1cf-4da1-a65e-2cdc8afbad66"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/common/6144e121f6284c9b/0b4a7845-88d5-4b4e-8c72-7fdc7b56cdba"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/auth/3d345b84c84c13f6/d608a96f-b1cf-4da1-a65e-2cdc8afbad66"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/zh-CN/common/6144e121f6284c9b/0b4a7845-88d5-4b4e-8c72-7fdc7b56cdba"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/register",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/auth/08a5b6d6c0872cca/ef33137a-2bae-490d-9c22-bae663aa52b8"
+  ],
+  [
+   "client:/login",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/client-console/1/en/common/556b162b81cce697/80b61c7f-7205-4d3e-8f1f-37dda09b0763"
+  ],
+  [
+   "ops:/i18n/translations?app=operations-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/en/enum/02d525731244fdcb/71fa1227-7653-473e-b578-340fd4817483"
+  ],
+  [
+   "ops:/i18n/translations?app=operations-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/en/i18n-admin/e27674bd13e6cbf3/85a6d422-f976-4b92-857b-d31cf3c508f3"
+  ],
+  [
+   "ops:/i18n/translations?app=operations-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/zh-CN/i18n-admin/07f8b889146f2168/fca955d8-7d39-429f-bbc8-fde5bf470006"
+  ],
+  [
+   "ops:/i18n/translations?app=operations-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/zh-CN/enum/ecd9af4c47c0e3f9/1cea908a-7b50-4628-8828-30b45504e7b2"
+  ],
+  [
+   "ops:/i18n/releases?app=operations-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/en/i18n-admin/e27674bd13e6cbf3/85a6d422-f976-4b92-857b-d31cf3c508f3"
+  ],
+  [
+   "ops:/i18n/releases?app=operations-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/zh-CN/i18n-admin/07f8b889146f2168/fca955d8-7d39-429f-bbc8-fde5bf470006"
+  ],
+  [
+   "ops:/i18n/releases?app=operations-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/en/enum/02d525731244fdcb/71fa1227-7653-473e-b578-340fd4817483"
+  ],
+  [
+   "ops:/i18n/releases?app=operations-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/zh-CN/enum/ecd9af4c47c0e3f9/1cea908a-7b50-4628-8828-30b45504e7b2"
+  ],
+  [
+   "ops:/i18n/settings",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/en/i18n-admin/e27674bd13e6cbf3/85a6d422-f976-4b92-857b-d31cf3c508f3"
+  ],
+  [
+   "ops:/i18n/settings",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/zh-CN/i18n-admin/07f8b889146f2168/fca955d8-7d39-429f-bbc8-fde5bf470006"
+  ],
+  [
+   "ops:/i18n/settings",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/en/enum/02d525731244fdcb/71fa1227-7653-473e-b578-340fd4817483"
+  ],
+  [
+   "ops:/i18n/settings",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/zh-CN/enum/ecd9af4c47c0e3f9/1cea908a-7b50-4628-8828-30b45504e7b2"
+  ],
+  [
+   "ops:/i18n/settings?app=client-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/en/i18n-admin/e27674bd13e6cbf3/85a6d422-f976-4b92-857b-d31cf3c508f3"
+  ],
+  [
+   "ops:/i18n/settings?app=client-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/zh-CN/i18n-admin/07f8b889146f2168/fca955d8-7d39-429f-bbc8-fde5bf470006"
+  ],
+  [
+   "ops:/i18n/settings?app=client-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/en/enum/02d525731244fdcb/71fa1227-7653-473e-b578-340fd4817483"
+  ],
+  [
+   "ops:/i18n/settings?app=client-console",
+   200,
+   "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/2/zh-CN/enum/ecd9af4c47c0e3f9/1cea908a-7b50-4628-8828-30b45504e7b2"
+  ]
+ ],
+ "screens": [
+  "c01-login-zh-CN.png",
+  "c02-login-zh-CN-390.png",
+  "c02-register-zh-CN-390.png",
+  "c02-login-en-390.png",
+  "c02-register-en-390.png",
+  "c03-login-manifest-503.png",
+  "p01-translations.png",
+  "p02-validation.png",
+  "o03-batch-paste-check.png",
+  "p03-import-keys.png",
+  "p04-publish.png",
+  "p05-releases.png",
+  "p06-switch-back.png",
+  "p07-settings.png",
+  "p08-new-application.png",
+  "p09-new-namespace.png",
+  "o11-translations-en.png"
+ ]
+}

@@ -56,6 +56,11 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
+                <artifactId>paytech-platform-support-localization</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
                 <artifactId>paytech-platform-support-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -133,6 +138,7 @@
         <module>paytech-platform-support-delivery</module>
         <module>paytech-platform-support-workflow</module>
         <module>paytech-platform-support-data-query</module>
+        <module>paytech-platform-support-localization</module>
         <module>paytech-platform-support-core</module>
         <module>paytech-platform-support-app</module>
         <module>paytech-platform-support-test</module>

@@ -1,0 +1,10 @@
+{
+  "enum.locale_status.disabled": "Disabled",
+  "enum.locale_status.enabled": "Enabled",
+  "enum.release_display.checking": "Checking",
+  "enum.release_display.failed": "Check failed",
+  "enum.release_display.live": "Live",
+  "enum.release_display.offline": "Offline",
+  "enum.text_direction.ltr": "Left to right",
+  "enum.text_direction.rtl": "Right to left"
+}

@@ -28,7 +28,8 @@ import com.paytech.platform.support.auditsecurity.domain.enums.OperationsAuditCl
     "com.paytech.platform.support.core.reliability.mapper",
     "com.paytech.platform.support.referencedata.core.dal.mapper",
     "com.paytech.platform.support.workflow.core.dal.mapper",
-    "com.paytech.platform.support.dataquery.core.dal.mapper"}, sqlSessionTemplateRef = "sqlSessionTemplate")
+    "com.paytech.platform.support.dataquery.core.dal.mapper",
+    "com.paytech.platform.support.localization.core.dal.mapper"}, sqlSessionTemplateRef = "sqlSessionTemplate")
 public class PersistenceConfiguration {
 
     /**
@@ -117,6 +118,19 @@ public class PersistenceConfiguration {
         registry.register(com.paytech.platform.support.dataquery.core.enums.DataSourceCheckResult.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.dataquery.core.enums.QueryTemplateStatus.class, CodeEnumTypeHandler.class);
         registerWorkflowHandlers(registry);
+        registerLocalizationHandlers(registry);
+    }
+
+    /** 多语言七张表的闭合枚举列。 */
+    private void registerLocalizationHandlers(TypeHandlerRegistry registry) {
+        for (Class<?> type : java.util.List.of(
+            com.paytech.platform.support.localization.core.enums.TextDirection.class,
+            com.paytech.platform.support.localization.core.enums.LocaleStatus.class,
+            com.paytech.platform.support.localization.core.enums.ApplicationStatus.class,
+            com.paytech.platform.support.localization.core.enums.KeyStatus.class,
+            com.paytech.platform.support.localization.core.enums.ReleaseStatus.class)) {
+            registry.register(type, CodeEnumTypeHandler.class);
+        }
     }
 
     /** 工作流十张表的闭合枚举列。 */

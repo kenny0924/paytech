@@ -6,3 +6,4 @@ dist/
 .DS_Store
 .idea/
 *.iml
+i18n-out/

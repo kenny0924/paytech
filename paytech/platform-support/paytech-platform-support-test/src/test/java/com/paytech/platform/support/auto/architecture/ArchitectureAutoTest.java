@@ -35,6 +35,7 @@ class ArchitectureAutoTest {
     private static final List<String> MODULES = List.of("paytech-platform-support-api",
         "paytech-platform-support-access-control", "paytech-platform-support-audit-security",
         "paytech-platform-support-file-document", "paytech-platform-support-delivery", "paytech-platform-support-data-query",
+        "paytech-platform-support-localization",
         "paytech-platform-support-core", "paytech-platform-support-app", "paytech-platform-support-test");
 
     /** 除登记的既有偏差外零违规；违规清单逐条输出，便于定位模块与类。 */

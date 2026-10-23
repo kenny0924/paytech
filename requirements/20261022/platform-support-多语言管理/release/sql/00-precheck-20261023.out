@@ -1,0 +1,47 @@
+-- executed 2026-10-23T08:15:30Z on mor-test-mysql-1 (root, read-only)
++---------------------------------------------------------------------------+--------+--------+----+
+| item                                                                      | actual | expect | ok |
++---------------------------------------------------------------------------+--------+--------+----+
+| S01 t_i18n_* tables absent                                                |      0 |      0 |  1 |
+| S02 mor_platform table count                                              |     64 |     64 |  1 |
+| G01 t_permission 1351xx empty                                             |      0 |      0 |  1 |
+| G02 t_role_permission 1352xx empty                                        |      0 |      0 |  1 |
+| G03 t_console_resource 1353xx empty                                       |      0 |      0 |  1 |
+| G04 t_gateway_route 1354xx empty                                          |      0 |      0 |  1 |
+| G05 t_gateway_route_header 1355xx-1356xx empty                            |      0 |      0 |  1 |
+| G06 t_gateway_route_query_param 1357xx empty                              |      0 |      0 |  1 |
+| G07 t_gateway_guard_rule 1358xx-1359xx empty                              |      0 |      0 |  1 |
+| G08 permission codes I18N_VIEW/EDIT/PUBLISH unused                        |      0 |      0 |  1 |
+| G09 resource codes OPERATIONS_I18N* unused                                |      0 |      0 |  1 |
+| G10 frontend routes /i18n/* unused                                        |      0 |      0 |  1 |
+| G11 route codes operations-i18n-* / client-i18n-manifest unused           |      0 |      0 |  1 |
+| G12 external paths unused                                                 |      0 |      0 |  1 |
+| G13 ops-bff target 900000000000000001 ACTIVE                              |      1 |      1 |  1 |
+| G14 client-console-bff target exactly one ACTIVE                          |      1 |      1 |  1 |
+| G15 role 510 PLATFORM_ADMIN ACTIVE                                        |      1 |      1 |  1 |
+| G16 top-level OPERATIONS menu sort 70 free                                |      0 |      0 |  1 |
+| F01 policies I18N_BUNDLE_JSON / OPERATIONS_BFF_IMPORT absent              |      0 |      0 |  1 |
+| F02 scan policy IDs 135021-135025 free                                    |      0 |      0 |  1 |
+| F03 scan requirement IDs 135021-135025 free                               |      0 |      0 |  1 |
+| F04 route 135025 / platform-support x PUBLIC absent                       |      0 |      0 |  1 |
+| F05 ops-bff PRIVATE route 239087906591948800 / CARD_BIN_CSV / 900         |      1 |      1 |  1 |
+| F06 ops-bff PRIVATE routes total                                          |      1 |      1 |  1 |
+| F07 MINIO/mor-platform-public ACTIVE PUBLIC with base URL                 |      1 |      1 |  1 |
+| F08 CARD_BIN_CSV r1 ACTIVE (rollback target)                              |      1 |      1 |  1 |
+| F09 no I18N_RELEASE_ACTIVATE compensation events                          |      0 |      0 |  1 |
+| F10 * x PUBLIC -> S3_TEST/mor-test-platform-public-k7q2 / PUBLIC_DOCUMENT |      1 |      1 |  1 |
+| F11 client-console-bff x PUBLIC -> same bucket / PUBLIC_IMAGE             |      1 |      1 |  1 |
+| F12 PUBLIC routes total (only the two above)                              |      2 |      2 |  1 |
+| F13 no platform-support PUBLIC files yet                                  |      0 |      0 |  1 |
++---------------------------------------------------------------------------+--------+--------+----+
++--------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
+| item                                                   | value                                                                                                          |
++--------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+
+| R01 role 510 version                                   | 47                                                                                                             |
+| R02 ops-bff PRIVATE route version                      | 1                                                                                                              |
+| R03 client-console-bff target_id                       | 236085272176050176                                                                                             |
+| R04 PUBLIC routes (source/bucket/policy)               | *>mor-test-platform-public-k7q2>PUBLIC_DOCUMENT; client-console-bff>mor-test-platform-public-k7q2>PUBLIC_IMAGE |
+| R05 ACTIVE gateway routes total                        | 542                                                                                                            |
+| R06 files from operations-console-bff (BIN CSV) total  | 4                                                                                                              |
+| R07 open uploads from operations-console-bff (CREATED) | 0                                                                                                              |
++--------------------------------------------------------+----------------------------------------------------------------------------------------------------------------+

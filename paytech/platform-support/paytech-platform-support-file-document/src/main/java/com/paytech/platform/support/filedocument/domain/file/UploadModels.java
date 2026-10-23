@@ -17,9 +17,11 @@ public final class UploadModels {
      * @param sourceSystem 来源系统
      * @param reasonCode 来源系统声明的上传原因
      * @param accessLevel 调用方声明的访问级别；路由按该级别选择，不跨级别回落
+     * @param objectKeyPrefix Platform 进程内调用方指定的对象名前缀（如多语言语言包按应用、发布号、语言、命名空间与摘要组织）；
+     *        为空时对象名只有高熵随机部分。对象名始终以 Platform 生成的随机部分结尾，前缀不能决定或复用已有对象名
      */
     public record Start(Long tenantId, Long uploaderId, String sourceSystem, String reasonCode,
-        String displayName, String mimeType, long sizeBytes, FileAccessLevel accessLevel) {
+        String displayName, String mimeType, long sizeBytes, FileAccessLevel accessLevel, String objectKeyPrefix) {
         /** 文件名可能含个人信息。 */
         @Override public String toString() { return "Start[REDACTED]"; }
     }

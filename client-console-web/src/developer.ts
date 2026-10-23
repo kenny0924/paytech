@@ -1,3 +1,8 @@
+import { enumCodes, enumLabel } from "./enum-label.ts";
+import { formatDate, translator } from "./i18n/index.ts";
+
+const td = translator("developer");
+
 /** 工作区首页返回的权限能力（开发者与团队）；未授予的项不出现。 */
 export type Capability = "API_CREDENTIAL_READ" | "API_CREDENTIAL_MANAGE" | "WEBHOOK_READ" | "WEBHOOK_MANAGE" | "TEAM_READ" | "TEAM_MANAGE";
 export const capabilityCodes: readonly Capability[] = [
@@ -10,15 +15,15 @@ export function readCapabilities(value: unknown): Capability[] {
   return capabilityCodes.filter((code) => value.includes(code));
 }
 
-export type DeveloperMenuItem = { key: "api-keys" | "webhooks"; label: string; path: string };
+export type DeveloperMenuItem = { key: "api-keys" | "webhooks"; path: string };
 /** 开发者分组：有读或写权限即显示对应菜单；都没有时整组不显示。 */
 export function developerMenu(capabilities: readonly Capability[]): DeveloperMenuItem[] {
   const items: DeveloperMenuItem[] = [];
   if (capabilities.includes("API_CREDENTIAL_READ") || capabilities.includes("API_CREDENTIAL_MANAGE")) {
-    items.push({ key: "api-keys", label: "API 凭证", path: "/workspace/developer/api-keys" });
+    items.push({ key: "api-keys", path: "/workspace/developer/api-keys" });
   }
   if (capabilities.includes("WEBHOOK_READ") || capabilities.includes("WEBHOOK_MANAGE")) {
-    items.push({ key: "webhooks", label: "Webhook", path: "/workspace/developer/webhooks" });
+    items.push({ key: "webhooks", path: "/workspace/developer/webhooks" });
   }
   return items;
 }
@@ -39,21 +44,19 @@ export type Scope = { scopeCode: string; displayName: string | null; description
 
 export const validityOptions = [30, 90, 180, 365] as const;
 export const defaultValidityDays = 365;
-export const graceOptions: readonly { minutes: number; label: string }[] = [
-  { minutes: 0, label: "立即失效" },
-  { minutes: 60, label: "1 小时后失效" },
-  { minutes: 1440, label: "24 小时后失效" },
-  { minutes: 10080, label: "7 天后失效" },
-];
+/** 旧密钥宽限期；展示名按当前语言读取。 */
+export const graceOptions: readonly { minutes: number; readonly label: string }[] = [0, 60, 1440, 10080].map((minutes) => ({
+  minutes,
+  get label() { return td("grace.m" + minutes); },
+}));
 export const defaultGraceMinutes = 1440;
-export const credentialStatusLabels: Record<string, string> = { ACTIVE: "有效", REVOKED: "已撤销", EXPIRED: "已到期" };
 
 /** 凭证名称：去首尾空白后 1—64 字符，不允许控制字符。 */
 export function credentialNameIssue(name: string): string | null {
   const value = name.trim();
-  if (!value) return "请填写凭证名称";
-  if (Array.from(value).length > 64) return "名称不能超过 64 个字符";
-  if (/[\u0000-\u001f\u007f]/.test(value)) return "名称不能包含控制字符";
+  if (!value) return td("credential.name_required");
+  if (Array.from(value).length > 64) return td("credential.name_too_long", { max: 64 });
+  if (/[\u0000-\u001f\u007f]/.test(value)) return td("credential.name_control_chars");
   return null;
 }
 
@@ -62,12 +65,12 @@ export function credentialFormIssues(form: { name: string; scopeCodes: string[];
   const issues: Record<string, string> = {};
   const name = credentialNameIssue(form.name);
   if (name) issues.name = name;
-  if (form.scopeCodes.length === 0) issues.scopeCodes = "至少选择一个权限范围";
-  else if (form.scopeCodes.length > 64) issues.scopeCodes = "权限范围过多";
+  if (form.scopeCodes.length === 0) issues.scopeCodes = td("credential.scope_required");
+  else if (form.scopeCodes.length > 64) issues.scopeCodes = td("credential.scope_too_many");
   else if (new Set(form.scopeCodes).size !== form.scopeCodes.length || form.scopeCodes.some((code) => !catalog.includes(code))) {
-    issues.scopeCodes = "权限范围无效，请重新选择";
+    issues.scopeCodes = td("credential.scope_invalid");
   }
-  if (!validityOptions.includes(form.validityDays as (typeof validityOptions)[number])) issues.validityDays = "请选择有效期";
+  if (!validityOptions.includes(form.validityDays as (typeof validityOptions)[number])) issues.validityDays = td("credential.validity_required");
   return issues;
 }
 
@@ -104,25 +107,18 @@ export function readSecret(value: unknown, field: "secret" | "signingSecret"): s
   return typeof secret === "string" && secret.length >= 16 && secret.length <= 256 && !/\s/.test(secret) ? secret : null;
 }
 
-export type WebhookEventType = { code: string; label: string };
-export const webhookEventTypes: readonly WebhookEventType[] = [
-  { code: "order.paid", label: "订单已支付" },
-  { code: "order.cancelled", label: "订单已取消" },
-  { code: "order.expired", label: "订单已过期" },
-  { code: "order.funds_available", label: "订单资金可用" },
-  { code: "refund.created", label: "退款已创建" },
-  { code: "refund.succeeded", label: "退款成功" },
-  { code: "refund.failed", label: "退款失败" },
-  { code: "refund.cancelled", label: "退款已取消" },
-];
-export const endpointStatusLabels: Record<string, string> = { ACTIVE: "启用", DISABLED: "已停用" };
-export const deliveryStatusLabels: Record<string, string> = {
-  CREATED: "待发送", PROCESSING: "发送中", RETRY_WAIT: "等待重试", SUCCEEDED: "成功", DEAD: "已放弃", CANCELLED: "已取消",
-};
-export const failureLabels: Record<string, string> = {
-  HTTP_STATUS: "对方返回非 2xx", TIMEOUT: "超时", CONNECT_FAILED: "无法连接", TLS_FAILED: "TLS 握手失败",
-  DNS_FAILED: "域名解析失败", BLOCKED_ADDRESS: "地址不允许", INTERRUPTED: "发送中断",
-};
+export type WebhookEventType = { code: string; readonly label: string };
+/** 可订阅的业务事件；展示名在 `enum.webhook_event`。 */
+export const webhookEventTypes: readonly WebhookEventType[] = enumCodes.webhook_event.map((code) => ({
+  code,
+  get label() { return enumLabel("webhook_event", code) ?? code; },
+}));
+/** 测试事件不可订阅，只出现在投递记录中。 */
+export const testEventType = "webhook.ping";
+/** 事件展示名：已知事件、测试事件、其他原样显示。 */
+export function eventTypeLabel(code: string): string {
+  return code === testEventType ? td("webhooks.test_event") : enumLabel("webhook_event", code) ?? code;
+}
 export const maxEndpoints = 5;
 /** Platform 只允许重发已结束的投递（成功、放弃、已取消）；进行中或等待重试的不能重发。 */
 export const replayableDeliveryStatuses: readonly string[] = ["SUCCEEDED", "DEAD", "CANCELLED"];
@@ -130,18 +126,18 @@ export function canReplay(status: string | null | undefined): boolean {
   return !!status && replayableDeliveryStatuses.includes(status);
 }
 /** 重发被业务拒绝时的说明：上游业务原因不会经 BFF 透传，按 Platform 规则给出可能原因。 */
-export const replayRejectedText = "当前不能重新发送：投递尚未结束，或端点已停用、已不再订阅该事件类型。";
+export const replayRejectedText = (): string => td("webhooks.replay_rejected");
 
 /** Webhook 地址的前端预检：只做明显错误提示，SSRF 等规则以服务端为准。 */
 export function endpointUrlIssue(url: string): string | null {
   const value = url.trim();
-  if (!value) return "请填写接收地址";
-  if (value.length > 2048) return "地址过长";
+  if (!value) return td("endpoint.url_required");
+  if (value.length > 2048) return td("endpoint.url_too_long");
   let parsed: URL;
-  try { parsed = new URL(value); } catch { return "地址格式不正确"; }
-  if (parsed.protocol !== "https:") return "地址必须使用 HTTPS";
-  if (parsed.username || parsed.password) return "地址不能包含账号或密码";
-  if (parsed.hash) return "地址不能包含 # 片段";
+  try { parsed = new URL(value); } catch { return td("endpoint.url_invalid"); }
+  if (parsed.protocol !== "https:") return td("endpoint.url_https");
+  if (parsed.username || parsed.password) return td("endpoint.url_credentials");
+  if (parsed.hash) return td("endpoint.url_fragment");
   return null;
 }
 
@@ -151,9 +147,9 @@ export function endpointFormIssues(form: { url: string; eventTypes: string[] }) 
   const url = endpointUrlIssue(form.url);
   if (url) issues.url = url;
   const known = webhookEventTypes.map((event) => event.code);
-  if (form.eventTypes.length === 0) issues.eventTypes = "至少订阅一种事件";
+  if (form.eventTypes.length === 0) issues.eventTypes = td("endpoint.events_required");
   else if (new Set(form.eventTypes).size !== form.eventTypes.length || form.eventTypes.some((code) => !known.includes(code))) {
-    issues.eventTypes = "事件类型无效";
+    issues.eventTypes = td("endpoint.events_invalid");
   }
   return issues;
 }
@@ -199,8 +195,7 @@ export function deliveryQuery(filter: DeliveryFilter): string {
   return params.toString();
 }
 
-/** 本地时间显示；无效值显示破折号。 */
+/** 按当前语言显示的本地时间；无效值显示破折号。 */
 export function displayTime(value: string | null | undefined): string {
-  if (!value || !Number.isFinite(Date.parse(value))) return "—";
-  return new Date(value).toLocaleString("zh-CN", { hour12: false });
+  return formatDate(value, { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
 }

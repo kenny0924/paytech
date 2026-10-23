@@ -40,6 +40,37 @@ public final class FileBuilder {
         + "issuer_name\r\n41111111,VISA,CREDIT,CLASSIC,CONSUMER,AE,\"Banque Misr — بنك مصر\"\r\n")
         .getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
+    /** 以空白开头的 UTF-8 JSON 对象（含多字节字符与嵌套数组），识别为 application/json。 */
+    public static final byte[] JSON = "\n  {\"team.invite.submit\":\"发送邀请\",\"nested\":{\"list\":[1,2,true,null]}}\n"
+        .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+    /** 带 UTF-8 BOM 的 JSON 对象：首字节不是左花括号，识别为 text/csv。 */
+    public static final byte[] JSON_WITH_BOM = "\uFEFF{\"team.invite.submit\":\"发送邀请\"}"
+        .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+    /** 根为数组的 JSON：识别为 text/csv。 */
+    public static final byte[] JSON_ARRAY = "[{\"a\":1}]".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+    /** 对象之后还有第二个根值：识别为 application/json，全文检查不通过。 */
+    public static final byte[] JSON_TRAILING = "{\"a\":1} {\"b\":2}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+    /** 未闭合的对象：识别为 application/json，全文检查不通过。 */
+    public static final byte[] JSON_TRUNCATED = "{\"a\":\"b\",".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+    /**
+     * 长于 8 KiB 的 JSON 对象：识别只看开头，全文须完整解析。
+     *
+     * @param valid 为假时在 8 KiB 之后缺少右花括号
+     * @return 新数组
+     */
+    public static byte[] largeJson(boolean valid) {
+        StringBuilder json = new StringBuilder("{");
+        for (int i = 0; json.length() < 12_000; i++) {
+            json.append(i == 0 ? "" : ",").append("\"key.").append(i).append("\":\"文案 ").append(i).append('"');
+        }
+        return json.append(valid ? "}" : "").toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
     /** 既无已知文件头也不是 UTF-8 文本的二进制内容（含 NUL 与非法 UTF-8 字节）。 */
     public static final byte[] BINARY = {'b', 'i', 'n', 0, (byte) 0xC3, (byte) 0x28, (byte) 0xFE, 0x01};
 

@@ -1,0 +1,40 @@
+{
+ "application": "operations-console",
+ "bundles": {
+  "en": {
+   "enum": {
+    "hash": "02d525731244fdcbd55ae16adeab5e4d0b16916d40b282439c6f266d6cba4166",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/1/en/enum/02d525731244fdcb/6811518c-11bb-4a93-af0a-6303b96ce630"
+   },
+   "i18n-admin": {
+    "hash": "e27674bd13e6cbf34c0c953a38f64a30b0a99df60118b07c15bdad0295a89085",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/1/en/i18n-admin/e27674bd13e6cbf3/9dafe1c1-7039-487f-a080-b448623685ef"
+   }
+  },
+  "zh-CN": {
+   "enum": {
+    "hash": "ecd9af4c47c0e3f9d4daabc2008154a6b212e4e6d3f703ddc1233f9533f67d39",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/1/zh-CN/enum/ecd9af4c47c0e3f9/f74e06fa-3b32-46f2-9948-0c735a68effd"
+   },
+   "i18n-admin": {
+    "hash": "07f8b889146f216840e4b372cb22751eedac93b2206abc446dc23e3b9edee302",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/1/zh-CN/i18n-admin/07f8b889146f2168/73bc10f1-1d20-43da-b76f-d3114f93f437"
+   }
+  }
+ },
+ "defaultLocale": "zh-CN",
+ "locales": [
+  {
+   "code": "en",
+   "direction": "LTR",
+   "nativeName": "English"
+  },
+  {
+   "code": "zh-CN",
+   "direction": "LTR",
+   "nativeName": "简体中文"
+  }
+ ],
+ "publishedAt": "2026-10-23T08:37:30.270094Z",
+ "releaseNo": 1
+}

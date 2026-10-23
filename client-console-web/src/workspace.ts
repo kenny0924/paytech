@@ -1,5 +1,9 @@
 import { readCapabilities } from "./developer.ts";
 import type { Capability } from "./developer.ts";
+import { enumLabel } from "./enum-label.ts";
+import { translator } from "./i18n/index.ts";
+
+const tc = translator("common"), tw = translator("workspace");
 /** 开始页“我的工作区”中的一项；clientId 由服务端从成员关系得出，浏览器只回传 memberId。 */
 export type WorkspaceItem = {
   memberId: string;
@@ -57,31 +61,26 @@ function optionalText(value: unknown): string | null {
 
 /** 工作区显示名称：CCT 已批准名称，读取不到时用客户编号，都没有时显示固定提示。 */
 export function workspaceName(item: { displayName: string | null; clientNo: string | null }): string {
-  return item.displayName?.trim() || item.clientNo || "名称暂不可用";
+  return item.displayName?.trim() || item.clientNo || tc("name_unavailable");
 }
 
 /** 名称下方的说明行：类型 · 编号，缺失的部分省略。 */
 export function workspaceSubtitle(item: { clientType: string | null; clientNo: string | null }): string {
-  return [item.clientType ? clientTypeLabels[item.clientType] ?? item.clientType : null, item.clientNo].filter(Boolean).join(" · ");
+  return [item.clientType ? enumLabel("client_type", item.clientType) ?? item.clientType : null, item.clientNo].filter(Boolean).join(" · ");
 }
 
-export const clientTypeLabels: Record<string, string> = { INDIVIDUAL: "个人", ORGANIZATION: "组织" };
-export const clientStatusLabels: Record<string, string> = { ACTIVE: "已启用", PENDING: "开通中", SUSPENDED: "已暂停", TERMINATED: "已终止" };
-export const businessModelLabels: Record<string, string> = {
-  PHYSICAL_GOODS: "实物商品", DIGITAL_GOODS: "数字商品", SERVICES: "服务", SUBSCRIPTION: "订阅", MARKETPLACE: "平台 / 市场", OTHER: "其他",
-};
-export const homeNotices: Record<string, string> = { PAYMENTS_NOT_YET_ENABLED: "进入工作区不代表已开通收款。" };
+/** 首页提示码；未知或缺失时显示默认提示。 */
+export const homeNoticeCodes = ["PAYMENTS_NOT_YET_ENABLED"] as const;
+export function homeNoticeText(code: string | null): string {
+  const known = code && (homeNoticeCodes as readonly string[]).includes(code) ? code : "PAYMENTS_NOT_YET_ENABLED";
+  return tw("notice." + known.toLowerCase());
+}
 
-const fallbackTexts: Record<string, string> = {
-  TENANT_TERMINATED: "工作区已终止",
-  TENANT_SUSPENDED: "工作区已暂停",
-  TENANT_SECURITY_SUSPENDED: "工作区暂时不可访问",
-  MEMBER_INACTIVE: "您的成员资格已失效",
-};
+export const fallbackReasons = ["TENANT_TERMINATED", "TENANT_SUSPENDED", "TENANT_SECURITY_SUSPENDED", "MEMBER_INACTIVE"] as const;
 /** 刷新降级原因的公开文案；未知原因码不透传。 */
 export function fallbackText(reason: string | null): string | null {
   if (!reason) return null;
-  return "已退出工作区：" + (fallbackTexts[reason] ?? "工作区暂时不可访问") + "。";
+  return (fallbackReasons as readonly string[]).includes(reason) ? tw("fallback." + reason.toLowerCase()) : tw("fallback.unknown");
 }
 
 /** 审核通过的申请对应的可进入工作区；没有可访问项时返回空，页面继续显示“正在开通”。 */

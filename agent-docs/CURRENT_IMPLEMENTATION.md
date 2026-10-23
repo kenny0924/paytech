@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## platform-support 多语言管理（前端界面文案，2026-10-22—23，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [需求](<../requirements/20261022/platform-support-多语言管理/requirement.md>)、[技术方案](<../requirements/20261022/platform-support-多语言管理/technique.md>)、[交付记录](<../requirements/20261022/platform-support-多语言管理/delivery.md>)、[发布记录](<../requirements/20261022/platform-support-多语言管理/release/release.md>)、[决定](./decisions/2026-10-22-ui-text-localization.md)；前置为文件公开桶。只处理第一类文案（前端界面文案）；服务端报错文案、业务内容多语言另立。
+- **Implemented：** Platform 新模块 `paytech-platform-support-localization`：7 张 `t_i18n_*` 表、24 个内部接口（Locale、应用、命名空间、key 导入、翻译、发布、切回、manifest），ICU4J 校验，发布三步（事务外生成并以 PUBLIC 上传语言包 → 短事务登记 → 补偿事件在文件检查通过后上线）；file-document 增加 `application/json` 格式检查与进程内上传；Operations BFF 23 个管理转发 + 2 个导入上传 + 匿名 manifest，Client BFF 匿名 manifest；块 135（权限 3、控制台资源 11、路由 27）与初始数据；operations-console-web 新增“多语言”三页五弹窗（只有这些页面接入），client-console-web 全量接入（8 个命名空间 608 个 key，语言切换只列已发布语言）；两个 web 共用同一份 `src/i18n/` 运行时（`intl-messageformat`）。
+- **Verified：** 基于 main `bfb17bc9`：Platform localization / files / architecture / configuration 81/81、localization 36/36、arch-rules 68/68、ops-bff 2344/2344、client-bff 91/91、ops-web 1451/1451、client-web 80/80 与构建；阶段 7 修复后 localization HTTP 25/25。本机 `mor_platform` 已执行本需求 DDL。
+- **Deployed：** mor-test 2026-10-23 08:22—09:00Z：platform `48032999…`（i18n-20261023b）、ops-bff `e4d913e0…`、client-bff `9033b8fa…`、client-web `280a2f38…`、ops-web `fc3abaa7…`（源 main `ffdf872e` + 本需求，ops-web 另含 code-mor-55 的 10 个未提交数据查询文件；09:01Z 起被 code-mor-78 的 `9fb809df…` 取代，即同一构建 + `37173818`）；DDL、块 135 已执行并激活（ACTIVE 路由 569）；`operations-console-bff` × PRIVATE 路由改指 `OPERATIONS_BFF_IMPORT`（csv + json，code-mor-6b 同意，卡 BIN 回归通过）；`platform-support` × PUBLIC → `MINIO/mor-platform-public`；首批语言包 operations-console 409 key、client-console 608 key 已上线。阶段 7 发现并修复：块 135 守卫超 Gateway 编译上限导致快照刷新中断约 5 分钟（已回撤重做）、`manifest?locale=en` 503、语言与应用页并行请求触发 429。
+- **Pending / 遗留：** 推送另行授权；服务端 Problem `detail` 仍为中文；人员显示账号 ID；发布失败遗留的孤儿语言包不清理；语言包无长期 `Cache-Control`（留待生产 CDN）；其他机器需信任测试 CA 才能加载语言包；operations-console-web 既有页面未迁移；checkout / partner 控制台只登记应用。
+
 ## billing 支付事实自动登记（计费需求 B 首切片，2026-10-22—23，已部署 mor-test，已本地提交，未推送）
 
 - **范围：** [需求](<../requirements/20261022/billing-支付事实自动登记/requirement.md>)、[技术方案](<../requirements/20261022/billing-支付事实自动登记/technique.md>)、[交付记录](<../requirements/20261022/billing-支付事实自动登记/delivery.md>)、[发布记录](<../requirements/20261022/billing-支付事实自动登记/release/release.md>)。首次自动登记 `PAYMENT` 计费事实并跑通 billing → account → ledger → reconciliation。决定：S13 billing（领域层）不调 acquiring（流程层），改由 acquiring 发布新事件 `OrderPaymentSucceeded`（schema 1，聚合 ORDER，订单冻结商业字段 + 支付事实 34 字段，消费方 billing）；Q16 `PaymentSucceeded` 仍为 v2，末尾追加可空 `channelTransactionRefId` / `channelReferenceType`；S11 税务只记 `TAX_SNAPSHOT` 引用；S14 Σ CLIENT_FEE = 0 拒绝；S15 billing 补 `AE_BUSINESS_DAYS` 日历。

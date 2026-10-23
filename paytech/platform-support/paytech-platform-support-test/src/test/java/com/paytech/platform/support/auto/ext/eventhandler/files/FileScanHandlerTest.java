@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -102,6 +103,34 @@ class FileScanHandlerTest extends FileTestBase {
 
         assertScan(lateNul, FileScanStatus.REJECTED, FormatFileScanner.INVALID);
         assertScan(binary, FileScanStatus.REJECTED, FormatFileScanner.INVALID);
+    }
+
+    /** 登记为 application/json 的 JSON 对象（含开头空白、多字节字符，以及长于 8 KiB 的对象）：结果 FORMAT_VALID，文件变为 AVAILABLE。 */
+    @Test
+    void test_normalFlow_json() {
+        Spec small = stored(material().mime(StoredContentType.JSON).bytes(FileBuilder.JSON).build());
+        Spec large = stored(material().mime(StoredContentType.JSON).bytes(FileBuilder.largeJson(true)).build());
+
+        assertEquals(CompensationHandlerResult.success(), handle(small.fileId()));
+        assertEquals(CompensationHandlerResult.success(), handle(large.fileId()));
+
+        assertScan(small, FileScanStatus.AVAILABLE, FormatFileScanner.VALID);
+        assertScan(large, FileScanStatus.AVAILABLE, FormatFileScanner.VALID);
+    }
+
+    /**
+     * 登记为 application/json 但不是恰好一个 JSON 对象：带 BOM、根为数组、对象后还有内容、未闭合、8 KiB 之后才缺右花括号，
+     * 结果都为 FORMAT_INVALID，文件 REJECTED。
+     */
+    @Test
+    void test_businessRuleViolation_jsonNotObject() {
+        List<Spec> specs = Stream.of(FileBuilder.JSON_WITH_BOM, FileBuilder.JSON_ARRAY, FileBuilder.JSON_TRAILING,
+                FileBuilder.JSON_TRUNCATED, FileBuilder.largeJson(false))
+            .map(bytes -> stored(material().mime(StoredContentType.JSON).bytes(bytes).build())).toList();
+
+        specs.forEach(spec -> assertEquals(CompensationHandlerResult.success(), handle(spec.fileId())));
+
+        specs.forEach(spec -> assertScan(spec, FileScanStatus.REJECTED, FormatFileScanner.INVALID));
     }
 
     /** 登记版本在存储中不存在：可重试失败，不追加结果，文件停留在 SCANNING。 */

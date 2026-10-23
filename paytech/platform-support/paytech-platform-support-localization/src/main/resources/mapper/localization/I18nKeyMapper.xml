@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.localization.core.dal.mapper.I18nKeyMapper">
+
+    <sql id="columns">
+        key_id AS keyId, application_id AS applicationId, namespace_id AS namespaceId, key_code AS keyCode,
+        source_text AS sourceText, description, source_revision AS sourceRevision, status, version,
+        created_by AS createdBy, updated_by AS updatedBy, create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <insert id="insertBatch">
+        INSERT INTO t_i18n_key (key_id, application_id, namespace_id, key_code, source_text, description, source_revision, status, version, created_by, updated_by, create_time, update_time)
+        VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.keyId}, #{row.applicationId}, #{row.namespaceId}, #{row.keyCode}, #{row.sourceText}, #{row.description}, #{row.sourceRevision}, #{row.status}, #{row.version}, #{row.createdBy}, #{row.updatedBy}, #{row.createTime}, #{row.updateTime})
+        </foreach>
+    </insert>
+
+    <sql id="entryConditions">
+        FROM t_i18n_key k
+        JOIN t_i18n_namespace n ON n.namespace_id = k.namespace_id
+        LEFT JOIN t_i18n_translation t ON t.key_id = k.key_id AND t.locale_code = #{locale}
+        WHERE k.application_id = #{applicationId} AND k.status = 'ACTIVE'
+        <if test="namespaceId != null">AND k.namespace_id = #{namespaceId}</if>
+        <if test="state != null and state.code == 'UNTRANSLATED'">AND t.translation_id IS NULL</if>
+        <if test="state != null and state.code == 'SOURCE_CHANGED'">
+            AND t.translation_id IS NOT NULL AND t.based_on_source_revision &lt; k.source_revision
+        </if>
+        <if test="state != null and state.code == 'TRANSLATED'">
+            AND t.translation_id IS NOT NULL AND t.based_on_source_revision &gt;= k.source_revision
+        </if>
+        <if test="keyword != null">
+            AND (k.key_code LIKE CONCAT('%', #{keyword}, '%') OR k.source_text LIKE CONCAT('%', #{keyword}, '%')
+                OR t.text LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+    </sql>
+
+    <select id="selectByApplication" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nKey">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_key
+        WHERE application_id = #{applicationId}
+        ORDER BY key_code
+    </select>
+
+    <select id="selectByStatus" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nKey">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_key
+        WHERE application_id = #{applicationId} AND status = #{status}
+        ORDER BY key_code
+    </select>
+
+    <select id="selectByCodes" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nKey">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_key
+        WHERE application_id = #{applicationId} AND key_code IN
+        <foreach collection="keyCodes" item="code" open="(" separator="," close=")">#{code}</foreach>
+    </select>
+
+    <select id="countByNamespace" resultType="com.paytech.platform.support.localization.domain.NamespaceKeyCount">
+        SELECT namespace_id AS namespaceId, status, COUNT(*) AS keyCount
+        FROM t_i18n_key
+        WHERE application_id = #{applicationId}
+        GROUP BY namespace_id, status
+    </select>
+
+    <select id="countInNamespace" resultType="long">
+        SELECT COUNT(*)
+        FROM t_i18n_key
+        WHERE namespace_id = #{namespaceId}
+    </select>
+
+    <select id="countChangedSince" resultType="long">
+        SELECT COUNT(*)
+        FROM t_i18n_key k
+        WHERE k.application_id = #{applicationId}
+          AND (k.update_time &gt; #{since}
+            OR EXISTS (SELECT 1 FROM t_i18n_translation t WHERE t.key_id = k.key_id AND t.update_time &gt; #{since}))
+    </select>
+
+    <update id="updateImported">
+        UPDATE t_i18n_key
+        SET source_text = #{next.sourceText}, description = #{next.description},
+            source_revision = #{next.sourceRevision}, status = #{next.status}, version = version + 1,
+            updated_by = #{next.updatedBy}, update_time = #{next.updateTime}
+        WHERE key_id = #{row.keyId} AND version = #{row.version}
+    </update>
+
+    <select id="selectEntries" resultType="com.paytech.platform.support.localization.domain.TranslationEntryView">
+        SELECT k.key_id AS keyId, n.namespace_code AS namespaceCode, k.key_code AS keyCode,
+            k.source_text AS sourceText, k.description, k.source_revision AS sourceRevision,
+            t.translation_id AS translationId, t.text, t.based_on_source_revision AS basedOnSourceRevision,
+            t.version AS translationVersion, t.updated_by AS updatedBy, t.update_time AS updateTime
+        <include refid="entryConditions"/>
+        ORDER BY n.sort_order, n.namespace_code, k.key_code
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countEntries" resultType="long">
+        SELECT COUNT(*)
+        <include refid="entryConditions"/>
+    </select>
+</mapper>

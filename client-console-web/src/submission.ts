@@ -1,4 +1,7 @@
 import type { Application } from "./onboarding.ts";
+import { translator } from "./i18n/index.ts";
+
+const to = translator("onboarding");
 export type SubmissionIssue = { field: string; message: string };
 export type SubmissionCheck = { ready: boolean; issues: SubmissionIssue[] };
 export type IssueContext = {
@@ -20,7 +23,7 @@ export function readCheck(value: unknown): SubmissionCheck {
     ) ||
     check.ready !== (check.issues.length === 0)
   )
-    throw new Error("提交核对结果暂时不可用，请稍后重试");
+    throw new Error(to("submit.check_unavailable"));
   return check;
 }
 // 把 CCT 的问题定位翻译成页面上能看懂的位置；未知定位原样显示，不丢弃。
@@ -53,10 +56,10 @@ export function describeIssue(
     return {
       where: doc
         ? (doc.file?.displayName ?? ctx.materialName(doc.documentType))
-        : "材料",
+        : to("issue.material"),
       message: issue.message,
     };
   }
-  if (issue.field === "people") return { where: "相关人员", message: issue.message };
+  if (issue.field === "people") return { where: to("section.people"), message: issue.message };
   return { where: ctx.labels[issue.field] ?? issue.field, message: issue.message };
 }

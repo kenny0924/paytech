@@ -168,13 +168,16 @@ class MinioFileStorageTest extends FileStorageAdapterTestBase {
         assertEquals(now().plus(MAX_PRESIGN), adapter().authorize(distant.file(), distant.expiresAt(), attachment(distant)).expiresAt());
     }
 
-    /** PDF、PNG、JPEG、UTF-8 文本（CSV）与无法识别内容。 */
+    /** PDF、PNG、JPEG、UTF-8 文本（以对象开头的为 JSON，其余含带 BOM 的 JSON 为 CSV）与无法识别内容。 */
     static Stream<Arguments> contentTypes() {
         return Stream.of(Arguments.of("pdf", FileBuilder.PDF, "application/pdf"),
             Arguments.of("png", FileBuilder.PNG, "image/png"),
             Arguments.of("jpeg", FileBuilder.JPEG, "image/jpeg"),
             Arguments.of("csv", FileBuilder.CSV, StoredContentType.CSV),
             Arguments.of("text", FileBuilder.TEXT, StoredContentType.CSV),
+            Arguments.of("json", FileBuilder.JSON, StoredContentType.JSON),
+            Arguments.of("jsonWithBom", FileBuilder.JSON_WITH_BOM, StoredContentType.CSV),
+            Arguments.of("jsonArray", FileBuilder.JSON_ARRAY, StoredContentType.CSV),
             Arguments.of("unknown", FileBuilder.BINARY, StoredContentType.UNKNOWN));
     }
 }

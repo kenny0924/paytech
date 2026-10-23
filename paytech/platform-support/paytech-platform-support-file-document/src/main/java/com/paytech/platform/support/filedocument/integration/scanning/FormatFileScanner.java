@@ -1,6 +1,7 @@
 package com.paytech.platform.support.filedocument.integration.scanning;
 
 import java.io.BufferedInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -25,8 +26,9 @@ import com.paytech.platform.support.filedocument.integration.storage.FileStorage
 /**
  * Platform 内置格式检查（FORMAT）。
  * <li>按登记版本重新读取字节，复核 SHA-256 与大小，并以文件头复核媒体类型等于登记类型</li>
- * <li>text/csv 只凭开头字节识别，另在读取全文时复核全部字节是不含 NUL 的合法 UTF-8</li>
- * <li>类型一致（CSV 还须全文合法）返回 FORMAT_VALID，否则 FORMAT_INVALID；字节与登记不符或存储不可用时抛出异常，
+ * <li>text/csv 与 application/json 只凭开头字节识别，另在读取全文时复核全部字节是不含 NUL 的合法 UTF-8</li>
+ * <li>application/json 还须全文恰好是一个 JSON 对象（根为对象、其后只有空白）；带 BOM 的内容不会被识别为 JSON</li>
+ * <li>类型一致（文本还须全文合法）返回 FORMAT_VALID，否则 FORMAT_INVALID；字节与登记不符或存储不可用时抛出异常，
  * 由补偿重试，不伪造结果</li>
  * <li>不是病毒扫描；生产启用前须另配 ANTI_MALWARE 要求与真实扫描器</li>
  */
@@ -77,12 +79,15 @@ public final class FormatFileScanner implements FileScanner {
             InputStream raw = storage.open(file)) {
             BufferedInputStream bytes = StoredContentType.buffered(raw);
             String detected = StoredContentType.detect(bytes);
-            Utf8TextInspector text = StoredContentType.CSV.equals(detected) ? new Utf8TextInspector() : null;
-            String hash = digest(bytes, file.verified().sizeBytes(), text);
+            Utf8TextInspector text = StoredContentType.isText(detected) ? new Utf8TextInspector() : null;
+            VerifyingStream verifying = new VerifyingStream(bytes, file.verified().sizeBytes(), text);
+            boolean structureValid = !StoredContentType.JSON.equals(detected) || JsonObjectInspector.isObject(verifying);
+            String hash = verifying.finish();
             if (!hash.equals(file.verified().contentHash())) {
                 throw new ServiceUnavailableException();
             }
-            boolean formatValid = detected.equals(file.verified().mimeType()) && (text == null || text.finish());
+            boolean formatValid = detected.equals(file.verified().mimeType()) && (text == null || text.finish())
+                && structureValid;
             String code = formatValid ? VALID : INVALID;
             return new Result(file.fileId(), requirement.id(), attemptNo, file.verified().objectVersion(), hash,
                 Integer.toString(RUNTIME_VERSION), code, clock.instant());
@@ -102,7 +107,7 @@ public final class FormatFileScanner implements FileScanner {
     }
 
     /**
-     * 读满全部字节计算 SHA-256；实际长度与登记不一致视为字节不符。
+     * 读满全部字节计算 SHA-256；实际长度与登记不一致视为字节不符
      *
      * @param bytes 文件字节
      * @param expectedSize 登记大小
@@ -110,24 +115,92 @@ public final class FormatFileScanner implements FileScanner {
      * @return SHA-256 小写十六进制
      */
     static String digest(InputStream bytes, long expectedSize, Utf8TextInspector text) throws IOException {
-        MessageDigest digest = sha256();
-        byte[] buffer = new byte[8192];
-        long count = 0;
-        int length;
-        while ((length = bytes.read(buffer)) != -1) {
-            count += length;
-            if (count > expectedSize) {
+        return new VerifyingStream(bytes, expectedSize, text).finish();
+    }
+
+    /**
+     * 边读边计算摘要、计数并检查文本的输入流；JSON 解析器与摘要共用同一次读取，内存有界
+     * <li>读到的字节数超过登记大小立即抛出不可用；{@link #finish()} 读完剩余字节并核对总长度。</li>
+     */
+    static final class VerifyingStream extends FilterInputStream {
+
+        private final MessageDigest digest = sha256();
+        private final long expectedSize;
+        private final Utf8TextInspector text;
+        private long count;
+
+        /**
+         * 包装原始字节流。
+         *
+         * @param bytes 文件字节
+         * @param expectedSize 登记大小
+         * @param text 文本检查器，可空
+         */
+        VerifyingStream(InputStream bytes, long expectedSize, Utf8TextInspector text) {
+            super(bytes);
+            this.expectedSize = expectedSize;
+            this.text = text;
+        }
+
+        /** 单字节读取同样计入摘要。 */
+        @Override
+        public int read() throws IOException {
+            byte[] one = new byte[1];
+            int length = read(one, 0, 1);
+            return length == -1 ? -1 : one[0] & 0xFF;
+        }
+
+        /** 读取一段字节并计入摘要、计数与文本检查。 */
+        @Override
+        public int read(byte[] buffer, int offset, int length) throws IOException {
+            int read = super.read(buffer, offset, length);
+            if (read > 0) {
+                count += read;
+                if (count > expectedSize) {
+                    throw new ServiceUnavailableException();
+                }
+                digest.update(buffer, offset, read);
+                if (text != null) {
+                    text.update(buffer, offset, read);
+                }
+            }
+            return read;
+        }
+
+        /** 跳过的字节也必须计入摘要，因此按读取处理。 */
+        @Override
+        public long skip(long length) throws IOException {
+            byte[] buffer = new byte[(int) Math.min(8192, Math.max(0, length))];
+            int read = buffer.length == 0 ? 0 : read(buffer, 0, buffer.length);
+            return Math.max(read, 0);
+        }
+
+        /** 不支持标记，避免重复计入摘要。 */
+        @Override
+        public boolean markSupported() {
+            return false;
+        }
+
+        /** 由调用方的 try-with-resources 关闭原始流；解析器不得提前关闭。 */
+        @Override
+        public void close() {
+        }
+
+        /**
+         * 读完剩余字节并核对总长度。
+         *
+         * @return SHA-256 小写十六进制
+         */
+        String finish() throws IOException {
+            byte[] buffer = new byte[8192];
+            while (read(buffer, 0, buffer.length) != -1) {
+                // 剩余字节只计入摘要与文本检查
+            }
+            if (count != expectedSize) {
                 throw new ServiceUnavailableException();
             }
-            digest.update(buffer, 0, length);
-            if (text != null) {
-                text.update(buffer, 0, length);
-            }
+            return HexFormat.of().formatHex(digest.digest());
         }
-        if (count != expectedSize) {
-            throw new ServiceUnavailableException();
-        }
-        return HexFormat.of().formatHex(digest.digest());
     }
 
     /** JDK 必备算法。 */

@@ -401,6 +401,12 @@ data-query:
   http:
     callers: [operations-console-bff] # DataQueryApiTestBase.CALLER；其他调用方用于拒绝用例。
 
+# 多语言：与正式默认值相同。发布与 manifest 依赖的语言包存储 / 读取端口在本卡没有实现，相关用例留给集成卡。
+localization:
+  lock-wait-time: 500ms
+  lock-lease-time: 120s
+  import-max-file-bytes: 2097152 # 2 MiB；超限用例按此构造文件。
+
 
 # 内部调用 Token 签发端：Mock 中启用；密钥为仓库隔离的合成 P-256 测试值，不对应任何真实环境。
 internal-token:

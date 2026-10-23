@@ -1,5 +1,6 @@
 package com.paytech.platform.support.filedocument.integration.storage;
 
+import java.io.IOException;
 import java.time.Clock;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -16,6 +17,7 @@ import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorage
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageInstance;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileStorageRoute;
 import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
+import com.paytech.platform.support.filedocument.domain.file.UploadModels.Grant;
 import com.paytech.platform.support.filedocument.domain.storage.FileStorageCatalog;
 import com.paytech.platform.support.filedocument.domain.storage.StorageWriteTarget;
 import com.paytech.platform.support.filedocument.domainservice.service.FileStorageManagementService;
@@ -103,6 +105,35 @@ public class FileStorageRegistry {
             throw new ServiceUnavailableException();
         }
         return connect(instance);
+    }
+
+    /**
+     * Platform 进程内上传：按上传记录坐标的实例（须仍可写）把字节 PUT 到签发地址
+     * <li>不读取存储密钥：授权已在签发时生成；只使用实例的超时与信任设置。</li>
+     * <li>存储返回非 2xx（含 If-None-Match 拒绝覆盖）或连接失败时返回不可用（503），由调用方决定是否重来。</li>
+     *
+     * @param provider 上传记录的实例代码
+     * @param container 上传记录的存储桶
+     * @param grant 本次上传的 PUT 授权
+     * @param content 对象字节
+     */
+    public void putThroughGrant(String provider, String container, Grant grant, byte[] content) {
+        FileStorageCatalog current = catalog();
+        FileStorageInstance instance = current.instance(provider);
+        FileStorageBucket bucket = instance == null ? null : current.bucket(instance.getInstanceId(), container);
+        if (!writable(instance, bucket)) {
+            throw new ServiceUnavailableException();
+        }
+        int status;
+        try (GrantedUploadHttp http = new GrantedUploadHttp(instance)) {
+            status = http.put(grant, content);
+        } catch (IOException | RuntimeException unavailable) {
+            throw new ServiceUnavailableException(unavailable);
+        }
+        if (status < 200 || status > 299) {
+            LOG.warn("Granted upload rejected by storage: provider={}, status={}", provider, status);
+            throw new ServiceUnavailableException();
+        }
     }
 
     /** 完成、检查与下载读取：记录坐标的实例 ACTIVE 且桶 ACTIVE / READ_ONLY。 */

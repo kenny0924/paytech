@@ -1,0 +1,13 @@
+# 多语言管理：mor-test 回滚覆盖文件 = 2026-10-23 08:15Z 阶段 6 核对时 5 个运行容器的 .Image（不用 tag）。
+# 用法同 compose-candidate.yaml，只传本文件。回滚顺序与前提见 release.md 第 7 节。环境变量由主 compose 提供，本文件只钉镜像。
+services:
+  platform-support-service:
+    image: sha256:76587ed4a4b9451789654280cd4940149825433a72c80fecdf03f1fe2b543a55  # wfux-20261023（JAR c7357ede0b64ac5c，= bfb17bc9 构建 0 差异）
+  operations-console-bff:
+    image: sha256:c9a70b8dfe086925d6f74b77dec6eeaa4625c08dd288b4ef2396a7e3f008bebf  # wfux-20261023（JAR 6a7a8b4fe3dae51f，= bfb17bc9 构建 0 差异）
+  client-console-bff:
+    image: sha256:b8ecaaea2b2f0e642cb21400bb904cf7b3d65da165ef099871091ae937ac7748  # pubbucket-20261023a（JAR aea366e52763a595）
+  operations-console-web:
+    image: sha256:f42f545e97a24e378cf67b809c4864b03a9070e8cbc68990fa23cfe94d8e4f93  # wfpage-20261023（= ffdf872e + code-mor-55 数据查询 10 个未提交文件，dist 203 个逐字节一致）
+  client-console-web:
+    image: sha256:25b30a78547bfe8a510560500ad1ab19623252ede81ebcba2b78c2bc3a19423d  # filestore-s2-20261022（= 73a2460d / bfb17bc9 构建，dist 3 个逐字节一致）

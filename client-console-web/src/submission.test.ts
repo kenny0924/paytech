@@ -29,19 +29,19 @@ const app = {
 } as unknown as Application;
 const ctx = {
   app,
-  labels: { "individual.givenName": "名", "organization.legalName": "组织法定名称" },
-  subjectName: (party: string) => (party === "30" ? "主体" : "张三"),
-  materialName: (type: string) => (type === "REGISTRATION_CERTIFICATE" ? "组织注册证明" : type),
+  labels: { "individual.givenName": "Given name", "organization.legalName": "Organization legal name" },
+  subjectName: (party: string) => (party === "30" ? "Applicant" : "张三"),
+  materialName: (type: string) => (type === "REGISTRATION_CERTIFICATE" ? "Certificate of registration" : type),
 };
 test("issues are described by section, person and material", () => {
   assert.deepEqual(describeIssue({ field: "organization.legalName", message: "提交前请填写此项" }, ctx), {
-    where: "组织法定名称",
+    where: "Organization legal name",
     message: "提交前请填写此项",
   });
-  assert.equal(describeIssue({ field: "people[31].individual.givenName", message: "x" }, ctx).where, "张三 · 名");
-  assert.equal(describeIssue({ field: "materials[30].REGISTRATION", message: "x" }, ctx).where, "主体 · 组织注册证明");
+  assert.equal(describeIssue({ field: "people[31].individual.givenName", message: "x" }, ctx).where, "张三 · Given name");
+  assert.equal(describeIssue({ field: "materials[30].REGISTRATION", message: "x" }, ctx).where, "Applicant · Certificate of registration");
   assert.equal(describeIssue({ field: "documents[50]", message: "x" }, ctx).where, "passport.pdf");
-  assert.equal(describeIssue({ field: "people", message: "x" }, ctx).where, "相关人员");
+  assert.equal(describeIssue({ field: "people", message: "x" }, ctx).where, "Related people");
   assert.equal(describeIssue({ field: "unknown.path", message: "x" }, ctx).where, "unknown.path");
 });
 test("check results must be well-formed and consistent", () => {

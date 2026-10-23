@@ -1,0 +1,38 @@
+{
+  "common.brand.home_label": "PAYTECH home",
+  "common.error.bad_response": "The service returned an unexpected response. Please try again later.",
+  "common.error.generic": "We couldn't complete this action. Please try again later.",
+  "common.error.invalid_path": "Invalid request path.",
+  "common.error.network": "Network connection failed. Please check it and try again.",
+  "common.error.network_connection": "Network connection failed. Check your connection and try again.",
+  "common.error.rate_limited": "Too many attempts. Please try again later.",
+  "common.error.request_incomplete": "The request could not be completed. Please try again later.",
+  "common.error.unavailable": "The service is temporarily unavailable. Please try again later.",
+  "common.language.label": {
+    "text": "Language",
+    "description": "Accessible label of the language selector"
+  },
+  "common.name_unavailable": {
+    "text": "Name unavailable",
+    "description": "Shown when a workspace has neither a name nor a client number"
+  },
+  "common.password.hide": {
+    "text": "Hide",
+    "description": "Button that masks a password field"
+  },
+  "common.password.hide_label": {
+    "text": "Hide {label}",
+    "description": "Accessible label; {label} is the field label"
+  },
+  "common.password.show": {
+    "text": "Show",
+    "description": "Button that reveals a password field"
+  },
+  "common.password.show_label": {
+    "text": "Show {label}",
+    "description": "Accessible label; {label} is the field label"
+  },
+  "common.request_id": "Request ID: {requestId}",
+  "common.status.loading": "Loading…",
+  "common.status.processing": "Processing…"
+}

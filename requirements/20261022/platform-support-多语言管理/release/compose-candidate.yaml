@@ -1,0 +1,30 @@
+# 多语言管理（前端 UI 文案）：mor-test 候选覆盖文件（2026-10-23 阶段 6 准备；阶段 7 由主会话按 release.md 第 6 节执行，另需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史候选文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/platform-support-多语言管理/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service...>
+# 只列本次替换的 5 个服务；不加 --remove-orphans。部署只认下列 sha256（tag i18n-20261023a 仅供辨认，:development 未改动）。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-i18n-rel = main bfb17bc9 + Code-MoR-i18n-main 的本需求改动（指纹 a3c9313a9daecbaf，
+#   80 个修改文件 + 298 个未跟踪文件，未提交）+ main ffdf872e 的 ops-web 改动（069dca04 字段键拼音 4 个文件，package.json / lock 三方合并只多 pinyin-pro 一行；
+#   ffdf872e 工作流当前标签页跳转 2 个文件）；ops-web 另叠主工作区 10 个已上线未提交的数据查询文件（code-mor-55）。Java 与 client-web 在
+#   bfb17bc9..ffdf872e 之间无改动。基线证明见 release.md 第 1 节。
+# 环境变量：主 compose（test-environment/compose.applications.yaml）已含历次覆盖文件中这 5 个服务的全部键；本文件只换镜像。
+#   渲染结果与 5 个运行容器逐键、逐值相同（release.md 第 3 节）。本需求不新增变量。
+# 回滚：同目录 compose-rollback.yaml。
+services:
+  platform-support-service:
+    # localization 模块（7 表、23 个管理接口、manifest、发布三步与 I18N_RELEASE_ACTIVATE 补偿）；FORMAT 检查支持 application/json；
+    # 进程内上传语言包（对象键前缀）；新增第三方库 icu4j-79.1。需要本包 sql/01（DDL），第 3 部分 SQL 须在本镜像 healthy 之后执行。
+    image: sha256:4803299926245956db24f0260e46f8ca98d31b7f55fdfce306cb19a156d33515  # mor-test/platform-support-service:i18n-20261023b（阶段 7 修复 manifest locale=en；只差 GetManifestProcessor）
+  operations-console-bff:
+    # /localization-admin/v1 管理转发 25 个入口与匿名 /i18n/v1/manifest（应用 operations-console）。
+    image: sha256:e4d913e0948bcd92e82eb813050cede96dd28b4f935c03b37e3d286394c3349c  # mor-test/operations-console-bff:i18n-20261023a（JAR d52e541baf7a163b）
+  client-console-bff:
+    # 匿名 /i18n/v1/manifest（应用 client-console）；另随 bfb17bc9 带上已提交未上线的 f707f2da Foundation / 工作流合同库变化（release.md 1.2）。
+    image: sha256:9033b8fa365a60ff0917906e64280e44cfe574ca421bd11179da90c7c03e2d55  # mor-test/client-console-bff:i18n-20261023a（JAR 948f2c7ad412de27）
+  operations-console-web:
+    # 多语言三个页面（翻译、发布记录、语言与应用）、运行时语言包加载与回退；保留现网 wfpage-20261023（工作流、字段键拼音、
+    # 当前标签页跳转、检查策略列宽）与数据查询体验。
+    image: sha256:fc3abaa711b8ed90b5f0b19f42501e5937b3fb3dff10eefdcb56d348a34b6bb1  # mor-test/operations-console-web:i18n-20261023b（阶段 7 修复：语言与应用页逐个加载应用详情，避免 429；只差 SettingsPage）
+  client-console-web:
+    # 全部页面文案经 i18n 运行时；有发布时显示中英文切换，无发布时隐藏并用内置英文。
+    image: sha256:280a2f384b80110c69a09630c3389b921a04591aa4dfd90dfdeba7324aab7520  # mor-test/client-console-web:i18n-20261023a（dist 3 个文件）

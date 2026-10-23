@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import type {InputHTMLAttributes, Ref} from 'react';
+import {useT} from './i18n/react.tsx';
 
 type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'children' | 'onChange'> & {
   id: string;
@@ -24,7 +25,7 @@ export function focusField(input: HTMLInputElement | null | undefined) {
 /** 所有文本输入共用标签、提示预留区域与错误状态；业务校验留在调用页面。 */
 export function TextField({id, label, inputRef, onValueChange, error, message, messageTone='error',
   hint, invalid, describedBy, type='text', ...input}: TextFieldProps) {
-  const [visible, setVisible]=useState(false);
+  const [visible, setVisible]=useState(false), t=useT('common');
   const password=type==='password', feedbackId=id+'-feedback';
   const content=error || message || hint;
   const tone=error ? 'error' : message ? messageTone : 'hint';
@@ -36,8 +37,8 @@ export function TextField({id, label, inputRef, onValueChange, error, message, m
         onChange={event=>onValueChange(event.target.value)}
         aria-invalid={!!error || !!invalid} aria-describedby={[feedbackId,describedBy].filter(Boolean).join(' ')}/>
       {password && <button className="reveal" type="button" disabled={input.disabled}
-        onClick={()=>setVisible(!visible)} aria-label={(visible ? '隐藏' : '显示')+label}
-        aria-pressed={visible}>{visible ? '隐藏' : '显示'}</button>}
+        onClick={()=>setVisible(!visible)} aria-label={t(visible ? 'password.hide_label' : 'password.show_label', {label})}
+        aria-pressed={visible}>{t(visible ? 'password.hide' : 'password.show')}</button>}
     </div>
     <p className={'field-message '+tone} id={feedbackId} aria-live="polite" aria-atomic="true">{content}</p>
   </div>;

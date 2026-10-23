@@ -10,9 +10,9 @@ import {
   expiryText,
   hasNextPage,
   invitationActions,
-  invitationStatusLabels,
+  invitationStatusLabel,
   invitationStatuses,
-  memberStatusLabels,
+  memberStatusLabel,
   inviteFormIssues,
   readInvitation,
   readInvitationPage,
@@ -23,6 +23,10 @@ import {
   teamQuery,
 } from "./team.ts";
 import type { InvitationStatus, TeamInvitation, TeamMember, TeamPage } from "./team.ts";
+import { translator } from "./i18n/index.ts";
+import { useT } from "./i18n/react.tsx";
+
+const tt = translator("team");
 
 type Client = ReturnType<typeof createAuthClient>;
 const base = "/team/v1";
@@ -34,23 +38,24 @@ function failureText(failure: unknown, fallback: string): string {
 }
 
 function Pager({ page, onPage }: { page: TeamPage<unknown>; onPage: (page: number) => void }) {
+  const t = useT("team");
   if (page.page <= 1 && !hasNextPage(page)) return null;
   return (
     <div className="actions team-pager">
-      <button type="button" className="secondary" disabled={page.page <= 1} onClick={() => onPage(page.page - 1)}>上一页</button>
-      <span>第 {page.page} 页</span>
-      <button type="button" className="secondary" disabled={!hasNextPage(page)} onClick={() => onPage(page.page + 1)}>下一页</button>
+      <button type="button" className="secondary" disabled={page.page <= 1} onClick={() => onPage(page.page - 1)}>{t("pager.previous")}</button>
+      <span>{t("pager.page", { page: page.page })}</span>
+      <button type="button" className="secondary" disabled={!hasNextPage(page)} onClick={() => onPage(page.page + 1)}>{t("pager.next")}</button>
     </div>
   );
 }
 
 /** 行操作容器：桌面直接显示；窄屏收进“更多”。 */
 function RowActions({ label, children }: { label: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false), t = useT("team");
   return (
     <div className="team-row-actions">
-      <button type="button" className="text-button team-more" aria-expanded={open} aria-label={label + " 的更多操作"}
-        onClick={() => setOpen((value) => !value)}>更多</button>
+      <button type="button" className="text-button team-more" aria-expanded={open} aria-label={t("row.more_label", { name: label })}
+        onClick={() => setOpen((value) => !value)}>{t("row.more")}</button>
       <div className={"team-actions" + (open ? " open" : "")}>{children}</div>
     </div>
   );
@@ -76,18 +81,18 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
   const [inviting, setInviting] = useState(false), [form, setForm] = useState({ email: "", roleCode: defaultInviteRole as string });
   const [issues, setIssues] = useState<Record<string, string>>({}), [inviteError, setInviteError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null), [pending, setPending] = useState<Pending | null>(null);
-  const emailInput = useRef<HTMLInputElement>(null);
+  const emailInput = useRef<HTMLInputElement>(null), t = useT("team"), tc = useT("common");
 
   async function loadMembers(page = memberPage) {
     setMemberError(null);
     try {
       const value = readMemberPage(await client.request<unknown>(base + "/members?" + teamQuery(page)));
-      if (!value) throw new Error("成员列表暂时无法读取");
+      if (!value) throw new Error(tt("members.load_failed"));
       setMembers(value);
       setMemberPage(page);
     } catch (failure) {
       setMembers(null);
-      setMemberError(failureText(failure, "成员列表暂时无法读取"));
+      setMemberError(failureText(failure, tt("members.load_failed")));
     }
   }
   async function loadInvitations(nextStatus = status, page = invitationPage) {
@@ -95,13 +100,13 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
     setInvitationError(null);
     try {
       const value = readInvitationPage(await client.request<unknown>(base + "/invitations?" + teamQuery(page, nextStatus)));
-      if (!value) throw new Error("邀请列表暂时无法读取");
+      if (!value) throw new Error(tt("invitations.load_failed"));
       setInvitations(value);
       setStatus(nextStatus);
       setInvitationPage(page);
     } catch (failure) {
       setInvitations(null);
-      setInvitationError(failureText(failure, "邀请列表暂时无法读取"));
+      setInvitationError(failureText(failure, tt("invitations.load_failed")));
     }
   }
   useEffect(() => {
@@ -134,15 +139,15 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
       }));
       setInviting(false);
       setNotice(value?.emailDelivery === "FAILED"
-        ? { tone: "error", text: emailFailedText }
-        : { tone: "success", text: "邀请已发送" + (value ? "至 " + value.emailMasked : "") + "。" });
+        ? { tone: "error", text: emailFailedText() }
+        : { tone: "success", text: value ? tt("invite.sent_to", { email: value.emailMasked }) : tt("invite.sent") });
       await loadInvitations("PENDING", 1);
     } catch (failure) {
       const fields = failure instanceof RequestFailure ? { ...failure.fields } : {};
       const code = failure instanceof RequestFailure ? failure.code : "";
       if (code === "CLIENT_INVITATION_DUPLICATE" || code === "CLIENT_MEMBER_EXISTS") fields.email = teamErrorText(code, "");
       if (Object.keys(fields).length) setIssues(fields);
-      else setInviteError(failureText(failure, "邀请未发出，请稍后重试"));
+      else setInviteError(failureText(failure, tt("invite.failed")));
     } finally {
       setBusy(null);
     }
@@ -156,9 +161,9 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
       const value = readMember(await client.request<unknown>(base + "/members/" + encodeURIComponent(member.memberId) + "/role", {
         method: "POST", body: { roleCode },
       }));
-      setNotice({ tone: "success", text: member.emailMasked + " 的角色已改为" + roleLabel(value?.roleCode ?? roleCode) + "。" });
+      setNotice({ tone: "success", text: tt("role.changed", { email: member.emailMasked, role: roleLabel(value?.roleCode ?? roleCode) }) });
     } catch (failure) {
-      setNotice({ tone: "error", text: "角色未更改：" + failureText(failure, "请稍后重试") });
+      setNotice({ tone: "error", text: tt("role.change_failed", { reason: failureText(failure, tt("retry_later")) }) });
     } finally {
       setBusy(null);
       await loadMembers();
@@ -172,19 +177,19 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
     try {
       if (pending.kind === "remove") {
         await client.request<unknown>(base + "/members/" + encodeURIComponent(pending.member.memberId) + "/removal", { method: "POST" });
-        setNotice({ tone: "success", text: pending.member.emailMasked + " 已移出工作区。" });
+        setNotice({ tone: "success", text: tt("member.removed", { email: pending.member.emailMasked }) });
       } else if (pending.kind === "revoke") {
         await client.request<unknown>(base + "/invitations/" + encodeURIComponent(pending.invitation.invitationId) + "/revocation", { method: "POST" });
-        setNotice({ tone: "success", text: "已撤销对 " + pending.invitation.emailMasked + " 的邀请。" });
+        setNotice({ tone: "success", text: tt("invitation.revoked", { email: pending.invitation.emailMasked }) });
       } else {
         const value = readInvitation(await client.request<unknown>(
           base + "/invitations/" + encodeURIComponent(pending.invitation.invitationId) + "/resend", { method: "POST" }));
         setNotice(value?.emailDelivery === "FAILED"
-          ? { tone: "error", text: "新链接已生成，但邮件未发出，可稍后重发。" }
-          : { tone: "success", text: "邀请已重新发送至 " + pending.invitation.emailMasked + "，旧链接已失效。" });
+          ? { tone: "error", text: tt("invitation.resend_email_failed") }
+          : { tone: "success", text: tt("invitation.resent", { email: pending.invitation.emailMasked }) });
       }
     } catch (failure) {
-      setNotice({ tone: "error", text: failureText(failure, "操作未完成，请稍后重试") });
+      setNotice({ tone: "error", text: failureText(failure, tt("action_failed")) });
     } finally {
       const kind = pending.kind;
       setPending(null);
@@ -198,45 +203,45 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
     <section aria-labelledby="team-title" className="team">
       <div className="page-heading">
         <div>
-          <h1 id="team-title">团队</h1>
-          <p>{canManage ? "邀请同事加入工作区，并为成员分配角色。" : "查看工作区成员与其角色。"}</p>
+          <h1 id="team-title">{t("title")}</h1>
+          <p>{canManage ? t("intro.manage") : t("intro.read")}</p>
         </div>
-        {canManage && <button type="button" className="primary compact" onClick={openInvite}>邀请成员</button>}
+        {canManage && <button type="button" className="primary compact" onClick={openInvite}>{t("invite.open")}</button>}
       </div>
       {notice && <p className={"notice" + (notice.tone === "error" ? " error" : " success")} role="status">{notice.text}</p>}
 
-      <h2 className="section-title">成员</h2>
+      <h2 className="section-title">{t("members.title")}</h2>
       {memberError && (
         <div className="notice error" role="alert">
           {memberError}
-          <button type="button" className="text-button" onClick={() => void loadMembers()}>重试</button>
+          <button type="button" className="text-button" onClick={() => void loadMembers()}>{t("retry")}</button>
         </div>
       )}
-      {!members && !memberError && <p role="status">正在读取成员…</p>}
-      {members && members.items.length === 0 && <p className="empty">工作区还没有其他成员。{canManage ? "点击“邀请成员”邀请同事加入。" : ""}</p>}
+      {!members && !memberError && <p role="status">{t("members.loading")}</p>}
+      {members && members.items.length === 0 && <p className="empty">{canManage ? t("members.empty_manage") : t("members.empty")}</p>}
       {members && members.items.length > 0 && (
-        <ul className="team-list" aria-label="成员列表">
+        <ul className="team-list" aria-label={t("members.list_label")}>
           {members.items.map((member) => (
             <li className="team-row" key={member.memberId}>
               <div className="team-main">
                 <strong className="break">{member.emailMasked}</strong>
-                <small>{roleLabel(member.roleCode)}{member.self ? " · 你" : ""}</small>
+                <small>{member.self ? t("members.role_self", { role: roleLabel(member.roleCode) }) : roleLabel(member.roleCode)}</small>
               </div>
               <span className={"team-status " + member.status.toLowerCase()}>
-                {member.status === "ACTIVE" ? "已加入 " + displayDate(member.joinedAt) : memberStatusLabels[member.status] ?? "状态未知"}
+                {member.status === "ACTIVE" ? t("members.joined_on", { date: displayDate(member.joinedAt) }) : memberStatusLabel(member.status) ?? t("status_unknown")}
               </span>
               {canOperateMember(member, canManage) && (
                 <RowActions label={member.emailMasked}>
                   <label className="team-role">
-                    <span>更改角色</span>
-                    <select value={member.roleCode} disabled={busy !== null} aria-label={"更改 " + member.emailMasked + " 的角色"}
+                    <span>{t("role.change")}</span>
+                    <select value={member.roleCode} disabled={busy !== null} aria-label={t("role.change_label", { email: member.emailMasked })}
                       onChange={(event) => void changeRole(member, event.target.value)}>
                       {assignableRoles.map((role) => <option key={role.code} value={role.code}>{role.label}</option>)}
                     </select>
                   </label>
-                  {busy === "role:" + member.memberId && <small role="status">正在保存…</small>}
+                  {busy === "role:" + member.memberId && <small role="status">{t("saving")}</small>}
                   <button type="button" className="text-button danger-text" disabled={busy !== null}
-                    onClick={() => setPending({ kind: "remove", member })}>移除</button>
+                    onClick={() => setPending({ kind: "remove", member })}>{t("action.remove")}</button>
                 </RowActions>
               )}
             </li>
@@ -248,26 +253,26 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
       {canManage && (
         <>
           <div className="team-section-head">
-            <h2 className="section-title">邀请</h2>
-            <div className="team-filter" role="group" aria-label="邀请状态">
+            <h2 className="section-title">{t("invitations.title")}</h2>
+            <div className="team-filter" role="group" aria-label={t("invitations.status_filter")}>
               {invitationStatuses.map((code) => (
                 <button key={code} type="button" className={"chip" + (status === code ? " active" : "")} aria-pressed={status === code}
-                  onClick={() => void loadInvitations(code, 1)}>{invitationStatusLabels[code]}</button>
+                  onClick={() => void loadInvitations(code, 1)}>{invitationStatusLabel(code)}</button>
               ))}
             </div>
           </div>
           {invitationError && (
             <div className="notice error" role="alert">
               {invitationError}
-              <button type="button" className="text-button" onClick={() => void loadInvitations()}>重试</button>
+              <button type="button" className="text-button" onClick={() => void loadInvitations()}>{t("retry")}</button>
             </div>
           )}
-          {!invitations && !invitationError && <p role="status">正在读取邀请…</p>}
+          {!invitations && !invitationError && <p role="status">{t("invitations.loading")}</p>}
           {invitations && invitations.items.length === 0 && (
-            <p className="empty">{status === "PENDING" ? "还没有待接受的邀请。" : "没有" + invitationStatusLabels[status] + "的邀请。"}</p>
+            <p className="empty">{t("invitations.empty", { status })}</p>
           )}
           {invitations && invitations.items.length > 0 && (
-            <ul className="team-list" aria-label="邀请列表">
+            <ul className="team-list" aria-label={t("invitations.list_label")}>
               {invitations.items.map((invitation) => {
                 const actions = invitationActions(invitation, canManage);
                 return (
@@ -275,22 +280,23 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
                     <div className="team-main">
                       <strong className="break">{invitation.emailMasked}</strong>
                       <small>
-                        {roleLabel(invitation.roleCode)}
-                        {invitation.invitedByEmailMasked ? " · 邀请人 " + invitation.invitedByEmailMasked : ""}
+                        {invitation.invitedByEmailMasked
+                          ? t("invitations.role_inviter", { role: roleLabel(invitation.roleCode), inviter: invitation.invitedByEmailMasked })
+                          : roleLabel(invitation.roleCode)}
                       </small>
                     </div>
                     <span className={"team-status " + invitation.status.toLowerCase()}>
-                      {invitation.status === "PENDING" ? expiryText(invitation.expiresAt) : invitationStatusLabels[invitation.status] ?? "状态未知"}
+                      {invitation.status === "PENDING" ? expiryText(invitation.expiresAt) : invitationStatusLabel(invitation.status) ?? t("status_unknown")}
                     </span>
                     {(actions.resend || actions.revoke) && (
                       <RowActions label={invitation.emailMasked}>
                         {actions.resend && (
                           <button type="button" className="text-button" disabled={busy !== null}
-                            onClick={() => setPending({ kind: "resend", invitation })}>重发</button>
+                            onClick={() => setPending({ kind: "resend", invitation })}>{t("action.resend")}</button>
                         )}
                         {actions.revoke && (
                           <button type="button" className="text-button danger-text" disabled={busy !== null}
-                            onClick={() => setPending({ kind: "revoke", invitation })}>撤销</button>
+                            onClick={() => setPending({ kind: "revoke", invitation })}>{t("action.revoke")}</button>
                         )}
                       </RowActions>
                     )}
@@ -308,15 +314,15 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
           <form className="modal" role="dialog" aria-modal="true" aria-labelledby="invite-title" noValidate aria-busy={busy === "invite"}
             onKeyDown={(event) => { if (event.key === "Escape" && busy !== "invite") setInviting(false); }}
             onSubmit={(event) => { event.preventDefault(); void submitInvite(); }}>
-            <h2 id="invite-title">邀请成员</h2>
-            <label>邮箱
+            <h2 id="invite-title">{t("invite.title")}</h2>
+            <label>{t("invite.email")}
               <input ref={emailInput} type="email" value={form.email} maxLength={320} autoComplete="off" autoCapitalize="none" spellCheck={false}
                 disabled={busy === "invite"} aria-invalid={!!issues.email} aria-describedby={issues.email ? "invite-email-error" : undefined}
                 onChange={(event) => { setForm({ ...form, email: event.target.value }); setIssues({ ...issues, email: "" }); setInviteError(null); }} />
             </label>
             {issues.email && <small className="field-error" id="invite-email-error">{issues.email}</small>}
             <fieldset disabled={busy === "invite"}>
-              <legend>角色</legend>
+              <legend>{t("invite.role")}</legend>
               {assignableRoles.map((role) => (
                 <label key={role.code} className="role-option">
                   <input type="radio" name="roleCode" value={role.code} checked={form.roleCode === role.code}
@@ -327,10 +333,10 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
             </fieldset>
             {issues.roleCode && <small className="field-error">{issues.roleCode}</small>}
             {inviteError && <p className="notice error" role="alert">{inviteError}</p>}
-            <p className="hint">邀请 7 天内有效。对方需使用该邮箱登录或注册后接受。</p>
+            <p className="hint">{t("invite.hint")}</p>
             <div className="actions">
-              <button type="button" className="secondary" disabled={busy === "invite"} onClick={() => setInviting(false)}>取消</button>
-              <button type="submit" className="primary compact" disabled={busy === "invite"}>{busy === "invite" ? "处理中…" : "发送邀请"}</button>
+              <button type="button" className="secondary" disabled={busy === "invite"} onClick={() => setInviting(false)}>{t("action.cancel")}</button>
+              <button type="submit" className="primary compact" disabled={busy === "invite"}>{busy === "invite" ? tc("status.processing") : t("invite.submit")}</button>
             </div>
           </form>
         </div>
@@ -339,19 +345,15 @@ export function TeamPanel({ client, canManage }: { client: Client; canManage: bo
         <div className="modal-backdrop" role="presentation">
           <div className="modal" role="dialog" aria-modal="true" aria-labelledby="team-confirm-title"
             onKeyDown={(event) => { if (event.key === "Escape" && busy !== "confirm") setPending(null); }}>
-            <h2 id="team-confirm-title">{pending.kind === "remove" ? "移除成员" : pending.kind === "revoke" ? "撤销邀请" : "重发邀请"}</h2>
+            <h2 id="team-confirm-title">{t("confirm." + pending.kind + "_title")}</h2>
             <p>
-              {pending.kind === "remove"
-                ? "移除后 " + pending.member.emailMasked + " 将无法再进入本工作区，需要时可重新邀请。"
-                : pending.kind === "revoke"
-                  ? "撤销后发给 " + pending.invitation.emailMasked + " 的邀请链接立即失效。"
-                  : "将向 " + pending.invitation.emailMasked + " 发送新的邀请链接，旧链接立即失效，有效期重新计算 7 天。"}
+              {t("confirm." + pending.kind + "_body", { email: pending.kind === "remove" ? pending.member.emailMasked : pending.invitation.emailMasked })}
             </p>
             <div className="actions">
-              <button type="button" className="secondary" disabled={busy === "confirm"} onClick={() => setPending(null)}>取消</button>
+              <button type="button" className="secondary" disabled={busy === "confirm"} onClick={() => setPending(null)}>{t("action.cancel")}</button>
               <button type="button" className={pending.kind === "resend" ? "primary compact" : "danger"} disabled={busy === "confirm"}
                 onClick={() => void confirmPending()}>
-                {busy === "confirm" ? "处理中…" : pending.kind === "remove" ? "移除" : pending.kind === "revoke" ? "撤销" : "重发"}
+                {busy === "confirm" ? tc("status.processing") : t("action." + pending.kind)}
               </button>
             </div>
           </div>

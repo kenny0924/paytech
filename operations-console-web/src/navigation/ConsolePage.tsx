@@ -75,6 +75,9 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_WORKFLOW_ACTION_TEMPLATES: lazy(() => import('../pages/WorkflowActionTemplates').then(m => ({ default: m.WorkflowActionTemplates }))),
   OPERATIONS_DATA_SOURCES: lazy(() => import('../pages/DataSources').then(m => ({ default: m.DataSources }))),
   OPERATIONS_QUERY_TEMPLATES: lazy(() => import('../pages/QueryTemplates').then(m => ({ default: m.QueryTemplates }))),
+  OPERATIONS_I18N_TRANSLATIONS: lazy(() => import('../localization/TranslationsPage').then(m => ({ default: m.TranslationsPage }))),
+  OPERATIONS_I18N_RELEASES: lazy(() => import('../localization/ReleasesPage').then(m => ({ default: m.ReleasesPage }))),
+  OPERATIONS_I18N_SETTINGS: lazy(() => import('../localization/SettingsPage').then(m => ({ default: m.SettingsPage }))),
 };
 export function ConsolePage({ componentKey, ...props }: PageProps & { componentKey: string }) {
   const Page = pages[componentKey as PageComponentKey];

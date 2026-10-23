@@ -1,29 +1,31 @@
 import type { Capability } from "./developer.ts";
+import { enumLabel } from "./enum-label.ts";
+import { formatDate, translator } from "./i18n/index.ts";
+
+const tt = translator("team");
 
 /** 工作区角色；OWNER 固定为 TENANT_OWNER，可邀请或改授的只有后三个。 */
 export type RoleCode = "TENANT_OWNER" | "TENANT_ADMIN" | "TENANT_DEVELOPER" | "TENANT_VIEWER";
 export type AssignableRole = { code: Exclude<RoleCode, "TENANT_OWNER">; label: string; description: string };
 
-export const roleLabels: Record<string, string> = {
-  TENANT_OWNER: "所有者", TENANT_ADMIN: "管理员", TENANT_DEVELOPER: "开发者", TENANT_VIEWER: "只读成员",
-};
-export const assignableRoles: readonly AssignableRole[] = [
-  { code: "TENANT_ADMIN", label: "管理员", description: "管理员可管理团队、API 凭证与 Webhook" },
-  { code: "TENANT_DEVELOPER", label: "开发者", description: "开发者可管理 API 凭证与 Webhook" },
-  { code: "TENANT_VIEWER", label: "只读成员", description: "只读成员只能查看" },
-];
+/** 展示名与说明按当前语言读取。 */
+function assignable(code: AssignableRole["code"]): AssignableRole {
+  return {
+    code,
+    get label() { return roleLabel(code); },
+    get description() { return tt("role_description." + code.toLowerCase()); },
+  };
+}
+export const assignableRoles: readonly AssignableRole[] = [assignable("TENANT_ADMIN"), assignable("TENANT_DEVELOPER"), assignable("TENANT_VIEWER")];
 export const defaultInviteRole: AssignableRole["code"] = "TENANT_DEVELOPER";
-export const memberTypeLabels: Record<string, string> = { OWNER: "所有者", ADMIN: "管理员", MEMBER: "成员" };
-export const memberStatusLabels: Record<string, string> = { ACTIVE: "已加入", SUSPENDED: "已暂停", REVOKED: "已移除" };
-export const invitationStatusLabels: Record<string, string> = {
-  PENDING: "待接受", EXPIRED: "已过期", ACCEPTED: "已接受", REVOKED: "已撤销",
-};
+export const memberStatusLabel = (code: string): string | null => enumLabel("member_status", code);
+export const invitationStatusLabel = (code: string): string | null => enumLabel("invitation_status", code);
 export const invitationStatuses = ["PENDING", "EXPIRED", "ACCEPTED", "REVOKED"] as const;
 export type InvitationStatus = (typeof invitationStatuses)[number];
 
 /** 未知角色码不透传原值，避免展示内部代码。 */
 export function roleLabel(code: string | null | undefined): string {
-  return (code && roleLabels[code]) || "—";
+  return enumLabel("role", code) ?? "—";
 }
 
 export function isAssignableRole(code: string): code is AssignableRole["code"] {
@@ -121,9 +123,9 @@ export function invitationActions(invitation: TeamInvitation, canManage: boolean
 /** 邮箱前端预检：只做格式校验，不做企业域名限制。 */
 export function inviteEmailIssue(email: string): string | null {
   const value = email.trim();
-  if (!value) return "请填写邮箱";
-  if (value.length > 320) return "邮箱过长";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "邮箱格式不正确";
+  if (!value) return tt("invite.email_required");
+  if (value.length > 320) return tt("invite.email_too_long");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return tt("invite.email_invalid");
   return null;
 }
 
@@ -131,23 +133,19 @@ export function inviteFormIssues(form: { email: string; roleCode: string }): Rec
   const issues: Record<string, string> = {};
   const email = inviteEmailIssue(form.email);
   if (email) issues.email = email;
-  if (!isAssignableRole(form.roleCode)) issues.roleCode = "请选择角色";
+  if (!isAssignableRole(form.roleCode)) issues.roleCode = tt("invite.role_required");
   return issues;
 }
 
-export const emailFailedText = "邀请已创建，邮件未发出，可稍后重发";
+export const emailFailedText = (): string => tt("invite.email_failed");
 
 /** 团队操作业务错误的就地提示；未登记的错误码使用服务端说明。 */
-export const teamErrorTexts: Record<string, string> = {
-  CLIENT_INVITATION_DUPLICATE: "该邮箱已有待接受的邀请，请在邀请列表中重发",
-  CLIENT_INVITATION_LIMIT_REACHED: "待接受的邀请已达 20 条上限，请先撤销不需要的邀请",
-  CLIENT_MEMBER_EXISTS: "该邮箱已是工作区成员",
-  CLIENT_MEMBER_PROTECTED: "不能修改或移除所有者，也不能修改或移除自己",
-  CLIENT_WORKSPACE_UNAVAILABLE: "工作区当前不可用，暂时不能管理团队",
-  CLIENT_PERMISSION_DENIED: "您没有执行该操作的权限",
-};
+export const teamErrorCodes = [
+  "CLIENT_INVITATION_DUPLICATE", "CLIENT_INVITATION_LIMIT_REACHED", "CLIENT_MEMBER_EXISTS", "CLIENT_MEMBER_PROTECTED",
+  "CLIENT_WORKSPACE_UNAVAILABLE", "CLIENT_PERMISSION_DENIED",
+] as const;
 export function teamErrorText(code: string, fallback: string): string {
-  return teamErrorTexts[code] ?? fallback;
+  return (teamErrorCodes as readonly string[]).includes(code) ? tt("error." + code.toLowerCase()) : fallback;
 }
 
 /** 到期提示：未来按剩余天数，已过期显示“已过期”。 */
@@ -155,15 +153,14 @@ export function expiryText(expiresAt: string | null, now = Date.now()): string {
   const time = expiresAt ? Date.parse(expiresAt) : NaN;
   if (!Number.isFinite(time)) return "—";
   const remaining = time - now;
-  if (remaining <= 0) return "已过期";
+  if (remaining <= 0) return tt("expiry.expired");
   const days = Math.floor(remaining / 86_400_000);
-  if (days >= 1) return days + " 天后到期";
+  if (days >= 1) return tt("expiry.days", { days });
   const hours = Math.max(1, Math.floor(remaining / 3_600_000));
-  return hours + " 小时后到期";
+  return tt("expiry.hours", { hours });
 }
 
-/** 本地日期。 */
+/** 按当前语言显示的本地日期。 */
 export function displayDate(value: string | null | undefined): string {
-  if (!value || !Number.isFinite(Date.parse(value))) return "—";
-  return new Date(value).toLocaleDateString("zh-CN");
+  return formatDate(value);
 }

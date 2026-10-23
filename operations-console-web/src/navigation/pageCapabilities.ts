@@ -776,6 +776,55 @@ export const pageCapabilities = [
         "displayName": "维护"
       }
     ]
+  },
+  {
+    "componentKey": "OPERATIONS_I18N_TRANSLATIONS",
+    "displayName": "翻译",
+    "frontendRoute": "/i18n/translations",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_I18N_TRANSLATION_EDIT",
+        "displayName": "编辑翻译"
+      },
+      {
+        "resourceCode": "OPERATIONS_I18N_KEY_IMPORT",
+        "displayName": "导入 key"
+      },
+      {
+        "resourceCode": "OPERATIONS_I18N_RELEASE_PUBLISH",
+        "displayName": "发布"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_I18N_RELEASES",
+    "displayName": "发布记录",
+    "frontendRoute": "/i18n/releases",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_I18N_RELEASE_ACTIVATE",
+        "displayName": "切回此版本"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_I18N_SETTINGS",
+    "displayName": "语言与应用",
+    "frontendRoute": "/i18n/settings",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_I18N_APPLICATION_CREATE",
+        "displayName": "新建应用"
+      },
+      {
+        "resourceCode": "OPERATIONS_I18N_NAMESPACE_MANAGE",
+        "displayName": "维护命名空间"
+      },
+      {
+        "resourceCode": "OPERATIONS_I18N_SETTINGS_EDIT",
+        "displayName": "维护设置"
+      }
+    ]
   }
 ] as const;
 export type PageComponentKey = typeof pageCapabilities[number]["componentKey"];

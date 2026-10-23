@@ -8,6 +8,7 @@ import com.paytech.foundation.web.api.ApiErrorStatusResolver;
 import com.paytech.platform.support.api.enums.ApiCredentialErrorCode;
 import com.paytech.platform.support.api.enums.ClientTeamErrorCode;
 import com.paytech.platform.support.api.enums.GatewayConfigurationErrorCode;
+import com.paytech.platform.support.api.enums.LocalizationErrorCode;
 import com.paytech.platform.support.api.enums.OperationsErrorCode;
 
 /** Platform Support 公开错误码到 HTTP 状态的最小映射。 */
@@ -29,6 +30,13 @@ public class PlatformApiErrorConfiguration {
             if (errorCode == com.paytech.platform.support.api.enums.TenantProjectionErrorCode.TENANT_PROJECTION_CONFLICT
                 || errorCode == com.paytech.platform.support.api.enums.TenantProjectionErrorCode.TENANT_PROJECTION_STALE) return HttpStatus.CONFLICT;
             if (errorCode == com.paytech.foundation.common.error.CommonErrorCode.NOT_FOUND) return HttpStatus.NOT_FOUND;
+            if (errorCode instanceof LocalizationErrorCode localizationError) {
+                return switch (localizationError) {
+                    case I18N_COVERAGE_INSUFFICIENT, I18N_NAMESPACE_NOT_FOUND, I18N_MESSAGE_INVALID ->
+                        HttpStatus.UNPROCESSABLE_CONTENT;
+                    case I18N_IMPORT_PREVIEW_STALE, I18N_CONTENT_CHANGED, I18N_IMPORT_FILE_NOT_READY -> HttpStatus.CONFLICT;
+                };
+            }
             if (errorCode == com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode.CLIENT_EMAIL_LINK_INVALID) {
                 return HttpStatus.UNPROCESSABLE_CONTENT;
             }

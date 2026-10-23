@@ -1,0 +1,81 @@
+# python3 -I acceptance/precheck_readonly.py --browser  (2026-10-23T08:16:21Z，只读)
+PASS  SQL S01 t_i18n_* tables absent
+PASS  SQL S02 mor_platform table count
+PASS  SQL G01 t_permission 1351xx empty
+PASS  SQL G02 t_role_permission 1352xx empty
+PASS  SQL G03 t_console_resource 1353xx empty
+PASS  SQL G04 t_gateway_route 1354xx empty
+PASS  SQL G05 t_gateway_route_header 1355xx-1356xx empty
+PASS  SQL G06 t_gateway_route_query_param 1357xx empty
+PASS  SQL G07 t_gateway_guard_rule 1358xx-1359xx empty
+PASS  SQL G08 permission codes I18N_VIEW/EDIT/PUBLISH unused
+PASS  SQL G09 resource codes OPERATIONS_I18N* unused
+PASS  SQL G10 frontend routes /i18n/* unused
+PASS  SQL G11 route codes operations-i18n-* / client-i18n-manifest unused
+PASS  SQL G12 external paths unused
+PASS  SQL G13 ops-bff target 900000000000000001 ACTIVE
+PASS  SQL G14 client-console-bff target exactly one ACTIVE
+PASS  SQL G15 role 510 PLATFORM_ADMIN ACTIVE
+PASS  SQL G16 top-level OPERATIONS menu sort 70 free
+PASS  SQL F01 policies I18N_BUNDLE_JSON / OPERATIONS_BFF_IMPORT absent
+PASS  SQL F02 scan policy IDs 135021-135025 free
+PASS  SQL F03 scan requirement IDs 135021-135025 free
+PASS  SQL F04 route 135025 / platform-support x PUBLIC absent
+PASS  SQL F05 ops-bff PRIVATE route 239087906591948800 / CARD_BIN_CSV / 900
+PASS  SQL F06 ops-bff PRIVATE routes total
+PASS  SQL F07 MINIO/mor-platform-public ACTIVE PUBLIC with base URL
+PASS  SQL F08 CARD_BIN_CSV r1 ACTIVE (rollback target)
+PASS  SQL F09 no I18N_RELEASE_ACTIVATE compensation events
+PASS  SQL F10 * x PUBLIC -> S3_TEST/mor-test-platform-public-k7q2 / PUBLIC_DOCUMENT
+PASS  SQL F11 client-console-bff x PUBLIC -> same bucket / PUBLIC_IMAGE
+PASS  SQL F12 PUBLIC routes total (only the two above)
+PASS  SQL F13 no platform-support PUBLIC files yet
+      记录 R01 role 510 version = 47
+      记录 R02 ops-bff PRIVATE route version = 1
+      记录 R03 client-console-bff target_id = 236085272176050176
+      记录 R04 PUBLIC routes (source/bucket/policy) = *>mor-test-platform-public-k7q2>PUBLIC_DOCUMENT; client-console-bff>mor-test-platform-public-k7q2>PUBLIC_IMAGE
+      记录 R05 ACTIVE gateway routes total = 542
+      记录 R06 files from operations-console-bff (BIN CSV) total = 4
+      记录 R07 open uploads from operations-console-bff (CREATED) = 0
+PASS  基线 platform-support-service .Image = 回滚文件
+PASS  基线 platform-support-service healthy / 重启 0
+PASS  基线 operations-console-bff .Image = 回滚文件
+PASS  基线 operations-console-bff healthy / 重启 0
+PASS  基线 client-console-bff .Image = 回滚文件
+PASS  基线 client-console-bff healthy / 重启 0
+PASS  基线 operations-console-web .Image = 回滚文件
+PASS  基线 operations-console-web healthy / 重启 0
+PASS  基线 client-console-web .Image = 回滚文件
+PASS  基线 client-console-web healthy / 重启 0
+PASS  候选 platform-support-service 镜像存在 b844b0efd625
+PASS  候选 platform-support-service 镜像配置与运行镜像相同
+PASS  候选 platform-support-service JAR SHA-256 bfbb75a7bd195d66
+PASS  候选 operations-console-bff 镜像存在 e4d913e0948b
+PASS  候选 operations-console-bff 镜像配置与运行镜像相同
+PASS  候选 operations-console-bff JAR SHA-256 d52e541baf7a163b
+PASS  候选 client-console-bff 镜像存在 9033b8fa365a
+PASS  候选 client-console-bff 镜像配置与运行镜像相同
+PASS  候选 client-console-bff JAR SHA-256 948f2c7ad412de27
+PASS  候选 operations-console-web 镜像存在 d7dd45b7fc98
+PASS  候选 operations-console-web 镜像配置与运行镜像相同
+PASS  候选 client-console-web 镜像存在 280a2f384b80
+PASS  候选 client-console-web 镜像配置与运行镜像相同
+PASS  环境 compose-candidate.yaml platform-support-service 0 缺 0 多 0 不同（53 个 compose 键）
+PASS  环境 compose-candidate.yaml operations-console-bff 0 缺 0 多 0 不同（14 个 compose 键）
+PASS  环境 compose-candidate.yaml client-console-bff 0 缺 0 多 0 不同（10 个 compose 键）
+PASS  环境 compose-candidate.yaml operations-console-web 0 缺 0 多 0 不同（0 个 compose 键）
+PASS  环境 compose-candidate.yaml client-console-web 0 缺 0 多 0 不同（0 个 compose 键）
+PASS  环境 compose-rollback.yaml platform-support-service 0 缺 0 多 0 不同（53 个 compose 键）
+PASS  环境 compose-rollback.yaml operations-console-bff 0 缺 0 多 0 不同（14 个 compose 键）
+PASS  环境 compose-rollback.yaml client-console-bff 0 缺 0 多 0 不同（10 个 compose 键）
+PASS  环境 compose-rollback.yaml operations-console-web 0 缺 0 多 0 不同（0 个 compose 键）
+PASS  环境 compose-rollback.yaml client-console-web 0 缺 0 多 0 不同（0 个 compose 键）
+PASS  MinIO 公开桶 CORS 允许 http://localhost:28080（TLS 只信任 test CA）
+PASS  MinIO 公开桶 CORS 允许 https://localhost:28443（TLS 只信任 test CA）
+PASS  MinIO 公开桶对其他 Origin 不给 CORS 允许头
+PASS  /api/operations/i18n/v1/manifest 发布前未上线（404）
+PASS  /api/client/i18n/v1/manifest 发布前未上线（404）
+PASS  浏览器（严格证书）从 http://localhost:28080 fetch 公开桶：无 CORS / 证书错误
+PASS  浏览器（严格证书）从 https://localhost:28443 fetch 公开桶：无 CORS / 证书错误
+
+== 只读预检：PASS 71，FAIL 0

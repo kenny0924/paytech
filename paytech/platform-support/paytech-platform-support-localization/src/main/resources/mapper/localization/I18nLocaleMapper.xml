@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.localization.core.dal.mapper.I18nLocaleMapper">
+
+    <sql id="columns">
+        locale_id AS localeId, locale_code AS localeCode, native_name AS nativeName,
+        english_name AS englishName, text_direction AS textDirection, status, sort_order AS sortOrder, version,
+        created_by AS createdBy, updated_by AS updatedBy, create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_i18n_locale (locale_id, locale_code, native_name, english_name, text_direction, status, sort_order, version, created_by, updated_by, create_time, update_time)
+        VALUES (#{row.localeId}, #{row.localeCode}, #{row.nativeName}, #{row.englishName}, #{row.textDirection}, #{row.status}, #{row.sortOrder}, #{row.version}, #{row.createdBy}, #{row.updatedBy}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectByCode" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nLocale">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_locale
+        WHERE locale_code = #{localeCode}
+    </select>
+
+    <select id="selectByCodesForShare" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nLocale">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_locale
+        WHERE locale_code IN
+        <foreach collection="localeCodes" item="code" open="(" separator="," close=")">#{code}</foreach>
+        FOR SHARE
+    </select>
+
+    <select id="selectAll" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nLocale">
+        SELECT <include refid="columns"/>
+        FROM t_i18n_locale
+        ORDER BY sort_order, locale_code
+    </select>
+
+    <update id="update">
+        UPDATE t_i18n_locale
+        SET native_name = #{next.nativeName}, english_name = #{next.englishName},
+            text_direction = #{next.textDirection}, status = #{next.status}, sort_order = #{next.sortOrder},
+            version = version + 1, updated_by = #{next.updatedBy}, update_time = #{next.updateTime}
+        WHERE locale_id = #{row.localeId} AND version = #{row.version}
+    </update>
+</mapper>

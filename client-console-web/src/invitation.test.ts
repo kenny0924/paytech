@@ -51,7 +51,7 @@ test("preview, details and acceptance responses are validated", () => {
   const details = readDetails({ ...preview, emailMatches: true, clientId: "21", workspaceName: null, clientNo: "CL-21", clientType: null });
   assert.equal(details?.workspaceName, null);
   assert.equal(details && invitationWorkspaceName(details), "CL-21");
-  assert.equal(invitationWorkspaceName({ workspaceName: null, clientNo: null }), "名称暂不可用");
+  assert.equal(invitationWorkspaceName({ workspaceName: null, clientNo: null }), "Name unavailable");
   assert.equal(invitationWorkspaceName({ workspaceName: "Example Trading LLC", clientNo: "CL-21" }), "Example Trading LLC");
   assert.equal(readDetails(preview), null);
   assert.equal(readDetails({ ...preview, emailMatches: false })?.clientId, null);

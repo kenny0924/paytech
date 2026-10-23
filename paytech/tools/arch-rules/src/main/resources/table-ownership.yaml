@@ -2,7 +2,7 @@
 # Source: requirements/20261017/architecture-V2骨架与模块搬迁/design/03-module-and-table-ownership.md §2 and §4.2.
 # 255 source tables, 17 databases, 265 physical tables.
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
-# 63 retained-service tables added on top of design 03 (not part of the §4.2 count).
+# 70 retained-service tables added on top of design 03 (not part of the §4.2 count).
 # 23 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
 # 59 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
@@ -278,6 +278,13 @@ services:
       - t_gateway_route_header
       - t_gateway_route_query_param
       - t_gateway_target
+      - t_i18n_application
+      - t_i18n_key
+      - t_i18n_locale
+      - t_i18n_namespace
+      - t_i18n_release
+      - t_i18n_release_bundle
+      - t_i18n_translation
       - t_jwt_signing_key
       - t_notification_attempt
       - t_notification_delivery

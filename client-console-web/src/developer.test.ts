@@ -41,9 +41,9 @@ test("secret modal closes only after acknowledgement and secrets are read strict
 });
 
 test("credential form validation", () => {
-  assert.equal(credentialNameIssue("  "), "请填写凭证名称");
-  assert.equal(credentialNameIssue("a".repeat(65)), "名称不能超过 64 个字符");
-  assert.equal(credentialNameIssue("bad\u0007"), "名称不能包含控制字符");
+  assert.equal(credentialNameIssue("  "), "Enter a credential name");
+  assert.equal(credentialNameIssue("a".repeat(65)), "The name can't be longer than 64 characters");
+  assert.equal(credentialNameIssue("bad\u0007"), "The name can't contain control characters");
   assert.deepEqual(credentialFormIssues({ name: "Prod", scopeCodes: ["orders.read"], validityDays: 365 }, ["orders.read"]), {});
   const issues = credentialFormIssues({ name: "", scopeCodes: [], validityDays: 400 }, ["orders.read"]);
   assert.deepEqual(Object.keys(issues).sort(), ["name", "scopeCodes", "validityDays"]);
@@ -52,9 +52,9 @@ test("credential form validation", () => {
 });
 
 test("endpoint form validation", () => {
-  assert.equal(endpointUrlIssue("http://example.com/hook"), "地址必须使用 HTTPS");
-  assert.equal(endpointUrlIssue("https://user:pw@example.com"), "地址不能包含账号或密码");
-  assert.equal(endpointUrlIssue("not a url"), "地址格式不正确");
+  assert.equal(endpointUrlIssue("http://example.com/hook"), "The URL must use HTTPS");
+  assert.equal(endpointUrlIssue("https://user:pw@example.com"), "The URL can't contain a username or password");
+  assert.equal(endpointUrlIssue("not a url"), "The URL format is invalid");
   assert.equal(endpointUrlIssue("https://example.com/hook"), null);
   assert.deepEqual(endpointFormIssues({ url: "https://example.com/h", eventTypes: ["order.paid"] }), {});
   assert.ok(endpointFormIssues({ url: "https://example.com/h", eventTypes: [] }).eventTypes);
