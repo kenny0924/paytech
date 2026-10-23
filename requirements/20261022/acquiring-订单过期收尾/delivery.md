@@ -33,6 +33,7 @@
 | 2026-10-23 | 7 确认 | 用户“继续”：接受阶段 7 结果；退款尾段不补跑；授权阶段 8 本地提交（不推送） | 已确认 |
 | 2026-10-23 | 8 提交与归档 | 以 main `32dbdd18` 为父、私有索引构建单个本地提交（未推送）：本需求代码（payment、acquiring 及测试）、验收脚本与启动器、文档（COMMERCE_DATABASE 原因码目录、requirements.ts COM-05、acquiring README、设计规格 13.5 节改为四种、CURRENT_IMPLEMENTATION 台账）与本需求目录；提交 `623916ac`，并通知 code-mor-78 rebase | 完成 |
 | 2026-10-23 | 8 重建核对 | 以提交 `623916ac` 重建 acquiring、payment JAR，与 mor-test 运行 JAR 逐条目比对 `+0 −0 ~0`，提交与运行内容一致（release.md 第 11 节 S8） | 完成 |
+| 2026-10-23 | 8 后续 | 用户要求处理遗留并删除工作目录：`Code-MoR-expiry` 已删除；共用验收脚本修复（上传合同补丁合入仓库、接收端跳过临时文件），mor-test 复跑 `client_api_flow.py` 105/105 PASS，首轮未复验的 5 项退款检查补齐；F1 另行登记为新需求 [acquiring-到期后支付结果确认](../acquiring-到期后支付结果确认/requirement.md) | 完成 |
 
 ## 当前阶段与下一确认点
 
@@ -44,7 +45,7 @@
 
 ## 遗留
 
-- F1（2026-10-22 阶段 5 发现，用户 2026-10-23 确认本需求不改）：订单到期后收银台查看与轮询先返回 410 `CHECKOUT_EXPIRED`、不再触发 Payment 刷新；持卡人到期后才从银行跳回只能看到“已过期”，结果确认只靠 Payment 退避查单（`compensationEventScan`）或渠道通知。归收银台前端需求处理（到期后的结果页 / 查单入口）。
+- F1（2026-10-22 阶段 5 发现，用户 2026-10-23 确认本需求不改；已另行登记 [acquiring-到期后支付结果确认](../acquiring-到期后支付结果确认/requirement.md)）：订单到期后收银台查看与轮询先返回 410 `CHECKOUT_EXPIRED`、不再触发 Payment 刷新；持卡人到期后才从银行跳回只能看到“已过期”，结果确认只靠 Payment 退避查单（`compensationEventScan`）或渠道通知。归收银台前端需求处理（到期后的结果页 / 查单入口）。
 
 ## 依赖与协调
 

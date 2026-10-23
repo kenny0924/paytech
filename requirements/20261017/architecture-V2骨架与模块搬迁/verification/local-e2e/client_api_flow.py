@@ -132,7 +132,9 @@ class InboxReceiver:
     def requests(self):
         items = []
         for path in sorted(TEST_INBOX.glob("*.json")):
-            if int(path.name.split("-", 1)[0]) < self.started_ns:
+            # 接收端先写以点开头的临时文件再改名；只读已落定的“纳秒时间戳-序号.json”
+            stamp = path.name.split("-", 1)[0]
+            if path.name.startswith(".") or not stamp.isdigit() or int(stamp) < self.started_ns:
                 continue
             raw = json.loads(path.read_text(encoding="utf-8"))
             items.append({"headers": raw["headers"], "body": base64.b64decode(raw["body"])})
