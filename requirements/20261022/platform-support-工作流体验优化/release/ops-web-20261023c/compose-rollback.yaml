@@ -1,0 +1,8 @@
+# 回滚：ops-web 回到 4861cd0d（体验优化追加版本）。把下面命令中的 compose-candidate.yaml 换成 compose-rollback.yaml：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/platform-support-工作流体验优化/release/ops-web-20261023c/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+# 构建源：main ffdf872e（工作流「打开页面」/「在动作目录中编辑」当前标签页跳转）+ 主工作区 10 个已上线未提交的数据查询文件（sha 同 ../ops-web-uncommitted-10.sha256）。
+# 与现网 4861cd0d 的构建源差异只有 2 个文件（workflow/TaskPanels.tsx、workflow/EditorPanels.tsx）；基线（2259e7ba + 10 文件）构建与现网 dist 203 个文件逐字节一致。
+services:
+  operations-console-web:
+    image: sha256:4861cd0dc3b65badb1f724a7722de4f59b0318ead9a0b7de4551eafe52b99ad3  # 回滚：mor-test/operations-console-web:wfux-20261023b

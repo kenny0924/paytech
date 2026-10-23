@@ -188,3 +188,9 @@ up() { ./test-environment/compose.sh -f "$O" up -d --no-deps --no-build --pull n
 ### 8.y ops-web 追加发布（2026-10-23 07:49:58Z）
 
 只换 operations-console-web：`a8bb58d7` → `sha256:4861cd0dc3b65badb1f724a7722de4f59b0318ead9a0b7de4551eafe52b99ad3`（`mor-test/operations-console-web:wfux-20261023b`）。构建源 main `069dca04` + 10 个数据查询未提交文件（sha 同 `ops-web-uncommitted-10.sha256`）；与上次构建源只差 `ScanPolicyTab.tsx`（公开桶 `bfb17bc9`）、`formModel.ts` / `catalogModel.test.ts` / `package.json` / `package-lock.json`（字段键拼音，新增依赖 `pinyin-pro@3.29.4`）。发布前核对现网 dist 与上次构建逐字节一致；镜像 dist = 构建、nginx.conf 与镜像配置同现网。healthy、重启 0，只读冒烟 15/15。覆盖文件：[ops-web-20261023b/](./ops-web-20261023b/)；回滚 `compose.sh -f ops-web-20261023b/compose-rollback.yaml up -d --no-deps --no-build --pull never --wait operations-console-web`。今后 ops-web 候选须基于 `069dca04` 或之后，并继续带上 10 个数据查询文件直到其提交。
+
+### 8.z ops-web 页面任务跳转修复（2026-10-23 2026-10-23T08:10:34Z）
+
+在 mor-test 补页面任务 / 人工确认演示数据（编码 `DEMO_WF_*`，ID 见 `local-environment/e2e/runtime/workflow-demo-page-confirm-20261023.json`）时发现：待办「打开页面」用 `window.open(_blank, noopener)`、流程编辑器「在动作目录中编辑」用 `target=_blank`，而控制台会话只存在本标签页的 sessionStorage（refresh token 轮换，不能跨标签页共享），新标签页落到登录页。修复 `ffdf872e`：两处改为站内路由跳转（待办选中项在 URL，浏览器返回回到原待办；编辑器已有未保存离开确认）。
+
+只换 operations-console-web：`4861cd0d` → `sha256:f42f545e97a24e378cf67b809c4864b03a9070e8cbc68990fa23cfe94d8e4f93`（`mor-test/operations-console-web:wfpage-20261023`）。构建源 main `ffdf872e` + 10 个数据查询未提交文件（sha 同 `ops-web-uncommitted-10.sha256`），与现网构建源只差 `workflow/TaskPanels.tsx`、`workflow/EditorPanels.tsx`；基线（`2259e7ba` + 10 文件）构建与现网 dist 203 个文件逐字节一致；镜像 dist = 构建，nginx.conf、Env / User / Cmd 同现网。healthy、重启 0。web 单测 1411 全过、`tsc --noEmit` 0 错误。浏览器验证 9/9：提示文字、不开新标签页、目标页已登录且合同 ID 预填、返回原待办（`?task=` 保持）并显示「已打开过」、编辑器动作卡链接同标签页进入动作目录且仍登录、页面错误 0。覆盖文件：[ops-web-20261023c/](./ops-web-20261023c/)；回滚用 `ops-web-20261023c/compose-rollback.yaml`（同 8.y 命令）。今后 ops-web 候选须基于 `ffdf872e` 或之后。
