@@ -3,6 +3,7 @@ package com.paytech.acquiring.test.dal;
 import java.time.Instant;
 import java.util.Map;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -28,6 +29,14 @@ public interface PaymentResultTestMapper {
         WHERE o.order_id=#{orderId}
         """)
     void cancelOrder(@Param("orderId") long orderId, @Param("now") Instant now);
+
+    /** 删除订单的支付投影，制造未提交支付的订单。 */
+    @Delete("DELETE FROM t_order_payment_projection WHERE order_id=#{orderId}")
+    void deletePayment(long orderId);
+
+    /** 订单已被过期收尾写成 EXPIRED。 */
+    @Update("UPDATE t_commerce_order SET order_status='EXPIRED',version=version+1 WHERE order_id=#{orderId}")
+    void expireOrder(long orderId);
 
     /** 订单状态、支付时间（UTC 秒级字符串）与版本。 */
     @Select("SELECT order_status,DATE_FORMAT(paid_at,'%Y-%m-%dT%H:%i:%sZ') AS paid_at,version FROM t_commerce_order WHERE order_id=#{orderId}")

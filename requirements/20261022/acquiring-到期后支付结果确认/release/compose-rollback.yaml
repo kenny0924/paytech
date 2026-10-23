@@ -1,0 +1,10 @@
+# acquiring 到期后支付结果确认：mor-test 回滚覆盖文件（2026-10-23 阶段 6 只读核对时的运行镜像；单独使用，不叠加候选文件）。
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/acquiring-到期后支付结果确认/release/compose-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 acquiring-service
+# 回滚目标 = code-mor-78 billing-支付事实自动登记 发布的 acquiring 镜像（该需求 compose-candidate.yaml，10-23 07:48:55Z 起运行）。
+# 环境：与现网生效链（主 compose + billing 候选）逐键相同，只需带 PAYTECH_INSTANCE_ID。无数据变化。
+services:
+  acquiring-service:
+    image: sha256:27c36f4e3a16e10fd72c14c7667786dd5cbc795d4b2b400b52388c72c22f0437  # billing-b-20261023（JAR ec8487bd07a722f6，基线 d3d39e40 + billing B）
+    environment:
+      PAYTECH_INSTANCE_ID: acquiring-test

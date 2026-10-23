@@ -1,0 +1,733 @@
+{
+  "S4": {
+    "orderNo": "ord_3L5VmDrv3RzABUTsf22BhBHsO2BDy7",
+    "created": {
+      "http": 201,
+      "orderStatus": null,
+      "total": "10.00",
+      "expiresAt": "2026-10-23T08:57:52.230517Z"
+    },
+    "beforeExpiry": {
+      "poll": {
+        "http": 404,
+        "code": "PAYMENT_SUBMISSION_NOT_FOUND",
+        "status": null,
+        "elapsedMs": 18,
+        "at": "2026-10-23T08:27:53.000328Z"
+      }
+    },
+    "backdatedExpiresAt": "2026-10-23T08:25:53.000000Z",
+    "pollAfterExpiry": {
+      "submission1": {
+        "http": 410,
+        "code": "CHECKOUT_EXPIRED",
+        "status": null,
+        "elapsedMs": 6,
+        "at": "2026-10-23T08:27:53.171897Z"
+      },
+      "submissionLarge": {
+        "http": 410,
+        "code": "CHECKOUT_EXPIRED",
+        "status": null,
+        "elapsedMs": 4,
+        "at": "2026-10-23T08:27:53.176352Z"
+      }
+    },
+    "facts": {
+      "orderId": "239303801092202496",
+      "status": "OPEN",
+      "reasonCode": "",
+      "version": "1",
+      "expiresAt": "2026-10-23T08:25:53.000000Z",
+      "terminationRequestedAt": "",
+      "paidAt": "",
+      "updateTime": "2026-10-23T08:27:52.230517Z",
+      "session": {
+        "status": "OPEN",
+        "version": "1"
+      },
+      "projection": null,
+      "paymentIntent": null
+    },
+    "verdict": {
+      "beforeExpiry404": true,
+      "AC04_expired410": true,
+      "noPayment": true
+    }
+  },
+  "_runs": [
+    {
+      "scenario": "s4",
+      "startedAt": "2026-10-23T08:27:51.628969Z",
+      "finishedAt": "2026-10-23T08:27:53.279097Z"
+    },
+    {
+      "scenario": "s1",
+      "startedAt": "2026-10-23T08:27:57.176681Z",
+      "finishedAt": "2026-10-23T08:28:19.301133Z"
+    },
+    {
+      "scenario": "s2",
+      "startedAt": "2026-10-23T08:28:30.121433Z",
+      "finishedAt": "2026-10-23T08:28:51.482927Z"
+    },
+    {
+      "scenario": "s3",
+      "startedAt": "2026-10-23T08:28:51.482942Z",
+      "finishedAt": "2026-10-23T08:29:07.175602Z"
+    },
+    {
+      "scenario": "s5",
+      "startedAt": "2026-10-23T08:29:14.772589Z",
+      "finishedAt": "2026-10-23T08:29:14.814656Z"
+    }
+  ],
+  "S1": {
+    "orderNo": "ord_3L5VmtoflSHBWF4HfQIXjWPwa6Q4G6",
+    "created": {
+      "http": 201,
+      "orderStatus": null,
+      "total": "333.00",
+      "expiresAt": "2026-10-23T08:57:57.271571Z"
+    },
+    "submission": {
+      "status": "REQUIRES_ACTION",
+      "note": "submissionId=239303823443648512 attemptId=239303832952143872 status=REQUIRES_ACTION last4=* failure=None",
+      "actionType": "THREE_DS_CHALLENGE"
+    },
+    "beforeExpiry": {
+      "orderId": "239303822235688960",
+      "status": "OPEN",
+      "reasonCode": "",
+      "version": "4",
+      "expiresAt": "2026-10-23T08:57:57.271571Z",
+      "terminationRequestedAt": "",
+      "paidAt": "",
+      "updateTime": "2026-10-23T08:27:57.833857Z",
+      "session": {
+        "status": "OPEN",
+        "version": "1"
+      },
+      "projection": {
+        "intentId": "239303824416735232",
+        "intentStatus": "REQUIRES_PAYMENT",
+        "successfulAttemptId": "",
+        "version": "1"
+      },
+      "paymentIntent": {
+        "intentId": "239303824416735232",
+        "status": "OPEN",
+        "activeAttemptId": "239303832952143872",
+        "successfulAttemptId": "",
+        "version": "2"
+      }
+    },
+    "ids": {
+      "intentId": "239303824416735232",
+      "attemptId": "239303832952143872",
+      "submissionId": "239303823443648512"
+    },
+    "backdatedExpiresAt": "2026-10-23T08:26:02.000000Z",
+    "pollAfterExpiry": {
+      "http": 200,
+      "code": null,
+      "status": "REQUIRES_ACTION",
+      "failureCode": null,
+      "pollAfterMs": null,
+      "actionType": "THREE_DS_CHALLENGE",
+      "last4Present": false,
+      "keys": [
+        "attemptId",
+        "card",
+        "expiresAt",
+        "failure",
+        "nextAction",
+        "observedAt",
+        "pollAfterMs",
+        "status",
+        "submissionId"
+      ],
+      "elapsedMs": 194,
+      "at": "2026-10-23T08:28:08.376488Z"
+    },
+    "customerViewAfterExpiry": {
+      "http": 410,
+      "code": "CHECKOUT_EXPIRED"
+    },
+    "customerSaveAfterExpiry": {
+      "http": 410,
+      "code": "CHECKOUT_EXPIRED"
+    },
+    "customerSubmitAfterExpiry": {
+      "http": 410,
+      "code": "CHECKOUT_EXPIRED"
+    },
+    "clientGetAfterExpiry": {
+      "http": 200,
+      "orderStatus": "OPEN",
+      "paymentStatus": "NOT_STARTED",
+      "checkoutStatus": "OPEN",
+      "checkoutUrlPresent": false
+    },
+    "pollsAfterSuccess": [
+      {
+        "http": 200,
+        "code": null,
+        "status": "SUCCEEDED",
+        "failureCode": null,
+        "pollAfterMs": null,
+        "actionType": null,
+        "last4Present": false,
+        "keys": [
+          "attemptId",
+          "card",
+          "expiresAt",
+          "failure",
+          "nextAction",
+          "observedAt",
+          "pollAfterMs",
+          "status",
+          "submissionId"
+        ],
+        "elapsedMs": 273,
+        "at": "2026-10-23T08:28:14.719997Z"
+      }
+    ],
+    "paid": {
+      "orderId": "239303822235688960",
+      "status": "PAID",
+      "reasonCode": "",
+      "version": "5",
+      "expiresAt": "2026-10-23T08:26:02.000000Z",
+      "terminationRequestedAt": "",
+      "paidAt": "2026-10-23 08:28:14.673998",
+      "updateTime": "2026-10-23T08:28:14.819211Z",
+      "session": {
+        "status": "COMPLETED",
+        "version": "2"
+      },
+      "projection": {
+        "intentId": "239303824416735232",
+        "intentStatus": "SUCCEEDED",
+        "successfulAttemptId": "239303832952143872",
+        "version": "2"
+      },
+      "paymentIntent": {
+        "intentId": "239303824416735232",
+        "status": "SUCCEEDED",
+        "activeAttemptId": "",
+        "successfulAttemptId": "239303832952143872",
+        "version": "3"
+      }
+    },
+    "attempts": [
+      {
+        "attemptId": "239303832952143872",
+        "status": "SUCCEEDED"
+      }
+    ],
+    "scan": {
+      "logId": 1792744095955,
+      "runAccepted": {
+        "code": 200,
+        "msg": "Success"
+      },
+      "handleCode": 200,
+      "summary": "order expiry scan: scanned 1, expired 1, pending 0, already paid 0, reversal required 0, skipped 0, retry 0, failed 0"
+    },
+    "afterScan": {
+      "facts": {
+        "orderId": "239303822235688960",
+        "status": "PAID",
+        "reasonCode": "",
+        "version": "5",
+        "expiresAt": "2026-10-23T08:26:02.000000Z",
+        "terminationRequestedAt": "",
+        "paidAt": "2026-10-23 08:28:14.673998",
+        "updateTime": "2026-10-23T08:28:14.819211Z",
+        "session": {
+          "status": "COMPLETED",
+          "version": "2"
+        },
+        "projection": {
+          "intentId": "239303824416735232",
+          "intentStatus": "SUCCEEDED",
+          "successfulAttemptId": "239303832952143872",
+          "version": "2"
+        },
+        "paymentIntent": {
+          "intentId": "239303824416735232",
+          "status": "SUCCEEDED",
+          "activeAttemptId": "",
+          "successfulAttemptId": "239303832952143872",
+          "version": "3"
+        }
+      },
+      "get": {
+        "http": 200,
+        "orderStatus": "PAID",
+        "paymentStatus": "SUCCEEDED",
+        "checkoutStatus": "COMPLETED",
+        "checkoutUrlPresent": false
+      },
+      "platformEvents": [
+        {
+          "eventType": "order.paid",
+          "sourceEventKey": "evt_ord_3L5VmtoflSHBWF4HfQIXjWPwa6Q4G6_paid",
+          "sourceVersion": "5"
+        }
+      ],
+      "compensation": [
+        {
+          "eventType": "ORDER_PAYMENT_SUCCEEDED",
+          "subEventType": "-",
+          "executeStatus": "ERROR",
+          "executeCount": "1"
+        }
+      ]
+    },
+    "pollAfterPaid": {
+      "http": 200,
+      "code": null,
+      "status": "SUCCEEDED",
+      "failureCode": null,
+      "pollAfterMs": null,
+      "actionType": null,
+      "last4Present": false,
+      "keys": [
+        "attemptId",
+        "card",
+        "expiresAt",
+        "failure",
+        "nextAction",
+        "observedAt",
+        "pollAfterMs",
+        "status",
+        "submissionId"
+      ],
+      "elapsedMs": 45,
+      "at": "2026-10-23T08:28:19.300643Z"
+    },
+    "orderQueries": 4,
+    "verdict": {
+      "AC01_pollAfterExpiryNot410": true,
+      "AC01_pollSucceeded": true,
+      "AC01_orderPaid": true,
+      "AC01_scanKeepsPaid": true,
+      "AC01_pollAfterPaid": true,
+      "AC05_view410": true,
+      "AC05_save410": true,
+      "AC05_submit410": true,
+      "AC06_noCheckoutUrl": true
+    }
+  },
+  "S2": {
+    "orderNo": "ord_3L5VqzKg1xn47QoMdArnu3tCEOx4A6",
+    "created": {
+      "http": 201,
+      "orderStatus": null,
+      "total": "333.00",
+      "expiresAt": "2026-10-23T08:58:30.179629Z"
+    },
+    "submission": {
+      "status": "REQUIRES_ACTION",
+      "note": "submissionId=239303961503358976 attemptId=239303962379976704 status=REQUIRES_ACTION last4=* failure=None",
+      "actionType": "THREE_DS_CHALLENGE"
+    },
+    "beforeExpiry": {
+      "orderId": "239303960266039296",
+      "status": "OPEN",
+      "reasonCode": "",
+      "version": "4",
+      "expiresAt": "2026-10-23T08:58:30.179629Z",
+      "terminationRequestedAt": "",
+      "paidAt": "",
+      "updateTime": "2026-10-23T08:28:30.523844Z",
+      "session": {
+        "status": "OPEN",
+        "version": "1"
+      },
+      "projection": {
+        "intentId": "239303961650167808",
+        "intentStatus": "REQUIRES_PAYMENT",
+        "successfulAttemptId": "",
+        "version": "1"
+      },
+      "paymentIntent": {
+        "intentId": "239303961650167808",
+        "status": "OPEN",
+        "activeAttemptId": "239303962379976704",
+        "successfulAttemptId": "",
+        "version": "2"
+      }
+    },
+    "ids": {
+      "intentId": "239303961650167808",
+      "attemptId": "239303962379976704",
+      "submissionId": "239303961503358976"
+    },
+    "backdatedExpiresAt": "2026-10-23T08:26:31.000000Z",
+    "pollAfterExpiry": {
+      "http": 200,
+      "code": null,
+      "status": "REQUIRES_ACTION",
+      "failureCode": null,
+      "pollAfterMs": null,
+      "actionType": "THREE_DS_CHALLENGE",
+      "last4Present": false,
+      "keys": [
+        "attemptId",
+        "card",
+        "expiresAt",
+        "failure",
+        "nextAction",
+        "observedAt",
+        "pollAfterMs",
+        "status",
+        "submissionId"
+      ],
+      "elapsedMs": 265,
+      "at": "2026-10-23T08:28:37.783229Z"
+    },
+    "pollsAfterFailure": [
+      {
+        "http": 200,
+        "code": null,
+        "status": "FAILED",
+        "failureCode": "PAYMENT_FAILED",
+        "pollAfterMs": null,
+        "actionType": null,
+        "last4Present": false,
+        "keys": [
+          "attemptId",
+          "card",
+          "expiresAt",
+          "failure",
+          "nextAction",
+          "observedAt",
+          "pollAfterMs",
+          "status",
+          "submissionId"
+        ],
+        "elapsedMs": 250,
+        "at": "2026-10-23T08:28:44.038904Z"
+      }
+    ],
+    "afterFailure": {
+      "facts": {
+        "orderId": "239303960266039296",
+        "status": "OPEN",
+        "reasonCode": "",
+        "version": "4",
+        "expiresAt": "2026-10-23T08:26:31.000000Z",
+        "terminationRequestedAt": "",
+        "paidAt": "",
+        "updateTime": "2026-10-23T08:28:30.523844Z",
+        "session": {
+          "status": "OPEN",
+          "version": "1"
+        },
+        "projection": {
+          "intentId": "239303961650167808",
+          "intentStatus": "REQUIRES_PAYMENT",
+          "successfulAttemptId": "",
+          "version": "1"
+        },
+        "paymentIntent": {
+          "intentId": "239303961650167808",
+          "status": "OPEN",
+          "activeAttemptId": "",
+          "successfulAttemptId": "",
+          "version": "3"
+        }
+      },
+      "attempts": [
+        {
+          "attemptId": "239303962379976704",
+          "status": "FAILED"
+        }
+      ]
+    },
+    "scan": {
+      "logId": 1792744124181,
+      "runAccepted": {
+        "code": 200,
+        "msg": "Success"
+      },
+      "handleCode": 200,
+      "summary": "order expiry scan: scanned 1, expired 1, pending 0, already paid 0, reversal required 0, skipped 0, retry 0, failed 0"
+    },
+    "afterScan": {
+      "facts": {
+        "orderId": "239303960266039296",
+        "status": "EXPIRED",
+        "reasonCode": "EXPIRY_REACHED",
+        "version": "6",
+        "expiresAt": "2026-10-23T08:26:31.000000Z",
+        "terminationRequestedAt": "2026-10-23T08:28:44.197976Z",
+        "paidAt": "",
+        "updateTime": "2026-10-23T08:28:44.234761Z",
+        "session": {
+          "status": "EXPIRED",
+          "version": "2"
+        },
+        "projection": {
+          "intentId": "239303961650167808",
+          "intentStatus": "EXPIRED",
+          "successfulAttemptId": "",
+          "version": "2"
+        },
+        "paymentIntent": {
+          "intentId": "239303961650167808",
+          "status": "EXPIRED",
+          "activeAttemptId": "",
+          "successfulAttemptId": "",
+          "version": "4"
+        }
+      },
+      "get": {
+        "http": 200,
+        "orderStatus": "EXPIRED",
+        "paymentStatus": "EXPIRED",
+        "checkoutStatus": "EXPIRED",
+        "checkoutUrlPresent": false
+      },
+      "platformEvents": [
+        {
+          "eventType": "order.expired",
+          "sourceEventKey": "evt_ord_3L5VqzKg1xn47QoMdArnu3tCEOx4A6_expired",
+          "sourceVersion": "6"
+        }
+      ]
+    },
+    "pollAfterOrderExpired": {
+      "http": 200,
+      "code": null,
+      "status": "FAILED",
+      "failureCode": "PAYMENT_FAILED",
+      "pollAfterMs": null,
+      "actionType": null,
+      "last4Present": false,
+      "keys": [
+        "attemptId",
+        "card",
+        "expiresAt",
+        "failure",
+        "nextAction",
+        "observedAt",
+        "pollAfterMs",
+        "status",
+        "submissionId"
+      ],
+      "elapsedMs": 78,
+      "at": "2026-10-23T08:28:51.482075Z"
+    },
+    "orderQueries": 4,
+    "verdict": {
+      "AC02_pollAfterExpiryNot410": true,
+      "AC02_pollFailed": true,
+      "attemptFailed": true,
+      "AC02_orderSessionExpired": true,
+      "AC02_B4_pollAfterOrderExpired": true,
+      "orderExpiredEventOnce": true
+    }
+  },
+  "S3": {
+    "orderNo": "ord_3L5VtfpT3lEH8Wg8rBw8d2PRLnt5yC",
+    "created": {
+      "http": 201,
+      "orderStatus": null,
+      "total": "333.00",
+      "expiresAt": "2026-10-23T08:58:51.494151Z"
+    },
+    "submission": {
+      "status": "REQUIRES_ACTION",
+      "note": "submissionId=239304050326134784 attemptId=239304051177586688 status=REQUIRES_ACTION last4=* failure=None",
+      "actionType": "THREE_DS_CHALLENGE"
+    },
+    "beforeExpiry": {
+      "orderId": "239304049663434752",
+      "status": "OPEN",
+      "reasonCode": "",
+      "version": "4",
+      "expiresAt": "2026-10-23T08:58:51.494151Z",
+      "terminationRequestedAt": "",
+      "paidAt": "",
+      "updateTime": "2026-10-23T08:28:51.693605Z",
+      "session": {
+        "status": "OPEN",
+        "version": "1"
+      },
+      "projection": {
+        "intentId": "239304050447777792",
+        "intentStatus": "REQUIRES_PAYMENT",
+        "successfulAttemptId": "",
+        "version": "1"
+      },
+      "paymentIntent": {
+        "intentId": "239304050447777792",
+        "status": "OPEN",
+        "activeAttemptId": "239304051177586688",
+        "successfulAttemptId": "",
+        "version": "2"
+      }
+    },
+    "ids": {
+      "intentId": "239304050447777792",
+      "attemptId": "239304051177586688",
+      "submissionId": "239304050326134784"
+    },
+    "backdatedExpiresAt": "2026-10-23T08:26:52.000000Z",
+    "pollA": {
+      "http": 200,
+      "code": null,
+      "status": "REQUIRES_ACTION",
+      "failureCode": null,
+      "pollAfterMs": null,
+      "actionType": "THREE_DS_CHALLENGE",
+      "last4Present": false,
+      "keys": [
+        "attemptId",
+        "card",
+        "expiresAt",
+        "failure",
+        "nextAction",
+        "observedAt",
+        "pollAfterMs",
+        "status",
+        "submissionId"
+      ],
+      "elapsedMs": 184,
+      "at": "2026-10-23T08:28:58.761864Z"
+    },
+    "pollB": {
+      "http": 200,
+      "code": null,
+      "status": "REQUIRES_ACTION",
+      "failureCode": null,
+      "pollAfterMs": null,
+      "actionType": "THREE_DS_CHALLENGE",
+      "last4Present": false,
+      "keys": [
+        "attemptId",
+        "card",
+        "expiresAt",
+        "failure",
+        "nextAction",
+        "observedAt",
+        "pollAfterMs",
+        "status",
+        "submissionId"
+      ],
+      "elapsedMs": 13,
+      "at": "2026-10-23T08:28:58.775931Z"
+    },
+    "windowMs": 198,
+    "pollC": {
+      "http": 200,
+      "code": null,
+      "status": "REQUIRES_ACTION",
+      "failureCode": null,
+      "pollAfterMs": null,
+      "actionType": "THREE_DS_CHALLENGE",
+      "last4Present": false,
+      "keys": [
+        "attemptId",
+        "card",
+        "expiresAt",
+        "failure",
+        "nextAction",
+        "observedAt",
+        "pollAfterMs",
+        "status",
+        "submissionId"
+      ],
+      "elapsedMs": 170,
+      "at": "2026-10-23T08:29:05.958034Z"
+    },
+    "orderQueries": {
+      "beforePair": 2,
+      "afterPair": 3,
+      "afterThirdBeyond5s": 4,
+      "pairDelta": 1,
+      "thirdDelta": 1
+    },
+    "facts": {
+      "orderId": "239304049663434752",
+      "status": "OPEN",
+      "reasonCode": "",
+      "version": "4",
+      "expiresAt": "2026-10-23T08:26:52.000000Z",
+      "terminationRequestedAt": "",
+      "paidAt": "",
+      "updateTime": "2026-10-23T08:28:51.693605Z",
+      "session": {
+        "status": "OPEN",
+        "version": "1"
+      },
+      "projection": {
+        "intentId": "239304050447777792",
+        "intentStatus": "REQUIRES_PAYMENT",
+        "successfulAttemptId": "",
+        "version": "1"
+      },
+      "paymentIntent": {
+        "intentId": "239304050447777792",
+        "status": "OPEN",
+        "activeAttemptId": "239304051177586688",
+        "successfulAttemptId": "",
+        "version": "2"
+      }
+    },
+    "attempts": [
+      {
+        "attemptId": "239304051177586688",
+        "status": "PROCESSING"
+      }
+    ],
+    "verdict": {
+      "AC03_bothPending": true,
+      "AC03_withinWindow": true,
+      "AC03_atMostOneQueryInWindow": true,
+      "orderStillOpen": true
+    }
+  },
+  "S5": {
+    "windowStart": "2026-10-23T08:27:51.628969Z",
+    "acquiring": {
+      "linesInWindow": 136,
+      "hits": {
+        "pan": 0,
+        "cvvKey": 0,
+        "acsSecret": 0,
+        "checkoutPublicToken": 0,
+        "tokenShape": 0,
+        "redirectUrl": 0
+      },
+      "warnCount": 4,
+      "errorCount": 0,
+      "warnSamples": [
+        "LoadBalancerCacheManager not available, returning delegate without caching.",
+        "Returned message but no callback available"
+      ]
+    },
+    "payment": {
+      "linesInWindow": 22,
+      "hits": {
+        "pan": 0,
+        "cvvKey": 0,
+        "acsSecret": 0,
+        "checkoutPublicToken": 0,
+        "tokenShape": 0,
+        "redirectUrl": 0
+      },
+      "warnCount": 0,
+      "errorCount": 0,
+      "warnSamples": []
+    },
+    "checkedTokens": 4,
+    "verdict": {
+      "noLeak": true
+    }
+  }
+}

@@ -1,0 +1,16 @@
+2026-10-23T09:42:03Z
+== sha256:27c36f4e3a16e10fd72c14c7667786dd5cbc795d4b2b400b52388c72c22f0437
+Entrypoint=["java","-Xms128m","-Xmx512m","-Duser.home=/tmp","-Djava.io.tmpdir=/tmp","-jar","/app/application.jar"] Cmd=null User=10001:10001 WorkingDir=/app ExposedPorts=null Healthcheck=null EnvCount=6 Layers=8 Size=198384685
+EnvJsonSha256Prefix=8a01239f3e8f09b8
+JarSha256=ec8487bd07a722f67561dea551083c7cbe0a664124ee5fde52a9807dab3cbbcc
+HealthProbeDirDigest=1b237ccdbe2467dcd56308b7071f3ea940dad031d8ea7f534d387f7f333861bd
+JarOwnerMode=10001:10001 644
+== sha256:f6d55ade25d1cfdadcc499f487e291be15910883db16ec4ff60ce8088ebbbd33
+Entrypoint=["java","-Xms128m","-Xmx512m","-Duser.home=/tmp","-Djava.io.tmpdir=/tmp","-jar","/app/application.jar"] Cmd=null User=10001:10001 WorkingDir=/app ExposedPorts=null Healthcheck=null EnvCount=6 Layers=9 Size=294535201
+EnvJsonSha256Prefix=8a01239f3e8f09b8
+JarSha256=dca404ec4d30187625692f5919c6686d8bd7533c26e870fc41c253eecb2ede86
+HealthProbeDirDigest=1b237ccdbe2467dcd56308b7071f3ea940dad031d8ea7f534d387f7f333861bd
+JarOwnerMode=10001:10001 644
+== 构建上下文 /private/tmp/claude-501/-Users-kenny-Desktop-Workspace-Code-MoR/ba6af14f-0f7f-4481-9091-938816c03267/scratchpad/f1-rel/ctx：Dockerfile 两行 + app.jar（cp 自 local-environment/e2e/jars/paytech-acquiring-app-exec.jar）
+FROM sha256:27c36f4e3a16e10fd72c14c7667786dd5cbc795d4b2b400b52388c72c22f0437
+COPY --chown=10001:10001 app.jar /app/application.jar

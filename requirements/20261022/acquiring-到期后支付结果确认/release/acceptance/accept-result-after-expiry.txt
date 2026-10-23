@@ -1,0 +1,15 @@
+2026-10-23T10:09:33.507Z == pa
+2026-10-23T10:09:40.086Z P-A1 order=ord_3L5AsWBReR5fhapDgfcFmzJP69J4j7 poll=410/CHECKOUT_EXPIRED view=410/CHECKOUT_EXPIRED paymentDelta={}
+2026-10-23T10:09:46.846Z P-A2 order=ord_3L5B19KdF51LBU8SlDrMMltfy1VEJB intent=9410000032110446 (in payment: 0) submission=9420000033848214 poll=410/CHECKOUT_EXPIRED paymentDelta={'{error="none",exception="none",method="POST",outcome="CLIENT_ERROR",status="404",uri="/payment-execution/v1/intents/{intentId}/submissions/{sourceSubmissionId}/refresh"}': 1.0} acquiringClientDelta={'{client_name="payment-service",error="NotFound",exception="NotFound",method="POST",outcome="CLIENT_ERROR",status="404",uri="/payment/payment-execution/v1/intents/{intentId}/submissions/{sourceSubmissionId}/refresh"}': 1.0}
+2026-10-23T10:09:46.849Z P-A-2026-10-23T10:09:46.848Z saved verdict={"PA1_poll410": true, "PA1_view410": true, "PA1_noPaymentRequest": true, "PA2_poll410": true, "PA2_intentAbsentInPayment": true, "PA2_oneRefresh404": true}
+2026-10-23T10:09:55.060Z == pb
+2026-10-23T10:09:57.170Z P-B 建结账 HTTP 201 orderNo=ord_3L5iBmKka8K2co3YqrB8Ni5DWZU9yk expiresAt=2026-10-23T10:16:08Z code=None
+2026-10-23T10:09:59.035Z P-B 保存消费者资料 HTTP 200 code=None
+2026-10-23T10:10:03.192Z P-B 提交卡支付 HTTP 200 status=FAILED code=None
+2026-10-23T10:10:06.902Z P-B 提交结果 200 FAILED failure=THREE_DS_CHANNEL_UNAVAILABLE interactions 0->0
+2026-10-23T10:10:08.084Z P-B 到期前查询 200 FAILED
+2026-10-23T10:10:08.084Z P-B 等待到期 360 秒（expires_at=2026-10-23T10:16:08.000000Z）
+2026-10-23T10:16:13.110Z P-B 到期后扫描前 {"orderStatusBefore": "OPEN", "poll": {"http": 200, "code": null, "status": "FAILED", "failureCode": "THREE_DS_CHANNEL_UNAVAILABLE", "pollAfterMs": null, "last4Present": false, "keys": ["attemptId", "card", "expiresAt", "failure", "nextAction", "observedAt", "pollAfterMs", "status", "submissionId"], "at": "2026-10-23T10:16:10.399Z"}, "view": {"http": 410, "code": "CHECKOUT_EXPIRED", "at": "2026-10-23T10:16:11.197Z"}, "submitAgain": {"http": 410, "code": "CHECKOUT_EXPIRED", "at": "2026-10-23T10:16:11.994Z"}, "clientGet": {"http": 200, "orderStatus": "OPEN", "paymentStatus": "NOT_STARTED", "checkoutStatus": "OPEN", "checkoutUrlPresent": false, "at": "2026-10-23T10:16:12.990Z"}, "orderStatusAfter": "OPEN"}
+2026-10-23T10:17:06.383Z P-B 扫描后 status=EXPIRED reason=EXPIRY_REACHED poll=200 FAILED
+2026-10-23T10:17:06.385Z P-B-2026-10-23T10:09:55.060Z saved verdict={"submitFailed3dsUnavailable": true, "noChannelInteraction": true, "pollBeforeExpiryFailed": true, "AC02a_pollAfterExpiryFailed": true, "AC02a_windowBeforeScan": true, "AC05_view410": true, "AC05_submit410": true, "AC06_noCheckoutUrl": true, "AC02b_orderExpired": true, "AC02b_orderExpiredEventOnce": true, "AC02b_B4_pollAfterOrderExpired": true}
+2026-10-23T10:17:06.438Z leak-2026-10-23T10:17:06.437Z saved verdict={"noLeak": true}

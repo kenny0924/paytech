@@ -29,6 +29,7 @@ import lombok.AllArgsConstructor;
 /**
  * 按已授权订单和 Intent 查询 Payment 原提交，不读取命令或响应快照。
  * <li>经 Payment 刷新接口读取（3DS 全链路 technique 3.3.6）：仍在验证或确认中时由 Payment 限频触发一次查单确认，本服务不写库。</li>
+ * <li>订单到期不影响已提交支付的结果查询（到期后支付结果确认）；未提交过支付时到期返回 CHECKOUT_EXPIRED。</li>
  */
 @Component
 @AllArgsConstructor
@@ -56,7 +57,7 @@ public class GetCustomerPaymentProcessor
     protected CustomerPaymentResponse processRequest(GetCustomerPaymentRequest request) {
         var session = getAndCheckSession(request.getCheckoutToken());
         var order = getAndCheckOrder(session.getOrderId());
-        var projection = getAndCheckPayment(order.getOrderId());
+        var projection = getAndCheckPayment(order);
         var context = new CustomerPaymentQueryContext(order, projection, request.getSubmissionId());
         var result = queryPayment(context);
         return processResponse(context, result);
@@ -71,20 +72,20 @@ public class GetCustomerPaymentProcessor
         return session;
     }
 
-    /** 校验原订单的访问期限；已支付或取消不影响有效期内查询原支付。 */
+    /** 只校验原订单存在；到期与已支付、取消均不阻止查询已提交的支付。 */
     CommerceOrder getAndCheckOrder(long orderId) {
         var order = orderRepository.findByOrderId(orderId);
         if (order == null) {
             throw new FailException(CHECKOUT_NOT_FOUND);
         }
-        order.checkExpiry(clock.instant());
         return order;
     }
 
-    /** 只读取该订单已绑定的 Intent，不查询合同、接受或消费者资料。 */
-    OrderPaymentProjection getAndCheckPayment(long orderId) {
-        var projection = paymentRepository.findByOrderId(orderId);
+    /** 只读取该订单已绑定的 Intent；无支付记录视同未提交：到期返回 CHECKOUT_EXPIRED，未到期返回提交不存在。 */
+    OrderPaymentProjection getAndCheckPayment(CommerceOrder order) {
+        var projection = paymentRepository.findByOrderId(order.getOrderId());
         if (projection == null) {
+            order.checkExpiry(clock.instant());
             throw new FailException(PAYMENT_SUBMISSION_NOT_FOUND);
         }
         return projection;
@@ -92,8 +93,8 @@ public class GetCustomerPaymentProcessor
 
     /**
      * 刷新查询同订单、Intent 和提交编号的结果
-     * <li>Payment 未找到时返回 PAYMENT_SUBMISSION_NOT_FOUND，不推断为支付失败。</li>
-     * <li>Payment 不可用时与提交响应未知相同降级：返回空结果，由响应保持处理中并继续轮询。</li>
+     * <li>Payment 未找到时视同未提交：到期返回 CHECKOUT_EXPIRED，否则返回 PAYMENT_SUBMISSION_NOT_FOUND，不推断为支付失败。</li>
+     * <li>Payment 不可用时与提交响应未知相同降级（不论是否到期）：返回空结果，由响应保持处理中并继续轮询。</li>
      */
     PaymentResult queryPayment(CustomerPaymentQueryContext context) {
         var reference = context.paymentReference();
@@ -104,15 +105,15 @@ public class GetCustomerPaymentProcessor
             return null;
         }
         if (result == null) {
+            context.getOrder().checkExpiry(clock.instant());
             throw new FailException(PAYMENT_SUBMISSION_NOT_FOUND);
         }
         result.validateQueried(reference, clock.instant());
         return result;
     }
 
-    /** 复用已有上下文，仅按当前时间检查原期限；不为普通状态变化重复查库或返回版本冲突。 */
+    /** 复用已有上下文组装响应；已取得 Payment 结果即返回，不再检查期限，也不为普通状态变化重复查库或返回版本冲突。 */
     CustomerPaymentResponse processResponse(CustomerPaymentQueryContext context, PaymentResult result) {
-        context.getOrder().checkExpiry(clock.instant());
         return new CustomerPaymentResponse(context.paymentReference(), context.getOrder().getExpiresAt(), result);
     }
 }

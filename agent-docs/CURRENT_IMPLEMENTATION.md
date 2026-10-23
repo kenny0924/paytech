@@ -35,6 +35,14 @@
 - **Deployed：** mor-test 2026-10-23 05:22—05:30Z（窗口 05:23:57—05:25:27Z）：card `810b6b72…`、client-master `2e495b40…`、client-console-bff `b8ecaaea…`、ops-bff `06d850d1…`、platform `68ba631f…`、ops-web `f8b5dc32…`（源 `22ede435` + 本需求，ops-web 另含当时 16 个未提交文件）；DDL、回填 70 行、块 130 / 134 已执行并激活；MinIO 公开测试桶 `mor-platform-public` 已登记为 PUBLIC 并保留；postcheck 23/23、验收 87/89（2 项为脚本问题，已补验 / 修正）。
 - **Pending / 遗留：** 推送另行授权；真实 AWS S3 公开桶与 CDN 未实测（需公开桶与 `S3_TEST` 复制权限）；`local-environment/minio/init/init.sh` 未纳入公开桶（重跑 minio-init 会覆盖 `platform-files` 策略）；检查策略表「状态」列在窄屏被详情面板遮挡；公开文件被外部改写且无待执行同步任务时，后续替换返回 409 需人工恢复。
 
+## acquiring 订单到期后的支付结果确认（2026-10-23，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [需求](<../requirements/20261022/acquiring-到期后支付结果确认/requirement.md>)、[技术方案](<../requirements/20261022/acquiring-到期后支付结果确认/technique.md>)、[交付记录](<../requirements/20261022/acquiring-到期后支付结果确认/delivery.md>)、[发布记录](<../requirements/20261022/acquiring-到期后支付结果确认/release/release.md>)。来源为订单过期收尾 F1；参照 Stripe（提交后会话不再过期）。无 DDL、无 Platform 注册、无配置项；[Client API v1 设计](../docs/superpowers/specs/2026-09-05-commerce-client-api-v1-design.md)第 6 节 Token 校验与第 8.2 节已按本需求修订。
+- **Implemented：** acquiring `GetCustomerPaymentProcessor`：到期检查从入口移到“无支付记录”与“Payment 未找到该提交”两个分支（到期 410 `CHECKOUT_EXPIRED`，未到期 404 `PAYMENT_SUBMISSION_NOT_FOUND`），删除响应前复查；已提交支付在订单到期（含已 EXPIRED）后仍刷新 Payment 并返回真实结果，Payment 不可用降级为处理中。写操作与查看收银台到期规则不变。
+- **Verified：** acquiring `auto` 847/847（main `98210e0b` + 本需求）；本机 e2e S1—S5（3DS 挑战中到期后成功 / 失败、5 秒限频、未提交 410、日志泄漏 0）；mor-test P-A1 / P-A2（D1）、P-B 合成 600.00 USD 订单自然到期后 200 FAILED、扫描 EXPIRED 后仍 200 FAILED。3DS 成功、处理中限频只在本机验证（mor-test 无 3DS 渠道）。
+- **Deployed：** mor-test 2026-10-23 10:03Z：acquiring `f6d55ade…`（JAR `dca404ec`，现网镜像覆盖 JAR，源 main `a816bd14` + 本需求；JAR 相对前版另含 `f707f2da` / `be688db7` 两个公共库变更，acquiring 未使用），回滚目标 `27c36f4e…`（billing B 发布）。
+- **Pending / 遗留：** 推送另行授权；查看收银台到期后的只读页面留给 `checkout-web` 需求（前端跳回后先查支付结果）；Payment 已终止 Intent 后渠道晚到成功的自动退款另立需求（前置 Payment 退款链路）。
+
 ## acquiring 订单与会话过期收尾（2026-10-23，已部署 mor-test，已本地提交 `623916ac`，未推送；提交重建 JAR 与运行一致）
 
 - **范围：** [需求](<../requirements/20261022/acquiring-订单过期收尾/requirement.md>)、[技术方案](<../requirements/20261022/acquiring-订单过期收尾/technique.md>)、[交付记录](<../requirements/20261022/acquiring-订单过期收尾/delivery.md>)、[发布记录](<../requirements/20261022/acquiring-订单过期收尾/release/release.md>)。无 DDL、无 Platform 路由注册；过期终态时刻取 `expires_at`，原因码 `EXPIRY_REACHED` 登记到 [Commerce Order Status Reason Catalog](./database/COMMERCE_DATABASE.md)。

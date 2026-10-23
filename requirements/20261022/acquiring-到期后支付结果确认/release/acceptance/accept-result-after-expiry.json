@@ -1,0 +1,334 @@
+{
+ "P-A-2026-10-23T10:09:46.848Z": {
+  "at": "2026-10-23T10:09:33.592Z",
+  "probeImage": "sha256:cf9097ea8685",
+  "P-A1": {
+   "orderNo": "ord_3L5AsWBReR5fhapDgfcFmzJP69J4j7",
+   "poll": {
+    "http": 410,
+    "code": "CHECKOUT_EXPIRED",
+    "status": null,
+    "at": "2026-10-23T10:09:36.833Z"
+   },
+   "view": {
+    "http": 410,
+    "code": "CHECKOUT_EXPIRED",
+    "at": "2026-10-23T10:09:38.045Z"
+   },
+   "paymentRequestDelta": {}
+  },
+  "P-A2": {
+   "orderNo": "ord_3L5B19KdF51LBU8SlDrMMltfy1VEJB",
+   "paymentIntentId": "9410000032110446",
+   "submissionId": "9420000033848214",
+   "expiresAt": "2026-10-23T06:07:10Z",
+   "intentInPayment": 0,
+   "poll": {
+    "http": 410,
+    "code": "CHECKOUT_EXPIRED",
+    "status": null,
+    "at": "2026-10-23T10:09:43.599Z"
+   },
+   "paymentRequestDelta": {
+    "{error=\"none\",exception=\"none\",method=\"POST\",outcome=\"CLIENT_ERROR\",status=\"404\",uri=\"/payment-execution/v1/intents/{intentId}/submissions/{sourceSubmissionId}/refresh\"}": 1.0
+   },
+   "acquiringClientDelta": {
+    "{client_name=\"payment-service\",error=\"NotFound\",exception=\"NotFound\",method=\"POST\",outcome=\"CLIENT_ERROR\",status=\"404\",uri=\"/payment/payment-execution/v1/intents/{intentId}/submissions/{sourceSubmissionId}/refresh\"}": 1.0
+   }
+  },
+  "verdict": {
+   "PA1_poll410": true,
+   "PA1_view410": true,
+   "PA1_noPaymentRequest": true,
+   "PA2_poll410": true,
+   "PA2_intentAbsentInPayment": true,
+   "PA2_oneRefresh404": true
+  }
+ },
+ "P-B-2026-10-23T10:09:55.060Z": {
+  "startedAt": "2026-10-23T10:09:55.060Z",
+  "clientId": "239260386824658945",
+  "amount": "600.00",
+  "card": "公开测试卡 401288…（GB VISA DEBIT）",
+  "created": {
+   "http": 201,
+   "code": null,
+   "orderNo": "ord_3L5iBmKka8K2co3YqrB8Ni5DWZU9yk",
+   "orderStatus": null,
+   "total": "600.00",
+   "expiresAt": "2026-10-23T10:16:08Z",
+   "checkoutUrlPresent": true
+  },
+  "orderNo": "ord_3L5iBmKka8K2co3YqrB8Ni5DWZU9yk",
+  "saveConsumer": {
+   "http": 200,
+   "code": null
+  },
+  "contractReady": {
+   "allowedActions": [
+    "SAVE_CONSUMER",
+    "PAY"
+   ],
+   "preparationStatus": "READY"
+  },
+  "channelInteractionsBefore": 0,
+  "submit": {
+   "http": 200,
+   "code": null,
+   "status": "FAILED",
+   "failureCode": null,
+   "pollAfterMs": null,
+   "last4Present": false,
+   "keys": [
+    "attemptId",
+    "card",
+    "expiresAt",
+    "failure",
+    "nextAction",
+    "observedAt",
+    "pollAfterMs",
+    "status",
+    "submissionId"
+   ],
+   "submissionIdPresent": true
+  },
+  "submissionResult": {
+   "http": 200,
+   "code": null,
+   "status": "FAILED",
+   "failureCode": "THREE_DS_CHANNEL_UNAVAILABLE",
+   "pollAfterMs": null,
+   "last4Present": false,
+   "keys": [
+    "attemptId",
+    "card",
+    "expiresAt",
+    "failure",
+    "nextAction",
+    "observedAt",
+    "pollAfterMs",
+    "status",
+    "submissionId"
+   ],
+   "at": "2026-10-23T10:10:04.745Z"
+  },
+  "channelInteractionsAfter": 0,
+  "submissionId": "239329505183907840",
+  "factsAfterSubmit": {
+   "orderId": "239329486158544896",
+   "status": "OPEN",
+   "reasonCode": "",
+   "version": "4",
+   "expiresAt": "2026-10-23T10:16:08.000000Z",
+   "updateTime": "2026-10-23T10:10:00.874734Z",
+   "session": {
+    "status": "OPEN",
+    "version": "1"
+   },
+   "projection": {
+    "intentId": "239329506266009600",
+    "intentStatus": "REQUIRES_PAYMENT",
+    "lastAttemptId": "",
+    "lastAttemptStatus": "",
+    "version": "1"
+   },
+   "paymentIntent": {
+    "intentId": "239329506266009600",
+    "status": "OPEN",
+    "activeAttemptId": "",
+    "version": "3"
+   },
+   "attempts": [
+    {
+     "attemptId": "239329512368721920",
+     "status": "FAILED",
+     "midId": "238508278684950528"
+    }
+   ]
+  },
+  "pollBeforeExpiry": {
+   "http": 200,
+   "code": null,
+   "status": "FAILED",
+   "failureCode": "THREE_DS_CHANNEL_UNAVAILABLE",
+   "pollAfterMs": null,
+   "last4Present": false,
+   "keys": [
+    "attemptId",
+    "card",
+    "expiresAt",
+    "failure",
+    "nextAction",
+    "observedAt",
+    "pollAfterMs",
+    "status",
+    "submissionId"
+   ],
+   "at": "2026-10-23T10:10:08.083Z"
+  },
+  "afterExpiryBeforeScan": {
+   "orderStatusBefore": "OPEN",
+   "poll": {
+    "http": 200,
+    "code": null,
+    "status": "FAILED",
+    "failureCode": "THREE_DS_CHANNEL_UNAVAILABLE",
+    "pollAfterMs": null,
+    "last4Present": false,
+    "keys": [
+     "attemptId",
+     "card",
+     "expiresAt",
+     "failure",
+     "nextAction",
+     "observedAt",
+     "pollAfterMs",
+     "status",
+     "submissionId"
+    ],
+    "at": "2026-10-23T10:16:10.399Z"
+   },
+   "view": {
+    "http": 410,
+    "code": "CHECKOUT_EXPIRED",
+    "at": "2026-10-23T10:16:11.197Z"
+   },
+   "submitAgain": {
+    "http": 410,
+    "code": "CHECKOUT_EXPIRED",
+    "at": "2026-10-23T10:16:11.994Z"
+   },
+   "clientGet": {
+    "http": 200,
+    "orderStatus": "OPEN",
+    "paymentStatus": "NOT_STARTED",
+    "checkoutStatus": "OPEN",
+    "checkoutUrlPresent": false,
+    "at": "2026-10-23T10:16:12.990Z"
+   },
+   "orderStatusAfter": "OPEN"
+  },
+  "afterScan": {
+   "facts": {
+    "orderId": "239329486158544896",
+    "status": "EXPIRED",
+    "reasonCode": "EXPIRY_REACHED",
+    "version": "6",
+    "expiresAt": "2026-10-23T10:16:08.000000Z",
+    "updateTime": "2026-10-23T10:17:00.440789Z",
+    "session": {
+     "status": "EXPIRED",
+     "version": "2"
+    },
+    "projection": {
+     "intentId": "239329506266009600",
+     "intentStatus": "EXPIRED",
+     "lastAttemptId": "",
+     "lastAttemptStatus": "",
+     "version": "2"
+    },
+    "paymentIntent": {
+     "intentId": "239329506266009600",
+     "status": "EXPIRED",
+     "activeAttemptId": "",
+     "version": "4"
+    },
+    "attempts": [
+     {
+      "attemptId": "239329512368721920",
+      "status": "FAILED",
+      "midId": "238508278684950528"
+     }
+    ]
+   },
+   "platformEvents": [
+    {
+     "eventType": "order.expired",
+     "sourceVersion": "6"
+    }
+   ],
+   "job23": [
+    [
+     "2026-10-23T10:17:00",
+     "200",
+     "200",
+     ""
+    ]
+   ],
+   "clientGet": {
+    "http": 200,
+    "orderStatus": "EXPIRED",
+    "paymentStatus": "EXPIRED",
+    "checkoutUrlPresent": false
+   }
+  },
+  "pollAfterOrderExpired": {
+   "http": 200,
+   "code": null,
+   "status": "FAILED",
+   "failureCode": "THREE_DS_CHANNEL_UNAVAILABLE",
+   "pollAfterMs": null,
+   "last4Present": false,
+   "keys": [
+    "attemptId",
+    "card",
+    "expiresAt",
+    "failure",
+    "nextAction",
+    "observedAt",
+    "pollAfterMs",
+    "status",
+    "submissionId"
+   ],
+   "at": "2026-10-23T10:17:06.383Z"
+  },
+  "finishedAt": "2026-10-23T10:17:06.384Z",
+  "verdict": {
+   "submitFailed3dsUnavailable": true,
+   "noChannelInteraction": true,
+   "pollBeforeExpiryFailed": true,
+   "AC02a_pollAfterExpiryFailed": true,
+   "AC02a_windowBeforeScan": true,
+   "AC05_view410": true,
+   "AC05_submit410": true,
+   "AC06_noCheckoutUrl": true,
+   "AC02b_orderExpired": true,
+   "AC02b_orderExpiredEventOnce": true,
+   "AC02b_B4_pollAfterOrderExpired": true
+  },
+  "tokensChecked": 1
+ },
+ "leak-2026-10-23T10:17:06.437Z": {
+  "since": "2026-10-23T10:09:55.060Z",
+  "tokensChecked": 1,
+  "acquiring-service": {
+   "lines": 15,
+   "testPans": 0,
+   "cvvKey": 0,
+   "luhnCardLikeRuns": 0,
+   "checkoutToken": 0,
+   "chkTokenShape": 0,
+   "warnLines": 2,
+   "errorLines": 0,
+   "warnLoggers": [
+    "c.l.c.ServiceInstanceListSupplierBuilder"
+   ]
+  },
+  "payment-service": {
+   "lines": 9,
+   "testPans": 0,
+   "cvvKey": 0,
+   "luhnCardLikeRuns": 0,
+   "checkoutToken": 0,
+   "chkTokenShape": 0,
+   "warnLines": 1,
+   "errorLines": 0,
+   "warnLoggers": [
+    "c.p.p.e.core.action.PayActionActor"
+   ]
+  },
+  "verdict": {
+   "noLeak": true
+  }
+ }
+}

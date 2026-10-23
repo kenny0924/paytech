@@ -522,6 +522,8 @@ uk_checkout_public_token(public_token)
 
 CRC 合法不表示 Token 由平台签发或当前有效。Token 到期或业务终态后不得发起新支付；在 `expiresAt` 前的终态页面可以只读显示统一结果，到期后 Client 查询不再返回 `checkoutUrl`。
 
+> **2026-10-23 修订：** 到期后仍不得发起新支付；Consumer 对**到期前已提交**支付的结果查询不受 `expiresAt` 限制（照常刷新 Payment，限频不变），未提交过支付时返回 `CHECKOUT_EXPIRED`；查看收银台的到期规则不变。见 [到期后支付结果确认](../../../requirements/20261022/acquiring-到期后支付结果确认/requirement.md)。
+
 ## 7. 命令幂等
 
 > **2026-10-17：** 本节的 HTTP 请求幂等部分（Key 记录、请求 Hash、响应重放、执行中处理、`t_command_idempotency`）已由 [2026-09-17 职责决定](../../../agent-docs/decisions/2026-09-17-gateway-request-idempotency.md)取代，并由 [Gateway 处理 Idempotency-Key](../../../requirements/20261017/gateway-请求幂等IdempotencyKey/technique.md) 实现：Gateway 对开启幂等的路由校验 Key（缺失 400 `IDEMPOTENCY_KEY_REQUIRED`、非法 400 `INVALID_IDEMPOTENCY_KEY`），按 `通道 + Client` 判重，摘要取方法、路由、路径、Query 与请求体**原始字节**（不做本节 7.2 的语义规范化），首次下游响应保存 72 小时并逐字重放，换请求 409 `IDEMPOTENCY_KEY_REUSED`，执行中 409 `IDEMPOTENCY_REQUEST_IN_PROGRESS` + `Retry-After: 3`，下游无响应时释放 Key。Commerce 不再声明或处理该 Header。7.3 中“新 Key”各行（`clientOrderId` / `clientRefundId` / 订单状态的业务防重）仍由 Commerce 负责；其余内容为历史设计。
@@ -619,7 +621,7 @@ GET /api/v1/orders/ord_20260905_A7M4Q9/checkout
 }
 ```
 
-在 `expiresAt` 前，PAID/CANCELLED 等终态仍由已冻结 `public_origin + public_token` 返回同一 URL，用于 Consumer 查看只读统一结果页；达到 `expiresAt` 后 `checkoutUrl` 固定为 `null`，任何状态都不能再发起支付。
+在 `expiresAt` 前，PAID/CANCELLED 等终态仍由已冻结 `public_origin + public_token` 返回同一 URL，用于 Consumer 查看只读统一结果页；达到 `expiresAt` 后 `checkoutUrl` 固定为 `null`，任何状态都不能再发起支付。已提交支付的结果仍可由 Consumer 查询，见 [到期后支付结果确认](../../../requirements/20261022/acquiring-到期后支付结果确认/requirement.md)。
 
 ### 8.3 查询 Order
 

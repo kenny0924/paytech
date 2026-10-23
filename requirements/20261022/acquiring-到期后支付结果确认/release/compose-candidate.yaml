@@ -1,0 +1,17 @@
+# acquiring 到期后支付结果确认：mor-test 候选覆盖文件（2026-10-23 阶段 6 准备；阶段 7 由主会话按 release.md 第 6 节执行，另需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史候选文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/acquiring-到期后支付结果确认/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 acquiring-service
+# 只换 acquiring-service；payment 等其余容器不动（payment 现网 cf9097ea… 不变，本文件不写 payment-service）。
+# 镜像用 sha256 ID（tag f1-result-20261023 只供辨认，不得据此部署；不使用 :development）。
+# 构建：classic builder，FROM 现网 acquiring 镜像 sha256:27c36f4e…，只 COPY --chown=10001:10001 阶段 5 验证的 JAR（dca404ec4d301876）
+#   到 /app/application.jar；Entrypoint / User / WorkingDir / Env / health-probe 与现网相同（release.md 第 2.4 节）。
+# 环境变量：继承现网生效的 billing-支付事实自动登记 候选文件中 acquiring 的全部键（只有 PAYTECH_INSTANCE_ID；
+#   主 compose 自 98210e0b 起也已包含，同值，此处显式保留兜底）。本需求不新增键。
+# 回滚：同目录 compose-rollback.yaml。
+services:
+  acquiring-service:
+    # GetCustomerPaymentProcessor：到期检查移入“无支付记录”“Payment 未找到该提交”两个分支，已提交支付的结果查询不受到期限制。
+    image: sha256:f6d55ade25d1cfdadcc499f487e291be15910883db16ec4ff60ce8088ebbbd33  # mor-test/acquiring-service:f1-result-20261023（JAR dca404ec4d301876，main a816bd14 + 本需求 3 文件）
+    environment:
+      PAYTECH_INSTANCE_ID: acquiring-test

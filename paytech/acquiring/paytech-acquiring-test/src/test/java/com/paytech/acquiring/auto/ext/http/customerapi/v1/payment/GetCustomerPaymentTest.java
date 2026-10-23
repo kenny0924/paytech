@@ -2,6 +2,7 @@ package com.paytech.acquiring.auto.ext.http.customerapi.v1.payment;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode;
 import com.paytech.acquiring.api.checkout.v1.enums.CustomerPaymentStatus;
 import com.paytech.acquiring.api.checkout.v1.payment.CustomerPaymentApi;
 import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domain.enums.OrderStatus;
 import com.paytech.acquiring.domain.enums.PaymentAttemptStatus;
 import com.paytech.acquiring.test.base.MockTestBase;
 import com.paytech.acquiring.test.checker.customer.CheckoutFlowResponseChecker;
@@ -29,7 +31,7 @@ import com.paytech.payment.api.execution.response.GetSubmissionResponseBody;
 
 /**
  * Customer 查询原支付提交：真实 HTTP 入口经公共客户端调用 Payment 刷新接口（3DS 全链路 technique 3.3.6：处理中时由 Payment 限频查单确认）的
- * 测试接口，覆盖状态映射、REDIRECT 交互（AC-03）、确认中（AC-10）、未找到与不可用降级。
+ * 测试接口，覆盖状态映射、REDIRECT 交互（AC-03）、确认中（AC-10）、未找到与不可用降级，以及订单到期后的结果确认（到期后支付结果确认）。
  *
  * @see CustomerPaymentApi#getPayment(String, String)
  */
@@ -171,6 +173,89 @@ class GetCustomerPaymentTest extends MockTestBase {
         submissions.mockResponse(response);
 
         query().assertProblem(502, CommerceCheckoutErrorCode.UPSTREAM_PROTOCOL_ERROR.getCode());
+    }
+
+    /** 到期前已提交的支付在到期后仍刷新 Payment 并返回真实结果：3DS 挑战中、成功与失败（AC-01、AC-02）。 */
+    @ParameterizedTest
+    @CsvSource({"PROCESSING,REQUIRES_ACTION", "SUCCEEDED,SUCCEEDED", "FAILED,FAILED"})
+    void test_expiredResultQueried(PaymentAttemptStatus paymentStatus, CustomerPaymentStatus expected) {
+        var response = submission(paymentStatus.getCode());
+        if (paymentStatus == PaymentAttemptStatus.PROCESSING) {
+            var interaction = new GetSubmissionResponseBody.Interaction();
+            interaction.setType(THREE_DS);
+            interaction.setExpiresAt("2026-09-08T00:40:00Z");
+            response.setInteraction(interaction);
+        }
+        submissions.mockResponse(response);
+        expire();
+
+        var body = query().assertStatus(200).paymentBody();
+
+        assertEquals(expected.getCode(), body.getStatus());
+        assertEquals(List.of(new PaymentSubmissionMocker.Call(Long.toString(orderId()), Long.toString(SUBMISSION_ID),
+            Long.toString(fixture.getOrder().getClientId()), PaymentSubmissionMocker.REFRESH)), submissions.calls());
+    }
+
+    /** 到期后渠道仍处理中时返回确认中并继续轮询（AC-03）。 */
+    @Test
+    void test_expiredProcessing() {
+        submissions.mockResponse(submission(PaymentAttemptStatus.PROCESSING.getCode()));
+        expire();
+
+        var body = query().assertStatus(200).paymentBody();
+
+        assertEquals(CustomerPaymentStatus.PROCESSING.getCode(), body.getStatus());
+        assertNull(body.getNextAction());
+        assertEquals(2000, body.getPollAfterMs());
+    }
+
+    /** 订单已被过期收尾写成 EXPIRED 时仍返回 Payment 的最终失败结果（AC-02、B4）。 */
+    @Test
+    void test_expiredOrderStatus() {
+        submissions.mockResponse(submission(PaymentAttemptStatus.FAILED.getCode()));
+        mapper.expireOrder(orderId());
+
+        var body = query().assertStatus(200).paymentBody();
+
+        assertEquals(CustomerPaymentStatus.FAILED.getCode(), body.getStatus());
+        assertEquals(OrderStatus.EXPIRED.getCode(), mapper.order(orderId()).get("order_status"));
+    }
+
+    /** 到期时没有支付记录视同未提交，返回 CHECKOUT_EXPIRED 且不调用 Payment（AC-04）。 */
+    @Test
+    void test_expiredWithoutPayment() {
+        mapper.deletePayment(orderId());
+        expire();
+
+        query().assertProblem(410, CustomerCheckoutErrorCode.CHECKOUT_EXPIRED.getCode());
+        assertEquals(0, submissions.calls().size());
+    }
+
+    /** 到期后 Payment 未找到该提交时视同未提交，返回 CHECKOUT_EXPIRED（D1）。 */
+    @Test
+    void test_expiredSubmissionNotFound() {
+        submissions.mockNotFound();
+        expire();
+
+        query().assertProblem(410, CustomerCheckoutErrorCode.CHECKOUT_EXPIRED.getCode());
+        assertEquals(1, submissions.calls().size());
+    }
+
+    /** 到期后 Payment 不可用仍降级为确认中，不返回到期（B3）。 */
+    @Test
+    void test_expiredPaymentUnavailable() {
+        submissions.mockFailure(MockHttpFault.disconnect());
+        expire();
+
+        var body = query().assertStatus(200).paymentBody();
+
+        assertEquals(CustomerPaymentStatus.PROCESSING.getCode(), body.getStatus());
+        assertEquals(2000, body.getPollAfterMs());
+    }
+
+    /** 把时钟拨过订单到期时刻（创建后 30 分钟）。 */
+    void expire() {
+        adjustableUtcClock.advance(Duration.ofMinutes(31));
     }
 
     /** 本例的 Payment 查询响应。 */

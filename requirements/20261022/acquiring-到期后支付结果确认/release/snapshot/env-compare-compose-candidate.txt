@@ -1,0 +1,10 @@
+== acquiring-service  compose 键 36  容器键 44  渲染镜像 sha256:f6d55ade25d1cfdadcc499f487e291be15910883db16ec4ff60ce8088ebbbd33
+   ONLY_CONTAINER(image)    HOME
+   ONLY_CONTAINER(image)    HOSTNAME
+   ONLY_CONTAINER(image)    JAVA_HOME
+   ONLY_CONTAINER(image)    JAVA_VERSION
+   ONLY_CONTAINER(image)    LANG
+   ONLY_CONTAINER(image)    LANGUAGE
+   ONLY_CONTAINER(image)    LC_ALL
+   ONLY_CONTAINER(image)    PATH
+   SAME 36 / 36

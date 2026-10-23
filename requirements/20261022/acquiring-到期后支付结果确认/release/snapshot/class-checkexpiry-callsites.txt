@@ -1,0 +1,7 @@
+# javap -c -p GetCustomerPaymentProcessor.class（取自两 JAR 内嵌 paytech-acquiring-core-1.0.0-SNAPSHOT.jar），列出调用 CommerceOrder.checkExpiry 的方法
+== 候选（dca404ec…）
+getAndCheckPayment(CommerceOrder)
+queryPayment(CustomerPaymentQueryContext)
+== 现网（ec8487bd…）
+getAndCheckOrder(long)
+processResponse(CustomerPaymentQueryContext, PaymentResult)

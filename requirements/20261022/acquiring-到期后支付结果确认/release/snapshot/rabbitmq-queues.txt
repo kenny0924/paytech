@@ -1,0 +1,10 @@
+acquiring.payment.p0	0	1
+acquiring.payment.p1	0	1
+acquiring.payment.p3	0	1
+billing.acquiring.p2	0	1
+billing.acquiring.dlq	0	0
+billing.acquiring.p0	0	1
+acquiring.payment.p2	0	1
+billing.acquiring.p1	0	1
+acquiring.payment.dlq	0	0
+billing.acquiring.p3	0	1
