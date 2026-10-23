@@ -36,7 +36,7 @@ export function VersionDrawer({ templateId, templateCode, currentVersionNo, expe
       okText: '放弃修改并继续', cancelText: '返回编辑', okButtonProps: { danger: true }, onOk: () => setRestoring(versionNo) });
   }
 
-  return <Drawer open rootClassName="dq-modal" width={1180} title={`版本历史 · ${templateCode}`} onClose={onClose} destroyOnHidden
+  return <Drawer open rootClassName="dq-modal" size={1180} title={`版本历史 · ${templateCode}`} onClose={onClose} destroyOnHidden
     footer={<div className="dq-drawer-footer">
       {dirty ? <Note tone="warning">编辑器中有未保存的修改：恢复前会提示先保存或放弃</Note> : <span />}
       <Button onClick={onClose}>关闭</Button>

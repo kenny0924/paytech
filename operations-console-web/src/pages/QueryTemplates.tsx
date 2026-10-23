@@ -41,9 +41,6 @@ function TemplateList({ resources }: Props) {
   const sources = useDataSourceOptions();
   const canManage = hasButton(resources, dataQueryButtons.templateManage);
   return <div className="configuration-page dq-page">
-    <div className="page-heading"><h1>查询模板</h1>
-      {canManage && <Button type="primary" onClick={() => void navigate(dataQueryRoutes.newTemplate)}>＋ 新建模板</Button>}</div>
-    <p className="muted dq-intro">模板用统一语法书写只读 SQL，保存即生成新版本并立即生效；调用方按模板编码执行。</p>
     <Form form={form} layout="vertical" name="template-filter" initialValues={initial}
       onFinish={(values: FilterValues) => page.applyFilters(listFilters({ ...values }))}>
       <div className="dq-filters">
@@ -56,6 +53,11 @@ function TemplateList({ resources }: Props) {
       </div>
     </Form>
     <section className="dq-panel">
+      <div className="dq-list-toolbar">
+        <div><strong>共 {page.data.total} 个模板</strong>
+          <span className="muted">用统一语法书写只读 SQL，保存即生成新版本并立即生效；调用方按模板编码执行。</span></div>
+        {canManage && <Button type="primary" onClick={() => void navigate(dataQueryRoutes.newTemplate)}>＋ 新建模板</Button>}
+      </div>
       {page.failure ? <QueryFailure failure={page.failure} retry={page.refresh} />
         : <Table<TemplateSummary> rowKey="templateId" size="middle" loading={page.loading} dataSource={page.data.items} pagination={page.pagination}
           tableLayout="fixed" scroll={{ x: 1080 }} locale={{ emptyText: '没有符合条件的模板' }} rowClassName={() => 'dq-clickable'}

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { Button, Descriptions, Form, Input, Select, Table } from 'antd';
+import { useState } from 'react';
+import { Button, Descriptions, Drawer, Form, Input, Select, Table } from 'antd';
 import { Link } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
 import { usePaging } from '../hooks/usePaging';
@@ -23,7 +23,7 @@ interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => vo
 interface FilterValues { status?: string; engineType?: string; keyword?: string }
 type Step = { kind: 'create' } | { kind: 'edit'; source: DataSource } | { kind: 'status'; source: DataSource } | { kind: 'delete'; source: DataSource } | null;
 
-/** 数据源（原型 01、02）：左侧列表，右侧选中项详情；有维护按钮时可新建、编辑、测试连接、启停与删除。 */
+/** 数据源（原型 01、02）：全宽列表，点击行在右侧抽屉查看详情；有维护按钮时可新建、编辑、测试连接、启停与删除。 */
 export function DataSources({ resources, onAuthorizationChanged }: Props) {
   const [form] = Form.useForm<FilterValues>();
   const page = usePaging<DataSource>(dataQueryPaths.dataSources, decodeDataSourcePage, {}, { notifyOnError: false });
@@ -32,26 +32,13 @@ export function DataSources({ resources, onAuthorizationChanged }: Props) {
   const [revision, setRevision] = useState(0);
   const canManage = hasButton(resources, dataQueryButtons.dataSourceManage);
   const items = page.data.items;
-  // 新建或修改后要选中的数据源：刷新完成前它可能还不在旧列表中，不能因此回退到第一项。
-  const pendingSelection = useRef<string | null>(null);
-  useEffect(() => {
-    if (!items.length) return;
-    if (selectedId && items.some(item => item.dataSourceId === selectedId)) {
-      if (pendingSelection.current === selectedId) pendingSelection.current = null;
-      return;
-    }
-    if (selectedId && pendingSelection.current === selectedId) return;
-    setSelectedId(items[0].dataSourceId);
-  }, [items, selectedId]);
+  // 新建或修改后打开（或保持）该数据源的详情抽屉。
   const reload = (dataSourceId?: string) => {
     setStep(null);
-    if (dataSourceId) { pendingSelection.current = dataSourceId; setSelectedId(dataSourceId); }
+    if (dataSourceId) setSelectedId(dataSourceId);
     page.refresh(); setRevision(v => v + 1);
   };
   return <div className="configuration-page dq-page">
-    <div className="page-heading"><h1>数据源</h1>
-      {canManage && <Button type="primary" onClick={() => setStep({ kind: 'create' })}>＋ 新建数据源</Button>}</div>
-    <p className="muted dq-intro">登记可供查询模板使用的只读数据库连接。密码只存 Vault Token，不回显；启用与修改启用中的数据源前必须通过只读检查。</p>
     <Form form={form} layout="vertical" name="data-source-filter" onFinish={(values: FilterValues) => page.applyFilters(listFilters({ ...values }))}>
       <div className="dq-filters">
         <Form.Item name="status" label="状态"><Select allowClear placeholder="全部"
@@ -62,27 +49,29 @@ export function DataSources({ resources, onAuthorizationChanged }: Props) {
           <Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>重置</Button></div>
       </div>
     </Form>
-    <div className="dq-master-detail">
-      <section className="dq-panel">
-        {page.failure ? <QueryFailure failure={page.failure} retry={page.refresh} />
-          : <Table<DataSource> rowKey="dataSourceId" size="middle" loading={page.loading} dataSource={items} pagination={page.pagination}
-            tableLayout="fixed" scroll={{ x: 860 }} locale={{ emptyText: '没有符合条件的数据源' }}
-            rowClassName={row => `dq-clickable${row.dataSourceId === selectedId ? ' dq-selected-row' : ''}`}
-            onRow={row => ({ onClick: () => setSelectedId(row.dataSourceId) })} columns={[
-              { title: '编码 / 名称', width: 200, render: (_, row) => <div className="dq-cell"><span className="mono">{row.dataSourceCode}</span><span className="muted">{row.dataSourceName}</span></div> },
-              { title: '引擎', width: 80, render: (_, row) => engineLabels[row.engineType] },
-              { title: '地址 / 默认库', width: 240, render: (_, row) => <span className="mono">{addressLabel(row)}</span> },
-              { title: '状态', width: 80, render: (_, row) => <StatusTag status={row.status} /> },
-              { title: '最后检查', width: 170, render: (_, row) => <span className={row.lastCheckResult === 'FAILED' ? 'dq-text-error' : undefined}>{lastCheckLabel(row, localTime)}</span> },
-              { title: '引用模板', width: 90, align: 'right', render: (_, row) => row.templateCount },
-            ]} />}
-      </section>
-      <section className="dq-panel dq-detail">
-        {selectedId ? <DataSourceDetail key={`${selectedId}:${revision}`} dataSourceId={selectedId} canManage={canManage}
-          onAuthorizationChanged={onAuthorizationChanged} onStep={setStep} />
-          : <Note>{page.loading ? '加载中…' : '选择左侧数据源查看详情。'}</Note>}
-      </section>
-    </div>
+    <section className="dq-panel">
+      <div className="dq-list-toolbar">
+        <div><strong>共 {page.data.total} 个数据源</strong>
+          <span className="muted">只读数据库连接；密码只存 Vault Token、不回显，启用前必须通过只读检查。</span></div>
+        {canManage && <Button type="primary" onClick={() => setStep({ kind: 'create' })}>＋ 新建数据源</Button>}
+      </div>
+      {page.failure ? <QueryFailure failure={page.failure} retry={page.refresh} />
+        : <Table<DataSource> rowKey="dataSourceId" size="middle" loading={page.loading} dataSource={items} pagination={page.pagination}
+          tableLayout="fixed" scroll={{ x: 960 }} locale={{ emptyText: '没有符合条件的数据源' }}
+          rowClassName={row => `dq-clickable${row.dataSourceId === selectedId ? ' dq-selected-row' : ''}`}
+          onRow={row => ({ onClick: () => setSelectedId(row.dataSourceId) })} columns={[
+            { title: '编码 / 名称', width: 280, render: (_, row) => <div className="dq-cell"><span className="mono">{row.dataSourceCode}</span><span className="muted">{row.dataSourceName}</span></div> },
+            { title: '引擎', width: 80, render: (_, row) => engineLabels[row.engineType] },
+            { title: '地址 / 默认库', width: 260, render: (_, row) => <span className="mono">{addressLabel(row)}</span> },
+            { title: '状态', width: 80, render: (_, row) => <StatusTag status={row.status} /> },
+            { title: '最后检查', width: 180, render: (_, row) => <span className={row.lastCheckResult === 'FAILED' ? 'dq-text-error' : undefined}>{lastCheckLabel(row, localTime)}</span> },
+            { title: '引用模板', width: 90, align: 'right', render: (_, row) => row.templateCount },
+          ]} />}
+    </section>
+    <Drawer open={selectedId !== null} rootClassName="dq-modal" size={520} title="数据源详情" onClose={() => setSelectedId(null)} destroyOnHidden>
+      {selectedId && <DataSourceDetail key={`${selectedId}:${revision}`} dataSourceId={selectedId} canManage={canManage}
+        onAuthorizationChanged={onAuthorizationChanged} onStep={setStep} />}
+    </Drawer>
     {(step?.kind === 'create' || step?.kind === 'edit') && <DataSourceEditor source={step.kind === 'edit' ? step.source : null}
       onClose={() => setStep(null)} onSaved={reload} onAuthorizationChanged={onAuthorizationChanged} />}
     {step?.kind === 'status' && <StatusModal source={step.source} onClose={() => setStep(null)} onDone={() => reload(step.source.dataSourceId)}

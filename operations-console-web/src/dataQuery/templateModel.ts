@@ -197,6 +197,8 @@ export interface ParameterRow {
   /** 默认值文本：标量原文；BOOLEAN 为 true/false；LIST 为逗号分隔；LIST<OBJECT> 为 JSON。 */
   defaultText: string;
   maxLength: number | null; min: string; max: string; allowedValues: string[]; maxSize: number | null; choices: ChoiceRow[]; fields: FieldRow[];
+  /** 按正文自动添加且未被修改过：正文不再引用时自动删除（见 templateSync.ts），不进入请求。 */
+  auto?: boolean;
 }
 
 const boundText = (value: string | number | null | undefined) => value === null || value === undefined ? '' : String(value);
@@ -325,7 +327,11 @@ export function constraintsBody(constraints: QueryConstraints): QueryConstraints
   return base;
 }
 
-export interface ColumnRow { key: string; name: string; label: string; mask: MaskMode; keepStart: number | null; keepEnd: number | null }
+export interface ColumnRow {
+  key: string; name: string; label: string; mask: MaskMode; keepStart: number | null; keepEnd: number | null;
+  /** 按正文或试运行结果自动添加且未被修改过，不进入请求。 */
+  auto?: boolean;
+}
 export const columnRows = (columns: readonly QueryColumn[]): ColumnRow[] => columns.map(column => ({
   key: nextRowKey(), name: column.name, label: column.label ?? '', mask: column.mask ?? 'NONE', keepStart: column.keepStart ?? null, keepEnd: column.keepEnd ?? null,
 }));

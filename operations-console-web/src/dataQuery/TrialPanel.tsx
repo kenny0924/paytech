@@ -9,9 +9,11 @@ import { useDataQueryCommand } from './useDataQueryCommand';
 
 /**
  * 试运行（原型 05）：按参数声明生成输入，草稿不保存也能试；返回结果摘要、实际 SQL 与绑定值、结果表。
- * 偏移分页可翻页与选择返回总数；游标分页用上一页的 nextCursor 取下一页。
+ * 偏移分页可翻页与选择返回总数；游标分页用上一页的 nextCursor 取下一页。返回的列名交给 onResultColumns 补进列声明。
  */
-export function TrialPanel({ draft, canRun, onAuthorizationChanged }: { draft: TemplateDraft; canRun: boolean; onAuthorizationChanged: () => void }) {
+export function TrialPanel({ draft, canRun, onAuthorizationChanged, onResultColumns }: {
+  draft: TemplateDraft; canRun: boolean; onAuthorizationChanged: () => void; onResultColumns: (names: string[]) => void;
+}) {
   const command = useDataQueryCommand(onAuthorizationChanged);
   const fields = trialFields(draft.parameters);
   const constraints = draft.constraints;
@@ -27,7 +29,7 @@ export function TrialPanel({ draft, canRun, onAuthorizationChanged }: { draft: T
     const targetPage = next.page ?? page;
     const paging = trialPaging(constraints, { page: targetPage, size: size ?? undefined, withTotal, cursor: next.cursor });
     const value = await command.run(dataQueryPaths.trials, 'POST', { ...contentBody(draft), params: params.params, ...paging }, decodeTrialResult, '试运行失败');
-    if (value) { setResult({ value, page: targetPage, cursorUsed: !!next.cursor }); setPage(targetPage); }
+    if (value) { setResult({ value, page: targetPage, cursorUsed: !!next.cursor }); setPage(targetPage); onResultColumns(value.columns.map(column => column.name)); }
   }
   const belongs = (field: string, name: string) => field === `params.${name}` || field.startsWith(`params.${name}[`) || field.startsWith(`params.${name}.`);
   const errorsFor = (name: string) => [...localErrors.filter(error => error.name === name).map(error => error.message),
@@ -46,7 +48,7 @@ export function TrialPanel({ draft, canRun, onAuthorizationChanged }: { draft: T
       <div className="dq-trial-paging">
         <span className="muted">{pagingModeLabels[constraints.pagingMode]}</span>
         {constraints.pagingMode === 'OFFSET' && <>第 <InputNumber size="small" min={1} precision={0} value={page} onChange={value => setPage(value ?? 1)} /> 页</>}
-        {constraints.pagingMode !== 'NONE' && <>每页 <InputNumber size="small" min={1} max={constraints.maxPageSize ?? undefined} precision={0}
+        {constraints.pagingMode !== 'NONE' && <><span>每页</span><InputNumber size="small" min={1} max={constraints.maxPageSize ?? undefined} precision={0}
           placeholder={String(constraints.maxPageSize ?? '')} value={size} onChange={value => setSize(value)} /></>}
         {constraints.pagingMode === 'OFFSET' && <Checkbox checked={withTotal} disabled={constraints.countAllowed !== true}
           onChange={event => setWithTotal(event.target.checked)}>返回总数</Checkbox>}

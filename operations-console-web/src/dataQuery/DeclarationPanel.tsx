@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Button, Checkbox, Input, InputNumber, Segmented, Select, Switch, Tabs } from 'antd';
+import { Button, Checkbox, Input, InputNumber, Segmented, Select, Switch, Tag, Tooltip } from 'antd';
 import {
   constraintKinds, elementTypes, emptyColumnRow, emptyFieldRow, emptyParameterRow, fieldTypes, maskLabels, maskModes, moveRow, nextRowKey,
   pagingModeLabels, pagingModes, parameterHint, parameterTypes, templateLimits, typeLabel,
@@ -10,35 +10,22 @@ import { Note } from './DataQueryParts';
 
 export type DeclarationTab = 'parameters' | 'constraints' | 'columns';
 
-/** 右侧“参数 / 约束 / 列”标签页；focus 来自问题定位（参数行、列行或约束项高亮）。 */
-export function DeclarationPanel({ tab, onTab, parameters, onParameters, constraints, onConstraints, columns, onColumns, readOnly, focus }: {
-  tab: DeclarationTab; onTab: (tab: DeclarationTab) => void;
-  parameters: ParameterRow[]; onParameters: (rows: ParameterRow[]) => void;
-  constraints: QueryConstraints; onConstraints: (value: QueryConstraints) => void;
-  columns: ColumnRow[]; onColumns: (rows: ColumnRow[]) => void;
-  readOnly: boolean; focus: { tab: DeclarationTab; index?: number; field?: string; at: number } | null;
-}) {
-  return <Tabs activeKey={tab} onChange={key => onTab(key as DeclarationTab)} className="dq-declaration-tabs" items={[
-    { key: 'parameters', label: `参数 ${parameters.length}`,
-      children: <ParameterList rows={parameters} onChange={onParameters} readOnly={readOnly} focusIndex={focus?.tab === 'parameters' ? focus.index : undefined} /> },
-    { key: 'constraints', label: '约束',
-      children: <ConstraintsForm value={constraints} onChange={onConstraints} readOnly={readOnly} focusField={focus?.tab === 'constraints' ? focus.field : undefined} /> },
-    { key: 'columns', label: `列 ${columns.length}`,
-      children: <ColumnList rows={columns} onChange={onColumns} readOnly={readOnly} focusIndex={focus?.tab === 'columns' ? focus.index : undefined} /> },
-  ]} />;
-}
-
 const typeOptions = parameterTypes.map(value => ({ value, label: value }));
 
-/** 参数表格：可增删、拖动排序（⋮⋮ 手柄）；展开行编辑元素类型、对象字段、片段取值与约束。 */
-function ParameterList({ rows, onChange, readOnly, focusIndex }: {
-  rows: ParameterRow[]; onChange: (rows: ParameterRow[]) => void; readOnly: boolean; focusIndex?: number;
+/**
+ * 参数表格：可增删、拖动排序（⋮⋮ 手柄）；展开行编辑元素类型、对象字段、片段取值与约束。
+ * 按正文自动添加的行标“自动”，修改后转为手工行；手工行在正文不再引用时标“未引用”。
+ */
+export function ParameterList({ rows, onChange, readOnly, focusIndex, unreferenced }: {
+  rows: ParameterRow[]; onChange: (rows: ParameterRow[]) => void; readOnly: boolean; focusIndex?: number; unreferenced: ReadonlySet<string>;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [dragging, setDragging] = useState<number | null>(null);
-  const update = (index: number, patch: Partial<ParameterRow>) => onChange(rows.map((row, i) => i === index ? { ...row, ...patch } : row));
+  const update = (index: number, patch: Partial<ParameterRow>) => onChange(rows.map((row, i) => i === index ? { ...row, ...patch, auto: false } : row));
   const focusKey = focusIndex !== undefined ? rows[focusIndex]?.key : undefined;
   return <div className="dq-param-table">
+    <Note>正文中的 <span className="mono">#{'{}'}</span>、<span className="mono">@{'{}'}</span>、<span className="mono">{'{{#if}}'}</span> 与
+      <span className="mono">{'{{#each}}'}</span> 引用会自动加入参数表，并按用法推断类型（集合、片段、其余为 STRING）；请补充类型与约束。</Note>
     <div className="dq-param-head"><span /><span>名称</span><span>类型</span><span>必填</span><span>默认 / 约束</span><span /></div>
     {rows.map((row, index) => {
       const open = expanded === row.key || focusKey === row.key;
@@ -48,8 +35,12 @@ function ParameterList({ rows, onChange, readOnly, focusIndex }: {
         <div className="dq-param-line">
           <span className="dq-drag" draggable={!readOnly} onDragStart={() => setDragging(index)} onDragEnd={() => setDragging(null)}
             title="拖动排序" aria-label={`拖动排序 ${row.name}`}>⋮⋮</span>
-          <Input size="small" value={row.name} disabled={readOnly} placeholder="参数名" maxLength={64} className="mono"
-            onChange={event => update(index, { name: event.target.value })} />
+          <span className="dq-param-name">
+            <Input size="small" value={row.name} disabled={readOnly} placeholder="参数名" maxLength={64} className="mono"
+              onChange={event => update(index, { name: event.target.value })} />
+            {row.auto && <Tooltip title="按正文引用自动添加；正文不再引用时自动移除，修改后转为手工声明"><Tag color="blue">自动</Tag></Tooltip>}
+            {!row.auto && unreferenced.has(row.name.trim()) && <Tooltip title="正文没有引用此参数，可删除"><Tag color="gold">未引用</Tag></Tooltip>}
+          </span>
           <Select size="small" value={row.type} disabled={readOnly} options={typeOptions} popupMatchSelectWidth={false}
             onChange={type => update(index, { type, elementType: type === 'LIST' ? row.elementType ?? 'STRING' : null })} />
           <Checkbox checked={row.required} disabled={readOnly} onChange={event => update(index, { required: event.target.checked })} aria-label="必填" />
@@ -134,7 +125,7 @@ function FieldList({ rows, onChange, readOnly }: { rows: FieldRow[]; onChange: (
 }
 
 /** 约束：最大行数、超时、分页方式、页大小上限、允许总数（偏移）、游标列（游标）。 */
-function ConstraintsForm({ value, onChange, readOnly, focusField }: {
+export function ConstraintsForm({ value, onChange, readOnly, focusField }: {
   value: QueryConstraints; onChange: (value: QueryConstraints) => void; readOnly: boolean; focusField?: string;
 }) {
   const cls = (field: string) => `dq-constraint${focusField === field ? ' is-focused' : ''}`;
@@ -158,14 +149,17 @@ function ConstraintsForm({ value, onChange, readOnly, focusField }: {
   </div>;
 }
 
-/** 列声明：标题与屏蔽规则；没有声明的列原样返回，标题使用列名。 */
-function ColumnList({ rows, onChange, readOnly, focusIndex }: { rows: ColumnRow[]; onChange: (rows: ColumnRow[]) => void; readOnly: boolean; focusIndex?: number }) {
-  const update = (index: number, patch: Partial<ColumnRow>) => onChange(rows.map((row, i) => i === index ? { ...row, ...patch } : row));
+/** 列声明：标题与屏蔽规则；没有声明的列原样返回，标题使用列名。正文 SELECT 与试运行结果中的列自动加入。 */
+export function ColumnList({ rows, onChange, readOnly, focusIndex }: { rows: ColumnRow[]; onChange: (rows: ColumnRow[]) => void; readOnly: boolean; focusIndex?: number }) {
+  const update = (index: number, patch: Partial<ColumnRow>) => onChange(rows.map((row, i) => i === index ? { ...row, ...patch, auto: false } : row));
   return <div className="dq-column-list">
     <div className="dq-column-head"><span>列名</span><span>标题</span><span>屏蔽</span><span /></div>
     {rows.map((row, index) => <div key={row.key} className={`dq-column-row${focusIndex === index ? ' is-focused' : ''}`}>
-      <Input size="small" className="mono" value={row.name} placeholder="email" disabled={readOnly} onChange={event => update(index, { name: event.target.value })} />
-      <Input size="small" value={row.label} placeholder="邮箱" disabled={readOnly} onChange={event => update(index, { label: event.target.value })} />
+      <span className="dq-param-name">
+        <Input size="small" className="mono" value={row.name} placeholder="email" disabled={readOnly} onChange={event => update(index, { name: event.target.value })} />
+        {row.auto && <Tooltip title="按正文 SELECT 或试运行结果自动添加；修改后转为手工声明"><Tag color="blue">自动</Tag></Tooltip>}
+      </span>
+      <Input size="small" value={row.label} placeholder="不填则用列名" disabled={readOnly} onChange={event => update(index, { label: event.target.value })} />
       <div className="dq-mask">
         <Select size="small" value={row.mask} disabled={readOnly} options={maskModes.map(value => ({ value, label: maskLabels[value] }))}
           onChange={mask => update(index, { mask })} />
@@ -176,6 +170,6 @@ function ColumnList({ rows, onChange, readOnly, focusIndex }: { rows: ColumnRow[
       {!readOnly ? <Button size="small" type="text" aria-label="删除列" onClick={() => onChange(rows.filter((_, i) => i !== index))}>✕</Button> : <span />}
     </div>)}
     {!readOnly && <Button type="dashed" size="small" onClick={() => onChange([...rows, emptyColumnRow()])}>＋ 添加列</Button>}
-    <Note>没有声明的列原样返回，标题使用列名。HIDE 不返回该列；FULL 全部掩码；KEEP_EDGES 保留首尾若干位。</Note>
+    <Note>正文 SELECT 的列与试运行返回的列会自动加入。没有声明的列原样返回，标题使用列名。HIDE 不返回该列；FULL 全部掩码；KEEP_EDGES 保留首尾若干位。</Note>
   </div>;
 }

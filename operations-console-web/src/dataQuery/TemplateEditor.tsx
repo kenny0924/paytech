@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { App, Alert, Button, Input, Modal, Select, Tabs, Tag } from 'antd';
+import { App, Alert, Button, Drawer, Input, Modal, Select, Tabs, Tag } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { ApiError, session } from '../api/session';
 import type { ConsoleResource } from '../api/types';
@@ -15,16 +15,20 @@ import type { SaveResult, TemplateDetail, TemplateDraft, TemplateProblem } from 
 import { engineLabels, templateSourceOptions } from './dataSourceModel';
 import { BodyEditor } from './BodyEditor';
 import type { BodyEditorHandle } from './BodyEditor';
-import { DeclarationPanel } from './DeclarationPanel';
+import { ColumnList, ConstraintsForm, ParameterList } from './DeclarationPanel';
 import type { DeclarationTab } from './DeclarationPanel';
 import { TrialPanel } from './TrialPanel';
+import { mergeResultColumns, syncColumns, syncParameters, unreferencedParameters } from './templateSync';
 import { VersionDrawer } from './VersionDrawer';
 import { ConflictBanner, Note, StatusTag, useDataSourceOptions, useResource } from './DataQueryParts';
 import { useDataQueryCommand } from './useDataQueryCommand';
 
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; templateId: string | null }
 
-/** 模板编辑器（原型 04—06）：templateId 为 null 时新建。详情版本变化（保存、恢复、启停）后重新载入工作区。 */
+/**
+ * 模板编辑器（原型 04—06）：templateId 为 null 时新建。详情版本变化（保存、恢复、启停）后重新载入工作区。
+ * 正文、参数、约束、列与问题是同一卡片里的标签页；试运行在右侧抽屉中进行，抽屉关闭后保留输入与结果。
+ */
 export function TemplateEditor({ resources, onAuthorizationChanged, templateId }: Props) {
   const canManage = hasButton(resources, dataQueryButtons.templateManage);
   const decode = useCallback((value: unknown) => decodeTemplateDetail(value, templateId ?? undefined), [templateId]);
@@ -36,6 +40,7 @@ export function TemplateEditor({ resources, onAuthorizationChanged, templateId }
     onReload={detail.refresh} onAuthorizationChanged={onAuthorizationChanged} />;
 }
 
+type EditorTab = 'body' | DeclarationTab | 'problems';
 type Focus = { tab: DeclarationTab; index?: number; field?: string; at: number } | null;
 /** 校验结果连同被校验的正文：编辑器标记按该正文换算，之后的编辑由 CodeMirror 映射位置。 */
 type ValidationState = { problems: TemplateProblem[]; fingerprint: string; body: string } | null;
@@ -49,8 +54,8 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
   const [baseline, setBaseline] = useState(() => draftFingerprint(draft));
   const [validation, setValidation] = useState<ValidationState>(null);
   const [validating, setValidating] = useState(false);
-  const [tab, setTab] = useState<DeclarationTab>('parameters');
-  const [bottom, setBottom] = useState<'problems' | 'trial'>('problems');
+  const [tab, setTab] = useState<EditorTab>('body');
+  const [trialOpen, setTrialOpen] = useState(false);
   const [focus, setFocus] = useState<Focus>(null);
   const [highlightSource, setHighlightSource] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -63,6 +68,17 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
   const readOnly = !canManage;
   const contentKey = useMemo(() => JSON.stringify(contentBody(draft)), [draft]);
   const latest = useRef({ contentKey, body: draft.body }); latest.current = { contentKey, body: draft.body };
+
+  // 正文停顿 400 ms 后按引用同步参数与列；只响应载入后的正文修改，打开已有模板不会产生未保存修改。
+  const loadedBody = useRef(draft.body);
+  useEffect(() => {
+    if (readOnly || draft.body === loadedBody.current) return;
+    const timer = window.setTimeout(() => setDraft(current => {
+      const parameters = syncParameters(current.body, current.parameters); const columns = syncColumns(current.body, current.columns);
+      return parameters === current.parameters && columns === current.columns ? current : { ...current, parameters, columns };
+    }), 400);
+    return () => window.clearTimeout(timer);
+  }, [draft.body, readOnly]);
 
   const confirmLeave = useCallback(() => new Promise<boolean>(resolve => {
     modal.confirm({ title: '离开当前编辑？', content: '尚未保存的修改将丢失。', okText: '离开', cancelText: '继续编辑',
@@ -95,13 +111,15 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
   const errors = problems.filter(problem => problem.level === 'ERROR');
   const warnings = problems.filter(problem => problem.level === 'WARNING');
   const words = useMemo(() => completionWords(draft.parameters), [draft.parameters]);
+  const unreferenced = useMemo(() => unreferencedParameters(draft.body, draft.parameters), [draft.body, draft.parameters]);
   const source = sources.items.find(item => item.dataSourceId === draft.dataSourceId);
   const bytes = bodyBytes(draft.body);
   const change = (patch: Partial<TemplateDraft>) => setDraft(current => ({ ...current, ...patch }));
 
   function locate(problem: TemplateProblem) {
     const target = problemTarget(problem);
-    if (target.kind === 'body') editor.current?.focus(target.line, target.column);
+    // 正文标签页切回可见后再定位，CodeMirror 需要可见布局才能滚动到目标行。
+    if (target.kind === 'body') { setTab('body'); window.setTimeout(() => editor.current?.focus(target.line, target.column)); }
     else if (target.kind === 'parameter') { setTab('parameters'); setFocus({ tab: 'parameters', index: target.index, at: Date.now() }); }
     else if (target.kind === 'columns') { setTab('columns'); setFocus({ tab: 'columns', index: target.index, at: Date.now() }); }
     else if (target.kind === 'constraints') { setTab('constraints'); setFocus({ tab: 'constraints', field: target.field, at: Date.now() }); }
@@ -129,7 +147,7 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
   const saveErrors = command.fieldErrors;
   useEffect(() => {
     if (!saveErrors.length) return;
-    setValidation({ problems: fieldErrorProblems(saveErrors), fingerprint: latest.current.contentKey, body: latest.current.body }); setBottom('problems');
+    setValidation({ problems: fieldErrorProblems(saveErrors), fingerprint: latest.current.contentKey, body: latest.current.body }); setTab('problems');
   }, [saveErrors]);
 
   const nextVersion = detail ? detail.currentVersionNo + 1 : 1;
@@ -153,6 +171,7 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
         {dirty && canManage && <Tag color="orange">未保存</Tag>}
         <span className="dq-spacer" />
         {detail && <Button onClick={() => setVersionsOpen(true)}>版本历史</Button>}
+        {canManage && <Button onClick={() => setTrialOpen(true)}>▶ 试运行</Button>}
         {detail && canManage && <Button danger={detail.status === 'ACTIVE'} onClick={() => setStatusOpen(true)}>{detail.status === 'ACTIVE' ? '停用' : '启用'}</Button>}
         {canManage && <Button type="primary" disabled={!dirty && !!detail} loading={command.saving} onClick={() => setSaving(true)}>保存为 v{nextVersion}</Button>}
       </div>
@@ -163,34 +182,43 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
       {source && source.status !== 'ACTIVE' && <Alert type="warning" showIcon className="dq-banner" title={`数据源 ${source.dataSourceCode} 已停用：保存与试运行会被拒绝，请先启用或改选数据源。`} />}
       {readOnly && <Note>只读：没有查询模板维护权限，不进行实时校验与试运行。</Note>}
     </header>
-    <div className="dq-editor-body">
-      <section className="dq-editor-left">
-        <div className="dq-code-card">
+    <section className="dq-editor-card">
+      <Tabs activeKey={tab} onChange={key => setTab(key as EditorTab)} className="dq-editor-tabs" items={[
+        { key: 'body', label: '正文', forceRender: true, children: <div className="dq-code-card">
           <div className="dq-code-legend">
-            <strong>正文</strong>
             <span className="muted">{source ? `${engineLabels[source.engineType]} 方言` : '未选数据源'} · 统一模板语法</span>
             <span className="dq-legend"><span className="dq-tpl-value">#{'{}'} 值</span><span className="dq-tpl-fragment">@{'{}'} 片段</span>
               <span className="dq-tpl-tag">{'{{#if}} {{#each}} {{#join}} {{#part}}'}</span><span className="dq-tpl-comment">{'{{!-- --}}'}</span></span>
+            <ValidationBadge enabled={canManage && !!draft.dataSourceId} validating={validating} stale={stale} errors={errors.length} warnings={warnings.length}
+              onOpen={() => setTab('problems')} />
             <span className={`dq-bytes${bytes > templateLimits.maxBodyBytes ? ' dq-text-error' : ''}`}>{(bytes / 1024).toFixed(1)} / {templateLimits.maxBodyBytes / 1024} KB</span>
           </div>
           <BodyEditor value={draft.body} onChange={body => change({ body })} diagnostics={diagnostics} completions={words} readOnly={readOnly}
             onReady={handle => { editor.current = handle; }} />
-        </div>
-        <div className="dq-bottom">
-          <Tabs activeKey={bottom} onChange={key => setBottom(key as 'problems' | 'trial')} items={[
-            { key: 'problems', label: <span>问题 {errors.length ? <Tag color="red">{errors.length} 错误</Tag> : null}{warnings.length ? <Tag color="gold">{warnings.length} 警告</Tag> : null}</span>,
-              children: <ProblemPanel problems={problems} validating={validating} stale={stale} enabled={canManage && !!draft.dataSourceId} onLocate={locate} /> },
-            { key: 'trial', label: '试运行', disabled: !canManage,
-              children: <TrialPanel draft={draft} canRun={canManage && errors.length === 0} onAuthorizationChanged={onAuthorizationChanged} /> },
-          ]} />
-        </div>
-      </section>
-      <aside className="dq-editor-right">
-        <DeclarationPanel tab={tab} onTab={setTab} parameters={draft.parameters} onParameters={parameters => change({ parameters })}
-          constraints={draft.constraints} onConstraints={constraints => change({ constraints })} columns={draft.columns} onColumns={columns => change({ columns })}
-          readOnly={readOnly} focus={focus} />
-      </aside>
-    </div>
+        </div> },
+        { key: 'parameters', label: <span>参数 <Tag className="dq-tab-count">{draft.parameters.length}</Tag></span>,
+          children: <ParameterList rows={draft.parameters} onChange={parameters => change({ parameters })} readOnly={readOnly} unreferenced={unreferenced}
+            focusIndex={focus?.tab === 'parameters' ? focus.index : undefined} /> },
+        { key: 'constraints', label: '约束',
+          children: <ConstraintsForm value={draft.constraints} onChange={constraints => change({ constraints })} readOnly={readOnly}
+            focusField={focus?.tab === 'constraints' ? focus.field : undefined} /> },
+        { key: 'columns', label: <span>列 <Tag className="dq-tab-count">{draft.columns.length}</Tag></span>,
+          children: <ColumnList rows={draft.columns} onChange={columns => change({ columns })} readOnly={readOnly}
+            focusIndex={focus?.tab === 'columns' ? focus.index : undefined} /> },
+        { key: 'problems', label: <span>问题 {errors.length ? <Tag color="red">{errors.length} 错误</Tag> : null}{warnings.length ? <Tag color="gold">{warnings.length} 警告</Tag> : null}</span>,
+          children: <ProblemPanel problems={problems} validating={validating} stale={stale} enabled={canManage && !!draft.dataSourceId} onLocate={locate} /> },
+      ]} />
+    </section>
+    {canManage && <Drawer open={trialOpen} rootClassName="dq-modal" size={960} title={`试运行 · ${draft.templateCode || '未命名模板'}`}
+      onClose={() => setTrialOpen(false)}>
+      {errors.length > 0 && <Note tone="error">当前有 {errors.length} 个校验错误，修复后才能试运行。<button type="button" className="dq-link"
+        onClick={() => { setTrialOpen(false); setTab('problems'); }}>查看问题</button></Note>}
+      <TrialPanel draft={draft} canRun={errors.length === 0} onAuthorizationChanged={onAuthorizationChanged}
+        onResultColumns={names => setDraft(current => {
+          const columns = mergeResultColumns(current.columns, names);
+          return columns === current.columns ? current : { ...current, columns };
+        })} />
+    </Drawer>}
     {saving && <SaveModal nextVersion={nextVersion} creating={!detail} draft={draft} warnings={warnings} errors={errors.length} stale={stale}
       onClose={() => setSaving(false)} onSave={async note => { await save(note); setSaving(false); }} busy={command.saving} />}
     {versionsOpen && detail && <VersionDrawer templateId={detail.templateId} templateCode={detail.templateCode} currentVersionNo={detail.currentVersionNo}
@@ -200,6 +228,17 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
     {statusOpen && detail && <TemplateStatusModal detail={detail} dirty={dirty} onClose={() => setStatusOpen(false)}
       onDone={() => { setStatusOpen(false); flushSync(() => setBaseline(fingerprint)); onReload(); }} onAuthorizationChanged={onAuthorizationChanged} />}
   </div>;
+}
+
+/** 正文工具栏上的校验状态：点击切到问题标签页。 */
+function ValidationBadge({ enabled, validating, stale, errors, warnings, onOpen }: {
+  enabled: boolean; validating: boolean; stale: boolean; errors: number; warnings: number; onOpen: () => void;
+}) {
+  if (!enabled) return null;
+  if (validating || stale) return <span className="muted dq-validation">校验中…</span>;
+  if (!errors && !warnings) return <span className="dq-ok dq-validation">✓ 校验通过</span>;
+  return <button type="button" className="dq-link dq-validation" onClick={onOpen}>
+    {errors ? <Tag color="red">{errors} 错误</Tag> : null}{warnings ? <Tag color="gold">{warnings} 警告</Tag> : null}查看问题</button>;
 }
 
 /** 问题面板：错误、警告与展开校验说明；点击定位到正文行列或右侧对应标签页。 */

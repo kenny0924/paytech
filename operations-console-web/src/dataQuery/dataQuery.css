@@ -2,7 +2,6 @@
 .dq-page, .dq-modal { --dq-border: #e4e8f0; --dq-muted: #69717d; --dq-error: #d4380d; --dq-warning: #ad6800; }
 .dq-page .mono, .dq-modal .mono, .dq-check .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
 .dq-page .muted, .dq-modal .muted { color: var(--dq-muted); }
-.dq-intro { margin: -8px 0 16px; font-size: 12px; }
 .dq-banner { margin-bottom: 12px; }
 .dq-text-error { color: var(--dq-error); }
 .dq-ok { color: #389e0d; font-weight: 600; }
@@ -29,15 +28,18 @@
 .dq-param-tag.is-required { font-weight: 600; }
 .dq-link.mono, .dq-page .dq-link { color: #315dca; }
 
-/* 数据源主从布局 */
-.dq-master-detail { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 16px; align-items: start; }
-.dq-detail { padding: 18px 20px; }
+/* 列表工具栏与数据源详情抽屉 */
+.dq-list-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 4px 4px 12px; }
+.dq-list-toolbar > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-width: 0; }
+.dq-list-toolbar strong { font-size: 13px; font-weight: 600; }
+.dq-list-toolbar .muted { font-size: 12px; }
+.dq-list-toolbar > .ant-btn { flex-shrink: 0; }
 .dq-detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
 .dq-detail-head h2 { margin: 0 0 4px; font-size: 16px; }
 .dq-section-title { font-size: 13px; color: #63728b; font-weight: 600; margin: 18px 0 8px; border-top: 1px solid #edf0f5; padding-top: 14px; }
 .dq-reference-list { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 6px; }
 .dq-reference-list li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.dq-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; padding-top: 14px; border-top: 1px solid #edf0f5; }
+.dq-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; position: sticky; bottom: -24px; margin: 18px -24px -24px; padding: 14px 24px; background: #fff; border-top: 1px solid #edf0f5; }
 
 /* 数据源编辑弹窗 */
 .dq-editor-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; }
@@ -74,22 +76,26 @@
 .dq-source-select { min-width: 220px; }
 .dq-source-select.is-focused .ant-select-selector, .dq-source-select.is-focused { box-shadow: 0 0 0 2px #ffccc7; border-radius: 6px; }
 .dq-description-input { padding-left: 0; color: var(--dq-muted); }
-.dq-editor-body { display: grid; grid-template-columns: minmax(0, 3fr) minmax(360px, 2fr); gap: 16px; align-items: start; }
-.dq-editor-left { display: grid; gap: 12px; min-width: 0; }
-.dq-editor-right { background: #fff; border: 1px solid var(--dq-border); border-radius: 10px; padding: 4px 14px 14px; min-width: 0; }
+.dq-editor-card { background: #fff; border: 1px solid var(--dq-border); border-radius: 10px; padding: 0 16px 16px; min-width: 0; }
+.dq-editor-tabs > .ant-tabs-nav { margin-bottom: 12px; }
+.dq-tab-count { margin: 0 0 0 2px; font-size: 11px; line-height: 16px; padding: 0 5px; }
+.dq-param-name { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.dq-param-name .ant-input { min-width: 0; }
+.dq-param-name .ant-tag { margin: 0; font-size: 11px; line-height: 16px; padding: 0 4px; }
+.dq-validation { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+.dq-validation .ant-tag { margin: 0; }
 .dq-code-card { background: #fff; border: 1px solid var(--dq-border); border-radius: 10px; overflow: hidden; }
 .dq-code-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 12px; border-bottom: 1px solid #edf0f5; font-size: 12px; }
 .dq-legend { display: inline-flex; flex-wrap: wrap; gap: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 .dq-bytes { margin-left: auto; color: var(--dq-muted); }
-.dq-code { min-height: 360px; max-height: 62vh; overflow: auto; font-size: 13px; }
-.dq-code .cm-editor { min-height: 360px; }
+.dq-code { height: max(480px, calc(100vh - 300px)); overflow: auto; font-size: 13px; }
+.dq-code .cm-editor { min-height: 100%; }
 .dq-code .cm-editor.cm-focused { outline: none; }
 .dq-code .cm-scroller { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1.6; }
 .dq-tpl-value { color: #0958d9; background: #e6f4ff; border-radius: 2px; }
 .dq-tpl-fragment { color: #531dab; background: #f9f0ff; border-radius: 2px; }
 .dq-tpl-tag { color: #d46b08; font-weight: 600; }
 .dq-tpl-comment, .dq-tpl-comment * { color: #8c8c8c !important; font-style: italic; }
-.dq-bottom { background: #fff; border: 1px solid var(--dq-border); border-radius: 10px; padding: 0 12px 12px; }
 .dq-problems { display: grid; gap: 4px; }
 .dq-problem { display: grid; grid-template-columns: 52px 90px minmax(0, 1fr) 40px; gap: 8px; align-items: center; padding: 4px 0; font-size: 12px; }
 .dq-problem .ant-tag { margin: 0; text-align: center; }
@@ -128,7 +134,8 @@
 .dq-keep .ant-input-number { width: 56px; }
 
 /* 试运行 */
-.dq-trial { display: grid; gap: 12px; }
+.dq-trial { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.dq-trial-output { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
 .dq-trial-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 12px; align-items: start; }
 .dq-trial-hint, .dq-trial-paging, .dq-trial-form > .dq-note, .dq-trial-form > .dq-banner { grid-column: 1 / -1; }
 .dq-trial-field { display: grid; gap: 4px; font-size: 12px; }
@@ -168,10 +175,9 @@
 .dq-changes dt { color: #4a5568; font-weight: 600; }
 .dq-changes dd { margin: 0; }
 
-@media (max-width: 1280px) {
-  .dq-master-detail, .dq-editor-body { grid-template-columns: minmax(0, 1fr); }
-}
 @media (max-width: 760px) {
   .dq-editor-grid, .dq-version-layout, .dq-form-row { grid-template-columns: minmax(0, 1fr); }
   .dq-diff { grid-template-columns: minmax(0, 1fr); }
 }
+/* 标签页内的声明表格限制宽度，避免宽屏下输入框过度拉伸 */
+.dq-editor-tabs .dq-param-table, .dq-editor-tabs .dq-column-list, .dq-editor-tabs .dq-constraints, .dq-editor-tabs .dq-problems { max-width: 1120px; }
