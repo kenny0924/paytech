@@ -273,3 +273,4 @@
 
 .l10n-batch-stats { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; }
 .l10n-batch-stats > span { display: inline-flex; gap: 4px; align-items: center; }
+.l10n-load-more { display: flex; justify-content: center; padding: 8px 0 12px; }

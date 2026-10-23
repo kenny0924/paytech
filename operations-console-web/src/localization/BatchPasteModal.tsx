@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, App, Button, Input, Modal, Progress } from 'antd';
-import { ApiError } from '../api/session';
+import { ApiError, session } from '../api/session';
 import { requestAllPages } from '../api/paging';
 import { formatNumber } from '../i18n';
 import { validateTranslation } from './icu';
 import { PREVIEW_LIST_LIMIT } from './importModel';
-import { decodeSaveTranslations, decodeTranslationPage, localizationPaths } from './localizationApi';
+import { decodeNamespaces, decodeSaveTranslations, decodeTranslationPage, localizationPaths } from './localizationApi';
 import type { TranslationEntry } from './localizationApi';
 import { Icons, issueText, useAdminT } from './LocalizationParts';
-import { batchErrorTargets, parsePaste, splitBatches } from './translationModel';
+import { batchErrorTargets, parsePaste, pastePlan, splitBatches } from './translationModel';
 import type { TranslationInputItem } from './translationModel';
 import { classifyFailure, localizationCommand, sendCommand } from './useLocalizationCommand';
 
@@ -35,17 +35,25 @@ export function BatchPasteModal({ applicationCode, applicationName, locale, lang
   const [checking, setChecking] = useState(false);
   const [checked, setChecked] = useState<Checked | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [tooLarge, setTooLarge] = useState<number | null>(null);
   const [progress, setProgress] = useState<{ batch: number; batches: number } | null>(null);
   const [failure, setFailure] = useState<Failure | null>(null);
   const mounted = useRef(true);
   useEffect(() => () => { mounted.current = false; }, []);
 
   async function check() {
-    setChecking(true); setChecked(null); setFailure(null); setLoadFailed(false);
+    setChecking(true); setChecked(null); setFailure(null); setLoadFailed(false); setTooLarge(null);
     const parsed = parsePaste(text);
     try {
       const controller = new AbortController();
-      const entries = await requestAllPages(localizationPaths.translations(applicationCode), controller.signal, undefined, { locale }, decodeTranslationPage);
+      // 只读取粘贴内容涉及的命名空间（列表路由按用户限流）；页数超过预算时请用户分批粘贴。
+      const namespaces = await session.request(localizationPaths.namespaces(applicationCode), { signal: controller.signal }, decodeNamespaces);
+      const plan = pastePlan(parsed.entries.map(item => item.keyCode), namespaces);
+      if (plan.tooLarge) { if (mounted.current) setTooLarge(plan.namespaces.length); return; }
+      const entries: TranslationEntry[] = [];
+      for (const namespaceCode of plan.namespaces) {
+        entries.push(...await requestAllPages(localizationPaths.translations(applicationCode), controller.signal, undefined, { locale, namespaceCode }, decodeTranslationPage));
+      }
       if (!mounted.current) return;
       const byKey = new Map<string, TranslationEntry>(entries.map(entry => [entry.keyCode, entry]));
       const result: Checked = { ready: [], invalid: [], unknown: [], unchanged: 0, invalidLines: parsed.invalidLines };
@@ -107,6 +115,7 @@ export function BatchPasteModal({ applicationCode, applicationName, locale, lang
       <Input.TextArea rows={8} value={text} disabled={busy} className="l10n-mono-input" placeholder={t('batch.placeholder')}
         onChange={event => { setText(event.target.value); setChecked(null); }} aria-label={t('batch.title', { language: languageName })} />
       {loadFailed && <Alert type="error" showIcon title={t('batch.load_failed')} />}
+      {tooLarge !== null && <Alert type="warning" showIcon title={t('batch.too_large', { namespaces: tooLarge })} />}
       {progress && <div className="l10n-progress-row"><Progress size="small" percent={Math.round((progress.batch - 1) * 100 / progress.batches)} showInfo={false} style={{ width: 160 }} />
         {t('batch.progress', { batch: progress.batch, batches: progress.batches })}</div>}
       {failure && <Alert type="error" showIcon title={t('batch.partial', { saved: failure.saved, batch: failure.batch, batches: failure.batches,

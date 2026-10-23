@@ -179,3 +179,17 @@ export function parsePaste(text: string): { entries: { keyCode: string; text: st
   });
   return { entries: [...map].map(([keyCode, value]) => ({ keyCode, text: value })), invalidLines };
 }
+
+/** 翻译列表每次加载的条数：首屏一次请求，其余按需加载（列表路由每用户 30 次 / 分钟）。 */
+export const TRANSLATION_PAGE_SIZE = 100;
+/** 批量粘贴核对时最多发出的列表请求数（每页 200 条），超过时请用户按命名空间分批，避免触发限流。 */
+export const PASTE_PAGE_BUDGET = 20;
+const PASTE_PAGE_SIZE = 200;
+
+/** 批量粘贴的核对计划：只读取粘贴内容涉及的命名空间，并按各命名空间的 key 数估算请求页数。 */
+export function pastePlan(keyCodes: string[], namespaces: { namespaceCode: string; activeKeyCount: number }[]) {
+  const counts = new Map(namespaces.map(item => [item.namespaceCode, item.activeKeyCount]));
+  const involved = [...new Set(keyCodes.map(namespaceOf))].filter(code => counts.has(code)).sort();
+  const pages = involved.reduce((sum, code) => sum + Math.max(1, Math.ceil((counts.get(code) ?? 0) / PASTE_PAGE_SIZE)), 0);
+  return { namespaces: involved, pages, tooLarge: pages > PASTE_PAGE_BUDGET };
+}

@@ -3,7 +3,7 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import { App, Button, Dropdown, Empty, Input, Popover, Select, Spin, Tooltip } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IntlMessageFormat } from 'intl-messageformat';
-import { requestAllPages } from '../api/paging';
+import { requestPage } from '../api/paging';
 import type { ConsoleResource } from '../api/types';
 import { useUnsavedRuleGuard } from '../risk/useUnsavedRuleGuard';
 import { formatNumber } from '../i18n';
@@ -18,8 +18,8 @@ import { Icons, LoadFailed, LocalizationFrame, hasButton, issueText, localeName,
 import { BatchPasteModal } from './BatchPasteModal';
 import { PublishModal } from './PublishModal';
 import { TranslationImportModal } from './TranslationImportModal';
-import { editorState, entryStatus, issueGroups, namespaceOf, withDraftError, nextAfterSave, saveErrorMessages, siblingKey, tabCounts, tabState,
-  translationTabs, unpublishedRevisions } from './translationModel';
+import { TRANSLATION_PAGE_SIZE, editorState, entryStatus, issueGroups, namespaceOf, withDraftError, nextAfterSave, saveErrorMessages, siblingKey, tabCounts,
+  tabState, translationTabs, unpublishedRevisions } from './translationModel';
 import type { EntryStatus, IssueGroups, TranslationTab } from './translationModel';
 import { useLocalizationCommand } from './useLocalizationCommand';
 import { session } from '../api/session';
@@ -62,20 +62,42 @@ function Workbench({ resources, onAuthorizationChanged }: Props) {
   const precheck = useLoad(appCode ? localizationPaths.precheck(appCode) : null, decodePrecheck);
 
   const [entries, setEntries] = useState<TranslationEntry[]>([]);
+  const [entriesTotal, setEntriesTotal] = useState(0);
   const [entriesLoading, setEntriesLoading] = useState(false);
   const [entriesFailure, setEntriesFailure] = useState<unknown>();
   const [entriesReload, setEntriesReload] = useState(0);
-  useEffect(() => {
-    if (!appCode || !locale) { setEntries([]); return; }
-    const controller = new AbortController(); setEntriesLoading(true); setEntriesFailure(undefined);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadedPage = useRef(0);
+  const listFilters = useMemo(() => {
     const state = tabState[tab];
-    requestAllPages(localizationPaths.translations(appCode), controller.signal, undefined,
-      { locale, ...(namespace ? { namespaceCode: namespace } : {}), ...(state ? { state } : {}), ...(keyword ? { keyword } : {}) }, decodeTranslationPage)
-      .then(items => { if (!controller.signal.aborted) setEntries(items); })
+    return { locale: locale ?? '', ...(namespace ? { namespaceCode: namespace } : {}), ...(state ? { state } : {}), ...(keyword ? { keyword } : {}) };
+  }, [locale, namespace, tab, keyword]);
+  // 只读取第一页（列表路由按用户限流，不能一次取完全部 key），其余在列表底部或切换到末尾时按需加载。
+  useEffect(() => {
+    if (!appCode || !locale) { setEntries([]); setEntriesTotal(0); return; }
+    const controller = new AbortController(); setEntriesLoading(true); setEntriesFailure(undefined); loadedPage.current = 0;
+    requestPage(localizationPaths.translations(appCode), { page: 1, size: TRANSLATION_PAGE_SIZE }, controller.signal, undefined, listFilters, decodeTranslationPage)
+      .then(result => { if (!controller.signal.aborted) { setEntries(result.items); setEntriesTotal(result.total); loadedPage.current = 1; } })
       .catch(error => { if (!controller.signal.aborted) setEntriesFailure(error); })
       .finally(() => { if (!controller.signal.aborted) setEntriesLoading(false); });
     return () => controller.abort();
-  }, [appCode, locale, namespace, tab, keyword, entriesReload]);
+  }, [appCode, locale, listFilters, entriesReload]);
+  const hasMore = entries.length < entriesTotal;
+  const loadingMoreRef = useRef(false);
+  /** 加载下一页并追加；返回新增的条目（失败或没有更多时为空）。 */
+  const loadMore = useCallback(async (): Promise<TranslationEntry[]> => {
+    if (!appCode || !locale || loadingMoreRef.current || entries.length >= entriesTotal) return [];
+    loadingMoreRef.current = true; setLoadingMore(true);
+    try {
+      const result = await requestPage(localizationPaths.translations(appCode), { page: loadedPage.current + 1, size: TRANSLATION_PAGE_SIZE },
+        undefined, undefined, listFilters, decodeTranslationPage);
+      const known = new Set(entries.map(item => item.keyCode));
+      const added = result.items.filter(item => !known.has(item.keyCode));
+      loadedPage.current += 1; setEntries(current => [...current, ...added]); setEntriesTotal(result.total);
+      return added;
+    } catch (error) { setEntriesFailure(error); return []; }
+    finally { loadingMoreRef.current = false; setLoadingMore(false); }
+  }, [appCode, locale, entries, entriesTotal, listFilters]);
 
   const entry = entries.find(item => item.keyCode === selectedKey) ?? null;
   const [draft, setDraft] = useState<{ keyCode: string; text: string } | null>(null);
@@ -137,17 +159,18 @@ function Workbench({ resources, onAuthorizationChanged }: Props) {
     setDraft(null);
     refreshSummary();
     void message.success({ content: t('editor.saved', { key: entry.keyCode }), duration: 1.5 });
-    const next = goNext ? nextAfterSave(entries, entry.keyCode) : null;
+    const next = goNext ? nextAfterSave(entries, entry.keyCode) ?? (hasMore ? (await loadMore())[0]?.keyCode ?? null : null) : null;
     if (next) update({ key: next });
   }
 
-  function move(direction: 1 | -1) {
-    const next = siblingKey(entries, selectedKey, direction);
+  async function move(direction: 1 | -1) {
+    let next = siblingKey(entries, selectedKey, direction);
+    if (direction === 1 && next === selectedKey && hasMore) next = (await loadMore())[0]?.keyCode ?? next;
     if (next && next !== selectedKey) void guarded(() => update({ key: next }));
   }
-  /** 定位到某条：切到其语言与命名空间、全部页签，清除搜索。 */
+  /** 定位到某条：切到其语言与命名空间、全部页签，并以 key 搜索（该条可能不在已加载的页中）。 */
   function locate(keyCode: string, targetLocale = locale) {
-    void guarded(() => update({ locale: targetLocale, ns: namespaceOf(keyCode), tab: null, q: null, key: keyCode }));
+    void guarded(() => update({ locale: targetLocale, ns: namespaceOf(keyCode), tab: null, q: keyCode, key: keyCode }));
   }
 
   const [importing, setImporting] = useState(false);
@@ -223,7 +246,8 @@ function Workbench({ resources, onAuthorizationChanged }: Props) {
       <strong>{t('translations.no_keys_title')}</strong><p className="muted">{t('translations.no_keys_body')}</p></>}>
       {canImport && <Button type="primary" icon={Icons.upload()} onClick={() => setImporting(true)}>{t('translations.import_keys')}</Button>}</Empty></section>
       : <section className="l10n-card l10n-workbench">
-        <KeyList entries={entries} loading={entriesLoading} failure={entriesFailure} retry={() => setEntriesReload(value => value + 1)}
+        <KeyList entries={entries} total={entriesTotal} loading={entriesLoading} loadingMore={loadingMore} onLoadMore={() => void loadMore()}
+          failure={entriesFailure} retry={() => setEntriesReload(value => value + 1)}
           selectedKey={selectedKey} draft={entry && dirty ? { keyCode: entry.keyCode, text: draftText } : null} tab={tab}
           namespace={namespace} namespaces={namespaces.data ?? []} keyword={keyword} filtered={!!(namespace || keyword)}
           onNamespace={value => void guarded(() => update({ ns: value || null, key: null }))}
@@ -233,8 +257,8 @@ function Workbench({ resources, onAuthorizationChanged }: Props) {
           draft={draftText} onDraft={text => { setDraft({ keyCode: entry.keyCode, text }); setSaveFailure(null); }} canEdit={canEdit}
           saving={command.saving} failure={saveFailure?.keyCode === entry.keyCode ? saveFailure : null}
           onReload={() => { setSaveFailure(null); setDraft(null); setEntriesReload(value => value + 1); }}
-          hasPrev={entries[0]?.keyCode !== entry.keyCode} hasNext={entries.at(-1)?.keyCode !== entry.keyCode}
-          onMove={move} onSave={goNext => void save(goNext)} onExport={() => void exportTranslations()}
+          hasPrev={entries[0]?.keyCode !== entry.keyCode} hasNext={hasMore || entries.at(-1)?.keyCode !== entry.keyCode}
+          onMove={direction => void move(direction)} onSave={goNext => void save(goNext)} onExport={() => void exportTranslations()}
           onImportTranslations={() => setTranslationImport(true)} onBatchPaste={() => setBatchPaste(true)} />
           : <div className="l10n-detail l10n-detail-empty">{entriesLoading ? <Spin /> : <Empty description={t('editor.pick')} />}</div>}
       </section>}
@@ -312,8 +336,10 @@ const statusIcon: Record<EntryStatus, ReactNode> = {
 };
 
 /** 左侧 key 列表：命名空间筛选、搜索、状态图标；当前条高亮，编辑中显示草稿（原型 01）。 */
-function KeyList({ entries, loading, failure, retry, selectedKey, draft, tab, namespace, namespaces, keyword, filtered, onNamespace, onKeyword, onSelect }: {
-  entries: TranslationEntry[]; loading: boolean; failure: unknown; retry: () => void; selectedKey: string | null;
+function KeyList({ entries, total, loading, loadingMore, onLoadMore, failure, retry, selectedKey, draft, tab, namespace, namespaces, keyword, filtered,
+  onNamespace, onKeyword, onSelect }: {
+  entries: TranslationEntry[]; total: number; loading: boolean; loadingMore: boolean; onLoadMore: () => void; failure: unknown; retry: () => void;
+  selectedKey: string | null;
   draft: { keyCode: string; text: string } | null; tab: TranslationTab; namespace: string; namespaces: { namespaceCode: string; namespaceName: string }[];
   keyword: string; filtered: boolean; onNamespace: (value: string) => void; onKeyword: (value: string) => void; onSelect: (keyCode: string) => void;
 }) {
@@ -328,6 +354,16 @@ function KeyList({ entries, loading, failure, retry, selectedKey, draft, tab, na
   }, [text]);
   const selectedRef = useRef<HTMLButtonElement>(null);
   useEffect(() => { selectedRef.current?.scrollIntoView({ block: 'nearest' }); }, [selectedKey]);
+  // 滚动到列表底部时自动加载下一页（加载中或已全部加载时不触发）。
+  const sentinel = useRef<HTMLDivElement>(null);
+  const hasMore = entries.length < total;
+  useEffect(() => {
+    const node = sentinel.current;
+    if (!node || !hasMore || loading || loadingMore || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver(items => { if (items.some(item => item.isIntersecting)) onLoadMore(); });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, entries.length, onLoadMore]);
   return <aside className="l10n-keys" aria-label={t('list.label')}>
     <div className="l10n-keys-head">
       {searching ? <Input autoFocus allowClear size="small" value={text} placeholder={t('list.search_placeholder')} prefix={Icons.search(12)}
@@ -362,6 +398,9 @@ function KeyList({ entries, loading, failure, retry, selectedKey, draft, tab, na
             </span>
           </button>;
         })}
+      {hasMore && !loading && <div ref={sentinel} className="l10n-load-more">
+        <Button size="small" type="text" loading={loadingMore} onClick={onLoadMore}>
+          {t('list.load_more', { loaded: formatNumber(entries.length), total: formatNumber(total) })}</Button></div>}
     </div>
   </aside>;
 }

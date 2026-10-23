@@ -273,3 +273,15 @@ test('change summaries from Platform become rows with samples; check progress an
   assert.equal(decodeApplication({ ...base, pendingChangeCount: 23 }).pendingChangeCount, 23);
   assert.equal(decodeApplication(base).pendingChangeCount, null);
 });
+
+test('批量粘贴只读取涉及的命名空间，并在请求页数超过预算时要求分批', async () => {
+  const { pastePlan, PASTE_PAGE_BUDGET, TRANSLATION_PAGE_SIZE } = await import('./translationModel.ts');
+  const namespaces = [{ namespaceCode: 'auth', activeKeyCount: 42 }, { namespaceCode: 'channel', activeKeyCount: 1157 },
+    { namespaceCode: 'risk', activeKeyCount: 1132 }, { namespaceCode: 'workflow', activeKeyCount: 989 }];
+  const small = pastePlan(['auth.login.title', 'auth.login.submit', 'channel.list.title', 'unknown.key'], namespaces);
+  assert.deepEqual(small, { namespaces: ['auth', 'channel'], pages: 1 + 6, tooLarge: false });
+  const many = Array.from({ length: 30 }, (_, i) => ({ namespaceCode: `ns${i}`, activeKeyCount: 200 }));
+  const large = pastePlan(many.map(item => `${item.namespaceCode}.a.b`), many);
+  assert.equal(large.pages, 30); assert.equal(large.tooLarge, true); assert.ok(large.pages > PASTE_PAGE_BUDGET);
+  assert.ok(TRANSLATION_PAGE_SIZE <= 200, 'page size within the list contract');
+});

@@ -1,0 +1,18 @@
+# 运营控制台多语言迁移：mor-test 候选覆盖文件（2026-10-23 阶段 6 准备；阶段 7 由主会话按 release.md 第 6 节执行，另需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史候选文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261023/operations-控制台多语言迁移/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service...>
+# 只列本次替换的 2 个服务；不加 --remove-orphans。部署只认下列 sha256（tag opsi18n-20261023a 仅供辨认，:development 未改动）。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-opsi18n-rel = main 9f210b5c + 集成目录 Code-MoR-opsi18n 的本需求改动
+#   （git diff --cached --binary 9f210b5c，434 个文件，补丁 SHA-256 064f85856d35a4b1，未提交）。基线证明见 release.md 第 1 节。
+# 环境变量：主 compose（test-environment/compose.applications.yaml）已含历次覆盖文件中这 2 个服务的全部键；本文件只换镜像。
+#   渲染结果与 2 个运行容器逐键、逐值相同（release.md 第 3 节）。本需求不新增变量。
+# 回滚：同目录 compose-rollback.yaml。
+services:
+  operations-console-bff:
+    # 角色权限树节点带 code（resourceCode / permissionCode / OTHER_PERMISSIONS）；审计详情删除中文 label；价格试算说明改为 notes[{code, params}]。
+    # 另随 9f210b5c 带上已提交的 98210e0b ledger-api 只增变化（release.md 1.2）。
+    image: sha256:3751638e5f34273844582b53ad0b5b2401a057fe8001bfc63d15241a8f8d487f  # mor-test/operations-console-bff:opsi18n-20261023a（JAR 3c7e6f647261115c）
+  operations-console-web:
+    # 全部页面文案经 i18n 运行时（21 个命名空间、8523 key）；默认英文、页头 / 登录页语言切换、本地缓存；保留现网 billb-f1-20261023 全部内容。
+    image: sha256:d228e3c883fdc1524ddb63c2d10f291100fc72a8bf25c191f1e03074c7a33433  # 回滚：opsi18n-20261023a
