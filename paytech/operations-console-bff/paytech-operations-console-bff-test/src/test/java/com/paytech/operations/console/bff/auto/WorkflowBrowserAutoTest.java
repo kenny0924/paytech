@@ -231,6 +231,41 @@ class WorkflowBrowserAutoTest extends FinanceBrowserAutoTestBase {
             () -> assertFalse(response.body().contains("remote-private")));
     }
 
+    /**
+     * 完成动作（WF20）与发起实例（WF15）：提交值根下的路径即使请求体里没有该键也保留，登记的 Platform 固定文案透传；
+     * 含数据的远端文案换为通用提示，根外不存在的路径与畸形路径仍丢弃。
+     */
+    @ParameterizedTest(name = "{index} 运行时字段错误 {0}")
+    @CsvSource({"WF20,output", "WF15,startValues"})
+    void test_runtimeValidationKeepsMissingKeysAndFixedMessages(String id, String root) throws Exception {
+        var row = row(BOUNDARY, id);
+        var errors = JSON.createArrayNode();
+        errors.addObject().put("field", root + ".monthlyVolume").put("message", "必填");
+        errors.addObject().put("field", root + ".files[0]").put("message", "文件未通过安全检查，请删除后重新上传");
+        errors.addObject().put("field", root + ".remark").put("message", "超过 4000 个字符");
+        errors.addObject().put("field", root + ".contract[1]").put("message", "文件不存在：/files/v1/987654321");
+        errors.addObject().put("field", root + ".bad key").put("message", "必填");
+        errors.addObject().put("field", "privateField").put("message", "必填");
+        var upstream = ((ObjectNode) JSON.readTree(problem(422, CommonErrorCode.VALIDATION_ERROR.getCode(),
+            "remote-private-detail"))).put("requestId", "platform-fields-request").set("errors", errors);
+        platform.rawResponse(ownerPath(row), 422, "application/problem+json", JSON.writeValueAsString(upstream),
+            Map.of("X-Request-Id", "platform-fields-request"));
+
+        var response = send(row);
+
+        assertEquals(422, response.statusCode(), response.body());
+        var body = JSON.readTree(response.body());
+        Map<String, String> fields = new java.util.TreeMap<>();
+        body.path("errors").forEach(error -> fields.put(error.path("field").asString(),
+            error.path("message").asString()));
+        assertAll(() -> assertEquals(CommonErrorCode.VALIDATION_ERROR.getCode(), body.path("code").asString()),
+            () -> assertEquals(Map.of(root + ".monthlyVolume", "必填", root + ".files[0]",
+                "文件未通过安全检查，请删除后重新上传", root + ".remark", "超过 4000 个字符", root + ".contract[1]", "请检查此处填写"),
+                fields),
+            () -> assertFalse(response.body().contains("987654321")),
+            () -> assertFalse(response.body().contains("remote-private")));
+    }
+
     /** 写回执的对象类型或路径对象 ID 与本次操作不符时按上游无效响应 502。 */
     @Test
     void test_invalidUpstreamResponse() throws Exception {
@@ -244,8 +279,6 @@ class WorkflowBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertUpstreamInvalid(submit, withResponse(submit, "actionRunId", "7300000000000000999"));
         var retry = row(BOUNDARY, "WF25");
         assertUpstreamInvalid(retry, withResponse(retry, "objectType", "WORKFLOW_INSTANCE"));
-        var reverify = row(BOUNDARY, "WF29");
-        assertUpstreamInvalid(reverify, withResponse(reverify, "actionRunId", "7300000000000000999"));
         var complete = row(BOUNDARY, "WF31");
         assertUpstreamInvalid(complete, withResponse(complete, "uploadId", "7300000000000000999"));
     }

@@ -18,14 +18,19 @@ final class ConfigurationValidationConverter {
 
     /** 只保留实际 Body 内的完整路径，显式 null 可定位，越界、未知及畸形路径丢弃。 */
     static RequestBodyValidationException local(Object body, HttpRequestValidationException failure) {
-        JsonNode wire = JSON.valueToTree(body);
+        JsonNode wire = tree(body);
         var errors = failure.fieldPaths().stream().filter(path -> exists(wire, path)).distinct().sorted()
             .limit(100).map(path -> new ProblemFieldError(path, MESSAGE)).toList();
         return new RequestBodyValidationException(errors, failure);
     }
 
+    /** 页面请求体的本地序列化树。 */
+    static JsonNode tree(Object body) {
+        return JSON.valueToTree(body);
+    }
+
     /** 只遍历本地序列化树，禁止把远端字段文本当作表达式执行或把对象内容拼入响应。 */
-    private static boolean exists(JsonNode body, String path) {
+    static boolean exists(JsonNode body, String path) {
         if (path == null || path.isBlank() || path.length() > 256) return false;
         JsonNode current = body;
         for (String part : path.split("\\.", -1)) {

@@ -116,9 +116,6 @@ public interface PlatformWorkflowClient {
     WorkflowSubmissionResponseBody submitAction(OperatorContext context, String actionRunId,
         SubmitWorkflowActionRequestBody request);
 
-    /** 重新验证动作。 */
-    WorkflowSubmissionResponseBody reverifyAction(OperatorContext context, String actionRunId);
-
     /** 开始上传附件。 */
     FileUploadResponseBody startAttachmentUpload(OperatorContext context,
         StartWorkflowAttachmentUploadRequestBody request);

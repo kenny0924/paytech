@@ -16,7 +16,7 @@ import tools.jackson.databind.json.JsonMapper;
  * 工作流页面模型与 Platform 合同之间的转换与回执核对
  * <li>请求 record 与 Platform 请求类逐字段对应，转换遇到未知字段即失败（合同漂移）。</li>
  * <li>写回执的对象类型与路径中的对象 ID 必须与本次操作一致，否则按上游无效响应 502。</li>
- * <li>Platform 422 的字段路径只投影到本次页面请求体内存在的路径。</li>
+ * <li>Platform 422 的字段路径只投影到本次页面请求体内存在的路径；完成动作与发起实例另见 {@link WorkflowRuntimeValidationConverter}。</li>
  */
 final class WorkflowContractConverter {
 
@@ -42,6 +42,22 @@ final class WorkflowContractConverter {
             return require(call.get());
         } catch (HttpRequestValidationException failure) {
             throw ConfigurationValidationConverter.local(request, failure);
+        }
+    }
+
+    /**
+     * 运行时写入转发（完成动作、发起实例）：422 中提交值根下的字段路径即使不在请求体内也保留，登记的 Platform 固定文案透传。
+     *
+     * @param request 页面请求体
+     * @param root 提交值属性名（output / startValues）
+     * @param call Platform 调用
+     * @return Platform 响应
+     */
+    static <T> T runtimeWrite(Object request, String root, Supplier<T> call) {
+        try {
+            return require(call.get());
+        } catch (HttpRequestValidationException failure) {
+            throw WorkflowRuntimeValidationConverter.local(request, root, failure);
         }
     }
 

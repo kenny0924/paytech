@@ -24,7 +24,8 @@
           "version": 2,
           "updatedBy": "7300000000000000101",
           "updatedByName": "a***@example.test",
-          "updateTime": "2026-10-22T01:02:03.123456Z"
+          "updateTime": "2026-10-22T01:02:03.123456Z",
+          "referencedDefinitionCount": 2
         }
       ],
       "page": 1,
@@ -820,9 +821,7 @@
     "status": 200,
     "response": {
       "actionRunId": "7300000000000000501",
-      "status": "VERIFIED",
-      "verificationId": "7300000000000000901",
-      "failureReason": null,
+      "status": "COMPLETED",
       "instanceStatus": "RUNNING"
     }
   },
@@ -1004,23 +1003,6 @@
           "runningInstanceCount": 3
         }
       ]
-    }
-  },
-  {
-    "id": "WF29",
-    "method": "POST",
-    "path": "/workflow/v1/action-runs/7300000000000000501/verification",
-    "ownerPath": "/workflow/v1/action-runs/7300000000000000501/verification",
-    "query": "",
-    "routeCode": "operations-workflow-action-reverify",
-    "request": null,
-    "status": 200,
-    "response": {
-      "actionRunId": "7300000000000000501",
-      "status": "VERIFIED",
-      "verificationId": "7300000000000000511",
-      "failureReason": null,
-      "instanceStatus": "RUNNING"
     }
   },
   {

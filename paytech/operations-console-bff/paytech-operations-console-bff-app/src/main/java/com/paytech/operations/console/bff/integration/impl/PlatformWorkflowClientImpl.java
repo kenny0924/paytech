@@ -2,6 +2,7 @@ package com.paytech.operations.console.bff.integration.impl;
 
 import static com.paytech.operations.console.bff.integration.impl.WorkflowContractConverter.mutation;
 import static com.paytech.operations.console.bff.integration.impl.WorkflowContractConverter.require;
+import static com.paytech.operations.console.bff.integration.impl.WorkflowContractConverter.runtimeWrite;
 import static com.paytech.operations.console.bff.integration.impl.WorkflowContractConverter.toPlatform;
 import static com.paytech.operations.console.bff.integration.impl.WorkflowContractConverter.write;
 
@@ -182,7 +183,7 @@ public class PlatformWorkflowClientImpl implements PlatformWorkflowClient {
 
     @Override
     public WorkflowMutationResponseBody startInstance(OperatorContext context, StartWorkflowInstanceRequestBody request) {
-        return mutation(write(request, () -> runtime.startInstance(context.accountId(), context.sessionId(),
+        return mutation(runtimeWrite(request, "startValues", () -> runtime.startInstance(context.accountId(), context.sessionId(),
             toPlatform(request, com.paytech.platform.support.api.workflow.request.StartWorkflowInstanceRequestBody.class))),
             INSTANCE, null);
     }
@@ -217,22 +218,12 @@ public class PlatformWorkflowClientImpl implements PlatformWorkflowClient {
     @Override
     public WorkflowSubmissionResponseBody submitAction(OperatorContext context, String actionRunId,
         SubmitWorkflowActionRequestBody request) {
-        WorkflowSubmissionResponseBody result = write(request, () -> runtime.submitAction(context.accountId(),
+        WorkflowSubmissionResponseBody result = runtimeWrite(request, "output", () -> runtime.submitAction(context.accountId(),
             context.sessionId(), actionRunId,
             toPlatform(request, com.paytech.platform.support.api.workflow.request.SubmitWorkflowActionRequestBody.class)));
         if (!actionRunId.equals(result.getActionRunId())) {
             throw new com.paytech.foundation.common.error.ErrorException(
                 com.paytech.foundation.common.error.CommonErrorCode.UPSTREAM_INVALID_RESPONSE);
-        }
-        return result;
-    }
-
-    @Override
-    public WorkflowSubmissionResponseBody reverifyAction(OperatorContext context, String actionRunId) {
-        WorkflowSubmissionResponseBody result = require(runtime.reverifyAction(context.accountId(),
-            context.sessionId(), actionRunId));
-        if (!actionRunId.equals(result.getActionRunId())) {
-            throw new ErrorException(CommonErrorCode.UPSTREAM_INVALID_RESPONSE);
         }
         return result;
     }

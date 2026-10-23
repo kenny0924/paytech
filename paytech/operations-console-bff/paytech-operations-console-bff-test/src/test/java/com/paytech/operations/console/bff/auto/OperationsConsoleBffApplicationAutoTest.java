@@ -521,7 +521,6 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "GET /workflow/v1/my-tasks/handled",
             "GET /workflow/v1/assignee-candidates",
             "POST /workflow/v1/action-runs/{actionRunId}/submission",
-            "POST /workflow/v1/action-runs/{actionRunId}/verification",
             "POST /workflow/v1/attachments/uploads",
             "POST /workflow/v1/attachments/uploads/{uploadId}/completion",
             "POST /workflow/v1/instances/{instanceId}/files/{fileId}/download",

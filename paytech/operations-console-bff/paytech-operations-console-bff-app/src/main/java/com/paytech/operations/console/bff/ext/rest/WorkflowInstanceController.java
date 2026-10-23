@@ -103,19 +103,12 @@ public class WorkflowInstanceController {
         return client.terminateInstance(context, instanceId, request);
     }
 
-    /** 提交动作并同步验证。 */
+    /** 完成动作：只检查必填与值类型，不合格返回 422 字段错误。 */
     @PostMapping("/action-runs/{actionRunId}/submission")
     public WorkflowSubmissionResponseBody submitAction(OperatorContext context,
         @PathVariable("actionRunId") @Pattern(regexp = WorkflowModels.ID) String actionRunId,
         @Valid @RequestBody SubmitWorkflowActionRequestBody request) {
         return client.submitAction(context, actionRunId, request);
-    }
-
-    /** 重新验证动作（无 Body 的命令）。 */
-    @PostMapping("/action-runs/{actionRunId}/verification")
-    public WorkflowSubmissionResponseBody reverifyAction(OperatorContext context,
-        @PathVariable("actionRunId") @Pattern(regexp = WorkflowModels.ID) String actionRunId) {
-        return client.reverifyAction(context, actionRunId);
     }
 
     /** 转交动作。 */
