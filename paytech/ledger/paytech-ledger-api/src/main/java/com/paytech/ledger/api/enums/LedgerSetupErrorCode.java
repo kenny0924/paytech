@@ -3,7 +3,7 @@ package com.paytech.ledger.api.enums;
 import com.paytech.foundation.common.enums.CodeMessageEnum;
 
 /**
- * 账务基础资料与账簿命令/查询中调用方需要按错误码区分处理的业务拒绝（HTTP 400）
+ * 账务基础资料与账簿命令/查询中调用方需要按错误码区分处理的业务拒绝（HTTP 400；FINANCE_ENTITY_NOT_FOUND 为 404）
  * <li>Owner 以 {@code new FailException(code)} 抛出，Problem {@code code} 为枚举 Code、{@code detail} 为默认消息。</li>
  * <li>消费者：Operations BFF 在 {@code HttpServiceClientFactory} 显式注册本枚举并原样返回 400；Operations Web 按 Code 把拒绝映射到对应表单字段或页面提示。</li>
  * <li>未列出的业务拒绝仍使用公共 BUSINESS_CHECK_FAILED，参数错误使用公共 INVALID_REQUEST。</li>
@@ -14,6 +14,9 @@ public enum LedgerSetupErrorCode implements CodeMessageEnum {
 
     /** 新建账簿或财务日历时引用的财务主体不存在或非 ACTIVE */
     FINANCE_ENTITY_UNAVAILABLE("FINANCE_ENTITY_UNAVAILABLE", "财务主体不存在或已关闭"),
+
+    /** 按法律 Party 解析财务主体时不存在或已关闭（HTTP 404）；billing 据此判定上游事实缺失并重试 */
+    FINANCE_ENTITY_NOT_FOUND("FINANCE_ENTITY_NOT_FOUND", "法律 Party 没有对应的 ACTIVE 财务主体"),
 
     /** 同一主体重复创建财务日历 */
     FISCAL_CALENDAR_ALREADY_EXISTS("FISCAL_CALENDAR_ALREADY_EXISTS", "该主体已有财务日历"),

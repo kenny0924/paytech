@@ -9,6 +9,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.billing.core.dal.dataobject.BillingFact;
 import com.paytech.billing.domain.BillingFactContext;
 import com.paytech.billing.domainservice.repository.BillingFactLineRepository;
+import com.paytech.billing.domainservice.repository.BillingFactPricingRepository;
 import com.paytech.billing.domainservice.repository.BillingFactRefRepository;
 import com.paytech.billing.domainservice.repository.BillingFactRepository;
 import com.paytech.billing.domainservice.service.BillingFactService;
@@ -29,6 +30,7 @@ public class BillingFactServiceImpl implements BillingFactService {
     private final BillingFactRefRepository billingFactRefRepository;
     private final BillingFactLineRepository billingFactLineRepository;
     private final CompensationEventRegistrar compensationEventRegistrar;
+    private final BillingFactPricingRepository billingFactPricingRepository;
 
     /** 读取事实头、引用、明细行与币种精度（Platform 币种快照，只读内存）；不存在返回空。 */
     @Override
@@ -54,6 +56,25 @@ public class BillingFactServiceImpl implements BillingFactService {
         } catch (DuplicateKeyException duplicate) {
             throw new ConcurrentRequestException("计费事实来源引用已被并发登记: " + context.getFact().getSourceSystem() + "/"
                 + context.getFact().getSourceEventKey(), duplicate);
+        }
+    }
+
+    /** 同一事务写入已批准的自动事实与定价输入并登记发布任务；来源唯一键冲突转为并发冲突。 */
+    @Override
+    public void recordAutoFact(BillingFactContext context) {
+        BillingFact fact = context.getFact();
+        try {
+            transactionTemplate.executeWithoutResult(status -> {
+                billingFactRepository.insert(fact);
+                billingFactPricingRepository.insert(context.getPricing());
+                billingFactRefRepository.insertAll(context.getRefs());
+                billingFactLineRepository.insertAll(context.getLines());
+                compensationEventRegistrar.register(
+                    BillingFactRecordedHandler.buildEvent(fact.getId(), fact.getFactVersion()));
+            });
+        } catch (DuplicateKeyException duplicate) {
+            throw new ConcurrentRequestException("计费事实来源事件已被并发登记: " + fact.getSourceSystem() + "/"
+                + fact.getSourceEventKey(), duplicate);
         }
     }
 

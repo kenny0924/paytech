@@ -36,8 +36,9 @@ spring:
     publisher-returns: true
     template:
       mandatory: true
-  # 内部 HTTP 客户端：platform-support 币种规则（币种快照刷新，事务外）。JDK HttpClient 不自动重试；不接服务发现，基址直接配置，
-  # 含 Platform Context Path /platform-support。
+  # 内部 HTTP 客户端：platform-support 币种规则（币种快照刷新，事务外）；commercial、channel-connector、reconciliation、ledger
+  # （自动 PAYMENT 事实登记前事务外读取，技术方案 4.5）。JDK HttpClient 不自动重试；不接服务发现，基址直接配置并含各自 Context Path
+  # （Platform /platform-support，其余无）。
   http:
     clients:
       imperative:
@@ -45,6 +46,26 @@ spring:
     serviceclient:
       platform-support-service:
         base-url: "${BILLING_PLATFORM_SERVICE_URL:http://127.0.0.1:18106/platform-support}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      commercial-service:
+        base-url: "${BILLING_COMMERCIAL_SERVICE_URL:http://127.0.0.1:18108}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      channel-connector-service:
+        base-url: "${BILLING_CHANNEL_CONNECTOR_SERVICE_URL:http://127.0.0.1:18110}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      reconciliation-service:
+        base-url: "${BILLING_RECONCILIATION_SERVICE_URL:http://127.0.0.1:18115}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      ledger-service:
+        base-url: "${BILLING_LEDGER_SERVICE_URL:http://127.0.0.1:18105}"
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow
@@ -64,11 +85,18 @@ compensation:
   instance-id: "${BILLING_COMPENSATION_INSTANCE_ID:billing}"
 
 # paytech-messaging 发布端：声明 billing.events（Durable Fanout）并提供 DomainEventPublisher（design/08 §3）。
+# 消费端：订阅 acquiring 的 OrderPaymentSucceeded（技术方案 4.3，S13），声明 billing.acquiring.hash 与 billing.acquiring.p0..p3 分区队列
+# （含 DLX/DLQ），登记自动 PAYMENT 事实。
 messaging:
   producer:
     service: billing
   publisher:
     unroutable-policy: FAIL
+  consumer:
+    service: billing
+  consumers:
+    acquiring:
+      partitions: 4
 
 # 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId。
 paytech:

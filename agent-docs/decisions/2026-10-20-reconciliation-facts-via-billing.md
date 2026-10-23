@@ -49,7 +49,7 @@
 | [`FINANCE_DATABASE.md`](../database/FINANCE_DATABASE.md) §4.5 中对账直接生成 Journal（`CHANNEL_BATCH_SETTLEMENT`、`CHANNEL_BANK_MATCH`、`LATE_DEBIT`）、处置挂 Instruction、`duplicate_capture_item`、表名与 open / debit item 分表；§6.2 状态机 | 由本决定第 2–8、14、15 条取代；两层对账分离、三段账户含义、批次对平门禁、同一流水用途一致与累计不超额、净额不跨清算账户等规则继续成立 |
 | `paytech/reconciliation/docs/database/reconciliation.pdma.json` 与 Schema SQL 的现有 18 张表 | 随实现切片按第 15、17 条修改为 13 张；未执行前现有 Schema 仍是代码依据 |
 | [billing 决定](./2026-10-19-billing-fact-engine.md)第 4 条事实类型清单、DISPUTE 事实含渠道应付的口径 | 增加 `CHANNEL_BATCH_RECONCILED`（含组件 `CHANNEL_BATCH_ADJUSTMENT`）、`RECON_ADJUSTMENT`、`BANK_SUSPENSE`、`CHARGEBACK_DEBIT`、`CHARGEBACK_REVERSAL`；DISPUTE 只做 Client 侧结转（第 3、6–8 条）；引用类型增加 `CHANNEL_TRANSACTION_REF`、`RECON_RESOLUTION` |
-| `PaymentSucceeded` Payload v2 的渠道引用字段 | 补 `channelTransactionRefId`、`referenceType`（第 5 条），Schema 版本随实现递增 |
+| `PaymentSucceeded` Payload v2 的渠道引用字段 | 补 `channelTransactionRefId`、`referenceType`（第 5 条），Schema 版本随实现递增。**修订（2026-10-23，需求 B Q16）：** 已实现为 v2 末尾追加两个可空字段 `channelTransactionRefId`、`channelReferenceType`，`schemaVersion` 保持 2（与 card BIN 追加字段做法一致，消费方按字段名读取）；"随实现递增"只适用于非兼容变更 |
 
 ## 4. 已知代价
 

@@ -28,9 +28,15 @@ import com.paytech.billing.test.checker.BillingResponseChecker;
 import com.paytech.billing.test.clear.BillingDataCleaner;
 import com.paytech.billing.test.clear.BillingRedisCleaner;
 import com.paytech.billing.test.configuration.BillingTestMockConfiguration;
+import com.paytech.billing.test.mocker.external.ChannelCostMocker;
+import com.paytech.billing.test.mocker.external.ClearingAccountMocker;
+import com.paytech.billing.test.mocker.external.CommercialPriceMocker;
 import com.paytech.billing.test.mocker.external.CurrencySpecMocker;
+import com.paytech.billing.test.mocker.external.FinanceEntityMocker;
 import com.paytech.billing.test.probe.BillingFactEventProbe;
+import com.paytech.billing.test.probe.AcquiringEventPublisher;
 import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
+import com.paytech.foundation.messaging.testkit.PartitionQueueBaselineConfiguration;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
@@ -41,19 +47,23 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * Billing 服务级入口测试基类
  * <li>复用正式启动类 BillingApplication 与生产组件扫描，只附加 mock Profile 与测试组件；本地 MySQL（mor_billing）/Redis/RabbitMQ 需预先就绪。</li>
- * <li>外部依赖只有 platform-support 币种规则全量查询，由独立 Loopback Mock HTTP 服务返回配置的 DTO；自动测试关闭快照定时刷新，每例由全局
- * BeforeEach 配置默认 USD（2 位、HALF_UP、ACTIVE）并经真实刷新入口与出站客户端刷新一次快照。</li>
+ * <li>外部依赖为 platform-support 币种规则全量查询，以及自动 PAYMENT 事实登记读取的 commercial、channel-connector、reconciliation、
+ * ledger 四个上游，均由同一独立 Loopback Mock HTTP 服务按用例配置的 DTO 应答；自动测试关闭快照定时刷新，每例由全局 BeforeEach 配置默认
+ * USD（2 位、HALF_UP、ACTIVE）并经真实刷新入口与出站客户端刷新一次快照。四个上游默认不配置任何应答。</li>
+ * <li>OrderPaymentSucceeded 由 {@link AcquiringEventPublisher} 扮演 acquiring 发布到真实 acquiring.events，经正式消费链路处理；
+ * {@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空 billing.acquiring.p0..p3 与 DLQ（其他模块测试的残留消息），每例前后再清空。</li>
  * <li>BillingFactRecorded 经补偿任务异步发布到真实本地 Broker，每例为 billing.events 绑定一个临时观察队列（发布端 unroutable-policy 为
  * FAIL，未路由严格判定；不消费 account 的生产队列）。</li>
- * <li>AfterEach 先等待补偿协调器与 Handler 全部空闲，再删除观察队列并检查 Platform Mock 没有意外调用；Foundation TestBase 随后执行全部 Clear
- * 组件。异步未停止时禁止清理与复用环境。</li>
+ * <li>AfterEach 先等待 billing.acquiring 分区队列消费完毕、补偿协调器与 Handler 全部空闲，再删除观察队列并检查全部外部 Mock 没有意外调用；
+ * Foundation TestBase 随后执行全部 Clear 组件。异步未停止时禁止清理与复用环境。</li>
  * <li>Actuator 在独立管理端口（业务端口 + 1000，测试随机），由 {@link #management(String)} 访问。</li>
  */
 @ActiveProfiles("mock")
 @AutoConfigureRestTestClient
 @SpringBootTest(classes = BillingApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({BillingTestMapperConfiguration.class, BillingTestMockConfiguration.class, BillingDataCleaner.class,
-    BillingRedisCleaner.class, BillingFactEventProbe.class})
+    BillingRedisCleaner.class, BillingFactEventProbe.class, AcquiringEventPublisher.class,
+    PartitionQueueBaselineConfiguration.class})
 public abstract class MockTestBase extends TestBase {
     /** 所有测试请求使用的 Request ID。 */
     protected static final String REQUEST_ID = "Billing.Test_01";
@@ -72,6 +82,21 @@ public abstract class MockTestBase extends TestBase {
 
     @Autowired
     protected CurrencySpecMocker currencySpecs;
+
+    @Autowired
+    protected AcquiringEventPublisher acquiringEvents;
+
+    @Autowired
+    protected CommercialPriceMocker commercialPrices;
+
+    @Autowired
+    protected ChannelCostMocker channelCosts;
+
+    @Autowired
+    protected ClearingAccountMocker clearingAccounts;
+
+    @Autowired
+    protected FinanceEntityMocker financeEntities;
 
     @Autowired
     protected CurrencySpecSnapshot currencySnapshot;
@@ -102,17 +127,21 @@ public abstract class MockTestBase extends TestBase {
     @BeforeEach
     protected final void setUpGlobalMocks() {
         Assertions.assertTrue(asynchronousWorkStopped, "前例异步处理未结束，禁止复用环境");
+        acquiringEvents.purge();
         dataCleaner.assertEmpty();
-        currencySpecs.assertEmpty();
+        assertAll("外部 Mock 应处于空基线", currencySpecs::assertEmpty, commercialPrices::assertEmpty,
+            channelCosts::assertEmpty, clearingAccounts::assertEmpty, financeEntities::assertEmpty);
         events.bind();
         currencySpecs.mockCurrencySpecs(CurrencySpecResponseBuilder.template().build());
         Assertions.assertTrue(currencySnapshotRefresher.refresh(), "默认币种快照刷新失败");
     }
 
-    /** 等待补偿发布结束后删除观察队列，检查外部 Mock 意外调用；父类随后执行全部 Clear。 */
+    /** 等待 OrderPaymentSucceeded 消费与补偿发布结束后删除观察队列，检查外部 Mock 意外调用；父类随后执行全部 Clear。 */
     @AfterEach
     protected final void tearDownGlobalMocks() {
         try {
+            // 用例已等到终态（已登记消费或进入 DLQ），这里确认分区队列中没有尚未投递的消息。
+            await().atMost(Duration.ofSeconds(15)).until(() -> acquiringEvents.pending() == 0);
             // 同时观察协调器和真实 Handler；协调器空闲不代表 Handler 已经停止。
             await().atMost(Duration.ofSeconds(15)).until(() -> compensationDispatcher.activeTaskCount() == 0
                 && compensationDispatcher.queuedTaskCount() == 0 && compensationHandlers.getActiveCount() == 0);
@@ -122,10 +151,12 @@ public abstract class MockTestBase extends TestBase {
         } finally {
             // 发布结束后才删除观察队列，避免异步发布因无路由被退回。
             events.unbind();
+            acquiringEvents.purge();
         }
         mockHttpServer.awaitIdle();
-        assertAll("检查 Platform Mock 调用", currencySpecs::assertNoUnexpectedCalls,
-            mockHttpServer::assertNoUnexpectedRequests);
+        assertAll("检查外部 Mock 调用", currencySpecs::assertNoUnexpectedCalls, commercialPrices::assertNoUnexpectedCalls,
+            channelCosts::assertNoUnexpectedCalls, clearingAccounts::assertNoUnexpectedCalls,
+            financeEntities::assertNoUnexpectedCalls, mockHttpServer::assertNoUnexpectedRequests);
     }
 
     /** 异步无法停止时保留现场，防止公共清理之后仍被后台发布回写。 */

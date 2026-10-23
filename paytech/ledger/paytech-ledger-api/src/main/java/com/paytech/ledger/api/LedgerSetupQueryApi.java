@@ -20,7 +20,7 @@ import jakarta.validation.constraints.Size;
  * 账务基础资料只读查询（内部能力 Ledger & Account Balance）
  * <li>只读，不加锁、不开事务；供 Operations BFF 简单转发给账务基础资料页面。</li>
  * <li>分页复用公共 page/size：page 默认 1，size 默认 10 且只允许 10、20、50、100、200，非法值返回 400 INVALID_REQUEST。</li>
- * <li>需要区分处理的拒绝以 {@link com.paytech.ledger.api.enums.LedgerSetupErrorCode} 返回 400。</li>
+ * <li>需要区分处理的拒绝以 {@link com.paytech.ledger.api.enums.LedgerSetupErrorCode} 返回 400；按 Party 解析财务主体未命中返回 404。</li>
  */
 @HttpExchange(accept = "application/json")
 public interface LedgerSetupQueryApi {
@@ -38,6 +38,17 @@ public interface LedgerSetupQueryApi {
         @RequestParam(value = "status", required = false) @Pattern(regexp = "ACTIVE|CLOSED") String status,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size);
+
+    /**
+     * 按法律 Party 解析 ACTIVE 财务主体
+     * <li>法律 Party 与财务主体一一对应（唯一键）；供 billing 登记平台服务费时把 Partner 合同的平台签约 Party 映射为 Finance Entity。</li>
+     *
+     * @param legalPartyId CCT 法律 Party 稳定标识，十进制正整数
+     * @return 财务主体；不存在或已 CLOSED 时 404 FINANCE_ENTITY_NOT_FOUND
+     */
+    @GetExchange("/finance-entities/v1/by-party/{legalPartyId}")
+    FinanceEntityResponseBody getFinanceEntityByParty(
+        @PathVariable("legalPartyId") @Pattern(regexp = "[1-9][0-9]{0,18}") String legalPartyId);
 
     /**
      * 分页查询财务日历，按主键升序

@@ -28,6 +28,9 @@ public final class BillingFactBuilder {
 
     private final BillingFactPayload fact = new BillingFactPayload();
 
+    /** 渠道清算账户：PAYMENT 行目录中渠道角色的付方 / 收方标识。 */
+    private Long clearingAccountId;
+
     private BillingFactBuilder() {
     }
 
@@ -37,6 +40,7 @@ public final class BillingFactBuilder {
         BillingFactBuilder builder = base(factId, BillingFactType.PAYMENT, FactOriginType.AUTO, clientId, entityNo,
             currency);
         builder.fact.setGrossAmount(new BigDecimal(grossAmount));
+        builder.clearingAccountId = clearingAccountId;
         return builder.ref(FactRefType.CLEARING_ACCOUNT, String.valueOf(clearingAccountId));
     }
 
@@ -117,6 +121,46 @@ public final class BillingFactBuilder {
     public BillingFactBuilder component(FactComponentType componentType, FactPartyRole payerRole,
         FactPartyRole payeeRole, String amount) {
         return line(componentType, payerRole, partyId(payerRole), payeeRole, partyId(payeeRole), null, amount);
+    }
+
+    /**
+     * 按 billing 自动登记的 PAYMENT 行目录（technique 4.6）追加明细行，全部 CHARGE，金额为零的组件不生成行
+     * <li>顺序：CLIENT_FEE（渠道 → 经营主体）、CLIENT_PRINCIPAL（渠道 → Client，= 总额 − 手续费）、PARTNER_SHARE（经营主体 → Local Partner）、
+     * PLATFORM_SERVICE_CHARGE（经营主体 → Finance Entity）、CHANNEL_COST（经营主体 → 渠道）；渠道标识取清算账户。</li>
+     * <li>合作方两行只在已设置合作方二元组时生成，须先调用 {@link #partner(long, long)}。</li>
+     *
+     * @param clientFee Client 手续费
+     * @param partnerShare 合作方分润
+     * @param serviceCharge 平台服务费
+     * @param channelCost 渠道成本
+     * @return 本构造器
+     */
+    public BillingFactBuilder paymentLines(String clientFee, String partnerShare, String serviceCharge,
+        String channelCost) {
+        String entityNo = fact.getEntityNo();
+        String channel = String.valueOf(clearingAccountId);
+        String principal = fact.getGrossAmount().subtract(new BigDecimal(clientFee)).toPlainString();
+        chargeLine(FactComponentType.CLIENT_FEE, FactPartyRole.CHANNEL, channel, FactPartyRole.OPERATING_ENTITY, entityNo,
+            clientFee);
+        chargeLine(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.CHANNEL, channel, FactPartyRole.CLIENT,
+            String.valueOf(fact.getClientId()), principal);
+        if (fact.getLocalPartnerId() != null) {
+            chargeLine(FactComponentType.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY, entityNo,
+                FactPartyRole.LOCAL_PARTNER, String.valueOf(fact.getLocalPartnerId()), partnerShare);
+            chargeLine(FactComponentType.PLATFORM_SERVICE_CHARGE, FactPartyRole.OPERATING_ENTITY, entityNo,
+                FactPartyRole.FINANCE_ENTITY, String.valueOf(fact.getFinanceEntityId()), serviceCharge);
+        }
+        return chargeLine(FactComponentType.CHANNEL_COST, FactPartyRole.OPERATING_ENTITY, entityNo, FactPartyRole.CHANNEL,
+            channel, channelCost);
+    }
+
+    /** 追加一条 CHARGE 行；金额为零不生成。 */
+    BillingFactBuilder chargeLine(FactComponentType componentType, FactPartyRole payerRole, String payerId,
+        FactPartyRole payeeRole, String payeeId, String amount) {
+        if (new BigDecimal(amount).signum() == 0) {
+            return this;
+        }
+        return line(componentType, payerRole, payerId, payeeRole, payeeId, FactLineDirection.CHARGE, amount);
     }
 
     /** 事实头中角色对应的标识；渠道取测试渠道。 */

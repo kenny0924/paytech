@@ -36,6 +36,12 @@ public class FinanceEntityRepositoryImpl implements FinanceEntityRepository {
         return mapper.selectById(id);
     }
 
+    /** 按法律 Party 读取财务主体（法律 Party 唯一），不存在返回空。 */
+    @Override
+    public FinanceEntity findByLegalPartyId(long legalPartyId) {
+        return mapper.selectByLegalPartyId(legalPartyId);
+    }
+
     /** 按过滤条件分页读取财务主体，按主键升序。 */
     @Override
     public List<FinanceEntity> findPage(FinanceEntityQuery query) {

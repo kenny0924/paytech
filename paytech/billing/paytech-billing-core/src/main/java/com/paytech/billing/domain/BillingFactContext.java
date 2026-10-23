@@ -6,14 +6,16 @@ import com.paytech.billing.api.enums.BillingFactStatus;
 import com.paytech.billing.api.fact.BillingFactPayload;
 import com.paytech.billing.core.dal.dataobject.BillingFact;
 import com.paytech.billing.core.dal.dataobject.BillingFactLine;
+import com.paytech.billing.core.dal.dataobject.BillingFactPricing;
 import com.paytech.billing.core.dal.dataobject.BillingFactRef;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 一条计费事实的登记、批准与发布上下文：事实头、外部引用、按行号升序的全部明细行、被替代事实与币种精度
+ * 一条计费事实的登记、批准与发布上下文：事实头、外部引用、按行号升序的全部明细行、被替代事实、定价输入与币种精度
  * <li>提交时由 Processor 一次构造（尚未落库）；批准与发布时从已提交事实加载。</li>
+ * <li>自动 PAYMENT 事实登记时由 PaymentFactAssembler 一次构造，携带待写入的定价输入；其他路径不加载定价输入。</li>
  * <li>Repository 在 SQL 成功后直接同步 fact / supersededFact 的状态、版本与时间。</li>
  */
 @Getter
@@ -36,6 +38,18 @@ public class BillingFactContext {
 
     /** 事实币种的 minor unit，用于输出金额补齐小数位。 */
     private final int minorUnit;
+
+    /**
+     * PAYMENT 事实的定价与结算输入
+     * <li>仅自动 PAYMENT 事实登记时持有；人工登记、批准与读取路径为空。</li>
+     */
+    private final BillingFactPricing pricing;
+
+    /** 不携带定价输入的上下文：人工登记、批准、发布与读取路径。 */
+    public BillingFactContext(BillingFact fact, List<BillingFactRef> refs, List<BillingFactLine> lines,
+        BillingFact supersededFact, int minorUnit) {
+        this(fact, refs, lines, supersededFact, minorUnit, null);
+    }
 
     /** 批准时定稿的事实版本：首次登记为 1，替代事实为被替代事实版本 + 1。 */
     public long approvedVersion() {

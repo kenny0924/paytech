@@ -28,6 +28,27 @@
             <artifactId>paytech-platform-support-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 自动 PAYMENT 事实登记事务外读取的上游内部 HTTP 契约（技术方案 4.5）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-commercial-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-channel-connector-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-reconciliation-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-ledger-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mybatis-support</artifactId>

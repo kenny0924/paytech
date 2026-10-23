@@ -80,6 +80,11 @@ spring:
     password: "${COMMERCE_RABBITMQ_PASSWORD:}"
     virtual-host: "${COMMERCE_RABBITMQ_VHOST:/mor-local}"
     connection-timeout: 2s
+    # 发布确认与不可路由退回：OrderPaymentSucceeded 补偿 Handler 等待 Broker 确认后才算发布成功。
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
   jmx:
     enabled: false
 
@@ -89,12 +94,22 @@ mybatis:
 # paytech-messaging 消费端（design/08 §3–§4）：订阅 payment.events，声明 acquiring.payment.hash（x-consistent-hash）与
 # acquiring.payment.p0..p3（Quorum、单活消费者、delivery-limit 5、DLX acquiring.payment.dlx → acquiring.payment.dlq）；
 # 消费登记 t_consumed_event / t_consumed_aggregate_version 与业务表同库。上线后修改分区数需先排空分区队列。
+# 发布端：声明 acquiring.events（Durable Fanout）并提供 DomainEventPublisher，供 OrderPaymentSucceeded 补偿 Handler 使用；
+# 订阅方（billing）未声明队列时视为发布失败，由补偿任务重试。
 messaging:
+  producer:
+    service: acquiring
+  publisher:
+    unroutable-policy: FAIL
   consumer:
     service: acquiring
   consumers:
     payment:
       partitions: 4
+
+# 实例 ID（实例清单 instance.id，01 §5）：领域事件信封 instanceId。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
 
 redis:
   coordination:
@@ -105,6 +120,10 @@ internal-auth:
   mode: "${ACQUIRING_INTERNAL_AUTH_MODE:OFF}"
 
 acquiring:
+  event:
+    # OrderPaymentSucceeded 信封身份：sourceService 与 messaging.producer.service 一致。
+    source-service: acquiring
+    instance-id: "${paytech.instance-id}"
   payment:
     card-payment-method-code: "${COMMERCE_CARD_PAYMENT_METHOD_CODE}"
   checkout:

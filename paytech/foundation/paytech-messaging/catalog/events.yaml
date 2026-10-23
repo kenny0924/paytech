@@ -159,3 +159,16 @@ events:
     consumers: [payment]
     strictOrder: false
     payloadSchemaRef: paytech-channel-connector-api/event/ChannelPaymentNotified/v1
+  # 订单支付成功（需求 billing-支付事实自动登记 technique 4.3，S13）：acquiring 落地 PaymentSucceeded 推进订单为 PAID 的同一事务登记补偿
+  # 任务 ORDER_PAYMENT_SUCCEEDED，提交后由补偿 Handler 发布到 acquiring.events。Payload 在 paytech-acquiring-core 的
+  # com.paytech.acquiring.domain.order.OrderPaymentSucceededPayload：订单冻结商业字段在前、支付事实在后，ID 与金额为十进制字符串，
+  # 时间为 UTC RFC 3339，缺失为 JSON null。aggregateId 为订单 ID，aggregateVersion 为推进 PAID 后的 t_commerce_order.version
+  # （一个订单只成功一次，版本可能跳号，strictOrder=false）。已关闭订单补记支付投影与重复事件不发布。billing 据此登记 AUTO PAYMENT 计费事实。
+  - eventType: OrderPaymentSucceeded
+    schemaVersion: 1
+    producer: acquiring
+    aggregateType: ORDER
+    aggregateVersionField: version
+    consumers: [billing]
+    strictOrder: false
+    payloadSchemaRef: paytech-acquiring-api/event/OrderPaymentSucceeded/v1

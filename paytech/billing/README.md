@@ -57,6 +57,6 @@ aggregateId = factId，aggregateVersion = factVersion，occurredAt = approvedTim
 
 ## 其他
 
-- `t_business_calendar*` 是只读副本，种子行（DEFAULT 日历）在 `billing-initial-data.sql`；币种规则与状态值类型取自 `paytech-platform-support-api`。
+- `t_business_calendar*` 是只读副本，种子行（DEFAULT 与 AE_BUSINESS_DAYS 日历）在 `billing-initial-data.sql`；币种规则与状态值类型取自 `paytech-platform-support-api`。
 - 运行：`BILLING_DB_*`、`BILLING_REDIS_*`、`BILLING_RABBITMQ_*`、`BILLING_SNOWFLAKE_*`、`BILLING_PLATFORM_SERVICE_URL`（默认
   `http://127.0.0.1:18106/platform-support`）、`PAYTECH_INSTANCE_ID`；测试库账号 `billing_app`，Redis 前缀 `billing-mock`，RabbitMQ 凭据取自 `local-environment/.env.local`。

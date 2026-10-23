@@ -95,6 +95,13 @@ public interface OrderQueryTestMapper {
         """)
     void insertContext(Fixture fixture);
 
+    /** 补齐支付准备冻结的 OE 来源、合作方与行业事实；insertOrder 只写基础创建列。 */
+    @Update("""
+        UPDATE t_commerce_order SET entity_source_type=#{entitySourceType},local_partner_id=#{localPartnerId},
+          industry_code=#{industryCode},mcc_code=#{mccCode} WHERE order_id=#{orderId}
+        """)
+    int updateEntity(CommerceOrder order);
+
     /** 订单全部持久化列，用于前后快照比较，包含内部版本和不可见字段。 */
     @Select("SELECT * FROM t_commerce_order WHERE order_id=#{orderId}")
     List<Map<String, Object>> orderRows(long orderId);

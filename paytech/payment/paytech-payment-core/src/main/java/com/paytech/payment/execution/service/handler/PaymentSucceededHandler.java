@@ -139,7 +139,7 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
             .payload(PaymentSucceededPayload.json(result)).build();
     }
 
-    /** 组装事件事实；成功时间优先取渠道结果时间；卡工具字段与冻结的卡属性只在卡支付时填写。 */
+    /** 组装事件事实；成功时间优先取渠道结果时间；卡工具字段与冻结的卡属性只在卡支付时填写；渠道交易引用 ID 与类型取自成功 PAY 的唯一引用。 */
     static PaymentSucceededResult result(PaymentIntent intent, PaymentAttempt attempt, PaymentAction pay,
         ChannelTransactionRef ref, PaymentInstrumentToken token) {
         boolean card = token.getInstrumentType() == InstrumentType.CARD;
@@ -154,6 +154,8 @@ public class PaymentSucceededHandler implements CompensationEventHandler {
             .channelTransactionRef(ref.getExternalTransactionId()).instrumentRef(card ? token.getInstrumentRef() : null)
             .consentToSave(card && token.isConsentToSave()).customerId(token.getCustomerId())
             .cardBrand(card ? token.getCardBrand() : null).fundingType(card ? token.getFundingType() : null)
-            .cardLevel(card ? token.getCardLevel() : null).build();
+            .cardLevel(card ? token.getCardLevel() : null)
+            .channelTransactionRefId(Long.toString(ref.getChannelTransactionRefId()))
+            .channelReferenceType(ref.getReferenceType().getCode()).build();
     }
 }

@@ -1,0 +1,46 @@
+# billing 支付事实自动登记：mor-test 候选覆盖文件（2026-10-23 阶段 6 准备；阶段 7 由主会话按 release.md 第 5 节执行，另需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史候选文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/billing-支付事实自动登记/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 一次只换一个服务，顺序 billing → account → ledger →（d3d39e40 基础上构建后）payment → acquiring（release.md 第 5 节）。
+# 不加 --remove-orphans。镜像一律用 sha256 ID（tag billing-b-20261023 只供辨认，不得据此部署；不使用 :development）。
+# 构建源：billing / account / ledger = 工作树 /Users/kenny/Desktop/Workspace/Code-MoR-billing-b（main 22ede435 + 本需求未提交改动），
+#   test-environment/java/Dockerfile，health-probe 取自运行容器（三个服务逐字节相同）；镜像内 JAR 与构建产物 SHA-256 相同，
+#   Entrypoint / Cmd / User / WorkingDir / ExposedPorts / Env 与运行镜像相同（release.md 第 2 节）。
+#   payment / acquiring = 同一工作树 HEAD 挪到 bf 已提交的 main d3d39e40（623916ac 订单过期收尾）后 + 本需求改动构建；
+#   只用 d3d39e40 构建的两个 JAR 与运行容器逐条目 0 差异（release.md 第 2.3 节）。
+# 环境变量（2026-10-23 阶段 6 核对）：主 compose（主工作区 HEAD 32dbdd18，test-environment 无未提交改动）渲染结果与五个运行容器
+#   逐键、逐值相同，唯一例外是 payment 的 PAYMENT_CHANNEL_CALLBACK_BASE_URL（3DS / 订单过期候选带入，主 compose 没有），本文件原样带入。
+#   历次 compose-candidate*.yaml 给这五个服务加过的其他键（ledger XXL_JOB_*、billing / ledger *_PLATFORM_SERVICE_URL、
+#   payment PAYMENT_INSTRUMENT_PREPARATION_WINDOW）主 compose 都已包含，不重复。
+# 本次新增（工作树 compose.applications.yaml 已有、主工作区 HEAD 还没有，阶段 8 提交前由本文件兜底）：
+#   billing 四个上游 URL；acquiring PAYTECH_INSTANCE_ID（OrderPaymentSucceeded 信封 instanceId）。
+#   billing 的 MQ 消费配置（consumer.service、consumers.acquiring.partitions 4）、acquiring 的发布配置写在 application.yml，不需要变量。
+# 回滚：同目录 compose-rollback.yaml。
+services:
+  billing-service:
+    # 消费 acquiring.events OrderPaymentSucceeded（声明 billing.acquiring.hash / p0..p3 / dlx / dlq），登记 AUTO PAYMENT 事实；
+    # 事务外读 commercial 价格、channel-connector 渠道成本、reconciliation 清算账户、ledger Finance Entity。必须最先替换。
+    image: sha256:53450948e0225e3681930b55417526f2ae51ed35fc464276791cab7105e700b0  # mor-test/billing-service:billing-b-20261023（JAR 20869ac074e7b3ab）
+    environment:
+      BILLING_COMMERCIAL_SERVICE_URL: http://commercial-service:18108
+      BILLING_CHANNEL_CONNECTOR_SERVICE_URL: http://channel-connector-service:18110
+      BILLING_RECONCILIATION_SERVICE_URL: http://reconciliation-service:18115
+      BILLING_LEDGER_SERVICE_URL: http://ledger-service:18105
+  account-service:
+    # FactBalanceMappingRule：CHANNEL 可作为 CLIENT_PRINCIPAL / CLIENT_FEE 付方（不产生 Owner 流水）。
+    image: sha256:17831407811fefb3e747208d0bda1a4c5e0481e19ea4423ee98f28723cfa6284  # mor-test/account-service:billing-b-20261023（JAR f9bfd52ee103a6b7）
+  ledger-service:
+    # GET /finance-entities/v1/by-party/{legalPartyId}（ACTIVE 唯一，否则 404 FINANCE_ENTITY_NOT_FOUND）。
+    image: sha256:3819ff2809c7a7ff2a4e835221871b5b8bcf684a153bb7b30f408ca79de4d210  # mor-test/ledger-service:billing-b-20261023（JAR fb1b91d369724fe9）
+  acquiring-service:
+    # 支付成功落实事务内登记 ORDER_PAYMENT_SUCCEEDED，提交后发布 OrderPaymentSucceeded 到 acquiring.events（unroutable FAIL）。
+    image: sha256:27c36f4e3a16e10fd72c14c7667786dd5cbc795d4b2b400b52388c72c22f0437  # mor-test/acquiring-service:billing-b-20261023（JAR ec8487bd07a722f6，基线 d3d39e40）
+    environment:
+      PAYTECH_INSTANCE_ID: acquiring-test
+  payment-service:
+    # PaymentSucceeded v2 末尾追加 channelTransactionRefId、channelReferenceType（可空）。
+    image: sha256:cf9097ea8685fbb2231fd97f49a1993b1aa4b6f30ba628e76e929dfa155a11c7  # mor-test/payment-service:billing-b-20261023（JAR 96a1c9d83176f64d，基线 d3d39e40）
+    environment:
+      # 自 3DS / 订单过期候选继承（主 compose 没有）：渠道通知根地址置空，mor-test 无公网入口。
+      PAYMENT_CHANNEL_CALLBACK_BASE_URL: ""

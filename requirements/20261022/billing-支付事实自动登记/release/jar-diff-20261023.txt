@@ -1,0 +1,130 @@
+# billing 支付事实自动登记 · 候选 JAR 逐条目比较（2026-10-23 阶段 6，嵌套 JAR 逐条目 SHA-256；+ 新增 / - 删除 / ~ 内容不同）
+# run = 运行容器 /app/application.jar（docker cp 取出）；base = 只用 main 22ede435 构建（git archive，同命令）；cand = 工作树 Code-MoR-billing-b 构建
+
+## billing  run→base（运行镜像落后于 22ede435 的部分，均为其他已提交需求）
+entries running=45666 candidate=45683 added=109 removed=92 changed=2 (changed excl manifest/pom.properties=2)
+  92 - BOOT-INF/lib/paytech-platform-support-api-1.0.0-SNAPSHOT.jar
+ 109 + BOOT-INF/lib/paytech-platform-support-api-1.0.0-SNAPSHOT.jar
+   2 ~ BOOT-INF/lib/paytech-messaging-1.0.0-SNAPSHOT.jar
+## billing  base→cand（本需求）
+entries running=45683 candidate=46193 added=510 removed=0 changed=10 (changed excl manifest/pom.properties=10)
++ BOOT-INF/classes/com/paytech/billing/app/configuration/ChannelConnectorClientConfiguration.class
++ BOOT-INF/classes/com/paytech/billing/app/configuration/CommercialClientConfiguration.class
++ BOOT-INF/classes/com/paytech/billing/app/configuration/LedgerClientConfiguration.class
++ BOOT-INF/classes/com/paytech/billing/app/configuration/ReconciliationClientConfiguration.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/ChannelCostResolution$ChannelCostResolutionBuilder.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/ChannelCostResolution.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/ClearingAccount.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/CommercialPrice$CommercialPriceBuilder.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/CommercialPrice.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/CommercialPriceBand.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/CommercialPriceComponent$CommercialPriceComponentBuilder.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/CommercialPriceComponent.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/FeeCalculationBasis.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/OrderCommercialContext$OrderCommercialContextBuilder.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/OrderCommercialContext.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/OrderPaymentSucceededFact$OrderPaymentSucceededFactBuilder.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/OrderPaymentSucceededFact.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/PaymentFactInputs$PaymentFactInputsBuilder.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/PaymentFactInputs.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/PriceComponentAmount.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/PriceSettlement.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domainservice/service/CommercialPriceCalculator.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domainservice/service/PaymentFactAssembler.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domainservice/service/SettlementTimeCalculator.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domainservice/service/impl/CommercialPriceCalculatorImpl.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domainservice/service/impl/PaymentFactAssemblerImpl.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domainservice/service/impl/SettlementTimeCalculatorImpl.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/ext/mq/OrderPaymentSucceededBillingHandler.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/ext/mq/OrderPaymentSucceededEventReader.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/integration/UpstreamResponseFields.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/integration/channelconnector/ChannelCostClient.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/integration/channelconnector/impl/ChannelCostClientImpl.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/integration/commercial/CommercialPriceClient.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/integration/commercial/impl/CommercialPriceClientImpl.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/integration/ledger/FinanceEntityClient.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/integration/ledger/impl/FinanceEntityClientImpl.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/integration/reconciliation/ClearingAccountClient.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/integration/reconciliation/impl/ClearingAccountClientImpl.class
++ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/service/processor/RecordPaymentFactProcessor.class
+~ BOOT-INF/classes/application.yml
+~ BOOT-INF/classpath.idx
+~ BOOT-INF/layers.idx
+~ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/META-INF/maven/com.paytech/paytech-billing-core/pom.xml
+~ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domain/BillingFactContext.class
+~ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domainservice/service/BillingFactService.class
+~ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domainservice/service/impl/BillingFactServiceImpl.class
+~ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domainservice/validator/fact/BillingFactInvariants$1.class
+~ BOOT-INF/lib/paytech-billing-core-1.0.0-SNAPSHOT.jar!/com/paytech/billing/domainservice/validator/fact/BillingFactInvariants.class
+~ BOOT-INF/lib/paytech-messaging-1.0.0-SNAPSHOT.jar!/catalog/events.yaml
+  (whole new dependency JAR)  144 + BOOT-INF/lib/paytech-channel-connector-api-1.0.0-SNAPSHOT.jar
+  (whole new dependency JAR)  142 + BOOT-INF/lib/paytech-commercial-api-1.0.0-SNAPSHOT.jar
+  (whole new dependency JAR)   82 + BOOT-INF/lib/paytech-ledger-api-1.0.0-SNAPSHOT.jar
+  (whole new dependency JAR)  103 + BOOT-INF/lib/paytech-reconciliation-api-1.0.0-SNAPSHOT.jar
+
+## account  run→base（运行镜像落后于 22ede435 的部分，均为其他已提交需求）
+entries running=29404 candidate=29405 added=2 removed=1 changed=10 (changed excl manifest/pom.properties=10)
+   1 - BOOT-INF/lib/paytech-billing-api-1.0.0-SNAPSHOT.jar
+   2 + BOOT-INF/lib/paytech-billing-api-1.0.0-SNAPSHOT.jar
+   8 ~ BOOT-INF/lib/paytech-billing-api-1.0.0-SNAPSHOT.jar
+   2 ~ BOOT-INF/lib/paytech-messaging-1.0.0-SNAPSHOT.jar
+## account  base→cand（本需求）
+entries running=29405 candidate=29405 added=0 removed=0 changed=2 (changed excl manifest/pom.properties=2)
+~ BOOT-INF/lib/paytech-account-core-1.0.0-SNAPSHOT.jar!/com/paytech/account/domainservice/validator/FactBalanceMappingRule.class
+~ BOOT-INF/lib/paytech-messaging-1.0.0-SNAPSHOT.jar!/catalog/events.yaml
+
+## ledger  run→base（运行镜像落后于 22ede435 的部分，均为其他已提交需求）
+entries running=45994 candidate=46011 added=109 removed=92 changed=2 (changed excl manifest/pom.properties=2)
+  92 - BOOT-INF/lib/paytech-platform-support-api-1.0.0-SNAPSHOT.jar
+ 109 + BOOT-INF/lib/paytech-platform-support-api-1.0.0-SNAPSHOT.jar
+   2 ~ BOOT-INF/lib/paytech-messaging-1.0.0-SNAPSHOT.jar
+## ledger  base→cand（本需求）
+entries running=46011 candidate=46012 added=1 removed=0 changed=10 (changed excl manifest/pom.properties=10)
++ BOOT-INF/classes/com/paytech/ledger/app/configuration/LedgerApiErrorConfiguration.class
+~ BOOT-INF/classes/com/paytech/ledger/app/ext/rest/LedgerSetupQueryController.class
+~ BOOT-INF/lib/paytech-ledger-api-1.0.0-SNAPSHOT.jar!/com/paytech/ledger/api/LedgerSetupQueryApi.class
+~ BOOT-INF/lib/paytech-ledger-api-1.0.0-SNAPSHOT.jar!/com/paytech/ledger/api/enums/LedgerSetupErrorCode.class
+~ BOOT-INF/lib/paytech-ledger-core-1.0.0-SNAPSHOT.jar!/com/paytech/ledger/core/dal/mapper/FinanceEntityMapper.class
+~ BOOT-INF/lib/paytech-ledger-core-1.0.0-SNAPSHOT.jar!/com/paytech/ledger/domainservice/repository/FinanceEntityRepository.class
+~ BOOT-INF/lib/paytech-ledger-core-1.0.0-SNAPSHOT.jar!/com/paytech/ledger/domainservice/repository/impl/FinanceEntityRepositoryImpl.class
+~ BOOT-INF/lib/paytech-ledger-core-1.0.0-SNAPSHOT.jar!/com/paytech/ledger/domainservice/service/LedgerQueryService.class
+~ BOOT-INF/lib/paytech-ledger-core-1.0.0-SNAPSHOT.jar!/com/paytech/ledger/domainservice/service/impl/LedgerQueryServiceImpl.class
+~ BOOT-INF/lib/paytech-ledger-core-1.0.0-SNAPSHOT.jar!/mapper/ledger/FinanceEntityMapper.xml
+~ BOOT-INF/lib/paytech-messaging-1.0.0-SNAPSHOT.jar!/catalog/events.yaml
+
+# ---- payment / acquiring（2026-10-23 追加；基线 main d3d39e40 = 623916ac 订单过期收尾 + 文档）
+# run = 运行容器 JAR（payment 621ff256…、acquiring de02f36b…）；bf = git archive d3d39e40 同命令构建；cand = 工作树（HEAD d3d39e40 + 本需求）
+
+## payment  run→bf（D1 基线复现，期望 0）
+entries running=62319 candidate=62319 added=0 removed=0 changed=0 (changed excl manifest/pom.properties=0)
+## payment  bf→cand（本需求）
+entries running=62319 candidate=62319 added=0 removed=0 changed=5 (changed excl manifest/pom.properties=5)
+~ BOOT-INF/lib/paytech-messaging-1.0.0-SNAPSHOT.jar!/catalog/events.yaml
+~ BOOT-INF/lib/paytech-payment-core-1.0.0-SNAPSHOT.jar!/com/paytech/payment/execution/domain/PaymentSucceededPayload.class
+~ BOOT-INF/lib/paytech-payment-core-1.0.0-SNAPSHOT.jar!/com/paytech/payment/execution/domain/PaymentSucceededResult$PaymentSucceededResultBuilder.class
+~ BOOT-INF/lib/paytech-payment-core-1.0.0-SNAPSHOT.jar!/com/paytech/payment/execution/domain/PaymentSucceededResult.class
+~ BOOT-INF/lib/paytech-payment-core-1.0.0-SNAPSHOT.jar!/com/paytech/payment/execution/service/handler/PaymentSucceededHandler.class
+
+## acquiring  run→bf（D1 基线复现，期望 0）
+entries running=62700 candidate=62700 added=0 removed=0 changed=0 (changed excl manifest/pom.properties=0)
+## acquiring  bf→cand（本需求）
+entries running=62700 candidate=62708 added=8 removed=0 changed=11 (changed excl manifest/pom.properties=11)
++ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/core/configuration/AcquiringEventProperties.class
++ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/domain/order/OrderCommercialContextView.class
++ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/domain/order/OrderPaymentEventSource.class
++ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/domain/order/OrderPaymentFacts.class
++ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/domain/order/OrderPaymentSucceededPayload.class
++ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/domainservice/service/order/OrderPaymentEventService.class
++ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/domainservice/service/order/impl/OrderPaymentEventServiceImpl.class
++ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/ext/job/OrderPaymentSucceededHandler.class
+~ BOOT-INF/classes/application.yml
+~ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/core/dal/mapper/order/OrderContextMapper.class
+~ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/domain/order/PaymentSucceededContext.class
+~ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/domainservice/repository/order/OrderContextRepository.class
+~ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/domainservice/repository/order/OrderContextRepositoryImpl.class
+~ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/domainservice/service/order/impl/OrderPaymentServiceImpl.class
+~ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/ext/mq/PaymentSucceededMessageConverter.class
+~ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/service/processor/order/ApplyPaymentSucceededProcessor.class
+~ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/com/paytech/acquiring/service/processor/order/request/ApplyPaymentSucceededRequest.class
+~ BOOT-INF/lib/paytech-acquiring-core-1.0.0-SNAPSHOT.jar!/mapper/order/OrderContextMapper.xml
+~ BOOT-INF/lib/paytech-messaging-1.0.0-SNAPSHOT.jar!/catalog/events.yaml

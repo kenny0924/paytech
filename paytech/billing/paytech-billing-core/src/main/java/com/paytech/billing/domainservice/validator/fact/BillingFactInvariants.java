@@ -1,8 +1,12 @@
 package com.paytech.billing.domainservice.validator.fact;
 
+import java.math.BigDecimal;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.regex.Pattern;
 
 import com.paytech.billing.api.enums.BillingFactErrorCode;
@@ -30,6 +34,7 @@ import com.paytech.foundation.common.error.InvalidParameterException;
  * 收方为头部 Finance Entity。</li>
  * <li>只做纯内存校验，不访问数据库；引用类型不被事实类型允许为参数错误；行级违反为 {@link BillingFactErrorCode#FACT_LINE_INVALID}，
  * 头部违反（Client、来源事实、CLEARING_ACCOUNT、合作方二元组不完整）为公共业务拒绝。</li>
+ * <li>自动 PAYMENT 事实（技术方案 4.6.4）由 billing 按上游事实组装，任何违反都表示上游数据不一致或组装缺陷，统一为公共业务拒绝。</li>
  */
 public final class BillingFactInvariants {
     /** MANUAL_ADJUSTMENT 允许的组件类型。 */
@@ -50,6 +55,19 @@ public final class BillingFactInvariants {
     /** 必须与头部主体一致的付方 / 收方角色。 */
     static final Set<FactPartyRole> HEADER_ROLES = EnumSet.of(FactPartyRole.CLIENT, FactPartyRole.LOCAL_PARTNER,
         FactPartyRole.FINANCE_ENTITY, FactPartyRole.OPERATING_ENTITY);
+
+    /** 自动 PAYMENT 事实必须具备的引用类型。 */
+    static final Set<FactRefType> PAYMENT_REFS = EnumSet.of(FactRefType.ORDER, FactRefType.ORDER_CONTEXT,
+        FactRefType.PAYMENT_INTENT, FactRefType.PAYMENT_ATTEMPT, FactRefType.PAYMENT_CHANNEL_ACCOUNT, FactRefType.MID,
+        FactRefType.CLEARING_ACCOUNT, FactRefType.CHANNEL_TRANSACTION_REF);
+
+    /** 自动 PAYMENT 事实每类组件固定的付方与收方角色（技术方案 4.6 行目录）。 */
+    static final Map<FactComponentType, List<FactPartyRole>> PAYMENT_LINE_PARTIES = Map.of(
+        FactComponentType.CLIENT_FEE, List.of(FactPartyRole.CHANNEL, FactPartyRole.OPERATING_ENTITY),
+        FactComponentType.CLIENT_PRINCIPAL, List.of(FactPartyRole.CHANNEL, FactPartyRole.CLIENT),
+        FactComponentType.PARTNER_SHARE, List.of(FactPartyRole.OPERATING_ENTITY, FactPartyRole.LOCAL_PARTNER),
+        FactComponentType.PLATFORM_SERVICE_CHARGE, List.of(FactPartyRole.OPERATING_ENTITY, FactPartyRole.FINANCE_ENTITY),
+        FactComponentType.CHANNEL_COST, List.of(FactPartyRole.OPERATING_ENTITY, FactPartyRole.CHANNEL));
 
     private static final Pattern DECIMAL_ID = Pattern.compile("[1-9][0-9]{0,18}");
 
@@ -204,5 +222,92 @@ public final class BillingFactInvariants {
     /** 付方或收方角色。 */
     static FactPartyRole roleOf(String role, String side) {
         return BillingCodes.parse(FactPartyRole.class, side + "角色", role);
+    }
+
+    /**
+     * 校验一条待登记的自动 PAYMENT 事实（技术方案 4.6.4）
+     * <li>头部：Client、OE、币种、业务时间与到期时间非空，毛额为正，合作方二元组全有或全无。</li>
+     * <li>引用：包含 {@link #PAYMENT_REFS} 全部类型、不含 TICKET；明细行：组件、付方 / 收方角色按行目录，CHARGE、无目标余额桶、金额为正，
+     * 主体标识等于头部，渠道标识等于 CLEARING_ACCOUNT；CLIENT_PRINCIPAL 恰一行，Σ CLIENT_PRINCIPAL + Σ CLIENT_FEE = 毛额；PARTNER_SHARE、
+     * PLATFORM_SERVICE_CHARGE 只在有合作方时出现。</li>
+     *
+     * @param fact 由待登记事实头、引用与明细行组装的载荷
+     * @throws BizCheckFailException 任一约束不满足
+     */
+    public static void checkAutoPayment(BillingFactPayload fact) {
+        checkPaymentHeader(fact);
+        Map<FactRefType, String> refs = paymentRefs(fact);
+        for (BillingFactLinePayload line : fact.getLines()) {
+            checkPaymentLine(fact, line, refs.get(FactRefType.CLEARING_ACCOUNT));
+        }
+        checkPaymentTotals(fact);
+    }
+
+    /** 头部必填、毛额为正与合作方二元组。 */
+    static void checkPaymentHeader(BillingFactPayload fact) {
+        boolean complete = fact.getClientId() != null && fact.getEntityNo() != null && fact.getCurrency() != null
+            && fact.getBusinessTime() != null && fact.getBalanceAvailableTime() != null
+            && fact.getGrossAmount() != null && fact.getGrossAmount().signum() > 0;
+        if (!complete) {
+            throw paymentRejected(fact, "事实头不完整或毛额不为正");
+        }
+        if ((fact.getLocalPartnerId() == null) != (fact.getFinanceEntityId() == null)) {
+            throw paymentRejected(fact, "合作方二元组不完整");
+        }
+    }
+
+    /** 引用类型必须覆盖必需集合且不含 TICKET；返回类型到标识的映射。 */
+    static Map<FactRefType, String> paymentRefs(BillingFactPayload fact) {
+        Map<FactRefType, String> refs = fact.getRefs().stream().collect(Collectors.toMap(
+            ref -> BillingCodes.parse(FactRefType.class, "引用类型", ref.getRefType()), BillingFactRefPayload::getRefId));
+        if (!refs.keySet().containsAll(PAYMENT_REFS) || refs.containsKey(FactRefType.TICKET)) {
+            throw paymentRejected(fact, "引用集合不完整或包含 TICKET");
+        }
+        return refs;
+    }
+
+    /** 一行的组件、角色、方向、金额与主体标识。 */
+    static void checkPaymentLine(BillingFactPayload fact, BillingFactLinePayload line, String clearingAccountId) {
+        List<FactPartyRole> parties = PAYMENT_LINE_PARTIES.get(componentOf(line));
+        boolean valid = parties != null && parties.get(0) == roleOf(line.getPayerRole(), "付方")
+            && parties.get(1) == roleOf(line.getPayeeRole(), "收方")
+            && FactLineDirection.CHARGE.getCode().equals(line.getDirection()) && line.getTargetBucket() == null
+            && line.getPostedAmount().signum() > 0
+            && paymentPartyMatches(fact, line.getPayerRole(), line.getPayerId(), clearingAccountId)
+            && paymentPartyMatches(fact, line.getPayeeRole(), line.getPayeeId(), clearingAccountId);
+        if (!valid) {
+            throw paymentRejected(fact, "明细行 " + line.getLineNo() + " 不符合行目录");
+        }
+    }
+
+    /** 渠道角色的标识是清算账户，其余角色的标识等于头部主体。 */
+    static boolean paymentPartyMatches(BillingFactPayload fact, String role, String id, String clearingAccountId) {
+        FactPartyRole partyRole = roleOf(role, "主体");
+        if (partyRole == FactPartyRole.CHANNEL) {
+            return Objects.equals(clearingAccountId, id);
+        }
+        return Objects.equals(headerIdentity(fact, partyRole), id);
+    }
+
+    /** 本金恰一行、本金与手续费之和等于毛额、合作方组件只在有合作方时出现。 */
+    static void checkPaymentTotals(BillingFactPayload fact) {
+        long principalLines = fact.getLines().stream()
+            .filter(line -> componentOf(line) == FactComponentType.CLIENT_PRINCIPAL).count();
+        BigDecimal clientTotal = fact.getLines().stream()
+            .filter(line -> componentOf(line) == FactComponentType.CLIENT_PRINCIPAL
+                || componentOf(line) == FactComponentType.CLIENT_FEE)
+            .map(BillingFactLinePayload::getPostedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (principalLines != 1 || clientTotal.compareTo(fact.getGrossAmount()) != 0) {
+            throw paymentRejected(fact, "本金必须恰一行且本金与手续费之和等于毛额");
+        }
+        boolean partnerLines = fact.getLines().stream().anyMatch(line -> PARTNER_COMPONENTS.contains(componentOf(line)));
+        if (partnerLines && fact.getLocalPartnerId() == null) {
+            throw paymentRejected(fact, "无合作方的事实不得有分润或平台服务费行");
+        }
+    }
+
+    /** 带来源事件键的自动 PAYMENT 事实拒绝。 */
+    static BizCheckFailException paymentRejected(BillingFactPayload fact, String reason) {
+        return new BizCheckFailException("自动 PAYMENT 事实不满足登记约束: " + reason + ", 来源 " + fact.getSourceEventKey());
     }
 }

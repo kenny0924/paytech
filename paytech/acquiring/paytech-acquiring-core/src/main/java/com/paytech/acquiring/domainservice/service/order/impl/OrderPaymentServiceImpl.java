@@ -16,6 +16,7 @@ import com.paytech.acquiring.domainservice.repository.order.OrderPaymentProjecti
 import com.paytech.acquiring.domainservice.repository.order.OrderRefundPositionRepository;
 import com.paytech.acquiring.domainservice.service.order.OrderPaymentService;
 import com.paytech.acquiring.ext.job.ClientWebhookSubmissionHandler;
+import com.paytech.acquiring.ext.job.OrderPaymentSucceededHandler;
 import com.paytech.acquiring.service.transaction.CommerceTransactionExecutor;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 
@@ -36,7 +37,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     private final ObjectProvider<CompensationEventRegistrar> registrars;
 
     /**
-     * 五项事实与 order.paid Webhook 事件在一次 REQUIRED 事务完成；版本或状态已变时抛出冲突，不自动重试。
+     * 五项事实、order.paid Webhook 事件与 OrderPaymentSucceeded 发布任务在一次 REQUIRED 事务完成；版本或状态已变时抛出冲突，不自动重试。
+     * <li>发布任务的聚合版本取 markPaid 成功后同步到订单对象的版本。</li>
      * <li>只有首次进入 PAID 才到达这里；重复消息与已关闭订单的补记不登记事件。</li>
      */
     @Override
@@ -53,6 +55,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
                 context.getOccurredAt(), now);
             registrars.getObject().register(ClientWebhookSubmissionHandler.buildEvent(
                 ClientWebhookEvent.orderPaid(context.getOrder(), context.getCapturedAmount(), now)));
+            registrars.getObject().register(OrderPaymentSucceededHandler.buildEvent(context.getOrder().getOrderId(),
+                context.getOrder().getVersion(), context.getPaymentFacts()));
             return null;
         });
     }

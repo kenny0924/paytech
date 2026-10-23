@@ -289,6 +289,8 @@ services:
       # paytech-messaging 消费端（design/08 §3）：订阅 payment.events，分区 acquiring.payment.p0..p3。
       MESSAGING_CONSUMER_SERVICE: acquiring
       MESSAGING_CONSUMERS_PAYMENT_PARTITIONS: "4"
+      # 发布端 acquiring.events（OrderPaymentSucceeded，requirements/20261022/billing-支付事实自动登记 technique 4.3）：信封 instanceId。
+      PAYTECH_INSTANCE_ID: acquiring-test
       # 支付方式码与公开地址仅满足启动；CCT 商业事实、税、文档为 acquiring 内固定 Mock（需求 Q3）。
       COMMERCE_CARD_PAYMENT_METHOD_CODE: CARD
       COMMERCE_CHECKOUT_PUBLIC_ORIGIN: https://localhost:28443
@@ -686,6 +688,11 @@ services:
       PAYTECH_INSTANCE_ID: billing-test
       # 币种规则进程内快照：启动加载、每 60 秒刷新 GET /platform/v1/currency-specs；首次加载成功前就绪探针 DOWN（20261020 币种主数据）。
       BILLING_PLATFORM_SERVICE_URL: http://platform-support-service:18106/platform-support
+      # 自动 PAYMENT 事实登记前事务外读取的四个领域服务（requirements/20261022/billing-支付事实自动登记 technique 4.10）。
+      BILLING_COMMERCIAL_SERVICE_URL: http://commercial-service:18108
+      BILLING_CHANNEL_CONNECTOR_SERVICE_URL: http://channel-connector-service:18110
+      BILLING_RECONCILIATION_SERVICE_URL: http://reconciliation-service:18115
+      BILLING_LEDGER_SERVICE_URL: http://ledger-service:18105
       # 补偿扫描执行器：任务 compensationEventScan 在 xxl-job-admin 登记（20261018 任务卡 03）。
       XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
       XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}

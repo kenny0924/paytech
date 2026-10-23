@@ -10,6 +10,10 @@
         SELECT id, entity_code, legal_party_id, display_name, status, create_time, update_time FROM t_finance_entity WHERE id = #{id}
     </select>
 
+    <select id="selectByLegalPartyId" resultType="com.paytech.ledger.core.dal.dataobject.FinanceEntity">
+        SELECT id, entity_code, legal_party_id, display_name, status, create_time, update_time FROM t_finance_entity WHERE legal_party_id = #{legalPartyId}
+    </select>
+
     <select id="selectPage" resultType="com.paytech.ledger.core.dal.dataobject.FinanceEntity">
         SELECT id, entity_code, legal_party_id, display_name, status, create_time, update_time FROM t_finance_entity
         <where>

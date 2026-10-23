@@ -106,7 +106,7 @@ spring:
     password: "${COMMERCE_TEST_RABBITMQ_PASSWORD:${MOR_RABBITMQ_PASSWORD:}}"
     virtual-host: "${COMMERCE_TEST_RABBITMQ_VHOST:${MOR_RABBITMQ_VHOST:/mor-local}}"
     connection-timeout: 2s
-    # 测试作为 Payment 发布支付结果时等待 Broker 确认。
+    # 测试作为 Payment 发布支付结果、acquiring 发布 OrderPaymentSucceeded 时都等待 Broker 确认。
     publisher-confirm-type: correlated
     publisher-returns: true
     template:
@@ -114,6 +114,21 @@ spring:
 
 mybatis:
   mapper-locations: "classpath*:mapper/**/*.xml"
+
+# paytech-messaging：消费 payment.events（acquiring.payment.p0..p3），发布 acquiring.events；测试由观察队列绑定 acquiring.events。
+messaging:
+  producer:
+    service: acquiring
+  publisher:
+    unroutable-policy: FAIL
+  consumer:
+    service: acquiring
+  consumers:
+    payment:
+      partitions: 4
+
+paytech:
+  instance-id: main
 
 redis:
   key-prefix: "acquiring-test-${random.uuid}"
@@ -207,6 +222,10 @@ internal-auth:
 
 # acquiring 自有业务配置，字段完整对应自有 Properties 类；这些值修改后均需重启。
 acquiring:
+  event:
+    # OrderPaymentSucceeded 信封身份；sourceService 默认 acquiring，须与 messaging.producer.service 一致。
+    source-service: acquiring
+    instance-id: "${paytech.instance-id}"
   payment:
     card-payment-method-code: CARD_TEST
   checkout:

@@ -3,6 +3,9 @@ package com.paytech.acquiring.service.processor.order.request;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.paytech.acquiring.domain.order.OrderPaymentFacts;
+
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -46,10 +49,6 @@ public class ApplyPaymentSucceededRequest {
     @Positive
     private final long paymentIntentId;
 
-    /** 成功的支付尝试 ID。 */
-    @Positive
-    private final long paymentAttemptId;
-
     /** Intent 冻结的经营主体编号。 */
     @NotBlank
     private final String entityNo;
@@ -62,11 +61,8 @@ public class ApplyPaymentSucceededRequest {
     @NotBlank
     private final String currency;
 
-    /** 已捕获金额，币种主单位。 */
+    /** 成功尝试、已捕获金额、成功时间及需转发给 OrderPaymentSucceeded 的渠道与卡属性事实。 */
+    @Valid
     @NotNull
-    private final BigDecimal capturedAmount;
-
-    /** 支付成功的业务时间。 */
-    @NotNull
-    private final Instant paymentSucceededTime;
+    private final OrderPaymentFacts paymentFacts;
 }

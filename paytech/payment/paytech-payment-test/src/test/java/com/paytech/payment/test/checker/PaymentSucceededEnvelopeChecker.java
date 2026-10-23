@@ -23,15 +23,19 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * payment.events 上一条 PaymentSucceeded 信封（Schema v2，design/08 §2、design/05 §2.3）的断言：信封字段、AMQP 属性、Payload 为 v1 字段
- * 加 v2 卡域字段（instrumentRef、consentToSave、customerId）与 BIN 库卡属性（cardBrand、fundingType、cardLevel）、以真实消费端解码器
- * 校验 payloadHash，以及禁止字段。
+ * 加 v2 卡域字段（instrumentRef、consentToSave、customerId）、BIN 库卡属性（cardBrand、fundingType、cardLevel）与渠道交易引用
+ * （channelTransactionRefId、channelReferenceType）、以真实消费端解码器校验 payloadHash，以及禁止字段。
  */
 public class PaymentSucceededEnvelopeChecker {
-    /** Payload 固定字段顺序（Schema v2）：v1 字段之后依次为 instrumentRef、consentToSave、customerId、cardBrand、fundingType、cardLevel。 */
+    /**
+     * Payload 固定字段顺序（Schema v2）
+     * <li>v1 字段之后依次为 instrumentRef、consentToSave、customerId、cardBrand、fundingType、cardLevel、channelTransactionRefId、
+     * channelReferenceType。</li>
+     */
     public static final List<String> PAYLOAD_FIELDS = List.of("clientId", "orderId", "sourceType", "paymentIntentId",
         "paymentAttemptId", "sourceSubmissionId", "entityNo", "amount", "currency", "capturedAmount", "paymentSucceededTime",
         "paymentMethodCode", "channelId", "channelAccountId", "midId", "channelTransactionRef", "instrumentRef", "consentToSave",
-        "customerId", "cardBrand", "fundingType", "cardLevel");
+        "customerId", "cardBrand", "fundingType", "cardLevel", "channelTransactionRefId", "channelReferenceType");
 
     private final Message message;
 
@@ -106,6 +110,20 @@ public class PaymentSucceededEnvelopeChecker {
         assertAll(() -> assertTextOrNull(cardBrand, payload.path("cardBrand"), "cardBrand"),
             () -> assertTextOrNull(fundingType, payload.path("fundingType"), "fundingType"),
             () -> assertTextOrNull(cardLevel, payload.path("cardLevel"), "cardLevel"));
+        return this;
+    }
+
+    /**
+     * v2 追加的渠道交易引用：内部 ID 为十进制字符串，引用类型为代码字符串
+     *
+     * @param channelTransactionRefId 期望的渠道交易引用内部 ID
+     * @param channelReferenceType 期望的引用类型代码
+     */
+    public PaymentSucceededEnvelopeChecker channelReference(String channelTransactionRefId, String channelReferenceType) {
+        JsonNode payload = envelope.path("payload");
+        assertAll(() -> assertTrue(payload.path("channelTransactionRefId").isString(), "channelTransactionRefId 应为 JSON 字符串"),
+            () -> assertEquals(channelTransactionRefId, payload.path("channelTransactionRefId").asString()),
+            () -> assertEquals(channelReferenceType, payload.path("channelReferenceType").asString()));
         return this;
     }
 

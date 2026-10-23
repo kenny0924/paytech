@@ -18,6 +18,7 @@ import com.paytech.foundation.messaging.ordering.AggregateKeySequencer;
 import com.paytech.foundation.messaging.publish.UnroutablePolicy;
 
 import com.paytech.payment.api.execution.PaymentIntentApi;
+import com.paytech.payment.execution.core.action.ActionType;
 import com.paytech.payment.execution.core.enums.AttemptStatus;
 import com.paytech.payment.execution.core.enums.AuthenticationRequirement;
 import com.paytech.payment.execution.core.enums.RiskResult;
@@ -59,7 +60,10 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         risk.respond(RiskResult.ALLOW, AuthenticationRequirement.NOT_REQUIRED);
     }
 
-    /** 成功：payment.events 收到一条 v2 信封（卡域字段：工具引用、保存意愿与 Customer），Payload 与 Hash 正确，补偿任务在确认后删除。 */
+    /**
+     * 成功：payment.events 收到一条 v2 信封，Payload 与 Hash 正确，补偿任务在确认后删除
+     * <li>卡域字段为工具引用、保存意愿与 Customer；末尾渠道交易引用为该 PAY 引用的内部 ID 与类型 PAY。</li>
+     */
     @Test
     void test_succeededPublishedOnce() {
         channel.succeeded("T-PUB-1");
@@ -94,7 +98,8 @@ class PaymentSucceededPublishTest extends AbstractPayCardTest {
         assertEquals(1, tickets.length, "每次资金动作签发一张读卡票据");
         envelope.envelope(attemptId, version, instanceId).payload(expected).excludes(forbidden).excludes(tickets)
             .cardFields((String)mapper.instrumentTokens().getFirst().get("instrumentRef"), false, null)
-            .cardAttributes(null, null, null);
+            .cardAttributes(null, null, null)
+            .channelReference(String.valueOf(mapper.transactionRefId("T-PUB-1")), ActionType.PAY.getCode());
         assertTrue(mapper.compensationEvents(PaymentSucceededHandler.EVENT_TYPE, String.valueOf(attemptId)).isEmpty(),
             "发布确认后补偿任务应删除");
     }

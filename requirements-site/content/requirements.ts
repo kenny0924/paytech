@@ -190,7 +190,7 @@ export const FUNCTIONAL_SYSTEMS: FunctionalSystemDefinition[] = [
     ],
     dependsOn: ["Client & Contract：客户、主体和协议资格", "Risk & Compliance：Checkout 资格", "Payment Orchestration：支付和渠道退款执行", "Finance：交易税费与退款成功后的财政凭证事实", "Platform Support：合同、消费者文档文件及通用 Webhook 配置/投递"],
     subscribes: ["ClientSuspended", "ComplianceRestricted", "OperatingEntityChanged", "PaymentAttemptStarted", "PaymentAttemptFailed", "PaymentAttemptUnknown", "PaymentSucceeded", "PaymentIntentTerminated", "RefundSucceeded", "RefundFailed", "RefundCancelled", "BillingFactRecorded", "PayableBalanceMatured"],
-    publishes: ["OrderCreated", "CheckoutCreated", "CheckoutExpired", "OrderCancelled", "OrderPaid", "ConsumerContractLocked", "RefundRequestCreated", "RefundStatusChanged", "ConsumerDocumentRequested", "ClientWebhookRequested"],
+    publishes: ["OrderCreated", "CheckoutCreated", "CheckoutExpired", "OrderCancelled", "OrderPaid", "OrderPaymentSucceeded", "ConsumerContractLocked", "RefundRequestCreated", "RefundStatusChanged", "ConsumerDocumentRequested", "ClientWebhookRequested"],
     exclusions: ["不执行渠道支付", "不选择 MID", "不拥有支付最终状态", "不维护账本或结算余额"],
   },
   {
@@ -337,7 +337,7 @@ export const FUNCTIONAL_SYSTEMS: FunctionalSystemDefinition[] = [
       iuc("FIN-I22", "查询不可变 Tax Snapshot", ["Commerce", "Platform Support", "Operations Console"], "按 tax_snapshot_id 与 expected_calculation_hash 精确读取原 Tax Snapshot、Tax Evidence、Tax Line 及其 Registration、Jurisdiction、Rule/Rate/Treatment 与责任模式，并按 CODE-MOR:FINANCE:TAX_CALCULATION:1 从 Header/Evidence/Line 重算后比较 Hash；不得重新执行税务决策或改用当前税务规则，ID/Hash、集合排序、Item 映射或金额汇总不一致，对象缺失或读取失败均 Fail-Closed"),
     ],
     dependsOn: ["Client & Contract：费率、分润及主体关系", "Commerce：订单与消费者合同事实", "Payment Orchestration：支付终态与 MID 事实", "Risk & Compliance：争议结果、结算限制和 RESERVE_REQUIREMENT 最终最低保证金金额", "Platform Support：文件、通知和审计"],
-    subscribes: ["PaymentSucceeded", "DuplicatePaymentDetected", "DuplicatePaymentRemediated", "RefundSucceeded", "DisputeLost", "DisputeOutcomeCorrected", "ClientSuspended", "ComplianceRestricted", "SettlementRestricted", "SettlementReleased"],
+    subscribes: ["OrderPaymentSucceeded", "DuplicatePaymentDetected", "DuplicatePaymentRemediated", "RefundSucceeded", "DisputeLost", "DisputeOutcomeCorrected", "ClientSuspended", "ComplianceRestricted", "SettlementRestricted", "SettlementReleased"],
     publishes: ["BillingFactRecorded", "TaxCalculated", "FiscalRecordCreated", "LedgerPosted", "AccountPosted", "PayableBalanceMatured", "ClientRecoveryReceivableCreated", "ActualChannelCostConfirmed", "ReconciliationMismatchDetected", "PayoutCreated", "PayoutPaid", "PayoutRetryRequired"],
     exclusions: ["不维护商业协议", "不执行渠道支付", "不作出风险判断", "不恢复已删除的余额分桶、通用可用性规则、Reserve/Restricted Fund/Recovery 工作流或结算明细域", "第一版不自动发起银行付款"],
   },

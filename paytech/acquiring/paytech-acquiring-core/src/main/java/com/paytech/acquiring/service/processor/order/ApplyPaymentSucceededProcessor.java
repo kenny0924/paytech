@@ -30,7 +30,8 @@ import lombok.AllArgsConstructor;
  * 落地 Payment PaymentSucceeded 事件；由 MQ 监听器调用
  * <li>按订单核对 Client、Intent、经营主体、金额与币种；不一致或订单不存在时业务拒绝，由监听器转入死信队列。</li>
  * <li>同一事件（事件键与载荷 Hash 相同）或同一成功尝试重复投递时直接返回；同一事件键不同 Hash 或已有其他成功尝试时拒绝。</li>
- * <li>订单已取消或过期只记录支付投影并告警，订单与会话不变，资金由人工处理。</li>
+ * <li>订单已取消或过期只记录支付投影并告警，订单与会话不变，资金由人工处理；不发布 OrderPaymentSucceeded。</li>
+ * <li>首次推进 PAID 时在同一事务登记 ORDER_PAYMENT_SUCCEEDED，提交后发布 OrderPaymentSucceeded；重复事件不再登记。</li>
  * <li>不加 Redis 锁：订单、会话、投影、退款位置与资金投影均由条件更新保护，冲突整体回滚后由消息重投处理。</li>
  */
 @Component
@@ -106,7 +107,7 @@ public class ApplyPaymentSucceededProcessor
         if (payment.getSuccessfulAttemptId() == null) {
             return false;
         }
-        if (payment.getSuccessfulAttemptId() != request.getPaymentAttemptId()) {
+        if (payment.getSuccessfulAttemptId() != request.getPaymentFacts().getPaymentAttemptId()) {
             throw new BizCheckFailException("订单已有其他成功支付尝试: " + request.getOrderId());
         }
         return true;
@@ -117,7 +118,7 @@ public class ApplyPaymentSucceededProcessor
         var total = order.getTotalAmount();
         if (!request.getEntityNo().equals(order.getEntityNo()) || !request.getCurrency().equals(order.getCurrency())
             || total == null || request.getAmount().compareTo(total) != 0
-            || request.getCapturedAmount().compareTo(total) != 0) {
+            || request.getPaymentFacts().getCapturedAmount().compareTo(total) != 0) {
             throw new BizCheckFailException("支付成功事件的经营主体或金额与订单不一致: " + request.getOrderId());
         }
     }
@@ -143,9 +144,10 @@ public class ApplyPaymentSucceededProcessor
     /** 一次构造落地所需的上下文；时间按数据库精度截断。 */
     static PaymentSucceededContext buildContext(ApplyPaymentSucceededRequest request, CommerceOrder order,
         CheckoutSession session, OrderPaymentProjection payment, OrderRefundPosition refundPosition) {
-        return new PaymentSucceededContext(order, session, payment, refundPosition, request.getPaymentAttemptId(),
-            request.getCapturedAmount(), request.getEventKey(), request.getPayloadHash(), request.getSourceVersion(),
+        var facts = request.getPaymentFacts();
+        return new PaymentSucceededContext(order, session, payment, refundPosition, facts.getPaymentAttemptId(),
+            facts.getCapturedAmount(), request.getEventKey(), request.getPayloadHash(), request.getSourceVersion(),
             request.getOccurredAt().truncatedTo(ChronoUnit.MICROS),
-            request.getPaymentSucceededTime().truncatedTo(ChronoUnit.MICROS));
+            facts.getPaymentSucceededTime().truncatedTo(ChronoUnit.MICROS), facts);
     }
 }

@@ -47,4 +47,7 @@ public class PaymentSucceededContext {
 
     /** 支付成功的业务时间，作为订单支付与会话完成时刻。 */
     private final Instant paidAt;
+
+    /** 事件携带的支付事实，订单进入 PAID 时随 OrderPaymentSucceeded 补偿任务登记。 */
+    private final OrderPaymentFacts paymentFacts;
 }

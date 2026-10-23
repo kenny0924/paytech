@@ -19,6 +19,7 @@ import com.paytech.ledger.core.dal.dataobject.FiscalCalendar;
 import com.paytech.ledger.core.dal.dataobject.LedgerAccount;
 import com.paytech.ledger.core.dal.dataobject.LedgerBook;
 import com.paytech.ledger.core.enums.ChartAccountStatus;
+import com.paytech.ledger.core.enums.FinanceEntityStatus;
 import com.paytech.ledger.domain.AccountQuery;
 import com.paytech.ledger.domain.AccountingPeriodQuery;
 import com.paytech.ledger.domain.FinanceEntityQuery;
@@ -137,6 +138,16 @@ public class LedgerQueryServiceImpl implements LedgerQueryService {
     public PagingResponseBody<FinanceEntity> pageFinanceEntities(FinanceEntityQuery query) {
         return page(financeEntityRepository.findPage(query), query.getPaging(),
             financeEntityRepository.countPage(query));
+    }
+
+    /** 法律 Party 唯一定位财务主体；CLOSED 与不存在一样拒绝，不能用于新交易。 */
+    @Override
+    public FinanceEntity getActiveFinanceEntityByParty(long legalPartyId) {
+        FinanceEntity entity = financeEntityRepository.findByLegalPartyId(legalPartyId);
+        if (entity == null || entity.getStatus() != FinanceEntityStatus.ACTIVE) {
+            throw new FailException(LedgerSetupErrorCode.FINANCE_ENTITY_NOT_FOUND);
+        }
+        return entity;
     }
 
     /** 分页读取财务日历。 */

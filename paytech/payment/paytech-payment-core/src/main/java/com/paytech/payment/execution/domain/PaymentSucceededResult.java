@@ -81,4 +81,10 @@ public class PaymentSucceededResult {
 
     /** Token 冻结的卡等级；非卡支付、未识别或号段未提供为空（Schema v2 追加，billing card_level） */
     private final String cardLevel;
+
+    /** 成功 PAY 动作的渠道交易引用内部 ID，十进制字符串（Schema v2 追加，追加前的旧事件无此字段；billing channel_transaction_ref_id） */
+    private final String channelTransactionRefId;
+
+    /** 渠道交易引用类型代码，成功 PAY 恒为 PAY（Schema v2 追加，追加前的旧事件无此字段；billing external_reference_type） */
+    private final String channelReferenceType;
 }

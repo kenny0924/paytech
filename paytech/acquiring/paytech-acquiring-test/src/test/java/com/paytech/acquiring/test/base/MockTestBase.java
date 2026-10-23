@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 
 import com.paytech.acquiring.AcquiringTestApplication;
 import com.paytech.acquiring.test.checker.checkout.CheckoutCreationChecker;
+import com.paytech.acquiring.test.checker.order.OrderPaymentEventProbe;
 import com.paytech.acquiring.test.checkout.AdjustableUtcClock;
 import com.paytech.acquiring.test.checkout.CctTransactionProbe;
 import com.paytech.acquiring.test.mocker.local.CheckoutDataMocker;
@@ -82,6 +83,9 @@ public abstract class MockTestBase extends TestBase {
     protected PaymentTerminationMocker paymentTerminationMocker;
 
     @Autowired
+    protected OrderPaymentEventProbe orderPaymentEvents;
+
+    @Autowired
     private CompensationEventDispatcher compensationDispatcher;
 
     @Autowired
@@ -93,6 +97,8 @@ public abstract class MockTestBase extends TestBase {
     protected final void setUpGlobalMocks() {
         Assertions.assertTrue(asynchronousWorkStopped, "前例异步处理未结束，禁止复用环境");
         checkoutDataMocker.beforeEach();
+        // 订单进入 PAID 会发布 OrderPaymentSucceeded；观察队列使 acquiring.events 可路由，并供用例读取信封。
+        orderPaymentEvents.bind();
         adjustableUtcClock.reset();
         // 支付成功、取消与退款都会登记 Webhook 提交；未单独配置的事件按 Platform 受理处理。
         platformWebhookMocker.acceptByDefault();
@@ -109,6 +115,9 @@ public abstract class MockTestBase extends TestBase {
         } catch (RuntimeException | AssertionError failure) {
             asynchronousWorkStopped = false;
             throw failure;
+        } finally {
+            // 发布结束后才删除观察队列，避免异步发布因无路由被退回。
+            orderPaymentEvents.unbind();
         }
         assertAll("检查外部 Mock 调用", preparationMocker::assertNoUnexpectedCalls,
             riskMocker::assertNoUnexpectedCalls, platformWebhookMocker::assertNoUnexpectedCalls,

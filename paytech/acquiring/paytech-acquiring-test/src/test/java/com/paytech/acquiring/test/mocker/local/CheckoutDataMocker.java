@@ -15,6 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.acquiring.domainservice.port.CommerceIdentifierGenerator;
 import com.paytech.acquiring.test.dal.CheckoutCreationTestMapper;
 import com.paytech.acquiring.test.dal.ClientWebhookTestMapper;
+import com.paytech.acquiring.test.dal.OrderPaymentEventTestMapper;
 import com.paytech.acquiring.test.dal.RefundCreationTestMapper;
 import com.paytech.foundation.testsupport.api.Clear;
 
@@ -25,6 +26,7 @@ public final class CheckoutDataMocker implements Clear {
     private final CheckoutCreationTestMapper mapper;
     private final RefundCreationTestMapper refundMapper;
     private final ClientWebhookTestMapper webhookMapper;
+    private final OrderPaymentEventTestMapper orderPaymentEventMapper;
     private final CommerceIdentifierGenerator identifiers;
     private final TransactionTemplate transaction;
     private final Set<Long> ownedOrderIds = new HashSet<>();
@@ -32,11 +34,12 @@ public final class CheckoutDataMocker implements Clear {
 
     /** 使用 Spring 的真实数据库事务；随机值仅作为本次运行的隔离身份。 */
     public CheckoutDataMocker(CheckoutCreationTestMapper mapper, RefundCreationTestMapper refundMapper,
-        ClientWebhookTestMapper webhookMapper, CommerceIdentifierGenerator identifiers,
-        PlatformTransactionManager transactionManager) {
+        ClientWebhookTestMapper webhookMapper, OrderPaymentEventTestMapper orderPaymentEventMapper,
+        CommerceIdentifierGenerator identifiers, PlatformTransactionManager transactionManager) {
         this.mapper = mapper;
         this.refundMapper = refundMapper;
         this.webhookMapper = webhookMapper;
+        this.orderPaymentEventMapper = orderPaymentEventMapper;
         this.identifiers = identifiers;
         this.transaction = new TransactionTemplate(transactionManager);
     }
@@ -99,6 +102,7 @@ public final class CheckoutDataMocker implements Clear {
                 for (long orderId : ownedOrderIds) {
                     webhookMapper.deleteRefundTasks(orderId);
                     webhookMapper.deleteOrderTasks(orderId);
+                    orderPaymentEventMapper.deleteTasks(orderId);
                     refundMapper.deleteTasks(orderId);
                     refundMapper.deleteRequests(orderId);
                     mapper.deletePayment(orderId);

@@ -140,6 +140,10 @@ public interface PaymentTestMapper {
     @Select("SELECT reference_type AS type, external_transaction_id AS externalId, amount, currency FROM t_channel_transaction_ref")
     List<Map<String, Object>> transactionRefs();
 
+    /** 按外部交易编号查渠道交易引用的内部 ID。 */
+    @Select("SELECT channel_transaction_ref_id FROM t_channel_transaction_ref WHERE external_transaction_id = #{externalTransactionId}")
+    long transactionRefId(@Param("externalTransactionId") String externalTransactionId);
+
     /** 执行链路各表的全部文本列拼接，用于检索不得落库的值。 */
     @Select("SELECT CONCAT_WS('|', (SELECT GROUP_CONCAT(CONCAT_WS(',', channel_response_code, channel_response_msg)) FROM t_payment_action), (SELECT GROUP_CONCAT(CONCAT_WS(',', payment_instrument_token, instrument_ref)) FROM t_payment_instrument_token), (SELECT GROUP_CONCAT(external_transaction_id) FROM t_channel_transaction_ref))")
     String executionText();

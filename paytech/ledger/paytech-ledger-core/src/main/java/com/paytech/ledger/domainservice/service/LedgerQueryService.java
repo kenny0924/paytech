@@ -66,6 +66,14 @@ public interface LedgerQueryService {
     /** 分页查询财务主体，按主键升序。 */
     PagingResponseBody<FinanceEntity> pageFinanceEntities(FinanceEntityQuery query);
 
+    /**
+     * 按法律 Party 解析 ACTIVE 财务主体
+     *
+     * @param legalPartyId CCT 法律 Party 稳定标识
+     * @return 财务主体；不存在或已关闭时以 FINANCE_ENTITY_NOT_FOUND 拒绝
+     */
+    FinanceEntity getActiveFinanceEntityByParty(long legalPartyId);
+
     /** 分页查询财务日历，按主键升序。 */
     PagingResponseBody<FiscalCalendar> pageFiscalCalendars(FiscalCalendarQuery query);
 

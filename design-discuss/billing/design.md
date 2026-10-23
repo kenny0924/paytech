@@ -199,3 +199,5 @@
 5. `channel_account_id` 语义：billing 存的是对账的清算账户，`PaymentSucceeded` 带的是 Payment 的技术账户，两者没有映射（精简模型里拆成 `CLEARING_ACCOUNT` 与 `PAYMENT_CHANNEL_ACCOUNT` 两种引用）。
 7. 渠道成本配置与命中接口还在 billing，要先迁到 channel-connector（第 8 节）。
 6. 税务快照在 `mor_tax`，税务服务是空壳。
+
+**状态（2026-10-23，需求 B [billing 支付事实自动登记](<../../requirements/20261022/billing-支付事实自动登记/requirement.md>) 已上 mor-test）：** 第 1、2 条改由 acquiring 在支付成功落实后发布 `OrderPaymentSucceeded`（订单冻结商业字段 + 支付事实）解决，billing 不回查 acquiring（S13）；第 3 条 commercial 命中接口已存在；第 4 条 billing `t_business_calendar` 已有 `DEFAULT` 与 `AE_BUSINESS_DAYS`；第 5 条按拆分为 `CLEARING_ACCOUNT`（reconciliation 解析接口）与 `PAYMENT_CHANNEL_ACCOUNT` 两种引用落地；第 7 条已迁出；第 6 条只记 `TAX_SNAPSHOT` 引用、不生成税行（S11）。仍开放：acquiring 商业事实为固定 Mock（需求 D 前置）、CARD 价格所需发卡维度未经事件传递、Partner 演示价格缺失、对账四类事件（需求 C）。

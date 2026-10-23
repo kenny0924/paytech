@@ -35,6 +35,12 @@ public class LedgerSetupQueryController implements LedgerSetupQueryApi {
             .map(converter::toResponseBody);
     }
 
+    /** 按法律 Party 解析 ACTIVE 财务主体，复用列表项的响应转换。 */
+    @Override
+    public FinanceEntityResponseBody getFinanceEntityByParty(String legalPartyId) {
+        return converter.toResponseBody(ledgerQueryService.getActiveFinanceEntityByParty(Long.parseLong(legalPartyId)));
+    }
+
     /** 分页查询财务日历。 */
     @Override
     public PagingResponseBody<FiscalCalendarResponseBody> listFiscalCalendars(String entityType, String entityId,

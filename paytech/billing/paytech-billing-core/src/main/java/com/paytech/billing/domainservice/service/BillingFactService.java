@@ -23,6 +23,15 @@ public interface BillingFactService {
     void saveDraft(BillingFactContext context);
 
     /**
+     * 一个事务内登记自动事实：写入 APPROVED 事实头（版本 1）、定价输入、全部引用与全部明细行，并登记 BILLING_FACT_RECORDED 发布任务
+     * <li>同一来源事件被并发登记时（uk_fact_source 冲突）整体回滚并按并发冲突拒绝，由消费方重投后命中原事实。</li>
+     *
+     * @param context 已组装并通过登记不变量校验、携带定价输入的上下文
+     * @throws com.paytech.foundation.common.error.ConcurrentRequestException 来源事件已被并发登记
+     */
+    void recordAutoFact(BillingFactContext context);
+
+    /**
      * 一个事务内批准事实：DRAFT → APPROVED 并定稿版本、业务时间覆盖为批准时间；有被替代事实时将其 APPROVED → SUPERSEDED；登记
      * BILLING_FACT_RECORDED 发布任务
      * <li>任一条件更新未命中按并发冲突拒绝并整体回滚。</li>

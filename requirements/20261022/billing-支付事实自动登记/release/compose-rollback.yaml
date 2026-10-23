@@ -1,0 +1,20 @@
+# billing 支付事实自动登记：mor-test 回滚覆盖文件（2026-10-23 阶段 6 只读核对时的五个运行镜像；单独使用，不叠加候选文件）。
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/billing-支付事实自动登记/release/compose-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 回滚顺序 payment + acquiring → ledger → account → billing（release.md 第 6 节）。
+# 环境：主 compose 渲染结果与运行容器逐键相同，只有 payment 需要本文件带 PAYMENT_CHANNEL_CALLBACK_BASE_URL。
+#   阶段 8 若已把 billing 四个 URL、acquiring PAYTECH_INSTANCE_ID 提交进主 compose，回滚后旧镜像会多这些变量，旧代码不读取，无影响。
+# payment / acquiring 为 code-mor-bf 订单过期收尾发布的镜像（该会话的 compose-candidate.yaml），billing / account / ledger 见各行注释。
+services:
+  billing-service:
+    image: sha256:90d7401abdd689bee94e149880bf419890a8ede59bb0b5be5119a88cb47053e8  # currency-20261021（JAR 72987591c0d3b3e0），10-22 05:35:06Z 起运行
+  account-service:
+    image: sha256:dfa6254cb889bf5287af8652554b570b8e01082ca9ff2f0b0b1a52f40abd78d7  # chart3-20261020（JAR 6953cda5ca297818），10-22 05:34:49Z 起运行
+  ledger-service:
+    image: sha256:fa21520def8c319d32798d89d739fb752ae4fdcc27723df2bbb39f34a9a17053  # currency-20261021（JAR 7d8d2466c872018d），10-22 05:34:58Z 起运行
+  acquiring-service:
+    image: sha256:55a644fd4618606d0ff6bbd37a1cc8e414ea8a5e8dc22adba57583305a21278a  # expiry-20261023（JAR de02f36bd0b0c128），10-22 20:40:31Z 起运行
+  payment-service:
+    image: sha256:f3c48d893729ad9d133a4dda40a20fe5beac0a2991cbe90dd4c322eca32b8a1b  # expiry-20261023（JAR 621ff256dfc74c5c），10-22 20:39:24Z 起运行
+    environment:
+      PAYMENT_CHANNEL_CALLBACK_BASE_URL: ""

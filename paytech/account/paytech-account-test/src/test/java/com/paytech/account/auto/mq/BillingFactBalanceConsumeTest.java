@@ -41,7 +41,8 @@ import com.paytech.billing.api.fact.BillingFactPayload;
  * paytech-messaging 幂等拦截器与 BillingFactRecordedBalanceHandler 在 account 本地事务内写批次、流水、余额与 AccountPosted 补偿事件；
  * AccountPosted 由 {@link AccountPostedProbe} 在 account.events 上观察。
  * <p>
- * 覆盖：交易事实按付方 / 收方映射（经营主体、渠道、Finance Entity 只在 ledger）；重复投递只入账一次；不同事实按到达顺序分配连续序号；替代后到（冲回行 reverses_entry_id）与
+ * 覆盖：交易事实按付方 / 收方映射（经营主体、渠道、Finance Entity 只在 ledger）；billing 自动登记的 PAYMENT 行目录（渠道付本金与手续费，有 / 无合作方，
+ * 渠道付分润拒绝）；重复投递只入账一次；不同事实按到达顺序分配连续序号；替代后到（冲回行 reverses_entry_id）与
  * 替代先到（SKIPPED 0 流水批次）；人工调整按付方 / 收方映射；成本调整 0 流水批次；CLOSED 账户照常入账；到期时间落库；映射非法进死信。
  *
  * @see com.paytech.account.ext.mq.BillingFactRecordedBalanceHandler#consume(com.paytech.foundation.messaging.api.DomainEvent)
@@ -95,6 +96,63 @@ class BillingFactBalanceConsumeTest extends AbstractBalanceTest {
             () -> assertEquals("94.00", event.json().path("entries").get(0).path("amount").asString()),
             () -> assertEntry(payload.getEntries().get(0), OwnerAccountType.CLIENT_PAYABLE, CLIENT, EntrySide.CREDIT, 1),
             () -> assertEntry(payload.getEntries().get(1), OwnerAccountType.PARTNER_PAYABLE, PARTNER, EntrySide.CREDIT, 4));
+    }
+
+    /**
+     * billing 自动登记的 PAYMENT 行目录（有合作方）：渠道付本金 90 记 Client 应付 PENDING 贷方、经营主体付分润 8 记 Partner 应付 PENDING 贷方；
+     * 渠道付的手续费、经营主体付的平台服务费与渠道成本不产生流水，Partner 不因服务费被借记；带到期时间，到期状态 PENDING。
+     */
+    @Test
+    void test_autoPaymentFactChannelPaysPrincipalAndFee() {
+        BillingFactPayload fact = payment("100").partner(PARTNER_ID, FINANCE_ENTITY_ID).paymentLines("10", "8", "2", "0.5")
+            .balanceAvailableTime(Instant.now().plus(2, ChronoUnit.DAYS)).build();
+
+        consumed(fact);
+
+        assertBalance(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING, "0", "90", "90");
+        assertBalance(OwnerAccountType.PARTNER_PAYABLE, PARTNER, BalanceBucket.PENDING, "0", "8", "8");
+        List<Map<String, Object>> entries = factEntries(fact.getFactId());
+        assertAll(() -> assertEquals(5, fact.getLines().size()),
+            () -> assertEquals(2, testMapper.selectAccounts().size(), "只开立 Owner 账户"),
+            () -> assertEquals(List.of(2, 3), entries.stream().map(row -> ((Number)row.get("fact_line_no")).intValue()).toList()),
+            () -> assertEquals(AppliedFactStatus.APPLIED.getCode(), applyStatus(fact.getFactId())),
+            () -> assertEquals(MaturityStatus.PENDING.getCode(),
+                testMapper.selectAppliedFact(fact.getFactId()).get("maturity_status")));
+        AccountPostedPayload payload = posted.await(1).getFirst().payload();
+        assertAll(() -> assertEquals(2, payload.getEntries().size()),
+            () -> assertEntry(payload.getEntries().get(0), OwnerAccountType.CLIENT_PAYABLE, CLIENT, EntrySide.CREDIT, 2),
+            () -> assertEntry(payload.getEntries().get(1), OwnerAccountType.PARTNER_PAYABLE, PARTNER, EntrySide.CREDIT, 3));
+    }
+
+    /** billing 自动登记的 PAYMENT 行目录（无合作方，手续费、本金、渠道成本三行）：只有 Client 本金一条流水，到期状态 PENDING。 */
+    @Test
+    void test_autoPaymentFactWithoutPartner() {
+        BillingFactPayload fact = payment("100").paymentLines("10", "0", "0", "0.5")
+            .balanceAvailableTime(Instant.now().plus(2, ChronoUnit.DAYS)).build();
+
+        consumed(fact);
+
+        assertBalance(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING, "0", "90", "90");
+        assertAll(() -> assertEquals(3, fact.getLines().size()),
+            () -> assertEquals(1, testMapper.selectAccounts().size(), "只开立 Client 账户"),
+            () -> assertEquals(1, factEntries(fact.getFactId()).size()),
+            () -> assertEquals(AppliedFactStatus.APPLIED.getCode(), applyStatus(fact.getFactId())),
+            () -> assertEquals(MaturityStatus.PENDING.getCode(),
+                testMapper.selectAppliedFact(fact.getFactId()).get("maturity_status")));
+        posted.await(1);
+    }
+
+    /** 渠道只允许付本金与手续费、收渠道成本：渠道作为分润付方不在白名单，整条 PAYMENT 事实拒绝进入死信。 */
+    @Test
+    void test_channelPaidPartnerShareRejectedToDeadLetter() {
+        BillingFactPayload fact = payment("100").partner(PARTNER_ID, FINANCE_ENTITY_ID).paymentLines("10", "0", "0", "0")
+            .line(FactComponentType.PARTNER_SHARE, FactPartyRole.CHANNEL, String.valueOf(CHANNEL_ACCOUNT_ID),
+                FactPartyRole.LOCAL_PARTNER, PARTNER, FactLineDirection.CHARGE, "8").build();
+
+        billing.publish(fact);
+
+        await().atMost(CONSUME_WAIT).until(() -> billing.deadLetters() == 1);
+        assertRejected(fact);
     }
 
     /** 同一事实（同一 eventId）重复投递：消费登记一次、只有一个批次与一次 AccountPosted。 */

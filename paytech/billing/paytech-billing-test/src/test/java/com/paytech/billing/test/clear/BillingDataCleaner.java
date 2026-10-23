@@ -16,7 +16,9 @@ import com.paytech.foundation.testsupport.api.Clear;
 /**
  * Billing 本地 mor_billing 测试数据的基线检查与全局清理（10 张表）
  * <li>BeforeEach 只检查空基线，发现非测试遗留数据时失败而不删除，避免误清本地开发数据。</li>
- * <li>AfterEach 按依赖逆序删除全部测试写入；t_business_calendar 为只读副本保留表，只删除非 DEFAULT 日历。清理失败后环境标记为不可复用。</li>
+ * <li>AfterEach 按依赖逆序删除全部测试写入；t_business_calendar 为只读副本保留表，只删除 DEFAULT、AE_BUSINESS_DAYS 以外的日历。
+ * 清理失败后环境标记为不可复用。</li>
+ * <li>保留行检查只要求 DEFAULT：AE_BUSINESS_DAYS 由变更 SQL 补登，在本机执行前允许缺失，执行后受保护、不计入可写行。</li>
  */
 @TestComponent
 @Order(1)

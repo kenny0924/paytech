@@ -30,4 +30,38 @@
         LEFT JOIN t_consumer_contract cc ON cc.order_legal_id=l.order_legal_id AND cc.order_id=c.order_id
         WHERE c.order_id=#{orderId}
     </select>
+    <resultMap id="OrderCommercialContextView" type="com.paytech.acquiring.domain.order.OrderCommercialContextView">
+        <id column="order_id" property="orderId"/>
+        <result column="client_id" property="clientId"/>
+        <result column="entity_no" property="entityNo"/>
+        <result column="entity_source_type" property="entitySourceType"/>
+        <result column="local_partner_id" property="localPartnerId"/>
+        <result column="industry_code" property="industryCode"/>
+        <result column="mcc_code" property="mccCode"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="currency" property="currency"/>
+        <result column="order_context_id" property="orderContextId"/>
+        <result column="commercial_context_time" property="commercialContextTime"/>
+        <result column="client_pricing_version_id" property="clientPricingVersionId"/>
+        <result column="partner_share_version_id" property="partnerShareVersionId"/>
+        <result column="platform_charge_version_id" property="platformChargeVersionId"/>
+        <result column="platform_service_party_id" property="platformServicePartyId"/>
+        <result column="finance_tax_snapshot_id" property="financeTaxSnapshotId"/>
+        <result column="consumer_country_code" property="consumerCountryCode"/>
+        <result column="order_legal_id" property="orderLegalId"/>
+        <result column="client_agreement_id" property="clientAgreementId"/>
+        <result column="partner_agreement_id" property="partnerAgreementId"/>
+        <result column="partner_agreement_operating_entity_id" property="partnerAgreementOperatingEntityId"/>
+    </resultMap>
+    <select id="findCommercialContext" resultMap="OrderCommercialContextView" useCache="false" flushCache="true">
+        SELECT o.order_id,o.client_id,o.entity_no,o.entity_source_type,o.local_partner_id,o.industry_code,o.mcc_code,
+            o.total_amount,o.currency,c.order_context_id,c.commercial_context_time,c.client_pricing_version_id,
+            c.partner_share_version_id,c.platform_charge_version_id,c.platform_service_party_id,c.finance_tax_snapshot_id,
+            c.consumer_country_code,l.order_legal_id,l.client_agreement_id,l.partner_agreement_id,
+            l.partner_agreement_operating_entity_id
+        FROM t_commerce_order o
+        LEFT JOIN t_order_context c ON c.order_id=o.order_id
+        LEFT JOIN t_order_legal l ON l.order_context_id=c.order_context_id
+        WHERE o.order_id=#{orderId}
+    </select>
 </mapper>

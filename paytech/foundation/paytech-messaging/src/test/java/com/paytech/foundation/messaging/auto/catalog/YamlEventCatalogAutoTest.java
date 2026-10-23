@@ -44,8 +44,14 @@ class YamlEventCatalogAutoTest {
         assertEquals(List.of("PaymentSucceeded", "ClientReviewDecided", "BillingFactRecorded", "AccountPosted",
             "SettlementRestrictionChanged", "AgreementStatusChanged", "CommercialTermVersionActivated",
             "ActualChannelCostConfirmed", "ChannelBatchReconciled", "ChannelSettlementConfirmed", "ReconAdjustmentApproved",
-            "WorkflowCallbackRaised", "ChannelPaymentNotified"),
+            "WorkflowCallbackRaised", "ChannelPaymentNotified", "OrderPaymentSucceeded"),
             catalog.entries().stream().map(EventCatalogEntry::eventType).toList());
+        EventCatalogEntry orderPaid = catalog.find("OrderPaymentSucceeded").orElseThrow();
+        assertEquals(1, orderPaid.schemaVersion());
+        assertEquals("acquiring", orderPaid.producer());
+        assertEquals("ORDER", orderPaid.aggregateType());
+        assertEquals(List.of("billing"), orderPaid.consumers());
+        assertFalse(orderPaid.strictOrder());
         EventCatalogEntry notified = catalog.find("ChannelPaymentNotified").orElseThrow();
         assertEquals("channel-connector", notified.producer());
         assertEquals("CHANNEL_CALLBACK", notified.aggregateType());

@@ -1,7 +1,7 @@
 -- billing-service Mock 测试环境准备（管理员手工执行；应用与测试从不自动执行）。
 -- 测试复用仓库 local-environment 的 MySQL；账号与 application-mock.yml 一致，只授予本库最小 DML 权限（design/10 §4.2）。
 -- 已有库和账号不删除、不重置。表结构逐字取自 paytech/billing/docs/database/sql/billing-schema.sql 的全部 10 张表。
--- 保留行逐字取自 paytech/billing/docs/database/sql/billing-initial-data.sql（测试只删除非 DEFAULT 日历的行）；币种规则由 Platform Mock 提供，
+-- 保留行逐字取自 paytech/billing/docs/database/sql/billing-initial-data.sql（测试只删除 DEFAULT、AE_BUSINESS_DAYS 以外的日历行）；币种规则由 Platform Mock 提供，
 -- 已有库按 docs/database/sql/changes/2026-10-20-drop-currency-spec-copy.sql 删除旧副本表。
 -- 由旧 9 表结构重建时，先在 mor_billing 依次执行需求 requirements/20261019/billing-计费事实模型重构与渠道成本迁出 的 db/billing/ddl.sql
 -- 与 dml.sql（DROP 旧 7 表、CREATE 新 9 表、插入日历），或删库后执行本文件。
@@ -186,3 +186,6 @@ CREATE TABLE `t_compensation_event` (
 
 INSERT INTO `t_business_calendar` (`calendar_code`, `display_name`, `timezone`, `status`, `create_time`, `update_time`)
 VALUES ('DEFAULT', '默认工作日日历（周一至周五）', 'UTC', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));
+
+INSERT INTO `t_business_calendar` (`calendar_code`, `display_name`, `timezone`, `status`, `create_time`, `update_time`)
+VALUES ('AE_BUSINESS_DAYS', '阿联酋工作日', 'Asia/Dubai', 'ACTIVE', UTC_TIMESTAMP(6), UTC_TIMESTAMP(6));

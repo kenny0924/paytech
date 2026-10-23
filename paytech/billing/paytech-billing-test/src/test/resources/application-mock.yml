@@ -47,14 +47,35 @@ spring:
     publisher-returns: true
     template:
       mandatory: true
-  # platform-support 币种规则：指向测试注入的独立 Loopback Mock HTTP 服务（billing.test.external.base-url 由 @EnableMockHttpServer 在
-  # 应用创建客户端前注入；Mock 服务无 Context Path）。传输策略与生产一致。
+  # platform-support、commercial、channel-connector、reconciliation、ledger：全部指向测试注入的同一个独立 Loopback Mock HTTP 服务
+  # （billing.test.external.base-url 由 @EnableMockHttpServer 在应用创建客户端前注入；Mock 服务无 Context Path，各 API 路径互不冲突）。
+  # 传输策略与生产一致。
   http:
     clients:
       imperative:
         factory: jdk
     serviceclient:
       platform-support-service:
+        base-url: "${billing.test.external.base-url}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      commercial-service:
+        base-url: "${billing.test.external.base-url}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      channel-connector-service:
+        base-url: "${billing.test.external.base-url}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      reconciliation-service:
+        base-url: "${billing.test.external.base-url}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      ledger-service:
         base-url: "${billing.test.external.base-url}"
         connect-timeout: 2s
         read-timeout: 5s
@@ -78,10 +99,20 @@ compensation:
   # 多实例 Claim/Lease 的实例标识；测试固定值。
   instance-id: billing-test
 
-# paytech-messaging 发布端：声明 billing.events 并提供 DomainEventPublisher。测试每例绑定观察队列，未路由按默认 FAIL 严格判定。
+# paytech-messaging 发布端：声明 billing.events 并提供 DomainEventPublisher。测试每例绑定观察队列，未路由按 FAIL 严格判定。
+# 消费端：订阅 acquiring 的 OrderPaymentSucceeded（billing.acquiring.p0..p3 与 DLQ）；测试由 AcquiringEventPublisher 扮演 acquiring
+# 发布到真实 acquiring.events。重投退避基数测试为 200ms（生产缺省 1s），使投递上限前的退避在数秒内结束。
 messaging:
   producer:
     service: billing
+  publisher:
+    unroutable-policy: FAIL
+  consumer:
+    service: billing
+    retry-backoff: 200ms
+  consumers:
+    acquiring:
+      partitions: 4
 
 paytech:
   instance-id: "main"

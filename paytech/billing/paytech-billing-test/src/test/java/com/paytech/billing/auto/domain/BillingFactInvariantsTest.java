@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,10 +29,12 @@ import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.common.error.InvalidParameterException;
 
 /**
- * 人工登记计费事实的目录约束与登记不变量（纯 Java 公共静态合同）
- * <li>入口测试覆盖 HTTP 合同；本类聚焦组合规则，便于定位：类型目录、引用集合、组件与方向、付方 / 收方、目标余额桶、合作方二元组。</li>
+ * 人工登记与自动 PAYMENT 计费事实的目录约束与登记不变量（纯 Java 公共静态合同）
+ * <li>入口测试覆盖 HTTP 与 MQ 合同；本类聚焦组合规则，便于定位：类型目录、引用集合、组件与方向、付方 / 收方、目标余额桶、合作方二元组、
+ * 自动 PAYMENT 的行目录与金额恒等式。</li>
  *
  * @see BillingFactInvariants#checkManualRegistration(BillingFactPayload)
+ * @see BillingFactInvariants#checkAutoPayment(BillingFactPayload)
  */
 class BillingFactInvariantsTest {
     private static final long CLIENT_ID = 31001L;
@@ -42,6 +46,8 @@ class BillingFactInvariantsTest {
     private static final long FINANCE_ENTITY_ID = 5601L;
 
     private static final String CHANNEL_ID = "7001";
+
+    private static final String CLEARING_ACCOUNT_ID = "610001";
 
     /** 合法的人工调整（含合作方行与目标余额桶）与合法的成本调整都通过。 */
     @Test
@@ -227,5 +233,102 @@ class BillingFactInvariantsTest {
         ref.setRefType(refType.getCode());
         ref.setRefId(refId);
         return ref;
+    }
+
+    /** 合法的自动 PAYMENT 事实（含合作方两行与渠道成本）通过。 */
+    @Test
+    void test_autoPaymentAccepted() {
+        assertDoesNotThrow(() -> BillingFactInvariants.checkAutoPayment(payment(true)));
+        assertDoesNotThrow(() -> BillingFactInvariants.checkAutoPayment(payment(false)));
+    }
+
+    /** 头部必填、毛额为正与合作方二元组。 */
+    @Test
+    void test_autoPaymentHeader() {
+        assertPaymentRejected(fact -> fact.setBalanceAvailableTime(null), "事实头不完整");
+        assertPaymentRejected(fact -> fact.setGrossAmount(BigDecimal.ZERO), "事实头不完整");
+        assertPaymentRejected(fact -> fact.setFinanceEntityId(null), "合作方二元组不完整");
+    }
+
+    /** 引用必须覆盖八类且不含 TICKET。 */
+    @Test
+    void test_autoPaymentRefs() {
+        assertPaymentRejected(fact -> fact.getRefs().removeIf(
+            ref -> FactRefType.CHANNEL_TRANSACTION_REF.getCode().equals(ref.getRefType())), "引用集合不完整");
+        assertPaymentRejected(fact -> fact.getRefs().add(ref(FactRefType.TICKET, "OPS-1")), "引用集合不完整");
+    }
+
+    /** 行目录：角色、方向、目标余额桶、渠道标识等于清算账户、合作方行只在有合作方时出现。 */
+    @Test
+    void test_autoPaymentLineCatalog() {
+        assertPaymentRejected(fact -> fact.getLines().getFirst().setPayerRole(FactPartyRole.OPERATING_ENTITY.getCode()),
+            "不符合行目录");
+        assertPaymentRejected(fact -> fact.getLines().getFirst().setDirection(FactLineDirection.ADJUSTMENT.getCode()),
+            "不符合行目录");
+        assertPaymentRejected(fact -> fact.getLines().getFirst().setTargetBucket(FactTargetBucket.PENDING.getCode()),
+            "不符合行目录");
+        assertPaymentRejected(fact -> fact.getLines().getFirst().setPayerId(CHANNEL_ID), "不符合行目录");
+        assertPaymentRejected(fact -> fact.getLines().add(paymentLine(FactComponentType.SELLER_TAX,
+            FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.TAX_AUTHORITY, CHANNEL_ID, "1")), "不符合行目录");
+        BillingFactPayload withoutPartner = payment(false);
+        withoutPartner.getLines().add(paymentLine(FactComponentType.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY,
+            ENTITY_NO, FactPartyRole.LOCAL_PARTNER, Long.toString(PARTNER_ID), "1"));
+        assertThrows(BizCheckFailException.class, () -> BillingFactInvariants.checkAutoPayment(withoutPartner));
+    }
+
+    /** 本金恰一行，本金与手续费之和等于毛额。 */
+    @Test
+    void test_autoPaymentTotals() {
+        assertPaymentRejected(fact -> fact.getLines().get(1).setPostedAmount(new BigDecimal("89")), "本金必须恰一行");
+        assertPaymentRejected(fact -> fact.getLines().add(paymentLine(FactComponentType.CLIENT_PRINCIPAL,
+            FactPartyRole.CHANNEL, CLEARING_ACCOUNT_ID, FactPartyRole.CLIENT, Long.toString(CLIENT_ID), "1")),
+            "本金必须恰一行");
+    }
+
+    /** 修改一份合法 PAYMENT 事实后被业务拒绝，消息含给定片段。 */
+    private static void assertPaymentRejected(Consumer<BillingFactPayload> change, String fragment) {
+        BillingFactPayload fact = payment(true);
+        change.accept(fact);
+        BizCheckFailException error = assertThrows(BizCheckFailException.class,
+            () -> BillingFactInvariants.checkAutoPayment(fact));
+        assertTrue(error.getMessage().contains(fragment), "拒绝消息应含 [" + fragment + "]: " + error.getMessage());
+    }
+
+    /** 毛额 100：手续费 10、本金 90，可选合作方分润 8 与服务费 2，渠道成本 0.5；八类引用齐全。 */
+    private static BillingFactPayload payment(boolean partner) {
+        BillingFactPayload fact = manual(partner ? PARTNER_ID : null, partner ? FINANCE_ENTITY_ID : null,
+            paymentLine(FactComponentType.CLIENT_FEE, FactPartyRole.CHANNEL, CLEARING_ACCOUNT_ID,
+                FactPartyRole.OPERATING_ENTITY, ENTITY_NO, "10"),
+            paymentLine(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.CHANNEL, CLEARING_ACCOUNT_ID,
+                FactPartyRole.CLIENT, Long.toString(CLIENT_ID), "90"),
+            paymentLine(FactComponentType.CHANNEL_COST, FactPartyRole.OPERATING_ENTITY, ENTITY_NO, FactPartyRole.CHANNEL,
+                CLEARING_ACCOUNT_ID, "0.5"));
+        fact.setFactType(BillingFactType.PAYMENT.getCode());
+        fact.setSourceEventKey("PAYMENT_ATTEMPT:1");
+        fact.setCurrency("USD");
+        fact.setGrossAmount(new BigDecimal("100"));
+        fact.setBusinessTime(Instant.parse("2026-10-22T10:00:00Z"));
+        fact.setBalanceAvailableTime(Instant.parse("2026-10-23T23:59:59Z"));
+        if (partner) {
+            fact.getLines().add(paymentLine(FactComponentType.PARTNER_SHARE, FactPartyRole.OPERATING_ENTITY, ENTITY_NO,
+                FactPartyRole.LOCAL_PARTNER, Long.toString(PARTNER_ID), "8"));
+            fact.getLines().add(paymentLine(FactComponentType.PLATFORM_SERVICE_CHARGE, FactPartyRole.OPERATING_ENTITY,
+                ENTITY_NO, FactPartyRole.FINANCE_ENTITY, Long.toString(FINANCE_ENTITY_ID), "2"));
+        }
+        for (FactRefType refType : List.of(FactRefType.ORDER, FactRefType.ORDER_CONTEXT, FactRefType.PAYMENT_INTENT,
+            FactRefType.PAYMENT_ATTEMPT, FactRefType.PAYMENT_CHANNEL_ACCOUNT, FactRefType.MID,
+            FactRefType.CHANNEL_TRANSACTION_REF)) {
+            fact.getRefs().add(ref(refType, "9" + fact.getRefs().size()));
+        }
+        fact.getRefs().add(ref(FactRefType.CLEARING_ACCOUNT, CLEARING_ACCOUNT_ID));
+        return fact;
+    }
+
+    /** 金额为给定值的 CHARGE 行。 */
+    private static BillingFactLinePayload paymentLine(FactComponentType component, FactPartyRole payer, String payerId,
+        FactPartyRole payee, String payeeId, String amount) {
+        BillingFactLinePayload line = line(component, payer, payerId, payee, payeeId, FactLineDirection.CHARGE, null);
+        line.setPostedAmount(new BigDecimal(amount));
+        return line;
     }
 }

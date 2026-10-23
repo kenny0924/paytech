@@ -15,6 +15,8 @@ import tools.jackson.databind.node.ObjectNode;
  * consentToSave、customerId，供 card 标记凭证已验证并存卡；acquiring 忽略新增字段。</li>
  * <li>BIN 库需求（2026-10-22）在 v2 末尾再追加可空 cardBrand、fundingType、cardLevel（Token 冻结的卡属性快照，未识别或非卡支付为
  * null），只追加可空字段，Schema 版本仍为 2；供 billing 写入 card_network、funding_type、card_level。</li>
+ * <li>billing 支付事实自动登记需求（2026-10-22）在 cardLevel 之后再追加可空 channelTransactionRefId、channelReferenceType（成功 PAY
+ * 动作的渠道交易引用内部 ID 与引用类型），Schema 版本仍为 2；外部交易号仍为既有 channelTransactionRef，不重复。</li>
  */
 public final class PaymentSucceededPayload {
     /** 事件类型。 */
@@ -53,7 +55,8 @@ public final class PaymentSucceededPayload {
 
     /**
      * v2 JSON Object（领域事件信封）
-     * <li>v1 全部字段之后依次追加 instrumentRef、consentToSave、customerId，再追加卡属性 cardBrand、fundingType、cardLevel。</li>
+     * <li>v1 全部字段之后依次追加 instrumentRef、consentToSave、customerId，再追加卡属性 cardBrand、fundingType、cardLevel，
+     * 最后追加渠道交易引用 channelTransactionRefId、channelReferenceType。</li>
      */
     public static ObjectNode json(PaymentSucceededResult result) {
         ObjectNode payload = JsonNodeFactory.instance.objectNode();
@@ -64,6 +67,8 @@ public final class PaymentSucceededPayload {
         payload.put("cardBrand", result.getCardBrand());
         payload.put("fundingType", result.getFundingType());
         payload.put("cardLevel", result.getCardLevel());
+        payload.put("channelTransactionRefId", result.getChannelTransactionRefId());
+        payload.put("channelReferenceType", result.getChannelReferenceType());
         return payload;
     }
 }

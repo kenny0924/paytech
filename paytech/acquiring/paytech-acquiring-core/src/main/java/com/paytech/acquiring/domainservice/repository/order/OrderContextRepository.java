@@ -2,6 +2,7 @@ package com.paytech.acquiring.domainservice.repository.order;
 
 import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
 import com.paytech.acquiring.domain.customer.CheckoutLegalView;
+import com.paytech.acquiring.domain.order.OrderCommercialContextView;
 
 /** 冻结订单上下文的查询边界。 */
 public interface OrderContextRepository {
@@ -11,4 +12,6 @@ public interface OrderContextRepository {
     CheckoutLegalView findCheckoutLegal(long orderId);
     /** 读取原订单的三表冻结事实。 */
     FrozenCheckoutRecord findFrozen(long orderId);
+    /** 读取订单及其冻结上下文、法律事实的商业字段；订单不存在返回 null，上下文缺失时对应字段为空。 */
+    OrderCommercialContextView findCommercialContext(long orderId);
 }

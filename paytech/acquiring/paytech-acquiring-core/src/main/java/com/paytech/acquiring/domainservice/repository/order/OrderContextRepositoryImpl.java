@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import com.paytech.acquiring.core.dal.mapper.order.OrderContextMapper;
 import com.paytech.acquiring.domain.customer.CheckoutLegalView;
+import com.paytech.acquiring.domain.order.OrderCommercialContextView;
 
 import lombok.AllArgsConstructor;
 
@@ -34,5 +35,11 @@ public class OrderContextRepositoryImpl implements OrderContextRepository {
     @Override
     public FrozenCheckoutRecord findFrozen(long orderId) {
         return preparationMapper.frozen(orderId);
+    }
+
+    /** 订单为主表左连接上下文与法律事实，只读取商业字段。 */
+    @Override
+    public OrderCommercialContextView findCommercialContext(long orderId) {
+        return orderContextMapper.findCommercialContext(orderId);
     }
 }

@@ -63,6 +63,26 @@ class BalanceMaturityJobTest extends AbstractBalanceTest {
         AccountPostedProbe.assertContiguous(posted.await(3), STREAM);
     }
 
+    /** billing 自动登记的 PAYMENT 行目录（渠道付本金与手续费）到期：Client 本金 90 与 Partner 分润 8 转 AVAILABLE，平台侧行没有可移动余额。 */
+    @Test
+    void test_autoPaymentFactMatures() {
+        BillingFactPayload fact = payment("100").partner(PARTNER_ID, FINANCE_ENTITY_ID).paymentLines("10", "8", "2", "0.5")
+            .balanceAvailableTime(past()).build();
+        consumed(fact);
+
+        MaturityRunResult result = job.runOnce();
+
+        assertAll(() -> assertEquals(1, result.getMaturedFactCount()), () -> assertEquals(2, result.getMovementCount()),
+            () -> assertEquals(0, result.getFailedFactCount()),
+            () -> assertEquals(MaturityStatus.MATURED.getCode(), testMapper.selectAppliedFact(fact.getFactId())
+                .get("maturity_status")));
+        assertBalance(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING, "90", "90", "0");
+        assertBalance(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.AVAILABLE, "0", "90", "90");
+        assertBalance(OwnerAccountType.PARTNER_PAYABLE, PARTNER, BalanceBucket.PENDING, "8", "8", "0");
+        assertBalance(OwnerAccountType.PARTNER_PAYABLE, PARTNER, BalanceBucket.AVAILABLE, "0", "8", "8");
+        AccountPostedProbe.assertContiguous(posted.await(3), STREAM);
+    }
+
     /** 未到期：不移动，事实保持 PENDING。 */
     @Test
     void test_notDueUnchanged() {
