@@ -1,0 +1,85 @@
+副本：mor-test mor_platform 只读 mysqldump（2026-10-24T06:19:40Z，SHA-256 4a2f478ac60696a3），导入 --network none 的 mysql:8.4.11@sha256:b3b90af2…（与 mor-test 同一镜像 ID、同一字符集 / 时区参数）；编译器取候选 Platform JAR（be0abf79fc3ca9eb）内的 GatewayConfigurationCompiler。
+### compile: baseline
+COMPILE OK: routes loaded=574, effective=569, effective file-upload=0
+### 00-precheck.sql
+permission_ids_or_codes	0
+role_permission_ids	0
+console_resource_ids_or_codes	0
+menu_sort_86_under_562	0
+gateway_route_ids_codes_paths	0
+route_header_ids	0
+route_query_param_ids	0
+guard_rule_ids	0
+route_ops_public	0
+role	900000000000000510	PLATFORM_ADMIN	48
+target	900000000000000001	operations-console-bff	ACTIVE
+menu_parent	900000000000000562	OPERATIONS_PLATFORM_CONFIGURATION	ACTIVE
+bucket	239290413763084288	S3_TEST	mor-test-platform-public-k7q2	PUBLIC	ACTIVE	ACTIVE
+policy	PUBLIC_DOCUMENT	1	ACTIVE	20971520
+routes_active	569
+### 10-registration-block136.sql
+### compile: dormant
+COMPILE OK: routes loaded=579, effective=569, effective file-upload=0
+### 99-postcheck.sql
+permission	2	ACTIVE
+role_permission	2	REVOKED
+console_resource	2	DISABLED
+gateway_route	5	DISABLED
+route_header	18	NULL
+route_query_param	5	NULL
+guard_rule	30	NULL
+role	900000000000000510	48
+routes_active	569
+route_ops_public	operations-console-bff	PRIVATE	MINIO	mor-platform-files	OPERATIONS_BFF_IMPORT	900
+### 20-activate-block136.sql
+5
+2
+2
+1
+### compile: active
+COMPILE OK: routes loaded=579, effective=574, effective file-upload=5
+### 99-postcheck.sql
+permission	2	ACTIVE
+role_permission	2	ACTIVE
+console_resource	2	ACTIVE
+gateway_route	5	ACTIVE
+route_header	18	NULL
+route_query_param	5	NULL
+guard_rule	30	NULL
+role	900000000000000510	49
+routes_active	574
+route_ops_public	operations-console-bff	PRIVATE	MINIO	mor-platform-files	OPERATIONS_BFF_IMPORT	900
+### 21-deactivate-block136.sql
+5
+2
+2
+1
+### compile: deactivated
+COMPILE OK: routes loaded=579, effective=569, effective file-upload=0
+### 90-rollback-block136.sql
+30
+5
+18
+5
+2
+2
+2
+1
+### compile: rolled-back
+COMPILE OK: routes loaded=574, effective=569, effective file-upload=0
+### 00-precheck.sql
+permission_ids_or_codes	0
+role_permission_ids	0
+console_resource_ids_or_codes	0
+menu_sort_86_under_562	0
+gateway_route_ids_codes_paths	0
+route_header_ids	0
+route_query_param_ids	0
+guard_rule_ids	0
+route_ops_public	0
+role	900000000000000510	PLATFORM_ADMIN	51
+target	900000000000000001	operations-console-bff	ACTIVE
+menu_parent	900000000000000562	OPERATIONS_PLATFORM_CONFIGURATION	ACTIVE
+bucket	239290413763084288	S3_TEST	mor-test-platform-public-k7q2	PUBLIC	ACTIVE	ACTIVE
+policy	PUBLIC_DOCUMENT	1	ACTIVE	20971520
+routes_active	569

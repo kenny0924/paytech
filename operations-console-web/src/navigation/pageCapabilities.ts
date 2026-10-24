@@ -246,6 +246,17 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_FILE_UPLOAD",
+    "displayName": "文件上传",
+    "frontendRoute": "/file-upload",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FILE_UPLOAD_CREATE",
+        "displayName": "上传"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_CARD_BIN_LIBRARY",
     "displayName": "卡 BIN 库",
     "frontendRoute": "/card-bin-library",

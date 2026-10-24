@@ -1,0 +1,20 @@
+# a73e7398 干净构建对候选（JAR f84caa925b7105b6）
+entries a=2599 b=2612 removed=0 added=13 changed=5
++ BOOT-INF/classes/com/paytech/operations/console/bff/ext/rest/FileUploadController.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/integration/PlatformPublicFileClient.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/integration/impl/PlatformPublicFileClientImpl.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/fileupload/request/StartPublicFileUploadRequestBody.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/fileupload/response/FileUploadRecordResponseBody.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/CompleteFileUploadRecordProcessor.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/FileUploadRecords.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/GetFileUploadRecordProcessor.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/ListFileUploadRecordsProcessor.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/request/CompleteFileUploadRecordRequest.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/request/GetFileUploadRecordRequest.class
++ BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/request/ListFileUploadRecordsRequest.class
++ lib:paytech-platform-support-api!com/paytech/platform/support/api/files/response/FileUploadConstraintsResponseBody.class
+~ BOOT-INF/classes/application.yml
+~ BOOT-INF/classes/com/paytech/operations/console/bff/configuration/ConfigurationManagementRequestConfiguration$1.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/configuration/ConfigurationManagementRequestConfiguration$ConfigurationRequestConverter.class
+~ BOOT-INF/classes/com/paytech/operations/console/bff/configuration/ConfigurationManagementRequestConfiguration.class
+~ lib:paytech-platform-support-api!com/paytech/platform/support/api/files/InternalFileApi.class

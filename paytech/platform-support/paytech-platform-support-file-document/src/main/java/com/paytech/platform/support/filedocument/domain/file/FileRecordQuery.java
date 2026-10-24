@@ -36,4 +36,7 @@ public class FileRecordQuery {
 
     /** true 只看有检查中替换版本的文件，false 只看没有的。 */
     private final Boolean hasPendingReplacement;
+
+    /** 首次上传的上传人账号。 */
+    private final Long uploaderAccountId;
 }

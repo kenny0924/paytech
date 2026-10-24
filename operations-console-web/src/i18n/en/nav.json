@@ -69,6 +69,8 @@
   "nav.resource.OPERATIONS_FILE_RECORD_DOWNLOAD": "Download",
   "nav.resource.OPERATIONS_FILE_STORAGE": "Storage",
   "nav.resource.OPERATIONS_FILE_STORAGE_MANAGE": "Manage",
+  "nav.resource.OPERATIONS_FILE_UPLOAD": "File Upload",
+  "nav.resource.OPERATIONS_FILE_UPLOAD_CREATE": "Upload",
   "nav.resource.OPERATIONS_FINANCE": "Finance",
   "nav.resource.OPERATIONS_FINANCE_ACCOUNTING_RULES": "Posting Rules",
   "nav.resource.OPERATIONS_FINANCE_ACCOUNTING_RULES_APPROVE": "Review",

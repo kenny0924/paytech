@@ -3,6 +3,7 @@ package com.paytech.platform.support.filedocument.domain.file;
 import java.time.Instant;
 import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
+import java.util.List;
 import java.util.Map;
 
 /** 上传用例使用的不可变业务事实；不携带临时授权到持久化层。 */
@@ -54,6 +55,17 @@ public final class UploadModels {
      * @param accessLevel 访问级别
      */
     public record Completed(long fileId, int versionNo, Instant completedAt, FileAccessLevel accessLevel) {}
+    /**
+     * 扫描策略代码唯一有效修订的上传限制；与开始上传核对类型与大小使用同一份读取
+     *
+     * @param revisionNo 修订号
+     * @param allowedMimeTypes 允许声明的媒体类型，按策略登记顺序
+     * @param maxSizeBytes 单个文件的最大字节数
+     */
+    public record Constraints(int revisionNo, List<String> allowedMimeTypes, long maxSizeBytes) {
+        /** 冻结类型列表。 */
+        public Constraints { allowedMimeTypes = List.copyOf(allowedMimeTypes); }
+    }
     /** 仅回传给已授权浏览器的短期 PUT 权限；不落库或通用审计。 */
     public record Grant(String url, Map<String, String> headers, Instant expiresAt) {
         /** 冻结适配器输出，避免调用后被更改。 */

@@ -1,0 +1,35 @@
+# a73e7398 干净构建对候选（JAR be0abf79fc3ca9eb）
+entries a=3014 b=3021 removed=0 added=7 changed=26
++ lib:paytech-platform-support-api!com/paytech/platform/support/api/files/response/FileUploadConstraintsResponseBody.class
++ lib:paytech-platform-support-core!com/paytech/platform/support/service/processor/files/ListCallerFilesProcessor.class
++ lib:paytech-platform-support-core!com/paytech/platform/support/service/processor/files/QueryFileUploadConstraintsProcessor.class
++ lib:paytech-platform-support-core!com/paytech/platform/support/service/processor/files/request/ListCallerFilesRequest.class
++ lib:paytech-platform-support-core!com/paytech/platform/support/service/processor/files/request/QueryFileUploadConstraintsRequest.class
++ lib:paytech-platform-support-core!com/paytech/platform/support/service/processor/files/response/QueryFileUploadConstraintsResponse.class
++ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domain/file/UploadModels$Constraints.class
+~ BOOT-INF/classes/com/paytech/platform/support/ext/rest/files/InternalFileController.class
+~ BOOT-INF/classes/com/paytech/platform/support/ext/rest/files/InternalFileConverter.class
+~ lib:paytech-platform-support-api!com/paytech/platform/support/api/files/InternalFileApi.class
+~ lib:paytech-platform-support-core!com/paytech/platform/support/service/processor/filestorage/ListFileRecordsProcessor.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/core/dal/dataobject/FileScanPolicy.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/core/dal/mapper/FileRecordMapper.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domain/file/FileRecordQuery.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domain/file/StoredFileView.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domain/file/UploadModels$Completed.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domain/file/UploadModels$Grant.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domain/file/UploadModels$ReplacementStart.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domain/file/UploadModels$Start.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domain/file/UploadModels$Upload.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domain/file/UploadModels.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domain/storage/StorageWriteTarget.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domainservice/repository/FileRecordRepository.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domainservice/repository/impl/FileRecordRepositoryImpl.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domainservice/service/FileRecordService.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domainservice/service/FileUploadService.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domainservice/service/impl/FileLifecycleServiceImpl$1.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domainservice/service/impl/FileLifecycleServiceImpl.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domainservice/service/impl/FileRecordServiceImpl.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/domainservice/service/impl/FileUploadServiceImpl.class
+~ lib:paytech-platform-support-file-document!com/paytech/platform/support/filedocument/integration/storage/FileStorageRegistry.class
+~ lib:paytech-platform-support-file-document!mapper/file-document/FileRecordMapper.xml
+~ lib:paytech-platform-support-file-document!mapper/file-document/FileUploadMapper.xml

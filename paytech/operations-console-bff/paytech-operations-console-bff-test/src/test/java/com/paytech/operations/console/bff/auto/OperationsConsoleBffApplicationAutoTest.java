@@ -143,7 +143,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
                 "/data-query-admin/v1/data-sources", "/data-query-admin/v1/data-source-connection-tests",
                 "/data-query-admin/v1/template-trials", "/data-query/v1",
                 "/channel-admin/v1/channel-accounts", "/finance/reconciliation/v1/cash-accounts", "/workflow-admin", "/workflow",
-                "/card-admin/v1/bin-library/uploads", "/localization-admin/v1/uploads"),
+                "/card-admin/v1/bin-library/uploads", "/localization-admin/v1/uploads", "/file-upload/v1/uploads"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
         Set<String> routes = applicationContext.getBean(
@@ -269,6 +269,11 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /card-admin/v1/bin-library/uploads/{uploadId}/completion",
             "POST /card-admin/v1/bin-library/versions",
             "POST /card-admin/v1/bin-library/versions/{versionNo}/activation",
+            "GET /file-upload/v1/constraints",
+            "GET /file-upload/v1/files",
+            "GET /file-upload/v1/files/{fileId}",
+            "POST /file-upload/v1/uploads",
+            "POST /file-upload/v1/uploads/{uploadId}/completion",
             "GET /localization-admin/v1/locales",
             "POST /localization-admin/v1/locales",
             "PUT /localization-admin/v1/locales/{localeCode}",

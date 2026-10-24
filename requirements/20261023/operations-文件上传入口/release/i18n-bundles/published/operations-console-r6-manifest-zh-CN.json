@@ -1,0 +1,192 @@
+{
+ "application": "operations-console",
+ "bundles": {
+  "en": {
+   "access": {
+    "hash": "3acfb0e90c969bc874b6f93129df44e1574eac33e39f1b9fb1a8754f590d1166",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/access/3acfb0e90c969bc8/11011292-9dc5-42ef-b5c7-5dc71a0a3215"
+   },
+   "auth": {
+    "hash": "e798d3e071f813ea1a04ba6492c03a1ee8e260a0bf32ce553669bfd6bedd526f",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/auth/e798d3e071f813ea/45612c29-b3e8-4a69-810f-7baa585c0e04"
+   },
+   "card": {
+    "hash": "43da360d0372c465c4ccfbf80a9437a43ecc1bed4964e311f4a9672e40ab7b9a",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/card/43da360d0372c465/b6b18f16-121f-4a0a-96a8-3113b85d9cdf"
+   },
+   "channel": {
+    "hash": "7aabb467dcf9dd2c6508be84642ab30821062c15e045fda3d187584c3394015d",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/channel/7aabb467dcf9dd2c/4ceee790-527d-4542-b302-a64ba68e47fb"
+   },
+   "client-review": {
+    "hash": "276a9ded084f87e81495d655b3f5651cf2b25a0a455bb4222b14750da4cd6204",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/client-review/276a9ded084f87e8/3dfe48e0-4408-4bdf-946e-dda2a48e2505"
+   },
+   "commercial": {
+    "hash": "bdd8f7cb796c98dc4dfa0c8d06a0856d760ebc2d730257f57fa0e2b4ac278034",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/commercial/bdd8f7cb796c98dc/7c10f1e7-3649-47c4-93bd-ff85ee5137f3"
+   },
+   "common": {
+    "hash": "1ed667cb8c32c80e10a6b3ba5049f670bdb75a5b5c611c3bf0356abf8f2c03de",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/common/1ed667cb8c32c80e/9cab0c52-a149-47b6-87ba-bbfb76e49841"
+   },
+   "currency": {
+    "hash": "513462a1028ef41cac476a956729b17a5a08d8e2e37df4c28786168995ef8f97",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/currency/513462a1028ef41c/334fc132-27d7-412b-a17f-da30983a5fb5"
+   },
+   "data-query": {
+    "hash": "4de51139c017f1d0b3a42653ae6522f3686065319999aa09a398e4957077701e",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/data-query/4de51139c017f1d0/457f292d-1796-48d1-9d04-15a1cd87c325"
+   },
+   "enum": {
+    "hash": "02d525731244fdcbd55ae16adeab5e4d0b16916d40b282439c6f266d6cba4166",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/enum/02d525731244fdcb/05ed4889-7bd1-42ea-a111-e012a72c3d35"
+   },
+   "file": {
+    "hash": "368554a91f15201eb005ac6c8ca87d810401fb488f939daf2d5ed7fe87bb6c4b",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/file/368554a91f15201e/236be418-612f-4a45-bfb3-4169d239f1fd"
+   },
+   "finance": {
+    "hash": "a8f920751a9dc67b724b6f19f86e67f54c6035afcbef20fa9f0ee7876c3d2ded",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/finance/a8f920751a9dc67b/bf1224f6-fa9a-4773-85c4-9c60057c77f0"
+   },
+   "gateway": {
+    "hash": "95455453cc7fe850b3eac1e1aa80499b0682ac9171df5f5467db192acb35090c",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/gateway/95455453cc7fe850/e703a184-05da-445d-9179-f7c17a749d2e"
+   },
+   "i18n-admin": {
+    "hash": "0d61a421b9024f3364e89597b8e9cf44a954dda0cd8f768b1f2b64a5fad8c8bf",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/i18n-admin/0d61a421b9024f33/4b9ec830-9960-4e71-af6d-d0daeee7bdca"
+   },
+   "nav": {
+    "hash": "6c0ca4211fde9b11cb233f7a53b6b557cd8641485e3a0a42b669cbac64c10adc",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/nav/6c0ca4211fde9b11/611dfa45-c060-4517-be66-9551505a0b36"
+   },
+   "notification": {
+    "hash": "d705902bb254b2d15871b52249879c7eb33338f1dee3865e36253cdc09d67771",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/notification/d705902bb254b2d1/cdac0dee-3fe3-4ba1-bd33-4fba13c3cf63"
+   },
+   "recon": {
+    "hash": "ac982d0706d326fa0764fef60476f7649cc78046f12333234ee52e011b1e8ae6",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/recon/ac982d0706d326fa/178447aa-63f1-4895-a135-a886d369fd5d"
+   },
+   "risk": {
+    "hash": "6c7b196ed871a9ef10edb1bc552afb57e15f388afb90d018994ba08be133a0ca",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/risk/6c7b196ed871a9ef/98f3f874-4f67-4033-be88-6147457e93ec"
+   },
+   "vault": {
+    "hash": "6f06652b6a631810f49f32844f82e1d8c338a527fcb85d652b9d59266eb1ec05",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/vault/6f06652b6a631810/66ef6c57-d05a-4350-9b60-b3e9f16b2d97"
+   },
+   "webhook": {
+    "hash": "a8a677fe256bd8f914b1bdb63083d0f019ada000c67f5ab2abb69f9d05b7c577",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/webhook/a8a677fe256bd8f9/ef20103c-b7d5-4504-aa98-5374481bda58"
+   },
+   "workflow": {
+    "hash": "82f4ad60f8357bb96b0a6e3b8a936bc2dc1811a20cc2b683df2b9d4d9907c954",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/en/workflow/82f4ad60f8357bb9/a392d08c-2085-4451-b684-e2979a7bfc13"
+   }
+  },
+  "zh-CN": {
+   "access": {
+    "hash": "12a90b30a0d1130a977733fb573684ff6f721085c0e791d99c35af35afa2d8e9",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/access/12a90b30a0d1130a/b60081f7-a0e1-4a4f-b219-2f07a80d02fe"
+   },
+   "auth": {
+    "hash": "c23ad628c7baf23cbc17ca2e01b68b5fb71258a68c6e8e03eb7ee1c2f6b197c4",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/auth/c23ad628c7baf23c/cad35722-dcce-458f-9508-9906cc0402f1"
+   },
+   "card": {
+    "hash": "a1e7f5de1b62c770d32548db2964b1167c398e3dacc58c3ba34da58cace11c46",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/card/a1e7f5de1b62c770/a4dffccc-fcbd-4111-9a29-136229886c44"
+   },
+   "channel": {
+    "hash": "a63f50e4788b6d88a586f33777872b84fb27a0262c5f6d5625c6e25d4a2d5830",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/channel/a63f50e4788b6d88/5ae39d9f-862c-460c-9320-c9da89e9840e"
+   },
+   "client-review": {
+    "hash": "c1e98b4580a4ef27b0199f52655de154d9275d6d0cff008af406a9273abb8726",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/client-review/c1e98b4580a4ef27/0e5afded-4a84-4eb5-a1cc-2708583cd307"
+   },
+   "commercial": {
+    "hash": "1f16d3ef220344bfd04841446629abbf208c01f5028bf6a58b23e2e333314d85",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/commercial/1f16d3ef220344bf/d7a8a887-96fd-4e5c-b2f5-6b9d02a017ed"
+   },
+   "common": {
+    "hash": "3aa0456c6dbcc709354d9718c6c293637d4025b713783c87cbe8b41e1ca207bb",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/common/3aa0456c6dbcc709/0cd7ae7b-4608-4652-972e-f8452a518a9c"
+   },
+   "currency": {
+    "hash": "3a240c282f6a95b99f716380cfc1acf68ace0d33e730fb2f86ebe56b9067ee20",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/currency/3a240c282f6a95b9/e305c19b-d1bf-4f2e-9916-92be48a70df6"
+   },
+   "data-query": {
+    "hash": "833e3488f6319887a6ffaf1a5dbee2f9ce7846ee63e9558de0b965010018cbd1",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/data-query/833e3488f6319887/b5369790-4ad1-4ce1-9a37-163a3ece7417"
+   },
+   "enum": {
+    "hash": "ecd9af4c47c0e3f9d4daabc2008154a6b212e4e6d3f703ddc1233f9533f67d39",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/enum/ecd9af4c47c0e3f9/5eb2db31-d041-47e2-8b60-cfc28ff64a83"
+   },
+   "file": {
+    "hash": "77233e443c513414fd1038f4a91774a74ec6ee53dbca7624246f656b5ed00d03",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/file/77233e443c513414/3113c39b-4a48-47c3-8a91-1722323922d7"
+   },
+   "finance": {
+    "hash": "037cef36fc49835affc13ce2e0dcfa9054ab1426c6a22b49595d95ab316daa98",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/finance/037cef36fc49835a/57c42cf8-6aca-45ef-94fa-28f991bdc6b8"
+   },
+   "gateway": {
+    "hash": "0f7dd89dcdf6f98a90a55649d0e87dce50cb7a9afca05166276286c0b7a5bc26",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/gateway/0f7dd89dcdf6f98a/9396c6de-1bc1-4449-8a35-f51d03b38746"
+   },
+   "i18n-admin": {
+    "hash": "5eea184f21b95f0a853dafc88a3ee945292ae40f7aff709e66fb4be30b0ac010",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/i18n-admin/5eea184f21b95f0a/aebb7a04-e708-4bdb-8ed8-551549f60ca7"
+   },
+   "nav": {
+    "hash": "6fb94c69d56f30cbcfb7b2086f4f83ccc6a35a48bde753e87a57e7b710a15f6d",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/nav/6fb94c69d56f30cb/7e374c73-94b4-45df-9519-866952c9f0e7"
+   },
+   "notification": {
+    "hash": "7acca0117187a590ce401d58dce7dc86c7183e723b70ac3792bc49643fc5d408",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/notification/7acca0117187a590/715c1546-913d-4f1b-8060-444015b7df37"
+   },
+   "recon": {
+    "hash": "23bf513e1c16deeb3a8a8efba47a475d22822d94bbeb209ba6d2e32beffe9b71",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/recon/23bf513e1c16deeb/4c5eb526-18c8-443c-96a9-8d0c1479310e"
+   },
+   "risk": {
+    "hash": "51a7c1ce90c1a5caf62e83e0682d768562d10926610e278c4b81243f81af56b6",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/risk/51a7c1ce90c1a5ca/24302d55-8f6a-4553-8cbd-80024d47da36"
+   },
+   "vault": {
+    "hash": "790cd4b162fcc59e5ef0c9163643a90d4d5f42d97810c1372863b2f883a8b276",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/vault/790cd4b162fcc59e/d8854e83-075f-450d-bcfe-e828385761f9"
+   },
+   "webhook": {
+    "hash": "396fe61f16dc1ea977474818301139d9838f70f365e06680a626c1852499cf59",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/webhook/396fe61f16dc1ea9/9fce410e-8326-4ab2-bb98-1387af5a443c"
+   },
+   "workflow": {
+    "hash": "555b35f045fe953135425143e97987edf5728d0fbf9b9fac28cfca5749a2910b",
+    "url": "https://minio.mor-test.localhost:29400/mor-platform-public/i18n/operations-console/6/zh-CN/workflow/555b35f045fe9531/75c458ed-c0b9-453b-a866-49a6e829d649"
+   }
+  }
+ },
+ "defaultLocale": "en",
+ "locales": [
+  {
+   "code": "en",
+   "direction": "LTR",
+   "nativeName": "English"
+  },
+  {
+   "code": "zh-CN",
+   "direction": "LTR",
+   "nativeName": "简体中文"
+  }
+ ],
+ "publishedAt": "2026-10-24T08:07:00.331178Z",
+ "releaseNo": 6
+}

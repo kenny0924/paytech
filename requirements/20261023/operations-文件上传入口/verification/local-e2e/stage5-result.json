@@ -1,0 +1,406 @@
+{
+  "run": "20261024054435",
+  "window": [
+    "2026-10-24T05:44:35.388Z",
+    "2026-10-24T05:47:03.587Z"
+  ],
+  "environment": "local (https://127.0.0.1:18444, mor_platform_v2e2e)",
+  "language": "English: the local i18n manifest publishes no locale, so zh-CN cannot be selected (screenshots are English)",
+  "results": {
+    "AC-01": {
+      "result": "PASS",
+      "evidence": {
+        "constraintsBar": "Public Target Storage MINIO / mor-platform-public Write Rule Exact rule (operations-console-bff) Check Policy PUBLIC_DOCUMENT r1 Allowed Types application/pdf, image/png, image/jpeg Max Size 20 MB Authorization Valid For 15 minutes",
+        "tag": "Check Passed",
+        "labels": [
+          "Public URL",
+          "Versioned URL",
+          "File Address"
+        ],
+        "publicUrl": "https://127.0.0.1:19400/mor-platform-public/906f1685-6429-47af-8d27-fb90e5f41727",
+        "versionedUrl": "https://127.0.0.1:19400/mor-platform-public/906f1685-6429-47af-8d27-fb90e5f41727?v=1",
+        "fileAddress": "/files/v1/239626888937476096",
+        "screenshot": "screenshots/01-result-available.png",
+        "anonymousGet": {
+          "status": 200,
+          "contentType": "image/png",
+          "bytes": 69,
+          "sha256Match": true
+        }
+      }
+    },
+    "AC-06": {
+      "result": "PASS",
+      "evidence": {
+        "alert": "stage5-fake-20261024055137.png was rejected. The file content failed the check (it may not match the declared type), so no file was created. Reason: 文件类型或大小不符合要求",
+        "addresses": 0,
+        "completionStatuses": [
+          422
+        ],
+        "fakeFileInRecentUploads": 0,
+        "screenshot": "screenshots/06-result-failed.png"
+      }
+    },
+    "AC-02": {
+      "result": "PASS",
+      "evidence": {
+        "pageStartCalls": 0,
+        "svgReason": "stage5-vector-20261024054435.svg was rejected. Type image/svg+xml is not allowed. Allowed: application/pdf, image/png, image/jpeg.",
+        "bigReason": "stage5-big-20261024054435.png was rejected. The file is 20.0 MB, larger than the 20 MB limit.",
+        "direct": {
+          "svg": {
+            "status": 422,
+            "code": "FILE_POLICY_REJECTED",
+            "detail": "文件类型或大小不符合要求"
+          },
+          "oversize": {
+            "status": 422,
+            "code": "FILE_POLICY_REJECTED",
+            "detail": "文件类型或大小不符合要求"
+          },
+          "totalBefore": 2,
+          "totalAfter": 2
+        },
+        "screenshots": [
+          "screenshots/02-precheck-type.png",
+          "screenshots/02-precheck-size.png"
+        ]
+      }
+    },
+    "AC-05": {
+      "result": "PASS",
+      "evidence": {
+        "rowText": "stage5-logo-20261024055137.png 239626888937476096 image/png 69 B Me 10/24/2026, 09:51:42 Check Passed https://127.0.0.1:... File Record ›",
+        "rowsAll": 4,
+        "rowsMine": 4,
+        "mineRequestStatuses": [
+          200
+        ],
+        "detailUrl": "/file-records?file=239626888937476096",
+        "detailTitle": "stage5-logo-20261024055137.png Public Current v1 · Check Passed",
+        "screenshots": [
+          "screenshots/05-recent-only-mine.png",
+          "screenshots/05-file-record-detail.png"
+        ]
+      }
+    },
+    "AC-08": {
+      "result": "PASS",
+      "evidence": {
+        "pages": {
+          "/file-records": {
+            "visible": true,
+            "failures": [],
+            "screenshot": "screenshots/08-file-records.png"
+          },
+          "/file-storage": {
+            "visible": true,
+            "failures": [],
+            "screenshot": "screenshots/08-file-storage.png"
+          },
+          "/card-bin-library": {
+            "visible": true,
+            "failures": [],
+            "screenshot": "screenshots/08-card-bin-library.png"
+          },
+          "/file-storage#write-rules": {
+            "screenshot": "screenshots/08-file-storage-write-rules.png"
+          }
+        },
+        "storageShowsOpsBffRules": true,
+        "cardStart": {
+          "status": 201,
+          "uploadId": "239625214894280704",
+          "hasAuthorization": true
+        }
+      }
+    },
+    "AC-04": {
+      "result": "PASS",
+      "evidence": {
+        "note": "With FILE_UPLOAD_READ alone the API works (constraints/list 200, start 403) but the page is unreachable: parent menu 562 requires 900000000000000534 GATEWAY_CONFIG_READ.",
+        "onlyFileUploadRead": {
+          "person": {
+            "accountId": "239626114350190592",
+            "roleId": "239626113406472192",
+            "permissions": [
+              "900000000000136101"
+            ]
+          },
+          "pageRendered": false,
+          "constraintsBar": null,
+          "recentUploads": null,
+          "uploadWorkspaceCount": 0,
+          "fileRecordLinks": null,
+          "menu": "",
+          "screenshot": "screenshots/04a-only-file-upload-read.png",
+          "direct": {
+            "constraints": 200,
+            "configured": true,
+            "files": 200,
+            "start": {
+              "status": 403,
+              "code": "OPERATIONS_PERMISSION_DENIED",
+              "detail": "没有执行此操作的权限"
+            }
+          }
+        },
+        "withPlatformSettingsNav": {
+          "person": {
+            "accountId": "239626170633555968",
+            "roleId": "239626169387847680",
+            "permissions": [
+              "900000000000136101",
+              "900000000000000534"
+            ]
+          },
+          "pageRendered": true,
+          "constraintsBar": true,
+          "recentUploads": true,
+          "uploadWorkspaceCount": 0,
+          "fileRecordLinks": 0,
+          "menu": "Platform Settings API Routes File Upload",
+          "screenshot": "screenshots/04b-read-only-with-platform-settings-nav.png",
+          "direct": {
+            "constraints": 200,
+            "configured": true,
+            "files": 200,
+            "start": {
+              "status": 403,
+              "code": "OPERATIONS_PERMISSION_DENIED",
+              "detail": "没有执行此操作的权限"
+            }
+          }
+        }
+      }
+    },
+    "AC-03": {
+      "result": "PASS",
+      "evidence": {
+        "removed": {
+          "status": 200,
+          "detail": null,
+          "remaining": [
+            "*/PRIVATE",
+            "operations-console-bff/PRIVATE"
+          ]
+        },
+        "unconfigured": {
+          "status": 200,
+          "configured": false,
+          "seconds": 0,
+          "start": {
+            "status": 503,
+            "code": "DEPENDENCY_UNAVAILABLE",
+            "detail": "依赖服务暂时不可用，请稍后重试"
+          },
+          "routeSourceSystem": null,
+          "bucketName": null
+        },
+        "notice": "Public upload is not configured. Configure a public write rule in Storage. Go to Storage",
+        "selectDisabled": true,
+        "inputDisabled": true,
+        "goToStorageButton": true,
+        "screenshot": "screenshots/03-not-configured.png",
+        "restored": {
+          "setupExit": 0,
+          "route": {
+            "instanceCode": "MINIO",
+            "bucketName": "mor-platform-public",
+            "scanPolicyCode": "PUBLIC_DOCUMENT",
+            "maxUploadSeconds": 900
+          },
+          "privateRoute": {
+            "instanceCode": "MINIO",
+            "bucketName": "mor-platform-files",
+            "scanPolicyCode": "CARD_BIN_CSV"
+          }
+        },
+        "reconfigured": {
+          "status": 200,
+          "configured": true,
+          "seconds": 0,
+          "start": null,
+          "routeSourceSystem": "operations-console-bff",
+          "bucketName": "mor-platform-public"
+        },
+        "pageConfiguredAgain": true
+      }
+    },
+    "AC-07": {
+      "result": "PASS",
+      "evidence": {
+        "window": [
+          "2026-10-24T05:51:38.027Z",
+          "2026-10-24T05:51:51.470Z"
+        ],
+        "bytesScanned": 21098,
+        "lines": 29,
+        "markers": [],
+        "fileUploadLines": 14
+      }
+    }
+  },
+  "browserHttp4xx5xx": [
+    "admin POST /api/operations/file-upload/v1/uploads/239625121810092032/completion -> 422",
+    "viewerb POST /api/operations/auth/v1/login -> 429"
+  ],
+  "scriptExpected4xx5xx": [
+    "POST /api/operations/file-upload/v1/uploads/{uploadId}/completion -> 422 (AC-06 content check)",
+    "POST /api/operations/file-upload/v1/uploads -> 422 (AC-02 direct, script)",
+    "POST /api/operations/file-upload/v1/uploads -> 403 (AC-04 viewera direct, script)",
+    "POST /api/operations/file-upload/v1/uploads -> 503 (AC-03 direct, script)"
+  ],
+  "consoleErrors": [
+    "admin console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.",
+    "admin console.error Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+    "admin console.error In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <button> button \n\n  ...\n    <ResizeObserver$1 onResize={function onResize} disabled={true}>\n      <SingleObserver onResize={function onResi",
+    "admin console.error <%s> cannot contain a nested %s.\nSee this log for the ancestor stack trace. button <button>",
+    "viewera console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.",
+    "viewerb console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.",
+    "viewerb console.error Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  ],
+  "syntheticCleanup": {
+    "note": "script cleanup crashed on a stale scratch record format; rerun manually with `python3 stage5_api.py cleanup` right after",
+    "viewera": {
+      "account": 204,
+      "role": 204
+    },
+    "viewerb": {
+      "account": 204,
+      "role": 204
+    }
+  },
+  "screenshots": [
+    "screenshots/01-main-before-upload.png",
+    "screenshots/01-result-available.png",
+    "screenshots/06-result-failed.png",
+    "screenshots/02-precheck-type.png",
+    "screenshots/02-precheck-size.png",
+    "screenshots/05-recent-only-mine.png",
+    "screenshots/05-file-record-detail.png",
+    "screenshots/08-file-records.png",
+    "screenshots/08-file-storage.png",
+    "screenshots/08-card-bin-library.png",
+    "screenshots/08-file-storage-write-rules.png",
+    "screenshots/04a-only-file-upload-read.png",
+    "screenshots/03-not-configured.png"
+  ],
+  "reruns": [
+    {
+      "acs": [
+        "AC-04",
+        "AC-07"
+      ],
+      "run": "20261024054836",
+      "window": [
+        "2026-10-24T05:48:36.975Z",
+        "2026-10-24T05:50:06.693Z"
+      ],
+      "browserHttp4xx5xx": [
+        "viewerb POST /api/operations/auth/v1/login -> 429"
+      ],
+      "consoleErrors": [
+        "viewera console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.",
+        "viewerb console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.",
+        "viewerb console.error Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+      ],
+      "syntheticCleanup": {
+        "viewera": {
+          "account": {
+            "status": 204
+          },
+          "role": {
+            "status": 204
+          }
+        },
+        "viewerb": {
+          "account": {
+            "status": 204
+          },
+          "role": {
+            "status": 204
+          }
+        }
+      },
+      "screenshots": [
+        "screenshots/04a-only-file-upload-read.png",
+        "screenshots/04b-read-only-with-platform-settings-nav.png"
+      ]
+    },
+    {
+      "acs": [
+        "AC-01",
+        "AC-06",
+        "AC-05",
+        "AC-07"
+      ],
+      "run": "20261024055137",
+      "window": [
+        "2026-10-24T05:51:38.027Z",
+        "2026-10-24T05:51:51.836Z"
+      ],
+      "browserHttp4xx5xx": [
+        "admin POST /api/operations/file-upload/v1/uploads/239626896394948608/completion -> 422"
+      ],
+      "consoleErrors": [
+        "admin console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.",
+        "admin console.error Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+        "admin console.error In HTML, %s cannot be a descendant of <%s>.\nThis will cause a hydration error.%s <button> button \n\n  ...\n    <ResizeObserver$1 onResize={function onResize} disabled={true}>\n      <SingleObserver onResize={function onResi",
+        "admin console.error <%s> cannot contain a nested %s.\nSee this log for the ancestor stack trace. button <button>"
+      ],
+      "syntheticCleanup": {},
+      "screenshots": [
+        "screenshots/01-main-before-upload.png",
+        "screenshots/01-result-available.png",
+        "screenshots/06-result-failed.png",
+        "screenshots/05-recent-only-mine.png",
+        "screenshots/05-file-record-detail.png"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "area": "operations-console-web",
+      "issue": "Platform runs the format check synchronously at upload completion; a content/type mismatch returns 422 FILE_POLICY_REJECTED from /completion and no file is created. The page first showed the generic server reason, which reads like a type/size problem.",
+      "handling": "Fixed in web: a 422 at the completion step now says the content failed the check and no file was created (key file.upload.issue.contentRejected), server reason appended; unit test added. AC-06 rerun PASS."
+    },
+    {
+      "id": "F2",
+      "area": "operations-console-web",
+      "issue": "React warning <button> nested in <button> from the address copy control (antd copyable icon rendered as Button).",
+      "handling": "Fixed: copy icons are plain text spans, Open is a link. Upload page no longer emits the warning (probe). The same warning still appears on the File Records detail page (existing PublicUrlBar, not part of this change)."
+    },
+    {
+      "id": "F3",
+      "area": "operations-console-web",
+      "issue": "Recent Uploads Actions column was clipped at 1440px.",
+      "handling": "Column widths reduced; fits at 1440 (rerun screenshot)."
+    },
+    {
+      "id": "F4",
+      "area": "platform registration (block 136) - reported, not changed",
+      "issue": "FILE_UPLOAD_READ alone cannot reach the page: parent menu 562 'Platform Settings' is bound to 900000000000000534 GATEWAY_CONFIG_READ, which also shows API Routes. APIs work with FILE_UPLOAD_READ alone (constraints/list 200, start 403).",
+      "handling": "AC-04 verified with FILE_UPLOAD_READ + 534 (same approach as block 130/134 acceptance). Needs a main-session decision."
+    },
+    {
+      "id": "F5",
+      "area": "environment",
+      "issue": "Login endpoint rate limit (429) after many sign-ins; AC-04 first attempt failed on login.",
+      "handling": "Script retries login after 30 s; AC-04 rerun PASS."
+    },
+    {
+      "id": "F6",
+      "area": "environment",
+      "issue": "Local i18n manifest publishes no locale, so zh-CN cannot be selected.",
+      "handling": "Screenshots are English."
+    }
+  ],
+  "notes": {
+    "AC-05 onlyMine": "All uploads in the window were made by the admin, so the Only Mine list equals the full list (request returned 200 and the uploaded file stays visible); it does not demonstrate filtering out other people's files.",
+    "AC-01 publicUrl": "Anonymous GET via urllib without any credentials; certificate verification disabled for the local self-signed MinIO.",
+    "AC-03 snapshot": "configured=false was observed on the first poll after the route DELETE (0 s), so no 35 s wait was needed; restore via stage5_setup.py, configured=true afterwards, operations-console-bff/PRIVATE (CARD_BIN_CSV) unchanged.",
+    "artifacts": "Uploads created by the runs (stage5-logo-*.png, one probe-*.png) remain in mor_platform_v2e2e / MinIO public bucket; synthetic roles and accounts deleted via IAM (204)."
+  }
+}

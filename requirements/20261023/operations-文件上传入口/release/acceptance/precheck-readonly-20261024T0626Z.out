@@ -1,0 +1,54 @@
+[通过] 容器 compose-rollback.yaml 的 3 个镜像 = 常量
+[通过] 容器 platform-support-service .Image 480329992624 = 回滚（现网）
+[通过] 容器 platform-support-service healthy、重启 0
+[通过] 容器 operations-console-bff .Image 3751638e5f34 = 回滚（现网）
+[通过] 容器 operations-console-bff healthy、重启 0
+[通过] 容器 operations-console-web .Image 4c1f1ec39b64 = 回滚（现网）
+[通过] 容器 operations-console-web healthy、重启 0
+[通过] 候选 compose-candidate.yaml = 常量
+[通过] 候选 platform-support-service 候选镜像存在 4859efd78dd9
+[通过] 候选 platform-support-service 镜像配置与运行镜像相同（Env 只比较不输出）
+[通过] 候选 platform-support-service JAR SHA-256 be0abf79fc3ca9eb
+[通过] 候选 operations-console-bff 候选镜像存在 0bc674106d7b
+[通过] 候选 operations-console-bff 镜像配置与运行镜像相同（Env 只比较不输出）
+[通过] 候选 operations-console-bff JAR SHA-256 f84caa925b7105b6
+[通过] 候选 operations-console-web 候选镜像存在 70d3fdfbb6be
+[通过] 候选 operations-console-web 镜像配置与运行镜像相同（Env 只比较不输出）
+[通过] 环境 compose-candidate.yaml 渲染
+[通过] 环境 compose-candidate.yaml platform-support-service 0 缺 0 多 0 不同（compose 53 / 运行 59 键）
+[通过] 环境 compose-candidate.yaml operations-console-bff 0 缺 0 多 0 不同（compose 14 / 运行 20 键）
+[通过] 环境 compose-candidate.yaml operations-console-web 0 缺 0 多 0 不同（compose 0 / 运行 7 键）
+[通过] 环境 compose-rollback.yaml 渲染
+[通过] 环境 compose-rollback.yaml platform-support-service 0 缺 0 多 0 不同（compose 53 / 运行 59 键）
+[通过] 环境 compose-rollback.yaml operations-console-bff 0 缺 0 多 0 不同（compose 14 / 运行 20 键）
+[通过] 环境 compose-rollback.yaml operations-console-web 0 缺 0 多 0 不同（compose 0 / 运行 7 键）
+[通过] SQL 00-precheck permission_ids_or_codes = 0
+[通过] SQL 00-precheck role_permission_ids = 0
+[通过] SQL 00-precheck console_resource_ids_or_codes = 0
+[通过] SQL 00-precheck menu_sort_86_under_562 = 0
+[通过] SQL 00-precheck gateway_route_ids_codes_paths = 0
+[通过] SQL 00-precheck route_header_ids = 0
+[通过] SQL 00-precheck route_query_param_ids = 0
+[通过] SQL 00-precheck guard_rule_ids = 0
+[通过] SQL 00-precheck route_ops_public = 0
+[通过] SQL 角色 900000000000000510 PLATFORM_ADMIN 存在（版本 48）
+[通过] SQL Target 900000000000000001 operations-console-bff ACTIVE
+[通过] SQL 父菜单 900000000000000562 OPERATIONS_PLATFORM_CONFIGURATION ACTIVE
+[通过] SQL S3_TEST / mor-test-platform-public-k7q2 为 PUBLIC 桶，桶与实例 ACTIVE
+[通过] SQL PUBLIC_DOCUMENT 有唯一 ACTIVE 修订
+      记录 生效路由 569
+[通过] 规则 (*, PUBLIC) → S3_TEST / mor-test-platform-public-k7q2 / PUBLIC_DOCUMENT（未建精确规则前的回落）
+[通过] 规则 (operations-console-bff, PRIVATE) 不变：MINIO / mor-platform-files / OPERATIONS_BFF_IMPORT
+[通过] 规则 (operations-console-bff, PUBLIC) 尚不存在
+[通过] 多语言 operations-console.en.json SHA-256 = SHA256SUMS
+[通过] 多语言 operations-console.zh-CN.json SHA-256 = SHA256SUMS
+[通过] 多语言 operations-console 存在且有当前发布
+[通过] 多语言 当前发布 #5 READY（8525 key，默认 en）
+[通过] 多语言 没有进行中的发布
+[通过] 多语言 线上命名空间 = 输入的 21 个（file、nav 已存在，不新建）
+[通过] 多语言 线上 8525 个 ACTIVE key 全部在输入中（导入废弃 0）
+[通过] 多语言 已有 key 的英文基准、说明与命名空间与输入逐条相同（基准变更 0）
+[通过] 多语言 已有 key 的线上 zh-CN 翻译与输入逐条相同（不覆盖已有翻译）
+[通过] 多语言 输入比线上多 69 个 key，全部为 file.upload.* 与两个 nav.resource.OPERATIONS_FILE_UPLOAD*
+
+合计 51/51 通过

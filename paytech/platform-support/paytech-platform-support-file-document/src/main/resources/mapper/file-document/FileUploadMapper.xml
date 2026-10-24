@@ -11,7 +11,8 @@
  </select>
  <select id="policies" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPolicy">
   SELECT p.policy_id,p.rule_schema_version,p.allowed_mime_rules,p.max_size_bytes,
-   (SELECT COUNT(*) FROM t_file_scan_requirement r WHERE r.policy_id=p.policy_id) AS requirement_count
+   (SELECT COUNT(*) FROM t_file_scan_requirement r WHERE r.policy_id=p.policy_id) AS requirement_count,
+   p.revision_no
   FROM t_file_scan_policy p WHERE p.policy_code=#{code} AND p.status='ACTIVE' AND p.active_slot=1
    AND (p.effective_from IS NULL OR p.effective_from &lt;= #{now})
    AND (p.effective_to IS NULL OR p.effective_to &gt; #{now})

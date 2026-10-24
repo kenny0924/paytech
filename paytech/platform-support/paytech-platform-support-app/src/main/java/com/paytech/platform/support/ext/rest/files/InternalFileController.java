@@ -1,26 +1,32 @@
 package com.paytech.platform.support.ext.rest.files;
 
+import java.time.Instant;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.api.files.InternalFileApi;
 import com.paytech.platform.support.api.files.request.StartFileReplacementRequestBody;
 import com.paytech.platform.support.api.files.request.StartFileUploadRequestBody;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
+import com.paytech.platform.support.api.files.response.FileUploadConstraintsResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadResponseBody;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
 import com.paytech.platform.support.filedocument.domainservice.service.FileLifecycleService;
 import com.paytech.platform.support.service.processor.files.AuthorizeFileDownloadProcessor;
 import com.paytech.platform.support.service.processor.files.CompleteFileUploadProcessor;
+import com.paytech.platform.support.service.processor.files.ListCallerFilesProcessor;
+import com.paytech.platform.support.service.processor.files.QueryFileUploadConstraintsProcessor;
 import com.paytech.platform.support.service.processor.files.StartFileReplacementProcessor;
 import com.paytech.platform.support.service.processor.files.StartFileUploadProcessor;
 
 import lombok.AllArgsConstructor;
 
-/** 内部文件接口的协议适配；写入委托 Processor，元数据查询直接委托文件 Service。只记录元数据日志。 */
+/** 内部文件接口的协议适配；写入、写入限制与调用方文件列表委托 Processor，元数据查询直接委托文件 Service。只记录元数据日志。 */
 @RestController
 @AllArgsConstructor
 @ConditionalOnProperty(name = "files.enabled", havingValue = "true")
@@ -28,10 +34,12 @@ public class InternalFileController implements InternalFileApi {
 
     private final FileLifecycleService files;
     private final InternalFileConverter converter;
+    private final ListCallerFilesProcessor listProcessor;
     private final StartFileUploadProcessor startProcessor;
     private final CompleteFileUploadProcessor completeProcessor;
     private final AuthorizeFileDownloadProcessor downloadProcessor;
     private final StartFileReplacementProcessor replacementProcessor;
+    private final QueryFileUploadConstraintsProcessor constraintsProcessor;
 
     /** 新建上传返回 201。 */
     @Override
@@ -58,6 +66,20 @@ public class InternalFileController implements InternalFileApi {
     public StoredFileResponseBody getFile(String fileId) {
         converter.callerService();
         return converter.file(files.describe(converter.id(fileId, "文件 ID 必须为规范正整数")));
+    }
+
+    /** 写入限制；未配置返回 200 与 configured=false。 */
+    @Override
+    public FileUploadConstraintsResponseBody getUploadConstraints(String accessLevel) {
+        return converter.constraints(constraintsProcessor.process(converter.constraintsRequest(accessLevel)));
+    }
+
+    /** 调用方自己来源的文件分页。 */
+    @Override
+    public PagingResponseBody<StoredFileResponseBody> listFiles(Instant createdFrom, Instant createdTo, String reasonCode,
+        String accessLevel, String uploaderAccountId, Integer page, Integer size) {
+        return converter.files(listProcessor.process(
+            converter.listRequest(createdFrom, createdTo, reasonCode, accessLevel, uploaderAccountId, page, size)));
     }
 
     /** 签发短时下载地址；不做文件级权限，带人工操作人时写下载审计，下载方式缺省为附件。 */

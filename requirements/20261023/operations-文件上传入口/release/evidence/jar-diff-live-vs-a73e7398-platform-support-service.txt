@@ -1,0 +1,3 @@
+# 现网 platform-support-service（sha256:48032999…，JAR e45c406f1d313df2）对 a73e7398 干净构建（jarcmp.py --list）
+entries a=3014 b=3014 removed=0 added=0 changed=1
+~ lib:paytech-messaging!catalog/events.yaml

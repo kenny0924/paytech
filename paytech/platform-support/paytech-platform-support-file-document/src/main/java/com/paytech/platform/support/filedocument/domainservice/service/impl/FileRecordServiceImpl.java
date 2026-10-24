@@ -11,6 +11,7 @@ import com.paytech.platform.support.filedocument.domain.file.FileRecordDetailVie
 import com.paytech.platform.support.filedocument.domain.file.FileRecordQuery;
 import com.paytech.platform.support.filedocument.domain.file.FileRecordView;
 import com.paytech.platform.support.filedocument.domain.file.PublicFileUrl;
+import com.paytech.platform.support.filedocument.domain.file.StoredFileView;
 import com.paytech.platform.support.filedocument.domainservice.repository.FileLifecycleRepository;
 import com.paytech.platform.support.filedocument.domainservice.repository.FileRecordRepository;
 import com.paytech.platform.support.filedocument.domainservice.service.FileRecordService;
@@ -33,6 +34,13 @@ public class FileRecordServiceImpl implements FileRecordService {
     public PagingResponseBody<FileRecordView> list(FileRecordQuery query, PagingRequestBody paging) {
         return new PagingResponseBody<>(records.findPage(query, paging.size(), paging.offset()), paging.page(),
             paging.size(), records.count(query));
+    }
+
+    /** 数据库分页与相同条件的总数；每行按与按 ID 查询相同的规则计算公开地址。 */
+    @Override
+    public PagingResponseBody<StoredFileView> listFiles(FileRecordQuery query, PagingRequestBody paging) {
+        return new PagingResponseBody<>(records.findDescriptionPage(query, paging.size(), paging.offset()).stream()
+            .map(StoredFileView::of).toList(), paging.page(), paging.size(), records.count(query));
     }
 
     /** 文件元数据、存储位置与公开地址取组合读取结果，其余部分按文件 ID 读取。 */

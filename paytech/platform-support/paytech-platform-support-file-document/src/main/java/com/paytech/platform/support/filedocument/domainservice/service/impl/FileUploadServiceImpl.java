@@ -1,7 +1,8 @@
 package com.paytech.platform.support.filedocument.domainservice.service.impl;
 
 import java.time.Instant;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -14,6 +15,7 @@ import com.paytech.platform.support.filedocument.core.dal.dataobject.FileScanPol
 import com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload;
 import com.paytech.platform.support.filedocument.domain.enums.FileUploadStatus;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Replaceable;
+import com.paytech.platform.support.filedocument.domain.file.UploadModels.Constraints;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.ReplacementStart;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Start;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
@@ -67,12 +69,28 @@ public class FileUploadServiceImpl implements FileUploadService {
         return result(value);
     }
 
+    /** 读取有效修订并按与开始上传相同的规则解析允许类型。 */
+    @Override
+    public Constraints constraints(String policyCode, Instant now) {
+        FileScanPolicy policy = activePolicy(policyCode, now);
+        return new Constraints(policy.revisionNo(), new ArrayList<>(allowedTypes(policy)), policy.maxSizeBytes());
+    }
+
     /**
      * 读取策略代码唯一的有效修订并核对声明的类型与大小
      *
      * @return 将冻结到上传的修订
      */
     FileScanPolicy admit(String policyCode, String mimeType, long sizeBytes, Instant now) {
+        FileScanPolicy policy = activePolicy(policyCode, now);
+        if (!allowedTypes(policy).contains(mimeType) || sizeBytes > policy.maxSizeBytes()) {
+            throw new FailException(FileErrorCode.FILE_POLICY_REJECTED);
+        }
+        return policy;
+    }
+
+    /** 策略代码唯一的有效修订；没有、多于一个或结构不支持时关闭入口。 */
+    FileScanPolicy activePolicy(String policyCode, Instant now) {
         var policies = repository.policies(policyCode, now);
         if (policies.size() != 1) {
             throw new ServiceUnavailableException();
@@ -81,15 +99,12 @@ public class FileUploadServiceImpl implements FileUploadService {
         if (policy.ruleSchemaVersion() != 1 || policy.requirementCount() < 1 || policy.maxSizeBytes() < 1) {
             throw new ServiceUnavailableException();
         }
-        if (!allowedTypes(policy).contains(mimeType) || sizeBytes > policy.maxSizeBytes()) {
-            throw new FailException(FileErrorCode.FILE_POLICY_REJECTED);
-        }
         return policy;
     }
 
-    /** 严格读取允许类型；结构损坏时关闭入口。 */
+    /** 严格读取允许类型，保留登记顺序；结构损坏时关闭入口。 */
     Set<String> allowedTypes(FileScanPolicy policy) {
-        var allowed = new HashSet<String>();
+        var allowed = new LinkedHashSet<String>();
         try {
             if (policy.allowedMimeRules().length() > 8192) {
                 throw new IllegalArgumentException();

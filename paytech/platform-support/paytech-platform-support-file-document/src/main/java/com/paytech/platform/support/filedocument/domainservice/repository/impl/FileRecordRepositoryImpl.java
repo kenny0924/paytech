@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import com.paytech.platform.support.filedocument.core.dal.dataobject.FileDescription;
 import com.paytech.platform.support.filedocument.core.dal.mapper.FileRecordMapper;
 import com.paytech.platform.support.filedocument.domain.file.FileRecordDetailView;
 import com.paytech.platform.support.filedocument.domain.file.FileRecordQuery;
@@ -23,6 +24,12 @@ public class FileRecordRepositoryImpl implements FileRecordRepository {
     @Override
     public List<FileRecordView> findPage(FileRecordQuery query, int limit, int offset) {
         return mapper.selectPage(query, limit, offset);
+    }
+
+    /** 文件元数据分页。 */
+    @Override
+    public List<FileDescription> findDescriptionPage(FileRecordQuery query, int limit, int offset) {
+        return mapper.selectDescriptionPage(query, limit, offset);
     }
 
     /** 总数。 */

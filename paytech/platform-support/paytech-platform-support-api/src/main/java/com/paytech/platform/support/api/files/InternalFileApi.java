@@ -1,5 +1,7 @@
 package com.paytech.platform.support.api.files;
 
+import java.time.Instant;
+
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,10 +11,12 @@ import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
+import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.api.files.request.StartFileReplacementRequestBody;
 import com.paytech.platform.support.api.files.request.StartFileUploadRequestBody;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
+import com.paytech.platform.support.api.files.response.FileUploadConstraintsResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadResponseBody;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
 
@@ -85,6 +89,44 @@ public interface InternalFileApi {
      */
     @GetExchange("/files/{fileId}")
     StoredFileResponseBody getFile(@PathVariable("fileId") String fileId);
+
+    /**
+     * 查询调用方在某一访问级别开始上传时生效的写入限制
+     * <li>与开始上传同一份解析：(来源系统, 访问级别) → (*, 访问级别)，再取扫描策略唯一的有效修订；不跨级别回落。</li>
+     * <li>只读，不登记上传；不可用时不报错，返回 configured=false。</li>
+     *
+     * @param accessLevel 可选 Query 参数：PRIVATE 或 PUBLIC；缺省或为空按 PRIVATE
+     * @return 是否已配置、命中的路由来源、目标实例与桶、公开基础地址、扫描策略与修订号、允许类型、大小上限与上传期限
+     *         <li>访问级别不合法返回 400 INVALID_REQUEST。</li>
+     */
+    @GetExchange("/upload-constraints")
+    FileUploadConstraintsResponseBody getUploadConstraints(
+        @RequestParam(name = "accessLevel", required = false) String accessLevel);
+
+    /**
+     * 分页查询调用方自己来源的文件；按登记时间倒序、文件 ID 倒序
+     * <li>来源系统固定为调用身份的服务名，调用方不能查询其他来源的文件。</li>
+     * <li>登记时间范围左闭右开且必填，跨度不超过 31 天；其他条件精确匹配，为空不限制。</li>
+     *
+     * @param createdFrom 登记时间起点（UTC，包含）
+     * @param createdTo 登记时间终点（UTC，不包含）
+     * @param reasonCode 可选上传原因代码
+     * @param accessLevel 可选访问级别：PRIVATE 或 PUBLIC
+     * @param uploaderAccountId 可选首次上传的上传人账号 ID，无前导零的正整数十进制字符串
+     * @param page 页码，从 1 开始；为空默认 1
+     * @param size 每页条数，允许 10、20、50；为空默认 10
+     * @return 分页结果，每条与 {@link #getFile(String)} 的响应相同；空页保留总数
+     *         <li>范围缺失、颠倒或超过 31 天、条件格式不合法或条数不在允许值内返回 400。</li>
+     */
+    @GetExchange("/files")
+    PagingResponseBody<StoredFileResponseBody> listFiles(
+        @RequestParam(value = "createdFrom", required = false) Instant createdFrom,
+        @RequestParam(value = "createdTo", required = false) Instant createdTo,
+        @RequestParam(value = "reasonCode", required = false) String reasonCode,
+        @RequestParam(value = "accessLevel", required = false) String accessLevel,
+        @RequestParam(value = "uploaderAccountId", required = false) String uploaderAccountId,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size);
 
     /**
      * 签发文件当前版本的短时只读下载地址

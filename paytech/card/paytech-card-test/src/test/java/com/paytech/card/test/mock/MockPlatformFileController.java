@@ -13,12 +13,14 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.paytech.card.api.CardApiConstants;
 import com.paytech.card.test.mocker.PlatformMocker;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.api.enums.FileDisposition;
 import com.paytech.platform.support.api.files.InternalFileApi;
 import com.paytech.platform.support.api.files.request.StartFileReplacementRequestBody;
 import com.paytech.platform.support.api.files.request.StartFileUploadRequestBody;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
+import com.paytech.platform.support.api.files.response.FileUploadConstraintsResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadResponseBody;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
 import com.paytech.platform.support.api.referencedata.CountryRegionQueryApi;
@@ -57,6 +59,19 @@ public class MockPlatformFileController implements InternalFileApi, WebMvcConfig
     /** card 不完成上传。 */
     @Override
     public FileUploadCompletionResponseBody completeUpload(String uploadId) {
+        throw platform.unexpectedUpload();
+    }
+
+    /** card 不查询写入限制。 */
+    @Override
+    public FileUploadConstraintsResponseBody getUploadConstraints(String accessLevel) {
+        throw platform.unexpectedUpload();
+    }
+
+    /** card 不分页查询自己来源的文件。 */
+    @Override
+    public PagingResponseBody<StoredFileResponseBody> listFiles(Instant createdFrom, Instant createdTo, String reasonCode,
+        String accessLevel, String uploaderAccountId, Integer page, Integer size) {
         throw platform.unexpectedUpload();
     }
 

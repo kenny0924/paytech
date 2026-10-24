@@ -61,7 +61,7 @@ public class FileStorageRegistry {
      *
      * @param sourceSystem 来源系统
      * @param accessLevel 调用方声明的访问级别
-     * @return 实例代码、桶名、扫描策略与上传期限；没有该级别的可用路由返回不可用（503）
+     * @return 实例代码、桶名、扫描策略、上传期限、命中路由的来源与公开基础地址；没有该级别的可用路由返回不可用（503）
      */
     public StorageWriteTarget forWrite(String sourceSystem, FileAccessLevel accessLevel) {
         FileStorageCatalog current = catalog();
@@ -75,7 +75,7 @@ public class FileStorageRegistry {
             throw new ServiceUnavailableException();
         }
         return new StorageWriteTarget(instance.getInstanceCode(), bucket.getBucketName(), route.getScanPolicyCode(),
-            route.getMaxUploadSeconds());
+            route.getMaxUploadSeconds(), route.getSourceSystem(), bucket.getPublicBaseUrl());
     }
 
     /**

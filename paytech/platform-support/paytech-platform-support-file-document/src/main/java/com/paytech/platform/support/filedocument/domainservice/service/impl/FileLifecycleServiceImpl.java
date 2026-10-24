@@ -31,7 +31,6 @@ import com.paytech.platform.support.filedocument.domain.file.FileModels.Requirem
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Result;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Scan;
 import com.paytech.platform.support.filedocument.domain.file.FileModels.Verified;
-import com.paytech.platform.support.filedocument.domain.file.PublicFileUrl;
 import com.paytech.platform.support.filedocument.domain.file.StoredFileView;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Completed;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
@@ -77,26 +76,7 @@ public class FileLifecycleServiceImpl implements FileLifecycleService {
         if (row == null) {
             throw new FailException(FileErrorCode.FILE_NOT_FOUND);
         }
-        StoredFileView view = new StoredFileView();
-        view.setFileId(row.getFileId());
-        view.setSourceSystem(row.getSourceSystem());
-        view.setReasonCode(row.getReasonCode());
-        view.setDisplayName(row.getDisplayName());
-        view.setMimeType(row.getMimeType());
-        view.setSizeBytes(row.getSizeBytes());
-        view.setContentHash(row.getContentHash());
-        view.setScanStatus(row.getScanStatus());
-        view.setObjectStatus(row.getObjectStatus());
-        view.setUploaderId(row.getUploaderId());
-        view.setCreateTime(row.getCreateTime());
-        view.setAccessLevel(row.getAccessLevel());
-        view.setVersionNo(row.getCurrentVersionNo());
-        view.setPendingVersionNo(row.getPendingVersionNo());
-        String publicUrl = PublicFileUrl.of(row.getAccessLevel(), row.getScanStatus(), row.getPublicBaseUrl(),
-            row.getObjectRef());
-        view.setPublicUrl(publicUrl);
-        view.setVersionedUrl(PublicFileUrl.versioned(publicUrl, row.getCurrentVersionNo()));
-        return view;
+        return StoredFileView.of(row);
     }
 
     /** 文件当前版本坐标与状态。 */

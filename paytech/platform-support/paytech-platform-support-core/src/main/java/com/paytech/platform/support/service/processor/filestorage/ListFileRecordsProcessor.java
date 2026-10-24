@@ -49,7 +49,7 @@ public class ListFileRecordsProcessor
         PagingRequestBody paging = PagingRequestBody.of(request.getPage(), request.getSize());
         FileRecordQuery query = new FileRecordQuery(request.getCreatedFrom(), request.getCreatedTo(),
             request.getFileId(), request.getSourceSystem(), request.getReasonCode(), request.getAccessLevel(),
-            request.getScanStatus(), request.getHasPendingReplacement());
+            request.getScanStatus(), request.getHasPendingReplacement(), null);
         return support.read(request.getActor(), request.getSession(), () -> records.list(query, paging),
             FileStorageManagementSupport.RECORD_READ_PERMISSION);
     }

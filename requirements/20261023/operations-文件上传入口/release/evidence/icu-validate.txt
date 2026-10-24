@@ -1,0 +1,5 @@
+# 用候选 Platform JAR（be0abf79fc3ca9eb）内的 IcuMessageValidator（platform-support-localization domain/icu）离线校验 i18n-bundles 两个文件：
+# 每个 en 基准 validateSource、每条 zh-CN validateTranslation（语法、other 分支、参数名集合与基准一致）——与 Platform 导入时的校验相同。
+# 运行：java -cp <候选 JAR 的 BOOT-INF/classes 与 BOOT-INF/lib/*> Check.java pairs.tsv（pairs.tsv 由两个导出文件按 key 拼成，文案 Base64）
+# 输入：operations-console.en.json 2a893c937aca85cf、operations-console.zh-CN.json a1e208aea76072d2
+keys=8594 sourceProblems=0 translationProblems=0

@@ -1,0 +1,277 @@
+{
+  "run": "20261024080910",
+  "window": [
+    "2026-10-24T08:09:10Z",
+    "2026-10-24T08:11:29.119Z"
+  ],
+  "environment": "mor-test (http://localhost:28080)",
+  "language": "English by default; ZH switches to zh-CN once",
+  "results": {
+    "AC-01": {
+      "result": "PASS",
+      "evidence": {
+        "constraintsBar": "Public Target Storage S3_TEST / mor-test-platform-public-k7q2 Write Rule Exact rule (operations-console-bff) Check Policy PUBLIC_DOCUMENT r1 Allowed Types application/pdf, image/png, image/jpeg Max Size 20 MB Authorization Valid For 15 minutes",
+        "tag": "Check Passed",
+        "labels": [
+          "Public URL",
+          "Versioned URL",
+          "File Address"
+        ],
+        "publicUrl": "https://mor-test-platform-public-k7q2.s3.ap-southeast-1.amazonaws.com/dc18c12d-2a9b-41b9-9942-7d154b94b829",
+        "versionedUrl": "https://mor-test-platform-public-k7q2.s3.ap-southeast-1.amazonaws.com/dc18c12d-2a9b-41b9-9942-7d154b94b829?v=1",
+        "fileAddress": "/files/v1/239661523461554176",
+        "screenshot": "screenshots/01-result-available.png",
+        "anonymousGet": {
+          "status": 200,
+          "bytes": 69,
+          "sha256Match": true
+        }
+      }
+    },
+    "AC-06": {
+      "result": "PASS",
+      "evidence": {
+        "alert": "stage7-fake-20261024080910.png was rejected. The file content failed the check (it may not match the declared type), so no file was created. Reason: 文件类型或大小不符合要求",
+        "addresses": 0,
+        "completionStatuses": [
+          422
+        ],
+        "fakeFileInRecentUploads": 0,
+        "screenshot": "screenshots/06-result-failed.png"
+      }
+    },
+    "AC-02": {
+      "result": "PASS",
+      "evidence": {
+        "pageStartCalls": 0,
+        "svgReason": "stage7-vector-20261024080910.svg was rejected. Type image/svg+xml is not allowed. Allowed: application/pdf, image/png, image/jpeg.",
+        "bigReason": "stage7-big-20261024080910.png was rejected. The file is 20.0 MB, larger than the 20 MB limit.",
+        "direct": {
+          "svg": {
+            "status": 422,
+            "code": "FILE_POLICY_REJECTED",
+            "detail": "文件类型或大小不符合要求"
+          },
+          "oversize": {
+            "status": 422,
+            "code": "FILE_POLICY_REJECTED",
+            "detail": "文件类型或大小不符合要求"
+          },
+          "totalBefore": 1,
+          "totalAfter": 1
+        },
+        "screenshots": [
+          "screenshots/02-precheck-type.png",
+          "screenshots/02-precheck-size.png"
+        ]
+      }
+    },
+    "AC-05": {
+      "result": "PASS",
+      "evidence": {
+        "rowText": "stage7-logo-20261024080910.png 239661523461554176 image/png 69 B Me 10/24/2026, 12:09:19 Check Passed https://mor-test-p... File Record ›",
+        "rowsAll": 1,
+        "rowsMine": 1,
+        "mineRequestStatuses": [
+          200
+        ],
+        "detailUrl": "/file-records?file=239661523461554176",
+        "detailTitle": "stage7-logo-20261024080910.png Public Current v1 · Check Passed",
+        "screenshots": [
+          "screenshots/05-recent-only-mine.png",
+          "screenshots/05-file-record-detail.png"
+        ]
+      }
+    },
+    "ZH": {
+      "result": "PASS",
+      "evidence": {
+        "menuHasFileUpload": true,
+        "recentTitle": true,
+        "screenshot": "screenshots/zh-file-upload.png"
+      }
+    },
+    "AC-08": {
+      "result": "PASS",
+      "evidence": {
+        "pages": {
+          "/file-records": {
+            "visible": true,
+            "failures": [],
+            "screenshot": "screenshots/08-file-records.png"
+          },
+          "/file-storage": {
+            "visible": true,
+            "failures": [],
+            "screenshot": "screenshots/08-file-storage.png"
+          },
+          "/card-bin-library": {
+            "visible": true,
+            "failures": [],
+            "screenshot": "screenshots/08-card-bin-library.png"
+          },
+          "/file-storage#write-rules": {
+            "screenshot": "screenshots/08-file-storage-write-rules.png"
+          }
+        },
+        "storageShowsOpsBffRules": true,
+        "privateRule": {
+          "rule": [
+            "MINIO",
+            "mor-platform-files",
+            "OPERATIONS_BFF_IMPORT",
+            "900"
+          ],
+          "unchanged": true
+        }
+      }
+    },
+    "AC-04": {
+      "result": "PASS",
+      "evidence": {
+        "note": "With FILE_UPLOAD_READ alone the API works (constraints/list 200, start 403) but the page is unreachable: parent menu 562 requires 900000000000000534 GATEWAY_CONFIG_READ.",
+        "onlyFileUploadRead": {
+          "person": {
+            "accountId": "239661675471519744",
+            "roleId": "239661674053844992",
+            "permissions": [
+              "900000000000136101"
+            ]
+          },
+          "pageRendered": false,
+          "constraintsBar": null,
+          "recentUploads": null,
+          "uploadWorkspaceCount": 0,
+          "fileRecordLinks": null,
+          "menu": "",
+          "screenshot": "screenshots/04a-only-file-upload-read.png",
+          "direct": {
+            "constraints": 200,
+            "configured": true,
+            "files": 200,
+            "start": {
+              "status": 403,
+              "code": "OPERATIONS_PERMISSION_DENIED",
+              "detail": "没有执行此操作的权限"
+            }
+          }
+        },
+        "withPlatformSettingsNav": {
+          "person": {
+            "accountId": "239661731813605376",
+            "roleId": "239661731008299008",
+            "permissions": [
+              "900000000000136101",
+              "900000000000000534"
+            ]
+          },
+          "pageRendered": true,
+          "constraintsBar": true,
+          "recentUploads": true,
+          "uploadWorkspaceCount": 0,
+          "fileRecordLinks": 0,
+          "menu": "Platform Settings API Routes File Upload",
+          "screenshot": "screenshots/04b-read-only-with-platform-settings-nav.png",
+          "direct": {
+            "constraints": 200,
+            "configured": true,
+            "files": 200,
+            "start": {
+              "status": 403,
+              "code": "OPERATIONS_PERMISSION_DENIED",
+              "detail": "没有执行此操作的权限"
+            }
+          }
+        }
+      }
+    },
+    "AC-03": {
+      "result": "PASS",
+      "evidence": {
+        "constraints": {
+          "configured": true,
+          "accessLevel": "PUBLIC",
+          "routeSourceSystem": "operations-console-bff",
+          "instanceCode": "S3_TEST",
+          "bucketName": "mor-test-platform-public-k7q2",
+          "publicBaseUrl": "https://mor-test-platform-public-k7q2.s3.ap-southeast-1.amazonaws.com",
+          "scanPolicyCode": "PUBLIC_DOCUMENT",
+          "scanPolicyRevisionNo": 1,
+          "allowedMimeTypes": [
+            "application/pdf",
+            "image/png",
+            "image/jpeg"
+          ],
+          "maxSizeBytes": "20971520",
+          "maxUploadSeconds": 900
+        },
+        "constraintsBarConfigured": true,
+        "selectEnabled": true,
+        "unconfigured": "not constructed on mor-test (default (*, PUBLIC) rule); covered locally in stage 5 and by auto tests",
+        "screenshot": "screenshots/03-configured-exact-rule.png"
+      }
+    },
+    "AC-07": {
+      "result": "PASS",
+      "evidence": {
+        "window": [
+          "2026-10-24T08:09:10Z",
+          "2026-10-24T08:11:26.301Z"
+        ],
+        "bytesScanned": 177516,
+        "lines": 119,
+        "markers": [],
+        "fileUploadLines": 34
+      }
+    }
+  },
+  "browserHttp4xx5xx": [
+    "admin POST /api/operations/file-upload/v1/uploads/239661542679855104/completion -> 422",
+    "viewerb POST /api/operations/auth/v1/login -> 429"
+  ],
+  "scriptExpected4xx5xx": [
+    "POST /api/operations/file-upload/v1/uploads/{uploadId}/completion -> 422 (AC-06 content check)",
+    "POST /api/operations/file-upload/v1/uploads -> 422 (AC-02 direct, script)",
+    "POST /api/operations/file-upload/v1/uploads -> 403 (AC-04 viewera direct, script)",
+    "POST /api/operations/file-upload/v1/uploads -> 403 (AC-04 viewerb direct, script)"
+  ],
+  "consoleErrors": [
+    "admin console.error Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)",
+    "viewerb console.error Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  ],
+  "syntheticCleanup": {
+    "viewera": {
+      "account": {
+        "status": 204
+      },
+      "role": {
+        "status": 204
+      }
+    },
+    "viewerb": {
+      "account": {
+        "status": 204
+      },
+      "role": {
+        "status": 204
+      }
+    }
+  },
+  "screenshots": [
+    "screenshots/01-main-before-upload.png",
+    "screenshots/01-result-available.png",
+    "screenshots/06-result-failed.png",
+    "screenshots/02-precheck-type.png",
+    "screenshots/02-precheck-size.png",
+    "screenshots/05-recent-only-mine.png",
+    "screenshots/05-file-record-detail.png",
+    "screenshots/zh-file-upload.png",
+    "screenshots/08-file-records.png",
+    "screenshots/08-file-storage.png",
+    "screenshots/08-card-bin-library.png",
+    "screenshots/08-file-storage-write-rules.png",
+    "screenshots/04a-only-file-upload-read.png",
+    "screenshots/04b-read-only-with-platform-settings-nav.png",
+    "screenshots/03-configured-exact-rule.png"
+  ]
+}

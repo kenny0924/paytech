@@ -69,6 +69,8 @@
   "nav.resource.OPERATIONS_FILE_RECORD_DOWNLOAD": "下载",
   "nav.resource.OPERATIONS_FILE_STORAGE": "存储管理",
   "nav.resource.OPERATIONS_FILE_STORAGE_MANAGE": "维护",
+  "nav.resource.OPERATIONS_FILE_UPLOAD": "文件上传",
+  "nav.resource.OPERATIONS_FILE_UPLOAD_CREATE": "上传",
   "nav.resource.OPERATIONS_FINANCE": "财务",
   "nav.resource.OPERATIONS_FINANCE_ACCOUNTING_RULES": "记账规则",
   "nav.resource.OPERATIONS_FINANCE_ACCOUNTING_RULES_APPROVE": "复核",

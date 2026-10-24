@@ -1,5 +1,7 @@
 package com.paytech.client.master.test.mock.external.onboarding;
 
+import java.time.Instant;
+
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -7,11 +9,13 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.paytech.client.master.test.mocker.onboarding.OnboardingOwnerMocker;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.api.files.InternalFileApi;
 import com.paytech.platform.support.api.files.request.StartFileReplacementRequestBody;
 import com.paytech.platform.support.api.files.request.StartFileUploadRequestBody;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
+import com.paytech.platform.support.api.files.response.FileUploadConstraintsResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadResponseBody;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
 
@@ -54,6 +58,19 @@ public class MockPlatformInternalFileApi implements InternalFileApi {
             throw fault.disconnect() ? MockHttpFault.disconnect() : MockHttpFault.json(fault.status(), fault.problem());
         }
         return (StoredFileResponseBody)MockPlatformAuthenticationApi.required(reply);
+    }
+
+    /** CCT 不查询写入限制。 */
+    @Override
+    public FileUploadConstraintsResponseBody getUploadConstraints(String accessLevel) {
+        throw MockPlatformAuthenticationApi.unexpected();
+    }
+
+    /** CCT 不分页查询自己来源的文件。 */
+    @Override
+    public PagingResponseBody<StoredFileResponseBody> listFiles(Instant createdFrom, Instant createdTo, String reasonCode,
+        String accessLevel, String uploaderAccountId, Integer page, Integer size) {
+        throw MockPlatformAuthenticationApi.unexpected();
     }
 
     /** CCT 不签发下载。 */

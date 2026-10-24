@@ -19,4 +19,10 @@ public class StorageWriteTarget {
 
     /** 上传授权有效秒数。 */
     private final int maxUploadSeconds;
+
+    /** 命中路由的来源系统：调用方自己（精确路由）或 {@code *}（默认路由）。 */
+    private final String routeSourceSystem;
+
+    /** 公开桶的对外基础地址；私有桶或未登记时为空。 */
+    private final String publicBaseUrl;
 }

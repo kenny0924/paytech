@@ -1,5 +1,7 @@
 package com.paytech.platform.support.ext.rest.files;
 
+import java.time.Instant;
+
 import org.slf4j.MDC;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -9,6 +11,7 @@ import com.paytech.foundation.httpproblem.api.ApiProblemProfile;
 import com.paytech.foundation.internalauth.api.CallerIdentity;
 import com.paytech.foundation.internalauth.api.CallerIdentityHolder;
 import com.paytech.foundation.internalauth.api.InternalTokenInvalidException;
+import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.api.enums.FileDisposition;
 import com.paytech.platform.support.api.files.FileAddress;
 import com.paytech.platform.support.api.files.request.StartFileReplacementRequestBody;
@@ -16,16 +19,20 @@ import com.paytech.platform.support.api.files.request.StartFileUploadRequestBody
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadAuthorization;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
+import com.paytech.platform.support.api.files.response.FileUploadConstraintsResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadResponseBody;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
 import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 import com.paytech.platform.support.filedocument.domain.file.StoredFileView;
 import com.paytech.platform.support.service.processor.files.request.AuthorizeFileDownloadRequest;
 import com.paytech.platform.support.service.processor.files.request.CompleteFileUploadRequest;
+import com.paytech.platform.support.service.processor.files.request.ListCallerFilesRequest;
+import com.paytech.platform.support.service.processor.files.request.QueryFileUploadConstraintsRequest;
 import com.paytech.platform.support.service.processor.files.request.StartFileReplacementRequest;
 import com.paytech.platform.support.service.processor.files.request.StartFileUploadRequest;
 import com.paytech.platform.support.service.processor.files.response.AuthorizeFileDownloadResponse;
 import com.paytech.platform.support.service.processor.files.response.CompleteFileUploadResponse;
+import com.paytech.platform.support.service.processor.files.response.QueryFileUploadConstraintsResponse;
 import com.paytech.platform.support.service.processor.files.response.StartFileUploadResponse;
 
 /**
@@ -82,6 +89,38 @@ public class InternalFileConverter {
             operator, requestId == null ? UNKNOWN_REQUEST : requestId, null);
     }
 
+    /** 写入限制查询：来源系统取调用身份，访问级别缺省为 PRIVATE。 */
+    QueryFileUploadConstraintsRequest constraintsRequest(String accessLevel) {
+        String caller = callerService();
+        return new QueryFileUploadConstraintsRequest(caller, accessLevel(accessLevel, FileAccessLevel.PRIVATE));
+    }
+
+    /** 调用方文件列表：来源系统取调用身份，可选条件为空不限制，上传人按规范正整数解析。 */
+    ListCallerFilesRequest listRequest(Instant createdFrom, Instant createdTo, String reasonCode, String accessLevel,
+        String uploaderAccountId, Integer page, Integer size) {
+        String caller = callerService();
+        Long uploader = blank(uploaderAccountId) ? null : id(uploaderAccountId, "上传人账号 ID 必须为规范正整数");
+        return new ListCallerFilesRequest(caller, createdFrom, createdTo, blank(reasonCode) ? null : reasonCode,
+            accessLevel(accessLevel, null), uploader, page, size);
+    }
+
+    /** 访问级别 Code：缺省或为空取给定默认值，未知 Code 拒绝。 */
+    FileAccessLevel accessLevel(String value, FileAccessLevel fallback) {
+        if (blank(value)) {
+            return fallback;
+        }
+        try {
+            return FileAccessLevel.fromNullableCode(value);
+        } catch (IllegalArgumentException unknown) {
+            throw new InvalidParameterException("accessLevel 只能为 PRIVATE 或 PUBLIC");
+        }
+    }
+
+    /** 可选 Query 参数缺省或为空。 */
+    static boolean blank(String value) {
+        return value == null || value.isEmpty();
+    }
+
     /** 下载方式：缺省或为空按附件，未知 Code 拒绝。 */
     FileDisposition disposition(String value) {
         if (value == null || value.isEmpty()) {
@@ -130,6 +169,33 @@ public class InternalFileConverter {
             view.getUploaderId() == null ? null : view.getUploaderId().toString(), view.getCreateTime(),
             view.getAccessLevel().getCode(), view.getVersionNo(), view.getPublicUrl(), view.getVersionedUrl(),
             view.getPendingVersionNo());
+    }
+
+    /** 写入限制：未配置只回显访问级别；大小上限输出十进制字符串。 */
+    FileUploadConstraintsResponseBody constraints(QueryFileUploadConstraintsResponse response) {
+        var body = new FileUploadConstraintsResponseBody();
+        body.setConfigured(response.configured());
+        body.setAccessLevel(response.getAccessLevel().getCode());
+        if (!response.configured()) {
+            return body;
+        }
+        var target = response.getTarget();
+        var limits = response.getConstraints();
+        body.setRouteSourceSystem(target.getRouteSourceSystem());
+        body.setInstanceCode(target.getProvider());
+        body.setBucketName(target.getContainer());
+        body.setPublicBaseUrl(target.getPublicBaseUrl());
+        body.setScanPolicyCode(target.getScanPolicyCode());
+        body.setScanPolicyRevisionNo(limits.revisionNo());
+        body.setAllowedMimeTypes(limits.allowedMimeTypes());
+        body.setMaxSizeBytes(Long.toString(limits.maxSizeBytes()));
+        body.setMaxUploadSeconds(target.getMaxUploadSeconds());
+        return body;
+    }
+
+    /** 文件元数据分页：每条与按 ID 查询相同。 */
+    PagingResponseBody<StoredFileResponseBody> files(PagingResponseBody<StoredFileView> page) {
+        return page.map(this::file);
     }
 
     /** 下载授权与实际生效的下载方式。 */

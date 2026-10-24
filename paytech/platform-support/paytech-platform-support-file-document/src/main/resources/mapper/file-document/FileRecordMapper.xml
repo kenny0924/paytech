@@ -4,7 +4,11 @@
 
     <sql id="filters">
         FROM t_file_object f
-        WHERE f.create_time &gt;= #{query.createdFrom} AND f.create_time &lt; #{query.createdTo}
+        WHERE <include refid="conditions"/>
+    </sql>
+
+    <sql id="conditions">
+        f.create_time &gt;= #{query.createdFrom} AND f.create_time &lt; #{query.createdTo}
         <if test="query.fileId != null">AND f.file_id = #{query.fileId}</if>
         <if test="query.sourceSystem != null">AND f.source_system = #{query.sourceSystem}</if>
         <if test="query.reasonCode != null">AND f.reason_code = #{query.reasonCode}</if>
@@ -13,6 +17,9 @@
         <if test="query.hasPendingReplacement != null">
             AND <if test="!query.hasPendingReplacement">NOT</if> EXISTS (SELECT 1 FROM t_file_version p
                 WHERE p.file_id = f.file_id AND p.version_no &gt; f.current_version_no AND p.version_status = 'CANDIDATE')
+        </if>
+        <if test="query.uploaderAccountId != null">
+            AND EXISTS (SELECT 1 FROM t_file_upload u WHERE u.upload_id = f.upload_id AND u.uploader_id = #{query.uploaderAccountId})
         </if>
     </sql>
 
@@ -29,6 +36,28 @@
             f.scan_status AS scanStatus, f.object_status AS objectStatus, f.mime_type AS mimeType,
             f.size_bytes AS sizeBytes, f.create_time AS createTime, f.update_time AS updateTime
         <include refid="filters"/>
+        ORDER BY f.create_time DESC, f.file_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectDescriptionPage" useCache="false"
+            resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileDescription">
+        SELECT f.file_id AS fileId, f.source_system AS sourceSystem, f.reason_code AS reasonCode,
+            COALESCE(cu.display_name, ou.display_name) AS displayName,
+            f.mime_type AS mimeType, f.size_bytes AS sizeBytes, f.content_hash AS contentHash, f.scan_status AS scanStatus,
+            f.object_status AS objectStatus, ou.uploader_id AS uploaderId, f.create_time AS createTime,
+            f.update_time AS updateTime, f.access_level AS accessLevel, f.current_version_no AS currentVersionNo,
+            (SELECT MAX(p.version_no) FROM t_file_version p WHERE p.file_id = f.file_id
+                AND p.version_no &gt; f.current_version_no AND p.version_status = 'CANDIDATE') AS pendingVersionNo,
+            f.storage_provider AS provider, f.storage_container_ref AS container, f.storage_object_ref AS objectRef,
+            b.public_base_url AS publicBaseUrl
+        FROM t_file_object f
+        LEFT JOIN t_file_upload ou ON ou.upload_id = f.upload_id
+        LEFT JOIN t_file_version cv ON cv.file_id = f.file_id AND cv.version_no = f.current_version_no
+        LEFT JOIN t_file_upload cu ON cu.upload_id = cv.upload_id
+        LEFT JOIN t_file_storage_instance i ON i.instance_code = f.storage_provider
+        LEFT JOIN t_file_storage_bucket b ON b.instance_id = i.instance_id AND b.bucket_name = f.storage_container_ref
+        WHERE <include refid="conditions"/>
         ORDER BY f.create_time DESC, f.file_id DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>

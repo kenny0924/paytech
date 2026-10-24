@@ -1,0 +1,11 @@
+# 运营控制台文件上传入口：mor-test 回滚覆盖文件 = 阶段 6（2026-10-24）时 3 个运行容器的 .Image。
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261023/operations-文件上传入口/release/compose-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service...>
+# 只换镜像，环境变量同主 compose（渲染结果与运行容器逐键、逐值相同）。回滚顺序：ops-web → ops-bff → Platform。
+services:
+  platform-support-service:
+    image: sha256:4803299926245956db24f0260e46f8ca98d31b7f55fdfce306cb19a156d33515  # mor-test/platform-support-service:i18n-20261023b（JAR e45c406f1d313df2）
+  operations-console-bff:
+    image: sha256:3751638e5f34273844582b53ad0b5b2401a057fe8001bfc63d15241a8f8d487f  # mor-test/operations-console-bff:opsi18n-20261023a（JAR 3c7e6f647261115c）
+  operations-console-web:
+    image: sha256:4c1f1ec39b641285f3dd87320da7311ed11bc8a7024d0e52d4c7cc3f5265ef7d  # mor-test/operations-console-web:opsi18n-20261024b（= main a73e7398 构建，dist 214 个文件）

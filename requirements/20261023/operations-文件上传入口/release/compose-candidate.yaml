@@ -1,0 +1,22 @@
+# 运营控制台文件上传入口：mor-test 候选覆盖文件（2026-10-24 阶段 6 准备；阶段 7 由主会话按 release.md 第 6 节执行，另需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史候选文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261023/operations-文件上传入口/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service...>
+# 只列本次替换的 3 个服务；不加 --remove-orphans。部署只认下列 sha256（tag fileupload-20261024a 仅供辨认，:development 未改动）。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-fileupload-rel = main a73e7398 + 开发目录 Code-MoR-fileupload 的本需求改动
+#   （git diff --binary a73e7398 + 未跟踪文件（不含截图），72 个文件（新增 38、修改 34），补丁 SHA-256 4ad8dd53d581f8a7，未提交）。
+#   基线证明见 release.md 第 1 节。
+# 环境变量：主 compose（test-environment/compose.applications.yaml）已含这 3 个服务的全部键；本文件只换镜像。
+#   渲染结果与 3 个运行容器逐键、逐值相同（release.md 第 3 节）。本需求不新增变量。
+# 回滚：同目录 compose-rollback.yaml。顺序：先 Platform，再 ops-bff，再 ops-web；回滚反之。
+services:
+  platform-support-service:
+    # InternalFileApi 新增 GET /internal/files/v1/upload-constraints 与 GET /internal/files/v1/files（只读，按调用方限定）；
+    # 另随 a73e7398 带上已提交的 98210e0b 事件目录文档变化（paytech-messaging catalog/events.yaml，release.md 1.2）。
+    image: sha256:4859efd78dd92de7c8f97dca29ef7894e7d2e1115bd72f471960553375075d17  # mor-test/platform-support-service:fileupload-20261024a（JAR be0abf79fc3ca9eb）
+  operations-console-bff:
+    # 新增 /file-upload/v1 五个接口（写入限制、最近上传、单个上传、开始上传、完成上传复查来源与原因）；/file-upload/v1/uploads 只记元数据日志。
+    image: sha256:0bc674106d7b75f4857f5e299d6fdfeacd030c6e8514d8f92dadb4bc2f51a3ed  # mor-test/operations-console-bff:fileupload-20261024a（JAR f84caa925b7105b6）
+  operations-console-web:
+    # 新增“平台配置 → 文件上传”页（OPERATIONS_FILE_UPLOAD）；文案 file.upload.* 与 nav.resource.OPERATIONS_FILE_UPLOAD*。
+    image: sha256:70d3fdfbb6be16ed48edd3883338c08264122b34432ad68246b938e3c10dffea  # mor-test/operations-console-web:fileupload-20261024a（dist 219 个文件）

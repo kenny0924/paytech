@@ -310,6 +310,11 @@ The unique Scope code and database row/version checks remain the final concurren
   调用身份的服务名；只有原来源可以完成上传；内部系统之间不做文件级权限，浏览器侧的业务授权由调用方（BFF）完成。Platform 内部模块
   直接调用同名入口：`StartFileUploadProcessor`、`CompleteFileUploadProcessor`、`FileLifecycleService.describe`、
   `AuthorizeFileDownloadProcessor`，来源系统传 `platform-support`。
+- **写入限制与调用方文件列表**（2026-10-24，[文件上传入口](../../requirements/20261023/operations-文件上传入口/technique.md) 第 5 节）：
+  `GET /internal/files/v1/upload-constraints?accessLevel=` 按开始上传同一份解析（精确路由 → `*` 路由，再取策略唯一有效修订）返回
+  目标实例与桶、公开基础地址、策略与修订号、允许类型、大小上限与上传期限；不可用时 200 `configured=false`。
+  `GET /internal/files/v1/files` 只返回调用方自己来源的文件（登记时间范围必填、左闭右开、≤ 31 天；可按原因、级别、首次上传的上传人
+  筛选；每页 10 / 20 / 50），每条与按 ID 查询的元数据相同。两者只读、不加事务。
 - **文件地址**：`FileAddress`（`paytech-platform-support-api`）格式化与解析稳定逻辑地址 `/files/v1/{fileId}`；完成回执与元数据查询
   在 `fileId` 之外返回 `fileAddress`。业务数据保存地址而不是文件 ID；地址不含实例与桶，存储迁移后不变，只能经本接口换取临时下载地址。
 - **下载方式与原文件名**：下载授权接受可选 Query `disposition`（`FileDisposition`：`INLINE` / `ATTACHMENT`，缺省或为空按附件，

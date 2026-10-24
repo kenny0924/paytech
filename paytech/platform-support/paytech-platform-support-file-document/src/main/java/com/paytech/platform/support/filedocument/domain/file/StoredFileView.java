@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import com.paytech.platform.support.api.enums.FileObjectStatus;
 import com.paytech.platform.support.api.enums.FileScanStatus;
+import com.paytech.platform.support.filedocument.core.dal.dataobject.FileDescription;
 import com.paytech.platform.support.filedocument.core.enums.FileAccessLevel;
 
 import lombok.Getter;
@@ -66,5 +67,34 @@ public class StoredFileView {
     @Override
     public String toString() {
         return "StoredFileView[" + fileId + "]";
+    }
+
+    /**
+     * 由文件对象、当前版本、上传与存储桶的组合读取构造元数据；公开地址只在 PUBLIC 且当前版本 AVAILABLE 时计算
+     *
+     * @param row 组合读取的一行
+     * @return 不含存储坐标的元数据
+     */
+    public static StoredFileView of(FileDescription row) {
+        StoredFileView view = new StoredFileView();
+        view.setFileId(row.getFileId());
+        view.setSourceSystem(row.getSourceSystem());
+        view.setReasonCode(row.getReasonCode());
+        view.setDisplayName(row.getDisplayName());
+        view.setMimeType(row.getMimeType());
+        view.setSizeBytes(row.getSizeBytes());
+        view.setContentHash(row.getContentHash());
+        view.setScanStatus(row.getScanStatus());
+        view.setObjectStatus(row.getObjectStatus());
+        view.setUploaderId(row.getUploaderId());
+        view.setCreateTime(row.getCreateTime());
+        view.setAccessLevel(row.getAccessLevel());
+        view.setVersionNo(row.getCurrentVersionNo());
+        view.setPendingVersionNo(row.getPendingVersionNo());
+        String publicUrl = PublicFileUrl.of(row.getAccessLevel(), row.getScanStatus(), row.getPublicBaseUrl(),
+            row.getObjectRef());
+        view.setPublicUrl(publicUrl);
+        view.setVersionedUrl(PublicFileUrl.versioned(publicUrl, row.getCurrentVersionNo()));
+        return view;
     }
 }
