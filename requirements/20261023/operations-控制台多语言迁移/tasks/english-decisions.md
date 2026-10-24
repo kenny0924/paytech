@@ -56,3 +56,7 @@
 | M7 | 写入规则 / 静态密钥（Vault）/ 更换密钥 | Write Rule / Static Keys (Vault) / Replace Keys | 接受：存储访问密钥用 Keys，通知发送凭据用 Credentials，语境不同 |
 | M7 | 已作废（上传）/ 修订 / 生效 | Voided / Revision / Active | 接受 |
 | M7 | 片段 / 试运行 / 展开校验 / 脱敏选项 | Fragment / Trial Run / Expanded Validation / Hidden、Fully Masked、Keep Edges | 作为标签首字母大写；F9 修改 |
+
+## R2 例外：侧栏底部（2026-10-24，用户确认）
+
+原代码在中文界面也显示英文 "Operations Console" / "Hide Navigation" / "Show Navigation"。用户确认改为中文：`nav.sidebar.product` 运营控制台、`nav.sidebar.hide` 收起导航、`nav.sidebar.show` 展开导航。只改 Platform zh-CN 译文，语言包 #7，见 `release/fix-20261024c/`。
