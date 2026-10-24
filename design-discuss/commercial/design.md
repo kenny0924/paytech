@@ -4,7 +4,7 @@
 
 ## 1. 一句话
 
-**commercial 是"卖什么、按什么条件卖、跟谁签了什么"的唯一权威。** 它持有产品目录、合同（含业务模式 MoR / PSP）、商业条款版本，回答两类问题：交易前"这个 Client 在这个 OE 下适用哪份合同、哪个业务模式、哪个条款版本"；交易后"冻结的那个版本在这组支付事实下命中哪条价格"。它不算钱（billing）、不管主体（client-master）、不算税（tax）、不持交易状态（acquiring）、不做审批裁决（workflow-approval 只记"人已同意"）。
+**commercial 是"卖什么、按什么条件卖、跟谁签了什么"的唯一权威。** 它持有产品目录、合同（含业务模式 MoR / PSP）、商业条款版本，回答两类问题：交易前"这个 Client 在这个 OE 下适用哪份合同、哪个业务模式、哪个条款版本"；交易后"冻结的那个版本在这组支付事实下命中哪条价格"。它不算钱（billing）、不管主体（client-master）、不算税（tax）、不持交易状态（acquiring）、不做审批裁决（Platform 工作流只记"人已同意"）。
 
 V2 里没有 CCT 服务：原 client-contract-service 在阶段 4 第 04 步拆成 client-master（Party / Client / Partner / OE / Scope / Affiliation / 法律文档 / 披露）与 commercial（Agreement 四表 + Profile 两表 + Term 五表）。合同整体归商务；客户主档反查"共签人员"走 `GET /commercial/v1/agreement-parties/exists`。
 
@@ -39,7 +39,7 @@ V2 里没有 CCT 服务：原 client-contract-service 在阶段 4 第 04 步拆�
 | 费用金额、分润、服务费、到期时间、周期用量 | billing | 给出命中的 Price 与组件 / 阶梯证据，不算数、不记用量 |
 | 税额、税务快照、发票 | tax | 业务模式决定税务责任方，`fee_tax_treatment` 决定含税口径 |
 | 订单、Session、冻结后的 Order Context | acquiring | 返回解析结果，由收单本地事务冻结 |
-| 审批流转、Maker-Checker | workflow-approval | 激活时重新校验并记录最终决定（D13） |
+| 审批流转、Maker-Checker | Platform 工作流（`paytech-platform-support-workflow`，见 [2026-10-22 决定](../../agent-docs/decisions/2026-10-22-workflow-into-platform-support.md)） | 激活时重新校验并记录最终决定（D13） |
 | 法律文档与卖方披露内容 | client-master | 候选自带引用，直接取值（D39） |
 | 品牌、实例装配、模块授权 | 运维平面 / Platform | 只读"本实例可售产品集合" |
 | 保证金、结算限制的执行 | account / risk / compliance | 只存合同约定的比例与天数 |
@@ -109,7 +109,7 @@ V2 里没有 CCT 服务：原 client-contract-service 在阶段 4 第 04 步拆�
 
 - **A 交易前解析**（收单支付准备）：acquiring → `POST /checkout-context/v1/resolutions` → client-master 候选（含法律文档、披露、rootVersions）→ commercial 本库只读快照逐候选解析（合同已签且覆盖 OE、业务模式、产品订阅含本次产品、开通项含本次支付方式、按 `contextAsOfTime` 生效的条款版本）→ 事务外 risk-decision 门禁 + client-master verify + 本库根版本重读 → acquiring 本地事务冻结 OE、agreementId、businessMode、Term Version IDs、法律文档引用、`contextAsOfTime`，以及 D02 四项派生（卖方 Party、收单 OE、税务责任方、资金归属账簿主体，由商务按模式给出，收单只冻结）。
 - **B 交易后命中**（billing 生成事实）：`POST /commercial-prices/v1/resolutions` 按冻结版本的完整历史内容解析，校验 Version / Plan / Agreement / OE 父链与原适用关系；命中规则"支付方式精确 → 条件等值 → 维度数多者先 → priority_no 小者先"；事实缺失 422 `PRICING_FACTS_INCOMPLETE`、无命中 422 `PRICE_NOT_FOUND`、歧义 409；返回 priceId、profileCode、components / bands；`GET /commercial-prices/v1/{priceId}` 历史回读不重新选价。
-- **C 运营写入**：operations-console-bff → commercial Processor（`AbstractLockProcessor` 锁 agreement 或 plan，事务内只写本库 + BCR）→ workflow-approval 记"人已同意" → 排期 / 激活前重新校验 Profile 仍 ACTIVE、OE 仍有效、覆盖完整、Band 连续 → 提交后发布 `AgreementStatusChanged` / `CommercialTermVersionActivated`（只带 ID 与版本）→ acquiring 新鲜门禁、data-service CDC。
+- **C 运营写入**：operations-console-bff → commercial Processor（`AbstractLockProcessor` 锁 agreement 或 plan，事务内只写本库 + BCR）→ Platform 工作流记"人已同意" → 排期 / 激活前重新校验 Profile 仍 ACTIVE、OE 仍有效、覆盖完整、Band 连续 → 提交后发布 `AgreementStatusChanged` / `CommercialTermVersionActivated`（只带 ID 与版本）→ acquiring 新鲜门禁、data-service CDC。
 
 ## 7. 合同
 

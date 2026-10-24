@@ -1,0 +1,14 @@
+# 数据查询页面体验调整：mor-test 候选覆盖文件（2026-10-22）。只替换 operations-console-web。
+# 数据源列表全宽 + 详情右侧抽屉、新建按钮进列表工具栏；模板编辑器正文 / 参数 / 约束 / 列 / 问题改为标签页，
+# 试运行改为右侧抽屉，参数与列按正文自动同步。
+# 基线 = 现网 7551dc3b（opsui-20261022a：main 73a2460d + 按钮布局优化 6 个未提交文件），复现构建 188 个文件逐字节一致；
+# 本次只叠加 src/dataQuery 与 DataSources / QueryTemplates 页面，去哈希后内容差异仅 DataSources、QueryTemplates、
+# TemplateEditor、dataQuery.css 与入口的依赖列表。
+# 使用（叠在文件多存储第二段候选之后，替代按钮布局优化候选文件）：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261022/platform-support-文件多存储并存/release-s2/compose-candidate.yaml" \
+#     -f "$PWD/requirements/20261022/platform-support-数据查询服务/release-ux/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+# 回滚：把 operations-console-web 指回 sha256:7551dc3b3dd7cb48176bebb1863b7011cecc851897b190782b513c6969873180（按钮布局优化候选文件）。
+services:
+  operations-console-web:
+    image: sha256:5a9eb12df3803ee0d34a4520255defa37c1f1f286b61e8e442341bef4a446692  # mor-test/operations-console-web:dataquery-ux-20261022a

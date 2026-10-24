@@ -194,6 +194,11 @@
 - C1（B 线请求）：commercial 版本响应、方案响应、方案列表行、版本列表行均增 `ownerType`（CLIENT / LOCAL_PARTNER / PLATFORM_TEMPLATE），模板另带 `templateName`；新增 GET `/commercial-terms/v1/plans/{planId}`（返回方案详情，含 ownerType）。BFF 转发前据此校验模板 / 合同路由隔离。
 - C2：模板版本读取复用现有 GET `/commercial-terms/versions/{id}`（PRICING_READ）；工作区聚合对模板版本（ownerType=PLATFORM_TEMPLATE）按模板 `entityNo` 取价，不新增模板读路由。
 - C3：GET `/products/dimensions` 绑定 COMMERCIAL_CONTRACT_READ（同目录读）。
+- C4（C 线请求）：签署方式沿用合同签署现有枚举（E_SIGNATURE / CLICK_ACCEPTANCE / MANUAL_SIGNATURE 以 commercial 现有定义为准），第 3.2 节的 WET_SIGNATURE 作废。
+- C5：模板列表 BFF GET `/commercial-terms/templates?entityNo&termType&status&page&size` → 分页 `{items,page,size,total}`，行字段 `planId, planCode, templateName, termType, entityNo, status, changeVersion, activeVersionId, activeVersionNo, latestVersionId, latestVersionNo, latestVersionStatus`；POST 返回方案（含 ownerType、templateName）。模板版本列表复用 GET `/commercial-terms/versions?planId=`；模板版本详情复用 GET `/commercial-terms/versions/{id}`（模板时 agreement 为 null），**不**新增 `template-versions/{id}` 读路由（C2）。
+- C6：fill-from-template、acceptance、模板版本 submit / approve / reject / schedule / activate 回执与现有版本动作回执同形（TermVersion）。
+- C7：Console Resource 放置——新页 `OPERATIONS_COMMERCIAL_TEMPLATES`（按钮 `OPERATIONS_COMMERCIAL_TEMPLATE_MANAGE`「维护」、`OPERATIONS_COMMERCIAL_TEMPLATE_APPROVE`「复核」）；现有目录页加 `OPERATIONS_COMMERCIAL_CATALOG_MANAGE`「维护」；现有价目页加 `OPERATIONS_COMMERCIAL_TERM_SIGN`「登记签署」。pageCapabilities 与 console-resource-capabilities.json 一致。
+- C8：GET `/products/dimensions` → `{dimensions:[...]}`；目录写命令回执为 ProductCapabilitySummary / 计费事件行。
 - C9（集成对齐）：BFF 不提供 GET `/commercial-terms/plans/{planId}`；模板版本编辑页聚合返回 `template` 摘要（planId、planCode、templateName、entityNo 等），C 线据此显示；模板列表 BFF 参数为 entityNo / termType / status（非分页），C5 的分页包装作废。Owner 侧 GET `/commercial-terms/v1/plans/{planId}` 由 A 线视情况提供，不作为 BFF 路由。
 - C10（更正 C9）：B 线终版为 cp-bff `acfd9922` 起：BFF 提供 GET `/commercial-terms/plans/{planId}`（PRICING_READ，块 124 共 18 路由）、模板列表分页 `{items,page,size,total}`（page / size 可选，默认 1 / 100）；编辑页 / 对比聚合仍返回 `template` 摘要。C 线 f48fe526 的用法（取 template 摘要、不传分页参数）与之兼容。
 - C11（最终，取代 C10）：B 线终版为 cp-bff `56ba38fe`（内容同 `7f6d8657`）：17 路由，无 BFF GET `/commercial-terms/plans/{planId}`，模板列表非分页（参数 entityNo / termType / status）；编辑页 / 对比聚合返回 `template` 摘要。C 线终版 `f48fe526` 与之一致。A 线不提供 getPlan。

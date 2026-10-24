@@ -45,3 +45,7 @@
 | 复核人说明 | mor-test 只有一个运营账号；制单与"本人不能复核"走运营入口，复核由另一操作人 ID 直接调 ledger / billing 私网接口完成 |
 
 演示数据（AE001 账簿，保留）：人工调整 `MA238182800904253440`（5.00，已过账）；计费事实 1 条已批准（Client 本金 10.00）、1 条已作废；10 月期间关账 3 次记录（驳回 / 完成 / 重开完成），现为开放；`STANDARD_ADJUSTMENT` 当前版本 3（内容与版本 1 相同），版本 1 退役、版本 2 作废。
+
+## 5. 后续基线变化
+
+2026-10-20 07:25—07:28Z，channel-connector 会话发布块 92（tag `channel-20261020`，基于 `b04b77f1` + 其未提交改动），替换 platform-support `sha256:e5a06814…`、operations-console-bff `sha256:bec85826…`（保留 `OPERATIONS_BILLING_BASE_URL`）、operations-console-web `sha256:be32382a…`（随后修复展示缺陷重发为 `sha256:3ae27f3d…`，tag `channel-20261020b`）；PLATFORM_ADMIN 35 → 36。ledger、billing 未变。本需求无头浏览器回归 8/8 通过。此后回退这三个容器应使用其镜像，而非本清单第 1 步记录的回退位点。

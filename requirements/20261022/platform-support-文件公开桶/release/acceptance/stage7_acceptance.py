@@ -33,9 +33,17 @@ CSV = b"bin_prefix,card_brand,funding_type,card_level,card_product,issuer_countr
       b"40128888,VISA,CREDIT,PLATINUM,CONSUMER,AE,PB7 SYNTHETIC ISSUER\n"
 
 
+# 本需求之后的发布覆盖文件：其中的镜像同样包含本需求（基线 be688db7 起），按后发布者优先。
+LATER_RELEASES = ("platform-support-工作流体验优化",)
+
+
 def candidate_images():
-    text = (c.HERE.parent / "compose-candidate.yaml").read_text()
-    return dict(re.findall(r"^  ([a-z-]+):\n(?:    #.*\n)*    image: (sha256:[0-9a-f]{64})", text, re.M))
+    images = {}
+    for path in [c.HERE.parent / "compose-candidate.yaml"] + [
+            c.HERE.parents[2] / name / "release/compose-candidate.yaml" for name in LATER_RELEASES]:
+        if path.exists():
+            images.update(re.findall(r"^  ([a-z-]+):\n(?:    #.*\n)*    image: (sha256:[0-9a-f]{64})", path.read_text(), re.M))
+    return images
 
 
 def preconditions():
@@ -82,6 +90,13 @@ def public_bucket(admin, args, record):
         c.check("AC-02", f"公开桶已登记并启用（重跑），检查 OK（{status} {body.get('result')}）",
                 status == 200 and body.get("result") == "OK" and existing.get("publicBaseUrl") == args.public_base_url, body)
         return
+    if existing and existing.get("publicBaseUrl") == args.public_base_url:
+        # 用户已在控制台以正确对外地址登记（草稿）：只验证检查 → 启用 → 启用后不能改地址。
+        record["publicBucket"] = {"registeredByUser": True}
+        status, check, _ = c.raw(admin, "POST", f"{base}/{args.public_bucket}/check", typed_empty=True)
+        c.check("AC-02", f"公开桶检查 OK（{status} {check.get('result')}）", status == 200 and check.get("result") == "OK", check)
+        enable_and_lock(admin, args, base, check)
+        return
     if not existing:
         status, body, _ = c.raw(admin, "POST", base, {"bucketName": args.public_bucket, "accessLevel": "PUBLIC",
                                                       "publicBaseUrl": WRONG_BASE[args.public_instance], "reason": REASON})
@@ -100,6 +115,10 @@ def public_bucket(admin, args, record):
     c.check("AC-01", f"草稿公开桶修改对外地址（{status}）", status == 200, body)
     status, check, _ = c.raw(admin, "POST", f"{base}/{args.public_bucket}/check", typed_empty=True)
     c.check("AC-02", f"正确对外地址：检查 OK（{status} {check.get('result')}）", status == 200 and check.get("result") == "OK", check)
+    enable_and_lock(admin, args, base, check)
+
+
+def enable_and_lock(admin, args, base, check):
     status, body, _ = c.raw(admin, "PATCH", f"{base}/{args.public_bucket}/status",
                             {"status": "ACTIVE", "expectedVersion": check.get("version"), "reason": REASON})
     c.check("AC-02", f"启用公开桶（{status}）", status == 200 and body.get("status") == "ACTIVE", body)

@@ -31,8 +31,8 @@ services:
       rabbitmq: { condition: service_healthy }
       redis: { condition: service_healthy }
   operations-console-bff:
-    image: sha256:e822301cf35cab0dbce8ea87619d37d86c6ca5bed51c04fb2b3fa5b16968eab4  # recon-detail-20261021（对账会话 2026-10-21 06:1xZ 替换，含本需求与币种；整体重建须带 OPERATIONS_RECONCILIATION_BASE_URL，见对账候选）
+    image: sha256:4839c249e59c86d1f507b75ed25858ad7dbeabcfd816c1885fcb62d200ff206b  # ccu-20261021（channel-connector 会话 code-mor-0e 2026-10-21 10:36Z 替换，基线 main 1b60ae43 + 统一对外出口第一段，含本需求、币种、对账；整体重建须带 OPERATIONS_RECONCILIATION_BASE_URL；不可回退到旧 ID：外部 API 管理已迁到 channel-connector）
   operations-console-web:
     image: sha256:70829a3a9213f680b4ce8c100115996799fd3a800997faa1a85414dcfca19ef8  # recon-detail-20261021（对账会话替换，源含本需求 O4 commercialPreview.ts；本需求最后一版 c6d2118f…）
   platform-support-service:
-    image: sha256:3d8bc3752c37da4f57e6bfad764a6712758bef45b484980262ddbe68414ebd72  # recon-detail-20261021（对账会话替换，含块 124 / 125 / 126 键）
+    image: sha256:2d40c1ba7f9aa1cc0f4da838b23e880f414201574cba36fc4d4dc1587d7ba330  # ccu-20261021（同上替换，含块 124 / 125 / 126 键；已删除 integration 模块与 Platform 10 张外部 API 表，不可回退到旧 ID）

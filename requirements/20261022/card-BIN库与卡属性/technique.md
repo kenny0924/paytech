@@ -227,7 +227,7 @@ C7 响应：快照字段（3.4）加 `issuerName`、`binPrefix`（命中前缀�
 |---|---|
 | `GET /platform/v1/country-regions`（新，`CountryRegionQueryApi`，仿 `CurrencySpecQueryApi`） | 返回 `{ "items": [ { "countryCode": "AE", "regionCode": "GCC" }, … ] }`，按国家代码升序；内部接口不经 Gateway，调用方 card-service |
 | 内部文件接口（行为调整，合同不变） | `StoredContentType`：没有 PDF / PNG / JPEG 文件头，且首 8 KiB 不含 NUL、是合法 UTF-8（容忍末尾截断的多字节字符）时识别为 `text/csv`；`FormatFileScanner` 对 `text/csv` 全文校验 UTF-8 与无 NUL；`CompletedUploadVerifier` 不变（检测值 = 声明值） |
-| 文件写入路由（数据，不是 DML） | 发布时在「存储管理」登记 `operations-console-bff → 现有桶 + CARD_BIN_CSV`。注意：写入路由按来源系统划分，之后 ops-bff 的其他上传会共用 CSV 策略；届时需按上传原因细分路由（另立） |
+| 文件写入路由（数据，不是 DML） | 发布时在「存储管理」登记 `operations-console-bff → 现有桶 + CARD_BIN_CSV`。注意：写入路由按来源系统划分，之后 ops-bff 的其他上传会共用 CSV 策略；届时需按上传原因细分路由（另立）。**2026-10-23 更新（code-mor-db，多语言管理）**：路由 239087906591948800 的扫描策略已由 `CARD_BIN_CSV` 改指通用 `OPERATIONS_BFF_IMPORT`（version 1→2；text/csv + application/json；上限 52428800；maxUploadSeconds=900 与 FORMAT 检查不变；`CARD_BIN_CSV` 保持 ACTIVE 作为回滚目标）。改指后 `release/acceptance/accept_bin.py import good` 于 08:56:28Z 回归通过：8 行 CSV → 检查通过 → BIN 库版本 6 VALID、8/8、0 错误、未激活。Card 侧仍要求 mimeType=text/csv 与 reasonCode=CARD_BIN_LIBRARY_IMPORT |
 
 依赖：文件第二段（Platform internal-auth `DUAL`、`X-Caller-Service`、响应带 `fileAddress`）已上线。Card 调 Platform 带 `X-Caller-Service: card-service`；ops-bff 调 Platform 带 `operations-console-bff`。
 
