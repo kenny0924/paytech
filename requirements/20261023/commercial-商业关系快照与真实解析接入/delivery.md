@@ -21,14 +21,15 @@
 | 2026-10-25 | 6 确认 / 7 授权 | 用户确认阶段 6，授权阶段 7 按 `release/release.md` 第 12 节清单执行（7 个镜像替换、5 个库 SQL、运营接口数据、验收写入、AC-11 窗口内临时 REAL / 快照开关、通知会话；不含提交 / 推送） | 已确认 |
 | 2026-10-25 | 7 mor-test 部署与验收 | 13:38—14:35Z 按 release.md 第 6 节执行：六库备份 `~/Code-MoR-backups/20261025T133812Z-relsnap-mor-test/`；7 个服务换为 relsnap-20261025a 候选镜像（均 healthy、0 ERROR、环境变量只多两个开关）；SQL 10/11/20/21/22/23/40/41/50/60/61 执行，postcheck 全部等于期望；块 137 激活（Gateway 574 → 585）；语言包 #8（8813 key）；PayFac Partner 合同与两个 0 费率方案经运营接口建立并由临时 checker 批准（账号已停用、权限已撤销）；AE001 / PayFac 资格经页面登记。AC-11 窗口 14:09—14:12 REAL：S-1/S-2/S-3/S-5 PASS，窗口后回 MOCK / false，S-0/S-6/AC-13 PASS；浏览器 31/32（Z1 仅因 Client 业务名称为英文）。阶段内修正 3 个验收脚本问题（rs_bundles 转义、浏览器 Q4 预期、合同脚本 204 / 费率比较）。详见 release.md 第 10 节 | 待确认 |
 | 2026-10-25 | 7 确认 / 8 授权 | 用户确认阶段 7，授权阶段 8：按清单本地提交（relsnap worktree 543 个文件，不含 98 张验收截图；加本需求 3 份文档、CURRENT_IMPLEMENTATION.md、requirements/README.md；不含推送） | 已确认 |
+| 2026-10-25 | 8 本地提交 | 提交 `4b661830`（548 个文件：relsnap worktree 543 个，含 2 个删除；本需求 3 份文档；不含 98 张验收截图，截图留在 relsnap worktree）；私有索引构建，父提交 main `8a86a31c`，可执行位保留；提交前凭据扫描无命中；未推送 | 已完成 |
 
 ## 当前阶段与下一确认点
 
-阶段 8（本地提交）进行中；推送须另行授权。
+阶段 1—8 已完成。推送须另行授权（`! git push origin main`）。
 
 ## 实现 / 验证 / 部署状态
 
-mor-test 已部署（2026-10-25，见 release.md 第 10 节）；已本地提交（未推送）；台账见 [CURRENT_IMPLEMENTATION.md](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。
+mor-test 已部署（2026-10-25，见 release.md 第 10 节）；已本地提交 `4b661830`（未推送）；台账见 [CURRENT_IMPLEMENTATION.md](../../../agent-docs/CURRENT_IMPLEMENTATION.md)。
 
 ## 发布前置记录（阶段 6 使用）
 

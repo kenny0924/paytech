@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## commercial 商业关系快照与真实解析接入（2026-10-23—25，已部署 mor-test，已本地提交，未推送）
+## commercial 商业关系快照与真实解析接入（2026-10-23—25，已部署 mor-test，已本地提交 `4b661830`，未推送）
 
 - **范围：** [需求](<../requirements/20261023/commercial-商业关系快照与真实解析接入/requirement.md>)、[技术方案](<../requirements/20261023/commercial-商业关系快照与真实解析接入/technique.md>)、[交付记录](<../requirements/20261023/commercial-商业关系快照与真实解析接入/delivery.md>)、[发布记录](<../requirements/20261023/commercial-商业关系快照与真实解析接入/release/release.md>)。依据 [Platform 技术服务商与 PayFac 定位决定](decisions/2026-10-23-platform-tech-provider-and-partner-payfac.md)（Proposed）D13 快照；本轮只 C1 / C2。OE 来源值 `PLATFORM` 全系统删除（只剩 `CLIENT` / `PARTNER`），AE001 迁到"我方 PayFac" Partner。
 - **Implemented：** commercial 商业关系快照推导与组合约束、解析顺序、写入时 Party 校验、快照开关 `COMMERCIAL_RELATIONSHIP_SNAPSHOT_ENABLED`（默认 false），修复 `CapabilityConditions` 缺 equals 的既有缺陷；compliance 资格表 DataObject / Mapper、评估接口、4 个运营接口、入驻审核投影（`role_id` 改字符型存 entity_no / 十进制 ID）；client-master 多角色、OE 收单资质 `acquiring_qualification`、3 张新表、7 个运营接口；acquiring 真实解析客户端与错误映射、开关 `ACQUIRING_COMMERCIAL_RESOLUTION_MODE`（MOCK / REAL）、快照冻结表与三列；risk-decision 删除 PLATFORM 来源；ops-bff 11 个接口；ops-web 资格登记、经营主体、Local Partner 三页和 2 个命名空间；Platform 注册块 137。
