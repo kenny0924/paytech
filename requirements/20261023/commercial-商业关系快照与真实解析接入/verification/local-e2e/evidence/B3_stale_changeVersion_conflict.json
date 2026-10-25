@@ -1,0 +1,18 @@
+{
+  "method": "PUT",
+  "path": "/api/operations/entity-admin/v1/operating-entities/AE001/acquiring-qualification",
+  "request": {
+    "acquiringQualification": "PAYFAC",
+    "expectedChangeVersion": 2,
+    "reason": "阶段 5 本机联调（运营入口冒烟）"
+  },
+  "status": 409,
+  "response": {
+    "type": "about:blank",
+    "title": "Conflict",
+    "detail": "主档已被修改，请刷新后重试",
+    "code": "ENTITY_CHANGE_VERSION_CONFLICT",
+    "requestId": "e61cc9d0-858a-4396-90ac-d7ace582b5bf",
+    "timestamp": "2026-10-25T06:01:53.898918Z"
+  }
+}

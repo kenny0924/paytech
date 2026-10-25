@@ -10,7 +10,10 @@ public enum OperationsBffErrorCode implements CodeMessageEnum {
 
     DEPENDENCY_TIMEOUT("DEPENDENCY_TIMEOUT", "依赖服务响应超时，请稍后重试"),
 
-    DEPENDENCY_UNAVAILABLE("DEPENDENCY_UNAVAILABLE", "依赖服务暂时不可用，请稍后重试");
+    DEPENDENCY_UNAVAILABLE("DEPENDENCY_UNAVAILABLE", "依赖服务暂时不可用，请稍后重试"),
+
+    /** 资格登记的主体已关闭或终止（OE CLOSED、Partner / Client TERMINATED）；页面提示不能登记，422。 */
+    QUALIFICATION_SUBJECT_TERMINATED("QUALIFICATION_SUBJECT_TERMINATED", "主体已关闭或终止，不能登记资格");
 
     private final String code;
     private final String message;

@@ -14,7 +14,7 @@ CREATE TABLE `t_commerce_order` (
   `consumer_country_code` CHAR(2) NULL COMMENT '基础创建时固定的消费者 ISO 3166-1 alpha-2 国家代码；NULL 仅用于历史订单读取旧创建快照。',
   `termination_requested_at` DATETIME(6) NULL COMMENT '取消或到期首次请求的UTC时间，串行阻止新副作用；不表示远端未知Intent已终止。',
   `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT 'CCT唯一不可变OE编号，创建时经营国家二位代码加001–999，如AE001；不是数字代理ID，编号不参与路由。',
-  `entity_source_type` VARCHAR(64) NULL COMMENT '订单经营主体来源于平台、Client 或 Local Partner 的闭合类型。允许值：PLATFORM、CLIENT、PARTNER。',
+  `entity_source_type` VARCHAR(64) NULL COMMENT '订单经营主体来源于 Client 或 Local Partner 的闭合类型；平台自有 OE 经平台 PayFac Partner 以 PARTNER 来源提供。允许值：CLIENT、PARTNER。',
   `local_partner_id` BIGINT NULL COMMENT '当经营主体来源为 PARTNER 时对应的 Local Partner 标识。',
   `industry_code` VARCHAR(64) NULL COMMENT '订单上下文采用的平台行业目录代码。',
   `mcc_code` VARCHAR(4) NULL COMMENT '订单上下文采用的四位 Merchant Category Code。',
@@ -57,10 +57,13 @@ CREATE TABLE `t_order_context` (
   `finance_tax_snapshot_hash` CHAR(64) NOT NULL COMMENT 'Finance 税务快照 calculation_hash 的精确副本，按 CODE-MOR:FINANCE:TAX_CALCULATION:1 对 Header、全部 Evidence 和 Tax Line 生成 SHA-256 小写 64 位十六进制，用于校验按标识返回的不可变税务结果。',
   `consumer_country_code` CHAR(2) NOT NULL COMMENT '订单创建时冻结的消费者 ISO 3166-1 alpha-2 国家代码。',
   `locale` VARCHAR(35) NOT NULL COMMENT '文档或消费者体验采用的 IETF BCP 47 语言区域代码。',
+  `fund_flow` VARCHAR(32) NULL COMMENT 'commercial 商业关系快照的资金流向；固定 Mock 解析时为 NULL。允许值：THROUGH_CUSTODIAN、DIRECT_TO_CLIENT。',
+  `effective_relationship_model_version` INT NOT NULL COMMENT '订单冻结的商业关系生效模型版本：0 表示快照只记录、下游沿用旧字段，1 表示下游按快照生效；固定 Mock 解析及 2026-10-24 之前的存量订单为 0。',
+  `snapshot_model_version` INT NULL COMMENT '记录的商业关系快照按哪一版推导规则产生；固定 Mock 解析时为 NULL。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
   PRIMARY KEY (`order_context_id`),
   UNIQUE KEY `uk_order_context` (`order_id`) COMMENT '唯一索引：order_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='支付准备时一次建立的不可变上下文；外部事实只保存稳定引用；保存CCT批准Scope/Affiliation/Source及固定Term Version，准确Price由完整成功支付事实解析；三份接受证据及原始Context不得覆盖；PARTNER的分成版本/服务费版本/平台Party三项成组非空且Order的local_partner_id非空，非 PARTNER三项成组为空且local_partner_id为空。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='支付准备时一次建立的不可变上下文；外部事实只保存稳定引用；保存CCT批准Scope/Affiliation/Source及固定Term Version，准确Price由完整成功支付事实解析；三份接受证据及原始Context不得覆盖；PARTNER的分成版本/服务费版本/平台Party三项成组非空且Order的local_partner_id非空，非 PARTNER三项成组为空且local_partner_id为空；commercial 商业关系快照逐角色冻结在 t_order_relationship_binding，资金流向与两个模型版本记在本表，同一事务写入。';
 
 CREATE TABLE `t_order_legal` (
   `order_legal_id` BIGINT NOT NULL COMMENT '订单不可变上下文对应法律呈现记录的内部唯一标识。',
@@ -108,6 +111,19 @@ CREATE TABLE `t_order_item` (
   PRIMARY KEY (`order_item_id`),
   UNIQUE KEY `uk_order_item` (`order_id`, `client_item_id`) COMMENT '唯一索引：order_id、client_item_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='创建时固定不可变商品/优惠/净额；新流程最终逐行税额和总额由Finance不可变Tax Snapshot按client_item_id读取，不先写假税额再更新。';
+
+CREATE TABLE `t_order_relationship_binding` (
+  `binding_id` BIGINT NOT NULL COMMENT '订单商业关系中一个角色绑定的内部唯一标识。',
+  `order_id` BIGINT NOT NULL COMMENT 'Commerce 订单聚合的内部唯一标识。',
+  `role_code` VARCHAR(64) NOT NULL COMMENT 'commercial 商业关系快照中的角色，每个订单每个角色至多一行。允许值：CLIENT、SELLER、ACQUIRING_OE、OE_PROVIDER、FUNDS_CUSTODIAN、TAX_RESPONSIBLE、PLATFORM_FEE_PAYER、ACQUIRER_SUB_MERCHANT、REFERRER、SPLIT_PAYEE、PLATFORM。',
+  `subject_type` VARCHAR(64) NOT NULL COMMENT '角色绑定的主体类型。允许值：CLIENT、OPERATING_ENTITY、LOCAL_PARTNER、PLATFORM。',
+  `subject_id` VARCHAR(64) NULL COMMENT '主体标识：CLIENT 为 clientId，OPERATING_ENTITY 为 entityNo，LOCAL_PARTNER 为 localPartnerId；主体类型为 PLATFORM 时为 NULL。',
+  `party_id` BIGINT NULL COMMENT '主体对应的 client-master 法律 Party 稳定标识；commercial 未提供时为 NULL，不建立跨库外键。',
+  `snapshot_model_version` INT NOT NULL COMMENT '本行所属商业关系快照的推导规则版本，与订单上下文 snapshot_model_version 相同。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  PRIMARY KEY (`binding_id`),
+  UNIQUE KEY `uk_order_relationship_role` (`order_id`, `role_code`) COMMENT '唯一索引：order_id、role_code'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='订单创建时冻结 commercial 返回的商业关系快照，每个角色一行，记录主体类型、主体标识与法律 Party；与订单上下文同一事务写入，之后不可变；固定 Mock 解析不写本表。';
 
 CREATE TABLE `t_order_payment_projection` (
   `order_payment_projection_id` BIGINT NOT NULL COMMENT '订单唯一支付状态投影的内部标识。',

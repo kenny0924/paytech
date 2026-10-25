@@ -32,7 +32,7 @@ function ConditionRow({ condition, catalog, disabled, onChange, onRemove }: {
     try { canonicalFieldValue(condition.fieldCode, value); return []; }
     catch (error) { return [error instanceof Error ? error.message : t('conditionBuilder.checkValue')]; }
   });
-  const choices = field.widget === 'ENTITY_SOURCE' ? ['PLATFORM', 'CLIENT', 'PARTNER'].map(value => ({ value, label: value })) : [];
+  const choices = field.widget === 'ENTITY_SOURCE' ? ['CLIENT', 'PARTNER'].map(value => ({ value, label: value })) : [];
   const fieldControl = <Select aria-label={t('conditionBuilder.field')} value={condition.fieldCode} disabled={disabled} className="risk-condition-field"
     options={catalog.fields.map(item => ({ value: item.fieldCode, label: item.label }))} onChange={fieldCode => {
       const allowed = operatorsForField(fieldCode); const operator = allowed.includes(condition.operator as typeof allowed[number]) ? condition.operator : 'EQ';

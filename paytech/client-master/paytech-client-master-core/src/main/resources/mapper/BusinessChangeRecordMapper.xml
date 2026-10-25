@@ -18,4 +18,19 @@
         WHERE parent_history_id IS NULL AND ((record_type='CLIENT' AND record_id=CAST(#{clientId} AS CHAR)) OR (record_type='OPERATING_ENTITY' AND record_id IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})) OR (record_type='LOCAL_PARTNER' AND record_id IN (SELECT CAST(source_partner_id AS CHAR) FROM t_entity_source_relation WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}) AND source_type='PARTNER')) OR (record_type='CONSUMER_LEGAL_DOCUMENT' AND record_id IN (SELECT CAST(legal_document_id AS CHAR) FROM t_consumer_legal_document WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}))) OR (record_type='SELLER_DISCLOSURE' AND record_id IN (SELECT CAST(disclosure_id AS CHAR) FROM t_seller_disclosure WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}))))
         ORDER BY history_id
     </select>
+    <select id="findRoot" resultMap="BusinessChangeRecord">
+        SELECT history_id, record_type, record_id, aggregate_root_type, aggregate_root_id, parent_history_id, current_version
+        FROM t_business_change_record
+        WHERE record_type = #{rootType} AND record_id = #{rootId} AND aggregate_root_type = #{rootType}
+            AND aggregate_root_id = #{rootId} AND parent_history_id IS NULL
+    </select>
+    <insert id="insertRoot">
+        INSERT INTO t_business_change_record(history_id, record_type, record_id, aggregate_root_type, aggregate_root_id,
+            parent_history_id, current_version, create_time, update_time)
+        VALUES(#{historyId}, #{rootType}, #{rootId}, #{rootType}, #{rootId}, NULL, 1, #{now}, #{now})
+    </insert>
+    <update id="advanceRoot">
+        UPDATE t_business_change_record SET current_version = #{expectedVersion} + 1, update_time = #{now}
+        WHERE history_id = #{historyId} AND current_version = #{expectedVersion} AND parent_history_id IS NULL
+    </update>
 </mapper>

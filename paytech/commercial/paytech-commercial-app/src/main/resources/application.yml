@@ -115,6 +115,9 @@ commercial:
     # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
     region-id: "${COMMERCIAL_SNOWFLAKE_REGION_ID}"
     worker-id: "${COMMERCIAL_SNOWFLAKE_WORKER_ID}"
+  relationship-snapshot:
+    # Checkout 解析的商业关系快照是否生效：false（默认）响应 effectiveModelVersion=0，收单只记录；true 为 1，新订单按快照生效。修改需重启。
+    enabled: "${COMMERCIAL_RELATIONSHIP_SNAPSHOT_ENABLED:false}"
 
 # 内部调用 Token（D26）：默认关闭；值必须带引号，裸 OFF 在 YAML 1.1 中是布尔 false。
 internal-auth:

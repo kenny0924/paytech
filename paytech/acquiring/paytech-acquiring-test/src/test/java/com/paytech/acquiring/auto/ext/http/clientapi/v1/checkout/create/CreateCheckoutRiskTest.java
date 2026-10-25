@@ -28,7 +28,7 @@ import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
 import com.paytech.acquiring.domain.enums.EntitySourceType;
 import com.paytech.acquiring.domain.enums.RiskDecisionResult;
 import com.paytech.acquiring.test.base.checkout.AbstractCreateCheckoutApiTest;
-import com.paytech.acquiring.test.builder.external.CommercialFactsBuilder;
+import com.paytech.acquiring.test.builder.external.CheckoutContextResponseBuilder;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.risk.decision.api.enums.RiskDecisionEvaluationErrorCode;
 import com.paytech.risk.decision.api.evaluation.request.CheckoutPrepareRiskInput;
@@ -224,7 +224,7 @@ class CreateCheckoutRiskTest extends AbstractCreateCheckoutApiTest {
         assertProtocolError();
     }
 
-    /** PLATFORM 来源：合同版本、业务身份与 11 个输入；金额去尾零，行数为明细数，不传 Local Partner。 */
+    /** PARTNER 来源：合同版本、业务身份与 12 个输入（含 Local Partner ID）；金额去尾零，行数为明细数。 */
     @Test
     void test_requestMapping() {
         riskMocker.replies(result(RiskDecisionResult.ALLOW, 7111L));
@@ -234,21 +234,20 @@ class CreateCheckoutRiskTest extends AbstractCreateCheckoutApiTest {
         long orderId = checkoutChecker.assertRiskAssessment(clientId(), CLIENT_ORDER_ID, 7111L);
         var request = riskMocker.requests().getFirst();
         var expected = new CheckoutPrepareRiskInput(Long.toString(clientId()), "AE001",
-            EntitySourceType.PLATFORM.getCode(), null, "US", "USD", "44.9", "2", "42.9", "RETAIL", "5999", "2");
+            EntitySourceType.PARTNER.getCode(), CheckoutContextResponseBuilder.LOCAL_PARTNER_ID, "US", "USD", "44.9", "2",
+            "42.9", "RETAIL", "5999", "2");
         assertAll(() -> assertEquals(CheckoutPrepareRiskInput.POINT_CODE, request.getPointCode()),
             () -> assertEquals(CheckoutPrepareRiskInput.CONTRACT_VERSION, request.getContractVersion()),
             () -> assertEquals(Long.toString(orderId), request.getBusinessKey()),
             () -> assertEquals(expected.inputs(), request.getInputs()),
-            () -> assertEquals(11, request.getInputs().size()));
+            () -> assertEquals(12, request.getInputs().size()));
     }
 
-    /** PARTNER 来源带 Local Partner ID；整额无小数时金额为整数字符串。 */
+    /** CLIENT 来源不传 Local Partner（11 个输入）；整额无小数时金额为整数字符串。 */
     @Test
-    void test_partnerSource() {
-        preparationMocker.mockFacts(clientId(), "US", "USD", CommercialFactsBuilder.template()
-            .entitySourceType(EntitySourceType.PARTNER.getCode()).localPartnerId(300001L).partnerShareVersionId(401L)
-            .platformChargeVersionId(402L).platformServicePartyId(403L).partnerAgreementId(404L)
-            .partnerAgreementOperatingEntityId(405L).build());
+    void test_clientSource() {
+        preparationMocker.mockResolution(clientId(), "US", "USD",
+            CheckoutContextResponseBuilder.clientSource(clientId()).build());
         riskMocker.replies(result(RiskDecisionResult.ALLOW, 7112L));
         var items = List.of(item("single", "Single item", "1", "10", null));
 
@@ -257,8 +256,9 @@ class CreateCheckoutRiskTest extends AbstractCreateCheckoutApiTest {
 
         checkoutChecker.assertRiskAssessment(clientId(), CLIENT_ORDER_ID, 7112L);
         var expected = new CheckoutPrepareRiskInput(Long.toString(clientId()), "AE001",
-            EntitySourceType.PARTNER.getCode(), "300001", "US", "USD", "10", "0", "10", "RETAIL", "5999", "1");
+            EntitySourceType.CLIENT.getCode(), null, "US", "USD", "10", "0", "10", "RETAIL", "5999", "1");
         assertEquals(expected.inputs(), riskMocker.requests().getFirst().getInputs());
+        assertEquals(11, riskMocker.requests().getFirst().getInputs().size());
     }
 
     /** 两次调用的业务身份与输入完全相同（Risk 按业务身份重放）。 */

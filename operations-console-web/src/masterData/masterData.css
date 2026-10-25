@@ -1,0 +1,18 @@
+.master-data-page .master-data-search { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)) auto; gap: 12px; align-items: end; }
+.master-data-page .master-data-summary { display: flex; flex-wrap: wrap; gap: 12px 40px; background: #f8fafc; border-radius: 6px; padding: 12px 16px; margin: 0 0 16px; }
+.master-data-page .master-data-summary dt { color: #69717d; font-size: 11px; }
+.master-data-page .master-data-summary dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+.master-data-page .master-data-section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 12px; }
+.master-data-page .master-data-section-head h2 { margin: 0; }
+.master-data-page .master-data-tier-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.master-data-page .master-data-tier-list > div { border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px 12px; display: grid; gap: 6px; }
+.master-data-page .master-data-tier-list > div.is-current { border-color: #6366f1; background: #f5f7ff; }
+.master-data-page .master-data-provider { border-top: 1px dashed #e5e7eb; margin-top: 12px; padding-top: 12px; }
+.master-data-page .clickable-row { cursor: pointer; }
+.master-data-tiers { display: grid; gap: 10px; }
+.master-data-roles { display: grid; gap: 10px; }
+.master-data-error { color: #dc2626; font-size: 12px; margin-top: 4px; }
+@media (max-width: 900px) {
+  .master-data-page .master-data-search { grid-template-columns: 1fr 1fr; }
+  .master-data-page .master-data-tier-list { grid-template-columns: 1fr; }
+}

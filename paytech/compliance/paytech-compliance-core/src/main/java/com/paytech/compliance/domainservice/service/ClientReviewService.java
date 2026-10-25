@@ -41,8 +41,9 @@ public interface ClientReviewService {
     void saveClassifications(DueDiligenceCase mainCase, List<CaseClassification> classifications, Instant now);
 
     /**
-     * 结束主任务与子任务，保存决定和状态变更，并登记结果发布任务
+     * 结束主任务与子任务，保存决定和状态变更，投影 Client 角色资格，并登记结果发布任务
      * <li>结果在提交后由补偿任务发布给 CCT；事务内不访问 Broker。</li>
+     * <li>资格投影版本已变化或同一资格已被建立时抛出 QUALIFICATION_CHANGED 并整体回滚。</li>
      */
     void decide(ClientReviewDecisionContext context);
 }

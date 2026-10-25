@@ -1,4 +1,34 @@
 {
+  "party": [
+    {
+      "party_id": 910000000000002,
+      "party_no": "CCTQUERY-PARTY-2",
+      "party_type": "ORGANIZATION",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "party_id": 910000000000102,
+      "party_no": "CCTQUERY-PARTY-102",
+      "party_type": "ORGANIZATION",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "party_id": 910000000000202,
+      "party_no": "CCTQUERY-PARTY-202",
+      "party_type": "ORGANIZATION",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "party_id": 910000000000302,
+      "party_no": "CCTQUERY-PARTY-302",
+      "party_type": "ORGANIZATION",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
   "client": [
     {
       "client_id": 910000000000001,
@@ -73,6 +103,7 @@
       "party_id": 910000000000102,
       "operating_country": "AE",
       "status": "ACTIVE",
+      "acquiring_qualification": "PAYFAC",
       "create_time": "2026-09-01T00:00:00Z",
       "update_time": "2026-09-01T00:00:00Z"
     },
@@ -81,6 +112,7 @@
       "party_id": 910000000000202,
       "operating_country": "AE",
       "status": "ACTIVE",
+      "acquiring_qualification": "MERCHANT_RESALE_APPROVED",
       "create_time": "2026-09-01T00:00:00Z",
       "update_time": "2026-09-01T00:00:00Z"
     }
@@ -89,9 +121,9 @@
     {
       "source_relation_id": 910000000000103,
       "entity_no": "AE991",
-      "source_type": "PLATFORM",
+      "source_type": "PARTNER",
       "source_client_id": null,
-      "source_partner_id": null,
+      "source_partner_id": 910000000000150,
       "client_source_basis": null,
       "status": "ACTIVE",
       "active_source_slot": 1,
@@ -103,9 +135,9 @@
     {
       "source_relation_id": 910000000000203,
       "entity_no": "AE992",
-      "source_type": "PLATFORM",
+      "source_type": "PARTNER",
       "source_client_id": null,
-      "source_partner_id": null,
+      "source_partner_id": 910000000000250,
       "client_source_basis": null,
       "status": "ACTIVE",
       "active_source_slot": 1,
@@ -155,9 +187,9 @@
       "base_entity_change_version": 1,
       "entity_no": "AE991",
       "party_profile_id": 910000000000111,
-      "source_type": "PLATFORM",
+      "source_type": "PARTNER",
       "source_client_id": null,
-      "source_partner_id": null,
+      "source_partner_id": 910000000000150,
       "client_source_basis": null,
       "status": "APPROVED",
       "active_slot": null,
@@ -179,9 +211,9 @@
       "base_entity_change_version": 1,
       "entity_no": "AE992",
       "party_profile_id": 910000000000211,
-      "source_type": "PLATFORM",
+      "source_type": "PARTNER",
       "source_client_id": null,
-      "source_partner_id": null,
+      "source_partner_id": 910000000000250,
       "client_source_basis": null,
       "status": "APPROVED",
       "active_slot": null,
@@ -197,7 +229,126 @@
       "update_time": "2026-09-01T00:00:00Z"
     }
   ],
-  "local_partner": [],
+  "local_partner": [
+    {
+      "local_partner_id": 910000000000150,
+      "partner_no": "CCTQUERY-LP-150",
+      "party_id": 910000000000102,
+      "status": "ACTIVE",
+      "activation_time": "2026-09-01T00:00:00Z",
+      "termination_time": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "local_partner_id": 910000000000250,
+      "partner_no": "CCTQUERY-LP-250",
+      "party_id": 910000000000202,
+      "status": "ACTIVE",
+      "activation_time": "2026-09-01T00:00:00Z",
+      "termination_time": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "local_partner_id": 910000000000350,
+      "partner_no": "CCTQUERY-LP-350",
+      "party_id": 910000000000302,
+      "status": "ACTIVE",
+      "activation_time": "2026-09-01T00:00:00Z",
+      "termination_time": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "partner_role": [
+    {
+      "partner_role_id": 910000000000151,
+      "local_partner_id": 910000000000150,
+      "role_code": "OE_PROVIDER",
+      "status": "ACTIVE",
+      "active_slot": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "partner_role_id": 910000000000251,
+      "local_partner_id": 910000000000250,
+      "role_code": "OE_PROVIDER",
+      "status": "ACTIVE",
+      "active_slot": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "partner_role_id": 910000000000252,
+      "local_partner_id": 910000000000250,
+      "role_code": "REFERRER",
+      "status": "ACTIVE",
+      "active_slot": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "partner_role_id": 910000000000351,
+      "local_partner_id": 910000000000350,
+      "role_code": "REFERRER",
+      "status": "ACTIVE",
+      "active_slot": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
+  "party_role": [
+    {
+      "party_role_id": 910000000000152,
+      "party_id": 910000000000102,
+      "role_code": "OE_PROVIDER",
+      "subject_id": "910000000000150",
+      "status": "ACTIVE",
+      "active_slot": 1,
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "party_role_id": 910000000000253,
+      "party_id": 910000000000202,
+      "role_code": "OE_PROVIDER",
+      "subject_id": "910000000000250",
+      "status": "ACTIVE",
+      "active_slot": 1,
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "party_role_id": 910000000000254,
+      "party_id": 910000000000202,
+      "role_code": "REFERRER",
+      "subject_id": "910000000000250",
+      "status": "ACTIVE",
+      "active_slot": 1,
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "party_role_id": 910000000000352,
+      "party_id": 910000000000302,
+      "role_code": "REFERRER",
+      "subject_id": "910000000000350",
+      "status": "ACTIVE",
+      "active_slot": 1,
+      "effective_from": "2026-09-01T00:00:00Z",
+      "effective_to": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    }
+  ],
   "party_profile": [
     {
       "profile_id": 910000000000005,
@@ -225,6 +376,57 @@
       "update_time": "2026-09-01T00:00:00Z",
       "approved_time": "2026-09-01T00:00:00Z",
       "draft_application_id": null
+    },
+    {
+      "profile_id": 910000000000311,
+      "party_id": 910000000000302,
+      "content_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z",
+      "approved_time": "2026-09-01T00:00:00Z",
+      "draft_application_id": null
+    }
+  ],
+  "organization_profile": [
+    {
+      "profile_id": 910000000000005,
+      "legal_name": "Synthetic Client LLC",
+      "trade_name": null,
+      "incorporation_country": "AE",
+      "organization_type": "LIMITED_COMPANY",
+      "incorporation_date": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "profile_id": 910000000000111,
+      "legal_name": "Synthetic Entity One LLC",
+      "trade_name": null,
+      "incorporation_country": "AE",
+      "organization_type": "LIMITED_COMPANY",
+      "incorporation_date": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "profile_id": 910000000000211,
+      "legal_name": "Synthetic Entity Two LLC",
+      "trade_name": null,
+      "incorporation_country": "AE",
+      "organization_type": "LIMITED_COMPANY",
+      "incorporation_date": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "profile_id": 910000000000311,
+      "legal_name": "Synthetic Referrer LLC",
+      "trade_name": null,
+      "incorporation_country": "AE",
+      "organization_type": "LIMITED_COMPANY",
+      "incorporation_date": null,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
     }
   ],
   "consumer_legal_document": [
@@ -343,12 +545,12 @@
       "entity_no": "AE991",
       "country_code": "AE",
       "locale": "en-AE",
-      "public_legal_name": "Synthetic Seller",
-      "public_registration_number": "SYNTHETIC",
-      "public_tax_registration_number": null,
-      "public_address_text": "Synthetic Address",
-      "public_support_email": "support@example.invalid",
-      "public_support_phone": null,
+      "public_legal_name": "Synthetic Entity One LLC",
+      "public_registration_number": "REG-991",
+      "public_tax_registration_number": "TRN-991",
+      "public_address_text": "1 Synthetic Street, Dubai",
+      "public_support_email": "support-991@example.invalid",
+      "public_support_phone": "+971400000991",
       "status": "ACTIVE",
       "effective_from": "2026-09-01T00:00:00Z",
       "effective_to": "2026-10-01T00:00:00Z",
@@ -408,6 +610,28 @@
       "record_id": "910000000000001",
       "aggregate_root_type": "CLIENT",
       "aggregate_root_id": "910000000000001",
+      "parent_history_id": null,
+      "current_version": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "history_id": 910000000000160,
+      "record_type": "LOCAL_PARTNER",
+      "record_id": "910000000000150",
+      "aggregate_root_type": "LOCAL_PARTNER",
+      "aggregate_root_id": "910000000000150",
+      "parent_history_id": null,
+      "current_version": 1,
+      "create_time": "2026-09-01T00:00:00Z",
+      "update_time": "2026-09-01T00:00:00Z"
+    },
+    {
+      "history_id": 910000000000260,
+      "record_type": "LOCAL_PARTNER",
+      "record_id": "910000000000250",
+      "aggregate_root_type": "LOCAL_PARTNER",
+      "aggregate_root_id": "910000000000250",
       "parent_history_id": null,
       "current_version": 1,
       "create_time": "2026-09-01T00:00:00Z",

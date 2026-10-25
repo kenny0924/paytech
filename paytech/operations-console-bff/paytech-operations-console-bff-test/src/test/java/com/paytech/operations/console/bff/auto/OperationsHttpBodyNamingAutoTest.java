@@ -90,7 +90,10 @@ class OperationsHttpBodyNamingAutoTest {
         com.paytech.operations.console.bff.ext.rest.ReconciliationStatementController.class,
         com.paytech.operations.console.bff.ext.rest.ReconciliationBankController.class,
         com.paytech.operations.console.bff.ext.rest.ReconciliationExceptionController.class,
-        com.paytech.commercial.api.agreement.AgreementApi.class, com.paytech.commercial.api.pricing.PricingProfileApi.class})
+        com.paytech.commercial.api.agreement.AgreementApi.class, com.paytech.commercial.api.pricing.PricingProfileApi.class,
+        com.paytech.operations.console.bff.ext.rest.EntityAdminController.class,
+        com.paytech.operations.console.bff.ext.rest.QualificationAdminController.class,
+        com.paytech.client.master.api.entityadmin.ClientMasterEntityAdminApi.class, com.paytech.compliance.api.QualificationAdminApi.class})
     void test_httpBodyTypesUseExplicitRequestAndResponseSuffixes(Class<?> contract) {
         if (contract.isInterface()) {
             assertEquals(0, contract.getDeclaredClasses().length,

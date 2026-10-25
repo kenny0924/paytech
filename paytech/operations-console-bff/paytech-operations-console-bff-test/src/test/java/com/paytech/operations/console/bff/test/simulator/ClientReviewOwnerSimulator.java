@@ -13,7 +13,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 /**
- * Risk 与 CCT 的 Client 入驻审核测试端点：按“方法 + 路径”返回配置的 Owner DTO，并记录每次调用
+ * compliance 与 client-master 的测试端点（入驻审核、主档维护、资格登记）：按“方法 + 路径”返回配置的 Owner DTO，并记录每次调用
+ * <li>同一路径按 Query 区分的调用（例如按主体查询资格）可用“方法 + 路径?Query”配置，优先于只按路径的配置。</li>
  * <li>未配置的请求返回 500 并计入 unexpected，由测试 AfterEach 断言为空。</li>
  * <li>只返回 Owner 合同事实，不预组装 BFF 页面。</li>
  */
@@ -54,6 +55,16 @@ public final class ClientReviewOwnerSimulator implements AutoCloseable {
         replies.put(method + " " + path, new Reply(status, "application/json", json));
     }
 
+    /** 配置按精确 Query 匹配的成功 JSON 响应。 */
+    public synchronized void replyQuery(String method, String path, String rawQuery, int status, String json) {
+        replies.put(method + " " + path + "?" + rawQuery, new Reply(status, "application/json", json));
+    }
+
+    /** 配置按精确 Query 匹配的 Owner Problem 响应。 */
+    public synchronized void problemQuery(String method, String path, String rawQuery, int status, String code) {
+        problem(method, path + "?" + rawQuery, status, code);
+    }
+
     /** 配置 Owner Problem 响应。 */
     public synchronized void problem(String method, String path, int status, String code) {
         replies.put(method + " " + path, new Reply(status, "application/problem+json",
@@ -90,7 +101,11 @@ public final class ClientReviewOwnerSimulator implements AutoCloseable {
         Reply reply;
         synchronized (this) {
             requests.add(new Request(method, path, exchange.getRequestURI().getRawQuery(), Map.copyOf(exchange.getRequestHeaders()), body));
-            reply = replies.get(method + " " + path);
+            String query = exchange.getRequestURI().getRawQuery();
+            reply = query == null ? null : replies.get(method + " " + path + "?" + query);
+            if (reply == null) {
+                reply = replies.get(method + " " + path);
+            }
             if (reply == null) {
                 unexpected.add(method + " " + path);
             }

@@ -81,7 +81,7 @@ Client & Contract（CCT）唯一拥有 Party 与资料、Client/Local Partner/Op
 | 表 | 用途 | 完整有序字段 | 命名唯一键与关键约束 |
 |---|---|---|---|
 | `client_entity_affiliation` | Client 使用 Operating Entity 的业务资格关系 | `affiliation_id`, `client_id`, `entity_no`, `priority_no`, `status`, `active_slot`, `effective_from`, `effective_to`, `create_time`, `update_time` | `uk_aff_entity_active(client_id,entity_no,active_slot)`、`uk_aff_priority_active(client_id,priority_no,active_slot)`、`uk_aff_entity_time(client_id,entity_no,effective_from)`；ACTIVE时slot=1，其余NULL；Client全局正整数优先级，升序逐个完整验证；授权覆盖OE当前和未来已批准且匹配Client分类的范围 |
-| `entity_source_relation` | OE 的唯一来源认定关系 | `source_relation_id`, `entity_no`, `source_type`, `source_client_id`, `source_partner_id`, `client_source_basis`, `status`, `active_source_slot`, `effective_from`, `effective_to`, `create_time`, `update_time` | `uk_source_effective(entity_no,effective_from)`、`uk_source_active(entity_no,active_source_slot)`；`source_type IN (PLATFORM,CLIENT,PARTNER)`，Owner XOR；状态仅 `ACTIVE/ENDED`，仅 ACTIVE 的 `active_source_slot=1`；Client 来源依据仅为 `SAME_PARTY/VERIFIED_ASSOCIATION` |
+| `entity_source_relation` | OE 的唯一来源认定关系 | `source_relation_id`, `entity_no`, `source_type`, `source_client_id`, `source_partner_id`, `client_source_basis`, `status`, `active_source_slot`, `effective_from`, `effective_to`, `create_time`, `update_time` | `uk_source_effective(entity_no,effective_from)`、`uk_source_active(entity_no,active_source_slot)`；`source_type IN (CLIENT,PARTNER)`，Owner XOR；状态仅 `ACTIVE/ENDED`，仅 ACTIVE 的 `active_source_slot=1`；Client 来源依据仅为 `SAME_PARTY/VERIFIED_ASSOCIATION` |
 
 ### 3.4 Agreement 与产品目录：11 张
 
@@ -203,7 +203,7 @@ OE Submission Schema V1 的精确输入对象为：
     "partyProfile": {"profileId": "<BIGINT>", "contentHash": "<64-hex>"},
     "qualificationType": "ENTITY_UNDERWRITING",
     "source": {
-      "sourceType": "<PLATFORM|CLIENT|PARTNER>",
+      "sourceType": "<CLIENT|PARTNER>",
       "sourceClientId": null,
       "sourcePartnerId": null,
       "clientSourceBasis": null
@@ -221,7 +221,7 @@ OE Submission Schema V1 的精确输入对象为：
 }
 ```
 
-Source 对象始终保留全部固定属性并按 XOR 填字符串或 JSON `null`。CLIENT 来源的 `clientSourceBasis` 仅为 `SAME_PARTY/VERIFIED_ASSOCIATION`；PLATFORM、PARTNER 来源固定为 JSON `null`。Schema V2 删除权属路径属性，Document 排序与 Client Application 相同。Risk Case/Decision 是提交后的执行结果，不进入 Submission Hash。
+Source 对象始终保留全部固定属性并按 XOR 填字符串或 JSON `null`。CLIENT 来源的 `clientSourceBasis` 仅为 `SAME_PARTY/VERIFIED_ASSOCIATION`；PARTNER 来源固定为 JSON `null`。Schema V2 删除权属路径属性，Document 排序与 Client Application 相同。Risk Case/Decision 是提交后的执行结果，不进入 Submission Hash。
 
 仅对仍在兼容期内的 legacy CCT-I13 V5，Client Fee、Partner Share 与 Platform Service Charge Component 作为结构化 `component` 字段对象进入历史 `commercial_context_hash`。对象属性顺序固定为 `termComponentId/componentCode/componentType/triggerCode/calculationBase/rate/fixedAmount/currency/minAmount/maxAmount`；所有可空属性显式为 JSON `null`，Decimal 使用无指数规范字符串，组件按 `componentCode/termComponentId` 稳定排序。`termScopeId` 已由 legacy 父 Scope 对象表达，不在 Component 中重复；不得用新 Price/Component/Band 数据重算该 V5 Hash，也不得据此推导新 Wire 的 Canonical 形状。
 
@@ -297,7 +297,7 @@ CCT 必须验证 Scope、Version、Plan 与 Agreement 的父链完整，Associat
 
 ## 6. Source、审核关联与分配
 
-Source Type 只允许 `PLATFORM/CLIENT/PARTNER`。来源所有者直接由 `source_type + source_client_id/source_partner_id` 表达，不保存派生 `source_owner_key`。Owner XOR 由数据库可表达的 CHECK 与 Repository 双重校验：PLATFORM 两个 Owner ID 都为空，CLIENT 只允许 Client ID，PARTNER 只允许 Partner ID。Source 身份 Tuple 创建后不可修改，来源变化结束旧 Relation 并创建新 Relation。
+Source Type 只允许 `CLIENT/PARTNER`（2026-10-24 起删除 `PLATFORM`，不保留历史；平台自有 OE 由我们的 PayFac Partner 以 `PARTNER` 来源提供）。来源所有者直接由 `source_type + source_client_id/source_partner_id` 表达，不保存派生 `source_owner_key`。Owner XOR 由数据库可表达的 CHECK 与 Repository 双重校验：CLIENT 只允许 Client ID，PARTNER 只允许 Partner ID。Source 身份 Tuple 创建后不可修改，来源变化结束旧 Relation 并创建新 Relation。
 
 CLIENT Source 的 `client_source_basis` 仅为 `SAME_PARTY/VERIFIED_ASSOCIATION`：前者要求 Client Party 等于 OE Party；后者要求两个 Party 不同，并且必须由已批准的 Operating Entity Application、冻结申请材料和匹配的 Risk Qualification Decision 支撑。非 CLIENT 来源的 `client_source_basis` 必须为空。当前不结构化保存多公司多层持股路径，也不在运行时计算间接持股比例；未来出现明确用例时再作为独立能力扩展。
 
@@ -430,7 +430,7 @@ erDiagram
 
 77、68、66、57、55、48、44 与 37 仅是先前重构阶段的历史表数，不是当前目标；当前目标是本文件的 40 表、443 字段 Catalog，且已与最终 PDManer 工件及第 1 页记录的两个 SHA-256 对齐。历史名称或旧字段只能在实施/设计历史和明确标注的 legacy Wire 兼容章节中作为“已删除、替换或待迁移”证据出现，不得用于当前关系、状态或生成目标。
 
-- 禁止把来源扩展为 `DIRECT`；平台自有 OE 使用 `PLATFORM`。
+- 禁止把来源扩展为 `DIRECT` 或恢复 `PLATFORM`；平台自有 OE 由我们的 PayFac Partner 以 `PARTNER` 来源提供。
 - 禁止恢复 Agreement/Consumer Legal/Seller Disclosure 的 Root/Version、Current Pointer、Active Slot、Client Override、Agreement 交易 Scope、业务 Content/Scope Hash、Hash Schema Version、Binding Revision 或 Seller Content Hash；也禁止恢复普通业务 `version`、Assignment Policy/Version/Binding、Assignment Root/Version、Assignment 中间 Hash、`source_owner_key`、任何 `current_version_id`、申请/合同材料的文档版本列、Primary/Fallback 双标记、`entity_source_ownership_path`、`entity_source_path_edge` 或 `ownership_path_id`。GLOBAL/Wildcard/Manual Assignment 与多公司多层持股能力必须在出现明确用例后重新设计并审批。
 - 禁止恢复 `commercial_term_scope` 或 Commercial Term 的 `hash_schema_version/content_hash/scope_hash/canonical_hash`，也禁止用 `scope_key`、NULL OE、`*` 或另一种派生摘要改名恢复同一结构。Legacy CCT-I13/I14 的历史 Scope Reader 是迁移期间的兼容能力，不得反向进入当前 40 表新写模型。
 - 禁止建立 Payment Method 主表、Profile Version、Dimension Definition、Condition Value、Operator/Range 子模型，或把价格、Owner、OE、Agreement、有效期、优先级放入 Profile。禁止用 PAN、完整 BIN、Channel 原始 Payload或“无 Challenge”推断 Profile 条件事实。

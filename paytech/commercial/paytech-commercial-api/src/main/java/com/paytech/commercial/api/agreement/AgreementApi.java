@@ -85,6 +85,7 @@ public interface AgreementApi {
      * @param agreementId 合同 ID
      * @param body 版本条件
      * @return 合同写入结果；已是 ACTIVE 且版本为期望版本加一时按重放返回当前结果
+     *         <li>PARTNER 合同的 Local Partner 有平台服务费方案时，OE 法律主体不等于 Local Partner 法律主体 400。</li>
      */
     @PostExchange("/{agreementId}/activate")
     AgreementResponseBody activate(@RequestHeader(ACTOR_HEADER) String actorId,

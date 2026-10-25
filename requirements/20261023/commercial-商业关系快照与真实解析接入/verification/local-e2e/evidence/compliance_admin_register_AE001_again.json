@@ -1,0 +1,50 @@
+{
+  "list": {
+    "items": [
+      {
+        "currentDecisionId": "239990871808823296",
+        "decisionSource": "MANUAL",
+        "effectiveStatus": "REVOKED",
+        "qualificationId": "239990535295619072",
+        "qualificationType": "ENTITY_UNDERWRITING",
+        "reviewStatus": "COMPLETED",
+        "roleId": "AE001",
+        "roleType": "OPERATING_ENTITY",
+        "status": "REVOKED",
+        "updatedAt": "2026-10-25T05:58:02.654635Z",
+        "validFrom": "2026-10-01T00:00:00.000000Z",
+        "validTo": "2026-10-25T05:58:02.654635Z",
+        "version": "2"
+      }
+    ],
+    "page": 1,
+    "size": 10,
+    "total": 1
+  },
+  "request": {
+    "roleType": "OPERATING_ENTITY",
+    "roleId": "AE001",
+    "qualificationType": "ENTITY_UNDERWRITING",
+    "validFrom": "2026-10-01T00:00:00Z",
+    "validTo": null,
+    "reasonCode": "STAGE5_LOCAL_E2E",
+    "basisNote": "阶段 5 本机联调合成主体登记（AE001 again）",
+    "expectedVersion": "2"
+  },
+  "status": 200,
+  "response": {
+    "currentDecisionId": "239990872899342336",
+    "decisionSource": "MANUAL",
+    "effectiveStatus": "ELIGIBLE",
+    "qualificationId": "239990535295619072",
+    "qualificationType": "ENTITY_UNDERWRITING",
+    "reviewStatus": "NOT_REQUIRED",
+    "roleId": "AE001",
+    "roleType": "OPERATING_ENTITY",
+    "status": "APPROVED",
+    "updatedAt": "2026-10-25T05:58:02.914787Z",
+    "validFrom": "2026-10-01T00:00:00.000000Z",
+    "validTo": null,
+    "version": "3"
+  }
+}

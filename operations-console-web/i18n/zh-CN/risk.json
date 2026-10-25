@@ -595,7 +595,7 @@
   "risk.legacyCatalog.fieldHelp.country_code": "ISO 3166-1 大写二字母，例如 AE",
   "risk.legacyCatalog.fieldHelp.currency": "ISO 4217 大写三字母，例如 USD",
   "risk.legacyCatalog.fieldHelp.discount_amount": "最多 16 位整数和 8 位小数",
-  "risk.legacyCatalog.fieldHelp.entity_source_type": "仅 PLATFORM、CLIENT 或 PARTNER",
+  "risk.legacyCatalog.fieldHelp.entity_source_type": "仅 CLIENT 或 PARTNER",
   "risk.legacyCatalog.fieldHelp.industry_code": "1–64 位平台行业大写代码",
   "risk.legacyCatalog.fieldHelp.locale": "规范 BCP 47 标签，例如 ar-AE",
   "risk.legacyCatalog.fieldHelp.mcc_code": "保留前导零的四位十进制代码",

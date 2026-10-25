@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import com.paytech.commercial.api.enums.BusinessMode;
 import com.paytech.commercial.api.enums.ProductCode;
+import com.paytech.commercial.api.enums.RelationshipSubjectType;
 import com.paytech.commercial.api.enums.ResponsiblePartyType;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.*;
@@ -18,11 +19,16 @@ import com.paytech.commercial.domain.ClientMasterCandidates.LegalDocument;
 import com.paytech.commercial.domain.ClientMasterCandidates.LocalPartner;
 import com.paytech.commercial.domain.ClientMasterCandidates.RootVersion;
 import com.paytech.commercial.domain.ClientMasterCandidates.SellerDisclosure;
+import com.paytech.commercial.domain.relationship.QualificationSubject;
+import com.paytech.commercial.domain.relationship.RelationshipSnapshot;
 
 import lombok.Value;
 import lombok.experimental.Accessors;
 
-/** 一个完整候选的原始业务对象，贯穿外部资格、当前事实复核和最终查询结果构造。 */
+/**
+ * 一个完整候选的原始业务对象，贯穿外部资格、当前事实复核和最终查询结果构造
+ * <li>商业关系快照只由候选事实推导，参与 equals；资格结果与生效模型版本不在其中（S-13）。</li>
+ */
 @Value
 @Accessors(fluent = true)
 public class CheckoutCandidateContext {
@@ -40,10 +46,12 @@ public class CheckoutCandidateContext {
     CheckoutPricingContext clientTerms;
     /** 合同订阅产品与本次支付方式命中的开通项。 */
     CheckoutSubscriptionContext subscription;
-    /** PARTNER 来源的合同与双条款，其他来源为空。 */
+    /** PARTNER 来源的合同与双条款；本轮选中的候选必有。 */
     PartnerTerms partnerTerms;
     /** 原消费者法律文档、卖方披露及参与方资料。 */
     Legal legal;
+    /** 由本候选事实推导的商业关系快照；参与相等性比较。 */
+    RelationshipSnapshot relationship;
     /** client-master 返回的 Client 根修订。 */
     RootVersion clientRoot;
     /** client-master 返回的 OE 根修订。 */
@@ -58,9 +66,23 @@ public class CheckoutCandidateContext {
         return eligibility.entityNo();
     }
 
-    /** Partner 资格只在来源为 Partner 时参与，不补造角色身份。 */
-    public Long localPartnerId() {
-        return partnerTerms == null ? null : partnerTerms.partner().localPartnerId();
+    /** 本候选需要资格的主体：收单 OE 与 OE 提供方。 */
+    public List<QualificationSubject> qualificationSubjects() {
+        return qualificationSubjects(eligibility);
+    }
+
+    /**
+     * 主档候选需要资格的主体
+     *
+     * @param candidate 主档候选
+     * @return 收单 OE，以及存在时的 OE 提供方
+     */
+    public static List<QualificationSubject> qualificationSubjects(Candidate candidate) {
+        if (candidate.oeProvider() == null || candidate.oeProvider().localPartnerId() == null) {
+            return List.of(QualificationSubject.operatingEntity(candidate.entityNo()));
+        }
+        return List.of(QualificationSubject.operatingEntity(candidate.entityNo()),
+            QualificationSubject.localPartner(candidate.oeProvider().localPartnerId()));
     }
 
     /** 判断需要复核当前终止状态的原合同。 */
@@ -79,6 +101,13 @@ public class CheckoutCandidateContext {
             .forEach(CheckoutResolutionContext::id);
         subscription.capabilities().forEach(matched -> id(matched.capability().getAgreementCapabilityId()));
         require(legal.documents().size() == 3);
+        SellerDisclosure seller = legal.seller();
+        require(present(seller.publicLegalName()) && present(seller.publicRegistrationNumber())
+            && present(seller.publicAddressText()) && present(seller.publicSupportEmail()));
+        relationship.bindings().forEach(binding -> {
+            id(binding.partyId());
+            require(binding.subjectType() == RelationshipSubjectType.PLATFORM || present(binding.subjectId()));
+        });
         legal.documents().forEach(document -> {
             id(document.legalDocumentId());
             id(document.contentFileId());
@@ -99,8 +128,18 @@ public class CheckoutCandidateContext {
         }
     }
 
-    /** 全部检查完成后才投影多表查询结果；不再读取数据库或重新决定候选。 */
-    public CheckoutContextView toView() {
+    /** 必填公开文本非空。 */
+    private static boolean present(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    /**
+     * 全部检查完成后才投影多表查询结果；不再读取数据库或重新决定候选
+     *
+     * @param effectiveModelVersion 快照生效模型版本，由开关决定，不参与候选相等性
+     * @return 查询结果
+     */
+    public CheckoutContextView toView(int effectiveModelVersion) {
         return new CheckoutContextView(query.asOfText(), query.evaluatedAt().toString(), id(client.clientId()),
             query.orderNo(), entityNo(), eligibility.sourceType(),
             new CheckoutContextView.Classification(id(classification.businessProfileId()),
@@ -110,7 +149,16 @@ public class CheckoutCandidateContext {
             clientTermsView(), partnerView(), legalView(), derivedView(),
             new CheckoutContextView.Revisions(id(clientRoot.version()), id(entityRoot.version()),
                 id(agreementRoot.currentVersion()),
-                partnerAgreementRoot == null ? null : id(partnerAgreementRoot.currentVersion())));
+                partnerAgreementRoot == null ? null : id(partnerAgreementRoot.currentVersion())),
+            relationshipView(effectiveModelVersion));
+    }
+
+    /** 快照按角色声明顺序投影。 */
+    private CheckoutContextView.RelationshipSnapshot relationshipView(int effectiveModelVersion) {
+        return new CheckoutContextView.RelationshipSnapshot(effectiveModelVersion, relationship.snapshotModelVersion(),
+            relationship.fundFlow().getCode(), relationship.businessMode().getCode(),
+            relationship.bindings().stream().map(binding -> new CheckoutContextView.RoleBinding(binding.role().getCode(),
+                binding.subjectType().getCode(), binding.subjectId(), id(binding.partyId()))).toList());
     }
 
     /** Client 合同、条款版本、商业关系、订阅产品与命中的开通项。 */
@@ -173,7 +221,15 @@ public class CheckoutCandidateContext {
                     id(document.contentFileId()), document.contentHash()))
                 .toList(),
             legal.parties().stream().map(party -> new CheckoutContextView.PartyEvidence(id(party.partyId()),
-                id(party.profileId()), party.contentHash())).toList());
+                id(party.profileId()), party.contentHash())).toList(),
+            sellerView(legal.seller()));
+    }
+
+    /** 卖方公开文本原样透传。 */
+    private static CheckoutContextView.Seller sellerView(SellerDisclosure seller) {
+        return new CheckoutContextView.Seller(seller.publicLegalName(), seller.publicRegistrationNumber(),
+            seller.publicTaxRegistrationNumber(), seller.publicAddressText(), seller.publicSupportEmail(),
+            seller.publicSupportPhone());
     }
 
     /** Partner 来源所需的完整合同和双条款。 */

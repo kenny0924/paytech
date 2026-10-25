@@ -340,7 +340,7 @@ Channel 报表不等于现金到账；银行入账也不自动等于已匹配。
 ## 7. 全局强制不变量
 
 1. Client、Local Partner、Operating Entity 是 Party 的平级角色；同一 Party 可拥有多个不同角色，角色状态互不替代。
-2. Operating Entity 来源统一为 `PLATFORM/CLIENT/PARTNER`：平台自有主体、Organization Client 自身或经平台审核关联的主体、Local Partner 提供的主体；三类来源都可拥有多个 Operating Entity，且所有主体均由平台管理。CLIENT 来源只保存 `SAME_PARTY/VERIFIED_ASSOCIATION` 审核结论，当前不结构化保存多公司多层持股路径或计算间接持股比例。
+2. Operating Entity 来源统一为 `CLIENT/PARTNER`：Organization Client 自身或经平台审核关联的主体、Local Partner 提供的主体；平台自有主体由我们的 PayFac Partner 以 `PARTNER` 来源提供（2026-10-24 删除 `PLATFORM` 来源，不保留历史）；两类来源都可拥有多个 Operating Entity，且所有主体均由平台管理。CLIENT 来源只保存 `SAME_PARTY/VERIFIED_ASSOCIATION` 审核结论，当前不结构化保存多公司多层持股路径或计算间接持股比例。
 3. Client 和 Local Partner 均不能在交易请求中选择 Operating Entity 或 MID；平台根据 CCT Assignment 选择，Commerce 在 Order 上锁定唯一 Operating Entity，Payment 只在该主体下为每个 Attempt 选择 MID。CCT 新数据库目标以 Payment Method Profile Code、准确 OE Price 和 Component/Band 保存价格；Payment 提供晚到支付事实后如何解析与冻结证据须由新 Wire 专项决定。现行 CCT-I13/I14 V5 的 Term Scope ID、Order Context 字段和 Hash 只作为 legacy 迁移输入保留，历史不重算，不能机械映射为 Price ID。
 4. 同一 Client 可通过多个 Operating Entity 交易，任何订单、支付、退款和交易税事实只属于一个交易 Operating Entity；但 Partner 来源的显式 Platform Service Charge 会在 Partner OE 与平台 Finance Entity 两本独立账簿分别形成平衡 Journal，不能把平台利润记入 Partner OE。
 5. Client Fee、Partner Share 与 Platform Service Charge 是三类独立合同条款；Partner Share 以实际 Client Fee 为基数，Platform Service Charge 使用其明确配置的计算基数，均不能作为 Client 费率的附属字段或按交易残差倒算。

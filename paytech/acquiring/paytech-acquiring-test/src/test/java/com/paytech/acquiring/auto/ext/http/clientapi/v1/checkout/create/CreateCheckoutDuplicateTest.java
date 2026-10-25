@@ -19,7 +19,7 @@ import com.paytech.acquiring.api.client.v1.checkout.ClientCheckoutApi;
 import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody;
 import com.paytech.acquiring.domain.enums.OrderStatus;
 import com.paytech.acquiring.test.base.checkout.AbstractCreateCheckoutApiTest;
-import com.paytech.acquiring.test.builder.external.CommercialFactsBuilder;
+import com.paytech.acquiring.test.builder.external.CheckoutContextResponseBuilder;
 import com.paytech.acquiring.test.checker.checkout.CreateCheckoutResponseChecker;
 
 /**
@@ -72,8 +72,8 @@ class CreateCheckoutDuplicateTest extends AbstractCreateCheckoutApiTest {
     /** 相同业务编号属于不同 Client 时互不占用。 */
     @Test
     void test_clientOrderIdHasClientScope() {
-        preparationMocker.mockFacts(otherClientId(), "US", "USD",
-            CommercialFactsBuilder.template().build());
+        preparationMocker.mockResolution(otherClientId(), "US", "USD",
+            CheckoutContextResponseBuilder.template(otherClientId()).build());
         var first =
             invoke(template().build()).assertCreated(CLIENT_ORDER_ID, NOW.plusSeconds(1800), "44.90", "2.00", "42.90");
         var second = invoke(otherClientId(), template().build()).assertCreated(CLIENT_ORDER_ID, NOW.plusSeconds(1800),
@@ -111,6 +111,6 @@ class CreateCheckoutDuplicateTest extends AbstractCreateCheckoutApiTest {
         }
         checkoutChecker.assertOrderCount(clientId(), otherClientId(), 1);
         preparationMocker.assertCalls(clientId(), 2);
-        assertEquals(List.of(false, false), preparationMocker.transactionStates());
+        assertEquals(List.of(false, false), cctTransactions.transactionStates());
     }
 }

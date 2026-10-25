@@ -104,6 +104,9 @@ web:
       - /external-api-admin
       # 审核详情含申请人个人资料，命令含内部理由与客户可见说明，只记元数据。
       - /client-onboarding-admin
+      # 主档与资格页面含法定名称（个人 Client 为姓名）、修改原因与登记依据，只记元数据。
+      - /entity-admin
+      - /qualification-admin
       # 人工加/解密请求与响应含原值或 Token，只记元数据。
       - /vault-admin
       # 通知模板正文与预览示例参数可能含业务文案或样例值，只记元数据。

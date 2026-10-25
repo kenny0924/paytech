@@ -65,6 +65,13 @@ public class CheckoutCandidateResponseChecker extends AbstractHttpResponseChecke
         return this;
     }
 
+    /** 某个字段路径为 null 或缺失。 */
+    public CheckoutCandidateResponseChecker assertNull(String pointer) {
+        var node = body().at(pointer);
+        assertTrue(node.isMissingNode() || node.isNull(), "字段应为空: " + pointer);
+        return this;
+    }
+
     /** 某个字段路径的布尔值。 */
     public CheckoutCandidateResponseChecker assertBoolean(String pointer, boolean expected) {
         assertEquals(expected, body().at(pointer).asBoolean(!expected), "字段不符: " + pointer);

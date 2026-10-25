@@ -3,8 +3,13 @@ package com.paytech.client.master.auto.ext.http.checkout;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.client.master.api.checkout.ClientMasterCheckoutApi;
+import com.paytech.client.master.api.enums.AcquiringQualification;
 import com.paytech.client.master.api.enums.CheckoutCandidateErrorCode;
+import com.paytech.client.master.api.enums.PartnerRoleCode;
+import com.paytech.client.master.domain.enums.EntitySourceRelationSourceType;
+import com.paytech.client.master.domain.enums.LocalPartnerStatus;
 import com.paytech.client.master.test.base.checkout.AbstractCheckoutCandidateApiTest;
+import com.paytech.client.master.test.mocker.checkout.CheckoutCandidateFixture;
 
 /**
  * 两段式解析第一段：只依赖主档事实的候选、排序、落选、根版本与只读保证（design/06 §2.1）。
@@ -19,7 +24,50 @@ class ResolveCandidatesHttpTest extends AbstractCheckoutCandidateApiTest {
             .assertText("/client/partyProfileId", "910000000000005")
             .assertBoolean("/client/storedCardSetting/enabled", false)
             .assertText("/classification/mccCode", "5734")
-            .assertTexts("/commercialScope/entityNos", "AE991", "AE992").assertTexts("/commercialScope/localPartnerIds");
+            .assertTexts("/commercialScope/entityNos", "AE991", "AE992")
+            .assertTexts("/commercialScope/localPartnerIds", "910000000000150", "910000000000250");
+    }
+
+    /** 候选带收单资质、PARTNER 来源的提供方及其角色，卖方披露带公开文本。 */
+    @Test
+    void test_relationshipFacts() {
+        post(CANDIDATES, request(), headers()).assertOk()
+            .assertText("/candidates/0/acquiringQualification", AcquiringQualification.PAYFAC.getCode())
+            .assertText("/candidates/1/acquiringQualification", AcquiringQualification.MERCHANT_RESALE_APPROVED.getCode())
+            .assertText("/candidates/0/sourceRelation/sourceType", EntitySourceRelationSourceType.PARTNER.getCode())
+            .assertText("/candidates/0/oeProvider/localPartnerId", "910000000000150")
+            .assertText("/candidates/0/oeProvider/partyId", "910000000000102")
+            .assertText("/candidates/0/oeProvider/status", LocalPartnerStatus.ACTIVE.getCode())
+            .assertTexts("/candidates/0/oeProvider/roles", PartnerRoleCode.OE_PROVIDER.getCode())
+            .assertTexts("/candidates/1/oeProvider/roles", PartnerRoleCode.OE_PROVIDER.getCode(), PartnerRoleCode.REFERRER.getCode())
+            .assertText("/candidates/0/localPartner/localPartnerId", "910000000000150")
+            .assertText("/candidates/0/sellerDisclosures/0/publicLegalName", "Synthetic Entity One LLC")
+            .assertText("/candidates/0/sellerDisclosures/0/publicRegistrationNumber", "REG-991")
+            .assertText("/candidates/0/sellerDisclosures/0/publicTaxRegistrationNumber", "TRN-991")
+            .assertText("/candidates/0/sellerDisclosures/0/publicAddressText", "1 Synthetic Street, Dubai")
+            .assertText("/candidates/0/sellerDisclosures/0/publicSupportEmail", "support-991@example.invalid")
+            .assertText("/candidates/0/sellerDisclosures/0/publicSupportPhone", "+971400000991")
+            .assertNull("/candidates/1/sellerDisclosures/0/publicTaxRegistrationNumber")
+            .assertRoot("localPartners", "910000000000150", 1);
+    }
+
+    /** CLIENT 来源的候选没有提供方，也不进入 Partner 查询范围。 */
+    @Test
+    void test_clientSourceHasNoProvider() {
+        data.clientSource("AE992", CheckoutCandidateFixture.CLIENT_ID);
+        post(CANDIDATES, request(), headers()).assertOk().assertCandidates("AE991", "AE992")
+            .assertText("/candidates/1/sourceRelation/sourceType", EntitySourceRelationSourceType.CLIENT.getCode())
+            .assertNull("/candidates/1/oeProvider").assertNull("/candidates/1/localPartner")
+            .assertTexts("/commercialScope/localPartnerIds", "910000000000150");
+    }
+
+    /** 数据库残留已取消的 PLATFORM 来源时读取失败关闭为 503，不泄露该取值。 */
+    @Test
+    void test_platformSourceFailsClosed() {
+        data.platformSource("AE991");
+        post(CANDIDATES, request(), headers())
+            .assertProblem(503, CheckoutCandidateErrorCode.CANDIDATE_SOURCE_UNAVAILABLE.getCode())
+            .assertDoesNotExpose("PLATFORM");
     }
 
     /** Scope 全部结束后没有候选，仍返回空数组而不是错误。 */

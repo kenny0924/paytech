@@ -1,0 +1,757 @@
+{
+  "run": "2026-10-25T07:10:37.640Z",
+  "finished": "2026-10-25T07:15:11.302Z",
+  "web": "http://127.0.0.1:18311",
+  "environment": "local e2e (gateway 18080 via nginx 18444, mor_platform_v2e2e block 137 active, i18n release #2)",
+  "initialState": {
+    "psp": {
+      "status": "APPROVED",
+      "effectiveStatus": "ELIGIBLE",
+      "version": "28",
+      "validFrom": "2026-10-01T00:00:00.000000Z",
+      "validTo": null
+    },
+    "ae001": {
+      "acquiringQualification": "PAYFAC",
+      "changeVersion": 12
+    },
+    "payfac": {
+      "roles": [
+        "OE_PROVIDER"
+      ],
+      "changeVersion": 13
+    }
+  },
+  "finalState": {
+    "psp": {
+      "status": "APPROVED",
+      "effectiveStatus": "ELIGIBLE",
+      "version": "33",
+      "validFrom": "2026-10-01T00:00:00.000000Z",
+      "validTo": null
+    },
+    "ae001": {
+      "acquiringQualification": "PAYFAC",
+      "changeVersion": 14
+    },
+    "payfac": {
+      "roles": [
+        "OE_PROVIDER"
+      ],
+      "changeVersion": 15
+    }
+  },
+  "restorePspValidity": {
+    "status": 200,
+    "validFrom": "2026-10-01T00:00:00.000000Z",
+    "qualificationStatus": "APPROVED",
+    "code": null,
+    "detail": null
+  },
+  "results": [
+    {
+      "id": "M1",
+      "lang": "en",
+      "name": "menus visible for the e2e admin",
+      "result": "PASS",
+      "evidence": {
+        "seen": {
+          "/compliance/qualifications": {
+            "h1": "Qualifications",
+            "menuHasLabel": true,
+            "menuHasParent": true
+          },
+          "/master-data/operating-entities": {
+            "h1": "Operating Entities",
+            "menuHasLabel": true,
+            "menuHasParent": true
+          },
+          "/master-data/local-partners": {
+            "h1": "Local Partners",
+            "menuHasLabel": true,
+            "menuHasParent": true
+          }
+        },
+        "screenshot": "screenshots/en-M1-menu-local-partners.png"
+      }
+    },
+    {
+      "id": "Q1",
+      "lang": "en",
+      "name": "qualification list and filters",
+      "result": "PASS",
+      "evidence": {
+        "rowsAll": 4,
+        "filterQuery": "?roleType=CLIENT&qualificationType=ORGANIZATION_KYB&status=APPROVED&page=1&size=20",
+        "filteredRows": [
+          "Relsnap Synthetic Client PSP LLC Client · 900000000001380201 Organization KYB Eligible Approved 10/1/2026, 04:00:00 – No end date Manual 10/",
+          "Relsnap Synthetic Client MOR LLC Client · 237161687952666625 Organization KYB Eligible Approved 10/1/2026, 04:00:00 – No end date Manual 10/"
+        ],
+        "rowsAfterReset": 4,
+        "screenshots": [
+          "screenshots/en-Q1-list.png",
+          "screenshots/en-Q1-filtered-client-kyb-approved.png"
+        ]
+      }
+    },
+    {
+      "id": "Q2",
+      "lang": "en",
+      "name": "find subject: OE AE001, Local Partner, Client",
+      "result": "PASS",
+      "evidence": {
+        "OPERATING_ENTITY": {
+          "head": "Relsnap Synthetic AE001 FZ-LLC Operating Entity · AE001 Active",
+          "slots": [
+            "Entity Underwriting Eligible 10/1/2026, 04:00:00 – No end date · Manual History Register Revoke"
+          ],
+          "query": "?roleType=OPERATING_ENTITY&roleId=AE001&page=1&size=20",
+          "screenshot": "screenshots/en-Q2-subject-operating_entity.png",
+          "ok": true
+        },
+        "LOCAL_PARTNER": {
+          "head": "Relsnap Synthetic AE001 FZ-LLC Local Partner · 900000000001370001 Active",
+          "slots": [
+            "Partner Due Diligence Eligible 10/1/2026, 04:00:00 – No end date · Manual History Register Revoke"
+          ],
+          "query": "?roleType=LOCAL_PARTNER&roleId=900000000001370001&page=1&size=20",
+          "screenshot": "screenshots/en-Q2-subject-local_partner.png",
+          "ok": true
+        },
+        "CLIENT": {
+          "head": "Relsnap Synthetic Client PSP LLC Client · 900000000001380201 Active",
+          "slots": [
+            "Individual KYC Not Registered Not registered Register",
+            "Organization KYB Eligible 10/1/2026, 04:00:00 – No end date · Manual History Register Revoke"
+          ],
+          "query": "?roleType=CLIENT&roleId=900000000001380201&page=1&size=20",
+          "screenshot": "screenshots/en-Q2-subject-client.png",
+          "ok": true
+        }
+      }
+    },
+    {
+      "id": "Q3",
+      "lang": "en",
+      "name": "history drawer (timeline: transition, source, actor, basis)",
+      "result": "PASS",
+      "evidence": {
+        "title": "Entity Underwriting history · Relsnap Synthetic AE001 FZ-LLC",
+        "firstItemTags": [
+          "Operations Action",
+          "Manual"
+        ],
+        "items": [
+          "Revoked → Approved Operations ActionManual 10/25/2026, 09:58:02 · by 900000000001380999 · version 3 10/1/2026, 04:00:00 – No end date Reason: STAGE5_LOCAL_E2E 阶段 5 本机联调合成主体登记（AE001 again）",
+          "Approved → Revoked Operations ActionManual 10/25/2026, 09:58:02 · by 900000000001380999 · version 2 10/1/2026, 04:00:00 – 10/25/2026, 09:58:02 Reason: STAGE5_LOCAL_E2E 阶段 5 本机联调：验证撤销后解析落空",
+          "Approved Operations ActionManual 10/25/2026, 09:56:42 · by 900000000001380999 · version 1 10/1/2026, 04:00:00 – No end date Reason: STAGE5_LOCAL_E2E 阶段 5 本机联调合成主体登记（AE001）"
+        ],
+        "screenshot": "screenshots/en-Q3-history-drawer-ae001.png"
+      }
+    },
+    {
+      "id": "Q4",
+      "lang": "en",
+      "name": "manual decision dialog: allowed types per role",
+      "result": "PASS",
+      "evidence": {
+        "OPERATING_ENTITY": {
+          "typeSelectDisabled": true,
+          "options": [
+            "Entity Underwriting"
+          ],
+          "screenshot": "screenshots/en-Q4-decision-dialog-operating_entity.png"
+        },
+        "LOCAL_PARTNER": {
+          "typeSelectDisabled": true,
+          "options": [
+            "Partner Due Diligence"
+          ],
+          "screenshot": "screenshots/en-Q4-decision-dialog-local_partner.png"
+        },
+        "CLIENT": {
+          "typeSelectDisabled": false,
+          "options": [
+            "Individual KYC",
+            "Organization KYB"
+          ],
+          "screenshot": "screenshots/en-Q4-decision-dialog-client.png"
+        }
+      }
+    },
+    {
+      "id": "Q5",
+      "lang": "en",
+      "name": "real revocation of PSP Client ORGANIZATION_KYB",
+      "result": "PASS",
+      "evidence": {
+        "before": {
+          "status": "APPROVED",
+          "effectiveStatus": "ELIGIBLE",
+          "version": "28",
+          "validFrom": "2026-10-01T00:00:00.000000Z",
+          "validTo": null
+        },
+        "after": "screenshots/en-Q5-after-revoke.png",
+        "warning": "New order resolutions will treat this subject as not qualified. Relationship snapshots already frozen on orders are not rewritten.",
+        "message": "Qualification revoked.",
+        "slot": "Organization KYB Revoked 10/1/2026, 04:00:00 – 10/25/2026, 11:11:20 · Manual History Register",
+        "screenshot": "screenshots/en-Q5-revoke-dialog.png"
+      }
+    },
+    {
+      "id": "Q6",
+      "lang": "en",
+      "name": "stale version: 409 message and refresh",
+      "result": "PASS",
+      "evidence": {
+        "impact": "New order resolutions will treat this subject as qualified. Existing orders are not affected.",
+        "concurrentRegistration": {
+          "status": 200,
+          "version": "30",
+          "qualificationStatus": "APPROVED",
+          "code": null
+        },
+        "decisionStatuses": [
+          409
+        ],
+        "banner": "This qualification changed after you opened it. Refresh and try again. Refresh",
+        "slotAfterRefresh": "Organization KYB Eligible 10/1/2026, 04:00:00 – No end date · Manual History Register Revoke",
+        "screenshots": [
+          "screenshots/en-Q6-decision-confirm-impact.png",
+          "screenshots/en-Q6-stale-409.png"
+        ]
+      }
+    },
+    {
+      "id": "Q7",
+      "lang": "en",
+      "name": "revocation + re-registration through the page",
+      "result": "PASS",
+      "evidence": {
+        "revokeMessage": "Qualification revoked.",
+        "slotAfterRevoke": "Organization KYB Revoked 10/1/2026, 04:00:00 – 10/25/2026, 11:11:32 · Manual History Register",
+        "registerMessage": "Qualification registered.",
+        "slotAfterRegister": "Organization KYB Eligible 10/25/2026, 11:11:37 – No end date · Manual History Register Revoke",
+        "state": {
+          "status": "APPROVED",
+          "effectiveStatus": "ELIGIBLE",
+          "version": "32",
+          "validFrom": "2026-10-25T07:11:37.000000Z",
+          "validTo": null
+        },
+        "screenshot": "screenshots/en-Q7-after-register.png"
+      }
+    },
+    {
+      "id": "E1",
+      "lang": "en",
+      "name": "operating entity list with filters",
+      "result": "PASS",
+      "evidence": {
+        "rows": [
+          "AE001 Relsnap Synthetic AE001 FZ-LLC AE Partner PayFac Relsnap Synthetic AE001 FZ-LLC Active"
+        ],
+        "filterQuery": "?sourceType=PARTNER&country=AE&page=1&size=20",
+        "filtered": [
+          "AE001 Relsnap Synthetic AE001 FZ-LLC AE Partner PayFac Relsnap Synthetic AE001 FZ-LLC Active"
+        ],
+        "emptyText": "Nothing matches the filters.",
+        "screenshots": [
+          "screenshots/en-E1-entity-list.png",
+          "screenshots/en-E1-entity-list-partner-ae.png"
+        ]
+      }
+    },
+    {
+      "id": "E2",
+      "lang": "en",
+      "name": "AE001 detail: tier card, provider card, scopes, disclosures note, qualification card",
+      "result": "PASS",
+      "evidence": {
+        "currentTier": "PayFacCurrent Payment facilitator: accepts Client orders as Merchant of Record or PSP.",
+        "tierCount": 3,
+        "provider": "Provider Open Partner Legal Name Relsnap Synthetic AE001 FZ-LLC Partner No. LP-PAYFAC-AE001 Status Active Roles OE Provider Provider Qualification Open in Qualifications Partner Due Diligence Eligible 10/1/2026, 04:00:00 – No end date · Manual",
+        "scopes": 1,
+        "disclosures": [
+          "US en Active 10/1/2026, 04:00:00 – No end date"
+        ],
+        "disclosureNote": "Real resolution matches published disclosures by (Operating Entity, consumer country, locale) exactly; missing ones make checkout fail for that country.",
+        "qualification": "Entity Qualification Open in Qualifications Entity Underwriting Eligible 10/1/2026, 04:00:00 – No end date · Manual",
+        "screenshot": "screenshots/en-E2-ae001-detail.png"
+      }
+    },
+    {
+      "id": "E3",
+      "lang": "en",
+      "name": "acquiring qualification dialog: MERCHANT warning; PAYFAC -> MERCHANT_RESALE_APPROVED -> PAYFAC",
+      "result": "PASS",
+      "evidence": {
+        "before": {
+          "acquiringQualification": "PAYFAC",
+          "changeVersion": 12
+        },
+        "warning": "MERCHANT entities no longer accept Client orders: new order resolutions will skip this entity.",
+        "warningScreenshot": "screenshots/en-E3-merchant-warning.png",
+        "steps": [
+          {
+            "to": "MERCHANT_RESALE_APPROVED",
+            "warningShown": false,
+            "message": "Acquiring qualification updated.",
+            "current": "Merchant (Resale Approved)Current Approved for resale: accepts Client orders as Merchant of Record only.",
+            "state": {
+              "acquiringQualification": "MERCHANT_RESALE_APPROVED",
+              "changeVersion": 13
+            },
+            "screenshot": "screenshots/en-E3-after-merchant_resale_approved.png"
+          },
+          {
+            "to": "PAYFAC",
+            "warningShown": false,
+            "message": "Acquiring qualification updated.",
+            "current": "PayFacCurrent Payment facilitator: accepts Client orders as Merchant of Record or PSP.",
+            "state": {
+              "acquiringQualification": "PAYFAC",
+              "changeVersion": 14
+            },
+            "screenshot": "screenshots/en-E3-after-payfac.png"
+          }
+        ]
+      }
+    },
+    {
+      "id": "E4",
+      "lang": "en",
+      "name": "provider card link opens the Partner detail; qualification card link pre-fills the subject",
+      "result": "PASS",
+      "evidence": {
+        "partnerUrl": "/master-data/local-partners/900000000001370001",
+        "qualificationLink": "?roleType=OPERATING_ENTITY&roleId=AE001"
+      }
+    },
+    {
+      "id": "P1",
+      "lang": "en",
+      "name": "Local Partner list with filters",
+      "result": "PASS",
+      "evidence": {
+        "query": "?role=OE_PROVIDER&page=1&size=20",
+        "rows": [
+          "LP-PAYFAC-AE001 Relsnap Synthetic AE001 FZ-LLC OE Provider 1 Active"
+        ],
+        "screenshot": "screenshots/en-P1-partner-list-oe-provider.png"
+      }
+    },
+    {
+      "id": "P2",
+      "lang": "en",
+      "name": "PayFac LP detail: roles card, provided entities, qualification card",
+      "result": "PASS",
+      "evidence": {
+        "roles": "Roles Edit Roles OE Provider OE Provider cannot be removed while this Partner still provides an active Operating Entity.",
+        "provided": [
+          "AE001 Relsnap Synthetic AE001 FZ-LLC Active Active 10/1/2026, 04:00:00 – No end date"
+        ],
+        "qualification": "Partner Qualification Open in Qualifications Partner Due Diligence Eligible 10/1/2026, 04:00:00 – No end date · Manual",
+        "screenshot": "screenshots/en-P2-payfac-detail.png"
+      }
+    },
+    {
+      "id": "P3",
+      "lang": "en",
+      "name": "roles dialog: OE_PROVIDER disabled with reason; add and remove REFERRER",
+      "result": "PASS",
+      "evidence": {
+        "before": {
+          "roles": [
+            "OE_PROVIDER"
+          ],
+          "changeVersion": 13
+        },
+        "providerDisabled": true,
+        "providerChecked": true,
+        "reason": "OE Provider cannot be removed while this Partner still provides an active Operating Entity.",
+        "tooltip": "OE Provider cannot be removed while this Partner still provides an active Operating Entity.",
+        "dialogScreenshot": "screenshots/en-P3-roles-dialog-locked.png",
+        "steps": [
+          {
+            "target": "add",
+            "message": "Partner roles updated.",
+            "rolesCard": "Roles Edit Roles OE ProviderReferrer OE Provider cannot be removed while this Partner still provides an active Operating Entity.",
+            "state": {
+              "roles": [
+                "OE_PROVIDER",
+                "REFERRER"
+              ],
+              "changeVersion": 14
+            },
+            "screenshot": "screenshots/en-P3-after-add-referrer.png"
+          },
+          {
+            "target": "remove",
+            "message": "Partner roles updated.",
+            "rolesCard": "Roles Edit Roles OE Provider OE Provider cannot be removed while this Partner still provides an active Operating Entity.",
+            "state": {
+              "roles": [
+                "OE_PROVIDER"
+              ],
+              "changeVersion": 15
+            },
+            "screenshot": "screenshots/en-P3-after-remove-referrer.png"
+          }
+        ]
+      }
+    },
+    {
+      "id": "L1",
+      "lang": "zh-CN",
+      "name": "switch to Simplified Chinese from the header language menu",
+      "result": "PASS",
+      "evidence": {
+        "h1": "主体资格",
+        "htmlLang": "zh-CN",
+        "zhBundleRequests": 23,
+        "screenshot": "screenshots/zh-CN-L1-after-switch.png"
+      }
+    },
+    {
+      "id": "M1",
+      "lang": "zh-CN",
+      "name": "menus visible for the e2e admin",
+      "result": "PASS",
+      "evidence": {
+        "seen": {
+          "/compliance/qualifications": {
+            "h1": "主体资格",
+            "menuHasLabel": true,
+            "menuHasParent": true
+          },
+          "/master-data/operating-entities": {
+            "h1": "经营主体",
+            "menuHasLabel": true,
+            "menuHasParent": true
+          },
+          "/master-data/local-partners": {
+            "h1": "Local Partner",
+            "menuHasLabel": true,
+            "menuHasParent": true
+          }
+        },
+        "screenshot": "screenshots/zh-CN-M1-menu-local-partners.png"
+      }
+    },
+    {
+      "id": "Q1",
+      "lang": "zh-CN",
+      "name": "qualification list and filters",
+      "result": "PASS",
+      "evidence": {
+        "rowsAll": 4,
+        "filterQuery": "?roleType=CLIENT&qualificationType=ORGANIZATION_KYB&status=APPROVED&page=1&size=20",
+        "filteredRows": [
+          "Relsnap Synthetic Client PSP LLC Client · 900000000001380201 企业 KYB 合格 已批准 2026/10/25 11:11:37 至 长期 手工登记 2026/10/25 11:11:37 历史 登记 撤销",
+          "Relsnap Synthetic Client MOR LLC Client · 237161687952666625 企业 KYB 合格 已批准 2026/10/1 04:00:00 至 长期 手工登记 2026/10/25 10:03:16 历史 登记 撤销"
+        ],
+        "rowsAfterReset": 4,
+        "screenshots": [
+          "screenshots/zh-CN-Q1-list.png",
+          "screenshots/zh-CN-Q1-filtered-client-kyb-approved.png"
+        ]
+      }
+    },
+    {
+      "id": "Q2",
+      "lang": "zh-CN",
+      "name": "find subject: OE AE001, Local Partner, Client",
+      "result": "PASS",
+      "evidence": {
+        "OPERATING_ENTITY": {
+          "head": "Relsnap Synthetic AE001 FZ-LLC 经营主体 · AE001 生效中",
+          "slots": [
+            "主体承保审核 合格 2026/10/1 04:00:00 至 长期 · 手工登记 历史 登记 撤销"
+          ],
+          "query": "?roleType=OPERATING_ENTITY&roleId=AE001&page=1&size=20",
+          "screenshot": "screenshots/zh-CN-Q2-subject-operating_entity.png",
+          "ok": true
+        },
+        "LOCAL_PARTNER": {
+          "head": "Relsnap Synthetic AE001 FZ-LLC Local Partner · 900000000001370001 生效中",
+          "slots": [
+            "Partner 尽调 合格 2026/10/1 04:00:00 至 长期 · 手工登记 历史 登记 撤销"
+          ],
+          "query": "?roleType=LOCAL_PARTNER&roleId=900000000001370001&page=1&size=20",
+          "screenshot": "screenshots/zh-CN-Q2-subject-local_partner.png",
+          "ok": true
+        },
+        "CLIENT": {
+          "head": "Relsnap Synthetic Client PSP LLC Client · 900000000001380201 生效中",
+          "slots": [
+            "个人 KYC 未登记 未登记 登记",
+            "企业 KYB 合格 2026/10/25 11:11:37 至 长期 · 手工登记 历史 登记 撤销"
+          ],
+          "query": "?roleType=CLIENT&roleId=900000000001380201&page=1&size=20",
+          "screenshot": "screenshots/zh-CN-Q2-subject-client.png",
+          "ok": true
+        }
+      }
+    },
+    {
+      "id": "Q3",
+      "lang": "zh-CN",
+      "name": "history drawer (timeline: transition, source, actor, basis)",
+      "result": "PASS",
+      "evidence": {
+        "title": "主体承保审核历史 · Relsnap Synthetic AE001 FZ-LLC",
+        "firstItemTags": [
+          "运营操作",
+          "手工登记"
+        ],
+        "items": [
+          "已撤销 → 已批准 运营操作手工登记 2026/10/25 09:58:02 · 操作人 900000000001380999 · 版本 3 2026/10/1 04:00:00 至 长期 原因码：STAGE5_LOCAL_E2E 阶段 5 本机联调合成主体登记（AE001 again）",
+          "已批准 → 已撤销 运营操作手工登记 2026/10/25 09:58:02 · 操作人 900000000001380999 · 版本 2 2026/10/1 04:00:00 至 2026/10/25 09:58:02 原因码：STAGE5_LOCAL_E2E 阶段 5 本机联调：验证撤销后解析落空",
+          "已批准 运营操作手工登记 2026/10/25 09:56:42 · 操作人 900000000001380999 · 版本 1 2026/10/1 04:00:00 至 长期 原因码：STAGE5_LOCAL_E2E 阶段 5 本机联调合成主体登记（AE001）"
+        ],
+        "screenshot": "screenshots/zh-CN-Q3-history-drawer-ae001.png"
+      }
+    },
+    {
+      "id": "Q4",
+      "lang": "zh-CN",
+      "name": "manual decision dialog: allowed types per role",
+      "result": "PASS",
+      "evidence": {
+        "OPERATING_ENTITY": {
+          "typeSelectDisabled": true,
+          "options": [
+            "主体承保审核"
+          ],
+          "screenshot": "screenshots/zh-CN-Q4-decision-dialog-operating_entity.png"
+        },
+        "LOCAL_PARTNER": {
+          "typeSelectDisabled": true,
+          "options": [
+            "Partner 尽调"
+          ],
+          "screenshot": "screenshots/zh-CN-Q4-decision-dialog-local_partner.png"
+        },
+        "CLIENT": {
+          "typeSelectDisabled": false,
+          "options": [
+            "个人 KYC",
+            "企业 KYB"
+          ],
+          "screenshot": "screenshots/zh-CN-Q4-decision-dialog-client.png"
+        }
+      }
+    },
+    {
+      "id": "Q6",
+      "lang": "zh-CN",
+      "name": "decision confirm step (impact notice) and revoke dialog, cancelled",
+      "result": "PASS",
+      "evidence": {
+        "impact": "登记后新订单解析会把该主体视为合格。 已有订单不受影响。",
+        "revokeWarning": "撤销后新订单解析会把该主体视为不合格。 已冻结在订单上的商业关系快照不会被改写。",
+        "screenshots": [
+          "screenshots/zh-CN-Q6-decision-confirm-impact.png",
+          "screenshots/zh-CN-Q6-revoke-dialog.png"
+        ],
+        "state": {
+          "status": "APPROVED",
+          "effectiveStatus": "ELIGIBLE",
+          "version": "32",
+          "validFrom": "2026-10-25T07:11:37.000000Z",
+          "validTo": null
+        }
+      }
+    },
+    {
+      "id": "E1",
+      "lang": "zh-CN",
+      "name": "operating entity list with filters",
+      "result": "PASS",
+      "evidence": {
+        "rows": [
+          "AE001 Relsnap Synthetic AE001 FZ-LLC AE Partner PayFac Relsnap Synthetic AE001 FZ-LLC 生效中"
+        ],
+        "filterQuery": "?sourceType=PARTNER&country=AE&page=1&size=20",
+        "filtered": [
+          "AE001 Relsnap Synthetic AE001 FZ-LLC AE Partner PayFac Relsnap Synthetic AE001 FZ-LLC 生效中"
+        ],
+        "emptyText": "没有符合条件的记录。",
+        "screenshots": [
+          "screenshots/zh-CN-E1-entity-list.png",
+          "screenshots/zh-CN-E1-entity-list-partner-ae.png"
+        ]
+      }
+    },
+    {
+      "id": "E2",
+      "lang": "zh-CN",
+      "name": "AE001 detail: tier card, provider card, scopes, disclosures note, qualification card",
+      "result": "PASS",
+      "evidence": {
+        "currentTier": "PayFac当前 支付服务商：可以 MoR 或 PSP 方式承接 Client 订单。",
+        "tierCount": 3,
+        "provider": "提供方 查看 Partner 法定名称 Relsnap Synthetic AE001 FZ-LLC Partner 编号 LP-PAYFAC-AE001 状态 生效中 角色 OE 提供方 提供方资格 在主体资格中查看 Partner 尽调 合格 2026/10/1 04:00:00 至 长期 · 手工登记",
+        "scopes": 1,
+        "disclosures": [
+          "US en 生效中 2026/10/1 04:00:00 至 长期"
+        ],
+        "disclosureNote": "真实解析按（经营主体、消费者国家、locale）精确匹配已发布的披露；缺失时该国家的结账会失败。",
+        "qualification": "主体资格 在主体资格中查看 主体承保审核 合格 2026/10/1 04:00:00 至 长期 · 手工登记",
+        "screenshot": "screenshots/zh-CN-E2-ae001-detail.png"
+      }
+    },
+    {
+      "id": "E3",
+      "lang": "zh-CN",
+      "name": "acquiring qualification dialog: MERCHANT warning (cancelled)",
+      "result": "PASS",
+      "evidence": {
+        "warning": "改为 MERCHANT 后该主体不再承接 Client 订单，新订单解析会跳过它。",
+        "screenshot": "screenshots/zh-CN-E3-merchant-warning.png",
+        "state": {
+          "acquiringQualification": "PAYFAC",
+          "changeVersion": 14
+        }
+      }
+    },
+    {
+      "id": "E4",
+      "lang": "zh-CN",
+      "name": "provider card link opens the Partner detail; qualification card link pre-fills the subject",
+      "result": "PASS",
+      "evidence": {
+        "partnerUrl": "/master-data/local-partners/900000000001370001",
+        "qualificationLink": "?roleType=OPERATING_ENTITY&roleId=AE001"
+      }
+    },
+    {
+      "id": "P1",
+      "lang": "zh-CN",
+      "name": "Local Partner list with filters",
+      "result": "PASS",
+      "evidence": {
+        "query": "?role=OE_PROVIDER&page=1&size=20",
+        "rows": [
+          "LP-PAYFAC-AE001 Relsnap Synthetic AE001 FZ-LLC OE 提供方 1 生效中"
+        ],
+        "screenshot": "screenshots/zh-CN-P1-partner-list-oe-provider.png"
+      }
+    },
+    {
+      "id": "P2",
+      "lang": "zh-CN",
+      "name": "PayFac LP detail: roles card, provided entities, qualification card",
+      "result": "PASS",
+      "evidence": {
+        "roles": "角色 维护角色 OE 提供方 该 Partner 仍在提供生效的经营主体，不能取消 OE 提供方角色。",
+        "provided": [
+          "AE001 Relsnap Synthetic AE001 FZ-LLC 生效中 生效中 2026/10/1 04:00:00 至 长期"
+        ],
+        "qualification": "Partner 资格 在主体资格中查看 Partner 尽调 合格 2026/10/1 04:00:00 至 长期 · 手工登记",
+        "screenshot": "screenshots/zh-CN-P2-payfac-detail.png"
+      }
+    },
+    {
+      "id": "P3",
+      "lang": "zh-CN",
+      "name": "roles dialog: OE_PROVIDER disabled with reason (cancelled)",
+      "result": "PASS",
+      "evidence": {
+        "providerDisabled": true,
+        "providerChecked": true,
+        "reason": "该 Partner 仍在提供生效的经营主体，不能取消 OE 提供方角色。",
+        "tooltip": "该 Partner 仍在提供生效的经营主体，不能取消 OE 提供方角色。",
+        "screenshot": "screenshots/zh-CN-P3-roles-dialog-locked.png"
+      }
+    },
+    {
+      "id": "Z1",
+      "lang": "zh-CN",
+      "name": "zh-CN: no raw i18n keys or untranslated English on the new pages",
+      "result": "PASS",
+      "evidence": {
+        "scans": 12,
+        "rawKeys": [],
+        "latin": []
+      }
+    }
+  ],
+  "http4xx5xxAndFailed": [
+    "en GET /src/pages/Accounts.tsx -> FAILED net::ERR_ABORTED",
+    "en POST /api/operations/qualification-admin/v1/qualifications/manual-decisions -> 409",
+    "en GET /src/pages/LocalPartners.tsx -> FAILED net::ERR_ABORTED",
+    "zh-CN GET /api/operations/auth/v1/context -> 429",
+    "zh-CN GET /api/operations/auth/v1/context -> FAILED net::ERR_ABORTED"
+  ],
+  "expected4xx": [
+    "POST /api/operations/qualification-admin/v1/qualifications/manual-decisions -> 409 (Q6 stale version, deliberate)"
+  ],
+  "consoleErrors": [
+    "en console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /",
+    "en console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /compliance/qualifications",
+    "en console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /master-data/operating-entities",
+    "en console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /master-data/local-partners",
+    "en console.error Failed to load resource: the server responded with a status of 409 (Conflict) @ /compliance/qualifications",
+    "en console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /master-data/operating-entities/AE001",
+    "en console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /master-data/local-partners/900000000001370001",
+    "zh-CN console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /compliance/qualifications",
+    "zh-CN console.error Failed to load resource: the server responded with a status of 429 (Too Many Requests) @ /compliance/qualifications",
+    "zh-CN console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /master-data/operating-entities",
+    "zh-CN console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /master-data/local-partners",
+    "zh-CN console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /master-data/operating-entities/AE001",
+    "zh-CN console.error Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead. @ /master-data/local-partners/900000000001370001"
+  ],
+  "screenshots": [
+    "screenshots/en-M1-menu-local-partners.png",
+    "screenshots/en-Q1-list.png",
+    "screenshots/en-Q1-filtered-client-kyb-approved.png",
+    "screenshots/en-Q2-subject-operating_entity.png",
+    "screenshots/en-Q2-subject-local_partner.png",
+    "screenshots/en-Q2-subject-client.png",
+    "screenshots/en-Q3-history-drawer-ae001.png",
+    "screenshots/en-Q4-decision-dialog-operating_entity.png",
+    "screenshots/en-Q4-decision-dialog-local_partner.png",
+    "screenshots/en-Q4-decision-dialog-client.png",
+    "screenshots/en-Q5-revoke-dialog.png",
+    "screenshots/en-Q5-after-revoke.png",
+    "screenshots/en-Q6-decision-confirm-impact.png",
+    "screenshots/en-Q6-stale-409.png",
+    "screenshots/en-Q7-revoke-dialog.png",
+    "screenshots/en-Q7-after-revoke.png",
+    "screenshots/en-Q7-after-register.png",
+    "screenshots/en-E1-entity-list.png",
+    "screenshots/en-E1-entity-list-partner-ae.png",
+    "screenshots/en-E2-ae001-detail.png",
+    "screenshots/en-E3-merchant-warning.png",
+    "screenshots/en-E3-after-merchant_resale_approved.png",
+    "screenshots/en-E3-after-payfac.png",
+    "screenshots/en-P1-partner-list-oe-provider.png",
+    "screenshots/en-P2-payfac-detail.png",
+    "screenshots/en-P3-roles-dialog-locked.png",
+    "screenshots/en-P3-after-add-referrer.png",
+    "screenshots/en-P3-after-remove-referrer.png",
+    "screenshots/zh-CN-L1-after-switch.png",
+    "screenshots/zh-CN-M1-menu-local-partners.png",
+    "screenshots/zh-CN-Q1-list.png",
+    "screenshots/zh-CN-Q1-filtered-client-kyb-approved.png",
+    "screenshots/zh-CN-Q2-subject-operating_entity.png",
+    "screenshots/zh-CN-Q2-subject-local_partner.png",
+    "screenshots/zh-CN-Q2-subject-client.png",
+    "screenshots/zh-CN-Q3-history-drawer-ae001.png",
+    "screenshots/zh-CN-Q4-decision-dialog-operating_entity.png",
+    "screenshots/zh-CN-Q4-decision-dialog-local_partner.png",
+    "screenshots/zh-CN-Q4-decision-dialog-client.png",
+    "screenshots/zh-CN-Q6-decision-confirm-impact.png",
+    "screenshots/zh-CN-Q6-revoke-dialog.png",
+    "screenshots/zh-CN-E1-entity-list.png",
+    "screenshots/zh-CN-E1-entity-list-partner-ae.png",
+    "screenshots/zh-CN-E2-ae001-detail.png",
+    "screenshots/zh-CN-E3-merchant-warning.png",
+    "screenshots/zh-CN-P1-partner-list-oe-provider.png",
+    "screenshots/zh-CN-P2-payfac-detail.png",
+    "screenshots/zh-CN-P3-roles-dialog-locked.png"
+  ]
+}

@@ -27,6 +27,12 @@
             <artifactId>paytech-client-master-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Checkout 解析的角色资格判定（HTTP contract only）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compliance-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mybatis-support</artifactId>

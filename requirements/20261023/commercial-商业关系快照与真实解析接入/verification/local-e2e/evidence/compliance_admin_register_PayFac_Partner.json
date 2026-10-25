@@ -1,0 +1,34 @@
+{
+  "list": {
+    "items": [],
+    "page": 1,
+    "size": 10,
+    "total": 0
+  },
+  "request": {
+    "roleType": "LOCAL_PARTNER",
+    "roleId": "900000000001370001",
+    "qualificationType": "PARTNER_DUE_DILIGENCE",
+    "validFrom": "2026-10-01T00:00:00Z",
+    "validTo": null,
+    "reasonCode": "STAGE5_LOCAL_E2E",
+    "basisNote": "阶段 5 本机联调合成主体登记（PayFac Partner）",
+    "expectedVersion": null
+  },
+  "status": 200,
+  "response": {
+    "currentDecisionId": "239990535484362752",
+    "decisionSource": "MANUAL",
+    "effectiveStatus": "ELIGIBLE",
+    "qualificationId": "239990535484362753",
+    "qualificationType": "PARTNER_DUE_DILIGENCE",
+    "reviewStatus": "NOT_REQUIRED",
+    "roleId": "900000000001370001",
+    "roleType": "LOCAL_PARTNER",
+    "status": "APPROVED",
+    "updatedAt": "2026-10-25T05:56:42.468881Z",
+    "validFrom": "2026-10-01T00:00:00.000000Z",
+    "validTo": null,
+    "version": "1"
+  }
+}

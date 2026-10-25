@@ -663,7 +663,7 @@
         {
           "defKey": "entity_source_type",
           "defName": "主体来源类型",
-          "comment": "订单经营主体来源于平台、Client 或 Local Partner 的闭合类型。允许值：PLATFORM、CLIENT、PARTNER。",
+          "comment": "订单经营主体来源于 Client 或 Local Partner 的闭合类型；平台自有 OE 经平台 PayFac Partner 以 PARTNER 来源提供。允许值：CLIENT、PARTNER。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -1123,7 +1123,7 @@
       },
       "defKey": "t_order_context",
       "defName": "订单不可变上下文",
-      "comment": "支付准备时一次建立的不可变上下文；外部事实只保存稳定引用；保存CCT批准Scope/Affiliation/Source及固定Term Version，准确Price由完整成功支付事实解析；三份接受证据及原始Context不得覆盖；PARTNER的分成版本/服务费版本/平台Party三项成组非空且Order的local_partner_id非空，非 PARTNER三项成组为空且local_partner_id为空。",
+      "comment": "支付准备时一次建立的不可变上下文；外部事实只保存稳定引用；保存CCT批准Scope/Affiliation/Source及固定Term Version，准确Price由完整成功支付事实解析；三份接受证据及原始Context不得覆盖；PARTNER的分成版本/服务费版本/平台Party三项成组非空且Order的local_partner_id非空，非 PARTNER三项成组为空且local_partner_id为空。；commercial 商业关系快照逐角色冻结在 t_order_relationship_binding，资金流向与两个模型版本记在本表，同一事务写入。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -1557,6 +1557,60 @@
           "extProps": {},
           "domain": "",
           "id": "DE48E72A-1159-51C9-9265-2871D5283980"
+        },
+        {
+          "defKey": "fund_flow",
+          "defName": "资金流向",
+          "comment": "commercial 商业关系快照的资金流向；固定 Mock 解析时为 NULL。允许值：THROUGH_CUSTODIAN、DIRECT_TO_CLIENT。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "F6264BD5-30E1-4148-B79C-B7C61F9FBD99"
+        },
+        {
+          "defKey": "effective_relationship_model_version",
+          "defName": "关系生效模型版本",
+          "comment": "订单冻结的商业关系生效模型版本：0 表示快照只记录、下游沿用旧字段，1 表示下游按快照生效；固定 Mock 解析及 2026-10-24 之前的存量订单为 0。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "B1787183-D1DD-4296-999A-3A3EE9572FEA"
+        },
+        {
+          "defKey": "snapshot_model_version",
+          "defName": "快照推导规则版本",
+          "comment": "记录的商业关系快照按哪一版推导规则产生；固定 Mock 解析时为 NULL。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "EA651598-ABBF-44CD-91BC-B312FF15B192"
         },
         {
           "defKey": "create_time",
@@ -2683,6 +2737,359 @@
             }
           ],
           "id": "D05066A5-E726-5FED-8192-558C77261210"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "DE1BF7F3-C34A-4271-B2BA-4411BE5095E3",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_order_relationship_binding",
+      "defName": "订单商业关系绑定",
+      "comment": "订单创建时冻结 commercial 返回的商业关系快照，每个角色一行，记录主体类型、主体标识与法律 Party；与订单上下文同一事务写入，之后不可变；固定 Mock 解析不写本表。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "binding_id",
+          "defName": "角色绑定标识",
+          "comment": "订单商业关系中一个角色绑定的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "72CB7472-ACE5-453A-A8AA-E7BB175FCD04"
+        },
+        {
+          "defKey": "order_id",
+          "defName": "订单标识",
+          "comment": "Commerce 订单聚合的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "772F4B58-40C0-4F09-9319-87C25C1A4FA3"
+        },
+        {
+          "defKey": "role_code",
+          "defName": "角色代码",
+          "comment": "commercial 商业关系快照中的角色，每个订单每个角色至多一行。允许值：CLIENT、SELLER、ACQUIRING_OE、OE_PROVIDER、FUNDS_CUSTODIAN、TAX_RESPONSIBLE、PLATFORM_FEE_PAYER、ACQUIRER_SUB_MERCHANT、REFERRER、SPLIT_PAYEE、PLATFORM。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "475F14A3-B534-421E-BFAA-C0B8E30002C8"
+        },
+        {
+          "defKey": "subject_type",
+          "defName": "主体类型",
+          "comment": "角色绑定的主体类型。允许值：CLIENT、OPERATING_ENTITY、LOCAL_PARTNER、PLATFORM。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "FEC1FE5A-53D6-4EEE-A1AA-6B02C2C8DFE9"
+        },
+        {
+          "defKey": "subject_id",
+          "defName": "主体标识",
+          "comment": "主体标识：CLIENT 为 clientId，OPERATING_ENTITY 为 entityNo，LOCAL_PARTNER 为 localPartnerId；主体类型为 PLATFORM 时为 NULL。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "61FB5757-141E-4B21-B231-E6EDDFE1CBAD"
+        },
+        {
+          "defKey": "party_id",
+          "defName": "法律主体标识",
+          "comment": "主体对应的 client-master 法律 Party 稳定标识；commercial 未提供时为 NULL，不建立跨库外键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A16F3107-0405-4322-AF86-65607F6A9E2C"
+        },
+        {
+          "defKey": "snapshot_model_version",
+          "defName": "快照推导规则版本",
+          "comment": "本行所属商业关系快照的推导规则版本，与订单上下文 snapshot_model_version 相同。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "02CEB301-4CA6-47EF-919C-F62D6E7CFC63"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "数据库记录创建的 UTC 微秒精度时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "49CE9F87-ED15-4E19-878E-D970C09ECDC9"
+        }
+      ],
+      "correlations": [
+        {
+          "myField": "772F4B58-40C0-4F09-9319-87C25C1A4FA3",
+          "refEntity": "5182AEB1-A7BE-5154-83A0-CDC312B8817F",
+          "refField": "4633721A-9A7B-5F73-98D4-B7C16EA3E790",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_order_relationship_role",
+          "defName": "UK ORDER RELATIONSHIP ROLE",
+          "unique": true,
+          "comment": "唯一索引：order_id、role_code",
+          "fields": [
+            {
+              "fieldDefKey": "772F4B58-40C0-4F09-9319-87C25C1A4FA3",
+              "ascOrDesc": "A",
+              "id": "E0971B48-5890-4FA8-9EF2-370B7F8A0B53"
+            },
+            {
+              "fieldDefKey": "475F14A3-B534-421E-BFAA-C0B8E30002C8",
+              "ascOrDesc": "A",
+              "id": "36ED17DC-1EB5-46CC-8827-5B3EBFF3F8D8"
+            }
+          ],
+          "id": "0038C902-0130-4404-B5CB-726B8F51BB7C"
         }
       ],
       "type": "P"
@@ -8496,6 +8903,21 @@
             }
           },
           {
+            "id": "6F936A38-6954-4465-8709-16A17FABC79A",
+            "shape": "table",
+            "position": {
+              "x": 1720,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "DE1BF7F3-C34A-4271-B2BA-4411BE5095E3",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 240
+            }
+          },
+          {
             "id": "F3DE600F-84F2-5D4D-B650-B18A87A73276",
             "shape": "erdRelation",
             "source": {
@@ -8543,6 +8965,27 @@
             "source": {
               "cell": "3494DA8D-245D-5576-95BE-8201B7819FC3",
               "port": "ED2BDBAB-E1A0-532E-952F-55F991A56783%out"
+            },
+            "target": {
+              "cell": "117980E4-DE99-556C-960B-035F45F897C7",
+              "port": "4633721A-9A7B-5F73-98D4-B7C16EA3E790%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "01D6E3F7-456B-4D3A-886E-2EDE64E3CBE2",
+            "shape": "erdRelation",
+            "source": {
+              "cell": "6F936A38-6954-4465-8709-16A17FABC79A",
+              "port": "772F4B58-40C0-4F09-9319-87C25C1A4FA3%out"
             },
             "target": {
               "cell": "117980E4-DE99-556C-960B-035F45F897C7",

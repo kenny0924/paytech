@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.order.OrderRelationshipBindingMapper">
+    <insert id="insertAll">
+        INSERT INTO t_order_relationship_binding (binding_id,order_id,role_code,subject_type,subject_id,party_id,
+            snapshot_model_version,create_time)
+        VALUES
+        <foreach collection="bindings" item="b" separator=",">
+            (#{b.bindingId},#{b.orderId},#{b.roleCode},#{b.subjectType},#{b.subjectId},#{b.partyId},
+            #{b.snapshotModelVersion},#{b.createTime})
+        </foreach>
+    </insert>
+</mapper>

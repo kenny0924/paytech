@@ -96,8 +96,8 @@ public class ClientDraftConfiguration {
         return new RemoveClientRelationProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,writes(transactions));
     }
     @Bean public ClientDraftService clientDraftService(ClientDraftRepository repository,ClientPeopleRepository people,ClientDocumentRepository documents,
-        IdGenerator ids,Clock clock,CompensationEventRegistrar events) {
-        return new ClientDraftServiceImpl(repository,people,documents,ids,clock,events);
+        IdGenerator ids,Clock clock,CompensationEventRegistrar events,PartyRoleRepository partyRoles) {
+        return new ClientDraftServiceImpl(repository,people,documents,ids,clock,events,partyRoles);
     }
     @Bean public ClientDraftAccountClient clientDraftAccountClient(Environment environment,ObjectProvider<LoadBalancerClient> discovery,
         ObjectProvider<InternalTokenSupplier> tokens) {

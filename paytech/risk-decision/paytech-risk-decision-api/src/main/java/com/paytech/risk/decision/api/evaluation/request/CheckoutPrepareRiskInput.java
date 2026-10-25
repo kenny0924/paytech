@@ -11,7 +11,7 @@ import java.util.Map;
  *
  * @param clientId Client ID
  * @param entityNo Operating Entity 编号，5 位大写字母或数字
- * @param entitySourceType 经营主体来源：PLATFORM、CLIENT 或 PARTNER
+ * @param entitySourceType 经营主体来源：CLIENT 或 PARTNER
  * @param localPartnerId Local Partner ID；仅 PARTNER 来源必填，其他来源为空
  * @param consumerCountryCode 订单消费者国家 ISO 3166-1 alpha-2
  * @param currency ISO 4217 币种

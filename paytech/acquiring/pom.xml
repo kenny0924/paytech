@@ -35,7 +35,7 @@
                 <version>${project.version}</version>
             </dependency>
             <!-- 服务间合同：Reactor 内的 payment / platform-support / counterparty api；Risk 统一评估合同为 paytech-risk-decision-api（第 06 步）。
-                 client-contract-api 已删除：Checkout 商业端口仍为固定 Mock，没有生产代码引用 commercial-api。 -->
+                 commercial-api：Checkout 商业上下文真实解析（2026-10-24 商业关系快照与真实解析接入），由 acquiring.commercial.resolution-mode=REAL 启用。 -->
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-payment-api</artifactId>
@@ -59,6 +59,11 @@
             <dependency>
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-risk-decision-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-commercial-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

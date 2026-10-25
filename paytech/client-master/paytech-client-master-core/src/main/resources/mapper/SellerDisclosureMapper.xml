@@ -12,12 +12,27 @@
             <arg column="effective_to" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
             <arg column="approved_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
             <arg column="published_time" javaType="java.time.Instant" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+            <arg column="public_legal_name" javaType="java.lang.String"/>
+            <arg column="public_registration_number" javaType="java.lang.String"/>
+            <arg column="public_tax_registration_number" javaType="java.lang.String"/>
+            <arg column="public_address_text" javaType="java.lang.String"/>
+            <arg column="public_support_email" javaType="java.lang.String"/>
+            <arg column="public_support_phone" javaType="java.lang.String"/>
         </constructor>
     </resultMap>
+    <sql id="Columns">
+        SELECT disclosure_id, entity_no, country_code, locale, status, effective_from, effective_to, approved_time, published_time,
+            public_legal_name, public_registration_number, public_tax_registration_number, public_address_text, public_support_email,
+            public_support_phone
+    </sql>
     <select id="findForCheckout" resultMap="SellerDisclosure">
-        SELECT disclosure_id, entity_no, country_code, locale, status, effective_from, effective_to, approved_time, published_time
+        <include refid="Columns"/>
         FROM t_seller_disclosure
         WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})
         ORDER BY disclosure_id
+    </select>
+    <select id="findByEntityNo" resultMap="SellerDisclosure">
+        <include refid="Columns"/>
+        FROM t_seller_disclosure WHERE entity_no = #{entityNo} ORDER BY disclosure_id
     </select>
 </mapper>

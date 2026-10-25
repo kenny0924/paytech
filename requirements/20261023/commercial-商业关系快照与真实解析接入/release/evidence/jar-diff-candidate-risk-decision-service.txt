@@ -1,0 +1,5 @@
+# 纯 8a86a31c 基线（01e3d34ac0810abd）对 候选 relsnap-20261025a（0196699b7bac2fac）；jarcmp.py --list
+entries a=1371 b=1371 removed=0 added=0 changed=3
+~ lib:paytech-risk-decision-core!com/paytech/risk/decision/domain/release/DecisionReleaseStaticValidatorImpl.class
+~ lib:paytech-risk-decision-core!com/paytech/risk/decision/domain/rule/RuleAstValidatorImpl.class
+~ lib:paytech-risk-decision-core!com/paytech/risk/decision/service/evaluation/CheckoutPrepareEvaluator.class

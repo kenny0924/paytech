@@ -16,10 +16,11 @@ public interface CheckoutPaymentTestMapper {
 INSERT INTO t_order_context (order_context_id,order_id,commercial_context_time,affiliation_id,entity_scope_id,
  entity_source_relation_id,client_pricing_version_id,partner_share_version_id,platform_charge_version_id,
  platform_service_party_id,risk_checkout_assessment_id,finance_tax_snapshot_id,finance_tax_snapshot_hash,
- consumer_country_code,locale,create_time) VALUES
+ consumer_country_code,locale,fund_flow,effective_relationship_model_version,snapshot_model_version,create_time) VALUES
  (#{orderContextId},#{orderId},#{commercialContextTime},#{affiliationId},#{entityScopeId},#{entitySourceRelationId},
  #{clientPricingVersionId},#{partnerShareVersionId},#{platformChargeVersionId},#{platformServicePartyId},
- #{riskCheckoutAssessmentId},#{financeTaxSnapshotId},#{financeTaxSnapshotHash},#{consumerCountryCode},#{locale},#{presentedAt})
+ #{riskCheckoutAssessmentId},#{financeTaxSnapshotId},#{financeTaxSnapshotHash},#{consumerCountryCode},#{locale},
+ #{fundFlow},#{effectiveRelationshipModelVersion},#{snapshotModelVersion},#{presentedAt})
 """)
     void insertContext(FrozenCheckoutRecord row);
 
@@ -50,7 +51,7 @@ INSERT INTO t_consumer_contract (consumer_contract_id,order_id,order_legal_id,re
 
     @Update(
             "UPDATE t_commerce_order SET"
-                + " entity_source_type='PLATFORM',industry_code='RETAIL',mcc_code='5999' WHERE"
+                + " entity_source_type='CLIENT',industry_code='RETAIL',mcc_code='5999' WHERE"
                 + " order_id=#{orderId}")
     void completeOrder(long orderId);
 

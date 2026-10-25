@@ -3,7 +3,7 @@ package com.paytech.acquiring.test.base.checkout;
 import java.time.Instant;
 
 import com.paytech.acquiring.test.base.MockTestBase;
-import com.paytech.acquiring.test.builder.external.CommercialFactsBuilder;
+import com.paytech.acquiring.test.builder.external.CheckoutContextResponseBuilder;
 import com.paytech.acquiring.test.checker.checkout.CreateCheckoutResponseChecker;
 import com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
@@ -14,9 +14,10 @@ public abstract class AbstractCreateCheckoutApiTest extends MockTestBase {
     protected static final String CLIENT_ORDER_ID = "checkout-main";
     protected static final Instant NOW = Instant.parse("2026-09-08T00:00:00Z");
 
-    /** 由各场景类的 BeforeEach 调用，每例重新配置本 Client 的 USD/US 预检 DTO 与 Risk 默认放行。 */
+    /** 由各场景类的 BeforeEach 调用，每例重新配置本 Client 的 USD/US commercial 解析 DTO 与 Risk 默认放行。 */
     protected final void mockDefaultPreparation() {
-        preparationMocker.mockFacts(clientId(), "US", "USD", CommercialFactsBuilder.template().build());
+        preparationMocker.mockResolution(clientId(), "US", "USD",
+            CheckoutContextResponseBuilder.template(clientId()).build());
         riskMocker.allow(CheckoutRiskMocker.DEFAULT_EVALUATION_ID);
     }
 

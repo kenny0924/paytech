@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.RoleQualificationMapper">
+    <sql id="columns">qualification_id AS qualificationId, role_type AS roleType, role_id AS roleId, qualification_type AS qualificationType,
+        current_decision_id AS currentDecisionId, status, valid_from AS validFrom, valid_to AS validTo,
+        review_frequency_code AS reviewFrequencyCode, next_review_time AS nextReviewTime, review_status AS reviewStatus, version,
+        create_time AS createTime, update_time AS updateTime</sql>
+    <insert id="insert">
+        INSERT INTO t_role_qualification(qualification_id, role_type, role_id, qualification_type, current_decision_id, status, valid_from, valid_to, review_frequency_code, next_review_time, review_status, version, create_time, update_time)
+        VALUES(#{row.qualificationId}, #{row.roleType}, #{row.roleId}, #{row.qualificationType}, #{row.currentDecisionId}, #{row.status}, #{row.validFrom}, #{row.validTo}, #{row.reviewFrequencyCode}, #{row.nextReviewTime}, #{row.reviewStatus}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="findById" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.RoleQualification">
+        SELECT <include refid="columns"/> FROM t_role_qualification WHERE qualification_id = #{qualificationId}
+    </select>
+    <select id="findByRole" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.RoleQualification">
+        SELECT <include refid="columns"/> FROM t_role_qualification
+        WHERE role_type = #{roleType} AND role_id = #{roleId} AND qualification_type = #{qualificationType}
+    </select>
+    <select id="findBySubjects" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.RoleQualification">
+        SELECT <include refid="columns"/> FROM t_role_qualification
+        WHERE <foreach collection="subjects" item="s" open="(" separator=" OR " close=")">(role_type = #{s.roleType.code} AND role_id = #{s.roleId})</foreach>
+        ORDER BY qualification_id
+    </select>
+    <sql id="filter">
+        <where>
+            <if test="roleType != null">AND role_type = #{roleType}</if>
+            <if test="roleId != null">AND role_id = #{roleId}</if>
+            <if test="qualificationType != null">AND qualification_type = #{qualificationType}</if>
+            <if test="status != null">AND status = #{status}</if>
+        </where>
+    </sql>
+    <select id="page" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.RoleQualification">
+        SELECT <include refid="columns"/> FROM t_role_qualification <include refid="filter"/>
+        ORDER BY update_time DESC, qualification_id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_role_qualification <include refid="filter"/>
+    </select>
+    <update id="applyDecision">
+        UPDATE t_role_qualification
+        SET current_decision_id = #{decisionId}, status = #{status}, valid_from = #{validFrom}, valid_to = #{validTo},
+            review_frequency_code = NULL, next_review_time = NULL, review_status = #{reviewStatus}, version = version + 1, update_time = #{now}
+        WHERE qualification_id = #{row.qualificationId} AND version = #{row.version}
+    </update>
+</mapper>

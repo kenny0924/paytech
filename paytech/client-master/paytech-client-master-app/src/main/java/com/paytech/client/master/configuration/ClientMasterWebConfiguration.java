@@ -41,6 +41,9 @@ public class ClientMasterWebConfiguration {
             case "INVALID_CANDIDATE_QUERY", "CLIENT_NOT_ELIGIBLE" -> HttpStatus.UNPROCESSABLE_CONTENT;
             case "CANDIDATE_CONTEXT_AMBIGUOUS" -> HttpStatus.CONFLICT;
             case "CANDIDATE_SOURCE_UNAVAILABLE" -> HttpStatus.SERVICE_UNAVAILABLE;
+            case "OPERATING_ENTITY_NOT_FOUND", "LOCAL_PARTNER_NOT_FOUND" -> HttpStatus.NOT_FOUND;
+            case "ENTITY_CHANGE_VERSION_CONFLICT" -> HttpStatus.CONFLICT;
+            case "ENTITY_ATTRIBUTE_INVALID" -> HttpStatus.UNPROCESSABLE_CONTENT;
             default -> fallback;
         };
     }

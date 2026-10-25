@@ -1,0 +1,18 @@
+# compose.sh -f compose-<kind>.yaml config --format json 渲染（渲染文件含密钥，比较后已删除）对运行容器 Config.Env：只输出键名与是否一致
+# 期望容器 Env = 镜像 Env 叠加 compose Env；new = 本需求新增且运行容器尚无的键
+## candidate
+compliance-service: image=sha256:ca1585452f9c compose-keys=33 live-keys=39 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=603979776/603979776
+commercial-service: image=sha256:e5c1ee6b0d03 compose-keys=31 live-keys=36 missing=[] extra=[] differ=[] new=['COMMERCIAL_RELATIONSHIP_SNAPSHOT_ENABLED'] mounts=same ip=same mem=469762048/469762048
+client-master-service: image=sha256:eeed4e63235d compose-keys=34 live-keys=40 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=603979776/603979776
+acquiring-service: image=sha256:e0a1f618a050 compose-keys=37 live-keys=42 missing=[] extra=[] differ=[] new=['ACQUIRING_COMMERCIAL_RESOLUTION_MODE'] mounts=same ip=same mem=603979776/603979776
+risk-decision-service: image=sha256:288b0ff6a607 compose-keys=27 live-keys=33 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=603979776/603979776
+operations-console-bff: image=sha256:feefe73f0aa3 compose-keys=14 live-keys=20 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=603979776/603979776
+operations-console-web: image=sha256:4f44725eb26f compose-keys=0 live-keys=7 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=67108864/67108864
+## rollback
+compliance-service: image=sha256:2f62a26ad46c compose-keys=33 live-keys=39 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=603979776/603979776
+commercial-service: image=sha256:c6c9b8f663ae compose-keys=30 live-keys=36 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=469762048/469762048
+client-master-service: image=sha256:2e495b40adee compose-keys=34 live-keys=40 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=603979776/603979776
+acquiring-service: image=sha256:f6d55ade25d1 compose-keys=36 live-keys=42 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=603979776/603979776
+risk-decision-service: image=sha256:d69ca678416a compose-keys=27 live-keys=33 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=603979776/603979776
+operations-console-bff: image=sha256:0bc674106d7b compose-keys=14 live-keys=20 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=603979776/603979776
+operations-console-web: image=sha256:70d3fdfbb6be compose-keys=0 live-keys=7 missing=[] extra=[] differ=[] new=[] mounts=same ip=same mem=67108864/67108864

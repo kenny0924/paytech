@@ -7470,12 +7470,12 @@
         {
           "defKey": "case_id",
           "defName": "尽调案件",
-          "comment": "尽调案件的稳定业务标识。",
+          "comment": "尽调案件的稳定业务标识；运营手工登记或撤销（decision_source=MANUAL）的决定不关联案件，为空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -7524,9 +7524,9 @@
         {
           "defKey": "role_id",
           "defName": "角色",
-          "comment": "角色的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
+          "comment": "角色的稳定业务标识：OPERATING_ENTITY 存 entity_no（两位大写字母加三位数字，如 AE001），CLIENT、LOCAL_PARTNER、RELATED_PERSON 存十进制 ID 文本。",
+          "type": "VARCHAR",
+          "len": 64,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -7534,8 +7534,11 @@
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
           "domain": "",
           "id": "BD831B49-E85D-540E-8114-2D24B5406062"
         },
@@ -7578,7 +7581,7 @@
         {
           "defKey": "decision_source",
           "defName": "决定来源",
-          "comment": "决定来源的稳定业务代码。允许值：AUTOMATED、REVIEWER、OVERRIDE。",
+          "comment": "决定来源的稳定业务代码。允许值：AUTOMATED、REVIEWER、OVERRIDE、MANUAL。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -7646,6 +7649,24 @@
           "extProps": {},
           "domain": "",
           "id": "D636A483-2766-5128-9F13-43192D8E6321"
+        },
+        {
+          "defKey": "basis_note",
+          "defName": "登记依据",
+          "comment": "运营手工登记或撤销资格的依据说明，最多 1000 字符；仅 MANUAL 决定填写，其他来源为空。",
+          "type": "VARCHAR",
+          "len": 1000,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "BC909160-C192-4AAE-8B79-E2098B9159D8"
         },
         {
           "defKey": "valid_from",
@@ -8003,9 +8024,9 @@
         {
           "defKey": "role_id",
           "defName": "角色",
-          "comment": "角色的稳定业务标识。",
-          "type": "BIGINT",
-          "len": "",
+          "comment": "角色的稳定业务标识：OPERATING_ENTITY 存 entity_no（两位大写字母加三位数字，如 AE001），CLIENT、LOCAL_PARTNER、RELATED_PERSON 存十进制 ID 文本。",
+          "type": "VARCHAR",
+          "len": 64,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -8013,8 +8034,11 @@
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
           "domain": "",
           "id": "B7428264-2F87-57D6-9994-C39074037850"
         },

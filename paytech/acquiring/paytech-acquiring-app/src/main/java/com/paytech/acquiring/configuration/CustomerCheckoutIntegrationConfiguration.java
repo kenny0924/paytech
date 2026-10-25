@@ -13,7 +13,7 @@ import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentRes
 import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.*;
 import com.paytech.acquiring.domainservice.port.customer.*;
 
-/** 本轮明确授权的固定外部 Client Mock；仅用于临时流程联通，不代表真实 Owner 集成。 */
+/** 本轮明确授权的固定外部 Client Mock；仅用于临时流程联通，不代表真实 Owner 集成。商业解析的 Mock 见 CommercialMockConfiguration。 */
 @Configuration(proxyBeanMethods = false)
 public class CustomerCheckoutIntegrationConfiguration {
     /** TODO(Vault)：接入稳定 Email Protect 与独立 Profile Protect/Reveal。 */
@@ -30,20 +30,6 @@ public class CustomerCheckoutIntegrationConfiguration {
                     new Address("AE", "Mock address", null, null, "Dubai", null));
             }
         };
-    }
-
-    /** TODO(CCT)：接入 commercial-service 的 exact OE、Affiliation 与 TERM_PRICE 决策接口（paytech-commercial-api，第 04 步）。 */
-    @Bean
-    @ConditionalOnMissingBean(CheckoutCommercialPort.class)
-    CheckoutCommercialPort checkoutCommercialPort() {
-        return request -> CommercialFacts.builder().entityNo("AE001").entitySourceType("PLATFORM")
-            .industryCode("RETAIL").mccCode("5999").affiliationId(101L).entityScopeId(102L).entitySourceRelationId(103L)
-            .clientPricingVersionId(104L).clientAgreementId(105L).sellerDisclosureId(106L)
-            .seller(new Seller("Mock Operating Entity", "MOCK-REG", null, "Mock seller address",
-                "support@example.invalid", null))
-            .consumerTerms(new FileRef(201L, 301L, "a".repeat(64)))
-            .refundPolicy(new FileRef(202L, 302L, "b".repeat(64)))
-            .privacyNotice(new FileRef(203L, 303L, "c".repeat(64))).build();
     }
 
     /** TODO(Finance)：接入按原订单身份冻结的 Tax Snapshot。 */

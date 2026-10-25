@@ -1,0 +1,23 @@
+{
+  "request": {
+    "expectedVersion": "1",
+    "reasonCode": "STAGE5_LOCAL_E2E",
+    "basisNote": "阶段 5 本机联调：验证撤销后解析落空"
+  },
+  "status": 200,
+  "response": {
+    "currentDecisionId": "239990871808823296",
+    "decisionSource": "MANUAL",
+    "effectiveStatus": "REVOKED",
+    "qualificationId": "239990535295619072",
+    "qualificationType": "ENTITY_UNDERWRITING",
+    "reviewStatus": "COMPLETED",
+    "roleId": "AE001",
+    "roleType": "OPERATING_ENTITY",
+    "status": "REVOKED",
+    "updatedAt": "2026-10-25T05:58:02.654635Z",
+    "validFrom": "2026-10-01T00:00:00.000000Z",
+    "validTo": "2026-10-25T05:58:02.654635Z",
+    "version": "2"
+  }
+}

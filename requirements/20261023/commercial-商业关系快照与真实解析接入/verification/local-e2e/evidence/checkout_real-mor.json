@@ -1,0 +1,126 @@
+{
+  "entry": "direct acquiring /commerce/client-gateway-api/v1/checkouts with Gateway headers X-Gateway-Client-Id / X-Gateway-Credential-Id",
+  "request": {
+    "clientOrderId": "relsnap-real-mor-dd2028df",
+    "currency": "USD",
+    "consumerCountryCode": "US",
+    "items": [
+      {
+        "clientItemId": "line-1",
+        "name": "Relsnap stage five item",
+        "productTypeCode": "SERVICE",
+        "taxCategoryCode": "STANDARD",
+        "quantity": "1",
+        "unitAmount": "12.34"
+      }
+    ]
+  },
+  "status": 201,
+  "response": {
+    "orderNo": "ord_3LAsQ1XrB9K71Wq4I7hcN7Jb0KDAml",
+    "clientOrderId": "relsnap-real-mor-dd2028df",
+    "checkoutUrl": "https://127.0.0.1:18446/c/chk_<redacted>",
+    "currency": "USD",
+    "amounts": {
+      "merchandiseAmount": "12.34",
+      "discountAmount": "0.00",
+      "netAmount": "12.34",
+      "taxAmount": "0.00",
+      "roundingAmount": "0.00",
+      "totalAmount": "12.34"
+    },
+    "expiresAt": "2026-10-25T06:33:06.538707Z",
+    "preparationStatus": "READY",
+    "amountStatus": "FINAL",
+    "checkoutStatus": "OPEN"
+  },
+  "rows": {
+    "t_commerce_order": [
+      [
+        "239992146390704128",
+        "AE001",
+        "PARTNER",
+        "900000000001370001"
+      ]
+    ],
+    "t_order_context": [
+      [
+        "THROUGH_CUSTODIAN",
+        "0",
+        "1",
+        "900000000001371021",
+        "900000000001371022"
+      ]
+    ],
+    "t_order_relationship_binding": [
+      [
+        "ACQUIRING_OE",
+        "OPERATING_ENTITY",
+        "AE001",
+        "900000000001380102",
+        "1"
+      ],
+      [
+        "CLIENT",
+        "CLIENT",
+        "237161687952666625",
+        "900000000001380002",
+        "1"
+      ],
+      [
+        "FUNDS_CUSTODIAN",
+        "OPERATING_ENTITY",
+        "AE001",
+        "900000000001380102",
+        "1"
+      ],
+      [
+        "OE_PROVIDER",
+        "LOCAL_PARTNER",
+        "900000000001370001",
+        "900000000001380102",
+        "1"
+      ],
+      [
+        "PLATFORM",
+        "PLATFORM",
+        "NULL",
+        "900000000001380900",
+        "1"
+      ],
+      [
+        "PLATFORM_FEE_PAYER",
+        "LOCAL_PARTNER",
+        "900000000001370001",
+        "900000000001380102",
+        "1"
+      ],
+      [
+        "SELLER",
+        "OPERATING_ENTITY",
+        "AE001",
+        "900000000001380102",
+        "1"
+      ],
+      [
+        "TAX_RESPONSIBLE",
+        "OPERATING_ENTITY",
+        "AE001",
+        "900000000001380102",
+        "1"
+      ]
+    ],
+    "t_order_legal": [
+      [
+        "Relsnap Synthetic AE001 FZ-LLC",
+        "RELSNAP-REG-AE001",
+        "RELSNAP-TRN-AE001",
+        "1 Synthetic Street, Dubai, AE",
+        "support-ae001@example.invalid",
+        "+971400000001",
+        "900000000001371001",
+        "900000000001380128"
+      ]
+    ]
+  }
+}

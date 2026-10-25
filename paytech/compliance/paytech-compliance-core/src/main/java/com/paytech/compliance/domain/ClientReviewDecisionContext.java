@@ -10,7 +10,7 @@ import com.paytech.compliance.core.dal.dataobject.QualificationDecision;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/** 一次审核结论：要结束的全部任务、最终决定、状态变更与主任务说明。 */
+/** 一次审核结论：要结束的全部任务、最终决定、状态变更、主任务说明与 Client 资格投影。 */
 @Getter
 @AllArgsConstructor
 public class ClientReviewDecisionContext {
@@ -30,6 +30,12 @@ public class ClientReviewDecisionContext {
     private final List<QualificationDecision> decisions;
     /** 每个任务一条状态变更，聚合版本为结束后的版本。 */
     private final List<CaseStateChange> stateChanges;
+    /**
+     * 主任务结论对 Client 角色资格的投影
+     * <li>通过时新建或切换为 APPROVED；拒绝且已有 APPROVED 资格时切换为 REJECTED；其他情况为空。</li>
+     * <li>决定即 decisions 中的主任务决定，不重复插入。</li>
+     */
+    private final QualificationChangeContext qualificationChange;
     /** 结束时间。 */
     private final Instant now;
 }

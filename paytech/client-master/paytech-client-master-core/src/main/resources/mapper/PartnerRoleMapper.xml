@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.PartnerRoleMapper">
+    <sql id="Columns">
+        SELECT partner_role_id AS partnerRoleId, local_partner_id AS localPartnerId, role_code AS roleCode, status AS status,
+            active_slot AS activeSlot, create_time AS createTime, update_time AS updateTime
+        FROM t_partner_role
+    </sql>
+    <select id="findActiveForCheckout" resultType="com.paytech.client.master.core.dal.dataobject.PartnerRole">
+        <include refid="Columns"/>
+        WHERE active_slot = 1 AND local_partner_id IN (SELECT source_partner_id FROM t_entity_source_relation
+            WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}) AND source_type = 'PARTNER')
+        ORDER BY local_partner_id, role_code
+    </select>
+    <select id="findActiveByPartners" resultType="com.paytech.client.master.core.dal.dataobject.PartnerRole">
+        <include refid="Columns"/>
+        WHERE active_slot = 1 AND local_partner_id IN
+        <foreach collection="localPartnerIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY local_partner_id, role_code
+    </select>
+    <insert id="insert">
+        INSERT INTO t_partner_role(partner_role_id, local_partner_id, role_code, status, active_slot, create_time, update_time)
+        VALUES(#{row.partnerRoleId}, #{row.localPartnerId}, #{row.roleCode}, #{row.status}, #{row.activeSlot}, #{row.createTime},
+            #{row.updateTime})
+    </insert>
+    <update id="end">
+        UPDATE t_partner_role SET status = 'ENDED', active_slot = NULL, update_time = #{now}
+        WHERE partner_role_id = #{partnerRoleId} AND active_slot = 1
+    </update>
+</mapper>

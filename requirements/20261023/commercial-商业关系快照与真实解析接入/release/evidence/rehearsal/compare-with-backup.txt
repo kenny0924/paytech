@@ -1,0 +1,8 @@
+mor_compliance: compared 24 tables; leftover routines 0
+mor_client_master: compared 29 tables; leftover routines 2
+mor_commercial: compared 22 tables; leftover routines 0
+mor_acquiring: compared 16 tables; leftover routines 0
+mor_risk_decision: compared 54 tables; leftover routines 0
+mor_platform.t_role: rows differ (rolled-back 250 rows, backup 250 rows; update_time ignored)
+mor_platform: compared 71 tables; leftover routines 0
+DIFFERENCES: 1

@@ -271,7 +271,7 @@ class VariableMembersApiAutoTest extends AbstractVariableApiTest {
     @Test
     void test_businessRuleViolation_replaceSystemCollection() {
         MockedVariable system = variables.mock(VariableBuilder.collection(STRING, TOKEN).systemDefinition()
-            .member("PLATFORM", null));
+            .member("PARTNER", null));
 
         replace(system.code(), members("1", member("CLIENT", null))).assertProblem(403,
             SYSTEM_VARIABLE_READ_ONLY.getCode());

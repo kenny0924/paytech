@@ -1,0 +1,25 @@
+{
+  "method": "POST",
+  "path": "/api/operations/qualification-admin/v1/qualifications/239991753833205761/revocation",
+  "request": {
+    "expectedVersion": "1",
+    "reasonCode": "STAGE5_LOCAL_E2E",
+    "basisNote": "阶段 5 本机联调（运营入口冒烟）"
+  },
+  "status": 200,
+  "response": {
+    "currentDecisionId": "239991754567208960",
+    "decisionSource": "MANUAL",
+    "effectiveStatus": "REVOKED",
+    "qualificationId": "239991753833205761",
+    "qualificationType": "ORGANIZATION_KYB",
+    "reviewStatus": "COMPLETED",
+    "roleId": "900000000001380201",
+    "roleType": "CLIENT",
+    "status": "REVOKED",
+    "updatedAt": "2026-10-25T06:01:33.120831Z",
+    "validFrom": "2026-10-01T00:00:00.000000Z",
+    "validTo": "2026-10-25T06:01:33.120831Z",
+    "version": "2"
+  }
+}

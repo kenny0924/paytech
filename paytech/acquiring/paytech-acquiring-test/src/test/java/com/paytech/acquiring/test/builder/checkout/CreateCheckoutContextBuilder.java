@@ -13,6 +13,7 @@ import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
 import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
 import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
+import com.paytech.acquiring.domain.enums.EntitySourceType;
 import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
 import com.paytech.acquiring.domain.enums.OrderStatus;
 
@@ -40,7 +41,8 @@ public final class CreateCheckoutContextBuilder {
         var order = CommerceOrder.builder().orderId(orderId).orderNo("ord_" + suffix).clientId(clientId)
             .clientOrderId("transaction-order").creationMode(OrderCreationMode.HOSTED_CHECKOUT)
             .consumerCountryCode("US").merchandiseAmount(one).discountAmount(zero).netAmount(one)
-            .entityNo("AE001").entitySourceType("PLATFORM").industryCode("RETAIL").mccCode("5999")
+            .entityNo("AE001").entitySourceType(EntitySourceType.CLIENT.getCode()).industryCode("RETAIL")
+            .mccCode("5999")
             .taxAmount(zero).roundingAmount(zero).totalAmount(one).currency("USD").orderStatus(OrderStatus.OPEN).expiresAt(now.plusSeconds(1800))
             .version(1L).createTime(now).updateTime(now).build();
         var item = OrderItem.builder().orderItemId(orderId).orderId(orderId).clientItemId("line-1")
@@ -67,6 +69,6 @@ public final class CreateCheckoutContextBuilder {
             .sellerDisclosureId(106).publicLegalName("Test Seller").publicRegistrationNumber("TEST-REG")
             .publicAddressText("Test Address").publicSupportEmail("support@example.invalid")
             .consumerContractId(orderId).renderedFileId(orderId).renderedContentHash("e".repeat(64)).presentedAt(now).build();
-        return new CreateCheckoutContext(frozen, order, List.of(item), refund, funds, session);
+        return new CreateCheckoutContext(frozen, List.of(), order, List.of(item), refund, funds, session);
     }
 }

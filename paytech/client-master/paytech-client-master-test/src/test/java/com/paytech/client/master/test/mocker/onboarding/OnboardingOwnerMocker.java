@@ -18,6 +18,7 @@ import com.paytech.platform.support.api.files.FileAddress;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 import com.paytech.compliance.api.MaterialRequirementsModels.RequirementsResponseBody;
+import com.paytech.platform.support.api.tenantprojection.request.ProvisionRequestBody;
 import com.paytech.platform.support.api.tenantprojection.request.StatusRequestBody;
 import com.paytech.platform.support.api.tenantprojection.response.ProjectionResponseBody;
 import com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody;
@@ -47,6 +48,8 @@ public class OnboardingOwnerMocker implements Clear {
     private final List<ClientReviewClassificationsRequestBody> classificationRequests = new CopyOnWriteArrayList<>();
     private final Map<String, ProjectionResponseBody> projections = new HashMap<>();
     private final List<StatusRequestBody> projectionRequests = new CopyOnWriteArrayList<>();
+    private boolean provisionAccepted;
+    private final List<ProvisionRequestBody> provisionRequests = new CopyOnWriteArrayList<>();
 
     /** 当前账号会话有效。 */
     public synchronized void mockSession(long accountId, long sessionId) {
@@ -137,10 +140,38 @@ public class OnboardingOwnerMocker implements Clear {
         return classificationReply;
     }
 
-    /** PLT-I17 查询当前位置；未配置返回 null。 */
-    public synchronized ProjectionResponseBody projection(String ownerRefId) {
+    /** PLT-I17 查询当前位置；未配置返回 null，已允许首版开通而尚未开通时返回 404 NOT_FOUND。 */
+    public synchronized Object projection(String ownerRefId) {
         calls.add("projection:" + ownerRefId);
-        return projections.get(ownerRefId);
+        var position = projections.get(ownerRefId);
+        if (position == null && provisionAccepted) {
+            return new Fault(404, problem(404, "NOT_FOUND"), false);
+        }
+        return position;
+    }
+
+    /** 新建 Client 的首版工作区开通由 Platform 受理。 */
+    public synchronized void mockProvisionAccepted() {
+        provisionAccepted = true;
+    }
+
+    /** PLT-I17 首版开通：已配置时按请求建立 PENDING 位置并返回；未配置返回 null。 */
+    public synchronized ProjectionResponseBody provision(ProvisionRequestBody request) {
+        calls.add("provision:" + request.getOwnerRefId());
+        provisionRequests.add(request);
+        if (!provisionAccepted) {
+            return null;
+        }
+        var position = new ProjectionResponseBody("CLIENT", request.getOwnerRefId(), request.getRequestedByAccountId(),
+            "880" + Long.parseLong(request.getOwnerRefId()) % 1_000_000, "881" + Long.parseLong(request.getOwnerRefId()) % 1_000_000,
+            "PENDING", request.getSourceVersion(), request.getPayloadHash());
+        projections.put(request.getOwnerRefId(), position);
+        return position;
+    }
+
+    /** PLT-I17 首版开通请求快照。 */
+    public List<ProvisionRequestBody> provisionRequests() {
+        return new ArrayList<>(provisionRequests);
     }
 
     /** PLT-I17 状态投影：按请求推进位置并返回；未配置 Client 返回 null。 */
@@ -242,5 +273,7 @@ public class OnboardingOwnerMocker implements Clear {
         classificationRequests.clear();
         projections.clear();
         projectionRequests.clear();
+        provisionAccepted = false;
+        provisionRequests.clear();
     }
 }

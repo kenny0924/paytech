@@ -2,6 +2,7 @@ package com.paytech.client.master.domain.checkout;
 
 import java.util.List;
 
+import com.paytech.client.master.api.enums.PartnerRoleCode;
 import com.paytech.client.master.core.dal.dataobject.CheckoutRecords.ConsumerLegalDocument;
 import com.paytech.client.master.core.dal.dataobject.CheckoutRecords.LocalPartner;
 import com.paytech.client.master.core.dal.dataobject.CheckoutRecords.SellerDisclosure;
@@ -18,6 +19,8 @@ public class EntityCandidate {
     EntityEligibility eligibility;
     /** PARTNER 来源的 Local Partner；其他来源或主档缺失时为空。 */
     LocalPartner partner;
+    /** PARTNER 来源 Local Partner 的当前 ACTIVE 角色，按 Code 升序；其他来源为空列表。 */
+    List<PartnerRoleCode> partnerRoles;
     /** 请求国家与 Locale 下该 OE 的全部消费者法律文件。 */
     List<ConsumerLegalDocument> legalDocuments;
     /** 请求国家与 Locale 下该 OE 的全部卖方披露。 */

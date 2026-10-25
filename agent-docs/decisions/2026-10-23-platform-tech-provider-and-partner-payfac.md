@@ -41,7 +41,7 @@
 | # | 决定 |
 |---|---|
 | D1 | **Platform 只做技术服务商**：所有模式下不持 MID、不当卖方、不经手消费者资金，只收技术服务费 |
-| D2 | **我们自己的 PayFac 以 Partner 接入**，是独立于技术公司的另一法律主体，有自己的 Finance Entity 与账本；现有平台自有 OE（如 AE001，来源 `PLATFORM`）迁到该 Partner 名下。Partner 增加“关联关系”属性（`AFFILIATED` 关联主体 / `EXTERNAL` 外部），我们的 PayFac 为 AFFILIATED：其出款审批、争议处理、商户价目维护由平台运营人员在运营控制台代为操作，Partner 门户只读的现有规则对它不构成限制。**外部 PayFac 需要自行操作出款、争议与价目**，与 AGENTS“Partner 只读”规则冲突，列为后续需求（第 10 节 R3），本记录不改该规则 |
+| D2 | **我们自己的 PayFac 以 Partner 接入**，是独立于技术公司的另一法律主体，有自己的 Finance Entity 与账本；现有平台自有 OE（如 AE001，来源 `PLATFORM`）迁到该 Partner 名下。Partner 增加“关联关系”属性（`AFFILIATED` 关联主体 / `EXTERNAL` 外部），我们的 PayFac 为 AFFILIATED：其出款审批、争议处理、商户价目维护由平台运营人员在运营控制台代为操作，Partner 门户只读的现有规则对它不构成限制。**外部 PayFac 需要自行操作出款、争议与价目**，与 AGENTS“Partner 只读”规则冲突，列为后续需求（第 10 节 R3），本记录不改该规则。（2026-10-24 补注：OE 来源 `PLATFORM` 已按用户决定从全系统删除，平台 OE（AE001）迁到我们的 PayFac Partner（`PARTNER` 来源）在需求 [commercial-商业关系快照与真实解析接入](../../requirements/20261023/commercial-商业关系快照与真实解析接入/requirement.md) 中完成（数据直接改写，不保留历史）；双边合同与按角色计费仍属第 2 步；Partner `affiliation`（关联关系）本轮延后，不实现） |
 | D3（修订） | **技术服务费的付款方**：C1 / C2（及其叠加层）由 **PayFac Partner** 付给 Platform；只有 C3 由 **Client** 付。付款方式均为按账单（平台主体应收）或从付款方放在平台的服务费预存款扣（平台主体的预付款负债；避免使用“备付金”一词——该词在支付监管语境中专指支付机构的客户备付金）。预存款只能抵扣平台服务费，不得用于出款或结算，与 PayFac 的保证金（`CLIENT_SECURITY_DEPOSIT`）分开；合规性待法务确认（Q1）。第一轮“Client 在所有模式下付 Platform”的写法作废。**债务人与账簿分开**：技术费的合同债务人是 Partner 的法律主体；资金与账簿所属主体是收单 OE（见 D4、9.2）。**本期显式限制**：① 技术费按 OE 计费并记入该 OE 账本，跨 OE 聚合的月费 / 阶梯不支持（需 Partner 级账簿或分摊规则，另立决定）；② **收费合同的 Partner 法律主体必须与承担费用的 OE 法律主体一致**（OE 的 Party 即 Partner 的 Party），否则“平台应收 A、OE B 应付”之间缺少承担关系；commercial 保存平台价目 / 激活平台合同时按 OE 逐个校验，不一致则拒绝。允许不同主体（Partner 为 OE 代付、集团内往来）需另行明确费用承担、代付与往来规则（第 10 节 R19） |
 | D4（修订） | **Partner 付平台服务费保留**：现有 `PLATFORM_SERVICE_CHARGE`（Partner OE 账本记费用 / 应付、平台主体账本记应收 / 收入）继续使用，计算口径改为 D12 的技术服务费；记账位置仍是收单 OE 账本（Partner 提供多个 OE 时，各 OE 分别记），平台主体账本对 Partner 法律主体记应收；第一轮“Partner 暂不收费、停用该分录”的写法作废 |
 | D5 | **基础模式三种**：C1 Partner OE × MoR、C2 Partner OE × PSP、C3 Direct Merchant（Client 自有 OE × PSP）；**叠加层两种**：C4 推荐方（可叠加于 C1—C3）、C5 子商户 / 分账（**本期只允许叠加于 C2**；C1 + C5 涉及 MoR 主体替 Client 向其供应商付款，待法务确认后再开放，见第 10 节 R7）。Client 自有 OE × MoR 无效。**C2 的基础能力包含 Client 的子商户渠道身份**（收单侧子商户登记、生效状态、交易报送标识），与 C5 的分账收款方是两个角色，不随 C5 延期（第 10 节 R15） |
@@ -104,7 +104,7 @@
 
 | 文档 | 修订内容 |
 |---|---|
-| `AGENTS.md` Fixed architecture boundaries | OE 来源 `PLATFORM / CLIENT / PARTNER` → 去掉 `PLATFORM`（或保留为历史来源）；Partner 来源 OE 的 V5 Scope 与 `PLATFORM_SIGNATORY` 表述；`PLATFORM_SERVICE_CHARGE` 双账本分录保留但计算口径改为技术服务费（D4 修订）；Canonical terminology 中 Platform 的定义 |
+| `AGENTS.md` Fixed architecture boundaries | OE 来源 `PLATFORM / CLIENT / PARTNER` → 去掉 `PLATFORM`（或保留为历史来源）（2026-10-24 补注：OE 来源 `PLATFORM` 已按用户决定从全系统删除，平台 OE（AE001）迁到我们的 PayFac Partner（`PARTNER` 来源）在需求 [commercial-商业关系快照与真实解析接入](../../requirements/20261023/commercial-商业关系快照与真实解析接入/requirement.md) 中完成（数据直接改写，不保留历史）；双边合同与按角色计费仍属第 2 步；Partner `affiliation`（关联关系）本轮延后，不实现；AGENTS 该句已随该需求改为 `CLIENT / PARTNER`）；Partner 来源 OE 的 V5 Scope 与 `PLATFORM_SIGNATORY` 表述；`PLATFORM_SERVICE_CHARGE` 双账本分录保留但计算口径改为技术服务费（D4 修订）；Canonical terminology 中 Platform 的定义 |
 | [commercial 设计第 13 节](../../design-discuss/commercial/design.md) | 模式表改为 C1—C5；去掉“我们是 PayFac（现状）”；`fund_mode` / `pricing_authority` 约束按 D3、D6、D8 调整 |
 | [2026-10-19 六层定价决定](./2026-10-19-commercial-six-layer-product-pricing.md) | `PARTNER_SHARE` 只保留给推荐方；Client 价目归 PayFac 定价；平台价目对象改为 Partner（C1 / C2）与 Client（C3） |
 | Finance / account / ledger 设计（[account-ledger V3 决定](./2026-10-18-account-ledger-subledger-control-account.md)） | 平台主体新增对 Client 应收与 Client 预付款负债；技术公司与 PayFac 两个 Finance Entity |
@@ -188,6 +188,7 @@
 ### 9.5 建议的落地顺序
 
 1. **先立骨架（随前置需求，范围锁定为 U1、U2、U5、U6 四项）**：U1 的角色、关联关系与收单资质字段、U2 资格查询、U5 快照（角色绑定行，本期只产出 C1 / C2 角色，其余组合拒绝）、U6 去 Mock 冻结快照。**不迁移平台 OE，不做 U3 / U4 / U9 / U10**；快照带 `relationship_model_version=1` 并由开关 `commercial.relationship-snapshot.enabled` 控制，默认关闭（或仅非生产环境开启），第一步继续填充旧消费者依赖的字段（`entity_no`、定价版本等），下游行为不变。
+   > 2026-10-24 补注：OE 来源 `PLATFORM` 已按用户决定从全系统删除，平台 OE（AE001）迁到我们的 PayFac Partner（`PARTNER` 来源）在需求 [commercial-商业关系快照与真实解析接入](../../requirements/20261023/commercial-商业关系快照与真实解析接入/requirement.md) 中完成（数据直接改写，不保留历史）；双边合同与按角色计费仍属第 2 步；Partner `affiliation`（关联关系）本轮延后，不实现。因此第 1 步实际包含平台 OE 迁移，第 2 步不再重复该迁移，但其余启用门禁不变。
 2. **C1 / C2 跑通**：U3 / U4 双边价目与角色化组件（平台价目改为对 Partner）、U7 子商户绑定与报送、U9 / U10 按角色生成与记账、U8 开票主体。**全部验证通过后**，才执行平台 OE → 我们的 PayFac Partner 的迁移（Q4 方案经用户确认）并打开开关。
 
 **启用门禁（新模式生效前必须全部满足）：** ① 双边合同与价目（U3 / U4）可保存、激活；② C2 子商户绑定与渠道报送（U7）至少在一个真实渠道验证；③ billing 按角色生成费用行且旧 `PARTNER_SHARE` / `PLATFORM_SERVICE_CHARGE` 口径已切换（U9）；④ 账务（U10）与开票（U8）链路验证；⑤ 平台 OE 迁移方案（Q4）确认并演练；⑥ 开关打开前 acquiring 冻结的快照只作记录、不改变下游计算。否则会出现新关系已生效、下游仍按旧费用承担方计算的错账（第 10 节 R18）。

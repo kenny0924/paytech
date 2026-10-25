@@ -81,7 +81,7 @@ Commerce 不建设主动履约。Chargeback 后由 Risk 将 Dispute Case 置为 
 
 CreateOrder 把 `command_idempotency.operation_context_time=2026-08-23T08:00:00.000000Z` 冻结为 CCT-I13 `context_as_of_time`，并原样写入 `order_context.commercial_context_time`；恢复重放不得重新取 `now()`。Commerce 保存 CCT V5 Bundle 的 `H_CCT_V5`、Assignment、Scope、法律与 Seller 引用。PARTNER 来源四项成组非空：`local_partner_id`、`partner_share_scope_id`、`platform_service_charge_scope_id`、`platform_service_party_id`；非 PARTNER 来源四项成组为空。示例中的 Platform Service Charge Scope 是 `PLATFORM_SERVICE_CHARGE` 条款，Platform Service Party 来自 Partner Agreement 唯一 `PLATFORM_SIGNATORY`。Finance 后续调用 `GetImmutableCommercialTermScope(720000000000000403,720000000000000302,2026-08-23T08:00:00.000000Z)`；`H_CCT_V5` 是 Commerce 审计关联摘要，不是单 Scope 校验参数，也不复制到 Finance Transaction Economics Header。Finance Tax 使用 `finance_tax_snapshot_hash=H_FINANCE_TAX`，完整税务证据通过 `GetImmutableTaxSnapshot(740000000000000101, H_FINANCE_TAX)` 获取。
 
-边界样例：非 Partner 成功场景（`PLATFORM` 或 `CLIENT` 来源）要求上述四项全部为 `NULL`；PARTNER 来源只要其中任一项为空，或者非 PARTNER 来源错误携带任一项，均按“缺一字段拒绝创建 Order”失败关闭。COM-I04 只回传已经冻结的 Scope、Party 和 V5 Hash；Commerce 不保存 CCT Term Component 或 Finance Entity 映射，也不计算平台服务费金额。
+边界样例：非 Partner 成功场景（`CLIENT` 来源）要求上述四项全部为 `NULL`；PARTNER 来源只要其中任一项为空，或者非 PARTNER 来源错误携带任一项，均按“缺一字段拒绝创建 Order”失败关闭。COM-I04 只回传已经冻结的 Scope、Party 和 V5 Hash；Commerce 不保存 CCT Term Component 或 Finance Entity 映射，也不计算平台服务费金额。
 
 ### 3.1 Consumer Context 完整行
 

@@ -105,6 +105,27 @@ public class ClientMasterRepositoryConfiguration {
                 new SqlSessionTemplate(factory).getMapper(ClientStoredCardSettingMapper.class));
     }
 
+    /** 装配 t_partner_role 仓储。 */
+    @Bean
+    public PartnerRoleRepository partnerRoleRepository(SqlSessionFactory factory) {
+        return new PartnerRoleRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(PartnerRoleMapper.class));
+    }
+
+    /** 装配 t_party_role 仓储。 */
+    @Bean
+    public PartyRoleRepository partyRoleRepository(SqlSessionFactory factory) {
+        return new PartyRoleRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(PartyRoleMapper.class));
+    }
+
+    /** 装配 t_business_change_version 仓储。 */
+    @Bean
+    public BusinessChangeVersionRepository businessChangeVersionRepository(SqlSessionFactory factory) {
+        return new BusinessChangeVersionRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(BusinessChangeVersionMapper.class));
+    }
+
     /** 装配 t_business_change_record 仓储。 */
     @Bean
     public BusinessChangeRecordRepository businessChangeRecordRepository(SqlSessionFactory factory) {

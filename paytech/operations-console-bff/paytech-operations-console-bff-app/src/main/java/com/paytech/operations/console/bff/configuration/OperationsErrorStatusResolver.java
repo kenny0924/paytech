@@ -39,6 +39,7 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case UNSUPPORTED_MEDIA_TYPE -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
                 case DEPENDENCY_TIMEOUT -> HttpStatus.GATEWAY_TIMEOUT;
                 case DEPENDENCY_UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
+                case QUALIFICATION_SUBJECT_TERMINATED -> HttpStatus.UNPROCESSABLE_CONTENT;
             };
         }
         if (errorCode instanceof OperationsErrorCode platformCode) {
@@ -102,6 +103,24 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
             return switch (reconciliation) {
                 case BANK_STATEMENT_NOT_FOUND, BANK_STATEMENT_LINE_NOT_FOUND -> HttpStatus.NOT_FOUND;
                 case CLEARING_ACCOUNT_NOT_RESOLVED -> defaultStatus;
+            };
+        }
+        // 主档维护与资格登记（2026-10-23 商业关系快照）：Owner 404 / 409 / 422 原样到达浏览器。
+        if (errorCode instanceof com.paytech.client.master.api.enums.EntityAdminErrorCode entityAdmin) {
+            return switch (entityAdmin) {
+                case OPERATING_ENTITY_NOT_FOUND, LOCAL_PARTNER_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case ENTITY_CHANGE_VERSION_CONFLICT -> HttpStatus.CONFLICT;
+                case ENTITY_ATTRIBUTE_INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
+            };
+        }
+        if (errorCode == com.paytech.client.master.api.enums.CheckoutCandidateErrorCode.CLIENT_NOT_FOUND) {
+            return HttpStatus.NOT_FOUND;
+        }
+        if (errorCode instanceof com.paytech.compliance.api.enums.QualificationErrorCode qualification) {
+            return switch (qualification) {
+                case QUALIFICATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case QUALIFICATION_CHANGED, QUALIFICATION_NOT_ACTIVE -> HttpStatus.CONFLICT;
+                case QUALIFICATION_INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
             };
         }
         if (errorCode instanceof com.paytech.client.contract.api.enums.ClientDraftErrorCode cct) {

@@ -80,7 +80,7 @@ class CheckoutRiskAssessmentApiAutoTest extends AbstractCheckoutRiskApiTest {
             () -> assertEquals(assessed.evaluationId(), ((Number)snapshot.get("evaluation_id")).longValue()),
             () -> assertEquals(800001L, ((Number)snapshot.get("client_id")).longValue()),
             () -> assertEquals(request.getInputs().get("entityNo"), snapshot.get("entity_no")),
-            () -> assertEquals(CheckoutRiskRequestBuilder.PLATFORM_SOURCE, snapshot.get("entity_source_type")),
+            () -> assertEquals(CheckoutRiskRequestBuilder.CLIENT_SOURCE, snapshot.get("entity_source_type")),
             () -> assertNull(snapshot.get("local_partner_id")),
             () -> assertEquals("AE", snapshot.get("consumer_country_code")),
             () -> assertEquals("USD", snapshot.get("currency")),
@@ -133,7 +133,7 @@ class CheckoutRiskAssessmentApiAutoTest extends AbstractCheckoutRiskApiTest {
         assess(CheckoutRiskRequestBuilder.template().lineCount("50").build()).assertResult(DecisionValue.ALLOW.getCode());
     }
 
-    /** Local Partner：被拦截的拒绝，其他放行并冻结到快照；平台来源没有 Local Partner，比较不成立。 */
+    /** Local Partner：被拦截的拒绝，其他放行并冻结到快照；Client 来源没有 Local Partner，比较不成立。 */
     @Test
     void test_edgeCase_localPartner() {
         EvaluateDecisionRequestBody partner = CheckoutRiskRequestBuilder.template().partner("300001").build();

@@ -33,6 +33,7 @@ public class CheckoutCandidateQueryServiceImpl implements CheckoutCandidateQuery
     private final TransactionTemplate reads;
 
     private final ClientRepository clientRepository;
+    private final PartnerRoleRepository partnerRoleRepository;
     private final LocalPartnerRepository localPartnerRepository;
     private final PartyProfileRepository partyProfileRepository;
     private final OperatingEntityRepository operatingEntityRepository;
@@ -81,6 +82,7 @@ public class CheckoutCandidateQueryServiceImpl implements CheckoutCandidateQuery
             .scopes(operatingEntityScopeRepository.findForCheckout(clientId))
             .scopeApplications(operatingEntityApplicationRepository.findForCheckout(clientId))
             .partners(localPartnerRepository.findForCheckout(clientId))
+            .partnerRoles(partnerRoleRepository.findActiveForCheckout(clientId))
             .partyProfiles(partyProfileRepository.findForCheckout(clientId))
             .legalDocuments(consumerLegalDocumentRepository.findForCheckout(clientId))
             .sellerDisclosures(sellerDisclosureRepository.findForCheckout(clientId))

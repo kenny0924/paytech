@@ -16,12 +16,15 @@ import org.springframework.test.context.ContextConfiguration;
 
 import com.paytech.compliance.ComplianceApplication;
 import com.paytech.compliance.test.checker.ClientReviewStoreChecker;
+import com.paytech.compliance.test.checker.QualificationStoreChecker;
 import com.paytech.compliance.test.clear.ComplianceDataCleaner;
 import com.paytech.compliance.test.infrastructure.ComplianceDatabasePrecondition;
 import com.paytech.compliance.test.mapper.ClientReviewTestMapper;
 import com.paytech.compliance.test.mapper.MaterialProgramTestMapper;
+import com.paytech.compliance.test.mapper.QualificationTestMapper;
 import com.paytech.compliance.test.mocker.ClientReviewMocker;
 import com.paytech.compliance.test.mocker.MaterialProgramMocker;
+import com.paytech.compliance.test.mocker.QualificationMocker;
 import com.paytech.compliance.test.probe.ClientReviewResultProbe;
 import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
 import com.paytech.foundation.messaging.ordering.AggregateKeySequencer;
@@ -33,7 +36,7 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * compliance 服务级入口测试基类（由原 Risk MockTestBase 拆出，design/10 §2.4）
  * <li>复用正式启动类 ComplianceApplication 与生产组件扫描，只附加 mock Profile 配置；本地 mor_compliance 未就绪时在上下文启动前明确失败。</li>
- * <li>只导入 compliance 的 Mocker / TestMapper / Checker 与 ClientReviewResultProbe。</li>
+ * <li>只导入 compliance 的 Mocker / TestMapper / Checker（入驻审核与角色资格）与 ClientReviewResultProbe。</li>
  * <li>全局 BeforeEach：前例异步已停止且 mor_compliance 为空基线。全局 AfterEach：等待补偿任务（CLIENT_REVIEW_RESULT 双写发布）处理停止后
  * 再交给 Foundation TestBase 执行全部 Clear。本服务没有出站 HTTP，无外部 DTO Mock 需要做意外调用检查。</li>
  */
@@ -42,7 +45,8 @@ import tools.jackson.databind.ObjectMapper;
 @ContextConfiguration(initializers = ComplianceDatabasePrecondition.class)
 @SpringBootTest(classes = ComplianceApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import({ComplianceDataCleaner.class, MaterialProgramTestMapper.class, MaterialProgramMocker.class,
-    ClientReviewTestMapper.class, ClientReviewMocker.class, ClientReviewStoreChecker.class, ClientReviewResultProbe.class})
+    ClientReviewTestMapper.class, ClientReviewMocker.class, ClientReviewStoreChecker.class, ClientReviewResultProbe.class,
+    QualificationTestMapper.class, QualificationMocker.class, QualificationStoreChecker.class})
 public abstract class ComplianceMockTestBase extends TestBase {
     /** 补偿处理停止的最长等待。 */
     private static final long ASYNC_STOP_MILLIS = 10_000;

@@ -1,0 +1,14 @@
+{
+  "method": "GET",
+  "path": "/api/operations/qualification-admin/v1/subjects?roleType=CLIENT&subjectRef=900000000001389999",
+  "request": null,
+  "status": 404,
+  "response": {
+    "type": "about:blank",
+    "title": "Not Found",
+    "detail": "Client 不存在或无权访问",
+    "code": "CLIENT_NOT_FOUND",
+    "requestId": "ff47065c-7c22-443c-b55d-ddb7d9e425cb",
+    "timestamp": "2026-10-25T06:01:32.701907Z"
+  }
+}

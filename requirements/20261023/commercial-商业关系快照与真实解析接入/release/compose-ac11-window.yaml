@@ -1,0 +1,12 @@
+# 商业关系快照与真实解析接入：AC-11 验收窗口的开关覆盖（D-7，待用户确认）。只改两个开关，与 compose-candidate.yaml 叠加使用，
+# 不单独使用：compose.sh -f <abs>/compose-candidate.yaml -f <abs>/compose-ac11-window.yaml up -d --no-deps --no-build --pull never \
+#   --wait --wait-timeout 180 <service>。compose 多文件合并时 environment 按键覆盖，其余键与镜像取自候选文件。
+# 窗口结束：只用 compose-candidate.yaml 再 up 同一服务，回到 MOCK / false。
+# 用法见 release.md 第 6 节第 ⑩—⑫ 步：acquiring 切 REAL（快照不生效，版本 0）→ commercial 打开快照（版本 1）→ 两者恢复。
+services:
+  acquiring-service:
+    environment:
+      ACQUIRING_COMMERCIAL_RESOLUTION_MODE: REAL
+  commercial-service:
+    environment:
+      COMMERCIAL_RELATIONSHIP_SNAPSHOT_ENABLED: "true"

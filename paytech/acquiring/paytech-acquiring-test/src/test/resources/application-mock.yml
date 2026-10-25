@@ -36,6 +36,8 @@ spring:
               - uri: "${acquiring.test.external.base-url}"
             risk-decision-service:
               - uri: "${acquiring.test.external.base-url}"
+            commercial-service:
+              - uri: "${acquiring.test.external.base-url}"
             platform-support-service:
               - uri: "${acquiring.test.external.base-url}"
     loadbalancer:
@@ -66,6 +68,12 @@ spring:
       # 读超时比生产 1s 短，使超时重试用例更快结束。
       risk-decision-service:
         base-url: lb://risk-decision-service
+        connect-timeout: 2s
+        read-timeout: 500ms
+        redirects: dont-follow
+      # 读超时比生产 3s 短，使超时用例更快结束。
+      commercial-service:
+        base-url: lb://commercial-service
         connect-timeout: 2s
         read-timeout: 500ms
         redirects: dont-follow
@@ -222,6 +230,10 @@ internal-auth:
 
 # acquiring 自有业务配置，字段完整对应自有 Properties 类；这些值修改后均需重启。
 acquiring:
+  commercial:
+    # Checkout 商业解析模式：MOCK（生产缺省）使用固定 AE001 + PARTNER Mock；REAL 经真实客户端调用 commercial-service。
+    # 测试默认 REAL，经测试 HTTP Mock（MockCheckoutContextApi）覆盖真实解析链路；MOCK 行为由单独的测试类以属性覆盖验证。修改后需重启。
+    resolution-mode: REAL
   event:
     # OrderPaymentSucceeded 信封身份；sourceService 默认 acquiring，须与 messaging.producer.service 一致。
     source-service: acquiring

@@ -42,7 +42,7 @@ class CreateCheckoutSuccessTest extends AbstractCreateCheckoutApiTest {
         checkoutChecker.assertRiskAssessment(clientId(), CLIENT_ORDER_ID, CheckoutRiskMocker.DEFAULT_EVALUATION_ID);
         preparationMocker.assertCalls(clientId(), 1);
         riskMocker.assertCalls(1);
-        assertEquals(List.of(false), preparationMocker.transactionStates());
+        assertEquals(List.of(false), cctTransactions.transactionStates());
     }
 
     /** 显式期限的两个精确边界均允许，不能受数据库时间精度影响。 */

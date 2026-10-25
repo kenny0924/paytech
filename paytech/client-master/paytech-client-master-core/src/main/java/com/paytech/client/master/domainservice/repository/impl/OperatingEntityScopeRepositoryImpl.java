@@ -18,4 +18,10 @@ public class OperatingEntityScopeRepositoryImpl implements OperatingEntityScopeR
     public List<OperatingEntityScope> findForCheckout(long clientId) {
         return List.copyOf(mapper.findForCheckout(clientId));
     }
+
+    /** 读取一个 OE 的全部准入范围。 */
+    @Override
+    public List<OperatingEntityScope> findByEntityNo(String entityNo) {
+        return List.copyOf(mapper.findByEntityNo(entityNo));
+    }
 }

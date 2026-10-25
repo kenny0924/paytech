@@ -1,0 +1,85 @@
+{
+  "method": "GET",
+  "path": "/api/operations/qualification-admin/v1/qualifications?page=1&size=20",
+  "request": null,
+  "status": 200,
+  "response": {
+    "items": [
+      {
+        "qualification": {
+          "currentDecisionId": "239991755032776704",
+          "decisionSource": "MANUAL",
+          "effectiveStatus": "ELIGIBLE",
+          "qualificationId": "239991753833205761",
+          "qualificationType": "ORGANIZATION_KYB",
+          "reviewStatus": "NOT_REQUIRED",
+          "roleId": "900000000001380201",
+          "roleType": "CLIENT",
+          "status": "APPROVED",
+          "updatedAt": "2026-10-25T06:01:33.231229Z",
+          "validFrom": "2026-10-01T00:00:00.000000Z",
+          "validTo": null,
+          "version": "3"
+        },
+        "subjectName": "Relsnap Synthetic Client PSP LLC"
+      },
+      {
+        "qualification": {
+          "currentDecisionId": "239990872899342336",
+          "decisionSource": "MANUAL",
+          "effectiveStatus": "ELIGIBLE",
+          "qualificationId": "239990535295619072",
+          "qualificationType": "ENTITY_UNDERWRITING",
+          "reviewStatus": "NOT_REQUIRED",
+          "roleId": "AE001",
+          "roleType": "OPERATING_ENTITY",
+          "status": "APPROVED",
+          "updatedAt": "2026-10-25T05:58:02.914787Z",
+          "validFrom": "2026-10-01T00:00:00.000000Z",
+          "validTo": null,
+          "version": "3"
+        },
+        "subjectName": "Relsnap Synthetic AE001 FZ-LLC"
+      },
+      {
+        "qualification": {
+          "currentDecisionId": "239990536570687488",
+          "decisionSource": "MANUAL",
+          "effectiveStatus": "ELIGIBLE",
+          "qualificationId": "239990536570687489",
+          "qualificationType": "ORGANIZATION_KYB",
+          "reviewStatus": "NOT_REQUIRED",
+          "roleId": "237161687952666625",
+          "roleType": "CLIENT",
+          "status": "APPROVED",
+          "updatedAt": "2026-10-25T05:56:42.727332Z",
+          "validFrom": "2026-10-01T00:00:00.000000Z",
+          "validTo": null,
+          "version": "1"
+        },
+        "subjectName": "Relsnap Synthetic Client MOR LLC"
+      },
+      {
+        "qualification": {
+          "currentDecisionId": "239990535484362752",
+          "decisionSource": "MANUAL",
+          "effectiveStatus": "ELIGIBLE",
+          "qualificationId": "239990535484362753",
+          "qualificationType": "PARTNER_DUE_DILIGENCE",
+          "reviewStatus": "NOT_REQUIRED",
+          "roleId": "900000000001370001",
+          "roleType": "LOCAL_PARTNER",
+          "status": "APPROVED",
+          "updatedAt": "2026-10-25T05:56:42.468881Z",
+          "validFrom": "2026-10-01T00:00:00.000000Z",
+          "validTo": null,
+          "version": "1"
+        },
+        "subjectName": "Relsnap Synthetic AE001 FZ-LLC"
+      }
+    ],
+    "page": 1,
+    "size": 20,
+    "total": 4
+  }
+}

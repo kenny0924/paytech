@@ -309,7 +309,7 @@ public class ClientReviewStoreChecker {
             DecisionRow row = decisions.stream().filter(d -> d.caseId() == item.caseId()).findFirst().orElseThrow();
             CaseRow caseRow = cases.get(item.caseId());
             assertAll("资格决定 " + item.caseId(), () -> assertNull(row.decisionVersion()),
-                () -> assertEquals(caseRow.roleType(), row.roleType()), () -> assertEquals(caseRow.roleId(), row.roleId()),
+                () -> assertEquals(caseRow.roleType(), row.roleType()), () -> assertEquals(Long.toString(caseRow.roleId()), row.roleId()),
                 () -> assertEquals(item.qualificationType().getCode(), row.qualificationType()),
                 () -> assertEquals("REVIEWER", row.decisionSource()),
                 () -> assertEquals(decision.action.getDecisionOutcome(), row.outcome()),

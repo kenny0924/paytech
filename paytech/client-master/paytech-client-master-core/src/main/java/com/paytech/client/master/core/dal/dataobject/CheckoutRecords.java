@@ -1,6 +1,7 @@
 package com.paytech.client.master.core.dal.dataobject;
 
 import java.time.Instant;
+import com.paytech.client.master.api.enums.AcquiringQualification;
 import com.paytech.client.master.domain.enums.*;
 
 /** 本库查询的最小持久化投影，不能作为 HTTP 或跨模块 DTO。 */
@@ -75,7 +76,9 @@ public final class CheckoutRecords {
             /** 自然人或机构法律身份根的内部唯一标识。 */
             Long partyId,
             /** 当前业务记录在其所属聚合生命周期中的状态代码。允许值：PENDING、ACTIVE、SUSPENDED、CLOSED。 */
-            OperatingEntityStatus status) {
+            OperatingEntityStatus status,
+            /** 收单资质档位。允许值：MERCHANT、MERCHANT_RESALE_APPROVED、PAYFAC。 */
+            AcquiringQualification acquiringQualification) {
     }
 
     /** 经营主体来源关系的只读字段。 */
@@ -84,7 +87,7 @@ public final class CheckoutRecords {
             Long sourceRelationId,
             /** CCT唯一不可变OE身份，CHAR(5)，创建时经营国家二位代码加001–999，如AE001；编号不参与路由、不复用。 */
             String entityNo,
-            /** 该 Operating Entity 来源关系对应的来源主体类型。允许值：PLATFORM、CLIENT、PARTNER。 */
+            /** 该 Operating Entity 来源关系对应的来源主体类型。允许值：CLIENT、PARTNER。 */
             EntitySourceRelationSourceType sourceType,
             /** 提交并经平台审核关联 Operating Entity 的 Organization Client 标识。 */
             Long sourceClientId,
@@ -214,7 +217,19 @@ public final class CheckoutRecords {
             /** 法律事实通过批准的 UTC 微秒精度时刻。 */
             Instant approvedTime,
             /** 法律事实正式向消费者发布的 UTC 微秒精度时刻。 */
-            Instant publishedTime) {
+            Instant publishedTime,
+            /** 批准向 Consumer 展示的 Operating Entity 法定名称。 */
+            String publicLegalName,
+            /** 批准向 Consumer 展示的 Operating Entity 注册编号。 */
+            String publicRegistrationNumber,
+            /** 按国家披露规则可选展示的卖方税务登记编号。 */
+            String publicTaxRegistrationNumber,
+            /** 按司法辖区规则批准向 Consumer 披露的卖方地址文本。 */
+            String publicAddressText,
+            /** 向消费者公开展示的卖方支持邮箱。 */
+            String publicSupportEmail,
+            /** 向消费者公开展示的卖方支持电话。 */
+            String publicSupportPhone) {
     }
 
     /** 业务行变更历史主档的只读字段。 */

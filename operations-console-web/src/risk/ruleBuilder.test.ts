@@ -282,7 +282,7 @@ const fieldVectors: [string, readonly string[], readonly unknown[]][] = [
   ['industry_code', ['A', 'RETAIL_2', 'A'.repeat(64)], ['', '_A', '1A', 'retail', 'HAS-SPACE', 'A'.repeat(65), 'A\r']],
   ['mcc_code', ['0000', '0123', '9999'], ['', '123', '12345', '12A4', '１２３４', '1234\n', 1234]],
   ['currency', ['USD', 'AED'], ['', 'US', 'USDD', 'usd', 'US1', 'USD\n']],
-  ['entity_source_type', ['PLATFORM', 'CLIENT', 'PARTNER'], ['', 'platform', 'OTHER', 'CLIENT\n', ' CLIENT']],
+  ['entity_source_type', ['CLIENT', 'PARTNER'], ['', 'PLATFORM', 'platform', 'OTHER', 'CLIENT\n', ' CLIENT']],
   ['locale', ['en', 'en-US', 'ar-AE'], ['', ' ', 'en_US', 'en,ar', 'en ar', ' en', 'en\n', ['en'], ['en', 'ar'], {}, 'not_a_locale']],
 ];
 for (const [fieldCode, valid, invalid] of fieldVectors) test(`${fieldCode} validates widget grammar on both field sides`, () => {

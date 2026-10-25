@@ -9,7 +9,9 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Predicate;
 
+import com.paytech.client.master.api.enums.PartnerRoleCode;
 import com.paytech.client.master.core.dal.dataobject.CheckoutRecords.*;
+import com.paytech.client.master.core.dal.dataobject.PartnerRole;
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.FailException;
 
@@ -46,6 +48,8 @@ public final class CheckoutEligibilityContext {
     private final List<OperatingEntityApplication> scopeApplications;
     /** 同一读事务取得的来源合作方原对象。 */
     private final List<LocalPartner> partners;
+    /** 同一读事务取得的来源合作方 ACTIVE 角色。 */
+    private final List<PartnerRole> partnerRoles;
     /** 同一读事务取得的 Client 主体资料原对象。 */
     private final List<PartyProfile> partyProfiles;
     /** 同一读事务取得的消费者法律文件原对象。 */
@@ -63,8 +67,8 @@ public final class CheckoutEligibilityContext {
         List<ClientBusinessProfile> businessProfiles, List<ClientBusinessClassification> classifications,
         List<ClientEntityAffiliation> affiliations, List<OperatingEntity> entities, List<EntitySourceRelation> sources,
         List<OperatingEntityScope> scopes, List<OperatingEntityApplication> scopeApplications,
-        List<LocalPartner> partners, List<PartyProfile> partyProfiles, List<ConsumerLegalDocument> legalDocuments,
-        List<SellerDisclosure> sellerDisclosures, List<BusinessChangeRecord> roots, boolean storedCardEnabled) {
+        List<LocalPartner> partners, List<PartnerRole> partnerRoles, List<PartyProfile> partyProfiles,
+        List<ConsumerLegalDocument> legalDocuments, List<SellerDisclosure> sellerDisclosures, List<BusinessChangeRecord> roots, boolean storedCardEnabled) {
         this.query = Objects.requireNonNull(query);
         if (client == null || client.clientId() != query.clientId()) {
             throw new FailException(CLIENT_NOT_FOUND);
@@ -78,6 +82,7 @@ public final class CheckoutEligibilityContext {
         this.scopes = List.copyOf(scopes);
         this.scopeApplications = List.copyOf(scopeApplications);
         this.partners = List.copyOf(partners);
+        this.partnerRoles = List.copyOf(partnerRoles);
         this.partyProfiles = List.copyOf(partyProfiles);
         this.legalDocuments = List.copyOf(legalDocuments);
         this.sellerDisclosures = List.copyOf(sellerDisclosures);
@@ -266,13 +271,10 @@ public final class CheckoutEligibilityContext {
         return new EntityEligibility(affiliation, entity, source, scope);
     }
 
-    /** 来源关系的形态必须与来源类型一致。 */
+    /** 来源关系的形态必须与来源类型一致；来源只认 CLIENT / PARTNER，其他取值失败关闭为配置冲突。 */
     private void validateSource(EntitySourceRelation source) {
         require(Objects.equals(source.activeSourceSlot(), 1));
-        if (code(source.sourceType(), "PLATFORM")) {
-            require(source.sourceClientId() == null && source.sourcePartnerId() == null
-                && source.clientSourceBasis() == null);
-        } else if (code(source.sourceType(), "CLIENT")) {
+        if (code(source.sourceType(), "CLIENT")) {
             require(source.sourceClientId() != null && source.sourcePartnerId() == null
                 && source.clientSourceBasis() != null);
         } else {
@@ -287,9 +289,12 @@ public final class CheckoutEligibilityContext {
     private EntityCandidate candidate(ClientBusinessClassification classification, EntityEligibility entity,
         Set<BusinessChangeRecord> revisions) {
         LocalPartner partner = null;
+        List<PartnerRoleCode> roles = List.of();
         if (code(entity.source().sourceType(), "PARTNER")) {
             long partnerId = entity.source().sourcePartnerId();
             partner = unique(this.partners, p -> p.localPartnerId() == partnerId);
+            roles = partnerRoles.stream().filter(r -> r.getLocalPartnerId() == partnerId).map(PartnerRole::getRoleCode)
+                .sorted(Comparator.comparing(PartnerRoleCode::getCode)).toList();
         }
         String entityNo = entity.entity().entityNo();
         List<ConsumerLegalDocument> documents = legalDocuments.stream().filter(d -> d.entityNo().equals(entityNo)
@@ -299,8 +304,8 @@ public final class CheckoutEligibilityContext {
         BusinessChangeRecord clientRoot = root(revisions, "CLIENT", client.clientId().toString());
         BusinessChangeRecord entityRoot = root(revisions, "OPERATING_ENTITY", entityNo);
         String digest = digest(Arrays.asList(client, classification, entity.affiliation(), entity.entity(),
-            entity.source(), entity.scope(), partner, documents, sellers, clientRoot, entityRoot));
-        return new EntityCandidate(entity, partner, documents, sellers, digest);
+            entity.source(), entity.scope(), partner, documents, sellers, clientRoot, entityRoot, roles));
+        return new EntityCandidate(entity, partner, roles, documents, sellers, digest);
     }
 
     /** 该 Client 全部 Affiliation 的 OE 编号，替代商务查询原来的 Affiliation 子查询。 */

@@ -314,7 +314,7 @@ test("Partner Console is read-only for transactions and can request only share p
   assert.match(content, /提交 Partner 出款申请/);
   assert.match(content, /仅限已形成的 Partner 可用分润余额/);
   assert.match(content, /禁止操作订单、支付、退款、路由和账本/);
-  assert.match(content, /平台自有 Operating Entity 不创建虚假 Partner 或 Client 来源关系/);
+  assert.match(content, /平台自有 Operating Entity 只挂在我们的 PayFac Partner 名下，不创建虚假 Client 来源关系/);
 });
 
 test("rendered consoles expose unified CUSTOMER authentication without extending it to Consumers", async () => {
@@ -333,7 +333,8 @@ test("rendered consoles expose unified CUSTOMER authentication without extending
 test("Operating Entity sources and the two-stage routing boundary are explicit", async () => {
   const content = await renderPage();
 
-  assert.match(content, /PLATFORM、CLIENT、PARTNER/);
+  assert.match(content, /Operating Entity 来源统一使用 CLIENT、PARTNER/);
+  assert.match(content, /平台自有 Operating Entity 由我们的 PayFac Partner 以 PARTNER 来源提供/);
   assert.match(content, /Organization Client 可申请使用自身或经平台审核关联的 Operating Entity/);
   assert.match(content, /当前不结构化保存多公司多层持股路径/);
   assert.match(content, /Client 和 Local Partner 均不可在交易请求中指定 Operating Entity 或 MID/);

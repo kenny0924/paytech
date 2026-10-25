@@ -5,6 +5,7 @@ import java.time.Duration;
 
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerRequestFactory;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestClient;
 
 import com.paytech.client.master.api.checkout.ClientMasterCheckoutApi;
 import com.paytech.client.master.api.enums.CheckoutCandidateErrorCode;
+import com.paytech.commercial.core.configuration.CommercialRelationshipSnapshotProperties;
 import com.paytech.commercial.domainservice.repository.*;
 import com.paytech.commercial.domainservice.service.AgreementPartyQueryService;
 import com.paytech.commercial.domainservice.service.CheckoutQueryService;
@@ -26,18 +28,24 @@ import com.paytech.commercial.domainservice.service.impl.CheckoutQueryServiceImp
 import com.paytech.commercial.integration.CheckoutQualificationClient;
 import com.paytech.commercial.integration.ClientMasterCheckoutClient;
 import com.paytech.commercial.integration.impl.ClientMasterCheckoutClientImpl;
-import com.paytech.commercial.integration.impl.UnavailableCheckoutQualificationClient;
+import com.paytech.commercial.integration.impl.ComplianceQualificationClientImpl;
 import com.paytech.commercial.service.processor.CheckoutResolutionProcessor;
+import com.paytech.compliance.api.QualificationEvaluationApi;
+import com.paytech.compliance.api.enums.QualificationErrorCode;
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 
-/** 两段式 Checkout 解析与合同参与方查询的装配：本库只读 Service、client-master 客户端、Risk 资格端口与 Processor。 */
+/** 两段式 Checkout 解析与合同参与方查询的装配：本库只读 Service、client-master 客户端、compliance 资格客户端与 Processor。 */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "spring.datasource", name = "url")
+@EnableConfigurationProperties(CommercialRelationshipSnapshotProperties.class)
 public class CheckoutResolutionConfiguration {
     /** client-master 服务发现名。 */
     static final String CLIENT_MASTER = "client-master-service";
+
+    /** compliance 服务发现名。 */
+    static final String COMPLIANCE = "compliance-service";
 
     /** 多表加载共用同一个有界的只读事务（REPEATABLE READ，10 秒），仓储不自行创建事务。 */
     @Bean
@@ -87,17 +95,25 @@ public class CheckoutResolutionConfiguration {
         return new ClientMasterCheckoutClientImpl(api);
     }
 
-    /** 真实 Risk 合同尚未提供时保持不可用，不生成资格成功事实。 */
+    /**
+     * compliance 角色资格判定客户端：服务发现名 compliance-service，连接 2 秒、读取 3 秒，禁止重定向，不重试。
+     * <li>登记 compliance 的资格错误码作为合同错误；适配器对任何失败一律失败关闭为 OWNER_UNAVAILABLE。</li>
+     */
     @Bean
-    public CheckoutQualificationClient checkoutQualification() {
-        return new UnavailableCheckoutQualificationClient();
+    public CheckoutQualificationClient checkoutQualification(ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        var api = HttpServiceClientFactory.create(discoveryTransport(discovery, COMPLIANCE),
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(262144), tokens,
+                COMPLIANCE),
+            QualificationErrorCode.values()).createClient(QualificationEvaluationApi.class);
+        return new ComplianceQualificationClientImpl(api);
     }
 
-    /** 装配候选、本库快照、事务外资格检查与复核的入口。 */
+    /** 装配候选、本库快照、事务外资格检查与复核的入口；快照开关决定响应的生效模型版本。 */
     @Bean
     public CheckoutResolutionProcessor checkoutResolution(CheckoutQueryService service, ClientMasterCheckoutClient clientMaster,
-        CheckoutQualificationClient qualification) {
-        return new CheckoutResolutionProcessor(service, clientMaster, qualification);
+        CheckoutQualificationClient qualification, CommercialRelationshipSnapshotProperties relationshipSnapshot) {
+        return new CheckoutResolutionProcessor(service, clientMaster, qualification, relationshipSnapshot);
     }
 
     /**

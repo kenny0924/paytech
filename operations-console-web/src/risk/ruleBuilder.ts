@@ -90,7 +90,7 @@ export function canonicalFieldValue(fieldCode: string, value: string): string {
       if (!matches(value, /^[A-Z]{3}$/)) return fail(t('ruleBuilder.currencyFormat'));
       break;
     case 'ENTITY_SOURCE':
-      if (!['PLATFORM', 'CLIENT', 'PARTNER'].includes(value)) return fail(t('ruleBuilder.entitySource'));
+      if (!['CLIENT', 'PARTNER'].includes(value)) return fail(t('ruleBuilder.entitySource'));
       break;
     case 'LOCALE': {
       const message = t('ruleBuilder.localeFormat');

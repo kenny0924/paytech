@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.SettlementControlMapper">
+    <select id="findBlockedRoleIds" useCache="false" resultType="long">
+        SELECT DISTINCT role_id FROM t_settlement_control
+        WHERE role_type = #{roleType}
+            AND role_id IN <foreach collection="roleIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+            AND control_type = 'SETTLEMENT_BLOCK' AND status = 'ACTIVE'
+            AND effective_from &lt;= #{now} AND (effective_to IS NULL OR effective_to &gt; #{now})
+    </select>
+</mapper>

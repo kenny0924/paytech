@@ -33,7 +33,7 @@ public class RiskDecisionDataCleaner implements Clear {
             List.of(2400041L, 2400042L, 2400051L, 2400052L)),
         "t_risk_variable", new Catalog("variable_id", Stream.concat(range(900000000000091001L, 20),
             range(900000000000093001L, 16)).toList()),
-        "t_risk_variable_member", new Catalog("member_id", Stream.concat(range(900000000000092001L, 9),
+        "t_risk_variable_member", new Catalog("member_id", Stream.concat(range(900000000000092002L, 8),
             range(900000000000094001L, 3)).toList()));
 
     /** 只有测试数据、没有初始化行的表（含仅 Schema 的表与每库一份的基础设施表）。 */

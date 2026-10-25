@@ -9,6 +9,7 @@ import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
 import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderRelationshipBinding;
 
 /** 本接口测试专用的前置数据、清理和只读查询；不替换生产 Mapper。 */
 @Mapper
@@ -34,6 +35,32 @@ public interface CheckoutCreationTestMapper {
     /** 订单上下文冻结的 Risk 结账评估 ID。 */
     @Select("SELECT risk_checkout_assessment_id FROM t_order_context WHERE order_id=#{orderId}")
     Long riskCheckoutAssessmentId(long orderId);
+
+    /** 订单冻结的商业关系角色绑定，按插入顺序（雪花主键递增）。 */
+    @Select("SELECT * FROM t_order_relationship_binding WHERE order_id=#{orderId} ORDER BY binding_id")
+    @Results({@Result(column = "binding_id", property = "bindingId"), @Result(column = "order_id", property = "orderId"),
+        @Result(column = "role_code", property = "roleCode"), @Result(column = "subject_type", property = "subjectType"),
+        @Result(column = "subject_id", property = "subjectId"), @Result(column = "party_id", property = "partyId"),
+        @Result(column = "snapshot_model_version", property = "snapshotModelVersion"),
+        @Result(column = "create_time", property = "createTime")})
+    List<OrderRelationshipBinding> relationshipBindings(long orderId);
+
+    /** 本订单的角色绑定行数，供清理前后检查。 */
+    @Select("SELECT COUNT(*) FROM t_order_relationship_binding WHERE order_id=#{orderId}")
+    int relationshipBindingCount(long orderId);
+
+    /** 订单上下文与法律事实中由商业解析冻结的列，按列名读取原值。 */
+    @Select("""
+        SELECT c.affiliation_id,c.entity_scope_id,c.entity_source_relation_id,c.client_pricing_version_id,
+          c.partner_share_version_id,c.platform_charge_version_id,c.platform_service_party_id,c.locale,c.fund_flow,
+          c.effective_relationship_model_version,c.snapshot_model_version,l.client_agreement_id,l.partner_agreement_id,
+          l.partner_agreement_operating_entity_id,l.seller_disclosure_id,l.consumer_terms_document_id,
+          l.consumer_terms_file_id,l.refund_policy_file_id,l.privacy_notice_file_id,l.public_legal_name,
+          l.public_registration_number,l.public_tax_registration_number,l.public_address_text,l.public_support_email,
+          l.public_support_phone
+        FROM t_order_context c JOIN t_order_legal l ON l.order_context_id=c.order_context_id WHERE c.order_id=#{orderId}
+        """)
+    java.util.Map<String, Object> frozenCommercial(long orderId);
 
     /** 一笔创建只允许一条 Checkout 会话。 */
     @Select("SELECT * FROM t_checkout_session WHERE order_id=#{orderId}")
@@ -119,6 +146,10 @@ public interface CheckoutCreationTestMapper {
     /** 清理查询场景插入的本测试冻结上下文。 */
     @Delete("DELETE FROM t_order_context WHERE order_id=#{orderId}")
     void deleteContext(long orderId);
+
+    /** 清理本测试订单的商业关系角色绑定。 */
+    @Delete("DELETE FROM t_order_relationship_binding WHERE order_id=#{orderId}")
+    void deleteRelationshipBindings(long orderId);
 
     /** 清理本测试的 Session。 */
     @Delete("DELETE FROM t_checkout_session WHERE order_id=#{orderId}")

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.QualificationStateChangeMapper">
+    <insert id="insert">
+        INSERT INTO t_qualification_state_change(change_id, qualification_id, from_status, to_status, decision_id, reason_code, trigger_type, trigger_id, actor_id, aggregate_version, occurred_time, create_time)
+        VALUES(#{row.changeId}, #{row.qualificationId}, #{row.fromStatus}, #{row.toStatus}, #{row.decisionId}, #{row.reasonCode}, #{row.triggerType}, #{row.triggerId}, #{row.actorId}, #{row.aggregateVersion}, #{row.occurredTime}, #{row.createTime})
+    </insert>
+    <select id="findByQualification" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.QualificationStateChange">
+        SELECT change_id AS changeId, qualification_id AS qualificationId, from_status AS fromStatus, to_status AS toStatus,
+            decision_id AS decisionId, reason_code AS reasonCode, trigger_type AS triggerType, trigger_id AS triggerId, actor_id AS actorId,
+            aggregate_version AS aggregateVersion, occurred_time AS occurredTime, create_time AS createTime
+        FROM t_qualification_state_change WHERE qualification_id = #{qualificationId}
+        ORDER BY aggregate_version DESC
+    </select>
+</mapper>

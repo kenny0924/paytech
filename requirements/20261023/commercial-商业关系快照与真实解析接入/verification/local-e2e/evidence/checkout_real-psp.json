@@ -1,0 +1,110 @@
+{
+  "entry": "direct acquiring with Gateway headers",
+  "request": {
+    "clientOrderId": "relsnap-real-psp-9af34e14",
+    "currency": "USD",
+    "consumerCountryCode": "US",
+    "items": [
+      {
+        "clientItemId": "line-1",
+        "name": "Relsnap stage five item",
+        "productTypeCode": "SERVICE",
+        "taxCategoryCode": "STANDARD",
+        "quantity": "1",
+        "unitAmount": "12.34"
+      }
+    ]
+  },
+  "status": 201,
+  "response": {
+    "orderNo": "ord_3LAsT1r5runIfSKwny2XmiiqwZuBWo",
+    "clientOrderId": "relsnap-real-psp-9af34e14",
+    "checkoutUrl": "https://127.0.0.1:18446/c/chk_<redacted>",
+    "currency": "USD",
+    "amounts": {
+      "merchandiseAmount": "12.34",
+      "discountAmount": "0.00",
+      "netAmount": "12.34",
+      "taxAmount": "0.00",
+      "roundingAmount": "0.00",
+      "totalAmount": "12.34"
+    },
+    "expiresAt": "2026-10-25T06:33:30.174187Z",
+    "preparationStatus": "READY",
+    "amountStatus": "FINAL",
+    "checkoutStatus": "OPEN"
+  },
+  "rows": {
+    "t_commerce_order": [
+      [
+        "239992245527273472",
+        "AE001",
+        "PARTNER",
+        "900000000001370001"
+      ]
+    ],
+    "t_order_context": [
+      [
+        "THROUGH_CUSTODIAN",
+        "0",
+        "1"
+      ]
+    ],
+    "t_order_relationship_binding": [
+      [
+        "ACQUIRER_SUB_MERCHANT",
+        "CLIENT",
+        "900000000001380201",
+        "900000000001380202"
+      ],
+      [
+        "ACQUIRING_OE",
+        "OPERATING_ENTITY",
+        "AE001",
+        "900000000001380102"
+      ],
+      [
+        "CLIENT",
+        "CLIENT",
+        "900000000001380201",
+        "900000000001380202"
+      ],
+      [
+        "FUNDS_CUSTODIAN",
+        "OPERATING_ENTITY",
+        "AE001",
+        "900000000001380102"
+      ],
+      [
+        "OE_PROVIDER",
+        "LOCAL_PARTNER",
+        "900000000001370001",
+        "900000000001380102"
+      ],
+      [
+        "PLATFORM",
+        "PLATFORM",
+        "NULL",
+        "900000000001380900"
+      ],
+      [
+        "PLATFORM_FEE_PAYER",
+        "LOCAL_PARTNER",
+        "900000000001370001",
+        "900000000001380102"
+      ],
+      [
+        "SELLER",
+        "CLIENT",
+        "900000000001380201",
+        "900000000001380202"
+      ],
+      [
+        "TAX_RESPONSIBLE",
+        "CLIENT",
+        "900000000001380201",
+        "900000000001380202"
+      ]
+    ]
+  }
+}

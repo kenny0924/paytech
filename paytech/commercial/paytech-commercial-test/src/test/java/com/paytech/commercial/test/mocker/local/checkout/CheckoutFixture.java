@@ -15,6 +15,14 @@ import tools.jackson.databind.json.JsonMapper;
 public final class CheckoutFixture implements AutoCloseable {
     public static final long CLIENT_ID = 910000000000001L;
     public static final Instant NOW = Instant.parse("2026-09-11T12:00:00Z");
+    /** AE991 的提供方 Local Partner（法律主体同 AE991）。 */
+    public static final long FIRST_PARTNER_ID = 910000000000150L;
+    /** AE992 的提供方 Local Partner（法律主体同 AE992）。 */
+    public static final long SECOND_PARTNER_ID = 910000000000250L;
+    /** AE991 的 Partner 合同。 */
+    public static final long FIRST_PARTNER_AGREEMENT_ID = 910000000000160L;
+    /** 两份 Partner 合同共同的平台签约方 Party。 */
+    public static final long PLATFORM_PARTY_ID = 910000000000900L;
     private final Map<String, List<Map<String, Object>>> rows;
     private final List<Runnable> cleanup = new ArrayList<>();
     /** 加载完整解析 HTTP 场景使用的合成本地事实。 */

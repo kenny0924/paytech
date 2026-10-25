@@ -10,14 +10,17 @@ import com.paytech.risk.decision.domain.runtime.CheckoutRiskInput;
 
 /**
  * 结账风控点统一评估请求的测试 Builder
- * <li>{@link #template()} 为一笔合法结账：随机订单 ID（业务身份），平台来源主体、无 Local Partner，USD 商品 120、折扣 20、净额 100，2 行明细。</li>
+ * <li>{@link #template()} 为一笔合法结账：随机订单 ID（业务身份），Client 来源主体、无 Local Partner，USD 商品 120、折扣 20、净额 100，2 行明细。</li>
  * <li>字段可显式设为 null（省略）或非法值，{@link #build()} 不修复；返回的请求 inputs 可直接修改以构造重放差异。</li>
  *
  * @author Kenny
  */
 public final class CheckoutRiskRequestBuilder {
-    /** 平台来源的经营主体；Risk 没有该来源的枚举，取 CCT 合同值。 */
-    public static final String PLATFORM_SOURCE = "PLATFORM";
+    /** Client 来源的经营主体；Risk 没有该来源的枚举，取 CCT 合同值。 */
+    public static final String CLIENT_SOURCE = "CLIENT";
+
+    /** 已从全系统删除的平台来源；只用于验证 Risk 拒绝该取值。 */
+    public static final String RETIRED_PLATFORM_SOURCE = "PLATFORM";
 
     private final Map<String, String> inputs = new LinkedHashMap<>();
 
@@ -25,11 +28,11 @@ public final class CheckoutRiskRequestBuilder {
 
     private CheckoutRiskRequestBuilder() { }
 
-    /** 一笔合法的平台来源结账。 */
+    /** 一笔合法的 Client 来源结账。 */
     public static CheckoutRiskRequestBuilder template() {
         CheckoutRiskRequestBuilder builder = new CheckoutRiskRequestBuilder();
         builder.orderId = randomId();
-        builder.inputs.putAll(new CheckoutPrepareRiskInput("800001", "AE001", PLATFORM_SOURCE, null, "AE", "USD",
+        builder.inputs.putAll(new CheckoutPrepareRiskInput("800001", "AE001", CLIENT_SOURCE, null, "AE", "USD",
             "120.00", "20", "100.00", "DIGITAL_GOODS", "5816", "2").inputs());
         return builder;
     }

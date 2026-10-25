@@ -1,0 +1,48 @@
+{
+  "method": "GET",
+  "path": "/api/operations/entity-admin/v1/local-partners/900000000001370001",
+  "request": null,
+  "status": 200,
+  "response": {
+    "partner": {
+      "localPartnerId": "900000000001370001",
+      "partnerNo": "LP-PAYFAC-AE001",
+      "partyId": "900000000001380102",
+      "legalName": "Relsnap Synthetic AE001 FZ-LLC",
+      "status": "ACTIVE",
+      "roles": [
+        "OE_PROVIDER"
+      ],
+      "changeVersion": 1,
+      "providedEntities": [
+        {
+          "entityNo": "AE001",
+          "legalName": "Relsnap Synthetic AE001 FZ-LLC",
+          "entityStatus": "ACTIVE",
+          "sourceRelationId": "900000000001380103",
+          "sourceStatus": "ACTIVE",
+          "effectiveFrom": "2026-10-01T00:00:00.000000Z",
+          "effectiveTo": null
+        }
+      ]
+    },
+    "qualificationsStatus": "AVAILABLE",
+    "qualifications": [
+      {
+        "currentDecisionId": "239990535484362752",
+        "decisionSource": "MANUAL",
+        "effectiveStatus": "ELIGIBLE",
+        "qualificationId": "239990535484362753",
+        "qualificationType": "PARTNER_DUE_DILIGENCE",
+        "reviewStatus": "NOT_REQUIRED",
+        "roleId": "900000000001370001",
+        "roleType": "LOCAL_PARTNER",
+        "status": "APPROVED",
+        "updatedAt": "2026-10-25T05:56:42.468881Z",
+        "validFrom": "2026-10-01T00:00:00.000000Z",
+        "validTo": null,
+        "version": "1"
+      }
+    ]
+  }
+}

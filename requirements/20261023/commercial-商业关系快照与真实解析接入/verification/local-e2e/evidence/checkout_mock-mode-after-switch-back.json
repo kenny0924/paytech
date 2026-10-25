@@ -1,0 +1,59 @@
+{
+  "entry": "direct acquiring with Gateway headers; acquiring restarted without ACQUIRING_COMMERCIAL_RESOLUTION_MODE (default MOCK)",
+  "request": {
+    "clientOrderId": "relsnap-mock-b67bcb0b",
+    "currency": "USD",
+    "consumerCountryCode": "US",
+    "items": [
+      {
+        "clientItemId": "line-1",
+        "name": "Relsnap stage five item",
+        "productTypeCode": "SERVICE",
+        "taxCategoryCode": "STANDARD",
+        "quantity": "1",
+        "unitAmount": "12.34"
+      }
+    ]
+  },
+  "status": 201,
+  "response": {
+    "orderNo": "ord_3LAsXx6pKLiPjDfPVLXBdObZl3k7UO",
+    "clientOrderId": "relsnap-mock-b67bcb0b",
+    "checkoutUrl": "https://127.0.0.1:18446/c/chk_<redacted>",
+    "currency": "USD",
+    "amounts": {
+      "merchandiseAmount": "12.34",
+      "discountAmount": "0.00",
+      "netAmount": "12.34",
+      "taxAmount": "0.00",
+      "roundingAmount": "0.00",
+      "totalAmount": "12.34"
+    },
+    "expiresAt": "2026-10-25T06:34:09.832460Z",
+    "preparationStatus": "READY",
+    "amountStatus": "FINAL",
+    "checkoutStatus": "OPEN"
+  },
+  "rows": {
+    "t_commerce_order": [
+      [
+        "239992411864981504",
+        "AE001",
+        "PARTNER",
+        "107"
+      ]
+    ],
+    "t_order_context": [
+      [
+        "NULL",
+        "0",
+        "NULL"
+      ]
+    ],
+    "binding_count": [
+      [
+        "0"
+      ]
+    ]
+  }
+}

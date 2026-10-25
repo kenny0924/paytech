@@ -1,0 +1,20 @@
+{
+  "method": "PUT",
+  "path": "/api/operations/entity-admin/v1/local-partners/900000000001370001/roles",
+  "request": {
+    "roles": [
+      "REFERRER"
+    ],
+    "expectedChangeVersion": 1,
+    "reason": "阶段 5 本机联调（运营入口冒烟）"
+  },
+  "status": 422,
+  "response": {
+    "type": "about:blank",
+    "title": "Unprocessable Content",
+    "detail": "主档属性取值不符合约定",
+    "code": "ENTITY_ATTRIBUTE_INVALID",
+    "requestId": "3f8ac620-bd59-45b5-b5eb-39299f0f34b5",
+    "timestamp": "2026-10-25T06:01:54.162563Z"
+  }
+}

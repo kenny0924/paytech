@@ -184,9 +184,17 @@ Legacy CCT-I13 V5 每次重新执行同一检查，业务不满足或技术依�
 
 ### 6.3 Source 与审核关联
 
-`source_type` 仅允许 `PLATFORM|CLIENT|PARTNER`；`DIRECT` 明确禁止作为当前值。来源 Owner 直接由 `source_type + source_client_id/source_partner_id` 的 XOR 表达，不保存派生 `source_owner_key`。
+`source_type` 仅允许 `CLIENT|PARTNER`；`PLATFORM` 已于 2026-10-24 取消（平台自有主体 AE001 迁到“我们的 PayFac”Partner 名下，见 requirements/20261023/commercial-商业关系快照与真实解析接入/technique.md 第 3.4.1 节），`DIRECT` 明确禁止作为当前值。来源 Owner 直接由 `source_type + source_client_id/source_partner_id` 的 XOR 表达，不保存派生 `source_owner_key`。
 
 CLIENT 来源的 `client_source_basis` 仅允许 `SAME_PARTY|VERIFIED_ASSOCIATION`：前者要求 Client Party 与 OE Party 相同；后者要求两个 Party 不同，并由已批准的 Operating Entity Application、冻结申请材料和匹配的 Risk Qualification Decision 支撑。非 CLIENT 来源该字段必须为空。当前不结构化保存多公司多层持股路径，也不计算间接持股比例；`party_relation` 继续保存 KYB 所需的直接所有权、控制、董事、签字人与 UBO 关系。
+
+### 6.3.1 收单资质与角色表（2026-10-24）
+
+- `t_operating_entity.acquiring_qualification`：`MERCHANT|MERCHANT_RESALE_APPROVED|PAYFAC`，NOT NULL；存量回填 `PAYFAC`。由 Admin API 修改，推进 OPERATING_ENTITY 根 BCR 并写 UPDATE 快照。
+- `t_partner_role`：Local Partner 的 `OE_PROVIDER|REFERRER` 角色，`uk_partner_role_active(local_partner_id,role_code,active_slot)`；LOCAL_PARTNER 根的非审计子行，增减由 Admin API 推进根版本；仍有 ACTIVE PARTNER 来源关系时不得去掉 OE_PROVIDER。
+- `t_party_role`：法律主体统一角色索引（CLIENT / OPERATING_ENTITY / OE_PROVIDER / REFERRER / SPLIT_PAYEE），`uk_party_role_active(role_code,subject_id,active_slot)`；Client 创建与 Partner 角色维护时同事务写入，本期没有读取方。
+- `t_client_partner_relation`：Client 与 Local Partner 的 REFERRAL 关系，本期只建表。
+- 三张新表都不进入 BCR `record_type` 白名单；写入推进的是所属根。
 
 ### 6.4 自动分配四表闭环
 

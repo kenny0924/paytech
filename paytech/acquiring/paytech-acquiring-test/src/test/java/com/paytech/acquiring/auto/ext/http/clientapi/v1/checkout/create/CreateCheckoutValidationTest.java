@@ -22,7 +22,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import com.paytech.acquiring.api.client.v1.checkout.ClientCheckoutApi;
 import com.paytech.acquiring.api.client.v1.checkout.request.CreateCheckoutRequestBody;
 import com.paytech.acquiring.test.base.checkout.AbstractCreateCheckoutApiTest;
-import com.paytech.acquiring.test.builder.external.CommercialFactsBuilder;
+import com.paytech.acquiring.test.builder.external.CheckoutContextResponseBuilder;
 import com.paytech.acquiring.test.builder.checkout.CreateCheckoutRequestBuilder;
 import com.paytech.foundation.common.http.ApiHeaderNames;
 
@@ -114,7 +114,8 @@ class CreateCheckoutValidationTest extends AbstractCreateCheckoutApiTest {
     /** 当前接口只启用 USD，其他合法币种也应在预检和保存前拒绝。 */
     @Test
     void test_unsupportedCurrencyIsRejectedBeforePersistence() {
-        preparationMocker.mockFacts(clientId(), "US", "EUR", CommercialFactsBuilder.template().build());
+        preparationMocker.mockResolution(clientId(), "US", "EUR",
+            CheckoutContextResponseBuilder.template(clientId()).build());
         var response = invoke(template().currency("EUR").build());
         assertAll(() -> response.assertProblem(422, "VALIDATION_ERROR").assertFieldError("currency"),
             this::assertNoBusinessEffects);

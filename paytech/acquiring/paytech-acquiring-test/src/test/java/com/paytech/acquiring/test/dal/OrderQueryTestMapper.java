@@ -89,9 +89,10 @@ public interface OrderQueryTestMapper {
     @Insert("""
         INSERT INTO t_order_context (order_context_id,order_id,commercial_context_time,affiliation_id,
           entity_scope_id,entity_source_relation_id,client_pricing_version_id,risk_checkout_assessment_id,
-          finance_tax_snapshot_id,finance_tax_snapshot_hash,consumer_country_code,locale,create_time)
+          finance_tax_snapshot_id,finance_tax_snapshot_hash,consumer_country_code,locale,
+          effective_relationship_model_version,create_time)
         VALUES (#{order.orderId},#{order.orderId},#{order.createTime},101,102,103,104,105,106,
-          REPEAT('a',64),#{contextCountry},'en-US',#{order.createTime})
+          REPEAT('a',64),#{contextCountry},'en-US',0,#{order.createTime})
         """)
     void insertContext(Fixture fixture);
 

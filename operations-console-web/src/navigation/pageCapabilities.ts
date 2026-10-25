@@ -191,6 +191,17 @@ export const pageCapabilities = [
     "actions": []
   },
   {
+    "componentKey": "OPERATIONS_QUALIFICATIONS",
+    "displayName": "主体资格",
+    "frontendRoute": "/compliance/qualifications",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_QUALIFICATIONS_MANAGE",
+        "displayName": "登记与撤销"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_CONSOLE_RESOURCES",
     "displayName": "菜单资源",
     "frontendRoute": "/console-resources",
@@ -667,6 +678,28 @@ export const pageCapabilities = [
     "displayName": "变更历史",
     "frontendRoute": "/commercial/history",
     "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_OPERATING_ENTITIES",
+    "displayName": "经营主体",
+    "frontendRoute": "/master-data/operating-entities",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_OPERATING_ENTITIES_MANAGE",
+        "displayName": "维护收单资质"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_LOCAL_PARTNERS",
+    "displayName": "Local Partner",
+    "frontendRoute": "/master-data/local-partners",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_LOCAL_PARTNERS_MANAGE",
+        "displayName": "维护角色"
+      }
+    ]
   },
   {
     "componentKey": "OPERATIONS_CHANNEL_CHANNELS",

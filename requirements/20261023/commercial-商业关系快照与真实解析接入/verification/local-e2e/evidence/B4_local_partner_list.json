@@ -1,0 +1,24 @@
+{
+  "method": "GET",
+  "path": "/api/operations/entity-admin/v1/local-partners?role=OE_PROVIDER&page=1&size=20",
+  "request": null,
+  "status": 200,
+  "response": {
+    "items": [
+      {
+        "localPartnerId": "900000000001370001",
+        "partnerNo": "LP-PAYFAC-AE001",
+        "legalName": "Relsnap Synthetic AE001 FZ-LLC",
+        "status": "ACTIVE",
+        "roles": [
+          "OE_PROVIDER"
+        ],
+        "providedEntityCount": 1,
+        "changeVersion": 1
+      }
+    ],
+    "page": 1,
+    "size": 20,
+    "total": 1
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "request": {
+    "clientId": "237161687952666625",
+    "orderNo": "RELSNAPD45AD086A092",
+    "consumerCountryCode": "US",
+    "currency": "USD",
+    "locale": "en",
+    "contextAsOfTime": "2026-10-25T05:58:23.493511Z"
+  },
+  "status": 503,
+  "response": {
+    "type": "about:blank",
+    "title": "Service Unavailable",
+    "detail": "必要业务依赖暂不可用",
+    "code": "OWNER_UNAVAILABLE",
+    "requestId": "req-relsnap-3b36389dbf09",
+    "timestamp": "2026-10-25T05:58:23.578872Z"
+  }
+}

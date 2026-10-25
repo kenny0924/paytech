@@ -23,9 +23,10 @@ public class CheckoutCreationServiceImpl implements CheckoutCreationService {
     private final CheckoutSessionRepository checkoutSessionRepository;
     private final CommerceTransactionExecutor transactionExecutor;
     private final OrderRefundPositionRepository orderRefundPositionRepository;
+    private final OrderRelationshipBindingRepository relationshipBindingRepository;
     private final OrderFundsAvailabilityProjectionRepository orderFundsAvailabilityProjectionRepository;
 
-    /** 保存本次 Context；SQL 失败时全部事实整体回滚。 */
+    /** 保存本次 Context（含商业关系角色绑定）；SQL 失败时全部事实整体回滚。 */
     @Override
     public void saveCreateCheckoutContext(CreateCheckoutContext context) {
         transactionExecutor.write(() -> {
@@ -37,6 +38,7 @@ public class CheckoutCreationServiceImpl implements CheckoutCreationService {
             contextRepository.insert(context.getFrozen());
             legalRepository.insert(context.getFrozen());
             contractRepository.insert(context.getFrozen());
+            relationshipBindingRepository.insertAll(context.getRelationshipBindings());
             return null;
         });
     }

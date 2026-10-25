@@ -1,0 +1,50 @@
+{
+  "list": {
+    "items": [
+      {
+        "currentDecisionId": "239992187511656448",
+        "decisionSource": "MANUAL",
+        "effectiveStatus": "REVOKED",
+        "qualificationId": "239990536570687489",
+        "qualificationType": "ORGANIZATION_KYB",
+        "reviewStatus": "COMPLETED",
+        "roleId": "237161687952666625",
+        "roleType": "CLIENT",
+        "status": "REVOKED",
+        "updatedAt": "2026-10-25T06:03:16.342661Z",
+        "validFrom": "2026-10-01T00:00:00.000000Z",
+        "validTo": "2026-10-25T06:03:16.342661Z",
+        "version": "2"
+      }
+    ],
+    "page": 1,
+    "size": 10,
+    "total": 1
+  },
+  "request": {
+    "roleType": "CLIENT",
+    "roleId": "237161687952666625",
+    "qualificationType": "ORGANIZATION_KYB",
+    "validFrom": "2026-10-01T00:00:00Z",
+    "validTo": null,
+    "reasonCode": "STAGE5_LOCAL_E2E",
+    "basisNote": "阶段 5 本机联调合成主体登记（Client MOR again）",
+    "expectedVersion": "2"
+  },
+  "status": 200,
+  "response": {
+    "currentDecisionId": "239992188178550784",
+    "decisionSource": "MANUAL",
+    "effectiveStatus": "ELIGIBLE",
+    "qualificationId": "239990536570687489",
+    "qualificationType": "ORGANIZATION_KYB",
+    "reviewStatus": "NOT_REQUIRED",
+    "roleId": "237161687952666625",
+    "roleType": "CLIENT",
+    "status": "APPROVED",
+    "updatedAt": "2026-10-25T06:03:16.501487Z",
+    "validFrom": "2026-10-01T00:00:00.000000Z",
+    "validTo": null,
+    "version": "3"
+  }
+}

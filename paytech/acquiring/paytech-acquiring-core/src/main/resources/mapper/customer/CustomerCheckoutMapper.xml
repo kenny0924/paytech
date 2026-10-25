@@ -19,6 +19,9 @@
             <arg column="finance_tax_snapshot_hash" javaType="java.lang.String"/>
             <arg column="consumer_country_code" javaType="java.lang.String"/>
             <arg column="locale" javaType="java.lang.String"/>
+            <arg column="fund_flow" javaType="java.lang.String"/>
+            <arg column="effective_relationship_model_version" javaType="_int"/>
+            <arg column="snapshot_model_version" javaType="java.lang.Integer"/>
             <arg column="order_legal_id" javaType="_long"/>
             <arg column="client_agreement_id" javaType="_long"/>
             <arg column="partner_agreement_id" javaType="java.lang.Long"/>
@@ -50,7 +53,8 @@
         SELECT c.order_context_id,c.order_id,c.commercial_context_time,c.affiliation_id,c.entity_scope_id,
         c.entity_source_relation_id,c.client_pricing_version_id,c.partner_share_version_id,c.platform_charge_version_id,
         c.platform_service_party_id,c.risk_checkout_assessment_id,c.finance_tax_snapshot_id,c.finance_tax_snapshot_hash,
-        c.consumer_country_code,c.locale,l.order_legal_id,l.client_agreement_id,l.partner_agreement_id,
+        c.consumer_country_code,c.locale,c.fund_flow,c.effective_relationship_model_version,c.snapshot_model_version,
+        l.order_legal_id,l.client_agreement_id,l.partner_agreement_id,
         l.partner_agreement_operating_entity_id,l.consumer_terms_document_id,l.consumer_terms_file_id,l.consumer_terms_content_hash,
         l.refund_policy_document_id,l.refund_policy_file_id,l.refund_policy_content_hash,l.privacy_notice_document_id,
         l.privacy_notice_file_id,l.privacy_notice_content_hash,l.seller_disclosure_id,l.public_legal_name,
@@ -65,10 +69,11 @@
         INSERT INTO t_order_context (order_context_id,order_id,commercial_context_time,affiliation_id,entity_scope_id,
         entity_source_relation_id,client_pricing_version_id,partner_share_version_id,platform_charge_version_id,
         platform_service_party_id,risk_checkout_assessment_id,finance_tax_snapshot_id,finance_tax_snapshot_hash,
-        consumer_country_code,locale,create_time) VALUES
+        consumer_country_code,locale,fund_flow,effective_relationship_model_version,snapshot_model_version,create_time) VALUES
         (#{orderContextId},#{orderId},#{commercialContextTime},#{affiliationId},#{entityScopeId},#{entitySourceRelationId},
         #{clientPricingVersionId},#{partnerShareVersionId},#{platformChargeVersionId},#{platformServicePartyId},
-        #{riskCheckoutAssessmentId},#{financeTaxSnapshotId},#{financeTaxSnapshotHash},#{consumerCountryCode},#{locale},#{presentedAt})
+        #{riskCheckoutAssessmentId},#{financeTaxSnapshotId},#{financeTaxSnapshotHash},#{consumerCountryCode},#{locale},
+        #{fundFlow},#{effectiveRelationshipModelVersion},#{snapshotModelVersion},#{presentedAt})
     </insert>
     <insert id="insertLegal">
         INSERT INTO t_order_legal (order_legal_id,order_context_id,client_agreement_id,partner_agreement_id,

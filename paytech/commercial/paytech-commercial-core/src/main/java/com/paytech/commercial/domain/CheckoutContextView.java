@@ -22,7 +22,7 @@ public class CheckoutContextView {
     /** 选定 OE 的不可变五位编号。 */
     String entityNo;
 
-    /** OE 来源 Code：PLATFORM、CLIENT 或 PARTNER。 */
+    /** OE 来源 Code；本轮选中的候选恒为 PARTNER。 */
     String sourceType;
 
     /** Client 唯一 Primary 经营分类。 */
@@ -45,6 +45,9 @@ public class CheckoutContextView {
 
     /** 返回前复核的相关业务根修订。 */
     Revisions revisions;
+
+    /** 商业关系快照及生效模型版本。 */
+    RelationshipSnapshot relationshipSnapshot;
 
     /** Primary 分类证据。 */
     @Value
@@ -110,7 +113,7 @@ public class CheckoutContextView {
 
         /**
          * 本次支付方式命中的全部开通项，按开通项代码升序
-         * <li>请求未给支付方式时为空数组；给出时至少一项，且都有生效价格。</li>
+         * <li>给出支付方式时至少一项；未给时为全部可用的 PAYMENT_METHOD 开通项，可为空；都有生效价格。</li>
          */
         java.util.List<Capability> capabilities;
     }
@@ -256,6 +259,69 @@ public class CheckoutContextView {
 
         /** 按参与方去重的已批准资料证据。 */
         java.util.List<PartyEvidence> parties;
+
+        /** 选中卖方披露的公开文本。 */
+        Seller seller;
+    }
+
+    /** 卖方披露的公开文本。 */
+    @Value
+    @Accessors(fluent = true)
+    public static class Seller {
+        /** 卖方法定名称。 */
+        String legalName;
+
+        /** 卖方注册编号。 */
+        String registrationNumber;
+
+        /** 卖方税务登记编号；不披露时为 null。 */
+        String taxRegistrationNumber;
+
+        /** 卖方地址文本。 */
+        String addressText;
+
+        /** 卖方支持邮箱。 */
+        String supportEmail;
+
+        /** 卖方支持电话；不披露时为 null。 */
+        String supportPhone;
+    }
+
+    /** 商业关系快照的投影。 */
+    @Value
+    @Accessors(fluent = true)
+    public static class RelationshipSnapshot {
+        /** 生效模型版本：0 只记录，1 生效。 */
+        int effectiveModelVersion;
+
+        /** 推导规则版本。 */
+        int snapshotModelVersion;
+
+        /** 资金流向 Code。 */
+        String fundFlow;
+
+        /** 合同业务模式 Code。 */
+        String businessMode;
+
+        /** 角色绑定，按角色声明顺序。 */
+        java.util.List<RoleBinding> bindings;
+    }
+
+    /** 一个角色到主体的绑定。 */
+    @Value
+    @Accessors(fluent = true)
+    public static class RoleBinding {
+        /** 角色 Code。 */
+        String role;
+
+        /** 主体类型 Code。 */
+        String subjectType;
+
+        /** 主体标识；PLATFORM 为 null。 */
+        String subjectId;
+
+        /** 法律主体 Party ID 的十进制文本。 */
+        String partyId;
     }
 
     /** 相关业务根修订。 */

@@ -31,7 +31,8 @@ import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Client 入驻审核请求的严格边界
+ * Client 入驻审核、主档维护与资格登记请求的严格边界
+ * <li>覆盖 /client-onboarding-admin/v1、/entity-admin/v1 与 /qualification-admin/v1。</li>
  * <li>Query 只接受 Controller 声明的参数，不能重复或为空；GET 不接受 Body。</li>
  * <li>写 Body 最多 64 KiB，必须为对象，拒绝重复键、未知字段和标量隐式转换。</li>
  */
@@ -39,6 +40,13 @@ import tools.jackson.databind.json.JsonMapper;
 public class ClientReviewRequestConfiguration implements WebMvcConfigurer {
     /** 写 Body 上限。 */
     static final int BODY_LIMIT = 65536;
+
+    /** 主档维护与资格登记直接使用 Owner 管理合同的请求模型。 */
+    static final Set<Class<?>> OWNER_REQUEST_BODIES = Set.of(
+        com.paytech.client.master.api.entityadmin.request.ChangeAcquiringQualificationRequestBody.class,
+        com.paytech.client.master.api.entityadmin.request.ReplacePartnerRolesRequestBody.class,
+        com.paytech.compliance.api.request.QualificationManualDecisionRequestBody.class,
+        com.paytech.compliance.api.request.QualificationRevocationRequestBody.class);
 
     private final JsonMapper mapper;
 
@@ -70,7 +78,7 @@ public class ClientReviewRequestConfiguration implements WebMvcConfigurer {
                 }
                 return true;
             }
-        }).addPathPatterns("/client-onboarding-admin/v1/**");
+        }).addPathPatterns("/client-onboarding-admin/v1/**", "/entity-admin/v1/**", "/qualification-admin/v1/**");
     }
 
     @Override
@@ -91,7 +99,7 @@ public class ClientReviewRequestConfiguration implements WebMvcConfigurer {
         return keys;
     }
 
-    /** 只读取审核请求记录的有界严格转换器。 */
+    /** 只读取审核请求记录与上述 Owner 请求模型的有界严格转换器。 */
     static final class ReviewRequestConverter extends JacksonJsonHttpMessageConverter {
         ReviewRequestConverter(JsonMapper mapper) {
             super(mapper);
@@ -100,7 +108,8 @@ public class ClientReviewRequestConfiguration implements WebMvcConfigurer {
         @Override
         public boolean canRead(ResolvableType type, MediaType mediaType) {
             Class<?> value = type.resolve();
-            return value != null && value.getEnclosingClass() == ClientReviewModels.class && value.getSimpleName().endsWith("RequestBody")
+            return value != null && (OWNER_REQUEST_BODIES.contains(value)
+                || value.getEnclosingClass() == ClientReviewModels.class && value.getSimpleName().endsWith("RequestBody"))
                 && super.canRead(type, mediaType);
         }
 

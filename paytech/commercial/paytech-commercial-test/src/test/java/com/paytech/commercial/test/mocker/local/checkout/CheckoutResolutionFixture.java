@@ -19,7 +19,8 @@ import com.paytech.foundation.testsupport.api.Clear;
 public class CheckoutResolutionFixture implements Clear {
     /** 合成夹具的商务查询范围：与 client-master DTO 样本的 commercialScope 一致。 */
     public static final CommercialCheckoutScope SCOPE =
-        new CommercialCheckoutScope(CheckoutFixture.CLIENT_ID, List.of("AE991", "AE992"), List.of());
+        new CommercialCheckoutScope(CheckoutFixture.CLIENT_ID, List.of("AE991", "AE992"),
+            List.of(CheckoutFixture.FIRST_PARTNER_ID, CheckoutFixture.SECOND_PARTNER_ID));
 
     private final DataSource source;
     private final DataSourceProperties properties;

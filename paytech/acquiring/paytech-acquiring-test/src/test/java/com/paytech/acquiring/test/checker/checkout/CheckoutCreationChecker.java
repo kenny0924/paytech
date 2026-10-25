@@ -5,13 +5,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
+import org.junit.jupiter.api.function.Executable;
 import org.springframework.boot.test.context.TestComponent;
 
 import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
 import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
 import com.paytech.acquiring.domain.enums.OrderStatus;
 import com.paytech.acquiring.test.dal.CheckoutCreationTestMapper;
+import com.paytech.commercial.api.checkout.response.ResolveCheckoutContextResponseBody.RoleBinding;
 
 import lombok.AllArgsConstructor;
 
@@ -114,6 +117,53 @@ public final class CheckoutCreationChecker {
         assertNotNull(order, "订单应已提交");
         assertEquals(evaluationId, mapper.riskCheckoutAssessmentId(order.getOrderId()), "冻结的 Risk 评估 ID");
         return order.getOrderId();
+    }
+
+    /** 订单冻结的经营主体来源与 Local Partner。 */
+    public void assertEntitySource(long clientId, String clientOrderId, String entitySourceType, Long localPartnerId) {
+        var order = mapper.order(clientId, clientOrderId);
+        assertNotNull(order, "订单应已提交");
+        assertAll(() -> assertEquals(entitySourceType, order.getEntitySourceType(), "经营主体来源"),
+            () -> assertEquals(localPartnerId, order.getLocalPartnerId(), "Local Partner"));
+    }
+
+    /** 订单上下文与法律事实中商业解析冻结的列逐项等于期望；只比较给出的列，缺少的列视为失败。 */
+    public void assertFrozenCommercial(long clientId, String clientOrderId, Map<String, Object> expected) {
+        var order = mapper.order(clientId, clientOrderId);
+        assertNotNull(order, "订单应已提交");
+        var actual = mapper.frozenCommercial(order.getOrderId());
+        assertNotNull(actual, "冻结上下文应已提交");
+        assertAll(expected.entrySet().stream().map(entry -> (Executable)() -> {
+            assertTrue(actual.containsKey(entry.getKey()) || entry.getValue() == null, "缺少冻结列：" + entry.getKey());
+            assertEquals(entry.getValue(), actual.get(entry.getKey()), "冻结列 " + entry.getKey());
+        }));
+    }
+
+    /**
+     * 商业关系快照的冻结结果：上下文三列与绑定行（数量、顺序、主体与版本）逐项等于期望
+     * <li>没有快照时期望 fundFlow / snapshotVersion 为空、生效版本 0、绑定为空集合。</li>
+     */
+    public void assertRelationship(long clientId, String clientOrderId, String fundFlow, int effectiveVersion,
+        Integer snapshotVersion, List<RoleBinding> expected) {
+        var order = mapper.order(clientId, clientOrderId);
+        assertNotNull(order, "订单应已提交");
+        var context = mapper.frozenCommercial(order.getOrderId());
+        var rows = mapper.relationshipBindings(order.getOrderId());
+        assertAll(() -> assertEquals(fundFlow, context.get("fund_flow"), "资金流向"),
+            () -> assertEquals(effectiveVersion, context.get("effective_relationship_model_version"), "生效模型版本"),
+            () -> assertEquals(snapshotVersion, context.get("snapshot_model_version"), "快照推导规则版本"),
+            () -> assertEquals(expected.size(), rows.size(), "角色绑定行数"));
+        for (int index = 0; index < expected.size(); index++) {
+            var want = expected.get(index);
+            var row = rows.get(index);
+            assertAll(() -> assertEquals(want.getRole(), row.getRoleCode(), "角色"),
+                () -> assertEquals(want.getSubjectType(), row.getSubjectType(), "主体类型 " + want.getRole()),
+                () -> assertEquals(want.getSubjectId(), row.getSubjectId(), "主体标识 " + want.getRole()),
+                () -> assertEquals(want.getPartyId(), row.getPartyId() == null ? null : row.getPartyId().toString(),
+                    "法律 Party " + want.getRole()),
+                () -> assertEquals((Object)snapshotVersion, row.getSnapshotModelVersion(), "行快照版本 " + want.getRole()),
+                () -> assertEquals(order.getCreateTime(), row.getCreateTime(), "行创建时间 " + want.getRole()));
+        }
     }
 
     /** 失败用例不能产生订单。 */

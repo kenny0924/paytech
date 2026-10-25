@@ -4,7 +4,7 @@
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 70 retained-service tables added on top of design 03 (not part of the §4.2 count).
 # 23 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
-# 59 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
+# 63 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
 # Renamed services: consumer -> counterparty; databases: mor_consumer -> mor_counterparty.
@@ -39,6 +39,7 @@ services:
       - t_order_legal
       - t_order_payment_projection
       - t_order_refund_position
+      - t_order_relationship_binding
       - t_refund_request
   billing:
     mor_billing:
@@ -104,6 +105,7 @@ services:
       - t_client_business_classification
       - t_client_business_profile
       - t_client_entity_affiliation
+      - t_client_partner_relation
       - t_client_stored_card_setting
       - t_compensation_event
       - t_consumer_legal_document
@@ -115,6 +117,7 @@ services:
       - t_operating_entity_scope
       - t_organization_profile
       - t_partner_application
+      - t_partner_role
       - t_party
       - t_party_address
       - t_party_contact
@@ -122,6 +125,7 @@ services:
       - t_party_profile
       - t_party_profile_identifier
       - t_party_relation
+      - t_party_role
       - t_seller_disclosure
   commercial:
     mor_commercial:

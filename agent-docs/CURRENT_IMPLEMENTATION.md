@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## commercial 商业关系快照与真实解析接入（2026-10-23—25，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [需求](<../requirements/20261023/commercial-商业关系快照与真实解析接入/requirement.md>)、[技术方案](<../requirements/20261023/commercial-商业关系快照与真实解析接入/technique.md>)、[交付记录](<../requirements/20261023/commercial-商业关系快照与真实解析接入/delivery.md>)、[发布记录](<../requirements/20261023/commercial-商业关系快照与真实解析接入/release/release.md>)。依据 [Platform 技术服务商与 PayFac 定位决定](decisions/2026-10-23-platform-tech-provider-and-partner-payfac.md)（Proposed）D13 快照；本轮只 C1 / C2。OE 来源值 `PLATFORM` 全系统删除（只剩 `CLIENT` / `PARTNER`），AE001 迁到"我方 PayFac" Partner。
+- **Implemented：** commercial 商业关系快照推导与组合约束、解析顺序、写入时 Party 校验、快照开关 `COMMERCIAL_RELATIONSHIP_SNAPSHOT_ENABLED`（默认 false），修复 `CapabilityConditions` 缺 equals 的既有缺陷；compliance 资格表 DataObject / Mapper、评估接口、4 个运营接口、入驻审核投影（`role_id` 改字符型存 entity_no / 十进制 ID）；client-master 多角色、OE 收单资质 `acquiring_qualification`、3 张新表、7 个运营接口；acquiring 真实解析客户端与错误映射、开关 `ACQUIRING_COMMERCIAL_RESOLUTION_MODE`（MOCK / REAL）、快照冻结表与三列；risk-decision 删除 PLATFORM 来源；ops-bff 11 个接口；ops-web 资格登记、经营主体、Local Partner 三页和 2 个命名空间；Platform 注册块 137。
+- **Verified：** 基于 main `8a86a31c`：compliance 437、client-master 100（arch-rules 68）、commercial 211、acquiring 897、risk-decision 相关 188、ops-bff 95、ops-web 1519 + tsc + build 全部通过；本地联调 44/44、浏览器 30/30（英文 + 中文）。requirements-site 137 个中 10 个失败、Platform 初始数据脚本测试失败，均与 HEAD 相同的既有失败。
+- **Deployed：** mor-test 2026-10-25 13:38—14:35Z（tag `relsnap-20261025a`）：compliance `ca158545…`、commercial `e5c1ee6b…`、client-master `eeed4e63…`、acquiring `e0a1f618…`、risk-decision `288b0ff6…`、ops-bff `feefe73f…`、ops-web `4f44725e…`；5 个库 SQL 已执行，块 137 已激活（Gateway 574 → 585 条路由），语言包 #8（8813 key）；PayFac Partner 合同 + PARTNER_SHARE / PLATFORM_SERVICE_CHARGE 两个 0 费率方案已生效。AC-11 窗口 14:09—14:12 临时 REAL 只对 DEMO-CL-001 验收通过，之后 acquiring 回 MOCK、快照开关回 false；浏览器 31/32（Z1 仅因 Client 业务名称为英文）。
+- **Pending / 遗留：** 推送另行授权。GAP-PROFILE：client-master 入驻审核通过不清 `t_party_profile.draft_application_id`、不写 `content_hash`，全部 37 个已通过 Client 在 REAL 下会被拒，须另立 client-master 需求，修好前 mor-test 保持 MOCK。S-4（Apple Pay 真实支付 → billing 按 Partner 计费）未验。重建 mor-test compliance 必须带本次 `compose-candidate.yaml`（主 compose 仍指旧镜像）。仓库 `operations-console-web/i18n/zh-CN/nav.json` 侧栏 3 个 key 仍为英文（线上为中文），另行修正。client-master 与 channel-connector 共用 Snowflake worker 26（既有问题）。验收截图未入库，留在 relsnap worktree。
+
 ## operations 运营控制台多语言迁移（2026-10-23，已部署 mor-test，已本地提交，未推送）
 
 - **范围：** [需求](<../requirements/20261023/operations-控制台多语言迁移/requirement.md>)、[技术方案](<../requirements/20261023/operations-控制台多语言迁移/technique.md>)、[交付记录](<../requirements/20261023/operations-控制台多语言迁移/delivery.md>)、[发布记录](<../requirements/20261023/operations-控制台多语言迁移/release/release.md>)、[英文术语表](<../requirements/20261023/operations-控制台多语言迁移/glossary.md>)。多语言管理 R9 的"另立需求"：operations-console-web 全部既有页面接入；服务端报错文案、业务内容多语言不在范围。

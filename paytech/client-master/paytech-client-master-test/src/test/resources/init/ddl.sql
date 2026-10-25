@@ -133,6 +133,22 @@ CREATE TABLE `t_party_relation` (
   KEY `idx_party_relation_application` (`client_application_id`) COMMENT 'Access index for party_relation on client_application_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='主体关系；uk_party_relation_identity(organization_party_id,related_party_id,relation_type)；同一机构、相关主体和关系类型只保留一条稳定关系；Client 草稿由 client_application_id 限定修改归属；应用校验，不创建 CHECK/FK；稳定关系标识；Client 未批准资料只允许所属可编辑申请维护，批准后关系集合锁定。；真实关系生效/结束日期保留；非 Client 历史引用不得自动迁移或归并。';
 
+CREATE TABLE `t_party_role` (
+  `party_role_id` BIGINT NOT NULL COMMENT '法律主体业务角色行的内部唯一标识。',
+  `party_id` BIGINT NOT NULL COMMENT '自然人或机构法律身份根的内部唯一标识。',
+  `role_code` VARCHAR(64) NOT NULL COMMENT '法律主体承担的业务角色代码。允许值：CLIENT、OPERATING_ENTITY、OE_PROVIDER、REFERRER、SPLIT_PAYEE。',
+  `subject_id` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '角色对应的业务主体标识：CLIENT 为 client_id，OPERATING_ENTITY 为 entity_no，OE_PROVIDER/REFERRER 为 local_partner_id，均为十进制或编号文本。',
+  `status` VARCHAR(64) NOT NULL COMMENT '当前业务记录在其所属聚合生命周期中的状态代码。允许值：ACTIVE、ENDED。',
+  `active_slot` TINYINT(1) NULL COMMENT '同一角色同一主体同时只有一行有效的稀疏唯一槽位。允许值：1 或 NULL。取值规则：状态为 ACTIVE 时为 1，其他状态为 NULL。',
+  `effective_from` DATETIME(6) NOT NULL COMMENT '业务记录生效区间的 UTC 微秒精度起点，包含该时刻。',
+  `effective_to` DATETIME(6) NULL COMMENT '业务记录生效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
+  PRIMARY KEY (`party_role_id`),
+  UNIQUE KEY `uk_party_role_active` (`role_code`, `subject_id`, `active_slot`) COMMENT 'Unique index for party_role on role_code, subject_id, active_slot',
+  KEY `idx_party_role_party` (`party_id`, `status`) COMMENT 'Access index for party_role on party_id, status'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='法律主体统一角色索引；uk_party_role_active(role_code,subject_id,active_slot)；状态 ACTIVE/ENDED，仅 ACTIVE 的 active_slot=1，ENDED 填写 effective_to；Client 创建、Partner 角色维护时与所属根同一事务写入，是 Client / Operating Entity / Local Partner 根的非审计子行；应用校验，不创建 CHECK/FK';
+
 CREATE TABLE `t_client` (
   `client_id` BIGINT NOT NULL COMMENT '平台 Client 角色的内部唯一标识。',
   `client_no` VARCHAR(64) NOT NULL COMMENT '供外部接口与业务查询使用的唯一 Client 编号。',
@@ -162,11 +178,25 @@ CREATE TABLE `t_local_partner` (
   UNIQUE KEY `uk_partner_party` (`party_id`) COMMENT 'Unique index for local_partner on party_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Local Partner 角色根；uk_partner_no(partner_no)、uk_partner_party(party_id)；Party 必须为 Organization';
 
+CREATE TABLE `t_partner_role` (
+  `partner_role_id` BIGINT NOT NULL COMMENT 'Local Partner 商业角色行的内部唯一标识。',
+  `local_partner_id` BIGINT NOT NULL COMMENT '承担该角色的 Local Partner 标识。',
+  `role_code` VARCHAR(64) NOT NULL COMMENT 'Local Partner 承担的商业角色代码。允许值：OE_PROVIDER、REFERRER。',
+  `status` VARCHAR(64) NOT NULL COMMENT '当前业务记录在其所属聚合生命周期中的状态代码。允许值：ACTIVE、ENDED。',
+  `active_slot` TINYINT(1) NULL COMMENT '同一 Local Partner 同一角色同时只有一行有效的稀疏唯一槽位。允许值：1 或 NULL。取值规则：状态为 ACTIVE 时为 1，其他状态为 NULL。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
+  PRIMARY KEY (`partner_role_id`),
+  UNIQUE KEY `uk_partner_role_active` (`local_partner_id`, `role_code`, `active_slot`) COMMENT 'Unique index for partner_role on local_partner_id, role_code, active_slot',
+  KEY `idx_partner_role_code` (`role_code`, `status`) COMMENT 'Access index for partner_role on role_code, status'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Local Partner 商业角色；uk_partner_role_active(local_partner_id,role_code,active_slot)；role_code IN (OE_PROVIDER,REFERRER)，状态 ACTIVE/ENDED，仅 ACTIVE 的 active_slot=1；LOCAL_PARTNER 根的非审计子行，增减角色推进根 BCR 版本并同步 t_party_role；仍有 ACTIVE 的 PARTNER 来源关系时不得结束 OE_PROVIDER；应用校验，不创建 CHECK/FK';
+
 CREATE TABLE `t_operating_entity` (
   `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'CCT唯一不可变OE身份，CHAR(5)，创建时经营国家二位代码加001–999，如AE001；编号不参与路由、不复用。',
   `party_id` BIGINT NOT NULL COMMENT '自然人或机构法律身份根的内部唯一标识。',
   `operating_country` CHAR(2) NOT NULL COMMENT 'Operating Entity 开展业务的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。',
   `status` VARCHAR(64) NOT NULL COMMENT '当前业务记录在其所属聚合生命周期中的状态代码。允许值：PENDING、ACTIVE、SUSPENDED、CLOSED。',
+  `acquiring_qualification` VARCHAR(64) NOT NULL COMMENT 'Operating Entity 经收单行认定的收单资质档位：MERCHANT 只能作为自身商户收单、不能承接 Client；MERCHANT_RESALE_APPROVED 经收单行批准转售、只承接 MOR；PAYFAC 支付服务商资质、可承接 MOR 与 PSP。允许值：MERCHANT、MERCHANT_RESALE_APPROVED、PAYFAC。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
   PRIMARY KEY (`entity_no`),
@@ -258,7 +288,7 @@ CREATE TABLE `t_operating_entity_application` (
   `base_entity_change_version` BIGINT NOT NULL COMMENT '提交时OE根BCR修订，批准应用前必须一致，防止过时决定覆盖新配置。',
   `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '申请创建时冻结的稳定 Operating Entity 标识；ONBOARDING 拒绝或撤回后重提复用同一 PENDING 主体；SCOPE_CHANGE 沿用既有主体且不回退其状态。',
   `party_profile_id` BIGINT NOT NULL COMMENT '本次申请冻结审核的机构 Party Profile 版本标识，必须属于 entity_no 对应的 Party。',
-  `source_type` VARCHAR(64) NOT NULL COMMENT '本次 Operating Entity 入驻申请的法律来源类型；PLATFORM 表示平台自有主体，提交 Actor 或入口渠道不由该字段表达。允许值：PLATFORM、CLIENT、PARTNER。',
+  `source_type` VARCHAR(64) NOT NULL COMMENT '本次 Operating Entity 入驻申请的法律来源类型，提交 Actor 或入口渠道不由该字段表达。允许值：CLIENT、PARTNER。',
   `source_client_id` BIGINT NULL COMMENT 'source_type=CLIENT 时提交自身或经平台审核关联经营主体的 Organization Client 标识，其他来源为空。',
   `source_partner_id` BIGINT NULL COMMENT 'source_type=PARTNER 时提交经营主体的 Local Partner 标识，其他来源为空。',
   `client_source_basis` VARCHAR(64) NULL COMMENT 'source_type=CLIENT 时说明目标 Party 与 Client 是同一法律主体或经材料和资格审核确认的关联主体；其他来源为空。允许值：SAME_PARTY、VERIFIED_ASSOCIATION。',
@@ -281,7 +311,7 @@ CREATE TABLE `t_operating_entity_application` (
   KEY `idx_operating_entity_ap_f2fe417d` (`party_profile_id`) COMMENT 'Access index for operating_entity_application on party_profile_id',
   KEY `idx_operating_entity_ap_5dd3d5f9` (`source_client_id`) COMMENT 'Access index for operating_entity_application on source_client_id',
   KEY `idx_operating_entity_ap_941a9370` (`source_partner_id`) COMMENT 'Access index for operating_entity_application on source_partner_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='OE入驻或完整目标范围变更申请；uk_oe_app_no(application_no)、uk_oe_app_active(entity_no,active_slot)；申请状态/Slot 与 Client Application 相同；entity_no 非空稳定，ONBOARDING 使用 ENTITY_UNDERWRITING，SCOPE_CHANGE 使用 ENTITY_SCOPE_REVIEW（Risk 接入待后续实施）；仅 APPROVED 的 approved_source_relation_id 非空；application_type=ONBOARDING/SCOPE_CHANGE，Scope批准时核对base_entity_change_version；Risk新审核类型尚未接入时禁止自动激活范围；CHECK ((status IN (''DRAFT'',''SUBMITTED'',''UNDER_REVIEW'') AND active_slot=1) OR (status IN (''APPROVED'',''REJECTED'',''WITHDRAWN'') AND active_slot IS NULL))；CHECK ((qualification_decision_id IS NULL) = (qualification_decision_version IS NULL))；CHECK ((status=''APPROVED'' AND approved_source_relation_id IS NOT NULL) OR (status<>''APPROVED'' AND approved_source_relation_id IS NULL))；Risk Tuple 固定映射：role_type=OPERATING_ENTITY、role_id=entity_no、ONBOARDING 的 qualification_type=ENTITY_UNDERWRITING；SCOPE_CHANGE 的 qualification_type=ENTITY_SCOPE_REVIEW。；qualification_decision_id 与 qualification_decision_version 必须成组为空或成组非空。；APPROVED/REJECTED 前 due_diligence_case_id、qualification_decision_id、qualification_decision_version、qualification_type、role_type、role_id 必须匹配同一次 Risk 决策；WITHDRAWN 不要求 Decision。；qualification_type 由系统按申请类型固定为 ENTITY_UNDERWRITING 或 ENTITY_SCOPE_REVIEW，不接受调用方输入。；提交后 source_type、source_client_id、source_partner_id、client_source_basis 与 qualification_type 组成的 Source/Qualification Tuple 冻结且不可修改。；approved_source_relation_id 仅在 APPROVED 时非空，其他状态必须为空。；Source Owner XOR：PLATFORM 要求 source_client_id IS NULL AND source_partner_id IS NULL；CLIENT 要求 source_client_id IS NOT NULL AND source_partner_id IS NULL；PARTNER 要求 source_client_id IS NULL AND source_partner_id IS NOT NULL。；CLIENT 来源依据：SAME_PARTY 要求 Client Party=Operating Entity Party；VERIFIED_ASSOCIATION 要求两个 Party 不同，并由已批准申请、冻结材料和匹配的 Risk Qualification Decision 支撑；非 CLIENT 要求 client_source_basis IS NULL。；SCOPE_CHANGE 必须核对 base_entity_change_version 与完整目标 Scope，沿用既有主体和唯一来源关系，不回退主体状态；过时或拒绝的审核不能撤销现有范围。Risk 新 Tuple 未接入时禁止该流程激活范围。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='OE入驻或完整目标范围变更申请；uk_oe_app_no(application_no)、uk_oe_app_active(entity_no,active_slot)；申请状态/Slot 与 Client Application 相同；entity_no 非空稳定，ONBOARDING 使用 ENTITY_UNDERWRITING，SCOPE_CHANGE 使用 ENTITY_SCOPE_REVIEW（Risk 接入待后续实施）；仅 APPROVED 的 approved_source_relation_id 非空；application_type=ONBOARDING/SCOPE_CHANGE，Scope批准时核对base_entity_change_version；Risk新审核类型尚未接入时禁止自动激活范围；CHECK ((status IN (''DRAFT'',''SUBMITTED'',''UNDER_REVIEW'') AND active_slot=1) OR (status IN (''APPROVED'',''REJECTED'',''WITHDRAWN'') AND active_slot IS NULL))；CHECK ((qualification_decision_id IS NULL) = (qualification_decision_version IS NULL))；CHECK ((status=''APPROVED'' AND approved_source_relation_id IS NOT NULL) OR (status<>''APPROVED'' AND approved_source_relation_id IS NULL))；Risk Tuple 固定映射：role_type=OPERATING_ENTITY、role_id=entity_no、ONBOARDING 的 qualification_type=ENTITY_UNDERWRITING；SCOPE_CHANGE 的 qualification_type=ENTITY_SCOPE_REVIEW。；qualification_decision_id 与 qualification_decision_version 必须成组为空或成组非空。；APPROVED/REJECTED 前 due_diligence_case_id、qualification_decision_id、qualification_decision_version、qualification_type、role_type、role_id 必须匹配同一次 Risk 决策；WITHDRAWN 不要求 Decision。；qualification_type 由系统按申请类型固定为 ENTITY_UNDERWRITING 或 ENTITY_SCOPE_REVIEW，不接受调用方输入。；提交后 source_type、source_client_id、source_partner_id、client_source_basis 与 qualification_type 组成的 Source/Qualification Tuple 冻结且不可修改。；approved_source_relation_id 仅在 APPROVED 时非空，其他状态必须为空。；Source Owner XOR：CLIENT 要求 source_client_id IS NOT NULL AND source_partner_id IS NULL；PARTNER 要求 source_client_id IS NULL AND source_partner_id IS NOT NULL。；CLIENT 来源依据：SAME_PARTY 要求 Client Party=Operating Entity Party；VERIFIED_ASSOCIATION 要求两个 Party 不同，并由已批准申请、冻结材料和匹配的 Risk Qualification Decision 支撑；非 CLIENT 要求 client_source_basis IS NULL。；SCOPE_CHANGE 必须核对 base_entity_change_version 与完整目标 Scope，沿用既有主体和唯一来源关系，不回退主体状态；过时或拒绝的审核不能撤销现有范围。Risk 新 Tuple 未接入时禁止该流程激活范围。';
 
 CREATE TABLE `t_operating_entity_scope` (
   `scope_id` BIGINT NOT NULL COMMENT 'OE准确四要素范围行的稳定标识，由申请创建，批准后供交易引用。',
@@ -341,10 +371,25 @@ CREATE TABLE `t_client_entity_affiliation` (
   KEY `idx_client_entity_affil_a789336f` (`entity_no`) COMMENT 'Access index for client_entity_affiliation on entity_no'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Client 使用 Operating Entity 的业务资格关系；uk_aff_entity_active(client_id,entity_no,active_slot)、uk_aff_priority_active(client_id,priority_no,active_slot)、uk_aff_entity_time(client_id,entity_no,effective_from)；ACTIVE时slot=1，其余NULL；Client全局正整数优先级，升序逐个完整验证；授权覆盖OE当前和未来已批准且匹配Client分类的范围';
 
+CREATE TABLE `t_client_partner_relation` (
+  `relation_id` BIGINT NOT NULL COMMENT 'Client 与 Local Partner 业务关系的内部唯一标识。',
+  `client_id` BIGINT NOT NULL COMMENT '平台 Client 角色的内部唯一标识。',
+  `local_partner_id` BIGINT NOT NULL COMMENT '与 Client 建立业务关系的 Local Partner 标识。',
+  `relation_type` VARCHAR(64) NOT NULL COMMENT 'Client 与 Local Partner 的关系类型。允许值：REFERRAL。',
+  `status` VARCHAR(64) NOT NULL COMMENT '当前业务记录在其所属聚合生命周期中的状态代码。允许值：ACTIVE、ENDED。',
+  `effective_from` DATETIME(6) NOT NULL COMMENT '业务记录生效区间的 UTC 微秒精度起点，包含该时刻。',
+  `effective_to` DATETIME(6) NULL COMMENT '业务记录生效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
+  PRIMARY KEY (`relation_id`),
+  UNIQUE KEY `uk_client_partner_rel` (`client_id`, `local_partner_id`, `relation_type`, `effective_from`) COMMENT 'Unique index for client_partner_relation on client_id, local_partner_id, relation_type, effective_from',
+  KEY `idx_client_partner_rel_partner` (`local_partner_id`) COMMENT 'Access index for client_partner_relation on local_partner_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='Client 与 Local Partner 的推荐等业务关系；uk_client_partner_rel(client_id,local_partner_id,relation_type,effective_from)；relation_type=REFERRAL，状态 ACTIVE/ENDED；本期只建表，没有写入方与读取方，与合同 referral_partner_id 的关系由后续需求确定；应用校验，不创建 CHECK/FK';
+
 CREATE TABLE `t_entity_source_relation` (
   `source_relation_id` BIGINT NOT NULL COMMENT 'Operating Entity 来源关系的稳定内部标识。',
   `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'CCT唯一不可变OE身份，CHAR(5)，创建时经营国家二位代码加001–999，如AE001；编号不参与路由、不复用。',
-  `source_type` VARCHAR(64) NOT NULL COMMENT '该 Operating Entity 来源关系对应的来源主体类型。允许值：PLATFORM、CLIENT、PARTNER。',
+  `source_type` VARCHAR(64) NOT NULL COMMENT '该 Operating Entity 来源关系对应的来源主体类型。允许值：CLIENT、PARTNER。',
   `source_client_id` BIGINT NULL COMMENT '提交并经平台审核关联 Operating Entity 的 Organization Client 标识。',
   `source_partner_id` BIGINT NULL COMMENT '提供 Operating Entity 的 Local Partner 标识。',
   `client_source_basis` VARCHAR(64) NULL COMMENT 'Organization Client 提供 Operating Entity 时的来源认定依据；source_type=CLIENT 时为 SAME_PARTY 或 VERIFIED_ASSOCIATION，其他来源为空。允许值：SAME_PARTY、VERIFIED_ASSOCIATION。',
@@ -360,7 +405,7 @@ CREATE TABLE `t_entity_source_relation` (
   KEY `idx_entity_source_relat_6036b10b` (`entity_no`, `status`, `effective_from`, `effective_to`) COMMENT 'Access index for entity_source_relation on entity_no, status, effective_from, effective_to',
   KEY `idx_entity_source_relat_925d4955` (`source_client_id`) COMMENT 'Access index for entity_source_relation on source_client_id',
   KEY `idx_entity_source_relat_48981e34` (`source_partner_id`) COMMENT 'Access index for entity_source_relation on source_partner_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='OE 的唯一来源认定关系；uk_source_effective(entity_no,effective_from)、uk_source_active(entity_no,active_source_slot)；source_type IN (PLATFORM,CLIENT,PARTNER)，Owner XOR；状态仅 ACTIVE/ENDED，仅 ACTIVE 的 active_source_slot=1；Client 来源依据仅为 SAME_PARTY/VERIFIED_ASSOCIATION；CHECK ((status=''ACTIVE'' AND active_source_slot=1) OR (status=''ENDED'' AND active_source_slot IS NULL))；CHECK (effective_to IS NULL OR effective_from < effective_to)；Owner XOR：PLATFORM 要求 source_client_id IS NULL AND source_partner_id IS NULL；CLIENT 要求 source_client_id IS NOT NULL AND source_partner_id IS NULL；PARTNER 要求 source_client_id IS NULL AND source_partner_id IS NOT NULL。；CLIENT 来源依据：SAME_PARTY 要求 Client Party=Operating Entity Party；VERIFIED_ASSOCIATION 要求两个 Party 不同，并由已批准申请、冻结材料和匹配的 Risk Qualification Decision 支撑；非 CLIENT 要求 client_source_basis IS NULL。；source_type、source_client_id、source_partner_id、client_source_basis 创建后不可修改；来源失效时只允许推进为 ENDED 并填写 effective_to。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='OE 的唯一来源认定关系；uk_source_effective(entity_no,effective_from)、uk_source_active(entity_no,active_source_slot)；source_type IN (CLIENT,PARTNER)，Owner XOR；状态仅 ACTIVE/ENDED，仅 ACTIVE 的 active_source_slot=1；Client 来源依据仅为 SAME_PARTY/VERIFIED_ASSOCIATION；CHECK ((status=''ACTIVE'' AND active_source_slot=1) OR (status=''ENDED'' AND active_source_slot IS NULL))；CHECK (effective_to IS NULL OR effective_from < effective_to)；Owner XOR：CLIENT 要求 source_client_id IS NOT NULL AND source_partner_id IS NULL；PARTNER 要求 source_client_id IS NULL AND source_partner_id IS NOT NULL。；CLIENT 来源依据：SAME_PARTY 要求 Client Party=Operating Entity Party；VERIFIED_ASSOCIATION 要求两个 Party 不同，并由已批准申请、冻结材料和匹配的 Risk Qualification Decision 支撑；非 CLIENT 要求 client_source_basis IS NULL。；source_type、source_client_id、source_partner_id、client_source_basis 创建后不可修改；来源失效时只允许推进为 ENDED 并填写 effective_to。';
 
 CREATE TABLE `t_consumer_legal_document` (
   `legal_document_id` BIGINT NOT NULL COMMENT '一份独立、可发布且可审批的消费者法律文档内部唯一标识。',

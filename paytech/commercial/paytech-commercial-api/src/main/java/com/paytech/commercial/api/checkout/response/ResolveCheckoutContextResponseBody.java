@@ -26,7 +26,7 @@ public class ResolveCheckoutContextResponseBody {
     /** 选定 OE 的不可变五位编号。 */
     private String entityNo;
 
-    /** OE 来源 Code：PLATFORM、CLIENT 或 PARTNER。 */
+    /** OE 来源 Code：CLIENT 或 PARTNER。 */
     private String sourceType;
 
     /** Client 唯一 Primary 经营分类。 */
@@ -49,6 +49,12 @@ public class ResolveCheckoutContextResponseBody {
 
     /** 返回前复核的相关业务根修订。 */
     private Revisions revisions;
+
+    /**
+     * 商业关系快照
+     * <li>由选中候选的事实推导；收单按 effectiveModelVersion 决定下游是否按快照生效，0 表示只记录。</li>
+     */
+    private RelationshipSnapshot relationshipSnapshot;
 
     /** Client 经营分类证据。 */
     @Getter
@@ -120,7 +126,7 @@ public class ResolveCheckoutContextResponseBody {
 
         /**
          * 本次支付方式命中、且有生效价格的全部开通项，按开通项代码升序
-         * <li>请求未给支付方式时为空数组；给出时至少一项。接受条件与 3DS 要求由收单在执行时使用（二期）。</li>
+         * <li>请求给出支付方式时至少一项；未给时为全部可用的 PAYMENT_METHOD 开通项，可为空数组。接受条件与 3DS 要求由收单在执行时使用（二期）。</li>
          */
         private java.util.List<Capability> capabilities;
     }
@@ -290,6 +296,88 @@ public class ResolveCheckoutContextResponseBody {
 
         /** 按参与方去重的已批准资料证据。 */
         private java.util.List<PartyEvidence> parties;
+
+        /** 选中卖方披露向消费者公开的卖方文本，原样透传 client-master。 */
+        private Seller seller;
+    }
+
+    /** 卖方披露的公开文本。 */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Seller {
+        /** 卖方法定名称。 */
+        private String legalName;
+
+        /** 卖方注册编号。 */
+        private String registrationNumber;
+
+        /** 卖方税务登记编号；不披露时为 null。 */
+        private String taxRegistrationNumber;
+
+        /** 卖方地址文本。 */
+        private String addressText;
+
+        /** 卖方支持邮箱。 */
+        private String supportEmail;
+
+        /** 卖方支持电话；不披露时为 null。 */
+        private String supportPhone;
+    }
+
+    /**
+     * 商业关系快照（决定 9.2）
+     * <li>本轮只对 OE 来源 PARTNER 推导：MOR 合同对应 C1，PSP 合同对应 C2。</li>
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RelationshipSnapshot {
+        /**
+         * 生效模型版本
+         * <li>0：快照只记录，下游沿用旧字段；1：快照生效。由 commercial 开关 commercial.relationship-snapshot.enabled 决定。</li>
+         */
+        private int effectiveModelVersion;
+
+        /** 推导规则版本；本轮恒为 1。 */
+        private int snapshotModelVersion;
+
+        /** 资金流向 Code，见 FundFlow；本轮恒为 THROUGH_CUSTODIAN。 */
+        private String fundFlow;
+
+        /** 合同业务模式 Code：MOR 或 PSP，与 clientTerms.businessMode 相同。 */
+        private String businessMode;
+
+        /**
+         * 角色绑定
+         * <li>按 RelationshipRole 声明顺序排列，同一角色至多一行。</li>
+         * <li>MOR 产出 8 行（无 ACQUIRER_SUB_MERCHANT），PSP 产出 9 行。</li>
+         */
+        private java.util.List<RoleBinding> bindings;
+    }
+
+    /** 一个角色到主体的绑定。 */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RoleBinding {
+        /** 角色 Code，见 RelationshipRole。 */
+        private String role;
+
+        /** 主体类型 Code，见 RelationshipSubjectType。 */
+        private String subjectType;
+
+        /**
+         * 主体标识
+         * <li>CLIENT 为 clientId，OPERATING_ENTITY 为 entityNo，LOCAL_PARTNER 为 localPartnerId；PLATFORM 为 null。</li>
+         */
+        private String subjectId;
+
+        /** 主体法律主体 Party ID；规范正十进制字符串，可空。 */
+        private String partyId;
     }
 
     /** CCT 输出前复核的业务根修订。 */

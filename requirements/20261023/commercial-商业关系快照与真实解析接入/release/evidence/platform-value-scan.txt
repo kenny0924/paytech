@@ -1,0 +1,31 @@
+# exact-match scan: every varchar/char(>=8) column in mor_* = 'PLATFORM' (read-only, mor-test, 2026-10-25)
+mor_acquiring	t_commerce_order	entity_source_type	46
+mor_commercial	t_agreement	pricing_authority	9
+mor_commercial	t_product	product_code	1
+mor_commercial	t_product	product_name	1
+mor_commercial	t_product_fee_event	product_code	3
+mor_platform	t_audit_event	resource_system	4196
+mor_platform	t_role	tenant_scope	2
+mor_platform	t_role	scope_key	2
+mor_platform	t_security_event	source_system	925
+mor_platform	t_tenant_member_role	role_scope_key	7
+mor_risk_decision	t_checkout_input_snapshot	entity_source_type	46
+mor_risk_decision	t_risk_variable_member	value_key	1
+mor_risk_decision	t_risk_variable_member	string_value	1
+
+# text/json columns (excluding mor_platform) containing PLATFORM
+mor_channel_connector	t_channel_script	source_code	2
+mor_channel_connector	t_channel_verify_run_step	trace_json	63
+mor_commercial	t_business_change_version	snapshot_json	123
+mor_risk_decision	t_risk_variable_member	value_key	1
+mor_risk_decision	t_risk_variable_member	string_value	1
+mor_vault	t_vault_data_type	description	3
+mor_vault	t_vault_policy_change	target_key	9
+mor_vault	t_vault_policy_change	after_snapshot	10
+mor_vault	t_vault_policy_change	reason	12
+
+# text/json columns with an entity source key followed by PLATFORM (regex)
+(none)
+
+# BIGINT primary keys in 8 DBs within 900000000001370000-379999 / 880000000000-881999999999 / 900000000000137000-137999
+(none)

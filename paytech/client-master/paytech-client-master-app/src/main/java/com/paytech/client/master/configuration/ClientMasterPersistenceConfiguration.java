@@ -15,6 +15,8 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import com.zaxxer.hikari.HikariDataSource;
 import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
+import com.paytech.client.master.api.enums.AcquiringQualification;
+import com.paytech.client.master.api.enums.PartnerRoleCode;
 import com.paytech.client.master.domain.enums.*;
 
 /** client-master 唯一持久化装配（mor_client_master）；连接参数复用 Spring 标准配置，不由某个业务接口拥有。 */
@@ -54,6 +56,11 @@ public class ClientMasterPersistenceConfiguration {
         config.getTypeHandlerRegistry().register(OperatingEntityScopeStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(OperatingEntityApplicationStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(LocalPartnerStatus.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(AcquiringQualification.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(PartnerRoleCode.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(PartnerRoleStatus.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(PartyRoleCode.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(PartyRoleStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(ConsumerLegalDocumentDocumentType.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(ConsumerLegalDocumentStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(SellerDisclosureStatus.class, CodeEnumTypeHandler.class);

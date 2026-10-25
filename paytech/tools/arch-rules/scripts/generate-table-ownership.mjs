@@ -109,6 +109,15 @@ const stepAddedTables = [
   // 2026-10-22 payment-3DS全链路 (technique 3.4): payment consumes ChannelPaymentNotified for the first time and adds the
   // Foundation consume-idempotency pair to mor_payment.
   { service: 'payment', database: 'mor_payment', tables: ['t_consumed_event', 't_consumed_aggregate_version'] },
+  // 2026-10-24 商业关系快照与真实解析接入 (requirements/20261023/commercial-商业关系快照与真实解析接入 technique §3.4.1):
+  // Local Partner roles, the party role index and the Client / Partner relation in mor_client_master.
+  {
+    service: 'client-master',
+    database: 'mor_client_master',
+    tables: ['t_partner_role', 't_party_role', 't_client_partner_relation'],
+  },
+  // 2026-10-24 商业关系快照与真实解析接入 (technique §3.4.3): the order relationship snapshot rows in mor_acquiring.
+  { service: 'acquiring', database: 'mor_acquiring', tables: ['t_order_relationship_binding'] },
   // Step 12 (design/05 §2.1, S3): one-time card material tickets in mor_card.
   { service: 'card', database: 'mor_card', tables: ['t_card_material_ticket'] },
   // 2026-10-22 BIN library (requirements/20261022/card-BIN库与卡属性 technique §3.6): versions, ranges, import errors and

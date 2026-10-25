@@ -18102,7 +18102,7 @@
         {
           "defKey": "entity_source_type",
           "defName": "经营主体来源",
-          "comment": "经营主体来源的稳定业务代码。允许值：PLATFORM、CLIENT、PARTNER。",
+          "comment": "经营主体来源的稳定业务代码。允许值：CLIENT、PARTNER。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",

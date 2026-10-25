@@ -20,7 +20,7 @@ import com.paytech.risk.control.domain.list.RiskSubjectType;
  * @param entityNo
  *            Operating Entity 编号
  * @param entitySourceType
- *            经营主体来源：PLATFORM、CLIENT 或 PARTNER
+ *            经营主体来源：CLIENT 或 PARTNER
  * @param localPartnerId
  *            Local Partner ID；仅 PARTNER 来源非空
  * @param consumerCountryCode

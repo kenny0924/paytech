@@ -1,0 +1,362 @@
+{
+  "stage": "5 local e2e (backend)",
+  "date": "2026-10-25",
+  "worktree": "/Users/kenny/Desktop/Workspace/Code-MoR-relsnap (detached 8a86a31c + uncommitted stage-4 changes)",
+  "services": {
+    "compliance": {
+      "port": 18112,
+      "mgmt": 19112,
+      "pid": 66341,
+      "jar": "local-environment/e2e/jars/paytech-compliance-app-exec.jar (new)",
+      "db": "mor_compliance_v2e2e"
+    },
+    "client-master": {
+      "port": 18101,
+      "mgmt": 19101,
+      "pid": 64930,
+      "jar": "paytech-client-master-app-exec.jar (new)",
+      "db": "mor_client_master_v2e2e"
+    },
+    "commercial": {
+      "port": 18108,
+      "mgmt": 19108,
+      "pid": 65010,
+      "jar": "paytech-commercial-app-exec.jar (new)",
+      "db": "mor_commercial_v2e2e",
+      "env": "COMMERCIAL_SNOWFLAKE_REGION_ID=0 WORKER_ID=7; relationship-snapshot.enabled default false"
+    },
+    "acquiring": {
+      "port": 18102,
+      "mgmt": 19102,
+      "pid": 68066,
+      "jar": "swapped; backup paytech-acquiring-app-exec.jar.pre-relsnap",
+      "db": "mor_acquiring_v2e2e",
+      "mode": "MOCK (default) at end; REAL used 06:02-06:04Z"
+    },
+    "risk-decision": {
+      "port": 18104,
+      "mgmt": 19104,
+      "pid": 67520,
+      "jar": "swapped; backup paytech-risk-decision-app-exec.jar.pre-relsnap",
+      "db": "mor_risk_decision_v2e2e"
+    },
+    "ops-bff": {
+      "port": 18201,
+      "mgmt": 19201,
+      "pid": 66833,
+      "jar": "swapped; backup paytech-operations-console-bff-app-exec.jar.pre-relsnap"
+    }
+  },
+  "checkoutEntry": "direct to acquiring http://127.0.0.1:18102/commerce/client-gateway-api/v1/checkouts with the headers Gateway adds (X-Gateway-Client-Id, X-Gateway-Credential-Id); no Client API credential secret is available locally (client-bff not running)",
+  "opsEntry": "https://127.0.0.1:18444/api/operations via nginx -> Gateway (snapshot 464 -> 475 routes after block 137) -> ops-bff, E2E admin session",
+  "checks": [
+    {
+      "name": "resolve client-not-qualified",
+      "ok": true,
+      "at": "2026-10-25T05:56:24Z",
+      "note": "HTTP 422 code=CLIENT_NOT_ELIGIBLE",
+      "evidence": "evidence/resolve_client-not-qualified.json"
+    },
+    {
+      "name": "compliance admin register AE001",
+      "ok": true,
+      "at": "2026-10-25T05:56:42Z",
+      "note": "HTTP 200 status=APPROVED effective=ELIGIBLE version=1",
+      "evidence": "evidence/compliance_admin_register_AE001.json"
+    },
+    {
+      "name": "compliance admin register PayFac Partner",
+      "ok": true,
+      "at": "2026-10-25T05:56:42Z",
+      "note": "HTTP 200 status=APPROVED effective=ELIGIBLE version=1",
+      "evidence": "evidence/compliance_admin_register_PayFac_Partner.json"
+    },
+    {
+      "name": "resolve oe-lp-qualified-client-not",
+      "ok": true,
+      "at": "2026-10-25T05:56:42Z",
+      "note": "HTTP 422 code=CLIENT_NOT_ELIGIBLE",
+      "evidence": "evidence/resolve_oe-lp-qualified-client-not.json"
+    },
+    {
+      "name": "compliance admin register Client 237161687952666625",
+      "ok": true,
+      "at": "2026-10-25T05:56:42Z",
+      "note": "HTTP 200 status=APPROVED effective=ELIGIBLE version=1",
+      "evidence": "evidence/compliance_admin_register_Client_237161687952666625.json"
+    },
+    {
+      "name": "resolve mor-c1",
+      "ok": true,
+      "at": "2026-10-25T05:57:48Z",
+      "note": "HTTP 200 mode=MOR fundFlow=THROUGH_CUSTODIAN effective=0 snapshot=1 roles=8 problems=none",
+      "evidence": "evidence/resolve_mor-c1.json"
+    },
+    {
+      "name": "compliance admin revoke AE001",
+      "ok": true,
+      "at": "2026-10-25T05:58:02Z",
+      "note": "HTTP 200 status=REVOKED",
+      "evidence": "evidence/compliance_admin_revoke_AE001.json"
+    },
+    {
+      "name": "resolve oe-revoked",
+      "ok": true,
+      "at": "2026-10-25T05:58:02Z",
+      "note": "HTTP 422 code=NO_ELIGIBLE_ENTITY",
+      "evidence": "evidence/resolve_oe-revoked.json"
+    },
+    {
+      "name": "compliance admin register AE001 again",
+      "ok": true,
+      "at": "2026-10-25T05:58:02Z",
+      "note": "HTTP 200 status=APPROVED effective=ELIGIBLE version=3",
+      "evidence": "evidence/compliance_admin_register_AE001_again.json"
+    },
+    {
+      "name": "resolve mor-c1-after-reregister",
+      "ok": true,
+      "at": "2026-10-25T05:58:03Z",
+      "note": "HTTP 200 mode=MOR fundFlow=THROUGH_CUSTODIAN effective=0 snapshot=1 roles=8 problems=none",
+      "evidence": "evidence/resolve_mor-c1-after-reregister.json"
+    },
+    {
+      "name": "resolve compliance-down",
+      "ok": true,
+      "at": "2026-10-25T05:58:23Z",
+      "note": "HTTP 503 code=OWNER_UNAVAILABLE",
+      "evidence": "evidence/resolve_compliance-down.json"
+    },
+    {
+      "name": "resolve mor-c1-after-compliance-restart",
+      "ok": true,
+      "at": "2026-10-25T05:58:31Z",
+      "note": "HTTP 200 mode=MOR fundFlow=THROUGH_CUSTODIAN effective=0 snapshot=1 roles=8 problems=none",
+      "evidence": "evidence/resolve_mor-c1-after-compliance-restart.json"
+    },
+    {
+      "name": "B7 subject lookup CLIENT",
+      "ok": true,
+      "at": "2026-10-25T06:01:32Z",
+      "note": "HTTP 200 displayName=Relsnap Synthetic Client PSP LLC status=ACTIVE",
+      "evidence": "evidence/B7_subject_lookup_CLIENT.json"
+    },
+    {
+      "name": "B7 subject lookup unknown CLIENT",
+      "ok": true,
+      "at": "2026-10-25T06:01:32Z",
+      "note": "HTTP 404 code=CLIENT_NOT_FOUND",
+      "evidence": "evidence/B7_subject_lookup_unknown_CLIENT.json"
+    },
+    {
+      "name": "resolve psp-client-not-qualified",
+      "ok": true,
+      "at": "2026-10-25T06:01:32Z",
+      "note": "HTTP 422 code=CLIENT_NOT_ELIGIBLE",
+      "evidence": "evidence/resolve_psp-client-not-qualified.json"
+    },
+    {
+      "name": "B10 manual decision PSP client",
+      "ok": true,
+      "at": "2026-10-25T06:01:32Z",
+      "note": "HTTP 200 status=APPROVED version=1",
+      "evidence": "evidence/B10_manual_decision_PSP_client.json"
+    },
+    {
+      "name": "resolve psp-c2",
+      "ok": true,
+      "at": "2026-10-25T06:01:33Z",
+      "note": "HTTP 200 mode=PSP fundFlow=THROUGH_CUSTODIAN effective=0 snapshot=1 roles=9 problems=none",
+      "evidence": "evidence/resolve_psp-c2.json"
+    },
+    {
+      "name": "B11 revoke PSP client",
+      "ok": true,
+      "at": "2026-10-25T06:01:33Z",
+      "note": "HTTP 200 status=REVOKED version=2",
+      "evidence": "evidence/B11_revoke_PSP_client.json"
+    },
+    {
+      "name": "resolve psp-client-revoked",
+      "ok": true,
+      "at": "2026-10-25T06:01:33Z",
+      "note": "HTTP 422 code=CLIENT_NOT_ELIGIBLE",
+      "evidence": "evidence/resolve_psp-client-revoked.json"
+    },
+    {
+      "name": "B10 stale version conflict",
+      "ok": true,
+      "at": "2026-10-25T06:01:33Z",
+      "note": "HTTP 409 code=QUALIFICATION_CHANGED",
+      "evidence": "evidence/B10_stale_version_conflict.json"
+    },
+    {
+      "name": "B10 re-register PSP client",
+      "ok": true,
+      "at": "2026-10-25T06:01:33Z",
+      "note": "HTTP 200 status=APPROVED version=3",
+      "evidence": "evidence/B10_re-register_PSP_client.json"
+    },
+    {
+      "name": "B9 qualification history",
+      "ok": true,
+      "at": "2026-10-25T06:01:33Z",
+      "note": "HTTP 200 items=3",
+      "evidence": "evidence/B9_qualification_history.json"
+    },
+    {
+      "name": "B8 qualification list",
+      "ok": true,
+      "at": "2026-10-25T06:01:33Z",
+      "note": "HTTP 200 total=4 items=4",
+      "evidence": "evidence/B8_qualification_list.json"
+    },
+    {
+      "name": "B1 operating entity list",
+      "ok": true,
+      "at": "2026-10-25T06:01:53Z",
+      "note": "HTTP 200 total=1 first=AE001",
+      "evidence": "evidence/B1_operating_entity_list.json"
+    },
+    {
+      "name": "B2 operating entity detail",
+      "ok": true,
+      "at": "2026-10-25T06:01:53Z",
+      "note": "HTTP 200 qualification=PAYFAC changeVersion=2",
+      "evidence": "evidence/B2_operating_entity_detail.json"
+    },
+    {
+      "name": "B3 acquiring qualification -> MERCHANT_RESALE_APPROVED",
+      "ok": true,
+      "at": "2026-10-25T06:01:53Z",
+      "note": "HTTP 200 qualification=MERCHANT_RESALE_APPROVED changeVersion=3",
+      "evidence": "evidence/B3_acquiring_qualification_->_MERCHANT_RESALE_APPROVED.json"
+    },
+    {
+      "name": "resolve psp-under-resale-approved",
+      "ok": true,
+      "at": "2026-10-25T06:01:53Z",
+      "note": "HTTP 422 code=NO_ELIGIBLE_ENTITY",
+      "evidence": "evidence/resolve_psp-under-resale-approved.json"
+    },
+    {
+      "name": "resolve mor-under-resale-approved",
+      "ok": true,
+      "at": "2026-10-25T06:01:53Z",
+      "note": "HTTP 200 mode=MOR fundFlow=THROUGH_CUSTODIAN effective=0 snapshot=1 roles=8 problems=none",
+      "evidence": "evidence/resolve_mor-under-resale-approved.json"
+    },
+    {
+      "name": "B3 stale changeVersion conflict",
+      "ok": true,
+      "at": "2026-10-25T06:01:53Z",
+      "note": "HTTP 409 code=ENTITY_CHANGE_VERSION_CONFLICT",
+      "evidence": "evidence/B3_stale_changeVersion_conflict.json"
+    },
+    {
+      "name": "B3 acquiring qualification -> PAYFAC",
+      "ok": true,
+      "at": "2026-10-25T06:01:53Z",
+      "note": "HTTP 200 qualification=PAYFAC changeVersion=4",
+      "evidence": "evidence/B3_acquiring_qualification_->_PAYFAC.json"
+    },
+    {
+      "name": "resolve psp-c2-after-payfac",
+      "ok": true,
+      "at": "2026-10-25T06:01:54Z",
+      "note": "HTTP 200 mode=PSP fundFlow=THROUGH_CUSTODIAN effective=0 snapshot=1 roles=9 problems=none",
+      "evidence": "evidence/resolve_psp-c2-after-payfac.json"
+    },
+    {
+      "name": "B4 local partner list",
+      "ok": true,
+      "at": "2026-10-25T06:01:54Z",
+      "note": "HTTP 200 total=1",
+      "evidence": "evidence/B4_local_partner_list.json"
+    },
+    {
+      "name": "B5 local partner detail",
+      "ok": true,
+      "at": "2026-10-25T06:01:54Z",
+      "note": "HTTP 200 roles=['OE_PROVIDER'] changeVersion=1",
+      "evidence": "evidence/B5_local_partner_detail.json"
+    },
+    {
+      "name": "B6 remove OE_PROVIDER while providing rejected",
+      "ok": true,
+      "at": "2026-10-25T06:01:54Z",
+      "note": "HTTP 422 code=ENTITY_ATTRIBUTE_INVALID",
+      "evidence": "evidence/B6_remove_OE_PROVIDER_while_providing_rejected.json"
+    },
+    {
+      "name": "B6 roles -> OE_PROVIDER+REFERRER",
+      "ok": true,
+      "at": "2026-10-25T06:01:54Z",
+      "note": "HTTP 200 roles=['OE_PROVIDER', 'REFERRER'] changeVersion=2",
+      "evidence": "evidence/B6_roles_->_OE_PROVIDER+REFERRER.json"
+    },
+    {
+      "name": "B6 roles -> OE_PROVIDER",
+      "ok": true,
+      "at": "2026-10-25T06:01:54Z",
+      "note": "HTTP 200 roles=['OE_PROVIDER'] changeVersion=3",
+      "evidence": "evidence/B6_roles_->_OE_PROVIDER.json"
+    },
+    {
+      "name": "resolve mor-c1-after-ops-changes",
+      "ok": true,
+      "at": "2026-10-25T06:01:54Z",
+      "note": "HTTP 200 mode=MOR fundFlow=THROUGH_CUSTODIAN effective=0 snapshot=1 roles=8 problems=none",
+      "evidence": "evidence/resolve_mor-c1-after-ops-changes.json"
+    },
+    {
+      "name": "checkout real-mor",
+      "ok": true,
+      "at": "2026-10-25T06:03:06Z",
+      "note": "HTTP 201 orderNo=ord_3LAsQ1XrB9K71Wq4I7hcN7Jb0KDAml problems=none",
+      "evidence": "evidence/checkout_real-mor.json"
+    },
+    {
+      "name": "compliance admin revoke MOR client",
+      "ok": true,
+      "at": "2026-10-25T06:03:16Z",
+      "note": "HTTP 200 status=REVOKED",
+      "evidence": "evidence/compliance_admin_revoke_MOR_client.json"
+    },
+    {
+      "name": "checkout real-client-not-qualified",
+      "ok": true,
+      "at": "2026-10-25T06:03:16Z",
+      "note": "HTTP 422 code=CHECKOUT_NOT_ELIGIBLE",
+      "evidence": "evidence/checkout_real-client-not-qualified.json"
+    },
+    {
+      "name": "compliance admin register Client MOR again",
+      "ok": true,
+      "at": "2026-10-25T06:03:16Z",
+      "note": "HTTP 200 status=APPROVED effective=ELIGIBLE version=3",
+      "evidence": "evidence/compliance_admin_register_Client_MOR_again.json"
+    },
+    {
+      "name": "checkout real-mor-after-reregister",
+      "ok": true,
+      "at": "2026-10-25T06:03:16Z",
+      "note": "HTTP 201 orderNo=ord_3LAsREfj8kBqKfcRJ7fhghOF8HVDVb problems=none",
+      "evidence": "evidence/checkout_real-mor-after-reregister.json"
+    },
+    {
+      "name": "checkout real-psp",
+      "ok": true,
+      "at": "2026-10-25T06:03:31Z",
+      "note": "HTTP 201 bindings=9 seller=900000000001380201",
+      "evidence": "evidence/checkout_real-psp.json"
+    },
+    {
+      "name": "checkout mock-mode-after-switch-back",
+      "ok": true,
+      "at": "2026-10-25T06:04:10Z",
+      "note": "HTTP 201 rows=[['239992411864981504', 'AE001', 'PARTNER', '107']] ctx=[['NULL', '0', 'NULL']]",
+      "evidence": "evidence/checkout_mock-mode-after-switch-back.json"
+    }
+  ]
+}

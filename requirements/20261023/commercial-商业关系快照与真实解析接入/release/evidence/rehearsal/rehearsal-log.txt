@@ -1,0 +1,634 @@
+### baseline
+### apply_sql.sh precheck 
++----------------------------------+---------------------------------------------+
+| cmp.role_id_type (bigint,bigint) | GROUP_CONCAT(DATA_TYPE ORDER BY TABLE_NAME) |
++----------------------------------+---------------------------------------------+
+| cmp.role_id_type (bigint,bigint) | bigint,bigint                               |
++----------------------------------+---------------------------------------------+
++---------------------------+----------+
+| cmp.basis_note_exists (0) | COUNT(*) |
++---------------------------+----------+
+| cmp.basis_note_exists (0) |        0 |
++---------------------------+----------+
++-----------------------------------+----------+
+| cmp.role_qualification_rows (0)   | COUNT(*) |
++-----------------------------------+----------+
+| cmp.role_qualification_rows (0)   |        0 |
+| cmp.state_change_rows (0)         |        0 |
+| cmp.settlement_control_rows (0)   |        0 |
+| cmp.client_reviewer_approved (37) |       37 |
+| cmp.client_reviewer_rejected (3)  |        3 |
+| cmp.non_client_decisions (0)      |        0 |
++-----------------------------------+----------+
++------------------------------------+----------+
+| cm.acquiring_qualification_col (0) | COUNT(*) |
++------------------------------------+----------+
+| cm.acquiring_qualification_col (0) |        0 |
++------------------------------------+----------+
++-------------------+----------+
+| cm.new_tables (0) | COUNT(*) |
++-------------------+----------+
+| cm.new_tables (0) |        0 |
++-------------------+----------+
++-------------------------------------------------------+----------+
+| cm.operating_entity (0)                               | COUNT(*) |
++-------------------------------------------------------+----------+
+| cm.operating_entity (0)                               |        0 |
+| cm.entity_source_relation (0)                         |        0 |
+| cm.source_platform (0)                                |        0 |
+| cm.oe_application (0)                                 |        0 |
+| cm.oe_scope (0)                                       |        0 |
+| cm.local_partner (0)                                  |        0 |
+| cm.affiliation (0)                                    |        0 |
+| cm.seller_disclosure (0)                              |        0 |
+| cm.consumer_legal_document (0)                        |        0 |
+| cm.client (54)                                        |       54 |
+| cm.bcr_non_client (0)                                 |        0 |
+| cm.placeholder_parties_880000000701_702 (0)           |        0 |
+| cm.placeholder_profiles_881000000701_702 (0)          |        0 |
+| cm.seed_and_data_id_ranges (0)                        |        0 |
+| cm.ac11_client_237575207592763393_active (1)          |        1 |
+| cm.ac11_client_profile_not_finalized (1, GAP-PROFILE) |        1 |
+| cm.ac11_business_profile_hash_null (1, GAP-PROFILE)   |        1 |
++-------------------------------------------------------+----------+
++-----------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| com.payfac_agreement_or_plan (0)        | (SELECT COUNT(*) FROM mor_commercial.t_agreement WHERE local_partner_id=900000000001370001 OR agreement_no LIKE 'PAYFAC-%'
+    OR agreement_id BETWEEN 900000000001371000 AND 900000000001371099)
+  + (SELECT COUNT(*) FROM mor_commercial.t_commercial_term_pl   |
++-----------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| com.payfac_agreement_or_plan (0)        |                                                                                                                                                                                                                                                                 0 |
+| com.oe_party_rows_880000000702 (9)      |                                                                                                                                                                                                                                                                 9 |
+| com.platform_signatory_880000000701 (2) |                                                                                                                                                                                                                                                                 2 |
+| com.demo_cl_001_active (1)              |                                                                                                                                                                                                                                                                 1 |
++-----------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------------------------------+----------------------------+
+| com.earliest_oe_or_platform_acceptance (2026-10-20 02:50:52.276802 or later; seed profiles approved 2026-10-13) | MIN(accepted_time)         |
++-----------------------------------------------------------------------------------------------------------------+----------------------------+
+| com.earliest_oe_or_platform_acceptance (2026-10-20 02:50:52.276802 or later; seed profiles approved 2026-10-13) | 2026-10-20 02:50:52.326809 |
++-----------------------------------------------------------------------------------------------------------------+----------------------------+
++----------------------------------------------+----------+
+| acq.platform_orders (46)                     | COUNT(*) |
++----------------------------------------------+----------+
+| acq.platform_orders (46)                     |       46 |
+| acq.platform_orders_not_ae001_or_with_lp (0) |        0 |
+| acq.other_source_orders (0)                  |        0 |
+| acq.order_context (46)                       |       46 |
+| acq.binding_table (0)                        |        0 |
+| acq.context_new_cols (0)                     |        0 |
++----------------------------------------------+----------+
++--------------------------------------------------------------+----------+
+| risk.platform_snapshots (46)                                 | COUNT(*) |
++--------------------------------------------------------------+----------+
+| risk.platform_snapshots (46)                                 |       46 |
+| risk.entity_source_members (3)                               |        3 |
+| risk.platform_member_900000000000092001 (1)                  |        1 |
+| risk.rule_operand_platform_literal (0)                       |        0 |
+| risk.rule_action_param_platform (0)                          |        0 |
+| risk.rule_operand_entity_source_field (1, compares = CLIENT) |        1 |
++--------------------------------------------------------------+----------+
++-------------------------------------------+----------+
+| plt.permission_ids_or_codes (0)           | COUNT(*) |
++-------------------------------------------+----------+
+| plt.permission_ids_or_codes (0)           |        0 |
+| plt.role_permission_ids (0)               |        0 |
+| plt.console_resource_ids_codes_routes (0) |        0 |
+| plt.menu_sort_90_under_565 (0)            |        0 |
+| plt.menu_sort_60_70_under_95301 (0)       |        0 |
+| plt.gateway_route_ids_codes_paths (0)     |        0 |
+| plt.route_header_ids (0)                  |        0 |
+| plt.route_query_param_ids (0)             |        0 |
+| plt.guard_rule_ids (0)                    |        0 |
+| plt.routes_active (574)                   |      574 |
+| plt.routes_total (579)                    |      579 |
++-------------------------------------------+----------+
++----------+--------------------+----------------+---------+
+| plt.role | role_id            | role_code      | version |
++----------+--------------------+----------------+---------+
+| plt.role | 900000000000000510 | PLATFORM_ADMIN |      49 |
++----------+--------------------+----------------+---------+
++------------+--------------------+------------------------+--------+
+| plt.target | target_id          | target_service_code    | status |
++------------+--------------------+------------------------+--------+
+| plt.target | 900000000000000001 | operations-console-bff | ACTIVE |
++------------+--------------------+------------------------+--------+
++-----------------+--------------------+----------------------------+--------+
+| plt.menu_parent | resource_id        | resource_code              | status |
++-----------------+--------------------+----------------------------+--------+
+| plt.menu_parent | 900000000000000565 | OPERATIONS_RISK_MANAGEMENT | ACTIVE |
+| plt.menu_parent | 900000000000095301 | OPERATIONS_COMMERCIAL      | ACTIVE |
++-----------------+--------------------+----------------------------+--------+
++-----------------------------+------------+-----------+
+| plt.i18n_ops_release_no (7) | release_no | key_count |
++-----------------------------+------------+-----------+
+| plt.i18n_ops_release_no (7) |          7 |      8594 |
++-----------------------------+------------+-----------+
++-------------------------------------+----------+----------------------------------------------------------+
+| plt.i18n_ops_namespaces (21; new 0) | COUNT(*) | SUM(n.namespace_code IN ('qualification','master-data')) |
++-------------------------------------+----------+----------------------------------------------------------+
+| plt.i18n_ops_namespaces (21; new 0) |       21 |                                                        0 |
++-------------------------------------+----------+----------------------------------------------------------+
+### compile: baseline
+COMPILE OK: routes loaded=579, effective=574, effective block137=0
+### schema drift before migration: backup vs main 8a86a31c schema files (pre-existing drift)
+mor_compliance: compared columns/indexes/table comments with compliance-schema.sql @ 8a86a31c
+mor_client_master: compared columns/indexes/table comments with client-master-schema.sql @ 8a86a31c
+mor_acquiring: compared columns/indexes/table comments with acquiring-schema.sql @ 8a86a31c
+mor_risk_decision: compared columns/indexes/table comments with risk-decision-schema.sql @ 8a86a31c
+SCHEMA DRIFT ROWS: 0
+### apply_sql.sh cmp-ddl --apply
+### apply_sql.sh cmp-backfill 
+### apply_sql.sh cmp-backfill --apply
+### apply_sql.sh cm-ddl --apply
+### apply_sql.sh cm-seed 
+### apply_sql.sh cm-seed --apply
+### apply_sql.sh cm-data --apply
+### apply_sql.sh cm-ac11 
++------------------------+
+| party_profile_expect_1 |
++------------------------+
+|                      1 |
++------------------------+
++---------------------------+
+| business_profile_expect_1 |
++---------------------------+
+|                         1 |
++---------------------------+
+### apply_sql.sh cm-ac11 --apply
++------------------------+
+| party_profile_expect_1 |
++------------------------+
+|                      1 |
++------------------------+
++---------------------------+
+| business_profile_expect_1 |
++---------------------------+
+|                         1 |
++---------------------------+
+### re-run guards (each must fail before writing)
+ERROR 1644 (45000) at line 54: client-master already has OE / partner master data; re-inventory before seeding
+### re-run of cm-seed aborted as expected
+ERROR 1644 (45000) at line 28: AC-11 client profile state differs from the stage-6 inventory; abort
+### re-run of cm-ac11 aborted as expected
+### apply_sql.sh com-fallback 
+### apply_sql.sh com-fallback --apply
+### apply_sql.sh acq-ddl --apply
+### apply_sql.sh acq-platform --apply
++----------------------------+
+| relsnap_rewrite_time       |
++----------------------------+
+| 2026-10-25 11:41:45.938734 |
++----------------------------+
+### apply_sql.sh risk --apply
++----------------------------+
+| relsnap_rewrite_time       |
++----------------------------+
+| 2026-10-25 11:41:46.074839 |
++----------------------------+
+### apply_sql.sh plt-reg 
+### apply_sql.sh plt-reg --apply
+### compile: dormant
+COMPILE OK: routes loaded=590, effective=574, effective block137=0
+### apply_sql.sh plt-activate --apply
++--------+
+| routes |
++--------+
+|     11 |
++--------+
++-----------+
+| resources |
++-----------+
+|         6 |
++-----------+
++--------+
+| grants |
++--------+
+|      6 |
++--------+
++------+
+| role |
++------+
+|    1 |
++------+
+### compile: active
+COMPILE OK: routes loaded=590, effective=585, effective block137=11
+### apply_sql.sh postcheck 
++------------------------------------+---------------------------------------------+
+| cmp.role_id_type (varchar,varchar) | GROUP_CONCAT(DATA_TYPE ORDER BY TABLE_NAME) |
++------------------------------------+---------------------------------------------+
+| cmp.role_id_type (varchar,varchar) | varchar,varchar                             |
++------------------------------------+---------------------------------------------+
++----------------------------+-------------+
+| cmp.case_id_nullable (YES) | IS_NULLABLE |
++----------------------------+-------------+
+| cmp.case_id_nullable (YES) | YES         |
++----------------------------+-------------+
++--------------------+----------+
+| cmp.basis_note (1) | COUNT(*) |
++--------------------+----------+
+| cmp.basis_note (1) |        1 |
++--------------------+----------+
++------------------------------------------------------+----------+
+| cmp.client_qualifications APPROVED/NOT_REQUIRED (37) | COUNT(*) |
++------------------------------------------------------+----------+
+| cmp.client_qualifications APPROVED/NOT_REQUIRED (37) |       37 |
+| cmp.other_qualifications (0)                         |        0 |
+| cmp.backfill_state_changes (37)                      |       37 |
+| cmp.ac11_client_qualified (1)                        |        1 |
++------------------------------------------------------+----------+
++------------------------------------------+-------------+
+| cm.acquiring_qualification NOT NULL (NO) | IS_NULLABLE |
++------------------------------------------+-------------+
+| cm.acquiring_qualification NOT NULL (NO) | NO          |
++------------------------------------------+-------------+
++-------------------+----------+
+| cm.new_tables (3) | COUNT(*) |
++-------------------+----------+
+| cm.new_tables (3) |        3 |
++-------------------+----------+
++--------------------------------------------+----------+
+| cm.source_platform (0)                     | COUNT(*) |
++--------------------------------------------+----------+
+| cm.source_platform (0)                     |        0 |
+| cm.application_platform (0)                |        0 |
+| cm.ae001_partner_source_payfac (1)         |        1 |
+| cm.payfac_partner_party_eq_ae001 (1)       |        1 |
+| cm.payfac_oe_provider_role (1)             |        1 |
+| cm.party_role_client (54)                  |       54 |
+| cm.party_role_oe (1)                       |        1 |
+| cm.party_role_oe_provider (1)              |        1 |
+| cm.ae001_root_version (2)                  |        2 |
+| cm.payfac_root_version (1)                 |        1 |
+| cm.ae001_scope_us_usd_retail_5999 (1)      |        1 |
+| cm.ae001_us_en_legal_docs (3)              |        3 |
+| cm.ae001_us_en_seller_disclosure (1)       |        1 |
+| cm.ae001_affiliations (7)                  |        7 |
+| cm.signatory_profiles_approved_final (2)   |        2 |
+| cm.ac11_profile_final (1 after 23, else 0) |        1 |
++--------------------------------------------+----------+
++-----------------------------------------------------------------------------+----------+
+| com.payfac_partner_agreements (0 before stage-7 ops API / fallback, then 1) | COUNT(*) |
++-----------------------------------------------------------------------------+----------+
+| com.payfac_partner_agreements (0 before stage-7 ops API / fallback, then 1) |        1 |
+| com.payfac_partner_plans (0, then 2)                                        |        2 |
++-----------------------------------------------------------------------------+----------+
++------------------------------------+----------+
+| acq.platform_orders (0)            | COUNT(*) |
++------------------------------------+----------+
+| acq.platform_orders (0)            |        0 |
+| acq.rewritten_partner_orders (46)  |       46 |
+| acq.partner_orders_without_lp (0)  |        0 |
+| acq.context_model_version_null (0) |        0 |
+| acq.binding_rows (0)               |        0 |
++------------------------------------+----------+
++----------------------+------------------------------------------------------------------------------------------------------+
+| acq.context_new_cols | GROUP_CONCAT(CONCAT(COLUMN_NAME,':',COLUMN_TYPE,':',IS_NULLABLE) ORDER BY ORDINAL_POSITION)          |
++----------------------+------------------------------------------------------------------------------------------------------+
+| acq.context_new_cols | fund_flow:varchar(32):YES,effective_relationship_model_version:int:NO,snapshot_model_version:int:YES |
++----------------------+------------------------------------------------------------------------------------------------------+
++--------------------------------+----------+
+| risk.platform_snapshots (0)    | COUNT(*) |
++--------------------------------+----------+
+| risk.platform_snapshots (0)    |        0 |
+| risk.rewritten_snapshots (46)  |       46 |
+| risk.entity_source_members (2) |        2 |
++--------------------------------+----------+
++----------------------------------------------+----------+-------------------------------+
+| plt.permission (6 ACTIVE)                    | COUNT(*) | GROUP_CONCAT(DISTINCT status) |
++----------------------------------------------+----------+-------------------------------+
+| plt.permission (6 ACTIVE)                    |        6 | ACTIVE                        |
+| plt.role_permission (6 REVOKED -> ACTIVE)    |        6 | ACTIVE                        |
+| plt.console_resource (6 DISABLED -> ACTIVE)  |        6 | ACTIVE                        |
+| plt.gateway_route (11 DISABLED -> ACTIVE)    |       11 | ACTIVE                        |
+| plt.route_header (38)                        |       38 | NULL                          |
+| plt.route_query_param (17)                   |       17 | NULL                          |
+| plt.guard_rule (66)                          |       66 | NULL                          |
+| plt.routes_active (574 dormant / 585 active) |      585 | NULL                          |
++----------------------------------------------+----------+-------------------------------+
++----------+--------------------+---------+
+| plt.role | role_id            | version |
++----------+--------------------+---------+
+| plt.role | 900000000000000510 |      50 |
++----------+--------------------+---------+
+### schema drift vs worktree schema files
+mor_compliance: compared columns/indexes/table comments with compliance-schema.sql (worktree)
+mor_client_master: compared columns/indexes/table comments with client-master-schema.sql (worktree)
+mor_acquiring: compared columns/indexes/table comments with acquiring-schema.sql (worktree)
+mor_risk_decision: compared columns/indexes/table comments with risk-decision-schema.sql (worktree)
+SCHEMA DRIFT ROWS: 0
+### apply_sql.sh plt-deactivate --apply
++--------+
+| routes |
++--------+
+|     11 |
++--------+
++-----------+
+| resources |
++-----------+
+|         6 |
++-----------+
++--------+
+| grants |
++--------+
+|      6 |
++--------+
++------+
+| role |
++------+
+|    1 |
++------+
+### compile: deactivated
+COMPILE OK: routes loaded=590, effective=574, effective block137=0
+### apply_sql.sh plt-rollback --apply
++-------------+
+| guard_rules |
++-------------+
+|          66 |
++-------------+
++--------------+
+| query_params |
++--------------+
+|           17 |
++--------------+
++---------------+
+| route_headers |
++---------------+
+|            38 |
++---------------+
++--------+
+| routes |
++--------+
+|     11 |
++--------+
++-------+
+| menus |
++-------+
+|     3 |
++-------+
++--------+
+| grants |
++--------+
+|      6 |
++--------+
++-------------+
+| permissions |
++-------------+
+|           6 |
++-------------+
++------+
+| role |
++------+
+|    1 |
++------+
+### compile: rolled-back
+COMPILE OK: routes loaded=579, effective=574, effective block137=0
+### risk rewrite time from step 50 output: 2026-10-25 11:41:46.074839
+### rb-risk (89 with rewrite time filled)
++--------------------------+
+| member_restored_expect_1 |
++--------------------------+
+|                        1 |
++--------------------------+
++------------------------------+
+| snapshots_reverted_expect_46 |
++------------------------------+
+|                           46 |
++------------------------------+
+### apply_sql.sh rb-acq-platform --apply
++---------------------------+
+| orders_reverted_expect_46 |
++---------------------------+
+|                        46 |
++---------------------------+
+### apply_sql.sh rb-acq-ddl --apply
+### apply_sql.sh rb-com-fallback --apply
++----------------------------+
+| agreement_deleted_expect_1 |
++----------------------------+
+|                          1 |
++----------------------------+
+### apply_sql.sh rb-cm-ac11 --apply
++---------------------------------+
+| party_profile_restored_expect_1 |
++---------------------------------+
+|                               1 |
++---------------------------------+
++------------------------------------+
+| business_profile_restored_expect_1 |
++------------------------------------+
+|                                  1 |
++------------------------------------+
+### apply_sql.sh rb-cm-data --apply
++--------------------+
+| party_role_deleted |
++--------------------+
+|                 56 |
++--------------------+
++----------------------+
+| partner_role_deleted |
++----------------------+
+|                    1 |
++----------------------+
++----------------------+
+| application_reverted |
++----------------------+
+|                    1 |
++----------------------+
++-----------------------------+
+| oe_root_version_decremented |
++-----------------------------+
+|                           1 |
++-----------------------------+
++-----------------+
+| source_reverted |
++-----------------+
+|               1 |
++-----------------+
++-------------+
+| bcv_deleted |
++-------------+
+|           0 |
++-------------+
++-------------+
+| bcr_deleted |
++-------------+
+|           1 |
++-------------+
++-----------------------+
+| local_partner_deleted |
++-----------------------+
+|                     1 |
++-----------------------+
+### apply_sql.sh rb-cm-seed --apply
++------------------------------+
+| affiliation_deleted_expect_7 |
++------------------------------+
+|                            7 |
++------------------------------+
++-----------------------------------+
+| operating_entity_deleted_expect_1 |
++-----------------------------------+
+|                                 1 |
++-----------------------------------+
++------------------------+
+| party_deleted_expect_2 |
++------------------------+
+|                      2 |
++------------------------+
+### apply_sql.sh rb-cm-ddl --apply
+### apply_sql.sh rb-cmp-backfill --apply
++----------------------------+
+| role_qualification_deleted |
++----------------------------+
+|                         37 |
++----------------------------+
++----------------------+
+| state_change_deleted |
++----------------------+
+|                   37 |
++----------------------+
+### apply_sql.sh rb-cmp-ddl --apply
++----------------------+
+| state_change_deleted |
++----------------------+
+|                    0 |
++----------------------+
++----------------------------+
+| role_qualification_deleted |
++----------------------------+
+|                          0 |
++----------------------------+
++-------------------------+
+| manual_decision_deleted |
++-------------------------+
+|                       0 |
++-------------------------+
+### after rollback
+### apply_sql.sh precheck 
++----------------------------------+---------------------------------------------+
+| cmp.role_id_type (bigint,bigint) | GROUP_CONCAT(DATA_TYPE ORDER BY TABLE_NAME) |
++----------------------------------+---------------------------------------------+
+| cmp.role_id_type (bigint,bigint) | bigint,bigint                               |
++----------------------------------+---------------------------------------------+
++---------------------------+----------+
+| cmp.basis_note_exists (0) | COUNT(*) |
++---------------------------+----------+
+| cmp.basis_note_exists (0) |        0 |
++---------------------------+----------+
++-----------------------------------+----------+
+| cmp.role_qualification_rows (0)   | COUNT(*) |
++-----------------------------------+----------+
+| cmp.role_qualification_rows (0)   |        0 |
+| cmp.state_change_rows (0)         |        0 |
+| cmp.settlement_control_rows (0)   |        0 |
+| cmp.client_reviewer_approved (37) |       37 |
+| cmp.client_reviewer_rejected (3)  |        3 |
+| cmp.non_client_decisions (0)      |        0 |
++-----------------------------------+----------+
++------------------------------------+----------+
+| cm.acquiring_qualification_col (0) | COUNT(*) |
++------------------------------------+----------+
+| cm.acquiring_qualification_col (0) |        0 |
++------------------------------------+----------+
++-------------------+----------+
+| cm.new_tables (0) | COUNT(*) |
++-------------------+----------+
+| cm.new_tables (0) |        0 |
++-------------------+----------+
++-------------------------------------------------------+----------+
+| cm.operating_entity (0)                               | COUNT(*) |
++-------------------------------------------------------+----------+
+| cm.operating_entity (0)                               |        0 |
+| cm.entity_source_relation (0)                         |        0 |
+| cm.source_platform (0)                                |        0 |
+| cm.oe_application (0)                                 |        0 |
+| cm.oe_scope (0)                                       |        0 |
+| cm.local_partner (0)                                  |        0 |
+| cm.affiliation (0)                                    |        0 |
+| cm.seller_disclosure (0)                              |        0 |
+| cm.consumer_legal_document (0)                        |        0 |
+| cm.client (54)                                        |       54 |
+| cm.bcr_non_client (0)                                 |        0 |
+| cm.placeholder_parties_880000000701_702 (0)           |        0 |
+| cm.placeholder_profiles_881000000701_702 (0)          |        0 |
+| cm.seed_and_data_id_ranges (0)                        |        0 |
+| cm.ac11_client_237575207592763393_active (1)          |        1 |
+| cm.ac11_client_profile_not_finalized (1, GAP-PROFILE) |        1 |
+| cm.ac11_business_profile_hash_null (1, GAP-PROFILE)   |        1 |
++-------------------------------------------------------+----------+
++-----------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| com.payfac_agreement_or_plan (0)        | (SELECT COUNT(*) FROM mor_commercial.t_agreement WHERE local_partner_id=900000000001370001 OR agreement_no LIKE 'PAYFAC-%'
+    OR agreement_id BETWEEN 900000000001371000 AND 900000000001371099)
+  + (SELECT COUNT(*) FROM mor_commercial.t_commercial_term_pl   |
++-----------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| com.payfac_agreement_or_plan (0)        |                                                                                                                                                                                                                                                                 0 |
+| com.oe_party_rows_880000000702 (9)      |                                                                                                                                                                                                                                                                 9 |
+| com.platform_signatory_880000000701 (2) |                                                                                                                                                                                                                                                                 2 |
+| com.demo_cl_001_active (1)              |                                                                                                                                                                                                                                                                 1 |
++-----------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------------------------------+----------------------------+
+| com.earliest_oe_or_platform_acceptance (2026-10-20 02:50:52.276802 or later; seed profiles approved 2026-10-13) | MIN(accepted_time)         |
++-----------------------------------------------------------------------------------------------------------------+----------------------------+
+| com.earliest_oe_or_platform_acceptance (2026-10-20 02:50:52.276802 or later; seed profiles approved 2026-10-13) | 2026-10-20 02:50:52.326809 |
++-----------------------------------------------------------------------------------------------------------------+----------------------------+
++----------------------------------------------+----------+
+| acq.platform_orders (46)                     | COUNT(*) |
++----------------------------------------------+----------+
+| acq.platform_orders (46)                     |       46 |
+| acq.platform_orders_not_ae001_or_with_lp (0) |        0 |
+| acq.other_source_orders (0)                  |        0 |
+| acq.order_context (46)                       |       46 |
+| acq.binding_table (0)                        |        0 |
+| acq.context_new_cols (0)                     |        0 |
++----------------------------------------------+----------+
++--------------------------------------------------------------+----------+
+| risk.platform_snapshots (46)                                 | COUNT(*) |
++--------------------------------------------------------------+----------+
+| risk.platform_snapshots (46)                                 |       46 |
+| risk.entity_source_members (3)                               |        3 |
+| risk.platform_member_900000000000092001 (1)                  |        1 |
+| risk.rule_operand_platform_literal (0)                       |        0 |
+| risk.rule_action_param_platform (0)                          |        0 |
+| risk.rule_operand_entity_source_field (1, compares = CLIENT) |        1 |
++--------------------------------------------------------------+----------+
++-------------------------------------------+----------+
+| plt.permission_ids_or_codes (0)           | COUNT(*) |
++-------------------------------------------+----------+
+| plt.permission_ids_or_codes (0)           |        0 |
+| plt.role_permission_ids (0)               |        0 |
+| plt.console_resource_ids_codes_routes (0) |        0 |
+| plt.menu_sort_90_under_565 (0)            |        0 |
+| plt.menu_sort_60_70_under_95301 (0)       |        0 |
+| plt.gateway_route_ids_codes_paths (0)     |        0 |
+| plt.route_header_ids (0)                  |        0 |
+| plt.route_query_param_ids (0)             |        0 |
+| plt.guard_rule_ids (0)                    |        0 |
+| plt.routes_active (574)                   |      574 |
+| plt.routes_total (579)                    |      579 |
++-------------------------------------------+----------+
++----------+--------------------+----------------+---------+
+| plt.role | role_id            | role_code      | version |
++----------+--------------------+----------------+---------+
+| plt.role | 900000000000000510 | PLATFORM_ADMIN |      52 |
++----------+--------------------+----------------+---------+
++------------+--------------------+------------------------+--------+
+| plt.target | target_id          | target_service_code    | status |
++------------+--------------------+------------------------+--------+
+| plt.target | 900000000000000001 | operations-console-bff | ACTIVE |
++------------+--------------------+------------------------+--------+
++-----------------+--------------------+----------------------------+--------+
+| plt.menu_parent | resource_id        | resource_code              | status |
++-----------------+--------------------+----------------------------+--------+
+| plt.menu_parent | 900000000000000565 | OPERATIONS_RISK_MANAGEMENT | ACTIVE |
+| plt.menu_parent | 900000000000095301 | OPERATIONS_COMMERCIAL      | ACTIVE |
++-----------------+--------------------+----------------------------+--------+
++-----------------------------+------------+-----------+
+| plt.i18n_ops_release_no (7) | release_no | key_count |
++-----------------------------+------------+-----------+
+| plt.i18n_ops_release_no (7) |          7 |      8594 |
++-----------------------------+------------+-----------+
++-------------------------------------+----------+----------------------------------------------------------+
+| plt.i18n_ops_namespaces (21; new 0) | COUNT(*) | SUM(n.namespace_code IN ('qualification','master-data')) |
++-------------------------------------+----------+----------------------------------------------------------+
+| plt.i18n_ops_namespaces (21; new 0) |       21 |                                                        0 |
++-------------------------------------+----------+----------------------------------------------------------+
+### compare rolled-back databases with the backup

@@ -19,8 +19,8 @@ import com.paytech.foundation.common.error.FailException;
 
 /**
  * 两段式解析第 4 步：外部资格检查后的复核（design/06 §2.2、§4）。
- * <li>HTTP 解析链在 Risk 正式不可用端口处以 503 结束，复核阶段无法经 HTTP 到达；这里从公开端口 {@link ClientMasterCheckoutClient}
- * 与公开领域合同 {@link CheckoutResolutionContext#verifyUnchanged} 触发同一复核逻辑，覆盖“回查版本不一致返回冲突”。</li>
+ * <li>从公开端口 {@link ClientMasterCheckoutClient} 与公开领域合同 {@link CheckoutResolutionContext#verifyUnchanged} 直接触发复核逻辑，
+ * 覆盖“回查版本不一致返回冲突”的各个来源；经 HTTP 的 CCT_CONTEXT_CHANGED 见 ResolveCheckoutRelationshipHttpTest。</li>
  */
 class CheckoutVerificationTest extends AbstractCheckoutApiTest {
     @Autowired

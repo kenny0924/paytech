@@ -65,7 +65,7 @@ public class ClientReviewTestMapper {
         Integer primarySlot, long confirmedBy, Instant confirmedTime) {}
 
     /** 资格决定行。 */
-    public record DecisionRow(long decisionId, long caseId, Integer decisionVersion, String roleType, long roleId,
+    public record DecisionRow(long decisionId, long caseId, Integer decisionVersion, String roleType, String roleId,
         String qualificationType, String decisionSource, String outcome, Instant validFrom, Instant validTo,
         Long decidedBy, Instant decidedTime) {}
 
@@ -217,7 +217,7 @@ public class ClientReviewTestMapper {
     public List<DecisionRow> decisions(Collection<Long> caseIds) {
         return jdbc.query("SELECT * FROM t_qualification_decision WHERE case_id IN (" + in(caseIds) + ") "
             + "ORDER BY case_id,decision_id", (rs, i) -> new DecisionRow(rs.getLong("decision_id"), rs.getLong("case_id"),
-                rs.getObject("decision_version", Integer.class), rs.getString("role_type"), rs.getLong("role_id"),
+                rs.getObject("decision_version", Integer.class), rs.getString("role_type"), rs.getString("role_id"),
                 rs.getString("qualification_type"), rs.getString("decision_source"), rs.getString("outcome"),
                 instant(rs, "valid_from"), instant(rs, "valid_to"), rs.getObject("decided_by", Long.class),
                 instant(rs, "decided_time")), caseIds.toArray());

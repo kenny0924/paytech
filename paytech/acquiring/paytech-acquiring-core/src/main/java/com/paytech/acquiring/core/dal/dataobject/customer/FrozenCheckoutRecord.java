@@ -58,6 +58,24 @@ public class FrozenCheckoutRecord {
     /** 文档语言。 */
     private String locale;
 
+    /**
+     * 商业关系快照的资金流向 Code
+     * <li>固定 Mock 解析或 commercial 未返回快照时为空。</li>
+     */
+    private String fundFlow;
+
+    /**
+     * 商业关系生效模型版本
+     * <li>0 只记录、下游沿用旧字段；1 下游按快照生效；无快照时为 0。</li>
+     */
+    private int effectiveRelationshipModelVersion;
+
+    /**
+     * 商业关系快照的推导规则版本
+     * <li>无快照时为空。</li>
+     */
+    private Integer snapshotModelVersion;
+
     /** 订单法律事实主键。 */
     private long orderLegalId;
 

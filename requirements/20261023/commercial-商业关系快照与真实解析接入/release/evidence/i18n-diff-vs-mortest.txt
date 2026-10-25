@@ -1,0 +1,10 @@
+db keys 8594 active 8594 worktree en 8813 zh 8813
+new keys 219 {'nav': 6, 'qualification': 105, 'master-data': 108}
+active in db but not in worktree 0 []
+source text changed 1 ['risk.legacyCatalog.fieldHelp.entity_source_type']
+zh-CN differs (worktree seed vs mor-test) 4
+   nav.sidebar.hide | mor-test: 收起导航 | seed: Hide Navigation
+   nav.sidebar.product | mor-test: 运营控制台 | seed: Operations Console
+   nav.sidebar.show | mor-test: 展开导航 | seed: Show Navigation
+   risk.legacyCatalog.fieldHelp.entity_source_type | mor-test: 仅 PLATFORM、CLIENT 或 PARTNER | seed: 仅 CLIENT 或 PARTNER
+en keys without zh seed 0

@@ -133,6 +133,8 @@ class CheckoutRiskAssessmentAvailabilityApiAutoTest extends AbstractCheckoutRisk
             Arguments.of("Operating Entity 小写", "inputs.entityNo", change(builder -> builder.entityNo("ae001"))),
             Arguments.of("经营主体来源未登记", "inputs.entitySourceType",
                 change(builder -> builder.entitySourceType("OTHER"))),
+            Arguments.of("经营主体来源 PLATFORM 已删除", "inputs.entitySourceType",
+                change(builder -> builder.entitySourceType(CheckoutRiskRequestBuilder.RETIRED_PLATFORM_SOURCE))),
             Arguments.of("Local Partner 非数字", "inputs.localPartnerId",
                 change(builder -> builder.partner("abc"))),
             Arguments.of("国家小写", "inputs.consumerCountryCode", change(builder -> builder.consumerCountryCode("ae"))),

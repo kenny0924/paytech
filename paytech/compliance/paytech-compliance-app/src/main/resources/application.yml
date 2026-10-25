@@ -64,6 +64,8 @@ web:
       - /client-onboarding-review
       # 审核命令含内部理由与客户可见说明，只记元数据。
       - /client-onboarding-admin
+      # 资格登记与撤销含内部依据说明，只记元数据。
+      - /compliance-admin
 
 management:
   server:

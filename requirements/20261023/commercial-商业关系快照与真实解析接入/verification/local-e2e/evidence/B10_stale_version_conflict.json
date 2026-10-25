@@ -1,0 +1,23 @@
+{
+  "method": "POST",
+  "path": "/api/operations/qualification-admin/v1/qualifications/manual-decisions",
+  "request": {
+    "roleType": "CLIENT",
+    "roleId": "900000000001380201",
+    "qualificationType": "ORGANIZATION_KYB",
+    "validFrom": "2026-10-01T00:00:00Z",
+    "validTo": null,
+    "reasonCode": "STAGE5_LOCAL_E2E",
+    "basisNote": "阶段 5 本机联调：经运营入口登记 PSP 合成 Client",
+    "expectedVersion": "1"
+  },
+  "status": 409,
+  "response": {
+    "type": "about:blank",
+    "title": "Conflict",
+    "detail": "角色资格已被其他操作改变，请刷新后确认",
+    "code": "QUALIFICATION_CHANGED",
+    "requestId": "12bb5789-97c0-4c12-94ca-699d19e09695",
+    "timestamp": "2026-10-25T06:01:33.201035Z"
+  }
+}

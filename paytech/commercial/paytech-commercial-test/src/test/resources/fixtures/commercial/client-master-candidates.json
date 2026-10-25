@@ -20,16 +20,29 @@
       {
         "entityNo": "AE991",
         "oePartyId": "910000000000102",
+        "acquiringQualification": "PAYFAC",
         "affiliationId": "910000000000101",
         "priorityNo": 10,
         "scopeId": "910000000000105",
         "sourceRelation": {
           "sourceRelationId": "910000000000103",
-          "sourceType": "PLATFORM",
+          "sourceType": "PARTNER",
           "sourceClientId": null,
-          "sourcePartnerId": null
+          "sourcePartnerId": "910000000000150"
         },
-        "localPartner": null,
+        "localPartner": {
+          "localPartnerId": "910000000000150",
+          "partyId": "910000000000102",
+          "status": "ACTIVE"
+        },
+        "oeProvider": {
+          "localPartnerId": "910000000000150",
+          "partyId": "910000000000102",
+          "status": "ACTIVE",
+          "roles": [
+            "OE_PROVIDER"
+          ]
+        },
         "legalDocuments": [
           {
             "legalDocumentId": "910000000000120",
@@ -72,7 +85,13 @@
             "effectiveFrom": "2026-09-01T00:00:00Z",
             "effectiveTo": "2026-10-01T00:00:00Z",
             "approvedTime": "2026-09-01T00:00:00Z",
-            "publishedTime": "2026-09-01T00:00:00Z"
+            "publishedTime": "2026-09-01T00:00:00Z",
+            "publicLegalName": "AE991 Synthetic Seller LLC",
+            "publicRegistrationNumber": "REG-AE991",
+            "publicTaxRegistrationNumber": "TRN-AE991",
+            "publicAddressText": "1 Synthetic Street, Dubai, AE991",
+            "publicSupportEmail": "support-ae991@example.test",
+            "publicSupportPhone": null
           }
         ],
         "candidateDigest": "1111111111111111111111111111111111111111111111111111111111111111"
@@ -80,16 +99,29 @@
       {
         "entityNo": "AE992",
         "oePartyId": "910000000000202",
+        "acquiringQualification": "PAYFAC",
         "affiliationId": "910000000000201",
         "priorityNo": 20,
         "scopeId": "910000000000205",
         "sourceRelation": {
           "sourceRelationId": "910000000000203",
-          "sourceType": "PLATFORM",
+          "sourceType": "PARTNER",
           "sourceClientId": null,
-          "sourcePartnerId": null
+          "sourcePartnerId": "910000000000250"
         },
-        "localPartner": null,
+        "localPartner": {
+          "localPartnerId": "910000000000250",
+          "partyId": "910000000000202",
+          "status": "ACTIVE"
+        },
+        "oeProvider": {
+          "localPartnerId": "910000000000250",
+          "partyId": "910000000000202",
+          "status": "ACTIVE",
+          "roles": [
+            "OE_PROVIDER"
+          ]
+        },
         "legalDocuments": [
           {
             "legalDocumentId": "910000000000220",
@@ -132,7 +164,13 @@
             "effectiveFrom": "2026-09-01T00:00:00Z",
             "effectiveTo": "2026-10-01T00:00:00Z",
             "approvedTime": "2026-09-01T00:00:00Z",
-            "publishedTime": "2026-09-01T00:00:00Z"
+            "publishedTime": "2026-09-01T00:00:00Z",
+            "publicLegalName": "AE992 Synthetic Seller LLC",
+            "publicRegistrationNumber": "REG-AE992",
+            "publicTaxRegistrationNumber": "TRN-AE992",
+            "publicAddressText": "1 Synthetic Street, Dubai, AE992",
+            "publicSupportEmail": "support-ae992@example.test",
+            "publicSupportPhone": null
           }
         ],
         "candidateDigest": "2222222222222222222222222222222222222222222222222222222222222222"
@@ -143,7 +181,10 @@
         "AE991",
         "AE992"
       ],
-      "localPartnerIds": []
+      "localPartnerIds": [
+        "910000000000150",
+        "910000000000250"
+      ]
     },
     "rootVersions": {
       "client": {
@@ -163,7 +204,18 @@
           "version": 1
         }
       ],
-      "localPartners": [],
+      "localPartners": [
+        {
+          "recordId": "910000000000150",
+          "historyId": "910000000000151",
+          "version": 1
+        },
+        {
+          "recordId": "910000000000250",
+          "historyId": "910000000000251",
+          "version": 1
+        }
+      ],
       "consumerLegalDocuments": [],
       "sellerDisclosures": []
     }
@@ -187,6 +239,13 @@
       {
         "profileId": "910000000000211",
         "partyId": "910000000000202",
+        "approvedTime": "2026-09-01T00:00:00Z",
+        "draftApplicationId": null,
+        "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      {
+        "profileId": "910000000000901",
+        "partyId": "910000000000900",
         "approvedTime": "2026-09-01T00:00:00Z",
         "draftApplicationId": null,
         "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"

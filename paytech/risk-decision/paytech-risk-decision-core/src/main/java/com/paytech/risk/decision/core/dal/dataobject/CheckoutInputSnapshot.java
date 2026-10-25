@@ -23,7 +23,7 @@ public class CheckoutInputSnapshot {
     /** Operating Entity 编号。 */
     private String entityNo;
 
-    /** 经营主体来源，PLATFORM、CLIENT 或 PARTNER。 */
+    /** 经营主体来源，CLIENT 或 PARTNER。 */
     private String entitySourceType;
 
     /**

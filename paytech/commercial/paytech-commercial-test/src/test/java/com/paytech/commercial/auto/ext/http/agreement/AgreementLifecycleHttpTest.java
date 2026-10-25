@@ -6,29 +6,37 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.commercial.api.agreement.AgreementApi;
 import com.paytech.commercial.api.agreement.request.AgreementFileEntry;
 import com.paytech.commercial.api.agreement.request.AgreementTransitionRequestBody;
 import com.paytech.commercial.api.agreement.request.TerminateAgreementRequestBody;
+import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.enums.BusinessMode;
+import com.paytech.commercial.api.enums.CommercialTermOwnerType;
 import com.paytech.commercial.api.event.AgreementStatusChangedPayload;
+import com.paytech.commercial.domain.enums.AgreementAgreementType;
 import com.paytech.commercial.domain.enums.AgreementDocumentRefDocumentType;
+import com.paytech.commercial.domain.enums.AgreementPartyPartyRole;
 import com.paytech.commercial.domain.enums.AgreementStatus;
 import com.paytech.commercial.domain.enums.BusinessChangeReason;
 import com.paytech.commercial.domain.enums.BusinessChangeRecordRecordType;
 import com.paytech.commercial.service.handler.AgreementStatusChangedHandler;
 import com.paytech.commercial.test.base.write.AbstractCommercialWriteApiTest;
 import com.paytech.commercial.test.builder.AgreementBuilder;
+import com.paytech.commercial.test.builder.AgreementPartyBuilder;
+import com.paytech.commercial.test.builder.CommercialTermPlanBuilder;
 import com.paytech.commercial.test.checker.write.BusinessChangeChecker;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture;
+import com.paytech.commercial.test.mocker.local.term.TermPricingMocker;
 import com.paytech.foundation.common.error.CommonErrorCode;
 
 import tools.jackson.databind.JsonNode;
 
 /**
  * 合同激活与终止（technique.md §2.2、§2.8）：状态条件推进、同版本重放、版本冲突、生效区间与同 Owner 区间冲突、保存失败整体回滚，
- * 以及提交后经 compensation_event 发布 AgreementStatusChanged（真实本地 Broker 观察）
+ * 以及提交后经 compensation_event 发布 AgreementStatusChanged（真实本地 Broker 观察）；Partner 平台服务费的法律主体一致校验（AC-10）
  *
  * @see AgreementApi#activate(String, String, AgreementTransitionRequestBody)
  * @see AgreementApi#terminate(String, String, TerminateAgreementRequestBody)
@@ -39,6 +47,13 @@ class AgreementLifecycleHttpTest extends AbstractCommercialWriteApiTest {
     private static final String BASE = "/agreements/v1/" + AGREEMENT_ID;
 
     private static final Instant SIGNED_TIME = Instant.parse("2026-09-10T00:00:00Z");
+
+    private static final long PARTNER_LOCAL_ID = 930000000000981L;
+
+    private static final long PARTNER_PARTY_ID = 930000000000983L;
+
+    @Autowired
+    TermPricingMocker pricing;
 
     /** SIGNED（版本 4）激活：ACTIVE、激活时刻为当前业务时点、版本 5；提交后发布事件，信封版本与载荷状态一致。 */
     @Test
@@ -121,6 +136,56 @@ class AgreementLifecycleHttpTest extends AbstractCommercialWriteApiTest {
             () -> assertEquals(0, testMapper.countCompensationEvents(AgreementStatusChangedHandler.EVENT_TYPE)),
             () -> events.assertNoEnvelope(eventKey(5)));
         history.record(BusinessChangeRecordRecordType.AGREEMENT.getCode(), AGREEMENT_ID).assertCurrentVersion(4);
+    }
+
+    /** Partner 有平台服务费方案时，合同 OE 法律主体不等于 Local Partner 法律主体：激活被拒，状态不变、不发布（AC-10）。 */
+    @Test
+    void test_activate_partnerServiceChargePartyMismatch() {
+        long partnerAgreementId = AGREEMENT_ID + 400;
+        mockSignedPartner(partnerAgreementId, PARTNER_LOCAL_ID, 930000000000984L);
+        mockServiceChargePlan(PARTNER_LOCAL_ID);
+
+        post("/agreements/v1/" + partnerAgreementId + "/activate", transition(4)).assertBusinessCheckFailed("法律主体不一致");
+
+        assertAll(
+            () -> assertEquals(AgreementStatus.SIGNED.getCode(), testMapper.agreement(partnerAgreementId).get("status")),
+            () -> assertEquals(0, testMapper.countCompensationEvents(AgreementStatusChangedHandler.EVENT_TYPE)));
+    }
+
+    /** OE 法律主体等于 Local Partner 法律主体时激活成功；没有平台服务费方案的 Partner 不做该校验。 */
+    @Test
+    void test_activate_partnerServiceChargePartyMatches() {
+        long matchingId = AGREEMENT_ID + 400;
+        mockSignedPartner(matchingId, PARTNER_LOCAL_ID, PARTNER_PARTY_ID);
+        mockServiceChargePlan(PARTNER_LOCAL_ID);
+        post("/agreements/v1/" + matchingId + "/activate", transition(4)).assertOk()
+            .assertText("status", AgreementStatus.ACTIVE.getCode());
+
+        long withoutPlanId = AGREEMENT_ID + 500;
+        mockSignedPartner(withoutPlanId, PARTNER_LOCAL_ID + 1, 930000000000984L);
+        post("/agreements/v1/" + withoutPlanId + "/activate", transition(4)).assertOk()
+            .assertText("status", AgreementStatus.ACTIVE.getCode());
+
+        assertEquals(AgreementStatus.ACTIVE.getCode(), testMapper.agreement(matchingId).get("status"));
+    }
+
+    /** SIGNED 的 PARTNER 合同（版本 4）：覆盖 AE993，Local Partner 行 Party 固定，OE 行 Party 由用例给出。 */
+    private void mockSignedPartner(long agreementId, long localPartnerId, long entityPartyId) {
+        agreements.mock(signed().agreementId(agreementId).agreementNo("B-PARTNER-" + agreementId)
+                .agreementType(AgreementAgreementType.PARTNER).businessMode(null).fundMode(null).pricingAuthority(null)
+                .clientId(null).entityNo(null).localPartnerId(localPartnerId), 4)
+            .operatingEntity(agreementId + 1, AgreementBuilder.ENTITY_NO)
+            .party(AgreementPartyBuilder.template().agreementPartyId(agreementId + 2).partyId(PARTNER_PARTY_ID)
+                .partyRole(AgreementPartyPartyRole.LOCAL_PARTNER))
+            .party(AgreementPartyBuilder.template().agreementPartyId(agreementId + 3).partyId(entityPartyId)
+                .partyRole(AgreementPartyPartyRole.OPERATING_ENTITY));
+    }
+
+    /** Local Partner 名下的平台服务费方案（DRAFT，无版本）。 */
+    private void mockServiceChargePlan(long localPartnerId) {
+        pricing.mockPlan(CommercialTermPlanBuilder.template().termPlanId(localPartnerId + 10).planCode("PSC-" + localPartnerId)
+            .termType(CommercialCodes.TermType.PLATFORM_SERVICE_CHARGE).ownerType(CommercialTermOwnerType.LOCAL_PARTNER)
+            .agreementId(null).entityNo(null).clientId(null).localPartnerId(localPartnerId), 1);
     }
 
     /** ACTIVE（版本 5）终止：TERMINATED、终点写入、新增终止通知文件、版本 6；提交后发布事件。 */

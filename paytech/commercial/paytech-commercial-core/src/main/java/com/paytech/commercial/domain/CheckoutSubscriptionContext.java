@@ -29,6 +29,7 @@ import lombok.experimental.Accessors;
 /**
  * CLIENT 合同的产品订阅与本次支付方式命中的开通项（technique §2.5）；只使用同一次本地读取的订阅、开通项、约束与目录。
  * <li>订阅必须含 ACQUIRING；给出支付方式时，同合同同 OE 下至少一个开通项命中即通过，零个则候选落空。</li>
+ * <li>未给支付方式时取全部 PAYMENT_METHOD 开通项，同样按状态、时间窗、条件与生效价格过滤；结果为空不落空，不影响 OE 选择。</li>
  * <li>开通项按目录 payment_method_code 匹配本次支付方式；卡组织等在录卡时才知道的维度不在解析时过滤，命中的开通项连同完整接受条件与 3DS
  * 要求一起返回，由收单在执行时使用（二期）。只有目录或开通项重复这类数据冲突才报 409。</li>
  * <li>条件只检查判定时点为 CHECKOUT 的事实：CURRENCY、CONSUMER_COUNTRY 有条件时必须包含请求值。</li>
@@ -42,7 +43,7 @@ public class CheckoutSubscriptionContext {
     /** 合同订阅的产品，按 Code 升序。 */
     List<ProductCode> products;
 
-    /** 本次支付方式命中的全部开通项，按开通项代码升序；请求未给支付方式时为空列表。 */
+    /** 本次支付方式命中的全部开通项，按开通项代码升序；请求未给支付方式时为全部可用的 PAYMENT_METHOD 开通项，可为空。 */
     List<MatchedCapability> capabilities;
 
     /**
@@ -51,7 +52,7 @@ public class CheckoutSubscriptionContext {
      * @param context 本次解析的查询与本地事实
      * @param agreement 已签署且适用的 CLIENT 合同
      * @param entityNo 候选 OE
-     * @return 订阅与命中的开通项；未订阅 ACQUIRING 或支付方式无命中时为 null
+     * @return 订阅与命中的开通项；未订阅 ACQUIRING，或给出支付方式而无命中时为 null
      */
     static CheckoutSubscriptionContext resolve(CheckoutResolutionContext context, Agreement agreement, String entityNo) {
         List<ProductCode> products = context.facts().agreementProducts().stream()
@@ -62,9 +63,6 @@ public class CheckoutSubscriptionContext {
                 context.query().clientId(), entityNo, agreement.agreementId());
             return null;
         }
-        if (context.query().paymentMethodCode() == null) {
-            return new CheckoutSubscriptionContext(products, List.of());
-        }
         List<MatchedCapability> capabilities = context.facts().agreementCapabilities().stream()
             .filter(value -> value.getAgreementId().equals(agreement.agreementId()) && value.getEntityNo().equals(entityNo))
             .map(value -> new MatchedCapability(value, catalog(context, value), conditions(context, value)))
@@ -72,7 +70,7 @@ public class CheckoutSubscriptionContext {
             .sorted(Comparator.comparing(value -> value.capability().getCapabilityCode())).toList();
         require(capabilities.stream().map(value -> value.capability().getCapabilityCode()).distinct()
             .count() == capabilities.size());
-        if (capabilities.isEmpty()) {
+        if (capabilities.isEmpty() && context.query().paymentMethodCode() != null) {
             LOG.info("checkout 候选落空：无可用开通项 clientId={} entityNo={} agreementId={} paymentMethodCode={} currency={}"
                 + " country={}", context.query().clientId(), entityNo, agreement.agreementId(),
                 context.query().paymentMethodCode(), context.query().currency(), context.query().country());
@@ -89,12 +87,13 @@ public class CheckoutSubscriptionContext {
         return catalog;
     }
 
-    /** 目录为本次支付方式、状态 ENABLED、商业时点在区间内且请求事实满足约束。 */
+    /** 目录为支付方式类（给出支付方式时须相等）、状态 ENABLED、商业时点在区间内且请求事实满足约束。 */
     private static boolean matches(CheckoutResolutionContext context, MatchedCapability matched) {
         AgreementCapability capability = matched.capability();
         ProductCapability catalog = matched.catalog();
+        String paymentMethodCode = context.query().paymentMethodCode();
         if (catalog.getCapabilityKind() != CapabilityKind.PAYMENT_METHOD
-            || !context.query().paymentMethodCode().equals(catalog.getPaymentMethodCode())) {
+            || paymentMethodCode != null && !paymentMethodCode.equals(catalog.getPaymentMethodCode())) {
             return false;
         }
         CheckoutQuery query = context.query();
@@ -112,7 +111,7 @@ public class CheckoutSubscriptionContext {
     }
 
     /**
-     * 只保留在 Client 条款版本中有生效价格的开通项；请求未给支付方式时原样返回
+     * 只保留在 Client 条款版本中有生效价格的开通项
      *
      * @param context 本次解析的查询与本地事实
      * @param version 商业时点适用的 Client 条款版本
@@ -120,15 +119,12 @@ public class CheckoutSubscriptionContext {
      * @return 过滤后的订阅；给出支付方式而无任何有价开通项时为 null
      */
     CheckoutSubscriptionContext priced(CheckoutResolutionContext context, CommercialTermVersion version, String entityNo) {
-        if (context.query().paymentMethodCode() == null) {
-            return this;
-        }
         List<CommercialTermPrice> prices = context.facts().termPrices().stream()
             .filter(price -> price.termVersionId().equals(version.termVersionId()) && price.entityNo().equals(entityNo))
             .toList();
         List<MatchedCapability> priced = capabilities.stream().filter(matched -> prices.stream()
             .anyMatch(price -> hasPrice(context, matched, price))).toList();
-        if (priced.isEmpty()) {
+        if (priced.isEmpty() && context.query().paymentMethodCode() != null) {
             LOG.info("checkout 候选落空：开通项无生效价格 clientId={} entityNo={} versionId={} paymentMethodCode={}",
                 context.query().clientId(), entityNo, version.termVersionId(), context.query().paymentMethodCode());
             return null;

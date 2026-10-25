@@ -1,6 +1,7 @@
 package com.paytech.client.master.domainservice.repository;
 
 import com.paytech.client.master.core.dal.dataobject.CheckoutRecords.Client;
+import com.paytech.client.master.domain.entityadmin.ClientSummaryView;
 
 /** t_client 的本地仓储；不负责其他表的加载或事务。 */
 public interface ClientRepository {
@@ -9,4 +10,7 @@ public interface ClientRepository {
 
     /** 入驻通过后 PENDING 条件转为 ACTIVE；状态已变化时抛出并发冲突。 */
     void activate(long clientId, java.time.Instant now);
+
+    /** 读取 Client 主体摘要（Client、Party 类型与法定名称）；不存在时返回 null。 */
+    ClientSummaryView findSummary(long clientId);
 }

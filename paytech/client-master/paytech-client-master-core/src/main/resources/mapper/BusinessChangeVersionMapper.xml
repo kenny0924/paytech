@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.BusinessChangeVersionMapper">
+    <insert id="insertUpdate">
+        INSERT INTO t_business_change_version(change_version_id, history_id, version_no, operation_type, snapshot_format,
+            snapshot_json, create_by, create_time)
+        VALUES(#{changeVersionId}, #{historyId}, #{versionNo}, 'UPDATE', 'ENTITY_NO', #{snapshotJson}, #{createBy}, #{now})
+    </insert>
+</mapper>

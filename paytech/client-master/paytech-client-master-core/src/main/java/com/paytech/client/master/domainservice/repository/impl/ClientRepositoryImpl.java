@@ -2,6 +2,7 @@ package com.paytech.client.master.domainservice.repository.impl;
 
 import com.paytech.client.master.core.dal.dataobject.CheckoutRecords.Client;
 import com.paytech.client.master.core.dal.mapper.ClientMapper;
+import com.paytech.client.master.domain.entityadmin.ClientSummaryView;
 import com.paytech.client.master.domainservice.repository.ClientRepository;
 
 import lombok.AllArgsConstructor;
@@ -23,5 +24,11 @@ public class ClientRepositoryImpl implements ClientRepository {
         if (mapper.activate(clientId, now) != 1) {
             throw new com.paytech.foundation.common.error.ConcurrentRequestException("Client 状态已变化");
         }
+    }
+
+    /** 读取 Client 主体摘要；不存在时返回 null。 */
+    @Override
+    public ClientSummaryView findSummary(long clientId) {
+        return mapper.findSummary(clientId);
     }
 }

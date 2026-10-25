@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import com.paytech.client.master.api.enums.AcquiringQualification;
+
 import lombok.Value;
 import lombok.experimental.Accessors;
 
@@ -71,6 +73,8 @@ public class ClientMasterCandidates {
         String entityNo;
         /** OE 法律主体 Party ID。 */
         Long oePartyId;
+        /** OE 收单资质，决定能否承接 Client 及可承接的业务模式。 */
+        AcquiringQualification acquiringQualification;
         /** Client/OE 关联 ID。 */
         Long affiliationId;
         /** 关联优先级。 */
@@ -85,6 +89,8 @@ public class ClientMasterCandidates {
         Long sourcePartnerId;
         /** PARTNER 来源的 Local Partner 主档；其他来源或主档缺失时为空。 */
         LocalPartner localPartner;
+        /** OE 提供方：PARTNER 来源关系上的 Local Partner 及其 ACTIVE 角色；CLIENT 来源或主档缺失时为空。 */
+        OeProvider oeProvider;
         /** 请求国家与 Locale 下该 OE 的全部法律文件。 */
         List<LegalDocument> legalDocuments;
         /** 请求国家与 Locale 下该 OE 的全部卖方披露。 */
@@ -103,6 +109,20 @@ public class ClientMasterCandidates {
         Long partyId;
         /** 状态 Code。 */
         String status;
+    }
+
+    /** OE 提供方。 */
+    @Value
+    @Accessors(fluent = true)
+    public static class OeProvider {
+        /** Local Partner ID。 */
+        Long localPartnerId;
+        /** 法律主体 Party ID。 */
+        Long partyId;
+        /** 状态 Code。 */
+        String status;
+        /** 当前 ACTIVE 角色 Code，升序。 */
+        List<String> roles;
     }
 
     /** 消费者法律文件。 */
@@ -145,6 +165,18 @@ public class ClientMasterCandidates {
         Instant approvedTime;
         /** 发布时间。 */
         Instant publishedTime;
+        /** 公开的卖方法定名称。 */
+        String publicLegalName;
+        /** 公开的卖方注册编号。 */
+        String publicRegistrationNumber;
+        /** 公开的卖方税务登记编号；不披露时为空。 */
+        String publicTaxRegistrationNumber;
+        /** 公开的卖方地址文本。 */
+        String publicAddressText;
+        /** 公开的卖方支持邮箱。 */
+        String publicSupportEmail;
+        /** 公开的卖方支持电话；不披露时为空。 */
+        String publicSupportPhone;
     }
 
     /** 根修订。 */

@@ -508,7 +508,7 @@ public final class DecisionReleaseStaticValidatorImpl implements DecisionRelease
             case "currency" -> raw.matches("[A-Z]{3}");
             case "mcc_code" -> raw.matches("[0-9]{4}");
             case "industry_code" -> raw.matches("[A-Z][A-Z0-9_]{0,63}");
-            case "entity_source_type" -> Set.of("PLATFORM", "CLIENT", "PARTNER").contains(raw);
+            case "entity_source_type" -> Set.of("CLIENT", "PARTNER").contains(raw);
             case "locale" -> raw.matches("[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*")
                 && Locale.forLanguageTag(raw).toLanguageTag().equals(raw);
             default -> true;

@@ -1,0 +1,19 @@
+.qualification-page .qualification-search { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)) auto; gap: 12px; align-items: end; }
+.qualification-page .qualification-finder { display: grid; grid-template-columns: 200px minmax(160px, 280px) auto; gap: 12px; align-items: end; }
+.qualification-page .qualification-section, .master-data-page .master-data-section { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+.qualification-page .qualification-section h2, .master-data-page .master-data-section h2 { font-size: 15px; margin: 0 0 12px; }
+.qualification-page .qualification-subject-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.qualification-page .qualification-slot { display: grid; grid-template-columns: minmax(160px, 220px) 140px 1fr auto; gap: 8px 12px; align-items: center; padding: 8px 0; border-top: 1px dashed #e5e7eb; }
+.qualification-page .qualification-slot:first-of-type { border-top: none; }
+.qualification-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.qualification-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; overflow-wrap: anywhere; }
+.qualification-history-item { display: flex; flex-direction: column; gap: 2px; }
+.qualification-basis { white-space: pre-wrap; background: #f8fafc; border-radius: 4px; padding: 6px 8px; margin-top: 4px; }
+.qualification-summary { border-top: 1px dashed #e5e7eb; padding-top: 12px; margin-top: 12px; }
+.qualification-summary:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+.qualification-summary-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.qualification-summary-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 4px 0; }
+@media (max-width: 900px) {
+  .qualification-page .qualification-search, .qualification-page .qualification-finder { grid-template-columns: 1fr 1fr; }
+  .qualification-page .qualification-slot { grid-template-columns: 1fr 1fr; }
+}

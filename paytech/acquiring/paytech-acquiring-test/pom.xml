@@ -42,6 +42,10 @@
                 <groupId>com.paytech</groupId>
                 <artifactId>paytech-risk-decision-api</artifactId>
             </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-commercial-api</artifactId>
+            </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-test-support</artifactId>

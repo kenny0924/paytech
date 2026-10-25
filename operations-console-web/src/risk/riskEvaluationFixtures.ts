@@ -59,7 +59,7 @@ export const checkoutEvaluationWire = {
 export const checkoutExplanationWire = {
   ...explanationWire, evaluationId: '236600000000000201',
   inputs: {
-    clientId: '235900000000000104', entityNo: 'AE001', entitySourceType: 'PLATFORM', localPartnerId: null, consumerCountryCode: 'AE', currency: 'USD',
+    clientId: '235900000000000104', entityNo: 'AE001', entitySourceType: 'CLIENT', localPartnerId: null, consumerCountryCode: 'AE', currency: 'USD',
     merchandiseAmount: '120', discountAmount: '20', netAmount: '100', industryCode: 'GAMING', mccCode: '5816', lineCount: '3',
   },
   shadows: [{ evaluationId: '236600000000000207', shadowRunId: '236600000000000300', result: 'DENY', decisionChanged: false, outputChanged: false, severity: null }],

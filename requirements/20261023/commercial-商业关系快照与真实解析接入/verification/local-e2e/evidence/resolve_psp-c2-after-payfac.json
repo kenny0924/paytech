@@ -1,0 +1,193 @@
+{
+  "request": {
+    "clientId": "900000000001380201",
+    "orderNo": "RELSNAPED2D826B141E",
+    "consumerCountryCode": "US",
+    "currency": "USD",
+    "locale": "en",
+    "contextAsOfTime": "2026-10-25T06:01:53.959203Z"
+  },
+  "status": 200,
+  "response": {
+    "contextAsOfTime": "2026-10-25T06:01:53.959203Z",
+    "evaluatedAt": "2026-10-25T06:01:53.960906Z",
+    "clientId": "900000000001380201",
+    "orderNo": "RELSNAPED2D826B141E",
+    "entityNo": "AE001",
+    "sourceType": "PARTNER",
+    "classification": {
+      "businessProfileId": "900000000001380203",
+      "classificationId": "900000000001380204",
+      "industryCode": "RETAIL",
+      "mccCode": "5999"
+    },
+    "eligibility": {
+      "affiliationId": "900000000001380206",
+      "priorityNo": 10,
+      "entityScopeId": "900000000001380105",
+      "entitySourceRelationId": "900000000001380103"
+    },
+    "clientTerms": {
+      "agreementId": "900000000001372101",
+      "planId": "900000000001372110",
+      "versionId": "900000000001372111",
+      "businessMode": "PSP",
+      "fundMode": "SETTLE_THROUGH_PLATFORM",
+      "pricingAuthority": "PLATFORM",
+      "referralPartnerId": null,
+      "agreementProducts": [
+        "ACQUIRING"
+      ],
+      "capabilities": [
+        {
+          "agreementCapabilityId": "900000000001372107",
+          "capabilityCode": "CARD",
+          "status": "ENABLED",
+          "dimensionCode": null,
+          "dimensionValue": null,
+          "rollingReserveRate": null,
+          "rollingReserveDays": null,
+          "paymentMethodCode": "CARD",
+          "capabilityKind": "PAYMENT_METHOD",
+          "conditions": [
+            {
+              "dimensionCode": "CURRENCY",
+              "values": [
+                "USD"
+              ]
+            }
+          ],
+          "require3ds": false
+        }
+      ]
+    },
+    "partnerTerms": {
+      "localPartnerId": "900000000001370001",
+      "agreementId": "900000000001371001",
+      "agreementOperatingEntityId": "900000000001371002",
+      "sharePlanId": "900000000001371011",
+      "shareVersionId": "900000000001371021",
+      "serviceChargePlanId": "900000000001371012",
+      "serviceChargeVersionId": "900000000001371022",
+      "platformSignatoryPartyId": "900000000001380900"
+    },
+    "legal": {
+      "clientAgreementId": "900000000001372101",
+      "consumerTermsDocumentId": "900000000001380120",
+      "refundPolicyDocumentId": "900000000001380121",
+      "privacyNoticeDocumentId": "900000000001380122",
+      "sellerDisclosureId": "900000000001380128",
+      "documents": [
+        {
+          "documentId": "900000000001380120",
+          "fileId": "900000000001380125",
+          "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "documentId": "900000000001380121",
+          "fileId": "900000000001380126",
+          "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "documentId": "900000000001380122",
+          "fileId": "900000000001380127",
+          "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "parties": [
+        {
+          "partyId": "900000000001380102",
+          "partyProfileId": "900000000001380111",
+          "profileContentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        {
+          "partyId": "900000000001380202",
+          "partyProfileId": "900000000001380205",
+          "profileContentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      ],
+      "seller": {
+        "legalName": "Relsnap Synthetic AE001 FZ-LLC",
+        "registrationNumber": "RELSNAP-REG-AE001",
+        "taxRegistrationNumber": "RELSNAP-TRN-AE001",
+        "addressText": "1 Synthetic Street, Dubai, AE",
+        "supportEmail": "support-ae001@example.invalid",
+        "supportPhone": "+971400000001"
+      }
+    },
+    "derived": {
+      "sellerPartyId": "900000000001380202",
+      "acquiringEntityNo": "AE001",
+      "taxResponsibleParty": "CLIENT",
+      "fundsBookOwner": "OPERATING_ENTITY"
+    },
+    "revisions": {
+      "clientChangeVersion": "1",
+      "entityChangeVersion": "4",
+      "clientAgreementChangeVersion": "1",
+      "partnerAgreementChangeVersion": "1"
+    },
+    "relationshipSnapshot": {
+      "effectiveModelVersion": 0,
+      "snapshotModelVersion": 1,
+      "fundFlow": "THROUGH_CUSTODIAN",
+      "businessMode": "PSP",
+      "bindings": [
+        {
+          "role": "CLIENT",
+          "subjectType": "CLIENT",
+          "subjectId": "900000000001380201",
+          "partyId": "900000000001380202"
+        },
+        {
+          "role": "SELLER",
+          "subjectType": "CLIENT",
+          "subjectId": "900000000001380201",
+          "partyId": "900000000001380202"
+        },
+        {
+          "role": "ACQUIRING_OE",
+          "subjectType": "OPERATING_ENTITY",
+          "subjectId": "AE001",
+          "partyId": "900000000001380102"
+        },
+        {
+          "role": "OE_PROVIDER",
+          "subjectType": "LOCAL_PARTNER",
+          "subjectId": "900000000001370001",
+          "partyId": "900000000001380102"
+        },
+        {
+          "role": "FUNDS_CUSTODIAN",
+          "subjectType": "OPERATING_ENTITY",
+          "subjectId": "AE001",
+          "partyId": "900000000001380102"
+        },
+        {
+          "role": "TAX_RESPONSIBLE",
+          "subjectType": "CLIENT",
+          "subjectId": "900000000001380201",
+          "partyId": "900000000001380202"
+        },
+        {
+          "role": "PLATFORM_FEE_PAYER",
+          "subjectType": "LOCAL_PARTNER",
+          "subjectId": "900000000001370001",
+          "partyId": "900000000001380102"
+        },
+        {
+          "role": "ACQUIRER_SUB_MERCHANT",
+          "subjectType": "CLIENT",
+          "subjectId": "900000000001380201",
+          "partyId": "900000000001380202"
+        },
+        {
+          "role": "PLATFORM",
+          "subjectType": "PLATFORM",
+          "subjectId": null,
+          "partyId": "900000000001380900"
+        }
+      ]
+    }
+  }
+}

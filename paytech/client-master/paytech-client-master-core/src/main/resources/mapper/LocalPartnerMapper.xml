@@ -14,4 +14,40 @@
         WHERE local_partner_id IN (SELECT source_partner_id FROM t_entity_source_relation WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId}) AND source_type='PARTNER')
         ORDER BY local_partner_id
     </select>
+    <select id="findById" resultMap="LocalPartner">
+        SELECT local_partner_id, party_id, status FROM t_local_partner WHERE local_partner_id = #{localPartnerId}
+    </select>
+    <!-- Party 唯一资料（uk_party_profile_party）上的法定名称：机构取 legal_name，个人取姓名。 -->
+        <sql id="LegalName">
+        (SELECT NULLIF(COALESCE(o.legal_name, TRIM(CONCAT_WS(' ', i.given_name, i.middle_name, i.family_name))), '')
+                FROM t_party_profile pp LEFT JOIN t_organization_profile o ON o.profile_id = pp.profile_id
+                LEFT JOIN t_individual_profile i ON i.profile_id = pp.profile_id WHERE pp.party_id = ${partyColumn})
+    </sql>
+    <sql id="AdminView">
+        SELECT p.local_partner_id AS localPartnerId, p.partner_no AS partnerNo, p.party_id AS partyId, p.status AS status,
+            <include refid="LegalName"><property name="partyColumn" value="p.party_id"/></include> AS legalName,
+            (SELECT COUNT(*) FROM t_entity_source_relation s WHERE s.source_type = 'PARTNER'
+                AND s.source_partner_id = p.local_partner_id AND s.active_source_slot = 1) AS providedEntityCount,
+            COALESCE(r.current_version, 1) AS changeVersion
+        FROM t_local_partner p
+        LEFT JOIN t_business_change_record r ON r.record_type = 'LOCAL_PARTNER'
+            AND r.record_id = CAST(p.local_partner_id AS CHAR) AND r.parent_history_id IS NULL
+    </sql>
+    <sql id="AdminFilter">
+        <where>
+            <if test="status != null">AND p.status = #{status}</if>
+            <if test="role != null">AND EXISTS (SELECT 1 FROM t_partner_role pr WHERE pr.local_partner_id = p.local_partner_id
+                AND pr.role_code = #{role} AND pr.active_slot = 1)</if>
+        </where>
+    </sql>
+    <select id="findAdminView" resultType="com.paytech.client.master.domain.entityadmin.LocalPartnerAdminView">
+        <include refid="AdminView"/> WHERE p.local_partner_id = #{localPartnerId}
+    </select>
+    <select id="pageForAdmin" resultType="com.paytech.client.master.domain.entityadmin.LocalPartnerAdminView">
+        <include refid="AdminView"/> <include refid="AdminFilter"/>
+        ORDER BY p.local_partner_id LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countForAdmin" resultType="long">
+        SELECT COUNT(*) FROM t_local_partner p <include refid="AdminFilter"/>
+    </select>
 </mapper>

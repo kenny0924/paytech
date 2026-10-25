@@ -88,7 +88,7 @@ test('editable catalog supplies the exact frozen Chinese displays, help text and
     ['merchandise_amount', 'Merchandise Amount', 'At most 16 integer digits and 8 decimal places', 'DECIMAL'],
     ['discount_amount', 'Discount Amount', 'At most 16 integer digits and 8 decimal places', 'DECIMAL'],
     ['net_amount', 'Net Amount', 'At most 16 integer digits and 8 decimal places', 'DECIMAL'],
-    ['entity_source_type', 'Operating Entity Source', 'PLATFORM, CLIENT or PARTNER only', 'ENTITY_SOURCE'],
+    ['entity_source_type', 'Operating Entity Source', 'CLIENT or PARTNER only', 'ENTITY_SOURCE'],
   ]);
   assert.deepEqual(result.catalog.actions, [{ actionCode: 'ALLOW_CHECKOUT', label: 'Pass (PASS)' }, { actionCode: 'REVIEW_CHECKOUT', label: 'Review (REVIEW)' }, { actionCode: 'DENY_CHECKOUT', label: 'Reject (REJECT)' }]);
   assert.deepEqual(result.catalog.operators.map(item => item.label), ['Equals', 'Not Equal To', 'Greater Than', 'Greater Than or Equal To', 'Less Than', 'Less Than or Equal To', 'In', 'Not In', 'Between', 'Is Empty', 'Is Not Empty']);

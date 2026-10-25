@@ -1,0 +1,14 @@
+# 现网 sha256:c6c9b8f663ae /app/application.jar（0e3bc94ab646a2b1，临时容器从镜像取出，= docker exec sha256sum）对 纯 8a86a31c 基线构建（e17dcecd06f54a35）；jarcmp.py --list
+entries a=1110 b=1107 removed=3 added=0 changed=9
+- lib:paytech-client-master-api!com/paytech/client/contract/api/onboarding/ClientFileTargetApi.class
+- lib:paytech-client-master-api!com/paytech/client/contract/api/onboarding/ClientFileTargetModels$FileTargetResponseBody.class
+- lib:paytech-client-master-api!com/paytech/client/contract/api/onboarding/ClientFileTargetModels.class
+~ lib:paytech-client-master-api!com/paytech/client/contract/api/onboarding/ClientDocumentModels$DocumentCommandReceiptResponseBody.class
+~ lib:paytech-client-master-api!com/paytech/client/contract/api/onboarding/ClientDocumentModels$DocumentReferenceRequestBody.class
+~ lib:paytech-client-master-api!com/paytech/client/contract/api/onboarding/ClientDocumentModels$DocumentResponseBody.class
+~ lib:paytech-commercial-api!com/paytech/commercial/api/constant/CommercialCodes$BillingFactType.class
+~ lib:paytech-commercial-api!com/paytech/commercial/api/constant/CommercialCodes$CardBrand.class
+~ lib:paytech-http-client-support!com/paytech/foundation/httpclient/api/HttpRequestValidationException.class
+~ lib:paytech-http-client-support!com/paytech/foundation/httpclient/core/error/HttpServiceClientInterceptor.class
+~ lib:paytech-messaging!catalog/events.yaml
+~ lib:paytech-messaging!com/paytech/foundation/messaging/catalog/YamlEventCatalog.class

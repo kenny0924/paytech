@@ -1,10 +1,17 @@
 package com.paytech.client.master.auto.ext.http.checkout;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 
 import com.paytech.client.master.api.checkout.ClientMasterCheckoutApi;
+import com.paytech.client.master.api.enums.AcquiringQualification;
 import com.paytech.client.master.api.enums.CheckoutCandidateErrorCode;
+import com.paytech.client.master.api.enums.PartnerRoleCode;
 import com.paytech.client.master.test.base.checkout.AbstractCheckoutCandidateApiTest;
+import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -13,6 +20,7 @@ import tools.jackson.databind.node.ObjectNode;
  * 两段式解析第二段：外部资格检查后复核根版本与选定授权（design/06 §2.1、§4），以及签署校验的参与方资料读取。
  * @see ClientMasterCheckoutApi#verify(String, com.paytech.client.master.api.checkout.request.VerifyCheckoutCandidateRequestBody)
  * @see ClientMasterCheckoutApi#partyProfiles(String, java.util.List)
+ * @see com.paytech.client.master.api.entityadmin.ClientMasterEntityAdminApi
  */
 class VerifyCandidatesHttpTest extends AbstractCheckoutCandidateApiTest {
     /** 两次快照之间没有变化时返回 unchanged=true。 */
@@ -48,6 +56,38 @@ class VerifyCandidatesHttpTest extends AbstractCheckoutCandidateApiTest {
         var body = verification(first, 1);
         ((ObjectNode) body.path("candidate")).put("candidateDigest", "0".repeat(64));
         post(VERIFY, body, headers()).assertOk().assertBoolean("/unchanged", false).assertTexts("/changedRoots", "CANDIDATE:AE992");
+    }
+
+    /** 运营修改 OE 收单资质推进 OE 根版本，复核返回该根变化。 */
+    @Test
+    void test_acquiringQualificationChanged() {
+        var first = post(CANDIDATES, request(), headers()).assertOk().json();
+        var body = json.createObjectNode().put("acquiringQualification", AcquiringQualification.MERCHANT.getCode())
+            .put("expectedChangeVersion", 1).put("reason", "Downgraded by acquirer");
+        assertEquals(200, invoker.exchange(HttpMethod.PUT, "/client-master-admin/v1/operating-entities/AE991/acquiring-qualification",
+            admin(), body).getStatus().value());
+        post(VERIFY, verification(first, 0), headers()).assertOk().assertBoolean("/unchanged", false)
+            .assertTexts("/changedRoots", "OPERATING_ENTITY:AE991");
+    }
+
+    /** 运营修改提供方角色推进 Partner 根版本，复核返回该根变化。 */
+    @Test
+    void test_providerRolesChanged() {
+        var first = post(CANDIDATES, request(), headers()).assertOk().json();
+        var body = json.createObjectNode().put("expectedChangeVersion", 1).put("reason", "Referral programme");
+        body.putArray("roles").add(PartnerRoleCode.OE_PROVIDER.getCode()).add(PartnerRoleCode.REFERRER.getCode());
+        assertEquals(200, invoker.exchange(HttpMethod.PUT, "/client-master-admin/v1/local-partners/910000000000150/roles", admin(),
+            body).getStatus().value());
+        post(VERIFY, verification(first, 0), headers()).assertOk().assertBoolean("/unchanged", false)
+            .assertTexts("/changedRoots", "LOCAL_PARTNER:910000000000150");
+    }
+
+    /** Gateway 可信操作者头。 */
+    private HttpHeaders admin() {
+        var headers = TestRequestHeaders.internal(REQUEST_ID);
+        headers.set("X-Gateway-Actor-Subject", "9300000019");
+        headers.set("X-Gateway-Session-Id", "ops-session-1");
+        return headers;
     }
 
     /** 按 ID 读取参与方资料；格式非法的 ID 在读取前拒绝。 */

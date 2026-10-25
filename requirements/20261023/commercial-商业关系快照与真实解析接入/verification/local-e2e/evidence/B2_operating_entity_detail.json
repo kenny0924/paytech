@@ -1,0 +1,93 @@
+{
+  "method": "GET",
+  "path": "/api/operations/entity-admin/v1/operating-entities/AE001",
+  "request": null,
+  "status": 200,
+  "response": {
+    "entity": {
+      "entityNo": "AE001",
+      "partyId": "900000000001380102",
+      "legalName": "Relsnap Synthetic AE001 FZ-LLC",
+      "operatingCountry": "AE",
+      "status": "ACTIVE",
+      "acquiringQualification": "PAYFAC",
+      "changeVersion": 2,
+      "sourceRelation": {
+        "sourceRelationId": "900000000001380103",
+        "sourceType": "PARTNER",
+        "sourceClientId": null,
+        "sourcePartnerId": "900000000001370001",
+        "effectiveFrom": "2026-10-01T00:00:00.000000Z",
+        "effectiveTo": null
+      },
+      "provider": {
+        "localPartnerId": "900000000001370001",
+        "partnerNo": "LP-PAYFAC-AE001",
+        "partyId": "900000000001380102",
+        "legalName": "Relsnap Synthetic AE001 FZ-LLC",
+        "status": "ACTIVE",
+        "roles": [
+          "OE_PROVIDER"
+        ]
+      },
+      "scopes": [
+        {
+          "scopeId": "900000000001380105",
+          "consumerCountryCode": "US",
+          "currency": "USD",
+          "industryCode": "RETAIL",
+          "mccCode": "5999",
+          "status": "ACTIVE",
+          "effectiveFrom": "2026-10-01T00:00:00.000000Z",
+          "effectiveTo": null
+        }
+      ],
+      "sellerDisclosures": [
+        {
+          "disclosureId": "900000000001380128",
+          "countryCode": "US",
+          "locale": "en",
+          "status": "ACTIVE",
+          "effectiveFrom": "2026-10-01T00:00:00.000000Z",
+          "effectiveTo": null
+        }
+      ]
+    },
+    "qualificationsStatus": "AVAILABLE",
+    "qualifications": [
+      {
+        "currentDecisionId": "239990872899342336",
+        "decisionSource": "MANUAL",
+        "effectiveStatus": "ELIGIBLE",
+        "qualificationId": "239990535295619072",
+        "qualificationType": "ENTITY_UNDERWRITING",
+        "reviewStatus": "NOT_REQUIRED",
+        "roleId": "AE001",
+        "roleType": "OPERATING_ENTITY",
+        "status": "APPROVED",
+        "updatedAt": "2026-10-25T05:58:02.914787Z",
+        "validFrom": "2026-10-01T00:00:00.000000Z",
+        "validTo": null,
+        "version": "3"
+      }
+    ],
+    "providerQualificationsStatus": "AVAILABLE",
+    "providerQualifications": [
+      {
+        "currentDecisionId": "239990535484362752",
+        "decisionSource": "MANUAL",
+        "effectiveStatus": "ELIGIBLE",
+        "qualificationId": "239990535484362753",
+        "qualificationType": "PARTNER_DUE_DILIGENCE",
+        "reviewStatus": "NOT_REQUIRED",
+        "roleId": "900000000001370001",
+        "roleType": "LOCAL_PARTNER",
+        "status": "APPROVED",
+        "updatedAt": "2026-10-25T05:56:42.468881Z",
+        "validFrom": "2026-10-01T00:00:00.000000Z",
+        "validTo": null,
+        "version": "1"
+      }
+    ]
+  }
+}

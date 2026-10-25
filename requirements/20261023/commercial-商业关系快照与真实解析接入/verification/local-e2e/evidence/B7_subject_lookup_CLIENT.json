@@ -1,0 +1,12 @@
+{
+  "method": "GET",
+  "path": "/api/operations/qualification-admin/v1/subjects?roleType=CLIENT&subjectRef=900000000001380201",
+  "request": null,
+  "status": 200,
+  "response": {
+    "roleType": "CLIENT",
+    "roleId": "900000000001380201",
+    "displayName": "Relsnap Synthetic Client PSP LLC",
+    "status": "ACTIVE"
+  }
+}

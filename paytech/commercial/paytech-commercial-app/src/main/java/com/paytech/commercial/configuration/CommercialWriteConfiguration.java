@@ -19,6 +19,7 @@ import com.paytech.commercial.domainservice.repository.AgreementProductRepositor
 import com.paytech.commercial.domainservice.repository.AgreementRepository;
 import com.paytech.commercial.domainservice.repository.BusinessChangeRecordRepository;
 import com.paytech.commercial.domainservice.repository.BusinessChangeVersionRepository;
+import com.paytech.commercial.domainservice.repository.CommercialTermPlanRepository;
 import com.paytech.commercial.domainservice.repository.PricingProfileCondRepository;
 import com.paytech.commercial.domainservice.repository.PricingProfileRepository;
 import com.paytech.commercial.domainservice.repository.ProductCapabilityRepository;
@@ -121,9 +122,10 @@ public class CommercialWriteConfiguration {
     @Bean
     public ActivateAgreementProcessor activateAgreementProcessor(Clock clock, AgreementService agreementService,
         AgreementRepository agreementRepository, BusinessChangeRecordRepository businessChangeRecordRepository,
+        AgreementPartyRepository agreementPartyRepository, CommercialTermPlanRepository commercialTermPlanRepository,
         AgreementOperatingEntityRepository agreementOperatingEntityRepository) {
         return new ActivateAgreementProcessor(clock, agreementService, agreementRepository, businessChangeRecordRepository,
-            agreementOperatingEntityRepository);
+            agreementPartyRepository, commercialTermPlanRepository, agreementOperatingEntityRepository);
     }
 
     /** POST /agreements/v1/{id}/terminate。 */

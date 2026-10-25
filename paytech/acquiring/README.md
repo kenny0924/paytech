@@ -9,7 +9,7 @@
 
 - 模块：`paytech-acquiring-api`（Client API 订单 / Checkout / 退款 / 取消合同，及消费者端 Hosted Checkout 合同包 `checkout`）、`paytech-acquiring-core`（transaction / checkout / command 三个内部模块共用，共库 mor_acquiring）、`paytech-acquiring-app`（启动类、Controller、DataSource / MyBatis、出站客户端、paytech-messaging 消费端配置）、`paytech-acquiring-test`。
 - Customer 归 counterparty：建单时在订单事务前经 `POST /counterparty/v1/customers/resolve` 建或取 Customer，订单只存 `customer_id`；GET checkout 与 SubmitPayment 经 `GET /counterparty/v1/card-saving-eligibility` 读取存卡资格，任何失败降级为不可存卡并记 WARN（S6）；付款人引用经 `GET /counterparty/v1/customers/{customerId}` 取 `customerNo`。已存卡列表仍经 Payment `StoredCardApi` 读取，不可用时为空。
-- 出站发现名：`payment-service`（`/payment`）、`counterparty-service`、`risk-decision-service`、`platform-support-service`；`internal-auth.mode` 默认 `"OFF"`。Checkout 商业端口仍为固定 Mock（目标 `commercial-service`）。
+- 出站发现名：`payment-service`（`/payment`）、`counterparty-service`、`risk-decision-service`、`platform-support-service`；`internal-auth.mode` 默认 `"OFF"`。Checkout 商业端口按 `acquiring.commercial.resolution-mode` 选择：`MOCK`（缺省，固定 AE001 + PARTNER）或 `REAL`（`commercial-service`，`POST /checkout-context/v1/resolutions`，冻结商业关系快照）。
 - 支付结果消费第 08 步切到 paytech-messaging：订阅 `payment.events`，分区队列 `acquiring.payment.p0..p3`（DLQ `acquiring.payment.dlq`）；第 03 步的旧队列与旧 Topic 已不再声明。
 - 配置前缀 `acquiring.*`；环境变量名（`COMMERCE_*`、`MOR_COMMERCE_DB_*`）暂沿用，以免影响现有部署描述。
 - PDManer 模型 `docs/database/acquiring.pdma.json` 由 `scripts/pdmaner/generate-acquiring-model.mjs` 生成；Schema `docs/database/sql/acquiring-schema.sql`。
@@ -294,7 +294,7 @@ Spring Cloud 以 Group 名作为服务 ID。连接/读取超时为 2/5 秒，Loa
 Foundation Group Configurer 统一完成 Request ID 传播、Problem 解码及可选的严格 JSON 绑定/响应大小限制。
 应用级禁重试传输集中在 `HttpClientConfiguration`。发现结果为空或连接失败返回依赖不可用。
 
-旧预检链（`CctPrecheckClient` → `CheckoutEligibilityApi.precheck`）已删除：CCT 在合并单仓时已移除该接口，创建主链也早已不再调用（[Customer 与存卡支付](../../requirements/20261015/commerce-Customer与存卡支付/delivery.md)阶段 4 记录）。当前由 `CheckoutCommercialPort` 返回完整 OE/商业/法律事实；新依赖暂固定 Mock，真实解析接入时继续复用上述 HTTP 与服务发现公共组件。创建初始化不使用请求幂等组件。
+旧预检链（`CctPrecheckClient` → `CheckoutEligibilityApi.precheck`）已删除：CCT 在合并单仓时已移除该接口，创建主链也早已不再调用（[Customer 与存卡支付](../../requirements/20261015/commerce-Customer与存卡支付/delivery.md)阶段 4 记录）。当前由 `CheckoutCommercialPort` 返回完整 OE/商业/法律事实；`REAL` 模式由 `CheckoutCommercialPortImpl` 经 `CommercialClientConfiguration`（服务发现 + Foundation 公共出站边界）调用 commercial，`MOCK` 模式使用 `CommercialMockConfiguration` 的固定事实。创建初始化不使用请求幂等组件。
 
 ## Customer 与已存卡
 
@@ -329,7 +329,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
 CreateCheckout 与 GetOrder 按[现行测试规范](../../agent-docs/UNIT_TEST_GUIDE.md)使用 `MockTestBase`：
 `TestApplication` 引用正式 `CommerceApplication`，复用其生产组件扫描，以随机端口启动；
 测试组合根只声明辅助组件扫描、测试 Mapper 和必要的 HTTP 配置，不逐个列举生产 Bean。
-新创建流程由 `CheckoutCommercialMocker` 配置商业 DTO，首次支付由 `CheckoutIntentMocker`/`CheckoutCardMocker` 配置结果；它们只替换本轮暂缓的外部端口，不替换内部业务或数据库。以下独立 CCT HTTP Mock 基础设施仍保留，但新创建主链不再调用基础预检。
+新创建流程由 `CheckoutCommercialMocker` 为测试 HTTP 接口 `MockCheckoutContextApi` 配置 commercial 解析 DTO（测试默认 `REAL` 模式，`CreateCheckoutMockResolutionTest` 单独验证 `MOCK`），首次支付由 `CheckoutIntentMocker`/`CheckoutCardMocker` 配置结果；它们只配置外部接口的响应 DTO，不替换内部业务或数据库。以下独立 CCT HTTP Mock 基础设施仍保留，但新创建主链不再调用基础预检。
 `MockCheckoutEligibilityApi` 直接实现正式 CCT API；Foundation `MockHttpServer` 使用独立 MVC
 上下文承载它，路径与参数绑定继承接口。测试服务发现将 `client-contract-service` 指向随机地址，
 生产 API 代理与 LoadBalancer 保持原样。

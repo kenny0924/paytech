@@ -39,10 +39,27 @@ final class CheckoutContextConverter {
                         l.parties().stream()
                                 .map(f -> new ResolveCheckoutContextResponseBody.PartyEvidence(f.partyId(), f.partyProfileId(),
                                         f.profileContentHash()))
-                                .toList()),
+                                .toList(),
+                        seller(l.seller())),
                 derived(c.derived()),
                 new ResolveCheckoutContextResponseBody.Revisions(r.clientChangeVersion(), r.entityChangeVersion(),
-                        r.clientAgreementChangeVersion(), r.partnerAgreementChangeVersion()));
+                        r.clientAgreementChangeVersion(), r.partnerAgreementChangeVersion()),
+                relationship(c.relationshipSnapshot()));
+    }
+
+    /** 卖方公开文本原样投影。 */
+    private static ResolveCheckoutContextResponseBody.Seller seller(CheckoutContextView.Seller s) {
+        return new ResolveCheckoutContextResponseBody.Seller(s.legalName(), s.registrationNumber(),
+                s.taxRegistrationNumber(), s.addressText(), s.supportEmail(), s.supportPhone());
+    }
+
+    /** 商业关系快照原样投影，绑定保持角色顺序。 */
+    private static ResolveCheckoutContextResponseBody.RelationshipSnapshot relationship(
+            CheckoutContextView.RelationshipSnapshot r) {
+        return new ResolveCheckoutContextResponseBody.RelationshipSnapshot(r.effectiveModelVersion(),
+                r.snapshotModelVersion(), r.fundFlow(), r.businessMode(),
+                r.bindings().stream().map(b -> new ResolveCheckoutContextResponseBody.RoleBinding(b.role(),
+                        b.subjectType(), b.subjectId(), b.partyId())).toList());
     }
 
     /** Client 合同条款与命中的全部开通项。 */

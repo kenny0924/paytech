@@ -103,6 +103,7 @@ web:
       - /client-onboarding
       - /internal/client-onboarding
       - /client-onboarding-admin
+      - /client-master-admin
 
 vault:
   client:

@@ -15,6 +15,7 @@ import com.paytech.compliance.core.dal.dataobject.EvidenceRef;
 import com.paytech.compliance.domain.ClientReviewCaseBundle;
 import com.paytech.compliance.domain.ClientReviewContext;
 import com.paytech.compliance.domain.ClientReviewDecisionContext;
+import com.paytech.compliance.domain.QualificationChangeContext;
 import com.paytech.compliance.domain.ReviewRequirementView;
 import com.paytech.compliance.domainservice.repository.CaseClassificationRepository;
 import com.paytech.compliance.domainservice.repository.CaseDependencyRepository;
@@ -24,6 +25,8 @@ import com.paytech.compliance.domainservice.repository.CaseSubjectRepository;
 import com.paytech.compliance.domainservice.repository.DueDiligenceCaseRepository;
 import com.paytech.compliance.domainservice.repository.EvidenceRefRepository;
 import com.paytech.compliance.domainservice.repository.QualificationDecisionRepository;
+import com.paytech.compliance.domainservice.repository.QualificationStateChangeRepository;
+import com.paytech.compliance.domainservice.repository.RoleQualificationRepository;
 import com.paytech.compliance.domainservice.service.ClientReviewService;
 import com.paytech.compliance.service.handler.ClientReviewResultHandler;
 
@@ -41,8 +44,10 @@ public class ClientReviewServiceImpl implements ClientReviewService {
     private final CompensationEventRegistrar events;
     private final DueDiligenceCaseRepository cases;
     private final QualificationDecisionRepository decisions;
+    private final RoleQualificationRepository qualifications;
     private final PlatformTransactionManager transactionManager;
     private final CaseClassificationRepository classifications;
+    private final QualificationStateChangeRepository qualificationChanges;
 
     /** 一个 READ COMMITTED 短事务保存全部登记事实。 */
     @Override
@@ -85,7 +90,7 @@ public class ClientReviewServiceImpl implements ClientReviewService {
         });
     }
 
-    /** 子任务先于主任务结束；主任务版本条件保证读取门禁后没有其他命令插入。 */
+    /** 子任务先于主任务结束；主任务版本条件保证读取门禁后没有其他命令插入；Client 资格投影与结论同事务提交。 */
     @Override
     public void decide(ClientReviewDecisionContext context) {
         transaction().executeWithoutResult(status -> {
@@ -96,8 +101,21 @@ public class ClientReviewServiceImpl implements ClientReviewService {
                 context.getResolutionNote(), context.getReturnSection(), context.getNow());
             context.getDecisions().forEach(decisions::insert);
             context.getStateChanges().forEach(stateChanges::insert);
+            if (context.getQualificationChange() != null) {
+                project(context.getQualificationChange());
+            }
             events.register(ClientReviewResultHandler.buildEvent(context.getMainCase().getCaseId()));
         });
+    }
+
+    /** 新建或按读取时版本切换 Client 资格投影并追加状态变更；决定已随审核结论插入，外层事务负责提交。 */
+    void project(QualificationChangeContext change) {
+        if (change.getCurrent() == null) {
+            qualifications.insert(change.getCreated());
+        } else {
+            qualifications.applyDecision(change.getCurrent(), change.getDecision(), change.getStateChange().getOccurredTime());
+        }
+        qualificationChanges.insert(change.getStateChange());
     }
 
     /** READ COMMITTED、5 秒超时的本地短事务。 */

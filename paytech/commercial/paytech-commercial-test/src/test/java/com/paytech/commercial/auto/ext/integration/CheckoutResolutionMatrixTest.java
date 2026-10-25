@@ -39,12 +39,12 @@ import com.paytech.commercial.test.mocker.local.term.TermPricingMocker;
 
 /**
  * 解析矩阵（technique §2.3、§2.5、§2.11）：订阅、开通项、约束、资金模式、版本区间与派生四项。
- * <li>HTTP 解析链在 Risk 正式不可用端口处以 503 结束，成功候选无法经 HTTP 返回；这里与 {@link CheckoutVerificationTest}
- * 相同，从公开端口与本库只读 Service 构造 {@link CheckoutResolutionContext}，以首个候选和 {@link CheckoutCandidateContext#toView()}
- * 观察真实解析结果。</li>
+ * <li>只观察本库商务事实的落选矩阵，不涉及外部资格：与 {@link CheckoutVerificationTest} 相同，从公开端口与本库只读 Service 构造
+ * {@link CheckoutResolutionContext}，以首个候选和 {@link CheckoutCandidateContext#toView(int)} 观察真实解析结果；完整 HTTP 成功路径见
+ * ResolveCheckoutRelationshipHttpTest。</li>
  * <li>夹具：AE991（优先级 1，合同 106 订阅 ACQUIRING / PAYOUT，CARD 限 VISA、USD / EUR 且带保证金，APPLE_PAY 无约束且无价格）与
  * AE992（优先级 2，合同 206 订阅 ACQUIRING，CARD 限 USD 与 AE）；两份 Client 版本各有一条 USD 的 CARD 画像价格。AE991 落空即由 AE992
- * 接替。开通项只在有生效价格时输出（开通与定价模型调整 AC-09）。</li>
+ * 接替。开通项只在有生效价格时输出（开通与定价模型调整 AC-09）。两个 OE 都是 PARTNER 来源，各有法律主体相同的提供方与 Partner 合同。</li>
  */
 class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
     private static final long FIRST_AGREEMENT_ID = CheckoutTermVersionMocker.AGREEMENT_ID;
@@ -74,10 +74,10 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
         clientMaster.mockCandidates();
     }
 
-    /** 不给支付方式：首选 AE991，返回商业关系、订阅产品与 MOR 派生，不匹配开通项。 */
+    /** 不给支付方式：首选 AE991，返回商业关系、订阅产品与 MOR 派生；开通项为全部有生效价格的支付方式（CARD；APPLE_PAY 无价格）。 */
     @Test
     void test_normalFlow_withoutPaymentMethod() {
-        CheckoutContextView view = first(query()).toView();
+        CheckoutContextView view = first(query()).toView(0);
 
         var terms = view.clientTerms();
         var derived = view.derived();
@@ -88,7 +88,8 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
             () -> assertNull(terms.referralPartnerId()),
             () -> assertEquals(List.of(ProductCode.ACQUIRING.getCode(), ProductCode.PAYOUT.getCode()),
                 terms.agreementProducts()),
-            () -> assertEquals(List.of(), terms.capabilities()),
+            () -> assertEquals(List.of(CommercialCodes.Capability.CARD),
+                terms.capabilities().stream().map(CheckoutContextView.Capability::capabilityCode).toList()),
             () -> assertEquals(Long.toString(FIRST_ENTITY_PARTY_ID), derived.sellerPartyId()),
             () -> assertEquals(FIRST_ENTITY, derived.acquiringEntityNo()),
             () -> assertEquals(ResponsiblePartyType.OPERATING_ENTITY.getCode(), derived.taxResponsibleParty()),
@@ -100,7 +101,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
     void test_normalFlow_withPaymentMethod() {
         data.overwriteCapabilityRequire3ds(FIRST_CARD_CAPABILITY_ID, true);
 
-        var capabilities = first(query(CommercialCodes.PaymentMethod.CARD)).toView().clientTerms().capabilities();
+        var capabilities = first(query(CommercialCodes.PaymentMethod.CARD)).toView(0).clientTerms().capabilities();
         var capability = capabilities.getFirst();
 
         assertAll(() -> assertEquals(1, capabilities.size()),
@@ -131,7 +132,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
                 .pricingProfileCode("CCTQUERY_APPLE").priorityNo(2),
             CommercialTermComponentBuilder.template().termComponentId(910000000000116L));
 
-        var capabilities = first(query(CommercialCodes.PaymentMethod.APPLE_PAY)).toView().clientTerms().capabilities();
+        var capabilities = first(query(CommercialCodes.PaymentMethod.APPLE_PAY)).toView(0).clientTerms().capabilities();
         assertAll(() -> assertEquals(List.of(CommercialCodes.Capability.APPLE_PAY),
                 capabilities.stream().map(CheckoutContextView.Capability::capabilityCode).toList()),
             () -> assertEquals(List.of(), capabilities.getFirst().conditions()),
@@ -159,7 +160,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
     void test_pspDerivesClientAsSeller() {
         data.overwriteAgreementModes(FIRST_AGREEMENT_ID, BusinessMode.PSP, FundMode.SETTLE_THROUGH_PLATFORM);
 
-        CheckoutContextView view = first(query()).toView();
+        CheckoutContextView view = first(query()).toView(0);
 
         assertAll(() -> assertEquals(BusinessMode.PSP.getCode(), view.clientTerms().businessMode()),
             () -> assertEquals(Long.toString(CLIENT_PARTY_ID), view.derived().sellerPartyId()),
@@ -224,7 +225,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
         data.overwriteVersionEffectiveTo(CheckoutTermVersionMocker.TERM_VERSION_ID, switchTime);
         versions.mockSuccessorVersion(SUCCESSOR_VERSION_ID, CommercialTermVersionStatus.SCHEDULED, switchTime);
 
-        CheckoutContextView view = first(query()).toView();
+        CheckoutContextView view = first(query()).toView(0);
 
         assertAll(() -> assertEquals(FIRST_ENTITY, view.entityNo()),
             () -> assertEquals(Long.toString(SUCCESSOR_VERSION_ID), view.clientTerms().versionId()));
@@ -236,7 +237,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
         versions.mockSuccessorVersion(SUCCESSOR_VERSION_ID, CommercialTermVersionStatus.SCHEDULED,
             Instant.parse("2026-09-10T00:00:00Z"));
 
-        assertEquals(Long.toString(SUCCESSOR_VERSION_ID), first(query()).toView().clientTerms().versionId());
+        assertEquals(Long.toString(SUCCESSOR_VERSION_ID), first(query()).toView(0).clientTerms().versionId());
     }
 
     /** 尚未到起点的 SCHEDULED 不参与，原 ACTIVE 版本继续生效。 */
@@ -246,7 +247,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
             Instant.parse("2026-10-01T00:00:00Z"));
 
         assertEquals(Long.toString(CheckoutTermVersionMocker.TERM_VERSION_ID),
-            first(query()).toView().clientTerms().versionId());
+            first(query()).toView(0).clientTerms().versionId());
     }
 
     /** 区间包含商业时点的 DRAFT 不参与解析，不与原 ACTIVE 版本构成冲突。 */
@@ -256,7 +257,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
             Instant.parse("2026-09-05T00:00:00Z"));
 
         assertEquals(Long.toString(CheckoutTermVersionMocker.TERM_VERSION_ID),
-            first(query()).toView().clientTerms().versionId());
+            first(query()).toView(0).clientTerms().versionId());
     }
 
     /** FEES_ONLY 本期不受理：AE991 落空。 */
@@ -274,7 +275,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
         data.insertCapabilityLimit(910000000000346L, FIRST_CARD_CAPABILITY_ID, PricingDimension.CARD_BRAND.getCode(),
             CommercialCodes.CardBrand.VISA);
 
-        CheckoutContextView view = first(query(CommercialCodes.PaymentMethod.CARD)).toView();
+        CheckoutContextView view = first(query(CommercialCodes.PaymentMethod.CARD)).toView(0);
 
         var capabilities = view.clientTerms().capabilities();
         assertAll(() -> assertEquals(FIRST_ENTITY, view.entityNo()),

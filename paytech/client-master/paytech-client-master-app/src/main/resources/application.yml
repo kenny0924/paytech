@@ -134,6 +134,8 @@ web:
       - /client-onboarding-admin
       # 工作区摘要返回客户名称，只记元数据。
       - /client-workspace
+      # 运营主档维护返回法定名称（个人 Client 为姓名），只记元数据。
+      - /client-master-admin
 redis:
   coordination:
     enabled: ${onboarding.draft-enabled:false}

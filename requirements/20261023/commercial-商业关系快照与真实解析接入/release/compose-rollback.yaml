@@ -1,0 +1,45 @@
+# 商业关系快照与真实解析接入：mor-test 回滚覆盖文件 = 阶段 6（2026-10-25）时 7 个运行容器的 .Image。
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261023/commercial-商业关系快照与真实解析接入/release/compose-rollback.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 环境变量 = 运行容器现状：主 compose + commercial 的历史覆盖键（与 commercial-运营控制台完善 候选相同）；不含本需求两个新开关。
+# 回滚顺序：ops-web → ops-bff → risk-decision → acquiring → client-master → commercial → compliance。
+# 新代码不认 PLATFORM 来源而数据已改写：client-master / risk-decision / acquiring 回旧镜像前先执行对应数据回滚 SQL。
+# compliance 运行容器按 :development tag 启动；回滚只认下列 ID（tag 可能已被他人重建）。
+services:
+  compliance-service:
+    image: sha256:2f62a26ad46cee3c7969995f6febfd03aea04b723c06b0774010af49e6948469  # mor-test/compliance-service:development（10-18 15:55Z 构建；运行容器按 tag 启动，回滚按此 ID，不要用 tag）
+  commercial-service:
+    image: sha256:c6c9b8f663aeb69c09cf2e2d494429bff2dbc38c8aaf632d88cbcbaaa5d0221b  # mor-test/commercial-service:capability-20261021c
+    environment:
+      COMMERCIAL_RABBITMQ_HOST: rabbitmq
+      COMMERCIAL_RABBITMQ_PORT: "5672"
+      COMMERCIAL_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_VHOST: /mor-test
+      COMMERCIAL_REDIS_HOST: redis
+      COMMERCIAL_REDIS_PORT: "6379"
+      COMMERCIAL_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      COMMERCIAL_SNOWFLAKE_REGION_ID: "0"
+      COMMERCIAL_SNOWFLAKE_WORKER_ID: "17"
+      COMMERCIAL_COMPENSATION_INSTANCE_ID: commercial-test-1
+      COMMERCIAL_XXL_JOB_ENABLED: "true"
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_APPNAME: commercial-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.34
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  client-master-service:
+    image: sha256:2e495b40adee0d918d7fe96a93be837514f83936e2537139122de6155c5c604f  # mor-test/client-master-service:pubbucket-20261023a
+  acquiring-service:
+    image: sha256:f6d55ade25d1cfdadcc499f487e291be15910883db16ec4ff60ce8088ebbbd33  # mor-test/acquiring-service:f1-result-20261023
+  risk-decision-service:
+    image: sha256:d69ca678416aaceb746d3fac0933e0e138c6eb36441c6e8ea7e75804d0bca523  # mor-test/risk-decision-serviceard3ds-20261022:latest
+  operations-console-bff:
+    image: sha256:0bc674106d7b75f4857f5e299d6fdfeacd030c6e8514d8f92dadb4bc2f51a3ed  # mor-test/operations-console-bff:fileupload-20261024a
+  operations-console-web:
+    image: sha256:70d3fdfbb6be16ed48edd3883338c08264122b34432ad68246b938e3c10dffea  # mor-test/operations-console-web:fileupload-20261024a

@@ -1,0 +1,28 @@
+2026-10-25T13:43:28.288Z == S-0
+2026-10-25T13:43:28.351Z 开关：acquiring=MOCK snapshot=false
+2026-10-25T13:43:32.497Z S-0 saved verdict="PASS"
+2026-10-25T13:44:23.850Z == S-0
+2026-10-25T13:44:23.914Z 开关：acquiring=MOCK snapshot=false
+2026-10-25T13:44:26.332Z S-0 saved verdict="PASS"
+2026-10-25T13:55:21.918Z == AC-13
+2026-10-25T13:55:22.088Z AC-13 saved verdict="PASS"
+2026-10-25T14:09:02.719Z == preflight
+2026-10-25T14:09:02.770Z 开关：acquiring=MOCK snapshot=false
+2026-10-25T14:09:03.276Z preflight saved verdict="PASS"
+2026-10-25T14:10:02.637Z == S-1
+2026-10-25T14:10:02.724Z 开关：acquiring=REAL snapshot=false
+2026-10-25T14:10:06.881Z S-1 saved verdict="PASS"
+2026-10-25T14:10:07.004Z == S-2
+2026-10-25T14:10:07.049Z 开关：acquiring=REAL snapshot=false
+2026-10-25T14:10:10.724Z S-2 saved verdict="PASS"
+2026-10-25T14:10:10.897Z == S-3
+2026-10-25T14:10:10.974Z 开关：acquiring=REAL snapshot=false
+2026-10-25T14:10:15.361Z S-3 saved verdict="PASS"
+2026-10-25T14:11:07.737Z == S-5
+2026-10-25T14:11:07.792Z 开关：acquiring=REAL snapshot=true
+2026-10-25T14:11:11.150Z S-5 saved verdict="PASS"
+2026-10-25T14:12:24.999Z == S-6
+2026-10-25T14:12:25.042Z 开关：acquiring=MOCK snapshot=false
+2026-10-25T14:12:28.035Z S-6 saved verdict="PASS"
+2026-10-25T14:12:28.156Z == AC-13
+2026-10-25T14:12:28.356Z AC-13 saved verdict="PASS"

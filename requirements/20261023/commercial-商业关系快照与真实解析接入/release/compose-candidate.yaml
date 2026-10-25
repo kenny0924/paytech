@@ -1,0 +1,66 @@
+# 商业关系快照与真实解析接入：mor-test 候选覆盖文件（2026-10-25 阶段 6 准备；阶段 7 须用户另行授权，由主会话执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史候选文件：
+#   ./test-environment/compose.sh -f "$PWD/requirements/20261023/commercial-商业关系快照与真实解析接入/release/compose-candidate.yaml" \
+#     up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 一次只起一个服务，按 technique 2.4 顺序：compliance → commercial → client-master（紧接 commercial）→ acquiring → risk-decision → ops-bff → ops-web。
+# 只认下列 sha256（tag relsnap-20261025a 仅供辨认；:development 未改动）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-relsnap-rel = main 8a86a31c + 开发目录 Code-MoR-relsnap 的本需求改动
+#   （git diff --binary 8a86a31c + 未跟踪文件，419 个文件，补丁 SHA-256 118a4b0aac5e6e32，未提交；清单 evidence/source-diff-8a86a31c.txt）。
+# 环境变量：其余服务的全部键在主 compose；commercial 的键在历史覆盖文件（见该服务注释）。新增两个开关：
+#   ACQUIRING_COMMERCIAL_RESOLUTION_MODE=MOCK（acquiring）、COMMERCIAL_RELATIONSHIP_SNAPSHOT_ENABLED=false（commercial）。核对见 evidence/build-report.md 第 3 节。
+# 回滚：同目录 compose-rollback.yaml，顺序反之；回滚 client-master / risk-decision / acquiring 时须同时回数据（technique 3.7「删除 PLATFORM 的回滚」）。
+services:
+  compliance-service:
+    # 角色资格评估 POST /compliance/v1/qualifications/query（仅 commercial-service）；运营资格 Admin 4 个（/compliance-admin，只记元数据）；
+    # 入驻审核通过时同事务投影 CLIENT 资格。Schema：case_id 可空、role_id 字符型、basis_note（DDL 先于本镜像执行）。
+    image: sha256:ca1585452f9c60835ecb099db694e36bd5d2fdcfa197016a242d204954ce3545  # mor-test/compliance-service:relsnap-20261025a（JAR 5bd849ff153c1cf3）
+  commercial-service:
+    # 商业关系快照推导与组合约束、compliance 资格客户端（lb://compliance-service）、解析顺序、删除 PLATFORM 来源。
+    # 环境变量：commercial 段沿用 requirements/20261020/commercial-运营控制台完善/release/compose-candidate.yaml 的全部键与 depends_on
+    #   （主 compose 的 commercial-service 段仍是旧形状，缺这些键无法启动），另加本需求开关 COMMERCIAL_RELATIONSHIP_SNAPSHOT_ENABLED=false。
+    image: sha256:e5c1ee6b0d037c4c899f43bf3583dcfdea8175f408f661d6f51580a36d3dd28c  # mor-test/commercial-service:relsnap-20261025a（JAR 1dae75ab534567c3）
+    environment:
+      COMMERCIAL_RABBITMQ_HOST: rabbitmq
+      COMMERCIAL_RABBITMQ_PORT: "5672"
+      COMMERCIAL_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      COMMERCIAL_RABBITMQ_VHOST: /mor-test
+      COMMERCIAL_REDIS_HOST: redis
+      COMMERCIAL_REDIS_PORT: "6379"
+      COMMERCIAL_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      COMMERCIAL_SNOWFLAKE_REGION_ID: "0"
+      COMMERCIAL_SNOWFLAKE_WORKER_ID: "17"
+      COMMERCIAL_COMPENSATION_INSTANCE_ID: commercial-test-1
+      COMMERCIAL_XXL_JOB_ENABLED: "true"
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_APPNAME: commercial-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.34
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+      # 本需求新增：商业关系快照不生效（effectiveModelVersion=0，收单只记录）；改为 true 须另行决定并重启。
+      COMMERCIAL_RELATIONSHIP_SNAPSHOT_ENABLED: "false"
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  client-master-service:
+    # 候选响应新增 acquiringQualification / oeProvider / 卖方公开文本；Admin API 7 个（/client-master-admin，只记元数据）；删除 PLATFORM 来源。
+    # 与 commercial 紧接着连续发布（commercial 先），数据 SQL（AE001 迁 PayFac Partner）同窗口执行。
+    image: sha256:eeed4e63235de481ee6a02777de25a454197f2993af84fe90f14e0d1ee0df8a8  # mor-test/client-master-service:relsnap-20261025a（JAR 25cfb1fa9e084fc5）
+  acquiring-service:
+    # REAL 客户端（lb://commercial-service）与错误映射；MOCK / REAL 开关；关系快照冻结表与三列（DDL 先于本镜像执行）。
+    # 部署时 MOCK（Mock 改为 AE001 + PARTNER）；必须先于 risk-decision。切 REAL 另行决定（release.md 门禁），只改本文件这一个值。
+    image: sha256:e0a1f618a050e30b85059aa4214fea43bedeb35cf48438374d444e735e107299  # mor-test/acquiring-service:relsnap-20261025a（JAR d64644a67a9e7713）
+    environment:
+      # 本需求新增：Checkout 商业解析模式，部署时 MOCK；REAL 另行决定。
+      ACQUIRING_COMMERCIAL_RESOLUTION_MODE: MOCK
+  risk-decision-service:
+    # 删除 PLATFORM 来源（结账评估输入 / 规则校验）；数据 SQL 同窗口执行；在 acquiring 之后。
+    image: sha256:288b0ff6a607a8e82bbf7e7cd03023bcca9159fc72e599281ec2fda81fe28a88  # mor-test/risk-decision-service:relsnap-20261025a（JAR 0196699b7bac2fac）
+  operations-console-bff:
+    # B1—B11：/entity-admin/v1、/qualification-admin/v1（client-master-service / compliance-service 经 Nacos，不新增 base-url 变量）。
+    image: sha256:feefe73f0aa35e556e5bf1b11da9144ac3d7414285740bf22d9cbe94f086e6af  # mor-test/operations-console-bff:relsnap-20261025a（JAR 818dc53305ffd646）
+  operations-console-web:
+    # 资格登记、经营主体、Local Partner 三页；qualification / master-data 命名空间；风控规则编辑器删除 PLATFORM。
+    image: sha256:4f44725eb26f7569b40719f29f48da7cc60f46c3c6bdd4d45ba0c44827662d3a  # mor-test/operations-console-web:relsnap-20261025a（dist 226 个文件）

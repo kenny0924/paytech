@@ -1,0 +1,34 @@
+{
+  "list": {
+    "items": [],
+    "page": 1,
+    "size": 10,
+    "total": 0
+  },
+  "request": {
+    "roleType": "CLIENT",
+    "roleId": "237161687952666625",
+    "qualificationType": "ORGANIZATION_KYB",
+    "validFrom": "2026-10-01T00:00:00Z",
+    "validTo": null,
+    "reasonCode": "STAGE5_LOCAL_E2E",
+    "basisNote": "阶段 5 本机联调合成主体登记（Client 237161687952666625）",
+    "expectedVersion": null
+  },
+  "status": 200,
+  "response": {
+    "currentDecisionId": "239990536570687488",
+    "decisionSource": "MANUAL",
+    "effectiveStatus": "ELIGIBLE",
+    "qualificationId": "239990536570687489",
+    "qualificationType": "ORGANIZATION_KYB",
+    "reviewStatus": "NOT_REQUIRED",
+    "roleId": "237161687952666625",
+    "roleType": "CLIENT",
+    "status": "APPROVED",
+    "updatedAt": "2026-10-25T05:56:42.727332Z",
+    "validFrom": "2026-10-01T00:00:00.000000Z",
+    "validTo": null,
+    "version": "1"
+  }
+}

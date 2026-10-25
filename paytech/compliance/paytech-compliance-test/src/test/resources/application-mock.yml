@@ -103,6 +103,7 @@ web:
       - /internal/due-diligence/material-requirements
       - /client-onboarding-review
       - /client-onboarding-admin
+      - /compliance-admin
 
 # paytech-compensation-event：本地补偿任务，事务内登记、提交后执行。
 compensation:

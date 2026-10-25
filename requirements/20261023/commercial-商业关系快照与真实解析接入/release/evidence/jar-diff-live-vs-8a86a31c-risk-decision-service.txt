@@ -1,0 +1,2 @@
+# 现网 sha256:d69ca678416a /app/application.jar（3b0195e5267cf692，临时容器从镜像取出，= docker exec sha256sum）对 纯 8a86a31c 基线构建（01e3d34ac0810abd）；jarcmp.py --list
+entries a=1371 b=1371 removed=0 added=0 changed=0

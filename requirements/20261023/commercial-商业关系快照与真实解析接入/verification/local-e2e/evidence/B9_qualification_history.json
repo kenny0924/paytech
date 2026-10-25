@@ -1,0 +1,62 @@
+{
+  "method": "GET",
+  "path": "/api/operations/qualification-admin/v1/qualifications/239991753833205761/history",
+  "request": null,
+  "status": 200,
+  "response": {
+    "items": [
+      {
+        "actorId": "236033080844881920",
+        "aggregateVersion": "3",
+        "basisNote": "阶段 5 本机联调：经运营入口登记 PSP 合成 Client",
+        "changeId": "239991755032776705",
+        "decidedBy": "236033080844881920",
+        "decisionId": "239991755032776704",
+        "decisionSource": "MANUAL",
+        "fromStatus": "REVOKED",
+        "occurredAt": "2026-10-25T06:01:33.231229Z",
+        "outcome": "APPROVED",
+        "reasonCode": "STAGE5_LOCAL_E2E",
+        "toStatus": "APPROVED",
+        "triggerType": "OPERATIONS_MANUAL",
+        "validFrom": "2026-10-01T00:00:00.000000Z",
+        "validTo": null
+      },
+      {
+        "actorId": "236033080844881920",
+        "aggregateVersion": "2",
+        "basisNote": "阶段 5 本机联调（运营入口冒烟）",
+        "changeId": "239991754567208961",
+        "decidedBy": "236033080844881920",
+        "decisionId": "239991754567208960",
+        "decisionSource": "MANUAL",
+        "fromStatus": "APPROVED",
+        "occurredAt": "2026-10-25T06:01:33.120831Z",
+        "outcome": "REVOKED",
+        "reasonCode": "STAGE5_LOCAL_E2E",
+        "toStatus": "REVOKED",
+        "triggerType": "OPERATIONS_MANUAL",
+        "validFrom": "2026-10-01T00:00:00.000000Z",
+        "validTo": "2026-10-25T06:01:33.120831Z"
+      },
+      {
+        "actorId": "236033080844881920",
+        "aggregateVersion": "1",
+        "basisNote": "阶段 5 本机联调：经运营入口登记 PSP 合成 Client",
+        "changeId": "239991753837400064",
+        "decidedBy": "236033080844881920",
+        "decisionId": "239991753833205760",
+        "decisionSource": "MANUAL",
+        "fromStatus": null,
+        "occurredAt": "2026-10-25T06:01:32.945519Z",
+        "outcome": "APPROVED",
+        "reasonCode": "STAGE5_LOCAL_E2E",
+        "toStatus": "APPROVED",
+        "triggerType": "OPERATIONS_MANUAL",
+        "validFrom": "2026-10-01T00:00:00.000000Z",
+        "validTo": null
+      }
+    ],
+    "qualificationId": "239991753833205761"
+  }
+}

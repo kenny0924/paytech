@@ -16,11 +16,16 @@ import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.compliance.core.dal.dataobject.CaseStateChange;
 import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
 import com.paytech.compliance.core.dal.dataobject.QualificationDecision;
+import com.paytech.compliance.core.dal.dataobject.RoleQualification;
+import com.paytech.compliance.core.enums.QualificationDecisionSource;
+import com.paytech.compliance.core.enums.QualificationStatus;
 import com.paytech.compliance.domain.ClientReviewAction;
 import com.paytech.compliance.domain.ClientReviewDecisionContext;
 import com.paytech.compliance.domain.ClientReviewFamily;
+import com.paytech.compliance.domain.QualificationChangeContext;
 import com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy;
 import com.paytech.compliance.domainservice.port.ComplianceIdentifierGenerator;
+import com.paytech.compliance.domainservice.repository.RoleQualificationRepository;
 import com.paytech.compliance.domainservice.service.ClientReviewService;
 import com.paytech.compliance.service.processor.request.DecideClientReviewRequest;
 import com.paytech.compliance.service.processor.response.ClientReviewCommandResponse;
@@ -33,17 +38,20 @@ import lombok.AllArgsConstructor;
  * <li>任务已以同一结论结束直接返回当前结果；已以其他结论结束 409。</li>
  * <li>主任务按读取门禁时的版本条件结束，期间有其他审核命令时整体回滚并返回 409。</li>
  * <li>内部理由只写 resolution_note，不自动复制为客户可见说明。</li>
+ * <li>主任务结论同事务投影到 Client 角色资格：通过时新建或切换为 APPROVED（NOT_REQUIRED），拒绝时只把已有的 APPROVED 资格切换为
+ * REJECTED（COMPLETED）；关联人员子任务不投影。投影版本已变化时整体回滚并返回 409 QUALIFICATION_CHANGED。</li>
  */
 @Component
 @AllArgsConstructor
 public class DecideClientReviewProcessor extends AbstractProcessor<DecideClientReviewRequest, ClientReviewCommandResponse> {
-    /** 运营审核命令的触发类型。 */
-    static final String TRIGGER_TYPE = "OPERATIONS_REVIEW";
+    /** 运营审核命令的触发类型；案件与资格的状态变更共用。 */
+    public static final String TRIGGER_TYPE = "OPERATIONS_REVIEW";
 
     private final Clock clock;
     private final ClientReviewService reviews;
     private final ComplianceIdentifierGenerator ids;
     private final ClientReviewFamilyLoader families;
+    private final RoleQualificationRepository qualifications;
 
     /** 退回要求分区和客户可见说明；通过与拒绝要求内部理由且不能带分区。 */
     @Override
@@ -105,8 +113,27 @@ public class DecideClientReviewProcessor extends AbstractProcessor<DecideClientR
             }
         }
         String reason = action == ClientReviewAction.RETURN ? null : request.getReason();
+        QualificationChangeContext projection = decisions.isEmpty() ? null : projection(request, decisions.getFirst());
         return new ClientReviewDecisionContext(main, children, action, request.getPublicNote(), reason,
-            request.getReturnSection(), decisions, changes, now);
+            request.getReturnSection(), decisions, changes, projection, now);
+    }
+
+    /**
+     * 主任务决定对 Client 角色资格的投影
+     * <li>通过：没有资格行时新建版本 1，否则切换到本次决定；拒绝：只有当前 APPROVED 的资格行才切换，否则不投影。</li>
+     *
+     * @param request 审核命令
+     * @param decision 主任务决定
+     * @return 资格变更；拒绝且没有已批准资格时为空
+     */
+    QualificationChangeContext projection(DecideClientReviewRequest request, QualificationDecision decision) {
+        RoleQualification current = qualifications.findByRole(decision.getRoleType(), decision.getRoleId(),
+            decision.getQualificationType());
+        if (request.getAction() == ClientReviewAction.REJECT
+            && (current == null || !QualificationStatus.APPROVED.getCode().equals(current.getStatus()))) {
+            return null;
+        }
+        return QualificationChangeBuilder.change(ids, decision, current, request.getReasonCode(), TRIGGER_TYPE);
     }
 
     /** 审核人的最终资格决定。 */
@@ -115,9 +142,9 @@ public class DecideClientReviewProcessor extends AbstractProcessor<DecideClientR
         decision.setDecisionId(ids.nextIdentifier());
         decision.setCaseId(row.getCaseId());
         decision.setRoleType(row.getRoleType());
-        decision.setRoleId(row.getRoleId());
+        decision.setRoleId(Long.toString(row.getRoleId()));
         decision.setQualificationType(row.getQualificationType());
-        decision.setDecisionSource("REVIEWER");
+        decision.setDecisionSource(QualificationDecisionSource.REVIEWER.getCode());
         decision.setOutcome(outcome);
         decision.setValidFrom(now);
         decision.setDecidedBy(request.getActorId());

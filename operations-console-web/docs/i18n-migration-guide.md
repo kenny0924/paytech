@@ -8,7 +8,7 @@
 |---|---|
 | `src/i18n/index.ts` | 运行时实例 `i18n`、`translator(ns)`、`tOr`、`enumLabel`、`formatDateTime` / `formatDate` / `formatShortDateTime` / `formatNumber` |
 | `src/i18n/react.tsx` | `useT(ns)`、`useLocale()`、`I18nGate`（根部已加载全部命名空间，页面不再需要自己的 Gate） |
-| `src/i18n/namespaces.ts` | `OPS_NAMESPACES`：21 个命名空间 |
+| `src/i18n/namespaces.ts` | `OPS_NAMESPACES`：23 个命名空间 |
 | `src/i18n/en/<ns>.json` | 英文基准（唯一基准，构建时内置） |
 | `i18n/zh-CN/<ns>.json` | 简体中文种子：扁平 `{"<完整 key>": "原中文"}` |
 | `src/i18n/testing.ts` | 测试辅助 `testT(ns)`：内置英文、不发网络、key 缺失直接抛错 |
@@ -39,6 +39,8 @@
 | `notification` | `pages/Notification*` `notification/` | M7 |
 | `webhook` | `pages/WebhookManagement.tsx` `webhook/` | M7 |
 | `vault` | `pages/Vault*` `vault/` | M7 |
+| `qualification` | `pages/Qualifications.tsx` `qualification/` | 商业关系快照（20261023） |
+| `master-data` | `pages/OperatingEntities.tsx` `pages/LocalPartners.tsx` `masterData/` | 商业关系快照（20261023） |
 | `i18n-admin` `enum` | `localization/`（已有，不动） | — |
 
 `gateway.json` 中已有 F0 写入的 `gateway.statusModal.*`（`components/GatewayStatusModal.tsx` 用），M6 在同一文件追加即可。

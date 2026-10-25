@@ -1,0 +1,26 @@
+{
+  "method": "GET",
+  "path": "/api/operations/entity-admin/v1/operating-entities?sourceType=PARTNER&page=1&size=20",
+  "request": null,
+  "status": 200,
+  "response": {
+    "items": [
+      {
+        "entityNo": "AE001",
+        "legalName": "Relsnap Synthetic AE001 FZ-LLC",
+        "operatingCountry": "AE",
+        "status": "ACTIVE",
+        "sourceType": "PARTNER",
+        "acquiringQualification": "PAYFAC",
+        "provider": {
+          "localPartnerId": "900000000001370001",
+          "legalName": "Relsnap Synthetic AE001 FZ-LLC"
+        },
+        "changeVersion": 2
+      }
+    ],
+    "page": 1,
+    "size": 20,
+    "total": 1
+  }
+}

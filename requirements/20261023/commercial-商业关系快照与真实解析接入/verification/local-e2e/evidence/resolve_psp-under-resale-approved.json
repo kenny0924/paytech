@@ -1,0 +1,19 @@
+{
+  "request": {
+    "clientId": "900000000001380201",
+    "orderNo": "RELSNAP0ED3034E35C3",
+    "consumerCountryCode": "US",
+    "currency": "USD",
+    "locale": "en",
+    "contextAsOfTime": "2026-10-25T06:01:53.601715Z"
+  },
+  "status": 422,
+  "response": {
+    "type": "about:blank",
+    "title": "Unprocessable Content",
+    "detail": "没有可用经营主体",
+    "code": "NO_ELIGIBLE_ENTITY",
+    "requestId": "req-relsnap-bd754910a21d",
+    "timestamp": "2026-10-25T06:01:53.719307Z"
+  }
+}

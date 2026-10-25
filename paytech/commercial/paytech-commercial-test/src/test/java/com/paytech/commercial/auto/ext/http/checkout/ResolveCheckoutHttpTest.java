@@ -3,6 +3,8 @@ package com.paytech.commercial.auto.ext.http.checkout;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +12,12 @@ import com.paytech.client.master.api.enums.CheckoutCandidateErrorCode;
 import com.paytech.commercial.api.checkout.CheckoutContextApi;
 import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.checkout.request.ResolveCheckoutContextRequestBody;
+import com.paytech.commercial.api.checkout.response.ResolveCheckoutContextResponseBody;
 import com.paytech.commercial.test.base.checkout.AbstractCheckoutApiTest;
+import com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture;
+import com.paytech.compliance.api.enums.QualificationErrorCode;
+import com.paytech.compliance.api.enums.QualificationEvaluationStatus;
+import com.paytech.compliance.api.enums.QualificationRoleType;
 
 /**
  * 两段式完整解析的真实 HTTP、业务拒绝、配置变化和只读行为（design/06 §2.2）。
@@ -25,16 +32,26 @@ class ResolveCheckoutHttpTest extends AbstractCheckoutApiTest {
         clientMaster.mockCandidates();
     }
 
-    /** 正式不可用资格端口必须通过共享 Problem 返回，不保存任何查询结果。 */
+    /** compliance 断连或返回任何错误都失败关闭为 503，不保存任何查询结果、不进入复核。 */
     @Test
-    void test_unconnectedRiskFailsClosedAndLeavesDatabaseUnchanged() {
+    void test_complianceUnavailableFailsClosedAndLeavesDatabaseUnchanged() {
+        compliance.mockUnavailable();
         fixture.assertReadOnly(
                 () -> invoke(request(), headers()).assertProblem(503, "OWNER_UNAVAILABLE").assertNoCommercialFacts());
+        compliance.mockProblem(404, QualificationErrorCode.QUALIFICATION_NOT_FOUND.getCode());
+        fixture.assertReadOnly(
+                () -> invoke(request(), headers()).assertProblem(503, "OWNER_UNAVAILABLE").assertNoCommercialFacts());
+        compliance.mockProblem(422, QualificationErrorCode.QUALIFICATION_INVALID.getCode());
+        invoke(request(), headers()).assertProblem(503, "OWNER_UNAVAILABLE").assertDoesNotExpose("QUALIFICATION_INVALID");
+        assertEquals(3, compliance.count());
+        assertEquals(0, clientMaster.count("verify"));
     }
 
-    /** 支付方式只接受规范 Code；合法值参与开通项匹配：无候选开通时业务拒绝，有开通时停在尚未接入的 Risk 资格。 */
+    /** 支付方式只接受规范 Code；合法值参与开通项匹配：无候选开通时业务拒绝，有开通时返回命中项。 */
     @Test
     void test_paymentMethodCodeSelectsEnabledCapability() {
+        compliance.mockAllEligible();
+        clientMaster.mockVerified(true);
         var request = request();
         request.setPaymentMethodCode("card");
         fixture.assertReadOnly(() -> invoke(request, headers()).assertProblem(422, "INVALID_CHECKOUT_QUERY"));
@@ -42,7 +59,9 @@ class ResolveCheckoutHttpTest extends AbstractCheckoutApiTest {
         request.setPaymentMethodCode(CommercialCodes.PaymentMethod.GOOGLE_PAY);
         fixture.assertReadOnly(() -> invoke(request, headers()).assertProblem(422, "NO_ELIGIBLE_ENTITY"));
         request.setPaymentMethodCode(CommercialCodes.PaymentMethod.CARD);
-        fixture.assertReadOnly(() -> invoke(request, headers()).assertProblem(503, "OWNER_UNAVAILABLE"));
+        fixture.assertReadOnly(() -> assertEquals(List.of(CommercialCodes.Capability.CARD),
+                invoke(request, headers()).success().getClientTerms().getCapabilities().stream()
+                        .map(ResolveCheckoutContextResponseBody.Capability::getCapabilityCode).toList()));
     }
 
     /** class DTO 缺失必填字段时由 HTTP Bean Validation 拒绝。 */
@@ -83,39 +102,52 @@ class ResolveCheckoutHttpTest extends AbstractCheckoutApiTest {
             candidate.setSellerDisclosures(java.util.List.of());
         });
         clientMaster.mockCandidates(candidates);
+        compliance.mockAllEligible();
         var request = request();
         request.setLocale("fr-FR");
         fixture.assertReadOnly(() -> invoke(request, headers()).assertProblem(422, "NO_ELIGIBLE_ENTITY"));
     }
 
-    /** 批准业务数据的支持范围不受部署目录限制：client-master 按新范围返回候选后仍必须执行真实 Risk 资格检查。 */
+    /** 批准业务数据的支持范围不受部署目录限制：client-master 按新范围返回候选后照常解析，开通项按币种条件过滤为空也不落空。 */
     @Test
     void test_approvedScopeAndLegalDataDefineSupportedLocation() {
+        compliance.mockAllEligible();
+        clientMaster.mockVerified(true);
         var request = request();
         request.setConsumerCountryCode("GB");
         request.setCurrency("GBP");
         request.setLocale("en-GB");
-        fixture.assertReadOnly(() -> invoke(request, headers()).assertProblem(503, "OWNER_UNAVAILABLE"));
+        fixture.assertReadOnly(() -> {
+            var body = invoke(request, headers()).success();
+            assertEquals("AE991", body.getEntityNo());
+            assertEquals(List.of(), body.getClientTerms().getCapabilities());
+        });
     }
 
     /** 当前主体和分类必须已批准：client-master 的整体拒绝原样映射为 CLIENT_NOT_ELIGIBLE。 */
     @Test
     void resolutionObservesPersistedApprovalAndClassificationReadiness() {
-        invoke(request(), headers()).assertProblem(503, "OWNER_UNAVAILABLE");
+        compliance.mockAllEligible();
+        clientMaster.mockVerified(true);
+        assertEquals("AE991", invoke(request(), headers()).success().getEntityNo());
         clientMaster.mockCandidatesProblem(422, CheckoutCandidateErrorCode.CLIENT_NOT_ELIGIBLE.getCode());
         fixture.assertReadOnly(() -> invoke(request(), headers()).assertProblem(422, "CLIENT_NOT_ELIGIBLE"));
         clientMaster.mockCandidates();
-        invoke(request(), headers()).assertProblem(503, "OWNER_UNAVAILABLE");
+        assertEquals("AE991", invoke(request(), headers()).success().getEntityNo());
         clientMaster.mockCandidatesProblem(422, CheckoutCandidateErrorCode.CLIENT_NOT_ELIGIBLE.getCode());
         fixture.assertReadOnly(() -> invoke(request(), headers()).assertProblem(422, "CLIENT_NOT_ELIGIBLE"));
     }
 
-    /** 本地完整候选不能绕过尚未接入的真实 Risk 资格。 */
+    /** 本地完整候选不能绕过 compliance 资格：Client 未登记资格时整单拒绝，不泄露已构造的候选。 */
     @Test
-    void resolverRemainsClosedUntilRiskContractIsConnected() {
+    void resolverCannotBypassQualification() {
         assertEquals("AE991", context(query()).candidates().iterator().next().entityNo());
-        fixture.assertReadOnly(() -> invoke(request(), headers()).assertProblem(503, "OWNER_UNAVAILABLE")
+        compliance.mockAllEligible();
+        compliance.mockStatus(QualificationRoleType.CLIENT, Long.toString(CheckoutFixture.CLIENT_ID),
+                QualificationEvaluationStatus.NOT_REGISTERED);
+        fixture.assertReadOnly(() -> invoke(request(), headers()).assertProblem(422, "CLIENT_NOT_ELIGIBLE")
                 .assertDoesNotExpose("910000000000113"));
+        assertEquals(0, clientMaster.count("verify"));
     }
 
     /** 不向越权调用者泄露 Client 是否存在。 */
@@ -144,7 +176,9 @@ class ResolveCheckoutHttpTest extends AbstractCheckoutApiTest {
     /** 新调用观察 client-master 当前候选，不把上次候选作为准入凭证。 */
     @Test
     void changedScopeIsObservedByNextResolution() {
-        invoke(request(), headers()).assertProblem(503, "OWNER_UNAVAILABLE");
+        compliance.mockAllEligible();
+        clientMaster.mockVerified(true);
+        assertEquals("AE991", invoke(request(), headers()).success().getEntityNo());
         clientMaster.mockNoCandidates();
         invoke(request(), headers()).assertProblem(422, "NO_ELIGIBLE_ENTITY");
         assertFalse(context(query()).candidates().iterator().hasNext());

@@ -6,5 +6,6 @@
 export const OPS_NAMESPACES = [
   'common', 'auth', 'nav', 'enum', 'access', 'gateway', 'channel', 'commercial', 'finance', 'recon', 'risk',
   'workflow', 'data-query', 'file', 'notification', 'webhook', 'vault', 'card', 'client-review', 'currency', 'i18n-admin',
+  'qualification', 'master-data',
 ] as const;
 export type OpsNamespace = typeof OPS_NAMESPACES[number];

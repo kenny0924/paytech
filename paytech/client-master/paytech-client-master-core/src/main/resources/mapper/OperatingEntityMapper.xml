@@ -6,12 +6,59 @@
             <arg column="entity_no" javaType="java.lang.String"/>
             <arg column="party_id" javaType="java.lang.Long"/>
             <arg column="status" javaType="com.paytech.client.master.domain.enums.OperatingEntityStatus"/>
+            <arg column="acquiring_qualification" javaType="com.paytech.client.master.api.enums.AcquiringQualification"/>
         </constructor>
     </resultMap>
     <select id="findForCheckout" resultMap="OperatingEntity">
-        SELECT entity_no, party_id, status
+        SELECT entity_no, party_id, status, acquiring_qualification
         FROM t_operating_entity
         WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})
         ORDER BY entity_no
+    </select>
+    <select id="findByEntityNo" resultMap="OperatingEntity">
+        SELECT entity_no, party_id, status, acquiring_qualification FROM t_operating_entity WHERE entity_no = #{entityNo}
+    </select>
+    <update id="updateAcquiringQualification">
+        UPDATE t_operating_entity SET acquiring_qualification = #{qualification}, update_time = #{now} WHERE entity_no = #{entityNo}
+    </update>
+    <!-- Party 唯一资料（uk_party_profile_party）上的法定名称：机构取 legal_name，个人取姓名。 -->
+    <sql id="LegalName">
+        (SELECT NULLIF(COALESCE(o.legal_name, TRIM(CONCAT_WS(' ', i.given_name, i.middle_name, i.family_name))), '')
+                FROM t_party_profile pp LEFT JOIN t_organization_profile o ON o.profile_id = pp.profile_id
+                LEFT JOIN t_individual_profile i ON i.profile_id = pp.profile_id WHERE pp.party_id = ${partyColumn})
+    </sql>
+    <sql id="AdminView">
+        SELECT e.entity_no AS entityNo, e.party_id AS partyId, e.operating_country AS operatingCountry, e.status AS status,
+            e.acquiring_qualification AS acquiringQualification,
+            <include refid="LegalName"><property name="partyColumn" value="e.party_id"/></include> AS legalName,
+            s.source_relation_id AS sourceRelationId, s.source_type AS sourceType, s.source_client_id AS sourceClientId,
+            s.source_partner_id AS sourcePartnerId, s.effective_from AS sourceEffectiveFrom, s.effective_to AS sourceEffectiveTo,
+            p.partner_no AS providerPartnerNo, p.party_id AS providerPartyId, p.status AS providerStatus,
+            <include refid="LegalName"><property name="partyColumn" value="p.party_id"/></include> AS providerLegalName,
+            COALESCE(r.current_version, 1) AS changeVersion
+        FROM t_operating_entity e
+        LEFT JOIN t_entity_source_relation s ON s.entity_no = e.entity_no AND s.active_source_slot = 1
+        LEFT JOIN t_local_partner p ON s.source_type = 'PARTNER' AND p.local_partner_id = s.source_partner_id
+        LEFT JOIN t_business_change_record r ON r.record_type = 'OPERATING_ENTITY' AND r.record_id = e.entity_no
+            AND r.parent_history_id IS NULL
+    </sql>
+    <sql id="AdminFilter">
+        <where>
+            <if test="status != null">AND e.status = #{status}</if>
+            <if test="sourceType != null">AND s.source_type = #{sourceType}</if>
+            <if test="country != null">AND e.operating_country = #{country}</if>
+        </where>
+    </sql>
+    <select id="findAdminView" resultType="com.paytech.client.master.domain.entityadmin.OperatingEntityAdminView">
+        <include refid="AdminView"/> WHERE e.entity_no = #{entityNo}
+    </select>
+    <select id="pageForAdmin" resultType="com.paytech.client.master.domain.entityadmin.OperatingEntityAdminView">
+        <include refid="AdminView"/> <include refid="AdminFilter"/>
+        ORDER BY e.entity_no LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countForAdmin" resultType="long">
+        SELECT COUNT(*) FROM t_operating_entity e
+        LEFT JOIN t_entity_source_relation s ON s.entity_no = e.entity_no AND s.active_source_slot = 1
+        <include refid="AdminFilter"/>
     </select>
 </mapper>

@@ -1,0 +1,4 @@
+# 现网 sha256:2f62a26ad46c /app/application.jar（afb27fb4416d38bf，临时容器从镜像取出，= docker exec sha256sum）对 纯 8a86a31c 基线构建（4a6542361566affe）；jarcmp.py --list
+entries a=574 b=574 removed=0 added=0 changed=2
+~ lib:paytech-messaging!catalog/events.yaml
+~ lib:paytech-messaging!com/paytech/foundation/messaging/catalog/YamlEventCatalog.class

@@ -23,11 +23,13 @@ import org.springframework.http.HttpMethod;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 import com.paytech.foundation.web.logging.WebLoggingProperties;
 import com.paytech.compliance.test.base.ComplianceMockTestBase;
+import com.paytech.compliance.test.builder.QualificationManualDecisionRequestBuilder;
 import com.paytech.compliance.test.probe.HttpLogProbe;
 
 /**
  * compliance HTTP 访问日志的敏感边界（决策配置、名单与评估前缀留在 risk-decision，另有一份同名测试）
- * <li>生产 application.yml 的 metadata-only 前缀清单完整：材料目录、Client 入驻审核登记与运营审核。</li>
+ * <li>生产 application.yml 的 metadata-only 前缀清单完整：材料目录、Client 入驻审核登记、运营审核与运营资格登记。</li>
+ * <li>真实手工登记请求成功落库，依据说明不进入访问日志。</li>
  * <li>mock Profile 实际生效的清单与生产一致，其余用例的日志行为即生产行为。</li>
  * <li>命中前缀的请求只记录方法、脱敏路径与状态，Query 与 Body 原值不进入日志；未命中前缀的请求照常记录 Query，证明 Probe 有效。</li>
  *
@@ -36,7 +38,7 @@ import com.paytech.compliance.test.probe.HttpLogProbe;
 class WebLoggingBoundaryAutoTest extends ComplianceMockTestBase {
     /** 请求体含个人信息或审核理由的入口。 */
     private static final List<String> METADATA_ONLY_PREFIXES = List.of("/internal/due-diligence/material-requirements",
-        "/client-onboarding-review", "/client-onboarding-admin");
+        "/client-onboarding-review", "/client-onboarding-admin", "/compliance-admin");
 
     @Autowired
     private WebLoggingProperties loggingProperties;
@@ -68,6 +70,25 @@ class WebLoggingBoundaryAutoTest extends ComplianceMockTestBase {
                 () -> assertFalse(event.containsKey("responseBody"), "不得记录响应体"),
                 () -> assertFalse(probe.rendered().contains("query-secret"), "Query 原值泄露"),
                 () -> assertFalse(probe.rendered().contains("payload-secret"), "Body 原值泄露"));
+        }
+    }
+
+    /** 真实的手工登记请求成功处理，但依据说明与请求体都不进入访问日志。 */
+    @Test
+    void test_normalFlow_manualDecisionBasisNoteNotLogged() {
+        String requestId = "compliance-logging-" + UUID.randomUUID();
+        String basisNote = "basis-secret-" + UUID.randomUUID();
+        try (HttpLogProbe probe = HttpLogProbe.start()) {
+            var result = http.post("/compliance-admin/v1/qualifications/manual-decisions", headers(requestId),
+                QualificationManualDecisionRequestBuilder.template().basisNote(basisNote).build());
+
+            assertEquals(200, result.getStatus().value(), "登记应成功");
+            List<Map<String, String>> events = probe.eventsOf(requestId);
+            assertEquals(1, events.size(), "访问日志条数");
+            assertAll(() -> assertEquals("/compliance-admin/**", events.getFirst().get("uri")),
+                () -> assertFalse(events.getFirst().containsKey("requestBody"), "不得记录请求体"),
+                () -> assertFalse(events.getFirst().containsKey("responseBody"), "不得记录响应体"),
+                () -> assertFalse(probe.rendered().contains(basisNote), "依据说明泄露"));
         }
     }
 

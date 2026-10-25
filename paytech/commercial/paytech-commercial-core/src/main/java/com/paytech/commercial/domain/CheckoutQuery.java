@@ -38,7 +38,7 @@ public class CheckoutQuery {
 
     /**
      * 本次支付方式，可选
-     * <li>给出时候选的 CLIENT 合同必须在该 OE 下至少命中一个 ENABLED 开通项；为空时不做开通项匹配。</li>
+     * <li>给出时候选的 CLIENT 合同必须在该 OE 下至少命中一个 ENABLED 开通项；为空时返回全部可用的支付方式开通项，不影响 OE 选择。</li>
      */
     String paymentMethodCode;
 

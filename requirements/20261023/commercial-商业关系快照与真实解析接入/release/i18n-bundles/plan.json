@@ -1,0 +1,36 @@
+{
+ "source": "/Users/kenny/Desktop/Workspace/Code-MoR-relsnap-rel/operations-console-web",
+ "namespaces": 23,
+ "keys": 8813,
+ "newNamespaces": [
+  "master-data",
+  "qualification"
+ ],
+ "expectedNewKeys": 219,
+ "expectedNewByNamespace": {
+  "qualification": 105,
+  "master-data": 108,
+  "nav": 6
+ },
+ "expectedSourceChanged": [
+  "risk.legacyCatalog.fieldHelp.entity_source_type"
+ ],
+ "translationKeys": 220,
+ "translationNamespaces": [
+  "master-data",
+  "nav",
+  "qualification",
+  "risk"
+ ],
+ "excludedSidebarKeys": [
+  "nav.sidebar.product",
+  "nav.sidebar.hide",
+  "nav.sidebar.show"
+ ],
+ "enBytes": 682953,
+ "zhDeltaBytes": 15024,
+ "sha256": {
+  "operations-console.en.json": "b2874bb86d6558f004082e880755ab7671846dc0031c6029dc742531bbea0102",
+  "operations-console.zh-CN.relsnap-delta.json": "90df17a98f39abde0c56cdfc6b6c3d0146ed54a4965a3da36a1ad8c6fe3ca21e"
+ }
+}

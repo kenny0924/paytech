@@ -595,7 +595,7 @@
   "risk.legacyCatalog.fieldHelp.country_code": "ISO 3166-1 two uppercase letters, e.g. AE",
   "risk.legacyCatalog.fieldHelp.currency": "ISO 4217 three uppercase letters, e.g. USD",
   "risk.legacyCatalog.fieldHelp.discount_amount": "At most 16 integer digits and 8 decimal places",
-  "risk.legacyCatalog.fieldHelp.entity_source_type": "PLATFORM, CLIENT or PARTNER only",
+  "risk.legacyCatalog.fieldHelp.entity_source_type": "CLIENT or PARTNER only",
   "risk.legacyCatalog.fieldHelp.industry_code": "Platform industry code of 1–64 uppercase characters",
   "risk.legacyCatalog.fieldHelp.locale": "Canonical BCP 47 tag, e.g. ar-AE",
   "risk.legacyCatalog.fieldHelp.mcc_code": "Four-digit decimal code with leading zeros kept",

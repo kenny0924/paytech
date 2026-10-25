@@ -1,0 +1,59 @@
+{
+  "method": "PUT",
+  "path": "/api/operations/entity-admin/v1/operating-entities/AE001/acquiring-qualification",
+  "request": {
+    "acquiringQualification": "PAYFAC",
+    "expectedChangeVersion": 3,
+    "reason": "阶段 5 本机联调（运营入口冒烟）"
+  },
+  "status": 200,
+  "response": {
+    "entityNo": "AE001",
+    "partyId": "900000000001380102",
+    "legalName": "Relsnap Synthetic AE001 FZ-LLC",
+    "operatingCountry": "AE",
+    "status": "ACTIVE",
+    "acquiringQualification": "PAYFAC",
+    "changeVersion": 4,
+    "sourceRelation": {
+      "sourceRelationId": "900000000001380103",
+      "sourceType": "PARTNER",
+      "sourceClientId": null,
+      "sourcePartnerId": "900000000001370001",
+      "effectiveFrom": "2026-10-01T00:00:00.000000Z",
+      "effectiveTo": null
+    },
+    "provider": {
+      "localPartnerId": "900000000001370001",
+      "partnerNo": "LP-PAYFAC-AE001",
+      "partyId": "900000000001380102",
+      "legalName": "Relsnap Synthetic AE001 FZ-LLC",
+      "status": "ACTIVE",
+      "roles": [
+        "OE_PROVIDER"
+      ]
+    },
+    "scopes": [
+      {
+        "scopeId": "900000000001380105",
+        "consumerCountryCode": "US",
+        "currency": "USD",
+        "industryCode": "RETAIL",
+        "mccCode": "5999",
+        "status": "ACTIVE",
+        "effectiveFrom": "2026-10-01T00:00:00.000000Z",
+        "effectiveTo": null
+      }
+    ],
+    "sellerDisclosures": [
+      {
+        "disclosureId": "900000000001380128",
+        "countryCode": "US",
+        "locale": "en",
+        "status": "ACTIVE",
+        "effectiveFrom": "2026-10-01T00:00:00.000000Z",
+        "effectiveTo": null
+      }
+    ]
+  }
+}

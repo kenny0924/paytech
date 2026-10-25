@@ -11,11 +11,15 @@ import java.util.TreeSet;
 import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
 
+import lombok.EqualsAndHashCode;
+
 /**
  * 一个合同开通项的接受条件：同维度多值按 OR，异维度按 AND，未写的维度视为全集
  * <li>由 t_agreement_capability_limit 行构造；不可变，纯判断，不访问数据库。</li>
  * <li>价格命中、相关性、完整性、Checkout 解析与基于模板生成共用同一套相容规则。</li>
+ * <li>按取值相等：Checkout 复核比较两次读取的候选，同样的条件行得到相等的条件。</li>
  */
+@EqualsAndHashCode
 public final class CapabilityConditions {
     private final Map<PricingDimension, Set<String>> values;
 

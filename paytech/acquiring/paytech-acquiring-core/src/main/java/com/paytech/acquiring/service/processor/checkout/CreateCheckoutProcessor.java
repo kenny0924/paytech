@@ -53,6 +53,9 @@ import lombok.AllArgsConstructor;
 @Component
 @AllArgsConstructor
 public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheckoutRequest, CreateCheckoutResponse> {
+    /** 订单冻结的法律内容 Locale；Client API 尚无语言字段，当前恒为 en。 */
+    static final String CONTENT_LOCALE = "en";
+
     private final Clock clock;
     private final CheckoutCommercialPort commercial;
     private final CheckoutRiskPort risk;
@@ -131,12 +134,15 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
         }
     }
 
-    /** 所有 Owner 调用在保存前完成；Risk 经正式客户端评估，其余 Owner 仍按批准的固定 Mock 返回初始化结果。 */
+    /**
+     * 所有 Owner 调用在保存前完成；Risk 经正式客户端评估，商业解析按 acquiring.commercial.resolution-mode 走 commercial 或固定
+     * Mock，Tax / Document 仍按批准的固定 Mock 返回初始化结果。
+     */
     void initializeCheckout(CreateCheckoutContext context) {
         var order = context.getOrder();
         var input = new InitializationRequest(order.getOrderId(), order.getOrderNo(), order.getClientId(),
-            order.getConsumerCountryCode(), order.getCurrency(), order.getCreateTime(), order.getMerchandiseAmount(),
-            order.getDiscountAmount(), order.getNetAmount(), context.getItems());
+            order.getConsumerCountryCode(), order.getCurrency(), CONTENT_LOCALE, order.getCreateTime(),
+            order.getMerchandiseAmount(), order.getDiscountAmount(), order.getNetAmount(), context.getItems());
         var facts = commercial.resolve(input);
         CheckoutInitializationContext.validateCommercial(facts);
         var riskId = risk.assess(input, facts);
@@ -144,6 +150,7 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
         var rendered = documents.render(input, facts, amounts);
         var initialization = new CheckoutInitializationContext(input, facts, riskId, amounts, rendered);
         context.setFrozen(initialization.buildFrozen(nextId(), nextId(), nextId()));
+        context.setRelationshipBindings(initialization.buildRelationshipBindings(this::nextId));
         order.setEntityNo(facts.entityNo());
         order.setEntitySourceType(facts.entitySourceType());
         order.setLocalPartnerId(facts.localPartnerId());
@@ -193,7 +200,7 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
             .merchandiseAmount(amount(amounts.merchandise())).discountAmount(amount(amounts.discount()))
             .netAmount(amount(amounts.net())).currency(request.getCurrency()).orderStatus(OrderStatus.CREATED)
             .expiresAt(resolveExpiresAt(request, now)).version(1).createTime(now).updateTime(now).build();
-        return new CreateCheckoutContext(null, order, buildOrderItems(order, amounts.lines()),
+        return new CreateCheckoutContext(null, List.of(), order, buildOrderItems(order, amounts.lines()),
             buildRefundPosition(order), buildFundsAvailability(order), buildCheckoutSession(order));
     }
 

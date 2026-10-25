@@ -64,6 +64,9 @@ public final class CustomerCheckoutModels {
         /** 订单币种。 */
         private final String currency;
 
+        /** 订单冻结的法律内容 Locale；精确匹配法律文件与卖方披露，当前恒为 en。 */
+        private final String locale;
+
         /** 本次商业事实时间。 */
         private final Instant contextTime;
 
@@ -108,7 +111,51 @@ public final class CustomerCheckoutModels {
             shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING) Long partnerAgreementOperatingEntityId,
         @com.fasterxml.jackson.annotation.JsonFormat(
             shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING) long sellerDisclosureId,
-        Seller seller, FileRef consumerTerms, FileRef refundPolicy, FileRef privacyNotice) {
+        Seller seller, FileRef consumerTerms, FileRef refundPolicy, FileRef privacyNotice,
+        RelationshipFacts relationship, List<CapabilityFacts> capabilities, String businessMode) {
+    }
+
+    /**
+     * commercial 推导的商业关系快照，订单创建时原样冻结
+     * <li>固定 Mock 不提供快照（为 null）：不写角色绑定，fund_flow 与 snapshot_model_version 为空，生效版本记 0。</li>
+     *
+     * @param effectiveModelVersion 生效模型版本；0 只记录，1 下游按快照生效
+     * @param snapshotModelVersion 推导规则版本
+     * @param fundFlow 资金流向 Code
+     * @param bindings 角色绑定，按 commercial 返回顺序
+     */
+    public record RelationshipFacts(int effectiveModelVersion, int snapshotModelVersion, String fundFlow,
+        List<RoleBindingFacts> bindings) {
+    }
+
+    /**
+     * 一个角色到主体的绑定
+     *
+     * @param role 角色 Code
+     * @param subjectType 主体类型 Code
+     * @param subjectId 主体标识；PLATFORM 为空
+     * @param partyId 主体法律 Party；可空
+     */
+    public record RoleBindingFacts(String role, String subjectType, String subjectId,
+        @com.fasterxml.jackson.annotation.JsonFormat(
+            shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING) Long partyId) {
+    }
+
+    /**
+     * Client 合同命中的开通项；本期不落库，二期执行接受条件与 3DS 时使用
+     *
+     * @param agreementCapabilityId 开通项 ID
+     * @param capabilityCode 可开通项代码
+     * @param capabilityKind 可开通项种类 Code
+     * @param paymentMethodCode 绑定的支付方式代码；非支付方式类为空
+     * @param require3ds 是否要求 3DS
+     * @param conditions 接受条件：维度 Code → 允许取值；同维度 OR，异维度 AND
+     */
+    public record CapabilityFacts(
+        @com.fasterxml.jackson.annotation.JsonFormat(
+            shape = com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING) long agreementCapabilityId,
+        String capabilityCode, String capabilityKind, String paymentMethodCode, boolean require3ds,
+        java.util.Map<String, List<String>> conditions) {
     }
 
     /** 冻结的卖方披露。 */

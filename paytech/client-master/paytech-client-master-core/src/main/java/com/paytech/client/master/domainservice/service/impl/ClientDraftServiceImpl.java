@@ -24,8 +24,11 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
     private final IdGenerator ids;
     private final Clock clock;
     private final CompensationEventRegistrar events;
-    public ClientDraftServiceImpl(ClientDraftRepository repository,ClientPeopleRepository people,ClientDocumentRepository documents,IdGenerator ids,Clock clock,CompensationEventRegistrar events) {
+    private final PartyRoleRepository partyRoles;
+    public ClientDraftServiceImpl(ClientDraftRepository repository,ClientPeopleRepository people,ClientDocumentRepository documents,IdGenerator ids,Clock clock,CompensationEventRegistrar events,
+        PartyRoleRepository partyRoles) {
         this.repository=repository;this.people=people;this.documents=documents;this.ids=ids;this.clock=clock;this.events=events;
+        this.partyRoles=partyRoles;
     }
     public CommandReceiptResponseBody create(ClientDraftCommand command,ClientType type) {
         requireTransaction();
@@ -50,6 +53,7 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
         String snapshot=ClientProjectionSnapshot.snapshot(history,ClientStatus.PENDING,
             Long.toString(creation.commandRecordId()),"CLIENT_CREATED");
         repository.create(creation,snapshot);
+        partyRoles.insert(clientRole(creation));
         events.register(ClientTenantProjectionHandler.buildEvent(creation.changeId()));
         return receipt(identity(creation.applicationId(),command.accountId(),false),"CREATED",now);
     }
@@ -101,6 +105,20 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
     private CommandReceiptResponseBody receipt(ClientDraftIdentity row,String operation,Instant time) {
         return new CommandReceiptResponseBody(null,Long.toString(row.applicationId()),row.applicationNo(),Long.toString(row.clientId()),
             row.clientType().getCode(),operation,new DateTimeFormatterBuilder().appendInstant(6).toFormatter().format(time));
+    }
+    /** 新建 Client 在统一角色索引中的 CLIENT 行，与 Client 同一事务写入。 */
+    private PartyRole clientRole(ClientDraftCreation creation) {
+        PartyRole role=new PartyRole();
+        role.setPartyRoleId(ids.nextId());
+        role.setPartyId(creation.partyId());
+        role.setRoleCode(PartyRoleCode.CLIENT);
+        role.setSubjectId(Long.toString(creation.clientId()));
+        role.setStatus(PartyRoleStatus.ACTIVE);
+        role.setActiveSlot(1);
+        role.setEffectiveFrom(creation.now());
+        role.setCreateTime(creation.now());
+        role.setUpdateTime(creation.now());
+        return role;
     }
     private static void requireTransaction() {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) throw new IllegalStateException("草稿业务必须由入口事务包裹");

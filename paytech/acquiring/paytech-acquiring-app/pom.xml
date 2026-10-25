@@ -43,6 +43,10 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
+            <artifactId>paytech-commercial-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
             <artifactId>paytech-platform-support-api</artifactId>
         </dependency>
         <dependency>

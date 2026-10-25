@@ -22,6 +22,7 @@ import com.paytech.client.master.domain.checkout.CheckoutCandidateQuery;
 import com.paytech.client.master.domain.checkout.CheckoutEligibility;
 import com.paytech.client.master.domain.checkout.CheckoutEligibilityContext;
 import com.paytech.client.master.domain.checkout.EntityCandidate;
+import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.FailException;
 
 /** 候选查询 Wire 与领域对象之间的一次性转换；不访问数据库或执行业务判断。 */
@@ -95,18 +96,28 @@ final class CheckoutCandidateConverter {
         var source = eligibility.source();
         var partner = candidate.partner();
         return new Candidate(candidate.entityNo(), id(eligibility.entity().partyId()),
+            code(eligibility.entity().acquiringQualification()),
             id(eligibility.affiliation().affiliationId()), eligibility.affiliation().priorityNo(),
             id(eligibility.scope().scopeId()),
             new SourceRelation(id(source.sourceRelationId()), source.sourceType().getCode(), id(source.sourceClientId()),
                 id(source.sourcePartnerId())),
             partner == null ? null
                 : new LocalPartner(id(partner.localPartnerId()), id(partner.partyId()), code(partner.status())),
+            partner == null ? null
+                : new OeProvider(id(partner.localPartnerId()), id(partner.partyId()), code(partner.status()),
+                    candidate.partnerRoles().stream().map(CodeEnum::getCode).toList()),
             candidate.legalDocuments().stream().map(d -> new LegalDocument(id(d.legalDocumentId()),
                 code(d.documentType()), id(d.contentFileId()), d.contentHash(), code(d.status()), time(d.effectiveFrom()),
                 time(d.effectiveTo()), time(d.approvedTime()), time(d.publishedTime()))).toList(),
-            candidate.sellerDisclosures().stream().map(s -> new SellerDisclosure(id(s.disclosureId()), code(s.status()),
-                time(s.effectiveFrom()), time(s.effectiveTo()), time(s.approvedTime()), time(s.publishedTime()))).toList(),
+            candidate.sellerDisclosures().stream().map(CheckoutCandidateConverter::sellerDisclosure).toList(),
             candidate.digest());
+    }
+
+    /** 卖方披露原始记录及公开文本。 */
+    private static SellerDisclosure sellerDisclosure(CheckoutRecords.SellerDisclosure s) {
+        return new SellerDisclosure(id(s.disclosureId()), code(s.status()), time(s.effectiveFrom()), time(s.effectiveTo()),
+            time(s.approvedTime()), time(s.publishedTime()), s.publicLegalName(), s.publicRegistrationNumber(),
+            s.publicTaxRegistrationNumber(), s.publicAddressText(), s.publicSupportEmail(), s.publicSupportPhone());
     }
 
     /** 根按类型分组输出。 */
@@ -159,7 +170,7 @@ final class CheckoutCandidateConverter {
     }
 
     /** 枚举 Code，空值保持 null。 */
-    private static String code(com.paytech.foundation.common.enums.CodeEnum value) {
+    private static String code(CodeEnum value) {
         return value == null ? null : value.getCode();
     }
 }

@@ -42,6 +42,7 @@ import com.paytech.risk.decision.domain.enums.OperandRole;
 import com.paytech.risk.decision.domain.enums.OperandSource;
 import com.paytech.risk.test.base.RiskDecisionMockTestBase;
 import com.paytech.risk.test.builder.decision.RuleSetCreateRequestBuilder;
+import com.paytech.risk.test.builder.evaluation.CheckoutRiskRequestBuilder;
 import com.paytech.risk.test.checker.decision.RuleSetCommandResponseChecker;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker;
 import com.paytech.risk.test.checker.decision.RuleSetStoreChecker.ExpectedAction;
@@ -313,6 +314,10 @@ class RuleSetCreateApiAutoTest extends RiskDecisionMockTestBase {
                 VARIABLE_UNIT_MISMATCH),
             violation("比较值不属于变量可选集合", code -> template(code).rules(condition("EQ",
                 variable("LEFT", 1, "INPUT_ENTITY_SOURCE_TYPE", "STRING"), literal("RIGHT", 1, "STRING", "OTHER"))),
+                409, VARIABLE_DOMAIN_MISMATCH),
+            violation("比较值为已删除的经营主体来源 PLATFORM", code -> template(code).rules(condition("EQ",
+                variable("LEFT", 1, "INPUT_ENTITY_SOURCE_TYPE", "STRING"),
+                literal("RIGHT", 1, "STRING", CheckoutRiskRequestBuilder.RETIRED_PLATFORM_SOURCE))),
                 409, VARIABLE_DOMAIN_MISMATCH));
     }
 

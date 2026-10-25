@@ -50,7 +50,6 @@ INSERT INTO t_risk_variable (variable_id, variable_code, variable_name, descript
   (900000000000091019, 'INPUT_LOCAL_PARTNER_ID', 'Local Partner 标识', NULL, 'INPUT', 'STRING', 'CHECKOUT_PREPARE', 'ORDER_PREPARATION', 5, 'local_partner_id', 1, 1, 0, 1, 'POSITIVE_ID', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ACTIVE', 1, 1, 1, @rco19_time, @rco19_time),
   (900000000000091020, 'INPUT_LINE_COUNT', '明细行数', NULL, 'INPUT', 'NUMBER', 'CHECKOUT_PREPARE', 'ORDER_PREPARATION', 5, 'line_count', 1, 1, 0, 1, 'NONE', 'SCALAR', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ACTIVE', 1, 1, 1, @rco19_time, @rco19_time);
 INSERT INTO t_risk_variable_member (member_id, variable_code, value_key, string_value, number_value, boolean_value, datetime_value, duration_value, display_name, sort_order, create_time) VALUES
-  (900000000000092001, 'ENTITY_SOURCE_VALUES', 'PLATFORM', 'PLATFORM', NULL, NULL, NULL, NULL, '平台提供', 1, @rco19_time),
   (900000000000092002, 'ENTITY_SOURCE_VALUES', 'CLIENT', 'CLIENT', NULL, NULL, NULL, NULL, 'Client 提供', 2, @rco19_time),
   (900000000000092003, 'ENTITY_SOURCE_VALUES', 'PARTNER', 'PARTNER', NULL, NULL, NULL, NULL, 'Partner 提供', 3, @rco19_time),
   (900000000000092004, 'NODE_DECISION_VALUES', 'ALLOW', 'ALLOW', NULL, NULL, NULL, NULL, 'PASS', 1, @rco19_time),

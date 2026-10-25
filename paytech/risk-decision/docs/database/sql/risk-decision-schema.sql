@@ -709,7 +709,7 @@ CREATE TABLE `t_checkout_input_snapshot` (
   `order_id` BIGINT NOT NULL COMMENT 'Commerce 预分配订单的稳定业务标识；结账风控点的业务身份。',
   `client_id` BIGINT NOT NULL COMMENT 'Client 客户的稳定业务标识。',
   `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT 'CCT 为本次结账确定的 Operating Entity 编号。取值来源：CCT Operating Entity；非固定枚举。',
-  `entity_source_type` VARCHAR(64) NOT NULL COMMENT '经营主体来源的稳定业务代码。允许值：PLATFORM、CLIENT、PARTNER。',
+  `entity_source_type` VARCHAR(64) NOT NULL COMMENT '经营主体来源的稳定业务代码。允许值：CLIENT、PARTNER。',
   `local_partner_id` BIGINT NULL COMMENT 'PARTNER 来源主体所属 Local Partner 的稳定业务标识；其他来源为空。',
   `consumer_country_code` CHAR(2) NOT NULL COMMENT '订单上的 ISO 3166-1 alpha-2 消费者国家。取值来源：ISO 3166-1 alpha-2；非固定枚举。',
   `currency` CHAR(3) NOT NULL COMMENT 'ISO 4217 alpha-3 订单币种。取值来源：ISO 4217 alpha-3；非固定枚举。',

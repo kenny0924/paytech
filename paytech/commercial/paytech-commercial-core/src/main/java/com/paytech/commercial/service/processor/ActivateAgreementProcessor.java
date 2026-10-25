@@ -6,16 +6,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.AgreementOperatingEntity;
 import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.domain.AgreementContext;
+import com.paytech.commercial.domain.enums.AgreementAgreementType;
 import com.paytech.commercial.domain.enums.AgreementStatus;
 import com.paytech.commercial.domain.enums.BusinessChangeReason;
 import com.paytech.commercial.domainservice.repository.AgreementOperatingEntityRepository;
+import com.paytech.commercial.domainservice.repository.AgreementPartyRepository;
 import com.paytech.commercial.domainservice.repository.AgreementRepository;
 import com.paytech.commercial.domainservice.repository.BusinessChangeRecordRepository;
+import com.paytech.commercial.domainservice.repository.CommercialTermPlanRepository;
 import com.paytech.commercial.domainservice.service.AgreementService;
+import com.paytech.commercial.domainservice.validator.agreement.PartnerEntityPartyValidator;
 import com.paytech.commercial.service.handler.AgreementStatusChangedHandler;
 import com.paytech.commercial.service.processor.request.AgreementTransitionRequest;
 import com.paytech.commercial.service.processor.response.AgreementResponse;
@@ -25,11 +30,14 @@ import com.paytech.foundation.common.error.BizCheckFailException;
  * 激活合同（POST /agreements/v1/{agreementId}/activate）：SIGNED → ACTIVE，锁 {@code agreement:{id}}
  * <li>原请求：已是 ACTIVE 且 Root 版本为期望版本加一时直接返回。</li>
  * <li>新请求：期望版本一致、状态 SIGNED、生效起点已到且终点未到（effective_from ≤ activated_time）、不与同 Owner 的其他 ACTIVE 合同
- * 区间冲突（CLIENT 按 Client + OE + 业务模式，PARTNER 按 Local Partner + 共同覆盖 OE）。状态、Root CAS 与 AgreementStatusChanged
+ * 区间冲突（CLIENT 按 Client + OE + 业务模式，PARTNER 按 Local Partner + 共同覆盖 OE）；Partner 有平台服务费方案时合同 OE Party
+ * 必须等于 Local Partner Party（AC-10）。状态、Root CAS 与 AgreementStatusChanged
  * 发布任务同一事务，提交后由补偿 Handler 发布。</li>
  */
 public class ActivateAgreementProcessor extends AbstractAgreementWriteProcessor<AgreementTransitionRequest, AgreementResponse> {
     private final AgreementService agreementService;
+    private final AgreementPartyRepository agreementPartyRepository;
+    private final CommercialTermPlanRepository commercialTermPlanRepository;
     private final AgreementOperatingEntityRepository agreementOperatingEntityRepository;
 
     /**
@@ -39,13 +47,18 @@ public class ActivateAgreementProcessor extends AbstractAgreementWriteProcessor<
      * @param agreementService 合同写入服务
      * @param agreementRepository 合同仓储
      * @param businessChangeRecordRepository BCR 仓储
+     * @param agreementPartyRepository 合同参与方仓储
+     * @param commercialTermPlanRepository 条款方案仓储
      * @param agreementOperatingEntityRepository 覆盖 OE 仓储
      */
     public ActivateAgreementProcessor(Clock clock, AgreementService agreementService,
         AgreementRepository agreementRepository, BusinessChangeRecordRepository businessChangeRecordRepository,
+        AgreementPartyRepository agreementPartyRepository, CommercialTermPlanRepository commercialTermPlanRepository,
         AgreementOperatingEntityRepository agreementOperatingEntityRepository) {
         super(clock, agreementRepository, businessChangeRecordRepository);
         this.agreementService = agreementService;
+        this.agreementPartyRepository = agreementPartyRepository;
+        this.commercialTermPlanRepository = commercialTermPlanRepository;
         this.agreementOperatingEntityRepository = agreementOperatingEntityRepository;
     }
 
@@ -90,6 +103,7 @@ public class ActivateAgreementProcessor extends AbstractAgreementWriteProcessor<
             throw new BizCheckFailException("合同生效终点已过，不能激活: " + agreement.getAgreementId());
         }
         checkNoOverlap(agreement);
+        checkServiceChargeParties(agreement);
         AgreementContext context = new AgreementContext(agreement, root, request.getActorId(), now,
             request.getExpectedChangeVersion());
         context.moveTo(AgreementStatus.ACTIVE);
@@ -121,6 +135,16 @@ public class ActivateAgreementProcessor extends AbstractAgreementWriteProcessor<
                     + other.getAgreementId());
             }
         }
+    }
+
+    /** Partner 合同的 Local Partner 有平台服务费方案时，合同 OE Party 必须等于 Local Partner Party。 */
+    void checkServiceChargeParties(Agreement agreement) {
+        if (agreement.getAgreementType() != AgreementAgreementType.PARTNER || commercialTermPlanRepository
+            .findByPartnerAndType(agreement.getLocalPartnerId(), CommercialCodes.TermType.PLATFORM_SERVICE_CHARGE) == null) {
+            return;
+        }
+        PartnerEntityPartyValidator.check(agreement.getAgreementId(),
+            agreementPartyRepository.findByAgreementId(agreement.getAgreementId()));
     }
 
     /** 合同覆盖的 OE。 */

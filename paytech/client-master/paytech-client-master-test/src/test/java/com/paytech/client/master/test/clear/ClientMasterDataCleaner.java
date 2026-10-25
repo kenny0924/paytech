@@ -22,10 +22,11 @@ public class ClientMasterDataCleaner implements Clear {
     /** 本库全部表，与 init/ddl.sql 一致。 */
     public static final List<String> TABLES = List.of("t_party", "t_party_profile", "t_individual_profile",
         "t_organization_profile", "t_party_identity_key", "t_party_profile_identifier", "t_party_address", "t_party_contact",
-        "t_party_relation", "t_client", "t_local_partner", "t_operating_entity", "t_client_business_profile",
-        "t_client_business_classification", "t_client_application", "t_partner_application",
+        "t_party_relation", "t_party_role", "t_client", "t_local_partner", "t_partner_role", "t_operating_entity",
+        "t_client_business_profile", "t_client_business_classification", "t_client_application", "t_partner_application",
         "t_operating_entity_application", "t_operating_entity_scope", "t_application_document",
-        "t_client_entity_affiliation", "t_entity_source_relation", "t_consumer_legal_document", "t_seller_disclosure",
+        "t_client_entity_affiliation", "t_client_partner_relation", "t_entity_source_relation", "t_consumer_legal_document",
+        "t_seller_disclosure",
         "t_business_change_record", "t_business_change_version", "t_compensation_event", "t_client_stored_card_setting",
         "t_consumed_event", "t_consumed_aggregate_version");
 

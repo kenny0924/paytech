@@ -78,7 +78,8 @@ public interface CommercialTermApi {
      * @param actorId 操作者 Account ID，规范正十进制
      * @param versionId 版本 ID
      * @param body 根修订与完整价格集合
-     * @return 200 与版本；非 DRAFT、OE 不被合同覆盖、画像不存在、计费事件未登记、组件矩阵或结算字段不符 400；根修订冲突 409
+     * @return 200 与版本；非 DRAFT、OE 不被合同覆盖、画像不存在、计费事件未登记、组件矩阵或结算字段不符、平台服务费价目的 Partner 合同
+     *         OE 法律主体不等于 Local Partner 法律主体 400；根修订冲突 409
      */
     @PutExchange("/versions/{versionId}/prices")
     CommercialTermVersionResponseBody replacePrices(@RequestHeader(ACTOR_HEADER) String actorId,

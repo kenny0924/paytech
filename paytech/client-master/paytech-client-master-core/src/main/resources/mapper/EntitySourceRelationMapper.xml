@@ -21,4 +21,23 @@
         WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})
         ORDER BY source_relation_id
     </select>
+    <!-- Party 唯一资料（uk_party_profile_party）上的法定名称：机构取 legal_name，个人取姓名。 -->
+    <sql id="LegalName">
+        (SELECT NULLIF(COALESCE(o.legal_name, TRIM(CONCAT_WS(' ', i.given_name, i.middle_name, i.family_name))), '')
+                FROM t_party_profile pp LEFT JOIN t_organization_profile o ON o.profile_id = pp.profile_id
+                LEFT JOIN t_individual_profile i ON i.profile_id = pp.profile_id WHERE pp.party_id = ${partyColumn})
+    </sql>
+    <select id="findProvidedByPartner" resultType="com.paytech.client.master.domain.entityadmin.ProvidedEntityView">
+        SELECT s.entity_no AS entityNo, e.status AS entityStatus,
+            <include refid="LegalName"><property name="partyColumn" value="e.party_id"/></include> AS legalName,
+            s.source_relation_id AS sourceRelationId, s.status AS sourceStatus, s.effective_from AS effectiveFrom,
+            s.effective_to AS effectiveTo
+        FROM t_entity_source_relation s JOIN t_operating_entity e ON e.entity_no = s.entity_no
+        WHERE s.source_type = 'PARTNER' AND s.source_partner_id = #{localPartnerId}
+        ORDER BY s.entity_no, s.effective_from
+    </select>
+    <select id="countActiveByPartner" resultType="long">
+        SELECT COUNT(*) FROM t_entity_source_relation
+        WHERE source_type = 'PARTNER' AND source_partner_id = #{localPartnerId} AND active_source_slot = 1
+    </select>
 </mapper>

@@ -27,6 +27,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.paytech.commercial.CommercialTestApplication;
 import com.paytech.commercial.domain.CheckoutQuery;
 import com.paytech.commercial.test.mocker.clientmaster.ClientMasterCandidateMocker;
+import com.paytech.commercial.test.mocker.compliance.QualificationEvaluationMocker;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutResolutionFixture;
 import com.paytech.commercial.test.probe.CommercialEventProbe;
@@ -36,7 +37,7 @@ import com.paytech.foundation.testsupport.api.TestBase;
 
 /**
  * commercial Mock 测试基类：正式应用、真实本地 MySQL（mor_commercial）/ Redis / RabbitMQ，client-master 走测试 HTTP 服务。
- * <li>Risk 资格使用正式不可用端口，不注入批准替身；成功解析路径仍无覆盖（既有缺口）。</li>
+ * <li>compliance 资格判定同样走测试 HTTP 服务（{@link QualificationEvaluationMocker}），由用例按主体配置实时状态。</li>
  * <li>commercial 只发布不消费，不装配分区队列基线；两个业务事件经补偿任务异步发布到真实本地 Broker，每例为 commercial.events 绑定一个
  * 临时观察队列（测试发布端 unroutable-policy 为默认 FAIL，未路由严格判定）。</li>
  * <li>AfterEach 先等待补偿协调器与 Handler 全部空闲，再删除观察队列并检查意外调用；Foundation TestBase 随后执行全部 Clear（含
@@ -55,6 +56,9 @@ public abstract class CommercialMockTestBase extends TestBase {
 
     @Autowired
     protected ClientMasterCandidateMocker clientMaster;
+
+    @Autowired
+    protected QualificationEvaluationMocker compliance;
 
     @Autowired
     protected MockHttpServer ownerServer;

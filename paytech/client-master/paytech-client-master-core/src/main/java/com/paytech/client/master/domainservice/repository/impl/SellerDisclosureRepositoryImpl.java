@@ -18,4 +18,10 @@ public class SellerDisclosureRepositoryImpl implements SellerDisclosureRepositor
     public List<SellerDisclosure> findForCheckout(long clientId) {
         return List.copyOf(mapper.findForCheckout(clientId));
     }
+
+    /** 读取一个 OE 的全部卖方披露。 */
+    @Override
+    public List<SellerDisclosure> findByEntityNo(String entityNo) {
+        return List.copyOf(mapper.findByEntityNo(entityNo));
+    }
 }

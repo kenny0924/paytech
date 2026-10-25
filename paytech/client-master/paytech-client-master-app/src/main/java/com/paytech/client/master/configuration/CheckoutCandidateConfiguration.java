@@ -24,7 +24,7 @@ public class CheckoutCandidateConfiguration {
      */
     @Bean
     public CheckoutCandidateQueryService checkoutCandidateQueryService(Clock clock, DataSourceTransactionManager transactions,
-        ClientRepository clientRepository, LocalPartnerRepository localPartnerRepository,
+        ClientRepository clientRepository, PartnerRoleRepository partnerRoleRepository, LocalPartnerRepository localPartnerRepository,
         PartyProfileRepository partyProfileRepository, OperatingEntityRepository operatingEntityRepository,
         SellerDisclosureRepository sellerDisclosureRepository, BusinessChangeRecordRepository businessChangeRecordRepository,
         EntitySourceRelationRepository entitySourceRelationRepository,
@@ -40,7 +40,7 @@ public class CheckoutCandidateConfiguration {
         reads.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
         reads.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
         reads.setTimeout(10);
-        return new CheckoutCandidateQueryServiceImpl(clock, reads, clientRepository, localPartnerRepository,
+        return new CheckoutCandidateQueryServiceImpl(clock, reads, clientRepository, partnerRoleRepository, localPartnerRepository,
             partyProfileRepository, operatingEntityRepository, sellerDisclosureRepository, businessChangeRecordRepository,
             entitySourceRelationRepository, operatingEntityScopeRepository, clientBusinessProfileRepository,
             consumerLegalDocumentRepository, clientStoredCardSettingRepository, clientEntityAffiliationRepository,

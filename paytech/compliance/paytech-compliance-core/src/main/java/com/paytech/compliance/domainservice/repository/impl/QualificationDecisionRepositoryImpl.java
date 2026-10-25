@@ -1,5 +1,8 @@
 package com.paytech.compliance.domainservice.repository.impl;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.springframework.stereotype.Repository;
 
 import com.paytech.compliance.core.dal.dataobject.QualificationDecision;
@@ -15,11 +18,11 @@ import lombok.AllArgsConstructor;
 public class QualificationDecisionRepositoryImpl implements QualificationDecisionRepository {
     private final QualificationDecisionMapper mapper;
 
-    /** 新增最终决定。 */
+    /** 新增资格决定。 */
     @Override
     public void insert(QualificationDecision row) {
         if (mapper.insert(row) != 1) {
-            throw new ErrorException("最终决定写入行数异常");
+            throw new ErrorException("资格决定写入行数异常");
         }
     }
 
@@ -27,5 +30,11 @@ public class QualificationDecisionRepositoryImpl implements QualificationDecisio
     @Override
     public QualificationDecision findByCase(long caseId) {
         return mapper.findByCase(caseId);
+    }
+
+    /** 按决定 ID 集合读取。 */
+    @Override
+    public List<QualificationDecision> findByIds(Collection<Long> decisionIds) {
+        return decisionIds.isEmpty() ? List.of() : mapper.findByIds(decisionIds);
     }
 }

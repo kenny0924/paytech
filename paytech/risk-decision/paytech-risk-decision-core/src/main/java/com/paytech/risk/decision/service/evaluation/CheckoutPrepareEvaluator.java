@@ -51,7 +51,7 @@ public class CheckoutPrepareEvaluator implements DecisionPointEvaluator {
         DecisionPointAuthoringDescriptor.checkoutPrepare().point().inputContractVersion(), POSITIVE_ID,
         List.of(new Field("clientId", true, POSITIVE_ID, 19),
             new Field("entityNo", true, Pattern.compile("[A-Z0-9]{5}"), 5),
-            new Field("entitySourceType", true, Pattern.compile("PLATFORM|CLIENT|PARTNER"), 8),
+            new Field("entitySourceType", true, Pattern.compile("CLIENT|PARTNER"), 8),
             new Field("localPartnerId", false, POSITIVE_ID, 19),
             new Field("consumerCountryCode", true, Pattern.compile("[A-Z]{2}"), 2),
             new Field("currency", true, Pattern.compile("[A-Z]{3}"), 3),

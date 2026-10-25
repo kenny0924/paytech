@@ -23,7 +23,7 @@ class TableOwnershipAutoTest {
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 46 张表
         // （2026-10-20 渠道协议 10 表迁往 channel-connector 后由 56 张减为 46 张，总表数不变）。
-        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2 - 2 + 2 + 3 + 10 + 3 - 1 + 2 + 1 + 4 + 1 + 7, ownership.physicalTableCount(),
+        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2 - 2 + 2 + 3 + 10 + 3 - 1 + 2 + 1 + 4 + 1 + 7 + 3 + 1, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
                 + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）"
@@ -40,7 +40,8 @@ class TableOwnershipAutoTest {
                 + " - Platform t_file_owner_ref（2026-10-22 文件多存储并存第二段）"
                 + " + payment 消费幂等两表（2026-10-22 3DS 全链路）+ Platform 国家区域映射 t_country_region + card BIN 库四表（2026-10-22 BIN 库与卡属性）"
                 + " + Platform t_file_version（2026-10-22 文件公开桶与同地址替换）"
-                + " + Platform 多语言七表（2026-10-23 多语言管理）");
+                + " + Platform 多语言七表（2026-10-23 多语言管理）"
+                + " + client-master 角色与关系三表 + acquiring t_order_relationship_binding（2026-10-24 商业关系快照与真实解析接入）");
         // mor_platform：2026-10-20 渠道协议 10 表迁往 channel-connector，由 57 张减为 47 张；2026-10-22 文件存储 3 表、工作流 10 表与 data-query 3 表并入，
         // 第二段删除 t_file_owner_ref，卡 BIN 库新增 t_country_region，文件公开桶新增 t_file_version，共 64 张；2026-10-23 多语言新增七张 t_i18n_*，共 71 张。
         Assertions.assertEquals(71, ownership.databasesOf("platform-support").get("mor_platform").size());

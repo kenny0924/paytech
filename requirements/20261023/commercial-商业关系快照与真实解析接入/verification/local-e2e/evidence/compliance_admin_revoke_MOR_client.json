@@ -1,0 +1,23 @@
+{
+  "request": {
+    "expectedVersion": "1",
+    "reasonCode": "STAGE5_LOCAL_E2E",
+    "basisNote": "阶段 5 本机联调：验证 Client 不合格时建单错误映射"
+  },
+  "status": 200,
+  "response": {
+    "currentDecisionId": "239992187511656448",
+    "decisionSource": "MANUAL",
+    "effectiveStatus": "REVOKED",
+    "qualificationId": "239990536570687489",
+    "qualificationType": "ORGANIZATION_KYB",
+    "reviewStatus": "COMPLETED",
+    "roleId": "237161687952666625",
+    "roleType": "CLIENT",
+    "status": "REVOKED",
+    "updatedAt": "2026-10-25T06:03:16.342661Z",
+    "validFrom": "2026-10-01T00:00:00.000000Z",
+    "validTo": "2026-10-25T06:03:16.342661Z",
+    "version": "2"
+  }
+}

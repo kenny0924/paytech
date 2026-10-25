@@ -1,0 +1,30 @@
+{
+  "method": "POST",
+  "path": "/api/operations/qualification-admin/v1/qualifications/manual-decisions",
+  "request": {
+    "roleType": "CLIENT",
+    "roleId": "900000000001380201",
+    "qualificationType": "ORGANIZATION_KYB",
+    "validFrom": "2026-10-01T00:00:00Z",
+    "validTo": null,
+    "reasonCode": "STAGE5_LOCAL_E2E",
+    "basisNote": "阶段 5 本机联调：经运营入口登记 PSP 合成 Client",
+    "expectedVersion": "2"
+  },
+  "status": 200,
+  "response": {
+    "currentDecisionId": "239991755032776704",
+    "decisionSource": "MANUAL",
+    "effectiveStatus": "ELIGIBLE",
+    "qualificationId": "239991753833205761",
+    "qualificationType": "ORGANIZATION_KYB",
+    "reviewStatus": "NOT_REQUIRED",
+    "roleId": "900000000001380201",
+    "roleType": "CLIENT",
+    "status": "APPROVED",
+    "updatedAt": "2026-10-25T06:01:33.231229Z",
+    "validFrom": "2026-10-01T00:00:00.000000Z",
+    "validTo": null,
+    "version": "3"
+  }
+}

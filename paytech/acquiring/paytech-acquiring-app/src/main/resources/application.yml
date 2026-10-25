@@ -42,6 +42,12 @@ spring:
         connect-timeout: 2s
         read-timeout: 1s
         redirects: dont-follow
+      # Checkout 商业上下文真实解析，仅 acquiring.commercial.resolution-mode=REAL 时注册客户端。
+      commercial-service:
+        base-url: lb://commercial-service
+        connect-timeout: 2s
+        read-timeout: 3s
+        redirects: dont-follow
       platform-support-service:
         base-url: lb://platform-support-service/platform-support
         connect-timeout: 2s
@@ -120,6 +126,9 @@ internal-auth:
   mode: "${ACQUIRING_INTERNAL_AUTH_MODE:OFF}"
 
 acquiring:
+  commercial:
+    # Checkout 商业解析模式：MOCK（缺省）使用固定 AE001 + PARTNER Mock；REAL 调用 commercial-service 并冻结商业关系快照。修改后需重启。
+    resolution-mode: "${ACQUIRING_COMMERCIAL_RESOLUTION_MODE:MOCK}"
   event:
     # OrderPaymentSucceeded 信封身份：sourceService 与 messaging.producer.service 一致。
     source-service: acquiring

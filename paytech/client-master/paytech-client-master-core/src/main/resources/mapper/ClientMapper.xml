@@ -17,4 +17,16 @@
     <update id="activate">
         UPDATE t_client SET status='ACTIVE', update_time=#{now} WHERE client_id=#{clientId} AND status='PENDING'
     </update>
+    <!-- Party 唯一资料（uk_party_profile_party）上的法定名称：机构取 legal_name，个人取姓名。 -->
+    <sql id="LegalName">
+        (SELECT NULLIF(COALESCE(o.legal_name, TRIM(CONCAT_WS(' ', i.given_name, i.middle_name, i.family_name))), '')
+                FROM t_party_profile pp LEFT JOIN t_organization_profile o ON o.profile_id = pp.profile_id
+                LEFT JOIN t_individual_profile i ON i.profile_id = pp.profile_id WHERE pp.party_id = ${partyColumn})
+    </sql>
+    <select id="findSummary" resultType="com.paytech.client.master.domain.entityadmin.ClientSummaryView">
+        SELECT c.client_id AS clientId, c.client_no AS clientNo, c.party_id AS partyId, pt.party_type AS clientType,
+            c.status AS status, <include refid="LegalName"><property name="partyColumn" value="c.party_id"/></include> AS legalName
+        FROM t_client c JOIN t_party pt ON pt.party_id = c.party_id
+        WHERE c.client_id = #{clientId}
+    </select>
 </mapper>

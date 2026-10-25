@@ -1,0 +1,27 @@
+{
+  "entry": "direct acquiring /commerce/client-gateway-api/v1/checkouts with Gateway headers X-Gateway-Client-Id / X-Gateway-Credential-Id",
+  "request": {
+    "clientOrderId": "relsnap-real-client-not-qualified-84cd00ed",
+    "currency": "USD",
+    "consumerCountryCode": "US",
+    "items": [
+      {
+        "clientItemId": "line-1",
+        "name": "Relsnap stage five item",
+        "productTypeCode": "SERVICE",
+        "taxCategoryCode": "STANDARD",
+        "quantity": "1",
+        "unitAmount": "12.34"
+      }
+    ]
+  },
+  "status": 422,
+  "response": {
+    "type": "about:blank",
+    "title": "Unprocessable Content",
+    "detail": "Checkout 不符合创建条件",
+    "code": "CHECKOUT_NOT_ELIGIBLE",
+    "requestId": "req-relsnap-df88b9d57169",
+    "timestamp": "2026-10-25T06:03:16.490252Z"
+  }
+}

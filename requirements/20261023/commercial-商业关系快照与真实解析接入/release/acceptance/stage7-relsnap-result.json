@@ -1,0 +1,493 @@
+{
+ "S-0": {
+  "at": "2026-10-25T13:44:26.332Z",
+  "clientOrderId": "relsnap-s7-s-0-d3ca3690",
+  "http": 201,
+  "code": null,
+  "rows": {
+   "order": {
+    "orderId": "240108238232731648",
+    "orderNo": "ord_3LBmWGfN0MLQz3L3VpVhdpBDcJsG1H",
+    "entityNo": "AE001",
+    "sourceType": "PARTNER",
+    "localPartnerId": "107"
+   },
+   "context": {
+    "fundFlow": "NULL",
+    "effectiveVersion": "0",
+    "snapshotVersion": "NULL",
+    "shareVersionId": "108",
+    "chargeVersionId": "109",
+    "platformPartyId": "110"
+   },
+   "bindings": {},
+   "legal": [
+    "Mock Operating Entity",
+    "MOCK-REG"
+   ]
+  },
+  "checks": {
+   "http201": true,
+   "orderFrozen": true,
+   "source": true,
+   "noBindings": true,
+   "effective0": true,
+   "fundFlowNull": true
+  },
+  "verdict": "PASS"
+ },
+ "AC-13": {
+  "at": "2026-10-25T14:12:28.355Z",
+  "values": {
+   "acquiring.orders.PLATFORM": "0",
+   "risk.snapshots.PLATFORM": "0",
+   "risk.ENTITY_SOURCE_VALUES": "CLIENT,PARTNER",
+   "client-master.sources.PLATFORM": "0",
+   "client-master.applications.PLATFORM": "0"
+  },
+  "checks": {
+   "acquiring.orders.PLATFORM": true,
+   "risk.snapshots.PLATFORM": true,
+   "risk.ENTITY_SOURCE_VALUES": true,
+   "client-master.sources.PLATFORM": true,
+   "client-master.applications.PLATFORM": true
+  },
+  "verdict": "PASS"
+ },
+ "preflight": {
+  "at": "2026-10-25T14:09:03.275Z",
+  "switches": {
+   "acquiring": "MOCK",
+   "snapshot": "false"
+  },
+  "images": {
+   "compliance-service": "sha256:ca1585452f9c60835ecb099db694e36bd5d2fdcfa197016a242d204954ce3545",
+   "commercial-service": "sha256:e5c1ee6b0d037c4c899f43bf3583dcfdea8175f408f661d6f51580a36d3dd28c",
+   "client-master-service": "sha256:eeed4e63235de481ee6a02777de25a454197f2993af84fe90f14e0d1ee0df8a8",
+   "acquiring-service": "sha256:e0a1f618a050e30b85059aa4214fea43bedeb35cf48438374d444e735e107299",
+   "risk-decision-service": "sha256:288b0ff6a607a8e82bbf7e7cd03023bcca9159fc72e599281ec2fda81fe28a88",
+   "operations-console-bff": "sha256:feefe73f0aa35e556e5bf1b11da9144ac3d7414285740bf22d9cbe94f086e6af",
+   "operations-console-web": "sha256:4f44725eb26f7569b40719f29f48da7cc60f46c3c6bdd4d45ba0c44827662d3a"
+  },
+  "payfacAgreements": [
+   [
+    "240113831739723776",
+    "ACTIVE"
+   ]
+  ],
+  "payfacTerms": {
+   "PARTNER_SHARE": {
+    "versionId": "240113834742845440",
+    "profiles": [
+     "CARD_STANDARD",
+     "APPLE_PAY_STANDARD"
+    ]
+   },
+   "PLATFORM_SERVICE_CHARGE": {
+    "versionId": "240113839838924800",
+    "profiles": [
+     "CARD_STANDARD",
+     "APPLE_PAY_STANDARD"
+    ]
+   }
+  },
+  "qualifications": {
+   "AE001": [
+    {
+     "qualificationId": "240109394329718784",
+     "type": "ENTITY_UNDERWRITING",
+     "status": "APPROVED",
+     "version": "1",
+     "validFrom": "2026-10-25T13:48:59.000000Z",
+     "validTo": ""
+    }
+   ],
+   "PayFac": [
+    {
+     "qualificationId": "240109414927945729",
+     "type": "PARTNER_DUE_DILIGENCE",
+     "status": "APPROVED",
+     "version": "1",
+     "validFrom": "2026-10-25T13:49:04.000000Z",
+     "validTo": ""
+    }
+   ],
+   "DEMO-CL-001": [
+    {
+     "qualificationId": "237575223778594817",
+     "type": "INDIVIDUAL_KYC",
+     "status": "APPROVED",
+     "version": "1",
+     "validFrom": "2026-10-18T13:59:07.283302Z",
+     "validTo": ""
+    }
+   ]
+  },
+  "masterData": [
+   [
+    "1",
+    "1",
+    "1"
+   ]
+  ],
+  "dlqMessages": 0,
+  "checks": {
+   "images": true,
+   "payfacAgreementActive": true,
+   "payfacPrices": true,
+   "qualifications": true,
+   "masterData": true
+  },
+  "verdict": "PASS"
+ },
+ "S-1": {
+  "at": "2026-10-25T14:10:06.880Z",
+  "request": {
+   "clientId": "237575207592763393",
+   "orderNo": "RELSNAPS71DA8494787",
+   "consumerCountryCode": "US",
+   "currency": "USD",
+   "locale": "en",
+   "contextAsOfTime": "2026-10-25T14:10:02.724Z"
+  },
+  "http": 200,
+  "code": null,
+  "switches": {
+   "acquiring": "REAL",
+   "snapshot": "false"
+  },
+  "snapshot": {
+   "effectiveModelVersion": 0,
+   "snapshotModelVersion": 1,
+   "fundFlow": "THROUGH_CUSTODIAN",
+   "businessMode": "MOR",
+   "bindings": [
+    {
+     "role": "CLIENT",
+     "subjectType": "CLIENT",
+     "subjectId": "237575207592763393",
+     "partyId": "237575207592763394"
+    },
+    {
+     "role": "SELLER",
+     "subjectType": "OPERATING_ENTITY",
+     "subjectId": "AE001",
+     "partyId": "880000000702"
+    },
+    {
+     "role": "ACQUIRING_OE",
+     "subjectType": "OPERATING_ENTITY",
+     "subjectId": "AE001",
+     "partyId": "880000000702"
+    },
+    {
+     "role": "OE_PROVIDER",
+     "subjectType": "LOCAL_PARTNER",
+     "subjectId": "900000000001370001",
+     "partyId": "880000000702"
+    },
+    {
+     "role": "FUNDS_CUSTODIAN",
+     "subjectType": "OPERATING_ENTITY",
+     "subjectId": "AE001",
+     "partyId": "880000000702"
+    },
+    {
+     "role": "TAX_RESPONSIBLE",
+     "subjectType": "OPERATING_ENTITY",
+     "subjectId": "AE001",
+     "partyId": "880000000702"
+    },
+    {
+     "role": "PLATFORM_FEE_PAYER",
+     "subjectType": "LOCAL_PARTNER",
+     "subjectId": "900000000001370001",
+     "partyId": "880000000702"
+    },
+    {
+     "role": "PLATFORM",
+     "subjectType": "PLATFORM",
+     "subjectId": null,
+     "partyId": "880000000701"
+    }
+   ]
+  },
+  "partnerTerms": {
+   "localPartnerId": "900000000001370001",
+   "agreementId": "240113831739723776",
+   "agreementOperatingEntityId": "240113831743918084",
+   "sharePlanId": "240113834088534016",
+   "shareVersionId": "240113834742845440",
+   "serviceChargePlanId": "240113839545323520",
+   "serviceChargeVersionId": "240113839838924800",
+   "platformSignatoryPartyId": "880000000701"
+  },
+  "seller": {
+   "legalName": "AE001 Demo Operating Entity FZ-LLC",
+   "registrationNumber": "MORTEST-REG-AE001",
+   "taxRegistrationNumber": "MORTEST-TRN-AE001",
+   "addressText": "Demo Address, Dubai, United Arab Emirates",
+   "supportEmail": "support-ae001@example.invalid",
+   "supportPhone": null
+  },
+  "capabilities": [
+   "APPLE_PAY",
+   "CARD"
+  ],
+  "checks": {
+   "http200": true,
+   "entity": true,
+   "snapshot": true,
+   "roles": true,
+   "parties": true,
+   "partnerTerms": true,
+   "seller": true,
+   "capabilitiesWithoutPaymentMethod": true
+  },
+  "verdict": "PASS"
+ },
+ "S-2": {
+  "at": "2026-10-25T14:10:10.721Z",
+  "clientOrderId": "relsnap-s7-s-2-9ea033fd",
+  "http": 201,
+  "code": null,
+  "rows": {
+   "order": {
+    "orderId": "240114711390175232",
+    "orderNo": "ord_3LBpeD5DZJUdNEnotmlfVWgrNqKDir",
+    "entityNo": "AE001",
+    "sourceType": "PARTNER",
+    "localPartnerId": "900000000001370001"
+   },
+   "context": {
+    "fundFlow": "THROUGH_CUSTODIAN",
+    "effectiveVersion": "0",
+    "snapshotVersion": "1",
+    "shareVersionId": "240113834742845440",
+    "chargeVersionId": "240113839838924800",
+    "platformPartyId": "880000000701"
+   },
+   "bindings": {
+    "ACQUIRING_OE": [
+     "OPERATING_ENTITY",
+     "AE001",
+     "880000000702"
+    ],
+    "CLIENT": [
+     "CLIENT",
+     "237575207592763393",
+     "237575207592763394"
+    ],
+    "FUNDS_CUSTODIAN": [
+     "OPERATING_ENTITY",
+     "AE001",
+     "880000000702"
+    ],
+    "OE_PROVIDER": [
+     "LOCAL_PARTNER",
+     "900000000001370001",
+     "880000000702"
+    ],
+    "PLATFORM": [
+     "PLATFORM",
+     null,
+     "880000000701"
+    ],
+    "PLATFORM_FEE_PAYER": [
+     "LOCAL_PARTNER",
+     "900000000001370001",
+     "880000000702"
+    ],
+    "SELLER": [
+     "OPERATING_ENTITY",
+     "AE001",
+     "880000000702"
+    ],
+    "TAX_RESPONSIBLE": [
+     "OPERATING_ENTITY",
+     "AE001",
+     "880000000702"
+    ]
+   },
+   "legal": [
+    "AE001 Demo Operating Entity FZ-LLC",
+    "MORTEST-REG-AE001"
+   ]
+  },
+  "checks": {
+   "http201": true,
+   "orderFrozen": true,
+   "source": true,
+   "context": true,
+   "partnerFields": true,
+   "bindings": true,
+   "legal": true
+  },
+  "verdict": "PASS"
+ },
+ "S-3": {
+  "at": "2026-10-25T14:10:10.975Z",
+  "unaffiliated": {
+   "clientOrderId": "relsnap-s7-s-3a-9a175fcc",
+   "http": 422,
+   "code": "CHECKOUT_NOT_ELIGIBLE",
+   "orderRows": null
+  },
+  "qualificationBefore": [
+   {
+    "qualificationId": "237575223778594817",
+    "type": "INDIVIDUAL_KYC",
+    "status": "APPROVED",
+    "version": "1",
+    "validFrom": "2026-10-18T13:59:07.283302Z",
+    "validTo": ""
+   }
+  ],
+  "revoked": {
+   "status": "REVOKED",
+   "effectiveStatus": "REVOKED",
+   "version": "2"
+  },
+  "revokedClient": {
+   "clientOrderId": "relsnap-s7-s-3b-5a2c9569",
+   "http": 422,
+   "code": "CHECKOUT_NOT_ELIGIBLE",
+   "orderRows": null
+  },
+  "restored": {
+   "status": "APPROVED",
+   "effectiveStatus": "ELIGIBLE",
+   "version": "3",
+   "validFrom": "2026-10-18T13:59:07.283302Z"
+  },
+  "checks": {
+   "unaffiliatedRejected": true,
+   "unaffiliatedNoOrder": true,
+   "revokedRejected": true,
+   "revokedNoOrder": true,
+   "restored": true
+  },
+  "verdict": "PASS"
+ },
+ "S-5": {
+  "at": "2026-10-25T14:11:11.129Z",
+  "clientOrderId": "relsnap-s7-s-5-d948d77f",
+  "http": 201,
+  "code": null,
+  "rows": {
+   "order": {
+    "orderId": "240114966521298944",
+    "orderNo": "ord_3LBpluoyPiLqo4n8Xtq0d54Jwgc3ET",
+    "entityNo": "AE001",
+    "sourceType": "PARTNER",
+    "localPartnerId": "900000000001370001"
+   },
+   "context": {
+    "fundFlow": "THROUGH_CUSTODIAN",
+    "effectiveVersion": "1",
+    "snapshotVersion": "1",
+    "shareVersionId": "240113834742845440",
+    "chargeVersionId": "240113839838924800",
+    "platformPartyId": "880000000701"
+   },
+   "bindings": {
+    "ACQUIRING_OE": [
+     "OPERATING_ENTITY",
+     "AE001",
+     "880000000702"
+    ],
+    "CLIENT": [
+     "CLIENT",
+     "237575207592763393",
+     "237575207592763394"
+    ],
+    "FUNDS_CUSTODIAN": [
+     "OPERATING_ENTITY",
+     "AE001",
+     "880000000702"
+    ],
+    "OE_PROVIDER": [
+     "LOCAL_PARTNER",
+     "900000000001370001",
+     "880000000702"
+    ],
+    "PLATFORM": [
+     "PLATFORM",
+     null,
+     "880000000701"
+    ],
+    "PLATFORM_FEE_PAYER": [
+     "LOCAL_PARTNER",
+     "900000000001370001",
+     "880000000702"
+    ],
+    "SELLER": [
+     "OPERATING_ENTITY",
+     "AE001",
+     "880000000702"
+    ],
+    "TAX_RESPONSIBLE": [
+     "OPERATING_ENTITY",
+     "AE001",
+     "880000000702"
+    ]
+   },
+   "legal": [
+    "AE001 Demo Operating Entity FZ-LLC",
+    "MORTEST-REG-AE001"
+   ]
+  },
+  "s2Order": {
+   "orderId": "240114711390175232",
+   "effectiveVersion": "0"
+  },
+  "checks": {
+   "http201": true,
+   "orderFrozen": true,
+   "source": true,
+   "context": true,
+   "partnerFields": true,
+   "bindings": true,
+   "legal": true,
+   "s2OrderStill0": true
+  },
+  "verdict": "PASS"
+ },
+ "S-6": {
+  "at": "2026-10-25T14:12:28.032Z",
+  "clientOrderId": "relsnap-s7-s-6-fae47c4b",
+  "http": 201,
+  "code": null,
+  "rows": {
+   "order": {
+    "orderId": "240115292771041280",
+    "orderNo": "ord_3LBpvZsDi71b1kjQZrVrxksHNTB8V6",
+    "entityNo": "AE001",
+    "sourceType": "PARTNER",
+    "localPartnerId": "107"
+   },
+   "context": {
+    "fundFlow": "NULL",
+    "effectiveVersion": "0",
+    "snapshotVersion": "NULL",
+    "shareVersionId": "108",
+    "chargeVersionId": "109",
+    "platformPartyId": "110"
+   },
+   "bindings": {},
+   "legal": [
+    "Mock Operating Entity",
+    "MOCK-REG"
+   ]
+  },
+  "checks": {
+   "http201": true,
+   "orderFrozen": true,
+   "source": true,
+   "noBindings": true,
+   "effective0": true,
+   "fundFlowNull": true
+  },
+  "verdict": "PASS"
+ }
+}

@@ -11,6 +11,7 @@ import lombok.Setter;
  * 只依赖客户主档事实即通过的 OE 候选及复核所需根版本。
  * <li>候选按 Affiliation 优先级升序；商务合同、定价与法律文件的落选判断由 commercial 完成。</li>
  * <li>法律文件与卖方披露返回该 OE 在请求国家与 Locale 下的全部原始记录，适用性由 commercial 按原规则判断。</li>
+ * <li>卖方披露携带公开文本，commercial 透传给 acquiring 冻结展示，acquiring 不另调 client-master。</li>
  */
 @Getter
 @Setter
@@ -98,6 +99,9 @@ public class CheckoutCandidatesResponseBody {
         /** OE 法律主体 Party ID。 */
         private String oePartyId;
 
+        /** OE 收单资质 Code：MERCHANT、MERCHANT_RESALE_APPROVED 或 PAYFAC；commercial 按此过滤可承接的业务模式。 */
+        private String acquiringQualification;
+
         /** Client/OE 关联 ID。 */
         private String affiliationId;
 
@@ -112,6 +116,12 @@ public class CheckoutCandidatesResponseBody {
 
         /** PARTNER 来源的 Local Partner；其他来源或主档缺失时为 null。 */
         private LocalPartner localPartner;
+
+        /**
+         * OE 提供方：PARTNER 来源关系上的 Local Partner 及其当前 ACTIVE 角色
+         * <li>与 localPartner 是同一个 Partner，额外携带角色；CLIENT 来源或主档缺失时为 null。</li>
+         */
+        private OeProvider oeProvider;
 
         /** 请求国家与 Locale 下该 OE 的全部消费者法律文件原始记录。 */
         private List<LegalDocument> legalDocuments;
@@ -132,7 +142,7 @@ public class CheckoutCandidatesResponseBody {
         /** 来源关系 ID。 */
         private String sourceRelationId;
 
-        /** 来源类型 Code：PLATFORM、CLIENT 或 PARTNER。 */
+        /** 来源类型 Code：CLIENT 或 PARTNER。 */
         private String sourceType;
 
         /** CLIENT 来源的 Client ID，其他来源为 null。 */
@@ -156,6 +166,25 @@ public class CheckoutCandidatesResponseBody {
 
         /** Local Partner 状态 Code。 */
         private String status;
+    }
+
+    /** OE 提供方。 */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OeProvider {
+        /** Local Partner ID。 */
+        private String localPartnerId;
+
+        /** Local Partner 法律主体 Party ID。 */
+        private String partyId;
+
+        /** Local Partner 状态 Code。 */
+        private String status;
+
+        /** 当前 ACTIVE 角色 Code（OE_PROVIDER、REFERRER），升序；没有角色时为空数组。 */
+        private List<String> roles;
     }
 
     /** 消费者法律文件原始记录。 */
@@ -215,6 +244,24 @@ public class CheckoutCandidatesResponseBody {
 
         /** 发布时间；未发布为 null。 */
         private String publishedTime;
+
+        /** 向消费者公开的卖方法定名称。 */
+        private String publicLegalName;
+
+        /** 向消费者公开的卖方注册编号。 */
+        private String publicRegistrationNumber;
+
+        /** 向消费者公开的卖方税务登记编号；不披露时为 null。 */
+        private String publicTaxRegistrationNumber;
+
+        /** 向消费者公开的卖方地址文本。 */
+        private String publicAddressText;
+
+        /** 向消费者公开的卖方支持邮箱。 */
+        private String publicSupportEmail;
+
+        /** 向消费者公开的卖方支持电话；不披露时为 null。 */
+        private String publicSupportPhone;
     }
 
     /** commercial 的查询范围。 */

@@ -5,6 +5,7 @@ import java.util.*;
 import com.paytech.client.master.api.checkout.response.CheckoutCandidateVerificationResponseBody;
 import com.paytech.client.master.api.checkout.response.CheckoutCandidatesResponseBody;
 import com.paytech.client.master.api.checkout.response.PartyProfilesResponseBody;
+import com.paytech.client.master.api.enums.AcquiringQualification;
 import com.paytech.commercial.domain.ClientMasterCandidates;
 import com.paytech.commercial.domain.ClientMasterCandidates.*;
 import com.paytech.commercial.domain.CommercialCheckoutScope;
@@ -63,11 +64,13 @@ final class ClientMasterCandidateConverter {
     private static Candidate candidate(CheckoutCandidatesResponseBody.Candidate wire) {
         var source = required(wire.getSourceRelation());
         var partner = wire.getLocalPartner();
-        return new Candidate(required(wire.getEntityNo()), id(wire.getOePartyId()), id(wire.getAffiliationId()),
+        return new Candidate(required(wire.getEntityNo()), id(wire.getOePartyId()),
+            required(AcquiringQualification.fromCode(wire.getAcquiringQualification())), id(wire.getAffiliationId()),
             wire.getPriorityNo(), id(wire.getScopeId()), id(source.getSourceRelationId()), source.getSourceType(),
             id(source.getSourcePartnerId()),
             partner == null ? null
                 : new LocalPartner(id(partner.getLocalPartnerId()), id(partner.getPartyId()), partner.getStatus()),
+            provider(wire.getOeProvider()),
             required(wire.getLegalDocuments()).stream().map(d -> new LegalDocument(id(d.getLegalDocumentId()),
                 d.getDocumentType(), id(d.getContentFileId()), d.getContentHash(), d.getStatus(),
                 ClientMasterCheckoutClientImpl.time(d.getEffectiveFrom()), ClientMasterCheckoutClientImpl.time(d.getEffectiveTo()),
@@ -76,8 +79,19 @@ final class ClientMasterCandidateConverter {
             required(wire.getSellerDisclosures()).stream().map(s -> new SellerDisclosure(id(s.getDisclosureId()),
                 s.getStatus(), ClientMasterCheckoutClientImpl.time(s.getEffectiveFrom()),
                 ClientMasterCheckoutClientImpl.time(s.getEffectiveTo()), ClientMasterCheckoutClientImpl.time(s.getApprovedTime()),
-                ClientMasterCheckoutClientImpl.time(s.getPublishedTime()))).toList(),
+                ClientMasterCheckoutClientImpl.time(s.getPublishedTime()), s.getPublicLegalName(),
+                s.getPublicRegistrationNumber(), s.getPublicTaxRegistrationNumber(), s.getPublicAddressText(),
+                s.getPublicSupportEmail(), s.getPublicSupportPhone())).toList(),
             required(wire.getCandidateDigest()));
+    }
+
+    /** OE 提供方转换；CLIENT 来源为空，角色数组必填。 */
+    private static OeProvider provider(CheckoutCandidatesResponseBody.OeProvider wire) {
+        if (wire == null) {
+            return null;
+        }
+        return new OeProvider(required(id(wire.getLocalPartnerId())), required(id(wire.getPartyId())),
+            required(wire.getStatus()), List.copyOf(required(wire.getRoles())));
     }
 
     /** 根版本按 {@code TYPE:recordId} 建索引；重复根视为响应不合法。 */

@@ -5,6 +5,8 @@
 最后更新：2026-09-10
 适用基线：Client & Contract 最终 PDManer 生成模型已确认 40 表、443 字段、63 个唯一索引、46 个访问索引、67 条本库关系和 6 个关系图组；Model SHA-256 为 `e36ef6f7a00b67b772895ab834703634dd29854210646920963295a8105d9129`，Structural Projection SHA-256 为 `6013f7f066c277b475a251f85c5ca7768689886b5da0335471d4aa4ec804d678`，模型测试 80/80 通过
 
+> **2026-10-24 OE 来源提示：** `PLATFORM` 来源已从全系统删除且不保留历史，来源只剩 `CLIENT/PARTNER`。本文的平台自有 OE（Code-MoR UAE LLC）按“我们的 PayFac Partner”以 `PARTNER` 来源提供来读；示例中的 PayFac Partner `730300000000000002` 仅为场景编号。
+
 > **2026-09-10 定价迁移提示：** 第 8 节描述当前 Payment Method Profile / Price / Component / Band 目标模型。第 9 节完整保留现行 CCT-I13/I14 V5 Scope 场景，但只作为 legacy/pending migration 兼容证据；其中的 `t_commercial_term_scope`、`term_scope_id`、下单时定价解析和 V5 Hash 不属于当前 40 表新写模型，不得改名冒充 Price 或用新模型重算历史交易。新 Wire 尚未定义。
 
 > **2026-09-05 横切迁移提示：** 除上面的定价迁移边界外，本文的既有逐表记录继续描述相应模型与消费者假设，不单独拥有
@@ -38,7 +40,7 @@
 
 ## 2. 现实参与方
 
-Nova Learning FZ-LLC 是一家在阿联酋销售一次性软件许可证的 Organization Client。创始人 Aisha Rahman 持股 75%，同时是董事，并作为平台 Actor 代表 Nova 完成合同接受。Gulf Commerce Network FZ-LLC 是 Local Partner，它向平台提供 Desert Digital Trading LLC 作为法律卖方。平台自身还拥有 Code-MoR UAE LLC。
+Nova Learning FZ-LLC 是一家在阿联酋销售一次性软件许可证的 Organization Client。创始人 Aisha Rahman 持股 75%，同时是董事，并作为平台 Actor 代表 Nova 完成合同接受。Gulf Commerce Network FZ-LLC 是 Local Partner，它向平台提供 Desert Digital Trading LLC 作为法律卖方。平台自身还拥有 Code-MoR UAE LLC，它由我们的 PayFac Partner 以 PARTNER 来源提供。
 
 ```mermaid
 flowchart TD
@@ -52,7 +54,7 @@ flowchart TD
     NOVA -->|"1:1 Operating Entity Role"| NOVA_OE["OE 730400000000000001\nCLIENT / SAME_PARTY"]
     GULF -->|"1:1 Local Partner Role"| PARTNER["Local Partner 730300000000000001"]
     DESERT -->|"1:1 Operating Entity Role"| DESERT_OE["OE 730400000000000002\nPARTNER"]
-    PLATFORM -->|"1:1 Operating Entity Role"| PLATFORM_OE["OE 730400000000000003\nPLATFORM"]
+    PLATFORM -->|"1:1 Operating Entity Role"| PLATFORM_OE["OE 730400000000000003\nPARTNER（我们的 PayFac Partner）"]
     NOVA -->|"1:N direct Party Relations"| AISHA
 ```
 
@@ -255,7 +257,7 @@ Gulf 的 Local Partner 首次入驻先由 `START_OR_RESUME` 在同一 CCT 本地
 |---|---:|---:|---|---|---:|
 | `CLIENT` | `730420000000000001` | `730400000000000001` | `t_operating_entity_application.source_client_id=730200000000000001`、`t_operating_entity_application.source_partner_id=NULL` | `SAME_PARTY` | `730430000000000001` |
 | `PARTNER` | `730420000000000002` | `730400000000000002` | `t_operating_entity_application.source_client_id=NULL`、`t_operating_entity_application.source_partner_id=730300000000000001` | `NULL` | `730430000000000002` |
-| `PLATFORM` | `730420000000000003` | `730400000000000003` | 两个 Owner ID 均为 `NULL` | `NULL` | `730430000000000003` |
+| `PARTNER`（我们的 PayFac Partner） | `730420000000000003` | `730400000000000003` | `t_operating_entity_application.source_client_id=NULL`、`t_operating_entity_application.source_partner_id=730300000000000002` | `NULL` | `730430000000000003` |
 
 以 Desert 的 PARTNER 来源申请为完整示例：
 
@@ -327,7 +329,7 @@ Gulf 的 Local Partner 首次入驻先由 `START_OR_RESUME` 在同一 CCT 本地
 |---|---:|---|---|---|
 | Nova OE | `730430000000000001` | `CLIENT` | `t_entity_source_relation.source_client_id=730200000000000001`、`t_entity_source_relation.source_partner_id=NULL`、`t_entity_source_relation.client_source_basis=SAME_PARTY` | `t_entity_source_relation.status=ACTIVE`、`t_entity_source_relation.active_source_slot=1`、`t_entity_source_relation.effective_from=2026-09-10T10:00:00.000000Z`、`t_entity_source_relation.effective_to=NULL` |
 | Desert OE | `730430000000000002` | `PARTNER` | Client 为空、`t_entity_source_relation.source_partner_id=730300000000000001`、Basis 为空 | ACTIVE、Slot 1、同日起有效 |
-| Platform OE | `730430000000000003` | `PLATFORM` | Client、Partner、Basis 全为空 | ACTIVE、Slot 1、同日起有效 |
+| Platform OE | `730430000000000003` | `PARTNER` | Client 为空、`t_entity_source_relation.source_partner_id=730300000000000002`（我们的 PayFac Partner）、Basis 为空 | ACTIVE、Slot 1、同日起有效 |
 
 同一 OE 同时只能有一个 ACTIVE Source Relation。来源改变时结束旧行并创建新 ID，不能覆盖 Owner Tuple。
 
@@ -848,7 +850,7 @@ BCR 白名单是 20 类 Record Type、17 类 Root Type。`PARTY_PROFILE -> PARTY
 | Assignment | `t_client_entity_affiliation` | Client 使用 OE 的批准关系 | 有效期事实 + BCR Root |
 | Assignment | `t_entity_assignment_rule` | 准确 Scope 候选和 Priority | 有效期事实 + BCR Root |
 | Assignment | `t_client_entity_assignment` | 已验证分配结果 | 稳定交易事实 + BCR Root |
-| Assignment | `t_entity_source_relation` | PLATFORM/CLIENT/PARTNER 来源 | 来源事实 + BCR Root |
+| Assignment | `t_entity_source_relation` | CLIENT/PARTNER 来源 | 来源事实 + BCR Root |
 | Agreement | `t_agreement` | Client/Partner 独立合同 | 独立法律事实 + BCR Root |
 | Agreement | `t_agreement_signatory` | 实际签约主体与冻结 Profile | 合同证据，不重复 BCR |
 | Agreement | `t_agreement_document_ref` | Signing/Executed 文件 | 文件证据，不重复 BCR |
@@ -1306,7 +1308,6 @@ BCR 白名单是 20 类 Record Type、17 类 Root Type。`PARTY_PROFILE -> PARTY
       "PARTNER_DUE_DILIGENCE"
     ],
     "operating_entity_application.source_type": [
-      "PLATFORM",
       "CLIENT",
       "PARTNER"
     ],
@@ -1331,7 +1332,6 @@ BCR 白名单是 20 类 Record Type、17 类 Root Type。`PARTY_PROFILE -> PARTY
       "ENDED"
     ],
     "entity_source_relation.source_type": [
-      "PLATFORM",
       "CLIENT",
       "PARTNER"
     ],

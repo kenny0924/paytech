@@ -63,6 +63,7 @@ public final class CheckoutDataMocker implements Clear {
             assertTrue(mapper.orderIds(clientId, otherClientId()).isEmpty(), "上例订单未清理");
             for (long orderId : ownedOrderIds) {
                 assertEquals(0, mapper.creationRows(orderId), "存在残留子行");
+                assertEquals(0, mapper.relationshipBindingCount(orderId), "存在残留角色绑定");
             }
         } catch (RuntimeException failure) {
             throw new AssertionError(
@@ -111,6 +112,7 @@ public final class CheckoutDataMocker implements Clear {
                     mapper.deleteConsumer(orderId);
                     mapper.deleteContract(orderId);
                     mapper.deleteLegal(orderId);
+                    mapper.deleteRelationshipBindings(orderId);
                     mapper.deleteContext(orderId);
                     mapper.deleteSession(orderId);
                     mapper.deleteFunds(orderId);
@@ -121,6 +123,7 @@ public final class CheckoutDataMocker implements Clear {
             });
             for (long orderId : ownedOrderIds) {
                 assertEquals(0, mapper.creationRows(orderId), "清理后仍存在本例数据");
+                assertEquals(0, mapper.relationshipBindingCount(orderId), "清理后仍存在角色绑定");
                 assertTrue(refundMapper.refunds(orderId).isEmpty(), "清理后仍存在退款申请");
             }
             ownedOrderIds.clear();

@@ -60,3 +60,15 @@ Control 只允许 `NULL→ACTIVE→RELEASED|EXPIRED`；RELEASED/EXPIRED 是不�
 PRIMARY Eligibility 在 MySQL InnoDB `REPEATABLE READ` 下通过 `(role_type,role_id,active_slot,control_id)` 锁定 Role Range；零行也取得 Next-Key/Gap Lock。创建、检查、精确释放和 Timer 使用唯一锁序 `Role Range -> control_id 升序 Root -> Scope/Event`，且只有取得所需锁后才采样数据库 UTC。每个命中 Control 都冻结完整 Scope 集；任一 Block 返回 RESTRICT，同币种多个最低保证金取 MAX 而不相加。
 > 原 10.2 后续段落（出款检查点 Assessment 与 RCO-I09 结果）属于 risk-decision，见 [RISK_DECISION_PHYSICAL_DECISIONS.md](../../../risk-decision/docs/database/RISK_DECISION_PHYSICAL_DECISIONS.md) 第 10.2 节。
 
+
+### 10.3 角色资格投影、手工登记与字符型角色标识（2026-10-24）
+
+> 依据：[商业关系快照与真实解析接入 technique.md](../../../../requirements/20261023/commercial-商业关系快照与真实解析接入/technique.md) 第 3.3.2、3.4.2 节（S-05、S-07、S-09）；增量 SQL 见 [sql/changes/2026-10-24-qualification-manual-and-role-id.sql](./sql/changes/2026-10-24-qualification-manual-and-role-id.sql) 与 [回填](./sql/changes/2026-10-24-qualification-backfill.sql)。
+
+- `t_qualification_decision.role_id` 与 `t_role_qualification.role_id` 为 `VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin`：`OPERATING_ENTITY` 存 `entity_no`（`[A-Z]{2}[0-9]{3}`），`CLIENT`、`LOCAL_PARTNER`、`RELATED_PERSON` 存十进制 ID 文本。`t_due_diligence_case` 与 `t_settlement_control` 的 `role_id` 仍为 BIGINT（本轮没有 OE 尽调案件，结算控制只涉及 CLIENT / LOCAL_PARTNER）；以后做 OE 尽调时再统一。
+- `decision_source` 新增 `MANUAL`：运营手工登记（结论 APPROVED）或撤销（结论 REVOKED），`case_id`、`decision_version`、`decision_evaluation_id`、`recommended_decision` 为空，`decided_by` 与原因代码（写入 `override_reason_code`）、依据说明（`basis_note`，1—1000 字符）必填。`ck_qual_decision_source` 相应增加 MANUAL 分支，由应用保证（不建物理 CHECK）。`uk_qual_decision_ver(case_id, decision_version)` 对 NULL 不约束。
+- 允许登记的组合：CLIENT + INDIVIDUAL_KYC / ORGANIZATION_KYB、OPERATING_ENTITY + ENTITY_UNDERWRITING、LOCAL_PARTNER + PARTNER_DUE_DILIGENCE。
+- `t_role_qualification` 写入：一个本地事务内插入决定 → 无行时插入 version 1、有行时 `WHERE qualification_id=? AND version=?` 条件切换（影响行数 ≠ 1 或 `uk_role_qualification` 冲突即 409 `QUALIFICATION_CHANGED`）→ 追加 `t_qualification_state_change`（`aggregate_version` = 新版本，`trigger_id` = 决定 ID）。本期不安排持续复审：APPROVED 为 `NOT_REQUIRED`，REJECTED / REVOKED 为 `COMPLETED`，`review_frequency_code` 与 `next_review_time` 置空（满足 `ck_role_qual_review`）；撤销把 `valid_to` 置为撤销时间。
+- 入驻审核：O08 通过在同一事务为主案件 upsert CLIENT 资格（`trigger_type=OPERATIONS_REVIEW`）；O09 拒绝仅把已有 APPROVED 资格切换为 REJECTED；RELATED_PERSON 子案件不投影。存量已通过的 Client 由回填脚本建立（`trigger_type=BACKFILL`，`qualification_id = change_id = decision_id`）。
+- 判定（`POST /compliance/v1/qualifications/evaluations`、Admin 列表的 `effectiveStatus`）按查询时间实时计算 `EXPIRED`（APPROVED 且 `valid_to ≤ now`，或 status=EXPIRED）与 `NOT_YET_VALID`（`valid_from > now`），不依赖定时任务；资格合格的 Client 再按 `idx_settle_control_role` 只读检查 ACTIVE 且在生效期的 `SETTLEMENT_BLOCK`。
+- 表数不变（25）。

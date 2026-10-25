@@ -1,0 +1,34 @@
+{
+  "list": {
+    "items": [],
+    "page": 1,
+    "size": 10,
+    "total": 0
+  },
+  "request": {
+    "roleType": "OPERATING_ENTITY",
+    "roleId": "AE001",
+    "qualificationType": "ENTITY_UNDERWRITING",
+    "validFrom": "2026-10-01T00:00:00Z",
+    "validTo": null,
+    "reasonCode": "STAGE5_LOCAL_E2E",
+    "basisNote": "阶段 5 本机联调合成主体登记（AE001）",
+    "expectedVersion": null
+  },
+  "status": 200,
+  "response": {
+    "currentDecisionId": "239990535287230464",
+    "decisionSource": "MANUAL",
+    "effectiveStatus": "ELIGIBLE",
+    "qualificationId": "239990535295619072",
+    "qualificationType": "ENTITY_UNDERWRITING",
+    "reviewStatus": "NOT_REQUIRED",
+    "roleId": "AE001",
+    "roleType": "OPERATING_ENTITY",
+    "status": "APPROVED",
+    "updatedAt": "2026-10-25T05:56:42.421458Z",
+    "validFrom": "2026-10-01T00:00:00.000000Z",
+    "validTo": null,
+    "version": "1"
+  }
+}

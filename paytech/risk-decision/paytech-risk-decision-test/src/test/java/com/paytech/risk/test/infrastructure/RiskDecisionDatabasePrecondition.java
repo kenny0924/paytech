@@ -159,7 +159,7 @@ public final class RiskDecisionDatabasePrecondition
             + "AND ((table_name='t_rule_operand' AND column_name IN ('variable_code','numeric_unit','currency_code','currency_variable_code')) "
             + "OR (table_name='t_rule_action_parameter' AND column_name='variable_code'))") == 5L);
         require(count(connection, "SELECT COUNT(*) FROM t_risk_variable WHERE variable_id BETWEEN 900000000000091001 AND 900000000000091020") == 20L);
-        require(count(connection, "SELECT COUNT(*) FROM t_risk_variable_member WHERE member_id BETWEEN 900000000000092001 AND 900000000000092009") == 9L);
+        require(count(connection, "SELECT COUNT(*) FROM t_risk_variable_member WHERE member_id BETWEEN 900000000000092001 AND 900000000000092009") == 8L);
         for (ActionCatalogEntry action : ACTIONS) {
             require(countAction(connection, action) == 1L);
         }

@@ -22,4 +22,8 @@
         WHERE entity_no IN (SELECT entity_no FROM t_client_entity_affiliation WHERE client_id = #{clientId})
         ORDER BY scope_id
     </select>
+    <select id="findByEntityNo" resultMap="OperatingEntityScope">
+        SELECT scope_id, entity_no, application_id, consumer_country_code, currency, industry_code, mcc_code, status, active_slot, effective_from, effective_to
+        FROM t_operating_entity_scope WHERE entity_no = #{entityNo} ORDER BY scope_id
+    </select>
 </mapper>

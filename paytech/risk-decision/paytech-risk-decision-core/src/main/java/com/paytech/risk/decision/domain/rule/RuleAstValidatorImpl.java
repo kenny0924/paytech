@@ -321,7 +321,7 @@ public final class RuleAstValidatorImpl implements RuleAstValidator {
             case "currency" -> value.matches("[A-Z]{3}");
             case "mcc_code" -> value.matches("[0-9]{4}");
             case "industry_code" -> value.matches("[A-Z][A-Z0-9_]{0,63}");
-            case "entity_source_type" -> Set.of("PLATFORM", "CLIENT", "PARTNER").contains(value);
+            case "entity_source_type" -> Set.of("CLIENT", "PARTNER").contains(value);
             case "locale" -> validLocale(value);
             default -> true;
         };

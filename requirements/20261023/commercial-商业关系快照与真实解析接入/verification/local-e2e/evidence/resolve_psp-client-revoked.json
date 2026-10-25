@@ -1,0 +1,19 @@
+{
+  "request": {
+    "clientId": "900000000001380201",
+    "orderNo": "RELSNAP57792E6E5D43",
+    "consumerCountryCode": "US",
+    "currency": "USD",
+    "locale": "en",
+    "contextAsOfTime": "2026-10-25T06:01:33.131143Z"
+  },
+  "status": 422,
+  "response": {
+    "type": "about:blank",
+    "title": "Unprocessable Content",
+    "detail": "Client 不具备当前交易资格",
+    "code": "CLIENT_NOT_ELIGIBLE",
+    "requestId": "req-relsnap-a53d5ef4c540",
+    "timestamp": "2026-10-25T06:01:33.166630Z"
+  }
+}

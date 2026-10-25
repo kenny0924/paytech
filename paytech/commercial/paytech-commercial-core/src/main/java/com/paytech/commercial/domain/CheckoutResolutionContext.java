@@ -10,6 +10,9 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.paytech.client.master.api.enums.AcquiringQualification;
+import com.paytech.client.master.api.enums.PartnerRoleCode;
+import com.paytech.commercial.api.enums.BusinessMode;
 import com.paytech.commercial.api.enums.FundMode;
 import com.paytech.commercial.core.dal.dataobject.CheckoutRecords.*;
 import com.paytech.commercial.domain.ClientMasterCandidates.Candidate;
@@ -17,6 +20,7 @@ import com.paytech.commercial.domain.ClientMasterCandidates.LegalDocument;
 import com.paytech.commercial.domain.ClientMasterCandidates.LocalPartner;
 import com.paytech.commercial.domain.ClientMasterCandidates.RootVersion;
 import com.paytech.commercial.domain.ClientMasterCandidates.SellerDisclosure;
+import com.paytech.commercial.domain.relationship.RelationshipSnapshot;
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.FailException;
 
@@ -109,6 +113,9 @@ public final class CheckoutResolutionContext {
     /** 完整商务资格通过后一次构造候选上下文，不在后续步骤逐层补字段。 */
     private CheckoutCandidateContext buildCandidate(Candidate candidate, Set<BusinessChangeRecord> roots) {
         var client = master.client();
+        if (!relationshipSupported(candidate)) {
+            return null;
+        }
         Agreement clientAgreement = clientAgreement(candidate);
         if (clientAgreement == null) {
             return null;
@@ -128,19 +135,71 @@ public final class CheckoutResolutionContext {
             return null;
         }
         CheckoutCandidateContext.PartnerTerms partner = partner(candidate);
-        if ("PARTNER".equals(candidate.sourceType()) && partner == null) {
+        if (partner == null) {
             return null;
         }
         CheckoutCandidateContext.Legal legal = legal(candidate, clientAgreement);
         if (legal == null) {
             return null;
         }
+        if (!relationshipAllowed(candidate, clientAgreement)) {
+            return null;
+        }
+        RelationshipSnapshot relationship = RelationshipSnapshot.derive(clientAgreement.businessMode(),
+            new RelationshipSnapshot.Party(client.clientId(), client.partyId()), candidate.entityNo(), candidate.oePartyId(),
+            new RelationshipSnapshot.Party(candidate.oeProvider().localPartnerId(), candidate.oeProvider().partyId()),
+            partner.signatory().partyId());
         CheckoutCandidateContext result = new CheckoutCandidateContext(query, client, master.classification(), candidate,
-            clientAgreement, clientTerms, subscription, partner, legal, masterRoot("CLIENT", id(client.clientId())),
+            clientAgreement, clientTerms, subscription, partner, legal, relationship,
+            masterRoot("CLIENT", id(client.clientId())),
             masterRoot("OPERATING_ENTITY", candidate.entityNo()), root(roots, id(clientAgreement.agreementId())),
-            partner == null ? null : root(roots, id(partner.agreement().agreementId())));
+            root(roots, id(partner.agreement().agreementId())));
         result.validateEvidence();
         return result;
+    }
+
+    /**
+     * 商业关系快照本轮只支持 OE 来源 PARTNER 且主档带回提供方；CLIENT 来源（C3）或缺少提供方的候选落空
+     * <li>来源只认 CLIENT / PARTNER，其他取值属于主档配置冲突。</li>
+     */
+    private boolean relationshipSupported(Candidate candidate) {
+        require("CLIENT".equals(candidate.sourceType()) || "PARTNER".equals(candidate.sourceType()));
+        if ("PARTNER".equals(candidate.sourceType()) && candidate.oeProvider() != null) {
+            return true;
+        }
+        LOG.info("checkout 候选落空：relationship-unsupported clientId={} entityNo={} sourceType={} oeProvider={}",
+            query.clientId(), candidate.entityNo(), candidate.sourceType(), candidate.oeProvider() != null);
+        return false;
+    }
+
+    /**
+     * 商业关系组合约束，不符即候选落空并记录原因
+     * <li>收单资质：MERCHANT 不能承接；MERCHANT_RESALE_APPROVED 只承接 MOR；PAYFAC 承接 MOR / PSP。</li>
+     * <li>提供方必须 ACTIVE 且持有 OE_PROVIDER 角色，其法律主体必须就是 OE 的法律主体（决定 D3 ②）。</li>
+     * <li>提供方必须是来源关系上的同一个 Local Partner，否则属于主档配置冲突。</li>
+     */
+    private boolean relationshipAllowed(Candidate candidate, Agreement agreement) {
+        ClientMasterCandidates.OeProvider provider = candidate.oeProvider();
+        require(provider.localPartnerId().equals(candidate.sourcePartnerId()));
+        String reason = null;
+        if (candidate.acquiringQualification() == AcquiringQualification.MERCHANT) {
+            reason = "acquiring-qualification-merchant";
+        } else if (candidate.acquiringQualification() == AcquiringQualification.MERCHANT_RESALE_APPROVED
+            && agreement.businessMode() != BusinessMode.MOR) {
+            reason = "acquiring-qualification-resale-mor-only";
+        } else if (!"ACTIVE".equals(provider.status())
+            || !provider.roles().contains(PartnerRoleCode.OE_PROVIDER.getCode())) {
+            reason = "provider-not-active-oe-provider";
+        } else if (!provider.partyId().equals(candidate.oePartyId())) {
+            reason = "provider-party-mismatch";
+        }
+        if (reason == null) {
+            return true;
+        }
+        LOG.info("checkout 候选落空：{} clientId={} entityNo={} acquiringQualification={} businessMode={} localPartnerId={}",
+            reason, query.clientId(), candidate.entityNo(), candidate.acquiringQualification().getCode(),
+            agreement.businessMode().getCode(), provider.localPartnerId());
+        return false;
     }
 
     /**
@@ -166,11 +225,8 @@ public final class CheckoutResolutionContext {
         return agreement;
     }
 
-    /** PARTNER 来源的合同、双条款与唯一平台签约方；其他来源为空。 */
+    /** PARTNER 来源的合同、双条款与唯一平台签约方；Partner 非 ACTIVE 或缺少合同、条款时为空。 */
     private CheckoutCandidateContext.PartnerTerms partner(Candidate candidate) {
-        if (!"PARTNER".equals(candidate.sourceType())) {
-            return null;
-        }
         Long partnerId = candidate.sourcePartnerId();
         LocalPartner partner = candidate.localPartner();
         require(partner != null && partnerId != null && partnerId.equals(partner.localPartnerId()));
