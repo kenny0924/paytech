@@ -1,0 +1,6 @@
+# 文件记录详情页整理（叠加在文件上传页整理 fileupload-ux-20261027a 之上）：mor-test 候选覆盖（2026-10-27）。
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-fileupload-ux = 5e1f16ab + 文件上传页 7 个文件 + 文件记录 3 个文件（与主工作区逐字节相同）。
+services:
+  operations-console-web:
+    image: sha256:bfae15b3a23cc4d8e0d070b859fb699aa96940a8707a6be8325dc587a6e91f69  # mor-test/operations-console-web:fileupload-ux-20261027b（dist 245 个文件）

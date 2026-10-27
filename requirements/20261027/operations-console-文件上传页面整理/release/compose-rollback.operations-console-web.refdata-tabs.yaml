@@ -1,0 +1,4 @@
+# 回滚到文件记录详情页整理后的镜像。
+services:
+  operations-console-web:
+    image: sha256:bfae15b3a23cc4d8e0d070b859fb699aa96940a8707a6be8325dc587a6e91f69  # mor-test/operations-console-web:fileupload-ux-20261027b

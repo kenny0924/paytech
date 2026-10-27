@@ -37,16 +37,14 @@ export function RecentUploads({ reloadToken, canOpenRecords }: { reloadToken: nu
       </span>
     </div>
     <Table<UploadedFile> rowKey="fileId" tableLayout="fixed" size="small" dataSource={page.error ? [] : page.data.items} loading={page.loading}
-      scroll={{ x: 1150 }} pagination={{ ...page.pagination, pageSizeOptions: recentPageSizes }}
+      scroll={{ x: 960 }} pagination={{ ...page.pagination, pageSizeOptions: recentPageSizes }}
       locale={{ emptyText: <Empty description={page.error ? t('upload.recent.loadFailed') : t('upload.recent.empty')} /> }} columns={[
-        { title: t('upload.recent.column.name'), width: 230, render: (_, row) => <div><div className="file-ellipsis" title={row.displayName}>{row.displayName}</div>
-          <div className="cell-meta mono">{row.fileId}</div></div> },
-        { title: t('upload.recent.column.type'), width: 130, render: (_, row) => <span className="mono">{row.mimeType}</span> },
-        { title: t('upload.recent.column.size'), width: 90, render: (_, row) => byteSizeLabel(row.sizeBytes) },
+        { title: t('upload.recent.column.name'), width: 260, render: (_, row) => <div><div className="file-ellipsis" title={row.displayName}>{row.displayName}</div>
+          <div className="cell-meta">{byteSizeLabel(row.sizeBytes)} · <span className="mono" title={row.fileId}>{row.mimeType}</span></div></div> },
         { title: t('upload.recent.column.uploader'), width: 150, render: (_, row) => <span className={row.uploadedByMe ? undefined : 'mono'}>{uploaderLabel(row)}</span> },
         { title: t('upload.recent.column.uploadedAt'), width: 160, render: (_, row) => date(row.createTime) },
         { title: t('upload.recent.column.scan'), width: 110, render: (_, row) => <ScanTag status={row.scanStatus} /> },
-        { title: t('upload.recent.column.publicUrl'), width: 200, render: (_, row) => {
+        { title: t('upload.recent.column.publicUrl'), width: 240, render: (_, row) => {
           const addresses = visibleAddresses(row);
           return addresses ? <Typography.Text className="mono" ellipsis={{ tooltip: addresses.publicUrl }}
             copyable={{ text: addresses.publicUrl, tooltips: [t('check.copy'), t('check.copied')] }}>{addresses.publicUrl}</Typography.Text> : '—';

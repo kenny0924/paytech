@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ChangeEvent, DragEvent } from 'react';
-import { Alert, Button, Progress, Space, Spin, Tag, Typography } from 'antd';
+import type { ChangeEvent, DragEvent, ReactNode } from 'react';
+import { ExclamationCircleOutlined, InboxOutlined, SettingOutlined } from '@ant-design/icons';
+import { Alert, Button, Popover, Progress, Space, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { ApiError, session } from '../api/session';
 import { decodeUploadStart } from '../card/binLibrary';
@@ -12,37 +13,49 @@ import { accessLevelColors, accessLevelLabel } from '../fileStorage/fileStorage'
 import { byteSizeLabel } from '../fileStorage/scanPolicy';
 import { useT } from '../i18n/react';
 import {
-  acceptAttribute, decodeUploadCompletionReceipt, decodeUploadedFileFor, fileRecordHref, fileUploadPaths, pollUploadedFile, routeRuleLabel, startUploadBody, uploadFileIssue, uploadRejectionReason,
+  acceptAttribute, decodeUploadCompletionReceipt, decodeUploadedFileFor, fileRecordHref, fileUploadPaths, pollUploadedFile, routeRuleLabel, startUploadBody, uploadFileIssue, uploadHint, uploadRejectionReason,
   uploadValidityLabel, visibleAddresses,
 } from './fileUpload';
 import type { UploadConstraints, UploadedFile } from './fileUpload';
 
 /**
- * 顶部限制提示：公开标签、目标存储、写入规则、检查策略、允许类型、大小上限与上传期限
- * <li>未配置时标红：有存储管理页面时提供「前往存储管理」，否则提示联系管理员；未取到时提示重试。</li>
+ * 限制提示异常态：加载中、未取到（可重试）、未配置（有存储管理页面时提供「前往存储管理」，否则提示联系管理员）
+ * <li>已配置时不占版面，返回 null；详细限制收进上传卡的「上传设置」。</li>
  */
-export function ConstraintsBar({ constraints, failed, canOpenStorage, onRetry }: {
+export function ConstraintsNotice({ constraints, failed, canOpenStorage, onRetry }: {
   constraints: UploadConstraints | null; failed: boolean; canOpenStorage: boolean; onRetry: () => void;
 }) {
   const t = useT('file'), tCommon = useT('common'); const navigate = useNavigate();
-  if (failed) return <Alert type="warning" showIcon className="file-upload-constraints" title={t('upload.constraints.loadFailed')}
+  if (failed) return <Alert type="warning" showIcon className="file-upload-notice" title={t('upload.constraints.loadFailed')}
     action={<Button size="small" onClick={onRetry}>{tCommon('action.retry')}</Button>} />;
-  if (!constraints) return <div className="file-upload-constraints is-loading"><Spin size="small" /></div>;
-  if (!constraints.configured) return canOpenStorage
-    ? <Alert type="error" showIcon className="file-upload-constraints" title={t('upload.constraints.notConfigured')}
+  if (!constraints || constraints.configured) return null;
+  return canOpenStorage
+    ? <Alert type="error" showIcon className="file-upload-notice" title={t('upload.constraints.notConfigured')}
       action={<Button size="small" onClick={() => void navigate('/file-storage')}>{t('upload.constraints.goToStorage')}</Button>} />
-    : <Alert type="error" showIcon className="file-upload-constraints" title={t('upload.constraints.notConfiguredContact')} />;
-  const item = (label: string, value: string, mono = true) => <span className="file-upload-constraint">
-    <span className="muted">{label}</span><span className={mono ? 'mono' : undefined}>{value}</span></span>;
-  return <div className="file-upload-constraints is-configured">
+    : <Alert type="error" showIcon className="file-upload-notice" title={t('upload.constraints.notConfiguredContact')} />;
+}
+
+/** 上传设置：公开标签、目标存储、写入规则、检查策略、允许类型、大小上限与上传期限，收在弹出层里。 */
+export function UploadSettings({ constraints }: { constraints: UploadConstraints | null }) {
+  const t = useT('file');
+  if (!constraints?.configured) return null;
+  const rows: [string, ReactNode][] = [
+    [t('upload.constraints.target'), <span className="mono">{constraints.instanceCode} / {constraints.bucketName}</span>],
+    [t('upload.constraints.rule'), routeRuleLabel(constraints.routeSourceSystem!)],
+    [t('upload.constraints.policy'), <span className="mono">{t('upload.constraints.policyRevision', { code: constraints.scanPolicyCode, revisionNo: constraints.scanPolicyRevisionNo })}</span>],
+    [t('upload.constraints.allowed'), <span className="mono">{constraints.allowedMimeTypes.join(', ')}</span>],
+    [t('upload.constraints.maxSize'), byteSizeLabel(constraints.maxSizeBytes!)],
+    [t('upload.constraints.validity'), uploadValidityLabel(constraints.maxUploadSeconds!)],
+  ];
+  const content = <dl className="file-upload-settings">
+    {rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+  </dl>;
+  return <span className="file-upload-settings-trigger">
     <Tag color={accessLevelColors[constraints.accessLevel]}>{accessLevelLabel(constraints.accessLevel)}</Tag>
-    {item(t('upload.constraints.target'), `${constraints.instanceCode} / ${constraints.bucketName}`)}
-    {item(t('upload.constraints.rule'), routeRuleLabel(constraints.routeSourceSystem!), false)}
-    {item(t('upload.constraints.policy'), t('upload.constraints.policyRevision', { code: constraints.scanPolicyCode, revisionNo: constraints.scanPolicyRevisionNo }))}
-    {item(t('upload.constraints.allowed'), constraints.allowedMimeTypes.join(', '))}
-    {item(t('upload.constraints.maxSize'), byteSizeLabel(constraints.maxSizeBytes!), false)}
-    {item(t('upload.constraints.validity'), uploadValidityLabel(constraints.maxUploadSeconds!), false)}
-  </div>;
+    <Popover content={content} trigger="click" placement="bottomRight">
+      <Button type="link" size="small" icon={<SettingOutlined />}>{t('upload.settings.open')}</Button>
+    </Popover>
+  </span>;
 }
 
 type Stage =
@@ -71,7 +84,7 @@ export function useUploadCommand(onAuthorizationChanged: () => void) {
 }
 
 /**
- * 上传区与结果卡
+ * 上传卡：说明与上传设置、拖放区、公开提示，进行中显示进度，结束后在卡内显示结果
  * <li>选择或拖入单个文件 → 前端预校验（被拦截不调接口）→ 开始上传 → 直传对象存储（带进度）→ 完成上传 → 每秒查一次检查结果，最多 30 秒。</li>
  * <li>只有检查通过才显示公开地址、带版本的地址与文件地址；未通过只显示状态与通用提示（有文件记录页面时引导去详情查看）；超时提示稍后在最近上传中查看。</li>
  */
@@ -127,39 +140,43 @@ export function UploadWorkspace({ constraints, enabled, canOpenRecords, onUpload
   }
   const percent = stage.kind === 'running' && stage.total > 0 ? Math.floor(stage.loaded * 100 / stage.total) : 0;
 
-  return <div className="file-upload-workspace">
-    <section className="file-upload-panel">
-      <Alert type="warning" showIcon title={t('upload.panel.publicWarning')} />
-      <div className={['file-upload-drop', dragging ? 'is-dragging' : '', disabled ? 'is-disabled' : ''].join(' ').trim()}
-        onDragOver={event => { event.preventDefault(); if (!disabled) setDragging(true); }} onDragLeave={() => setDragging(false)}
-        onDrop={event => disabled ? event.preventDefault() : drop(event)}>
-        <div>{t('upload.panel.drop')}</div>
-        <Button type="primary" disabled={disabled} onClick={() => input.current?.click()}>{t('upload.panel.select')}</Button>
-        <input ref={input} type="file" hidden disabled={disabled} accept={constraints ? acceptAttribute(constraints) : undefined} onChange={pick} />
-        <div className="muted">{enabled ? t('upload.panel.single') : t('upload.panel.disabled')}</div>
-      </div>
-      {stage.kind === 'running' && <div className="file-upload-progress">
-        <div className="file-upload-progress-head"><span className="file-ellipsis mono" title={stage.name}>{stage.name}</span>
-          <Button size="small" onClick={cancel}>{tCommon('action.cancel')}</Button></div>
-        <span className="muted">{stage.step === 'start' ? t('upload.stage.starting') : stage.step === 'upload' ? t('upload.stage.uploading')
-          : stage.step === 'complete' ? t('upload.stage.completing') : t('upload.stage.checking')}</span>
-        <Progress percent={stage.step === 'upload' ? percent : stage.step === 'start' ? 0 : 100} status="active"
-          format={value => stage.step === 'upload' ? `${byteSizeLabel(stage.loaded)} / ${byteSizeLabel(stage.total)} · ${value}%` : `${value}%`} />
-      </div>}
-    </section>
-    <section className="file-upload-result">
+  const runningLabel = stage.kind !== 'running' ? '' : stage.step === 'start' ? t('upload.stage.starting')
+    : stage.step === 'upload' ? t('upload.stage.uploading') : stage.step === 'complete' ? t('upload.stage.completing') : t('upload.stage.checking');
+
+  return <section className="file-upload-card">
+    <div className="file-upload-card-head">
+      <span className="muted">{t('upload.intro')}</span>
+      <UploadSettings constraints={constraints} />
+    </div>
+    <div className={['file-upload-drop', dragging ? 'is-dragging' : '', disabled ? 'is-disabled' : ''].join(' ').trim()}
+      onDragOver={event => { event.preventDefault(); if (!disabled) setDragging(true); }} onDragLeave={() => setDragging(false)}
+      onDrop={event => disabled ? event.preventDefault() : drop(event)}>
+      <InboxOutlined className="file-upload-drop-icon" />
+      <div className="file-upload-drop-line">{t('upload.panel.drop')}
+        <Button type="link" disabled={disabled} onClick={() => input.current?.click()}>{t('upload.panel.select')}</Button></div>
+      <input ref={input} type="file" hidden disabled={disabled} accept={constraints ? acceptAttribute(constraints) : undefined} onChange={pick} />
+      <div className="muted file-upload-drop-hint">{!enabled ? t('upload.panel.disabled') : constraints ? uploadHint(constraints) : null}</div>
+    </div>
+    <div className="file-upload-public-note"><ExclamationCircleOutlined />{t('upload.panel.publicWarning')}</div>
+    {stage.kind === 'running' && <div className="file-upload-progress">
+      <div className="file-upload-progress-head"><span className="file-ellipsis mono" title={stage.name}>{stage.name}</span>
+        <Button size="small" onClick={cancel}>{tCommon('action.cancel')}</Button></div>
+      <span className="muted">{runningLabel}</span>
+      <Progress percent={stage.step === 'upload' ? percent : stage.step === 'start' ? 0 : 100} status="active"
+        format={value => stage.step === 'upload' ? `${byteSizeLabel(stage.loaded)} / ${byteSizeLabel(stage.total)} · ${value}%` : `${value}%`} />
+    </div>}
+    {stage.kind !== 'idle' && stage.kind !== 'running' && <div className="file-upload-result">
       <div className="file-upload-result-head"><strong>{t('upload.result.title')}</strong>
         {stage.kind === 'done' && stage.file && <ScanTag status={stage.file.scanStatus} />}</div>
       <UploadResult stage={stage} canOpenRecords={canOpenRecords} onRetry={() => input.current?.click()} retryDisabled={disabled} />
-    </section>
-  </div>;
+    </div>}
+  </section>;
 }
 
 function UploadResult({ stage, canOpenRecords, onRetry, retryDisabled }: { stage: Stage; canOpenRecords: boolean; onRetry: () => void; retryDisabled: boolean }) {
   const t = useT('file'); const navigate = useNavigate();
   const again = <Button disabled={retryDisabled} onClick={onRetry}>{t('upload.result.uploadAgain')}</Button>;
-  if (stage.kind === 'idle') return <div className="muted">{t('upload.result.empty')}</div>;
-  if (stage.kind === 'running') return <div className="muted">{t('upload.result.inProgress')}</div>;
+  if (stage.kind === 'idle' || stage.kind === 'running') return null;
   if (stage.kind === 'rejected') return <Space orientation="vertical" className="file-upload-result-body">
     <Alert type="error" showIcon title={t('upload.result.rejected', { name: stage.name })} description={stage.reason} />{again}</Space>;
   if (stage.kind === 'error') return <Space orientation="vertical" className="file-upload-result-body">

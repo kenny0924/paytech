@@ -11,7 +11,7 @@ import { ConfigurationStatusModal } from '../configuration/ConfigurationStatusMo
 import { useConfigurationForm } from '../configuration/useConfigurationForm';
 import {
   changeLogoBody, createCurrencySpecBody, currencyCodePattern, currencySpecPath, currencySpecStatuses, currencyStatusChange, currencyStatusColors,
-  currencyStatusCounts, decodeCurrencySpecList, decodeCurrencySpecMutation, editableCurrencySpec, fileAddressPattern, logoChangeBlocked,
+  decodeCurrencySpecList, decodeCurrencySpecMutation, editableCurrencySpec, fileAddressPattern, logoChangeBlocked,
   manageCurrencySpecs, maxMinorUnit, maxNameLength, maxSymbolLength, numericCodePattern, roundingModes, updateCurrencySpecBody,
 } from '../configuration/currencySpecModel';
 import type { CurrencySpec, CurrencySpecFormValues, CurrencySpecStatus } from '../configuration/currencySpecModel';
@@ -49,7 +49,6 @@ export function CurrencySpecsTab({ resources, onAuthorizationChanged }: Props) {
   // t 随语言包刷新换新，只用于失败通知标题，不应触发重新查询
   }, [reload, notify]);
   const refresh = () => setReload(value => value + 1);
-  const counts = currencyStatusCounts(items);
   const rows = items.filter(item => filter === 'ALL' || item.status === filter);
   const creating = selection?.kind === 'new';
   const selected = selection?.kind === 'spec' ? items.find(item => item.currency === selection.currency) : creating ? undefined : rows[0];
@@ -58,7 +57,7 @@ export function CurrencySpecsTab({ resources, onAuthorizationChanged }: Props) {
     <div className="refdata-toolbar">
       <Segmented<CurrencySpecStatus | 'ALL'> value={filter} onChange={setFilter}
         options={(['ALL', ...currencySpecStatuses] as const).map(value => ({ value,
-          label: t('specs.filter', { label: value === 'ALL' ? t('specs.all') : enumLabel(t, 'enum.status', value), count: counts[value] }) }))} />
+          label: value === 'ALL' ? t('specs.all') : enumLabel(t, 'enum.status', value) }))} />
       <span className="dq-spacer" />
       {canManage && <Button type="primary" onClick={() => setSelection({ kind: 'new' })}>{t('specs.create')}</Button>}
     </div>

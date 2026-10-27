@@ -1,0 +1,4 @@
+# 回滚到文件上传页面整理之前的现网镜像（refdata-20261027b，币种页并入参考数据页）。
+services:
+  operations-console-web:
+    image: sha256:f3da39ad2f23f74f2b0684db6019b54858996d1336079678f4b3d1dc23ab8fb1  # mor-test/operations-console-web:refdata-20261027b

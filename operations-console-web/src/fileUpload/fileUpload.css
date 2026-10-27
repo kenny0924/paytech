@@ -1,20 +1,38 @@
-.file-upload-constraints { margin-bottom: 16px; }
-.file-upload-constraints.is-loading { min-height: 40px; display: flex; align-items: center; }
-.file-upload-constraints.is-configured { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 20px; background: #f0f7ff; border-radius: 6px; padding: 10px 14px; }
-.file-upload-constraint { display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; }
-.file-upload-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; margin-bottom: 16px; }
-.file-upload-panel, .file-upload-result { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-.file-upload-drop { border: 1px dashed #c5cdd8; border-radius: 8px; padding: 28px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; background: #fafbfc; }
+.file-upload-page .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.file-upload-notice { margin-bottom: 16px; }
+.file-upload-card { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; padding: 16px 20px 18px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; }
+.file-upload-card-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-width: 0; }
+.file-upload-card-head.is-readonly { margin-bottom: 20px; }
+.file-upload-settings-trigger { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.file-upload-settings-trigger .ant-tag { margin: 0; }
+.file-upload-settings { display: grid; gap: 8px; min-width: 300px; max-width: 420px; margin: 0; }
+.file-upload-settings > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; }
+.file-upload-settings dt { color: #69717d; }
+.file-upload-settings dd { margin: 0; overflow-wrap: anywhere; }
+.file-upload-drop { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 22px 16px 20px; text-align: center; background: #fafbfc; border: 1px dashed #c9d1dc; border-radius: 8px; transition: border-color .15s, background-color .15s; }
+.file-upload-drop:not(.is-disabled):hover { border-color: #8fb3f5; }
 .file-upload-drop.is-dragging { border-color: #1677ff; background: #f0f7ff; }
 .file-upload-drop.is-disabled { opacity: .6; }
-.file-upload-progress { display: flex; flex-direction: column; gap: 4px; }
+.file-upload-drop-icon { font-size: 30px; color: #8a94a3; }
+.file-upload-drop.is-dragging .file-upload-drop-icon { color: #1677ff; }
+.file-upload-drop-line { display: inline-flex; align-items: center; color: #1f2937; }
+.file-upload-drop-line .ant-btn { padding-inline: 4px; font-weight: 500; }
+.file-upload-drop-hint { font-size: 12px; line-height: 1.5; }
+.file-upload-public-note { display: flex; align-items: flex-start; gap: 6px; color: #8a6d1f; font-size: 12px; line-height: 1.6; }
+.file-upload-public-note .anticon { margin-top: 3px; color: #d48806; }
+.file-upload-progress, .file-upload-result { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid #eef0f3; }
 .file-upload-progress-head, .file-upload-result-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-width: 0; }
 .file-upload-result-body { width: 100%; }
 .file-upload-address { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; align-items: center; gap: 8px; }
-.file-upload-address-label { font-weight: 600; }
+.file-upload-address-label { color: #69717d; }
 .file-upload-recent-filters { display: inline-flex; align-items: center; gap: 12px; }
-.file-upload-range { min-width: 140px; }
+.file-upload-range { min-width: 120px; }
 .file-upload-mine { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
-@media (max-width: 1100px) {
-  .file-upload-workspace { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 720px) {
+  .file-upload-card { padding: 14px; }
+  .file-upload-card-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .file-upload-address { grid-template-columns: minmax(0, 1fr) auto; }
+  .file-upload-address-label { grid-column: 1 / -1; }
+  .file-upload-recent .table-toolbar { flex-wrap: wrap; gap: 8px; }
+  .file-upload-recent .table-count { white-space: nowrap; }
 }

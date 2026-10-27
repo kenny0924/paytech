@@ -1,0 +1,5 @@
+# 行业页签"展开全部 / 收起全部"移到状态筛选旁（叠加在 fileupload-ux-20261027c 之上）：mor-test 候选覆盖（2026-10-27）。
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+services:
+  operations-console-web:
+    image: sha256:2e179d6f1bc3635a427f50246aa86fea338e740995d703868799cdf54efb9a4c  # mor-test/operations-console-web:fileupload-ux-20261027d

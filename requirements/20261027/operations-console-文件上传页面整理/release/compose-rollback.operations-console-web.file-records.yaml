@@ -1,0 +1,4 @@
+# 回滚到只含文件上传页整理的镜像；完全回滚用 compose-rollback.operations-console-web.yaml（f3da39ad）。
+services:
+  operations-console-web:
+    image: sha256:bddabcbc3cecd294e7247c03805c473a5be768aba0e2acace626a1fc4dc8247a  # mor-test/operations-console-web:fileupload-ux-20261027a

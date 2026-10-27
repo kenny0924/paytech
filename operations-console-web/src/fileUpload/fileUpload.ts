@@ -170,6 +170,12 @@ export function uploadFileIssue(file: PickedFile, constraints: UploadConstraints
 /** 文件选择框的 accept：允许的类型。 */
 export const acceptAttribute = (constraints: UploadConstraints) => constraints.allowedMimeTypes.join(',');
 
+/** 上传区提示：允许类型取子类型大写（application/pdf → PDF），去重后与大小上限组成一句话。 */
+export function uploadHint(constraints: UploadConstraints): string {
+  const types = [...new Set(constraints.allowedMimeTypes.map(type => type.split('/')[1].replace(/\+.*$/, '').toUpperCase()))];
+  return t('upload.panel.hint', { types: types.join(' / '), max: byteSizeLabel(constraints.maxSizeBytes!) });
+}
+
 // ---------- 完成上传后的检查轮询 ----------
 
 export const pollIntervalMillis = 1000;

@@ -1,0 +1,4 @@
+# 回滚到参考数据页签按需加载后的镜像。
+services:
+  operations-console-web:
+    image: sha256:615c1b890dc17bf76096e3a3e6afe68395209993ca89a80aba78355bba6bb571  # mor-test/operations-console-web:fileupload-ux-20261027c

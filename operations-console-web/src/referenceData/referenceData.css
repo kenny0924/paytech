@@ -1,10 +1,7 @@
 /* 参考数据页（原型：平台配置 · 参考数据 01—04）与币种 / 分类页共用的国旗、图标；布局基础复用 dataQuery.css 的 dq-* 类。 */
-.refdata-readonly { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
-.refdata-count { display: inline-block; min-width: 22px; margin-left: 4px; padding: 0 6px; border-radius: 10px; background: #f2f4f7; color: #69717d;
-  font-size: 12px; line-height: 18px; text-align: center; }
-.ant-tabs-tab-active .refdata-count { background: #e8efff; color: #315dca; }
 .refdata-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
 .refdata-search { width: 300px; max-width: 100%; }
+.refdata-expand { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .refdata-filter { min-width: 140px; }
 .refdata-split { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 400px); align-items: start; }
 .refdata-nowrap { white-space: nowrap; }
