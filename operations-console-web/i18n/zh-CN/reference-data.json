@@ -64,7 +64,7 @@
   "reference-data.mcc.note": "MCC 本身是 ISO 18245 标准数据；平台是否允许、是否需要审批、风险等级在合规与风控中配置，不在本页。",
   "reference-data.mcc.search": "搜索 MCC 前缀或名称",
   "reference-data.mcc.summary": "匹配 {count} 条（编码前缀或英文名）",
-  "reference-data.page.intro": "全平台共用的国家、行政区、行业与 MCC。数据由 Platform 统一维护，变更走评审过的 SQL；币种在“币种”页维护。名称按界面语言显示，翻译缺失时显示英文名。",
+  "reference-data.page.intro": "全平台共用的币种、国家、行政区、行业与 MCC。币种可在线维护；其他参考数据通过评审过的 SQL 维护。名称按界面语言显示，翻译缺失时显示英文名。",
   "reference-data.page.readOnly": "只读 · 数据来自 Platform",
   "reference-data.subdivision.column.category": "类别",
   "reference-data.subdivision.column.code": "编码",
@@ -78,6 +78,7 @@
   "reference-data.subdivision.hint": "首批只装 AE / SA / EG；其他国家没有行政区时，入驻地址显示文本框",
   "reference-data.subdivision.search": "搜索编码或名称",
   "reference-data.tab.countries": "国家",
+  "reference-data.tab.currencies": "币种",
   "reference-data.tab.industries": "行业",
   "reference-data.tab.mccs": "MCC",
   "reference-data.tab.subdivisions": "行政区"

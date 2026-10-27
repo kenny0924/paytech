@@ -1,0 +1,13 @@
+PASS zh-CN sidebar has no Currencies item 
+PASS zh-CN sidebar has Reference Data 
+PASS zh-CN opens on Currencies tab 币种
+PASS zh-CN tab order 币种|国家 249|行政区 47|行业 42|MCC 298
+PASS zh-CN no read-only lock on Currencies tab 
+PASS zh-CN currency rows 
+PASS zh-CN new currency form opens 
+PASS zh-CN change-icon modal opens 
+PASS zh-CN countries tab http://localhost:28080/reference-data?tab=countries
+PASS zh-CN industries tab 
+PASS zh-CN /currency-specs redirects http://localhost:28080/reference-data?tab=currencies
+PASS zh-CN deep link subdivisions EG 
+failures 0

@@ -116,3 +116,25 @@
 - 原因：`refdata` 命名空间原先在页面里首次 `useT('refdata')` 时才按需加载；加载完成触发 i18n revision 变化，控制台外壳随之重新渲染并重新挂载当前页面，页内状态（所选页签、所选目录）丢失。点击目录行时右侧首次渲染用到 `refdata` 的组件，因此必现；同一机制也会让参考数据页、分类页在首次加载 refdata 时丢失页内状态。
 - 修复：`i18n/namespaces.ts` 新增 `RUNTIME_DATA_NAMESPACES = ['refdata']`（仍不内置、不进 `OPS_NAMESPACES`），`main.tsx` 根部 I18nGate 与全部命名空间一起预加载，页面中再用到时不再触发重新挂载。
 - 验证：e2e-dev 的复现脚本 `scratchpad/refdata-e2e/f5.mjs`：点击 `REF_COUNTRY_SUBDIVISION` 后页签保持"Catalogs"，右侧出现 AE 行政区预览（`has AE-DU true`）；web `tsc`、`npm test`（1565）、`build` 通过。仅改 web，Vite 已实时生效，无需换 JAR。
+
+## 6. 合并币种页（2026-10-27，用户确认"直接改吧"）
+
+只改 operations-console-web；Platform 注册（菜单、权限、路由、`console-resource-capabilities.json`、`pageCapabilities.ts`）不变。
+
+| 项 | 实现 |
+|---|---|
+| 页签 | "参考数据"页 5 个页签，币种在前：币种 / 国家 / 行政区 / 行业 / MCC。币种页签复用原币种页的列表、右侧编辑面板、换图标弹窗与"新建币种"（按钮移到页签工具栏），调用的 BFF 接口不变（`pages/CurrencySpecs.tsx` 改为导出 `CurrencySpecsTab`，去掉页头） |
+| 权限 | `referenceDataTabs(resources)`：有原"币种"菜单（`OPERATIONS_CURRENCY_SPECS`，CURRENCY_SPEC_READ）显示币种页签；新建 / 编辑 / 启停 / 换图标仍看 `OPERATIONS_CURRENCY_SPEC_MANAGE` 按钮；其余四个页签需要 `OPERATIONS_REFERENCE_DATA`，没有时不读取国家等数据 |
+| 菜单 | `menu.ts` 新增 `mergedPages`（币种 → 参考数据）与 `mergeMenus`，`buildMenuTree` 先合并：两个菜单都有权限时只显示"参考数据"；只有币种权限时把币种菜单改写为"参考数据"（沿用其父级与排序），进入后只看到币种页签 |
+| 地址 | 页签写在地址里（`?tab=currencies` 等，`replace` 方式，不增加历史记录）；`legacyRedirects` + `App.tsx`：`/currency-specs` 跳到 `/reference-data?tab=currencies`；`ConsolePage` 的 `OPERATIONS_CURRENCY_SPECS` 也改为同一跳转；入驻配置目录页的 REF_CURRENCY 链接改为该地址 |
+| 文案 | 页头说明改为"币种可在线维护；其他参考数据通过评审过的 SQL 维护"；只读锁标只在非币种页签显示；币种说明移到币种页签工具栏下方 |
+
+i18n 差异（相对上次导出 9659 键，现 9660 键，`i18n-out/` 已重新导出）：
+- 新增：`reference-data.tab.currencies`（Currencies / 币种）
+- 删除：无
+- 修改：`reference-data.page.intro`、`currency.specs.intro`、`client-review.config.catalog.openCurrencies`、`client-review.config.catalog.platformNote.REF_CURRENCY`
+
+验证：
+- `tsc`、`npm test` 1567 例（新增：合并菜单——两者都有 / 只有币种 / 只有参考数据、按钮不变、旧地址跳转；页签按授权——含只有币种权限）、`build` 通过。
+- Playwright（本机 e2e，1440，脚本 `scratchpad/opsfe-layout/merge.mjs`）：en 12/12 通过——侧栏无"币种"、有"参考数据"；进入默认币种页签；页签顺序；币种页签无只读锁标；新建表单与换图标弹窗可打开（取消，不写数据）；国家 / 行业页签与地址同步；`/currency-specs` 跳到 `?tab=currencies`；`?tab=subdivisions&country=EG` 深链。zh-CN 11/12：唯一不符是页签名显示"Currencies"、页头说明仍为旧中文——本机 Platform 语言包尚未包含新 / 改的键（运行时译文优先于内置），发布 operations-console #14 后即为"币种"与新说明，非代码问题。
+- 只有币种权限的账号：用单元测试模拟（菜单改写、只显示币种页签）；未在浏览器中用受限账号实测。

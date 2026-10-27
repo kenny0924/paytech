@@ -216,3 +216,14 @@ export function mccQuery(keyword: string, statusFilter: ReferenceStatus | 'ALL')
   if (statusFilter !== 'ALL') result.status = statusFilter;
   return result;
 }
+
+/**
+ * "参考数据"页按授权显示的页签：币种（原"币种"菜单 OPERATIONS_CURRENCY_SPECS）在前，国家 / 行政区 / 行业 / MCC 需要"参考数据"菜单
+ * <li>两个菜单资源仍由 Platform 分别授权（注册不变）；只有币种权限的账号只看到币种页签。</li>
+ */
+export function referenceDataTabs(resources: readonly { resourceType: string; componentKey?: string | null }[]):
+  ('currencies' | 'countries' | 'subdivisions' | 'industries' | 'mccs')[] {
+  const menu = (componentKey: string) => resources.some(r => r.resourceType === 'MENU' && r.componentKey === componentKey);
+  return [...(menu('OPERATIONS_CURRENCY_SPECS') ? ['currencies' as const] : []),
+    ...(menu('OPERATIONS_REFERENCE_DATA') ? ['countries', 'subdivisions', 'industries', 'mccs'] as const : [])];
+}

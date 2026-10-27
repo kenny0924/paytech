@@ -17,7 +17,6 @@ import {
 import type { CurrencySpec, CurrencySpecFormValues, CurrencySpecStatus } from '../configuration/currencySpecModel';
 import { usePublicFileUpload } from '../fileUpload/usePublicFileUpload';
 import { currencyName, shortFileAddress } from '../referenceData/referenceData';
-import '../configuration/configuration.css';
 import '../dataQuery/dataQuery.css';
 import '../referenceData/referenceData.css';
 import '../configuration/currencySpecs.css';
@@ -28,12 +27,12 @@ type Selection = { kind: 'spec'; currency: string } | { kind: 'new' } | null;
 type StatusTarget = Pick<CurrencySpec, 'currency' | 'version' | 'status' | 'minorUnit' | 'roundingMode'>;
 
 /**
- * 币种（原型 平台配置 · 币种 05—06）：列表 + 右侧面板；草稿可改全部属性，启用或停用后标准属性冻结，只能更换图标
+ * 币种页签（原型 平台配置 · 币种 05—06，2026-10-27 并入"参考数据"页的第一个页签）：列表 + 右侧面板；草稿可改全部属性，启用或停用后标准属性冻结，只能更换图标
  * <li>名称列由前端按界面语言显示（Intl），英文名是 Platform 数据；图标只保存文件服务地址，公开地址由 Platform 换算。</li>
- * <li>没有管理按钮时只读；没有文件上传权限时图标改为手工填写已上传的公开文件地址。</li>
+ * <li>没有管理按钮（OPERATIONS_CURRENCY_SPEC_MANAGE）时只读；没有文件上传权限时图标改为手工填写已上传的公开文件地址。</li>
  */
-export function CurrencySpecs({ resources, onAuthorizationChanged }: Props) {
-  const t = useT('currency'), tCommon = useT('common'), tNav = useT('nav'); const { locale } = useLocale();
+export function CurrencySpecsTab({ resources, onAuthorizationChanged }: Props) {
+  const t = useT('currency'), tCommon = useT('common'); const { locale } = useLocale();
   const notify = useErrorNotification();
   const canManage = resources.some(resource => resource.resourceType === 'BUTTON' && resource.resourceCode === manageCurrencySpecs);
   const [items, setItems] = useState<CurrencySpec[]>([]); const [loading, setLoading] = useState(true); const [failed, setFailed] = useState(false);
@@ -54,14 +53,16 @@ export function CurrencySpecs({ resources, onAuthorizationChanged }: Props) {
   const rows = items.filter(item => filter === 'ALL' || item.status === filter);
   const creating = selection?.kind === 'new';
   const selected = selection?.kind === 'spec' ? items.find(item => item.currency === selection.currency) : creating ? undefined : rows[0];
-  return <div className="configuration-page dq-page currency-page">
-    <div className="page-heading"><h1>{tNav('resource.OPERATIONS_CURRENCY_SPECS')}</h1>
-      {canManage && <Button type="primary" onClick={() => setSelection({ kind: 'new' })}>{t('specs.create')}</Button>}</div>
-    <p className="muted dq-intro">{t('specs.intro')}</p>
+  return <div className="currency-page">
     {failed && <Alert type="warning" showIcon title={t('specs.unavailable')} action={<Button onClick={refresh}>{tCommon('action.retry')}</Button>} />}
-    <Segmented<CurrencySpecStatus | 'ALL'> className="currency-filter" value={filter} onChange={setFilter}
-      options={(['ALL', ...currencySpecStatuses] as const).map(value => ({ value,
-        label: t('specs.filter', { label: value === 'ALL' ? t('specs.all') : enumLabel(t, 'enum.status', value), count: counts[value] }) }))} />
+    <div className="refdata-toolbar">
+      <Segmented<CurrencySpecStatus | 'ALL'> value={filter} onChange={setFilter}
+        options={(['ALL', ...currencySpecStatuses] as const).map(value => ({ value,
+          label: t('specs.filter', { label: value === 'ALL' ? t('specs.all') : enumLabel(t, 'enum.status', value), count: counts[value] }) }))} />
+      <span className="dq-spacer" />
+      {canManage && <Button type="primary" onClick={() => setSelection({ kind: 'new' })}>{t('specs.create')}</Button>}
+    </div>
+    <p className="muted currency-intro">{t('specs.intro')}</p>
     <div className="refdata-split">
       <section className="dq-panel">
         <Table<CurrencySpec> rowKey="currency" size="small" tableLayout="fixed" dataSource={rows} loading={loading} pagination={false} scroll={{ x: 800 }}

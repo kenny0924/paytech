@@ -1,0 +1,13 @@
+PASS en sidebar has no Currencies item 
+PASS en sidebar has Reference Data 
+PASS en opens on Currencies tab Currencies
+PASS en tab order Currencies|Countries 249|Subdivisions 47|Industries 42|MCC 298
+PASS en no read-only lock on Currencies tab 
+PASS en currency rows 
+PASS en new currency form opens 
+PASS en change-icon modal opens 
+PASS en countries tab http://localhost:28080/reference-data?tab=countries
+PASS en industries tab 
+PASS en /currency-specs redirects http://localhost:28080/reference-data?tab=currencies
+PASS en deep link subdivisions EG 
+failures 0

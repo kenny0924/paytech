@@ -9,7 +9,7 @@ import { useOperationsTools } from './auth/webmcp';
 import { useErrorNotification } from './feedback/useErrorNotification';
 import { LanguageSwitcher } from './i18n/LanguageSwitcher';
 import { useT } from './i18n/react';
-import { buildMenuTree, menuPages, pageRoutePaths, resourceLabel } from './navigation/menu';
+import { buildMenuTree, legacyRedirects, menuPages, pageRoutePaths, resourceLabel } from './navigation/menu';
 import { menuTrail } from './navigation/menuTrail';
 import { useTrailTitleHeading } from './navigation/useTrailTitleHeading';
 import { NavigationCollapseControl } from './navigation/NavigationCollapseControl';
@@ -125,6 +125,7 @@ function Console({ context }: { context: SessionContextResponseBody }) {
               <Route path="/" element={menus[0] ? <Navigate to={menus[0].frontendRoute!} replace /> : <NoAccess />} />
               {menus.flatMap(menu => pageRoutePaths(menu).map(path => <Route key={`${menu.resourceId}:${path}`} path={path} element={<ConsolePage componentKey={menu.componentKey!}
                 resources={resources} actorId={context.accountId} locationKey={location.key} onAuthorizationChanged={() => setReload(value => value + 1)} />} />))}
+              {legacyRedirects(menus).map(redirect => <Route key={redirect.path} path={redirect.path} element={<Navigate to={redirect.to} replace />} />)}
               <Route path="/external-api/integrations/*" element={menus.some(menu => menu.componentKey === 'OPERATIONS_CHANNEL_CHANNELS')
                 ? <LegacyIntegrationRedirect /> : <NoAccess />} />
               <Route path="*" element={<NoAccess />} />

@@ -3,12 +3,15 @@ import type { Key, ReactNode } from 'react';
 import { Empty, Input, Segmented, Select, Table, Tabs, Tag } from 'antd';
 import { LockOutlined, SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
+import type { ConsoleResource } from '../api/types';
+import { CurrencySpecsTab } from './CurrencySpecs';
 import { session } from '../api/session';
 import { requestAllPages } from '../api/paging';
 import { Loading, QueryFailure } from '../tenantAccess/TenantAccessView';
 import { enumLabel } from '../i18n/index';
 import { useLocale, useT } from '../i18n/react';
 import {
+  referenceDataTabs,
   countryName, currencyName, decodeCountries, industryDescription, decodeIndustries, decodeMccPage, decodeSubdivisions, industryTree, matchesKeyword,
   mccUsage, refdataName, referenceDataPaths, referenceStatusColors, referenceStatuses, shortFileAddress, subdivisionCountries, untranslated,
 } from '../referenceData/referenceData';
@@ -17,9 +20,11 @@ import { Flag, IndustryIcon } from '../referenceData/ReferenceDataParts';
 import '../dataQuery/dataQuery.css';
 import '../referenceData/referenceData.css';
 
-type TabKey = 'countries' | 'subdivisions' | 'industries' | 'mccs';
+type DataTab = 'countries' | 'subdivisions' | 'industries' | 'mccs';
+type TabKey = 'currencies' | DataTab;
 type StatusFilter = ReferenceStatus | 'ALL';
 interface Loaded { countries?: RefCountry[]; subdivisions?: RefSubdivision[]; industries?: RefIndustry[]; mccs?: RefMcc[] }
+interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void }
 interface Failures { countries?: unknown; subdivisions?: unknown; industries?: unknown; mccs?: unknown }
 const PAGE_SIZE = 50;
 
@@ -28,14 +33,15 @@ const PAGE_SIZE = 50;
  * <li>依次请求：参考数据路由按登录账号限并发 2，同时发出会被 Gateway 以 429 拒绝。</li>
  * <li>某类失败只影响对应页签，可单独重试。</li>
  */
-function useReferenceData() {
+function useReferenceData(enabled: boolean) {
   const [data, setData] = useState<Loaded>({}); const [failures, setFailures] = useState<Failures>({});
-  const [revision, setRevision] = useState<Record<TabKey, number>>({ countries: 0, subdivisions: 0, industries: 0, mccs: 0 });
-  const [loading, setLoading] = useState<Set<TabKey>>(new Set(['countries', 'subdivisions', 'industries', 'mccs']));
-  const [order, setOrder] = useState<TabKey[]>(['countries', 'subdivisions', 'industries', 'mccs']);
+  const [revision, setRevision] = useState<Record<DataTab, number>>({ countries: 0, subdivisions: 0, industries: 0, mccs: 0 });
+  const [loading, setLoading] = useState<Set<DataTab>>(new Set(enabled ? dataTabs : []));
+  const [order, setOrder] = useState<DataTab[]>([...dataTabs]);
   useEffect(() => {
+    if (!enabled) return;
     const controller = new AbortController(); const { signal } = controller;
-    const loaders: Record<TabKey, () => Promise<unknown>> = {
+    const loaders: Record<DataTab, () => Promise<unknown>> = {
       countries: () => session.request(referenceDataPaths.countries, { signal }, decodeCountries),
       subdivisions: () => session.request(referenceDataPaths.subdivisions, { signal }, value => decodeSubdivisions(value)),
       industries: () => session.request(referenceDataPaths.industries, { signal }, decodeIndustries),
@@ -56,36 +62,44 @@ function useReferenceData() {
       }
     })();
     return () => controller.abort();
-  }, [order, revision]);
-  const retry = (key: TabKey) => { setOrder([key]); setRevision(current => ({ ...current, [key]: current[key] + 1 })); };
+  }, [order, revision, enabled]);
+  const retry = (key: DataTab) => { setOrder([key]); setRevision(current => ({ ...current, [key]: current[key] + 1 })); };
   return { data, failures, loading, retry };
 }
 
-const tabKeys: readonly TabKey[] = ['countries', 'subdivisions', 'industries', 'mccs'];
+const dataTabs: readonly DataTab[] = ['countries', 'subdivisions', 'industries', 'mccs'];
 
 /**
- * 参考数据（原型 平台配置 · 参考数据 01—04）：国家、行政区、行业、MCC 四个只读页签；维护走评审过的 SQL，币种在币种页维护
- * <li>`?tab=subdivisions&country=AE` 直接打开某页签（入驻配置的目录来源说明由此跳入）。</li>
+ * 参考数据（原型 平台配置 · 参考数据 01—04 与币种 05—06）：币种（可在线维护）+ 国家、行政区、行业、MCC（只读，维护走评审过的 SQL）
+ * <li>页签按授权显示：币种页签需要原"币种"菜单（OPERATIONS_CURRENCY_SPECS），其余四个需要"参考数据"菜单（见 referenceDataTabs）。</li>
+ * <li>所选页签写在地址里（`?tab=currencies`、`?tab=subdivisions&country=AE`），旧地址 /currency-specs 跳到币种页签。</li>
  */
-export function ReferenceData() {
+export function ReferenceData({ resources, onAuthorizationChanged }: Props) {
   const t = useT('reference-data'), tNav = useT('nav');
-  const { data, failures, loading, retry } = useReferenceData();
-  const [params] = useSearchParams();
-  const [tab, setTab] = useState<TabKey>(() => (tabKeys as readonly string[]).includes(params.get('tab') ?? '') ? params.get('tab') as TabKey : 'countries');
-  const [subdivisionCountry, setSubdivisionCountry] = useState<string | undefined>(() => params.get('country') ?? undefined);
+  const tabKeys = referenceDataTabs(resources) as readonly TabKey[];
+  const dataAllowed = tabKeys.includes('countries');
+  const { data, failures, loading, retry } = useReferenceData(dataAllowed);
+  const [params, setParams] = useSearchParams();
+  const requested = params.get('tab') as TabKey | null;
+  const tab: TabKey = requested && tabKeys.includes(requested) ? requested : tabKeys[0] ?? 'countries';
+  const setTab = (next: TabKey) => setParams(current => { const query = new URLSearchParams(current); query.set('tab', next);
+    if (next !== 'subdivisions') query.delete('country'); return query; }, { replace: true });
+  const subdivisionCountry = params.get('country') ?? undefined;
+  const setSubdivisionCountry = (country: string) => setParams({ tab: 'subdivisions', country }, { replace: true });
   const [mccKeyword, setMccKeyword] = useState('');
-  const count = (key: TabKey) => data[key]?.length;
-  const body = (key: TabKey, render: () => ReactNode) => failures[key] ? <QueryFailure failure={failures[key]} retry={() => retry(key)} />
+  const count = (key: TabKey) => key === 'currencies' ? undefined : data[key]?.length;
+  const body = (key: DataTab, render: () => ReactNode) => failures[key] ? <QueryFailure failure={failures[key]} retry={() => retry(key)} />
     : !data[key] && loading.has(key) ? <Loading /> : data[key] ? render() : <Loading />;
-  const openSubdivisions = (countryCode: string) => { setSubdivisionCountry(countryCode); setTab('subdivisions'); };
+  const openSubdivisions = (countryCode: string) => setSubdivisionCountry(countryCode);
   const openMcc = (mccCode: string) => { setMccKeyword(mccCode); setTab('mccs'); };
   return <div className="configuration-page dq-page refdata-page">
     <div className="page-heading"><h1>{tNav('resource.OPERATIONS_REFERENCE_DATA')}</h1>
-      <span className="muted refdata-readonly"><LockOutlined /> {t('page.readOnly')}</span></div>
+      {tab !== 'currencies' && <span className="muted refdata-readonly"><LockOutlined /> {t('page.readOnly')}</span>}</div>
     <p className="muted dq-intro">{t('page.intro')}</p>
     <Tabs activeKey={tab} onChange={key => setTab(key as TabKey)} items={tabKeys.map(key => ({
       key, label: <span>{t('tab.' + key)} {count(key) !== undefined && <span className="refdata-count">{count(key)}</span>}</span>,
-      children: key === 'countries' ? body(key, () => <CountriesTab countries={data.countries!} subdivisions={data.subdivisions}
+      children: key === 'currencies' ? <CurrencySpecsTab resources={resources} onAuthorizationChanged={onAuthorizationChanged} />
+        : key === 'countries' ? body(key, () => <CountriesTab countries={data.countries!} subdivisions={data.subdivisions}
           onOpenSubdivisions={openSubdivisions} />)
         : key === 'subdivisions' ? body(key, () => <SubdivisionsTab subdivisions={data.subdivisions!} country={subdivisionCountry}
           onCountry={setSubdivisionCountry} />)

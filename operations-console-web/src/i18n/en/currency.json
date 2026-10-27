@@ -74,7 +74,7 @@
   "currency.specs.empty": "No currencies yet",
   "currency.specs.filter": "{label} {count}",
   "currency.specs.footnote": "The name is the ISO English name (data); currency names on pages follow the interface language. Currencies without an icon show their symbol.",
-  "currency.specs.intro": "ISO 4217 currency codes, names, symbols, decimal places and rounding. Drafts can change every attribute; once enabled the standard attributes are frozen and only the icon can change; disabling only blocks new uses.",
+  "currency.specs.intro": "Drafts can change every attribute; once enabled the standard attributes are frozen and only the icon can change; disabling only blocks new uses.",
   "currency.specs.loadFailed": "Couldn't load currencies",
   "currency.specs.loading": "Loading currencies…",
   "currency.specs.selectHint": "Select a currency to see its details",

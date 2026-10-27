@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import type { ComponentType } from 'react';
+import { Navigate } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
 import type { PageComponentKey } from './pageCapabilities';
 interface PageProps { resources: ConsoleResource[]; actorId: string; onAuthorizationChanged: () => void; locationKey: string }
@@ -26,7 +27,8 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_TENANT_ACCESS: lazy(() => import('../pages/TenantAccess').then(m => ({ default: m.TenantAccess }))),
   OPERATIONS_API_SCOPES: lazy(() => import('../pages/ApiScopes').then(m => ({ default: m.ApiScopes }))),
   OPERATIONS_PERMISSIONS: lazy(() => import('../pages/Permissions').then(m => ({ default: m.Permissions }))),
-  OPERATIONS_CURRENCY_SPECS: lazy(() => import('../pages/CurrencySpecs').then(m => ({ default: m.CurrencySpecs }))),
+  // 币种页已并入参考数据页（menu.ts mergedPages），菜单不再单独出现；直接访问时跳到币种页签。
+  OPERATIONS_CURRENCY_SPECS: () => <Navigate to="/reference-data?tab=currencies" replace />,
   OPERATIONS_FILE_STORAGE: lazy(() => import('../pages/FileStorage').then(m => ({ default: m.FileStorage }))),
   OPERATIONS_FILE_RECORDS: lazy(() => import('../pages/FileRecords').then(m => ({ default: m.FileRecords }))),
   OPERATIONS_FILE_UPLOAD: lazy(() => import('../pages/FileUpload').then(m => ({ default: m.FileUpload }))),

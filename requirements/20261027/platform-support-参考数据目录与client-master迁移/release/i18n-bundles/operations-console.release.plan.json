@@ -4,23 +4,23 @@
  "liveNamespaces": 26,
  "repoNamespaces": 26,
  "newNamespaces": [],
- "repoKeys": 10088,
+ "repoKeys": 10089,
  "liveActiveKeys": 10088,
- "added": 0,
+ "added": 1,
  "restored": 0,
- "sourceChanged": 0,
+ "sourceChanged": 4,
  "missingInRepo": 0,
- "zhImportKeys": 0,
+ "zhImportKeys": 5,
  "zhMissingForImport": 0,
- "keepLiveZh": 10088,
+ "keepLiveZh": 10084,
  "refdataZhReplaced": 0,
  "liveOutdatedZh": 0,
  "rebaseExpected": 0,
- "rebaseScope": 429,
+ "rebaseScope": 433,
  "outdatedUntouched": 0,
  "deprecations": [],
  "sha256": {
-  "operations-console.release.en.json": "93bed9957298de0257842cf29627b0ee667e063570eb1fecc6fc5a754b7cef39",
-  "operations-console.release.zh-CN.delta.json": "c01473698141eb8df4be180934d88aff0ad1a03643288ce4128c0fa6ff09fa8e"
+  "operations-console.release.en.json": "3c906d3bf8315a493d2cbdba9926cd8ceb606c5f4bf53d51ba34e0c6db86e00c",
+  "operations-console.release.zh-CN.delta.json": "b1f52d67d2f33c792ab42a3bfefeeba82eecb6d725b116407a89c8f244eeace0"
  }
 }

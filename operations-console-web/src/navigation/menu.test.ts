@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import type { ConsoleResource } from '../api/types.ts';
 import { testT } from '../i18n/testing.ts';
-import { pageRoutePaths, buildMenuTree, menuPages, menuAncestors, resourceLabel } from './menu.ts';
+import { pageRoutePaths, buildMenuTree, legacyRedirects, menuPages, menuAncestors, mergeMenus, resourceLabel } from './menu.ts';
 
 function resource(resourceId: string, values: Partial<ConsoleResource> = {}): ConsoleResource {
   return { resourceId, resourceCode: resourceId, resourceType: 'MENU', parentResourceId: null,
@@ -117,4 +117,23 @@ test('menu, breadcrumb and title labels use nav.resource.<resourceCode>; a code 
   assert.equal(resourceLabel(t, { resourceCode: 'OPERATIONS_ACCOUNTS', displayName: '人员管理' }), 'Users');
   assert.equal(resourceLabel(t, { resourceCode: 'OPERATIONS_FINANCE_RECON', displayName: '对账' }), 'Reconciliation');
   assert.equal(resourceLabel(t, { resourceCode: 'OPERATIONS_NOT_YET_TRANSLATED', displayName: '新页面' }), '新页面');
+});
+
+test('币种页并入参考数据：两个菜单都有权限时只显示参考数据；只有币种权限时改写为参考数据（沿用位置）；旧地址跳到币种页签', () => {
+  const platform = resource('platform', { resourceCode: 'OPERATIONS_PLATFORM_CONFIGURATION', displayName: '平台配置' });
+  const currency = resource('currency', { parentResourceId: 'platform', resourceCode: 'OPERATIONS_CURRENCY_SPECS', displayName: '币种',
+    frontendRoute: '/currency-specs', componentKey: 'OPERATIONS_CURRENCY_SPECS', sortOrder: 70 });
+  const manage = resource('currency-manage', { parentResourceId: 'currency', resourceType: 'BUTTON', resourceCode: 'OPERATIONS_CURRENCY_SPEC_MANAGE' });
+  const referenceData = resource('refdata', { parentResourceId: 'platform', resourceCode: 'OPERATIONS_REFERENCE_DATA', displayName: '参考数据',
+    frontendRoute: '/reference-data', componentKey: 'OPERATIONS_REFERENCE_DATA', sortOrder: 95 });
+  const both = menuPages(buildMenuTree([platform, currency, manage, referenceData]));
+  assert.deepEqual(both.map(menu => [menu.resourceId, menu.frontendRoute]), [['refdata', '/reference-data']]);
+  const currencyOnly = menuPages(buildMenuTree([platform, currency, manage]));
+  assert.deepEqual(currencyOnly.map(menu => [menu.resourceId, menu.resourceCode, menu.componentKey, menu.frontendRoute, menu.sortOrder]),
+    [['currency', 'OPERATIONS_REFERENCE_DATA', 'OPERATIONS_REFERENCE_DATA', '/reference-data', 70]]);
+  assert.equal(resourceLabel(testT('nav'), currencyOnly[0]), 'Reference Data');
+  assert.deepEqual(menuPages(buildMenuTree([platform, referenceData])).map(menu => menu.resourceId), ['refdata']);
+  assert.deepEqual(mergeMenus([manage]), [manage], 'buttons are untouched');
+  assert.deepEqual(legacyRedirects(currencyOnly), [{ path: '/currency-specs', to: '/reference-data?tab=currencies' }]);
+  assert.deepEqual(legacyRedirects(menuPages(buildMenuTree([platform, audit]))), [], 'no redirect without the reference data page');
 });

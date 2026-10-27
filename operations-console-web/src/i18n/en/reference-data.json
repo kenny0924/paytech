@@ -64,7 +64,7 @@
   "reference-data.mcc.note": "MCCs are ISO 18245 standard data. Whether the platform allows an MCC, needs approval or assigns a risk level is configured in compliance and risk, not on this page.",
   "reference-data.mcc.search": "Search MCC prefix or name",
   "reference-data.mcc.summary": "{count, plural, one {# match} other {# matches}} (code prefix or English name)",
-  "reference-data.page.intro": "Countries, subdivisions, industries and MCCs shared by the whole platform. Platform maintains them through reviewed SQL; currencies are maintained on the Currencies page. Names follow the interface language and fall back to the English name when a translation is missing.",
+  "reference-data.page.intro": "Currencies, countries, subdivisions, industries and MCCs shared by the whole platform. Currencies can be maintained online; the other reference data is maintained through reviewed SQL. Names follow the interface language and fall back to the English name when a translation is missing.",
   "reference-data.page.readOnly": "Read-only · data from Platform",
   "reference-data.subdivision.column.category": "Category",
   "reference-data.subdivision.column.code": "Code",
@@ -78,6 +78,7 @@
   "reference-data.subdivision.hint": "The first batch covers AE, SA and EG; countries without subdivisions use a text box in onboarding addresses.",
   "reference-data.subdivision.search": "Search code or name",
   "reference-data.tab.countries": "Countries",
+  "reference-data.tab.currencies": "Currencies",
   "reference-data.tab.industries": "Industries",
   "reference-data.tab.mccs": "MCC",
   "reference-data.tab.subdivisions": "Subdivisions"

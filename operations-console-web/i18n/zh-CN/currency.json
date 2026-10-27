@@ -74,7 +74,7 @@
   "currency.specs.empty": "暂无币种",
   "currency.specs.filter": "{label} {count}",
   "currency.specs.footnote": "名称是 ISO 英文名（数据）；页面上的币种名称由前端按界面语言显示。没有图标的币种显示符号。",
-  "currency.specs.intro": "ISO 4217 币种的编码、名称、符号、精度与舍入方式。草稿可改全部属性；启用后标准属性冻结，只能更换图标；停用只拦新用途。",
+  "currency.specs.intro": "草稿可改全部属性；启用后标准属性冻结，只能更换图标；停用只拦新用途。",
   "currency.specs.loadFailed": "币种列表加载失败",
   "currency.specs.loading": "正在读取币种…",
   "currency.specs.selectHint": "选择一个币种查看详情",

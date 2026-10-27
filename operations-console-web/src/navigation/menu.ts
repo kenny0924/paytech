@@ -4,6 +4,38 @@ import type { Translate } from '../i18n/index.ts';
 
 import { pageCapabilities } from './pageCapabilities.ts';
 const componentRoutes: Record<string, string> = Object.fromEntries(pageCapabilities.map(page => [page.componentKey, page.frontendRoute]));
+const componentNames: Record<string, string> = Object.fromEntries(pageCapabilities.map(page => [page.componentKey, page.displayName]));
+
+/**
+ * 前端合并的页面：Platform 仍分别登记两个菜单资源与权限（注册数据不变），控制台只展示合并后的一个页面
+ * <li>币种页并入"参考数据"页（2026-10-27）：币种是第一个页签；任一菜单有权限就显示"参考数据"，旧地址跳到对应页签。</li>
+ */
+export const mergedPages = [
+  { from: 'OPERATIONS_CURRENCY_SPECS', into: 'OPERATIONS_REFERENCE_DATA', legacyRoute: '/currency-specs', target: '/reference-data?tab=currencies' },
+] as const;
+
+/**
+ * 按合并规则改写授权菜单：被并入的菜单不再单独出现；只有它有权限时，改写为目标页面（沿用其位置与排序）
+ * <li>按钮与其他资源不变，页面仍按原资源判断能看到的页签和可用动作。</li>
+ */
+export function mergeMenus(resources: ConsoleResource[]): ConsoleResource[] {
+  const menuWith = (componentKey: string) => resources.find(r => r.resourceType === 'MENU' && r.componentKey === componentKey);
+  let result = resources;
+  for (const merge of mergedPages) {
+    const from = menuWith(merge.from);
+    if (!from) continue;
+    result = menuWith(merge.into)
+      ? result.filter(r => r !== from)
+      : result.map(r => r !== from ? r : { ...r, resourceCode: merge.into, componentKey: merge.into, frontendRoute: componentRoutes[merge.into],
+        displayName: componentNames[merge.into] });
+  }
+  return result;
+}
+
+/** 已合并页面的旧地址 → 合并后页面的对应页签；只登记目标页面在授权菜单中的跳转。 */
+export function legacyRedirects(menus: readonly ConsoleResource[]): { path: string; to: string }[] {
+  return mergedPages.filter(merge => menus.some(menu => menu.componentKey === merge.into)).map(merge => ({ path: merge.legacyRoute, to: merge.target }));
+}
 
 export interface ConsoleMenu extends ConsoleResource { children: ConsoleMenu[] }
 
@@ -15,10 +47,10 @@ export function resourceLabel(t: Translate, resource: Pick<ConsoleResource, 'res
   return tOr(t, 'resource.' + resource.resourceCode, resource.displayName);
 }
 
-/** 只展示服务端授权资源及本地已部署页面，不补回缺失的父级或权限。 */
+/** 只展示服务端授权资源及本地已部署页面，不补回缺失的父级或权限；先按 mergedPages 合并页面。 */
 export function buildMenuTree(resources: ConsoleResource[]): ConsoleMenu[] {
   const siblings = new Map<string | null, ConsoleResource[]>();
-  for (const resource of resources) {
+  for (const resource of mergeMenus(resources)) {
     if (resource.resourceType !== 'MENU') continue;
     const group = siblings.get(resource.parentResourceId) ?? [];
     group.push(resource);

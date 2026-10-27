@@ -2,5 +2,17 @@
   "format": "code-mor-i18n-translation/1",
   "application": "operations-console",
   "locale": "zh-CN",
-  "namespaces": {}
+  "namespaces": {
+    "client-review": {
+      "client-review.config.catalog.openCurrencies": "在 平台配置 › 参考数据 › 币种 查看",
+      "client-review.config.catalog.platformNote.REF_CURRENCY": "选项为 Platform 中全部启用的币种，名称按界面语言显示。入驻目录中不保存这些项；币种在“参考数据”页的“币种”页签维护。"
+    },
+    "currency": {
+      "currency.specs.intro": "草稿可改全部属性；启用后标准属性冻结，只能更换图标；停用只拦新用途。"
+    },
+    "reference-data": {
+      "reference-data.page.intro": "全平台共用的币种、国家、行政区、行业与 MCC。币种可在线维护；其他参考数据通过评审过的 SQL 维护。名称按界面语言显示，翻译缺失时显示英文名。",
+      "reference-data.tab.currencies": "币种"
+    }
+  }
 }

@@ -1,0 +1,17 @@
+[通过] operations-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] operations-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[通过] operations-console 线上 10088 个 ACTIVE key 都在仓库中（否则 KEY_IMPORT 会废弃它们；确认废弃用 --accept-deprecations）
+[通过] operations-console 新增 1 < 3000
+[通过] operations-console 导入集合 5+ 个 key 都有仓库 zh-CN（缺 0）
+{"currentRelease": 13, "liveNamespaces": 26, "repoNamespaces": 26, "newNamespaces": [], "repoKeys": 10089, "liveActiveKeys": 10088, "added": 1, "restored": 0, "sourceChanged": 4, "missingInRepo": 0, "zhMissingForImport": 0, "keepLiveZh": 10084, "refdataZhReplaced": 0, "liveOutdatedZh": 0, "rebaseExpected": 0, "outdatedUntouched": 0}
+导入文件与计划：/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/platform-support-参考数据目录与client-master迁移/release/i18n-bundles
+[通过] operations-console key 导入预览（第 1 次）：{'added': 1, 'sourceChanged': 4, 'deprecated': 0, 'restored': 0}
+[通过] operations-console key 导入预览（第 2 次）：{'added': 0, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}
+[通过] operations-console key 与仓库一致（10089 个不变）
+[通过] operations-console zh-CN 导入：写入 5、不变 0（文件 5）
+[通过] operations-console 导入集合外的 10084 条已有 zh-CN 文案与版本未变
+[通过] operations-console 新增 1 个 key ACTIVE 且有 zh-CN
+[通过] operations-console 没有基准已变更待确认的 zh-CN
+[通过] operations-console 预检可发布（缺口 0，下一发布号 14，新增 1、废弃 0、基准变更 4）
+[失败] operations-console 发布 #None（504） | {"type": "about:blank", "title": "Gateway Timeout", "detail": "依赖服务响应超时，请稍后重试", "code": "DEPENDENCY_TIMEOUT", "requestId": "ac159460-93a8-4b78-b7b3-f7553a9e9d1e", "timestamp": "2026-10-27T17:13:00.098435Z"}
+运行记录： /Users/kenny/Code-MoR-backups/refdata-20261027-i18n/refdata-bundles-2026-10-27T171239Z.json

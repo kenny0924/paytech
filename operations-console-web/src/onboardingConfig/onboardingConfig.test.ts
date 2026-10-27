@@ -90,6 +90,6 @@ test('catalog sources: REF_ catalogs come from Platform reference data and link 
   assert.deepEqual(withAddress.map(u => [u.catalogCode, u.fieldKeys]), [['REF_CURRENCY', ['business.currency']],
     ['REF_COUNTRY_SUBDIVISION', ['address.stateOrProvince (AE_POBOX)']]], 'address-format components list their catalogs too (prototype 09)');
   assert.equal(referenceCatalogHref('REF_COUNTRY_SUBDIVISION', 'AE'), '/reference-data?tab=subdivisions&country=AE');
-  assert.equal(referenceCatalogHref('REF_CURRENCY', 'AE'), '/currency-specs');
+  assert.equal(referenceCatalogHref('REF_CURRENCY', 'AE'), '/reference-data?tab=currencies');
   assert.equal(referenceCatalogHref('BUSINESS_MODEL', 'AE'), null);
 });

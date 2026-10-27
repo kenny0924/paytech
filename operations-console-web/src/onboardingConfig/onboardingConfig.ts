@@ -192,9 +192,9 @@ export function catalogUsages(schemas: readonly OnboardingSchema[], jurisdiction
     fieldKeys: [...new Set(references.filter(r => r.catalogCode === catalogCode).map(r => r.fieldKey))] }));
 }
 
-/** Platform 参考数据目录的查看位置：行政区在"参考数据"页（按辖区国家），币种在"币种"页；其他目录没有。 */
+/** Platform 参考数据目录的查看位置："参考数据"页的对应页签（行政区按辖区国家，币种在币种页签）；其他目录没有。 */
 export function referenceCatalogHref(catalogCode: string, countryCode: string | null): string | null {
   if (catalogCode === 'REF_COUNTRY_SUBDIVISION') return `/reference-data?${new URLSearchParams({ tab: 'subdivisions', ...(countryCode ? { country: countryCode } : {}) })}`;
-  if (catalogCode === 'REF_CURRENCY') return '/currency-specs';
+  if (catalogCode === 'REF_CURRENCY') return '/reference-data?tab=currencies';
   return catalogSource(catalogCode) === 'PLATFORM' ? '/reference-data' : null;
 }

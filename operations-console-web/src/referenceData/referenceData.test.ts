@@ -6,7 +6,7 @@ import { testT } from '../i18n/testing.ts';
 import { pageCapabilities } from '../navigation/pageCapabilities.ts';
 import {
   countryName, currencyName, decodeCountries, industryDescription, decodeIndustries, decodeIndustryCategory, decodeMccPage, decodeSubdivisions, industryTree,
-  matchesKeyword, mccQuery, mccUsage, refdataName, referenceDataPaths, referenceDataRoute, shortFileAddress, subdivisionCountries, untranslated,
+  matchesKeyword, mccQuery, mccUsage, refdataName, referenceDataPaths, referenceDataRoute, referenceDataTabs, shortFileAddress, subdivisionCountries, untranslated,
 } from './referenceData.ts';
 import type { RefIndustry } from './referenceData.ts';
 
@@ -106,4 +106,14 @@ test('labels: statuses, levels and subdivision categories use the reference-data
   assert.equal(enumLabel(t, 'enum.subdivisionCategory', 'GOVERNORATE'), 'Governorate (GOVERNORATE)');
   assert.equal(enumLabel(t, 'enum.subdivisionCategory', 'PROVINCE'), 'PROVINCE');
   assert.equal(t('country.summary', { count: 249 }), '249 countries · sorted by name');
+});
+
+test('tabs by authorization: currency first with the currency menu, the four data tabs with the reference data menu', () => {
+  const menu = (componentKey: string) => ({ resourceType: 'MENU', componentKey });
+  const button = { resourceType: 'BUTTON', componentKey: null };
+  assert.deepEqual(referenceDataTabs([menu('OPERATIONS_CURRENCY_SPECS'), menu('OPERATIONS_REFERENCE_DATA')]),
+    ['currencies', 'countries', 'subdivisions', 'industries', 'mccs']);
+  assert.deepEqual(referenceDataTabs([menu('OPERATIONS_CURRENCY_SPECS'), button]), ['currencies'], 'currency-only user sees only the currency tab');
+  assert.deepEqual(referenceDataTabs([menu('OPERATIONS_REFERENCE_DATA')]), ['countries', 'subdivisions', 'industries', 'mccs']);
+  assert.deepEqual(referenceDataTabs([]), []);
 });
