@@ -11,7 +11,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.client.contract.api.enums.ClientDraftErrorCode;
-import com.paytech.client.master.domain.enums.PartyRelationType;
 import com.paytech.client.master.test.base.onboarding.AbstractSubmissionApiTest;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ApplicationFixture;
 
@@ -38,7 +37,7 @@ class OnboardingDuplicateWriteTest extends AbstractSubmissionApiTest {
     @Test
     void test_createSameRelation() {
         var app = applications.organization(ACCOUNT_ID);
-        var person = applications.person(app, PartyRelationType.UBO.getCode());
+        var person = applications.person(app, "UBO");
 
         var same = createRelation(app, person.partyId(), "40");
 
@@ -57,7 +56,7 @@ class OnboardingDuplicateWriteTest extends AbstractSubmissionApiTest {
     @Test
     void test_removeRelationTwice() {
         var app = applications.organization(ACCOUNT_ID);
-        var person = applications.person(app, PartyRelationType.UBO.getCode());
+        var person = applications.person(app, "UBO");
 
         assertEquals(204, removeRelation(app, person.relationId()).getStatus().value());
         assertEquals(204, removeRelation(app, person.relationId()).getStatus().value());
@@ -94,7 +93,7 @@ class OnboardingDuplicateWriteTest extends AbstractSubmissionApiTest {
     EntityExchangeResult<byte[]> createRelation(ApplicationFixture app, long partyId, String ownership) {
         Map<String, String> relation = new HashMap<>();
         relation.put("relatedPartyId", Long.toString(partyId));
-        relation.put("relationType", PartyRelationType.UBO.getCode());
+        relation.put("relationType", "UBO");
         relation.put("ownershipPercentage", ownership);
         relation.put("effectiveFrom", "2024-01-01");
         relation.put("effectiveTo", null);

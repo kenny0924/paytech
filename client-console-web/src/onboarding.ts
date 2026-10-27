@@ -1,145 +1,12 @@
 import { RequestFailure } from "./auth.ts";
 import type { ApiOptions, ApiRequest } from "./auth.ts";
-import { enterableWorkspace } from "./workspace.ts";
-import type { Workspaces } from "./workspace.ts";
 import { translator } from "./i18n/index.ts";
 
 const to = translator("onboarding");
+/** 草稿分区值：`{分区: {字段: 值}}`；null 表示清空。 */
 export type Values = Record<string, Record<string, string | null>>;
 export type Flat = Record<string, string>;
-export type Requirement = {
-  requirementCode: string;
-  documentType: string;
-  requiredFlag: boolean;
-};
-export type FileInfo = {
-  fileId: string;
-  fileAddress: string;
-  displayName: string;
-  sizeBytes: string;
-  mimeType: string;
-  scanStatus: string;
-  objectStatus: string;
-  allowedActions: string[];
-};
-export type Relation = {
-  relationId: string;
-  relatedPartyId: string;
-  relationType: string;
-  ownershipPercentage: string | null;
-  effectiveFrom: string;
-  effectiveTo: string | null;
-  status: string;
-  editable: boolean;
-};
-export type Person = { partyId: string; editable: boolean; values: Values };
-export type Application = {
-  applicationId: string;
-  applicationNo: string;
-  clientId?: string;
-  subjectPartyId: string;
-  clientType: "INDIVIDUAL" | "ORGANIZATION";
-  status: string;
-  savedAt: string;
-  editable: boolean;
-  values: Values;
-  people: Person[];
-  relations: Relation[];
-  documents: {
-    documentId: string;
-    subjectPartyId: string;
-    fileId: string;
-    fileAddress: string;
-    requirementCode: string;
-    documentType: string;
-    subjectInScope: boolean;
-    fileStatus: string;
-    file: FileInfo | null;
-  }[];
-  materialSubjects: {
-    subjectPartyId: string;
-    requirementsStatus: string;
-    requirements: Requirement[];
-  }[];
-  reviewStatus?: "NONE" | "AVAILABLE" | "UNAVAILABLE";
-  review?: ReviewResult | null;
-};
-/** 最近一次审核的客户可见结果；内部理由不会返回到页面。 */
-export type ReviewResult = {
-  outcome: "RETURNED" | "APPROVED" | "REJECTED";
-  returnSection: "BASIC" | "BUSINESS" | "PEOPLE" | "MATERIALS" | null;
-  publicNote: string | null;
-  decidedAt: string | null;
-};
-/** 退回分区对应的页面位置；分区名称在 `onboarding.section.*`。 */
-export const returnSections: Record<string, { section: string; anchor: string }> = {
-  BASIC: { section: "basic", anchor: "profile" },
-  BUSINESS: { section: "business", anchor: "business" },
-  PEOPLE: { section: "people", anchor: "people" },
-  MATERIALS: { section: "materials", anchor: "materials" },
-};
-export type ResultBanner = {
-  tone: "warning" | "success" | "error" | "info";
-  title: string;
-  lines: string[];
-  anchor: string | null;
-  /** 审核通过且工作区已可访问时，可直接进入的成员；否则为空。 */
-  enterMemberId?: string | null;
-};
-/**
- * 审核结果提示；只用 CCT 状态与 Risk 公开说明，工作区是否可进入只看服务端返回的工作区状态
- * <li>结果读取失败时给出通用说明，不把未知错误当成审核原因。</li>
- */
-export function resultBanner(app: Pick<Application, "status" | "reviewStatus" | "review" | "clientId">,
-  workspaces: Workspaces | null = null): ResultBanner | null {
-  const review = app.reviewStatus === "AVAILABLE" && app.review?.outcome === app.status ? app.review : null;
-  const note = review?.publicNote?.trim() || null;
-  const unavailable = to("review.unavailable");
-  if (app.status === "RETURNED") {
-    const section = review?.returnSection ? returnSections[review.returnSection] : undefined;
-    return {
-      tone: "warning",
-      title: to("review.returned_title"),
-      lines: [
-        ...(section ? [to("review.returned_section", { section: to("section." + section.section) })] : []),
-        ...(note ? [note] : review ? [] : [unavailable]),
-        to("review.resubmit_hint"),
-      ],
-      anchor: section?.anchor ?? null,
-    };
-  }
-  if (app.status === "APPROVED") {
-    const entry = enterableWorkspace(app.clientId, workspaces);
-    return {
-      tone: "success",
-      title: to("review.approved_title"),
-      lines: [...(note ? [note] : []), entry ? to("review.workspace_ready") : to("review.workspace_pending")],
-      anchor: null,
-      enterMemberId: entry?.memberId ?? null,
-    };
-  }
-  if (app.status === "REJECTED") {
-    return {
-      tone: "error",
-      title: to("review.rejected_title"),
-      lines: [note ?? (review ? to("review.contact_support") : unavailable), to("review.rejected_final")],
-      anchor: null,
-    };
-  }
-  return null;
-}
-export type Start = {
-  workspaces?: unknown;
-  applications: {
-    applicationId: string;
-    applicationNo: string;
-    clientType: string;
-    status: string;
-    active: boolean;
-  }[];
-  activeApplicationId: string | null;
-  hasMore: boolean;
-};
+type FileInfo = { fileId: string; scanStatus: string; objectStatus: string };
 export const base = "/onboarding/v1/applications";
 export const files = "/onboarding-files/v1";
 export function flatten(values: Values): Flat {
@@ -167,7 +34,8 @@ export function patch(before: Flat, after: Flat) {
   );
   const values: Values = {};
   for (const key of dirtyFields) {
-    const [group, field] = key.split(".");
+    const index = key.lastIndexOf(".");
+    const group = key.slice(0, index), field = key.slice(index + 1);
     (values[group] ??= {})[field] = after[key].trim() || null;
   }
   return { dirtyFields, values };
@@ -204,6 +72,9 @@ export type Upload = {
   completeKey: string;
   associateKey: string;
   phase: "PUT" | "COMPLETE" | "SCAN" | "ASSOCIATE" | "DONE";
+  /** 材料签发日期 / 到期日（YYYY-MM-DD），关联时随引用提交；未填写为空。 */
+  issueDate?: string;
+  expiryDate?: string;
   uploadId?: string;
   fileId?: string;
   fileAddress?: string;
@@ -245,6 +116,7 @@ const id = (value: unknown): value is string =>
 // 文件服务签发的稳定地址只能对应同一文件 ID；关联材料时原样提交。
 const fileAddress = (value: unknown, fileId: string): value is string =>
   value === "/files/v1/" + fileId;
+const isDate = (value: unknown): value is string => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 // 只在文件成功传输后持久化无敏感内容的恢复坐标；临时 URL、文件名、字节与资料永不落浏览器存储。
 export function readCheckpoint(
   raw: string | null,
@@ -287,6 +159,8 @@ export function readCheckpoint(
       associateKey: value.associateKey,
       phase: value.phase,
       uploadId: value.uploadId,
+      ...(isDate(value.issueDate) ? { issueDate: value.issueDate } : {}),
+      ...(isDate(value.expiryDate) ? { expiryDate: value.expiryDate } : {}),
       ...(value.fileId
         ? { fileId: value.fileId, fileAddress: value.fileAddress }
         : {}),
@@ -387,6 +261,8 @@ export async function runUpload(
         requirementCode: state.requirementCode,
         documentType: state.documentType,
         fileAddress: state.fileAddress,
+        ...(state.issueDate ? { issueDate: state.issueDate } : {}),
+        ...(state.expiryDate ? { expiryDate: state.expiryDate } : {}),
       },
     });
     state.phase = "DONE";

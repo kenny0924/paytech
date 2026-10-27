@@ -4,7 +4,7 @@
 
 ## 0. 按服务归属
 
-- 尽调、筛查与资格（20）：`t_dd_case_classification`、`t_dd_case_dependency`、`t_dd_case_state_change`、`t_dd_case_subject`、`t_dd_check`、`t_dd_evidence_ref`、`t_dd_party_snapshot`、`t_dd_program`、`t_dd_program_check`、`t_dd_program_requirement`、`t_dd_program_screening`、`t_dd_program_version`、`t_dd_requirement`、`t_due_diligence_case`、`t_qualification_decision`、`t_qualification_state_change`、`t_role_qualification`、`t_screening_hit`、`t_screening_resolution`、`t_screening_run`。
+- 尽调、筛查与资格（24，2026-10-27 起）：`t_dd_case_classification`、`t_dd_case_dependency`、`t_dd_case_state_change`、`t_dd_case_subject`、`t_dd_check`、`t_dd_evidence_ref`、`t_dd_party_snapshot`、`t_dd_program`、`t_dd_program_check`、`t_dd_program_requirement`、`t_dd_program_requirement_doc_type`、`t_dd_program_screening`、`t_dd_program_version`、`t_dd_requirement`、`t_dd_return_error`、`t_dd_risk_factor`、`t_due_diligence_case`、`t_qualification_decision`、`t_qualification_state_change`、`t_role_qualification`、`t_screening_hit`、`t_screening_hit_list`、`t_screening_resolution`、`t_screening_run`。
 - 结算控制（3，C3 已定：合规持有，D38）：`t_settlement_control`、`t_settlement_control_scope`、`t_settle_control_state_change`。代码尚未实现；创建经 `POST /compliance/v1/settlement-controls`（幂等键 `sourceActionEffectId`），读取经 `GET /compliance/v1/settlement-controls?ownerType=&ownerId=&status=ACTIVE`，状态变化发布 `SettlementRestrictionChanged`（design/07 §2）。
 - 每库一份：`t_compensation_event`。
 - 跨库只存 ID、不建模关系：`t_qualification_decision.decision_evaluation_id`、`t_settlement_control.source_action_effect_id`、`t_settle_control_state_change.trigger_type=ACTION_EFFECT` 的 `trigger_id`（均指向 risk-decision，design/07 §3）。
@@ -71,4 +71,23 @@ PRIMARY Eligibility 在 MySQL InnoDB `REPEATABLE READ` 下通过 `(role_type,rol
 - `t_role_qualification` 写入：一个本地事务内插入决定 → 无行时插入 version 1、有行时 `WHERE qualification_id=? AND version=?` 条件切换（影响行数 ≠ 1 或 `uk_role_qualification` 冲突即 409 `QUALIFICATION_CHANGED`）→ 追加 `t_qualification_state_change`（`aggregate_version` = 新版本，`trigger_id` = 决定 ID）。本期不安排持续复审：APPROVED 为 `NOT_REQUIRED`，REJECTED / REVOKED 为 `COMPLETED`，`review_frequency_code` 与 `next_review_time` 置空（满足 `ck_role_qual_review`）；撤销把 `valid_to` 置为撤销时间。
 - 入驻审核：O08 通过在同一事务为主案件 upsert CLIENT 资格（`trigger_type=OPERATIONS_REVIEW`）；O09 拒绝仅把已有 APPROVED 资格切换为 REJECTED；RELATED_PERSON 子案件不投影。存量已通过的 Client 由回填脚本建立（`trigger_type=BACKFILL`，`qualification_id = change_id = decision_id`）。
 - 判定（`POST /compliance/v1/qualifications/evaluations`、Admin 列表的 `effectiveStatus`）按查询时间实时计算 `EXPIRED`（APPROVED 且 `valid_to ≤ now`，或 status=EXPIRED）与 `NOT_YET_VALID`（`valid_from > now`），不依赖定时任务；资格合格的 Client 再按 `idx_settle_control_role` 只读检查 ACTIVE 且在生效期的 `SETTLEMENT_BLOCK`。
-- 表数不变（25）。
+- 表数不变（25）。（2026-10-27 起见 10.4。）
+
+### 10.4 全球合规入驻与资格 · 切片 1（2026-10-27）
+
+> 依据：[technique.md](../../../../requirements/20261027/client-master-全球合规入驻与资格切片1/technique.md) 第 1.4（S-01、S-05、S-13、S-14、S-16）、2.2、2.3 节与 [design.md](../../../../design-discuss/client-onboarding/design.md) 第 6.1、7.3—7.5、10.2 节；增量 SQL 见 [sql/changes/2026-10-27-onboarding-global.sql](./sql/changes/2026-10-27-onboarding-global.sql)，在途数据清理见 [sql/changes/2026-10-27-onboarding-global-cleanup.sql](./sql/changes/2026-10-27-onboarding-global-cleanup.sql)，初始化 DML 见 [sql/compliance-initial-data.sql](./sql/compliance-initial-data.sql)。
+
+- **存量保留、在途清理**（发布决策 P-8，2026-10-27 主会话）：增量 SQL 不 DROP 表，按"ADD（NOT NULL 新列带临时默认值）→ 回填 → MODIFY 为最终定义"迁移，执行后结构与 `compliance-schema.sql` 一致；旧通用程序回填范围后置 RETIRED（不再被解析，已批准旧案件仍可回读冻结版本），旧案件 `jurisdiction_code=LEGACY`、`tier=STANDARD`、`round_no=1`，旧证据 `file_address=/files/v1/{file_id}`。随后由 [清理 SQL](./sql/changes/2026-10-27-onboarding-global-cleanup.sql) 删除主案件非 APPROVED 的整个案件族及其子行、关联资格决定 / 角色资格与补偿任务；APPROVED 案件族、MANUAL 决定与其资格保留。
+- **程序辖区化**：`t_dd_program` 增 `jurisdiction_code`（NULL=全局）、`party_type`、`role_type`、`tier`、`owner_partner_id`（NULL=平台）。解析按（主体类型，角色，档次）取 ACTIVE 候选，优先级 Owner 定制 &gt; 平台、辖区精确 &gt; 全局；同级多个、没有候选或版本未批准（`approved_by` 为空或 `approved_time` 晚于当前）一律 503，不回退。设计中的 `priority_no` 未建：精确度已完全决定优先级，同级歧义按配置错误失败关闭。`program_code` 唯一键保留。
+- `t_dd_program_version` 删除 `review_frequency_code` 与 `content_hash`（无读取方），增 `review_interval_months`、`four_eyes_required`；`auto_approve_allowed`、`medium/high_threshold` 属 S4 自动评级，未建。
+- 材料槽允许类型拆子表 `t_dd_program_requirement_doc_type`（一类型一行），`t_dd_program_requirement.document_type` 删除；证据保存实际提交的 `document_type`。`subject_role` 本期只用 PRIMARY（关联人员材料由 RELATED_PERSON 角色程序给出）。
+- **重提为新案件串联（S-01）**：退回关案（RETURNED 释放 `active_slot`，`uk_dd_case_source` / `uk_dd_case_active` 不变），重提以新 `source_submission_id` 新建案件，`round_no` 加 1、`previous_case_id` 指向上一轮同级案件；上一轮 ACCEPTED 材料（同文件同摘要或本轮未提交该槽时复制）与 `valid_until` 晚于当前的 PASS 检查复制到新案件并记 `reused_from_case_id`；筛查与评级不复用。RETURNED 案件在补件期限内可撤回，期限已过由扫描置 EXPIRED（`idx_dd_case_due`），已有后继（`idx_dd_case_previous`）的不再迁移。
+- 案件状态枚举增加 `PENDING_DEPENDENCY`；本期子案件随主案件一起决定，`WAITING_EVIDENCE`、`PENDING_DEPENDENCY`、`DRAFT` 不写入。首个审核命令把 SUBMITTED 推进为 IN_REVIEW（`START_REVIEW` 状态变更）；所有审核命令以主案件版本 CAS 串行。
+- **退回需求级错误**：新表 `t_dd_return_error`（按主案件、`sequence_no` 有序），`review_due_time` 为补件期限；`return_section` 保留一版兼容。
+- **检查**：`t_dd_check` 重建为案件级（`case_id`、`check_mode`、`status`、`outcome`、录入人、有效截止、复用来源、操作方）；本期只有 MANUAL，`provider_code=MANUAL`、`request_ref`=检查 ID。`result_code` / `result_vault_token` 删除（无自动检查）。
+- **筛查**：`t_screening_run` 增 `case_id`、`trigger_source`、`trigger_ref`、`execution_ref`；一次执行只对应一个筛查类型。命中不保存实体姓名（compliance 本切片不调 Vault，`name_vault_token` 删除），只存外部引用、实体类型、首个匹配方式、分数与风险等级；名单类型拆子表 `t_screening_hit_list`。新执行成功时把同主体同模板其他执行的 OPEN / RESOLVED 命中置 SUPERSEDED。处置枚举改为 NO_MATCH / FALSE_POSITIVE / POTENTIAL_MATCH / TRUE_POSITIVE_ACCEPT / TRUE_POSITIVE_REJECT / INSUFFICIENT_EVIDENCE，后两类与 POTENTIAL_MATCH 不关闭命中；证据文件列删除（无入口）。设计中的 `search_term_vault_token`、`whitelisted_flag` 未建（无消费者）。
+- **CRR**：`t_due_diligence_case` 增评级、说明、评级人与时间；`t_dd_risk_factor` 以（案件，因子代码，取值）唯一，手工评级整体替换 REVIEWER 因子，`score` 留给 S4。改评级清空推荐。
+- **四眼与冻结**：案件增推荐结论、理由、推荐人与时间；决定增 `tier`、`risk_rating`、`jurisdiction_code`、`responsible_partner_id`、`recommended_by/time`、`four_eyes_waived`、`operated_by`、`on_behalf_of_partner_id`；资格投影增同名冻结列及 `review_interval_months`、`last_review_time`，批准且有间隔时 `review_status=ACTIVE`、`next_review_time`=决定时间加间隔（本期只登记，不触发复审）。
+- **代操作（S-05）**：案件、状态变更、检查、处置与决定记 `operated_by=PLATFORM` 与 `on_behalf_of_partner_id`；决定人仍为运营账号。
+- `t_dd_case_dependency.dependency_type` 增 `RELATED_PERSON_KYC`：关系类型目录中五个种子之外的关系（例如 ZZ 自定义关系）统一归入，不改代码。
+- 表数：Schema/PDManer 28，测试 DDL 与运行库 29（含 `t_consumed_event`）。

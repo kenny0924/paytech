@@ -1,0 +1,693 @@
+{
+ "env": "local",
+ "startedAt": "2026-10-27T03:54:14.308947+00:00",
+ "finishedAt": "2026-10-27T03:55:22.321298+00:00",
+ "summary": {
+  "PASS": 105,
+  "FAIL": 0,
+  "SKIP": 0,
+  "INFO": 0
+ },
+ "ids": {
+  "reviewerAccountId": "240674286610681856",
+  "reviewerRoleId": "240674285423693824",
+  "clientAAccountId": "240684493860507648",
+  "clientAEmail": "onb-a-1027035414@example.test",
+  "responsiblePartnerId": "900000000001370001",
+  "onboardingCodeId": "240684545043607552",
+  "onboardingCodeSingleUseId": "240684545303654400",
+  "clientBAccountId": "240684546775846912",
+  "clientBEmail": "onb-b-1027035414@example.test",
+  "appB": "240684591583604736",
+  "caseB1": "240684676480520192",
+  "caseB2": "240684739692875776"
+ },
+ "results": [
+  {
+   "ac": "SETUP",
+   "step": "运营 A（管理员）登录",
+   "verdict": "PASS",
+   "evidence": "accountId=None"
+  },
+  {
+   "ac": "SETUP",
+   "step": "复核人 B 登录（复用已建的合成复核人）",
+   "verdict": "PASS",
+   "evidence": "accountId=240674286610681856"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 注册",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 验证链接",
+   "verdict": "PASS",
+   "evidence": "source=minted challengeNo=f70fc031-1b78-419a-ad48-89d433f5172c"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 邮箱验证",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 登录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：辖区包",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 jurisdictions=['AE', 'EG', 'SA']"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：AE Schema",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 schemas=[('9270000000700003', 'INDIVIDUAL', '*', 'ACTIVE', 28), ('9270000000700004', 'INDIVIDUAL', 'SOLE_ESTABLISHMENT', 'ACTIVE', 31), ('9270000000700001', 'ORGANIZATION', '*', 'ACTIVE', 39), ('9270000000700002', 'ORGANIZATION', 'FZ_LLC', 'ACTIVE', 40)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：AE 尽调程序",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 programs=[('AE_CLIENT_INDIVIDUAL_STANDARD', 'ACTIVE', True), ('AE_CLIENT_ORGANIZATION_STANDARD', 'ACTIVE', True), ('AE_RELATED_PERSON_STANDARD', 'ACTIVE', True)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：SA Schema",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 schemas=[('9270000000700006', 'INDIVIDUAL', '*', 'ACTIVE', 29), ('9270000000700005', 'ORGANIZATION', '*', 'ACTIVE', 41)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：SA 尽调程序",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 programs=[('SA_CLIENT_INDIVIDUAL_STANDARD', 'ACTIVE', True), ('SA_CLIENT_ORGANIZATION_STANDARD', 'ACTIVE', True), ('SA_RELATED_PERSON_STANDARD', 'ACTIVE', True)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：EG Schema",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 schemas=[('9270000000700008', 'INDIVIDUAL', '*', 'ACTIVE', 28), ('9270000000700007', 'ORGANIZATION', '*', 'ACTIVE', 39)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：EG 尽调程序",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 programs=[('EG_CLIENT_INDIVIDUAL_STANDARD', 'ACTIVE', True), ('EG_CLIENT_ORGANIZATION_STANDARD', 'ACTIVE', True), ('EG_RELATED_PERSON_STANDARD', 'ACTIVE', True)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：目录项（EG 省）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 count=27"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 Client 列表",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 total=6"
+  },
+  {
+   "ac": "AC-04",
+   "step": "运营 可签发入驻码的 PayFac（OE_PROVIDER）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 partners=[('900000000001370001', 'LP-PAYFAC-AE001', 'ACTIVE')]"
+  },
+  {
+   "ac": "AC-04",
+   "step": "签发入驻码：明文只在签发响应出现一次、格式 XXXX-XXXX、掩码末 4 位",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 codeId=240684545043607552 codeMasked=****-76QB status=ACTIVE"
+  },
+  {
+   "ac": "AC-04",
+   "step": "签发一次性入驻码（maxUses=1）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 codeId=240684545303654400"
+  },
+  {
+   "ac": "AC-04",
+   "step": "作废入驻码 → REVOKED，作废结果无明文",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 codeId=240684545555312640 status=REVOKED codeMasked=****-YGWR"
+  },
+  {
+   "ac": "AC-04",
+   "step": "签发已过有效期的入驻码（用于过期校验）",
+   "verdict": "PASS",
+   "evidence": "codeId=240684545991520256"
+  },
+  {
+   "ac": "AC-04",
+   "step": "入驻码列表只含掩码（无任何明文）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 items=16 mine=[('240684545043607552', '****-76QB', 'ACTIVE', 0)]"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client B 注册",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client B 验证链接",
+   "verdict": "PASS",
+   "evidence": "source=minted challengeNo=e23acc1e-37ef-4f8a-b804-895590ceefeb"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client B 邮箱验证",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client B 登录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-04",
+   "step": "B 创建申请（AE ORGANIZATION LLC）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 applicationId=240684591583604736 operation=CREATED "
+  },
+  {
+   "ac": "AC-07",
+   "step": "B 使用一次性入驻码创建",
+   "verdict": "PASS",
+   "evidence": "{\"commandId\": null, \"applicationId\": \"240684591583604736\", \"applicationNo\": \"CA-240684591583604736\", \"clientId\": \"240684591583604737\", \"clientType\": \"ORGANIZATION\", \"operation\": \"CREATED\", \"completedAt\": \"2026-10-27T03:54:38.334477Z\"}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B 主主体 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=20 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B UBO1 新增关系人（UBO）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 partyId=240684594813218816 relationId=240684594863550464 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B UBO1 追加关系（DIRECTOR）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 relationId=240684595060682752 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B UBO1 追加关系（SIGNATORY）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 relationId=240684595236843520 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B UBO2 新增关系人（UBO）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 partyId=240684595522056192 relationId=240684595559804928 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 B-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT B-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 B-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240684597052968960"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 B-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240684597052968960"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 B-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240684610768351232 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 B-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT B-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 B-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240684611280048128"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 B-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240684611280048128"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 B-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240684624458559488 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 B-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT B-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 B-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240684625205137408"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 B-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240684625205137408"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 B-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240684639788740608 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 B-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT B-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 B-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240684641328041984"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 B-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240684641328041984"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 B-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240684655173447680 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 B-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT B-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 B-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240684656532393984"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 B-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240684656532393984"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 B-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240684670541377536 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 OWNERSHIP_COMPLETE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240684671074054144 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 DIRECTORSHIP_COMPLETE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240684671665451008 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 REPRESENTATIVE_AUTHORITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240684672214904832 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 PEP_DECLARATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240684672835661824 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 INFORMATION_TRUE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240684673489973248 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 PLATFORM_TERMS",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240684673934569472 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B 提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 ready=True errors=[]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B 提交",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 submissionId=54e592f6-b717-401a-955b-1a6ab6774ab9 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B 进入审核",
+   "verdict": "PASS",
+   "evidence": "status=UNDER_REVIEW"
+  },
+  {
+   "ac": "AC-07",
+   "step": "审核中撤回 → 409 APPLICATION_NOT_WITHDRAWABLE",
+   "verdict": "PASS",
+   "evidence": "HTTP 409 {'code': 'APPLICATION_NOT_WITHDRAWABLE', 'detail': '当前申请状态不能撤回', 'requestId': '4b761168-aa2b-4be7-858c-cd44d896bd75'}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B 案件出现",
+   "verdict": "PASS",
+   "evidence": "applicationId=240684591583604736"
+  },
+  {
+   "ac": "AC-13",
+   "step": "TESTHIT 关系人产生 PEP 命中（OPEN）",
+   "verdict": "PASS",
+   "evidence": "hits=[('240684679466864640', '240684676535046144', ['PEP'], 'OPEN', 'MEDIUM'), ('240684679236177920', '240684676535046144', ['PEP'], 'OPEN', 'MEDIUM'), ('240684678950965248', '240684676535046144', ['PEP'], 'OPEN', 'MEDIUM')]"
+  },
+  {
+   "ac": "AC-06",
+   "step": "有 OPEN 命中 / 必需材料未接受时批准被拒",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'CLIENT_REVIEW_NOT_READY', 'detail': '审核尚未满足通过条件', 'requestId': '0de75b27-7537-4f50-a344-885c2e3db859'} blockers=['EVIDENCE_PENDING', 'REQUIRED_MATERIAL_NOT_ACCEPTED', 'CLASSIFICATION_NOT_RECEIVED', 'CHECK_NOT_PASSED', 'SCREENING_HIT_OPEN', 'RISK_RATING_MISSING', 'RECOMMENDATION_MISSING']"
+  },
+  {
+   "ac": "AC-06",
+   "step": "命中处置 FALSE_POSITIVE（hit 240684679466864640）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "命中处置 FALSE_POSITIVE（hit 240684679236177920）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "命中处置 FALSE_POSITIVE（hit 240684678950965248）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "B1 材料拒绝 BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=240684676480520197 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "B1 材料接受 ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=240684676480520200 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "B1 材料接受 REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=240684676480520203 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "B1 材料接受 IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=240684676535046147 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "B1 材料接受 IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=240684676535046156 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "B1 人工检查 MANUAL_SCREENING PASS（case 240684676480520192）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=240684676480520205 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "B1 人工检查 TERMINATED_MERCHANT_LOOKUP PASS（case 240684676480520192）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=240684676480520206 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "B1 人工检查 WEBSITE_REVIEW PASS（case 240684676480520192）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=240684676480520207 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "B1 人工检查 MANUAL_SCREENING PASS（case 240684676535046144）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=240684676535046148 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "B1 人工检查 MANUAL_SCREENING PASS（case 240684676535046153）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=240684676535046157 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "材料拒绝记原因码",
+   "verdict": "PASS",
+   "evidence": "[('BANK', 'REJECTED', 'DOCUMENT_UNREADABLE'), ('ONLINE_PRESENCE', 'ACCEPTED', None), ('REGISTRATION', 'ACCEPTED', None), ('IDENTITY', 'ACCEPTED', None), ('IDENTITY', 'ACCEPTED', None)]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "退回带需求级 errors[] 与 dueDays",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "Client 收到需求级 errors[] 与期限",
+   "verdict": "PASS",
+   "evidence": "status=RETURNED roundNo=1 dueTime=2026-11-03T03:55:04.571862Z errors=[{'requirementKey': 'document.BANK', 'subjectPartyId': '240684591583604738', 'code': 'DOCUMENT_UNREADABLE', 'reason': 'Bank letter is not readable, please upload a clear copy.', 'remediation': 'UPLOAD_DOCUMENT', 'dueTime': '2026-11-03T03:55:04.571862Z'}]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "需求清单的退回项带 dueTime（B3）：document.BANK 恰一条、审核员错误码、CLIENT 待办、期限 = 案件期限",
+   "verdict": "PASS",
+   "evidence": "bank=[('DOCUMENT_UNREADABLE', 'UPLOAD_DOCUMENT', 'CLIENT', 'CURRENTLY_DUE', '2026-11-03T03:55:04.571862Z')] caseDueTime=2026-11-03T03:55:04.571862Z allDue=[('document.BANK', '2026-11-03T03:55:04.571862Z')]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "Client 删除被拒材料引用",
+   "verdict": "PASS",
+   "evidence": "HTTP 204 documentId=240684610768351232"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 B-PRIMARY-BANK-v2",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT B-PRIMARY-BANK-v2",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 B-PRIMARY-BANK-v2",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240684723842584576"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 B-PRIMARY-BANK-v2",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240684723842584576"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 B-PRIMARY-BANK-v2",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240684738090643456 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B 重提 提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 ready=True errors=[]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B 重提 提交",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 submissionId=76dadd09-703e-4435-823b-160dddff20ef {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "B 重提 进入审核",
+   "verdict": "PASS",
+   "evidence": "status=UNDER_REVIEW"
+  },
+  {
+   "ac": "AC-07",
+   "step": "重提生成新案件",
+   "verdict": "PASS",
+   "evidence": "applicationId=240684591583604736"
+  },
+  {
+   "ac": "AC-07",
+   "step": "第 2 轮：round_no=2、previous_case_id = 第 1 轮案件",
+   "verdict": "PASS",
+   "evidence": "caseId=240684739692875776 roundNo=2 previousCaseId=240684676480520192"
+  },
+  {
+   "ac": "AC-07",
+   "step": "已 ACCEPTED 的要求复用（reusedFromCaseId）",
+   "verdict": "PASS",
+   "evidence": "reused=['ONLINE_PRESENCE', 'REGISTRATION', 'IDENTITY', 'IDENTITY'] round1Accepted=['IDENTITY', 'ONLINE_PRESENCE', 'REGISTRATION']"
+  },
+  {
+   "ac": "AC-07",
+   "step": "有效期内 PASS 的检查复用、不重做",
+   "verdict": "PASS",
+   "evidence": "reusedChecks=[('MANUAL_SCREENING', '240684676480520192'), ('TERMINATED_MERCHANT_LOOKUP', '240684676480520192'), ('WEBSITE_REVIEW', '240684676480520192'), ('MANUAL_SCREENING', '240684676535046144'), ('MANUAL_SCREENING', '240684676535046153')]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "被拒材料在第 2 轮重新待核验",
+   "verdict": "PASS",
+   "evidence": "[('RECEIVED', None)]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "第 2 轮再退回",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "撤回 RETURNED 申请 → WITHDRAWN",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "撤回后案件 WITHDRAWN（补偿 CLIENT_REVIEW_WITHDRAWAL → I03）",
+   "verdict": "PASS",
+   "evidence": "caseId=240684739692875776 status=WITHDRAWN"
+  },
+  {
+   "ac": "AC-07",
+   "step": "Client 申请为 WITHDRAWN",
+   "verdict": "PASS",
+   "evidence": "status=WITHDRAWN review={'caseStatus': 'WITHDRAWN', 'outcome': 'WITHDRAWN', 'roundNo': 2, 'publicNote': 'Second return for withdrawal acceptance.', 'decidedAt': '2026-10-27T03:55:21.837102Z', 'dueTime': None, 'errors': []}"
+  }
+ ],
+ "autoTestOnly": {
+  "AC-01 CLOSED 辖区": [
+   "OnboardingFormSchemaTest.test_notAccepted"
+  ],
+  "AC-02 完整错误码矩阵（格式 / EG NID / 到期 / UBO 超 100 / 二选一）": [
+   "SubmitClientApplicationTest.test_individualRuleMatrix",
+   "SubmitClientApplicationTest.test_organizationRuleMatrix",
+   "DraftIdentifierVaultTest.test_formatAndChecksumRecorded"
+  ],
+  "AC-03 IDENTIFIER_CONFLICT（提交时）、I01 只传 Token、MQ 无原值": [
+   "SubmitClientApplicationTest.test_identityConflict",
+   "DraftIdentifierVaultTest.test_vaultRequiredIdentifierStoresTokenOnly",
+   "ClientReviewRegistrationApiAutoTest.test_normalFlow_organization"
+  ],
+  "AC-05 programs/resolve 无程序失败关闭": [
+   "ProgramResolutionApiAutoTest.test_noDataFound",
+   "ClientReviewRegistrationApiAutoTest.test_noDataFound_program"
+  ],
+  "AC-07 退回超期 EXPIRED → 申请 WITHDRAWN": [
+   "ClientReviewReturnApiAutoTest.test_normalFlow_expiry",
+   "ClientReviewLifecycleV2Test.test_returnedThenExpired"
+  ],
+  "AC-11 ZZ 国家包全链 + 字面量禁令": [
+   "NewJurisdictionByDataTest.test_zzFullChain",
+   "ZzCountryPackAutoTest.test_normalFlow_zzFullChain",
+   "JurisdictionLiteralAutoTest.test_noJurisdictionLiterals",
+   "ComplianceHardcodingGuardTest.test_businessRuleViolation_noCatalogLiteralsInProduction"
+  ],
+  "AC-12 程序 / Schema 新版本不影响在途": [
+   "ClientReviewCaseDetailApiAutoTest.test_edgeCase_versionFrozen",
+   "OnboardingFormSchemaTest.test_byApplication"
+  ],
+  "AC-13 Mock 只在 local / mor-test": [
+   "渠道 S_SCREENING_MOCK 只在两环境登记（assets/harness/screening_channel_setup.py）"
+  ]
+ }
+}

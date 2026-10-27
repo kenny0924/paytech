@@ -1,0 +1,4 @@
+# 全球合规入驻与资格切片 1：Platform 回滚覆盖（rel-build 2026-10-27）。镜像 = 2026-10-27 运行镜像；env 同主 compose（与运行容器逐键相同）。
+services:
+  platform-support-service:
+    image: sha256:4859efd78dd92de7c8f97dca29ef7894e7d2e1115bd72f471960553375075d17  # mor-test/platform-support-service:fileupload-20261024a（现网，JAR be0abf79fc3ca9eb）

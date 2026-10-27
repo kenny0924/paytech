@@ -1,12 +1,15 @@
 package com.paytech.client.console.bff.configuration;
 
 import com.paytech.client.contract.api.enums.ClientDraftErrorCode;
+import com.paytech.client.master.api.onboarding.ClientOnboardingApplicationApi;
+import com.paytech.client.master.api.onboarding.ClientOnboardingCatalogApi;
+import com.paytech.client.master.api.enums.OnboardingErrorCode;
+import com.paytech.foundation.common.enums.CodeMessageEnum;
 import com.paytech.client.contract.api.onboarding.*;
 import com.paytech.client.contract.api.workspace.ClientWorkspaceApi;
 import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.httpclient.api.*;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
-import com.paytech.compliance.api.MaterialRequirementsApi;
 import com.paytech.compliance.api.ClientReviewResultApi;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -33,7 +36,8 @@ public class ClientOnboardingConfiguration {
         return HttpServiceClientFactory.create(
             transport(env, discovery, "cct", "client-master-service", ""),
             options(tokens, "client-master-service"),
-            ClientDraftErrorCode.values()
+            java.util.stream.Stream.concat(Arrays.stream(ClientDraftErrorCode.values()), Arrays.stream(OnboardingErrorCode.values()))
+                .toArray(CodeMessageEnum[]::new)
         );
     }
 
@@ -43,16 +47,22 @@ public class ClientOnboardingConfiguration {
         return clientOnboardingCctFactory.createClient(ClientDraftApi.class);
     }
 
+    /** CM-1 / CM-2：可入驻辖区与采集 Schema。 */
+    @Bean
+    ClientOnboardingCatalogApi clientOnboardingCatalogApi(HttpServiceProxyFactory clientOnboardingCctFactory) {
+        return clientOnboardingCctFactory.createClient(ClientOnboardingCatalogApi.class);
+    }
+
+    /** CM-6 / CM-7 / CM-8：声明、需求清单与撤回。 */
+    @Bean
+    ClientOnboardingApplicationApi clientOnboardingApplicationApi(HttpServiceProxyFactory clientOnboardingCctFactory) {
+        return clientOnboardingCctFactory.createClient(ClientOnboardingApplicationApi.class);
+    }
+
     /** C14 正式提交。 */
     @Bean
     ClientSubmissionApi clientSubmissionApi(HttpServiceProxyFactory clientOnboardingCctFactory) {
         return clientOnboardingCctFactory.createClient(ClientSubmissionApi.class);
-    }
-
-    /** C03 的 CCT 受控目录，使用同一严格私网传输。 */
-    @Bean
-    ClientFormOptionsApi clientFormOptionsApi(HttpServiceProxyFactory clientOnboardingCctFactory) {
-        return clientOnboardingCctFactory.createClient(ClientFormOptionsApi.class);
     }
 
     /** C01 的原申请事实。 */
@@ -77,16 +87,6 @@ public class ClientOnboardingConfiguration {
     @Bean
     ClientDocumentApi clientDocumentApi(HttpServiceProxyFactory clientOnboardingCctFactory) {
         return clientOnboardingCctFactory.createClient(ClientDocumentApi.class);
-    }
-
-    /** Risk 的非个人材料目录仅供授权页面查询。 */
-    @Bean
-    MaterialRequirementsApi materialRequirementsApi(Environment env, ObjectProvider<LoadBalancerClient> discovery,
-        ObjectProvider<InternalTokenSupplier> tokens) {
-        return HttpServiceClientFactory.create(
-            transport(env, discovery, "risk", "compliance-service", ""),
-            options(tokens, "compliance-service")
-        ).createClient(MaterialRequirementsApi.class);
     }
 
     /** Risk 客户可见审核结果；只在 CCT 核对申请归属后调用。 */

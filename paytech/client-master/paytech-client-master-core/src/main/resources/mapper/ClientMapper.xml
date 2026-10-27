@@ -15,18 +15,58 @@
         ORDER BY client_id
     </select>
     <update id="activate">
-        UPDATE t_client SET status='ACTIVE', update_time=#{now} WHERE client_id=#{clientId} AND status='PENDING'
+        UPDATE t_client SET status='ACTIVE', activation_time=COALESCE(activation_time, #{now}), update_time=#{now}
+        WHERE client_id=#{clientId} AND status='PENDING'
     </update>
-    <!-- Party 唯一资料（uk_party_profile_party）上的法定名称：机构取 legal_name，个人取姓名。 -->
+    <!-- 资格撤销自动挂起：只有 ACTIVE 可转 SUSPENDED。 -->
+    <update id="suspend">
+        UPDATE t_client SET status='SUSPENDED', suspension_time=#{now}, update_time=#{now} WHERE client_id=#{clientId} AND status='ACTIVE'
+    </update>
+    <!-- Party 当前资料（uk_party_profile_current，current_slot=1）上的法定名称：机构取 legal_name，个人取姓名。 -->
     <sql id="LegalName">
         (SELECT NULLIF(COALESCE(o.legal_name, TRIM(CONCAT_WS(' ', i.given_name, i.middle_name, i.family_name))), '')
                 FROM t_party_profile pp LEFT JOIN t_organization_profile o ON o.profile_id = pp.profile_id
-                LEFT JOIN t_individual_profile i ON i.profile_id = pp.profile_id WHERE pp.party_id = ${partyColumn})
+                LEFT JOIN t_individual_profile i ON i.profile_id = pp.profile_id WHERE pp.party_id = ${partyColumn} AND pp.current_slot = 1)
     </sql>
     <select id="findSummary" resultType="com.paytech.client.master.domain.entityadmin.ClientSummaryView">
         SELECT c.client_id AS clientId, c.client_no AS clientNo, c.party_id AS partyId, pt.party_type AS clientType,
             c.status AS status, <include refid="LegalName"><property name="partyColumn" value="c.party_id"/></include> AS legalName
         FROM t_client c JOIN t_party pt ON pt.party_id = c.party_id
         WHERE c.client_id = #{clientId}
+    </select>
+    <!-- 运营 Client 列表：当前资料名称与最近一份申请；筛选为空表示不限，按 Client ID 倒序稳定分页。 -->
+    <sql id="AdminFilter">
+        FROM t_client c JOIN t_party pt ON pt.party_id = c.party_id
+        <where>
+            <if test="status != null">c.status = #{status}</if>
+            <if test="jurisdictionCode != null">AND c.jurisdiction_code = #{jurisdictionCode}</if>
+            <if test="responsiblePartnerId != null">AND c.responsible_partner_id = #{responsiblePartnerId}</if>
+        </where>
+    </sql>
+    <select id="pageForAdmin" resultType="com.paytech.client.master.domain.onboardingadmin.ClientAdminView">
+        SELECT c.client_id AS clientId, c.client_no AS clientNo, pt.party_type AS clientType, c.status AS status,
+            c.jurisdiction_code AS jurisdictionCode, c.responsible_partner_id AS responsiblePartnerId,
+            <include refid="LegalName"><property name="partyColumn" value="c.party_id"/></include> AS legalName,
+            (SELECT a.application_id FROM t_client_application a WHERE a.client_id = c.client_id
+                ORDER BY a.application_id DESC LIMIT 1) AS latestApplicationId,
+            (SELECT a.status FROM t_client_application a WHERE a.client_id = c.client_id
+                ORDER BY a.application_id DESC LIMIT 1) AS latestApplicationStatus,
+            c.create_time AS createTime
+        <include refid="AdminFilter"/>
+        ORDER BY c.client_id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="countForAdmin" resultType="long">
+        SELECT COUNT(*) <include refid="AdminFilter"/>
+    </select>
+    <select id="findAdminView" resultType="com.paytech.client.master.domain.onboardingadmin.ClientAdminView">
+        SELECT c.client_id AS clientId, c.client_no AS clientNo, pt.party_type AS clientType, c.status AS status,
+            c.jurisdiction_code AS jurisdictionCode, c.responsible_partner_id AS responsiblePartnerId,
+            <include refid="LegalName"><property name="partyColumn" value="c.party_id"/></include> AS legalName,
+            (SELECT a.application_id FROM t_client_application a WHERE a.client_id = c.client_id
+                ORDER BY a.application_id DESC LIMIT 1) AS latestApplicationId,
+            (SELECT a.status FROM t_client_application a WHERE a.client_id = c.client_id
+                ORDER BY a.application_id DESC LIMIT 1) AS latestApplicationStatus,
+            c.create_time AS createTime
+        FROM t_client c JOIN t_party pt ON pt.party_id = c.party_id WHERE c.client_id = #{clientId}
     </select>
 </mapper>

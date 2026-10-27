@@ -3,14 +3,19 @@
 <mapper namespace="com.paytech.compliance.core.dal.mapper.QualificationDecisionMapper">
     <sql id="columns">decision_id AS decisionId, case_id AS caseId, role_type AS roleType, role_id AS roleId, qualification_type AS qualificationType,
             decision_source AS decisionSource, outcome, override_reason_code AS overrideReasonCode, basis_note AS basisNote,
-            valid_from AS validFrom, valid_to AS validTo, decided_by AS decidedBy, decided_time AS decidedTime, create_time AS createTime</sql>
+            tier, risk_rating AS riskRating, jurisdiction_code AS jurisdictionCode, responsible_partner_id AS responsiblePartnerId,
+            recommended_by AS recommendedBy, recommended_time AS recommendedTime, four_eyes_waived AS fourEyesWaived, operated_by AS operatedBy,
+            on_behalf_of_partner_id AS onBehalfOfPartnerId, valid_from AS validFrom, valid_to AS validTo, decided_by AS decidedBy, decided_time AS decidedTime, create_time AS createTime</sql>
     <insert id="insert">
-        INSERT INTO t_qualification_decision(decision_id, case_id, role_type, role_id, qualification_type, decision_source, outcome, override_reason_code, basis_note, valid_from, valid_to, decided_by, decided_time, create_time)
-        VALUES(#{row.decisionId}, #{row.caseId}, #{row.roleType}, #{row.roleId}, #{row.qualificationType}, #{row.decisionSource}, #{row.outcome}, #{row.overrideReasonCode}, #{row.basisNote}, #{row.validFrom}, #{row.validTo}, #{row.decidedBy}, #{row.decidedTime}, #{row.createTime})
+        INSERT INTO t_qualification_decision(decision_id, case_id, role_type, role_id, qualification_type, decision_source, outcome, override_reason_code, basis_note, tier, risk_rating, jurisdiction_code, responsible_partner_id, recommended_by, recommended_time, four_eyes_waived, operated_by, on_behalf_of_partner_id, valid_from, valid_to, decided_by, decided_time, create_time)
+        VALUES(#{row.decisionId}, #{row.caseId}, #{row.roleType}, #{row.roleId}, #{row.qualificationType}, #{row.decisionSource}, #{row.outcome}, #{row.overrideReasonCode}, #{row.basisNote}, #{row.tier}, #{row.riskRating}, #{row.jurisdictionCode}, #{row.responsiblePartnerId}, #{row.recommendedBy}, #{row.recommendedTime}, #{row.fourEyesWaived}, #{row.operatedBy}, #{row.onBehalfOfPartnerId}, #{row.validFrom}, #{row.validTo}, #{row.decidedBy}, #{row.decidedTime}, #{row.createTime})
     </insert>
     <select id="findByCase" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.QualificationDecision">
         SELECT <include refid="columns"/>
         FROM t_qualification_decision WHERE case_id = #{caseId} AND decision_version IS NULL
+    </select>
+    <select id="findById" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.QualificationDecision">
+        SELECT <include refid="columns"/> FROM t_qualification_decision WHERE decision_id = #{decisionId}
     </select>
     <select id="findByIds" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.QualificationDecision">
         SELECT <include refid="columns"/>

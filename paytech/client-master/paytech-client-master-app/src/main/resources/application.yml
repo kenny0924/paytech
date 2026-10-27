@@ -78,42 +78,6 @@ management:
 onboarding:
   recovery-enabled: false
   draft-enabled: false
-  # 由 CCT 维护的通用表单目录（2026-10-13 用户确认）：不按国家区分，签发国由客户从完整 ISO 国家中选择。修改后重启。
-  form-catalog:
-    organization-types:
-      - { code: LIMITED_COMPANY, label: 有限公司 }
-      - { code: PUBLIC_COMPANY, label: 上市公司 }
-      - { code: PARTNERSHIP, label: 合伙企业 }
-      - { code: SOLE_PROPRIETORSHIP, label: 个体经营 }
-      - { code: NON_PROFIT, label: 非营利组织 }
-      - { code: OTHER, label: 其他 }
-    business-models:
-      - { code: PHYSICAL_GOODS, label: 实物商品, client-types: [INDIVIDUAL, ORGANIZATION] }
-      - { code: DIGITAL_GOODS, label: 数字商品, client-types: [INDIVIDUAL, ORGANIZATION] }
-      - { code: SERVICES, label: 服务, client-types: [INDIVIDUAL, ORGANIZATION] }
-      - { code: SUBSCRIPTION, label: 订阅, client-types: [INDIVIDUAL, ORGANIZATION] }
-      - { code: MARKETPLACE, label: 平台 / 市场, client-types: [ORGANIZATION] }
-      - { code: OTHER, label: 其他, client-types: [INDIVIDUAL, ORGANIZATION] }
-    identifier-types:
-      - { code: PASSPORT, label: 护照, client-types: [INDIVIDUAL], issuing-country-mode: REQUIRED }
-      - { code: NATIONAL_ID, label: 身份证, client-types: [INDIVIDUAL], issuing-country-mode: REQUIRED }
-      - { code: DRIVING_LICENSE, label: 驾照, client-types: [INDIVIDUAL], issuing-country-mode: REQUIRED }
-      - { code: RESIDENCE_PERMIT, label: 居留证, client-types: [INDIVIDUAL], issuing-country-mode: REQUIRED }
-      - { code: COMPANY_REGISTRATION_NUMBER, label: 公司注册号, client-types: [ORGANIZATION], issuing-country-mode: REQUIRED }
-      - { code: TAX_ID, label: 税号, client-types: [ORGANIZATION], issuing-country-mode: REQUIRED }
-      - { code: LEI, label: LEI, client-types: [ORGANIZATION], issuing-country-mode: NONE }
-    # 运营审核选择的通用行业（2026-10-13 用户确认）；MCC 不建目录，由运营按卡组织标准填四位数字。
-    industries:
-      - { code: RETAIL, label: 零售 }
-      - { code: DIGITAL_GOODS, label: 数字商品 }
-      - { code: SOFTWARE_SAAS, label: 软件与 SaaS }
-      - { code: PROFESSIONAL_SERVICES, label: 专业服务 }
-      - { code: EDUCATION, label: 教育 }
-      - { code: TRAVEL, label: 旅游 }
-      - { code: FOOD_BEVERAGE, label: 餐饮 }
-      - { code: MEDIA_ENTERTAINMENT, label: 媒体娱乐 }
-      - { code: NON_PROFIT, label: 非营利 }
-      - { code: OTHER, label: 其他 }
 # paytech-messaging 消费端（design/08 §3–§4）：订阅 compliance.events，声明 client-master.compliance.hash（x-consistent-hash）与
 # client-master.compliance.p0..p3（Quorum、单活消费者、delivery-limit 5、DLX client-master.compliance.dlx → .dlq）；未注册 Handler
 # （onboarding 开关关闭）时不声明订阅拓扑。分区数取默认 4（messaging.consumers.compliance.partitions 只能在注册了 Handler 时配置，

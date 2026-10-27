@@ -1,9 +1,11 @@
 package com.paytech.client.console.bff.integration;
 
+import java.util.List;
+
 import com.paytech.client.console.bff.service.model.ClientActor;
+import com.paytech.client.master.api.onboarding.response.RequirementItemResponseBody;
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.ClientDraftResponseBody;
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.StartResponseBody;
-import com.paytech.client.contract.api.onboarding.response.ClientFormOptionsResponseBody;
 
 /** CCT 入驻申请只读查询的出站端口；写命令由 Controller 直接转发 CCT。 */
 public interface CctOnboardingClient {
@@ -26,11 +28,11 @@ public interface CctOnboardingClient {
     ClientDraftResponseBody draft(ClientActor actor, String applicationId);
 
     /**
-     * 读取受控表单目录（C03）。
+     * 读取实时需求清单（CM-7）。
      *
      * @param actor 当前可信身份
-     * @param clientType INDIVIDUAL 或 ORGANIZATION
-     * @return 属于该客户类型、状态已识别且列表有界的目录；否则按依赖不可用抛出
+     * @param applicationId 申请 ID
+     * @return 需求项（有界）；形状不符按依赖不可用抛出
      */
-    ClientFormOptionsResponseBody formOptions(ClientActor actor, String clientType);
+    List<RequirementItemResponseBody> requirements(ClientActor actor, String applicationId);
 }

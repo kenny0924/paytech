@@ -436,6 +436,19 @@ class RiskClientConfigurationAutoTest {
         Set<String> reviewPassThrough = Set.of(BFF_PACKAGE + "integration/ClientReviewRiskClient",
             BFF_PACKAGE + "service/model/ClientReviewModels", BFF_PACKAGE + "ext/rest/ClientOnboardingReviewController");
         String reviewConfiguration = BFF_PACKAGE + "configuration/ClientReviewClientConfiguration";
+        // compliance 管理合同的直接消费者：块 137 主档 / 资格与 2026-10-27 案件工作台按 Owner 请求体转发、按 Owner 响应读取（Risk 决策合同的限制不变）。
+        Set<String> complianceConsumers = Set.of("configuration/EntityQualificationClientConfiguration", "domain/enums/QualificationSubjectTerminalStatus",
+            "ext/rest/ClientOnboardingReviewController", "ext/rest/QualificationAdminController", "integration/ClientReviewRiskClient",
+            "integration/EntityAdminClient", "integration/QualificationAdminClient", "integration/impl/EntityAdminClientImpl",
+            "integration/impl/QualificationAdminClientImpl", "service/model/entityadmin/response/LocalPartnerPageResponseBody",
+            "service/model/entityadmin/response/OperatingEntityPageResponseBody", "service/model/qualificationadmin/response/QualificationListItemResponseBody",
+            "service/processor/ClientReviewCommandProcessor", "service/processor/LocalPartnerDetailsProcessor",
+            "service/processor/OperatingEntityDetailsProcessor", "service/processor/QualificationListProcessor",
+            "service/processor/RecordManualQualificationProcessor", "service/processor/request/ClientReviewCommandRequest",
+            "service/processor/request/RecordManualQualificationRequest", "service/processor/ClientReviewDetailsProcessor",
+            "service/processor/ClientReviewFileDownloadProcessor", "configuration/OperationsErrorStatusResolver",
+            "service/processor/ClientDetailsProcessor", "service/model/clientadmin/response/ClientPageResponseBody",
+            "ext/rest/OnboardingConfigAdminController").stream().map(name -> BFF_PACKAGE + name).collect(java.util.stream.Collectors.toSet());
         String configuration = BFF_PACKAGE + "configuration/RiskClientConfiguration";
         String resolver = BFF_PACKAGE + "configuration/OperationsErrorStatusResolver";
         Map<String, Set<String>> restricted = Map.of(
@@ -451,6 +464,7 @@ class RiskClientConfigurationAutoTest {
                     assertTrue(transport.contains(name) || adapters.contains(name)
                         || restricted.getOrDefault(name, Set.of()).contains(matcher.group(1))
                         || reviewPassThrough.contains(name) && matcher.group(1).startsWith("com.paytech.compliance.api.response.")
+                        || complianceConsumers.contains(name) && matcher.group(1).startsWith("com.paytech.compliance.api.")
                         || name.equals(reviewConfiguration) && Set.of("com.paytech.compliance.api.ClientReviewAdminApi",
                             "com.paytech.compliance.api.enums.ClientReviewErrorCode").contains(matcher.group(1)), source.toString());
                 }
@@ -473,6 +487,7 @@ class RiskClientConfigurationAutoTest {
                                 boolean errorEnum = owner.equals(OWNER_PACKAGE + "enums/RiskDecisionConfigurationErrorCode") || owner.equals(OWNER_PACKAGE + "enums/RiskVariableErrorCode");
                                 boolean reviewEnum = owner.equals(COMPLIANCE_OWNER_PACKAGE + "enums/ClientReviewErrorCode");
                                 assertTrue(adapters.contains(caller)
+                                    || (complianceConsumers.contains(caller) && owner.startsWith(COMPLIANCE_OWNER_PACKAGE))
                                     || (caller.equals(configuration) && errorEnum && method.equals("values"))
                                     || (caller.equals(reviewConfiguration) && reviewEnum && method.equals("values"))
                                     || (caller.equals(resolver) && reviewEnum)
@@ -482,7 +497,8 @@ class RiskClientConfigurationAutoTest {
                             @Override
                             public void visitFieldInsn(int opcode, String owner, String field, String descriptor) {
                                 if (!owner.startsWith(OWNER_PACKAGE) && !owner.startsWith(COMPLIANCE_OWNER_PACKAGE)) return;
-                                assertTrue(adapters.contains(caller) || (caller.equals(resolver)
+                                assertTrue(adapters.contains(caller) || (complianceConsumers.contains(caller) && owner.startsWith(COMPLIANCE_OWNER_PACKAGE))
+                                    || (caller.equals(resolver)
                                     && (owner.equals(OWNER_PACKAGE + "enums/RiskDecisionConfigurationErrorCode") || owner.equals(OWNER_PACKAGE + "enums/RiskVariableErrorCode")
                                     || owner.equals(COMPLIANCE_OWNER_PACKAGE + "enums/ClientReviewErrorCode"))),
                                     caller + " accesses Owner field " + owner + "." + field);

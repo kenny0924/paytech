@@ -1,0 +1,65 @@
+[
+ {
+  "lang": "en",
+  "page": "case 240686862329565184",
+  "kind": "error-banner",
+  "at": "case 240686862329565184",
+  "text": [
+   "The service is temporarily unavailable. Please try again later.",
+   "INVALID_RESPONSE"
+  ],
+  "screenshot": "screens/ops-en-case_240686862329565184.png"
+ },
+ {
+  "lang": "en",
+  "page": "case 240686862329565184",
+  "kind": "alert",
+  "at": "case 240686862329565184",
+  "text": [
+   "Couldn't load right now. Please try again. The service is temporarily unavailable. Please try again later. Request ID: 0d88f7fc-0134-418f-ac96-88289f926160 Retry"
+  ],
+  "screenshot": "screens/ops-en-case_240686862329565184.png"
+ },
+ {
+  "lang": "en",
+  "page": "case 240687064385966080",
+  "kind": "error-banner",
+  "at": "case 240687064385966080",
+  "text": [
+   "The service is temporarily unavailable. Please try again later.",
+   "INVALID_RESPONSE"
+  ],
+  "screenshot": "screens/ops-en-case_240687064385966080.png"
+ },
+ {
+  "lang": "en",
+  "page": "case 240687064385966080",
+  "kind": "alert",
+  "at": "case 240687064385966080",
+  "text": [
+   "Couldn't load right now. Please try again. The service is temporarily unavailable. Please try again later. Request ID: da38b0fd-5e64-4aa8-b435-3beefdc619ce Retry"
+  ],
+  "screenshot": "screens/ops-en-case_240687064385966080.png"
+ },
+ {
+  "lang": "en",
+  "page": "case 240687127606710272",
+  "kind": "error-banner",
+  "at": "case 240687127606710272",
+  "text": [
+   "The service is temporarily unavailable. Please try again later.",
+   "INVALID_RESPONSE"
+  ],
+  "screenshot": "screens/ops-en-case_240687127606710272.png"
+ },
+ {
+  "lang": "en",
+  "page": "case 240687127606710272",
+  "kind": "alert",
+  "at": "case 240687127606710272",
+  "text": [
+   "Couldn't load right now. Please try again. The service is temporarily unavailable. Please try again later. Request ID: b310d599-6447-4d00-95c4-c50cc3ef2c01 Retry"
+  ],
+  "screenshot": "screens/ops-en-case_240687127606710272.png"
+ }
+]

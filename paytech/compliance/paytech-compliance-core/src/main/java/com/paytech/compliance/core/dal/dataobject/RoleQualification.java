@@ -45,19 +45,31 @@ public class RoleQualification {
 
     /**
      * 复审频率代码
-     * <li>本期不安排持续复审，始终为空。</li>
+     * <li>已由 review_interval_months 取代，新决定不写。</li>
      */
     private String reviewFrequencyCode;
 
     /**
      * 下次复审 UTC 时间
-     * <li>本期始终为空。</li>
+     * <li>案件批准且程序有复审间隔时为决定时间加间隔月数；否则为空。本期只登记不触发复审。</li>
      */
     private Instant nextReviewTime;
 
-    /** 复审状态：APPROVED 为 NOT_REQUIRED，其余为 COMPLETED。 */
+    /** 复审状态：APPROVED 且有复审间隔为 ACTIVE、无间隔为 NOT_REQUIRED，其余为 COMPLETED。 */
     private String reviewStatus;
 
+    /** 当前决定冻结的尽调档次；MANUAL 为空。 */
+    private String tier;
+    /** 当前决定冻结的客户风险评级；MANUAL 为空。 */
+    private String riskRating;
+    /** 当前决定冻结的辖区代码；MANUAL 为空。 */
+    private String jurisdictionCode;
+    /** 当前决定冻结的责任 PayFac；平台自营或 MANUAL 为空。 */
+    private Long responsiblePartnerId;
+    /** 复审间隔月数；不复审为空。 */
+    private Integer reviewIntervalMonths;
+    /** 最近一次案件决定时间；MANUAL 为空。 */
+    private Instant lastReviewTime;
     /** 并发版本，从 1 开始。 */
     private long version;
 

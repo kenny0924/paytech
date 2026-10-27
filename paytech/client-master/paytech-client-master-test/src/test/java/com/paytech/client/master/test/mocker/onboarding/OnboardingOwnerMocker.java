@@ -16,13 +16,16 @@ import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.platform.support.api.authentication.response.AccountContextResponseBody;
 import com.paytech.platform.support.api.files.FileAddress;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
-import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
-import com.paytech.compliance.api.MaterialRequirementsModels.RequirementsResponseBody;
+import com.paytech.compliance.api.response.ClientReviewRequirementErrorBody;
+import com.paytech.compliance.api.response.ClientReviewResultResponseBody;
+import com.paytech.compliance.api.response.ProgramMaterialBody;
+import com.paytech.compliance.api.response.ProgramResolutionResponseBody;
 import com.paytech.platform.support.api.tenantprojection.request.ProvisionRequestBody;
 import com.paytech.platform.support.api.tenantprojection.request.StatusRequestBody;
 import com.paytech.platform.support.api.tenantprojection.response.ProjectionResponseBody;
 import com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody;
 import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
+import com.paytech.compliance.api.request.ClientReviewWithdrawalRequestBody;
 import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
 import com.paytech.compliance.api.response.ClientReviewRegistrationResponseBody;
 
@@ -36,9 +39,27 @@ public class OnboardingOwnerMocker implements Clear {
     public record Fault(int status, ApiProblemResponse problem, boolean disconnect) {
     }
 
+    /**
+     * 程序的一个材料槽
+     *
+     * @param requirementCode 材料要求代码
+     * @param documentType 接受的材料类型
+     * @param required 是否必交
+     */
+    public record Material(String requirementCode, String documentType, boolean required) {
+    }
+
+    /** 程序解析请求的非敏感记录。 */
+    public record ProgramCall(String jurisdiction, String partyType, String roleType, String responsiblePartnerId) {
+    }
+
     private final Map<String, String> sessions = new HashMap<>();
     private final Map<String, String[]> tenantSessions = new HashMap<>();
-    private final Map<String, Object> requirements = new HashMap<>();
+    private final Map<String, Object> programs = new HashMap<>();
+    private final List<ProgramCall> programCalls = new CopyOnWriteArrayList<>();
+    private Object withdrawal;
+    private final Map<String, Object> reviewResults = new HashMap<>();
+    private final List<ClientReviewWithdrawalRequestBody> withdrawalRequests = new CopyOnWriteArrayList<>();
     private final Map<String, Object> files = new HashMap<>();
     private Object review;
     private final List<String> calls = new CopyOnWriteArrayList<>();
@@ -62,14 +83,113 @@ public class OnboardingOwnerMocker implements Clear {
         tenantSessions.put(Long.toString(accountId), new String[] {Long.toString(tenantId), Long.toString(memberId)});
     }
 
-    /** 某资格类型的通用材料要求。 */
-    public synchronized void mockRequirements(String qualificationType, RequirementBody... items) {
-        requirements.put(qualificationType, new RequirementsResponseBody("900", "901", List.of(items)));
+    /** 某 主体类型:角色 的生效程序及其材料槽（适用角色 PRIMARY）。 */
+    public synchronized void mockProgram(String partyType, String roleType, Material... items) {
+        var body = new ProgramResolutionResponseBody();
+        body.setProgramId("9300000000000900");
+        body.setProgramCode(partyType + "_" + roleType);
+        body.setProgramVersionId("9300000000000901");
+        body.setVersionNo(1);
+        body.setTier("STANDARD");
+        body.setMaterials(java.util.Arrays.stream(items).map(item -> {
+            var material = new ProgramMaterialBody();
+            material.setRequirementCode(item.requirementCode());
+            material.setSubjectRole("PRIMARY");
+            material.setDocumentTypes(List.of(item.documentType()));
+            material.setRequired(item.required());
+            material.setWaivable(false);
+            return material;
+        }).toList());
+        body.setChecks(List.of());
+        body.setScreenings(List.of());
+        programs.put(partyType + ":" + roleType, body);
     }
 
-    /** 某资格类型的材料查询断连。 */
-    public synchronized void mockRequirementsUnavailable(String qualificationType) {
-        requirements.put(qualificationType, new Fault(0, null, true));
+    /**
+     * 常用程序：组织 REGISTRATION（必交）；个人 IDENTITY（必交）与 ADDRESS（可选）；关联人员 IDENTITY（必交）
+     */
+    public void mockStandardPrograms() {
+        mockProgram("ORGANIZATION", "CLIENT", new Material("REGISTRATION", "REGISTRATION_CERTIFICATE", true));
+        mockProgram("INDIVIDUAL", "CLIENT", new Material("IDENTITY", "IDENTITY_DOCUMENT", true),
+            new Material("ADDRESS", "PROOF_OF_ADDRESS", false));
+        mockProgram("INDIVIDUAL", "RELATED_PERSON", new Material("IDENTITY", "IDENTITY_DOCUMENT", true));
+    }
+
+    /** 某 主体类型:角色 的程序解析断连。 */
+    public synchronized void mockProgramUnavailable(String partyType, String roleType) {
+        programs.put(partyType + ":" + roleType, new Fault(0, null, true));
+    }
+
+    /** 某 主体类型:角色 的程序解析返回 503（无程序或程序歧义）。 */
+    public synchronized void mockProgramMissing(String partyType, String roleType) {
+        programs.put(partyType + ":" + roleType, new Fault(503, problem(503, "PROGRAM_NOT_AVAILABLE"), false));
+    }
+
+    /**
+     * CP-4：某申请当前任务已退回，带需求级错误与补件期限
+     *
+     * @param errors 每项为 {需求键, 主体 Party ID（申请级为 null）, 错误码, 补救动作}
+     */
+    public synchronized void mockReturnedResult(long applicationId, long caseId, String dueTime, String[]... errors) {
+        var body = new ClientReviewResultResponseBody();
+        body.setApplicationId(Long.toString(applicationId));
+        body.setCaseId(Long.toString(caseId));
+        body.setStatus("RETURNED");
+        body.setOutcome("RETURNED");
+        body.setRoundNo(1);
+        body.setDueTime(dueTime);
+        body.setErrors(java.util.Arrays.stream(errors).map(error -> {
+            var item = new ClientReviewRequirementErrorBody();
+            item.setRequirementKey(error[0]);
+            item.setSubjectPartyId(error[1]);
+            item.setCode(error[2]);
+            item.setRemediation(error[3]);
+            item.setReason("Reviewer note");
+            item.setDueTime(dueTime);
+            return item;
+        }).toList());
+        reviewResults.put(Long.toString(applicationId), body);
+    }
+
+    /** CP-4 结果；返回 DTO、Fault 或 null。 */
+    public synchronized Object reviewResult(String applicationId) {
+        calls.add("reviewResult:" + applicationId);
+        return reviewResults.get(applicationId);
+    }
+
+    /** I03 撤回受理。 */
+    public synchronized void mockWithdrawalAccepted() {
+        withdrawal = Boolean.TRUE;
+    }
+
+    /** I03 撤回被明确拒绝，例如 409 CLIENT_REVIEW_CLOSED。 */
+    public synchronized void mockWithdrawalRejected(int status, String code) {
+        withdrawal = new Fault(status, problem(status, code), false);
+    }
+
+    /** I03 撤回；返回 DTO、Fault 或 null。 */
+    public synchronized Object withdraw(String caseId, ClientReviewWithdrawalRequestBody request) {
+        calls.add("withdraw:" + caseId);
+        withdrawalRequests.add(request);
+        if (Boolean.TRUE.equals(withdrawal)) {
+            var body = new ClientReviewCommandResponseBody();
+            body.setCaseId(caseId);
+            body.setStatus("WITHDRAWN");
+            body.setAccepted(true);
+            body.setProcessing(false);
+            return body;
+        }
+        return withdrawal;
+    }
+
+    /** I03 请求快照。 */
+    public List<ClientReviewWithdrawalRequestBody> withdrawalRequests() {
+        return new ArrayList<>(withdrawalRequests);
+    }
+
+    /** 程序解析请求快照。 */
+    public List<ProgramCall> programCalls() {
+        return new ArrayList<>(programCalls);
     }
 
     /** 某账号上传的文件，对象 ACTIVE，扫描状态与内容摘要按本例指定。 */
@@ -211,10 +331,11 @@ public class OnboardingOwnerMocker implements Clear {
         return new AccountContextResponseBody(accountId, sessionId, "f***@example.test", true, "ACCOUNT", null, null, List.of());
     }
 
-    /** 材料要求查询；返回 DTO、Fault 或 null。 */
-    public synchronized Object requirements(String qualificationType) {
-        calls.add("requirements:" + qualificationType);
-        return requirements.get(qualificationType);
+    /** 程序解析；返回 DTO、Fault 或 null。 */
+    public synchronized Object program(String jurisdiction, String partyType, String roleType, String responsiblePartnerId) {
+        calls.add("program:" + partyType + ":" + roleType);
+        programCalls.add(new ProgramCall(jurisdiction, partyType, roleType, responsiblePartnerId));
+        return programs.get(partyType + ":" + roleType);
     }
 
     /** Platform 内部文件查询；记录文件与调用身份头，返回 DTO、Fault 或 null。 */
@@ -263,7 +384,11 @@ public class OnboardingOwnerMocker implements Clear {
     public synchronized void clear() {
         sessions.clear();
         tenantSessions.clear();
-        requirements.clear();
+        programs.clear();
+        programCalls.clear();
+        withdrawal = null;
+        reviewResults.clear();
+        withdrawalRequests.clear();
         files.clear();
         review = null;
         calls.clear();

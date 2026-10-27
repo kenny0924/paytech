@@ -4,15 +4,15 @@
   <select id="find" resultType="com.paytech.client.master.core.dal.dataobject.PartyIdentityKey">
     SELECT identity_key_id AS identityKeyId, party_id AS partyId, identifier_type AS identifierType,
       issuing_country AS issuingCountry, issuer_scope_key AS issuerScopeKey,
-      normalized_identifier_value AS normalizedIdentifierValue, create_time AS createTime, update_time AS updateTime
+      identifier_key_value AS identifierKeyValue, create_time AS createTime, update_time AS updateTime
     FROM t_party_identity_key
     WHERE identifier_type=#{identifierType} AND issuer_scope_key=#{issuerScopeKey}
-      AND normalized_identifier_value=#{normalizedValue}
+      AND identifier_key_value=#{keyValue}
   </select>
   <insert id="insert">
     INSERT INTO t_party_identity_key(identity_key_id, party_id, identifier_type, issuing_country, issuer_scope_key,
-      normalized_identifier_value, create_time, update_time)
+      identifier_key_value, create_time, update_time)
     VALUES(#{key.identityKeyId}, #{key.partyId}, #{key.identifierType}, #{key.issuingCountry}, #{key.issuerScopeKey},
-      #{key.normalizedIdentifierValue}, #{key.createTime}, #{key.updateTime})
+      #{key.identifierKeyValue}, #{key.createTime}, #{key.updateTime})
   </insert>
 </mapper>

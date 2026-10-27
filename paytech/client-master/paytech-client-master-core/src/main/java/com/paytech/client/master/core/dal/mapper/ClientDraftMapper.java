@@ -13,9 +13,14 @@ public interface ClientDraftMapper {
     Long activeApplication(long accountId);
     /** 本账号最近一份同类型、已被拒绝且 Client 仍为 PENDING 的申请；没有为空。 */
     ClientDraftIdentity rejectedApplication(@Param("accountId") long accountId, @Param("clientType") String clientType);
-    /** 在被拒申请的同一 Client 下新建 DRAFT 申请，沿用资格类型。 */
+    /** 在被拒或已撤回申请的同一 Client 下新建 DRAFT 申请，沿用资格类型，辖区等取本次条款。 */
     int insertReapplication(@Param("applicationId") long applicationId, @Param("applicationNo") String applicationNo,
-        @Param("rejectedId") long rejectedId, @Param("now") Instant now);
+        @Param("rejectedId") long rejectedId, @Param("terms") ClientApplicationTerms terms, @Param("now") Instant now);
+    /** PENDING Client 跟随新申请的辖区与责任方。 */
+    int updateClientTerms(@Param("clientId") long clientId, @Param("terms") ClientApplicationTerms terms, @Param("now") Instant now);
+    /** 可编辑申请更换组织类型时重新冻结 Schema 版本。 */
+    int updateApplicationSchema(@Param("applicationId") long applicationId, @Param("organizationTypeCode") String organizationTypeCode,
+        @Param("schemaId") long schemaId, @Param("now") Instant now);
     /** 主体与关联人员的未批准资料改由新申请编辑。 */
     int moveDraftProfiles(@Param("rejectedId") long rejectedId, @Param("applicationId") long applicationId, @Param("now") Instant now);
     /** 草稿关系改由新申请维护；关系按组织、人员、类型唯一，只能转移不能复制。 */

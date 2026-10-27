@@ -41,7 +41,7 @@ class YamlEventCatalogAutoTest {
     void test_normalFlow_packagedCatalog() {
         YamlEventCatalog catalog = YamlEventCatalog.fromClasspath();
 
-        assertEquals(List.of("PaymentSucceeded", "ClientReviewDecided", "BillingFactRecorded", "AccountPosted",
+        assertEquals(List.of("PaymentSucceeded", "ClientReviewDecided", "QualificationChanged", "BillingFactRecorded", "AccountPosted",
             "SettlementRestrictionChanged", "AgreementStatusChanged", "CommercialTermVersionActivated",
             "ActualChannelCostConfirmed", "ChannelBatchReconciled", "ChannelSettlementConfirmed", "ReconAdjustmentApproved",
             "WorkflowCallbackRaised", "ChannelPaymentNotified", "OrderPaymentSucceeded"),

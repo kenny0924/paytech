@@ -36,5 +36,32 @@ public class PartyProfilesResponseBody {
 
         /** 资料内容 SHA-256；可能为空。 */
         private String contentHash;
+
+        /** Party 类型 INDIVIDUAL 或 ORGANIZATION。 */
+        private String partyType;
+
+        /** 个人名（拉丁字母），筛查用；机构为空。 */
+        private String givenName;
+
+        /** 个人中间名，可空。 */
+        private String middleName;
+
+        /** 个人姓，筛查用；机构为空。 */
+        private String familyName;
+
+        /** 个人出生日期 YYYY-MM-DD，筛查用；机构为空。 */
+        private String birthDate;
+
+        /** 个人国籍 ISO 3166-1 alpha-2，筛查用；机构为空。 */
+        private String nationalityCountry;
+
+        /** 个人居住国 ISO 3166-1 alpha-2，筛查用；机构为空。 */
+        private String residenceCountry;
+
+        /** 机构法定名称，筛查用；个人为空。 */
+        private String legalName;
+
+        /** 机构注册国 ISO 3166-1 alpha-2，筛查用；个人为空。 */
+        private String incorporationCountry;
     }
 }

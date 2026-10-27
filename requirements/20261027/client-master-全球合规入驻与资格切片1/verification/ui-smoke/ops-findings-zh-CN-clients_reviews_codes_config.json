@@ -1,0 +1,36 @@
+[
+ {
+  "lang": "zh-CN",
+  "page": "clients list",
+  "kind": "console-error",
+  "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+ },
+ {
+  "lang": "zh-CN",
+  "page": "clients list",
+  "kind": "console-error",
+  "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+ },
+ {
+  "lang": "zh-CN",
+  "page": "clients list",
+  "kind": "http-failure",
+  "method": "GET",
+  "url": "/api/operations/client-admin/v1/responsible-partners",
+  "status": 503,
+  "requestId": "0944f8d9-5fe4-4ece-9696-27c37036819f",
+  "body": "{\"type\":\"about:blank\",\"title\":\"Service Unavailable\",\"detail\":\"依赖服务暂时不可用，请稍后重试\",\"code\":\"DEPENDENCY_UNAVAILABLE\",\"requestId\":\"0944f8d9-5fe4-4ece-9696-27c37036819f\",\"timestamp\":\"2026-10-27T06:33:09.280706Z\"}",
+  "file": "bodies/zh-CN-0040-_api_operations_client-admin_v1_responsible-partners.json"
+ },
+ {
+  "lang": "zh-CN",
+  "page": "clients list",
+  "kind": "http-failure",
+  "method": "GET",
+  "url": "/api/operations/client-admin/v1/clients?page=1&size=20",
+  "status": 503,
+  "requestId": "edece8c4-775a-40c6-8a5e-c4803ef68e56",
+  "body": "{\"type\":\"about:blank\",\"title\":\"Service Unavailable\",\"detail\":\"依赖服务暂时不可用，请稍后重试\",\"code\":\"DEPENDENCY_UNAVAILABLE\",\"requestId\":\"edece8c4-775a-40c6-8a5e-c4803ef68e56\",\"timestamp\":\"2026-10-27T06:33:09.280707Z\"}",
+  "file": "bodies/zh-CN-0041-_api_operations_client-admin_v1_clients.json"
+ }
+]

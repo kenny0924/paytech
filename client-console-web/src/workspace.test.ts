@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { enterableWorkspace, fallbackText, readHome, readWorkspaces, workspaceName, workspaceSubtitle } from "./workspace.ts";
-import { resultBanner } from "./onboarding.ts";
 
 const item = { memberId: "11", clientId: "21", clientNo: "CL-21", displayName: "Example Trading LLC", clientType: "ORGANIZATION",
   state: "ACCESSIBLE", reasonText: null, current: false };
@@ -44,17 +43,12 @@ test("fallback reason maps to public text and unknown codes stay generic", () =>
   assert.equal(fallbackText("SOMETHING_INTERNAL"), "You've left the workspace: it is temporarily unavailable.");
 });
 
-test("approved banner offers entry only for an accessible workspace of the same client", () => {
-  const approved = { status: "APPROVED", reviewStatus: "NONE" as const, review: null, clientId: "21" };
+test("approved result offers entry only for an accessible workspace of the same client", () => {
   const ready = readWorkspaces({ status: "AVAILABLE", items: [item] });
-  const enter = resultBanner(approved, ready);
-  assert.equal(enter?.enterMemberId, "11");
-  assert.ok(enter?.lines.includes("Your client workspace is ready. You can enter it now."));
+  assert.equal(enterableWorkspace("21", ready)?.memberId, "11");
   for (const workspaces of [null, readWorkspaces({ status: "AVAILABLE", items: [{ ...item, state: "RESTRICTED" }] }),
     readWorkspaces({ status: "AVAILABLE", items: [{ ...item, clientId: "99" }] }), readWorkspaces(undefined)]) {
-    const banner = resultBanner(approved, workspaces);
-    assert.equal(banner?.enterMemberId, null);
-    assert.ok(banner?.lines.some((line) => line.includes("being set up")));
+    assert.equal(enterableWorkspace("21", workspaces), null);
   }
   assert.equal(enterableWorkspace(undefined, ready), null);
 });

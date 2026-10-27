@@ -39,7 +39,7 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case UNSUPPORTED_MEDIA_TYPE -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
                 case DEPENDENCY_TIMEOUT -> HttpStatus.GATEWAY_TIMEOUT;
                 case DEPENDENCY_UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
-                case QUALIFICATION_SUBJECT_TERMINATED -> HttpStatus.UNPROCESSABLE_CONTENT;
+                case QUALIFICATION_SUBJECT_TERMINATED, ON_BEHALF_PARTNER_INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
             };
         }
         if (errorCode instanceof OperationsErrorCode platformCode) {
@@ -111,6 +111,13 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case OPERATING_ENTITY_NOT_FOUND, LOCAL_PARTNER_NOT_FOUND -> HttpStatus.NOT_FOUND;
                 case ENTITY_CHANGE_VERSION_CONFLICT -> HttpStatus.CONFLICT;
                 case ENTITY_ATTRIBUTE_INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
+            };
+        }
+        if (errorCode instanceof com.paytech.client.master.api.enums.OnboardingErrorCode onboarding) {
+            return switch (onboarding) {
+                case ONBOARDING_CODE_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case PARTNER_NOT_OE_PROVIDER, ONBOARDING_CODE_INVALID, JURISDICTION_NOT_ACCEPTED -> HttpStatus.UNPROCESSABLE_CONTENT;
+                default -> defaultStatus;
             };
         }
         if (errorCode == com.paytech.client.master.api.enums.CheckoutCandidateErrorCode.CLIENT_NOT_FOUND) {

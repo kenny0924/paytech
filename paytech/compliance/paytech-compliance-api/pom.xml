@@ -11,9 +11,10 @@
     </parent>
     <artifactId>paytech-compliance-api</artifactId>
     <name>PayTech Compliance API</name>
-    <description>Internal HTTP contracts of compliance: Client onboarding review, review result, material requirements,
-        settlement controls, and the ClientReviewDecided / SettlementRestrictionChanged event payloads.</description>
+    <description>Internal HTTP contracts of compliance: due diligence program resolution, Client onboarding review,
+        review result, settlement controls, and the ClientReviewDecided / QualificationChanged / SettlementRestrictionChanged event payloads.</description>
     <dependencies>
+        <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>provided</scope></dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-common-core</artifactId>
@@ -27,4 +28,7 @@
             <artifactId>jakarta.validation-api</artifactId>
         </dependency>
     </dependencies>
+    <build><plugins><plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId>
+                <configuration><annotationProcessorPaths><path><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId></path></annotationProcessorPaths></configuration>
+            </plugin></plugins></build>
 </project>

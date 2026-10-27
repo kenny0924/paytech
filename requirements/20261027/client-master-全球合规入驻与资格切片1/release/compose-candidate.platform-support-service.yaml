@@ -1,0 +1,12 @@
+# 全球合规入驻与资格切片 1：Platform 候选覆盖（rel-build 2026-10-27，S-11；阶段 7 由主会话执行）。只换镜像。
+# 时机：块 138 休眠注册（60 / 63）之后、激活（61 / 64）之前；见 runbook ⑪b。
+# compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 platform-support-service
+# 与现网 fileupload-20261024a JAR 相比只差两个资源（报告第 7 节）：access-control 的 operations/console-resource-capabilities.json
+#   （运营菜单资源能力清单，S-11）与 paytech-messaging 的 catalog/events.yaml（ClientReviewDecided v2、QualificationChanged；Platform 不生产也不消费）。
+# 环境变量：主 compose 的 platform-support-service 段（含 env_file private/platform.env、private/client-onboarding.env）已包含现网全部键，
+#   包括 PLATFORM_SUPPORT_RABBITMQ_*、PLATFORM_SUPPORT_INTERNAL_AUTH_MODE=DUAL、DATAQUERY_HTTP_CALLERS_0、WEBHOOK_*、SPRING_APPLICATION_JSON；
+#   与上一个覆盖文件（Code-MoR-fileupload …/operations-文件上传入口/release/compose-candidate.yaml，同样只换镜像）一致。
+#   渲染结果与运行容器 printenv 逐键、逐值相同（报告第 7 节）。密钥只来自 env_file，本文件不写任何值。
+services:
+  platform-support-service:
+    image: sha256:cad6dc14cc7c2c7687cc7aacdaf0a77804e529c6f492adacab56ba1045659ba2  # mor-test/platform-support-service:onboard-20261027a（JAR 478c53dea4ac7f92）

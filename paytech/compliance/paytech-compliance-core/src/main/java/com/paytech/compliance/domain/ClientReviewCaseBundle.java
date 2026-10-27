@@ -2,6 +2,7 @@ package com.paytech.compliance.domain;
 
 import java.util.List;
 
+import com.paytech.compliance.core.dal.dataobject.CaseCheck;
 import com.paytech.compliance.core.dal.dataobject.CaseRequirement;
 import com.paytech.compliance.core.dal.dataobject.CaseStateChange;
 import com.paytech.compliance.core.dal.dataobject.CaseSubject;
@@ -11,7 +12,7 @@ import com.paytech.compliance.core.dal.dataobject.EvidenceRef;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/** 一个待登记案件及其主体、材料要求、证据引用与初始状态变更。 */
+/** 一个待登记案件及其主体、材料要求、证据引用、检查与初始状态变更。 */
 @Getter
 @AllArgsConstructor
 public class ClientReviewCaseBundle {
@@ -19,10 +20,12 @@ public class ClientReviewCaseBundle {
     private final DueDiligenceCase reviewCase;
     /** 案件唯一的 PRIMARY 主体。 */
     private final CaseSubject subject;
-    /** 按程序修订实例化的材料要求。 */
+    /** 按程序版本实例化的材料要求。 */
     private final List<CaseRequirement> requirements;
-    /** 本案件主体的证据引用。 */
+    /** 本案件主体的证据引用（含从上一轮复用的已接受证据）。 */
     private final List<EvidenceRef> evidence;
+    /** 按程序版本实例化的检查（含从上一轮复用的有效 PASS 结论）。 */
+    private final List<CaseCheck> checks;
     /** 初始状态变更。 */
     private final CaseStateChange stateChange;
 }

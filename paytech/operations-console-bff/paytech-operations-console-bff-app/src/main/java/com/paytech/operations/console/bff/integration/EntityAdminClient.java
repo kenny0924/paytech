@@ -9,6 +9,7 @@ import com.paytech.client.master.api.entityadmin.response.OperatingEntitySummary
 import com.paytech.compliance.api.enums.QualificationRoleType;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
+import com.paytech.operations.console.bff.service.model.clientreview.response.ResponsiblePartnerListResponseBody;
 import com.paytech.operations.console.bff.service.model.qualificationadmin.response.QualificationSubjectResponseBody;
 
 /** client-master 主档维护：经营主体、Local Partner 与资格登记主体核对；单次调用，不自动重试。 */
@@ -30,6 +31,14 @@ public interface EntityAdminClient {
 
     /** B5 Local Partner 详情。 */
     LocalPartnerDetailResponseBody localPartner(OperatorContext operator, String localPartnerId);
+
+    /**
+     * 可作为责任方的 PayFac 选项：ACTIVE 且有 OE_PROVIDER 角色的 Local Partner
+     *
+     * @param operator 当前操作人
+     * @return 前 100 个选项，按 localPartnerId 升序
+     */
+    ResponsiblePartnerListResponseBody responsiblePartners(OperatorContext operator);
 
     /** B6 整体替换 Partner 角色。 */
     LocalPartnerDetailResponseBody replacePartnerRoles(OperatorContext operator, String localPartnerId,

@@ -69,6 +69,8 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
       return [menu.frontendRoute, `${menu.frontendRoute}/:entityNo`];
     case 'OPERATIONS_LOCAL_PARTNERS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:localPartnerId`];
+    case 'OPERATIONS_CLIENTS':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:clientId`];
     case 'OPERATIONS_COMMERCIAL_AGREEMENTS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:agreementId`];
     case 'OPERATIONS_COMMERCIAL_TERMS':

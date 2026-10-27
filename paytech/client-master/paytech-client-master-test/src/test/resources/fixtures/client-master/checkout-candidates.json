@@ -357,7 +357,8 @@
       "create_time": "2026-09-01T00:00:00Z",
       "update_time": "2026-09-01T00:00:00Z",
       "approved_time": "2026-09-01T00:00:00Z",
-      "draft_application_id": null
+      "draft_application_id": null,
+      "current_slot": 1
     },
     {
       "profile_id": 910000000000111,
@@ -366,7 +367,8 @@
       "create_time": "2026-09-01T00:00:00Z",
       "update_time": "2026-09-01T00:00:00Z",
       "approved_time": "2026-09-01T00:00:00Z",
-      "draft_application_id": null
+      "draft_application_id": null,
+      "current_slot": 1
     },
     {
       "profile_id": 910000000000211,
@@ -375,7 +377,8 @@
       "create_time": "2026-09-01T00:00:00Z",
       "update_time": "2026-09-01T00:00:00Z",
       "approved_time": "2026-09-01T00:00:00Z",
-      "draft_application_id": null
+      "draft_application_id": null,
+      "current_slot": 1
     },
     {
       "profile_id": 910000000000311,
@@ -384,7 +387,8 @@
       "create_time": "2026-09-01T00:00:00Z",
       "update_time": "2026-09-01T00:00:00Z",
       "approved_time": "2026-09-01T00:00:00Z",
-      "draft_application_id": null
+      "draft_application_id": null,
+      "current_slot": 1
     }
   ],
   "organization_profile": [

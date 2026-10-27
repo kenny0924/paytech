@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.client.contract.api.onboarding.ClientSubmissionApi;
 import com.paytech.client.contract.api.onboarding.response.SubmissionCheckResponseBody;
-import com.paytech.client.contract.api.onboarding.response.SubmissionIssueResponseBody;
+import com.paytech.client.master.service.processor.SubmissionErrors;
 import com.paytech.client.contract.api.onboarding.response.SubmissionResponseBody;
 import com.paytech.client.master.domain.onboarding.ClientDraftCommand;
 import com.paytech.client.master.service.processor.CheckClientSubmissionProcessor;
@@ -52,8 +52,7 @@ public class ClientSubmissionController implements ClientSubmissionApi {
         }
         var preparation = checks.process(new CheckClientSubmissionRequest(session(accountId), session(sessionId),
             ClientDraftCommand.id(applicationId)));
-        return new SubmissionCheckResponseBody(preparation.ready(), preparation.getIssues().stream()
-            .map(issue -> new SubmissionIssueResponseBody(issue.field(), issue.message())).toList());
+        return new SubmissionCheckResponseBody(preparation.ready(), SubmissionErrors.bodies(preparation.errors()));
     }
 
     /** 非法身份坐标与无效会话统一响应。 */

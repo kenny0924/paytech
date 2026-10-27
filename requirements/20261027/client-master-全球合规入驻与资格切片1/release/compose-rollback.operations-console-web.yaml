@@ -1,0 +1,6 @@
+# 全球合规入驻与资格切片 1：mor-test 回滚覆盖（rel-build 2026-10-27）。镜像 = 2026-10-27 运行容器 docker inspect 的镜像 ID；
+# env 与运行容器 printenv 逐键相同（敏感值为 ${...} 引用）。用法同候选文件：compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never ... <service>
+# client-master / compliance 回滚须同窗口从第 ① 步备份恢复数据库（runbook 第 5 节）。
+services:
+  operations-console-web:
+    image: sha256:4f44725eb26f7569b40719f29f48da7cc60f46c3c6bdd4d45ba0c44827662d3a  # mor-test/operations-console-web:relsnap-20261025a（现网）

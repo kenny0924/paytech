@@ -1,0 +1,12 @@
+# 全球合规入驻与资格切片 1：mor-test 候选覆盖（rel-build 2026-10-27，阶段 7 由主会话执行，另需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag onboard-20261027a 仅供辨认；:development 未改动）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-onboard-rel = ea0272f3 + Code-MoR-onboard 未提交改动的冻结副本
+#   （2026-10-27T02:52Z 复同步，708 项 git status，全文件清单指纹 6f985f45736395e6）；构建与核对见 ../verification/rel-build-report.md。
+# 环境变量：逐键对照运行容器 printenv、主 compose 与历史候选文件；主 compose 已含全部现网键，此处显式列出非敏感值，
+#   敏感值只写 ${...} 引用（与主 compose 同一变量），不落明文。
+services:
+  operations-console-web:
+    # 入驻配置、入驻码、Client 三页与审核工作台（筛查 / 推荐 / 豁免 / 四眼决定）。现网 relsnap-20261025a dist 与 ea0272f3 构建逐字节相同，不回退他人工作。
+    image: sha256:88ab111a7fdabeea6893c307f36a32baec8082b74b218fc2400f12b2cd031872  # mor-test/operations-console-web:onboard-20261027a（dist 234 个文件）

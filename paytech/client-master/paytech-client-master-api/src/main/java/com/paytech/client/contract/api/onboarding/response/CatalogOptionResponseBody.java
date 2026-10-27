@@ -12,6 +12,6 @@ import lombok.AllArgsConstructor;
 public class CatalogOptionResponseBody {
     /** Owner 维护的稳定代码。 */
     private String code;
-    /** 受控展示名称。 */
-    private String label;
+    /** 展示名称的界面文案键（命名空间 onboardingSchema，如 onboardingSchema.catalog.INDUSTRY.RETAIL）。 */
+    private String labelKey;
 }

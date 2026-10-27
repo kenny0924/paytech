@@ -1,0 +1,287 @@
+{
+ "env": "local",
+ "startedAt": "2026-10-27T03:13:40.438870+00:00",
+ "finishedAt": "2026-10-27T03:13:56.755673+00:00",
+ "summary": {
+  "PASS": 37,
+  "FAIL": 0,
+  "SKIP": 1,
+  "INFO": 0
+ },
+ "ids": {
+  "reviewerRoleId": "240674285423693824",
+  "reviewerAccountId": "240674286610681856",
+  "reviewerEmail": "onboarding-acceptance-reviewer-1027031340@example.test",
+  "clientAAccountId": "240674290574299136",
+  "clientAEmail": "onb-a-1027031340@example.test",
+  "responsiblePartnerId": "900000000001370001",
+  "onboardingCodeId": "240674345217699840",
+  "onboardingCodeSingleUseId": "240674345683267584"
+ },
+ "results": [
+  {
+   "ac": "SETUP",
+   "step": "运营 A（管理员）登录",
+   "verdict": "PASS",
+   "evidence": "accountId=None"
+  },
+  {
+   "ac": "SETUP",
+   "step": "复核人权限（CLIENT_ONBOARDING 资源下全部权限）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 permissions=8"
+  },
+  {
+   "ac": "SETUP",
+   "step": "IAM 新建合成复核角色",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "IAM 新建合成复核人",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "合成复核人首登改密并登录",
+   "verdict": "PASS",
+   "evidence": "accountId=240674286610681856 passwordChange=HTTP 204"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 注册",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 验证链接",
+   "verdict": "PASS",
+   "evidence": "source=minted challengeNo=123ee94b-6e5c-4b93-ad6c-8d5614b3f1d4"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 邮箱验证",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 登录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：辖区包",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 jurisdictions=['AE', 'EG', 'SA']"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：AE Schema",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 schemas=[('9270000000700003', 'INDIVIDUAL', '*', 'ACTIVE', 28), ('9270000000700004', 'INDIVIDUAL', 'SOLE_ESTABLISHMENT', 'ACTIVE', 31), ('9270000000700001', 'ORGANIZATION', '*', 'ACTIVE', 39), ('9270000000700002', 'ORGANIZATION', 'FZ_LLC', 'ACTIVE', 40)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：AE 尽调程序",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 programs=[('AE_CLIENT_INDIVIDUAL_STANDARD', 'ACTIVE', True), ('AE_CLIENT_ORGANIZATION_STANDARD', 'ACTIVE', True), ('AE_RELATED_PERSON_STANDARD', 'ACTIVE', True)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：SA Schema",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 schemas=[('9270000000700006', 'INDIVIDUAL', '*', 'ACTIVE', 29), ('9270000000700005', 'ORGANIZATION', '*', 'ACTIVE', 41)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：SA 尽调程序",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 programs=[('SA_CLIENT_INDIVIDUAL_STANDARD', 'ACTIVE', True), ('SA_CLIENT_ORGANIZATION_STANDARD', 'ACTIVE', True), ('SA_RELATED_PERSON_STANDARD', 'ACTIVE', True)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：EG Schema",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 schemas=[('9270000000700008', 'INDIVIDUAL', '*', 'ACTIVE', 28), ('9270000000700007', 'ORGANIZATION', '*', 'ACTIVE', 39)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：EG 尽调程序",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 programs=[('EG_CLIENT_INDIVIDUAL_STANDARD', 'ACTIVE', True), ('EG_CLIENT_ORGANIZATION_STANDARD', 'ACTIVE', True), ('EG_RELATED_PERSON_STANDARD', 'ACTIVE', True)]"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 入驻配置：目录项（EG 省）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 count=27"
+  },
+  {
+   "ac": "AC-15",
+   "step": "运营 Client 列表",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 total=2"
+  },
+  {
+   "ac": "AC-04",
+   "step": "运营 可签发入驻码的 PayFac（OE_PROVIDER）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 partners=[('900000000001370001', 'LP-PAYFAC-AE001', 'ACTIVE')]"
+  },
+  {
+   "ac": "AC-04",
+   "step": "签发入驻码：明文只在签发响应出现一次、格式 XXXX-XXXX、掩码末 4 位",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 codeId=240674345217699840 codeMasked=****-U6ZB status=ACTIVE"
+  },
+  {
+   "ac": "AC-04",
+   "step": "签发一次性入驻码（maxUses=1）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 codeId=240674345683267584"
+  },
+  {
+   "ac": "AC-04",
+   "step": "作废入驻码 → REVOKED，作废结果无明文",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 codeId=240674346241110016 status=REVOKED codeMasked=****-CXXQ"
+  },
+  {
+   "ac": "AC-04",
+   "step": "签发已过有效期的入驻码（用于过期校验）",
+   "verdict": "PASS",
+   "evidence": "codeId=240674346635374592"
+  },
+  {
+   "ac": "AC-04",
+   "step": "入驻码列表只含掩码（无任何明文）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 items=4 mine=[('240674345217699840', '****-U6ZB', 'ACTIVE', 0)]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "Client 可受理辖区",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 [('AE', 'OPEN'), ('EG', 'OPEN'), ('SA', 'OPEN')]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "form-schema AE ORGANIZATION LLC：分区 / 字段 / 标识 / 地址 / 关系规则 / 材料 / 声明",
+   "verdict": "PASS",
+   "evidence": "{\"schemaId\": \"9270000000700001\", \"sections\": [\"BASIC\", \"BUSINESS\", \"PEOPLE\", \"MATERIALS\", \"DECLARATIONS\"], \"fields\": 39, \"address\": \"AE_POBOX\", \"components\": [[\"addressLine1\", true, null], [\"addressLine2\", false, null], [\"city\", true, null], [\"stateOrProvince\", true, \"STATE_OR_PROVINCE\"], [\"poBox\", false, null], [\"countryCode\", true, null]], \"materials\": [[\"ADDRESS\", \"PRIMARY\", false], [\"AUTHORIZATION\", \"PRIMARY\", false], [\"BANK\", \"PRIMARY\", true], [\"CONSTITUTION\", \"PRIMARY\", false], [\"ONLINE_PRESENCE\", \"PRIMARY\", true], [\"OWNERSHIP\", \"PRIMARY\", false], [\"REGISTRATION\", \"PRIMARY\", true], [\"TAX\", \"PRIMARY\", false], [\"IDENTITY\", \"ANY_RELATED\", true]], \"declarations\": [\"OWNERSHIP_COMPLETE\", \"DI"
+  },
+  {
+   "ac": "AC-01",
+   "step": "form-schema AE INDIVIDUAL：分区 / 字段 / 标识 / 地址 / 关系规则 / 材料 / 声明",
+   "verdict": "PASS",
+   "evidence": "{\"schemaId\": \"9270000000700003\", \"sections\": [\"BASIC\", \"BUSINESS\", \"MATERIALS\", \"DECLARATIONS\"], \"fields\": 28, \"address\": \"AE_POBOX\", \"components\": [[\"addressLine1\", true, null], [\"addressLine2\", false, null], [\"city\", true, null], [\"stateOrProvince\", true, \"STATE_OR_PROVINCE\"], [\"poBox\", false, null], [\"countryCode\", true, null]], \"materials\": [[\"ADDRESS\", \"PRIMARY\", false], [\"BANK\", \"PRIMARY\", true], [\"IDENTITY\", \"PRIMARY\", true], [\"ONLINE_PRESENCE\", \"PRIMARY\", true], [\"REGISTRATION\", \"PRIMARY\", true]], \"declarations\": [\"PEP_DECLARATION\", \"INFORMATION_TRUE\", \"PLATFORM_TERMS\"], \"identifierTypes\": [[\"AE_EMIRATES_ID\", \"NONE\"], [\"PASSPORT\", \"NONE\"]], \"groups\": [\"PERSON_ID\"], \"relationRules\": n"
+  },
+  {
+   "ac": "AC-01",
+   "step": "form-schema SA ORGANIZATION LLC：分区 / 字段 / 标识 / 地址 / 关系规则 / 材料 / 声明",
+   "verdict": "PASS",
+   "evidence": "{\"schemaId\": \"9270000000700005\", \"sections\": [\"BASIC\", \"BUSINESS\", \"PEOPLE\", \"MATERIALS\", \"DECLARATIONS\"], \"fields\": 41, \"address\": \"SA_NATIONAL_ADDRESS\", \"components\": [[\"buildingNumber\", true, null], [\"addressLine1\", true, null], [\"district\", true, null], [\"city\", true, \"CITY\"], [\"postalCode\", true, null], [\"additionalNumber\", true, null], [\"addressLine2\", false, null], [\"countryCode\", true, null]], \"materials\": [[\"ADDRESS\", \"PRIMARY\", false], [\"AUTHORIZATION\", \"PRIMARY\", false], [\"BANK\", \"PRIMARY\", true], [\"CONSTITUTION\", \"PRIMARY\", false], [\"ONLINE_PRESENCE\", \"PRIMARY\", true], [\"OWNERSHIP\", \"PRIMARY\", false], [\"REGISTRATION\", \"PRIMARY\", true], [\"TAX\", \"PRIMARY\", false], [\"IDENTITY\", \"ANY"
+  },
+  {
+   "ac": "AC-01",
+   "step": "form-schema SA INDIVIDUAL：分区 / 字段 / 标识 / 地址 / 关系规则 / 材料 / 声明",
+   "verdict": "PASS",
+   "evidence": "{\"schemaId\": \"9270000000700006\", \"sections\": [\"BASIC\", \"BUSINESS\", \"MATERIALS\", \"DECLARATIONS\"], \"fields\": 29, \"address\": \"SA_NATIONAL_ADDRESS\", \"components\": [[\"buildingNumber\", true, null], [\"addressLine1\", true, null], [\"district\", true, null], [\"city\", true, \"CITY\"], [\"postalCode\", true, null], [\"additionalNumber\", true, null], [\"addressLine2\", false, null], [\"countryCode\", true, null]], \"materials\": [[\"ADDRESS\", \"PRIMARY\", false], [\"BANK\", \"PRIMARY\", true], [\"IDENTITY\", \"PRIMARY\", true], [\"ONLINE_PRESENCE\", \"PRIMARY\", true], [\"REGISTRATION\", \"PRIMARY\", false]], \"declarations\": [\"PEP_DECLARATION\", \"INFORMATION_TRUE\", \"PLATFORM_TERMS\"], \"identifierTypes\": [[\"SA_NATIONAL_ID\", \"LUHN\"], [\"SA"
+  },
+  {
+   "ac": "AC-01",
+   "step": "form-schema EG ORGANIZATION LLC：分区 / 字段 / 标识 / 地址 / 关系规则 / 材料 / 声明",
+   "verdict": "PASS",
+   "evidence": "{\"schemaId\": \"9270000000700007\", \"sections\": [\"BASIC\", \"BUSINESS\", \"PEOPLE\", \"MATERIALS\", \"DECLARATIONS\"], \"fields\": 39, \"address\": \"EG_STANDARD\", \"components\": [[\"addressLine1\", true, null], [\"addressLine2\", false, null], [\"district\", false, null], [\"city\", true, null], [\"stateOrProvince\", true, \"STATE_OR_PROVINCE\"], [\"postalCode\", true, null], [\"countryCode\", true, null]], \"materials\": [[\"ADDRESS\", \"PRIMARY\", true], [\"AUTHORIZATION\", \"PRIMARY\", false], [\"BANK\", \"PRIMARY\", true], [\"CONSTITUTION\", \"PRIMARY\", true], [\"ONLINE_PRESENCE\", \"PRIMARY\", true], [\"OWNERSHIP\", \"PRIMARY\", true], [\"REGISTRATION\", \"PRIMARY\", true], [\"TAX\", \"PRIMARY\", true], [\"IDENTITY\", \"ANY_RELATED\", true]], \"declaration"
+  },
+  {
+   "ac": "AC-01",
+   "step": "form-schema EG INDIVIDUAL：分区 / 字段 / 标识 / 地址 / 关系规则 / 材料 / 声明",
+   "verdict": "PASS",
+   "evidence": "{\"schemaId\": \"9270000000700008\", \"sections\": [\"BASIC\", \"BUSINESS\", \"MATERIALS\", \"DECLARATIONS\"], \"fields\": 28, \"address\": \"EG_STANDARD\", \"components\": [[\"addressLine1\", true, null], [\"addressLine2\", false, null], [\"district\", false, null], [\"city\", true, null], [\"stateOrProvince\", true, \"STATE_OR_PROVINCE\"], [\"postalCode\", true, null], [\"countryCode\", true, null]], \"materials\": [[\"ADDRESS\", \"PRIMARY\", true], [\"BANK\", \"PRIMARY\", true], [\"IDENTITY\", \"PRIMARY\", true], [\"ONLINE_PRESENCE\", \"PRIMARY\", true], [\"REGISTRATION\", \"PRIMARY\", false]], \"declarations\": [\"PEP_DECLARATION\", \"INFORMATION_TRUE\", \"PLATFORM_TERMS\"], \"identifierTypes\": [[\"EG_NATIONAL_ID\", \"EG_NID\"], [\"PASSPORT\", \"NONE\"]], \"groups"
+  },
+  {
+   "ac": "AC-14",
+   "step": "AE 地址格式 AE_POBOX 含 PO Box 组件",
+   "verdict": "PASS",
+   "evidence": "[\"addressLine1\", \"addressLine2\", \"city\", \"stateOrProvince\", \"poBox\", \"countryCode\"]"
+  },
+  {
+   "ac": "AC-14",
+   "step": "SA 国家地址：建筑号 / 附加号 / 区 / 邮编必填",
+   "verdict": "PASS",
+   "evidence": "{\"buildingNumber\": true, \"addressLine1\": true, \"district\": true, \"city\": true, \"postalCode\": true, \"additionalNumber\": true, \"addressLine2\": false, \"countryCode\": true}"
+  },
+  {
+   "ac": "AC-14",
+   "step": "EG 省（governorate）必填且有目录",
+   "verdict": "PASS",
+   "evidence": "catalog=STATE_OR_PROVINCE items=27"
+  },
+  {
+   "ac": "AC-01",
+   "step": "标识类型校验位规则（SA NID LUHN、EG NID EG_NID）",
+   "verdict": "PASS",
+   "evidence": "{\"SA\": {\"SA_NATIONAL_ID\": \"LUHN\", \"SA_IQAMA\": \"LUHN\", \"PASSPORT\": \"NONE\"}, \"EG\": {\"EG_NATIONAL_ID\": \"EG_NID\", \"PASSPORT\": \"NONE\"}}"
+  },
+  {
+   "ac": "AC-14",
+   "step": "AE 个人 SOLE_ESTABLISHMENT Schema（执照属性）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 schemaId=9270000000700004 organizationTypeCode=SOLE_ESTABLISHMENT"
+  },
+  {
+   "ac": "AC-01",
+   "step": "不存在的辖区 → 422 JURISDICTION_NOT_ACCEPTED",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'JURISDICTION_NOT_ACCEPTED', 'detail': '当前辖区暂不受理入驻', 'requestId': 'f6c4d472-3172-4f6b-ad95-306392a7b342'}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "ACCEPTANCE_POLICY=CLOSED → 422",
+   "verdict": "SKIP",
+   "evidence": "AE / SA / EG 均为 OPEN，无 CLOSED 辖区可测（不改数据）；由 OnboardingFormSchemaTest.test_notAccepted 覆盖"
+  }
+ ],
+ "autoTestOnly": {
+  "AC-01 CLOSED 辖区": [
+   "OnboardingFormSchemaTest.test_notAccepted"
+  ],
+  "AC-02 完整错误码矩阵（格式 / EG NID / 到期 / UBO 超 100 / 二选一）": [
+   "SubmitClientApplicationTest.test_individualRuleMatrix",
+   "SubmitClientApplicationTest.test_organizationRuleMatrix",
+   "DraftIdentifierVaultTest.test_formatAndChecksumRecorded"
+  ],
+  "AC-03 IDENTIFIER_CONFLICT（提交时）、I01 只传 Token、MQ 无原值": [
+   "SubmitClientApplicationTest.test_identityConflict",
+   "DraftIdentifierVaultTest.test_vaultRequiredIdentifierStoresTokenOnly",
+   "ClientReviewRegistrationApiAutoTest.test_normalFlow_organization"
+  ],
+  "AC-05 programs/resolve 无程序失败关闭": [
+   "ProgramResolutionApiAutoTest.test_noDataFound",
+   "ClientReviewRegistrationApiAutoTest.test_noDataFound_program"
+  ],
+  "AC-07 退回超期 EXPIRED → 申请 WITHDRAWN": [
+   "ClientReviewReturnApiAutoTest.test_normalFlow_expiry",
+   "ClientReviewLifecycleV2Test.test_returnedThenExpired"
+  ],
+  "AC-11 ZZ 国家包全链 + 字面量禁令": [
+   "NewJurisdictionByDataTest.test_zzFullChain",
+   "ZzCountryPackAutoTest.test_normalFlow_zzFullChain",
+   "JurisdictionLiteralAutoTest.test_noJurisdictionLiterals",
+   "ComplianceHardcodingGuardTest.test_businessRuleViolation_noCatalogLiteralsInProduction"
+  ],
+  "AC-12 程序 / Schema 新版本不影响在途": [
+   "ClientReviewCaseDetailApiAutoTest.test_edgeCase_versionFrozen",
+   "OnboardingFormSchemaTest.test_byApplication"
+  ],
+  "AC-13 Mock 只在 local / mor-test": [
+   "渠道 S_SCREENING_MOCK 只在两环境登记（assets/harness/screening_channel_setup.py）"
+  ]
+ }
+}

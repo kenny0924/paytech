@@ -34,4 +34,18 @@ public class ClientApplicationSubmission {
     private Instant submittedTime;
     /** 最近一次更新的 UTC 时间。 */
     private Instant updateTime;
+    /** 已正式提交的轮次；创建为 0，每次提交加一。 */
+    private int submissionRound;
+    /** 退回重提时上一轮审核任务；首轮为空。 */
+    private Long previousCaseId;
+    /** 申请辖区。 */
+    private String jurisdictionCode;
+    /** 组织类型；个人且无个人经营形态时为空。 */
+    private String organizationTypeCode;
+    /** 责任 PayFac；平台自营为空。 */
+    private Long responsiblePartnerId;
+    /** 退回补件截止时间，可空。 */
+    private Instant reviewDueTime;
+    /** 申请冻结的 Schema 版本。 */
+    private Long schemaId;
 }

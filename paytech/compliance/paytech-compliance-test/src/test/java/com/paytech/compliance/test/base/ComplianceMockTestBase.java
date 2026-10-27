@@ -15,17 +15,20 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
 import com.paytech.compliance.ComplianceApplication;
-import com.paytech.compliance.test.checker.ClientReviewStoreChecker;
 import com.paytech.compliance.test.checker.QualificationStoreChecker;
 import com.paytech.compliance.test.clear.ComplianceDataCleaner;
+import com.paytech.compliance.test.configuration.ComplianceTestMockConfiguration;
 import com.paytech.compliance.test.infrastructure.ComplianceDatabasePrecondition;
-import com.paytech.compliance.test.mapper.ClientReviewTestMapper;
-import com.paytech.compliance.test.mapper.MaterialProgramTestMapper;
+import com.paytech.compliance.test.mapper.ProgramTestMapper;
 import com.paytech.compliance.test.mapper.QualificationTestMapper;
-import com.paytech.compliance.test.mocker.ClientReviewMocker;
-import com.paytech.compliance.test.mocker.MaterialProgramMocker;
+import com.paytech.compliance.test.mapper.ReviewTestMapper;
+import com.paytech.compliance.test.mocker.LegacyCaseMocker;
+import com.paytech.compliance.test.mocker.ProgramPackMocker;
 import com.paytech.compliance.test.mocker.QualificationMocker;
-import com.paytech.compliance.test.probe.ClientReviewResultProbe;
+import com.paytech.compliance.test.mocker.external.PartyProfileMocker;
+import com.paytech.compliance.test.mocker.external.ScreeningMocker;
+import com.paytech.compliance.test.probe.ComplianceEventProbe;
+import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
 import com.paytech.foundation.messaging.ordering.AggregateKeySequencer;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
@@ -36,17 +39,18 @@ import tools.jackson.databind.ObjectMapper;
 /**
  * compliance 服务级入口测试基类（由原 Risk MockTestBase 拆出，design/10 §2.4）
  * <li>复用正式启动类 ComplianceApplication 与生产组件扫描，只附加 mock Profile 配置；本地 mor_compliance 未就绪时在上下文启动前明确失败。</li>
- * <li>只导入 compliance 的 Mocker / TestMapper / Checker（入驻审核与角色资格）与 ClientReviewResultProbe。</li>
- * <li>全局 BeforeEach：前例异步已停止且 mor_compliance 为空基线。全局 AfterEach：等待补偿任务（CLIENT_REVIEW_RESULT 双写发布）处理停止后
- * 再交给 Foundation TestBase 执行全部 Clear。本服务没有出站 HTTP，无外部 DTO Mock 需要做意外调用检查。</li>
+ * <li>导入程序夹具、审核只读 Mapper、资格 Mocker / Checker、compliance.events 观察者与外部 Mock 服务配置（channel-connector、
+ * client-master 在独立 Loopback 服务上应答）。</li>
+ * <li>全局 BeforeEach：前例异步已停止、mor_compliance 与外部 Mock 为空基线，并绑定本例的 compliance.events 观察队列（使发布可路由）。</li>
+ * <li>全局 AfterEach：等待补偿任务与 Mock 服务空闲、删除观察队列、检查外部意外调用，再交给 Foundation TestBase 执行全部 Clear。</li>
  */
 @ActiveProfiles("mock")
 @AutoConfigureRestTestClient
 @ContextConfiguration(initializers = ComplianceDatabasePrecondition.class)
 @SpringBootTest(classes = ComplianceApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({ComplianceDataCleaner.class, MaterialProgramTestMapper.class, MaterialProgramMocker.class,
-    ClientReviewTestMapper.class, ClientReviewMocker.class, ClientReviewStoreChecker.class, ClientReviewResultProbe.class,
-    QualificationTestMapper.class, QualificationMocker.class, QualificationStoreChecker.class})
+@Import({ComplianceTestMockConfiguration.class, ComplianceDataCleaner.class, ProgramTestMapper.class, ProgramPackMocker.class,
+    LegacyCaseMocker.class, ReviewTestMapper.class, ComplianceEventProbe.class, QualificationTestMapper.class, QualificationMocker.class,
+    QualificationStoreChecker.class})
 public abstract class ComplianceMockTestBase extends TestBase {
     /** 补偿处理停止的最长等待。 */
     private static final long ASYNC_STOP_MILLIS = 10_000;
@@ -66,6 +70,18 @@ public abstract class ComplianceMockTestBase extends TestBase {
     private ComplianceDataCleaner dataCleaner;
 
     @Autowired
+    protected ComplianceEventProbe events;
+
+    @Autowired
+    protected ScreeningMocker screening;
+
+    @Autowired
+    protected PartyProfileMocker partyProfiles;
+
+    @Autowired
+    protected MockHttpServer mockHttpServer;
+
+    @Autowired
     private CompensationEventDispatcher compensationDispatcher;
 
     @Autowired
@@ -77,6 +93,9 @@ public abstract class ComplianceMockTestBase extends TestBase {
     protected final void setUpComplianceBaseline() {
         Assertions.assertTrue(asynchronousWorkStopped, "前例异步处理未结束，禁止复用环境");
         dataCleaner.assertBaseline();
+        screening.assertEmpty();
+        partyProfiles.assertEmpty();
+        events.bind();
     }
 
     /** 等待补偿处理停止；超时则保留现场并拒绝清理与复用。 */
@@ -96,6 +115,10 @@ public abstract class ComplianceMockTestBase extends TestBase {
                 Assertions.fail("等待补偿任务停止被中断");
             }
         }
+        mockHttpServer.awaitIdle();
+        events.unbind();
+        Assertions.assertAll("外部意外调用", screening::assertNoUnexpectedCalls, partyProfiles::assertNoUnexpectedCalls,
+            mockHttpServer::assertNoUnexpectedRequests);
     }
 
     /** 异步无法停止时保留现场，防止公共清理之后仍被后台发布回写。 */

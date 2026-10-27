@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.JurisdictionMapper">
+  <sql id="columns">
+    jurisdiction_code AS jurisdictionCode, country_code AS countryCode, label_key AS labelKey,
+    address_format_code AS addressFormatCode, status, change_version AS changeVersion, create_time AS createTime,
+    update_time AS updateTime
+  </sql>
+  <select id="find" resultType="com.paytech.client.master.core.dal.dataobject.Jurisdiction">
+    SELECT <include refid="columns"/> FROM t_jurisdiction WHERE jurisdiction_code=#{jurisdictionCode}
+  </select>
+  <!-- 辖区包很小（每国一行），全量按代码排序读取。 -->
+  <select id="findAll" resultType="com.paytech.client.master.core.dal.dataobject.Jurisdiction">
+    SELECT <include refid="columns"/> FROM t_jurisdiction ORDER BY jurisdiction_code
+  </select>
+</mapper>

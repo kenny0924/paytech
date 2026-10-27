@@ -27,12 +27,13 @@ public class ClientReviewOutcomeServiceImpl implements ClientReviewOutcomeServic
     @Override
     public void conclude(ClientReviewOutcomeContext context) {
         writes.executeWithoutResult(status -> {
-            applications.concludeReview(context.getApplication(), context.getStatus(), context.getDecisionId(), context.getNow());
+            applications.concludeReview(context.getApplication(), context.getStatus(), context.getDecisionId(), context.getDueTime(),
+                context.getNow());
             if (!context.activates()) {
                 return;
             }
             clients.activate(context.getApplication().getClientId(), context.getNow());
-            profiles.markApproved(context.getActivation().partyId(), context.getNow());
+            profiles.markApproved(context.getActivation().partyId(), context.getProfileContentHash(), context.getNow());
             projections.append(context.getActivation(), context.getActivationSnapshot());
             events.register(ClientTenantProjectionHandler.buildEvent(context.getActivation().changeVersionId()));
         });

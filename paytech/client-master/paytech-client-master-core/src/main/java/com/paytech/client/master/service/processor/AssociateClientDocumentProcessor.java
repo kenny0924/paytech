@@ -8,7 +8,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.client.contract.api.onboarding.ClientDocumentModels.DocumentCommandReceiptResponseBody;
 import com.paytech.client.contract.api.onboarding.ClientDocumentModels.DocumentReferenceRequestBody;
 import com.paytech.client.master.domain.onboarding.ClientDraftCommand;
+import com.paytech.client.master.domainservice.repository.ClientDraftRepository;
 import com.paytech.client.master.domainservice.service.ClientDocumentService;
+import com.paytech.client.master.domainservice.service.OnboardingPackService;
 import com.paytech.client.master.integration.ClientDraftAccountClient;
 import com.paytech.client.master.integration.ClientMaterialAuthorityClient;
 import com.paytech.client.master.service.processor.request.AssociateClientDocumentRequest;
@@ -32,11 +34,13 @@ public class AssociateClientDocumentProcessor
     private final ClientMaterialAuthorityClient authority;
     private final TransactionTemplate reads;
     private final TransactionTemplate writes;
+    private final ClientDraftRepository drafts;
+    private final OnboardingPackService packs;
 
     /** 复用本服务已有短事务与原账号权威，不建立跨系统事务；锁参数沿用 CCT 既有注解锁配置。 */
     public AssociateClientDocumentProcessor(Duration lockWait, Duration lockLease, ClientDocumentService service,
         ClientDraftAccountClient accounts, ClientMaterialAuthorityClient authority, TransactionTemplate reads,
-        TransactionTemplate writes) {
+        TransactionTemplate writes, ClientDraftRepository drafts, OnboardingPackService packs) {
         this.lockWait = lockWait;
         this.lockLease = lockLease;
         this.service = service;
@@ -44,6 +48,8 @@ public class AssociateClientDocumentProcessor
         this.authority = authority;
         this.reads = reads;
         this.writes = writes;
+        this.drafts = drafts;
+        this.packs = packs;
     }
 
     /** 与原注解锁 client-onboarding:application 生成同一逻辑 Key。 */
@@ -58,19 +64,34 @@ public class AssociateClientDocumentProcessor
         long accountId = request.getAccountId();
         accounts.authorize(accountId, request.getSessionId());
         DocumentReferenceRequestBody document = request.getDocument();
-        if (document == null || !code(document.requirementCode()) || !code(document.documentType())) {
+        if (document == null || !code(document.requirementCode()) || !code(document.documentType()) || !date(document.issueDate())
+            || !date(document.expiryDate())) {
             throw new FailException(INVALID_DRAFT);
         }
         long subject = ClientDraftCommand.id(document.subjectPartyId());
         ClientDraftCommand.fileAddress(document.fileAddress());
         var command = ClientDraftCommand.of(accountId, "CLIENT_DOCUMENT_ASSOCIATE");
         var target = reads.execute(tx -> service.target(accountId, request.getApplicationId(), subject, false));
-        String hash = authority.verify(accountId, target, document);
+        var application = drafts.identity(request.getApplicationId(), accountId, false);
+        var scope = OnboardingScopes.scope(packs.load(application.schemaId()), target.partyType(), target.responsiblePartnerId());
+        String hash = authority.verify(accountId, target, scope, document);
         accounts.authorize(accountId, request.getSessionId());
         return ClientOnboardingCommands.documentWrite(writes, () -> service.associate(command, target, document, hash));
     }
 
-    /** 代码形状只是协议校验，合法组合仍必须来自 Risk。 */
+    /** 可空日期须为有效的 YYYY-MM-DD。 */
+    boolean date(String value) {
+        if (value == null) {
+            return true;
+        }
+        try {
+            return value.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}") && java.time.LocalDate.parse(value).getYear() >= 1000;
+        } catch (java.time.DateTimeException invalid) {
+            return false;
+        }
+    }
+
+    /** 代码形状只是协议校验，合法组合仍必须来自 compliance 程序。 */
     boolean code(String value) {
         return value != null && value.matches("[A-Z][A-Z0-9_]{0,63}");
     }

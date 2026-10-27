@@ -32,8 +32,6 @@ public interface RoleQualificationMapper {
     long count(@Param("roleType") String roleType, @Param("roleId") String roleId,
         @Param("qualificationType") String qualificationType, @Param("status") String status);
 
-    /** 以读取时版本为条件切换当前决定、状态与有效期，并清空复审调度。 */
-    int applyDecision(@Param("row") RoleQualification row, @Param("decisionId") long decisionId, @Param("status") String status,
-        @Param("validFrom") Instant validFrom, @Param("validTo") Instant validTo, @Param("reviewStatus") String reviewStatus,
-        @Param("now") Instant now);
+    /** 以读取时版本为条件切换到目标投影的决定、状态、有效期、复审调度与冻结属性。 */
+    int applyDecision(@Param("row") RoleQualification row, @Param("target") RoleQualification target, @Param("now") Instant now);
 }

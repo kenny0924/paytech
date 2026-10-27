@@ -19,6 +19,9 @@ import org.springframework.web.servlet.config.annotation.*;
 @lombok.AllArgsConstructor
 public class ClientOnboardingWebConfiguration implements WebMvcConfigurer {
 
+    /** form-schema 唯一允许的 Query：辖区、主体类型、组织形式与申请 ID（后两者可省略）。 */
+    static final Set<String> SCHEMA_QUERY = Set.of("jurisdiction", "partyType", "organizationType", "applicationId");
+
     private final ClientRequestInterceptor common;
     private final ClientActorResolver actors;
 
@@ -53,11 +56,11 @@ public class ClientOnboardingWebConfiguration implements WebMvcConfigurer {
                                 }
                             }
                         }
-                        boolean options = request.getRequestURI().endsWith("/form-options");
+                        boolean schema = request.getRequestURI().endsWith("/form-schema");
                         for (var entry : request.getParameterMap().entrySet()) {
                             if (
-                                !options ||
-                                !"clientType".equals(entry.getKey()) ||
+                                !schema ||
+                                !SCHEMA_QUERY.contains(entry.getKey()) ||
                                 entry.getValue().length != 1 ||
                                 entry.getValue()[0].isBlank()
                             ) {
@@ -66,7 +69,7 @@ public class ClientOnboardingWebConfiguration implements WebMvcConfigurer {
                         }
                         String method = request.getMethod(),
                             path = request.getRequestURI();
-                        boolean submission = path.endsWith("/submissions");
+                        boolean submission = path.endsWith("/submissions") || path.endsWith("/withdrawal");
                         boolean empty =
                             Set.of("GET", "HEAD", "DELETE").contains(method) ||
                             path.endsWith("/completion") ||

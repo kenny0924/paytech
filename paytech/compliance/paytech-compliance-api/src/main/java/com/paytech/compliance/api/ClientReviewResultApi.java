@@ -15,7 +15,7 @@ public interface ClientReviewResultApi {
      * 读取申请最近一次主审核任务的客户可见结果
      *
      * @param caller
-     *            私网调用方，固定为 client-console-bff
+     *            私网调用方：client-console-bff（客户结果页）或 client-master-service（退回申请展示需求级错误）
      * @param applicationId
      *            CCT 申请 ID；调用方必须已经通过 CCT 核对该申请属于当前账号
      * @return 最近一次主任务的状态、结果、退回分区与客户可见说明

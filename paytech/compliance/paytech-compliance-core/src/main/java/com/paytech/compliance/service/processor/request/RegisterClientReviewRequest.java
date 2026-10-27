@@ -2,6 +2,7 @@ package com.paytech.compliance.service.processor.request;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -14,8 +15,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * I01 的 Owner 输入：只保留建任务需要的稳定标识，不承载主体个人资料原值。
- * <li>资料快照本期不做（2026-10-13 用户决定），入口不把姓名、证件号、地址传入本模块。</li>
+ * I01 v2 的 Owner 输入：只保留建案需要的稳定标识与冻结属性，不承载主体个人资料原值。
+ * <li>资料快照本期不做（2026-10-13 用户决定），入口不把姓名、证件 Token、属性与声明传入本模块。</li>
  */
 @Getter
 @AllArgsConstructor
@@ -32,6 +33,15 @@ public class RegisterClientReviewRequest {
     /** 客户类型：INDIVIDUAL 或 ORGANIZATION。 */
     @NotBlank
     private final String clientType;
+    /** 申请冻结的辖区代码。 */
+    @NotBlank
+    private final String jurisdictionCode;
+    /** 组织类型代码；个人为空。 */
+    private final String organizationTypeCode;
+    /** 责任 PayFac Local Partner ID；平台自营为空。 */
+    private final Long responsiblePartnerId;
+    /** 上一轮被退回的主案件 ID；首次提交为空。 */
+    private final Long previousCaseId;
     /** 提交 UTC 时间。 */
     @NotNull
     private final Instant submittedAt;
@@ -81,6 +91,10 @@ public class RegisterClientReviewRequest {
         private final String relationType;
         /** 持股比例，可空。 */
         private final BigDecimal ownershipPercentage;
+        /** UBO 认定依据，可空。 */
+        private final String uboBasis;
+        /** 职务，可空。 */
+        private final String jobTitle;
     }
 
     /** 材料引用。 */
@@ -99,11 +113,15 @@ public class RegisterClientReviewRequest {
         /** 材料类型代码。 */
         @NotBlank
         private final String documentType;
-        /** Platform 文件 ID。 */
-        @Positive
-        private final long fileId;
+        /** 文件服务地址 /files/v1/{fileId}。 */
+        @NotBlank
+        private final String fileAddress;
         /** 文件 SHA-256。 */
         @NotBlank
         private final String contentHash;
+        /** 签发日期，可空。 */
+        private final LocalDate issueDate;
+        /** 到期日期，可空。 */
+        private final LocalDate expiryDate;
     }
 }

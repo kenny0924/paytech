@@ -12,7 +12,6 @@ import com.paytech.client.master.domainservice.service.ClientDocumentService;
 import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.id.IdGenerator;
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
-import com.paytech.compliance.api.enums.MaterialQualificationType;
 /** 申请行锁保护材料集合；Hash 来自事务前的 Platform 核验，普通保存不生成 BCR。 */
 public final class ClientDocumentServiceImpl implements ClientDocumentService {
     private final ClientDraftRepository drafts;
@@ -27,16 +26,14 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
     /** 锁内重新派生主体和资格类型，不能把旧页面或被移除人员悄悄换到新目标。 */
     @Override public ClientMaterialTarget target(long accountId,long applicationId,long subjectPartyId,boolean lock) {
         var app=application(accountId,applicationId,lock);editable(app);
-        boolean organization=app.partyId()==subjectPartyId && app.clientType()==ClientType.ORGANIZATION;
-        MaterialQualificationType qualification=organization?MaterialQualificationType.ORGANIZATION_KYB:MaterialQualificationType.INDIVIDUAL_KYC;
         if (app.partyId()!=subjectPartyId) {
             if (app.clientType()!=ClientType.ORGANIZATION) throw new FailException(PERSON_NOT_FOUND);
             var person=people.person(app,subjectPartyId,lock);
             if (person==null || people.relations(app).stream().noneMatch(relation -> relation.relatedPartyId()==subjectPartyId
                 && (relation.status()==PartyRelationStatus.DRAFT || relation.status()==PartyRelationStatus.ACTIVE))) throw new FailException(PERSON_NOT_FOUND);
-            qualification=MaterialQualificationType.RELATED_PERSON_KYC;
         }
-        return new ClientMaterialTarget(applicationId,app.clientId(),subjectPartyId,qualification);
+        return new ClientMaterialTarget(applicationId,app.clientId(),subjectPartyId,app.partyId()==subjectPartyId,app.jurisdictionCode(),
+            app.clientType(),app.responsiblePartnerId());
     }
     /** 原申请锁内再次校验本地目标；同一申请、主体、要求、类型和文件已关联时返回原引用。 */
     @Override public DocumentCommandReceiptResponseBody associate(ClientDraftCommand command,ClientMaterialTarget expected,DocumentReferenceRequestBody request,String hash) {
@@ -49,7 +46,8 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
         if (same!=null) {
             return receipt(command,app.applicationId(),same,now);
         }
-        var document=new ClientApplicationDocument(ids.nextId(),current.subjectPartyId(),request.requirementCode(),request.documentType(),fileAddress,hash);
+        var document=new ClientApplicationDocument(ids.nextId(),current.subjectPartyId(),request.requirementCode(),request.documentType(),fileAddress,hash,
+            date(request.issueDate()),date(request.expiryDate()));
         documents.insert(app.applicationId(),document,now);people.touch(app,now);
         return receipt(command,app.applicationId(),document,now);
     }
@@ -63,6 +61,8 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
         if (documents.remove(applicationId,documentId)!=1) throw new FailException(MATERIAL_CONTEXT_CHANGED);
         var now=clock.instant().truncatedTo(ChronoUnit.MICROS);people.touch(app,now);
     }
+    /** 已由入口校验格式的可空日期。 */
+    private static java.time.LocalDate date(String value) { return value==null?null:java.time.LocalDate.parse(value); }
     /** 当前申请下相同主体、要求、类型和文件的已有引用；没有为空。 */
     private ClientApplicationDocument sameDocument(long applicationId,long subjectPartyId,DocumentReferenceRequestBody request,String fileAddress) {
         return documents.documents(applicationId).stream()

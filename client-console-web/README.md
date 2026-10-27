@@ -23,10 +23,14 @@ Access Token 只保存在内存；Refresh Token 由 BFF 的 HttpOnly Cookie 管�
 
 本期保留注册页填写密码、验证邮箱后再次登录的方案。密码与邮箱所有权绑定的加强方案已由用户延至对外开放前，见[决定记录](../requirements/20260914/client-console-注册与客户入驻/registration-password-binding-amendment.md)。
 
-## 入驻页面
+## 入驻页面（v2，2026-10-27 全球合规入驻切片 1）
 
-`/onboarding` 查询我的申请，用户显式选择个人/组织后才创建；`/onboarding/applications/:applicationId` 展示主表单、组织人员/关系编辑及材料。行业/MCC、资料版本、OTP、团队邀请不进入客户填写流程。组织类型、证件/机构与经营模式读取 CCT 受控目录；旧值保留并标明待确认，选项不可用不清空资料。正式提交及永久身份绑定仍按合同单独校验，目录可用和草稿保存成功均不代表提交就绪。
+`/onboarding` 列出工作区与申请；`/onboarding/new` 三步开始申请（PayFac 入驻码 → 注册国家与主体类型 → 准备清单，"开始填写"时才创建）；`/onboarding/applications/:id` 是任务清单首页，`/tasks/:task` 是各任务页，`/fix` 是退回后的补件视图；审核中、已批准、未通过、已逾期、已撤回分别是结果页。代码在 `src/onboarding/`：
 
-写操作冻结请求与幂等键，依赖失败可重试原操作；结果回读失败也不创建新意图。文件传输、完成确认、扫描与材料关联分阶段恢复。sessionStorage 仅保存当前账号＋申请的一份非敏感上传恢复坐标；不保存文件名、字节、表单或临时授权。扫描通过并经 CCT 当前授权核验后才关联。下载使用重新签发的短时 HTTPS 授权。
+- 表单完全由采集 Schema（CM-2）渲染：分区 → 分组 → 字段；控件注册表在 `widgets.tsx`，按国家变化的只有 Schema 数据（目录、地址组件、标识类型正则与校验位、可见条件、关系人规则、材料槽、声明）。字段键即草稿路径；同一 requirementGroup 的证件字段合并为一个"证件类型 + 号码"控件，号码只写不读，读回只有掩码。
+- 需求清单（CM-7）决定任务状态；提交前核对与 422 统一为需求级 `errors[]`，页顶错误汇总逐条跳到字段 / 人员 / 材料 / 声明；文案按错误码本地化，不显示服务端原文。
+- 材料直传文件服务，状态机：未上传 → 上传中（进度 + 取消）→ 检查中（扫描）→ 已完成；失败可重试或删除。关联只提交 `/files/v1/{fileId}`。
+- 视觉按 N0 token（`src/style.css` 顶部 CSS 变量，IBM Plex 本地字体包）；状态只用圆点 + 灰字，不用彩色底框；动效时长与缓动见 token，遵守 prefers-reduced-motion。
+- 国家包文案在命名空间 `onboarding-schema`（`src/i18n/en/onboarding-schema.json`；client-master 初始化 DML 的 label_key 为 `onboardingSchema.*`，由 `schemaI18nKey()` 映射到 `onboarding-schema.*`，测试核对）；页面文案在 `onboarding`。
 
-纯界面验证可运行需求目录的 `verification/preview-onboarding.mjs`（先 build）。它只监听随机 loopback，提供合成浏览器协议，不连接真实 Owner，不改变生产配置。正式业务仍必须走获准 HTTPS Gateway；生产前端没有旁路开关。复现步骤见[验证说明](../requirements/20260914/client-console-注册与客户入驻/verification/README.md#bffweb-入驻接线验证)。
+纯界面预览：先 `npm run build`，再运行需求目录的 `requirements/20261027/client-master-全球合规入驻与资格切片1/verification/preview-onboarding-v2.mjs`（loopback 模拟器，Schema 由仓库 DML 现场解析；文件直传不可用）。

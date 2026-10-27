@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.ScreeningRunMapper">
+    <sql id="columns">screening_run_id AS screeningRunId, case_id AS caseId, case_subject_id AS caseSubjectId, program_screening_id AS programScreeningId, provider_code AS providerCode, request_ref AS requestRef, trigger_source AS triggerSource, trigger_ref AS triggerRef, execution_ref AS executionRef, status, started_time AS startedTime, completed_time AS completedTime, version, create_time AS createTime, update_time AS updateTime</sql>
+    <insert id="insert">
+        INSERT INTO t_screening_run(screening_run_id, case_id, case_subject_id, program_screening_id, provider_code, request_ref, trigger_source, trigger_ref, execution_ref, status, started_time, completed_time, version, create_time, update_time)
+        VALUES(#{row.screeningRunId}, #{row.caseId}, #{row.caseSubjectId}, #{row.programScreeningId}, #{row.providerCode}, #{row.requestRef}, #{row.triggerSource}, #{row.triggerRef}, #{row.executionRef}, #{row.status}, #{row.startedTime}, #{row.completedTime}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="findByCaseIds" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.ScreeningRun">
+        SELECT <include refid="columns"/> FROM t_screening_run WHERE case_id IN <foreach collection="caseIds" item="id" open="(" separator="," close=")">#{id}</foreach> ORDER BY case_id, started_time DESC, screening_run_id DESC
+    </select>
+    <update id="complete">
+        UPDATE t_screening_run SET status = #{status}, execution_ref = #{executionRef}, completed_time = #{now}, version = version + 1, update_time = #{now}
+        WHERE screening_run_id = #{row.screeningRunId} AND version = #{row.version} AND status = 'STARTED'
+    </update>
+</mapper>

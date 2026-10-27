@@ -32,6 +32,12 @@ public class QualificationDecisionRepositoryImpl implements QualificationDecisio
         return mapper.findByCase(caseId);
     }
 
+    /** 按决定 ID 读取。 */
+    @Override
+    public QualificationDecision findById(long decisionId) {
+        return mapper.findById(decisionId);
+    }
+
     /** 按决定 ID 集合读取。 */
     @Override
     public List<QualificationDecision> findByIds(Collection<Long> decisionIds) {

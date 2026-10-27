@@ -1,21 +1,26 @@
 package com.paytech.compliance.domainservice.repository.impl;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import com.paytech.compliance.core.dal.dataobject.DueDiligenceCase;
 import com.paytech.compliance.core.dal.mapper.DueDiligenceCaseMapper;
+import com.paytech.compliance.core.enums.DueDiligenceCaseStatus;
+import com.paytech.compliance.domain.CaseClosing;
 import com.paytech.compliance.domainservice.repository.DueDiligenceCaseRepository;
+import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.AllArgsConstructor;
 
-/** t_due_diligence_case 单表持久化。 */
+/** 尽调案件持久化：条件更新确认行数后同步原对象。 */
 @Repository
 @AllArgsConstructor
 public class DueDiligenceCaseRepositoryImpl implements DueDiligenceCaseRepository {
+    private static final String CHANGED = "审核案件已变化，请刷新后重试";
+
     private final DueDiligenceCaseMapper mapper;
 
     /** 新增案件。 */
@@ -44,40 +49,121 @@ public class DueDiligenceCaseRepositoryImpl implements DueDiligenceCaseRepositor
         return caseIds.isEmpty() ? List.of() : mapper.findByIds(caseIds);
     }
 
-    /** Client 入驻主案件分页。 */
+    /** 最近一轮主案件。 */
     @Override
-    public List<DueDiligenceCase> pageClientCases(String status, String qualificationType, Long applicationId, long offset, int size) {
-        return mapper.pageClientCases(status, qualificationType, applicationId, offset, size);
+    public DueDiligenceCase findLatestClientCase(long applicationId) {
+        return mapper.findLatestClientCase(applicationId);
     }
 
-    /** Client 入驻主案件计数。 */
+    /** 是否已有后继。 */
     @Override
-    public long countClientCases(String status, String qualificationType, Long applicationId) {
-        return mapper.countClientCases(status, qualificationType, applicationId);
+    public boolean hasSuccessor(long caseId) {
+        return mapper.countSuccessors(caseId) > 0;
     }
 
-    /** 条件结束案件并同步原对象。 */
+    /** 到期退回案件。 */
     @Override
-    public void close(DueDiligenceCase row, String status, String publicNote, String resolutionNote, String returnSection, Instant now) {
-        if (mapper.close(row, status, publicNote, resolutionNote, returnSection, now) != 1) {
-            throw new com.paytech.foundation.common.error.ConcurrentRequestException("审核任务已变化，请刷新后重试");
+    public List<DueDiligenceCase> findDueReturned(Instant now, int limit) {
+        return mapper.findDueReturned(now, limit);
+    }
+
+    /** 主案件分页。 */
+    @Override
+    public List<DueDiligenceCase> pageClientCases(String status, String qualificationType, Long applicationId, Long responsiblePartnerId,
+        boolean platformOnly, String jurisdictionCode, long offset, int size) {
+        return mapper.pageClientCases(status, qualificationType, applicationId, responsiblePartnerId, platformOnly, jurisdictionCode,
+            offset, size);
+    }
+
+    /** 主案件计数。 */
+    @Override
+    public long countClientCases(String status, String qualificationType, Long applicationId, Long responsiblePartnerId,
+        boolean platformOnly, String jurisdictionCode) {
+        return mapper.countClientCases(status, qualificationType, applicationId, responsiblePartnerId, platformOnly, jurisdictionCode);
+    }
+
+    /** 结束进行中案件并同步原对象。 */
+    @Override
+    public void close(DueDiligenceCase row, String status, CaseClosing closing, Instant now) {
+        if (mapper.close(row, status, closing.getPublicNote(), closing.getResolutionNote(), closing.getReturnSection(),
+            closing.getReviewDueTime(), closing.getOperatedBy(), closing.getOnBehalfOfPartnerId(), now) != 1) {
+            throw new ConcurrentRequestException(CHANGED);
         }
         row.setStatus(status);
         row.setActiveSlot(null);
-        row.setPublicNote(publicNote);
-        row.setResolutionNote(resolutionNote);
-        row.setReturnSection(returnSection);
+        row.setPublicNote(closing.getPublicNote());
+        row.setResolutionNote(closing.getResolutionNote());
+        row.setReturnSection(closing.getReturnSection());
+        row.setReviewDueTime(closing.getReviewDueTime());
+        row.setOperatedBy(closing.getOperatedBy());
+        row.setOnBehalfOfPartnerId(closing.getOnBehalfOfPartnerId());
         row.setDecisionTime(now);
-        row.setVersion(row.getVersion() + 1);
-        row.setUpdateTime(now);
+        bump(row, now);
     }
 
-    /** 条件递增版本并同步原对象。 */
+    /** 迁移到撤回或过期并同步原对象。 */
+    @Override
+    public void transition(DueDiligenceCase row, String toStatus, Instant now) {
+        if (mapper.transition(row, toStatus, now) != 1) {
+            throw new ConcurrentRequestException(CHANGED);
+        }
+        row.setStatus(toStatus);
+        row.setActiveSlot(null);
+        row.setDecisionTime(now);
+        bump(row, now);
+    }
+
+    /** 递增版本。 */
     @Override
     public void touch(DueDiligenceCase row, Instant now) {
         if (mapper.touch(row, now) != 1) {
-            throw new com.paytech.foundation.common.error.ConcurrentRequestException("审核任务已变化，请刷新后重试");
+            throw new ConcurrentRequestException(CHANGED);
         }
+        bump(row, now);
+    }
+
+    /** 开始审核。 */
+    @Override
+    public void startReview(DueDiligenceCase row, Instant now) {
+        if (mapper.startReview(row, now) != 1) {
+            throw new ConcurrentRequestException(CHANGED);
+        }
+        row.setStatus(DueDiligenceCaseStatus.IN_REVIEW.getCode());
+        bump(row, now);
+    }
+
+    /** 手工评级。 */
+    @Override
+    public void updateRiskRating(DueDiligenceCase row, String riskRating, String note, long actorId, Instant now) {
+        if (mapper.updateRiskRating(row, riskRating, note, actorId, now) != 1) {
+            throw new ConcurrentRequestException(CHANGED);
+        }
+        row.setRiskRating(riskRating);
+        row.setRiskRatingNote(note);
+        row.setRiskRatedBy(actorId);
+        row.setRiskRatedTime(now);
+        row.setRecommendation(null);
+        row.setRecommendationNote(null);
+        row.setRecommendedBy(null);
+        row.setRecommendedTime(null);
+        bump(row, now);
+    }
+
+    /** 推荐。 */
+    @Override
+    public void updateRecommendation(DueDiligenceCase row, String recommendation, String note, long actorId, Instant now) {
+        if (mapper.updateRecommendation(row, recommendation, note, actorId, now) != 1) {
+            throw new ConcurrentRequestException(CHANGED);
+        }
+        row.setRecommendation(recommendation);
+        row.setRecommendationNote(note);
+        row.setRecommendedBy(actorId);
+        row.setRecommendedTime(now);
+        bump(row, now);
+    }
+
+    /** 同步版本与更新时间。 */
+    static void bump(DueDiligenceCase row, Instant now) {
         row.setVersion(row.getVersion() + 1);
         row.setUpdateTime(now);
     }

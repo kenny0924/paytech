@@ -17,4 +17,10 @@ public record ClientDraftIdentity(
     /** 批准后冻结时间。 */ Instant approvedTime,
     /** 当前业务资料标识。 */ Long businessProfileId,
     /** 原申请建立时间。 */ Instant createdAt,
-    /** 最近资料保存或状态变化时间。 */ Instant savedAt) {}
+    /** 最近资料保存或状态变化时间。 */ Instant savedAt,
+    /** 申请适用的辖区代码。 */ String jurisdictionCode,
+    /** 组织类型代码；个人且无个人经营形态时为空。 */ String organizationTypeCode,
+    /** 申请冻结的采集 Schema 版本。 */ Long schemaId,
+    /** 责任 PayFac；平台自营为空。 */ Long responsiblePartnerId,
+    /** 当前审核任务；未登记或首次提交前为空。 */ Long dueDiligenceCaseId,
+    /** 退回补件截止时间，可空。 */ Instant reviewDueTime) {}

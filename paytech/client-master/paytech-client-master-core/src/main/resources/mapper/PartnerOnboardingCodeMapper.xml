@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.PartnerOnboardingCodeMapper">
+  <sql id="columns">
+    code_id AS codeId, code, local_partner_id AS localPartnerId, status, effective_from AS effectiveFrom,
+    effective_to AS effectiveTo, max_uses AS maxUses, use_count AS useCount, note, issued_by AS issuedBy,
+    revoked_by AS revokedBy, revoked_time AS revokedTime, create_time AS createTime, update_time AS updateTime
+  </sql>
+  <insert id="insert">
+    INSERT INTO t_partner_onboarding_code(code_id,code,local_partner_id,status,effective_from,effective_to,max_uses,use_count,
+      note,issued_by,revoked_by,revoked_time,create_time,update_time)
+    VALUES(#{row.codeId},#{row.code},#{row.localPartnerId},#{row.status},#{row.effectiveFrom},#{row.effectiveTo},#{row.maxUses},
+      #{row.useCount},#{row.note},#{row.issuedBy},#{row.revokedBy},#{row.revokedTime},#{row.createTime},#{row.updateTime})
+  </insert>
+  <select id="findByCode" resultType="com.paytech.client.master.core.dal.dataobject.PartnerOnboardingCode">
+    SELECT <include refid="columns"/> FROM t_partner_onboarding_code WHERE code=#{code}
+  </select>
+  <select id="findById" resultType="com.paytech.client.master.core.dal.dataobject.PartnerOnboardingCode">
+    SELECT <include refid="columns"/> FROM t_partner_onboarding_code WHERE code_id=#{codeId}
+  </select>
+  <select id="findByPartner" resultType="com.paytech.client.master.core.dal.dataobject.PartnerOnboardingCode">
+    SELECT <include refid="columns"/> FROM t_partner_onboarding_code WHERE local_partner_id=#{localPartnerId}
+    ORDER BY create_time DESC, code_id DESC
+  </select>
+  <!-- 创建申请时占用一次：只在 ACTIVE、已生效、未失效且未用尽时成功；用到上限同一语句转 EXPIRED（MySQL 按书写顺序求值，
+       status 读到的是已加一的 use_count）。 -->
+  <update id="consume">
+    UPDATE t_partner_onboarding_code
+    SET use_count=use_count+1,
+      status=IF(max_uses IS NOT NULL AND use_count&gt;=max_uses,'EXPIRED',status),
+      update_time=#{now}
+    WHERE code_id=#{codeId} AND status='ACTIVE' AND effective_from&lt;=#{now}
+      AND (effective_to IS NULL OR effective_to&gt;#{now}) AND (max_uses IS NULL OR use_count&lt;max_uses)
+  </update>
+  <update id="revoke">
+    UPDATE t_partner_onboarding_code SET status='REVOKED', revoked_by=#{revokedBy}, revoked_time=#{now}, update_time=#{now}
+    WHERE code_id=#{codeId} AND status='ACTIVE'
+  </update>
+</mapper>

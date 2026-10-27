@@ -100,7 +100,6 @@ management:
 web:
   logging:
     metadata-only-path-prefixes:
-      - /internal/due-diligence/material-requirements
       - /client-onboarding-review
       - /client-onboarding-admin
       - /compliance-admin
@@ -159,6 +158,13 @@ internal-auth:
 # ==================== compliance 自定义配置 ====================
 
 compliance:
+  screening:
+    # 名单筛查服务渠道；测试由 MockServiceChannelExecutionApi 应答。
+    channel-code: S_SCREENING_MOCK
+  # 出站测试直连：channel-connector 与 client-master 的 Mock 接口在 @EnableMockHttpServer 创建的独立 Loopback 服务上，
+  # 地址在应用创建客户端前注入（ComplianceOutboundConfiguration 只允许 mock Profile 的 127.0.0.1 根路径）。
+  outbound:
+    test-base-url: "${compliance.test.external.base-url}"
   identifier:
     # Snowflake 区域与节点号；生产必须由部署注入，测试固定为 0 / 1（与 risk-decision 测试的 0 / 0 不同）。
     region-id: 0
@@ -166,11 +172,6 @@ compliance:
 
 onboarding:
   review:
-    # I01/I02 审核登记入口与 /client-onboarding-admin 管理入口开关；生产缺省关闭，mock 环境开启以便所有新规范测试共享同一应用上下文。
-    # 审核结论经 compensation 补偿任务发布到 compliance.events（ClientReviewDecided v1）。
+    # I01—I03 审核入口、运营工作台与退回超期扫描开关；生产缺省关闭，mock 环境开启以便所有测试共享同一应用上下文。
+    # 审核结论经 compensation 补偿任务发布到 compliance.events（ClientReviewDecided v2）。
     enabled: true
-  materials:
-    # 材料目录入口开关；生产缺省关闭，mock 环境开启以便所有新规范测试共享同一应用上下文。
-    enabled: true
-    # 资格类型到通用材料程序的映射 JSON；每类最多一行。用例经 MaterialProgramMocker 覆盖，每例结束恢复此值。
-    programs-json: '[{"qualificationType":"INDIVIDUAL_KYC","programCode":"CLIENT_INDIVIDUAL_GENERIC"},{"qualificationType":"ORGANIZATION_KYB","programCode":"CLIENT_ORGANIZATION_GENERIC"},{"qualificationType":"RELATED_PERSON_KYC","programCode":"RELATED_PERSON_GENERIC"}]'

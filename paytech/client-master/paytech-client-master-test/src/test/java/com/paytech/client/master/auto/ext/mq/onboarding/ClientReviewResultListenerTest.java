@@ -60,8 +60,11 @@ class ClientReviewResultListenerTest extends AbstractClientReviewTest {
     @Test
     void test_replayedEventSkipped() throws Exception {
         var review = applications.underReview(ACCOUNT_ID);
+        double firstHandled = complianceEvents.outcome("handled");
         publishResult(review, review.caseId(), "RETURNED", null, null);
         waitUntil(() -> "RETURNED".equals(mapper.review(review.app().applicationId()).get("status")), Duration.ofSeconds(10));
+        // 计数在事务提交后才累加：先等首次处理计数落定，再取基线。
+        complianceEvents.awaitOutcome("handled", firstHandled, 1);
         var application = mapper.review(review.app().applicationId());
         double replayed = complianceEvents.outcome("replayed");
         double handled = complianceEvents.outcome("handled");

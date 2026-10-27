@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.RuleSettingMapper">
+  <sql id="columns">
+    rule_setting_id AS ruleSettingId, scope_type AS scopeType, scope_code AS scopeCode, rule_code AS ruleCode,
+    rule_value AS ruleValue, status, create_time AS createTime, update_time AS updateTime
+  </sql>
+  <!-- 解析用：给定作用对象代码（含 * 默认）的 ACTIVE 规则；层级由调用方按 scope_type 区分。 -->
+  <select id="findActive" resultType="com.paytech.client.master.core.dal.dataobject.RuleSetting">
+    SELECT <include refid="columns"/> FROM t_rule_setting
+    WHERE status='ACTIVE' AND scope_code IN
+    <foreach collection="scopeCodes" item="code" open="(" separator="," close=")">#{code}</foreach>
+    ORDER BY scope_type, scope_code, rule_code
+  </select>
+  <!-- 运营只读查看：全部规则（每国约数十行）。 -->
+  <select id="findAll" resultType="com.paytech.client.master.core.dal.dataobject.RuleSetting">
+    SELECT <include refid="columns"/> FROM t_rule_setting ORDER BY scope_type, scope_code, rule_code
+  </select>
+</mapper>

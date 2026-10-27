@@ -32,7 +32,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Client 入驻审核、主档维护与资格登记请求的严格边界
- * <li>覆盖 /client-onboarding-admin/v1、/entity-admin/v1 与 /qualification-admin/v1。</li>
+ * <li>覆盖 /client-onboarding-admin/v1、/entity-admin/v1、/qualification-admin/v1 与入驻管理 /onboarding-config-admin/v1、/client-admin/v1、/onboarding-code-admin/v1。</li>
  * <li>Query 只接受 Controller 声明的参数，不能重复或为空；GET 不接受 Body。</li>
  * <li>写 Body 最多 64 KiB，必须为对象，拒绝重复键、未知字段和标量隐式转换。</li>
  */
@@ -41,12 +41,22 @@ public class ClientReviewRequestConfiguration implements WebMvcConfigurer {
     /** 写 Body 上限。 */
     static final int BODY_LIMIT = 65536;
 
-    /** 主档维护与资格登记直接使用 Owner 管理合同的请求模型。 */
+    /** 主档维护、资格登记与案件工作台写命令直接使用 Owner 合同的请求模型。 */
     static final Set<Class<?>> OWNER_REQUEST_BODIES = Set.of(
         com.paytech.client.master.api.entityadmin.request.ChangeAcquiringQualificationRequestBody.class,
         com.paytech.client.master.api.entityadmin.request.ReplacePartnerRolesRequestBody.class,
         com.paytech.compliance.api.request.QualificationManualDecisionRequestBody.class,
-        com.paytech.compliance.api.request.QualificationRevocationRequestBody.class);
+        com.paytech.compliance.api.request.QualificationRevocationRequestBody.class,
+        com.paytech.compliance.api.request.ClientReviewEvidenceReviewRequestBody.class,
+        com.paytech.compliance.api.request.ClientReviewWaiverRequestBody.class,
+        com.paytech.compliance.api.request.ClientReviewCheckResultRequestBody.class,
+        com.paytech.compliance.api.request.ClientReviewScreeningRunRequestBody.class,
+        com.paytech.compliance.api.request.ClientReviewHitResolutionRequestBody.class,
+        com.paytech.compliance.api.request.ClientReviewRiskRatingRequestBody.class,
+        com.paytech.compliance.api.request.ClientReviewRecommendationRequestBody.class,
+        com.paytech.compliance.api.request.ClientReviewReturnRequestBody.class,
+        com.paytech.compliance.api.request.ClientReviewDecisionRequestBody.class,
+        com.paytech.client.master.api.onboardingadmin.request.IssueOnboardingCodeRequestBody.class);
 
     private final JsonMapper mapper;
 
@@ -78,7 +88,8 @@ public class ClientReviewRequestConfiguration implements WebMvcConfigurer {
                 }
                 return true;
             }
-        }).addPathPatterns("/client-onboarding-admin/v1/**", "/entity-admin/v1/**", "/qualification-admin/v1/**");
+        }).addPathPatterns("/client-onboarding-admin/v1/**", "/entity-admin/v1/**", "/qualification-admin/v1/**", "/onboarding-config-admin/v1/**",
+            "/client-admin/v1/**", "/onboarding-code-admin/v1/**");
     }
 
     @Override

@@ -43,6 +43,13 @@ public class ClientErrorStatusResolver implements ApiErrorStatusResolver {
                 default -> HttpStatus.CONFLICT;
             };
         }
+        if(code instanceof com.paytech.client.master.api.enums.OnboardingErrorCode value) {
+            return switch(value) {
+                case ONBOARDING_CODE_INVALID, JURISDICTION_NOT_ACCEPTED, PARTNER_NOT_OE_PROVIDER -> HttpStatus.UNPROCESSABLE_CONTENT;
+                case ONBOARDING_CODE_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case APPLICATION_NOT_WITHDRAWABLE -> HttpStatus.CONFLICT;
+            };
+        }
         if(code instanceof com.paytech.platform.support.api.enums.FileErrorCode) {
             return switch(code.getCode()) {
                 case "FILE_NOT_FOUND" -> HttpStatus.NOT_FOUND;

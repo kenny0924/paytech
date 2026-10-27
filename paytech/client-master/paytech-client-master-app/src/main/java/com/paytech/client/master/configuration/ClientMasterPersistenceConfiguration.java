@@ -44,7 +44,17 @@ public class ClientMasterPersistenceConfiguration {
         config.getTypeHandlerRegistry().register(Instant.class, InstantTypeHandler.class);
         config.getTypeHandlerRegistry().register(ClientStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(ClientType.class, CodeEnumTypeHandler.class);
-        config.getTypeHandlerRegistry().register(PartyRelationType.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(CatalogStatus.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(RuleScopeType.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(IssuerScopeMode.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(RuleRole.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(AttributeDataType.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(AttributeSensitivity.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(SchemaSection.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(WidgetCode.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(RequirementLevel.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(SchemaSubject.class, CodeEnumTypeHandler.class);
+        config.getTypeHandlerRegistry().register(OnboardingCodeStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(PartyRelationStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(ClientApplicationStatus.class, CodeEnumTypeHandler.class);
         config.getTypeHandlerRegistry().register(ClientEntityAffiliationStatus.class, CodeEnumTypeHandler.class);

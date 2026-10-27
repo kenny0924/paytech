@@ -1,6 +1,5 @@
 package com.paytech.client.master.configuration;
 
-import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
 import java.time.Clock;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,6 +22,13 @@ import com.paytech.client.master.domainservice.service.impl.ClientClassification
 import com.paytech.client.master.domainservice.repository.PartyProfileRepository;
 import com.paytech.client.master.domainservice.service.impl.ClientReviewOutcomeServiceImpl;
 import com.paytech.client.master.ext.mq.ClientReviewResultListener;
+import com.paytech.client.master.ext.mq.QualificationChangedListener;
+import com.paytech.client.master.domainservice.repository.CatalogItemRepository;
+import com.paytech.client.master.domainservice.repository.ClientDraftRepository;
+import com.paytech.client.master.domainservice.repository.PartyAttributeRepository;
+import com.paytech.client.master.domainservice.service.ClientLifecycleService;
+import com.paytech.client.master.domainservice.service.impl.ClientLifecycleServiceImpl;
+import com.paytech.client.master.service.processor.ApplyQualificationChangeProcessor;
 import com.paytech.client.master.integration.ClientReviewRegistrationClient;
 import com.paytech.client.master.service.handler.ClientClassificationHandler;
 import com.paytech.client.master.service.processor.ApplyClientReviewResultProcessor;
@@ -86,7 +92,7 @@ public class ClientReviewConfiguration {
     /** O03。 */
     @Bean
     public ReplaceClientClassificationProcessor replaceClientClassificationProcessor(Clock clock, IdGenerator ids,
-        RedisResourceLockProperties locks, ClientFormCatalogProperties catalog, ClientBusinessProfileRepository profiles,
+        RedisResourceLockProperties locks, CatalogItemRepository catalog, ClientBusinessProfileRepository profiles,
         ClientClassificationService classifications, ClientApplicationRepository applications, ClientBusinessClassificationRepository rows) {
         return new ReplaceClientClassificationProcessor(clock, ids, locks.getWaitTime(), locks.getLeaseTime(), catalog, profiles,
             classifications, applications, rows);
@@ -111,8 +117,29 @@ public class ClientReviewConfiguration {
     /** 审核结果落地用例。 */
     @Bean
     public ApplyClientReviewResultProcessor applyClientReviewResultProcessor(Clock clock, IdGenerator ids,
-        ClientReviewOutcomeService outcomes, ClientProjectionRepository projections, ClientApplicationRepository applications) {
-        return new ApplyClientReviewResultProcessor(clock, ids, outcomes, projections, applications);
+        ClientReviewOutcomeService outcomes, ClientProjectionRepository projections, ClientApplicationRepository applications,
+        ClientDraftRepository drafts, PartyAttributeRepository attributes) {
+        return new ApplyClientReviewResultProcessor(clock, ids, outcomes, projections, applications, drafts, attributes);
+    }
+
+    /** Client 生命周期（资格撤销挂起）本地落地。 */
+    @Bean
+    public ClientLifecycleService clientLifecycleService(ClientRepository clients, PlatformTransactionManager manager,
+        CompensationEventRegistrar events, ClientProjectionRepository projections) {
+        return new ClientLifecycleServiceImpl(clients, ClientSubmissionConfiguration.writes(manager), events, projections);
+    }
+
+    /** QualificationChanged 落地用例。 */
+    @Bean
+    public ApplyQualificationChangeProcessor applyQualificationChangeProcessor(Clock clock, IdGenerator ids, ClientRepository clients,
+        ClientLifecycleService lifecycle, ClientProjectionRepository projections) {
+        return new ApplyQualificationChangeProcessor(clock, ids, clients, lifecycle, projections);
+    }
+
+    /** 资格变化 Handler（QualificationChanged），与审核结果同一 compliance 分区队列。 */
+    @Bean
+    public QualificationChangedListener qualificationChangedListener(ApplyQualificationChangeProcessor processor) {
+        return new QualificationChangedListener(processor);
     }
 
     /** 审核结果 Handler（ClientReviewDecided）。 */

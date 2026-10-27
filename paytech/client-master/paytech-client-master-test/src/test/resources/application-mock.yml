@@ -107,7 +107,7 @@ web:
 
 vault:
   client:
-    # C14 不调用 Vault；走正式服务发现，vault-service 由 SimpleDiscovery 指向测试 HTTP 服务，任何调用都会记录为意外调用。
+    # 证件号与联系方式 Protect 走正式服务发现，vault-service 由 SimpleDiscovery 指向测试 HTTP 服务；未启用 VaultMocker 的调用记为意外调用。
     caller-service: client-master-service
     connect-timeout: 2s
     read-timeout: 3s
@@ -142,19 +142,6 @@ onboarding:
   # 留空：Platform、Risk 走正式服务发现，由上方 SimpleDiscovery 指向测试 HTTP 服务。
   platform-test-base-url: ""
   risk-test-base-url: ""
-  form-catalog:
-    organization-types:
-      - { code: LIMITED_COMPANY, label: 有限公司 }
-      - { code: OTHER, label: 其他 }
-    business-models:
-      - { code: SERVICES, label: 服务, client-types: [INDIVIDUAL, ORGANIZATION] }
-    identifier-types:
-      - { code: PASSPORT, label: 护照, client-types: [INDIVIDUAL], issuing-country-mode: REQUIRED }
-      - { code: COMPANY_REGISTRATION_NUMBER, label: 公司注册号, client-types: [ORGANIZATION], issuing-country-mode: REQUIRED }
-      - { code: LEI, label: LEI, client-types: [ORGANIZATION], issuing-country-mode: NONE }
-    industries:
-      - { code: RETAIL, label: 零售 }
-      - { code: SOFTWARE_SAAS, label: 软件与 SaaS }
 
 client-master:
   test:

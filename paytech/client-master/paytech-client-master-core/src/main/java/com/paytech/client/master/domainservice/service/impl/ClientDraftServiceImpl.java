@@ -16,6 +16,7 @@ import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 import com.paytech.foundation.id.IdGenerator;
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
+import com.paytech.client.master.api.enums.OnboardingErrorCode;
 /** CCT 业务规则和原子写集合；事务由 Processor 包裹，内部只访问本库。 */
 public final class ClientDraftServiceImpl implements ClientDraftService {
     private final ClientDraftRepository repository;
@@ -25,14 +26,20 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
     private final Clock clock;
     private final CompensationEventRegistrar events;
     private final PartyRoleRepository partyRoles;
+    private final PartyAttributeRepository partyAttributes;
+    private final PartnerOnboardingCodeRepository onboardingCodes;
+    private final ApplicationDeclarationRepository declarations;
+    private final LocalPartnerRepository localPartners;
     public ClientDraftServiceImpl(ClientDraftRepository repository,ClientPeopleRepository people,ClientDocumentRepository documents,IdGenerator ids,Clock clock,CompensationEventRegistrar events,
-        PartyRoleRepository partyRoles) {
+        PartyRoleRepository partyRoles,PartyAttributeRepository partyAttributes,PartnerOnboardingCodeRepository onboardingCodes,
+        ApplicationDeclarationRepository declarations,LocalPartnerRepository localPartners) {
         this.repository=repository;this.people=people;this.documents=documents;this.ids=ids;this.clock=clock;this.events=events;
-        this.partyRoles=partyRoles;
+        this.partyRoles=partyRoles;this.partyAttributes=partyAttributes;this.onboardingCodes=onboardingCodes;
+        this.declarations=declarations;this.localPartners=localPartners;
     }
-    public CommandReceiptResponseBody create(ClientDraftCommand command,ClientType type) {
+    public CommandReceiptResponseBody create(ClientDraftCommand command,ClientType type,ClientApplicationTerms terms,PartnerOnboardingCode code) {
         requireTransaction();
-        // 已有未完成申请时恢复原申请：同一请求重复到达也落在这里。
+        // 已有未完成申请时恢复原申请：同一请求重复到达也落在这里，不占用入驻码。
         Long existing=repository.activeApplication(command.accountId());
         if (existing!=null) {
             var row=identity(existing,command.accountId(),true);
@@ -40,13 +47,15 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
             if (row.clientType()!=type) throw new FailException(ACTIVE_APPLICATION_TYPE_MISMATCH);
             return receipt(row,"RESTORED",now());
         }
+        Instant now=now();
+        // 入驻码在新建或重新申请的同一事务占用一次；占用失败（并发用尽、作废或过期）整体回滚。
+        if (code!=null && !onboardingCodes.consume(code,now)) throw new FailException(OnboardingErrorCode.ONBOARDING_CODE_INVALID);
         var rejected=repository.rejectedApplication(command.accountId(),type);
         if (rejected!=null) {
-            return reapply(command,rejected);
+            return reapply(command,rejected,terms);
         }
-        Instant now=now();
         var creation=new ClientDraftCreation(ids.nextId(),ids.nextId(),ids.nextId(),ids.nextId(),ids.nextId(),ids.nextId(),
-            ids.nextId(),ids.nextId(),ids.nextId(),ids.nextId(),command.accountId(),type,now);
+            ids.nextId(),ids.nextId(),ids.nextId(),ids.nextId(),command.accountId(),type,terms,now);
         var history=new ClientProjectionHistory(creation.changeId(),creation.historyId(),Long.toString(creation.clientId()),1,
             BusinessChangeOperation.CREATE,BusinessChangeSnapshotFormat.ENTITY_NO,null,command.accountId(),now,
             creation.clientId(),creation.partyId(),creation.clientNo(),command.accountId(),1);
@@ -74,27 +83,66 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
         var relations=row.clientType()==ClientType.ORGANIZATION?people.relations(row):List.<ClientPartyRelation>of();
         var visibleIds=persons.stream().map(person -> person.identity().partyId()).collect(java.util.stream.Collectors.toSet());
         if (relations.stream().anyMatch(relation -> !visibleIds.contains(relation.relatedPartyId()))) throw new ErrorException(DRAFT_CONTEXT_INVALID);
-        return new ClientDraftView(row,repository.fields(row),repository.contacts(row.profileId()),persons,relations,documents.documents(applicationId));
+        var profileIds=new java.util.ArrayList<Long>();
+        profileIds.add(row.profileId());
+        persons.forEach(person -> profileIds.add(person.identity().profileId()));
+        return new ClientDraftView(row,repository.fields(row),repository.contacts(row.profileId()),persons,relations,
+            documents.documents(applicationId),partyAttributes.findByProfiles(profileIds),latestDeclarations(applicationId),
+            responsiblePartnerName(row.responsiblePartnerId()));
     }
-    public void prepareSave(ClientDraftCommand command,long applicationId,ClientDraftPatch patch) {
+    /** 每种声明的最新一条（按声明时间追加），保持首次出现顺序。 */
+    private List<ApplicationDeclaration> latestDeclarations(long applicationId) {
+        var latest=new java.util.LinkedHashMap<String,ApplicationDeclaration>();
+        declarations.findByApplication(applicationId).forEach(row -> latest.put(row.getDeclarationType(),row));
+        return List.copyOf(latest.values());
+    }
+    /** 责任 PayFac 的法定名称；平台自营为空。 */
+    private String responsiblePartnerName(Long responsiblePartnerId) {
+        if (responsiblePartnerId==null) {
+            return null;
+        }
+        var partner=localPartners.findAdminView(responsiblePartnerId);
+        return partner==null?null:partner.getLegalName();
+    }
+    public ClientDraftSource prepareSave(ClientDraftCommand command,long applicationId,ClientDraftPatch patch) {
         requireTransaction();
         var row=identity(applicationId,command.accountId(),false);
         editable(row);patch.requireType(row.clientType());
+        return new ClientDraftSource(row,repository.fields(row));
     }
-    public CommandReceiptResponseBody save(ClientDraftCommand command,long applicationId,ClientDraftPatch patch,
+    /**
+     * 保存事务外已准备的写入
+     * <li>重新加锁读取申请并复核可编辑；资料列、扩展属性、联系方式与 Schema 切换同一事务提交。</li>
+     */
+    public CommandReceiptResponseBody save(ClientDraftCommand command,long applicationId,ClientDraftChanges changes,
         Map<String,ClientDraftContact> contacts) {
         requireTransaction();
         var row=identity(applicationId,command.accountId(),true);
-        editable(row);patch.requireType(row.clientType());
+        editable(row);
         Instant now=now();
-        repository.save(row,patch,contacts,now);
+        repository.save(row,changes,contacts,now);
+        saveAttributes(row.profileId(),changes,now);
         return receipt(row,"SAVED",now);
     }
-    /** 同类型被拒后重新申请：沿用原 Client、Party 与工作区，不新建 Client，也不再投影 Platform。 */
-    private CommandReceiptResponseBody reapply(ClientDraftCommand command,ClientDraftIdentity rejected) {
+    /** 扩展属性逐项写入或清空。 */
+    private void saveAttributes(long profileId,ClientDraftChanges changes,Instant now) {
+        changes.getAttributes().forEach((code,value) -> {
+            if (value==null) {
+                partyAttributes.delete(profileId,code);
+                return;
+            }
+            var row=new PartyAttribute();
+            row.setAttributeId(ids.nextId());row.setProfileId(profileId);row.setAttributeCode(code);
+            row.setValueText(value.text());row.setValueDate(value.date());row.setValueDecimal(value.decimal());
+            row.setCreateTime(now);row.setUpdateTime(now);
+            partyAttributes.save(row);
+        });
+    }
+    /** 同类型被拒或撤回后重新申请：沿用原 Client、Party 与工作区，不新建 Client，也不再投影 Platform。 */
+    private CommandReceiptResponseBody reapply(ClientDraftCommand command,ClientDraftIdentity rejected,ClientApplicationTerms terms) {
         Instant now=now();
         long applicationId=ids.nextId();
-        repository.reapply(rejected,applicationId,now);
+        repository.reapply(rejected,applicationId,terms,now);
         return receipt(identity(applicationId,command.accountId(),false),"CREATED",now);
     }
     private ClientDraftIdentity identity(long applicationId,long accountId,boolean lock) {

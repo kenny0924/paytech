@@ -1,0 +1,94 @@
+# 全球合规入驻与资格切片 1：mor-test 合并回滚覆盖（rel-build 2026-10-27）。镜像 = 2026-10-27 运行镜像 ID；env = 运行容器 printenv。
+# channel-connector 回滚 = 同一镜像去掉两个出站放行键；screening-mock 用 compose.screening-mock.yaml rm -sf。
+services:
+  client-master-service:
+    image: sha256:eeed4e63235de481ee6a02777de25a454197f2993af84fe90f14e0d1ee0df8a8  # mor-test/client-master-service:relsnap-20261025a（现网）
+    environment:
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.26
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mor_client_master?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: client_master_app
+      SPRING_DATASOURCE_PASSWORD: ${MOR_CLIENT_MASTER_DB_PASSWORD:?prepare test secrets}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SPRING_DATA_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      CCT_RABBITMQ_HOST: rabbitmq
+      CCT_RABBITMQ_PORT: "5672"
+      CCT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      CCT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      CCT_RABBITMQ_VHOST: /mor-test
+      MESSAGING_CONSUMER_SERVICE: client-master
+      MESSAGING_CONSUMERS_COMPLIANCE_PARTITIONS: "4"
+      ONBOARDING_DRAFT_ENABLED: "true"
+      ONBOARDING_RECOVERY_ENABLED: "true"
+      ONBOARDING_ID_DATACENTER: "0"
+      ONBOARDING_ID_WORKER: "26"
+      COMPENSATION_INSTANCE_ID: client-master-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: client-master-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.26
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+  compliance-service:
+    image: sha256:ca1585452f9c60835ecb099db694e36bd5d2fdcfa197016a242d204954ce3545  # mor-test/compliance-service:relsnap-20261025a（现网）
+    environment:
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.32
+      COMPLIANCE_DB_URL: jdbc:mysql://mysql:3306/mor_compliance?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      COMPLIANCE_DB_USERNAME: compliance_app
+      COMPLIANCE_DB_PASSWORD: ${MOR_COMPLIANCE_DB_PASSWORD:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_HOST: rabbitmq
+      COMPLIANCE_RABBITMQ_PORT: "5672"
+      COMPLIANCE_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_VHOST: /mor-test
+      COMPLIANCE_SNOWFLAKE_REGION_ID: "0"
+      COMPLIANCE_SNOWFLAKE_WORKER_ID: "29"
+      ONBOARDING_REVIEW_ENABLED: "true"
+      ONBOARDING_MATERIALS_ENABLED: "true"
+      MESSAGING_PRODUCER_SERVICE: compliance
+      MESSAGING_PRODUCER_SEQUENCER_ENABLED: "true"
+      MESSAGING_PUBLISHER_UNROUTABLEPOLICY: FAIL
+      COMPENSATION_INSTANCEID: compliance-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: compliance-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.32
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+  client-console-bff:
+    image: sha256:9033b8fa365a60ff0917906e64280e44cfe574ca421bd11179da90c7c03e2d55  # mor-test/client-console-bff:i18n-20261023a（现网）
+    environment:
+      CLIENT_BFF_BIND_ADDRESS: 172.30.73.27
+      CLIENT_ONBOARDING_ENABLED: "true"
+      CLIENT_CONSOLE_ORIGIN: https://localhost:28443
+  operations-console-bff:
+    image: sha256:feefe73f0aa35e556e5bf1b11da9144ac3d7414285740bf22d9cbe94f086e6af  # mor-test/operations-console-bff:relsnap-20261025a（现网）
+    environment:
+      OPERATIONS_BFF_BIND_ADDRESS: 172.30.73.22
+      OPERATIONS_CONSOLE_ORIGIN: http://localhost:28080
+      OPERATIONS_TEST_HTTP_ENABLED: "true"
+      OPERATIONS_LEDGER_BASE_URL: http://ledger-service:18105
+      OPERATIONS_ACCOUNT_BASE_URL: http://account-service:18114
+      OPERATIONS_BILLING_BASE_URL: http://billing-service:18113
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115
+  client-console-web:
+    image: sha256:280a2f384b80110c69a09630c3389b921a04591aa4dfd90dfdeba7324aab7520  # mor-test/client-console-web:i18n-20261023a（现网）
+  operations-console-web:
+    image: sha256:4f44725eb26f7569b40719f29f48da7cc60f46c3c6bdd4d45ba0c44827662d3a  # mor-test/operations-console-web:relsnap-20261025a（现网）
+  channel-connector-service:
+    image: sha256:23679d451fe44dfce08426777b5ec7cbc73a60253c604f149dfc48291c3890aa  # mor-test/channel-connector-service:card3ds-20261022（JAR 9cb23e8161abc430），现网（3DS 全链路覆盖同一镜像、同一 env）
+    environment:
+      CHANNEL_CONNECTOR_RABBITMQ_HOST: rabbitmq
+      CHANNEL_CONNECTOR_RABBITMQ_PORT: "5672"
+      CHANNEL_CONNECTOR_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      CHANNEL_CONNECTOR_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      CHANNEL_CONNECTOR_RABBITMQ_VHOST: /mor-test
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+  platform-support-service:
+    image: sha256:4859efd78dd92de7c8f97dca29ef7894e7d2e1115bd72f471960553375075d17  # mor-test/platform-support-service:fileupload-20261024a（现网，JAR be0abf79fc3ca9eb）

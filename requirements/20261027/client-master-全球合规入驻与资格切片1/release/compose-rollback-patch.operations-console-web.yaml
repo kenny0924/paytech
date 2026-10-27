@@ -1,0 +1,6 @@
+# 全球合规入驻与资格切片 1：ops-web 补丁回滚覆盖（rel-build 2026-10-27，06:26Z 更新）。
+# 对应补丁：88ab111a（ui-smoke 第三批）。回到补丁前正在 mor-test 运行的 1274fefe（ui-smoke 第二批）；
+# 更早的版本依次为 35b61f12、4d4c1130、4ee66de8。回滚整个切片仍用 compose-rollback.yaml。
+services:
+  operations-console-web:
+    image: sha256:1274fefe07968596d77c7f48e22d94e9ff7bdc423b15a0729baae104375105a6  # mor-test/operations-console-web（ui-smoke 第二批，2026-10-27 06:25Z 现网）

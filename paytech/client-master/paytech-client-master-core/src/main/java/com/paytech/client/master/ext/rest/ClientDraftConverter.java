@@ -4,14 +4,18 @@ import java.math.BigDecimal;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.*;
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.ClientDraftResponseBody;
+import com.paytech.client.master.api.onboarding.response.DeclarationResponseBody;
+import com.paytech.client.master.core.dal.dataobject.ApplicationDeclaration;
 import com.paytech.client.master.domain.enums.*;
 import com.paytech.client.master.core.dal.dataobject.ClientDraftFields;
+import com.paytech.client.master.core.dal.dataobject.PartyAttribute;
 import com.paytech.client.contract.api.onboarding.ClientPeopleModels.*;
 import com.paytech.client.master.domain.onboarding.ClientRelationValues;
 import com.paytech.client.master.domain.onboarding.ClientDraftView;
+import com.paytech.client.master.domain.onboarding.ClientDraftValues;
 import com.paytech.client.master.domain.onboarding.ClientDraftPolicy;
 import com.paytech.client.master.domain.onboarding.ClientAgreementPartyUsage;
-/** 输出仅可见值，不返回 Vault 引用、数据库版本或未经聚合的 Risk/文件状态。 */
+/** 输出仅可见值：证件只给类型、签发国、末 4 位脱敏、检查结论与日期，不返回 Vault 引用、号码原值或数据库版本。 */
 public final class ClientDraftConverter {
     private ClientDraftConverter() {}
     /** 将有界本库导航事实转换为无敏感字段的 Owner 响应。 */
@@ -33,65 +37,45 @@ public final class ClientDraftConverter {
      * @return 申请资料响应
      */
     public static ClientDraftResponseBody response(ClientDraftView view,Map<String,String> contacts,ClientAgreementPartyUsage usage) {
-        var row=view.identity();var values=values(view.fields());
+        var row=view.identity();var values=ClientDraftValues.values(view.fields());
         values.remove(row.clientType()==ClientType.INDIVIDUAL?"organization":"individual");
         values.put("contact",contacts);
+        values.put("attributes",ClientDraftValues.attributes(view.attributes(),row.profileId()));
         var people=view.people().stream().map(person -> {
-            var personValues=values(person.fields());personValues.remove("organization");personValues.remove("business");
+            var personValues=ClientDraftValues.values(person.fields());personValues.remove("organization");personValues.remove("business");
+            personValues.put("attributes",ClientDraftValues.attributes(view.attributes(),person.identity().profileId()));
             return new PersonResponseBody(Long.toString(person.identity().partyId()),ClientDraftPolicy.isPersonEditable(row,person.identity(),usage),personValues);
         }).toList();
         var relations=view.relations().stream().map(relation -> new RelationResponseBody(Long.toString(relation.relationId()),
-            Long.toString(relation.relatedPartyId()),relation.relationType().getCode(),ClientRelationValues.decimal(relation.ownershipPercentage()),
+            Long.toString(relation.relatedPartyId()),relation.relationType(),ClientRelationValues.decimal(relation.ownershipPercentage()),
             ClientRelationValues.date(relation.effectiveFrom()),ClientRelationValues.date(relation.effectiveTo()),relation.status().getCode(),
-            ClientDraftPolicy.isEditable(row) && relation.status()==PartyRelationStatus.DRAFT)).toList();
+            ClientDraftPolicy.isEditable(row) && relation.status()==PartyRelationStatus.DRAFT,relation.uboBasis(),relation.jobTitle(),
+            relation.nomineeFlag(),relation.controlNature())).toList();
+        var formatter=new DateTimeFormatterBuilder().appendInstant(6).toFormatter();
         return new ClientDraftResponseBody(Long.toString(row.applicationId()),row.applicationNo(),Long.toString(row.clientId()),
-            row.clientType().getCode(),Long.toString(row.partyId()),row.status().getCode(),new DateTimeFormatterBuilder().appendInstant(6).toFormatter().format(row.savedAt()),
+            row.clientType().getCode(),Long.toString(row.partyId()),row.status().getCode(),formatter.format(row.savedAt()),
             ClientDraftPolicy.isEditable(row),values,people,relations,view.documents().stream().map(document ->
                 new com.paytech.client.contract.api.onboarding.ClientDocumentModels.DocumentResponseBody(Long.toString(document.documentId()),Long.toString(document.subjectPartyId()),
                     document.requirementCode(),document.documentType(),document.fileAddress(),document.subjectPartyId()==row.partyId()
                     || view.people().stream().anyMatch(person -> person.identity().partyId()==document.subjectPartyId())
                         && view.relations().stream().anyMatch(relation -> relation.relatedPartyId()==document.subjectPartyId()
-                            && (relation.status()==PartyRelationStatus.DRAFT || relation.status()==PartyRelationStatus.ACTIVE)))).toList());
+                            && (relation.status()==PartyRelationStatus.DRAFT || relation.status()==PartyRelationStatus.ACTIVE)),
+                    text(document.issueDate()),text(document.expiryDate()))).toList(),
+            row.jurisdictionCode(),row.organizationTypeCode(),row.schemaId()==null?null:row.schemaId().toString(),
+            row.reviewDueTime()==null?null:formatter.format(row.reviewDueTime()),
+            row.responsiblePartnerId()==null?null:row.responsiblePartnerId().toString(),view.responsiblePartnerName(),
+            view.declarations().stream().map(declaration -> declaration(declaration,formatter)).toList());
     }
-    private static Map<String,Map<String,String>> values(ClientDraftFields fields) {
-        Map<String,Map<String,String>> values=new LinkedHashMap<>();
-        put(values,"individual","givenName",fields.individualGivenName());
-        put(values,"individual","middleName",fields.individualMiddleName());
-        put(values,"individual","familyName",fields.individualFamilyName());
-        put(values,"individual","birthDate",fields.individualBirthDate());
-        put(values,"individual","nationalityCountry",fields.individualNationalityCountry());
-        put(values,"individual","residenceCountry",fields.individualResidenceCountry());
-        put(values,"organization","legalName",fields.organizationLegalName());
-        put(values,"organization","tradeName",fields.organizationTradeName());
-        put(values,"organization","incorporationCountry",fields.organizationIncorporationCountry());
-        put(values,"organization","organizationType",fields.organizationOrganizationType());
-        put(values,"organization","incorporationDate",fields.organizationIncorporationDate());
-        put(values,"address","addressLine1",fields.addressAddressLine1());
-        put(values,"address","addressLine2",fields.addressAddressLine2());
-        put(values,"address","city",fields.addressCity());
-        put(values,"address","stateOrProvince",fields.addressStateOrProvince());
-        put(values,"address","postalCode",fields.addressPostalCode());
-        put(values,"address","countryCode",fields.addressCountryCode());
-        put(values,"identifier","identifierType",fields.identifierIdentifierType());
-        put(values,"identifier","issuingCountry",fields.identifierIssuingCountry());
-        put(values,"identifier","identifierValue",fields.identifierIdentifierValue());
-        put(values,"identifier","validFrom",fields.identifierValidFrom());
-        put(values,"identifier","validTo",fields.identifierValidTo());
-        put(values,"business","businessModelCode",fields.businessBusinessModelCode());
-        put(values,"business","websiteUrl",fields.businessWebsiteUrl());
-        put(values,"business","businessDescription",fields.businessBusinessDescription());
-        put(values,"business","expectedVolume",fields.businessExpectedVolume());
-        put(values,"business","expectedTicket",fields.businessExpectedTicket());
-        put(values,"business","currency",fields.businessCurrency());
-        return values;
+    /** 一条声明的读回。 */
+    private static DeclarationResponseBody declaration(ApplicationDeclaration row,java.time.format.DateTimeFormatter formatter) {
+        var body=new DeclarationResponseBody();
+        body.setDeclarationId(row.getDeclarationId().toString());
+        body.setApplicationId(row.getClientApplicationId().toString());
+        body.setDeclarationType(row.getDeclarationType());
+        body.setDeclaredValue(row.getDeclaredValue());
+        body.setTermsVersion(row.getTermsVersion());
+        body.setDeclaredAt(formatter.format(row.getDeclaredTime()));
+        return body;
     }
-    private static void put(Map<String,Map<String,String>> values,String group,String field,Object value) {
-        String text=switch(value) {
-            case null -> null;
-            case Instant time -> time.atOffset(ZoneOffset.UTC).toLocalDate().toString();
-            case BigDecimal amount -> amount.stripTrailingZeros().toPlainString();
-            default -> value.toString();
-        };
-        values.computeIfAbsent(group,ignored -> new LinkedHashMap<>()).put(field,text);
-    }
+    private static String text(LocalDate value) { return value==null?null:value.toString(); }
 }

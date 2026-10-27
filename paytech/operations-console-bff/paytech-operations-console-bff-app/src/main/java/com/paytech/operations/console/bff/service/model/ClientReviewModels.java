@@ -22,21 +22,6 @@ public final class ClientReviewModels {
     private ClientReviewModels() {
     }
 
-    /** O05 材料核验结果。 */
-    public record EvidenceReviewRequestBody(@NotBlank @Pattern(regexp = "^(ACCEPTED|REJECTED)$") String outcome) {
-    }
-
-    /** O07 退回：内部原因代码、退回分区与客户可见说明。 */
-    public record ReturnRequestBody(@NotBlank @Pattern(regexp = CODE) String reasonCode,
-        @NotBlank @Pattern(regexp = "^(BASIC|BUSINESS|PEOPLE|MATERIALS)$") String section,
-        @NotBlank @Size(max = 1000) String publicNote) {
-    }
-
-    /** O08/O09 结论：内部原因与可选客户可见说明。 */
-    public record DecisionRequestBody(@NotBlank @Pattern(regexp = CODE) String reasonCode, @NotBlank @Size(max = 2000) String reason,
-        @Size(max = 1000) String publicNote) {
-    }
-
     /** 一条行业与 MCC 分类。 */
     public record ClassificationItem(@NotBlank @Pattern(regexp = CODE) String industryCode,
         @NotBlank @Pattern(regexp = "^[0-9]{4}$") String mccCode, @NotNull Boolean primary) {

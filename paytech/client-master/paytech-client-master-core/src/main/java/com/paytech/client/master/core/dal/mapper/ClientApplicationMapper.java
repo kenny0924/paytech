@@ -27,12 +27,19 @@ public interface ClientApplicationMapper {
     /** 按申请读取提交坐标，不限发起账号；只供内部审核结果使用。 */
     ClientApplicationSubmission findById(@Param("applicationId") long applicationId);
 
+    /** Client 的全部申请，新在前。 */
+    List<ClientApplicationSubmission> findByClient(@Param("clientId") long clientId);
+
     /** 当前任务为指定任务的申请（任意状态）。 */
     ClientApplicationSubmission findByCase(@Param("caseId") long caseId);
 
-    /** 同一提交、同一任务的 UNDER_REVIEW 条件结束审核，返回影响行数。 */
-    int concludeReview(@Param("row") ClientApplicationSubmission row, @Param("status") ClientApplicationStatus status,
-        @Param("decisionId") Long decisionId, @Param("release") boolean release, @Param("now") Instant now);
+    /** 同一提交、同一任务、处于 expected 状态时条件结束审核，返回影响行数。 */
+    int concludeReview(@Param("row") ClientApplicationSubmission row, @Param("expected") ClientApplicationStatus expected,
+        @Param("status") ClientApplicationStatus status, @Param("decisionId") Long decisionId, @Param("dueTime") Instant dueTime,
+        @Param("release") boolean release, @Param("now") Instant now);
+
+    /** DRAFT/RETURNED 条件撤回，返回影响行数。 */
+    int withdraw(@Param("applicationId") long applicationId, @Param("now") Instant now);
 
     /** 存在 APPROVED 申请的 Client 摘要，按 Client ID 升序；成员关系由调用方依据 Platform 事实决定。 */
     List<ClientWorkspaceSummary> findApprovedSummaries(@Param("clientIds") List<Long> clientIds);

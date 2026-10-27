@@ -17,8 +17,10 @@ const browserSessionLock: SessionLock = action => typeof navigator !== 'undefine
   ? navigator.locks.request('paytech-client-session', action) : action();
 export class RequestFailure extends Error {
   status: number; requestId: string; fields: Record<string, string>; code: string;
-  constructor(status: number, message: string, requestId = '', fields: Record<string, string> = {}, code = '') {
-    super(message); this.status = status; this.requestId = requestId; this.fields = fields; this.code = code;
+  /** 原始 Problem 体；需求级错误（errors[].requirementKey）由入驻页面自行解析。 */
+  problem: unknown;
+  constructor(status: number, message: string, requestId = '', fields: Record<string, string> = {}, code = '', problem: unknown = null) {
+    super(message); this.status = status; this.requestId = requestId; this.fields = fields; this.code = code; this.problem = problem;
   }
 }
 export function readEmailLink(fragment: string): EmailLink | null {
@@ -77,7 +79,7 @@ export function createAuthClient(transport: typeof fetch = fetch, sessionLock: S
       if (Array.isArray(problem?.errors)) for (const error of problem.errors) {
         if (typeof error.field === 'string' && typeof error.message === 'string') fields[error.field] = error.message;
       }
-      throw new RequestFailure(response.status, message, typeof problem?.requestId === 'string' ? problem.requestId : '', fields, typeof problem?.code === 'string' ? problem.code : '');
+      throw new RequestFailure(response.status, message, typeof problem?.requestId === 'string' ? problem.requestId : '', fields, typeof problem?.code === 'string' ? problem.code : '', value);
     }
     return value as T;
   }

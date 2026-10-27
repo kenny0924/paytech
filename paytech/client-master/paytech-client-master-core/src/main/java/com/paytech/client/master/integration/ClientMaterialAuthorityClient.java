@@ -1,48 +1,43 @@
 package com.paytech.client.master.integration;
-import java.util.HashSet;
+import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
 import com.paytech.client.contract.api.onboarding.ClientDocumentModels.DocumentReferenceRequestBody;
 import com.paytech.client.master.domain.onboarding.ClientDraftCommand;
 import com.paytech.client.master.domain.onboarding.ClientMaterialTarget;
-import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
+import com.paytech.client.master.domain.onboarding.ProgramScope;
+import com.paytech.client.master.domain.onboarding.requirement.MaterialRequirement;
+import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.platform.support.api.files.FileAddress;
 import com.paytech.platform.support.api.files.InternalFileApi;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
 import com.paytech.platform.support.api.enums.*;
-import com.paytech.compliance.api.*;
-import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
-/** Owner HTTP 证据校验，不缓存材料许可，不跨库读取，也不进入 CCT 事务。 */
+/** Owner HTTP 证据校验：compliance 程序材料槽与 Platform 文件；不缓存材料许可，不跨库读取，也不进入 CCT 事务。 */
 public final class ClientMaterialAuthorityClient {
-    private final MaterialRequirementsApi risk;
+    private final ComplianceProgramClient programs;
     private final InternalFileApi platform;
-    /** 只依赖两份轻量 Owner API。 */
-    public ClientMaterialAuthorityClient(MaterialRequirementsApi risk,InternalFileApi platform) { this.risk=risk;this.platform=platform; }
-    /** 先读取真实材料要求，再校验原文件当前可用性与上传人；客户端 Hash 从不参与。 */
-    public String verify(long accountId,ClientMaterialTarget target,DocumentReferenceRequestBody request) {
+    /** 只依赖 compliance 程序端口与 Platform 文件接口。 */
+    public ClientMaterialAuthorityClient(ComplianceProgramClient programs,InternalFileApi platform) { this.programs=programs;this.platform=platform; }
+    /**
+     * 先按申请的程序解析材料槽，再校验原文件当前可用性与上传人；客户端 Hash 从不参与
+     *
+     * @param accountId 当前账号
+     * @param target 材料目标（主主体或关联人员）
+     * @param scope 申请的程序解析范围
+     * @param request 材料引用
+     * @return Platform 权威内容摘要
+     */
+    public String verify(long accountId,ClientMaterialTarget target,ProgramScope scope,DocumentReferenceRequestBody request) {
         if (org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()) throw new IllegalStateException("材料 Owner 调用不能位于数据库事务内");
         FileAddress address=ClientDraftCommand.fileAddress(request.fileAddress());
-        boolean matched=requirements(target.qualificationType().getCode()).stream()
-            .anyMatch(item -> request.requirementCode().equals(item.requirementCode()) && request.documentType().equals(item.documentType()));
+        boolean matched=programs.materials(scope).stream().anyMatch(item -> applies(item,target)
+            && request.requirementCode().equals(item.requirementCode())
+            && (item.documentTypes().isEmpty() || item.documentTypes().contains(request.documentType())));
         if (!matched) throw new FailException(MATERIAL_REQUIREMENT_INVALID);
         return fileHash(accountId,address);
     }
-    /**
-     * 读取资格类型的通用材料要求；Risk 不可用或目录损坏时依赖不可用，不视为无需材料。
-     *
-     * @param qualificationType 资格类型代码
-     * @return 已校验的材料要求，至少一项
-     */
-    public java.util.List<RequirementBody> requirements(String qualificationType) {
-        com.paytech.compliance.api.MaterialRequirementsModels.RequirementsResponseBody requirements;
-        try { requirements=risk.read("client-master-service",qualificationType); }
-        catch (RuntimeException unavailable) { throw unavailable(); }
-        if (requirements==null || !id(requirements.programId()) || !id(requirements.programVersionId())
-            || requirements.items()==null || requirements.items().isEmpty() || requirements.items().size()>1024) throw unavailable();
-        var codes=new HashSet<String>();
-        for (var item:requirements.items()) {
-            if (item==null || !code(item.requirementCode()) || !code(item.documentType()) || !codes.add(item.requirementCode())) throw unavailable();
-        }
-        return requirements.items();
+    /** 主主体只用 PRIMARY 材料槽，关联人员用其他材料槽（ANY_RELATED 或按关系角色）。 */
+    private static boolean applies(MaterialRequirement item,ClientMaterialTarget target) {
+        return target.primary()==MaterialRequirementRoles.PRIMARY.equals(item.subjectRole());
     }
     /**
      * 经 Platform 内部文件接口核验文件当前可用、由当前账号上传，并返回 Platform 权威内容摘要。
@@ -70,13 +65,6 @@ public final class ClientMaterialAuthorityClient {
         if (scan!=FileScanStatus.AVAILABLE || object!=FileObjectStatus.ACTIVE) throw new FailException(MATERIAL_FILE_UNAVAILABLE);
         return file.getContentHash();
     }
-    /** 下游标识必须为规范正整数。 */
-    private boolean id(String value) {
-        try { return value!=null && value.matches("[1-9][0-9]{0,18}") && Long.parseLong(value)>0; }
-        catch (NumberFormatException invalid) { return false; }
-    }
-    /** 稳定材料代码不能由浏览器自由扩展。 */
-    private boolean code(String value) { return value!=null && value.matches("[A-Z][A-Z0-9_]{0,63}"); }
     /** 不透传下游原始错误和敏感元数据。 */
-    private com.paytech.foundation.common.error.ErrorException unavailable() { return new com.paytech.foundation.common.error.ErrorException(ONBOARDING_DEPENDENCY_UNAVAILABLE); }
+    private ErrorException unavailable() { return new ErrorException(ONBOARDING_DEPENDENCY_UNAVAILABLE); }
 }

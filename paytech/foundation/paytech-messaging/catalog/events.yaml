@@ -20,14 +20,28 @@ events:
   # aggregateType 与旧报文 sourceType 一致为 DD_CASE，aggregateId 为审核主任务 ID，aggregateVersion 取 Payload caseVersion
   # （t_due_diligence_case.version，登记、核验、分类都会推进，可能跳号，故 strictOrder=false）。client-master 第 08 步切到
   # client-master.compliance.p0..p3（Handler strictOrder=false、HANDLER_MANAGED），旧 topic_risk_client_review 停发。
+  # 2026-10-27 全球合规入驻切片 1 升 v2（technique S-02）：在 v1 字段后追加 caseType、roundNo、tier、riskRating、dueTime、errors[]，
+  # outcome 增 EXPIRED（退回超期，client-master 把申请置 WITHDRAWN）。client-master 先兼容 schemaVersion 1 与 2 并上线，compliance 再发 v2。
   - eventType: ClientReviewDecided
-    schemaVersion: 1
+    schemaVersion: 2
     producer: compliance
     aggregateType: DD_CASE
     aggregateVersionField: caseVersion
     consumers: [client-master]
     strictOrder: false
-    payloadSchemaRef: paytech-compliance-api/event/ClientReviewDecided/v1
+    payloadSchemaRef: paytech-compliance-api/event/ClientReviewDecided/v2
+  # 角色资格状态迁移（2026-10-27 全球合规入驻切片 1，R7）：compliance 在案件决定、运营手工登记与撤销的同一本地事务登记补偿任务
+  # QUALIFICATION_CHANGED，提交后回读 t_qualification_state_change 与决定发布。aggregateId 为 qualification_id，aggregateVersion 取
+  # 该次迁移的资格版本（同一资格连续递增）；client-master 只按 status 幂等处理（REVOKED → Client SUSPENDED），故 strictOrder=false。
+  # Payload 见 paytech-compliance-api 的 com.paytech.compliance.api.event.QualificationChangedPayload。
+  - eventType: QualificationChanged
+    schemaVersion: 1
+    producer: compliance
+    aggregateType: ROLE_QUALIFICATION
+    aggregateVersionField: qualificationVersion
+    consumers: [client-master]
+    strictOrder: false
+    payloadSchemaRef: paytech-compliance-api/event/QualificationChanged/v1
   # 唯一计费事实（决定 2026-10-19 计费事实引擎；需求 billing-计费事实模型重构与渠道成本迁出，替代原经济事实事件）：Payload 为
   # paytech-billing-api 的 com.paytech.billing.api.fact.BillingFactPayload，含头 + 外部引用（refs）+ 全部明细行（每行付方 / 收方）。
   # aggregateId 为 factId，aggregateVersion 取 t_billing_fact.fact_version（替代链递增），occurredAt 为批准（AUTO 为登记）时间。

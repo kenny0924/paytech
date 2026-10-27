@@ -51,6 +51,10 @@ mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
 
 compliance:
+  # 名单筛查（CASE_SCREENING 补偿任务）：经 channel-connector 服务渠道执行 SCREENING_SEARCH，经 client-master CM-13 读取主体名称。
+  # 缺省渠道 S_SCREENING_MOCK 只在 local / mor-test 部署；生产须改为真实供应商渠道。
+  screening:
+    channel-code: "${COMPLIANCE_SCREENING_CHANNEL_CODE:S_SCREENING_MOCK}"
   identifier:
     # 本服务独立的 Snowflake 坐标（实例清单分配），不得与 risk-decision 共用 worker。
     region-id: "${COMPLIANCE_SNOWFLAKE_REGION_ID}"
@@ -59,8 +63,7 @@ compliance:
 web:
   logging:
     metadata-only-path-prefixes:
-      - /internal/due-diligence/material-requirements
-      # I01 请求体含主体姓名、证件号与地址原值，只记元数据。
+      # I01 请求体含主体姓名、生日与证件 Token，只记元数据。
       - /client-onboarding-review
       # 审核命令含内部理由与客户可见说明，只记元数据。
       - /client-onboarding-admin
@@ -121,12 +124,10 @@ paytech:
 internal-auth:
   mode: "${COMPLIANCE_INTERNAL_AUTH_MODE:OFF}"
 
-# Client 入驻通用材料目录：每类资格一个全局程序，不按国家区分；材料充分性由人工审核判断。
-# 程序数据由 requirements/20260914/client-console-注册与客户入驻/db/implementation/risk-generic-materials-init.sql 手工初始化（目标库 mor_compliance）。
+# Client 入驻审核：程序按辖区 × 主体类型 × 角色 × 档次存于 t_dd_program*（初始化 DML docs/database/sql/compliance-initial-data.sql），
+# 不再使用 programs-json 配置；程序解析接口 /compliance/v1/programs/resolve 始终开启。
 onboarding:
-  # I01 审核登记入口（client-master 私网调用）；默认关闭。
+  # I01—I03 审核入口、运营工作台与退回超期扫描；默认关闭。
   review:
     enabled: false
-  materials:
-    enabled: false
-    programs-json: '[{"qualificationType":"INDIVIDUAL_KYC","programCode":"CLIENT_INDIVIDUAL_GENERIC"},{"qualificationType":"ORGANIZATION_KYB","programCode":"CLIENT_ORGANIZATION_GENERIC"},{"qualificationType":"RELATED_PERSON_KYC","programCode":"RELATED_PERSON_GENERIC"}]'
+

@@ -11,7 +11,7 @@
     </parent>
     <artifactId>paytech-compliance-app</artifactId>
     <name>PayTech Compliance App</name>
-    <description>Only executable of compliance: Spring Boot entry, onboarding review / material Controllers, ClientReviewDecided
+    <description>Only executable of compliance: Spring Boot entry, onboarding review / program resolution Controllers, screening outbound adapters, ClientReviewDecided
         publication (old Topic + compliance.events), persistence and runtime assembly.</description>
     <dependencies>
         <dependency>
@@ -31,7 +31,7 @@
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mvc-web-starter</artifactId>
         </dependency>
-        <!-- 内部调用身份（D26）：默认 OFF；入站校验由 MVC Starter 装配。本服务没有出站 HTTP 客户端。 -->
+        <!-- 内部调用身份（D26）：默认 OFF；入站校验由 MVC Starter 装配，出站筛查调用按目标服务附加 Token。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-internal-auth</artifactId>
@@ -53,6 +53,25 @@
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-messaging</artifactId>
+        </dependency>
+        <!-- 名单筛查出站（2026-10-27）：channel-connector 服务渠道执行与 client-master CM-13 资料读取。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-http-client-support</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-channel-connector-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-client-master-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

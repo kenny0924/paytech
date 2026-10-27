@@ -15,19 +15,19 @@ import com.paytech.foundation.testsupport.api.Clear;
 
 /**
  * mor_compliance 全表清理器（design/10 §3.1、§4.2）：触碰的表集合等于本模块 init/ddl.sql 的表集合（含结算控制 3 表与 t_consumed_event）。
- * <li>ClientReviewMocker、MaterialProgramMocker 定向清理之后兜底删除本库全部行；compliance 没有初始化目录数据。</li>
+ * <li>各 Mocker 定向清理之后兜底删除本库全部行；测试库不执行初始化 DML，程序由 ProgramPackMocker 按用例插入。</li>
  * <li>{@link #assertBaseline()} 供全局 BeforeEach 断言空基线。</li>
  */
 @TestComponent
 public class ComplianceDataCleaner implements Clear {
     /** 本库全部表（= init/ddl.sql 的 CREATE TABLE 集合）。 */
     public static final List<String> TABLES = List.of("t_dd_program", "t_dd_program_version", "t_dd_program_requirement",
-        "t_dd_program_check", "t_dd_program_screening", "t_due_diligence_case", "t_dd_case_subject",
-        "t_dd_case_classification", "t_dd_case_dependency", "t_dd_requirement", "t_dd_evidence_ref",
+        "t_dd_program_requirement_doc_type", "t_dd_program_check", "t_dd_program_screening", "t_due_diligence_case",
+        "t_dd_case_subject", "t_dd_case_classification", "t_dd_case_dependency", "t_dd_requirement", "t_dd_evidence_ref",
         "t_dd_case_state_change", "t_dd_party_snapshot", "t_dd_check", "t_screening_run", "t_screening_hit",
-        "t_screening_resolution", "t_qualification_decision", "t_role_qualification", "t_qualification_state_change",
-        "t_settlement_control", "t_settlement_control_scope", "t_settle_control_state_change", "t_compensation_event",
-        "t_consumed_event");
+        "t_screening_hit_list", "t_screening_resolution", "t_dd_risk_factor", "t_dd_return_error", "t_qualification_decision",
+        "t_role_qualification", "t_qualification_state_change", "t_settlement_control", "t_settlement_control_scope",
+        "t_settle_control_state_change", "t_compensation_event", "t_consumed_event");
 
     private final JdbcTemplate jdbc;
 

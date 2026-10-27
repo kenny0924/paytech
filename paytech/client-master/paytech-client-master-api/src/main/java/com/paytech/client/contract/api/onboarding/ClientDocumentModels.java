@@ -9,7 +9,14 @@ public final class ClientDocumentModels {
      * @param documentType Risk 指定的材料类型
      * @param fileAddress 当前账号上传的 Platform 文件地址，格式 /files/v1/{fileId}
      */
-    public record DocumentReferenceRequestBody(String subjectPartyId,String requirementCode,String documentType,String fileAddress) {}
+    /**
+     * C12 关联材料
+     *
+     * @param issueDate 材料签发日期 YYYY-MM-DD，可空；程序 maxAgeDays 按它校验
+     * @param expiryDate 材料到期日 YYYY-MM-DD（含当日有效），可空
+     */
+    public record DocumentReferenceRequestBody(String subjectPartyId,String requirementCode,String documentType,String fileAddress,
+        String issueDate,String expiryDate) {}
     /**
      * @param commandId 已停用，恒为空；请求幂等由 Gateway 处理
      * @param applicationId 原申请
@@ -28,5 +35,6 @@ public final class ClientDocumentModels {
      * @param fileAddress 原文件地址
      * @param subjectInScope 主体是否仍在当前申请范围内
      */
-    public record DocumentResponseBody(String documentId,String subjectPartyId,String requirementCode,String documentType,String fileAddress,boolean subjectInScope) {}
+    public record DocumentResponseBody(String documentId,String subjectPartyId,String requirementCode,String documentType,String fileAddress,
+        boolean subjectInScope,String issueDate,String expiryDate) {}
 }

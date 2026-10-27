@@ -16,3 +16,7 @@
   .master-data-page .master-data-search { grid-template-columns: 1fr 1fr; }
   .master-data-page .master-data-tier-list { grid-template-columns: 1fr; }
 }
+.master-data-page .client-values h3, .master-data-page .client-person h3 { font-size: 13px; margin: 12px 0 6px; color: #384152; }
+.master-data-page .client-person { border-top: 1px dashed #e5e7eb; padding-top: 12px; margin-top: 12px; }
+.master-data-page .client-person:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+.master-data-page .client-person-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

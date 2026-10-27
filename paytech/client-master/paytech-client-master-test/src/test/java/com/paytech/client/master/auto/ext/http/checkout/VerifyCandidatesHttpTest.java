@@ -95,7 +95,8 @@ class VerifyCandidatesHttpTest extends AbstractCheckoutCandidateApiTest {
     void test_partyProfiles() {
         get(PROFILES + "?ids=910000000000111&ids=910000000000005&ids=910000000000999", headers()).assertOk()
             .assertText("/items/0/profileId", "910000000000005").assertText("/items/1/profileId", "910000000000111")
-            .assertText("/items/1/partyId", "910000000000102").assertText("/items/1/approvedTime", "2026-09-01T00:00:00.000000Z");
+            .assertText("/items/1/partyId", "910000000000102").assertText("/items/1/approvedTime", "2026-09-01T00:00:00.000000Z")
+            .assertText("/items/1/partyType", "ORGANIZATION").assertText("/items/1/incorporationCountry", "AE");
         get(PROFILES + "?ids=01", headers()).assertProblem(422, CheckoutCandidateErrorCode.INVALID_CANDIDATE_QUERY.getCode());
     }
 

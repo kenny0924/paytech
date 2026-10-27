@@ -13,7 +13,10 @@ public enum OperationsBffErrorCode implements CodeMessageEnum {
     DEPENDENCY_UNAVAILABLE("DEPENDENCY_UNAVAILABLE", "依赖服务暂时不可用，请稍后重试"),
 
     /** 资格登记的主体已关闭或终止（OE CLOSED、Partner / Client TERMINATED）；页面提示不能登记，422。 */
-    QUALIFICATION_SUBJECT_TERMINATED("QUALIFICATION_SUBJECT_TERMINATED", "主体已关闭或终止，不能登记资格");
+    QUALIFICATION_SUBJECT_TERMINATED("QUALIFICATION_SUBJECT_TERMINATED", "主体已关闭或终止，不能登记资格"),
+
+    /** 审核写命令的代操作 PayFac 不存在、未生效或不是 OE_PROVIDER；页面提示重新选择，422。 */
+    ON_BEHALF_PARTNER_INVALID("ON_BEHALF_PARTNER_INVALID", "代操作的 PayFac 不存在、未生效或不是 OE 提供方");
 
     private final String code;
     private final String message;

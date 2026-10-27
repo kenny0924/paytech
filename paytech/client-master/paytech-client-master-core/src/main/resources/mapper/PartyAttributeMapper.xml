@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.PartyAttributeMapper">
+  <select id="findByProfiles" resultType="com.paytech.client.master.core.dal.dataobject.PartyAttribute">
+    SELECT attribute_id AS attributeId, profile_id AS profileId, attribute_code AS attributeCode, value_text AS valueText,
+      value_date AS valueDate, value_decimal AS valueDecimal, value_vault_token AS valueVaultToken, masked_value AS maskedValue,
+      create_time AS createTime, update_time AS updateTime
+    FROM t_party_attribute WHERE profile_id IN
+    <foreach collection="profileIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    ORDER BY profile_id, attribute_code
+  </select>
+  <!-- 同一资料同一属性只有一行：存在时整体覆盖取值，不改 attribute_id 与 create_time。 -->
+  <insert id="upsert">
+    INSERT INTO t_party_attribute(attribute_id,profile_id,attribute_code,value_text,value_date,value_decimal,value_vault_token,
+      masked_value,create_time,update_time)
+    VALUES(#{row.attributeId},#{row.profileId},#{row.attributeCode},#{row.valueText},#{row.valueDate},#{row.valueDecimal},
+      #{row.valueVaultToken},#{row.maskedValue},#{row.createTime},#{row.updateTime}) AS incoming
+    ON DUPLICATE KEY UPDATE value_text=incoming.value_text,value_date=incoming.value_date,value_decimal=incoming.value_decimal,
+      value_vault_token=incoming.value_vault_token,masked_value=incoming.masked_value,update_time=incoming.update_time
+  </insert>
+  <delete id="delete">DELETE FROM t_party_attribute WHERE profile_id=#{profileId} AND attribute_code=#{attributeCode}</delete>
+</mapper>

@@ -1,7 +1,5 @@
 package com.paytech.compliance.domainservice.service.impl;
 
-import java.time.Instant;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -12,6 +10,8 @@ import com.paytech.compliance.domainservice.repository.QualificationDecisionRepo
 import com.paytech.compliance.domainservice.repository.QualificationStateChangeRepository;
 import com.paytech.compliance.domainservice.repository.RoleQualificationRepository;
 import com.paytech.compliance.domainservice.service.QualificationService;
+import com.paytech.compliance.service.handler.QualificationChangedHandler;
+import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 
 import lombok.AllArgsConstructor;
 
@@ -19,29 +19,35 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class QualificationServiceImpl implements QualificationService {
+    private final CompensationEventRegistrar events;
     private final PlatformTransactionManager transactionManager;
     private final QualificationDecisionRepository decisions;
     private final RoleQualificationRepository qualifications;
     private final QualificationStateChangeRepository stateChanges;
 
-    /** 一个 READ COMMITTED、5 秒超时的短事务保存决定、投影与状态变更。 */
+    /** 一个 READ COMMITTED、5 秒超时的短事务保存决定、投影、状态变更并登记 QualificationChanged 发布。 */
     @Override
     public void saveChange(QualificationChangeContext context) {
         transaction().executeWithoutResult(status -> {
             decisions.insert(context.getDecision());
-            saveProjection(context);
-            stateChanges.insert(context.getStateChange());
+            applyProjection(context);
         });
     }
 
-    /** 没有投影时新建，否则按读取时版本条件切换；外层事务负责提交。 */
-    void saveProjection(QualificationChangeContext context) {
+    /**
+     * 投影切换、状态变更与发布任务登记；必须在调用方事务内执行
+     * <li>案件决定把决定随案件一起插入后调用本方法，手工登记 / 撤销由 {@link #saveChange} 调用。</li>
+     */
+    @Override
+    public void applyProjection(QualificationChangeContext context) {
         if (context.getCurrent() == null) {
             qualifications.insert(context.getCreated());
-            return;
+        } else {
+            qualifications.applyDecision(context.getCurrent(), context.getTarget(), context.getStateChange().getOccurredTime());
         }
-        Instant now = context.getStateChange().getOccurredTime();
-        qualifications.applyDecision(context.getCurrent(), context.getDecision(), now);
+        stateChanges.insert(context.getStateChange());
+        events.register(QualificationChangedHandler.buildEvent(context.getStateChange().getQualificationId(),
+            context.getStateChange().getAggregateVersion()));
     }
 
     /** READ COMMITTED、5 秒超时的本地短事务。 */

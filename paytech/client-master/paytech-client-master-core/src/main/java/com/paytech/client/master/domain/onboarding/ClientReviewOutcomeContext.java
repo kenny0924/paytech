@@ -9,13 +9,13 @@ import com.paytech.client.master.domain.enums.ClientApplicationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/** 一次 Risk 审核结果在 CCT 的落地：申请结论；通过时另含 Client 激活的生命周期历史。 */
+/** 一次审核结果在 CCT 的落地：申请结论；通过时另含 Client 激活的生命周期历史与主体资料内容摘要。 */
 @Getter
 @AllArgsConstructor
 public class ClientReviewOutcomeContext {
     /** 审核中且提交、任务均匹配的申请。 */
     private final ClientApplicationSubmission application;
-    /** 目标状态：RETURNED、APPROVED 或 REJECTED。 */
+    /** 目标状态：RETURNED、APPROVED、REJECTED 或 WITHDRAWN（退回超期）。 */
     private final ClientApplicationStatus status;
     /** Risk 主任务最终决定 ID；退回为空。 */
     private final Long decisionId;
@@ -25,6 +25,10 @@ public class ClientReviewOutcomeContext {
     private final String activationSnapshot;
     /** 服务端时间。 */
     private final Instant now;
+    /** 退回补件截止时间；其他结果为空。 */
+    private final Instant dueTime;
+    /** 通过时冻结的主体资料内容摘要（SHA-256 小写十六进制）；其他结果为空。 */
+    private final String profileContentHash;
 
     /** 是否通过并激活 Client。 */
     public boolean activates() {

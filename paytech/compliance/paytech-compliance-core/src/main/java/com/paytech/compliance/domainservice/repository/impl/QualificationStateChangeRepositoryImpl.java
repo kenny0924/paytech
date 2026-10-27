@@ -25,6 +25,12 @@ public class QualificationStateChangeRepositoryImpl implements QualificationStat
         }
     }
 
+    /** 某资格指定聚合版本的状态变更。 */
+    @Override
+    public QualificationStateChange findByVersion(long qualificationId, long version) {
+        return mapper.findByVersion(qualificationId, version);
+    }
+
     /** 某资格的全部状态变更。 */
     @Override
     public List<QualificationStateChange> findByQualification(long qualificationId) {

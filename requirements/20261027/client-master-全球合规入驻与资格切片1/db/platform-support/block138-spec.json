@@ -1,0 +1,325 @@
+{
+ "_status": "FINAL (OPERATIONS part); CLIENT routes follow as addendum block138-client (idStart route 441, header 581, query 651, guard 901)",
+ "_decisions": "main 2026-10-27 final: Client menu under 商务 sort 80; 入驻配置 310 / 入驻码 320 top-level; risk-rating reuses CLIENT_ONBOARDING_CLASSIFICATION_EDIT; other codes per ops-fe; c03 disabled on activate; OPERATIONS writes forward idempotency-key; programs route G4 re-added 2026-10-27 (compliance ClientReviewAdminApi.listPrograms + ops-bff OnboardingConfigAdminController GET /programs?jurisdiction)",
+ "title": "（全球合规入驻与资格切片 1 · OPERATIONS：入驻配置、Client、入驻码运营页与案件工作台新命令）",
+ "permissions": [
+  {
+   "code": "ONBOARDING_CONFIG_READ",
+   "resourceType": "ONBOARDING_CONFIG",
+   "action": "READ",
+   "risk": "LOW"
+  },
+  {
+   "code": "CLIENT_READ",
+   "resourceType": "CLIENT",
+   "action": "READ",
+   "risk": "LOW"
+  },
+  {
+   "code": "ONBOARDING_CODE_READ",
+   "resourceType": "ONBOARDING_CODE",
+   "action": "READ",
+   "risk": "LOW"
+  },
+  {
+   "code": "ONBOARDING_CODE_MANAGE",
+   "resourceType": "ONBOARDING_CODE",
+   "action": "MANAGE",
+   "risk": "HIGH"
+  },
+  {
+   "code": "CLIENT_ONBOARDING_SCREENING",
+   "resourceType": "CLIENT_ONBOARDING",
+   "action": "SCREENING",
+   "risk": "MEDIUM"
+  },
+  {
+   "code": "CLIENT_ONBOARDING_RECOMMEND",
+   "resourceType": "CLIENT_ONBOARDING",
+   "action": "RECOMMEND",
+   "risk": "HIGH"
+  },
+  {
+   "code": "CLIENT_ONBOARDING_WAIVE",
+   "resourceType": "CLIENT_ONBOARDING",
+   "action": "WAIVE",
+   "risk": "HIGH"
+  }
+ ],
+ "existingPermissions": [
+  "CLIENT_ONBOARDING_REVIEW_READ",
+  "CLIENT_ONBOARDING_EVIDENCE_REVIEW",
+  "CLIENT_ONBOARDING_CLASSIFICATION_EDIT"
+ ],
+ "resources": [
+  {
+   "code": "OPERATIONS_ONBOARDING_CONFIG",
+   "type": "MENU",
+   "parent": null,
+   "displayName": "入驻配置",
+   "frontendRoute": "/client-onboarding/config",
+   "permission": "ONBOARDING_CONFIG_READ",
+   "sort": 310
+  },
+  {
+   "code": "OPERATIONS_ONBOARDING_CODES",
+   "type": "MENU",
+   "parent": null,
+   "displayName": "入驻码",
+   "frontendRoute": "/client-onboarding/codes",
+   "permission": "ONBOARDING_CODE_READ",
+   "sort": 320
+  },
+  {
+   "code": "OPERATIONS_CLIENTS",
+   "type": "MENU",
+   "parent": "id:900000000000095301",
+   "displayName": "Client",
+   "frontendRoute": "/master-data/clients",
+   "permission": "CLIENT_READ",
+   "sort": 80
+  },
+  {
+   "code": "OPERATIONS_ONBOARDING_CODES_MANAGE",
+   "type": "BUTTON",
+   "parent": "OPERATIONS_ONBOARDING_CODES",
+   "displayName": "签发与作废",
+   "permission": "ONBOARDING_CODE_MANAGE",
+   "sort": 10
+  },
+  {
+   "code": "CLIENT_ONBOARDING_SCREENING",
+   "type": "BUTTON",
+   "parent": "existing:CLIENT_ONBOARDING_REVIEW",
+   "displayName": "筛查与命中处置",
+   "permission": "CLIENT_ONBOARDING_SCREENING",
+   "sort": 50
+  },
+  {
+   "code": "CLIENT_ONBOARDING_RECOMMEND",
+   "type": "BUTTON",
+   "parent": "existing:CLIENT_ONBOARDING_REVIEW",
+   "displayName": "推荐结论",
+   "permission": "CLIENT_ONBOARDING_RECOMMEND",
+   "sort": 60
+  },
+  {
+   "code": "CLIENT_ONBOARDING_WAIVE",
+   "type": "BUTTON",
+   "parent": "existing:CLIENT_ONBOARDING_REVIEW",
+   "displayName": "豁免材料要求",
+   "permission": "CLIENT_ONBOARDING_WAIVE",
+   "sort": 70
+  }
+ ],
+ "routes": [
+  {
+   "routeCode": "client-onboarding-responsible-partners",
+   "channel": "OPERATIONS",
+   "method": "GET",
+   "externalPath": "/api/operations/client-onboarding-admin/v1/responsible-partners",
+   "downstreamPath": "/client-onboarding-admin/v1/responsible-partners",
+   "permission": "CLIENT_ONBOARDING_REVIEW_READ",
+   "query": []
+  },
+  {
+   "routeCode": "client-onboarding-check-result",
+   "channel": "OPERATIONS",
+   "method": "POST",
+   "externalPath": "/api/operations/client-onboarding-admin/v1/cases/{caseId}/checks/{checkId}/result",
+   "downstreamPath": "/client-onboarding-admin/v1/cases/{caseId}/checks/{checkId}/result",
+   "permission": "CLIENT_ONBOARDING_EVIDENCE_REVIEW",
+   "query": []
+  },
+  {
+   "routeCode": "client-onboarding-screening-run",
+   "channel": "OPERATIONS",
+   "method": "POST",
+   "externalPath": "/api/operations/client-onboarding-admin/v1/cases/{caseId}/screenings/run",
+   "downstreamPath": "/client-onboarding-admin/v1/cases/{caseId}/screenings/run",
+   "permission": "CLIENT_ONBOARDING_SCREENING",
+   "query": []
+  },
+  {
+   "routeCode": "client-onboarding-hit-resolution",
+   "channel": "OPERATIONS",
+   "method": "POST",
+   "externalPath": "/api/operations/client-onboarding-admin/v1/cases/{caseId}/screening-hits/{hitId}/resolution",
+   "downstreamPath": "/client-onboarding-admin/v1/cases/{caseId}/screening-hits/{hitId}/resolution",
+   "permission": "CLIENT_ONBOARDING_SCREENING",
+   "query": []
+  },
+  {
+   "routeCode": "client-onboarding-risk-rating",
+   "channel": "OPERATIONS",
+   "method": "PUT",
+   "externalPath": "/api/operations/client-onboarding-admin/v1/cases/{caseId}/risk-rating",
+   "downstreamPath": "/client-onboarding-admin/v1/cases/{caseId}/risk-rating",
+   "permission": "CLIENT_ONBOARDING_CLASSIFICATION_EDIT",
+   "query": []
+  },
+  {
+   "routeCode": "client-onboarding-recommendation",
+   "channel": "OPERATIONS",
+   "method": "POST",
+   "externalPath": "/api/operations/client-onboarding-admin/v1/cases/{caseId}/recommendation",
+   "downstreamPath": "/client-onboarding-admin/v1/cases/{caseId}/recommendation",
+   "permission": "CLIENT_ONBOARDING_RECOMMEND",
+   "query": []
+  },
+  {
+   "routeCode": "client-onboarding-waiver",
+   "channel": "OPERATIONS",
+   "method": "POST",
+   "externalPath": "/api/operations/client-onboarding-admin/v1/cases/{caseId}/requirements/{requirementId}/waiver",
+   "downstreamPath": "/client-onboarding-admin/v1/cases/{caseId}/requirements/{requirementId}/waiver",
+   "permission": "CLIENT_ONBOARDING_WAIVE",
+   "query": []
+  },
+  {
+   "routeCode": "operations-onboarding-config-jurisdictions",
+   "channel": "OPERATIONS",
+   "method": "GET",
+   "externalPath": "/api/operations/onboarding-config-admin/v1/jurisdictions",
+   "downstreamPath": "/onboarding-config-admin/v1/jurisdictions",
+   "permission": "ONBOARDING_CONFIG_READ",
+   "query": []
+  },
+  {
+   "routeCode": "operations-onboarding-config-schemas",
+   "channel": "OPERATIONS",
+   "method": "GET",
+   "externalPath": "/api/operations/onboarding-config-admin/v1/onboarding-schemas",
+   "downstreamPath": "/onboarding-config-admin/v1/onboarding-schemas",
+   "permission": "ONBOARDING_CONFIG_READ",
+   "query": [
+    "jurisdiction"
+   ]
+  },
+  {
+   "routeCode": "operations-onboarding-config-catalog-items",
+   "channel": "OPERATIONS",
+   "method": "GET",
+   "externalPath": "/api/operations/onboarding-config-admin/v1/catalog-items",
+   "downstreamPath": "/onboarding-config-admin/v1/catalog-items",
+   "permission": "ONBOARDING_CONFIG_READ",
+   "query": [
+    "catalogCode",
+    "jurisdiction"
+   ]
+  },
+  {
+   "routeCode": "operations-client-admin-list",
+   "channel": "OPERATIONS",
+   "method": "GET",
+   "externalPath": "/api/operations/client-admin/v1/clients",
+   "downstreamPath": "/client-admin/v1/clients",
+   "permission": "CLIENT_READ",
+   "query": [
+    "page",
+    "size",
+    "status",
+    "jurisdiction",
+    "responsiblePartnerId"
+   ]
+  },
+  {
+   "routeCode": "operations-client-admin-detail",
+   "channel": "OPERATIONS",
+   "method": "GET",
+   "externalPath": "/api/operations/client-admin/v1/clients/{clientId}",
+   "downstreamPath": "/client-admin/v1/clients/{clientId}",
+   "permission": "CLIENT_READ",
+   "query": []
+  },
+  {
+   "routeCode": "operations-client-admin-responsible-partners",
+   "channel": "OPERATIONS",
+   "method": "GET",
+   "externalPath": "/api/operations/client-admin/v1/responsible-partners",
+   "downstreamPath": "/client-admin/v1/responsible-partners",
+   "permission": "CLIENT_READ",
+   "query": []
+  },
+  {
+   "routeCode": "operations-onboarding-code-partners",
+   "channel": "OPERATIONS",
+   "method": "GET",
+   "externalPath": "/api/operations/onboarding-code-admin/v1/local-partners",
+   "downstreamPath": "/onboarding-code-admin/v1/local-partners",
+   "permission": "ONBOARDING_CODE_READ",
+   "query": []
+  },
+  {
+   "routeCode": "operations-onboarding-code-list",
+   "channel": "OPERATIONS",
+   "method": "GET",
+   "externalPath": "/api/operations/onboarding-code-admin/v1/local-partners/{localPartnerId}/onboarding-codes",
+   "downstreamPath": "/onboarding-code-admin/v1/local-partners/{localPartnerId}/onboarding-codes",
+   "permission": "ONBOARDING_CODE_READ",
+   "query": [
+    "status"
+   ]
+  },
+  {
+   "routeCode": "operations-onboarding-code-issue",
+   "channel": "OPERATIONS",
+   "method": "POST",
+   "externalPath": "/api/operations/onboarding-code-admin/v1/local-partners/{localPartnerId}/onboarding-codes",
+   "downstreamPath": "/onboarding-code-admin/v1/local-partners/{localPartnerId}/onboarding-codes",
+   "permission": "ONBOARDING_CODE_MANAGE",
+   "query": []
+  },
+  {
+   "routeCode": "operations-onboarding-code-revoke",
+   "channel": "OPERATIONS",
+   "method": "POST",
+   "externalPath": "/api/operations/onboarding-code-admin/v1/local-partners/{localPartnerId}/onboarding-codes/{codeId}/revocation",
+   "downstreamPath": "/onboarding-code-admin/v1/local-partners/{localPartnerId}/onboarding-codes/{codeId}/revocation",
+   "permission": "ONBOARDING_CODE_MANAGE",
+   "query": []
+  },
+  {
+   "routeCode": "operations-onboarding-config-programs",
+   "channel": "OPERATIONS",
+   "method": "GET",
+   "externalPath": "/api/operations/onboarding-config-admin/v1/programs",
+   "downstreamPath": "/onboarding-config-admin/v1/programs",
+   "permission": "ONBOARDING_CONFIG_READ",
+   "query": [
+    "jurisdiction"
+   ]
+  }
+ ],
+ "existingRouteQueryParams": [
+  {
+   "routeCode": "client-onboarding-o01",
+   "parameter": "responsiblePartnerId"
+  },
+  {
+   "routeCode": "client-onboarding-o01",
+   "parameter": "jurisdictionCode"
+  }
+ ],
+ "disableOnActivate": [
+  "client-onboarding-c03"
+ ],
+ "englishHeader": [
+  "Global onboarding and qualification slice 1, Operations part (2026-10-27, requirements/20261027/client-master-全球合规入驻与资格切片1;",
+  "technique.md sections 2.1-2.3). Self-contained block: on an environment already initialized by platform-support-initial-data.sql,",
+  "apply ONLY this block. Dormant like earlier Operations features: permissions ACTIVE, administrator grants REVOKED, menus/buttons/",
+  "routes DISABLED; activation disables the replaced client-onboarding-c03 form-options route (block138-activate.sql).",
+  "Routes forward to operations-console-bff on the same path minus /api/operations (/client-onboarding-admin/v1, /onboarding-config-admin/v1,",
+  "/client-admin/v1, /onboarding-code-admin/v1). New permissions: ONBOARDING_CONFIG_READ, CLIENT_READ, ONBOARDING_CODE_READ (LOW);",
+  "CLIENT_ONBOARDING_SCREENING (MEDIUM); ONBOARDING_CODE_MANAGE, CLIENT_ONBOARDING_RECOMMEND, CLIENT_ONBOARDING_WAIVE (HIGH).",
+  "Risk rating reuses CLIENT_ONBOARDING_CLASSIFICATION_EDIT; check results reuse CLIENT_ONBOARDING_EVIDENCE_REVIEW.",
+  "Menus: 入驻配置 (top level, sort 310), 入驻码 (top level, 320), Client under 商务 900000000000095301 (sort 80). Buttons: 签发与作废 under",
+  "入驻码; screening, recommendation and waiver under the existing CLIENT_ONBOARDING_REVIEW menu (resolved by code).",
+  "Shapes copy block 137: GET authorization + origin, body 0, principal 30/min; writes add content-type and idempotency-key",
+  "(CORS + forward), body 65536, principal 10/min; every route SHARED_ROUTE 300/min + 50, CLIENT_IP 30/min + 3, principal 2 concurrent.",
+  "Existing objects (created through the management API, IDs differ per environment) are resolved by code into variables:",
+  "permissions CLIENT_ONBOARDING_REVIEW_READ / EVIDENCE_REVIEW / CLASSIFICATION_EDIT, menu CLIENT_ONBOARDING_REVIEW, route",
+  "client-onboarding-o01 (gains query parameters responsiblePartnerId and jurisdictionCode)."
+ ],
+ "_routeCodes": "ops-fe 2026-10-27 (BFF tests use these names); risk-rating keeps CLIENT_ONBOARDING_CLASSIFICATION_EDIT per main"
+}

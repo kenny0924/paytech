@@ -32,5 +32,5 @@ public interface CheckoutCandidateQueryService {
      * @param ids 资料 ID
      * @return 存在的资料，按 profileId 升序
      */
-    List<PartyProfile> partyProfiles(Collection<Long> ids);
+    List<com.paytech.client.master.domain.checkout.PartyProfileView> partyProfiles(Collection<Long> ids);
 }

@@ -1,8 +1,8 @@
 package com.paytech.compliance.core.dal.mapper;
 
+import java.time.Instant;
 import java.util.List;
 
-import java.time.Instant;
 import org.apache.ibatis.annotations.Param;
 
 import com.paytech.compliance.core.dal.dataobject.EvidenceRef;
@@ -15,9 +15,7 @@ public interface EvidenceRefMapper {
     /** 若干案件下的全部证据引用。 */
     List<EvidenceRef> findByCaseIds(@Param("caseIds") List<Long> caseIds);
 
-    /** 按证据 ID 读取。 */
-    EvidenceRef findById(@Param("evidenceId") long evidenceId);
-
     /** 以版本和 RECEIVED 为条件写入核验结果，返回影响行数。 */
-    int review(@Param("row") EvidenceRef row, @Param("status") String status, @Param("now") Instant now);
+    int review(@Param("row") EvidenceRef row, @Param("status") String status, @Param("rejectReasonCode") String rejectReasonCode,
+        @Param("note") String note, @Param("reviewerId") long reviewerId, @Param("now") Instant now);
 }

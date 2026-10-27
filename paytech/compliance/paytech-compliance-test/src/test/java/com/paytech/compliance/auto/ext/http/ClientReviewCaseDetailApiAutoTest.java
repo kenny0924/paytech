@@ -1,173 +1,123 @@
 package com.paytech.compliance.auto.ext.http;
 
-import static com.paytech.foundation.common.error.CommonErrorCode.INVALID_REQUEST;
-import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.CASE_NOT_ACTIVE;
-import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.CHILD_CASE_NOT_ACTIVE;
-import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.CLASSIFICATION_NOT_RECEIVED;
-import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.EVIDENCE_PENDING;
-import static com.paytech.compliance.domainservice.policy.ClientReviewApprovalPolicy.REQUIRED_MATERIAL_NOT_ACCEPTED;
-import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.ACCEPTED;
-import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.RECEIVED;
-import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.REJECTED;
-import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.individual;
-import static com.paytech.compliance.test.builder.ClientReviewCaseBuilder.organization;
-import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.IDENTITY_DOCUMENT;
-import static com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder.PROOF_OF_ADDRESS;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Instant;
-import java.util.UUID;
-import java.util.stream.Stream;
+import java.util.List;
+import java.util.Map;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 
-import com.paytech.foundation.testsupport.api.TestRequestHeaders;
-import com.paytech.compliance.api.ClientReviewAdminApi;
-import com.paytech.compliance.domain.ClientReviewAction;
-import com.paytech.compliance.test.base.ComplianceMockTestBase;
-import com.paytech.compliance.test.checker.ClientReviewCaseResponseChecker;
-import com.paytech.compliance.test.mocker.ClientReviewMocker;
-import com.paytech.compliance.test.mocker.ClientReviewMocker.MockedReview;
+import com.paytech.compliance.test.base.ClientReviewFlowTestBase;
+import com.paytech.compliance.test.builder.ClientReviewRegistrationRequestBuilder;
+import com.paytech.compliance.test.builder.ProgramBuilder;
+import com.paytech.compliance.test.mapper.ProgramTestMapper;
+import com.paytech.compliance.test.mocker.ProgramPackMocker.MockedProgram;
+
+import tools.jackson.databind.JsonNode;
 
 /**
- * O02 Client 入驻审核任务详情（Risk 部分）
- * <li>正常流程：主任务与关联人员子任务的主体、依赖类型、材料要求、证据，已接收分类，以及按策略顺序给出的通过门禁未满足项。</li>
- * <li>门禁：未核验证据、必需材料未接受、未接收分类、子任务已单独结束、主任务已结束分别出现；全部满足时为空。</li>
- * <li>边界：同一要求多份证据、已结束任务的结束时间与客户可见说明。</li>
- * <li>未找到：任务不存在、是子任务或不属于 Client 入驻一律 404；路径 ID 非法 400。</li>
- *
- * @see ClientReviewAdminApi#getCase(String, String, String)
+ * 案件工作台详情、I02 分类与程序版本冻结（AC-06 展示、AC-12）
+ * <li>详情含主体材料（允许类型、可豁免、证据文件地址）、检查、筛查执行与命中、评级因子、时间线与门禁；门禁按查看人计算四眼。</li>
+ * <li>I02 同集合重放成功、不同集合 409；在途案件保持立案时的程序版本，新版本只影响之后的立案。</li>
  */
-class ClientReviewCaseDetailApiAutoTest extends ComplianceMockTestBase {
-    private static final String PATH = "/client-onboarding-admin/v1/cases/%s";
+class ClientReviewCaseDetailApiAutoTest extends ClientReviewFlowTestBase {
+    @org.springframework.beans.factory.annotation.Autowired
+    private ProgramTestMapper programMapper;
 
-    @Autowired
-    private ClientReviewMocker reviews;
+    /** 筛查无命中。 */
+    @BeforeEach
+    void setUpDetail() {
+        screening.mockNoHitsByDefault();
+    }
 
-    /** 刚登记的组织任务：材料待核验、必需材料未接受、未接收分类。 */
+    /** 详情结构与按查看人的四眼门禁。 */
     @Test
-    void test_normalFlow() {
-        MockedReview review = reviews.mock(organization());
+    void test_normalFlow_detail() {
+        programs.mockCountryPacks();
+        var builder = ClientReviewRegistrationRequestBuilder.organization("AE", "LLC").responsiblePartner(PAYFAC);
+        long director = builder.addRelatedPerson("DIRECTOR");
+        String license = builder.addDocument(builder.primaryPartyId(), "REGISTRATION", "TRADE_LICENSE");
+        mockSubjects(builder, "Detail LLC");
+        long caseId = register(builder);
+        reviews.awaitScreeningCompleted(caseId);
+        rate(caseId, "MEDIUM").ok();
+        recommend(REVIEWER, caseId, "APPROVE").ok();
 
-        read(review.caseId()).assertDetail(review, EVIDENCE_PENDING, REQUIRED_MATERIAL_NOT_ACCEPTED,
-            CLASSIFICATION_NOT_RECEIVED);
+        JsonNode body = detail(caseId);
+        JsonNode main = body.path("subjects").path(0);
+        JsonNode registration = find(main.path("requirements"), "requirementCode", "REGISTRATION");
+        assertAll(() -> assertEquals("AE", body.path("jurisdictionCode").asString()),
+            () -> assertEquals(Long.toString(PAYFAC), body.path("responsiblePartnerId").asString()),
+            () -> assertEquals("MEDIUM", body.path("riskRating").asString()),
+            () -> assertEquals(2, body.path("riskFactors").size()),
+            () -> assertEquals("APPROVE", body.path("recommendation").asString()),
+            () -> assertEquals(Long.toString(REVIEWER), body.path("recommendedBy").asString()),
+            () -> assertTrue(body.path("fourEyesRequired").asBoolean()),
+            () -> assertEquals(2, body.path("subjects").size()),
+            () -> assertEquals(List.of("TRADE_LICENSE"), List.of(registration.path("documentTypes").path(0).asString())),
+            () -> assertEquals(license, registration.path("evidence").path(0).path("fileAddress").asString()),
+            () -> assertEquals(3, main.path("checks").size()),
+            () -> assertEquals(3, main.path("screenings").size()),
+            () -> assertEquals("SUCCEEDED", main.path("screenings").path(0).path("status").asString()),
+            () -> assertEquals("DIRECTOR_KYC", body.path("subjects").path(1).path("dependencyTypes").path(0).asString()),
+            () -> assertEquals(Long.toString(director), body.path("subjects").path(1).path("partyId").asString()),
+            () -> assertEquals("REGISTER", body.path("timeline").path(0).path("actionType").asString()),
+            () -> assertTrue(listOf(body.path("timeline")).stream().anyMatch(item -> "START_REVIEW".equals(item.path("actionType")
+                .asString()))));
+        assertTrue(blockers(REVIEWER, caseId).contains("FOUR_EYES_SAME_PERSON"));
+        assertTrue(!blockers(DECIDER, caseId).contains("FOUR_EYES_SAME_PERSON"));
     }
 
-    /** 全部证据已接受并已接收主次分类：门禁为空，分类按接收顺序返回。 */
+    /** I02：同集合重放成功；不同集合 409。 */
     @Test
-    void test_normalFlow_readyForApproval() {
-        MockedReview review = reviews.mock(organization().readyForApproval().classification("SOFTWARE", "5734", false));
+    void test_edgeCase_classificationReplay() {
+        programs.mockCountryPacks();
+        var builder = ClientReviewRegistrationRequestBuilder.individual("SA");
+        mockSubjects(builder, "Classified");
+        long caseId = register(builder);
 
-        read(review.caseId()).assertDetail(review);
+        classify(caseId, builder.build()).ok();
+        classify(caseId, builder.build()).ok();
+        classify(caseId, builder.build(), "TRAVEL").assertProblem(409, "CLIENT_REVIEW_CLASSIFICATION_CONFLICT");
+        assertEquals(1, detail(caseId).path("classifications").size());
+        assertTrue(!blockers(DECIDER, caseId).contains("CLASSIFICATION_NOT_RECEIVED"));
     }
 
-    /** 个人任务没有子任务，主体只有主任务本身。 */
+    /** 程序发布新版本后，在途案件仍按立案时的版本；新立案使用新版本。 */
     @Test
-    void test_normalFlow_individual() {
-        MockedReview review = reviews.mock(individual());
+    void test_edgeCase_versionFrozen() {
+        MockedProgram v1 = programs.mock(ProgramBuilder.zzOrganization().code("ZZ_INDIVIDUAL").scope("INDIVIDUAL", "CLIENT",
+            "INDIVIDUAL_KYC"));
+        var first = ClientReviewRegistrationRequestBuilder.individual("ZZ");
+        mockSubjects(first, "First");
+        long firstCase = register(first);
 
-        read(review.caseId()).assertDetail(review, EVIDENCE_PENDING, REQUIRED_MATERIAL_NOT_ACCEPTED,
-            CLASSIFICATION_NOT_RECEIVED);
+        programMapper.retireVersion(v1.versionId());
+        MockedProgram v2 = programs.mockVersion(v1.programId(), 2, ProgramBuilder.zzOrganization().code("ZZ_INDIVIDUAL")
+            .scope("INDIVIDUAL", "CLIENT", "INDIVIDUAL_KYC").material(new ProgramBuilder.Material("TAX", List.of("TAX_CARD"), true, null,
+                false)));
+        var second = ClientReviewRegistrationRequestBuilder.individual("ZZ");
+        mockSubjects(second, "Second");
+        long secondCase = register(second);
+
+        Map<String, Object> firstRow = reviews.caseRow(firstCase);
+        assertAll(() -> assertEquals(v1.versionId(), number(firstRow.get("dd_program_version_id"))),
+            () -> assertEquals(2, reviews.requirements(firstCase).size()),
+            () -> assertEquals(2, detail(firstCase).path("subjects").path(0).path("requirements").size()),
+            () -> assertEquals(v2.versionId(), number(reviews.caseRow(secondCase).get("dd_program_version_id"))),
+            () -> assertEquals(3, reviews.requirements(secondCase).size()));
     }
 
-    /** 已结束的任务：结束时间、客户可见说明与分区随结论返回，门禁报告主任务与子任务均已结束。 */
-    @ParameterizedTest(name = "{0}")
-    @EnumSource(ClientReviewAction.class)
-    void test_edgeCase_closed(ClientReviewAction action) {
-        MockedReview review = reviews.mock(organization().readyForApproval().closed(action));
-
-        read(review.caseId()).assertDetail(review, CASE_NOT_ACTIVE, CHILD_CASE_NOT_ACTIVE);
-    }
-
-    /** 子任务已单独结束时只报告子任务未在进行。 */
-    @Test
-    void test_edgeCase_childClosed() {
-        MockedReview review = reviews.mock(organization().readyForApproval().childClosed(1, REJECTED));
-
-        read(review.caseId()).assertDetail(review, CHILD_CASE_NOT_ACTIVE);
-    }
-
-    /** 同一要求多份证据；必需材料被拒绝、非必需材料仍待核验时分别计入门禁。 */
-    @Test
-    void test_edgeCase_mixedEvidence() {
-        MockedReview review = reviews.mock(organization().readyForApproval()
-            .childRequirement(0, IDENTITY_DOCUMENT, ACCEPTED, REJECTED, ACCEPTED)
-            .childRequirement(1, IDENTITY_DOCUMENT, REJECTED, REJECTED)
-            .mainRequirement(PROOF_OF_ADDRESS, RECEIVED, RECEIVED));
-
-        read(review.caseId()).assertDetail(review, EVIDENCE_PENDING, REQUIRED_MATERIAL_NOT_ACCEPTED);
-    }
-
-    /** 非必需材料没有证据不影响门禁。 */
-    @Test
-    void test_edgeCase_optionalMaterialMissing() {
-        MockedReview review = reviews.mock(individual().readyForApproval());
-
-        read(review.caseId()).assertDetail(review);
-    }
-
-    /** 整秒提交时间同样输出固定六位小数。 */
-    @Test
-    void test_edgeCase_wholeSecondTime() {
-        MockedReview review = reviews.mock(organization().submittedTime(Instant.parse("2026-10-13T08:00:00Z")));
-
-        read(review.caseId()).assertDetail(review, EVIDENCE_PENDING, REQUIRED_MATERIAL_NOT_ACCEPTED,
-            CLASSIFICATION_NOT_RECEIVED);
-    }
-
-    /** 详情不接受任何 Query，也不接受 GET Body。 */
-    @Test
-    void test_invalidParameter_queryAndBody() {
-        MockedReview review = reviews.mock(organization());
-        String path = PATH.formatted(review.caseId());
-
-        invoke(path + "?status=SUBMITTED").assertProblem(400, INVALID_REQUEST.getCode());
-        String requestId = "risk-review-" + UUID.randomUUID();
-        new ClientReviewCaseResponseChecker(http.exchange(HttpMethod.GET, path, headers(requestId), "{}"), objectMapper,
-            requestId).assertProblem(400, INVALID_REQUEST.getCode());
-    }
-
-    /** 任务不存在、是子任务或不属于 Client 入驻。 */
-    @Test
-    void test_noDataFound() {
-        MockedReview review = reviews.mock(organization());
-        MockedReview partner = reviews.mock(individual().sourceNamespace("CCT_PARTNER_APPLICATION"));
-
-        read(999999999999999L).assertNotFound();
-        read(review.child(0).caseId()).assertNotFound();
-        read(partner.caseId()).assertNotFound();
-    }
-
-    /** 路径中的任务 ID 格式非法。 */
-    @ParameterizedTest(name = "caseId={0}")
-    @MethodSource("invalidCaseIds")
-    void test_invalidParameter(String caseId) {
-        invoke(PATH.formatted(caseId)).assertProblem(400, INVALID_REQUEST.getCode());
-    }
-
-    static Stream<String> invalidCaseIds() {
-        return Stream.of("0", "-1", "abc", "012", "1".repeat(20), "9223372036854775808");
-    }
-
-    private ClientReviewCaseResponseChecker read(long caseId) {
-        return invoke(PATH.formatted(caseId));
-    }
-
-    private ClientReviewCaseResponseChecker invoke(String path) {
-        String requestId = "risk-review-" + UUID.randomUUID();
-        return new ClientReviewCaseResponseChecker(http.get(path, headers(requestId)), objectMapper, requestId);
-    }
-
-    /** Gateway 转发的 Operations 可信身份。 */
-    private static HttpHeaders headers(String requestId) {
-        HttpHeaders headers = TestRequestHeaders.internal(requestId);
-        headers.set("X-Gateway-Actor-Subject", "70001");
-        headers.set("X-Gateway-Session-Id", "risk-test-session");
-        return headers;
+    /** 数组中按字段值查找元素。 */
+    static JsonNode find(JsonNode array, String field, String value) {
+        for (JsonNode item : array) {
+            if (value.equals(item.path(field).asString())) {
+                return item;
+            }
+        }
+        throw new AssertionError("未找到 " + field + "=" + value);
     }
 }

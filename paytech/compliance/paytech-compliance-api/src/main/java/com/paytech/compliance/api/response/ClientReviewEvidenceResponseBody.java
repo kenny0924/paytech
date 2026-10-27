@@ -1,44 +1,43 @@
 package com.paytech.compliance.api.response;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /** 一份证据引用及核验状态。 */
+@Getter
+@Setter
 public class ClientReviewEvidenceResponseBody {
 
     /** 证据 ID。 */
     private String evidenceId;
 
-    /** Platform 文件 ID。 */
-    private String fileId;
+    /** 文件服务地址 /files/v1/{fileId}。 */
+    private String fileAddress;
+
+    /** 文件 SHA-256。 */
+    private String contentHash;
+
+    /** 材料类型代码。 */
+    private String documentType;
+
+    /** 签发日期 YYYY-MM-DD；未提供为空。 */
+    private String issueDate;
+
+    /** 到期日期 YYYY-MM-DD；未提供为空。 */
+    private String expiryDate;
 
     /** RECEIVED、ACCEPTED、REJECTED 或 SUPERSEDED。 */
     private String status;
 
-    /** 读取证据 ID。 */
-    public String getEvidenceId() {
-        return evidenceId;
-    }
+    /** 拒绝原因码；未拒绝为空。 */
+    private String rejectReasonCode;
 
-    /** 设置证据 ID。 */
-    public void setEvidenceId(String evidenceId) {
-        this.evidenceId = evidenceId;
-    }
+    /** 核验人；未核验为空。 */
+    private String reviewerId;
 
-    /** 读取Platform 文件 ID。 */
-    public String getFileId() {
-        return fileId;
-    }
+    /** 核验时间；未核验为空。 */
+    private String reviewedAt;
 
-    /** 设置Platform 文件 ID。 */
-    public void setFileId(String fileId) {
-        this.fileId = fileId;
-    }
-
-    /** 读取RECEIVED、ACCEPTED、REJECTED 或 SUPERSEDED。 */
-    public String getStatus() {
-        return status;
-    }
-
-    /** 设置RECEIVED、ACCEPTED、REJECTED 或 SUPERSEDED。 */
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    /** 从上一轮案件复用时的来源案件 ID；否则为空。 */
+    private String reusedFromCaseId;
 }

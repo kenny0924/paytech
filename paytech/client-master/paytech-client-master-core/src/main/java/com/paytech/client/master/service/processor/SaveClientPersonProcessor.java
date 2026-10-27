@@ -8,7 +8,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.client.contract.api.onboarding.ClientPeopleModels.PeopleCommandReceiptResponseBody;
 import com.paytech.client.master.core.dal.dataobject.ClientPersonIdentity;
 import com.paytech.client.master.domain.onboarding.ClientAgreementPartyUsage;
+import com.paytech.client.master.core.dal.dataobject.ClientDraftFields;
+import com.paytech.client.master.domain.enums.ClientType;
+import com.paytech.client.master.domain.onboarding.ClientDraftChanges;
 import com.paytech.client.master.domain.onboarding.ClientDraftCommand;
+import com.paytech.client.master.domain.onboarding.ClientDraftPatch;
+import com.paytech.client.master.domain.onboarding.ClientDraftPolicy;
 import com.paytech.client.master.domain.onboarding.ClientPeopleOperation;
 import com.paytech.client.master.domainservice.repository.ClientDraftRepository;
 import com.paytech.client.master.domainservice.repository.ClientPeopleRepository;
@@ -37,11 +42,13 @@ public class SaveClientPersonProcessor
     private final ClientDraftRepository drafts;
     private final ClientPeopleRepository people;
     private final ClientAgreementPartyClient agreementParties;
+    private final ClientDraftPreparer preparer;
 
     /** 锁等待与租约沿用 CCT 既有注解锁配置，保持同一互斥域。 */
     public SaveClientPersonProcessor(Duration lockWait, Duration lockLease, ClientPeopleService service,
         ClientDraftAccountClient accounts, TransactionTemplate writes, Validator validator,
-        ClientDraftRepository drafts, ClientPeopleRepository people, ClientAgreementPartyClient agreementParties) {
+        ClientDraftRepository drafts, ClientPeopleRepository people, ClientAgreementPartyClient agreementParties,
+        ClientDraftPreparer preparer) {
         this.lockWait = lockWait;
         this.lockLease = lockLease;
         this.service = service;
@@ -51,6 +58,7 @@ public class SaveClientPersonProcessor
         this.drafts = drafts;
         this.people = people;
         this.agreementParties = agreementParties;
+        this.preparer = preparer;
     }
 
     /** 与原注解锁 client-onboarding:application 与 cct:party 生成同一组逻辑 Key。 */
@@ -63,11 +71,24 @@ public class SaveClientPersonProcessor
     @Override
     protected PeopleCommandReceiptResponseBody processWithinLock(SaveClientPersonRequest request) {
         accounts.authorize(request.getAccountId(), request.getSessionId());
-        var person = ClientOnboardingCommands.personPatch(request.getPatch(), validator);
+        var patch = ClientOnboardingCommands.personPatch(request.getPatch(), validator);
         var command = ClientDraftCommand.of(request.getAccountId(), ClientPeopleOperation.SAVE_PERSON.getCode());
         var usage = agreementUsage(request.getAccountId(), request.getApplicationId(), request.getPartyId());
+        var person = prepare(request, patch);
         return ClientOnboardingCommands.relationWrite(writes,
             () -> service.savePerson(command, request.getApplicationId(), request.getPartyId(), person, usage));
+    }
+
+    /**
+     * 事务外按申请辖区准备证件与扩展属性；申请或人员不存在时按空白资料准备，写事务内照常报原错误。
+     *
+     * @return 准备好的写入
+     */
+    ClientDraftChanges prepare(SaveClientPersonRequest request, ClientDraftPatch patch) {
+        var application = ClientDraftPolicy.requireValid(drafts.identity(request.getApplicationId(), request.getAccountId(), false));
+        ClientPersonIdentity person = people.person(application, request.getPartyId(), false);
+        var current = person == null ? ClientDraftFields.empty() : people.personFields(application, person);
+        return preparer.prepare(application, current, patch, ClientType.INDIVIDUAL, false);
     }
 
     /** 事务前读取本库人员身份并查询 commercial 合同引用；申请或人员不存在时传入空集合。 */

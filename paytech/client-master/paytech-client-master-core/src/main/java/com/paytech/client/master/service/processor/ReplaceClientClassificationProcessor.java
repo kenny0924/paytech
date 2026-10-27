@@ -10,12 +10,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
 import com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission;
 import com.paytech.client.master.core.dal.dataobject.ClientClassification;
 import com.paytech.client.master.core.dal.dataobject.ClientClassificationProfile;
 import com.paytech.client.master.domain.enums.ClientApplicationStatus;
 import com.paytech.client.master.domain.onboarding.ClientClassificationContext;
+import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
+import com.paytech.client.master.domainservice.repository.CatalogItemRepository;
 import com.paytech.client.master.domainservice.repository.ClientApplicationRepository;
 import com.paytech.client.master.domainservice.repository.ClientBusinessClassificationRepository;
 import com.paytech.client.master.domainservice.repository.ClientBusinessProfileRepository;
@@ -29,7 +30,7 @@ import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 /**
  * O03 设置分类：整体替换本任务的分类集合，确认前可反复修改
  * <li>与 O04 共用 client-onboarding:review-case:{caseId} 锁；本任务确认后的修改由条件更新最终拒绝。</li>
- * <li>行业必须在 CCT 行业目录；MCC 只校验四位数字；组合不重复且恰好一个主要分类。</li>
+ * <li>行业必须在通用目录 INDUSTRY（t_catalog_item，全局 *）的 ACTIVE 项；MCC 只校验四位数字；组合不重复且恰好一个主要分类。</li>
  */
 public class ReplaceClientClassificationProcessor
     extends AbstractLockProcessor<ClientClassificationRequest, ClientClassificationResponse> {
@@ -37,7 +38,7 @@ public class ReplaceClientClassificationProcessor
     private final IdGenerator ids;
     private final Duration lockWait;
     private final Duration lockLease;
-    private final ClientFormCatalogProperties catalog;
+    private final CatalogItemRepository catalog;
     private final ClientBusinessProfileRepository profiles;
     private final ClientClassificationService classifications;
     private final ClientApplicationRepository applications;
@@ -45,7 +46,7 @@ public class ReplaceClientClassificationProcessor
 
     /** 锁等待与租约沿用 CCT 既有资源锁配置。 */
     public ReplaceClientClassificationProcessor(Clock clock, IdGenerator ids, Duration lockWait, Duration lockLease,
-        ClientFormCatalogProperties catalog, ClientBusinessProfileRepository profiles, ClientClassificationService classifications,
+        CatalogItemRepository catalog, ClientBusinessProfileRepository profiles, ClientClassificationService classifications,
         ClientApplicationRepository applications, ClientBusinessClassificationRepository rows) {
         this.clock = clock;
         this.ids = ids;
@@ -58,15 +59,16 @@ public class ReplaceClientClassificationProcessor
         this.rows = rows;
     }
 
-    /** 目录、组合不重复与恰好一个主要分类只依赖输入。 */
+    /** 行业目录代码。 */
+    static final String INDUSTRY_CATALOG = "INDUSTRY";
+
+    /** 组合不重复与恰好一个主要分类只依赖输入；行业目录在锁内读取本库。 */
     @Override
     protected void validate(ClientClassificationRequest request) {
-        Set<String> industries = new HashSet<>();
-        catalog.industries().forEach(industry -> industries.add(industry.code()));
         Set<String> pairs = new HashSet<>();
         long primary = 0;
         for (ClientClassificationRequest.Item item : request.getItems()) {
-            if (!industries.contains(item.getIndustryCode()) || !pairs.add(item.getIndustryCode() + ":" + item.getMccCode())) {
+            if (!pairs.add(item.getIndustryCode() + ":" + item.getMccCode())) {
                 throw new FailException(CLASSIFICATION_INVALID);
             }
             primary += item.isPrimary() ? 1 : 0;
@@ -90,6 +92,11 @@ public class ReplaceClientClassificationProcessor
             throw new FailException(APPLICATION_NOT_EDITABLE);
         }
         ClientClassificationProfile profile = GetClientClassificationProcessor.classificationProfile(profiles, application);
+        Set<String> industries = new HashSet<>();
+        catalog.findActive(List.of(INDUSTRY_CATALOG), OnboardingPack.ANY).forEach(item -> industries.add(item.getItemCode()));
+        if (request.getItems().stream().anyMatch(item -> !industries.contains(item.getIndustryCode()))) {
+            throw new FailException(CLASSIFICATION_INVALID);
+        }
         if (profile.confirmedFor(request.getCaseId())) {
             throw new FailException(CLASSIFICATION_CONFIRMED);
         }

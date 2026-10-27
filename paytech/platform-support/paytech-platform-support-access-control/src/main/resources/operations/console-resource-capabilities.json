@@ -158,6 +158,49 @@
     ]
   },
   {
+    "componentKey": "OPERATIONS_RISK_LISTS",
+    "displayName": "风控名单",
+    "frontendRoute": "/risk/lists",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_LIST_MANAGE",
+        "displayName": "维护名单"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_RISK_EXECUTION_RELEASES",
+    "displayName": "执行发布",
+    "frontendRoute": "/risk/execution-releases",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_EXECUTION_RELEASE_PREPARE",
+        "displayName": "创建与校验发布"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_EXECUTION_RELEASE_ACTIVATE",
+        "displayName": "激活发布"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_RISK_EVALUATIONS",
+    "displayName": "评估查询",
+    "frontendRoute": "/risk/evaluations",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_QUALIFICATIONS",
+    "displayName": "主体资格",
+    "frontendRoute": "/compliance/qualifications",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_QUALIFICATIONS_MANAGE",
+        "displayName": "登记与撤销"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_CONSOLE_RESOURCES",
     "displayName": "菜单资源",
     "frontendRoute": "/console-resources",
@@ -191,17 +234,6 @@
     ]
   },
   {
-    "componentKey": "OPERATIONS_CARD_BIN_LIBRARY",
-    "displayName": "卡 BIN 库",
-    "frontendRoute": "/card-bin-library",
-    "actions": [
-      {
-        "resourceCode": "OPERATIONS_CARD_BIN_LIBRARY_MANAGE",
-        "displayName": "维护"
-      }
-    ]
-  },
-  {
     "componentKey": "OPERATIONS_FILE_STORAGE",
     "displayName": "存储管理",
     "frontendRoute": "/file-storage",
@@ -224,73 +256,24 @@
     ]
   },
   {
-    "componentKey": "OPERATIONS_DATA_SOURCES",
-    "displayName": "数据源",
-    "frontendRoute": "/data-query/data-sources",
+    "componentKey": "OPERATIONS_FILE_UPLOAD",
+    "displayName": "文件上传",
+    "frontendRoute": "/file-upload",
     "actions": [
       {
-        "resourceCode": "OPERATIONS_DATA_SOURCE_MANAGE",
+        "resourceCode": "OPERATIONS_FILE_UPLOAD_CREATE",
+        "displayName": "上传"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_CARD_BIN_LIBRARY",
+    "displayName": "卡 BIN 库",
+    "frontendRoute": "/card-bin-library",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_CARD_BIN_LIBRARY_MANAGE",
         "displayName": "维护"
-      }
-    ]
-  },
-  {
-    "componentKey": "OPERATIONS_QUERY_TEMPLATES",
-    "displayName": "查询模板",
-    "frontendRoute": "/data-query/templates",
-    "actions": [
-      {
-        "resourceCode": "OPERATIONS_DATA_QUERY_TEMPLATE_MANAGE",
-        "displayName": "维护"
-      }
-    ]
-  },
-  {
-    "componentKey": "OPERATIONS_I18N_TRANSLATIONS",
-    "displayName": "翻译",
-    "frontendRoute": "/i18n/translations",
-    "actions": [
-      {
-        "resourceCode": "OPERATIONS_I18N_TRANSLATION_EDIT",
-        "displayName": "编辑翻译"
-      },
-      {
-        "resourceCode": "OPERATIONS_I18N_KEY_IMPORT",
-        "displayName": "导入 key"
-      },
-      {
-        "resourceCode": "OPERATIONS_I18N_RELEASE_PUBLISH",
-        "displayName": "发布"
-      }
-    ]
-  },
-  {
-    "componentKey": "OPERATIONS_I18N_RELEASES",
-    "displayName": "发布记录",
-    "frontendRoute": "/i18n/releases",
-    "actions": [
-      {
-        "resourceCode": "OPERATIONS_I18N_RELEASE_ACTIVATE",
-        "displayName": "切回此版本"
-      }
-    ]
-  },
-  {
-    "componentKey": "OPERATIONS_I18N_SETTINGS",
-    "displayName": "语言与应用",
-    "frontendRoute": "/i18n/settings",
-    "actions": [
-      {
-        "resourceCode": "OPERATIONS_I18N_APPLICATION_CREATE",
-        "displayName": "新建应用"
-      },
-      {
-        "resourceCode": "OPERATIONS_I18N_NAMESPACE_MANAGE",
-        "displayName": "维护命名空间"
-      },
-      {
-        "resourceCode": "OPERATIONS_I18N_SETTINGS_EDIT",
-        "displayName": "维护设置"
       }
     ]
   },
@@ -362,8 +345,99 @@
       {
         "resourceCode": "CLIENT_ONBOARDING_DECIDE",
         "displayName": "批准或最终拒绝"
+      },
+      {
+        "resourceCode": "CLIENT_ONBOARDING_SCREENING",
+        "displayName": "筛查与命中处置"
+      },
+      {
+        "resourceCode": "CLIENT_ONBOARDING_RECOMMEND",
+        "displayName": "推荐结论"
+      },
+      {
+        "resourceCode": "CLIENT_ONBOARDING_WAIVE",
+        "displayName": "豁免材料要求"
       }
     ]
+  },
+  {
+    "componentKey": "OPERATIONS_ONBOARDING_CONFIG",
+    "displayName": "入驻配置",
+    "frontendRoute": "/client-onboarding/config",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_ONBOARDING_CODES",
+    "displayName": "入驻码",
+    "frontendRoute": "/client-onboarding/codes",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_ONBOARDING_CODES_MANAGE",
+        "displayName": "签发与作废"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_CLIENTS",
+    "displayName": "Client",
+    "frontendRoute": "/master-data/clients",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_DATA_TYPES",
+    "displayName": "数据类型",
+    "frontendRoute": "/vault/data-types",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_VAULT_DATA_TYPE_MANAGE",
+        "displayName": "维护数据类型"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_ACCESS_RULES",
+    "displayName": "访问规则",
+    "frontendRoute": "/vault/access-rules",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_VAULT_ACCESS_RULE_MANAGE",
+        "displayName": "维护访问规则"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_POLICY_CHANGES",
+    "displayName": "策略变更记录",
+    "frontendRoute": "/vault/policy-changes",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_MANUAL_PROTECT",
+    "displayName": "手动加密",
+    "frontendRoute": "/vault/manual-protect",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_VAULT_SECRET_PROTECT",
+        "displayName": "加密密钥类数据"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_MANUAL_REVEAL",
+    "displayName": "手动解密",
+    "frontendRoute": "/vault/manual-reveal",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_VAULT_SECRET_REVEAL",
+        "displayName": "解密密钥类数据"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_VAULT_MANUAL_EVENTS",
+    "displayName": "人工操作记录",
+    "frontendRoute": "/vault/manual-events",
+    "actions": []
   },
   {
     "componentKey": "OPERATIONS_NOTIFICATION_TEMPLATES",
@@ -590,6 +664,21 @@
     ]
   },
   {
+    "componentKey": "OPERATIONS_COMMERCIAL_TEMPLATES",
+    "displayName": "标准价目",
+    "frontendRoute": "/commercial/templates",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_COMMERCIAL_TEMPLATE_MANAGE",
+        "displayName": "维护"
+      },
+      {
+        "resourceCode": "OPERATIONS_COMMERCIAL_TEMPLATE_APPROVE",
+        "displayName": "复核"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_COMMERCIAL_WORKBENCH",
     "displayName": "工作台",
     "frontendRoute": "/commercial/workbench",
@@ -608,21 +697,6 @@
     "actions": []
   },
   {
-    "componentKey": "OPERATIONS_COMMERCIAL_TEMPLATES",
-    "displayName": "标准价目",
-    "frontendRoute": "/commercial/templates",
-    "actions": [
-      {
-        "resourceCode": "OPERATIONS_COMMERCIAL_TEMPLATE_MANAGE",
-        "displayName": "维护"
-      },
-      {
-        "resourceCode": "OPERATIONS_COMMERCIAL_TEMPLATE_APPROVE",
-        "displayName": "复核"
-      }
-    ]
-  },
-  {
     "componentKey": "OPERATIONS_COMMERCIAL_CATALOG",
     "displayName": "产品目录",
     "frontendRoute": "/commercial/catalog",
@@ -638,6 +712,28 @@
     "displayName": "变更历史",
     "frontendRoute": "/commercial/history",
     "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_OPERATING_ENTITIES",
+    "displayName": "经营主体",
+    "frontendRoute": "/master-data/operating-entities",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_OPERATING_ENTITIES_MANAGE",
+        "displayName": "维护收单资质"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_LOCAL_PARTNERS",
+    "displayName": "Local Partner",
+    "frontendRoute": "/master-data/local-partners",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_LOCAL_PARTNERS_MANAGE",
+        "displayName": "维护角色"
+      }
+    ]
   },
   {
     "componentKey": "OPERATIONS_CHANNEL_CHANNELS",
@@ -691,6 +787,12 @@
     "actions": []
   },
   {
+    "componentKey": "OPERATIONS_WORKFLOW_STARTED",
+    "displayName": "我发起的",
+    "frontendRoute": "/workflow/started",
+    "actions": []
+  },
+  {
     "componentKey": "OPERATIONS_WORKFLOW_INSTANCES",
     "displayName": "流程实例",
     "frontendRoute": "/workflow/instances",
@@ -728,6 +830,77 @@
       {
         "resourceCode": "OPERATIONS_WORKFLOW_ACTION_TEMPLATE_MANAGE",
         "displayName": "维护"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_DATA_SOURCES",
+    "displayName": "数据源",
+    "frontendRoute": "/data-query/data-sources",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_DATA_SOURCE_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_QUERY_TEMPLATES",
+    "displayName": "查询模板",
+    "frontendRoute": "/data-query/templates",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_DATA_QUERY_TEMPLATE_MANAGE",
+        "displayName": "维护"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_I18N_TRANSLATIONS",
+    "displayName": "翻译",
+    "frontendRoute": "/i18n/translations",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_I18N_TRANSLATION_EDIT",
+        "displayName": "编辑翻译"
+      },
+      {
+        "resourceCode": "OPERATIONS_I18N_KEY_IMPORT",
+        "displayName": "导入 key"
+      },
+      {
+        "resourceCode": "OPERATIONS_I18N_RELEASE_PUBLISH",
+        "displayName": "发布"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_I18N_RELEASES",
+    "displayName": "发布记录",
+    "frontendRoute": "/i18n/releases",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_I18N_RELEASE_ACTIVATE",
+        "displayName": "切回此版本"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_I18N_SETTINGS",
+    "displayName": "语言与应用",
+    "frontendRoute": "/i18n/settings",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_I18N_APPLICATION_CREATE",
+        "displayName": "新建应用"
+      },
+      {
+        "resourceCode": "OPERATIONS_I18N_NAMESPACE_MANAGE",
+        "displayName": "维护命名空间"
+      },
+      {
+        "resourceCode": "OPERATIONS_I18N_SETTINGS_EDIT",
+        "displayName": "维护设置"
       }
     ]
   }

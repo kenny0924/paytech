@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.CatalogItemMapper">
+  <sql id="columns">
+    catalog_item_id AS catalogItemId, catalog_code AS catalogCode, item_code AS itemCode, jurisdiction_code AS jurisdictionCode,
+    label_key AS labelKey, client_types AS clientTypes, display_order AS displayOrder, status, create_time AS createTime,
+    update_time AS updateTime
+  </sql>
+  <!-- 指定目录在辖区与全局（*）下的 ACTIVE 项。 -->
+  <select id="findActive" resultType="com.paytech.client.master.core.dal.dataobject.CatalogItem">
+    SELECT <include refid="columns"/> FROM t_catalog_item
+    WHERE status='ACTIVE' AND jurisdiction_code IN (#{jurisdictionCode}, '*') AND catalog_code IN
+    <foreach collection="catalogCodes" item="code" open="(" separator="," close=")">#{code}</foreach>
+    ORDER BY catalog_code, display_order, item_code
+  </select>
+  <!-- 运营只读查看：某目录全部辖区、全部状态的项。 -->
+  <select id="findByCatalog" resultType="com.paytech.client.master.core.dal.dataobject.CatalogItem">
+    SELECT <include refid="columns"/> FROM t_catalog_item WHERE catalog_code=#{catalogCode}
+    ORDER BY jurisdiction_code, display_order, item_code
+  </select>
+</mapper>

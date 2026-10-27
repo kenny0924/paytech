@@ -1,0 +1,11 @@
+.obc-split { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.obc-list { display: flex; flex-direction: column; gap: 8px; position: sticky; top: 12px; }
+.obc-item { display: flex; align-items: center; gap: 10px; text-align: left; background: #fff; border: 1px solid #e3e8ef; border-radius: 8px; padding: 10px 12px; cursor: pointer; font: inherit; }
+.obc-item.is-selected { border-color: #315dca; box-shadow: 0 0 0 2px rgba(49, 93, 202, .14); }
+.obc-item .obw-grow { display: flex; flex-direction: column; }
+.obc-code { width: 34px; height: 30px; border-radius: 6px; display: grid; place-items: center; background: #eef2fb; color: #315dca; font-weight: 600; font-size: 12px; flex-shrink: 0; }
+.obc-name { font-weight: 500; }
+.obc-section + .obc-section { border-top: 1px dashed #e3e8ef; margin-top: 12px; }
+@media (max-width: 900px) { .obc-split { grid-template-columns: 1fr; } .obc-list { position: static; } }
+.obk-code { text-align: center; padding: 18px 0; margin: 8px 0 14px; background: #f6f8fb; border-radius: 8px; }
+.obk-code-text { font: 600 28px/1.2 ui-monospace, Menlo, monospace; letter-spacing: 3px; }

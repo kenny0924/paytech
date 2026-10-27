@@ -31,7 +31,7 @@ public class ClientRequestInterceptor implements HandlerInterceptor {
         if(!(read && origins.isEmpty()) && (origins.size()!=1 || !origin.equals(origins.getFirst()))) {
             throw new FailException(ClientBffErrorCode.ORIGIN_REJECTED);
         }
-        boolean emptyCommand=request.getRequestURI().startsWith("/client-onboarding/") && ("DELETE".equals(request.getMethod()) || request.getRequestURI().endsWith("/submissions"))
+        boolean emptyCommand=request.getRequestURI().startsWith("/client-onboarding/") && ("DELETE".equals(request.getMethod()) || request.getRequestURI().endsWith("/submissions") || request.getRequestURI().endsWith("/withdrawal"))
             || request.getRequestURI().startsWith("/onboarding-files/") && (request.getRequestURI().endsWith("/completion") || request.getRequestURI().endsWith("/download"))
             || request.getRequestURI().startsWith("/client-developer/") && (request.getRequestURI().endsWith("/test-events") || request.getRequestURI().endsWith("/replay"))
             || request.getRequestURI().startsWith("/client-team/") && (request.getRequestURI().endsWith("/resend") || request.getRequestURI().endsWith("/revocation") || request.getRequestURI().endsWith("/removal"));

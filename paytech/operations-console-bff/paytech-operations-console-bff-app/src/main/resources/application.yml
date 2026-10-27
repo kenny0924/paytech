@@ -135,3 +135,7 @@ web:
       - /localization-admin/v1/uploads
       # 公开文件上传开始的响应含对象存储的临时 PUT 授权，只记元数据。
       - /file-upload/v1/uploads
+      # Client 详情含法定名称、关系人姓名与证件掩码，只记元数据。
+      - /client-admin
+      # 入驻码签发响应含明文码（只出现一次），只记元数据。
+      - /onboarding-code-admin

@@ -30,10 +30,16 @@ public class PartyProfileRepositoryImpl implements PartyProfileRepository {
         return List.copyOf(mapper.findByIds(ids));
     }
 
+    /** 空集合不访问数据库。 */
+    @Override
+    public List<com.paytech.client.master.domain.checkout.PartyProfileView> findViewsByIds(java.util.Collection<Long> ids) {
+        return ids.isEmpty() ? List.of() : List.copyOf(mapper.findViewsByIds(ids));
+    }
+
     /** 首次批准时写入法律主体资料的批准时间；必须恰好更新一行。 */
     @Override
-    public void markApproved(long partyId, Instant now) {
-        if (mapper.markApproved(partyId, now) != 1) {
+    public void markApproved(long partyId, String contentHash, Instant now) {
+        if (mapper.markApproved(partyId, contentHash, now) != 1) {
             throw new ErrorException("法律主体资料不存在或已记录批准时间: " + partyId);
         }
     }

@@ -1,0 +1,33 @@
+# 全球合规入驻与资格切片 1：mor-test 回滚覆盖（rel-build 2026-10-27）。镜像 = 2026-10-27 运行容器 docker inspect 的镜像 ID；
+# env 与运行容器 printenv 逐键相同（敏感值为 ${...} 引用）。用法同候选文件：compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never ... <service>
+# client-master / compliance 回滚须同窗口从第 ① 步备份恢复数据库（runbook 第 5 节）。
+services:
+  compliance-service:
+    image: sha256:ca1585452f9c60835ecb099db694e36bd5d2fdcfa197016a242d204954ce3545  # mor-test/compliance-service:relsnap-20261025a（现网）
+    environment:
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.32
+      COMPLIANCE_DB_URL: jdbc:mysql://mysql:3306/mor_compliance?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      COMPLIANCE_DB_USERNAME: compliance_app
+      COMPLIANCE_DB_PASSWORD: ${MOR_COMPLIANCE_DB_PASSWORD:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_HOST: rabbitmq
+      COMPLIANCE_RABBITMQ_PORT: "5672"
+      COMPLIANCE_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_VHOST: /mor-test
+      COMPLIANCE_SNOWFLAKE_REGION_ID: "0"
+      COMPLIANCE_SNOWFLAKE_WORKER_ID: "29"
+      ONBOARDING_REVIEW_ENABLED: "true"
+      ONBOARDING_MATERIALS_ENABLED: "true"
+      MESSAGING_PRODUCER_SERVICE: compliance
+      MESSAGING_PRODUCER_SEQUENCER_ENABLED: "true"
+      MESSAGING_PUBLISHER_UNROUTABLEPOLICY: FAIL
+      COMPENSATION_INSTANCEID: compliance-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: compliance-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.32
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.

@@ -3,11 +3,13 @@
 <mapper namespace="com.paytech.compliance.core.dal.mapper.RoleQualificationMapper">
     <sql id="columns">qualification_id AS qualificationId, role_type AS roleType, role_id AS roleId, qualification_type AS qualificationType,
         current_decision_id AS currentDecisionId, status, valid_from AS validFrom, valid_to AS validTo,
-        review_frequency_code AS reviewFrequencyCode, next_review_time AS nextReviewTime, review_status AS reviewStatus, version,
+        review_frequency_code AS reviewFrequencyCode, next_review_time AS nextReviewTime, review_status AS reviewStatus,
+        tier, risk_rating AS riskRating, jurisdiction_code AS jurisdictionCode, responsible_partner_id AS responsiblePartnerId,
+        review_interval_months AS reviewIntervalMonths, last_review_time AS lastReviewTime, version,
         create_time AS createTime, update_time AS updateTime</sql>
     <insert id="insert">
-        INSERT INTO t_role_qualification(qualification_id, role_type, role_id, qualification_type, current_decision_id, status, valid_from, valid_to, review_frequency_code, next_review_time, review_status, version, create_time, update_time)
-        VALUES(#{row.qualificationId}, #{row.roleType}, #{row.roleId}, #{row.qualificationType}, #{row.currentDecisionId}, #{row.status}, #{row.validFrom}, #{row.validTo}, #{row.reviewFrequencyCode}, #{row.nextReviewTime}, #{row.reviewStatus}, #{row.version}, #{row.createTime}, #{row.updateTime})
+        INSERT INTO t_role_qualification(qualification_id, role_type, role_id, qualification_type, current_decision_id, status, valid_from, valid_to, review_frequency_code, next_review_time, review_status, tier, risk_rating, jurisdiction_code, responsible_partner_id, review_interval_months, last_review_time, version, create_time, update_time)
+        VALUES(#{row.qualificationId}, #{row.roleType}, #{row.roleId}, #{row.qualificationType}, #{row.currentDecisionId}, #{row.status}, #{row.validFrom}, #{row.validTo}, #{row.reviewFrequencyCode}, #{row.nextReviewTime}, #{row.reviewStatus}, #{row.tier}, #{row.riskRating}, #{row.jurisdictionCode}, #{row.responsiblePartnerId}, #{row.reviewIntervalMonths}, #{row.lastReviewTime}, #{row.version}, #{row.createTime}, #{row.updateTime})
     </insert>
     <select id="findById" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.RoleQualification">
         SELECT <include refid="columns"/> FROM t_role_qualification WHERE qualification_id = #{qualificationId}
@@ -38,8 +40,12 @@
     </select>
     <update id="applyDecision">
         UPDATE t_role_qualification
-        SET current_decision_id = #{decisionId}, status = #{status}, valid_from = #{validFrom}, valid_to = #{validTo},
-            review_frequency_code = NULL, next_review_time = NULL, review_status = #{reviewStatus}, version = version + 1, update_time = #{now}
+        SET current_decision_id = #{target.currentDecisionId}, status = #{target.status}, valid_from = #{target.validFrom},
+            valid_to = #{target.validTo}, review_frequency_code = NULL, next_review_time = #{target.nextReviewTime},
+            review_status = #{target.reviewStatus}, tier = #{target.tier}, risk_rating = #{target.riskRating},
+            jurisdiction_code = #{target.jurisdictionCode}, responsible_partner_id = #{target.responsiblePartnerId},
+            review_interval_months = #{target.reviewIntervalMonths}, last_review_time = #{target.lastReviewTime},
+            version = version + 1, update_time = #{now}
         WHERE qualification_id = #{row.qualificationId} AND version = #{row.version}
     </update>
 </mapper>

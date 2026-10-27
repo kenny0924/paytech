@@ -6,10 +6,13 @@
       a.requested_by_account_id AS accountId, a.status, a.active_slot AS activeSlot,
       c.client_id AS clientId, c.client_no AS clientNo, c.party_id AS partyId, p.party_type AS clientType,
       f.profile_id AS profileId, f.draft_application_id AS draftApplicationId, f.approved_time AS approvedTime,
-      b.business_profile_id AS businessProfileId, a.create_time AS createdAt, a.update_time AS savedAt
+      b.business_profile_id AS businessProfileId, a.create_time AS createdAt, a.update_time AS savedAt,
+      a.jurisdiction_code AS jurisdictionCode, a.organization_type_code AS organizationTypeCode, a.schema_id AS schemaId,
+      a.responsible_partner_id AS responsiblePartnerId, a.due_diligence_case_id AS dueDiligenceCaseId,
+      a.review_due_time AS reviewDueTime
     FROM t_client_application a JOIN t_client c ON c.client_id=a.client_id
     JOIN t_party p ON p.party_id=c.party_id
-    LEFT JOIN t_party_profile f ON f.party_id=p.party_id
+    LEFT JOIN t_party_profile f ON f.party_id=p.party_id AND f.current_slot=1
     LEFT JOIN t_client_business_profile b ON b.client_id=c.client_id
   </sql>
   <select id="recentApplications" resultType="com.paytech.client.master.core.dal.dataobject.ClientDraftIdentity">
@@ -27,18 +30,30 @@
     <include refid="ApplicationIdentity"/>
     WHERE a.application_id=#{applicationId}
   </select>
-  <!-- 重新申请：本账号最近一份同类型、已被拒绝且 Client 仍未激活的申请。 -->
+  <!-- 重新申请：本账号最近一份同类型、已被拒绝或已撤回（含退回超期）且 Client 仍未激活的申请。 -->
   <select id="rejectedApplication" resultType="com.paytech.client.master.core.dal.dataobject.ClientDraftIdentity">
     <include refid="ApplicationIdentity"/>
-    WHERE a.requested_by_account_id=#{accountId} AND a.status='REJECTED' AND c.status='PENDING' AND p.party_type=#{clientType}
+    WHERE a.requested_by_account_id=#{accountId} AND a.status IN ('REJECTED','WITHDRAWN') AND c.status='PENDING'
+      AND p.party_type=#{clientType}
     ORDER BY a.application_id DESC LIMIT 1
   </select>
+  <!-- 新申请沿用原 Client 与资格类型；辖区、Schema、入驻码与责任方取本次创建请求。 -->
   <insert id="insertReapplication">INSERT INTO t_client_application(application_id,application_no,client_id,requested_by_account_id,
-    status,active_slot,qualification_type,create_time,update_time)
-    SELECT #{applicationId},#{applicationNo},client_id,requested_by_account_id,'DRAFT',1,qualification_type,#{now},#{now}
-    FROM t_client_application WHERE application_id=#{rejectedId} AND status='REJECTED'</insert>
+    status,active_slot,qualification_type,application_type,jurisdiction_code,organization_type_code,schema_id,onboarding_code_id,
+    responsible_partner_id,submission_round,create_time,update_time)
+    SELECT #{applicationId},#{applicationNo},client_id,requested_by_account_id,'DRAFT',1,qualification_type,'ONBOARDING',
+      #{terms.jurisdictionCode},#{terms.organizationTypeCode},#{terms.schemaId},#{terms.onboardingCodeId},
+      #{terms.responsiblePartnerId},0,#{now},#{now}
+    FROM t_client_application WHERE application_id=#{rejectedId} AND status IN ('REJECTED','WITHDRAWN')</insert>
+  <!-- 重新申请时 PENDING Client 跟随本次申请的辖区与责任方。 -->
+  <update id="updateClientTerms">UPDATE t_client SET jurisdiction_code=#{terms.jurisdictionCode},
+    responsible_partner_id=#{terms.responsiblePartnerId},update_time=#{now} WHERE client_id=#{clientId} AND status='PENDING'</update>
+  <!-- 草稿与退回期间更换组织类型：重新冻结组织类型与按其解析的 Schema 版本。 -->
+  <update id="updateApplicationSchema">UPDATE t_client_application SET organization_type_code=#{organizationTypeCode},
+    schema_id=#{schemaId},update_time=#{now}
+    WHERE application_id=#{applicationId} AND active_slot=1 AND status IN ('DRAFT','RETURNED')</update>
   <update id="moveDraftProfiles">UPDATE t_party_profile SET draft_application_id=#{applicationId},update_time=#{now}
-    WHERE draft_application_id=#{rejectedId} AND approved_time IS NULL</update>
+    WHERE draft_application_id=#{rejectedId} AND approved_time IS NULL AND current_slot=1</update>
   <update id="moveDraftRelations">UPDATE t_party_relation SET client_application_id=#{applicationId},update_time=#{now}
     WHERE client_application_id=#{rejectedId} AND status='DRAFT'</update>
   <select id="activeApplication" resultType="java.lang.Long">
@@ -52,22 +67,37 @@
       i.birth_date AS individualBirthDate,
       i.nationality_country AS individualNationalityCountry,
       i.residence_country AS individualResidenceCountry,
+      i.birth_place AS individualBirthPlace,
+      i.birth_country AS individualBirthCountry,
+      i.gender AS individualGender,
+      i.source_of_funds_code AS individualSourceOfFundsCode,
+      i.pep_self_declared AS individualPepSelfDeclared,
       o.legal_name AS organizationLegalName,
       o.trade_name AS organizationTradeName,
       o.incorporation_country AS organizationIncorporationCountry,
       o.organization_type AS organizationOrganizationType,
       o.incorporation_date AS organizationIncorporationDate,
+      o.registration_authority_code AS organizationRegistrationAuthorityCode,
+      o.license_expiry_date AS organizationLicenseExpiryDate,
+      o.listed_company AS organizationListedCompany,
       a.address_line1 AS addressAddressLine1,
       a.address_line2 AS addressAddressLine2,
       a.city AS addressCity,
       a.state_or_province AS addressStateOrProvince,
       a.postal_code AS addressPostalCode,
       a.country_code AS addressCountryCode,
+      a.building_number AS addressBuildingNumber,
+      a.additional_number AS addressAdditionalNumber,
+      a.district AS addressDistrict,
+      a.po_box AS addressPoBox,
       d.identifier_type AS identifierIdentifierType,
       d.issuing_country AS identifierIssuingCountry,
-      d.identifier_value AS identifierIdentifierValue,
-      d.valid_from AS identifierValidFrom,
-      d.valid_to AS identifierValidTo,
+      d.identifier_vault_token AS identifierVaultToken,
+      d.public_identifier_value AS identifierPublicValue,
+      d.identifier_masked_value AS identifierMaskedValue,
+      d.identifier_check_result AS identifierCheckResult,
+      d.issue_date AS identifierIssueDate,
+      d.expiry_date AS identifierExpiryDate,
       b.business_model_code AS businessBusinessModelCode,
       b.website_url AS businessWebsiteUrl,
       b.business_description AS businessBusinessDescription,
@@ -88,15 +118,22 @@
   <select id="identifiers" resultType="int">SELECT COUNT(*) FROM t_party_profile_identifier WHERE profile_id=#{profileId}</select>
   <insert id="insertParty">INSERT INTO t_party(party_id,party_no,party_type,create_time,update_time)
     VALUES(#{partyId},#{partyNo},#{type},#{now},#{now})</insert>
-  <insert id="insertClient">INSERT INTO t_client(client_id,client_no,party_id,status,create_time,update_time)
-    VALUES(#{clientId},#{clientNo},#{partyId},'PENDING',#{now},#{now})</insert>
+  <insert id="insertClient">INSERT INTO t_client(client_id,client_no,party_id,status,jurisdiction_code,responsible_partner_id,
+    create_time,update_time)
+    VALUES(#{clientId},#{clientNo},#{partyId},'PENDING',#{terms.jurisdictionCode},#{terms.responsiblePartnerId},#{now},#{now})</insert>
   <insert id="insertApplication">INSERT INTO t_client_application(application_id,application_no,client_id,requested_by_account_id,
-    status,active_slot,qualification_type,create_time,update_time)
-    VALUES(#{applicationId},#{applicationNo},#{clientId},#{accountId},'DRAFT',1,#{qualificationType},#{now},#{now})</insert>
-  <insert id="insertProfile">INSERT INTO t_party_profile(profile_id,party_id,draft_application_id,create_time,update_time)
-    VALUES(#{profileId},#{partyId},#{applicationId},#{now},#{now})</insert>
+    status,active_slot,qualification_type,application_type,jurisdiction_code,organization_type_code,schema_id,onboarding_code_id,
+    responsible_partner_id,submission_round,create_time,update_time)
+    VALUES(#{applicationId},#{applicationNo},#{clientId},#{accountId},'DRAFT',1,#{qualificationType},'ONBOARDING',
+      #{terms.jurisdictionCode},#{terms.organizationTypeCode},#{terms.schemaId},#{terms.onboardingCodeId},
+      #{terms.responsiblePartnerId},0,#{now},#{now})</insert>
+  <!-- 入驻草稿资料就是该 Party 唯一的当前资料，创建即占用 current_slot=1。 -->
+  <insert id="insertProfile">INSERT INTO t_party_profile(profile_id,party_id,draft_application_id,jurisdiction_code,current_slot,
+    create_time,update_time)
+    VALUES(#{profileId},#{partyId},#{applicationId},#{terms.jurisdictionCode},1,#{now},#{now})</insert>
   <insert id="insertIndividual">INSERT INTO t_individual_profile(profile_id,create_time,update_time) VALUES(#{profileId},#{now},#{now})</insert>
-  <insert id="insertOrganization">INSERT INTO t_organization_profile(profile_id,create_time,update_time) VALUES(#{profileId},#{now},#{now})</insert>
+  <insert id="insertOrganization">INSERT INTO t_organization_profile(profile_id,organization_type,create_time,update_time)
+    VALUES(#{profileId},#{terms.organizationTypeCode},#{now},#{now})</insert>
   <insert id="insertBusiness">INSERT INTO t_client_business_profile(business_profile_id,client_id,create_time,update_time)
     VALUES(#{businessProfileId},#{clientId},#{now},#{now})</insert>
   <insert id="insertAddress">INSERT INTO t_party_address(address_id,profile_id,address_type,create_time,update_time)
@@ -116,6 +153,11 @@
     <if test="changes.containsKey('individual_birthDate')">,birth_date=#{changes[individual_birthDate],jdbcType=DATE}</if>
     <if test="changes.containsKey('individual_nationalityCountry')">,nationality_country=#{changes[individual_nationalityCountry],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('individual_residenceCountry')">,residence_country=#{changes[individual_residenceCountry],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('individual_birthPlace')">,birth_place=#{changes[individual_birthPlace],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('individual_birthCountry')">,birth_country=#{changes[individual_birthCountry],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('individual_gender')">,gender=#{changes[individual_gender],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('individual_sourceOfFundsCode')">,source_of_funds_code=#{changes[individual_sourceOfFundsCode],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('individual_pepSelfDeclared')">,pep_self_declared=#{changes[individual_pepSelfDeclared],jdbcType=TINYINT}</if>
     WHERE profile_id=#{profileId}</update>
   <update id="saveOrganization">UPDATE t_organization_profile SET update_time=#{now}
     <if test="changes.containsKey('organization_legalName')">,legal_name=#{changes[organization_legalName],jdbcType=VARCHAR}</if>
@@ -123,6 +165,9 @@
     <if test="changes.containsKey('organization_incorporationCountry')">,incorporation_country=#{changes[organization_incorporationCountry],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('organization_organizationType')">,organization_type=#{changes[organization_organizationType],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('organization_incorporationDate')">,incorporation_date=#{changes[organization_incorporationDate],jdbcType=DATE}</if>
+    <if test="changes.containsKey('organization_registrationAuthorityCode')">,registration_authority_code=#{changes[organization_registrationAuthorityCode],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('organization_licenseExpiryDate')">,license_expiry_date=#{changes[organization_licenseExpiryDate],jdbcType=DATE}</if>
+    <if test="changes.containsKey('organization_listedCompany')">,listed_company=#{changes[organization_listedCompany],jdbcType=TINYINT}</if>
     WHERE profile_id=#{profileId}</update>
   <update id="saveAddress">UPDATE t_party_address SET update_time=#{now}
     <if test="changes.containsKey('address_addressLine1')">,address_line1=#{changes[address_addressLine1],jdbcType=VARCHAR}</if>
@@ -131,15 +176,24 @@
     <if test="changes.containsKey('address_stateOrProvince')">,state_or_province=#{changes[address_stateOrProvince],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('address_postalCode')">,postal_code=#{changes[address_postalCode],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('address_countryCode')">,country_code=#{changes[address_countryCode],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('address_buildingNumber')">,building_number=#{changes[address_buildingNumber],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('address_additionalNumber')">,additional_number=#{changes[address_additionalNumber],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('address_district')">,district=#{changes[address_district],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('address_poBox')">,po_box=#{changes[address_poBox],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('address_addressFormatCode')">,address_format_code=#{changes[address_addressFormatCode],jdbcType=VARCHAR}</if>
     WHERE profile_id=#{profileId} AND address_type=#{addressType}</update>
   <update id="unbindIdentifier">UPDATE t_party_profile_identifier SET identity_key_id=NULL,update_time=#{now}
     WHERE profile_id=#{profileId} AND identity_key_id IS NOT NULL</update>
+  <!-- 号码原值不进本库：Processor 在事务外规范化并 Protect，这里只写 Token / 公开登记号、脱敏值与检查结论。 -->
   <update id="saveIdentifier">UPDATE t_party_profile_identifier SET update_time=#{now}
     <if test="changes.containsKey('identifier_identifierType')">,identifier_type=#{changes[identifier_identifierType],jdbcType=VARCHAR}</if>
     <if test="changes.containsKey('identifier_issuingCountry')">,issuing_country=#{changes[identifier_issuingCountry],jdbcType=VARCHAR}</if>
-    <if test="changes.containsKey('identifier_identifierValue')">,identifier_value=#{changes[identifier_identifierValue],jdbcType=VARCHAR}</if>
-    <if test="changes.containsKey('identifier_validFrom')">,valid_from=#{changes[identifier_validFrom],jdbcType=TIMESTAMP}</if>
-    <if test="changes.containsKey('identifier_validTo')">,valid_to=#{changes[identifier_validTo],jdbcType=TIMESTAMP}</if>
+    <if test="changes.containsKey('identifier_identifierVaultToken')">,identifier_vault_token=#{changes[identifier_identifierVaultToken],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('identifier_publicIdentifierValue')">,public_identifier_value=#{changes[identifier_publicIdentifierValue],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('identifier_identifierMaskedValue')">,identifier_masked_value=#{changes[identifier_identifierMaskedValue],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('identifier_identifierCheckResult')">,identifier_check_result=#{changes[identifier_identifierCheckResult],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('identifier_issueDate')">,issue_date=#{changes[identifier_issueDate],jdbcType=DATE}</if>
+    <if test="changes.containsKey('identifier_expiryDate')">,expiry_date=#{changes[identifier_expiryDate],jdbcType=DATE}</if>
     WHERE profile_id=#{profileId} AND identity_key_id IS NULL</update>
   <update id="saveBusiness">UPDATE t_client_business_profile SET update_time=#{now}
     <if test="changes.containsKey('business_businessModelCode')">,business_model_code=#{changes[business_businessModelCode],jdbcType=VARCHAR}</if>

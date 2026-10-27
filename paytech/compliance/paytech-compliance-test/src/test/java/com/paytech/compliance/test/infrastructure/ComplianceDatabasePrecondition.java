@@ -13,13 +13,13 @@ import org.springframework.core.env.ConfigurableEnvironment;
 
 /**
  * 在 compliance Spring 测试上下文刷新前验证仓库自有本地 mor_compliance 已由开发者人工准备（由原 RiskDatabasePrecondition 拆出）。
- * <li>表数等于本模块 init/ddl.sql（尽调 20 表、结算控制 3 表、t_compensation_event、t_consumed_event）；隔离级别 REPEATABLE-READ。</li>
+ * <li>表数等于本模块 init/ddl.sql（尽调与资格 24 表、结算控制 3 表、t_compensation_event、t_consumed_event）；隔离级别 REPEATABLE-READ。</li>
  * <li>compliance 不使用 Redis，不做 Redis 前置检查。</li>
  */
 public final class ComplianceDatabasePrecondition implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    /** mor_compliance 的表数：compliance-schema.sql 的 24 张表加 t_consumed_event（= init/ddl.sql 的 CREATE TABLE 数）。 */
-    public static final int EXPECTED_TABLE_COUNT = 25;
+    /** mor_compliance 的表数：compliance-schema.sql 的 28 张表加 t_consumed_event（= init/ddl.sql 的 CREATE TABLE 数）。 */
+    public static final int EXPECTED_TABLE_COUNT = 29;
 
     /** 不包含凭据的本地数据库准备说明。 */
     public static final String SETUP = "compliance auto 需要仓库 local-environment 的 127.0.0.1:13306/mor_compliance "
@@ -98,6 +98,11 @@ public final class ComplianceDatabasePrecondition implements ApplicationContextI
         require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
             + "AND table_name IN ('t_qualification_decision','t_role_qualification') AND column_name='role_id' "
             + "AND data_type='varchar'") == 2L);
+        // 2026-10-27 全球合规入驻增量：新表与文件地址列（sql/changes/2026-10-27-onboarding-global.sql）。
+        require(count(connection, "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() "
+            + "AND table_name IN ('t_dd_program_requirement_doc_type','t_screening_hit_list','t_dd_risk_factor','t_dd_return_error')") == 4L);
+        require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+            + "AND table_name='t_dd_evidence_ref' AND column_name='file_address'") == 1L);
         require("REPEATABLE-READ".equals(text(connection, "SELECT @@transaction_isolation")));
     }
 

@@ -16,7 +16,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.client.master.domain.enums.ClientType;
-import com.paytech.client.master.domain.enums.PartyRelationType;
 import com.paytech.client.master.test.base.onboarding.AbstractSubmissionApiTest;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ApplicationFixture;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.PersonFixture;
@@ -52,7 +51,7 @@ class OnboardingResourceLockTest extends AbstractSubmissionApiTest {
     @BeforeEach
     void setUpLockFixtures() {
         app = applications.organization(ACCOUNT_ID);
-        person = applications.person(app, PartyRelationType.UBO.getCode());
+        person = applications.person(app, "UBO");
     }
 
     /** 申请锁被占用：草稿、人员、关系与材料的写入全部返回 409，申请与关系、材料保持不变。 */
@@ -97,7 +96,7 @@ class OnboardingResourceLockTest extends AbstractSubmissionApiTest {
 
         holding(ACCOUNT_SLOT_LOCK + accountId, () -> List.of(http.post().uri("/client-onboarding/v1/applications")
             .headers(headers -> client(headers, accountId)).header("Content-Type", "application/json")
-            .body("{\"clientType\":\"" + ClientType.ORGANIZATION.getCode() + "\"}")
+            .body("{\"clientType\":\"" + ClientType.ORGANIZATION.getCode() + "\",\"jurisdictionCode\":\"AE\"}")
             .exchange().expectBody(byte[].class).returnResult()));
     }
 

@@ -18,8 +18,10 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 
 import com.paytech.client.master.ClientMasterTestApplication;
 import com.paytech.client.master.test.dal.onboarding.OnboardingTestMapper;
+import com.paytech.client.master.test.mocker.onboarding.JurisdictionPackMocker;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingOwnerMocker;
+import com.paytech.client.master.test.mocker.onboarding.VaultMocker;
 import com.paytech.client.master.test.mocker.commercial.CommercialAgreementPartyMocker;
 import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
@@ -56,6 +58,12 @@ public abstract class ClientMasterMockTestBase extends TestBase {
     protected CommercialAgreementPartyMocker agreementParties;
 
     @Autowired
+    protected JurisdictionPackMocker packs;
+
+    @Autowired
+    protected VaultMocker vault;
+
+    @Autowired
     private CompensationEventDispatcher compensationDispatcher;
 
     @Autowired
@@ -67,6 +75,8 @@ public abstract class ClientMasterMockTestBase extends TestBase {
     protected final void setUpGlobalMocks() {
         Assertions.assertTrue(asynchronousWorkStopped, "前例异步处理未结束，禁止复用环境");
         applications.assertEmpty();
+        // 国家包是参考数据：每例装入正式 AE / SA / EG 包，清理器每例删除。
+        packs.loadStandardPacks();
         owners.mockSession(ACCOUNT_ID, SESSION_ID);
         // commercial 合同参与方引用的公共基线：可用且无引用；人员共享场景在用例内覆盖。
         agreementParties.mockNoReferences();

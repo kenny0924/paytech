@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.CaseCheckMapper">
+    <sql id="columns">check_id AS checkId, case_id AS caseId, case_subject_id AS caseSubjectId, program_check_id AS programCheckId, check_mode AS checkMode, provider_code AS providerCode, request_ref AS requestRef, status, outcome, reason_code AS reasonCode, evidence_ref AS evidenceRef, note, reviewer_id AS reviewerId, reviewed_time AS reviewedTime, valid_until AS validUntil, reused_from_case_id AS reusedFromCaseId, operated_by AS operatedBy, on_behalf_of_partner_id AS onBehalfOfPartnerId, version, create_time AS createTime, update_time AS updateTime</sql>
+    <insert id="insert">
+        INSERT INTO t_dd_check(check_id, case_id, case_subject_id, program_check_id, check_mode, provider_code, request_ref, status, outcome, reason_code, evidence_ref, note, reviewer_id, reviewed_time, valid_until, reused_from_case_id, operated_by, on_behalf_of_partner_id, version, create_time, update_time)
+        VALUES(#{row.checkId}, #{row.caseId}, #{row.caseSubjectId}, #{row.programCheckId}, #{row.checkMode}, #{row.providerCode}, #{row.requestRef}, #{row.status}, #{row.outcome}, #{row.reasonCode}, #{row.evidenceRef}, #{row.note}, #{row.reviewerId}, #{row.reviewedTime}, #{row.validUntil}, #{row.reusedFromCaseId}, #{row.operatedBy}, #{row.onBehalfOfPartnerId}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="findByCaseIds" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.CaseCheck">
+        SELECT <include refid="columns"/> FROM t_dd_check WHERE case_id IN <foreach collection="caseIds" item="id" open="(" separator="," close=")">#{id}</foreach> ORDER BY case_id, check_id
+    </select>
+    <update id="record">
+        UPDATE t_dd_check SET status = 'COMPLETED', outcome = #{outcome}, reason_code = #{reasonCode}, evidence_ref = #{evidenceRef}, note = #{note},
+            reviewer_id = #{reviewerId}, reviewed_time = #{now}, valid_until = #{validUntil}, operated_by = #{operatedBy},
+            on_behalf_of_partner_id = #{onBehalfOfPartnerId}, version = version + 1, update_time = #{now}
+        WHERE check_id = #{row.checkId} AND version = #{row.version} AND status = 'REQUESTED'
+    </update>
+</mapper>

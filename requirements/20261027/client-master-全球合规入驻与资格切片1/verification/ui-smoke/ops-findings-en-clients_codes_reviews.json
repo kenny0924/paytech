@@ -1,0 +1,9 @@
+[
+ {
+  "lang": "en",
+  "page": "reviews filter#3 = 50 / page",
+  "kind": "script-error",
+  "section": "reviews",
+  "text": "locator.click: Timeout 30000ms exceeded."
+ }
+]

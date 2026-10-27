@@ -19,6 +19,12 @@ public class ListClientReviewCasesRequest {
     private final String status;
     /** 资格类型。 */
     private final String qualificationType;
-    /** CCT 申请 ID。 */
+    /** 申请 ID。 */
     private final Long applicationId;
+    /** 责任 PayFac；为空不过滤。 */
+    private final Long responsiblePartnerId;
+    /** 只看平台自营（责任方为空）。 */
+    private final boolean platformOnly;
+    /** 辖区代码。 */
+    private final String jurisdictionCode;
 }

@@ -5,7 +5,6 @@ import java.time.Instant;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.client.master.core.dal.dataobject.PartyIdentityKey;
-import com.paytech.client.master.domain.onboarding.ClientIdentifierNormalizer;
 import com.paytech.client.master.domain.onboarding.ClientSubmissionSubject;
 import com.paytech.client.master.domain.onboarding.SubmitClientApplicationContext;
 import com.paytech.client.master.domainservice.repository.ClientApplicationRepository;
@@ -42,7 +41,7 @@ public class ClientSubmissionServiceImpl implements ClientSubmissionService {
         });
     }
 
-    /** 复用同一主体已有身份键，否则新建；其他主体已占用时由唯一索引拒绝。 */
+    /** 复用同一主体已有身份键，否则以 Token 或公开登记号新建；其他主体已占用时由唯一索引 uk_party_identity_token 拒绝。 */
     void bindIdentity(ClientSubmissionSubject subject, Instant now) {
         PartyIdentityKey key = subject.getExistingKey();
         if (key == null) {
@@ -50,9 +49,10 @@ public class ClientSubmissionServiceImpl implements ClientSubmissionService {
             key.setIdentityKeyId(ids.nextId());
             key.setPartyId(subject.getPartyId());
             key.setIdentifierType(subject.getFields().identifierIdentifierType());
-            key.setIssuingCountry(ClientIdentifierNormalizer.GLOBAL_SCOPE.equals(subject.getIssuerScopeKey()) ? null : subject.getIssuerScopeKey());
+            key.setIssuingCountry(subject.getIssuerScopeKey().equals(subject.getFields().identifierIssuingCountry())
+                ? subject.getIssuerScopeKey() : null);
             key.setIssuerScopeKey(subject.getIssuerScopeKey());
-            key.setNormalizedIdentifierValue(subject.getNormalizedIdentifierValue());
+            key.setIdentifierKeyValue(subject.identifierKeyValue());
             key.setCreateTime(now);
             key.setUpdateTime(now);
             identityKeys.insert(key);

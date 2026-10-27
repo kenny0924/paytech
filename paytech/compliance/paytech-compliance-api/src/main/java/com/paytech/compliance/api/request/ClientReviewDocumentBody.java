@@ -2,12 +2,16 @@ package com.paytech.compliance.api.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 
-/** 提交时关联的一份材料；Risk 只登记引用，文件由 Platform 持有。 */
+import lombok.Getter;
+import lombok.Setter;
+
+/** 提交时关联的一份材料；compliance 只登记文件服务地址，文件由 Platform 持有。 */
+@Getter
+@Setter
 public class ClientReviewDocumentBody {
 
-    /** CCT 材料引用 ID。 */
+    /** client-master 材料引用 ID。 */
     @NotBlank
     @Pattern(regexp = "^[1-9][0-9]{0,18}$")
     private String documentId;
@@ -17,83 +21,34 @@ public class ClientReviewDocumentBody {
     @Pattern(regexp = "^[1-9][0-9]{0,18}$")
     private String subjectPartyId;
 
-    /** 材料要求代码。 */
+    /** 材料要求代码，必须是该主体所解析程序中的材料槽。 */
     @NotBlank
     @Pattern(regexp = "^[A-Z][A-Z0-9_]{0,63}$")
     private String requirementCode;
 
-    /** 材料类型代码。 */
+    /** 材料类型代码，必须在材料槽允许的类型内。 */
     @NotBlank
     @Pattern(regexp = "^[A-Z][A-Z0-9_]{0,63}$")
     private String documentType;
 
-    /** Platform 文件 ID。 */
+    /**
+     * 文件服务地址
+     * <li>格式 /files/v1/{fileId}（FileAddress）。</li>
+     */
     @NotBlank
-    @Pattern(regexp = "^[1-9][0-9]{0,18}$")
-    private String fileId;
+    @Pattern(regexp = "^/files/v1/[1-9][0-9]{0,18}$")
+    private String fileAddress;
 
     /** Platform 确认的文件 SHA-256 小写十六进制。 */
     @NotBlank
     @Pattern(regexp = "^[0-9a-f]{64}$")
     private String contentHash;
 
-    /** 读取CCT 材料引用 ID。 */
-    public String getDocumentId() {
-        return documentId;
-    }
+    /** 材料签发日期 YYYY-MM-DD，可空。 */
+    @Pattern(regexp = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+    private String issueDate;
 
-    /** 设置CCT 材料引用 ID。 */
-    public void setDocumentId(String documentId) {
-        this.documentId = documentId;
-    }
-
-    /** 读取材料所属主体 Party ID。 */
-    public String getSubjectPartyId() {
-        return subjectPartyId;
-    }
-
-    /** 设置材料所属主体 Party ID。 */
-    public void setSubjectPartyId(String subjectPartyId) {
-        this.subjectPartyId = subjectPartyId;
-    }
-
-    /** 读取材料要求代码。 */
-    public String getRequirementCode() {
-        return requirementCode;
-    }
-
-    /** 设置材料要求代码。 */
-    public void setRequirementCode(String requirementCode) {
-        this.requirementCode = requirementCode;
-    }
-
-    /** 读取材料类型代码。 */
-    public String getDocumentType() {
-        return documentType;
-    }
-
-    /** 设置材料类型代码。 */
-    public void setDocumentType(String documentType) {
-        this.documentType = documentType;
-    }
-
-    /** 读取Platform 文件 ID。 */
-    public String getFileId() {
-        return fileId;
-    }
-
-    /** 设置Platform 文件 ID。 */
-    public void setFileId(String fileId) {
-        this.fileId = fileId;
-    }
-
-    /** 读取Platform 确认的文件 SHA-256 小写十六进制。 */
-    public String getContentHash() {
-        return contentHash;
-    }
-
-    /** 设置Platform 确认的文件 SHA-256 小写十六进制。 */
-    public void setContentHash(String contentHash) {
-        this.contentHash = contentHash;
-    }
+    /** 材料到期日期 YYYY-MM-DD，可空。 */
+    @Pattern(regexp = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+    private String expiryDate;
 }

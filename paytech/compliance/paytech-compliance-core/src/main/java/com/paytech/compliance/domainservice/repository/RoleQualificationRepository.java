@@ -3,7 +3,6 @@ package com.paytech.compliance.domainservice.repository;
 import java.time.Instant;
 import java.util.List;
 
-import com.paytech.compliance.core.dal.dataobject.QualificationDecision;
 import com.paytech.compliance.core.dal.dataobject.RoleQualification;
 import com.paytech.compliance.domain.QualificationSubject;
 
@@ -31,13 +30,12 @@ public interface RoleQualificationRepository {
     long count(String roleType, String roleId, String qualificationType, String status);
 
     /**
-     * 以读取时版本为条件切换到新决定，并同步原对象
-     * <li>状态取决定结论，有效期取决定有效期；APPROVED 为 NOT_REQUIRED，其余为 COMPLETED，复审调度清空。</li>
+     * 以读取时版本为条件切换到目标投影，并把目标的决定、状态、有效期、复审调度与冻结属性同步到原对象
      * <li>版本已变化抛出 QUALIFICATION_CHANGED，原对象不变。</li>
      *
      * @param row 读取时的投影
-     * @param decision 本次新决定
+     * @param target 本次决定对应的目标投影值（只读取其可变字段）
      * @param now 服务端时间
      */
-    void applyDecision(RoleQualification row, QualificationDecision decision, Instant now);
+    void applyDecision(RoleQualification row, RoleQualification target, Instant now);
 }

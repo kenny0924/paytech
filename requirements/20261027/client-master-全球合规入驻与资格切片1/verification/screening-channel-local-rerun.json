@@ -1,0 +1,51 @@
+{
+ "results": {
+  "channel.create": {
+   "ok": true,
+   "existed": true,
+   "status": "ACTIVE"
+  },
+  "channel.endpoints": {
+   "ok": true,
+   "unchanged": true,
+   "endpoints": [
+    {
+     "endpointCode": "SCREENING",
+     "baseUrl": "http://127.0.0.1:18191",
+     "sandbox": false
+    }
+   ]
+  },
+  "channel.activate": {
+   "ok": true,
+   "alreadyActive": true
+  },
+  "standardApi": {
+   "ok": true,
+   "existed": true,
+   "version": 2
+  },
+  "atomicApi": {
+   "ok": true,
+   "existed": true,
+   "version": 2
+  },
+  "implementation": {
+   "ok": true,
+   "existed": true,
+   "version": 1
+  },
+  "grant.create": {
+   "ok": true,
+   "existed": true,
+   "callGrantId": "240582625239040000"
+  },
+  "_meta": {
+   "baseUrl": "http://127.0.0.1:18110",
+   "mockUrl": "http://127.0.0.1:18191",
+   "channelId": "240582347794219008",
+   "startedAt": "2026-10-26T21:09:32.771502+00:00",
+   "finishedAt": "2026-10-26T21:09:32.858813+00:00"
+  }
+ }
+}

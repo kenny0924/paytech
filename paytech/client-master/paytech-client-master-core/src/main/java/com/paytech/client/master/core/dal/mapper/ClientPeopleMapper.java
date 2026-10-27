@@ -4,7 +4,6 @@ import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.paytech.client.master.core.dal.dataobject.*;
 import com.paytech.client.master.domain.onboarding.*;
-import com.paytech.client.master.domain.enums.PartyRelationType;
 /** 本库 SQL，申请范围和组织范围必须同时命中。 */
 public interface ClientPeopleMapper {
     List<ClientPersonIdentity> people(@Param("application") ClientDraftIdentity application);
@@ -12,7 +11,7 @@ public interface ClientPeopleMapper {
     List<ClientPartyRelation> relations(@Param("application") ClientDraftIdentity application);
     ClientPartyRelation relation(@Param("application") ClientDraftIdentity application,@Param("relationId") long relationId);
     boolean duplicate(@Param("organizationId") long organizationId,@Param("partyId") long partyId,
-        @Param("type") PartyRelationType type,@Param("excludeId") long excludeId);
+        @Param("type") String type,@Param("excludeId") long excludeId);
     void insertParty(ClientPersonCreation creation);
     void insertProfile(ClientPersonCreation creation);
     void insertIndividual(ClientPersonCreation creation);

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import com.paytech.compliance.core.dal.dataobject.QualificationDecision;
 import com.paytech.compliance.core.dal.dataobject.RoleQualification;
 import com.paytech.compliance.core.enums.QualificationDecisionSource;
+import com.paytech.compliance.core.enums.ReviewCodes;
 import com.paytech.compliance.core.enums.QualificationStatus;
 import com.paytech.compliance.domain.QualificationChangeContext;
 import com.paytech.compliance.domainservice.port.ComplianceIdentifierGenerator;
@@ -59,7 +60,7 @@ public class RevokeQualificationProcessor extends AbstractProcessor<RevokeQualif
         // 保存撤销决定与投影
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         QualificationChangeContext context = QualificationChangeBuilder.change(ids, decision(request, current, now), current,
-            request.getReasonCode(), RecordManualQualificationProcessor.TRIGGER_TYPE);
+            request.getReasonCode(), RecordManualQualificationProcessor.TRIGGER_TYPE, null);
         qualificationService.saveChange(context);
 
         // 响应处理：撤销后不再合格，无需检查结算冻结
@@ -75,6 +76,7 @@ public class RevokeQualificationProcessor extends AbstractProcessor<RevokeQualif
         decision.setRoleId(current.getRoleId());
         decision.setQualificationType(current.getQualificationType());
         decision.setDecisionSource(QualificationDecisionSource.MANUAL.getCode());
+        decision.setOperatedBy(ReviewCodes.OPERATED_BY_PLATFORM);
         decision.setOutcome(QualificationStatus.REVOKED.getCode());
         decision.setOverrideReasonCode(request.getReasonCode());
         decision.setBasisNote(request.getBasisNote());

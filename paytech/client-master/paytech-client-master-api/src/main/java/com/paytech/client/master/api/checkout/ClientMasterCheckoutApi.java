@@ -50,7 +50,7 @@ public interface ClientMasterCheckoutApi {
     /**
      * 按 ID 读取合同签署校验需要的参与方资料。
      *
-     * @param callerService 私网调用范围；仅允许 commercial-service
+     * @param callerService 私网调用范围；允许 commercial-service（合同签署校验）与 compliance-service（名单筛查读取姓名）
      * @param ids 参与方资料 ID，规范正十进制 BIGINT 字符串，1 到 1000 个
      * @return 存在的资料，按 profileId 升序；不存在的 ID 不返回
      */

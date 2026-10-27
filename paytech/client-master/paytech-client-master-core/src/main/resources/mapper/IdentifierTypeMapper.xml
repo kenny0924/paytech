@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.IdentifierTypeMapper">
+  <sql id="columns">
+    identifier_type_id AS identifierTypeId, identifier_type_code AS identifierTypeCode, jurisdiction_code AS jurisdictionCode,
+    party_type AS partyType, label_key AS labelKey, format_regex AS formatRegex, normalization_rule AS normalizationRule,
+    checksum_rule AS checksumRule, issuer_scope_mode AS issuerScopeMode, verification_check_code AS verificationCheckCode,
+    status, create_time AS createTime, update_time AS updateTime
+  </sql>
+  <!-- 辖区专用类型与全局类型（jurisdiction_code 为空）。 -->
+  <select id="findForJurisdiction" resultType="com.paytech.client.master.core.dal.dataobject.IdentifierType">
+    SELECT <include refid="columns"/> FROM t_identifier_type
+    WHERE jurisdiction_code=#{jurisdictionCode} OR jurisdiction_code IS NULL
+    ORDER BY identifier_type_code
+  </select>
+  <select id="findByCode" resultType="com.paytech.client.master.core.dal.dataobject.IdentifierType">
+    SELECT <include refid="columns"/> FROM t_identifier_type WHERE identifier_type_code=#{code}
+  </select>
+</mapper>

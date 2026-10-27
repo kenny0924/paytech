@@ -2,12 +2,15 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.compliance.core.dal.mapper.CaseRequirementMapper">
     <insert id="insert">
-        INSERT INTO t_dd_requirement(requirement_id, case_id, program_requirement_id, status, version, create_time, update_time)
-        VALUES(#{row.requirementId}, #{row.caseId}, #{row.programRequirementId}, #{row.status}, #{row.version}, #{row.createTime}, #{row.updateTime})
+        INSERT INTO t_dd_requirement(requirement_id, case_id, program_requirement_id, status, reused_from_case_id, version, create_time, update_time)
+        VALUES(#{row.requirementId}, #{row.caseId}, #{row.programRequirementId}, #{row.status}, #{row.reusedFromCaseId}, #{row.version},
+            #{row.createTime}, #{row.updateTime})
     </insert>
     <select id="findViewsByCaseIds" useCache="false" resultType="com.paytech.compliance.domain.ReviewRequirementView">
-        SELECT r.requirement_id AS requirementId, r.case_id AS caseId, r.status, r.version, p.requirement_code AS requirementCode,
-            p.document_type AS documentType, p.required_flag AS requiredFlag
+        SELECT r.requirement_id AS requirementId, r.case_id AS caseId, r.program_requirement_id AS programRequirementId, r.status,
+            r.version, p.requirement_code AS requirementCode, p.required_flag AS requiredFlag, p.max_age_days AS maxAgeDays,
+            p.waivable_flag AS waivableFlag, r.waived_by AS waivedBy, r.waived_reason_code AS waivedReasonCode,
+            r.waived_time AS waivedTime, r.reused_from_case_id AS reusedFromCaseId
         FROM t_dd_requirement r JOIN t_dd_program_requirement p ON p.program_requirement_id = r.program_requirement_id
         WHERE r.case_id IN <foreach collection="caseIds" item="id" open="(" separator="," close=")">#{id}</foreach>
         ORDER BY r.case_id, p.requirement_code
@@ -15,5 +18,11 @@
     <update id="updateStatus">
         UPDATE t_dd_requirement SET status = #{status}, version = version + 1, update_time = #{now}
         WHERE requirement_id = #{requirementId} AND version = #{version}
+    </update>
+    <update id="waive">
+        UPDATE t_dd_requirement
+        SET status = 'WAIVED', waived_by = #{actorId}, waived_reason_code = #{reasonCode}, waived_note = #{note}, waived_time = #{now},
+            version = version + 1, update_time = #{now}
+        WHERE requirement_id = #{requirementId} AND version = #{version} AND status IN ('PENDING', 'RECEIVED', 'REJECTED')
     </update>
 </mapper>

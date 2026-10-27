@@ -18,4 +18,12 @@ public interface ClientReviewRegistrationService {
      * @return 是否更新；已不是同一提交的 SUBMITTED 时返回 false
      */
     boolean startReview(ClientApplicationSubmission application, long caseId);
+
+    /**
+     * 撤回补偿任务读取申请当前的审核坐标
+     *
+     * @param applicationId 申请 ID
+     * @return 申请提交坐标；不存在为 null
+     */
+    ClientApplicationSubmission withdrawalSource(long applicationId);
 }

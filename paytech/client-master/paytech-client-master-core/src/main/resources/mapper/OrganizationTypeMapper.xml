@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.OrganizationTypeMapper">
+  <select id="findByJurisdiction" resultType="com.paytech.client.master.core.dal.dataobject.OrganizationType">
+    SELECT organization_type_id AS organizationTypeId, jurisdiction_code AS jurisdictionCode, type_code AS typeCode,
+      label_key AS labelKey, display_order AS displayOrder, status, create_time AS createTime, update_time AS updateTime
+    FROM t_organization_type WHERE jurisdiction_code=#{jurisdictionCode}
+    ORDER BY display_order, type_code
+  </select>
+</mapper>

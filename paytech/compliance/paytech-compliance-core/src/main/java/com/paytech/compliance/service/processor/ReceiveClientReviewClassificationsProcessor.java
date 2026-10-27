@@ -58,7 +58,7 @@ public class ReceiveClientReviewClassificationsProcessor
     protected ClientReviewCommandResponse processRequest(ReceiveClientReviewClassificationsRequest request) {
         // 归属与当前状态
         DueDiligenceCase main = cases.findById(request.getCaseId());
-        if (main == null || !RegisterClientReviewProcessor.NAMESPACE.equals(main.getSourceNamespace()) || !"CLIENT".equals(main.getRoleType())
+        if (main == null || !com.paytech.compliance.core.enums.ReviewCodes.NAMESPACE_CLIENT_APPLICATION.equals(main.getSourceNamespace()) || !"CLIENT".equals(main.getRoleType())
             || !Long.valueOf(request.getApplicationId()).equals(main.getSourceApplicationId())
             || !request.getSubmissionId().equals(main.getSourceSubmissionId())) {
             throw new FailException(CLIENT_REVIEW_NOT_FOUND);

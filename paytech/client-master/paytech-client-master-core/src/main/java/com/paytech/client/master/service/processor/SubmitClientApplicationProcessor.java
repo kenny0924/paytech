@@ -29,7 +29,7 @@ import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
  * <li>与草稿、人员、材料写入共用 client-onboarding:application:{id} 锁，提交期间不能再保存。</li>
  * <li>已是 SUBMITTED/UNDER_REVIEW 时按当前状态返回原提交，不重新检查；不读取 Idempotency-Key。</li>
  * <li>Platform 会话、Risk 材料要求和 Platform 文件核验都在事务外完成；本地事务只保存状态、身份和审核登记任务。</li>
- * <li>不完整返回 SUBMISSION_INCOMPLETE，逐项问题由提交核对查询提供；证件号被占用返回 IDENTITY_CONFLICT。</li>
+ * <li>不完整返回 422 SUBMISSION_INCOMPLETE、证件号被占用返回 409 IDENTITY_CONFLICT，两者都带需求级 errors[]（与提交核对同源）。</li>
  */
 public class SubmitClientApplicationProcessor
     extends AbstractLockProcessor<SubmitClientApplicationRequest, SubmitClientApplicationResponse> {
@@ -87,7 +87,7 @@ public class SubmitClientApplicationProcessor
             submissions.submit(context);
         } catch (DuplicateKeyException collision) {
             String reason = collision.getMostSpecificCause().getMessage();
-            if (reason != null && reason.contains("uk_party_identity_norm")) {
+            if (reason != null && reason.contains("uk_party_identity_token")) {
                 throw new FailException(IDENTITY_CONFLICT);
             }
             throw collision;
@@ -102,10 +102,10 @@ public class SubmitClientApplicationProcessor
         ClientApplicationSubmission application) {
         var preparation = preparer.prepare(request.getAccountId(), identity);
         if (preparation.isIdentityConflict()) {
-            throw new FailException(IDENTITY_CONFLICT);
+            throw SubmissionErrors.rejection(IDENTITY_CONFLICT, identity, preparation.errors());
         }
         if (!preparation.ready()) {
-            throw new FailException(SUBMISSION_INCOMPLETE);
+            throw SubmissionErrors.rejection(SUBMISSION_INCOMPLETE, identity, preparation.errors());
         }
         return new SubmitClientApplicationContext(identity, application, preparation.getSubjects(), preparation.getRelations(),
             preparation.getDocuments(), UUID.randomUUID().toString(), clock.instant().truncatedTo(ChronoUnit.MICROS));

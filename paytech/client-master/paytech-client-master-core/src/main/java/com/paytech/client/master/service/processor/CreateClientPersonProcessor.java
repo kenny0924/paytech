@@ -6,13 +6,18 @@ import java.util.List;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.client.contract.api.onboarding.ClientPeopleModels.PeopleCommandReceiptResponseBody;
+import com.paytech.client.master.core.dal.dataobject.ClientDraftFields;
+import com.paytech.client.master.domain.enums.ClientType;
 import com.paytech.client.master.domain.onboarding.ClientDraftCommand;
+import com.paytech.client.master.domain.onboarding.ClientDraftPolicy;
+import com.paytech.client.master.domainservice.repository.ClientDraftRepository;
 import com.paytech.client.master.domain.onboarding.ClientPeopleOperation;
 import com.paytech.client.master.domain.onboarding.ClientRelationValues;
 import com.paytech.client.master.domainservice.service.ClientPeopleService;
 import com.paytech.client.master.integration.ClientDraftAccountClient;
 import com.paytech.client.master.service.processor.request.CreateClientPersonRequest;
-import com.paytech.foundation.common.error.FailException;
+import com.paytech.foundation.httpproblem.api.RequestBodyValidationException;
+import com.paytech.foundation.httpproblem.api.ProblemFieldError;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 
 import jakarta.validation.Validator;
@@ -32,16 +37,21 @@ public class CreateClientPersonProcessor
     private final ClientDraftAccountClient accounts;
     private final TransactionTemplate writes;
     private final Validator validator;
+    private final ClientDraftRepository drafts;
+    private final ClientDraftPreparer preparer;
 
     /** 锁等待与租约沿用 CCT 既有注解锁配置，保持同一互斥域。 */
     public CreateClientPersonProcessor(Duration lockWait, Duration lockLease, ClientPeopleService service,
-        ClientDraftAccountClient accounts, TransactionTemplate writes, Validator validator) {
+        ClientDraftAccountClient accounts, TransactionTemplate writes, Validator validator, ClientDraftRepository drafts,
+        ClientDraftPreparer preparer) {
         this.lockWait = lockWait;
         this.lockLease = lockLease;
         this.service = service;
         this.accounts = accounts;
         this.writes = writes;
         this.validator = validator;
+        this.drafts = drafts;
+        this.preparer = preparer;
     }
 
     /** 与原注解锁 client-onboarding:application 生成同一逻辑 Key。 */
@@ -55,10 +65,13 @@ public class CreateClientPersonProcessor
     protected PeopleCommandReceiptResponseBody processWithinLock(CreateClientPersonRequest request) {
         accounts.authorize(request.getAccountId(), request.getSessionId());
         if (request.getBody() == null) {
-            throw new FailException(INVALID_DRAFT);
+            throw new RequestBodyValidationException(INVALID_DRAFT, List.of(new ProblemFieldError("person", "须提供人员资料与关系")), null);
         }
-        var person = ClientOnboardingCommands.personPatch(request.getBody().person(), validator);
+        var patch = ClientOnboardingCommands.personPatch(request.getBody().person(), validator);
         var relation = ClientRelationValues.create(request.getBody().relation());
+        // 事务外按申请辖区准备证件（个人证件 Protect）与扩展属性；归属与可编辑在写事务内加锁复核。
+        var application = ClientDraftPolicy.requireValid(drafts.identity(request.getApplicationId(), request.getAccountId(), false));
+        var person = preparer.prepare(application, ClientDraftFields.empty(), patch, ClientType.INDIVIDUAL, false);
         var command = ClientDraftCommand.of(request.getAccountId(), ClientPeopleOperation.CREATE_PERSON.getCode());
         return ClientOnboardingCommands.relationWrite(writes,
             () -> service.createPerson(command, request.getApplicationId(), person, relation));

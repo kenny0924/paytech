@@ -1,0 +1,21 @@
+{
+ "app": "client-console",
+ "currentRelease": 5,
+ "liveNamespaces": 9,
+ "repoNamespaces": 9,
+ "newNamespaces": [],
+ "repoKeys": 1035,
+ "liveActiveKeys": 1035,
+ "added": 0,
+ "restored": 0,
+ "sourceChanged": 0,
+ "missingInRepo": 0,
+ "zhImportKeys": 0,
+ "zhMissingForImport": 0,
+ "keepLiveZh": 1035,
+ "deprecations": [],
+ "sha256": {
+  "client-console.en.json": "681963bf571dd1817d940d64c4ae4e533ea8aef91b48cea6d9b5d733415d8a40",
+  "client-console.zh-CN.onboarding-delta.json": "dc78b3c1c827febb7ac36b8336bcf7765ca7b8a3ac862e4f39bf6ed4e5e339a2"
+ }
+}

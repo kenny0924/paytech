@@ -1,0 +1,42 @@
+# 全球合规入驻与资格切片 1：mor-test 候选覆盖（rel-build 2026-10-27，阶段 7 由主会话执行，另需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag onboard-20261027a 仅供辨认；:development 未改动）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-onboard-rel = ea0272f3 + Code-MoR-onboard 未提交改动的冻结副本
+#   （2026-10-27T02:52Z 复同步，708 项 git status，全文件清单指纹 6f985f45736395e6）；构建与核对见 ../verification/rel-build-report.md。
+# 环境变量：逐键对照运行容器 printenv、主 compose 与历史候选文件；主 compose 已含全部现网键，此处显式列出非敏感值，
+#   敏感值只写 ${...} 引用（与主 compose 同一变量），不落明文。
+services:
+  compliance-service:
+    # 程序解析 /compliance/v1/programs/resolve、筛查（经 channel-connector S_SCREENING_MOCK）、运营工作台、CRR / 推荐 / 四眼决定、
+    # ClientReviewDecided v2、逾期任务。需先执行 compliance DDL / DML / 清理（runbook ⑦）。
+    # P-3：保留 ONBOARDING_REVIEW_ENABLED=true；删除 ONBOARDING_MATERIALS_ENABLED（onboarding.materials.* 已移除，!reset 去掉主 compose 的键）；
+    #   COMPLIANCE_SCREENING_CHANNEL_CODE 不设（缺省 S_SCREENING_MOCK）；出站经服务发现，无新增地址键。
+    image: sha256:f5a9b13a0f0551d407f87e9efba138a45faafd7b37556b6d75f8a2a5f40a1b81  # mor-test/compliance-service:onboard-20261027a（JAR 2264afa0d7d4b60c）
+    environment:
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.32
+      COMPLIANCE_DB_URL: jdbc:mysql://mysql:3306/mor_compliance?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      COMPLIANCE_DB_USERNAME: compliance_app
+      COMPLIANCE_DB_PASSWORD: ${MOR_COMPLIANCE_DB_PASSWORD:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_HOST: rabbitmq
+      COMPLIANCE_RABBITMQ_PORT: "5672"
+      COMPLIANCE_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      COMPLIANCE_RABBITMQ_VHOST: /mor-test
+      COMPLIANCE_SNOWFLAKE_REGION_ID: "0"
+      COMPLIANCE_SNOWFLAKE_WORKER_ID: "29"
+      ONBOARDING_REVIEW_ENABLED: "true"
+      ONBOARDING_MATERIALS_ENABLED: !reset null
+      MESSAGING_PRODUCER_SERVICE: compliance
+      MESSAGING_PRODUCER_SEQUENCER_ENABLED: "true"
+      MESSAGING_PUBLISHER_UNROUTABLEPOLICY: FAIL
+      COMPENSATION_INSTANCEID: compliance-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: compliance-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.32
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.

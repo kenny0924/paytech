@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.ScreeningResolutionMapper">
+    <sql id="columns">resolution_id AS resolutionId, hit_id AS hitId, resolution_version AS resolutionVersion, resolution, reason_code AS reasonCode, note, reviewer_id AS reviewerId, operated_by AS operatedBy, on_behalf_of_partner_id AS onBehalfOfPartnerId, resolved_time AS resolvedTime, create_time AS createTime</sql>
+    <insert id="insert">
+        INSERT INTO t_screening_resolution(resolution_id, hit_id, resolution_version, resolution, reason_code, note, reviewer_id, operated_by, on_behalf_of_partner_id, resolved_time, create_time)
+        VALUES(#{row.resolutionId}, #{row.hitId}, #{row.resolutionVersion}, #{row.resolution}, #{row.reasonCode}, #{row.note}, #{row.reviewerId}, #{row.operatedBy}, #{row.onBehalfOfPartnerId}, #{row.resolvedTime}, #{row.createTime})
+    </insert>
+    <select id="findByHitIds" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.ScreeningResolution">
+        SELECT <include refid="columns"/> FROM t_screening_resolution WHERE hit_id IN <foreach collection="hitIds" item="id" open="(" separator="," close=")">#{id}</foreach> ORDER BY hit_id, resolution_version
+    </select>
+</mapper>

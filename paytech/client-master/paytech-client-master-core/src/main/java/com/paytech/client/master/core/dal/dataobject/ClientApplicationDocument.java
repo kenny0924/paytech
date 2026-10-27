@@ -6,8 +6,11 @@ package com.paytech.client.master.core.dal.dataobject;
  * @param documentType 材料类型
  * @param fileAddress 原 Platform 文件地址，格式 /files/v1/{fileId}
  * @param contentHash 固定字节摘要
+ * @param issueDate 签发日期，可空
+ * @param expiryDate 到期日，可空
  */
-public record ClientApplicationDocument(long documentId,long subjectPartyId,String requirementCode,String documentType,String fileAddress,String contentHash) {
+public record ClientApplicationDocument(long documentId,long subjectPartyId,String requirementCode,String documentType,String fileAddress,String contentHash,
+    java.time.LocalDate issueDate,java.time.LocalDate expiryDate) {
     /** 摘要不进入普通日志。 */
     @Override public String toString() { return "ClientApplicationDocument[REDACTED]"; }
 }

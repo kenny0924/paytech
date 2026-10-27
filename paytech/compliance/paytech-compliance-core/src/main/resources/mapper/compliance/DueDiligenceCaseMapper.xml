@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.paytech.compliance.core.dal.mapper.DueDiligenceCaseMapper">
-    <sql id="columns">case_id AS caseId, case_no AS caseNo, role_type AS roleType, role_id AS roleId, qualification_type AS qualificationType, dd_program_version_id AS ddProgramVersionId, case_origin AS caseOrigin, source_namespace AS sourceNamespace, source_application_id AS sourceApplicationId, source_submission_id AS sourceSubmissionId, public_note AS publicNote, resolution_note AS resolutionNote, return_section AS returnSection, status, active_slot AS activeSlot, submitted_time AS submittedTime, decision_time AS decisionTime, version, create_time AS createTime, update_time AS updateTime</sql>
+    <sql id="columns">case_id AS caseId, case_no AS caseNo, case_type AS caseType, role_type AS roleType, role_id AS roleId,
+        qualification_type AS qualificationType, dd_program_version_id AS ddProgramVersionId, jurisdiction_code AS jurisdictionCode, tier,
+        case_origin AS caseOrigin, source_namespace AS sourceNamespace, source_application_id AS sourceApplicationId,
+        source_submission_id AS sourceSubmissionId, round_no AS roundNo, previous_case_id AS previousCaseId,
+        responsible_partner_id AS responsiblePartnerId, risk_rating AS riskRating, risk_rating_note AS riskRatingNote,
+        risk_rated_by AS riskRatedBy, risk_rated_time AS riskRatedTime, recommendation, recommendation_note AS recommendationNote,
+        recommended_by AS recommendedBy, recommended_time AS recommendedTime, public_note AS publicNote,
+        resolution_note AS resolutionNote, return_section AS returnSection, review_due_time AS reviewDueTime, status,
+        active_slot AS activeSlot, operated_by AS operatedBy, on_behalf_of_partner_id AS onBehalfOfPartnerId,
+        submitted_time AS submittedTime, decision_time AS decisionTime, version, create_time AS createTime, update_time AS updateTime</sql>
     <insert id="insert">
-        INSERT INTO t_due_diligence_case(case_id, case_no, role_type, role_id, qualification_type, dd_program_version_id, case_origin, source_namespace, source_application_id, source_submission_id, status, active_slot, submitted_time, version, create_time, update_time)
-        VALUES(#{row.caseId}, #{row.caseNo}, #{row.roleType}, #{row.roleId}, #{row.qualificationType}, #{row.ddProgramVersionId}, #{row.caseOrigin}, #{row.sourceNamespace}, #{row.sourceApplicationId}, #{row.sourceSubmissionId}, #{row.status}, #{row.activeSlot}, #{row.submittedTime}, #{row.version}, #{row.createTime}, #{row.updateTime})
+        INSERT INTO t_due_diligence_case(case_id, case_no, case_type, role_type, role_id, qualification_type, dd_program_version_id,
+            jurisdiction_code, tier, case_origin, source_namespace, source_application_id, source_submission_id, round_no, previous_case_id,
+            responsible_partner_id, status, active_slot, submitted_time, version, create_time, update_time)
+        VALUES(#{row.caseId}, #{row.caseNo}, #{row.caseType}, #{row.roleType}, #{row.roleId}, #{row.qualificationType},
+            #{row.ddProgramVersionId}, #{row.jurisdictionCode}, #{row.tier}, #{row.caseOrigin}, #{row.sourceNamespace},
+            #{row.sourceApplicationId}, #{row.sourceSubmissionId}, #{row.roundNo}, #{row.previousCaseId}, #{row.responsiblePartnerId},
+            #{row.status}, #{row.activeSlot}, #{row.submittedTime}, #{row.version}, #{row.createTime}, #{row.updateTime})
     </insert>
     <select id="findBySubmission" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.DueDiligenceCase">
         SELECT <include refid="columns"/> FROM t_due_diligence_case
@@ -18,11 +32,29 @@
         SELECT <include refid="columns"/> FROM t_due_diligence_case
         WHERE case_id IN <foreach collection="caseIds" item="id" open="(" separator="," close=")">#{id}</foreach> ORDER BY case_id
     </select>
+    <select id="findLatestClientCase" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.DueDiligenceCase">
+        SELECT <include refid="columns"/> FROM t_due_diligence_case
+        WHERE source_namespace = 'CCT_CLIENT_APPLICATION' AND role_type = 'CLIENT' AND source_application_id = #{applicationId}
+        ORDER BY round_no DESC, case_id DESC LIMIT 1
+    </select>
+    <select id="countSuccessors" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_due_diligence_case WHERE previous_case_id = #{caseId}
+    </select>
+    <select id="findDueReturned" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.DueDiligenceCase">
+        SELECT <include refid="columns"/> FROM t_due_diligence_case c
+        WHERE c.status = 'RETURNED' AND c.review_due_time &lt;= #{now} AND c.source_namespace = 'CCT_CLIENT_APPLICATION'
+        AND c.role_type = 'CLIENT'
+        AND NOT EXISTS (SELECT 1 FROM t_due_diligence_case s WHERE s.previous_case_id = c.case_id)
+        ORDER BY c.review_due_time, c.case_id LIMIT #{limit}
+    </select>
     <sql id="clientCaseFilter">
         WHERE source_namespace = 'CCT_CLIENT_APPLICATION' AND role_type = 'CLIENT'
         <if test="status != null">AND status = #{status}</if>
         <if test="qualificationType != null">AND qualification_type = #{qualificationType}</if>
         <if test="applicationId != null">AND source_application_id = #{applicationId}</if>
+        <if test="responsiblePartnerId != null">AND responsible_partner_id = #{responsiblePartnerId}</if>
+        <if test="platformOnly">AND responsible_partner_id IS NULL</if>
+        <if test="jurisdictionCode != null">AND jurisdiction_code = #{jurisdictionCode}</if>
     </sql>
     <select id="pageClientCases" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.DueDiligenceCase">
         SELECT <include refid="columns"/> FROM t_due_diligence_case <include refid="clientCaseFilter"/>
@@ -34,11 +66,34 @@
     <update id="close">
         UPDATE t_due_diligence_case
         SET status = #{status}, active_slot = NULL, public_note = #{publicNote}, resolution_note = #{resolutionNote},
-            return_section = #{returnSection}, decision_time = #{now}, version = version + 1, update_time = #{now}
+            return_section = #{returnSection}, review_due_time = #{reviewDueTime}, operated_by = #{operatedBy},
+            on_behalf_of_partner_id = #{onBehalfOfPartnerId}, decision_time = #{now}, version = version + 1, update_time = #{now}
         WHERE case_id = #{row.caseId} AND version = #{row.version} AND active_slot = 1
+    </update>
+    <update id="transition">
+        UPDATE t_due_diligence_case
+        SET status = #{toStatus}, active_slot = NULL, decision_time = #{now}, version = version + 1, update_time = #{now}
+        WHERE case_id = #{row.caseId} AND version = #{row.version} AND status = #{row.status}
     </update>
     <update id="touch">
         UPDATE t_due_diligence_case SET version = version + 1, update_time = #{now}
+        WHERE case_id = #{row.caseId} AND version = #{row.version} AND active_slot = 1
+    </update>
+    <update id="startReview">
+        UPDATE t_due_diligence_case SET status = 'IN_REVIEW', version = version + 1, update_time = #{now}
+        WHERE case_id = #{row.caseId} AND version = #{row.version} AND status = 'SUBMITTED' AND active_slot = 1
+    </update>
+    <update id="updateRiskRating">
+        UPDATE t_due_diligence_case
+        SET risk_rating = #{riskRating}, risk_rating_note = #{note}, risk_rated_by = #{actorId}, risk_rated_time = #{now},
+            recommendation = NULL, recommendation_note = NULL, recommended_by = NULL, recommended_time = NULL,
+            version = version + 1, update_time = #{now}
+        WHERE case_id = #{row.caseId} AND version = #{row.version} AND active_slot = 1
+    </update>
+    <update id="updateRecommendation">
+        UPDATE t_due_diligence_case
+        SET recommendation = #{recommendation}, recommendation_note = #{note}, recommended_by = #{actorId}, recommended_time = #{now},
+            version = version + 1, update_time = #{now}
         WHERE case_id = #{row.caseId} AND version = #{row.version} AND active_slot = 1
     </update>
 </mapper>

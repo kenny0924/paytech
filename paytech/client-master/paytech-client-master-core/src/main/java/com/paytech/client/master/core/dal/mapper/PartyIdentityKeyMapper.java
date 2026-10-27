@@ -8,7 +8,7 @@ import com.paytech.client.master.core.dal.dataobject.PartyIdentityKey;
 public interface PartyIdentityKeyMapper {
     /** 按唯一身份读取。 */
     PartyIdentityKey find(@Param("identifierType") String identifierType, @Param("issuerScopeKey") String issuerScopeKey,
-        @Param("normalizedValue") String normalizedValue);
+        @Param("keyValue") String keyValue);
 
     /** 新增身份键；唯一索引冲突由调用方回滚。 */
     int insert(@Param("key") PartyIdentityKey key);

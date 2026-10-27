@@ -346,8 +346,43 @@ export const pageCapabilities = [
       {
         "resourceCode": "CLIENT_ONBOARDING_DECIDE",
         "displayName": "批准或最终拒绝"
+      },
+      {
+        "resourceCode": "CLIENT_ONBOARDING_SCREENING",
+        "displayName": "筛查与命中处置"
+      },
+      {
+        "resourceCode": "CLIENT_ONBOARDING_RECOMMEND",
+        "displayName": "推荐结论"
+      },
+      {
+        "resourceCode": "CLIENT_ONBOARDING_WAIVE",
+        "displayName": "豁免材料要求"
       }
     ]
+  },
+  {
+    "componentKey": "OPERATIONS_ONBOARDING_CONFIG",
+    "displayName": "入驻配置",
+    "frontendRoute": "/client-onboarding/config",
+    "actions": []
+  },
+  {
+    "componentKey": "OPERATIONS_ONBOARDING_CODES",
+    "displayName": "入驻码",
+    "frontendRoute": "/client-onboarding/codes",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_ONBOARDING_CODES_MANAGE",
+        "displayName": "签发与作废"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_CLIENTS",
+    "displayName": "Client",
+    "frontendRoute": "/master-data/clients",
+    "actions": []
   },
   {
     "componentKey": "OPERATIONS_VAULT_DATA_TYPES",

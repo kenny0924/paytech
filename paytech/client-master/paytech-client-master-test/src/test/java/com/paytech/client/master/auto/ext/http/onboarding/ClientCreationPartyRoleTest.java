@@ -36,7 +36,7 @@ class ClientCreationPartyRoleTest extends ClientMasterMockTestBase {
             headers.set("X-Gateway-Actor-Subject", Long.toString(ACCOUNT_ID));
             headers.set("X-Gateway-Session-Id", Long.toString(SESSION_ID));
             headers.set("X-Request-Id", "cct-party-role-test");
-        }).header("Content-Type", "application/json").body("{\"clientType\":\"" + ClientType.ORGANIZATION.getCode() + "\"}")
+        }).header("Content-Type", "application/json").body("{\"clientType\":\"" + ClientType.ORGANIZATION.getCode() + "\",\"jurisdictionCode\":\"AE\"}")
             .exchange().expectBody(byte[].class).returnResult();
 
         assertEquals(201, created.getStatus().value(), new String(created.getResponseBody()));

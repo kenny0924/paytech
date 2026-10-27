@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.OnboardingSchemaMapper">
+  <sql id="columns">
+    schema_id AS schemaId, jurisdiction_code AS jurisdictionCode, party_type AS partyType, role_type AS roleType,
+    organization_type_code AS organizationTypeCode, version_no AS versionNo, status, active_slot AS activeSlot,
+    approved_by AS approvedBy, approved_time AS approvedTime, create_time AS createTime, update_time AS updateTime
+  </sql>
+  <!-- 精确 Schema 键的唯一 ACTIVE 版本；组织类型 * 为默认版本。 -->
+  <select id="findActive" resultType="com.paytech.client.master.core.dal.dataobject.OnboardingSchema">
+    SELECT <include refid="columns"/> FROM t_onboarding_schema
+    WHERE jurisdiction_code=#{jurisdictionCode} AND party_type=#{partyType} AND role_type=#{roleType}
+      AND organization_type_code=#{organizationTypeCode} AND active_slot=1
+  </select>
+  <select id="findById" resultType="com.paytech.client.master.core.dal.dataobject.OnboardingSchema">
+    SELECT <include refid="columns"/> FROM t_onboarding_schema WHERE schema_id=#{schemaId}
+  </select>
+  <!-- 运营只读查看：辖区全部版本。 -->
+  <select id="findByJurisdiction" resultType="com.paytech.client.master.core.dal.dataobject.OnboardingSchema">
+    SELECT <include refid="columns"/> FROM t_onboarding_schema WHERE jurisdiction_code=#{jurisdictionCode}
+    ORDER BY party_type, organization_type_code, version_no
+  </select>
+</mapper>

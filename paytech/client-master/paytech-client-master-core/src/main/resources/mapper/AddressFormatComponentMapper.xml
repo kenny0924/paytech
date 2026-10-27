@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.AddressFormatComponentMapper">
+  <select id="findByFormats" resultType="com.paytech.client.master.core.dal.dataobject.AddressFormatComponent">
+    SELECT component_id AS componentId, address_format_code AS addressFormatCode, component, required_flag AS requiredFlag,
+      catalog_code AS catalogCode, label_key AS labelKey, display_order AS displayOrder, create_time AS createTime,
+      update_time AS updateTime
+    FROM t_address_format_component WHERE address_format_code IN
+    <foreach collection="formatCodes" item="code" open="(" separator="," close=")">#{code}</foreach>
+    ORDER BY address_format_code, display_order
+  </select>
+</mapper>

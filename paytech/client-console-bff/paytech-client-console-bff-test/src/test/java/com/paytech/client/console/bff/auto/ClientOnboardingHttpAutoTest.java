@@ -102,7 +102,7 @@ class ClientOnboardingHttpAutoTest {
     }
 
     @Test
-    void aggregatesMainAndRelatedRequirementsAndDeduplicatesFileRead() throws Exception {
+    void aggregatesDraftAndDeduplicatesFileRead() throws Exception {
         var result = send("GET", "/client-onboarding/v1/applications/10", null);
         assertEquals(200, result.statusCode(), result.body());
         assertTrue(result.body().contains("\"subjectPartyId\":\"30\""));
@@ -111,14 +111,7 @@ class ClientOnboardingHttpAutoTest {
         assertFalse(result.body().contains("contentHash"));
         assertFalse(result.body().contains("programVersionId"));
         assertFalse(result.body().contains("https://storage"));
-        var rules = CALLS.stream()
-            .filter(call -> call.path().contains("material-requirements"))
-            .toList();
-        assertEquals(2, rules.size());
-        assertTrue(rules.stream().allMatch(call -> "client-console-bff".equals(call.caller())));
-        assertTrue(rules.stream().noneMatch(call -> call.query().contains("countryCode")));
-        assertTrue(rules.stream().anyMatch(call -> call.query().equals("qualificationType=ORGANIZATION_KYB")));
-        assertTrue(rules.stream().anyMatch(call -> call.query().equals("qualificationType=RELATED_PERSON_KYC")));
+        assertTrue(CALLS.stream().noneMatch(call -> call.path().contains("material-requirements")));
         assertEquals(
             1,
             CALLS.stream()
@@ -136,21 +129,26 @@ class ClientOnboardingHttpAutoTest {
         var result = send("GET", "/client-onboarding/v1/applications/10", null);
         assertEquals(200, result.statusCode(), result.body());
         assertTrue(result.body().contains("\"documentId\":\"50\""));
-        assertTrue(result.body().contains("\"requirementsStatus\":\"UNAVAILABLE\""));
         assertTrue(result.body().contains("\"fileStatus\":\"UNAVAILABLE\""));
         assertFalse(result.body().contains("DOWNLOAD"));
     }
 
-    /** 退回：从 Risk 读取客户可见的退回分区与说明，只用申请 ID 和固定调用方。 */
+    /** 退回：从 compliance 读取客户可见的需求级错误、期限与说明，只用申请 ID 和固定调用方。 */
     @Test
     void returnedApplicationShowsPublicReviewResult() throws Exception {
         mode = "returned";
         var result = send("GET", "/client-onboarding/v1/applications/10", null);
         assertEquals(200, result.statusCode(), result.body());
         assertTrue(result.body().contains("\"reviewStatus\":\"AVAILABLE\""), result.body());
-        assertTrue(result.body().contains("\"returnSection\":\"BUSINESS\""));
+        var review = JSON.readTree(result.body()).path("review");
+        assertEquals("RETURNED", review.path("caseStatus").asString());
+        assertEquals("2026-11-10T23:59:00Z", review.path("dueTime").asString());
+        assertEquals("document.BANK", review.path("errors").get(0).path("requirementKey").asString());
+        assertEquals("DOCUMENT_TOO_OLD", review.path("errors").get(0).path("code").asString());
+        assertEquals("UPLOAD_DOCUMENT", review.path("errors").get(0).path("remediation").asString());
         assertTrue(result.body().contains("\"publicNote\":\"请补充经营地址\""));
         assertFalse(result.body().contains("caseId"));
+        assertFalse(result.body().contains("returnSection"));
         var call = CALLS.stream().filter(c -> c.path().endsWith("/result")).toList();
         assertEquals(1, call.size());
         assertEquals("/client-onboarding-review/v1/applications/10/result", call.getFirst().path());
@@ -164,7 +162,7 @@ class ClientOnboardingHttpAutoTest {
         var result = send("GET", "/client-onboarding/v1/applications/10", null);
         assertEquals(200, result.statusCode(), result.body());
         assertTrue(result.body().contains("\"outcome\":\"APPROVED\""), result.body());
-        assertTrue(result.body().contains("\"returnSection\":null"));
+        assertTrue(result.body().contains("\"errors\":[]"), result.body());
     }
 
     /** Risk 结果与 CCT 状态不一致或 Risk 不可用：结果标记不可用，不伪造，表单照常返回。 */
@@ -180,6 +178,27 @@ class ClientOnboardingHttpAutoTest {
         }
     }
 
+    /** 撤回的申请读取案件结果以区分主动撤回与退回逾期（EXPIRED）；结果不符时不伪造。 */
+    @Test
+    void withdrawnApplicationDistinguishesExpiry() throws Exception {
+        mode = "expired";
+        var result = send("GET", "/client-onboarding/v1/applications/10", null);
+        assertEquals(200, result.statusCode(), result.body());
+        assertEquals("EXPIRED", JSON.readTree(result.body()).path("review").path("outcome").asString(), result.body());
+        mode = "withdrawn-mismatch";
+        var mismatch = send("GET", "/client-onboarding/v1/applications/10", null);
+        assertTrue(mismatch.body().contains("\"reviewStatus\":\"UNAVAILABLE\""), mismatch.body());
+    }
+
+    /** 退回错误码不是大写代码时整段结果不可用，不向页面传递可疑内容。 */
+    @Test
+    void malformedReturnErrorsAreUnavailable() throws Exception {
+        mode = "returned-bad-error";
+        var result = send("GET", "/client-onboarding/v1/applications/10", null);
+        assertEquals(200, result.statusCode(), result.body());
+        assertTrue(result.body().contains("\"reviewStatus\":\"UNAVAILABLE\""), result.body());
+    }
+
     /** 草稿不读取审核结果。 */
     @Test
     void draftDoesNotReadReviewResult() throws Exception {
@@ -187,29 +206,6 @@ class ClientOnboardingHttpAutoTest {
         assertEquals(200, result.statusCode(), result.body());
         assertTrue(result.body().contains("\"reviewStatus\":\"NONE\""));
         assertTrue(CALLS.stream().noneMatch(c -> c.path().endsWith("/result")));
-    }
-
-    /** 材料按资格类型通用：主体未填国家时仍读取材料要求，不出现国家前置状态。 */
-    @Test
-    void missingCountryStillLoadsGenericRequirements() throws Exception {
-        mode = "no-country";
-        var result = send("GET", "/client-onboarding/v1/applications/10", null);
-        assertEquals(200, result.statusCode(), result.body());
-        assertFalse(result.body().contains("COUNTRY_REQUIRED"));
-        assertFalse(result.body().contains("countryCode"));
-        assertTrue(result.body().contains("\"requirementsStatus\":\"AVAILABLE\""));
-        assertEquals(2, CALLS.stream().filter(call -> call.path().contains("material-requirements")).count());
-    }
-
-    /** 同一资格类型的多个关联人员只查询一次通用材料要求。 */
-    @Test
-    void relatedPeopleShareOneRequirementQuery() throws Exception {
-        mode = "two-people";
-        var result = send("GET", "/client-onboarding/v1/applications/10", null);
-        assertEquals(200, result.statusCode(), result.body());
-        assertTrue(result.body().contains("\"subjectPartyId\":\"33\""), result.body());
-        assertEquals(1, CALLS.stream().filter(call -> call.path().contains("material-requirements")
-            && call.query().equals("qualificationType=RELATED_PERSON_KYC")).count());
     }
 
     @Test
@@ -233,7 +229,7 @@ class ClientOnboardingHttpAutoTest {
     void commandsPreserveOriginalIdentityAndNeverCallOtherOwners() throws Exception {
         associated = false;
         String body =
-            "{\"subjectPartyId\":\"30\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileAddress\":\"/files/v1/40\"}";
+            "{\"subjectPartyId\":\"30\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileAddress\":\"/files/v1/40\",\"issueDate\":null,\"expiryDate\":null}";
         for (int i = 0; i < 2; i++) {
             var result = send("POST", "/client-onboarding/v1/applications/10/documents", body);
             assertEquals(i == 0 ? 201 : 200, result.statusCode(), result.body());
@@ -419,62 +415,12 @@ class ClientOnboardingHttpAutoTest {
             "/client-onboarding/v1/start?create=true",
             "/client-onboarding/v1/applications/01",
             "/client-onboarding/v1/applications/9223372036854775808",
-            "/client-onboarding/v1/form-options?clientType=INDIVIDUAL&clientType=ORGANIZATION"
+            "/client-onboarding/v1/form-schema?jurisdiction=AE&jurisdiction=SA&partyType=ORGANIZATION"
         )) {
             assertEquals(400, send("GET", path, null).statusCode(), path);
         }
         assertEquals(400, send("POST", "/onboarding-files/v1/uploads/60/completion", "{}").statusCode());
         assertTrue(CALLS.isEmpty());
-    }
-
-    /** 目录只接受固定客户类型；旧国家参数与非法类型都不会查询目录或材料 Owner。 */
-    @Test
-    void optionsOnlyAllowsFixedClientTypesWithoutCountry() throws Exception {
-        var result = send("GET", "/client-onboarding/v1/form-options?clientType=INDIVIDUAL", null);
-        assertEquals(200, result.statusCode(), result.body());
-        assertFalse(result.body().contains("COUNTRY_REQUIRED"));
-        assertFalse(result.body().contains("countryCode"));
-        assertTrue(result.body().contains("\"requirementsStatus\":\"AVAILABLE\""));
-        assertTrue(CALLS.stream().anyMatch(call -> call.path().endsWith("/material-requirements")
-            && call.query().equals("qualificationType=INDIVIDUAL_KYC")));
-        CALLS.clear();
-        assertEquals(400, send("GET", "/client-onboarding/v1/form-options?clientType=INDIVIDUAL&countryCode=ZZ", null).statusCode());
-        assertEquals(400, send("GET", "/client-onboarding/v1/form-options?clientType=PARTNER", null).statusCode());
-        assertTrue(CALLS.stream().noneMatch(call -> call.path().endsWith("/form-options") || call.path().endsWith("/material-requirements")));
-    }
-
-    /** CCT 目录与 Risk 要求分别聚合，单边失败不能吞掉另一边事实。 */
-    @Test void optionsExposeControlledCatalogAndPreserveIndependentFailures() throws Exception {
-        var available=send("GET","/client-onboarding/v1/form-options?clientType=INDIVIDUAL",null);
-        assertEquals(200,available.statusCode());
-        assertTrue(available.body().contains("SYNTHETIC_PERSON_ID"),available.body());
-        assertTrue(available.body().contains("\"catalogStatus\":\"AVAILABLE\""));
-        var catalogCall=CALLS.stream().filter(call -> call.path().endsWith("/form-options")).findFirst().orElseThrow();
-        assertEquals("client-console-bff",catalogCall.caller());
-        mode="catalog-unavailable";
-        var missing=send("GET","/client-onboarding/v1/form-options?clientType=INDIVIDUAL",null);
-        assertEquals(200,missing.statusCode());
-        assertTrue(missing.body().contains("\"catalogStatus\":\"UNAVAILABLE\""));
-        assertTrue(missing.body().contains("\"requirementsStatus\":\"AVAILABLE\""));
-        mode="unavailable";
-        var riskMissing=send("GET","/client-onboarding/v1/form-options?clientType=INDIVIDUAL",null);
-        assertEquals(200,riskMissing.statusCode());
-        assertTrue(riskMissing.body().contains("\"catalogStatus\":\"AVAILABLE\""));
-        assertTrue(riskMissing.body().contains("\"requirementsStatus\":\"UNAVAILABLE\""));
-    }
-    /** 未识别的 Owner 状态不开放目录；聚合后撤销会话不能返回数据。 */
-    @Test void optionsFailClosedForUnknownCatalogAndLateRevocation() throws Exception {
-        mode="unknown-catalog";
-        var result=send("GET","/client-onboarding/v1/form-options?clientType=INDIVIDUAL",null);
-        assertEquals(200,result.statusCode());
-        assertTrue(result.body().contains("\"catalogStatus\":\"UNAVAILABLE\""));
-        mode="unknown-mode";
-        var unknownMode=send("GET","/client-onboarding/v1/form-options?clientType=INDIVIDUAL",null);
-        assertEquals(200,unknownMode.statusCode());
-        assertTrue(unknownMode.body().contains("\"catalogStatus\":\"UNAVAILABLE\""));
-        assertFalse(unknownMode.body().contains("SYNTHETIC_PERSON_ID"));
-        CONTEXT.set(0);mode="revoke";
-        assertEquals(401,send("GET","/client-onboarding/v1/form-options?clientType=INDIVIDUAL",null).statusCode());
     }
 
     /** C14 不要求 Idempotency-Key，原样转发 CCT 的 202/200，且不把请求键传给 Owner。 */
@@ -503,15 +449,113 @@ class ClientOnboardingHttpAutoTest {
         var incomplete = submit(false, null);
         assertEquals(422, incomplete.statusCode(), incomplete.body());
         assertTrue(incomplete.body().contains("\"code\":\"SUBMISSION_INCOMPLETE\""));
+        // 空 Body 命令的 422 不携带 errors[]（Foundation 只为带 Body 的请求透传字段错误）；页面据 SUBMISSION_INCOMPLETE 重新核对取逐项问题。
+        assertTrue(JSON.readTree(incomplete.body()).path("errors").isMissingNode() || JSON.readTree(incomplete.body()).path("errors").isEmpty());
         mode = "submit-conflict";
         var conflict = submit(false, null);
         assertEquals(409, conflict.statusCode(), conflict.body());
         assertTrue(conflict.body().contains("\"code\":\"IDENTITY_CONFLICT\""));
         var check = send("GET", "/client-onboarding/v1/applications/10/submission-check", null);
         assertEquals(200, check.statusCode(), check.body());
-        assertTrue(check.body().contains("\"ready\":false"));
-        assertTrue(check.body().contains("\"field\":\"materials[30].REGISTRATION\""));
+        var json = JSON.readTree(check.body());
+        assertFalse(json.path("ready").asBoolean());
+        assertEquals("document.REGISTRATION", json.path("errors").get(1).path("requirementKey").asString());
+        assertEquals("DOCUMENT_MISSING", json.path("errors").get(1).path("code").asString());
         assertEquals("no-store", check.headers().firstValue("Cache-Control").orElseThrow());
+        mode = "check-legacy";
+        assertTrue(send("GET", "/client-onboarding/v1/applications/10/submission-check", null).statusCode() >= 500);
+    }
+
+    /** CM-1 / CM-2：只转发白名单 Query，原样返回 Owner 事实；非法参数不到达 Owner，形状不符按不可用。 */
+    @Test
+    void jurisdictionsAndSchemaForwardWithStrictQuery() throws Exception {
+        var list = send("GET", "/client-onboarding/v1/jurisdictions", null);
+        assertEquals(200, list.statusCode(), list.body());
+        assertTrue(list.body().contains("onboardingSchema.jurisdiction.SA"));
+        var schema = send("GET", "/client-onboarding/v1/form-schema?jurisdiction=SA&partyType=ORGANIZATION&organizationType=LLC&applicationId=10", null);
+        assertEquals(200, schema.statusCode(), schema.body());
+        assertEquals("9270000000700005", JSON.readTree(schema.body()).path("schemaId").asString());
+        var call = CALLS.stream().filter(c -> c.path().endsWith("/form-schema")).findFirst().orElseThrow();
+        assertEquals("/client-onboarding/v1/form-schema", call.path());
+        assertTrue(call.query().contains("applicationId=10") && call.query().contains("jurisdiction=SA")
+            && call.query().contains("partyType=ORGANIZATION") && call.query().contains("organizationType=LLC"), call.query());
+        CALLS.clear();
+        var frozen = send("GET", "/client-onboarding/v1/form-schema?applicationId=10", null);
+        assertEquals(200, frozen.statusCode(), frozen.body());
+        var frozenCall = CALLS.stream().filter(c -> c.path().endsWith("/form-schema")).findFirst().orElseThrow();
+        assertEquals("applicationId=10", frozenCall.query());
+        assertEquals("client-console-bff", call.caller());
+        assertEquals("1", call.account());
+        CALLS.clear();
+        for (String path : List.of("/client-onboarding/v1/form-schema?jurisdiction=SA&partyType=PARTNER",
+            "/client-onboarding/v1/form-schema?jurisdiction=sa&partyType=ORGANIZATION",
+            "/client-onboarding/v1/form-schema?jurisdiction=SA&partyType=ORGANIZATION&roleType=CLIENT",
+            "/client-onboarding/v1/form-schema?jurisdiction=SA&partyType=ORGANIZATION&applicationId=01",
+            "/client-onboarding/v1/form-schema?jurisdiction=SA",
+            "/client-onboarding/v1/form-schema",
+            "/client-onboarding/v1/jurisdictions?status=ALL")) {
+            assertEquals(400, send("GET", path, null).statusCode(), path);
+        }
+        assertTrue(CALLS.stream().noneMatch(c -> c.path().endsWith("/form-schema") || c.path().endsWith("/jurisdictions")));
+        mode = "schema-malformed";
+        assertEquals(503, send("GET", "/client-onboarding/v1/form-schema?jurisdiction=SA&partyType=INDIVIDUAL", null).statusCode());
+        mode = "closed";
+        assertProblem(send("GET", "/client-onboarding/v1/form-schema?jurisdiction=SA&partyType=INDIVIDUAL", null), 422,
+            "JURISDICTION_NOT_ACCEPTED");
+    }
+
+    /** CM-6：只接受声明代码与 TRUE/FALSE，原样转发并带上浏览器标识；非法值不到达 Owner。 */
+    @Test
+    void declarationsForwardValidatedBody() throws Exception {
+        var result = send("POST", "/client-onboarding/v1/applications/10/declarations",
+            "{\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"TRUE\"}");
+        assertEquals(200, result.statusCode(), result.body());
+        assertEquals("70", JSON.readTree(result.body()).path("declarationId").asString());
+        var call = CALLS.stream().filter(c -> c.path().endsWith("/declarations")).findFirst().orElseThrow();
+        assertEquals("/client-onboarding/v1/applications/10/declarations", call.path());
+        assertEquals("INFORMATION_TRUE", JSON.readTree(call.body()).path("declarationType").asString());
+        CALLS.clear();
+        for (String body : List.of("{\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"YES\"}",
+            "{\"declarationType\":\"bad type\",\"declaredValue\":\"TRUE\"}")) {
+            assertEquals(400, send("POST", "/client-onboarding/v1/applications/10/declarations", body).statusCode(), body);
+        }
+        assertTrue(CALLS.stream().noneMatch(c -> c.path().endsWith("/declarations")));
+    }
+
+    /** CM-8：撤回 Body 为空；带 Body 的请求不到达 Owner。 */
+    @Test
+    void withdrawalForwardsEmptyCommand() throws Exception {
+        var result = send("POST", "/client-onboarding/v1/applications/10/withdrawal", null);
+        assertEquals(200, result.statusCode(), result.body());
+        assertTrue(result.body().contains("\"status\":\"WITHDRAWN\""));
+        var call = CALLS.stream().filter(c -> c.path().endsWith("/withdrawal")).findFirst().orElseThrow();
+        assertEquals("", call.body());
+        assertEquals("2", call.session());
+        CALLS.clear();
+        assertEquals(400, send("POST", "/client-onboarding/v1/applications/10/withdrawal", "{}").statusCode());
+        assertTrue(CALLS.stream().noneMatch(c -> c.path().endsWith("/withdrawal")));
+    }
+
+    /** CM-7：可编辑申请的详情并发合入需求清单；不可用时显式标记，已结束的申请不读取。 */
+    @Test
+    void detailsCarryRequirementsAndSchemaCoordinates() throws Exception {
+        var draft = JSON.readTree(send("GET", "/client-onboarding/v1/applications/10", null).body());
+        assertEquals("AVAILABLE", draft.path("requirementsStatus").asString());
+        assertEquals("organization.legalName", draft.path("requirements").get(0).path("requirementKey").asString());
+        assertEquals("SA", draft.path("jurisdictionCode").asString());
+        assertEquals("LLC", draft.path("organizationTypeCode").asString());
+        assertEquals("Gulf Pay", draft.path("responsiblePartnerName").asString());
+        assertEquals("880000000701", draft.path("responsiblePartnerId").asString());
+        assertEquals("INFORMATION_TRUE", draft.path("declarations").get(0).path("declarationType").asString());
+        assertEquals("TRUE", draft.path("declarations").get(0).path("declaredValue").asString());
+        mode = "unavailable";
+        var unavailable = JSON.readTree(send("GET", "/client-onboarding/v1/applications/10", null).body());
+        assertEquals("UNAVAILABLE", unavailable.path("requirementsStatus").asString());
+        CALLS.clear();
+        mode = "approved";
+        var approved = JSON.readTree(send("GET", "/client-onboarding/v1/applications/10", null).body());
+        assertEquals("NONE", approved.path("requirementsStatus").asString());
+        assertTrue(CALLS.stream().noneMatch(c -> c.path().endsWith("/requirements")));
     }
 
     /** C14 Body 必须为空；带 Body 的请求不会到达 CCT。 */
@@ -635,7 +679,7 @@ class ClientOnboardingHttpAutoTest {
         } else if (path.endsWith("/submissions") && method.equals("POST")) {
             exchange.getResponseHeaders().set("X-Request-Id", "fixture-owner");
             if (mode.equals("submit-incomplete")) {
-                write(exchange, 422, "{\"type\":\"about:blank\",\"title\":\"Unprocessable Content\",\"detail\":\"资料或材料尚不完整，请按提交核对结果补全\",\"code\":\"SUBMISSION_INCOMPLETE\",\"requestId\":\"fixture-owner\",\"timestamp\":\"2026-09-16T00:00:00.000000Z\"}", "application/problem+json");
+                write(exchange, 422, "{\"type\":\"about:blank\",\"title\":\"Unprocessable Content\",\"detail\":\"资料或材料尚不完整，请按提交核对结果补全\",\"code\":\"SUBMISSION_INCOMPLETE\",\"requestId\":\"fixture-owner\",\"timestamp\":\"2026-09-16T00:00:00.000000Z\",\"errors\":[{\"field\":\"document.BANK\",\"message\":\"DOCUMENT_MISSING/UPLOAD_DOCUMENT\"},{\"field\":\"people[31].individual.birthDate\",\"message\":\"FIELD_MISSING/PROVIDE_FIELD\"}]}", "application/problem+json");
                 return;
             }
             if (mode.equals("submit-conflict")) {
@@ -646,17 +690,29 @@ class ClientOnboardingHttpAutoTest {
             body = "{\"applicationId\":\"10\",\"submissionId\":\"6b4df4d5-e910-49eb-9695-3d083a3c4bbd\",\"status\":\""
                 + (mode.equals("submit-existing") ? "UNDER_REVIEW" : "SUBMITTED") + "\"}";
         } else if (path.endsWith("/submission-check")) {
-            body = "{\"ready\":false,\"issues\":[{\"field\":\"individual.givenName\",\"message\":\"提交前请填写此项\"},{\"field\":\"materials[30].REGISTRATION\",\"message\":\"请上传基础必需材料\"}]}";
-        } else if (path.endsWith("/form-options")) {
-            if(mode.equals("catalog-unavailable")) { failure(exchange,503);return; }
-            body="{\"clientType\":\"INDIVIDUAL\",\"catalogStatus\":\""+(mode.equals("unknown-catalog")?"FUTURE":"AVAILABLE")+"\",\"organizationTypes\":[],\"businessModels\":[{\"code\":\"SYNTHETIC_SOLE\",\"label\":\"合成模式\"}],\"identifierTypes\":[{\"code\":\"SYNTHETIC_PERSON_ID\",\"label\":\"合成证件\",\"issuingCountryMode\":\""+(mode.equals("unknown-mode")?"ISSUER":"REQUIRED")+"\"}]}";
-        } else if (path.endsWith("/material-requirements")) {
+            body = mode.equals("check-legacy") ? "{\"ready\":false,\"issues\":[]}"
+                : "{\"ready\":false,\"errors\":[{\"requirementKey\":\"organization.legalName\",\"subjectPartyId\":\"30\",\"code\":\"FIELD_MISSING\",\"remediation\":\"PROVIDE_FIELD\",\"message\":\"Required\"},{\"requirementKey\":\"document.REGISTRATION\",\"subjectPartyId\":\"30\",\"code\":\"DOCUMENT_MISSING\",\"remediation\":\"UPLOAD_DOCUMENT\",\"message\":\"Upload\"}]}";
+        } else if (path.endsWith("/jurisdictions")) {
+            body = "[{\"jurisdictionCode\":\"SA\",\"countryCode\":\"SA\",\"labelKey\":\"onboardingSchema.jurisdiction.SA\",\"acceptancePolicy\":\"OPEN\"}]";
+        } else if (path.endsWith("/form-schema")) {
+            if (mode.equals("closed")) {
+                exchange.getResponseHeaders().set("X-Request-Id", "fixture-owner");
+                write(exchange, 422, "{\"type\":\"about:blank\",\"title\":\"Unprocessable Content\",\"detail\":\"当前辖区暂不受理入驻\",\"code\":\"JURISDICTION_NOT_ACCEPTED\",\"requestId\":\"fixture-owner\",\"timestamp\":\"2026-10-27T00:00:00.000000Z\"}", "application/problem+json");
+                return;
+            }
+            body = mode.equals("schema-malformed") ? "{\"schemaId\":\"1\"}"
+                : "{\"schemaId\":\"9270000000700005\",\"versionNo\":1,\"sections\":[{\"section\":\"BASIC\",\"labelKey\":\"onboardingSchema.section.BASIC\",\"groups\":[]}],\"catalogs\":{},\"materials\":[]}";
+        } else if (path.endsWith("/requirements")) {
             if (mode.equals("unavailable")) {
                 failure(exchange, 503);
                 return;
             }
-            body =
-                "{\"programId\":\"70\",\"programVersionId\":\"71\",\"items\":[{\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"requiredFlag\":true}]}";
+            body = "{\"applicationId\":\"10\",\"status\":\"DRAFT\",\"ready\":false,\"dueTime\":null,\"items\":[{\"requirementKind\":\"FIELD\",\"requirementKey\":\"organization.legalName\",\"subjectPartyId\":\"30\",\"status\":\"CURRENTLY_DUE\",\"awaitingActionFrom\":\"CLIENT\",\"errorCode\":\"FIELD_MISSING\",\"remediationCode\":\"PROVIDE_FIELD\",\"dueTime\":null}]}";
+        } else if (path.endsWith("/declarations")) {
+            status = 201;
+            body = "{\"declarationId\":\"70\",\"applicationId\":\"10\",\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"TRUE\",\"termsVersion\":null,\"declaredAt\":\"2026-10-27T00:00:00Z\"}";
+        } else if (path.endsWith("/withdrawal")) {
+            body = "{\"applicationId\":\"10\",\"status\":\"WITHDRAWN\",\"withdrawnAt\":\"2026-10-27T00:00:00Z\"}";
         } else if (path.endsWith("/applications/10") && method.equals("GET")) {
             String organization = mode.equals("no-country") ? "{}" : "{\"incorporationCountry\":\"ZZ\"}";
             String individual = mode.equals("no-country") ? "{}" : "{\"residenceCountry\":\"AA\"}";
@@ -665,17 +721,28 @@ class ClientOnboardingHttpAutoTest {
                 organization +
                 "},\"people\":[{\"partyId\":\"31\",\"editable\":true,\"values\":{\"individual\":" +
                 individual +
-                "}}"+(mode.equals("two-people") ? ",{\"partyId\":\"33\",\"editable\":true,\"values\":{}}" : "")+"],\"relations\":[{\"relationId\":\"32\",\"relatedPartyId\":\"31\",\"relationType\":\"DIRECTOR\",\"ownershipPercentage\":null,\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true}"+(mode.equals("two-people") ? ",{\"relationId\":\"34\",\"relatedPartyId\":\"33\",\"relationType\":\"UBO\",\"ownershipPercentage\":\"30\",\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true}" : "")+"],\"documents\":[{\"documentId\":\"50\",\"subjectPartyId\":\"30\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileAddress\":\"/files/v1/40\",\"subjectInScope\":true},{\"documentId\":\"51\",\"subjectPartyId\":\"30\",\"requirementCode\":\"ADDRESS\",\"documentType\":\"ADDRESS_PROOF\",\"fileAddress\":\"/files/v1/40\",\"subjectInScope\":true}]}";
+                "}}"+(mode.equals("two-people") ? ",{\"partyId\":\"33\",\"editable\":true,\"values\":{}}" : "")+"],\"relations\":[{\"relationId\":\"32\",\"relatedPartyId\":\"31\",\"relationType\":\"DIRECTOR\",\"ownershipPercentage\":null,\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true,\"uboBasis\":null,\"jobTitle\":null,\"nomineeFlag\":null,\"controlNature\":null}"+(mode.equals("two-people") ? ",{\"relationId\":\"34\",\"relatedPartyId\":\"33\",\"relationType\":\"UBO\",\"ownershipPercentage\":\"30\",\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true,\"uboBasis\":null,\"jobTitle\":null,\"nomineeFlag\":null,\"controlNature\":null}" : "")+"],\"documents\":[{\"documentId\":\"50\",\"subjectPartyId\":\"30\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileAddress\":\"/files/v1/40\",\"subjectInScope\":true,\"issueDate\":null,\"expiryDate\":null},{\"documentId\":\"51\",\"subjectPartyId\":\"30\",\"requirementCode\":\"ADDRESS\",\"documentType\":\"ADDRESS_PROOF\",\"fileAddress\":\"/files/v1/40\",\"subjectInScope\":true,\"issueDate\":null,\"expiryDate\":null}],\"jurisdictionCode\":\"SA\",\"organizationTypeCode\":\"LLC\",\"schemaId\":\"9270000000700005\",\"reviewDueTime\":null,\"responsiblePartnerId\":\"880000000701\",\"responsiblePartnerName\":\"Gulf Pay\",\"declarations\":[{\"declarationId\":\"70\",\"applicationId\":\"10\",\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"TRUE\",\"termsVersion\":null,\"declaredAt\":\"2026-10-27T00:00:00Z\"}]}";
         } else if (path.endsWith("/applications/10/result")) {
             if (mode.equals("review-down")) {
                 failure(exchange, 503);
                 return;
             }
-            String outcome = mode.equals("review-mismatch") ? "null" : "\"" + applicationStatus() + "\"";
-            String section = mode.equals("returned") ? "\"BUSINESS\"" : "null";
-            body = "{\"applicationId\":\"10\",\"caseId\":\"90\",\"status\":\"" + (mode.equals("review-mismatch") ? "UNDER_REVIEW" : applicationStatus())
-                + "\",\"outcome\":" + outcome + ",\"returnSection\":" + section
-                + ",\"publicNote\":\"请补充经营地址\",\"decidedAt\":\"2026-10-13T00:00:00.000000Z\"}";
+            String outcome = switch (mode) {
+                case "review-mismatch" -> "null";
+                case "expired" -> "\"EXPIRED\"";
+                case "withdrawn-mismatch" -> "\"APPROVED\"";
+                default -> "\"" + applicationStatus() + "\"";
+            };
+            String errors = mode.startsWith("returned")
+                ? "[{\"requirementKey\":\"document.BANK\",\"subjectPartyId\":\"30\",\"code\":\""
+                    + (mode.equals("returned-bad-error") ? "not a code" : "DOCUMENT_TOO_OLD")
+                    + "\",\"reason\":\"请上传近 6 个月内的银行证明\",\"remediation\":\"UPLOAD_DOCUMENT\",\"dueTime\":\"2026-11-10T23:59:00Z\"}]"
+                : "[]";
+            body = "{\"applicationId\":\"10\",\"caseId\":\"90\",\"status\":\"" + (mode.equals("review-mismatch") ? "UNDER_REVIEW" : mode.equals("expired") ? "EXPIRED" : applicationStatus())
+                + "\",\"outcome\":" + outcome + ",\"roundNo\":1,\"returnSection\":null"
+                + ",\"publicNote\":\"请补充经营地址\",\"errors\":" + errors
+                + ",\"dueTime\":" + (mode.startsWith("returned") ? "\"2026-11-10T23:59:00Z\"" : "null")
+                + ",\"decidedAt\":\"2026-10-13T00:00:00.000000Z\"}";
         } else if (path.startsWith(FILES + "/files/") && method.equals("GET")) {
             if (mode.equals("unavailable")) {
                 failure(exchange, 503);
@@ -734,7 +801,8 @@ class ClientOnboardingHttpAutoTest {
     /** CCT 申请状态按场景切换；未指定时为草稿。 */
     private static String applicationStatus() {
         return switch (mode) {
-            case "returned", "review-mismatch" -> "RETURNED";
+            case "returned", "returned-bad-error", "review-mismatch" -> "RETURNED";
+            case "expired", "withdrawn-mismatch" -> "WITHDRAWN";
             case "approved" -> "APPROVED";
             case "review-down" -> "REJECTED";
             default -> "DRAFT";

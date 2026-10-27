@@ -1,0 +1,33 @@
+# 合成筛查服务（全球合规入驻切片 1，R8 / S-06）：服务渠道 S_SCREENING_MOCK 的出站地址，只在 backend 网络、不发布宿主机端口。
+#   ./compose.sh -f compose.screening-mock.yaml --profile acceptance up -d screening-mock
+# 脚本：acceptance/screening-mock/screening_mock_server.py（与 requirements/20261027/client-master-全球合规入驻与资格切片1/assets/harness/
+#   同名文件逐字相同）。规则：fullName 含 TESTHIT → PEP 命中，含 TESTSANCTION → SANCTIONS 命中，否则空；TESTFAIL / TESTERROR / TESTSLOW 为异常路径。
+# channel-connector 须加覆盖（发布清单登记，只放行本 IP，不得放行其他私网）：
+#   CHANNELCONNECTOR_PROTOCOL_EXECUTION_ALLOWEDSCHEMES: "https,http"
+#   CHANNELCONNECTOR_PROTOCOL_EXECUTION_TRUSTEDNETWORKS: "172.30.73.43/32"
+# 渠道出站地址：http://172.30.73.43:8080（Mock 不经服务发现；用 IP 便于 trusted-networks /32 精确匹配）。
+# 挂载源可用 SCREENING_MOCK_SCRIPT 覆盖为绝对路径（compose.sh 在主工作区运行、脚本只在 Code-MoR-onboard worktree 时必须设置）。
+# 镜像与 webhook-receiver 同一固定摘要（mor-test 已存在，无需拉取或构建）；无持久卷，流水不落盘。
+services:
+  screening-mock:
+    profiles: [acceptance]
+    image: python:3.13-alpine@sha256:2d9aefe2fef018a7eb2c13064c89c71929800fd2e5dccdbf52ea5da5bb8d929a
+    user: "10001:10001"
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=8m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 64m
+    command: [python, -I, /app/screening_mock_server.py, --host, 0.0.0.0, --port, "8080"]
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ${SCREENING_MOCK_SCRIPT:-./acceptance/screening-mock/screening_mock_server.py}:/app/screening_mock_server.py:ro
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      backend: { ipv4_address: 172.30.73.43 }

@@ -50,6 +50,24 @@ public class QualificationDecision {
      */
     private String basisNote;
 
+    /** 决定时冻结的尽调档次；MANUAL 为空。 */
+    private String tier;
+    /** 决定时冻结的客户风险评级；MANUAL 或未评级为空。 */
+    private String riskRating;
+    /** 决定时冻结的辖区代码；MANUAL 为空。 */
+    private String jurisdictionCode;
+    /** 决定时冻结的责任 PayFac；平台自营或 MANUAL 为空。 */
+    private Long responsiblePartnerId;
+    /** 推荐人；MANUAL 或未推荐为空。 */
+    private Long recommendedBy;
+    /** 推荐时间。 */
+    private Instant recommendedTime;
+    /** 程序不要求四眼时为 1，要求时为 0；MANUAL 为空。 */
+    private Integer fourEyesWaived;
+    /** 操作方 PLATFORM；历史行为空。 */
+    private String operatedBy;
+    /** 代操作的责任 PayFac；非代操作为空。 */
+    private Long onBehalfOfPartnerId;
     /** 有效开始 UTC 时间。 */
     private Instant validFrom;
 

@@ -8,6 +8,7 @@ import com.paytech.foundation.testsupport.api.MockHttpFault;
 import com.paytech.compliance.api.ClientReviewRegistrationApi;
 import com.paytech.compliance.api.request.ClientReviewClassificationsRequestBody;
 import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
+import com.paytech.compliance.api.request.ClientReviewWithdrawalRequestBody;
 import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
 import com.paytech.compliance.api.response.ClientReviewRegistrationResponseBody;
 
@@ -39,6 +40,17 @@ public class MockRiskReviewRegistrationApi implements ClientReviewRegistrationAp
         ClientReviewClassificationsRequestBody request) {
         MockPlatformAuthenticationApi.requestId();
         Object reply = mocker.classifications(caseId, request);
+        if (reply instanceof OnboardingOwnerMocker.Fault fault) {
+            throw fault.disconnect() ? MockHttpFault.disconnect() : MockHttpFault.json(fault.status(), fault.problem());
+        }
+        return (ClientReviewCommandResponseBody)MockPlatformAuthenticationApi.required(reply);
+    }
+
+    /** 返回本例配置的撤回结果或故障。 */
+    @Override
+    public ClientReviewCommandResponseBody withdraw(String caller, String caseId, ClientReviewWithdrawalRequestBody request) {
+        MockPlatformAuthenticationApi.requestId();
+        Object reply = mocker.withdraw(caseId, request);
         if (reply instanceof OnboardingOwnerMocker.Fault fault) {
             throw fault.disconnect() ? MockHttpFault.disconnect() : MockHttpFault.json(fault.status(), fault.problem());
         }

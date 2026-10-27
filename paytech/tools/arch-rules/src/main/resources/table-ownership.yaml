@@ -97,9 +97,13 @@ services:
       - t_standard_api
   client-master:
     mor_client_master:
+      - t_address_format_component
+      - t_application_declaration
       - t_application_document
+      - t_attribute_definition
       - t_business_change_record
       - t_business_change_version
+      - t_catalog_item
       - t_client
       - t_client_application
       - t_client_business_classification
@@ -110,22 +114,31 @@ services:
       - t_compensation_event
       - t_consumer_legal_document
       - t_entity_source_relation
+      - t_identifier_type
       - t_individual_profile
+      - t_jurisdiction
       - t_local_partner
+      - t_onboarding_schema
+      - t_onboarding_schema_field
       - t_operating_entity
       - t_operating_entity_application
       - t_operating_entity_scope
       - t_organization_profile
+      - t_organization_type
       - t_partner_application
+      - t_partner_onboarding_code
       - t_partner_role
       - t_party
       - t_party_address
+      - t_party_attribute
       - t_party_contact
       - t_party_identity_key
       - t_party_profile
       - t_party_profile_identifier
       - t_party_relation
       - t_party_role
+      - t_relation_type
+      - t_rule_setting
       - t_seller_disclosure
   commercial:
     mor_commercial:
@@ -164,14 +177,18 @@ services:
       - t_dd_program
       - t_dd_program_check
       - t_dd_program_requirement
+      - t_dd_program_requirement_doc_type
       - t_dd_program_screening
       - t_dd_program_version
       - t_dd_requirement
+      - t_dd_return_error
+      - t_dd_risk_factor
       - t_due_diligence_case
       - t_qualification_decision
       - t_qualification_state_change
       - t_role_qualification
       - t_screening_hit
+      - t_screening_hit_list
       - t_screening_resolution
       - t_screening_run
       - t_settle_control_state_change

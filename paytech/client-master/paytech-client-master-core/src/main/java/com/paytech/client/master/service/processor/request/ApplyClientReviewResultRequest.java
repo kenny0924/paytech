@@ -20,12 +20,14 @@ public class ApplyClientReviewResultRequest {
     /** 来源提交编号。 */
     @NotBlank
     private final String submissionId;
-    /** RETURNED、APPROVED 或 REJECTED。 */
+    /** RETURNED、APPROVED、REJECTED 或 EXPIRED（v2：退回超期）。 */
     @NotBlank
-    @Pattern(regexp = "^(RETURNED|APPROVED|REJECTED)$")
+    @Pattern(regexp = "^(RETURNED|APPROVED|REJECTED|EXPIRED)$")
     private final String outcome;
     /** Risk 主任务最终决定 ID；退回为空。 */
     private final Long decisionId;
-    /** 最终决定人 Account ID；退回为空。 */
+    /** 最终决定人 Account ID；退回与超期为空。 */
     private final Long decidedBy;
+    /** 退回补件截止时间（v2 RETURNED 填写）；其他结果或 v1 为空。 */
+    private final java.time.Instant dueTime;
 }

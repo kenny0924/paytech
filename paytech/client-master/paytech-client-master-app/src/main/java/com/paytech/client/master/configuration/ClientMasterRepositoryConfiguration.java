@@ -132,4 +132,95 @@ public class ClientMasterRepositoryConfiguration {
         return new BusinessChangeRecordRepositoryImpl(
                 new SqlSessionTemplate(factory).getMapper(BusinessChangeRecordMapper.class));
     }
+
+    /** 装配 t_jurisdiction 仓储。 */
+    @Bean
+    public JurisdictionRepository jurisdictionRepository(SqlSessionFactory factory) {
+        return new JurisdictionRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(JurisdictionMapper.class));
+    }
+
+    /** 装配 t_rule_setting 仓储。 */
+    @Bean
+    public RuleSettingRepository ruleSettingRepository(SqlSessionFactory factory) {
+        return new RuleSettingRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(RuleSettingMapper.class));
+    }
+
+    /** 装配 t_organization_type 仓储。 */
+    @Bean
+    public OrganizationTypeRepository organizationTypeRepository(SqlSessionFactory factory) {
+        return new OrganizationTypeRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(OrganizationTypeMapper.class));
+    }
+
+    /** 装配 t_identifier_type 仓储。 */
+    @Bean
+    public IdentifierTypeRepository identifierTypeRepository(SqlSessionFactory factory) {
+        return new IdentifierTypeRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(IdentifierTypeMapper.class));
+    }
+
+    /** 装配 t_relation_type 仓储。 */
+    @Bean
+    public RelationTypeRepository relationTypeRepository(SqlSessionFactory factory) {
+        return new RelationTypeRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(RelationTypeMapper.class));
+    }
+
+    /** 装配 t_address_format_component 仓储。 */
+    @Bean
+    public AddressFormatComponentRepository addressFormatComponentRepository(SqlSessionFactory factory) {
+        return new AddressFormatComponentRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(AddressFormatComponentMapper.class));
+    }
+
+    /** 装配 t_catalog_item 仓储。 */
+    @Bean
+    public CatalogItemRepository catalogItemRepository(SqlSessionFactory factory) {
+        return new CatalogItemRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(CatalogItemMapper.class));
+    }
+
+    /** 装配 t_attribute_definition 仓储。 */
+    @Bean
+    public AttributeDefinitionRepository attributeDefinitionRepository(SqlSessionFactory factory) {
+        return new AttributeDefinitionRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(AttributeDefinitionMapper.class));
+    }
+
+    /** 装配 t_party_attribute 仓储。 */
+    @Bean
+    public PartyAttributeRepository partyAttributeRepository(SqlSessionFactory factory) {
+        return new PartyAttributeRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(PartyAttributeMapper.class));
+    }
+
+    /** 装配 t_onboarding_schema 仓储。 */
+    @Bean
+    public OnboardingSchemaRepository onboardingSchemaRepository(SqlSessionFactory factory) {
+        return new OnboardingSchemaRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(OnboardingSchemaMapper.class));
+    }
+
+    /** 装配 t_onboarding_schema_field 仓储。 */
+    @Bean
+    public OnboardingSchemaFieldRepository onboardingSchemaFieldRepository(SqlSessionFactory factory) {
+        return new OnboardingSchemaFieldRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(OnboardingSchemaFieldMapper.class));
+    }
+
+    /** 装配 t_application_declaration 仓储。 */
+    @Bean
+    public ApplicationDeclarationRepository applicationDeclarationRepository(SqlSessionFactory factory) {
+        return new ApplicationDeclarationRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(ApplicationDeclarationMapper.class));
+    }
+
+    /** 装配 t_partner_onboarding_code 仓储。 */
+    @Bean
+    public PartnerOnboardingCodeRepository partnerOnboardingCodeRepository(SqlSessionFactory factory) {
+        return new PartnerOnboardingCodeRepositoryImpl(
+                new SqlSessionTemplate(factory).getMapper(PartnerOnboardingCodeMapper.class));
+    }
 }

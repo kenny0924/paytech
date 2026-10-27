@@ -1,5 +1,4 @@
 package com.paytech.client.master.configuration;
-import com.paytech.client.master.core.configuration.ClientFormCatalogProperties;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -40,15 +39,29 @@ import com.paytech.vault.client.autoconfigure.VaultClientAutoConfiguration;
 @Configuration(proxyBeanMethods=false)
 @ConditionalOnProperty(prefix="onboarding",name="draft-enabled",havingValue="true")
 @Import(VaultClientAutoConfiguration.class)
-@org.springframework.boot.context.properties.EnableConfigurationProperties(ClientFormCatalogProperties.class)
 public class ClientDraftConfiguration {
-    /** 受控目录只读取启动时校验过的 CCT 配置。 */
-    @Bean public ClientFormCatalogService clientFormCatalogService(ClientFormCatalogProperties catalog) {
-        return new ClientFormCatalogServiceImpl(catalog);
+    /** 辖区包与采集 Schema 装载：只读本库目录表。 */
+    @Bean public OnboardingPackService onboardingPackService(CatalogItemRepository catalogItems,JurisdictionRepository jurisdictions,
+        RuleSettingRepository ruleSettings,RelationTypeRepository relationTypes,IdentifierTypeRepository identifierTypes,
+        OnboardingSchemaRepository schemas,OrganizationTypeRepository organizationTypes,OnboardingSchemaFieldRepository schemaFields,
+        AttributeDefinitionRepository attributeDefinitions,AddressFormatComponentRepository addressComponents) {
+        return new OnboardingPackServiceImpl(catalogItems,jurisdictions,ruleSettings,relationTypes,identifierTypes,schemas,
+            organizationTypes,schemaFields,attributeDefinitions,addressComponents);
     }
-    /** 目录查询复用真实 Platform 会话验证，不打开数据库事务。 */
-    @Bean public GetClientFormOptionsProcessor getClientFormOptionsProcessor(ClientDraftAccountClient accounts,ClientFormCatalogService catalog) {
-        return new GetClientFormOptionsProcessor(accounts,catalog);
+    /** 个人证件号 Vault 保护（LEGAL_IDENTIFIER_V1，STABLE）。 */
+    @Bean public ClientIdentifierVaultClient clientIdentifierVaultClient(VaultClient vault) { return new ClientIdentifierVaultClientImpl(vault); }
+    /** 草稿与人员写入共用的事务外准备。 */
+    @Bean public ClientDraftPreparer clientDraftPreparer(OnboardingPackService packs,ClientIdentifierVaultClient identifiers) {
+        return new ClientDraftPreparer(packs,identifiers);
+    }
+    /** CM-1 可入驻辖区。 */
+    @Bean public GetOnboardingJurisdictionsProcessor getOnboardingJurisdictionsProcessor(OnboardingPackService packs,ClientDraftAccountClient accounts) {
+        return new GetOnboardingJurisdictionsProcessor(packs,accounts);
+    }
+    /** CM-2 表单渲染规格；材料槽由 compliance 程序解析。 */
+    @Bean public GetOnboardingFormSchemaProcessor getOnboardingFormSchemaProcessor(OnboardingPackService packs,ClientDraftRepository drafts,
+        ClientDraftAccountClient accounts,ComplianceProgramClient programs) {
+        return new GetOnboardingFormSchemaProcessor(packs,drafts,accounts,programs);
     }
     /** 工作区摘要复用真实 Platform 会话验证，只读不开事务。 */
     @Bean public GetClientWorkspaceSummariesProcessor getClientWorkspaceSummariesProcessor(ClientDraftAccountClient accounts,
@@ -65,20 +78,23 @@ public class ClientDraftConfiguration {
         var session=new SqlSessionTemplate(factory);
         return new ClientPeopleRepositoryImpl(session.getMapper(ClientPeopleMapper.class),session.getMapper(ClientDraftMapper.class));
     }
-    @Bean public ClientPeopleService clientPeopleService(ClientDraftRepository drafts,ClientPeopleRepository people,IdGenerator ids,Clock clock) {
-        return new ClientPeopleServiceImpl(drafts,people,ids,clock);
+    @Bean public ClientPeopleService clientPeopleService(ClientDraftRepository drafts,ClientPeopleRepository people,IdGenerator ids,Clock clock,
+        RelationTypeRepository relationTypes,PartyAttributeRepository partyAttributes) {
+        return new ClientPeopleServiceImpl(drafts,people,ids,clock,relationTypes,partyAttributes);
     }
-    /** C08 新增人员；锁参数沿用既有注解锁配置。 */
+    /** C07 新增人员；锁参数沿用既有注解锁配置；证件在事务外 Protect。 */
     @Bean public CreateClientPersonProcessor createClientPersonProcessor(RedisResourceLockProperties locks,ClientPeopleService service,
-        ClientDraftAccountClient accounts,PlatformTransactionManager transactions,Validator validator) {
-        return new CreateClientPersonProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,writes(transactions),validator);
+        ClientDraftAccountClient accounts,PlatformTransactionManager transactions,Validator validator,ClientDraftRepository drafts,
+        ClientDraftPreparer preparer) {
+        return new CreateClientPersonProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,writes(transactions),validator,
+            drafts,preparer);
     }
-    /** C08 保存人员；事务前查询 commercial 合同引用。 */
+    /** C08 保存人员；事务前查询 commercial 合同引用并在事务外 Protect 证件。 */
     @Bean public SaveClientPersonProcessor saveClientPersonProcessor(RedisResourceLockProperties locks,ClientPeopleService service,
         ClientDraftAccountClient accounts,PlatformTransactionManager transactions,Validator validator,ClientDraftRepository drafts,
-        ClientPeopleRepository people,ClientAgreementPartyClient agreementParties) {
+        ClientPeopleRepository people,ClientAgreementPartyClient agreementParties,ClientDraftPreparer preparer) {
         return new SaveClientPersonProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,writes(transactions),validator,
-            drafts,people,agreementParties);
+            drafts,people,agreementParties,preparer);
     }
     /** C09 新建关系。 */
     @Bean public CreateClientRelationProcessor createClientRelationProcessor(RedisResourceLockProperties locks,ClientPeopleService service,
@@ -96,8 +112,10 @@ public class ClientDraftConfiguration {
         return new RemoveClientRelationProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,writes(transactions));
     }
     @Bean public ClientDraftService clientDraftService(ClientDraftRepository repository,ClientPeopleRepository people,ClientDocumentRepository documents,
-        IdGenerator ids,Clock clock,CompensationEventRegistrar events,PartyRoleRepository partyRoles) {
-        return new ClientDraftServiceImpl(repository,people,documents,ids,clock,events,partyRoles);
+        IdGenerator ids,Clock clock,CompensationEventRegistrar events,PartyRoleRepository partyRoles,PartyAttributeRepository partyAttributes,
+        PartnerOnboardingCodeRepository onboardingCodes,ApplicationDeclarationRepository declarations,LocalPartnerRepository localPartners) {
+        return new ClientDraftServiceImpl(repository,people,documents,ids,clock,events,partyRoles,partyAttributes,onboardingCodes,
+            declarations,localPartners);
     }
     @Bean public ClientDraftAccountClient clientDraftAccountClient(Environment environment,ObjectProvider<LoadBalancerClient> discovery,
         ObjectProvider<InternalTokenSupplier> tokens) {
@@ -141,10 +159,13 @@ public class ClientDraftConfiguration {
                 return balancer.execute(service,instance,new LoadBalancerRequestFactory(balancer).createRequest(request,body,execution));
             }).build();
     }
-    /** C02 开始新申请；锁参数沿用既有注解锁配置。 */
-    @Bean public CreateClientApplicationProcessor createClientApplicationProcessor(RedisResourceLockProperties locks,
-        ClientDraftService service,ClientDraftAccountClient accounts,PlatformTransactionManager transactions) {
-        return new CreateClientApplicationProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,writes(transactions));
+    /** C02 开始新申请；锁参数沿用既有注解锁配置；辖区、Schema 与入驻码在事务外解析。 */
+    @Bean public CreateClientApplicationProcessor createClientApplicationProcessor(Clock clock,RedisResourceLockProperties locks,
+        ClientDraftService service,OnboardingPackService packs,ClientDraftAccountClient accounts,PartnerRoleRepository partnerRoles,
+        LocalPartnerRepository localPartners,OrganizationTypeRepository organizationTypes,PartnerOnboardingCodeRepository onboardingCodes,
+        PlatformTransactionManager transactions) {
+        return new CreateClientApplicationProcessor(clock,locks.getWaitTime(),locks.getLeaseTime(),service,packs,accounts,partnerRoles,
+            localPartners,organizationTypes,onboardingCodes,writes(transactions));
     }
     /** C01 开始页导航，只读不开事务。 */
     @Bean public GetClientOnboardingStartProcessor getClientOnboardingStartProcessor(ClientDraftService service,
@@ -158,8 +179,9 @@ public class ClientDraftConfiguration {
     }
     /** 保存草稿；只读准备与最终短写事务分开。 */
     @Bean public SaveClientDraftProcessor saveClientDraftProcessor(RedisResourceLockProperties locks,ClientDraftService service,
-        ClientDraftAccountClient accounts,ClientDraftContactClient contacts,Validator validator,PlatformTransactionManager transactions) {
-        return new SaveClientDraftProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,contacts,validator,
+        ClientDraftAccountClient accounts,ClientDraftContactClient contacts,ClientDraftPreparer preparer,Validator validator,
+        PlatformTransactionManager transactions) {
+        return new SaveClientDraftProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,contacts,preparer,validator,
             writes(transactions),reads(transactions));
     }
     /** READ COMMITTED、5 秒超时的写事务。 */

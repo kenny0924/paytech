@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.client.contract.api.enums.ClientDraftErrorCode;
-import com.paytech.client.master.domain.enums.PartyRelationType;
 import com.paytech.client.master.test.base.onboarding.AbstractSubmissionApiTest;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ApplicationFixture;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.PersonFixture;
@@ -29,7 +28,7 @@ class PersonAgreementSharingTest extends AbstractSubmissionApiTest {
     @Test
     void test_referencedPersonIsShared() {
         var app = applications.organization(ACCOUNT_ID);
-        var person = applications.person(app, PartyRelationType.UBO.getCode());
+        var person = applications.person(app, "UBO");
         var first = savePerson(app, person);
         assertEquals(200, first.getStatus().value(), new String(first.getResponseBody()));
 
@@ -44,7 +43,7 @@ class PersonAgreementSharingTest extends AbstractSubmissionApiTest {
     @Test
     void test_commercialUnavailableFailsClosed() {
         var app = applications.organization(ACCOUNT_ID);
-        var person = applications.person(app, PartyRelationType.UBO.getCode());
+        var person = applications.person(app, "UBO");
         agreementParties.mockUnavailable();
 
         var saved = savePerson(app, person);

@@ -16,6 +16,8 @@ import com.paytech.client.master.domainservice.repository.ClientApplicationRepos
 import com.paytech.client.master.domainservice.repository.ClientDocumentRepository;
 import com.paytech.client.master.domainservice.repository.ClientDraftRepository;
 import com.paytech.client.master.domainservice.repository.ClientPeopleRepository;
+import com.paytech.client.master.domainservice.repository.ApplicationDeclarationRepository;
+import com.paytech.client.master.domainservice.repository.PartyAttributeRepository;
 import com.paytech.client.master.domainservice.repository.PartyProfileIdentifierRepository;
 import com.paytech.client.master.domainservice.service.ClientReviewRegistrationService;
 
@@ -31,6 +33,8 @@ public class ClientReviewRegistrationServiceImpl implements ClientReviewRegistra
     private final ClientDocumentRepository documents;
     private final ClientApplicationRepository applications;
     private final PartyProfileIdentifierRepository identifiers;
+    private final PartyAttributeRepository attributes;
+    private final ApplicationDeclarationRepository declarations;
 
     /** 只读组合提交事实；SUBMITTED 后资料只读，关系和人员只取 DRAFT/ACTIVE 范围。 */
     @Override
@@ -50,7 +54,8 @@ public class ClientReviewRegistrationServiceImpl implements ClientReviewRegistra
         bindings.put(identity.profileId(), identifiers.findByProfile(identity.profileId()));
         persons.forEach(person -> bindings.put(person.identity().profileId(), identifiers.findByProfile(person.identity().profileId())));
         return new ClientReviewSourceView(application, identity, drafts.fields(identity), persons, relations,
-            documents.documents(application.getApplicationId()), bindings);
+            documents.documents(application.getApplicationId()), bindings, attributes.findByProfiles(bindings.keySet()),
+            declarations.findByApplication(application.getApplicationId()));
     }
 
     /** 同一提交进入审核中。 */
@@ -58,5 +63,11 @@ public class ClientReviewRegistrationServiceImpl implements ClientReviewRegistra
     public boolean startReview(ClientApplicationSubmission application, long caseId) {
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         return Boolean.TRUE.equals(transactions.execute(status -> applications.startReview(application, caseId, now)));
+    }
+
+    /** 按申请读取。 */
+    @Override
+    public ClientApplicationSubmission withdrawalSource(long applicationId) {
+        return applications.findById(applicationId);
     }
 }

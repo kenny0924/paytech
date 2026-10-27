@@ -14,7 +14,11 @@ public enum ClientReviewErrorCode implements CodeMessageEnum {
 
     CLIENT_REVIEW_EVIDENCE_REVIEWED("材料已核验为其他结果"),
 
-    CLIENT_REVIEW_CLASSIFICATION_CONFLICT("分类与该任务已接收的分类不一致");
+    CLIENT_REVIEW_CLASSIFICATION_CONFLICT("分类与该任务已接收的分类不一致"),
+
+    CLIENT_REVIEW_CHECK_RECORDED("检查已录入其他结论"),
+
+    CLIENT_REVIEW_HIT_CLOSED("筛查命中已关闭或已被新的筛查取代");
 
     private final String message;
 

@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.client.master.domain.enums.ClientStatus;
 import com.paytech.client.master.domain.enums.ClientType;
+import com.paytech.client.master.test.mocker.onboarding.OnboardingFixtures;
 import com.paytech.client.master.test.base.ClientMasterMockTestBase;
 
 import tools.jackson.databind.JsonNode;
@@ -51,7 +52,9 @@ class ClientSummariesTest extends ClientMasterMockTestBase {
         assertEquals("Alex Fixture", person.path("displayName").asString());
         assertEquals("AE", person.path("country").asString());
         String raw = body(result).toString();
-        assertFalse(raw.contains("Fixture Road") || raw.contains("vt_email") || raw.contains("p 12-"), raw);
+        assertFalse(raw.contains("Fixture Road") || raw.contains(OnboardingFixtures.passport(individual.partyId()))
+            || raw.contains(OnboardingFixtures.passportToken(OnboardingFixtures.passport(individual.partyId())))
+            || mapper.contactTokens(individual.profileId()).values().stream().anyMatch(raw::contains), raw);
         assertTrue(items.get(0).path("clientId").asLong() < items.get(1).path("clientId").asLong());
     }
 

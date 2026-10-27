@@ -66,14 +66,17 @@ class ClientClassificationAdminTest extends AbstractClientReviewTest {
         assertEquals(0, owners.count("classifications:"));
     }
 
-    /** 行业目录来自 CCT 配置。 */
+    /** 行业目录来自国家包的全局 INDUSTRY 目录（按展示顺序），只给文案键。 */
     @Test
     void test_options() {
         var options = http.get().uri("/client-onboarding-admin/v1/classification-options")
             .header("X-Gateway-Actor-Subject", Long.toString(OPERATOR_ID)).header("X-Gateway-Session-Id", "ops-session-1")
             .exchange().expectStatus().isOk().expectBody(byte[].class).returnResult();
 
-        assertEquals(List.of("RETAIL", "SOFTWARE_SAAS"),
-            body(options).path("industries").valueStream().map(node -> node.path("code").asString()).toList());
+        var industries = body(options).path("industries");
+        assertEquals(List.of("RETAIL", "DIGITAL_GOODS", "SOFTWARE_SAAS", "PROFESSIONAL_SERVICES", "EDUCATION", "TRAVEL",
+            "FOOD_BEVERAGE", "MEDIA_ENTERTAINMENT", "NON_PROFIT", "OTHER"),
+            industries.valueStream().map(node -> node.path("code").asString()).toList());
+        assertEquals("onboardingSchema.catalog.INDUSTRY.RETAIL", industries.get(0).path("labelKey").asString());
     }
 }

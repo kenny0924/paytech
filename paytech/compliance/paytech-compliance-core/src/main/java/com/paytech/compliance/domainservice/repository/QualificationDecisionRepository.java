@@ -13,6 +13,9 @@ public interface QualificationDecisionRepository {
     /** 某 Client 入驻案件的最终决定；不存在返回 null。 */
     QualificationDecision findByCase(long caseId);
 
+    /** 按决定 ID 读取；不存在返回 null。 */
+    QualificationDecision findById(long decisionId);
+
     /** 按决定 ID 集合读取；空集合返回空列表。 */
     List<QualificationDecision> findByIds(Collection<Long> decisionIds);
 }

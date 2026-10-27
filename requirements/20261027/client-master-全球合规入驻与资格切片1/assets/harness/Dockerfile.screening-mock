@@ -1,0 +1,11 @@
+# 合成筛查服务镜像（mor-test 备选：需要独立镜像时使用；首选 test-environment/compose.screening-mock.yaml 以固定摘要的
+# python 镜像只读挂载脚本，无需构建）。构建：docker build -f Dockerfile.screening-mock -t code-mor/screening-mock:slice1 .
+FROM python:3-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY screening_mock_server.py /app/screening_mock_server.py
+USER 10001:10001
+EXPOSE 8080
+HEALTHCHECK --interval=10s --timeout=5s --retries=6 \
+  CMD ["python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8080/health',timeout=3)"]
+CMD ["python", "-I", "/app/screening_mock_server.py", "--host", "0.0.0.0", "--port", "8080"]

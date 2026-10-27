@@ -7,8 +7,9 @@ import { builtin } from "./i18n/builtin.ts";
 import { enumCodes } from "./enum-label.ts";
 import { teamErrorCodes } from "./team.ts";
 import { fallbackReasons, homeNoticeCodes } from "./workspace.ts";
-import { returnSections } from "./onboarding.ts";
 import { graceOptions } from "./developer.ts";
+import { SCHEMA_NAMESPACE, schemaI18nKey } from "./onboarding/schema.ts";
+import { requestErrorCodes } from "./onboarding/draft.ts";
 
 const src = fileURLToPath(new URL(".", import.meta.url));
 const seed = JSON.parse(readFileSync(join(src, "../i18n/client-console.zh-CN.seed.json"), "utf8")) as {
@@ -72,7 +73,8 @@ test("English base and zh-CN seed have identical namespaces and keys, all prefix
   for (const ns of Object.keys(builtin)) {
     assert.deepEqual(Object.keys(seed.namespaces[ns]).sort(), enKeys(ns).sort(), ns);
     for (const key of enKeys(ns)) {
-      assert.match(key, new RegExp("^" + ns + "(\\.[a-z0-9_]+)+$"), key);
+      // 国家包命名空间的键来自 DML 代码（如 onboarding-schema.organizationType.AE.LLC），段内允许大写。
+      assert.match(key, new RegExp("^" + ns + (ns === SCHEMA_NAMESPACE ? "(\\.[A-Za-z0-9_]+)+$" : "(\\.[a-z0-9_]+)+$")), key);
       assert.equal(typeof seed.namespaces[ns][key], "string", key);
       assert.ok(seed.namespaces[ns][key].trim(), "empty zh-CN seed for " + key);
     }
@@ -102,16 +104,47 @@ test("every dynamic key family resolves in the English base", () => {
     ...fallbackReasons.map((reason) => "workspace.fallback." + reason.toLowerCase()),
     ...homeNoticeCodes.map((code) => "workspace.notice." + code.toLowerCase()),
     ...["api_keys", "webhooks"].map((key) => "workspace.nav." + key),
-    ...Object.values(returnSections).map((value) => "onboarding.section." + value.section),
+    ...["profile_individual", "profile_organization", "address", "people", "materials_individual", "materials_organization", "declarations", "review"]
+      .map((task) => "onboarding.task." + task),
+    ...["done", "attention", "active", "todo", "locked"].map((state) => "onboarding.task_state." + state),
+    ...["profile_individual", "profile_organization", "address"].map((task) => "onboarding.task_intro." + task),
+    ...["field_missing", "group_missing", "too_short", "too_long", "digits", "format", "checksum", "url", "email", "phone"].map((key) => "onboarding.error." + key),
+    ...["type", "size", "empty"].map((problem) => "onboarding.upload.problem_" + problem),
+    ...["ownership", "control", "senior_managing_official"].map((basis) => "onboarding.people.ubo_basis_" + basis),
+    ...["met", "not_met"].map((key) => "onboarding.people." + key),
+    ...["yes", "no"].map((key) => "onboarding.form." + key),
+    ...[...requestErrorCodes.map((code) => code.toLowerCase()), "gateway_concurrency_limited", "unavailable"].map((key) => "onboarding.request_error." + key),
     ...graceOptions.map((option) => "developer.grace.m" + option.minutes),
     ...["invalid", "closed", "unavailable", "missing"].map((kind) => "invitation.problem." + kind),
     ...["login", "register", "forgot", "reset", "verify", "sent"].flatMap((kind) => ["auth." + kind + ".title", "auth." + kind + ".intro", "auth.submit." + kind]),
     ...["register", "verify", "reset"].map((kind) => "auth." + kind + ".done_title"),
+    ...["verify", "reset"].map((kind) => "auth." + kind + ".done_status"),
   ];
-  // OnboardingPage 字段标签由资料路径换算：individual.givenName → onboarding.field.individual.given_name。
-  const page = readFileSync(join(src, "OnboardingPage.tsx"), "utf8");
-  const fields = [...page.matchAll(/\["((?:individual|organization|address|identifier|business|contact)\.\w+)", "/g)].map((m) => m[1]);
-  assert.ok(fields.length >= 30, "field definitions not found");
-  expected.push(...fields.map((key) => "onboarding.field." + key.replace(/[A-Z]/g, (letter) => "_" + letter.toLowerCase())));
   assert.deepEqual(expected.filter((key) => !hasKey(key)), []);
+});
+
+const repo = join(src, "../..");
+const readSql = (path: string) => { try { return readFileSync(join(repo, path), "utf8"); } catch { return null; } };
+
+test("Platform namespace codes are lowercase with hyphens", () => {
+  for (const ns of Object.keys(builtin)) assert.match(ns, /^[a-z][a-z0-9-]{0,63}$/, ns);
+});
+
+test("every label and help key of the client-master country packs exists in the onboarding-schema base after mapping", () => {
+  const sql = readSql("paytech/client-master/docs/database/sql/client-master-initial-data.sql");
+  if (sql === null) return;
+  const keys = [...new Set([...sql.matchAll(/'(onboardingSchema\.[A-Za-z0-9_.]+)'/g)].map((match) => match[1]))];
+  assert.ok(keys.length > 50, "country pack label keys not found");
+  assert.deepEqual(keys.map(schemaI18nKey).filter((key) => !hasKey(key)), []);
+});
+
+test("every compliance material requirement and document type has a client label", () => {
+  const sql = readSql("paytech/compliance/docs/database/sql/compliance-initial-data.sql");
+  if (sql === null) return;
+  const requirements = [...sql.matchAll(/t_dd_program_requirement \(.*?VALUES \(\d+, \d+, '([A-Z_]+)'/g)].map((match) => match[1]);
+  const types = [...sql.matchAll(/t_dd_program_requirement_doc_type \(.*?VALUES \(\d+, \d+, '([A-Z_]+)'/g)].map((match) => match[1]);
+  assert.ok(requirements.length && types.length, "program materials not found");
+  const missing = [...new Set([...requirements.map((code) => "onboarding.requirement." + code.toLowerCase()),
+    ...types.map((code) => "onboarding.material." + code.toLowerCase())])].filter((key) => !hasKey(key));
+  assert.deepEqual(missing, []);
 });

@@ -22,6 +22,7 @@ import currencyNs from './en/currency.json' with { type: 'json' };
 import i18nAdminNs from './en/i18n-admin.json' with { type: 'json' };
 import qualificationNs from './en/qualification.json' with { type: 'json' };
 import masterDataNs from './en/master-data.json' with { type: 'json' };
+import onboardingSchemaNs from './en/onboarding-schema.json' with { type: 'json' };
 
 /** English base text bundled at build time; one JSON file per namespace (see namespaces.ts). */
 export const builtin: Catalog = {
@@ -48,4 +49,5 @@ export const builtin: Catalog = {
   'i18n-admin': i18nAdminNs,
   qualification: qualificationNs,
   'master-data': masterDataNs,
+  'onboarding-schema': onboardingSchemaNs,
 };

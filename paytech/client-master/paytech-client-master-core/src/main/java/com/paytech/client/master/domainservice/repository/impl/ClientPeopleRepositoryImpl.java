@@ -3,7 +3,6 @@ import java.time.*;
 import java.util.*;
 import com.paytech.client.master.core.dal.dataobject.*;
 import com.paytech.client.master.core.dal.mapper.*;
-import com.paytech.client.master.domain.enums.PartyRelationType;
 import com.paytech.client.master.domain.onboarding.*;
 import com.paytech.client.master.domainservice.repository.ClientPeopleRepository;
 import com.paytech.foundation.common.error.*;
@@ -23,17 +22,22 @@ public final class ClientPeopleRepositoryImpl implements ClientPeopleRepository 
     public List<ClientPartyRelation> relations(ClientDraftIdentity application) { return people.relations(application); }
     public ClientPersonIdentity person(ClientDraftIdentity application,long partyId,boolean lock) { return people.person(application,partyId,lock); }
     public ClientPartyRelation relation(ClientDraftIdentity application,long relationId) { return people.relation(application,relationId); }
-    public boolean duplicate(long organizationId,long partyId,PartyRelationType type,long excludeId) { return people.duplicate(organizationId,partyId,type,excludeId); }
-    public void create(ClientPersonCreation creation,ClientDraftPatch patch) {
+    public boolean duplicate(long organizationId,long partyId,String type,long excludeId) { return people.duplicate(organizationId,partyId,type,excludeId); }
+    public void create(ClientPersonCreation creation,ClientDraftChanges changes) {
         people.insertParty(creation);people.insertProfile(creation);people.insertIndividual(creation);
         people.insertAddress(creation);people.insertIdentifier(creation);
-        savePerson(new ClientPersonIdentity(creation.partyId(),creation.profileId(),creation.applicationId(),null,false),patch,creation.now());
+        savePerson(new ClientPersonIdentity(creation.partyId(),creation.profileId(),creation.applicationId(),null,false),changes,creation.now());
     }
-    public void savePerson(ClientPersonIdentity person,ClientDraftPatch patch,Instant now) {
-        var changes=patch.databaseValues();
+    public ClientDraftFields personFields(ClientDraftIdentity application,ClientPersonIdentity person) {
+        var fields=drafts.fields(person.profileId(),application.clientId(),"RESIDENTIAL");
+        if (fields==null) throw new ErrorException(DRAFT_CONTEXT_INVALID);
+        return fields;
+    }
+    public void savePerson(ClientPersonIdentity person,ClientDraftChanges draft,Instant now) {
+        var changes=draft.getColumns();
         if (has(changes,"individual")) one(drafts.saveIndividual(person.profileId(),changes,now));
         if (has(changes,"address")) one(drafts.saveAddress(person.profileId(),"RESIDENTIAL",changes,now));
-        if (has(changes,"identifier")) {
+        if (draft.isIdentifierChanged()) {
             if (drafts.identifiers(person.profileId())!=1) throw new FailException(PERSON_NOT_EDITABLE);
             // 退回后改证件：先解绑旧身份键，重提时按新号码重新绑定（同号码复用原键）。
             drafts.unbindIdentifier(person.profileId(),now);

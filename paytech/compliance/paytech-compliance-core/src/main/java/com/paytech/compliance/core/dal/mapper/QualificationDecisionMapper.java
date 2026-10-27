@@ -15,6 +15,9 @@ public interface QualificationDecisionMapper {
     /** 某案件的最终决定；每个 Client 入驻案件至多一条，不存在返回 null。 */
     QualificationDecision findByCase(@Param("caseId") long caseId);
 
+    /** 按决定 ID 读取；不存在返回 null。 */
+    QualificationDecision findById(@Param("decisionId") long decisionId);
+
     /** 按决定 ID 集合读取，按决定 ID 升序。 */
     List<QualificationDecision> findByIds(@Param("decisionIds") Collection<Long> decisionIds);
 }

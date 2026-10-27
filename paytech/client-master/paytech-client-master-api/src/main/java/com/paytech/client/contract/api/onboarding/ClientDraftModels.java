@@ -14,17 +14,38 @@ public final class ClientDraftModels {
      */
     public record ApplicationSummary(String applicationId, String applicationNo, String clientType,
         String status, boolean active, String savedAt) {}
-    public record StartApplicationRequestBody(String clientType) {}
+    /**
+     * C02 开始新申请
+     *
+     * @param clientType INDIVIDUAL 或 ORGANIZATION
+     * @param jurisdictionCode 辖区代码（jurisdictions 接口返回的 ACTIVE 辖区）
+     * @param organizationTypeCode 组织类型代码，可空；个人只在选择个人经营形态（如 AE SOLE_ESTABLISHMENT）时填写
+     * @param onboardingCode PayFac 线下发放的入驻码 XXXX-XXXX，可空；无码为平台自营
+     */
+    public record StartApplicationRequestBody(String clientType, String jurisdictionCode, String organizationTypeCode,
+        String onboardingCode) {
+        @Override public String toString() { return "StartApplicationRequestBody[redacted]"; }
+    }
     /** values 的叶字段与 dirtyFields 精确对应，null 表示清空。 */
     public record DraftPatchRequestBody(List<String> dirtyFields, Map<String, Map<String, String>> values) {
         @Override public String toString() { return "DraftPatchRequestBody[redacted]"; }
     }
     public record CommandReceiptResponseBody(String commandId, String applicationId, String applicationNo,
         String clientId, String clientType, String operation, String completedAt) {}
+    /**
+     * C05 申请资料
+     * <li>values 分区：individual / organization / address / identifier / business / contact / attributes；identifier 只给
+     * identifierType、issuingCountry、identifierMasked（末 4 位）、identifierCheckResult、issueDate、expiryDate，不回显号码原值。</li>
+     * <li>jurisdictionCode、organizationTypeCode、schemaId 决定 form-schema；reviewDueTime 为退回补件截止时间（可空）。</li>
+     * <li>responsiblePartnerId / responsiblePartnerName 为入驻码冻结的责任 PayFac 及其法定名称，平台自营为空。</li>
+     * <li>declarations 为每种声明的最新一条（声明属于申请，重新申请须重签）。</li>
+     */
     public record ClientDraftResponseBody(String applicationId, String applicationNo, String clientId,
         String clientType, String subjectPartyId, String status, String savedAt, boolean editable, Map<String, Map<String, String>> values,
         List<ClientPeopleModels.PersonResponseBody> people,List<ClientPeopleModels.RelationResponseBody> relations,
-        List<ClientDocumentModels.DocumentResponseBody> documents) {
+        List<ClientDocumentModels.DocumentResponseBody> documents, String jurisdictionCode, String organizationTypeCode,
+        String schemaId, String reviewDueTime, String responsiblePartnerId, String responsiblePartnerName,
+        List<com.paytech.client.master.api.onboarding.response.DeclarationResponseBody> declarations) {
         @Override public String toString() { return "ClientDraftResponseBody[redacted]"; }
     }
 }

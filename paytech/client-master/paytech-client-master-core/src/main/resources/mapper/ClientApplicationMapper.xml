@@ -5,7 +5,9 @@
     application_id AS applicationId, application_no AS applicationNo, client_id AS clientId,
     requested_by_account_id AS accountId, status, current_submission_id AS currentSubmissionId,
     due_diligence_case_id AS dueDiligenceCaseId, qualification_decision_id AS qualificationDecisionId,
-    submitted_time AS submittedTime, update_time AS updateTime
+    submitted_time AS submittedTime, update_time AS updateTime, submission_round AS submissionRound,
+    previous_case_id AS previousCaseId, jurisdiction_code AS jurisdictionCode, organization_type_code AS organizationTypeCode,
+    responsible_partner_id AS responsiblePartnerId, review_due_time AS reviewDueTime, schema_id AS schemaId
   </sql>
   <select id="findByApplication" resultType="com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission">
     SELECT <include refid="submissionColumns"/> FROM t_client_application
@@ -14,9 +16,11 @@
   <select id="findBySubmission" resultType="com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission">
     SELECT <include refid="submissionColumns"/> FROM t_client_application WHERE current_submission_id=#{submissionId}
   </select>
+  <!-- 退回重提：上一轮审核任务转入 previous_case_id 供 compliance 新案件串联（MySQL 按书写顺序赋值，先读旧任务再清空）。 -->
   <update id="submit">
     UPDATE t_client_application
-    SET status='SUBMITTED', current_submission_id=#{submissionId}, due_diligence_case_id=NULL,
+    SET status='SUBMITTED', current_submission_id=#{submissionId}, previous_case_id=due_diligence_case_id,
+      due_diligence_case_id=NULL, submission_round=submission_round+1, review_due_time=NULL,
       submitted_time=#{now}, update_time=#{now}
     WHERE application_id=#{applicationId} AND status IN ('DRAFT','RETURNED') AND active_slot=1
   </update>
@@ -28,16 +32,26 @@
   <select id="findById" resultType="com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission">
     SELECT <include refid="submissionColumns"/> FROM t_client_application WHERE application_id=#{applicationId}
   </select>
+  <!-- 运营 Client 详情：全部申请，新在前。 -->
+  <select id="findByClient" resultType="com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission">
+    SELECT <include refid="submissionColumns"/> FROM t_client_application WHERE client_id=#{clientId} ORDER BY application_id DESC
+  </select>
   <select id="findByCase" resultType="com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission">
     SELECT <include refid="submissionColumns"/> FROM t_client_application
     WHERE due_diligence_case_id=#{caseId}
   </select>
+  <!-- 审核结论：UNDER_REVIEW → RETURNED/APPROVED/REJECTED；退回超期 RETURNED → WITHDRAWN（expected 为当前应处状态）。 -->
   <update id="concludeReview">
     UPDATE t_client_application
-    SET status=#{status}, qualification_decision_id=#{decisionId}, update_time=#{now}
+    SET status=#{status}, qualification_decision_id=#{decisionId}, review_due_time=#{dueTime}, update_time=#{now}
       <if test="release">, active_slot=NULL</if>
-    WHERE application_id=#{row.applicationId} AND status='UNDER_REVIEW'
+    WHERE application_id=#{row.applicationId} AND status=#{expected}
       AND current_submission_id=#{row.currentSubmissionId} AND due_diligence_case_id=#{row.dueDiligenceCaseId}
+  </update>
+  <!-- Client 撤回：DRAFT / RETURNED → WITHDRAWN，释放名额。 -->
+  <update id="withdraw">
+    UPDATE t_client_application SET status='WITHDRAWN', active_slot=NULL, update_time=#{now}
+    WHERE application_id=#{applicationId} AND status IN ('DRAFT','RETURNED') AND active_slot=1
   </update>
   <!-- 工作区摘要：只组合展示字段，不读取证件、地址或联系方式；approvedAt 取主体资料首次批准时间 approved_time；
        该列尚未回填的存量数据退回最早一份 APPROVED 申请的 update_time。

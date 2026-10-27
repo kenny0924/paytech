@@ -62,9 +62,9 @@ public class CheckoutCandidateQueryServiceImpl implements CheckoutCandidateQuery
 
     /** 单条按主键集合的查询，不开事务。 */
     @Override
-    public List<PartyProfile> partyProfiles(Collection<Long> ids) {
+    public List<com.paytech.client.master.domain.checkout.PartyProfileView> partyProfiles(Collection<Long> ids) {
         try {
-            return partyProfileRepository.findByIds(ids);
+            return partyProfileRepository.findViewsByIds(ids);
         } catch (DataAccessException exception) {
             throw new ErrorException(CANDIDATE_SOURCE_UNAVAILABLE, "客户主档资料读取不可用", exception);
         }

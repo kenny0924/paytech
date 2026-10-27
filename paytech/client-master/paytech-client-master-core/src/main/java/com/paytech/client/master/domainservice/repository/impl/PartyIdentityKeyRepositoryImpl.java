@@ -14,8 +14,8 @@ public class PartyIdentityKeyRepositoryImpl implements PartyIdentityKeyRepositor
 
     /** 按唯一身份读取。 */
     @Override
-    public PartyIdentityKey find(String identifierType, String issuerScopeKey, String normalizedValue) {
-        return mapper.find(identifierType, issuerScopeKey, normalizedValue);
+    public PartyIdentityKey find(String identifierType, String issuerScopeKey, String keyValue) {
+        return mapper.find(identifierType, issuerScopeKey, keyValue);
     }
 
     /** 新增身份键。 */

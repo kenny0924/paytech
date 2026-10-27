@@ -28,9 +28,10 @@ public final class ClientDraftRepositoryImpl implements ClientDraftRepository {
      * <li>主体资料必须仍归被拒申请编辑，否则数据不一致；新申请沿用同一 Party，重提时复用已有身份键。</li>
      * <li>材料文件在 Platform 按申请归属，不带入，由客户在新申请重新上传。</li>
      */
-    public void reapply(ClientDraftIdentity rejected,long applicationId,Instant now) {
+    public void reapply(ClientDraftIdentity rejected,long applicationId,ClientApplicationTerms terms,Instant now) {
         if (!Long.valueOf(rejected.applicationId()).equals(rejected.draftApplicationId())) throw new ErrorException(DRAFT_CONTEXT_INVALID);
-        one(mapper.insertReapplication(applicationId,"CA-"+applicationId,rejected.applicationId(),now));
+        one(mapper.insertReapplication(applicationId,"CA-"+applicationId,rejected.applicationId(),terms,now));
+        one(mapper.updateClientTerms(rejected.clientId(),terms,now));
         if (mapper.moveDraftProfiles(rejected.applicationId(),applicationId,now)<1) throw new ErrorException(DRAFT_CONTEXT_INVALID);
         mapper.moveDraftRelations(rejected.applicationId(),applicationId,now);
     }
@@ -47,13 +48,13 @@ public final class ClientDraftRepositoryImpl implements ClientDraftRepository {
         mapper.insertBusiness(row);mapper.insertAddress(row);mapper.insertIdentifier(row);
         mapper.insertHistoryRoot(row);mapper.insertHistory(row,snapshot);
     }
-    public void save(ClientDraftIdentity row,ClientDraftPatch patch,Map<String,ClientDraftContact> contacts,Instant now) {
-        Map<String,Object> changes=patch.databaseValues();
+    public void save(ClientDraftIdentity row,ClientDraftChanges draft,Map<String,ClientDraftContact> contacts,Instant now) {
+        Map<String,Object> changes=draft.getColumns();
         if (has(changes,"individual")) one(mapper.saveIndividual(row.profileId(),changes,now));
         if (has(changes,"organization")) one(mapper.saveOrganization(row.profileId(),changes,now));
         if (has(changes,"business")) one(mapper.saveBusiness(row.clientId(),changes,now));
         if (has(changes,"address")) one(mapper.saveAddress(row.profileId(),addressType(row),changes,now));
-        if (has(changes,"identifier")) {
+        if (draft.isIdentifierChanged()) {
             if (mapper.identifiers(row.profileId())!=1) throw new FailException(APPLICATION_NOT_EDITABLE);
             // 退回后改证件：先解绑旧身份键，重提时按新号码重新绑定（同号码复用原键）。
             mapper.unbindIdentifier(row.profileId(),now);
@@ -62,6 +63,9 @@ public final class ClientDraftRepositoryImpl implements ClientDraftRepository {
         for (var entry:contacts.entrySet()) {
             if (entry.getValue()==null) mapper.clearContact(row.profileId(),entry.getKey());
             else mapper.saveContact(ids.nextId(),row.profileId(),entry.getValue(),now);
+        }
+        if (draft.schemaChanged()) {
+            one(mapper.updateApplicationSchema(row.applicationId(),draft.getOrganizationTypeCode(),draft.getSchemaId(),now));
         }
         one(mapper.touchProfile(row.profileId(),now));one(mapper.touchApplication(row.applicationId(),now));
     }

@@ -45,7 +45,8 @@ public class ClientPeopleController implements ClientPeopleApi {
     }
     public ResponseEntity<PeopleCommandReceiptResponseBody> createRelation(String caller,String accountId,String sessionId,String applicationId,CreateRelationRequestBody request) {
         caller(caller);if (request==null) throw new FailException(INVALID_DRAFT);
-        var relation=new RelationFields(request.relationType(),request.ownershipPercentage(),request.effectiveFrom(),request.effectiveTo());
+        var relation=new RelationFields(request.relationType(),request.ownershipPercentage(),request.effectiveFrom(),request.effectiveTo(),
+            request.uboBasis(),request.jobTitle(),request.nomineeFlag(),request.controlNature());
         return ResponseEntity.status(201).body(createRelationProcessor.process(new CreateClientRelationRequest(account(accountId),
             account(sessionId),id(applicationId),id(request.relatedPartyId()),relation)));
     }

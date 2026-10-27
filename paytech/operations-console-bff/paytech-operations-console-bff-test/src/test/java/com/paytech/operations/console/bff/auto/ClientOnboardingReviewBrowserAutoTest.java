@@ -20,6 +20,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
+import com.paytech.client.master.api.enums.EntityAdminErrorCode;
+import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.operations.console.bff.test.base.OperationsBffHttpTestBase;
 import com.paytech.operations.console.bff.test.simulator.ClientReviewOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator;
@@ -52,8 +54,15 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
     private static final String RISK_CASE_WITH_FILE = RISK_CASE.replace("\"subjects\":[]", "\"subjects\":[{\"caseId\":\"7001\","
         + "\"caseStatus\":\"SUBMITTED\",\"partyId\":\"8201\",\"profileId\":\"8301\",\"roleType\":\"CLIENT\","
         + "\"qualificationType\":\"ORGANIZATION_KYB\",\"dependencyTypes\":[],\"requirements\":[{\"requirementId\":\"8401\","
-        + "\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"required\":true,"
-        + "\"status\":\"SUBMITTED\",\"evidence\":[{\"evidenceId\":\"8501\",\"fileId\":\"" + FILE + "\",\"status\":\"PENDING\"}]}]}]");
+        + "\"requirementCode\":\"REGISTRATION\",\"documentTypes\":[\"REGISTRATION_CERTIFICATE\"],\"required\":true,"
+        + "\"status\":\"RECEIVED\",\"evidence\":[{\"evidenceId\":\"8501\",\"fileAddress\":\"/files/v1/" + FILE + "\",\"status\":\"RECEIVED\"}]}]}]");
+    private static final String RETURN = "{\"reasonCode\":\"ADDRESS_UNCLEAR\",\"errors\":[{\"requirementKey\":\"document.PROOF_OF_ADDRESS\","
+        + "\"subjectPartyId\":\"8201\",\"code\":\"DOCUMENT_MISSING\",\"reason\":null,\"remediation\":\"UPLOAD_DOCUMENT\"}],\"dueDays\":14,"
+        + "\"publicNote\":\"请补充经营地址证明\"}";
+    private static final String PARTNER = "9001";
+    private static final String PARTNER_PATH = "/client-master-admin/v1/local-partners/" + PARTNER;
+    private static final String PAYFAC = "{\"localPartnerId\":\"9001\",\"partnerNo\":\"LP9001\",\"partyId\":\"880000000002\","
+        + "\"legalName\":\"Our PayFac\",\"status\":\"ACTIVE\",\"roles\":[\"OE_PROVIDER\"],\"changeVersion\":2,\"providedEntities\":[]}";
     private static final String STORED_FILE = "{\"fileId\":\"" + FILE + "\",\"fileAddress\":\"/files/v1/" + FILE + "\","
         + "\"sourceSystem\":\"client-console-bff\",\"reasonCode\":\"CLIENT_ONBOARDING_MATERIAL\",\"displayName\":\"registration.pdf\","
         + "\"mimeType\":\"application/pdf\",\"sizeBytes\":\"1024\",\"contentHash\":\"" + "a".repeat(64) + "\","
@@ -168,8 +177,7 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
         owners.reply("POST", ROOT + "/cases/" + CASE + "/classification-confirmation", 200, CLASSIFICATION);
 
         assertOk(send("POST", ROOT + "/cases/" + CASE + "/evidence/9001/review", "client-onboarding-o05", "{\"outcome\":\"ACCEPTED\"}"));
-        assertOk(send("POST", ROOT + "/cases/" + CASE + "/return", "client-onboarding-o07",
-            "{\"reasonCode\":\"ADDRESS_UNCLEAR\",\"section\":\"BUSINESS\",\"publicNote\":\"请补充经营地址\"}"));
+        assertOk(send("POST", ROOT + "/cases/" + CASE + "/return", "client-onboarding-o07", RETURN));
         assertOk(send("POST", ROOT + "/cases/" + CASE + "/approval", "client-onboarding-o08",
             "{\"reasonCode\":\"KYB_PASSED\",\"reason\":\"材料齐全\",\"publicNote\":null}"));
         assertOk(send("POST", ROOT + "/cases/" + CASE + "/rejection", "client-onboarding-o09",
@@ -180,9 +188,12 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
 
         var calls = owners.requests();
         assertEquals(6, calls.size());
-        assertEquals(Map.of("outcome", "ACCEPTED"), JSON.readValue(calls.get(0).body(), Map.class));
-        assertEquals("BUSINESS", JSON.readTree(calls.get(1).body()).path("section").asString());
-        assertEquals("请补充经营地址", JSON.readTree(calls.get(1).body()).path("publicNote").asString());
+        assertEquals("ACCEPTED", JSON.readTree(calls.get(0).body()).path("outcome").asString());
+        assertTrue(JSON.readTree(calls.get(0).body()).path("onBehalfOfPartnerId").isNull(), "平台自营不带代操作 PayFac");
+        JsonNode returned = JSON.readTree(calls.get(1).body());
+        assertEquals("document.PROOF_OF_ADDRESS", returned.path("errors").get(0).path("requirementKey").asString());
+        assertEquals(14, returned.path("dueDays").asInt());
+        assertEquals("请补充经营地址证明", returned.path("publicNote").asString());
         assertEquals("材料齐全", JSON.readTree(calls.get(2).body()).path("reason").asString());
         assertEquals("KYB_FAILED", JSON.readTree(calls.get(3).body()).path("reasonCode").asString());
         assertTrue(JSON.readTree(calls.get(4).body()).path("items").get(0).path("primary").asBoolean());
@@ -201,8 +212,7 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
             "{\"reasonCode\":\"KYB_PASSED\",\"reason\":\"材料齐全\",\"publicNote\":null}");
         var classification = send("PUT", ROOT + "/cases/" + CASE + "/classifications", "client-onboarding-o03",
             "{\"items\":[{\"industryCode\":\"RETAIL\",\"mccCode\":\"5411\",\"primary\":true}]}");
-        var returned = send("POST", ROOT + "/cases/" + CASE + "/return", "client-onboarding-o07",
-            "{\"reasonCode\":\"ADDRESS_UNCLEAR\",\"section\":\"BUSINESS\",\"publicNote\":\"请补充经营地址\"}");
+        var returned = send("POST", ROOT + "/cases/" + CASE + "/return", "client-onboarding-o07", RETURN);
 
         assertProblem(approval, 422, "CLIENT_REVIEW_NOT_READY");
         assertProblem(classification, 409, "CLASSIFICATION_CONFIRMED");
@@ -221,9 +231,11 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
 
     /** 不合法的命令 Body 在 BFF 拒绝，不调用 Owner。 */
     @ParameterizedTest
-    @ValueSource(strings = {"{}", "{\"reasonCode\":\"R\",\"section\":\"OTHER\",\"publicNote\":\"x\"}",
-        "{\"reasonCode\":\"R\",\"section\":\"BASIC\",\"publicNote\":\"x\",\"internal\":\"y\"}",
-        "{\"reasonCode\":\"R\",\"section\":\"BASIC\",\"section\":\"PEOPLE\",\"publicNote\":\"x\"}", "[]"})
+    @ValueSource(strings = {"{}", "{\"reasonCode\":\"R\",\"errors\":[],\"dueDays\":14,\"publicNote\":\"x\"}",
+        "{\"reasonCode\":\"R\",\"errors\":[{\"requirementKey\":\"document X\",\"code\":\"DOCUMENT_MISSING\",\"remediation\":\"UPLOAD_DOCUMENT\"}],\"dueDays\":14,\"publicNote\":\"x\"}",
+        "{\"reasonCode\":\"R\",\"errors\":[{\"requirementKey\":\"document.X\",\"code\":\"DOCUMENT_MISSING\",\"remediation\":\"UPLOAD_DOCUMENT\"}],\"dueDays\":91,\"publicNote\":\"x\"}",
+        "{\"reasonCode\":\"R\",\"errors\":[{\"requirementKey\":\"document.X\",\"code\":\"DOCUMENT_MISSING\",\"remediation\":\"UPLOAD_DOCUMENT\"}],\"dueDays\":14,\"publicNote\":\"x\",\"internal\":\"y\"}",
+        "{\"reasonCode\":\"R\",\"reasonCode\":\"S\",\"errors\":[],\"dueDays\":14,\"publicNote\":\"x\"}", "[]"})
     void test_invalidReturnBodyNeverReachesOwner(String body) throws Exception {
         var response = send("POST", ROOT + "/cases/" + CASE + "/return", "client-onboarding-o07", body);
 
@@ -340,6 +352,114 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
         assertEquals(502, response.statusCode(), response.body());
         assertFalse(response.body().contains("storage.local.test"));
         assertTrue(fileCalls(DOWNLOAD_PATH).isEmpty());
+    }
+
+    /** CP-5 六个工作台命令：请求体按 compliance 合同原样转发，路径参数到达对应资源。 */
+    @Test
+    void test_workbenchCommandsForwardOwnerContracts() throws Exception {
+        for (String path : List.of("/checks/8701/result", "/screenings/run", "/screening-hits/8801/resolution", "/recommendation", "/requirements/8401/waiver")) {
+            owners.reply("POST", ROOT + "/cases/" + CASE + path, 200, COMMAND);
+        }
+        owners.reply("PUT", ROOT + "/cases/" + CASE + "/risk-rating", 200, COMMAND);
+
+        assertOk(send("POST", ROOT + "/cases/" + CASE + "/checks/8701/result", "client-onboarding-check-result",
+            "{\"outcome\":\"FAIL\",\"reasonCode\":\"REGISTRY_NOT_FOUND\",\"note\":\"CR not in registry\"}"));
+        assertOk(send("POST", ROOT + "/cases/" + CASE + "/screenings/run", "client-onboarding-screening-run", "{}"));
+        assertOk(send("POST", ROOT + "/cases/" + CASE + "/screening-hits/8801/resolution", "client-onboarding-hit-resolution",
+            "{\"resolution\":\"FALSE_POSITIVE\",\"reasonCode\":\"DOB_DIFFERENT\",\"note\":null}"));
+        assertOk(send("PUT", ROOT + "/cases/" + CASE + "/risk-rating", "client-onboarding-risk-rating",
+            "{\"riskRating\":\"HIGH\",\"factors\":[{\"factorCode\":\"PEP\",\"factorValue\":\"Yes\"}],\"note\":\"PEP director\"}"));
+        assertOk(send("POST", ROOT + "/cases/" + CASE + "/recommendation", "client-onboarding-recommendation",
+            "{\"recommendation\":\"APPROVE\",\"note\":\"All checks passed\"}"));
+        assertOk(send("POST", ROOT + "/cases/" + CASE + "/requirements/8401/waiver", "client-onboarding-waiver",
+            "{\"reasonCode\":\"LISTED_COMPANY\",\"note\":\"Listed on Tadawul\"}"));
+
+        var calls = owners.requests();
+        assertEquals(6, calls.size());
+        assertEquals("REGISTRY_NOT_FOUND", JSON.readTree(calls.get(0).body()).path("reasonCode").asString());
+        assertEquals("FALSE_POSITIVE", JSON.readTree(calls.get(2).body()).path("resolution").asString());
+        assertEquals("PUT", calls.get(3).method());
+        assertEquals("PEP", JSON.readTree(calls.get(3).body()).path("factors").get(0).path("factorCode").asString());
+        assertEquals("APPROVE", JSON.readTree(calls.get(4).body()).path("recommendation").asString());
+        assertEquals(ROOT + "/cases/" + CASE + "/requirements/8401/waiver", calls.get(5).path());
+        assertTrustedCalls();
+    }
+
+    /** 不符合 compliance 合同的工作台 Body（缺必填原因码、未知处置、因子越界）在 BFF 拒绝，不调用 Owner。 */
+    @Test
+    void test_invalidWorkbenchBodiesNeverReachOwner() throws Exception {
+        assertBadRequest(send("POST", ROOT + "/cases/" + CASE + "/checks/8701/result", "client-onboarding-check-result", "{\"outcome\":\"PASS\"}"));
+        assertBadRequest(send("POST", ROOT + "/cases/" + CASE + "/screening-hits/8801/resolution", "client-onboarding-hit-resolution",
+            "{\"resolution\":\"CONFIRMED_MATCH\",\"reasonCode\":\"X\"}"));
+        assertBadRequest(send("PUT", ROOT + "/cases/" + CASE + "/risk-rating", "client-onboarding-risk-rating",
+            "{\"riskRating\":\"HIGH\",\"factors\":[],\"note\":\"x\"}"));
+        assertBadRequest(send("POST", ROOT + "/cases/" + CASE + "/recommendation", "client-onboarding-recommendation",
+            "{\"recommendation\":\"APPROVE\",\"note\":\"x\",\"onBehalfOfPartnerId\":\"payfac\"}"));
+        assertTrue(owners.requests().isEmpty());
+    }
+
+    /** 代 PayFac 操作：先核对 client-master Partner（ACTIVE + OE_PROVIDER），再写 compliance 并原样带上 onBehalfOfPartnerId。 */
+    @Test
+    void test_onBehalfPartnerCheckedBeforeWrite() throws Exception {
+        owners.reply("GET", PARTNER_PATH, 200, PAYFAC);
+        owners.reply("POST", ROOT + "/cases/" + CASE + "/approval", 200, COMMAND);
+
+        assertOk(send("POST", ROOT + "/cases/" + CASE + "/approval", "client-onboarding-o08",
+            "{\"reasonCode\":\"KYB_PASSED\",\"reason\":\"材料齐全\",\"publicNote\":null,\"onBehalfOfPartnerId\":\"" + PARTNER + "\"}"));
+
+        var calls = owners.requests();
+        assertEquals(List.of(PARTNER_PATH, ROOT + "/cases/" + CASE + "/approval"), calls.stream().map(ClientReviewOwnerSimulator.Request::path).toList());
+        assertEquals(PARTNER, JSON.readTree(calls.get(1).body()).path("onBehalfOfPartnerId").asString());
+        assertTrustedCalls();
+    }
+
+    /** 代操作 PayFac 不是 OE_PROVIDER、未生效或不存在：422 ON_BEHALF_PARTNER_INVALID，不调用 compliance。 */
+    @Test
+    void test_ineligibleOnBehalfPartnerRejected() throws Exception {
+        String body = "{\"reasonCode\":\"KYB_PASSED\",\"reason\":\"材料齐全\",\"onBehalfOfPartnerId\":\"" + PARTNER + "\"}";
+        for (String partner : List.of(PAYFAC.replace("\"OE_PROVIDER\"", "\"REFERRER\""), PAYFAC.replace("\"status\":\"ACTIVE\"", "\"status\":\"SUSPENDED\""))) {
+            owners.reset();
+            owners.reply("GET", PARTNER_PATH, 200, partner);
+            assertProblem(send("POST", ROOT + "/cases/" + CASE + "/approval", "client-onboarding-o08", body), 422,
+                OperationsBffErrorCode.ON_BEHALF_PARTNER_INVALID.getCode());
+            assertEquals(1, owners.requests().size());
+        }
+        owners.reset();
+        owners.problem("GET", PARTNER_PATH, 404, EntityAdminErrorCode.LOCAL_PARTNER_NOT_FOUND.getCode());
+
+        assertProblem(send("POST", ROOT + "/cases/" + CASE + "/approval", "client-onboarding-o08", body), 422,
+            OperationsBffErrorCode.ON_BEHALF_PARTNER_INVALID.getCode());
+        assertEquals(1, owners.requests().size());
+    }
+
+    /** PayFac 选项：client-master ACTIVE + OE_PROVIDER 单页，裁剪为选项；列表按责任方与辖区过滤原样转发。 */
+    @Test
+    void test_responsiblePartnersAndListFilters() throws Exception {
+        owners.reply("GET", "/client-master-admin/v1/local-partners", 200, "{\"items\":[{\"localPartnerId\":\"9001\",\"partnerNo\":\"LP9001\","
+            + "\"legalName\":\"Our PayFac\",\"status\":\"ACTIVE\",\"roles\":[\"OE_PROVIDER\"],\"providedEntityCount\":1,\"changeVersion\":2}],"
+            + "\"page\":1,\"size\":100,\"total\":1}");
+        owners.reply("GET", ROOT + "/cases", 200, "{\"items\":[],\"page\":1,\"size\":20,\"total\":0}");
+
+        var partners = send("GET", ROOT + "/responsible-partners", "client-onboarding-responsible-partners", null);
+        var list = send("GET", ROOT + "/cases?responsiblePartnerId=9001&jurisdictionCode=SA", "client-onboarding-o01", null);
+
+        assertOk(partners);
+        JsonNode item = JSON.readTree(partners.body()).path("items").get(0);
+        assertEquals("Our PayFac", item.path("legalName").asString());
+        assertFalse(item.has("providedEntityCount"));
+        assertEquals("status=ACTIVE&role=OE_PROVIDER&page=1&size=100", owners.requests().get(0).query());
+        assertOk(list);
+        assertEquals("responsiblePartnerId=9001&jurisdictionCode=SA", owners.requests().get(1).query());
+        assertEquals(400, send("GET", ROOT + "/cases?jurisdictionCode=sa", "client-onboarding-o01", null).statusCode());
+        assertEquals(400, send("GET", ROOT + "/cases?responsiblePartnerId=00", "client-onboarding-o01", null).statusCode());
+        assertOk(send("GET", ROOT + "/cases?responsiblePartnerId=0", "client-onboarding-o01", null));
+        assertEquals("responsiblePartnerId=0", owners.requests().get(2).query(), "0 表示平台自营，原样转发");
+        assertEquals(3, owners.requests().size());
+        assertTrustedCalls();
+    }
+
+    private static void assertBadRequest(HttpResponse<String> response) {
+        assertTrue(response.statusCode() == 400 || response.statusCode() == 422, response.statusCode() + response.body());
     }
 
     /** Platform 文件接口的调用记录。 */

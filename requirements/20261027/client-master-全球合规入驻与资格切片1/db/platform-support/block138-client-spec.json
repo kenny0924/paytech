@@ -1,0 +1,82 @@
+{
+ "_status": "FINAL (client-fe 2026-10-27: codes c17-c21, writes shaped like c12, reads like c16)",
+ "_notes": "review result read stays on existing client-onboarding-c05 (BFF aggregates) - no new route; no existing route changes; c03 disabled by block138-activate.sql",
+ "title": "补充件（全球合规入驻与资格切片 1 · CLIENT：Client 门户辖区、采集 Schema、声明、需求清单与撤回）",
+ "filePrefix": "block138-client",
+ "idStart": {
+  "route": 441,
+  "header": 581,
+  "query": 651,
+  "guard": 901
+ },
+ "englishHeader": [
+  "Global onboarding and qualification slice 1, CLIENT addendum (2026-10-27, requirements/20261027/client-master-全球合规入驻与资格切片1).",
+  "Apply after the Operations part of block 138; own ID ranges (routes 441+, headers 581+, query 651+, guards 901+), no permissions or",
+  "console resources. Routes forward to client-console-bff (target resolved by target_service_code) with the existing onboarding mapping",
+  "/api/client/onboarding/v1 -> /client-onboarding/v1; CLIENT_JWT + HUMAN_AUTHENTICATED. Shapes copy the live onboarding routes: GET",
+  "authorization CORS; writes add content-type (CORS + forward), idempotency-key (CORS only) and origin forward; body 16384 for reads and 65536 for writes (like c16 / c12); guards",
+  "SHARED_ROUTE 600/min + 50, CLIENT_IP 120/min + 10, principal 60/min + 5. The review result keeps the existing route."
+ ],
+ "permissions": [],
+ "existingPermissions": [],
+ "resources": [],
+ "existingRouteQueryParams": [],
+ "disableOnActivate": [],
+ "routes": [
+  {
+   "routeCode": "client-onboarding-c17",
+   "channel": "CLIENT",
+   "method": "GET",
+   "externalPath": "/api/client/onboarding/v1/jurisdictions",
+   "downstreamPath": "/client-onboarding/v1/jurisdictions",
+   "permission": null,
+   "query": [],
+   "bodyLimit": 16384
+  },
+  {
+   "routeCode": "client-onboarding-c18",
+   "channel": "CLIENT",
+   "method": "GET",
+   "externalPath": "/api/client/onboarding/v1/form-schema",
+   "downstreamPath": "/client-onboarding/v1/form-schema",
+   "permission": null,
+   "query": [
+    "applicationId",
+    "jurisdiction",
+    "partyType",
+    "organizationType"
+   ],
+   "bodyLimit": 16384
+  },
+  {
+   "routeCode": "client-onboarding-c19",
+   "channel": "CLIENT",
+   "method": "POST",
+   "externalPath": "/api/client/onboarding/v1/applications/{applicationId}/declarations",
+   "downstreamPath": "/client-onboarding/v1/applications/{applicationId}/declarations",
+   "permission": null,
+   "query": [],
+   "bodyLimit": 65536
+  },
+  {
+   "routeCode": "client-onboarding-c20",
+   "channel": "CLIENT",
+   "method": "GET",
+   "externalPath": "/api/client/onboarding/v1/applications/{applicationId}/requirements",
+   "downstreamPath": "/client-onboarding/v1/applications/{applicationId}/requirements",
+   "permission": null,
+   "query": [],
+   "bodyLimit": 16384
+  },
+  {
+   "routeCode": "client-onboarding-c21",
+   "channel": "CLIENT",
+   "method": "POST",
+   "externalPath": "/api/client/onboarding/v1/applications/{applicationId}/withdrawal",
+   "downstreamPath": "/client-onboarding/v1/applications/{applicationId}/withdrawal",
+   "permission": null,
+   "query": [],
+   "bodyLimit": 65536
+  }
+ ]
+}

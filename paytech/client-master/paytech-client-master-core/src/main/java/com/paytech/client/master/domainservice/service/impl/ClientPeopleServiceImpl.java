@@ -21,30 +21,56 @@ public final class ClientPeopleServiceImpl implements ClientPeopleService {
     private final ClientPeopleRepository people;
     private final IdGenerator ids;
     private final Clock clock;
+    private final RelationTypeRepository relationTypes;
+    private final PartyAttributeRepository partyAttributes;
     private record Change(long partyId,long relationId) {}
-    public ClientPeopleServiceImpl(ClientDraftRepository drafts,ClientPeopleRepository people,IdGenerator ids,Clock clock) {
-        this.drafts=drafts;this.people=people;this.ids=ids;this.clock=clock;
+    public ClientPeopleServiceImpl(ClientDraftRepository drafts,ClientPeopleRepository people,IdGenerator ids,Clock clock,
+        RelationTypeRepository relationTypes,PartyAttributeRepository partyAttributes) {
+        this.drafts=drafts;this.people=people;this.ids=ids;this.clock=clock;this.relationTypes=relationTypes;
+        this.partyAttributes=partyAttributes;
     }
-    public PeopleCommandReceiptResponseBody createPerson(ClientDraftCommand command,long applicationId,ClientDraftPatch person,ClientRelationValues relation) {
+    public PeopleCommandReceiptResponseBody createPerson(ClientDraftCommand command,long applicationId,ClientDraftChanges person,ClientRelationValues relation) {
         return execute(command,applicationId,CREATE_PERSON,(application,now) -> {
-            person.requirePerson();
-            var creation=new ClientPersonCreation(applicationId,ids.nextId(),ids.nextId(),ids.nextId(),ids.nextId(),now);
-            people.create(creation,person);long relationId=ids.nextId();
+            requireCatalog(application,relation);
+            var creation=new ClientPersonCreation(applicationId,ids.nextId(),ids.nextId(),ids.nextId(),ids.nextId(),
+                application.jurisdictionCode(),now);
+            people.create(creation,person);saveAttributes(creation.profileId(),person,now);long relationId=ids.nextId();
             people.createRelation(application,relationId,creation.partyId(),relation,now);
             return new Change(creation.partyId(),relationId);
         });
     }
-    public PeopleCommandReceiptResponseBody savePerson(ClientDraftCommand command,long applicationId,long partyId,ClientDraftPatch patch,
+    public PeopleCommandReceiptResponseBody savePerson(ClientDraftCommand command,long applicationId,long partyId,ClientDraftChanges changes,
         ClientAgreementPartyUsage usage) {
         return execute(command,applicationId,SAVE_PERSON,(application,now) -> {
-            var person=person(application,partyId);patch.requirePerson();
+            var person=person(application,partyId);
             if (!ClientDraftPolicy.isPersonEditable(application,person,usage)) throw new FailException(PERSON_NOT_EDITABLE);
-            people.savePerson(person,patch,now);return new Change(partyId,0);
+            people.savePerson(person,changes,now);saveAttributes(person.profileId(),changes,now);return new Change(partyId,0);
+        });
+    }
+    /** 关系类型须为申请辖区 ACTIVE 目录项，持股比例与 UBO 依据按目录适用。 */
+    private void requireCatalog(ClientDraftIdentity application,ClientRelationValues relation) {
+        var type=relationTypes.findForJurisdiction(application.jurisdictionCode()).stream()
+            .filter(row -> row.getRelationTypeCode().equals(relation.relationType()) && row.getStatus()==CatalogStatus.ACTIVE)
+            .findFirst().orElse(null);
+        relation.requireCatalog(type);
+    }
+    /** 扩展属性逐项写入或清空。 */
+    private void saveAttributes(long profileId,ClientDraftChanges changes,Instant now) {
+        changes.getAttributes().forEach((code,value) -> {
+            if (value==null) {
+                partyAttributes.delete(profileId,code);
+                return;
+            }
+            var row=new PartyAttribute();
+            row.setAttributeId(ids.nextId());row.setProfileId(profileId);row.setAttributeCode(code);
+            row.setValueText(value.text());row.setValueDate(value.date());row.setValueDecimal(value.decimal());
+            row.setCreateTime(now);row.setUpdateTime(now);
+            partyAttributes.save(row);
         });
     }
     public PeopleCommandReceiptResponseBody createRelation(ClientDraftCommand command,long applicationId,long partyId,ClientRelationValues relation) {
         return execute(command,applicationId,CREATE_RELATION,(application,now) -> {
-            person(application,partyId);
+            person(application,partyId);requireCatalog(application,relation);
             var same=sameRelation(application,partyId,relation);
             if (same!=null) {
                 return new Change(partyId,same.relationId());
@@ -56,6 +82,7 @@ public final class ClientPeopleServiceImpl implements ClientPeopleService {
     public PeopleCommandReceiptResponseBody saveRelation(ClientDraftCommand command,long applicationId,long relationId,Map<String,String> patch) {
         return execute(command,applicationId,SAVE_RELATION,(application,now) -> {
             var relation=relation(application,relationId);var values=ClientRelationValues.merge(relation,patch);
+            requireCatalog(application,values);
             unique(application,relation.relatedPartyId(),values,relationId);
             people.saveRelation(application,relationId,values,now);return new Change(relation.relatedPartyId(),relationId);
         });
@@ -103,7 +130,7 @@ public final class ClientPeopleServiceImpl implements ClientPeopleService {
      */
     private ClientPartyRelation sameRelation(ClientDraftIdentity application,long partyId,ClientRelationValues relation) {
         return people.relations(application).stream()
-            .filter(existing -> existing.relatedPartyId()==partyId && existing.relationType()==relation.relationType())
+            .filter(existing -> existing.relatedPartyId()==partyId && existing.relationType().equals(relation.relationType()))
             .filter(existing -> existing.status()==PartyRelationStatus.DRAFT && relation.matches(existing))
             .findFirst().orElse(null);
     }

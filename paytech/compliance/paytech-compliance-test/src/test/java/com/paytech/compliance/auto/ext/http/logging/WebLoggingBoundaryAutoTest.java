@@ -28,7 +28,7 @@ import com.paytech.compliance.test.probe.HttpLogProbe;
 
 /**
  * compliance HTTP 访问日志的敏感边界（决策配置、名单与评估前缀留在 risk-decision，另有一份同名测试）
- * <li>生产 application.yml 的 metadata-only 前缀清单完整：材料目录、Client 入驻审核登记、运营审核与运营资格登记。</li>
+ * <li>生产 application.yml 的 metadata-only 前缀清单完整：Client 入驻审核登记、运营审核与运营资格登记。</li>
  * <li>真实手工登记请求成功落库，依据说明不进入访问日志。</li>
  * <li>mock Profile 实际生效的清单与生产一致，其余用例的日志行为即生产行为。</li>
  * <li>命中前缀的请求只记录方法、脱敏路径与状态，Query 与 Body 原值不进入日志；未命中前缀的请求照常记录 Query，证明 Probe 有效。</li>
@@ -37,8 +37,8 @@ import com.paytech.compliance.test.probe.HttpLogProbe;
  */
 class WebLoggingBoundaryAutoTest extends ComplianceMockTestBase {
     /** 请求体含个人信息或审核理由的入口。 */
-    private static final List<String> METADATA_ONLY_PREFIXES = List.of("/internal/due-diligence/material-requirements",
-        "/client-onboarding-review", "/client-onboarding-admin", "/compliance-admin");
+    private static final List<String> METADATA_ONLY_PREFIXES = List.of("/client-onboarding-review",
+        "/client-onboarding-admin", "/compliance-admin");
 
     @Autowired
     private WebLoggingProperties loggingProperties;

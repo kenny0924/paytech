@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.AttributeDefinitionMapper">
+  <!-- 辖区专用与全局（jurisdiction_code 为空）属性定义。 -->
+  <select id="findForJurisdiction" resultType="com.paytech.client.master.core.dal.dataobject.AttributeDefinition">
+    SELECT attribute_code AS attributeCode, jurisdiction_code AS jurisdictionCode, party_type AS partyType, data_type AS dataType,
+      catalog_code AS catalogCode, sensitivity, vault_data_type AS vaultDataType, max_length AS maxLength,
+      format_regex AS formatRegex, label_key AS labelKey, status, create_time AS createTime, update_time AS updateTime
+    FROM t_attribute_definition WHERE jurisdiction_code=#{jurisdictionCode} OR jurisdiction_code IS NULL
+    ORDER BY attribute_code
+  </select>
+</mapper>

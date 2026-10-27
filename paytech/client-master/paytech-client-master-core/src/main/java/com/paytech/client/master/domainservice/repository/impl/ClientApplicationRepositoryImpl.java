@@ -37,7 +37,10 @@ public class ClientApplicationRepositoryImpl implements ClientApplicationReposit
         }
         application.setStatus(ClientApplicationStatus.SUBMITTED);
         application.setCurrentSubmissionId(submissionId);
+        application.setPreviousCaseId(application.getDueDiligenceCaseId());
         application.setDueDiligenceCaseId(null);
+        application.setSubmissionRound(application.getSubmissionRound() + 1);
+        application.setReviewDueTime(null);
         application.setSubmittedTime(now);
         application.setUpdateTime(now);
     }
@@ -60,6 +63,12 @@ public class ClientApplicationRepositoryImpl implements ClientApplicationReposit
         return mapper.findById(applicationId);
     }
 
+    /** Client 的全部申请，新在前。 */
+    @Override
+    public List<ClientApplicationSubmission> findByClient(long clientId) {
+        return List.copyOf(mapper.findByClient(clientId));
+    }
+
     /** 按当前审核任务读取。 */
     @Override
     public ClientApplicationSubmission findByCase(long caseId) {
@@ -68,13 +77,29 @@ public class ClientApplicationRepositoryImpl implements ClientApplicationReposit
 
     /** 条件结束审核。 */
     @Override
-    public void concludeReview(ClientApplicationSubmission application, ClientApplicationStatus status, Long decisionId, Instant now) {
-        if (mapper.concludeReview(application, status, decisionId, status != ClientApplicationStatus.RETURNED, now) != 1) {
+    public void concludeReview(ClientApplicationSubmission application, ClientApplicationStatus status, Long decisionId, Instant dueTime,
+        Instant now) {
+        ClientApplicationStatus expected = status == ClientApplicationStatus.WITHDRAWN ? ClientApplicationStatus.RETURNED
+            : ClientApplicationStatus.UNDER_REVIEW;
+        if (mapper.concludeReview(application, expected, status, decisionId, dueTime, status != ClientApplicationStatus.RETURNED,
+            now) != 1) {
             throw new ConcurrentRequestException("申请审核状态已变化");
         }
         application.setStatus(status);
         application.setQualificationDecisionId(decisionId);
+        application.setReviewDueTime(dueTime);
         application.setUpdateTime(now);
+    }
+
+    /** 条件撤回，成功后同步原对象。 */
+    @Override
+    public boolean withdraw(ClientApplicationSubmission application, Instant now) {
+        if (mapper.withdraw(application.getApplicationId(), now) != 1) {
+            return false;
+        }
+        application.setStatus(ClientApplicationStatus.WITHDRAWN);
+        application.setUpdateTime(now);
+        return true;
     }
 
     /** 只读组合查询。 */

@@ -7,6 +7,7 @@ import {
   runUpload,
   newUpload,
   downloadUrl,
+  readCheckpoint,
 } from "./onboarding.ts";
 import { RequestFailure } from "./auth.ts";
 test("patch sends only changed leaves including explicit clearing", () => {
@@ -242,4 +243,19 @@ test("save failure maps Problem errors onto known form fields only", () => {
   });
   assert.deepEqual(fieldIssues(new RequestFailure(503, "unavailable"), ["contact.phone"]), {});
   assert.deepEqual(fieldIssues(new Error("offline"), ["contact.phone"]), {});
+});
+
+test("document dates travel with the association and survive the checkpoint", async () => {
+  const state = { ...newUpload("1", "2", "BANK", "BANK_PROOF"), issueDate: "2026-09-01", expiryDate: "2027-09-01" };
+  state.phase = "ASSOCIATE";
+  state.uploadId = "3";
+  state.fileId = "4";
+  state.fileAddress = "/files/v1/4";
+  const restored = readCheckpoint(JSON.stringify({ ...state, issueDate: "2026-09-01", expiryDate: "not-a-date" }), "1");
+  assert.equal(restored?.issueDate, "2026-09-01");
+  assert.equal(restored?.expiryDate, undefined);
+  let body: unknown;
+  await runUpload(state, async (_path, options) => { body = options?.body; return {} as never; });
+  assert.deepEqual(body, { subjectPartyId: "2", requirementCode: "BANK", documentType: "BANK_PROOF", fileAddress: "/files/v1/4",
+    issueDate: "2026-09-01", expiryDate: "2027-09-01" });
 });

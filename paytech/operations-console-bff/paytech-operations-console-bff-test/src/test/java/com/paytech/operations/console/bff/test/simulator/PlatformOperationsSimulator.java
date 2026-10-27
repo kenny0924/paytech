@@ -153,7 +153,15 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("client-onboarding-o07", "900000000000041004"),
         Map.entry("client-onboarding-o08", "900000000000041005"),
         Map.entry("client-onboarding-o09", "900000000000041005"),
-        Map.entry("client-onboarding-o10", "900000000000041001"));
+        Map.entry("client-onboarding-o10", "900000000000041001"),
+        // 块 138 案件工作台：读取复用 41001、检查复用 41003、CRR 复用分类 41002，筛查 / 推荐 / 豁免为新权限（测试 ID）
+        Map.entry("client-onboarding-responsible-partners", "900000000000041001"),
+        Map.entry("client-onboarding-check-result", "900000000000041003"),
+        Map.entry("client-onboarding-screening-run", "900000000000138101"),
+        Map.entry("client-onboarding-hit-resolution", "900000000000138101"),
+        Map.entry("client-onboarding-risk-rating", "900000000000041002"),
+        Map.entry("client-onboarding-recommendation", "900000000000138103"),
+        Map.entry("client-onboarding-waiver", "900000000000138104"));
 
     /**
      * 财务路由权限：GET 为 FINANCE_ACCOUNTING_READ，POST 为 FINANCE_ACCOUNTING_MANAGE，审批与驳回为 FINANCE_ACCOUNTING_APPROVE（块 100）；

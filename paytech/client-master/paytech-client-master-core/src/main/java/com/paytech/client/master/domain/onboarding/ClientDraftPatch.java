@@ -16,12 +16,14 @@ import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.*;
  * 结构问题落在 dirtyFields 或 values；消息说明约束，不回显提交的原值。</li>
  */
 public final class ClientDraftPatch {
+    /** 号码原值只在内存中规范化并交给 Vault 保护，不作为数据库列写入。 */
+    public static final String IDENTIFIER_VALUE="identifier.identifierValue";
+    /** 扩展属性分区前缀，字段名为属性代码。 */
+    public static final String ATTRIBUTES="attributes.";
     private enum Kind {
         TEXT,
 
         DATE,
-
-        BOUNDARY,
 
         COUNTRY,
 
@@ -33,7 +35,9 @@ public final class ClientDraftPatch {
 
         EMAIL,
 
-        PHONE
+        PHONE,
+
+        BOOLEAN
     }
     private record Field(Kind kind, int length) {}
     /** 单字段校验结果：合规时 value 为规范化值，否则 message 为外显约束说明。 */
@@ -43,28 +47,41 @@ public final class ClientDraftPatch {
     }
     private record EmailValue(@Email String value) {}
     private static final Map<String,Field> FIELDS=Map.ofEntries(
-        Map.entry("individual.givenName", new Field(Kind.TEXT,64)),
-        Map.entry("individual.middleName", new Field(Kind.TEXT,64)),
-        Map.entry("individual.familyName", new Field(Kind.TEXT,64)),
+        Map.entry("individual.givenName", new Field(Kind.TEXT,128)),
+        Map.entry("individual.middleName", new Field(Kind.TEXT,128)),
+        Map.entry("individual.familyName", new Field(Kind.TEXT,128)),
         Map.entry("individual.birthDate", new Field(Kind.DATE,10)),
         Map.entry("individual.nationalityCountry", new Field(Kind.COUNTRY,2)),
         Map.entry("individual.residenceCountry", new Field(Kind.COUNTRY,2)),
-        Map.entry("organization.legalName", new Field(Kind.TEXT,64)),
-        Map.entry("organization.tradeName", new Field(Kind.TEXT,64)),
+        Map.entry("individual.birthPlace", new Field(Kind.TEXT,128)),
+        Map.entry("individual.birthCountry", new Field(Kind.COUNTRY,2)),
+        Map.entry("individual.gender", new Field(Kind.TEXT,16)),
+        Map.entry("individual.sourceOfFundsCode", new Field(Kind.TEXT,64)),
+        Map.entry("individual.pepSelfDeclared", new Field(Kind.BOOLEAN,5)),
+        Map.entry("organization.legalName", new Field(Kind.TEXT,128)),
+        Map.entry("organization.tradeName", new Field(Kind.TEXT,128)),
         Map.entry("organization.incorporationCountry", new Field(Kind.COUNTRY,2)),
         Map.entry("organization.organizationType", new Field(Kind.TEXT,64)),
         Map.entry("organization.incorporationDate", new Field(Kind.DATE,10)),
+        Map.entry("organization.registrationAuthorityCode", new Field(Kind.TEXT,64)),
+        Map.entry("organization.licenseExpiryDate", new Field(Kind.DATE,10)),
+        Map.entry("organization.listedCompany", new Field(Kind.BOOLEAN,5)),
         Map.entry("address.addressLine1", new Field(Kind.TEXT,255)),
         Map.entry("address.addressLine2", new Field(Kind.TEXT,255)),
         Map.entry("address.city", new Field(Kind.TEXT,128)),
         Map.entry("address.stateOrProvince", new Field(Kind.TEXT,128)),
         Map.entry("address.postalCode", new Field(Kind.TEXT,32)),
         Map.entry("address.countryCode", new Field(Kind.COUNTRY,2)),
+        Map.entry("address.addressFormatCode", new Field(Kind.TEXT,32)),
+        Map.entry("address.buildingNumber", new Field(Kind.TEXT,32)),
+        Map.entry("address.additionalNumber", new Field(Kind.TEXT,32)),
+        Map.entry("address.district", new Field(Kind.TEXT,128)),
+        Map.entry("address.poBox", new Field(Kind.TEXT,32)),
         Map.entry("identifier.identifierType", new Field(Kind.TEXT,64)),
         Map.entry("identifier.issuingCountry", new Field(Kind.COUNTRY,2)),
-        Map.entry("identifier.identifierValue", new Field(Kind.TEXT,128)),
-        Map.entry("identifier.validFrom", new Field(Kind.BOUNDARY,10)),
-        Map.entry("identifier.validTo", new Field(Kind.BOUNDARY,10)),
+        Map.entry(IDENTIFIER_VALUE, new Field(Kind.TEXT,128)),
+        Map.entry("identifier.issueDate", new Field(Kind.DATE,10)),
+        Map.entry("identifier.expiryDate", new Field(Kind.DATE,10)),
         Map.entry("business.businessModelCode", new Field(Kind.TEXT,64)),
         Map.entry("business.websiteUrl", new Field(Kind.URL,2048)),
         Map.entry("business.businessDescription", new Field(Kind.TEXT,2000)),
@@ -73,13 +90,25 @@ public final class ClientDraftPatch {
         Map.entry("business.currency", new Field(Kind.CURRENCY,3)),
         Map.entry("contact.email", new Field(Kind.EMAIL,320)),
         Map.entry("contact.phone", new Field(Kind.PHONE,32)));
+    /** 扩展属性分区：字段名为属性代码，类型与辖区适用性由辖区包属性定义在保存前校验。 */
+    private static final Field ATTRIBUTE=new Field(Kind.TEXT,512);
     private static final int MAX_DIRTY_FIELDS=50;
     private final Map<String,String> values;
     private ClientDraftPatch(Map<String,String> values) { this.values=Collections.unmodifiableMap(values); }
     /** 规范化后的脏字段值，键为字段路径，null 表示清空。 */
     public Map<String,String> values() { return values; }
-    /** 草稿支持的全部字段路径。 */
+    /** 草稿支持的全部固定字段路径（不含 attributes.*）。 */
     public static Set<String> paths() { return FIELDS.keySet(); }
+    /** 路径的字段定义：固定字段或扩展属性；不支持的路径为 null。 */
+    private static Field field(String path) {
+        if (path==null) {
+            return null;
+        }
+        if (path.startsWith(ATTRIBUTES)) {
+            return path.substring(ATTRIBUTES.length()).matches("[A-Z][A-Z0-9_]{0,63}")?ATTRIBUTE:null;
+        }
+        return FIELDS.get(path);
+    }
 
     /**
      * 校验并规范化一次草稿修改；任一问题都不保存，全部问题一次返回。
@@ -119,7 +148,7 @@ public final class ClientDraftPatch {
         }
         var dirty=new HashSet<String>();
         for (String path:request.dirtyFields()) {
-            if (path==null || !FIELDS.containsKey(path)) {
+            if (field(path)==null) {
                 errors.add(new ProblemFieldError("dirtyFields","包含不支持的字段"));
             } else if (!dirty.add(path)) {
                 errors.add(new ProblemFieldError("dirtyFields","同一字段不能重复列出"));
@@ -141,7 +170,7 @@ public final class ClientDraftPatch {
                 errors.add(new ProblemFieldError(path,"该字段未列入 dirtyFields"));
                 continue;
             }
-            Checked checked=normalize(FIELDS.get(path),field.getValue(),validator);
+            Checked checked=normalize(field(path),field.getValue(),validator);
             if (checked.message()!=null) {
                 errors.add(new ProblemFieldError(path,checked.message()));
                 continue;
@@ -152,8 +181,8 @@ public final class ClientDraftPatch {
 
     /** 人员资料只允许个人、地址和证件字段。 */
     public void requirePerson() {
-        rejectPaths(path -> !(path.startsWith("individual.") || path.startsWith("address.") || path.startsWith("identifier.")),
-            "人员资料不支持此字段");
+        rejectPaths(path -> !(path.startsWith("individual.") || path.startsWith("address.") || path.startsWith("identifier.")
+            || path.startsWith(ATTRIBUTES)), "人员资料不支持此字段");
     }
 
     /** 个人申请不能写组织字段，组织申请不能写个人字段。 */
@@ -171,16 +200,40 @@ public final class ClientDraftPatch {
         }
     }
 
-    /** 按字段类型转换为数据库列值，列名由路径的点换成下划线。 */
+    /**
+     * 按字段类型转换为数据库列值，列名由路径的点换成下划线
+     * <li>不含号码原值与扩展属性：前者由 Vault 保护后另行写入，后者写 t_party_attribute。</li>
+     */
     public Map<String,Object> databaseValues() {
         Map<String,Object> result=new HashMap<>();
-        values.forEach((path,value) -> result.put(path.replace('.','_'), value==null?null:switch(FIELDS.get(path).kind()) {
-            case DATE -> LocalDate.parse(value);
-            case BOUNDARY -> LocalDate.parse(value).atStartOfDay().toInstant(ZoneOffset.UTC);
-            case MONEY -> new BigDecimal(value);
-            default -> value;
-        }));
+        values.forEach((path,value) -> {
+            if (path.equals(IDENTIFIER_VALUE) || path.startsWith(ATTRIBUTES)) {
+                return;
+            }
+            result.put(path.replace('.','_'), value==null?null:switch(FIELDS.get(path).kind()) {
+                case DATE -> LocalDate.parse(value);
+                case MONEY -> new BigDecimal(value);
+                case BOOLEAN -> Boolean.valueOf(value);
+                default -> value;
+            });
+        });
         return result;
+    }
+
+    /** 扩展属性的修改：属性代码到规范化文本，null 表示清空。 */
+    public Map<String,String> attributeValues() {
+        Map<String,String> result=new TreeMap<>();
+        values.forEach((path,value) -> {
+            if (path.startsWith(ATTRIBUTES)) {
+                result.put(path.substring(ATTRIBUTES.length()),value);
+            }
+        });
+        return result;
+    }
+
+    /** 是否修改了某分区。 */
+    public boolean touches(String group) {
+        return values.keySet().stream().anyMatch(path -> path.startsWith(group+"."));
     }
 
     /** 去首尾空白后校验字符、长度和类型格式；空串视为清空。 */
@@ -212,7 +265,7 @@ public final class ClientDraftPatch {
                 String code=value.toUpperCase(Locale.ROOT);
                 yield code.matches(kind==Kind.COUNTRY?"[A-Z]{2}":"[A-Z]{3}")?Checked.ok(code):Checked.fail(message(kind));
             }
-            case DATE, BOUNDARY -> value.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}") && LocalDate.parse(value).getYear()>=1000
+            case DATE -> value.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}") && LocalDate.parse(value).getYear()>=1000
                 ?Checked.ok(value):Checked.fail(message(kind));
             case MONEY -> money(value);
             case EMAIL -> {
@@ -223,6 +276,8 @@ public final class ClientDraftPatch {
                 String phone=value.replaceAll("[ ()-]", "");
                 yield phone.matches("\\+[1-9][0-9]{7,14}")?Checked.ok(phone):Checked.fail(message(kind));
             }
+            case BOOLEAN -> "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)
+                ?Checked.ok(value.toLowerCase(Locale.ROOT)):Checked.fail(message(kind));
             case URL -> {
                 URI uri=URI.create(value);
                 boolean web="https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme());
@@ -246,7 +301,7 @@ public final class ClientDraftPatch {
 
     /** 代码和日期是定长格式，超长时直接说明格式比说明长度更有用。 */
     private static boolean fixedFormat(Kind kind) {
-        return kind==Kind.COUNTRY || kind==Kind.CURRENCY || kind==Kind.DATE || kind==Kind.BOUNDARY;
+        return kind==Kind.COUNTRY || kind==Kind.CURRENCY || kind==Kind.DATE;
     }
 
     /** 各字段类型的外显约束说明，不含提交值。 */
@@ -254,11 +309,12 @@ public final class ClientDraftPatch {
         return switch(kind) {
             case COUNTRY -> "须为两位国家代码，如 CN";
             case CURRENCY -> "须为三位币种代码，如 USD";
-            case DATE, BOUNDARY -> "须为 YYYY-MM-DD 格式的有效日期";
+            case DATE -> "须为 YYYY-MM-DD 格式的有效日期";
             case MONEY -> "须为非负金额，整数最多 16 位、小数最多 8 位";
             case EMAIL -> "邮箱格式不正确";
             case PHONE -> "手机号须为 E.164 格式，如 +8613800138000";
             case URL -> "须为 http 或 https 网址";
+            case BOOLEAN -> "须为 true 或 false";
             default -> "字段不符合约定";
         };
     }

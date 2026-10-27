@@ -27,7 +27,8 @@ import com.paytech.client.master.service.processor.RemoveClientDocumentProcessor
 import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.api.files.InternalFileApi;
-import com.paytech.compliance.api.MaterialRequirementsApi;
+import com.paytech.compliance.api.ProgramResolutionApi;
+import com.paytech.client.master.integration.impl.ComplianceProgramClientImpl;
 /** 默认随已批准的草稿开关关闭；没有真实规则或文件服务时明确不可用。 */
 @Configuration(proxyBeanMethods=false)
 @ConditionalOnProperty(prefix="onboarding",name="draft-enabled",havingValue="true")
@@ -38,14 +39,19 @@ public class ClientDocumentConfiguration {
     @Bean public ClientDocumentService clientDocumentService(ClientDraftRepository drafts,ClientPeopleRepository people,ClientDocumentRepository documents,IdGenerator ids,Clock clock) { return new ClientDocumentServiceImpl(drafts,people,documents,ids,clock); }
     /** 显式私网 HTTP 合同，不由浏览器指定 URL；注册 Platform 文件错误码，使 FILE_NOT_FOUND 可映射为材料不存在。 */
     @Bean public ClientMaterialAuthorityClient clientMaterialAuthorityClient(Environment env,ObjectProvider<LoadBalancerClient> discovery,
-        ObjectProvider<InternalTokenSupplier> tokens) {
+        ObjectProvider<InternalTokenSupplier> tokens,ComplianceProgramClient programs) {
         var platform=HttpServiceClientFactory.create(ClientOnboardingRecoveryConfiguration.platformTransport(env,discovery),
             InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192),tokens,"platform-support-service"),
             FileErrorCode.values()).createClient(InternalFileApi.class);
-        var risk=HttpServiceClientFactory.create(riskTransport(env,discovery),
+        return new ClientMaterialAuthorityClient(programs,platform);
+    }
+    /** compliance CP-1 程序解析；无可用程序时 compliance 返回 503，本服务失败关闭。 */
+    @Bean public ComplianceProgramClient complianceProgramClient(Environment env,ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        var api=HttpServiceClientFactory.create(riskTransport(env,discovery),
             InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(262144),tokens,"compliance-service"))
-            .createClient(MaterialRequirementsApi.class);
-        return new ClientMaterialAuthorityClient(risk,platform);
+            .createClient(ProgramResolutionApi.class);
+        return new ComplianceProgramClientImpl(api);
     }
     /** 生产使用 Risk 服务发现，测试仅允许 auto 的随机 loopback 根路径。 */
     static RestClient riskTransport(Environment env,ObjectProvider<LoadBalancerClient> discovery) {
@@ -68,9 +74,10 @@ public class ClientDocumentConfiguration {
     }
     /** C12 关联材料：只读准备与最终短写事务分开，外部查询由 Processor 在事务外完成。 */
     @Bean public AssociateClientDocumentProcessor associateClientDocumentProcessor(RedisResourceLockProperties locks,ClientDocumentService service,
-        ClientDraftAccountClient accounts,ClientMaterialAuthorityClient authority,PlatformTransactionManager manager) {
+        ClientDraftAccountClient accounts,ClientMaterialAuthorityClient authority,PlatformTransactionManager manager,ClientDraftRepository drafts,
+        OnboardingPackService packs) {
         return new AssociateClientDocumentProcessor(locks.getWaitTime(),locks.getLeaseTime(),service,accounts,authority,
-            ClientDraftConfiguration.reads(manager),ClientDraftConfiguration.writes(manager));
+            ClientDraftConfiguration.reads(manager),ClientDraftConfiguration.writes(manager),drafts,packs);
     }
     /** C13 删除材料关联。 */
     @Bean public RemoveClientDocumentProcessor removeClientDocumentProcessor(RedisResourceLockProperties locks,ClientDocumentService service,

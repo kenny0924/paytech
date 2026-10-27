@@ -8,9 +8,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 一次资格变更：新决定、要切换的现有投影或要新建的投影，以及一条状态变更
- * <li>current 与 created 恰有一个非空：已有投影时按读取时版本条件切换，否则插入版本 1 的新投影。</li>
- * <li>投影的新状态、有效期取自决定；状态变更的聚合版本为变更后的投影版本。</li>
+ * 一次资格变更：新决定、要切换的现有投影或要新建的投影、目标投影值，以及一条状态变更
+ * <li>current 与 created 恰有一个非空：已有投影时按读取时版本条件切换到 target，否则插入版本 1 的新投影（created 即 target）。</li>
+ * <li>状态变更的聚合版本为变更后的投影版本；保存时同事务登记 QUALIFICATION_CHANGED 发布任务。</li>
  */
 @Getter
 @AllArgsConstructor
@@ -21,6 +21,8 @@ public class QualificationChangeContext {
     private final RoleQualification current;
     /** 要新建的投影；已有投影时为空。 */
     private final RoleQualification created;
+    /** 目标投影值：状态、有效期、复审调度与冻结属性。 */
+    private final RoleQualification target;
     /** 本次状态变更。 */
     private final QualificationStateChange stateChange;
 

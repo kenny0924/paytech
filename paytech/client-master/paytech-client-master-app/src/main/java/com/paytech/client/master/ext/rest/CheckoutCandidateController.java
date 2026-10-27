@@ -30,6 +30,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class CheckoutCandidateController implements ClientMasterCheckoutApi {
     static final String COMMERCIAL = "commercial-service";
+    /** compliance 读取参与方姓名用于名单筛查（CM-13）。 */
+    static final String COMPLIANCE = "compliance-service";
     private static final int MAX_PROFILE_IDS = 1000;
 
     private final CheckoutCandidateQueryService service;
@@ -52,7 +54,9 @@ public class CheckoutCandidateController implements ClientMasterCheckoutApi {
     /** 按 ID 读取签署校验需要的参与方资料。 */
     @Override
     public PartyProfilesResponseBody partyProfiles(String callerService, List<String> ids) {
-        authorize(callerService);
+        if (!COMPLIANCE.equals(callerService)) {
+            authorize(callerService);
+        }
         return CheckoutCandidateConverter.profiles(service.partyProfiles(profileIds(ids)));
     }
 

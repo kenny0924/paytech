@@ -107,6 +107,16 @@ export function formatDateTime(value: string | number | Date | null | undefined,
   if (!Number.isFinite(date.getTime())) return '—';
   return date.toLocaleString(i18n.locale(), { hour12: false, ...options });
 }
+/** ISO 3166-1 alpha-2 country name in the current locale (or `locale`); unknown or malformed codes are shown as is. */
+export function formatCountry(code: string | null | undefined, locale: string = i18n.locale()): string {
+  if (!code) return '—';
+  if (!/^[A-Z]{2}$/.test(code)) return code;
+  try {
+    return new Intl.DisplayNames([locale], { type: 'region', fallback: 'code' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
 export function formatNumber(value: number, options?: Intl.NumberFormatOptions): string {
   return new Intl.NumberFormat(i18n.locale(), options).format(value);
 }

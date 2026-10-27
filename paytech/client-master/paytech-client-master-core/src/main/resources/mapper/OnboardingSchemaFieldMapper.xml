@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.client.master.core.dal.mapper.OnboardingSchemaFieldMapper">
+  <select id="findBySchemas" resultType="com.paytech.client.master.core.dal.dataobject.OnboardingSchemaField">
+    SELECT schema_field_id AS schemaFieldId, schema_id AS schemaId, section, display_group AS displayGroup, field_key AS fieldKey,
+      widget_code AS widgetCode, catalog_code AS catalogCode, requirement_level AS requirementLevel,
+      requirement_group AS requirementGroup, applies_to_subject AS appliesToSubject, validation_pattern AS validationPattern,
+      min_length AS minLength, max_length AS maxLength, visible_when AS visibleWhen, label_key AS labelKey, help_key AS helpKey,
+      display_order AS displayOrder, create_time AS createTime, update_time AS updateTime
+    FROM t_onboarding_schema_field WHERE schema_id IN
+    <foreach collection="schemaIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    ORDER BY schema_id, display_order, schema_field_id
+  </select>
+</mapper>

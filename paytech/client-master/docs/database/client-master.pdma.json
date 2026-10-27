@@ -609,7 +609,7 @@
       },
       "defKey": "t_party_profile",
       "defName": "法律主体资料",
-      "comment": "法律主体资料；uk_party_profile_party(party_id)；每个 Party 只保留一份资料；草稿由 draft_application_id 指定申请编辑；approved_time 非空后永久只读；应用校验，不创建 CHECK/FK",
+      "comment": "法律主体资料；uk_party_profile_current(party_id,current_slot)；同一 Party 只有一份当前资料（current_slot=1），被取代的历史资料 current_slot 为 NULL 并永久保留；草稿由 draft_application_id 指定申请编辑；批准时同一事务写 approved_time、content_hash 并清空 draft_application_id，之后永久只读；应用校验，不创建 CHECK/FK",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -813,7 +813,7 @@
         {
           "defKey": "content_hash",
           "defName": "封存内容哈希",
-          "comment": "批准资料内容摘要，保留现有 Checkout 法律资料消费者；未批准为空，批准后不可变。",
+          "comment": "批准资料内容摘要（规范化资料 JSON 的 SHA-256 小写十六进制），供 Checkout 法律资料消费者核对；未批准为空，批准时写入且不可变。",
           "type": "CHAR",
           "len": 64,
           "scale": "",
@@ -867,7 +867,7 @@
         {
           "defKey": "draft_application_id",
           "defName": "草稿申请",
-          "comment": "当前可编辑 Client 入驻申请；未批准资料只能由该申请编辑；批准后清空。",
+          "comment": "当前可编辑 Client 入驻申请；未批准资料只能由该申请编辑；批准时同一事务清空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -899,6 +899,60 @@
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "317E26FC-8CBE-54F7-B642-442A9391A428"
+        },
+        {
+          "defKey": "jurisdiction_code",
+          "defName": "辖区代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "78C8FE69-B6F4-4F64-A07F-61C30714DBA3",
+          "comment": "资料采集所依据的辖区包代码，入驻创建时写入；Operating Entity 与 Local Partner 的存量资料为空。取值来源：t_jurisdiction；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "current_slot",
+          "defName": "当前资料槽位",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "67841503-B60B-48EF-8BBF-6E98DDC5A11D",
+          "comment": "同一 Party 当前资料的稀疏唯一槽位。允许值：1 或 NULL。取值规则：入驻草稿资料与已批准的当前资料为 1；被后续修订取代后为 NULL 并记录 superseded_time（修订申请本期未启用）。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "superseded_time",
+          "defName": "取代时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "2DF7CC6C-4F9A-4C25-8F26-70DEBE65C964",
+          "comment": "资料被修订申请取代、不再是当前资料的 UTC 时间；当前资料为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
         }
       ],
       "correlations": [
@@ -921,18 +975,23 @@
       ],
       "indexes": [
         {
-          "defKey": "uk_party_profile_party",
-          "defName": "Uk Party Profile Party",
+          "defKey": "uk_party_profile_current",
+          "defName": "Uk Party Profile Current",
           "unique": true,
-          "comment": "Unique index for party_profile on party_id",
+          "comment": "Unique index for party_profile on party_id, current_slot",
           "fields": [
             {
               "fieldDefKey": "F5B5E7CE-D736-58D2-9EDA-4463901C5C0F",
               "ascOrDesc": "A",
-              "id": "0C8DDA2F-2E14-5C76-8F38-8462DEA0B140"
+              "id": "53A8BF58-DF51-4746-A779-C2C02CFAC3BA"
+            },
+            {
+              "fieldDefKey": "67841503-B60B-48EF-8BBF-6E98DDC5A11D",
+              "ascOrDesc": "A",
+              "id": "6C083416-C68D-4190-B580-00CA807E01C8"
             }
           ],
-          "id": "EEF6D47E-70DD-5C06-AA0F-4F459772CAA0"
+          "id": "F0283618-69DE-44A5-95C4-206C80738D80"
         },
         {
           "defKey": "idx_party_profile_80cc2659",
@@ -947,6 +1006,20 @@
             }
           ],
           "id": "D0CBEE6F-0748-5963-AA2C-E7809FB31BD9"
+        },
+        {
+          "defKey": "idx_party_profile_party",
+          "defName": "Idx Party Profile Party",
+          "unique": false,
+          "comment": "Access index for party_profile on party_id",
+          "fields": [
+            {
+              "fieldDefKey": "F5B5E7CE-D736-58D2-9EDA-4463901C5C0F",
+              "ascOrDesc": "A",
+              "id": "3E703114-EECC-47BC-AE79-D04DDF7941BB"
+            }
+          ],
+          "id": "F6DA1DEB-C79D-4323-A07C-DDA7223FB911"
         }
       ],
       "type": "P"
@@ -961,7 +1034,7 @@
       },
       "defKey": "t_individual_profile",
       "defName": "个人资料",
-      "comment": "个人资料；个人姓名、出生日期和国家允许部分草稿保存；提交时按入驻规则完整校验；批准后只读；应用校验，不创建 CHECK/FK",
+      "comment": "个人资料；允许部分草稿保存；提交时按申请冻结的采集 Schema 完整校验；批准后只读；职业、税务居民地等辖区特有事实走 t_party_attribute；应用校验，不创建 CHECK/FK",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -1147,9 +1220,9 @@
         {
           "defKey": "given_name",
           "defName": "个人名字",
-          "comment": "个人法定姓名中的名字。",
+          "comment": "个人法定姓名中的名字（拉丁字母，与护照一致）。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 128,
           "scale": "",
           "primaryKey": false,
           "notNull": false,
@@ -1165,9 +1238,9 @@
         {
           "defKey": "middle_name",
           "defName": "个人中间名",
-          "comment": "个人法定姓名中的可选中间名。",
+          "comment": "个人法定姓名中的可选中间名，可容纳父名与祖父名。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 128,
           "scale": "",
           "primaryKey": false,
           "notNull": false,
@@ -1185,7 +1258,7 @@
           "defName": "个人姓氏",
           "comment": "个人姓氏，即法定姓名中的姓氏部分。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 128,
           "scale": "",
           "primaryKey": false,
           "notNull": false,
@@ -1287,6 +1360,96 @@
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "953A3E35-DDF2-511A-88F4-4F72A2DF6C7C"
+        },
+        {
+          "defKey": "birth_place",
+          "defName": "出生地",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "5EA1CFC4-59F2-4583-873B-9D75C1B0B521",
+          "comment": "出生地（城市或地区）文本，按辖区 Schema 决定是否必填。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "birth_country",
+          "defName": "出生国家",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "3BF24747-712B-40D9-93BF-B44454D09F17",
+          "comment": "出生国家的 ISO 3166-1 alpha-2 代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。",
+          "type": "CHAR",
+          "len": 2,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E"
+        },
+        {
+          "defKey": "gender",
+          "defName": "性别",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "70D82947-14FC-40BD-AD97-9C2E8080F06B",
+          "comment": "筛查使用的性别代码。取值来源：通用目录 GENDER；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "source_of_funds_code",
+          "defName": "资金来源",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "5702ED1A-9988-4A5C-A4D2-5FAC0BF58761",
+          "comment": "资金来源代码，作为风险评级因子。取值来源：通用目录 SOURCE_OF_FUNDS；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "pep_self_declared",
+          "defName": "PEP 自述",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "82F1BB01-EA8D-4DC1-926C-D5BB1E3FBF3C",
+          "comment": "本人是否自述为政治公众人物。允许值：0、1、NULL。取值规则：NULL 表示尚未填写。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
         }
       ],
       "correlations": [
@@ -1312,7 +1475,7 @@
       },
       "defKey": "t_organization_profile",
       "defName": "机构资料",
-      "comment": "机构资料；机构名称、注册国家、机构类型和日期允许部分草稿保存；提交时按入驻规则完整校验；批准后只读；应用校验，不创建 CHECK/FK",
+      "comment": "机构资料；允许部分草稿保存；提交时按申请冻结的采集 Schema 完整校验；批准后只读；经济部门、自贸区代码、税号等辖区特有事实走 t_party_attribute；应用校验，不创建 CHECK/FK",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -1498,9 +1661,9 @@
         {
           "defKey": "legal_name",
           "defName": "机构法定名称",
-          "comment": "机构在注册司法辖区登记的完整法定名称。",
+          "comment": "机构在注册司法辖区登记的完整法定名称（拉丁字母）。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 128,
           "scale": "",
           "primaryKey": false,
           "notNull": false,
@@ -1518,7 +1681,7 @@
           "defName": "机构商号",
           "comment": "机构对外经营使用的可选商号或交易名称。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 128,
           "scale": "",
           "primaryKey": false,
           "notNull": false,
@@ -1552,7 +1715,7 @@
         {
           "defKey": "organization_type",
           "defName": "机构类型",
-          "comment": "按司法辖区和法律形态分类的受控机构类型代码。取值来源：司法辖区机构类型目录；非固定枚举。",
+          "comment": "按司法辖区和法律形态分类的受控机构类型代码。取值来源：t_organization_type.type_code；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -1620,6 +1783,60 @@
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "DEB4CB10-1D80-5822-BA5B-883D0A2153B6"
+        },
+        {
+          "defKey": "registration_authority_code",
+          "defName": "登记机关",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "D115C560-3761-4AC5-8081-6F81EBBB2FFF",
+          "comment": "颁发执照或商业登记的登记机关代码，如 AE_DED_DUBAI、SA_MC、EG_GAFI；AUTHORITY 作用域标识以它为唯一性作用域。取值来源：通用目录 REGISTRATION_AUTHORITY；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "license_expiry_date",
+          "defName": "执照到期日",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "5C483823-4E21-480A-83D0-817182D5F2AD",
+          "comment": "营业执照或商业登记到期日，提交时不得早于当日。",
+          "type": "DATE",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "F6232FAF-609B-5526-BC67-815F9BBEA3ED"
+        },
+        {
+          "defKey": "listed_company",
+          "defName": "上市公司",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "8DFD9B92-0315-49C5-B276-CE68C82E7DC5",
+          "comment": "是否为受监管市场上市公司。允许值：0、1、NULL。取值规则：NULL 表示尚未填写。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
         }
       ],
       "correlations": [
@@ -1645,7 +1862,7 @@
       },
       "defKey": "t_party_identity_key",
       "defName": "法律标识注册主档",
-      "comment": "法律标识注册主档；uk_party_identity_norm(identifier_type,issuer_scope_key,normalized_identifier_value)；已完成规范化校验的永久法律身份键；相同类型、签发域和规范化值只能绑定同一 Party；应用校验，不创建 CHECK/FK",
+      "comment": "法律标识注册主档；uk_party_identity_token(identifier_type,issuer_scope_key,identifier_key_value)；相同类型、作用域和号码只能绑定同一 Party；个人证件以 STABLE Token 比较，不保存原值；应用校验，不创建 CHECK/FK",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -1849,7 +2066,7 @@
         {
           "defKey": "identifier_type",
           "defName": "法律标识类型",
-          "comment": "注册号、证件号等法律标识的受控类型代码。取值来源：法律标识类型目录；非固定枚举。",
+          "comment": "注册号、证件号等法律标识的受控类型代码。取值来源：t_identifier_type.identifier_type_code；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -1867,7 +2084,7 @@
         {
           "defKey": "issuing_country",
           "defName": "签发国家",
-          "comment": "国家签发标识使用的 ISO 3166-1 alpha-2 国家代码；issuer_scope_key=GLOBAL 时为空。取值来源：ISO 3166-1 alpha-2，全局标识为空；非固定枚举。",
+          "comment": "国家签发标识使用的 ISO 3166-1 alpha-2 国家代码；作用域不是签发国时为空。取值来源：ISO 3166-1 alpha-2；非固定枚举。",
           "type": "CHAR",
           "len": 2,
           "scale": "",
@@ -1885,7 +2102,7 @@
         {
           "defKey": "issuer_scope_key",
           "defName": "签发作用域键",
-          "comment": "法律标识签发国家或 GLOBAL Sentinel 形成的稳定作用域键。",
+          "comment": "号码唯一性作用域键：GLOBAL、签发国代码或登记机关代码。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -1899,24 +2116,6 @@
           "extProps": {},
           "domain": "",
           "id": "BFF37382-FCE4-547B-B3AA-B6560CEC2F36"
-        },
-        {
-          "defKey": "normalized_identifier_value",
-          "defName": "规范化法律标识值",
-          "comment": "按法律标识类型和签发作用域批准规则确定性规范化后的值，用于本库查重和唯一约束。",
-          "type": "VARCHAR",
-          "len": 128,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "BAC2C0D8-FA5E-5060-9AE0-B829FFD12439"
         },
         {
           "defKey": "create_time",
@@ -1953,6 +2152,24 @@
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "E88C09BA-80F5-5687-939E-8E0CB3696491"
+        },
+        {
+          "defKey": "identifier_key_value",
+          "defName": "标识比较值",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "90DD711F-889F-46A8-8280-764D524D86BB",
+          "comment": "唯一性比较值：VAULT_REQUIRED 类型为规范化原值经 LEGAL_IDENTIFIER_V1 Protect 得到的 STABLE Token（同值同 Token），其他类型为规范化后的公开登记号；本库不保存个人证件原值。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
         }
       ],
       "correlations": [
@@ -1967,28 +2184,28 @@
       ],
       "indexes": [
         {
-          "defKey": "uk_party_identity_norm",
-          "defName": "Uk Party Identity Norm",
+          "defKey": "uk_party_identity_token",
+          "defName": "Uk Party Identity Token",
           "unique": true,
-          "comment": "Unique index for party_identity_key on identifier_type, issuer_scope_key, normalized_identifier_value",
+          "comment": "Unique index for party_identity_key on identifier_type, issuer_scope_key, identifier_key_value",
           "fields": [
             {
               "fieldDefKey": "4A1D68D8-A583-5FF9-8B9D-8F3F9FE811E2",
               "ascOrDesc": "A",
-              "id": "DE7821E7-AC4D-5398-88FC-B4636E682F96"
+              "id": "750A95F5-E2EA-4362-BC19-E823C649992A"
             },
             {
               "fieldDefKey": "BFF37382-FCE4-547B-B3AA-B6560CEC2F36",
               "ascOrDesc": "A",
-              "id": "456D5765-98B1-5B5B-A98A-D23DBD018F32"
+              "id": "5AC29150-1AA1-4A36-8DB6-3287041D42F8"
             },
             {
-              "fieldDefKey": "BAC2C0D8-FA5E-5060-9AE0-B829FFD12439",
+              "fieldDefKey": "90DD711F-889F-46A8-8280-764D524D86BB",
               "ascOrDesc": "A",
-              "id": "FE92803C-68D3-53B5-99DD-77BD78F907B1"
+              "id": "FCDDF7B3-2E49-4567-BF2C-ABF1905D45F1"
             }
           ],
-          "id": "5B0CC474-005A-5CCA-BA73-A26B3A76161A"
+          "id": "5F0538C5-748E-474C-AD83-B135695CEFB2"
         },
         {
           "defKey": "idx_party_identity_key_party_id",
@@ -2017,7 +2234,7 @@
       },
       "defKey": "t_party_profile_identifier",
       "defName": "主体资料法律标识关联",
-      "comment": "主体资料法律标识关联；uk_profile_identity(profile_id,identity_key_id)；草稿保存候选标识值；仅完成身份核对后绑定 identity_key_id；批准资料中的绑定不可改写；应用校验，不创建 CHECK/FK",
+      "comment": "主体资料法律标识；uk_profile_identity(profile_id,identity_key_id)；个人证件只保存 Vault Token 与末 4 位脱敏，机构公开登记号保存规范化明文；仅提交时绑定 identity_key_id；批准资料中的绑定不可改写；应用校验，不创建 CHECK/FK",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -2221,7 +2438,7 @@
         {
           "defKey": "identity_key_id",
           "defName": "法律标识根标识",
-          "comment": "跨 Profile 稳定的 Party 法律标识身份键。",
+          "comment": "跨 Profile 稳定的 Party 法律标识身份键；提交时绑定，草稿可空。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -2235,42 +2452,6 @@
           "extProps": {},
           "domain": "",
           "id": "5D501BE0-89B8-5810-915E-D07CA7FAA192"
-        },
-        {
-          "defKey": "valid_from",
-          "defName": "有效开始时间",
-          "comment": "法律标识值有效区间的 UTC 微秒精度起点，包含该时刻。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "4A7C6B65-0CC4-5056-A953-10B9CD4A3CAC"
-        },
-        {
-          "defKey": "valid_to",
-          "defName": "有效结束时间",
-          "comment": "法律标识值有效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。",
-          "type": "DATETIME",
-          "len": 6,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": false,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
-          "extProps": {},
-          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
-          "id": "40A53C29-74E5-5D71-9AE9-D79E951EC4DF"
         },
         {
           "defKey": "create_time",
@@ -2311,7 +2492,7 @@
         {
           "defKey": "identifier_type",
           "defName": "法律标识类型",
-          "comment": "当前资料填报的身份标识类型；草稿可空。取值来源：CCT 身份标识类型目录；非固定枚举。",
+          "comment": "当前资料填报的法律标识类型；草稿可空。取值来源：t_identifier_type.identifier_type_code；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -2329,7 +2510,7 @@
         {
           "defKey": "issuing_country",
           "defName": "签发国家",
-          "comment": "当前资料填报的签发国家代码；按标识类型适用。取值来源：ISO 3166-1 alpha-2，草稿未填可空；非固定枚举。",
+          "comment": "当前资料填报的签发国家代码；按标识类型的作用域方式适用。取值来源：ISO 3166-1 alpha-2，草稿未填可空；非固定枚举。",
           "type": "CHAR",
           "len": 2,
           "scale": "",
@@ -2347,7 +2528,7 @@
         {
           "defKey": "issuer_scope_key",
           "defName": "签发作用域键",
-          "comment": "当前资料填报的受控签发机构作用域代码；未选可空。",
+          "comment": "提交时计算并冻结的唯一性作用域键；草稿为空。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -2363,9 +2544,14 @@
           "id": "2436754A-0F03-5E75-98A7-E47CE3375867"
         },
         {
-          "defKey": "identifier_value",
-          "defName": "法律标识原值",
-          "comment": "当前资料填报的原始身份号码；不输出普通日志；草稿可空。",
+          "defKey": "identifier_vault_token",
+          "defName": "证件 Vault Token",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "57E77DE9-2B2A-4CEE-9244-358A514BD0F6",
+          "comment": "VAULT_REQUIRED 类型号码规范化后经 LEGAL_IDENTIFIER_V1 Protect 得到的 STABLE Token；非 Vault 类型或草稿未填为空。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -2373,12 +2559,97 @@
           "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "public_identifier_value",
+          "defName": "公开登记号",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "8131C4A4-5206-527C-BB93-1B92BCD32421"
+          "id": "121E5C63-B277-4D2B-B332-87AFCEA10FC0",
+          "comment": "非 Vault 类型的规范化公开登记号（机构执照号、商业登记号等）；VAULT_REQUIRED 类型恒为空。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "identifier_masked_value",
+          "defName": "证件脱敏值",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "46D92BE5-1D1F-4E2E-8BC7-22640A9828F6",
+          "comment": "展示用脱敏值，只保留末 4 位；草稿未填为空。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "identifier_check_result",
+          "defName": "号码检查结论",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "120F5602-C209-4F0F-A9CA-5B0E342FD064",
+          "comment": "保存号码时按标识类型执行的格式与校验位检查结论；为空表示通过或尚未填写。允许值：IDENTIFIER_FORMAT_INVALID、IDENTIFIER_CHECKSUM_FAILED、NULL。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "issue_date",
+          "defName": "签发日期",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "D886E83A-1E2F-4A35-92C7-2218726ED44C",
+          "comment": "证件签发日期；可空。",
+          "type": "DATE",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "F6232FAF-609B-5526-BC67-815F9BBEA3ED"
+        },
+        {
+          "defKey": "expiry_date",
+          "defName": "到期日",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "89F52449-4D0C-4A34-85E1-1B6ABE229DF3",
+          "comment": "证件到期日（含当日有效）；EXPIRY_REQUIRED 类型提交时必填且不得早于提交日。",
+          "type": "DATE",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "F6232FAF-609B-5526-BC67-815F9BBEA3ED"
         }
       ],
       "correlations": [
@@ -2446,7 +2717,7 @@
       },
       "defKey": "t_party_address",
       "defName": "主体地址",
-      "comment": "主体地址；uk_profile_address_type(profile_id,address_type)；同一资料同一地址类型最多一条；地址组成字段允许部分草稿；提交时完整校验；批准后只读；应用校验，不创建 CHECK/FK",
+      "comment": "主体地址；uk_profile_address_type(profile_id,address_type)；同一资料同一地址类型最多一条；组件允许部分草稿；提交时按 t_address_format_component 完整校验；批准后只读；应用校验，不创建 CHECK/FK",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -2650,7 +2921,7 @@
         {
           "defKey": "address_type",
           "defName": "地址类型",
-          "comment": "地址用途或法律属性的受控分类代码。取值来源：地址用途目录；非固定枚举。",
+          "comment": "地址用途或法律属性的受控分类代码。允许值：RESIDENTIAL、REGISTERED。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -2704,7 +2975,7 @@
         {
           "defKey": "city",
           "defName": "城市",
-          "comment": "主体地址所在城市或同级行政区域名称。",
+          "comment": "主体地址所在城市或同级行政区域名称或目录代码。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -2722,7 +2993,7 @@
         {
           "defKey": "state_or_province",
           "defName": "州省地区",
-          "comment": "主体地址所在的可选州、省或同级行政区域。",
+          "comment": "主体地址所在的州、省、酋长国或同级行政区域名称或目录代码。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -2740,7 +3011,7 @@
         {
           "defKey": "postal_code",
           "defName": "邮政编码",
-          "comment": "主体地址的可选邮政编码。",
+          "comment": "主体地址的邮政编码；是否必填由地址格式与 POSTAL_CODE_REQUIRED 规则决定。",
           "type": "VARCHAR",
           "len": 32,
           "scale": "",
@@ -2808,6 +3079,96 @@
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "A5A05638-5489-5B8D-AC8E-559CE87DC723"
+        },
+        {
+          "defKey": "address_format_code",
+          "defName": "地址格式代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "B64E1F0A-C63E-44E1-93BD-E37F86B21DAE",
+          "comment": "提交校验所用的地址格式代码；地址所在国家等于辖区国家时为辖区格式，否则为 GENERIC。取值来源：t_address_format_component；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "building_number",
+          "defName": "建筑号",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "E3A2190B-0BAA-4E27-8967-19B7EB401F5B",
+          "comment": "建筑号（如沙特国家地址 4 位建筑号）。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "additional_number",
+          "defName": "附加号",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "A988B83E-1BB7-47CF-BD42-096117D5F534",
+          "comment": "附加号（如沙特国家地址 4 位附加号）。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "district",
+          "defName": "区",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "4E910B14-A353-4593-886B-D21E4CD0C90D",
+          "comment": "区或街区名称。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "po_box",
+          "defName": "邮政信箱",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "3AC40D75-4C86-4280-8F0D-B5985909FA3F",
+          "comment": "邮政信箱号（如阿联酋 PO Box）。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
         }
       ],
       "correlations": [
@@ -3188,7 +3549,7 @@
       },
       "defKey": "t_party_relation",
       "defName": "主体关系",
-      "comment": "主体关系；uk_party_relation_identity(organization_party_id,related_party_id,relation_type)；同一机构、相关主体和关系类型只保留一条稳定关系；Client 草稿由 client_application_id 限定修改归属；应用校验，不创建 CHECK/FK；稳定关系标识；Client 未批准资料只允许所属可编辑申请维护，批准后关系集合锁定。；真实关系生效/结束日期保留；非 Client 历史引用不得自动迁移或归并。",
+      "comment": "主体关系；uk_party_relation_identity(organization_party_id,related_party_id,relation_type)；同一机构、相关主体和关系类型只保留一条稳定关系；关系类型来自 t_relation_type 目录；Client 草稿由 client_application_id 限定修改归属，批准后关系集合锁定；真实关系生效/结束日期保留；应用校验，不创建 CHECK/FK",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -3410,7 +3771,7 @@
         {
           "defKey": "relation_type",
           "defName": "Party Relation 类型",
-          "comment": "所有权、控制、任职或 UBO 等法律关系类型代码。允许值：OWNERSHIP、CONTROL、DIRECTOR、SIGNATORY、UBO。",
+          "comment": "所有权、控制、任职或 UBO 等法律关系类型代码。取值来源：t_relation_type.relation_type_code；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -3428,7 +3789,7 @@
         {
           "defKey": "ownership_percentage",
           "defName": "持股比例",
-          "comment": "法律关系类型具备持股语义时填写的百分比，取值范围为 0 至 100；其他关系类型为空。",
+          "comment": "关系类型要求持股比例时填写的百分比，取值范围为 0 至 100；其他关系类型为空。",
           "type": "DECIMAL",
           "len": 18,
           "scale": 10,
@@ -3550,6 +3911,78 @@
           "extProps": {},
           "domain": "",
           "id": "84DE88CB-964A-5C62-B8FE-3194DC1A768F"
+        },
+        {
+          "defKey": "ubo_basis",
+          "defName": "UBO 认定依据",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "C6248578-0BC9-40E0-BBC9-F6F2E8D175F5",
+          "comment": "最终受益人的认定依据；仅 ubo_flag 关系类型填写。允许值：OWNERSHIP、CONTROL、SENIOR_MANAGING_OFFICIAL。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "job_title",
+          "defName": "职务",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "3F52295F-403C-4648-8A15-63AE85550BF7",
+          "comment": "相关人员在机构中的职务名称。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "nominee_flag",
+          "defName": "名义持有",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "8EED4FCA-A8FB-4418-AE98-CD1C41DE350D",
+          "comment": "是否为名义（代持）股东或董事。允许值：0、1、NULL。取值规则：NULL 表示未填写。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "control_nature",
+          "defName": "控制方式",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "B1AEEA1B-4569-4B13-BD08-185C02E7F3D8",
+          "comment": "以控制而非持股认定时的控制方式说明。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
         }
       ],
       "correlations": [
@@ -3644,7 +4077,7 @@
       },
       "defKey": "t_client",
       "defName": "客户角色",
-      "comment": "Client 角色根；uk_client_no(client_no)、uk_client_party(party_id)；状态 PENDING/ACTIVE/SUSPENDED/TERMINATED",
+      "comment": "Client 角色根；uk_client_no(client_no)、uk_client_party(party_id)；状态 PENDING/ACTIVE/SUSPENDED/TERMINATED；资格 REVOKED 时系统自动 ACTIVE → SUSPENDED",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -3970,6 +4403,42 @@
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "9943007D-4041-559E-9CD2-025FF62486CB"
+        },
+        {
+          "defKey": "jurisdiction_code",
+          "defName": "辖区代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "BBC2DC00-7A1B-4396-91C3-B6A8F304E6D1",
+          "comment": "Client 入驻所在辖区代码，随最近一次入驻申请写入。取值来源：t_jurisdiction；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "responsible_partner_id",
+          "defName": "责任 PayFac",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "756F0C18-094A-4A88-81CE-1362F95B7EA3",
+          "comment": "对该 Client 尽调负责的 PayFac Local Partner；由入驻码解析，平台自营为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
         }
       ],
       "correlations": [
@@ -4010,6 +4479,25 @@
             }
           ],
           "id": "4825CB03-D4EB-54DB-B638-321BDDC1791F"
+        },
+        {
+          "defKey": "idx_client_jurisdiction",
+          "defName": "Idx Client Jurisdiction",
+          "unique": false,
+          "comment": "Access index for client on jurisdiction_code, status",
+          "fields": [
+            {
+              "fieldDefKey": "BBC2DC00-7A1B-4396-91C3-B6A8F304E6D1",
+              "ascOrDesc": "A",
+              "id": "07A69C1B-F4A4-4720-8A99-F41C68A852C7"
+            },
+            {
+              "fieldDefKey": "6825E6BF-AE9C-5C75-BA0D-6C5EE936E131",
+              "ascOrDesc": "A",
+              "id": "32D9385C-9AA5-4E65-8BB1-3377FE8EC38E"
+            }
+          ],
+          "id": "21D0556D-C165-4F59-BB01-CAD1C1CC1E5C"
         }
       ],
       "type": "P"
@@ -5534,7 +6022,7 @@
       },
       "defKey": "t_client_application",
       "defName": "客户申请",
-      "comment": "客户申请；uk_client_application_no(application_no)、uk_client_application_active(client_id,active_slot)、uk_client_app_account_active(requested_by_account_id,active_slot)、uk_client_app_submission(current_submission_id)；DRAFT、RETURNED 可编辑并占用 active_slot；SUBMITTED、UNDER_REVIEW 只读并继续占用；APPROVED、REJECTED 终态释放名额；current_submission_id 隔离每次提交结果；应用校验，不创建 CHECK/FK；同账号个人/组织合计一份进行中申请；RETURNED 占用名额，终态释放。；DRAFT/RETURNED 可编辑；批准后永久只读，最终拒绝不复活。；提交和重提使用 current_submission_id；旧审核任务结果不得覆盖当前任务。；资格类型由主 Party 类型推导，最终决定校验准确 Case/Decision/Role Tuple。",
+      "comment": "客户申请；uk_client_application_no(application_no)、uk_client_application_active(client_id,active_slot)、uk_client_app_account_active(requested_by_account_id,active_slot)、uk_client_app_submission(current_submission_id)；DRAFT、RETURNED 可编辑并占用 active_slot；SUBMITTED、UNDER_REVIEW 只读并继续占用；APPROVED、REJECTED、WITHDRAWN 终态释放名额；DRAFT/RETURNED 可由 Client 撤回为 WITHDRAWN，审核退回超期由结果事件转为 WITHDRAWN；current_submission_id 隔离每次提交结果，旧审核任务结果不得覆盖当前任务；辖区、Schema、入驻码与责任方创建时冻结；应用校验，不创建 CHECK/FK。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -5932,6 +6420,168 @@
           "extProps": {},
           "domain": "",
           "id": "8B6451FB-5747-5DDA-B006-A0647E9E8A1A"
+        },
+        {
+          "defKey": "application_type",
+          "defName": "申请类型",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "8F521407-3A7C-4B57-9A1E-F82DD40909EB",
+          "comment": "申请类型；本期只写入 ONBOARDING，PROFILE_AMENDMENT 由后续修订申请启用。允许值：ONBOARDING、PROFILE_AMENDMENT。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "jurisdiction_code",
+          "defName": "辖区代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "F3EDE8F3-4C1C-4743-9B6B-5A07CE6A8789",
+          "comment": "申请所适用的辖区包代码，创建时确定。取值来源：t_jurisdiction；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "organization_type_code",
+          "defName": "组织类型代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "32BD2159-5108-4E37-8881-097C7BD81958",
+          "comment": "组织申请当前选择的组织类型代码；个人申请为空。取值来源：t_organization_type.type_code；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "schema_id",
+          "defName": "采集 Schema 标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "F2AF3D85-3676-4BC7-B9A8-FB5C0C14E84A",
+          "comment": "申请冻结的采集 Schema 版本；草稿阶段更换组织类型时按新类型重新解析，提交后不可改；2026-10-27 之前的遗留申请没有 Schema，为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "onboarding_code_id",
+          "defName": "入驻码标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "4601A90B-BB3A-4FCE-816C-ED87FFD9B733",
+          "comment": "创建申请时使用的 PayFac 入驻码标识；无码为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "responsible_partner_id",
+          "defName": "责任 PayFac",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "B4776024-1F49-43DF-A7AE-D0B20BD6AC5D",
+          "comment": "由入驻码解析并冻结的责任 PayFac Local Partner；平台自营（无码）为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "submission_round",
+          "defName": "提交轮次",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "E95AB116-5E05-42AD-8B5A-0946F1D15FC7",
+          "comment": "正式提交轮次：创建为 0，每次提交加一；退回后重提为下一轮。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "previous_case_id",
+          "defName": "上一轮审核任务",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "AB2173F6-88B3-4BF5-8D2B-ACF061F37E26",
+          "comment": "退回重提时上一轮的 Risk & Compliance 尽调 Case，供新案件串联复用；首轮为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "review_due_time",
+          "defName": "补件截止时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "12FA8022-A889-4FB4-8E8E-2FC175A35A6C",
+          "comment": "退回时审核给出的补件截止 UTC 时间；非退回状态为空或保留上次值。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
         }
       ],
       "correlations": [
@@ -8213,6 +8863,42 @@
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "7CD0AAEF-413D-52F3-B5A8-31EFCA40ACD0"
+        },
+        {
+          "defKey": "issue_date",
+          "defName": "签发日期",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "73FE6A4A-F7E6-4C4F-89EC-E82F06D9650D",
+          "comment": "材料文件的签发或出具日期，用于程序 max_age_days 时效校验；未提供为空。",
+          "type": "DATE",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "F6232FAF-609B-5526-BC67-815F9BBEA3ED"
+        },
+        {
+          "defKey": "expiry_date",
+          "defName": "到期日",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "6D2DC63D-1C71-4B74-A1A0-C4D3BB258C1F",
+          "comment": "材料文件的到期日（含当日有效）；未提供或不到期为空。",
+          "type": "DATE",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "F6232FAF-609B-5526-BC67-815F9BBEA3ED"
         }
       ],
       "correlations": [
@@ -13836,6 +14522,5263 @@
             }
           ],
           "id": "61C06668-D76D-4593-BFFD-569959BB036D"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "CFAB310F-31A7-422E-B937-277CE3C6E300",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_jurisdiction",
+      "defName": "辖区包",
+      "comment": "辖区包；只保存身份与展示，规则开关在 t_rule_setting；新国家只需 DML，不改代码；目录不进 BCR，按 change_version 与操作日志管理",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "jurisdiction_code",
+          "defName": "辖区代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "8CBE1FBA-9716-4E51-B777-BA6ECCD7BEF4",
+          "comment": "适用一套采集与核验规则的辖区代码，默认等于 ISO 3166-1 alpha-2 国家码。取值来源：辖区包 DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "country_code",
+          "defName": "国家代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "1041318D-B719-4194-B244-A6315DDB6FF9",
+          "comment": "辖区所属国家的 ISO 3166-1 alpha-2 代码。取值来源：ISO 3166-1 alpha-2；非固定枚举。",
+          "type": "CHAR",
+          "len": 2,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E"
+        },
+        {
+          "defKey": "label_key",
+          "defName": "文案键",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "D56BD08F-6B2C-41E8-83E2-E41BFB6B7768",
+          "comment": "辖区展示名称的界面文案键，命名空间 onboardingSchema；文案由前端语言包提供。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "address_format_code",
+          "defName": "地址格式代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "A3B43E51-D11A-45CA-BCDB-85B1AF6E8EFA",
+          "comment": "辖区本地地址格式代码，对应 t_address_format_component 的一组地址组件。取值来源：地址格式组件目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "89FC9A4A-33C3-4F68-B446-F2CAFD0B831B",
+          "comment": "辖区包状态；只有 ACTIVE 对 Client 可见。允许值：DRAFT、ACTIVE、RETIRED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "change_version",
+          "defName": "变更版本",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "5ED94D17-9B7F-4615-81D4-2C83D9557202",
+          "comment": "辖区包目录的乐观并发版本，DML 修改时加一；Client 不可修改。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "5E0926FF-38D7-405F-9A25-6AC0B95E5BF5",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "D8DAA28E-195F-4BF2-867C-0AFD4E2796A0",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [],
+      "type": "P"
+    },
+    {
+      "id": "73BCBAEA-451D-44BA-A010-99BC46B093E3",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_rule_setting",
+      "defName": "规则开关",
+      "comment": "规则开关（键值，一值一行）；uk_rule_setting(scope_type,scope_code,rule_code)；解析顺序为精确 scope_code、再取同层 * 默认、再取代码内置默认；新规则类型只需登记 rule_code 并增加读取它的代码分支，不改表",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "rule_setting_id",
+          "defName": "规则开关标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "46D1DF08-6CFD-427D-83B9-E1B341A27218",
+          "comment": "规则开关行的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "scope_type",
+          "defName": "作用层级",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "DF4709D8-A680-46D5-984D-DF61DA71589A",
+          "comment": "规则开关作用的目录层级。允许值：JURISDICTION、ORGANIZATION_TYPE、IDENTIFIER_TYPE。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "scope_code",
+          "defName": "作用对象代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "01B1455C-9A9B-4058-A7B0-096E51769F91",
+          "comment": "作用对象代码：辖区为辖区码，组织类型为 辖区码:组织类型码，标识类型为标识类型码；* 表示该层级的全局默认。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "rule_code",
+          "defName": "规则代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "79C159B7-12CC-4273-A33E-8E51AFA3E3EF",
+          "comment": "已在代码 RuleCode 注册表登记的规则代码；未登记的代码被忽略并告警。取值来源：RuleCode 注册表；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "rule_value",
+          "defName": "规则取值",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "71554C8C-15F2-4E9C-82A2-5AC3F56DF8F0",
+          "comment": "规则取值的文本形式；数值、0/1 布尔或代码由对应 rule_code 定义解析。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "51CE81F5-E42B-45A0-ACF8-109EAE543BD9",
+          "comment": "规则行状态；只有 ACTIVE 参与解析。允许值：ACTIVE、RETIRED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "B71A725C-21F4-4CA8-B57D-3F4A59C75F79",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "AA0C00E3-EB80-4D99-87EF-167AD4B7CEC7",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_rule_setting",
+          "defName": "Uk Rule Setting",
+          "unique": true,
+          "comment": "Unique index for rule_setting on scope_type, scope_code, rule_code",
+          "fields": [
+            {
+              "fieldDefKey": "DF4709D8-A680-46D5-984D-DF61DA71589A",
+              "ascOrDesc": "A",
+              "id": "D7A15BB0-A48C-4766-8E1C-0AB02D598271"
+            },
+            {
+              "fieldDefKey": "01B1455C-9A9B-4058-A7B0-096E51769F91",
+              "ascOrDesc": "A",
+              "id": "84C0484F-891B-4062-AF52-06A7B8D7A1B7"
+            },
+            {
+              "fieldDefKey": "79C159B7-12CC-4273-A33E-8E51AFA3E3EF",
+              "ascOrDesc": "A",
+              "id": "EC5C0C85-3689-41EE-838F-165E3960E4FD"
+            }
+          ],
+          "id": "DDB8B6AA-2523-424D-9F88-C65462F688D9"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "741BE01B-59D5-4BAD-8723-55AF08FF1A17",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_organization_type",
+      "defName": "组织类型目录",
+      "comment": "组织类型目录；uk_org_type(jurisdiction_code,type_code)；只保存身份与展示，规则在 t_rule_setting(scope_type=ORGANIZATION_TYPE, scope_code=辖区码:类型码)",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "organization_type_id",
+          "defName": "组织类型标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "1188B2ED-31BC-41E9-9E8E-D980C353CC66",
+          "comment": "组织类型目录行的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "jurisdiction_code",
+          "defName": "辖区代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "EA66E3F5-69D9-4568-ADD6-7D45A27EB712",
+          "comment": "组织类型所属辖区代码。取值来源：t_jurisdiction；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "type_code",
+          "defName": "组织类型代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "DB0347BE-EAD8-4296-B7F4-4B6F762511B4",
+          "comment": "辖区内组织法律形态代码，如 LLC、FZ_LLC。取值来源：辖区组织类型目录 DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "label_key",
+          "defName": "文案键",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "45BF4D9C-A440-46DE-8B9C-421498B49FE7",
+          "comment": "组织类型展示名称的界面文案键，命名空间 onboardingSchema。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "display_order",
+          "defName": "展示顺序",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "4078F637-936C-48B3-83C7-FC7CE123D496",
+          "comment": "同一辖区内的展示顺序，数值越小越靠前。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "F37456C0-AD84-47C6-BC13-7F2FD61A1290",
+          "comment": "目录行状态；只有 ACTIVE 可被新申请选择。允许值：DRAFT、ACTIVE、RETIRED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "EB9E3DCF-67ED-4018-AEED-B5C9773F1233",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "41430AAA-57F3-48CD-8DC0-FDA784067816",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_org_type",
+          "defName": "Uk Org Type",
+          "unique": true,
+          "comment": "Unique index for organization_type on jurisdiction_code, type_code",
+          "fields": [
+            {
+              "fieldDefKey": "EA66E3F5-69D9-4568-ADD6-7D45A27EB712",
+              "ascOrDesc": "A",
+              "id": "09AE5594-EDD1-409F-9870-EDFA6F9C1F6C"
+            },
+            {
+              "fieldDefKey": "DB0347BE-EAD8-4296-B7F4-4B6F762511B4",
+              "ascOrDesc": "A",
+              "id": "0258DDB7-5100-4BD3-BE6C-1A2DF403076E"
+            }
+          ],
+          "id": "366B501E-0D49-44FB-A798-428C5FF0A4C9"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "9972ED3A-128B-4EF7-B539-CB5BF435A012",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_identifier_type",
+      "defName": "法律标识类型目录",
+      "comment": "法律标识类型目录；uk_identifier_type(identifier_type_code)；格式、规范化、校验位与作用域在本表，ACQUIRE_MODE、EXPIRY_REQUIRED、VAULT_REQUIRED 在 t_rule_setting(scope_type=IDENTIFIER_TYPE)",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "identifier_type_id",
+          "defName": "标识类型标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "7C6F13C3-F14E-41DD-A59F-98B354ABF38C",
+          "comment": "法律标识类型目录行的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "identifier_type_code",
+          "defName": "标识类型代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "47797638-EB53-465F-9B74-53B2CD4FA5FE",
+          "comment": "全局唯一的法律标识类型代码，如 SA_NATIONAL_ID、PASSPORT。取值来源：标识类型目录 DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "jurisdiction_code",
+          "defName": "辖区代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "AC929503-E2E9-43C6-90FF-658FD44038B8",
+          "comment": "标识类型所属辖区；为空表示全局通用类型（如 PASSPORT、LEI）。取值来源：t_jurisdiction；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "party_type",
+          "defName": "主体类型",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "F16DABEE-06D4-4770-A1F2-49AA0F9ABE2B",
+          "comment": "标识适用的法律主体类型。允许值：INDIVIDUAL、ORGANIZATION。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "label_key",
+          "defName": "文案键",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "3BA9A3C6-AC65-4EC0-9205-873A68CF4744",
+          "comment": "标识类型展示名称的界面文案键，命名空间 onboardingSchema。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "format_regex",
+          "defName": "格式正则",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "188B00DF-E4A2-48F2-A12B-61CFFA77DACA",
+          "comment": "规范化后号码必须完整匹配的正则表达式；为空表示只做通用字符校验。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "normalization_rule",
+          "defName": "规范化规则",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "FD3534CA-907A-438B-B305-D35342EF41F8",
+          "comment": "号码规范化规则代码，由代码注册表解释。取值来源：规范化规则注册表（STANDARD：NFKC、去空白与常见分隔符、转大写）；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "checksum_rule",
+          "defName": "校验位规则",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "4BBD8337-07B2-4B0C-81CF-D775497B8E95",
+          "comment": "号码校验位算法代码，由代码注册表解释；未登记的代码失败关闭。取值来源：校验位算法注册表（NONE、LUHN、EG_NID）；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "issuer_scope_mode",
+          "defName": "作用域方式",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "CB2289A7-F278-4916-B303-856BE78C9247",
+          "comment": "号码唯一性作用域的确定方式：NONE 为全局，COUNTRY 按签发国，AUTHORITY 按组织登记机关。允许值：NONE、COUNTRY、AUTHORITY。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "verification_check_code",
+          "defName": "核验标准 API",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "97B4C7C9-3AEA-4836-8F3D-924D4E88C1B6",
+          "comment": "后续外部核验使用的 channel-connector 标准 API 代码；本期只登记不调用。取值来源：标准 API 目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "329669E9-8026-494F-9FB9-ACAD1F97551E",
+          "comment": "目录行状态；只有 ACTIVE 可被新草稿选择。允许值：DRAFT、ACTIVE、RETIRED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "F2BE525B-AD4B-49A4-9770-52244FA63297",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "5FB515FA-2F95-4230-81C6-914F5223612E",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_identifier_type",
+          "defName": "Uk Identifier Type",
+          "unique": true,
+          "comment": "Unique index for identifier_type on identifier_type_code",
+          "fields": [
+            {
+              "fieldDefKey": "47797638-EB53-465F-9B74-53B2CD4FA5FE",
+              "ascOrDesc": "A",
+              "id": "EEA10CA2-827E-4A92-B49C-563822756B30"
+            }
+          ],
+          "id": "E7B3593F-364F-430E-8B9B-6C8B4ADFB84C"
+        },
+        {
+          "defKey": "idx_identifier_type_scope",
+          "defName": "Idx Identifier Type Scope",
+          "unique": false,
+          "comment": "Access index for identifier_type on jurisdiction_code, party_type",
+          "fields": [
+            {
+              "fieldDefKey": "AC929503-E2E9-43C6-90FF-658FD44038B8",
+              "ascOrDesc": "A",
+              "id": "296B2D76-086E-4005-A916-FD385F116DC2"
+            },
+            {
+              "fieldDefKey": "F16DABEE-06D4-4770-A1F2-49AA0F9ABE2B",
+              "ascOrDesc": "A",
+              "id": "7959CB7D-7C54-46D8-84FC-A38389DA2B43"
+            }
+          ],
+          "id": "90EE80FC-0636-4088-8C77-6CC59205A343"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "4E67A8C8-28EE-447E-B3BB-793628F6C6D7",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_relation_type",
+      "defName": "主体关系类型目录",
+      "comment": "主体关系类型目录；uk_relation_type(relation_type_code)；取代原闭合枚举 OWNERSHIP/CONTROL/DIRECTOR/SIGNATORY/UBO（五值作为全局种子）；关系人门槛只按 rule_role 与 ubo_flag 计数",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "relation_type_id",
+          "defName": "关系类型标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "EE90D61D-EA34-40CF-82DA-30DE2610031A",
+          "comment": "主体关系类型目录行的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "relation_type_code",
+          "defName": "关系类型代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "7ADD8219-B7E5-41A5-903E-EF098B2157D6",
+          "comment": "全局唯一的组织与相关主体关系类型代码，如 UBO、SIGNATORY。取值来源：关系类型目录 DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "jurisdiction_code",
+          "defName": "辖区代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "8D552608-89E7-4273-8DB2-44AEE08BD96B",
+          "comment": "关系类型限定的辖区；为空表示全局可用。取值来源：t_jurisdiction；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "rule_role",
+          "defName": "规则角色",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "44FAFD9D-2182-4460-97BD-3FF920C873A5",
+          "comment": "关系人规则校验识别的规则角色，供签字人、董事、经理与控制人门槛计数。允许值：OWNER、UBO、CONTROL、DIRECTOR、MANAGER、SIGNATORY、OTHER。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "ubo_flag",
+          "defName": "计入 UBO",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "328656C1-E9E8-4FD5-A246-1626BC49A3F0",
+          "comment": "是否计入最终受益人门槛与 100% 持股合计。允许值：0、1。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "ownership_pct_required",
+          "defName": "需持股比例",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "AC9A719F-E4F4-46C0-9ADE-C7219C2040D1",
+          "comment": "该关系类型是否必须填写持股比例。允许值：0、1。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "label_key",
+          "defName": "文案键",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "C5AD0F88-95E6-485C-87D1-0E6537472737",
+          "comment": "关系类型展示名称的界面文案键，命名空间 onboardingSchema。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "display_order",
+          "defName": "展示顺序",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "04096C74-7233-4DD2-B236-3948BF9E3A25",
+          "comment": "展示顺序，数值越小越靠前。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "37C0A77F-24D6-4239-9E1F-33AE36BF93B2",
+          "comment": "目录行状态；只有 ACTIVE 可被新关系选择。允许值：DRAFT、ACTIVE、RETIRED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "5B0D9443-6F7E-4691-A45D-3557AE9C4DF1",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "4F62360A-BA15-4746-9639-248B7E072A92",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_relation_type",
+          "defName": "Uk Relation Type",
+          "unique": true,
+          "comment": "Unique index for relation_type on relation_type_code",
+          "fields": [
+            {
+              "fieldDefKey": "7ADD8219-B7E5-41A5-903E-EF098B2157D6",
+              "ascOrDesc": "A",
+              "id": "98FF8682-9B79-4297-926A-7F3B5224B9E8"
+            }
+          ],
+          "id": "E5EB64C7-1944-4E43-AF71-261DAA781336"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "43FC8FA1-C5DB-4A36-BE92-F27A7D891071",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_address_format_component",
+      "defName": "地址格式组件",
+      "comment": "地址格式组件；uk_address_component(address_format_code,component)；通用地址控件按本表渲染、后端按本表校验，新国家不改地址代码",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "component_id",
+          "defName": "地址组件标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "C1D24668-42FE-4823-80A3-3FF4EB99F869",
+          "comment": "地址格式组件行的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "address_format_code",
+          "defName": "地址格式代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "BF1EEF8C-CDF5-428D-BABF-E29C104C9007",
+          "comment": "地址格式代码，与 t_jurisdiction.address_format_code 对应；GENERIC 为境外地址通用格式。取值来源：地址格式 DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "component",
+          "defName": "地址组件",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "38ED7353-78FD-4D39-856D-082056AA3FC7",
+          "comment": "地址组件，对应 t_party_address 的一列及草稿 address 分区字段。允许值：addressLine1、addressLine2、city、stateOrProvince、postalCode、countryCode、buildingNumber、additionalNumber、district、poBox。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "required_flag",
+          "defName": "必填",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "E429B22E-2652-4FED-AB13-E9852F3C82E3",
+          "comment": "提交时该组件是否必填。允许值：0、1。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "catalog_code",
+          "defName": "目录代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "62C97983-A49E-4123-B380-DD0DA2ADB73A",
+          "comment": "组件取值必须属于的通用目录代码，如省、城市；为空表示自由文本。取值来源：t_catalog_item.catalog_code；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "label_key",
+          "defName": "文案键",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "FA76791B-515C-4C58-AE95-9968FE0224E3",
+          "comment": "组件展示名称的界面文案键，命名空间 onboardingSchema。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "display_order",
+          "defName": "展示顺序",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "C76D6A60-DAFE-42C1-937F-D6B119AD422E",
+          "comment": "同一地址格式内的展示顺序，数值越小越靠前。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "81D33FC3-FDCB-4375-BF17-D07BD62DB22A",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "7006C3C7-A2D9-407B-9890-647C9D90841C",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_address_component",
+          "defName": "Uk Address Component",
+          "unique": true,
+          "comment": "Unique index for address_format_component on address_format_code, component",
+          "fields": [
+            {
+              "fieldDefKey": "BF1EEF8C-CDF5-428D-BABF-E29C104C9007",
+              "ascOrDesc": "A",
+              "id": "55883435-4AFA-4DCD-81C3-F300E0F100E9"
+            },
+            {
+              "fieldDefKey": "38ED7353-78FD-4D39-856D-082056AA3FC7",
+              "ascOrDesc": "A",
+              "id": "DFFF7695-FEC8-42F9-8D8D-9EE46E7EBDC2"
+            }
+          ],
+          "id": "21E89759-EFE4-4CD4-B4EB-2089B2DE8C0C"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "930579EB-6202-4F44-ADC1-9C8AFBB9BFDA",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_catalog_item",
+      "defName": "通用目录项",
+      "comment": "通用目录项；uk_catalog_item(catalog_code,jurisdiction_code,item_code)；SELECT 控件、属性与地址组件的取值来源；行业与经营模式目录由原 application.yml 迁入，运营分类与行业目录接口同样读取",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "catalog_item_id",
+          "defName": "目录项标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "A7CDBDB9-FDF0-4DA1-B26D-88D0BFE744ED",
+          "comment": "通用目录项的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "catalog_code",
+          "defName": "目录代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "5569E8C8-FA62-468E-988A-C35CE90CA728",
+          "comment": "目录代码，如 INDUSTRY、BUSINESS_MODEL、REGISTRATION_AUTHORITY、CITY。取值来源：目录 DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "item_code",
+          "defName": "目录项代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "CD19B616-34B8-4430-8CFB-986A313DBECA",
+          "comment": "目录内稳定的取值代码。取值来源：目录 DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "jurisdiction_code",
+          "defName": "辖区代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "7BF2C9FB-1C9C-4BC2-8935-ACD9067729E8",
+          "comment": "目录项适用的辖区代码；* 表示全局通用。取值来源：t_jurisdiction 或 *；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "label_key",
+          "defName": "文案键",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "553871E3-550F-4559-A66F-40FFCEB39C81",
+          "comment": "目录项展示名称的界面文案键，命名空间 onboardingSchema。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "client_types",
+          "defName": "适用 Client 类型",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "3EC22FD5-36B7-48DF-A538-8FE233ABEF08",
+          "comment": "目录项适用的 Client 类型，逗号分隔；为空表示个人与组织都适用。允许值：INDIVIDUAL、ORGANIZATION 的组合。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "display_order",
+          "defName": "展示顺序",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "47522393-EF73-4E73-834E-7DBC8E8672AC",
+          "comment": "同一目录内的展示顺序，数值越小越靠前。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "D5C3AE76-FC7B-4DCF-822A-EC2E0F36331F",
+          "comment": "目录项状态；只有 ACTIVE 可被选择与校验通过。允许值：DRAFT、ACTIVE、RETIRED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "1B1BB720-D75F-4F3D-B4D8-5D7556A7D854",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "9C5F95B6-BD27-468F-8F62-F54E6332D334",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_catalog_item",
+          "defName": "Uk Catalog Item",
+          "unique": true,
+          "comment": "Unique index for catalog_item on catalog_code, jurisdiction_code, item_code",
+          "fields": [
+            {
+              "fieldDefKey": "5569E8C8-FA62-468E-988A-C35CE90CA728",
+              "ascOrDesc": "A",
+              "id": "C7968FCE-B58B-4E58-88AA-E1075A0A225A"
+            },
+            {
+              "fieldDefKey": "7BF2C9FB-1C9C-4BC2-8935-ACD9067729E8",
+              "ascOrDesc": "A",
+              "id": "B4B2AE68-DA29-4301-BC8D-95001491DB2D"
+            },
+            {
+              "fieldDefKey": "CD19B616-34B8-4430-8CFB-986A313DBECA",
+              "ascOrDesc": "A",
+              "id": "13BBBFB4-4ECE-45F3-ADB9-18EDC9F38892"
+            }
+          ],
+          "id": "C6BBDE81-5389-4287-8B00-F544F7A289BC"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "2EB0C2EB-A137-4435-8F72-D246C78B2D83",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_attribute_definition",
+      "defName": "扩展属性定义",
+      "comment": "扩展属性定义；辖区特有事实（自贸区代码、税卡号、职业等）以 DML 增加，不改表；被逻辑使用且两个以上辖区必填时再升为核心列",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "attribute_code",
+          "defName": "属性代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "8AEC7E98-C0FA-4F91-8402-D02E73D27A1F",
+          "comment": "扩展属性代码，全局唯一，如 AE_FREE_ZONE_CODE、EG_TAX_CARD_NUMBER。取值来源：属性定义 DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "jurisdiction_code",
+          "defName": "辖区代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "1E142040-6E87-4757-96C5-CBBA1F5FDA93",
+          "comment": "属性适用的辖区；为空表示全局属性。取值来源：t_jurisdiction；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "party_type",
+          "defName": "主体类型",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "EF430C8A-16AF-445F-8FA7-2458979BC23C",
+          "comment": "属性适用的法律主体类型。允许值：INDIVIDUAL、ORGANIZATION。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "data_type",
+          "defName": "数据类型",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "1650F1D3-EB12-41ED-9745-B3AFAEC2A47E",
+          "comment": "属性值的类型，决定存储列与草稿校验。允许值：TEXT、DATE、COUNTRY、CODE、DECIMAL。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "catalog_code",
+          "defName": "目录代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "8DE7611E-AFC1-4612-84C9-50F1D952E564",
+          "comment": "CODE 类型属性取值所属的通用目录代码；其他类型为空。取值来源：t_catalog_item.catalog_code；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "sensitivity",
+          "defName": "敏感级别",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "EE7037A9-85AE-4072-81FA-1C6A46634D96",
+          "comment": "属性敏感级别；本期只支持 PUBLIC 与 INTERNAL，VAULT 级属性的保存失败关闭。允许值：PUBLIC、INTERNAL、VAULT。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "vault_data_type",
+          "defName": "Vault 数据类型",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "6DB0EBB4-CFAA-4DFD-A0CF-613E4387BA54",
+          "comment": "VAULT 级属性使用的 Vault 数据类型；其他级别为空。取值来源：Vault 数据类型目录；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "max_length",
+          "defName": "最大长度",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "1E685695-F90C-4F5E-88C4-358FDA1BD84C",
+          "comment": "TEXT 类型属性允许的最大字符数；为空时取 255。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "format_regex",
+          "defName": "格式正则",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "4671FC82-7E51-421E-ADBE-0C9CD6FC4E1A",
+          "comment": "TEXT 类型属性规范化后必须完整匹配的正则表达式；为空表示不限格式。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "label_key",
+          "defName": "文案键",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "7D0AFAD8-D1A2-436B-8843-1405EAF5BFF3",
+          "comment": "属性展示名称的界面文案键，命名空间 onboardingSchema。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "6A36D8F9-A234-445B-BEA2-3CD57351BAF6",
+          "comment": "定义状态；只有 ACTIVE 可被新草稿写入。允许值：DRAFT、ACTIVE、RETIRED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "F9914EAA-0AB7-45F9-9E7E-C464A965BE4B",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "71EF245C-88A1-4087-A9B3-954FCE333A2C",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [],
+      "type": "P"
+    },
+    {
+      "id": "C775AF3E-682B-4FF0-8427-6AEFEA954137",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_party_attribute",
+      "defName": "主体扩展属性值",
+      "comment": "Party 扩展属性值；uk_party_attribute(profile_id,attribute_code)；随资料草稿保存，批准后随资料只读；清空属性时删除该行；应用校验，不创建 CHECK/FK",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "attribute_id",
+          "defName": "属性值标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "25FA5F76-FECD-423B-975D-381A7A88F60F",
+          "comment": "扩展属性值行的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "profile_id",
+          "defName": "属性所属 Party 资料的标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "E8840E01-62C7-44E6-AB69-CF6E968EB016",
+          "comment": "属性所属 Party 资料的标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "attribute_code",
+          "defName": "属性代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "30077682-7D11-48E8-B5BF-1EEF7F2847AB",
+          "comment": "扩展属性代码。取值来源：t_attribute_definition；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "value_text",
+          "defName": "文本值",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "8A04FF40-8483-40FF-865A-20FBD2A28B8F",
+          "comment": "TEXT、COUNTRY、CODE 类型属性的规范化取值；其他类型为空。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "value_date",
+          "defName": "日期值",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "54F90CB8-152F-4F4E-9828-EADCBA7885EF",
+          "comment": "DATE 类型属性的日期取值；其他类型为空。",
+          "type": "DATE",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "F6232FAF-609B-5526-BC67-815F9BBEA3ED"
+        },
+        {
+          "defKey": "value_decimal",
+          "defName": "数值",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "46060C9B-D414-4B66-B1B1-504FF8BC4A41",
+          "comment": "DECIMAL 类型属性的精确数值；其他类型为空。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E"
+        },
+        {
+          "defKey": "value_vault_token",
+          "defName": "Vault Token",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "786B9A10-A562-4897-9D08-EA59A77E9017",
+          "comment": "VAULT 级属性的 Vault Token；本期没有 VAULT 级属性，恒为空。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "masked_value",
+          "defName": "脱敏值",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "955D18A0-A7AE-4FE9-BF03-5A734B79BF46",
+          "comment": "VAULT 级属性的脱敏展示值；本期恒为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "CF7D898F-3983-40A5-99F2-849030FA304D",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "9D92752C-4B85-48EC-91DB-7D691F20A927",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_party_attribute",
+          "defName": "Uk Party Attribute",
+          "unique": true,
+          "comment": "Unique index for party_attribute on profile_id, attribute_code",
+          "fields": [
+            {
+              "fieldDefKey": "E8840E01-62C7-44E6-AB69-CF6E968EB016",
+              "ascOrDesc": "A",
+              "id": "5DBFD17D-96ED-4B62-80FF-1D69E575E946"
+            },
+            {
+              "fieldDefKey": "30077682-7D11-48E8-B5BF-1EEF7F2847AB",
+              "ascOrDesc": "A",
+              "id": "EF867D9B-8241-424F-A667-AE4C36E924EC"
+            }
+          ],
+          "id": "B7475386-7715-4A7D-BEFD-A2A57FC75D10"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "162D5D14-6C05-4F5D-9A24-A47C384C0A52",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_onboarding_schema",
+      "defName": "入驻采集 Schema",
+      "comment": "入驻采集 Schema 版本；uk_schema_active、uk_schema_version；按 辖区 × 主体类型 × 角色 × 组织类型 解析，组织类型无专用版本时取 * 默认版本；发布新版本不影响已冻结 schema_id 的在途申请",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "schema_id",
+          "defName": "采集 Schema 标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "C19ABA2B-597C-4766-9528-882F35E86F1B",
+          "comment": "采集 Schema 版本的内部唯一标识；申请创建时冻结。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "jurisdiction_code",
+          "defName": "辖区代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "64EBD657-7BB5-450F-BD99-AFE1D3569F5D",
+          "comment": "Schema 适用的辖区代码。取值来源：t_jurisdiction；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "party_type",
+          "defName": "主体类型",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "5F125A60-15BC-4387-9B42-2EBE77B719A9",
+          "comment": "Schema 适用的申请主主体类型。允许值：INDIVIDUAL、ORGANIZATION。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "role_type",
+          "defName": "角色类型",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "C21F8F5E-60D2-47EA-8EA8-BB016AC70103",
+          "comment": "Schema 适用的业务角色；本期只有 Client 入驻。允许值：CLIENT。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "organization_type_code",
+          "defName": "组织类型代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "69509D2A-29CF-41DF-90CD-112B6D160AAB",
+          "comment": "专用组织类型代码；* 表示该辖区该主体类型的默认 Schema。取值来源：t_organization_type.type_code 或 *；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "version_no",
+          "defName": "版本号",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "D6E84509-7A2F-4BD2-BD03-245067B231FD",
+          "comment": "同一 Schema 键下从 1 递增的版本号。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "79396B7E-387B-4852-8E26-730AB8B487A5",
+          "comment": "Schema 版本状态；新申请只使用 ACTIVE，在途申请继续引用已冻结版本。允许值：DRAFT、ACTIVE、RETIRED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "active_slot",
+          "defName": "有效槽位",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "FE7BDC9C-2371-4B59-86F0-B00374CEC797",
+          "comment": "同一 Schema 键唯一 ACTIVE 版本的稀疏槽位。允许值：1 或 NULL。取值规则：状态为 ACTIVE 时为 1，其他状态为 NULL。",
+          "type": "TINYINT",
+          "len": 1,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "approved_by",
+          "defName": "发布人",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "1AC06491-341C-4139-BB76-BEDB86A915DD",
+          "comment": "发布该版本的 Operations Account；DML 预置版本为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "approved_time",
+          "defName": "发布时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "F876C546-A936-4C44-A3D3-33D84347E419",
+          "comment": "版本发布为 ACTIVE 的 UTC 时间；DRAFT 为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "20AB2F62-C5E5-4B84-A602-80262DAB118C",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "3C089666-7887-4D3C-A50B-BE380E829A18",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_schema_active",
+          "defName": "Uk Schema Active",
+          "unique": true,
+          "comment": "Unique index for onboarding_schema on jurisdiction_code, party_type, role_type, organization_type_code, active_slot",
+          "fields": [
+            {
+              "fieldDefKey": "64EBD657-7BB5-450F-BD99-AFE1D3569F5D",
+              "ascOrDesc": "A",
+              "id": "B104A4BA-43D6-45E9-838E-1064DA1C4CA1"
+            },
+            {
+              "fieldDefKey": "5F125A60-15BC-4387-9B42-2EBE77B719A9",
+              "ascOrDesc": "A",
+              "id": "94B201E2-98AE-46D9-B3E4-98B6B4D59088"
+            },
+            {
+              "fieldDefKey": "C21F8F5E-60D2-47EA-8EA8-BB016AC70103",
+              "ascOrDesc": "A",
+              "id": "5423F28B-CD65-4CAD-AD9F-69F68DE9D631"
+            },
+            {
+              "fieldDefKey": "69509D2A-29CF-41DF-90CD-112B6D160AAB",
+              "ascOrDesc": "A",
+              "id": "8EFF1C24-27C7-4E2C-AB9C-BCD3E635BB2E"
+            },
+            {
+              "fieldDefKey": "FE7BDC9C-2371-4B59-86F0-B00374CEC797",
+              "ascOrDesc": "A",
+              "id": "3220ABA1-B3C5-4093-AC53-5D77E7CFAD63"
+            }
+          ],
+          "id": "C7AB094A-99F4-4E65-A4B3-8F3D3F5126BD"
+        },
+        {
+          "defKey": "uk_schema_version",
+          "defName": "Uk Schema Version",
+          "unique": true,
+          "comment": "Unique index for onboarding_schema on jurisdiction_code, party_type, role_type, organization_type_code, version_no",
+          "fields": [
+            {
+              "fieldDefKey": "64EBD657-7BB5-450F-BD99-AFE1D3569F5D",
+              "ascOrDesc": "A",
+              "id": "A5A7D118-16A6-4915-A56A-40C430B7CA51"
+            },
+            {
+              "fieldDefKey": "5F125A60-15BC-4387-9B42-2EBE77B719A9",
+              "ascOrDesc": "A",
+              "id": "FF8435E7-3EAE-45D6-83F4-FDEA3FA88B14"
+            },
+            {
+              "fieldDefKey": "C21F8F5E-60D2-47EA-8EA8-BB016AC70103",
+              "ascOrDesc": "A",
+              "id": "D1FEC4FB-22E1-432C-A62D-DFD895BAAF56"
+            },
+            {
+              "fieldDefKey": "69509D2A-29CF-41DF-90CD-112B6D160AAB",
+              "ascOrDesc": "A",
+              "id": "4DA25274-ACE1-4201-AB74-CFA9BD1EEA9E"
+            },
+            {
+              "fieldDefKey": "D6E84509-7A2F-4BD2-BD03-245067B231FD",
+              "ascOrDesc": "A",
+              "id": "0A545824-C756-4D03-8111-C886F8DEF5DB"
+            }
+          ],
+          "id": "10F91112-AEAD-4BB5-A8CB-41BFBF522B59"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "60B14712-3819-4349-B7AA-431F0C4F1BD4",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_onboarding_schema_field",
+      "defName": "采集 Schema 字段",
+      "comment": "采集 Schema 字段，同时是前端渲染模板与后端提交校验的唯一来源；uk_schema_field(schema_id,field_key,applies_to_subject)；发布后不可修改",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "schema_field_id",
+          "defName": "Schema 字段标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "22E1A72C-429D-4A0D-8C5E-A8EF4CF1F6F0",
+          "comment": "采集 Schema 字段行的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "schema_id",
+          "defName": "采集 Schema 标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "640F064B-3362-4D47-A50C-81C05365ED01",
+          "comment": "所属采集 Schema 版本标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "section",
+          "defName": "分区",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "91A786CF-76E4-4C8A-B19F-227FAD8E2750",
+          "comment": "前端分区。允许值：BASIC、BUSINESS、PEOPLE、MATERIALS、DECLARATIONS。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "display_group",
+          "defName": "分组",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "9639CED5-95D7-490D-9FCE-DE55176E59C2",
+          "comment": "分区内分组代码，如 IDENTITY、REGISTRATION、ADDRESS。取值来源：Schema DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "field_key",
+          "defName": "字段键",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "AF77A4B6-36B2-4175-B65A-74542B39323B",
+          "comment": "字段键，等于草稿 values 的分区.字段路径（如 individual.birthPlace、attributes.AE_FREE_ZONE_CODE）或 identifier.<标识类型>、declaration.<声明类型>、address、people。取值来源：Schema DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "widget_code",
+          "defName": "控件代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "F21D435E-F80B-4512-98E0-15490252E761",
+          "comment": "前端控件代码，由前端控件注册表解释。允许值：TEXT、TEXTAREA、DATE、COUNTRY、SELECT、IDENTIFIER、ADDRESS、NAME、PERSON_LIST、DOCUMENT_SLOT、DECLARATION、URL、MONEY、EMAIL、PHONE、BOOLEAN。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "catalog_code",
+          "defName": "目录代码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "D068EA4E-6CC1-4C7A-ACF3-D4C1A7BDD5F0",
+          "comment": "SELECT 控件的取值目录代码；其他控件为空。取值来源：t_catalog_item.catalog_code；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "requirement_level",
+          "defName": "要求级别",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "BDEDE1F4-6C52-4236-9079-C12CD9EA7195",
+          "comment": "提交要求级别：REQUIRED 提交前必填，EVENTUALLY 批准前必填，OPTIONAL 可选，HIDDEN 不展示。允许值：REQUIRED、EVENTUALLY、OPTIONAL、HIDDEN。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "requirement_group",
+          "defName": "二选一组",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "E800E64A-DCF4-45DF-A7CC-803D1ADADC81",
+          "comment": "同组字段至少满足一个的组代码，如个人证件 NID 或 Iqama 或护照；为空表示单独计算。取值来源：Schema DML；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "applies_to_subject",
+          "defName": "适用主体",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "1DF3CB52-4F00-48C9-A5AF-DCE565E18069",
+          "comment": "字段适用的受审主体。允许值：PRIMARY、RELATED_PERSON、BOTH。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "validation_pattern",
+          "defName": "校验正则",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "E5EB56A4-D1AA-4CD3-8B76-3DA9784BA0E4",
+          "comment": "字段取值必须完整匹配的正则表达式；为空表示不限格式。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "min_length",
+          "defName": "最小长度",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "36212783-B260-46C0-976C-AE4EE791A663",
+          "comment": "字段最少字符数；为空表示不限。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "max_length",
+          "defName": "最大长度",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "4431C9FB-891D-4EF5-8BA5-D29F7688832A",
+          "comment": "字段最多字符数；为空时取草稿存储上限。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "visible_when",
+          "defName": "可见条件",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "D99397CA-6EBC-4C65-9A82-BD34874C6122",
+          "comment": "简单可见条件 field_key=value；条件不满足时字段不展示、不校验；为空表示始终可见。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "label_key",
+          "defName": "文案键",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "52E5F265-2D47-4F28-97C7-F1F1EA54F819",
+          "comment": "字段标题的界面文案键，命名空间 onboardingSchema。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "help_key",
+          "defName": "帮助文案键",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "61E0D7D3-8D92-4F9B-8FDC-304BEAA03C57",
+          "comment": "字段帮助说明的界面文案键；为空表示无帮助。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "display_order",
+          "defName": "展示顺序",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "311F3E89-577A-4EB7-8772-0ED66032E99E",
+          "comment": "同一分区内的展示顺序，数值越小越靠前。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "5FBE2C6D-D950-4B77-A5EF-21897C5900C8",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "1A45E34D-1BC2-4574-9F14-7111113EA01A",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_schema_field",
+          "defName": "Uk Schema Field",
+          "unique": true,
+          "comment": "Unique index for onboarding_schema_field on schema_id, field_key, applies_to_subject",
+          "fields": [
+            {
+              "fieldDefKey": "640F064B-3362-4D47-A50C-81C05365ED01",
+              "ascOrDesc": "A",
+              "id": "0D702E7A-C4F4-4890-88B3-30C073BEED8A"
+            },
+            {
+              "fieldDefKey": "AF77A4B6-36B2-4175-B65A-74542B39323B",
+              "ascOrDesc": "A",
+              "id": "2AB409AD-3B13-4B78-AF00-A91D644BEB57"
+            },
+            {
+              "fieldDefKey": "1DF3CB52-4F00-48C9-A5AF-DCE565E18069",
+              "ascOrDesc": "A",
+              "id": "75707A92-28FF-4BAF-82FE-4081ECE1562F"
+            }
+          ],
+          "id": "EDB99EBB-9E87-4056-BC53-B04F91810C1B"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "ABF14C83-6519-4028-BF1B-43212167B5A3",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_application_declaration",
+      "defName": "申请声明",
+      "comment": "申请声明证据；不可变、只追加；同一申请同一类型以最新一行为准；记录账号、时间、IP 与 User-Agent 作为电子声明证据",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "declaration_id",
+          "defName": "声明标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "A022A8F3-9DDB-4603-A41D-C61E49511784",
+          "comment": "申请声明记录的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "client_application_id",
+          "defName": "声明所属的 Client 入驻申请标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "25656853-8618-45CD-B061-F730261F9B21",
+          "comment": "声明所属的 Client 入驻申请标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "declaration_type",
+          "defName": "声明类型",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "39D87CC7-D7E7-4617-AA85-81637E18CE2D",
+          "comment": "声明类型，必须是申请冻结 Schema 中的 declaration.<类型> 字段，如 INFORMATION_TRUE、PEP_DECLARATION。取值来源：采集 Schema；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "declared_value",
+          "defName": "声明取值",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "A0A6ECDD-761E-41B2-82BA-230C26E4F508",
+          "comment": "声明取值；PEP 自述可为 FALSE，其他声明须为 TRUE 才算满足。允许值：TRUE、FALSE。",
+          "type": "VARCHAR",
+          "len": 8,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "declared_by_account_id",
+          "defName": "声明账号",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "EDD8E8A7-1802-49CD-BE0E-2BA3733228B1",
+          "comment": "作出声明的 Platform CUSTOMER Account 外部稳定标识，不建立跨库物理外键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "declared_time",
+          "defName": "声明时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "8A3A31EC-34DA-4150-843E-C0BFA0249E08",
+          "comment": "声明作出的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "client_ip",
+          "defName": "客户端 IP",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "E4BE01CF-54B1-4646-BBAD-89E8F341E9BE",
+          "comment": "Gateway 传入的可信客户端 IP；未提供时为空。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "user_agent",
+          "defName": "User-Agent",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "3093571F-8842-4D83-95AC-C9C72A391101",
+          "comment": "作出声明时的浏览器 User-Agent，超长截断；未提供时为空。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "terms_version",
+          "defName": "条款版本",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "2581059C-C250-4AE3-B75B-074E3A8A55D1",
+          "comment": "声明所针对的条款或告知文本版本；为空表示声明不对应版本化文本。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "0A498E3B-BFA4-449B-8351-9BB8827461F4",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "idx_app_declaration",
+          "defName": "Idx App Declaration",
+          "unique": false,
+          "comment": "Access index for application_declaration on client_application_id, declaration_type",
+          "fields": [
+            {
+              "fieldDefKey": "25656853-8618-45CD-B061-F730261F9B21",
+              "ascOrDesc": "A",
+              "id": "53CB95A0-A97B-4E31-827A-C4F0506B2DB4"
+            },
+            {
+              "fieldDefKey": "39D87CC7-D7E7-4617-AA85-81637E18CE2D",
+              "ascOrDesc": "A",
+              "id": "7A4B2B06-E6CE-4AF5-B92C-D41C772DC7E0"
+            }
+          ],
+          "id": "2E821C0A-6020-437C-BE8A-42D231A69D60"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "48C6CC5B-6D42-40D7-961F-D9CFF63F1124",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_partner_onboarding_code",
+      "defName": "PayFac 入驻码",
+      "comment": "PayFac 入驻码；uk_partner_onboarding_code(code)；Client 创建申请时填码解析 responsible_partner_id；码无效只返回 ONBOARDING_CODE_INVALID，不泄露 Partner 信息；ACTIVE 可转 REVOKED 或 EXPIRED，终态不可恢复",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "code_id",
+          "defName": "入驻码标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "0C3EC6CF-68DF-4E97-BFA9-98AF4C54B0C5",
+          "comment": "入驻码的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "code",
+          "defName": "入驻码",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "4A42D006-B7C2-4265-BAA5-A2F79C4233E7",
+          "comment": "不可猜测的随机入驻码，格式 XXXX-XXXX，由 PayFac 线下发给商户。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "local_partner_id",
+          "defName": "Local Partner 标识",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "C48EA14F-3968-4D91-80CC-8E00F1721655",
+          "comment": "签发入驻码并承担尽调责任的 Local Partner（须具备 OE_PROVIDER 角色）标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "66BFC4DC-33AB-49C6-A3CE-535DAC104054",
+          "comment": "入驻码状态；只有 ACTIVE 且在有效期、未用尽时可用。允许值：ACTIVE、REVOKED、EXPIRED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "effective_from",
+          "defName": "生效时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "47567D15-1C5A-40E0-85F1-5489EBED7C91",
+          "comment": "入驻码生效的 UTC 时间，包含该时刻。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "effective_to",
+          "defName": "失效时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "493BBBEB-D3AB-4D4A-AA64-A78B6767E9A9",
+          "comment": "入驻码失效的 UTC 时间，不包含该时刻；为空表示不过期。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "max_uses",
+          "defName": "最大使用次数",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "AAD0EE2B-2DF1-44E9-B87A-A292B024053D",
+          "comment": "允许创建申请的最大次数；为空表示不限次数。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "use_count",
+          "defName": "已使用次数",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "6F46CDD5-56F1-4880-B925-754F8FA17F1C",
+          "comment": "已被成功用于创建申请的次数；达到 max_uses 时状态转为 EXPIRED。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811"
+        },
+        {
+          "defKey": "note",
+          "defName": "签发说明",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "F6AC8935-D7E7-4184-B997-0B41CFEA5834",
+          "comment": "签发说明，仅运营可见。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64"
+        },
+        {
+          "defKey": "issued_by",
+          "defName": "签发人",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "AAD40BDC-F787-4DA0-AF00-2046A26DDA7E",
+          "comment": "签发入驻码的 Operations Account。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "revoked_by",
+          "defName": "作废人",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "75BE1470-45F1-46FA-A32C-ACCEAD31D4BF",
+          "comment": "作废入驻码的 Operations Account；未作废为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
+        },
+        {
+          "defKey": "revoked_time",
+          "defName": "作废时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "D01FD104-75FE-4973-BAF2-30D3B61C484B",
+          "comment": "作废的 UTC 时间；未作废为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "数据库记录创建的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "5F41138C-7BB4-42DB-8722-ADE31838BA31",
+          "comment": "数据库记录创建的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "数据库记录最后一次更新的 UTC 时间",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "8AB55CCC-C402-42F9-846D-28F344A41741",
+          "comment": "数据库记录最后一次更新的 UTC 时间，精确到微秒。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_partner_onboarding_code",
+          "defName": "Uk Partner Onboarding Code",
+          "unique": true,
+          "comment": "Unique index for partner_onboarding_code on code",
+          "fields": [
+            {
+              "fieldDefKey": "4A42D006-B7C2-4265-BAA5-A2F79C4233E7",
+              "ascOrDesc": "A",
+              "id": "3F16726A-0BCF-4BC8-9A62-045B476E0F88"
+            }
+          ],
+          "id": "67AAE6E5-5D27-4655-B7B8-1379DE73AE92"
+        },
+        {
+          "defKey": "idx_onboarding_code_partner",
+          "defName": "Idx Onboarding Code Partner",
+          "unique": false,
+          "comment": "Access index for partner_onboarding_code on local_partner_id, status",
+          "fields": [
+            {
+              "fieldDefKey": "C48EA14F-3968-4D91-80CC-8E00F1721655",
+              "ascOrDesc": "A",
+              "id": "22D18BDE-BDBF-40A0-A9CE-DBD88B01EEE0"
+            },
+            {
+              "fieldDefKey": "66BFC4DC-33AB-49C6-A3CE-535DAC104054",
+              "ascOrDesc": "A",
+              "id": "270DFBBB-849B-4752-BDCA-A112330FD39D"
+            }
+          ],
+          "id": "97FD23D2-254C-4E8F-BC5C-60008DE973F8"
         }
       ],
       "type": "P"

@@ -6,11 +6,9 @@ import java.util.List;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
-import com.paytech.compliance.core.dal.dataobject.QualificationDecision;
 import com.paytech.compliance.core.dal.dataobject.RoleQualification;
 import com.paytech.compliance.core.dal.mapper.RoleQualificationMapper;
 import com.paytech.compliance.core.enums.QualificationErrorCode;
-import com.paytech.compliance.core.enums.QualificationStatus;
 import com.paytech.compliance.domain.QualificationSubject;
 import com.paytech.compliance.domainservice.repository.RoleQualificationRepository;
 import com.paytech.foundation.common.error.ErrorException;
@@ -72,20 +70,24 @@ public class RoleQualificationRepositoryImpl implements RoleQualificationReposit
 
     /** 条件切换当前决定，成功后同步原对象。 */
     @Override
-    public void applyDecision(RoleQualification row, QualificationDecision decision, Instant now) {
-        String reviewStatus = QualificationStatus.ofCode(decision.getOutcome()).reviewStatus().getCode();
-        if (mapper.applyDecision(row, decision.getDecisionId(), decision.getOutcome(), decision.getValidFrom(),
-            decision.getValidTo(), reviewStatus, now) != 1) {
+    public void applyDecision(RoleQualification row, RoleQualification target, Instant now) {
+        if (mapper.applyDecision(row, target, now) != 1) {
             throw new FailException(QualificationErrorCode.QUALIFICATION_CHANGED,
                 "角色资格已被其他操作改变: " + row.getQualificationId() + ", 读取版本: " + row.getVersion());
         }
-        row.setCurrentDecisionId(decision.getDecisionId());
-        row.setStatus(decision.getOutcome());
-        row.setValidFrom(decision.getValidFrom());
-        row.setValidTo(decision.getValidTo());
+        row.setCurrentDecisionId(target.getCurrentDecisionId());
+        row.setStatus(target.getStatus());
+        row.setValidFrom(target.getValidFrom());
+        row.setValidTo(target.getValidTo());
         row.setReviewFrequencyCode(null);
-        row.setNextReviewTime(null);
-        row.setReviewStatus(reviewStatus);
+        row.setNextReviewTime(target.getNextReviewTime());
+        row.setReviewStatus(target.getReviewStatus());
+        row.setTier(target.getTier());
+        row.setRiskRating(target.getRiskRating());
+        row.setJurisdictionCode(target.getJurisdictionCode());
+        row.setResponsiblePartnerId(target.getResponsiblePartnerId());
+        row.setReviewIntervalMonths(target.getReviewIntervalMonths());
+        row.setLastReviewTime(target.getLastReviewTime());
         row.setVersion(row.getVersion() + 1);
         row.setUpdateTime(now);
     }

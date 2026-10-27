@@ -1,0 +1,6 @@
+# 全球合规入驻与资格切片 1：client-web 补丁回滚覆盖（rel-build 2026-10-27，06:30Z 更新）。
+# 对应补丁：34d3d6e3（人员抽屉 422 映射）。回到补丁前正在 mor-test 运行的 14690d94（ui-smoke 第二批）；
+# 更早的版本依次为 9f85e61c、4aaecccb、4659a92a。回滚整个切片仍用 compose-rollback.yaml。
+services:
+  client-console-web:
+    image: sha256:14690d94f97caffee856070358174a58d5499b772965fd8165231956bc0d4c00  # mor-test/client-console-web（ui-smoke 第二批，2026-10-27 06:29Z 现网）

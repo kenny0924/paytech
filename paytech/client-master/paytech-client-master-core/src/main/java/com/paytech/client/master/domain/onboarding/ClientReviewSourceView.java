@@ -34,6 +34,10 @@ public class ClientReviewSourceView {
     private final List<ClientApplicationDocument> documents;
     /** 各资料的证件绑定，按 profileId。 */
     private final Map<Long, PartyProfileIdentifier> identifiers;
+    /** 主主体与关联人员的扩展属性（全部为非 Vault 级）。 */
+    private final List<com.paytech.client.master.core.dal.dataobject.PartyAttribute> attributes;
+    /** 申请声明（只追加，同类型以最后一行为准）。 */
+    private final List<com.paytech.client.master.core.dal.dataobject.ApplicationDeclaration> declarations;
 
     /** 资料含个人信息，不进入日志。 */
     @Override

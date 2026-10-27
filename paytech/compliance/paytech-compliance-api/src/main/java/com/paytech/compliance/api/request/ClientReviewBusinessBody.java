@@ -4,7 +4,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /** 提交时的经营资料；金额为十进制字符串，不含行业或 MCC。 */
+@Getter
+@Setter
 public class ClientReviewBusinessBody {
 
     /** 经营模式代码。 */
@@ -35,64 +40,4 @@ public class ClientReviewBusinessBody {
     @NotBlank
     @Pattern(regexp = "^[A-Z]{3}$")
     private String currency;
-
-    /** 读取经营模式代码。 */
-    public String getBusinessModelCode() {
-        return businessModelCode;
-    }
-
-    /** 设置经营模式代码。 */
-    public void setBusinessModelCode(String businessModelCode) {
-        this.businessModelCode = businessModelCode;
-    }
-
-    /** 读取网站地址，可空。 */
-    public String getWebsiteUrl() {
-        return websiteUrl;
-    }
-
-    /** 设置网站地址，可空。 */
-    public void setWebsiteUrl(String websiteUrl) {
-        this.websiteUrl = websiteUrl;
-    }
-
-    /** 读取业务说明。 */
-    public String getBusinessDescription() {
-        return businessDescription;
-    }
-
-    /** 设置业务说明。 */
-    public void setBusinessDescription(String businessDescription) {
-        this.businessDescription = businessDescription;
-    }
-
-    /** 读取预计月交易额，十进制字符串。 */
-    public String getExpectedVolume() {
-        return expectedVolume;
-    }
-
-    /** 设置预计月交易额，十进制字符串。 */
-    public void setExpectedVolume(String expectedVolume) {
-        this.expectedVolume = expectedVolume;
-    }
-
-    /** 读取预计客单价，十进制字符串，与月交易额同币种。 */
-    public String getExpectedTicket() {
-        return expectedTicket;
-    }
-
-    /** 设置预计客单价，十进制字符串，与月交易额同币种。 */
-    public void setExpectedTicket(String expectedTicket) {
-        this.expectedTicket = expectedTicket;
-    }
-
-    /** 读取交易币种，ISO 4217。 */
-    public String getCurrency() {
-        return currency;
-    }
-
-    /** 设置交易币种，ISO 4217。 */
-    public void setCurrency(String currency) {
-        this.currency = currency;
-    }
 }

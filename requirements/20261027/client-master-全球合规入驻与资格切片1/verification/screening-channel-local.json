@@ -1,0 +1,150 @@
+{
+ "results": {
+  "channel.create": {
+   "ok": true,
+   "existed": true,
+   "status": "ACTIVE"
+  },
+  "channel.endpoints": {
+   "ok": true,
+   "unchanged": true,
+   "endpoints": [
+    {
+     "endpointCode": "SCREENING",
+     "baseUrl": "http://127.0.0.1:18191",
+     "sandbox": false
+    }
+   ]
+  },
+  "channel.activate": {
+   "ok": true,
+   "alreadyActive": true
+  },
+  "standardApi": {
+   "ok": true,
+   "httpStatus": 200,
+   "updated": [
+    "requestFields",
+    "responseFields"
+   ],
+   "versionBefore": 2,
+   "version": 3
+  },
+  "atomicApi": {
+   "ok": true,
+   "httpStatus": 200,
+   "updated": [
+    "requestFields",
+    "responseFields",
+    "definition"
+   ],
+   "versionBefore": 2,
+   "version": 3
+  },
+  "implementation": {
+   "ok": true,
+   "httpStatus": 200,
+   "updated": [
+    "flowDefinition"
+   ],
+   "versionBefore": 1,
+   "version": 2
+  },
+  "grant.create": {
+   "ok": true,
+   "existed": true,
+   "callGrantId": "240582625239040000"
+  },
+  "smoke.noHit": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "SUCCESS",
+   "outputs": {
+    "hits": [],
+    "runRef": "MOCK-RUN-676E80D6A897"
+   },
+   "problem": null
+  },
+  "smoke.pep": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "SUCCESS",
+   "outputs": {
+    "hits": [
+     {
+      "externalRef": "MOCK-PEP-0F1068989F",
+      "entityType": "PERSON",
+      "listTypes": [
+       "PEP"
+      ],
+      "score": "92.0",
+      "matchTypes": [
+       "NAME_EXACT"
+      ],
+      "riskLevel": "MEDIUM",
+      "matchName": "Synthetic TESTHIT Person"
+     }
+    ],
+    "runRef": "MOCK-RUN-076E5FC5D480"
+   },
+   "problem": null
+  },
+  "smoke.sanctions": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "SUCCESS",
+   "outputs": {
+    "hits": [
+     {
+      "externalRef": "MOCK-SAN-ADA2B7ED39",
+      "entityType": "PERSON",
+      "listTypes": [
+       "SANCTIONS"
+      ],
+      "score": "97.0",
+      "matchTypes": [
+       "NAME_EXACT"
+      ],
+      "riskLevel": "HIGH",
+      "matchName": "Synthetic TESTSANCTION Person"
+     }
+    ],
+    "runRef": "MOCK-RUN-EBCC3A239326"
+   },
+   "problem": null
+  },
+  "smoke.fail": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "FAIL",
+   "outputs": {
+    "hits": [],
+    "errorCode": "SUBJECT_REJECTED"
+   },
+   "problem": null
+  },
+  "smoke.error": {
+   "ok": true,
+   "httpStatus": 200,
+   "executeStatus": "ERROR",
+   "outputs": {},
+   "problem": null
+  },
+  "smoke.otherCallerNotGranted": {
+   "ok": true,
+   "httpStatus": 403,
+   "problem": {
+    "code": "CHANNEL_CALL_NOT_GRANTED",
+    "title": "Forbidden",
+    "detail": "调用方未获授权: client-master-service, 渠道: S_SCREENING_MOCK, 标准 API: SCREENING_SEARCH"
+   }
+  },
+  "_meta": {
+   "baseUrl": "http://127.0.0.1:18110",
+   "mockUrl": "http://127.0.0.1:18191",
+   "channelId": "240582347794219008",
+   "startedAt": "2026-10-26T21:33:33.213722+00:00",
+   "finishedAt": "2026-10-26T21:33:33.507067+00:00"
+  }
+ }
+}

@@ -1,10 +1,57 @@
-.client-review-page .review-search { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)) auto; gap: 12px; align-items: end; }
-.client-review-page .review-section { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
-.client-review-page .review-section h2 { font-size: 15px; margin: 0 0 12px; }
-.client-review-page .review-section h3 { font-size: 13px; margin: 12px 0 8px; color: #374151; }
-.client-review-page .review-blockers { margin: 0; padding-left: 18px; }
-.client-review-page .review-subject { border-top: 1px dashed #e5e7eb; padding-top: 12px; margin-top: 12px; }
-.client-review-page .review-subject:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
-.client-review-page .review-classification-row { display: grid; grid-template-columns: 1fr 140px 110px 60px; gap: 8px; margin-bottom: 8px; align-items: center; }
-.client-review-page .review-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-@media (max-width: 900px) { .client-review-page .review-search { grid-template-columns: 1fr 1fr; } }
+/* 入驻审核：列表沿用配置页样式；工作台按工作流 V2 的白底细边框、圆点状态，不用整块彩色底。 */
+.client-review-page .review-search { display: grid; grid-template-columns: repeat(5, minmax(150px, 1fr)) auto; gap: 12px; align-items: end; }
+.obw-page { --obw-border: #e3e8ef; --obw-muted: #69717d; --obw-ok: #1f8a4c; --obw-warn: #b76e00; --obw-danger: #c43c3c; --obw-info: #315dca;
+  display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.obw-page h1 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.obw-page h3, .obw-subhead { font-size: 13px; margin: 12px 0 8px; color: #384152; }
+.obw-crumbs { color: var(--obw-muted); font-size: 11px; }
+.obw-head { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.obw-meta { color: var(--obw-muted); margin-top: 4px; }
+.obw-grow { flex: 1 1 auto; min-width: 0; }
+.obw-label { color: var(--obw-muted); font-size: 11px; margin-bottom: 4px; }
+.obw-on-behalf { display: flex; flex-direction: column; }
+.obw-notice { border-left: 3px solid #e7b44b; padding: 6px 10px; background: #fff; color: #384152; }
+.obw-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+.obw-stats > span { border: 1px solid var(--obw-border); border-radius: 6px; padding: 4px 10px; background: #fff; }
+.obw-ok-text { color: var(--obw-ok); } .obw-warn-text { color: var(--obw-warn); }
+.obw-split { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.obw-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.obw-decision { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 12px; }
+.obw-card { background: #fff; border: 1px solid var(--obw-border); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+.obw-card-title { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-weight: 600; font-size: 13px; flex-wrap: wrap; }
+.obw-card-title .muted { font-weight: 400; font-size: 12px; }
+.obw-count { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: #eef2fb; color: var(--obw-info); font-size: 11px; text-align: center; }
+.obw-dot { display: inline-flex; align-items: center; gap: 6px; color: #384152; font-size: 12px; font-weight: 400; }
+.obw-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #b8c0cc; flex-shrink: 0; }
+.obw-dot.is-ok::before { background: var(--obw-ok, #1f8a4c); } .obw-dot.is-warn::before { background: #e0a100; }
+.obw-dot.is-danger::before { background: var(--obw-danger, #c43c3c); } .obw-dot.is-info::before { background: var(--obw-info, #315dca); }
+.obw-person { border-top: 1px dashed var(--obw-border); padding-top: 12px; margin-top: 12px; }
+.obw-person:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+.obw-subject-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.obw-run { border: 1px solid var(--obw-border); border-radius: 6px; padding: 10px 12px; margin-top: 10px; }
+.obw-run-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.obw-run-empty { padding: 4px 0; }
+.obw-plain-list { margin: 0; padding-left: 18px; }
+.obw-risk-current { display: flex; gap: 32px; flex-wrap: wrap; background: #f6f8fb; border-radius: 6px; padding: 10px 12px; margin-bottom: 14px; }
+.obw-factor-row { display: grid; grid-template-columns: 220px minmax(0, 1fr) 60px; gap: 8px; margin-bottom: 8px; align-items: center; }
+.obw-classification-row { display: grid; grid-template-columns: 1fr 140px 110px 60px; gap: 8px; margin-bottom: 8px; align-items: center; }
+.obw-inline-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; }
+.obw-timeline-item { display: flex; flex-direction: column; gap: 2px; }
+.obw-gate { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.obw-gate li { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.obw-kv { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
+.obw-kv > span:first-child { color: var(--obw-muted); }
+.obw-four-eyes { margin-top: 8px; }
+.obw-decision-actions { display: flex; flex-direction: column; gap: 8px; }
+.obw-modal-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; }
+.obw-modal-foot > .ant-space { margin-left: auto; }
+.obw-return-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.obw-return-meta { display: flex; gap: 24px; margin-top: 14px; align-items: flex-start; flex-wrap: wrap; }
+.obw-freeze { background: #f6f8fb; border-radius: 6px; padding: 8px 10px; margin-bottom: 12px; color: #384152; }
+@media (max-width: 1100px) { .obw-split { grid-template-columns: 1fr; } .obw-decision { position: static; } }
+@media (max-width: 900px) { .client-review-page .review-search { grid-template-columns: 1fr 1fr; } .obw-factor-row { grid-template-columns: 1fr; } }
+.obw-note { margin-top: 6px; color: #384152; white-space: pre-wrap; }
+/* 资料网格：等宽列（固定表格布局），值按词换行；避免长说明挤压其他列导致逐字折行。 */
+.obw-values .ant-descriptions-view > table, .client-values .ant-descriptions-view > table { table-layout: fixed; width: 100%; }
+.obw-values .ant-descriptions-item-content, .client-values .ant-descriptions-item-content { word-break: normal; overflow-wrap: break-word; }
+.obw-values .ant-descriptions-item-label, .client-values .ant-descriptions-item-label { white-space: normal; }

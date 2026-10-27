@@ -63,13 +63,25 @@ public class OnboardingApplicationMocker implements Clear {
         return application(accountId, true);
     }
 
-    /** 给组织申请添加一名完整的关联人员及草稿关系。 */
-    public PersonFixture person(ApplicationFixture app, String relationType) {
+    /**
+     * 给组织申请添加一名完整的关联人员及草稿关系
+     *
+     * @param relationTypes 关系类型；第一项的关系 ID 返回在夹具中
+     */
+    public PersonFixture person(ApplicationFixture app, String... relationTypes) {
         long partyId = nextId(), profileId = nextId(), relationId = nextId();
         parties.add(partyId);
-        mapper.insertSubject(partyId, profileId, app.applicationId(), false, "RESIDENTIAL", nextId(), nextId(), now());
-        mapper.insertRelation(relationId, app.applicationId(), app.partyId(), partyId, relationType, now());
+        mapper.insertSubject(partyId, profileId, app.applicationId(), false, "RESIDENTIAL", this::nextId, now());
+        mapper.insertRelation(relationId, app.applicationId(), app.partyId(), partyId, relationTypes[0], now());
+        for (int i = 1; i < relationTypes.length; i++) {
+            mapper.insertRelation(nextId(), app.applicationId(), app.partyId(), partyId, relationTypes[i], now());
+        }
         return new PersonFixture(partyId, profileId, relationId);
+    }
+
+    /** 满足 AE LLC 关系门槛的一名人员：受益人（40%）、董事与签字人。 */
+    public PersonFixture staffedPerson(ApplicationFixture app) {
+        return person(app, "UBO", "DIRECTOR", "SIGNATORY");
     }
 
     /** 给主体关联一份材料（保存该文件的规范地址），返回材料引用 ID。 */
@@ -81,12 +93,12 @@ public class OnboardingApplicationMocker implements Clear {
         return documentId;
     }
 
-    /** 某个其他主体已占用的身份键。 */
-    public long foreignIdentity(String type, String scope, String normalized) {
+    /** 某个其他主体已占用的身份键；keyValue 为 Vault Token 或公开登记号。 */
+    public long foreignIdentity(String type, String scope, String keyValue) {
         long partyId = nextId();
         parties.add(partyId);
-        mapper.insertSubject(partyId, nextId(), null, false, "RESIDENTIAL", nextId(), nextId(), now());
-        mapper.insertIdentityKey(nextId(), partyId, type, scope, normalized, now());
+        mapper.insertSubject(partyId, nextId(), null, false, "RESIDENTIAL", this::nextId, now());
+        mapper.insertIdentityKey(nextId(), partyId, type, scope, keyValue, now());
         return partyId;
     }
 
@@ -128,10 +140,12 @@ public class OnboardingApplicationMocker implements Clear {
         applications.add(applicationId);
         parties.add(partyId);
         clients.add(clientId);
-        mapper.insertSubject(partyId, profileId, applicationId, organization, organization ? "REGISTERED" : "RESIDENTIAL", nextId(),
-            nextId(), now());
+        mapper.insertSubject(partyId, profileId, applicationId, organization, organization ? "REGISTERED" : "RESIDENTIAL", this::nextId,
+            now());
         mapper.insertApplication(applicationId, clientId, partyId, profileId, nextId(), accountId, organization, nextId(), now());
         nextId();
+        mapper.insertDeclarations(applicationId, organization ? OnboardingFixtures.ORGANIZATION_DECLARATIONS
+            : OnboardingFixtures.INDIVIDUAL_DECLARATIONS, accountId, this::nextId, now());
         return new ApplicationFixture(accountId, applicationId, clientId, partyId, profileId, organization);
     }
 

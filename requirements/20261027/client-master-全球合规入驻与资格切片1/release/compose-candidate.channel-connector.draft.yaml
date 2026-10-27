@@ -1,0 +1,20 @@
+# 草稿（阶段 6 由主会话并入本需求 release/compose-candidate.yaml）：channel-connector 只加出站放行，镜像不变。
+# 2026-10-27 只读核对：运行镜像 sha256:23679d45…（来源 requirements/20261022/payment-3DS全链路/release/compose-candidate.yaml），
+#   运行容器 env 无 CHANNELCONNECTOR_PROTOCOL_EXECUTION_*（取 Nacos 默认：allowed-schemes [https]、trusted-networks []）、
+#   无 CHANNEL_CONNECTOR_INTERNAL_AUTH_MODE（默认 OFF，通用入口信任 X-Caller-Service）。
+# 携带：3DS 覆盖文件的 5 个 CHANNEL_CONNECTOR_RABBITMQ_* 与 depends_on rabbitmq（主 compose 若已含则无害）。
+# 放行范围：只放行合成筛查服务 172.30.73.43/32（test-environment/compose.screening-mock.yaml）；不得放行其他私网。
+# 先起 screening-mock，再换 channel-connector；回滚 = 用 3DS 覆盖文件重建 channel-connector（同一镜像，去掉两个键）。
+services:
+  channel-connector-service:
+    image: sha256:23679d451fe44dfce08426777b5ec7cbc73a60253c604f149dfc48291c3890aa  # mor-test/channel-connector-service:card3ds-20261022（JAR 9cb23e8161abc430），本切片不改代码
+    environment:
+      CHANNEL_CONNECTOR_RABBITMQ_HOST: rabbitmq
+      CHANNEL_CONNECTOR_RABBITMQ_PORT: "5672"
+      CHANNEL_CONNECTOR_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      CHANNEL_CONNECTOR_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      CHANNEL_CONNECTOR_RABBITMQ_VHOST: /mor-test
+      CHANNELCONNECTOR_PROTOCOL_EXECUTION_ALLOWEDSCHEMES: "https,http"
+      CHANNELCONNECTOR_PROTOCOL_EXECUTION_TRUSTEDNETWORKS: "172.30.73.43/32"
+    depends_on:
+      rabbitmq: { condition: service_healthy }

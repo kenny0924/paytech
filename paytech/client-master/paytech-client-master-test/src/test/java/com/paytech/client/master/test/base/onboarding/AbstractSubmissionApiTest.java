@@ -4,7 +4,6 @@ import com.paytech.client.master.test.base.ClientMasterMockTestBase;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ApplicationFixture;
-import com.paytech.compliance.api.MaterialRequirementsModels.RequirementBody;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -42,12 +41,20 @@ public abstract class AbstractSubmissionApiTest extends ClientMasterMockTestBase
         return json.readTree(result.getResponseBody());
     }
 
-    /** 三类资格的通用材料要求：个人/关联人员身份证明必需，组织注册证明必需。 */
+    /** 三类程序的材料：个人/关联人员身份证明必需，组织注册证明必需。 */
     protected void mockGenericRequirements() {
-        owners.mockRequirements("INDIVIDUAL_KYC", new RequirementBody("IDENTITY", "IDENTITY_DOCUMENT", true),
-            new RequirementBody("ADDRESS", "PROOF_OF_ADDRESS", false));
-        owners.mockRequirements("ORGANIZATION_KYB", new RequirementBody("REGISTRATION", "REGISTRATION_CERTIFICATE", true));
-        owners.mockRequirements("RELATED_PERSON_KYC", new RequirementBody("IDENTITY", "IDENTITY_DOCUMENT", true));
+        owners.mockStandardPrograms();
+    }
+
+    /** 提交核对的错误，每项为 需求键=错误码，按返回顺序。 */
+    protected java.util.List<String> checkErrors(ApplicationFixture app) {
+        var result = check(app);
+        if (result.getStatus().value() != 200) {
+            throw new AssertionError("提交核对失败: " + new String(result.getResponseBody()));
+        }
+        var errors = new java.util.ArrayList<String>();
+        body(result).path("errors").forEach(item -> errors.add(item.path("requirementKey").asString() + "=" + item.path("code").asString()));
+        return errors;
     }
 
     /** 关联一份可用材料。 */

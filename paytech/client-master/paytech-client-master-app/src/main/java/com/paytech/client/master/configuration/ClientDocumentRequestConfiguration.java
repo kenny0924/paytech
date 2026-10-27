@@ -11,18 +11,19 @@ public class ClientDocumentRequestConfiguration implements WebMvcConfigurer {
     /** 不将未知 Query 解释为材料权限或筛选条件。 */
     @Override public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new HandlerInterceptor() {
-            /** C03 只接收两个唯一 Query，禁止隐含筛选和 GET Body。 */
+            /** CM-1 / CM-2 只接收约定的唯一 Query，禁止隐含筛选和 GET Body。 */
             @Override public boolean preHandle(HttpServletRequest request,HttpServletResponse response,Object handler) throws IOException {
                 response.setHeader("Cache-Control","no-store");
                 for(var entry:request.getParameterMap().entrySet()) {
-                    if(!java.util.Set.of("clientType","countryCode").contains(entry.getKey()) || entry.getValue().length!=1) {
+                    if(!java.util.Set.of("applicationId","jurisdiction","partyType","organizationType").contains(entry.getKey())
+                        || entry.getValue().length!=1) {
                         throw new InvalidParameterException("目录查询参数无效");
                     }
                 }
                 if(request.getInputStream().read()!=-1) { throw new InvalidParameterException("目录查询不接受 Body"); }
                 return true;
             }
-        }).addPathPatterns("/client-onboarding/v1/form-options");
+        }).addPathPatterns("/client-onboarding/v1/form-schema", "/client-onboarding/v1/jurisdictions");
         registry.addInterceptor(new HandlerInterceptor() {
             /** 无论成功与失败都不缓存材料响应。 */
             @Override public boolean preHandle(HttpServletRequest request,HttpServletResponse response,Object handler) throws IOException {

@@ -1,7 +1,7 @@
 package com.paytech.client.master.core.dal.dataobject;
 import java.time.*;
 import java.math.BigDecimal;
-/** 主表单结构化查询，标识和金额保留数据库类型。 */
+/** 主表单结构化查询，标识只含 Token / 公开登记号与脱敏值，金额保留数据库类型。 */
 public record ClientDraftFields(
     /** 资料头标识，使空白草稿仍有有效查询行。 */ long profileId,
     /** 当前 individual.givenName 值。 */ String individualGivenName,
@@ -10,27 +10,54 @@ public record ClientDraftFields(
     /** 当前 individual.birthDate 值。 */ LocalDate individualBirthDate,
     /** 当前 individual.nationalityCountry 值。 */ String individualNationalityCountry,
     /** 当前 individual.residenceCountry 值。 */ String individualResidenceCountry,
+    /** 当前 individual.birthPlace 值。 */ String individualBirthPlace,
+    /** 当前 individual.birthCountry 值。 */ String individualBirthCountry,
+    /** 当前 individual.gender 值。 */ String individualGender,
+    /** 当前 individual.sourceOfFundsCode 值。 */ String individualSourceOfFundsCode,
+    /** 当前 individual.pepSelfDeclared 值。 */ Boolean individualPepSelfDeclared,
     /** 当前 organization.legalName 值。 */ String organizationLegalName,
     /** 当前 organization.tradeName 值。 */ String organizationTradeName,
     /** 当前 organization.incorporationCountry 值。 */ String organizationIncorporationCountry,
     /** 当前 organization.organizationType 值。 */ String organizationOrganizationType,
     /** 当前 organization.incorporationDate 值。 */ LocalDate organizationIncorporationDate,
+    /** 当前 organization.registrationAuthorityCode 值。 */ String organizationRegistrationAuthorityCode,
+    /** 当前 organization.licenseExpiryDate 值。 */ LocalDate organizationLicenseExpiryDate,
+    /** 当前 organization.listedCompany 值。 */ Boolean organizationListedCompany,
     /** 当前 address.addressLine1 值。 */ String addressAddressLine1,
     /** 当前 address.addressLine2 值。 */ String addressAddressLine2,
     /** 当前 address.city 值。 */ String addressCity,
     /** 当前 address.stateOrProvince 值。 */ String addressStateOrProvince,
     /** 当前 address.postalCode 值。 */ String addressPostalCode,
     /** 当前 address.countryCode 值。 */ String addressCountryCode,
+    /** 当前 address.buildingNumber 值。 */ String addressBuildingNumber,
+    /** 当前 address.additionalNumber 值。 */ String addressAdditionalNumber,
+    /** 当前 address.district 值。 */ String addressDistrict,
+    /** 当前 address.poBox 值。 */ String addressPoBox,
     /** 当前 identifier.identifierType 值。 */ String identifierIdentifierType,
     /** 当前 identifier.issuingCountry 值。 */ String identifierIssuingCountry,
-    /** 当前 identifier.identifierValue 值。 */ String identifierIdentifierValue,
-    /** 当前 identifier.validFrom 值。 */ Instant identifierValidFrom,
-    /** 当前 identifier.validTo 值。 */ Instant identifierValidTo,
+    /** VAULT_REQUIRED 号码的 STABLE Token；不得进入日志或 API。 */ String identifierVaultToken,
+    /** 非 Vault 类型的规范化公开登记号。 */ String identifierPublicValue,
+    /** 号码末 4 位脱敏值。 */ String identifierMaskedValue,
+    /** 保存号码时的格式与校验位结论，通过为空。 */ String identifierCheckResult,
+    /** 证件签发日期。 */ LocalDate identifierIssueDate,
+    /** 证件到期日。 */ LocalDate identifierExpiryDate,
     /** 当前 business.businessModelCode 值。 */ String businessBusinessModelCode,
     /** 当前 business.websiteUrl 值。 */ String businessWebsiteUrl,
     /** 当前 business.businessDescription 值。 */ String businessBusinessDescription,
     /** 当前 business.expectedVolume 值。 */ BigDecimal businessExpectedVolume,
     /** 当前 business.expectedTicket 值。 */ BigDecimal businessExpectedTicket,
     /** 当前 business.currency 值。 */ String businessCurrency) {
+    /** 是否已保存号码（Token 或公开登记号）。 */
+    public boolean identifierPresent() {
+        return identifierVaultToken != null || identifierPublicValue != null;
+    }
+    /** 唯一性比较值：Vault Token 或公开登记号。 */
+    public String identifierKeyValue() {
+        return identifierVaultToken != null ? identifierVaultToken : identifierPublicValue;
+    }
+    /** 新建人员尚无资料时的空白取值。 */
+    public static ClientDraftFields empty() {
+        return new ClientDraftFields(0L, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+    }
     @Override public String toString() { return "ClientDraftFields[redacted]"; }
 }

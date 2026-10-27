@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.ProgramMapper">
+    <sql id="versionColumns">p.program_id AS programId, p.program_code AS programCode, p.qualification_type AS qualificationType,
+        p.jurisdiction_code AS jurisdictionCode, p.party_type AS partyType, p.role_type AS roleType, p.tier,
+        p.owner_partner_id AS ownerPartnerId, p.status AS programStatus, v.status AS versionStatus, v.program_version_id AS programVersionId, v.version_no AS versionNo,
+        v.review_interval_months AS reviewIntervalMonths, v.four_eyes_required AS fourEyesRequired, v.active_slot AS activeSlot,
+        v.approved_by AS approvedBy, v.approved_time AS approvedTime</sql>
+    <select id="findCandidates" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.ProgramVersionView">
+        SELECT <include refid="versionColumns"/>
+        FROM t_dd_program p JOIN t_dd_program_version v ON v.program_id = p.program_id
+        WHERE BINARY p.party_type = BINARY #{partyType} AND BINARY p.role_type = BINARY #{roleType} AND BINARY p.tier = BINARY #{tier}
+        AND BINARY p.status = BINARY 'ACTIVE' AND BINARY v.status = BINARY 'ACTIVE'
+        AND (p.jurisdiction_code IS NULL OR BINARY p.jurisdiction_code = BINARY #{jurisdictionCode})
+        AND (p.owner_partner_id IS NULL<if test="ownerPartnerId != null"> OR p.owner_partner_id = #{ownerPartnerId}</if>)
+        ORDER BY p.program_id, v.program_version_id LIMIT 20
+    </select>
+    <select id="findCatalog" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.ProgramVersionView">
+        SELECT <include refid="versionColumns"/>
+        FROM t_dd_program p JOIN t_dd_program_version v ON v.program_id = p.program_id
+        <where>
+            <if test="jurisdictionCode != null">BINARY p.jurisdiction_code = BINARY #{jurisdictionCode}</if>
+            <if test="status != null">AND BINARY p.status = BINARY #{status}</if>
+        </where>
+        ORDER BY p.jurisdiction_code, p.program_code, v.version_no DESC LIMIT 201
+    </select>
+    <select id="findVersions" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.ProgramVersionView">
+        SELECT <include refid="versionColumns"/>
+        FROM t_dd_program p JOIN t_dd_program_version v ON v.program_id = p.program_id
+        WHERE v.program_version_id IN <foreach collection="versionIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+    <select id="findRequirements" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.ProgramRequirement">
+        SELECT program_requirement_id AS programRequirementId, program_version_id AS programVersionId, requirement_code AS requirementCode,
+            subject_role AS subjectRole, required_flag AS requiredFlag, max_age_days AS maxAgeDays, waivable_flag AS waivableFlag
+        FROM t_dd_program_requirement
+        WHERE program_version_id IN <foreach collection="versionIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY program_version_id, requirement_code LIMIT 2001
+    </select>
+    <select id="findDocTypes" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.ProgramRequirementDocType">
+        SELECT program_requirement_id AS programRequirementId, document_type AS documentType
+        FROM t_dd_program_requirement_doc_type
+        WHERE program_requirement_id IN <foreach collection="requirementIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY program_requirement_id, document_type
+    </select>
+    <select id="findChecks" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.ProgramCheck">
+        SELECT program_check_id AS programCheckId, program_version_id AS programVersionId, check_code AS checkCode, check_type AS checkType,
+            check_mode AS checkMode, subject_role AS subjectRole, standard_api_code AS standardApiCode, required_flag AS requiredFlag,
+            blocking_flag AS blockingFlag, validity_days AS validityDays
+        FROM t_dd_program_check
+        WHERE program_version_id IN <foreach collection="versionIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY program_version_id, check_code
+    </select>
+    <select id="findScreenings" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.ProgramScreening">
+        SELECT program_screening_id AS programScreeningId, program_version_id AS programVersionId, subject_role AS subjectRole,
+            screening_type AS screeningType, standard_api_code AS standardApiCode, required_flag AS requiredFlag,
+            monitoring_required AS monitoringRequired
+        FROM t_dd_program_screening
+        WHERE program_version_id IN <foreach collection="versionIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY program_version_id, subject_role, screening_type
+    </select>
+</mapper>

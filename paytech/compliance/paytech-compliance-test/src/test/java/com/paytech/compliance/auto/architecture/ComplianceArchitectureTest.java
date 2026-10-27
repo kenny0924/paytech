@@ -52,8 +52,10 @@ class ComplianceArchitectureTest {
 
     @Test
     void test_businessLibrariesHaveOnlyApprovedDependencies() throws Exception {
-        Assertions.assertEquals(Set.of("paytech-common-core", "spring-web", "jakarta.validation-api"),
+        Assertions.assertEquals(Set.of("paytech-common-core", "spring-web", "jakarta.validation-api", "lombok"),
             values(readPom(PREFIX + "api"), "/project/dependencies/dependency/artifactId"));
+        Assertions.assertEquals(Set.of("provided"),
+            values(readPom(PREFIX + "api"), "/project/dependencies/dependency[artifactId='lombok']/scope"));
         Document core = readPom(PREFIX + "core");
         Assertions.assertEquals(Set.of("paytech-common-core", "paytech-compensation-event", "mybatis", "spring-context",
             "spring-tx", "spring-boot", "jackson-databind", "lombok"), values(core, "/project/dependencies/dependency/artifactId"));
@@ -61,7 +63,8 @@ class ComplianceArchitectureTest {
             values(core, "/project/dependencies/dependency[artifactId='lombok']/scope"));
         Assertions.assertEquals(Set.of("paytech-compliance-api", "paytech-compliance-core", "paytech-mvc-web-starter",
             "paytech-internal-auth", "paytech-mybatis-support", "paytech-snowflake-id", "paytech-compensation-event",
-            "paytech-messaging"), values(readPom(PREFIX + "app"),
+            "paytech-messaging", "paytech-http-client-support", "paytech-channel-connector-api", "paytech-client-master-api"),
+            values(readPom(PREFIX + "app"),
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId"));
     }
 
@@ -102,7 +105,7 @@ class ComplianceArchitectureTest {
         Assertions.assertEquals(Set.of("true"), values(test, "/project/properties/maven.deploy.skip"));
     }
 
-    /** 发布审核结果需要 RabbitMQ 与 paytech-messaging；compliance 不使用 Redis，决策代码不在 classpath。 */
+    /** 发布审核结果需要 RabbitMQ 与 paytech-messaging；名单筛查出站需要公共 HTTP 客户端；compliance 不使用 Redis，决策代码不在 classpath。 */
     @Test
     void test_runtimeHasOnlyApprovedInfrastructure() {
         for (String resource : Set.of("org/apache/ibatis/session/SqlSession.class",
@@ -112,7 +115,8 @@ class ComplianceArchitectureTest {
             "org/springframework/transaction/support/TransactionTemplate.class",
             "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
             "com/paytech/foundation/messaging/publish/RabbitDomainEventPublisher.class",
-            "com/paytech/foundation/compensation/api/CompensationEventRegistrar.class")) {
+            "com/paytech/foundation/compensation/api/CompensationEventRegistrar.class",
+            "com/paytech/foundation/httpclient/api/HttpServiceClientFactory.class")) {
             Assertions.assertNotNull(getClass().getClassLoader().getResource(resource), resource);
         }
         for (String resource : Set.of("org/mockito/Mockito.class", "org/testcontainers/containers/MySQLContainer.class",
@@ -171,14 +175,19 @@ class ComplianceArchitectureTest {
         for (int index = 0; properties.getProperty("web.logging.metadata-only-path-prefixes[" + index + "]") != null; index++) {
             metadataOnly.add(properties.getProperty("web.logging.metadata-only-path-prefixes[" + index + "]"));
         }
-        Assertions.assertEquals(Set.of("/internal/due-diligence/material-requirements", "/client-onboarding-review",
-            "/client-onboarding-admin"), metadataOnly);
+        // 2026-10-27（S-16）：按 yml 实际读取，至少包含审核登记、运营审核与运营资格三个敏感前缀（4b661830 新增 /compliance-admin 后
+        // 原精确断言未同步导致既有失败）。
+        Assertions.assertTrue(metadataOnly.containsAll(Set.of("/client-onboarding-review", "/client-onboarding-admin",
+            "/compliance-admin")), metadataOnly::toString);
         Assertions.assertEquals("false", properties.getProperty("onboarding.review.enabled"));
-        Assertions.assertEquals("false", properties.getProperty("onboarding.materials.enabled"));
+        Assertions.assertNull(properties.getProperty("onboarding.materials.enabled"));
+        Assertions.assertNull(properties.getProperty("onboarding.materials.programs-json"));
+        Assertions.assertEquals("${COMPLIANCE_SCREENING_CHANNEL_CODE:S_SCREENING_MOCK}",
+            properties.getProperty("compliance.screening.channel-code"));
         Assertions.assertEquals("${COMPLIANCE_INTERNAL_AUTH_MODE:OFF}", properties.getProperty("internal-auth.mode"));
     }
 
-    /** ClientReviewDecided 由 compliance 发布到 compliance.events；client-master 已订阅，未路由按 FAIL 重试，发布任务按聚合串行。 */
+    /** ClientReviewDecided v2 与 QualificationChanged 由 compliance 发布到 compliance.events；client-master 订阅，未路由按 FAIL 重试。 */
     @Test
     void test_domainEventPublicationIsRegistered() {
         Properties properties = properties("application.yml");
@@ -191,6 +200,12 @@ class ComplianceArchitectureTest {
         Assertions.assertEquals("caseVersion", entry.aggregateVersionField());
         Assertions.assertEquals(List.of("client-master"), List.copyOf(entry.consumers()));
         Assertions.assertFalse(entry.strictOrder());
+        Assertions.assertEquals(2, entry.schemaVersion());
+        var qualification = YamlEventCatalog.fromClasspath().find("QualificationChanged").orElseThrow();
+        Assertions.assertEquals("compliance", qualification.producer());
+        Assertions.assertEquals("ROLE_QUALIFICATION", qualification.aggregateType());
+        Assertions.assertEquals("qualificationVersion", qualification.aggregateVersionField());
+        Assertions.assertEquals(List.of("client-master"), List.copyOf(qualification.consumers()));
         Assertions.assertEquals("compliance", YamlEventCatalog.fromClasspath().find("SettlementRestrictionChanged")
             .orElseThrow().producer());
     }

@@ -73,9 +73,12 @@ final class CheckoutCandidateConverter {
     }
 
     /** 参与方资料转换为响应。 */
-    static PartyProfilesResponseBody profiles(List<CheckoutRecords.PartyProfile> profiles) {
+    static PartyProfilesResponseBody profiles(List<com.paytech.client.master.domain.checkout.PartyProfileView> profiles) {
         return new PartyProfilesResponseBody(profiles.stream().map(p -> new PartyProfilesResponseBody.PartyProfile(
-            id(p.profileId()), id(p.partyId()), time(p.approvedTime()), id(p.draftApplicationId()), p.contentHash())).toList());
+            id(p.getProfileId()), id(p.getPartyId()), time(p.getApprovedTime()), id(p.getDraftApplicationId()), p.getContentHash(),
+            p.getPartyType() == null ? null : p.getPartyType().getCode(), p.getGivenName(), p.getMiddleName(), p.getFamilyName(),
+            p.getBirthDate() == null ? null : p.getBirthDate().toString(), p.getNationalityCountry(), p.getResidenceCountry(),
+            p.getLegalName(), p.getIncorporationCountry())).toList());
     }
 
     /** 规范正十进制 BIGINT。 */

@@ -2,19 +2,27 @@ package com.paytech.compliance.api.response;
 
 import java.util.List;
 
-/** Client 入驻审核任务；列表只填摘要，详情另含主体、分类与通过门禁。 */
+import lombok.Getter;
+import lombok.Setter;
+
+/** Client 入驻审核主案件；列表只填摘要字段，详情另含主体、分类、风险评级、推荐、退回错误、时间线与批准门禁。 */
+@Getter
+@Setter
 public class ClientReviewCaseResponseBody {
 
-    /** 主审核任务 ID。 */
+    /** 主审核案件 ID。 */
     private String caseId;
 
-    /** 任务编号。 */
+    /** 案件编号。 */
     private String caseNo;
 
-    /** CCT 申请 ID。 */
+    /** 案件类型：本期固定 ONBOARDING。 */
+    private String caseType;
+
+    /** Client 申请 ID。 */
     private String applicationId;
 
-    /** CCT Client ID。 */
+    /** Client ID。 */
     private String clientId;
 
     /** 来源提交编号。 */
@@ -23,10 +31,28 @@ public class ClientReviewCaseResponseBody {
     /** 资格类型。 */
     private String qualificationType;
 
-    /** 主任务状态。 */
+    /** 冻结的辖区代码。 */
+    private String jurisdictionCode;
+
+    /** 冻结的程序版本 ID。 */
+    private String programVersionId;
+
+    /** 尽调档次：SIMPLIFIED、STANDARD 或 ENHANCED。 */
+    private String tier;
+
+    /** 提交轮次，首次 1。 */
+    private Integer roundNo;
+
+    /** 上一轮被退回的主案件 ID；首次提交为空。 */
+    private String previousCaseId;
+
+    /** 责任 PayFac 的 Local Partner ID；平台自营为空。 */
+    private String responsiblePartnerId;
+
+    /** 主案件状态。 */
     private String status;
 
-    /** 主任务并发版本。 */
+    /** 主案件并发版本。 */
     private String version;
 
     /** 提交时间，UTC ISO-8601。 */
@@ -35,168 +61,68 @@ public class ClientReviewCaseResponseBody {
     /** 结束时间；进行中为空。 */
     private String decidedAt;
 
+    /** 退回补件期限；未退回为空。 */
+    private String reviewDueTime;
+
+    /** 客户风险评级 LOW、MEDIUM、HIGH；未评为空。 */
+    private String riskRating;
+
+    /** 推荐结论 APPROVE 或 REJECT；未推荐为空。 */
+    private String recommendation;
+
     /** 客户可见说明。 */
     private String publicNote;
 
-    /** 退回分区。 */
+    /** 兼容字段：退回分区。 */
     private String returnSection;
 
-    /** 主体与材料；列表为空。 */
+    /** 程序是否要求四眼；详情填写。 */
+    private Boolean fourEyesRequired;
+
+    /** 评级说明；详情填写。 */
+    private String riskRatingNote;
+
+    /** 评级人；详情填写。 */
+    private String riskRatedBy;
+
+    /** 评级时间；详情填写。 */
+    private String riskRatedAt;
+
+    /** 风险因子；列表为空。 */
+    private List<ClientReviewRiskFactorResponseBody> riskFactors;
+
+    /** 推荐人；详情填写。 */
+    private String recommendedBy;
+
+    /** 推荐时间；详情填写。 */
+    private String recommendedAt;
+
+    /** 推荐理由；详情填写。 */
+    private String recommendationNote;
+
+    /** 操作方：PLATFORM（平台运营）或 PARTNER；决定后填写。 */
+    private String operatedBy;
+
+    /** 决定时代操作的责任 PayFac；决定后填写。 */
+    private String onBehalfOfPartnerId;
+
+    /** 最近一次退回的需求级错误；列表为空。 */
+    private List<ClientReviewRequirementErrorBody> returnErrors;
+
+    /** 主体、材料、检查与筛查；列表为空。 */
     private List<ClientReviewSubjectResponseBody> subjects;
 
     /** 已接收分类；列表为空。 */
     private List<ClientReviewClassificationResponseBody> classifications;
 
-    /** 通过门禁未满足项；列表为空。 */
+    /** 主案件与子案件的状态时间线，按发生时间升序；列表为空。 */
+    private List<ClientReviewTimelineItemBody> timeline;
+
+    /**
+     * 批准门禁未满足项；列表为空
+     * <li>CASE_NOT_ACTIVE、CHILD_CASE_NOT_ACTIVE、EVIDENCE_PENDING、REQUIRED_MATERIAL_NOT_ACCEPTED、CLASSIFICATION_NOT_RECEIVED、
+     * CHECK_NOT_PASSED、SCREENING_INCOMPLETE、SCREENING_HIT_OPEN、SCREENING_TRUE_MATCH、RISK_RATING_MISSING、RECOMMENDATION_MISSING、
+     * RECOMMENDATION_NOT_APPROVE、FOUR_EYES_SAME_PERSON（当前操作人即推荐人时）。</li>
+     */
     private List<String> approvalBlockers;
-
-    /** 读取主审核任务 ID。 */
-    public String getCaseId() {
-        return caseId;
-    }
-
-    /** 设置主审核任务 ID。 */
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
-    }
-
-    /** 读取任务编号。 */
-    public String getCaseNo() {
-        return caseNo;
-    }
-
-    /** 设置任务编号。 */
-    public void setCaseNo(String caseNo) {
-        this.caseNo = caseNo;
-    }
-
-    /** 读取CCT 申请 ID。 */
-    public String getApplicationId() {
-        return applicationId;
-    }
-
-    /** 设置CCT 申请 ID。 */
-    public void setApplicationId(String applicationId) {
-        this.applicationId = applicationId;
-    }
-
-    /** 读取CCT Client ID。 */
-    public String getClientId() {
-        return clientId;
-    }
-
-    /** 设置CCT Client ID。 */
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    /** 读取来源提交编号。 */
-    public String getSourceSubmissionId() {
-        return sourceSubmissionId;
-    }
-
-    /** 设置来源提交编号。 */
-    public void setSourceSubmissionId(String sourceSubmissionId) {
-        this.sourceSubmissionId = sourceSubmissionId;
-    }
-
-    /** 读取资格类型。 */
-    public String getQualificationType() {
-        return qualificationType;
-    }
-
-    /** 设置资格类型。 */
-    public void setQualificationType(String qualificationType) {
-        this.qualificationType = qualificationType;
-    }
-
-    /** 读取主任务状态。 */
-    public String getStatus() {
-        return status;
-    }
-
-    /** 设置主任务状态。 */
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    /** 读取主任务并发版本。 */
-    public String getVersion() {
-        return version;
-    }
-
-    /** 设置主任务并发版本。 */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /** 读取提交时间，UTC ISO-8601。 */
-    public String getSubmittedAt() {
-        return submittedAt;
-    }
-
-    /** 设置提交时间，UTC ISO-8601。 */
-    public void setSubmittedAt(String submittedAt) {
-        this.submittedAt = submittedAt;
-    }
-
-    /** 读取结束时间；进行中为空。 */
-    public String getDecidedAt() {
-        return decidedAt;
-    }
-
-    /** 设置结束时间；进行中为空。 */
-    public void setDecidedAt(String decidedAt) {
-        this.decidedAt = decidedAt;
-    }
-
-    /** 读取客户可见说明。 */
-    public String getPublicNote() {
-        return publicNote;
-    }
-
-    /** 设置客户可见说明。 */
-    public void setPublicNote(String publicNote) {
-        this.publicNote = publicNote;
-    }
-
-    /** 读取退回分区。 */
-    public String getReturnSection() {
-        return returnSection;
-    }
-
-    /** 设置退回分区。 */
-    public void setReturnSection(String returnSection) {
-        this.returnSection = returnSection;
-    }
-
-    /** 读取主体与材料；列表为空。 */
-    public List<ClientReviewSubjectResponseBody> getSubjects() {
-        return subjects;
-    }
-
-    /** 设置主体与材料；列表为空。 */
-    public void setSubjects(List<ClientReviewSubjectResponseBody> subjects) {
-        this.subjects = subjects;
-    }
-
-    /** 读取已接收分类；列表为空。 */
-    public List<ClientReviewClassificationResponseBody> getClassifications() {
-        return classifications;
-    }
-
-    /** 设置已接收分类；列表为空。 */
-    public void setClassifications(List<ClientReviewClassificationResponseBody> classifications) {
-        this.classifications = classifications;
-    }
-
-    /** 读取通过门禁未满足项；列表为空。 */
-    public List<String> getApprovalBlockers() {
-        return approvalBlockers;
-    }
-
-    /** 设置通过门禁未满足项；列表为空。 */
-    public void setApprovalBlockers(List<String> approvalBlockers) {
-        this.approvalBlockers = approvalBlockers;
-    }
 }

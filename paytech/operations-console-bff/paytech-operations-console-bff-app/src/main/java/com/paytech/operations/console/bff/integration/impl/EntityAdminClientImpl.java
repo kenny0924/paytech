@@ -11,10 +11,13 @@ import com.paytech.client.master.api.entityadmin.response.LocalPartnerDetailResp
 import com.paytech.client.master.api.entityadmin.response.LocalPartnerSummaryResponseBody;
 import com.paytech.client.master.api.entityadmin.response.OperatingEntityDetailResponseBody;
 import com.paytech.client.master.api.entityadmin.response.OperatingEntitySummaryResponseBody;
+import com.paytech.client.master.api.enums.PartnerRoleCode;
 import com.paytech.compliance.api.enums.QualificationRoleType;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.EntityAdminClient;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
+import com.paytech.operations.console.bff.service.model.clientreview.response.ResponsiblePartnerListResponseBody;
+import com.paytech.operations.console.bff.service.model.clientreview.response.ResponsiblePartnerResponseBody;
 import com.paytech.operations.console.bff.service.model.qualificationadmin.response.QualificationSubjectResponseBody;
 
 import lombok.AllArgsConstructor;
@@ -23,6 +26,11 @@ import lombok.AllArgsConstructor;
 @Component
 @AllArgsConstructor
 public class EntityAdminClientImpl implements EntityAdminClient {
+    /** Partner 生效状态。 */
+    static final String ACTIVE = "ACTIVE";
+    /** PayFac 选项上限，与 client-master 单页上限一致。 */
+    static final int RESPONSIBLE_PARTNER_LIMIT = 100;
+
     private final ClientMasterEntityAdminApi api;
 
     @Override
@@ -55,6 +63,18 @@ public class EntityAdminClientImpl implements EntityAdminClient {
     @Override
     public LocalPartnerDetailResponseBody localPartner(OperatorContext o, String localPartnerId) {
         return partner(localPartnerId, api.getLocalPartner(o.accountId(), o.sessionId(), localPartnerId));
+    }
+
+    /** 只保留 client-master 已按条件过滤的 ACTIVE OE_PROVIDER；返回其他角色或状态视为上游响应无效。 */
+    @Override
+    public ResponsiblePartnerListResponseBody responsiblePartners(OperatorContext o) {
+        var page = listLocalPartners(o, ACTIVE, PartnerRoleCode.OE_PROVIDER.getCode(), 1, RESPONSIBLE_PARTNER_LIMIT);
+        var items = page.items().stream().map(partner -> {
+            require(partner != null && partner.getLocalPartnerId() != null && ACTIVE.equals(partner.getStatus()) && partner.getRoles() != null
+                && partner.getRoles().contains(PartnerRoleCode.OE_PROVIDER.getCode()));
+            return new ResponsiblePartnerResponseBody(partner.getLocalPartnerId(), partner.getPartnerNo(), partner.getLegalName(), partner.getStatus());
+        }).toList();
+        return new ResponsiblePartnerListResponseBody(items);
     }
 
     @Override

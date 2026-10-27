@@ -13,7 +13,7 @@
     <select id="findForCheckout" resultMap="PartyProfile">
         SELECT profile_id, party_id, approved_time, draft_application_id, content_hash
         FROM t_party_profile
-        WHERE party_id IN (SELECT party_id FROM t_client WHERE client_id = #{clientId})
+        WHERE party_id IN (SELECT party_id FROM t_client WHERE client_id = #{clientId}) AND current_slot = 1
         ORDER BY profile_id
     </select>
     <!-- commercial 合同签署校验按资料 ID 读取；调用方保证 ids 非空且有界。 -->
@@ -24,10 +24,25 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
         ORDER BY profile_id
     </select>
-    <!-- 资料首次批准并永久锁定的时间：只填空值，与申请结论、Client 激活同一事务。 -->
+    <!-- commercial 签署校验与 compliance 筛查按资料 ID 读取；只含姓名、生日、国籍、居住国与机构法定名称、注册国，不含证件、地址或联系方式。 -->
+    <select id="findViewsByIds" resultType="com.paytech.client.master.domain.checkout.PartyProfileView">
+        SELECT f.profile_id AS profileId, f.party_id AS partyId, p.party_type AS partyType, f.approved_time AS approvedTime,
+            f.draft_application_id AS draftApplicationId, f.content_hash AS contentHash, i.given_name AS givenName,
+            i.middle_name AS middleName, i.family_name AS familyName, i.birth_date AS birthDate,
+            i.nationality_country AS nationalityCountry, i.residence_country AS residenceCountry, o.legal_name AS legalName,
+            o.incorporation_country AS incorporationCountry
+        FROM t_party_profile f JOIN t_party p ON p.party_id = f.party_id
+            LEFT JOIN t_individual_profile i ON i.profile_id = f.profile_id
+            LEFT JOIN t_organization_profile o ON o.profile_id = f.profile_id
+        WHERE f.profile_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY f.profile_id
+    </select>
+    <!-- 资料首次批准并永久锁定：写批准时间与内容摘要、清空草稿归属，保持为当前资料；与申请结论、Client 激活同一事务（GAP-PROFILE 修复）。 -->
     <update id="markApproved">
         UPDATE t_party_profile SET approved_time=#{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler},
+            content_hash=#{contentHash}, draft_application_id=NULL, current_slot=1,
             update_time=#{now,typeHandler=com.paytech.foundation.mybatis.typehandler.InstantTypeHandler}
-        WHERE party_id=#{partyId} AND approved_time IS NULL
+        WHERE party_id=#{partyId} AND current_slot=1 AND approved_time IS NULL
     </update>
 </mapper>

@@ -12,7 +12,7 @@
      OR EXISTS(SELECT 1 FROM t_operating_entity_application oa WHERE oa.party_profile_id=f.profile_id AND oa.status='APPROVED')) AS shared
   </sql>
   <sql id="personScope">
-    FROM t_party p JOIN t_party_profile f ON f.party_id=p.party_id JOIN t_individual_profile i ON i.profile_id=f.profile_id
+    FROM t_party p JOIN t_party_profile f ON f.party_id=p.party_id AND f.current_slot=1 JOIN t_individual_profile i ON i.profile_id=f.profile_id
     WHERE p.party_type='INDIVIDUAL' AND (f.draft_application_id=#{application.applicationId}
       OR (f.approved_time IS NOT NULL AND EXISTS(SELECT 1 FROM t_party_relation r
         WHERE r.related_party_id=p.party_id AND r.organization_party_id=#{application.partyId}
@@ -27,7 +27,8 @@
   </select>
   <sql id="relationColumns">
     relation_id AS relationId,related_party_id AS relatedPartyId,relation_type AS relationType,
-    ownership_percentage AS ownershipPercentage,effective_from AS effectiveFrom,effective_to AS effectiveTo,status
+    ownership_percentage AS ownershipPercentage,effective_from AS effectiveFrom,effective_to AS effectiveTo,status,
+    ubo_basis AS uboBasis,job_title AS jobTitle,nominee_flag AS nomineeFlag,control_nature AS controlNature
   </sql>
   <sql id="relationScope">
     FROM t_party_relation WHERE client_application_id=#{application.applicationId} AND organization_party_id=#{application.partyId}
@@ -44,19 +45,23 @@
   </select>
   <insert id="insertParty">INSERT INTO t_party(party_id,party_no,party_type,create_time,update_time)
     VALUES(#{partyId},#{partyNo},'INDIVIDUAL',#{now},#{now})</insert>
-  <insert id="insertProfile">INSERT INTO t_party_profile(profile_id,party_id,draft_application_id,create_time,update_time)
-    VALUES(#{profileId},#{partyId},#{applicationId},#{now},#{now})</insert>
+  <insert id="insertProfile">INSERT INTO t_party_profile(profile_id,party_id,draft_application_id,jurisdiction_code,current_slot,
+    create_time,update_time)
+    VALUES(#{profileId},#{partyId},#{applicationId},#{jurisdictionCode},1,#{now},#{now})</insert>
   <insert id="insertIndividual">INSERT INTO t_individual_profile(profile_id,create_time,update_time) VALUES(#{profileId},#{now},#{now})</insert>
   <insert id="insertAddress">INSERT INTO t_party_address(address_id,profile_id,address_type,create_time,update_time)
     VALUES(#{addressId},#{profileId},'RESIDENTIAL',#{now},#{now})</insert>
   <insert id="insertIdentifier">INSERT INTO t_party_profile_identifier(profile_identifier_id,profile_id,create_time,update_time)
     VALUES(#{identifierId},#{profileId},#{now},#{now})</insert>
   <insert id="insertRelation">INSERT INTO t_party_relation(relation_id,organization_party_id,related_party_id,relation_type,
-    ownership_percentage,effective_from,effective_to,status,client_application_id,create_time,update_time)
+    ownership_percentage,effective_from,effective_to,status,client_application_id,ubo_basis,job_title,nominee_flag,control_nature,
+    create_time,update_time)
     VALUES(#{id},#{application.partyId},#{partyId},#{values.relationType},#{values.ownershipPercentage},#{values.effectiveFrom},
-      #{values.effectiveTo},'DRAFT',#{application.applicationId},#{now},#{now})</insert>
+      #{values.effectiveTo},'DRAFT',#{application.applicationId},#{values.uboBasis},#{values.jobTitle},#{values.nomineeFlag},
+      #{values.controlNature},#{now},#{now})</insert>
   <update id="saveRelation">UPDATE t_party_relation SET relation_type=#{values.relationType},ownership_percentage=#{values.ownershipPercentage},
-    effective_from=#{values.effectiveFrom},effective_to=#{values.effectiveTo},update_time=#{now}
+    effective_from=#{values.effectiveFrom},effective_to=#{values.effectiveTo},ubo_basis=#{values.uboBasis},
+    job_title=#{values.jobTitle},nominee_flag=#{values.nomineeFlag},control_nature=#{values.controlNature},update_time=#{now}
     WHERE relation_id=#{id} AND client_application_id=#{application.applicationId} AND organization_party_id=#{application.partyId} AND status='DRAFT'
   </update>
   <delete id="removeRelation">DELETE FROM t_party_relation

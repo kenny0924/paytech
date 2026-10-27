@@ -16,5 +16,8 @@ public interface PartyProfileMapper {
     List<PartyProfile> findByIds(@Param("ids") java.util.Collection<Long> ids);
 
     /** 首次批准时写入该法律主体资料的批准时间；已写入的不覆盖，返回影响行数。 */
-    int markApproved(@Param("partyId") long partyId, @Param("now") Instant now);
+    /** 按资料 ID 读取参与方资料与筛查用姓名。 */
+    java.util.List<com.paytech.client.master.domain.checkout.PartyProfileView> findViewsByIds(@Param("ids") java.util.Collection<Long> ids);
+
+    int markApproved(@Param("partyId") long partyId, @Param("contentHash") String contentHash, @Param("now") Instant now);
 }

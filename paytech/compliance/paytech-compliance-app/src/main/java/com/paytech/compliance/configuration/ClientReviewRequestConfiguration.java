@@ -14,12 +14,15 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/** Client 入驻审核（I01/I02 与运营 O01—O09）只接受合同内的 Query，查询不接受 Body。 */
+/** Client 入驻审核（I01—I03 与运营工作台）只接受合同内的 Query，查询不接受 Body。 */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(name = "onboarding.review.enabled", havingValue = "true")
 public class ClientReviewRequestConfiguration implements WebMvcConfigurer {
     /** 审核列表允许的 Query 参数。 */
-    static final Set<String> LIST_PARAMETERS = Set.of("page", "size", "status", "qualificationType", "applicationId");
+    static final Set<String> LIST_PARAMETERS = Set.of("page", "size", "status", "qualificationType", "applicationId",
+        "responsiblePartnerId", "jurisdictionCode");
+    /** 程序目录允许的 Query 参数。 */
+    static final Set<String> PROGRAM_PARAMETERS = Set.of("jurisdictionCode", "status");
 
     /** 绑定审核登记与运营审核路径。 */
     @Override
@@ -43,10 +46,16 @@ public class ClientReviewRequestConfiguration implements WebMvcConfigurer {
         }).addPathPatterns("/client-onboarding-review/v1/**", "/client-onboarding-admin/v1/**");
     }
 
-    /** 只有 GET 审核列表接受 Query。 */
+    /** 只有 GET 审核列表与程序目录接受 Query。 */
     static Set<String> parameters(String method, String path) {
-        if ("GET".equals(method) && path.endsWith("/client-onboarding-admin/v1/cases")) {
+        if (!"GET".equals(method)) {
+            return Set.of();
+        }
+        if (path.endsWith("/client-onboarding-admin/v1/cases")) {
             return LIST_PARAMETERS;
+        }
+        if (path.endsWith("/client-onboarding-admin/v1/programs")) {
+            return PROGRAM_PARAMETERS;
         }
         return Set.of();
     }

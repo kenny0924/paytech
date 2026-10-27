@@ -1,0 +1,2 @@
+{"tag":"D","lang":"zh-CN","width":390,"page":"register empty submit","kind":"http-failure","method":"POST","url":"/api/client/auth/v1/register","status":429,"requestId":"11245873-e384-4b88-98cd-55115bd60664","body":"(auth, not recorded)","file":null}
+{"tag":"D","lang":"zh-CN","width":390,"page":"register empty submit","kind":"console-error","text":"Failed to load resource: the server responded with a status of 429 (Too Many Requests)"}

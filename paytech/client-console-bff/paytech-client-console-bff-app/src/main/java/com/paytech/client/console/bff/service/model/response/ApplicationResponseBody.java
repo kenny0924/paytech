@@ -7,6 +7,8 @@ import com.paytech.client.contract.api.onboarding.ClientPeopleModels.PersonRespo
 import com.paytech.client.contract.api.onboarding.ClientPeopleModels.RelationResponseBody;
 
 import lombok.AllArgsConstructor;
+import com.paytech.client.master.api.onboarding.response.DeclarationResponseBody;
+import com.paytech.client.master.api.onboarding.response.RequirementItemResponseBody;
 import lombok.Getter;
 
 /**
@@ -53,9 +55,6 @@ public class ApplicationResponseBody {
     /** 材料引用及文件状态 */
     private final List<ApplicationDocument> documents;
 
-    /** 材料主体及其材料要求 */
-    private final List<MaterialSubject> materialSubjects;
-
     /**
      * 审核结果状态
      * <li>NONE 不适用；AVAILABLE 已读取 review；UNAVAILABLE 为 Compliance 不可用或与 CCT 状态不一致，不伪造结果。</li>
@@ -67,6 +66,36 @@ public class ApplicationResponseBody {
      * <li>reviewStatus 不为 AVAILABLE 时为空。</li>
      */
     private final ReviewResult review;
+
+    /** 辖区代码；与主体类型、组织形式一起决定采集 Schema */
+    private final String jurisdictionCode;
+
+    /** 组织形式代码，可空 */
+    private final String organizationTypeCode;
+
+    /** 申请冻结的采集 Schema ID */
+    private final String schemaId;
+
+    /** 退回补件截止时间，UTC；未退回为空 */
+    private final String reviewDueTime;
+
+    /**
+     * 需求清单状态
+     * <li>NONE 不适用（非 DRAFT / RETURNED）；UNAVAILABLE 不能解释为没有缺项。</li>
+     */
+    private final String requirementsStatus;
+
+    /** 实时需求清单（CM-7），按 client-master 原样投影 */
+    private final List<RequirementItemResponseBody> requirements;
+
+    /** 责任 PayFac 的 Local Partner ID；平台直连为空 */
+    private final String responsiblePartnerId;
+
+    /** 责任 PayFac 的展示名，由 client-master 解析；平台直连为空，页面不显示审核方 */
+    private final String responsiblePartnerName;
+
+    /** 已记录的声明（每类型最新一条），页面据此回显勾选 */
+    private final List<DeclarationResponseBody> declarations;
 
     /** 表单和文件展示名不打印到日志。 */
     @Override

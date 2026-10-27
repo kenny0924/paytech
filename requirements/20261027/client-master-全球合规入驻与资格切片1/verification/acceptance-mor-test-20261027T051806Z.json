@@ -1,0 +1,132 @@
+{
+ "env": "mor-test",
+ "startedAt": "2026-10-27T05:18:06.785065+00:00",
+ "finishedAt": "2026-10-27T05:18:19.229170+00:00",
+ "summary": {
+  "PASS": 10,
+  "FAIL": 0,
+  "SKIP": 3,
+  "INFO": 0
+ },
+ "ids": {
+  "clientAAccountId": "240705600114212864",
+  "clientAEmail": "onb-a-1027051806@example.test",
+  "legacyClientId": "236087245667409921"
+ },
+ "results": [
+  {
+   "ac": "SETUP",
+   "step": "运营 A（管理员）登录",
+   "verdict": "PASS",
+   "evidence": "accountId=None"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 注册",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 验证链接",
+   "verdict": "PASS",
+   "evidence": "source=minted challengeNo=8b35f853-1d41-46a6-88aa-0a12262e08e4"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 邮箱验证",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 登录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "client-master 库无证件原值",
+   "verdict": "SKIP",
+   "evidence": "本次无个人证件原值"
+  },
+  {
+   "ac": "AC-03",
+   "step": "compliance 库无证件原值",
+   "verdict": "SKIP",
+   "evidence": "本次无个人证件原值"
+  },
+  {
+   "ac": "AC-03",
+   "step": "本次个人证件行 Token / 掩码与日志核对",
+   "verdict": "SKIP",
+   "evidence": "本次未提交个人证件（只跑 SE）"
+  },
+  {
+   "ac": "AC-14",
+   "step": "client-console en onboarding-schema 语言包（AE 辖区标签已映射）",
+   "verdict": "PASS",
+   "evidence": "releaseNo=2 keys=276 AE=United Arab Emirates"
+  },
+  {
+   "ac": "AC-14",
+   "step": "client-console zh-CN onboarding-schema 语言包（AE 辖区标签已映射）",
+   "verdict": "PASS",
+   "evidence": "releaseNo=2 keys=276 AE=阿联酋"
+  },
+  {
+   "ac": "AC-15",
+   "step": "operations-console en onboarding-schema 语言包（AE 辖区标签已映射）",
+   "verdict": "PASS",
+   "evidence": "releaseNo=9 keys=155 AE=United Arab Emirates"
+  },
+  {
+   "ac": "AC-15",
+   "step": "operations-console zh-CN onboarding-schema 语言包（AE 辖区标签已映射）",
+   "verdict": "PASS",
+   "evidence": "releaseNo=9 keys=155 AE=阿联酋"
+  },
+  {
+   "ac": "MIGR",
+   "step": "遗留 ACTIVE Client（申请 schema_id 为空）运营详情 200、证件只有掩码",
+   "verdict": "PASS",
+   "evidence": "clientId=236087245667409921 jurisdiction=AE HTTP 200 status=ACTIVE legacyApplications=[('236087245667409920', 'APPROVED', 'AE')] identifierMasked=['****2624'] rawKeys=0"
+  }
+ ],
+ "autoTestOnly": {
+  "AC-01 CLOSED 辖区": [
+   "OnboardingFormSchemaTest.test_notAccepted"
+  ],
+  "AC-02 完整错误码矩阵（格式 / EG NID / 到期 / UBO 超 100 / 二选一）": [
+   "SubmitClientApplicationTest.test_individualRuleMatrix",
+   "SubmitClientApplicationTest.test_organizationRuleMatrix",
+   "DraftIdentifierVaultTest.test_formatAndChecksumRecorded"
+  ],
+  "AC-03 IDENTIFIER_CONFLICT（提交时）、I01 只传 Token、MQ 无原值": [
+   "SubmitClientApplicationTest.test_identityConflict",
+   "DraftIdentifierVaultTest.test_vaultRequiredIdentifierStoresTokenOnly",
+   "ClientReviewRegistrationApiAutoTest.test_normalFlow_organization"
+  ],
+  "AC-05 programs/resolve 无程序失败关闭": [
+   "ProgramResolutionApiAutoTest.test_noDataFound",
+   "ClientReviewRegistrationApiAutoTest.test_noDataFound_program"
+  ],
+  "AC-07 退回超期 EXPIRED → 申请 WITHDRAWN": [
+   "ClientReviewReturnApiAutoTest.test_normalFlow_expiry",
+   "ClientReviewLifecycleV2Test.test_returnedThenExpired"
+  ],
+  "AC-11 ZZ 国家包全链 + 字面量禁令": [
+   "NewJurisdictionByDataTest.test_zzFullChain",
+   "ZzCountryPackAutoTest.test_normalFlow_zzFullChain",
+   "JurisdictionLiteralAutoTest.test_noJurisdictionLiterals",
+   "ComplianceHardcodingGuardTest.test_businessRuleViolation_noCatalogLiteralsInProduction"
+  ],
+  "AC-12 程序 / Schema 新版本不影响在途": [
+   "ClientReviewCaseDetailApiAutoTest.test_edgeCase_versionFrozen",
+   "OnboardingFormSchemaTest.test_byApplication"
+  ],
+  "AC-13 Mock 只在 local / mor-test": [
+   "渠道 S_SCREENING_MOCK 只在两环境登记（assets/harness/screening_channel_setup.py）"
+  ]
+ }
+}

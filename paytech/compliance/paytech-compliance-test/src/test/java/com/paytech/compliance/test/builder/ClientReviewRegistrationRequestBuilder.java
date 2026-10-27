@@ -1,213 +1,164 @@
 package com.paytech.compliance.test.builder;
 
-import static com.paytech.compliance.api.enums.MaterialQualificationType.INDIVIDUAL_KYC;
-import static com.paytech.compliance.api.enums.MaterialQualificationType.ORGANIZATION_KYB;
-import static com.paytech.compliance.api.enums.MaterialQualificationType.RELATED_PERSON_KYC;
-
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Consumer;
 
 import com.paytech.compliance.api.request.ClientReviewBusinessBody;
+import com.paytech.compliance.api.request.ClientReviewDeclarationBody;
 import com.paytech.compliance.api.request.ClientReviewDocumentBody;
 import com.paytech.compliance.api.request.ClientReviewRegistrationRequestBody;
 import com.paytech.compliance.api.request.ClientReviewRelationBody;
 import com.paytech.compliance.api.request.ClientReviewSubjectBody;
 
 /**
- * I01 审核登记请求 Builder
- * <li>organization() 为组织客户 + 两名关联人员（甲 UBO 40% 兼 DIRECTOR，乙 SIGNATORY），每个主体一份基础必需材料。</li>
- * <li>individual() 为个人客户，只有主主体及一份身份材料。</li>
- * <li>申请、客户、主体、资料、关系、材料与文件 ID 均为随机 15 位正整数，提交编号为随机 UUID；资料均为合成值，不含真实个人信息。</li>
- * <li>build() 原样返回请求，不修复用例刻意设置的非法值。</li>
- *
- * @author Kenny
+ * I01 v2 请求 Builder：合法默认值（随机申请、Client、Party 与资料 ID），按辖区与主体类型组装
+ * <li>资料 ID 与 Party ID 相差 1（与 PartyProfileMocker 一致），便于为每个主体配置筛查名称。</li>
+ * <li>材料由用例按程序材料槽追加；默认不带材料。</li>
  */
-public final class ClientReviewRegistrationRequestBuilder {
-    /** 组织主体的基础必需材料要求代码与类型。 */
-    public static final String REGISTRATION_CERTIFICATE = "REGISTRATION_CERTIFICATE";
-
-    public static final String COMPANY_REGISTRY_EXTRACT = "COMPANY_REGISTRY_EXTRACT";
-
-    /** 个人与关联人员的基础必需材料要求代码与类型。 */
-    public static final String IDENTITY_DOCUMENT = "IDENTITY_DOCUMENT";
-
-    public static final String PASSPORT = "PASSPORT";
-
-    /** 所有资格类型共有的非必需材料要求代码与类型。 */
-    public static final String PROOF_OF_ADDRESS = "PROOF_OF_ADDRESS";
-
-    public static final String UTILITY_BILL = "UTILITY_BILL";
-
-    /** 合成文件 SHA-256。 */
-    public static final String CONTENT_HASH = "c".repeat(64);
-
-    /** 固定的合成提交时间，带微秒便于比较 Wire 时间。 */
-    public static final String SUBMITTED_AT = "2026-10-13T08:00:00.123456Z";
-
+public class ClientReviewRegistrationRequestBuilder {
     private final ClientReviewRegistrationRequestBody body = new ClientReviewRegistrationRequestBody();
 
-    private ClientReviewRegistrationRequestBuilder(String clientType) {
-        long application = randomId();
-        body.setSourceSubmissionId(UUID.randomUUID().toString());
-        body.setApplicationId(Long.toString(application));
-        body.setApplicationNo("TA" + application);
-        body.setClientId(Long.toString(randomId()));
-        body.setClientType(clientType);
-        body.setRequestedByAccountId(Long.toString(randomId()));
-        body.setSubmittedAt(SUBMITTED_AT);
-        body.setBusiness(business());
-        body.setSubjects(new ArrayList<>());
-        body.setRelations(new ArrayList<>());
-        body.setDocuments(new ArrayList<>());
-    }
-
-    /** 组织客户及两名关联人员，各有一份基础必需材料。 */
-    public static ClientReviewRegistrationRequestBuilder organization() {
-        ClientReviewRegistrationRequestBuilder builder = new ClientReviewRegistrationRequestBuilder("ORGANIZATION");
-        String organization = builder.addSubject("PRIMARY", ORGANIZATION_KYB.getCode(), true);
-        String personA = builder.addSubject("RELATED_PERSON", RELATED_PERSON_KYC.getCode(), false);
-        String personB = builder.addSubject("RELATED_PERSON", RELATED_PERSON_KYC.getCode(), false);
-        builder.addRelation(personA, "UBO", "40").addRelation(personA, "DIRECTOR", null)
-            .addRelation(personB, "SIGNATORY", null);
-        builder.addDocument(organization, REGISTRATION_CERTIFICATE, COMPANY_REGISTRY_EXTRACT)
-            .addDocument(personA, IDENTITY_DOCUMENT, PASSPORT).addDocument(personB, IDENTITY_DOCUMENT, PASSPORT);
+    /** 机构 Client 模板。 */
+    public static ClientReviewRegistrationRequestBuilder organization(String jurisdiction, String organizationType) {
+        ClientReviewRegistrationRequestBuilder builder = base(jurisdiction, "ORGANIZATION");
+        builder.body.setOrganizationTypeCode(organizationType);
+        builder.body.getSubjects().add(subject(id(), "PRIMARY", "ORGANIZATION_KYB"));
         return builder;
     }
 
-    /** 个人客户，只有主主体及一份身份材料。 */
-    public static ClientReviewRegistrationRequestBuilder individual() {
-        ClientReviewRegistrationRequestBuilder builder = new ClientReviewRegistrationRequestBuilder("INDIVIDUAL");
-        String person = builder.addSubject("PRIMARY", INDIVIDUAL_KYC.getCode(), false);
-        return builder.addDocument(person, IDENTITY_DOCUMENT, PASSPORT);
+    /** 个人 Client 模板。 */
+    public static ClientReviewRegistrationRequestBuilder individual(String jurisdiction) {
+        ClientReviewRegistrationRequestBuilder builder = base(jurisdiction, "INDIVIDUAL");
+        builder.body.getSubjects().add(subject(id(), "PRIMARY", "INDIVIDUAL_KYC"));
+        return builder;
     }
 
-    /**
-     * 追加一个受审主体
-     *
-     * @param role PRIMARY 或 RELATED_PERSON
-     * @param qualificationType 资格类型代码
-     * @param organization 是否填写组织资料，否则填写个人资料
-     * @return 新主体的 Party ID
-     */
-    public String addSubject(String role, String qualificationType, boolean organization) {
-        String partyId = Long.toString(randomId());
-        var subject = new ClientReviewSubjectBody();
-        subject.setPartyId(partyId);
-        subject.setProfileId(Long.toString(randomId()));
-        subject.setSubjectRole(role);
-        subject.setQualificationType(qualificationType);
-        if (organization) {
-            subject.setLegalName("Synthetic LLC");
-            subject.setIncorporationCountry("AE");
-            subject.setOrganizationType("LIMITED_COMPANY");
-            subject.setIncorporationDate("2020-01-15");
-        } else {
-            subject.setGivenName("Synthetic");
-            subject.setFamilyName("Person");
-            subject.setBirthDate("1990-05-01");
-            subject.setNationalityCountry("GB");
-            subject.setResidenceCountry("AE");
-        }
-        subject.setAddressLine1("1 Synthetic Road");
-        subject.setCity("Dubai");
-        subject.setAddressCountry("AE");
-        subject.setIdentifierType(organization ? "COMPANY_REGISTRATION_NUMBER" : "PASSPORT");
-        subject.setIssuingCountry("GB");
-        subject.setIdentifierValue("SYN" + partyId);
-        subject.setIdentityKeyId(Long.toString(randomId()));
-        body.getSubjects().add(subject);
+    /** 公共字段。 */
+    static ClientReviewRegistrationRequestBuilder base(String jurisdiction, String clientType) {
+        ClientReviewRegistrationRequestBuilder builder = new ClientReviewRegistrationRequestBuilder();
+        ClientReviewRegistrationRequestBody body = builder.body;
+        body.setSourceSubmissionId(UUID.randomUUID().toString());
+        body.setApplicationId(Long.toString(id()));
+        body.setApplicationNo("APP" + id());
+        body.setClientId(Long.toString(id()));
+        body.setClientType(clientType);
+        body.setJurisdictionCode(jurisdiction);
+        body.setRequestedByAccountId(Long.toString(id()));
+        body.setSubmittedAt(Instant.now().toString());
+        ClientReviewBusinessBody business = new ClientReviewBusinessBody();
+        business.setBusinessModelCode("ONLINE_RETAIL");
+        business.setWebsiteUrl("https://merchant.example");
+        business.setBusinessDescription("Synthetic test merchant");
+        business.setExpectedVolume("100000.00");
+        business.setExpectedTicket("50.00");
+        business.setCurrency("USD");
+        body.setBusiness(business);
+        body.setSubjects(new ArrayList<>());
+        body.setRelations(new ArrayList<>());
+        body.setDocuments(new ArrayList<>());
+        ClientReviewDeclarationBody declaration = new ClientReviewDeclarationBody();
+        declaration.setDeclarationType("INFORMATION_TRUE");
+        declaration.setDeclaredValue("TRUE");
+        declaration.setDeclaredAt(Instant.now().toString());
+        body.setDeclarations(new ArrayList<>(List.of(declaration)));
+        return builder;
+    }
+
+    /** 追加一名关联人员及其关系，返回其 Party ID。 */
+    public long addRelatedPerson(String relationType) {
+        long partyId = id();
+        body.getSubjects().add(subject(partyId, "RELATED_PERSON", "RELATED_PERSON_KYC"));
+        ClientReviewRelationBody relation = new ClientReviewRelationBody();
+        relation.setRelationId(Long.toString(id()));
+        relation.setRelatedPartyId(Long.toString(partyId));
+        relation.setRelationType(relationType);
+        relation.setOwnershipPercentage("UBO".equals(relationType) ? "60" : null);
+        relation.setUboBasis("UBO".equals(relationType) ? "OWNERSHIP" : null);
+        relation.setJobTitle("Director");
+        relation.setEffectiveFrom("2024-01-01");
+        body.getRelations().add(relation);
         return partyId;
     }
 
-    /** 追加一条关系；持股比例可空。 */
-    public ClientReviewRegistrationRequestBuilder addRelation(String relatedPartyId, String relationType,
-        String ownershipPercentage) {
-        var relation = new ClientReviewRelationBody();
-        relation.setRelationId(Long.toString(randomId()));
-        relation.setRelatedPartyId(relatedPartyId);
-        relation.setRelationType(relationType);
-        relation.setOwnershipPercentage(ownershipPercentage);
-        relation.setEffectiveFrom("2024-01-01");
-        body.getRelations().add(relation);
-        return this;
-    }
-
-    /** 追加一份材料，文件 ID 随机。 */
-    public ClientReviewRegistrationRequestBuilder addDocument(String subjectPartyId, String requirementCode,
-        String documentType) {
-        var document = new ClientReviewDocumentBody();
-        document.setDocumentId(Long.toString(randomId()));
-        document.setSubjectPartyId(subjectPartyId);
+    /** 为主体追加一份材料，返回文件地址。 */
+    public String addDocument(long partyId, String requirementCode, String documentType) {
+        ClientReviewDocumentBody document = new ClientReviewDocumentBody();
+        long fileId = id();
+        document.setDocumentId(Long.toString(id()));
+        document.setSubjectPartyId(Long.toString(partyId));
         document.setRequirementCode(requirementCode);
         document.setDocumentType(documentType);
-        document.setFileId(Long.toString(randomId()));
-        document.setContentHash(CONTENT_HASH);
+        document.setFileAddress("/files/v1/" + fileId);
+        document.setContentHash(String.format("%064x", fileId));
+        document.setIssueDate("2026-09-01");
         body.getDocuments().add(document);
+        return document.getFileAddress();
+    }
+
+    /** 主主体 Party ID。 */
+    public long primaryPartyId() {
+        return Long.parseLong(body.getSubjects().getFirst().getPartyId());
+    }
+
+    /** 全部主体 Party ID（主主体在前）。 */
+    public List<Long> partyIds() {
+        return body.getSubjects().stream().map(subject -> Long.parseLong(subject.getPartyId())).toList();
+    }
+
+    /** 主体的资料 ID。 */
+    public static long profileIdOf(long partyId) {
+        return partyId - 1;
+    }
+
+    /** 责任 PayFac。 */
+    public ClientReviewRegistrationRequestBuilder responsiblePartner(Long partnerId) {
+        body.setResponsiblePartnerId(partnerId == null ? null : Long.toString(partnerId));
         return this;
     }
 
-    /** 修改请求顶层字段。 */
-    public ClientReviewRegistrationRequestBuilder with(Consumer<ClientReviewRegistrationRequestBody> change) {
-        change.accept(body);
+    /** 重提：新提交编号并指向上一轮主案件。 */
+    public ClientReviewRegistrationRequestBuilder resubmit(long previousCaseId) {
+        body.setSourceSubmissionId(UUID.randomUUID().toString());
+        body.setPreviousCaseId(Long.toString(previousCaseId));
+        body.setSubmittedAt(Instant.now().toString());
         return this;
     }
 
-    /** 修改第 index 个主体（0 为主主体）。 */
-    public ClientReviewRegistrationRequestBuilder subject(int index, Consumer<ClientReviewSubjectBody> change) {
-        change.accept(body.getSubjects().get(index));
-        return this;
+    /** 直接改写请求体（负例）。 */
+    public ClientReviewRegistrationRequestBody body() {
+        return body;
     }
 
-    /** 修改第 index 条关系。 */
-    public ClientReviewRegistrationRequestBuilder relation(int index, Consumer<ClientReviewRelationBody> change) {
-        change.accept(body.getRelations().get(index));
-        return this;
-    }
-
-    /** 修改第 index 份材料。 */
-    public ClientReviewRegistrationRequestBuilder document(int index, Consumer<ClientReviewDocumentBody> change) {
-        change.accept(body.getDocuments().get(index));
-        return this;
-    }
-
-    /** 修改经营资料。 */
-    public ClientReviewRegistrationRequestBuilder business(Consumer<ClientReviewBusinessBody> change) {
-        change.accept(body.getBusiness());
-        return this;
-    }
-
-    /** 第 index 个主体的 Party ID。 */
-    public String partyId(int index) {
-        return body.getSubjects().get(index).getPartyId();
-    }
-
-    /** 当前请求；返回同一对象，便于重放同一内容。 */
+    /** 构建请求。 */
     public ClientReviewRegistrationRequestBody build() {
         return body;
     }
 
-    /** 合成经营资料。 */
-    private static ClientReviewBusinessBody business() {
-        var business = new ClientReviewBusinessBody();
-        business.setBusinessModelCode("SERVICES");
-        business.setBusinessDescription("Synthetic services");
-        business.setExpectedVolume("50000");
-        business.setExpectedTicket("25.5");
-        business.setCurrency("USD");
-        return business;
+    /** 主体模板：Token 化证件，不含原值。 */
+    static ClientReviewSubjectBody subject(long partyId, String role, String qualificationType) {
+        ClientReviewSubjectBody subject = new ClientReviewSubjectBody();
+        subject.setPartyId(Long.toString(partyId));
+        subject.setProfileId(Long.toString(profileIdOf(partyId)));
+        subject.setSubjectRole(role);
+        subject.setQualificationType(qualificationType);
+        subject.setIdentifierType("ORGANIZATION_KYB".equals(qualificationType) ? "SA_CR_NUMBER" : "PASSPORT");
+        subject.setIssuingCountry("SA");
+        subject.setIdentifierVaultToken("ORGANIZATION_KYB".equals(qualificationType) ? null : "vt_stable_" + partyId);
+        subject.setIdentifierMasked("ORGANIZATION_KYB".equals(qualificationType) ? null : "****" + (partyId % 10000));
+        subject.setIdentityKeyId(Long.toString(id()));
+        return subject;
     }
 
-    /** 15 位正整数 ID，远离 Snowflake 生成的生产 ID 区间。 */
+    /** 随机正 ID（资格等其他夹具复用）。 */
     public static long randomId() {
-        return ThreadLocalRandom.current().nextLong(100_000_000_000_000L, 1_000_000_000_000_000L);
+        return id();
     }
 
-    /** 当前请求中某主体的全部材料要求代码。 */
-    public List<String> documentCodes(String partyId) {
-        return body.getDocuments().stream().filter(document -> partyId.equals(document.getSubjectPartyId()))
-            .map(ClientReviewDocumentBody::getRequirementCode).toList();
+    /** 随机正 ID。 */
+    public static long id() {
+        return ThreadLocalRandom.current().nextLong(100_000_000_000_000L, 900_000_000_000_000L);
     }
 }

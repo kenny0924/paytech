@@ -14,10 +14,11 @@ public interface ClientDraftRepository {
     Long activeApplication(long accountId);
     /** 可重新申请的被拒申请：同账号、同类型、Client 仍为 PENDING 的最近一份；没有为空。 */
     ClientDraftIdentity rejectedApplication(long accountId,ClientType type);
-    /** 在被拒申请的 Client 下新建 DRAFT 申请，并把资料、人员与关系转给新申请；材料不带入。 */
-    void reapply(ClientDraftIdentity rejected,long applicationId,Instant now);
+    /** 在被拒或已撤回申请的 Client 下新建 DRAFT 申请，并把资料、人员与关系转给新申请；材料与声明不带入。 */
+    void reapply(ClientDraftIdentity rejected,long applicationId,ClientApplicationTerms terms,Instant now);
     ClientDraftFields fields(ClientDraftIdentity identity);
     List<ClientDraftContact> contacts(long profileId);
     void create(ClientDraftCreation creation,String snapshot);
-    void save(ClientDraftIdentity identity,ClientDraftPatch patch,Map<String,ClientDraftContact> contacts,Instant now);
+    /** 保存事务外准备好的资料列、联系方式与 Schema 切换；扩展属性由 PartyAttributeRepository 保存。 */
+    void save(ClientDraftIdentity identity,ClientDraftChanges changes,Map<String,ClientDraftContact> contacts,Instant now);
 }

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.compliance.core.dal.mapper.ScreeningHitMapper">
+    <sql id="columns">hit_id AS hitId, screening_run_id AS screeningRunId, external_hit_ref AS externalHitRef, entity_type AS entityType, match_type AS matchType, match_score AS matchScore, risk_level AS riskLevel, status, version, create_time AS createTime, update_time AS updateTime</sql>
+    <insert id="insert">
+        INSERT INTO t_screening_hit(hit_id, screening_run_id, external_hit_ref, entity_type, match_type, match_score, risk_level, status, version, create_time, update_time)
+        VALUES(#{row.hitId}, #{row.screeningRunId}, #{row.externalHitRef}, #{row.entityType}, #{row.matchType}, #{row.matchScore}, #{row.riskLevel}, #{row.status}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="findByRunIds" useCache="false" resultType="com.paytech.compliance.core.dal.dataobject.ScreeningHit">
+        SELECT <include refid="columns"/> FROM t_screening_hit WHERE screening_run_id IN <foreach collection="screeningRunIds" item="id" open="(" separator="," close=")">#{id}</foreach> ORDER BY screening_run_id, hit_id
+    </select>
+    <update id="resolve">
+        UPDATE t_screening_hit SET status = 'RESOLVED', version = version + 1, update_time = #{now}
+        WHERE hit_id = #{row.hitId} AND version = #{row.version} AND status = 'OPEN'
+    </update>
+    <update id="touch">
+        UPDATE t_screening_hit SET version = version + 1, update_time = #{now}
+        WHERE hit_id = #{row.hitId} AND version = #{row.version} AND status = 'OPEN'
+    </update>
+    <update id="supersedeOthers">
+        UPDATE t_screening_hit h JOIN t_screening_run r ON r.screening_run_id = h.screening_run_id
+        SET h.status = 'SUPERSEDED', h.version = h.version + 1, h.update_time = #{now}
+        WHERE r.case_subject_id = #{caseSubjectId} AND r.program_screening_id = #{programScreeningId}
+        AND r.screening_run_id &lt;&gt; #{keepRunId} AND h.status IN ('OPEN', 'RESOLVED')
+    </update>
+</mapper>
