@@ -20,6 +20,7 @@
 | 2026-10-27 | 7 mor-test 部署 | 03:47—04:05Z 按 [运行卡](./release/runbook.md) 执行，逐步记录见 [verification/sql-execution-log.md](./verification/sql-execution-log.md)。过程问题：mor-test Vault Nacos 注册丢失（Platform 重启后登录 503 约 1 分钟，重启 Vault 恢复）；Platform 拒绝驼峰命名空间 → 前端改名 `onboarding-schema` 重建两个 Web 后发布语言包；部署中途冻结代码 | 已完成 |
 | 2026-10-27 | 7 mor-test 验收 | 全量 242 PASS / 4 FAIL（语言包检查早于发布且用旧命名空间）/ 5 SKIP → 修脚本重跑 SE 10 PASS / 0 FAIL。未在 mor-test 建运营账号（安全检查拒绝），AC-08 四眼批准与 AC-09 资格撤销仅本机验收；CLOSED 辖区由 auto 测试覆盖 | 已完成（遗留见下） |
 | 2026-10-27 | 7 浏览器复验 | 用户报告运营「采集 Schema」页错误后，主会话启动 mor-test 浏览器冒烟（中英文、1440 / 390）：发现 3 个 P0（运营工作台解码、客户地址保存、机构添加人员）及 P1 / P2 共 15 项，接口验收未覆盖。逐轮修复并替换（client-master ba3f136f → 0af5b792；client-web 4aaecccb → 9f85e61c → 14690d94 → 34d3d6e3；ops-web 4d4c1130 → 35b61f12 → 1274fefe → 88ab111a；语言包 client #5、operations #12），每次带单服务回滚文件。最终 AE 机构（含 GB 地址人员）与 AE 个人经浏览器提交通过，详见 [verification/ui-smoke/report.md](./verification/ui-smoke/report.md) | 已完成 |
+| 2026-10-27 | 8 提交 | 用户授权提交（不含推送）。私有索引提交 `9f506f0f`（基于 `ea0272f3`，939 个文件）：worktree `Code-MoR-onboard` 的本需求改动 + `client-console.pen` + 共享文档中本需求的行（AGENTS.md Partner 例外、design-discuss / requirements 索引行、CURRENT_IMPLEMENTATION 条目）；排除 worktree 专用 `paytech/.mvn/maven.config`、浏览器冒烟截图与原始响应（`verification/ui-smoke/screens|bodies`，83 MB，本地保留）及他人未提交改动 | 已完成 |
 
 ## 适用阶段
 
@@ -27,7 +28,7 @@
 
 ## 当前阶段与下一确认点
 
-阶段 3—7 已完成（mor-test 已部署并验收）。下一确认点：**阶段 8 提交**（提交 / 推送需用户单独授权；`paytech/.mvn/maven.config` 只用于 worktree，提交时排除；提交来源为 worktree `Code-MoR-onboard`，按 git status 取文件清单）。
+阶段 3—7 已完成（mor-test 已部署并验收）。阶段 8 已提交 `9f506f0f`；推送另行授权（`paytech/.mvn/maven.config` 只用于 worktree，提交时排除；提交来源为 worktree `Code-MoR-onboard`，按 git status 取文件清单）。
 
 ## 测试 / 验收证据
 
@@ -45,7 +46,7 @@
 
 ## 提交记录
 
-无（阶段 8 待授权）。
+- `9f506f0f` feat(client-master,compliance): 全球合规入驻与资格切片 1（939 个文件，未推送）。
 
 ## 遗留项及后续需求
 
