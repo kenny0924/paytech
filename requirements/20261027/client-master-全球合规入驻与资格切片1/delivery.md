@@ -48,6 +48,12 @@
 
 - `9f506f0f` feat(client-master,compliance): 全球合规入驻与资格切片 1（939 个文件，未推送）。
 
+## 后续环境变更（其他需求覆盖本切片镜像）
+
+- 2026-10-27 15:33—15:56Z，需求 platform-support-参考数据目录与 client-master 迁移在 mor-test 替换了本切片的 5 个镜像。新镜像基于 `aba76a1a`，发布前已与线上 JAR / dist 逐项比对，未回退本切片：client-master `80257737`、client-console-bff `be79550f`、operations-console-bff `48113289`、client-console-web `c09af02a`、operations-console-web `b1309a45`（platform-support `aec53586`）。块 139 已激活（Gateway 607→612），块 138 保持；语言包 client-console #6、operations-console #13 是 #5 / #12 的超集。compliance、channel-connector、screening-mock 未动。
+- 该需求已删除 client-master `t_catalog_item` 中 INDUSTRY / CURRENCY / STATE_OR_PROVINCE 共 48 行。**不要重跑本切片的 country-pack 变更脚本**，否则会把这些行加回。回滚本切片时以那次发布的回滚方案为准，`release/compose-rollback.yaml` 中的镜像已不是当前线上镜像。
+- 2026-10-27 收尾：浏览器冒烟的截图、原始响应、`client-app-*.txt`、`sample.pdf`（未入库，72 MB）已移到本机 `Code-MoR-backups/onboard-20261027/ui-smoke-artifacts/`；构建用 worktree `Code-MoR-onboard-rel`、`Code-MoR-onboard-base` 已删除。`Code-MoR-onboard` 保留，因为 mor-test 的 screening-mock 挂载其中的脚本。本机 e2e 栈与 18302 开发服务器已由参考数据需求接管，本切片不再还原其 JAR。
+
 ## 遗留项及后续需求
 
 - 本切片遗留：C05 缺 submittedAt / withdrawnAt（结果页不显示时间）；运营工作台布尔值显示 true/false；mor-test 未经页面验 RETURNED 页与注册验证邮件（邮件走真实 SES）；入驻码过期状态目前由前端推导（宜由 client-master 推导）。AC-08 / AC-09 未在 mor-test 用第二运营账号验收；Foundation 无请求体写命令丢弃 Problem `errors[]`；后端 labelKey `onboardingSchema.*` 与命名空间 `onboarding-schema` 不一致（前端映射）；国家包 26 项待法务；真实筛查与整数分值校验未验；入驻码作废无原因、Client 详情无激活 / 挂起时间、BFF 侧过滤、PayFac 下拉上限 100；Vault Nacos 注册断线不自动恢复（环境问题，另行排查）。
