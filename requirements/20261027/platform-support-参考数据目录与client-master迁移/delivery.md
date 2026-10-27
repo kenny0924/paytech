@@ -26,6 +26,7 @@
 | 2026-10-27 | 6 确认 / 7 授权 | 用户回复"做一下"：接受阶段 6；授权阶段 7 在 mor-test 执行运行卡（替换 6 个服务镜像、root 执行本需求 SQL 含块 139 注册与激活、建命名空间并发布语言包、运行验收与浏览器冒烟并创建测试数据、按运行卡回滚）；并做国旗上传（PNG 经运营公开上传 + root 回填）。不含提交、推送 | 已确认 |
 | 2026-10-27 | 7 mor-test 部署与验收 | 按 [runbook](./release/runbook.md) 15:33—15:56Z 执行（证据 `release/evidence/mortest/`）：备份 → 预检与 baseline 一致 → Platform 窗口（中断约 50 秒，SQL 10/11 计数与演练一致）→ client-bff → client-master 窗口（约 40 秒，48 / 8 / 2 / 12 转换）→ client-web → ops-bff → ops-web → 块 139 休眠后激活（607→612）→ 语言包 client-console #6、operations-console #13（发布请求 504 网关超时、Platform 后台 11 秒完成，复核 52 包、10088 键与仓库一致）→ 接口验收 220 PASS / 0 FAIL / 5 SKIP（[结果](./verification/acceptance-mor-test-20261027T154327Z.json)）→ 浏览器 Client 21×4、运营 27×2 全过（首次预置遇上传完成 504 偶发、预置脚本打印缺陷已修）；ledger / billing 快照刷新 0 失败；AE / SA / EG form-schema 与草稿保存通过；已通知 code-mor-2d、code-mor-6b | 已完成 |
 | 2026-10-27 | 7 国旗上传 | flag-icons@7.5.0（MIT）249 个国家转 120×90 PNG，经运营控制台公开上传（`release/flags/flags.py`；原因码由 ops-bff 填写，文件名 `flag-<CC>.png`）→ 249 / 249 扫描通过 → root 回填 `t_ref_country.logo_file_address`（`release/flags/sql/apply.sql`，核对 249 / 249、与映射一致、无不可公开文件）；AE / SA / EG 公开地址 200 image/png；Client 冒烟国旗占位 0（原"无国旗显示占位"断言按预期不再成立）。过程：上传脚本修正 3 处（完成接口须带 JSON 内容类型且不带请求体、扫描改为最后统一核对、409 并发冲突按同一上传重试）；用户授权临时把两条上传路由限流放宽到 500 次 / 分钟（`ratelimit-500-apply.sql`，三层 RATE_LIMIT 6 条），上传后已用 `ratelimit-500-rollback.sql` 恢复 10 / 30 / 300，网关快照正常 612。前两次失败尝试在文件服务留下 1 条 AD 未完成上传记录（不被引用） | 已完成 |
+| 2026-10-27 | 7 确认 / 8 提交 | 用户接受阶段 7 并授权本地提交（不含推送）。私有索引提交 `ab27bd76`（父 `aba76a1a`，498 个文件）：worktree `Code-MoR-refdata` 的代码改动 + 本需求文档（决定、design-discuss/reference-data、需求目录、AGENTS / DATABASE_DESIGN_GUIDE / DOCUMENT_GOVERNANCE / D41 注记，共享文件 CURRENT_IMPLEMENTATION / requirements README / design-discuss README 只取本需求段落）；排除 worktree 专用 `paytech/.mvn/maven.config`、浏览器截图 `verification/ui-smoke/screens/`（本地保留）、两个 `.pen` 原型（其他会话有未提交改动且无法拆分，原型导出图已在 `assets/prototype/`）及其他会话改动。提交后已把主工作区与共享索引对齐 HEAD | 已完成 |
 
 ## 适用阶段
 
@@ -33,8 +34,8 @@
 
 ## 当前阶段与下一确认点
 
-阶段 7 已完成（含国旗上传），等待用户确认并授权阶段 8（提交，不含推送）。
+全部 8 个阶段已完成；已本地提交 `ab27bd76`，未推送。推送另行授权。
 
 ## 实现 / 验证 / 部署状态
 
-尚未开始；进入实现后只在 [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 记录。
+见 [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 对应条目。
