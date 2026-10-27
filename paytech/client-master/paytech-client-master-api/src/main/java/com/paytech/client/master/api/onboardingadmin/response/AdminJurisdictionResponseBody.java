@@ -4,7 +4,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
-/** CM-10 辖区包只读配置：辖区、规则开关与目录。 */
+/** CM-10 辖区包只读配置：辖区、规则开关、目录与本地地址格式组件。 */
 @Getter
 @Setter
 public class AdminJurisdictionResponseBody {
@@ -37,6 +37,9 @@ public class AdminJurisdictionResponseBody {
 
     /** 辖区与全局关系类型（全部状态）。 */
     private List<RelationTypeItem> relationTypes;
+
+    /** 本地地址格式（addressFormatCode）的组件，按展示顺序；未配置格式时为空列表。 */
+    private List<AddressComponentItem> addressComponents;
 
     /** 一条规则开关。 */
     @Getter
@@ -105,6 +108,23 @@ public class AdminJurisdictionResponseBody {
 
         /** 状态。 */
         private String status;
+    }
+
+    /** 一个地址格式组件。 */
+    @Getter
+    @Setter
+    public static class AddressComponentItem {
+        /** 组件，即草稿 address 分区字段名，如 stateOrProvince。 */
+        private String component;
+
+        /** 取值目录代码，可空（自由文本）；REF_ 开头为 Platform 参考数据目录（如 REF_COUNTRY_SUBDIVISION），不在本服务目录中。 */
+        private String catalogCode;
+
+        /** 组件自身的必填标记；未叠加 POSTAL_CODE_REQUIRED 规则（规则见 rules）。 */
+        private boolean required;
+
+        /** 展示顺序，数值越小越靠前。 */
+        private int order;
     }
 
     /** 一个关系类型。 */

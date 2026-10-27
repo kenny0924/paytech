@@ -1,0 +1,451 @@
+{
+ "env": "local",
+ "startedAt": "2026-10-27T11:33:34.237542+00:00",
+ "finishedAt": "2026-10-27T11:34:09.963022+00:00",
+ "summary": {
+  "PASS": 69,
+  "FAIL": 0,
+  "SKIP": 0,
+  "INFO": 3
+ },
+ "ids": {
+  "clientAAccountId": "240800086995505152",
+  "clientAEmail": "onb-a-1027113334@example.test",
+  "appAE": "240800130825990144",
+  "caseAE": "240800221729148928"
+ },
+ "results": [
+  {
+   "ac": "SETUP",
+   "step": "Client A 注册",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 验证链接",
+   "verdict": "PASS",
+   "evidence": "source=minted challengeNo=99bffb2a-f8fd-403e-af19-949281be4caa"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 邮箱验证",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 登录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 创建申请（AE ORGANIZATION LLC）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 applicationId=240800130825990144 operation=CREATED "
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 主主体 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=20 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE UBO1 新增关系人（UBO）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 partyId=240800132231081984 relationId=240800132268830720 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE UBO1 追加关系（DIRECTOR）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 relationId=240800132411437056 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE UBO1 追加关系（SIGNATORY）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 relationId=240800132604375040 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE UBO2 新增关系人（UBO）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 partyId=240800132780535808 relationId=240800132818284544 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 AE-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT AE-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 AE-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240800133338370048"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 AE-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240800133338370048"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 AE-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240800146848231424 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 AE-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT AE-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 AE-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240800147322179584"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 AE-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240800147322179584"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 AE-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240800160899149824 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 AE-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT AE-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 AE-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240800161511510016"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 AE-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240800161511510016"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 AE-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240800175235280896 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 AE-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT AE-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 AE-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240800175914749952"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 AE-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240800175914749952"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 AE-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240800189714018304 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 AE-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT AE-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 AE-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240800190607396864"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 AE-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240800190607396864"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 AE-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240800205979529216 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 OWNERSHIP_COMPLETE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240800206281519104 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 DIRECTORSHIP_COMPLETE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240800206629646336 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 REPRESENTATIVE_AUTHORITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240800206965190656 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 PEP_DECLARATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240800207137157120 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 INFORMATION_TRUE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240800207304929280 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 PLATFORM_TERMS",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240800207502061568 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 合法填写后提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 币种=XYZ（不存在） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=1 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "币种不存在 → FIELD_VALUE_NOT_IN_CATALOG 挂在 business.currency",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"business.currency\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"business.currency\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "临时 t_ref_currency.EGP ACTIVE → INACTIVE",
+   "verdict": "INFO",
+   "evidence": ""
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 币种=EGP（临时停用） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=1 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "币种停用 → FIELD_VALUE_NOT_IN_CATALOG 挂在 business.currency",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"business.currency\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"business.currency\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "恢复 t_ref_currency.EGP → ACTIVE",
+   "verdict": "PASS",
+   "evidence": "ACTIVE"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 币种恢复 AED 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=1 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 省州=AE-ZZ（不存在） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=5 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "行政区不存在 → FIELD_VALUE_NOT_IN_CATALOG 挂在 stateOrProvince",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"address.stateOrProvince\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"address.stateOrProvince\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 地址填 EG-C（国家不一致） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=5 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "行政区与地址国家不一致 → FIELD_VALUE_NOT_IN_CATALOG 挂在 stateOrProvince",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"address.stateOrProvince\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"address.stateOrProvince\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "临时 t_ref_country_subdivision.AE-UQ ACTIVE → INACTIVE",
+   "verdict": "INFO",
+   "evidence": ""
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 省州=AE-UQ（临时停用） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=5 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "行政区停用 → FIELD_VALUE_NOT_IN_CATALOG 挂在 stateOrProvince",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"address.stateOrProvince\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"address.stateOrProvince\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "恢复 t_ref_country_subdivision.AE-UQ → ACTIVE",
+   "verdict": "PASS",
+   "evidence": "ACTIVE"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 省州恢复 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=5 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE organization.incorporationCountry=XX（不存在） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=1 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "国家不存在 → FIELD_VALUE_NOT_IN_CATALOG 挂在 organization.incorporationCountry",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"organization.incorporationCountry\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"organization.incorporationCountry\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "带不存在国家正式提交 → 422 SUBMISSION_INCOMPLETE，申请仍 DRAFT、无提交号",
+   "verdict": "PASS",
+   "evidence": "{\"status\": 422, \"problem\": {\"code\": \"SUBMISSION_INCOMPLETE\", \"detail\": \"资料或材料尚不完整，请按提交核对结果补全\", \"requestId\": \"4dfd536f-2db2-4b27-a258-c3326cdfad96\"}, \"app\": \"DRAFT\"}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "临时 t_ref_country.AQ ACTIVE → INACTIVE",
+   "verdict": "INFO",
+   "evidence": ""
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE organization.incorporationCountry=AQ（临时停用） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=1 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "国家停用 → FIELD_VALUE_NOT_IN_CATALOG 挂在 organization.incorporationCountry",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"organization.incorporationCountry\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"organization.incorporationCountry\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "恢复 t_ref_country.AQ → ACTIVE",
+   "verdict": "PASS",
+   "evidence": "ACTIVE"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE organization.incorporationCountry 恢复 AE 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=1 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "草稿保存：旧下划线省州 AE_DU 格式不合法 → 422",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'INVALID_DRAFT', 'detail': '入驻字段不符合约定', 'requestId': '7f96319d-78df-4a59-bd3f-8b3001a10689', 'errors': [{'field': 'address.stateOrProvince', 'message': '须为 ISO 3166-2 行政区代码，如 AE-DU'}]}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "修正后提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 ready=True errors=[]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 提交",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 submissionId=0e976d23-47d6-4ca5-b4da-210913cabae3 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 进入审核",
+   "verdict": "PASS",
+   "evidence": "status=UNDER_REVIEW"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 案件出现在运营工作台",
+   "verdict": "PASS",
+   "evidence": "240800130825990144"
+  }
+ ]
+}

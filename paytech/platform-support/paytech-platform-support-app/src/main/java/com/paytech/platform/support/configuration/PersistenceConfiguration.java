@@ -85,6 +85,7 @@ public class PersistenceConfiguration {
         registry.register(GatewayHttpMethod.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.api.enums.CurrencyRoundingMode.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.api.enums.CurrencySpecStatus.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.api.enums.ReferenceDataStatus.class, CodeEnumTypeHandler.class);
         registry.register(GatewaySecurityProfileCode.class, CodeEnumTypeHandler.class);
         registry.register(GatewayAuthorizationMode.class, CodeEnumTypeHandler.class);
         registry.register(GatewayRequestCookieMode.class, CodeEnumTypeHandler.class);

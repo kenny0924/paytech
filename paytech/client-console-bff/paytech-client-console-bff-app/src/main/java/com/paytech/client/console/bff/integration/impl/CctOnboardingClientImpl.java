@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import com.paytech.client.console.bff.integration.CallerServiceCodes;
 import com.paytech.client.console.bff.integration.CctOnboardingClient;
 import com.paytech.client.master.api.onboarding.ClientOnboardingApplicationApi;
+import com.paytech.client.master.api.onboarding.ClientOnboardingCatalogApi;
+import com.paytech.client.master.api.onboarding.response.FormSchemaResponseBody;
 import com.paytech.client.master.api.onboarding.response.RequirementItemResponseBody;
 import com.paytech.client.console.bff.service.model.ClientActor;
 import com.paytech.client.contract.api.onboarding.ClientDraftApi;
@@ -50,6 +52,7 @@ public class CctOnboardingClientImpl implements CctOnboardingClient {
     private final ClientDraftApi drafts;
     private final ClientOnboardingStartApi applications;
     private final ClientOnboardingApplicationApi onboardingApplications;
+    private final ClientOnboardingCatalogApi catalogs;
 
     /** 读取申请导航并校验条数与未完成申请唯一。 */
     @Override
@@ -72,6 +75,18 @@ public class CctOnboardingClientImpl implements CctOnboardingClient {
             throw new ServiceUnavailableException();
         }
         return draft;
+    }
+
+    /** 读取采集 Schema 并校验版本 ID 与分区存在。 */
+    @Override
+    public FormSchemaResponseBody formSchema(ClientActor actor, String applicationId, String jurisdiction, String partyType,
+        String organizationType) {
+        var value = catalogs.formSchema(CallerServiceCodes.CLIENT_CONSOLE_BFF, actor.getAccountId(), actor.getSessionId(),
+            applicationId, jurisdiction, partyType, organizationType);
+        if (value == null || value.getSchemaId() == null || value.getSections() == null) {
+            throw new ServiceUnavailableException();
+        }
+        return value;
     }
 
     /** 读取需求清单并校验条数与每项的需求键、状态。 */

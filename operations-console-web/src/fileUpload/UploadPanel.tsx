@@ -53,7 +53,7 @@ type Stage =
   | { kind: 'done'; outcome: 'AVAILABLE' | 'FAILED' | 'TIMEOUT'; name: string; file: UploadedFile | null };
 
 /** 写命令：JSON Content-Type；同一目标与正文的人工重试复用 Idempotency-Key；403 刷新授权。 */
-function useUploadCommand(onAuthorizationChanged: () => void) {
+export function useUploadCommand(onAuthorizationChanged: () => void) {
   const last = useRef<ConfigurationCommand>(undefined);
   return async function run<T>(path: string, body: unknown, decode: (value: unknown) => T, signal: AbortSignal): Promise<T> {
     const command = configurationCommand(path, 'POST', body ?? {}, last.current); last.current = command;

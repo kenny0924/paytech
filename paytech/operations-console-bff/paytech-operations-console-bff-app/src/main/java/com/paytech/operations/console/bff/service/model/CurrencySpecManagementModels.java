@@ -1,6 +1,5 @@
 package com.paytech.operations.console.bff.service.model;
 
-import java.time.Instant;
 import java.util.List;
 
 import jakarta.validation.constraints.Max;
@@ -15,8 +14,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * 币种页面模型：列表、新建草稿、修改草稿与启停
- * <li>字段与 Platform 币种合同一一对应；Platform 为唯一 Owner，启用后小数位与舍入方式冻结由 Platform 校验。</li>
+ * 币种页面模型：列表、新建草稿、修改与启停
+ * <li>字段与 Platform 币种合同一一对应；Platform 为唯一 Owner，启用后数字代码、名称、符号、小数位与舍入方式冻结由 Platform 校验，
+ * 任何状态都可更换图标。</li>
+ * <li>列表读取参考数据币种接口（含数字代码、名称、符号与图标）；名称为英文基础名称，页面按 Intl 本地化显示。</li>
  * <li>写操作回执复用 {@link ConfigurationManagementModels.ConfigurationMutationResponseBody}。</li>
  *
  * @author Claude
@@ -34,6 +35,15 @@ public final class CurrencySpecManagementModels {
         /** ISO 4217 三位大写币种代码。 */
         private String currency;
 
+        /** ISO 4217 三位数字代码；历史数据未补齐时为空。 */
+        private String numericCode;
+
+        /** ISO 4217 英文名；历史数据未补齐时为空。 */
+        private String name;
+
+        /** 显示符号；历史数据未补齐时为空。 */
+        private String symbol;
+
         /**
          * 最小货币单位位数
          * <li>0..8。</li>
@@ -46,9 +56,15 @@ public final class CurrencySpecManagementModels {
          */
         private String roundingMode;
 
+        /** 图标文件地址 /files/v1/{fileId}，没有时为空。 */
+        private String logoFileAddress;
+
+        /** 图标公开地址；没有图标或不是公开文件时为空。 */
+        private String logoPublicUrl;
+
         /**
          * 状态
-         * <li>DRAFT、ACTIVE 或 INACTIVE；只有 DRAFT 可修改小数位与舍入方式。</li>
+         * <li>DRAFT、ACTIVE 或 INACTIVE；只有 DRAFT 可修改标准属性。</li>
          */
         private String status;
 
@@ -57,9 +73,6 @@ public final class CurrencySpecManagementModels {
          * <li>修改与启停时作为 expectedVersion 回传。</li>
          */
         private Integer version;
-
-        /** 最后更新时间，UTC。 */
-        private Instant updateTime;
     }
 
     /** 全部币种规则，按币种代码升序，不分页。 */
@@ -81,6 +94,37 @@ public final class CurrencySpecManagementModels {
         @NotBlank
         @Pattern(regexp = "[A-Z]{3}")
         private String currency;
+
+        /**
+         * ISO 4217 三位数字代码
+         * <li>启用后冻结。</li>
+         */
+        @NotBlank
+        @Pattern(regexp = "[0-9]{3}")
+        private String numericCode;
+
+        /**
+         * ISO 4217 英文名
+         * <li>最多 128 字符，启用后冻结；页面显示名由前端本地化。</li>
+         */
+        @NotBlank
+        @Size(max = 128)
+        private String name;
+
+        /**
+         * 显示符号
+         * <li>最多 8 字符，启用后冻结。</li>
+         */
+        @NotBlank
+        @Size(max = 8)
+        private String symbol;
+
+        /**
+         * 图标文件地址
+         * <li>可空；须为公开文件的 /files/v1/{fileId}，任何状态都可更换。</li>
+         */
+        @Pattern(regexp = "^/files/v1/[1-9][0-9]{0,18}$")
+        private String logoFileAddress;
 
         /**
          * 最小货币单位位数
@@ -108,10 +152,41 @@ public final class CurrencySpecManagementModels {
         private String reason;
     }
 
-    /** 修改 DRAFT 币种规则的小数位与舍入方式。 */
+    /** 修改币种规则：DRAFT 可改全部属性；启用或停用后只有图标可以不同于当前值。 */
     @Getter
     @Setter
     public static class UpdateCurrencySpecRequestBody {
+        /**
+         * ISO 4217 三位数字代码
+         * <li>启用后冻结。</li>
+         */
+        @NotBlank
+        @Pattern(regexp = "[0-9]{3}")
+        private String numericCode;
+
+        /**
+         * ISO 4217 英文名
+         * <li>最多 128 字符，启用后冻结；页面显示名由前端本地化。</li>
+         */
+        @NotBlank
+        @Size(max = 128)
+        private String name;
+
+        /**
+         * 显示符号
+         * <li>最多 8 字符，启用后冻结。</li>
+         */
+        @NotBlank
+        @Size(max = 8)
+        private String symbol;
+
+        /**
+         * 图标文件地址
+         * <li>可空；须为公开文件的 /files/v1/{fileId}，任何状态都可更换。</li>
+         */
+        @Pattern(regexp = "^/files/v1/[1-9][0-9]{0,18}$")
+        private String logoFileAddress;
+
         /**
          * 最小货币单位位数
          * <li>0..8。</li>

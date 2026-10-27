@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.referencedata.core.dal.mapper.ReferenceCountryMapper">
+
+    <select id="selectByFilter" timeout="2"
+            resultType="com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCountry">
+        SELECT id, country_code AS countryCode, alpha3_code AS alpha3Code, numeric_code AS numericCode, name,
+            region_code AS regionCode, calling_code AS callingCode, default_currency_code AS defaultCurrencyCode,
+            logo_file_address AS logoFileAddress, status, version, create_time AS createTime,
+            update_time AS updateTime
+        FROM t_ref_country
+        <where>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="codes != null">
+                AND country_code IN
+                <foreach collection="codes" item="code" open="(" separator="," close=")">#{code}</foreach>
+            </if>
+        </where>
+        ORDER BY country_code
+    </select>
+</mapper>

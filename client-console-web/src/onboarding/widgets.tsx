@@ -1,8 +1,11 @@
-import { useEffect } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import type { ReactNode } from "react";
 import type { Flat } from "../onboarding.ts";
-import { useLocale, useT } from "../i18n/react.tsx";
-import type { FormSchema, SchemaField } from "./model.ts";
+import { useLocale, useOptionalT, useT } from "../i18n/react.tsx";
+import { Ctx } from "./context.tsx";
+import type { CatalogItem, FormSchema, SchemaField } from "./model.ts";
+import { REF_COUNTRY_SUBDIVISION, REF_CURRENCY, REFDATA_NAMESPACE, countryOptions, currencyOptions, subdivisionOptions } from "./refdata.ts";
+import { OptionsUnavailable, RefSelect } from "./RefSelect.tsx";
 import { ADDRESS_COUNTRY, activeAddressFormat, addressPath, addressPathsToClear, draftPath, identifierAlternatives, identifierPaths, selectedIdentifier } from "./schema.ts";
 import { FieldShell, useSchemaLookup, useSchemaText } from "./ui.tsx";
 
@@ -19,24 +22,8 @@ export type WidgetProps = {
 type Render = (props: WidgetProps) => ReactNode;
 
 
-const countryCodes =
-  "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW"
-    .split(" ");
-const countriesByLocale = new Map<string, string[][]>();
-/** 国家 / 地区名称按当前语言显示并排序，每种语言只计算一次。 */
-export function countries(locale: string): string[][] {
-  let result = countriesByLocale.get(locale);
-  if (!result) {
-    const names = new Intl.DisplayNames([locale], { type: "region" });
-    result = countryCodes.map((code) => [code, names.of(code) ?? code]).sort((a, b) => a[1].localeCompare(b[1], locale));
-    countriesByLocale.set(locale, result);
-  }
-  return result;
-}
-export function countryName(code: string | null | undefined, locale: string): string {
-  if (!code) return "";
-  try { return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code; } catch { return code; }
-}
+/** 国家名称（Intl → 编码）；供只有编码的页面使用，选项与回退英文名见 refdata.ts。 */
+export { countryName } from "./refdata.ts";
 
 const described = (id: string, help: string | null, error?: string) =>
   [help ? id + "-help" : "", error ? id + "-error" : ""].filter(Boolean).join(" ") || undefined;
@@ -75,13 +62,46 @@ function Choice({ id, path, value, options, disabled, error, help, set, blur, pl
   </select>;
 }
 
+/**
+ * 国家选择：选项只来自 Schema 下发的 Platform ACTIVE 国家（国旗 + 本地化名称，可按本地化名、英文名或编码搜索）
+ * <li>国家列表为空表示未能加载：显示重试，不回退到内置列表。</li>
+ */
+function CountryChoice({ id, path, value, schema, disabled, error, help, title, set, blur }: {
+  id: string; path: string; value: string; schema: FormSchema; disabled: boolean; error?: string; help: string | null; title: string;
+  set: (path: string, value: string) => void; blur: (path: string) => void;
+}) {
+  const { locale } = useLocale(), t = useT("onboarding"), retry = useContext(Ctx)?.reloadSchema;
+  const options = useMemo(() => countryOptions(schema.countries, locale), [schema.countries, locale]);
+  if (!options.length) return <OptionsUnavailable id={id} onRetry={retry ? () => void retry() : undefined} />;
+  return <RefSelect id={id} value={value} options={options} disabled={disabled} invalid={!!error} describedBy={described(id, help, error)}
+    title={title} placeholder={t("refdata.select_country")} icon="country" hint={t("refdata.search_hint")}
+    onChange={(code) => set(path, code)} onBlur={() => blur(path)} />;
+}
+
 function Country(props: WidgetProps) {
-  const { locale } = useLocale(), t = useT("onboarding");
   const path = draftPath(props.field)!, error = props.errors[path];
   return <FieldShell id={props.id} label={props.label} optional={props.optional} help={props.help} error={error}>
-    <Choice id={props.id} path={path} value={props.values[path] ?? ""} options={countries(locale)} disabled={props.disabled}
-      error={error} help={props.help} set={props.set} blur={props.blur} placeholder={t("form.select")} />
+    <CountryChoice id={props.id} path={path} value={props.values[path] ?? ""} schema={props.schema} disabled={props.disabled}
+      error={error} help={props.help} title={props.label} set={props.set} blur={props.blur} />
   </FieldShell>;
+}
+
+/**
+ * 参考数据目录（REF_*）取值：币种显示"本地化名称 (CODE)"与图标；行政区只列给定国家的项
+ * <li>目录未下发表示未能加载：显示重试，不回退到内置列表。</li>
+ */
+function ReferenceChoice({ id, path, value, catalogCode, catalog, countryCode, disabled, error, help, title, set, blur }: {
+  id: string; path: string; value: string; catalogCode: string; catalog: CatalogItem[] | undefined; countryCode?: string | null;
+  disabled: boolean; error?: string; help: string | null; title: string; set: (path: string, value: string) => void; blur: (path: string) => void;
+}) {
+  const { locale } = useLocale(), t = useT("onboarding"), refdata = useOptionalT(REFDATA_NAMESPACE), retry = useContext(Ctx)?.reloadSchema;
+  const options = useMemo(() => !catalog ? [] : catalogCode === REF_CURRENCY ? currencyOptions(catalog, locale)
+    : subdivisionOptions(catalog, countryCode, locale, (key) => refdata(key)), [catalog, catalogCode, countryCode, locale, refdata]);
+  if (!catalog) return <OptionsUnavailable id={id} onRetry={retry ? () => void retry() : undefined} />;
+  return <RefSelect id={id} value={value} options={options} disabled={disabled} invalid={!!error} describedBy={described(id, help, error)}
+    title={title} placeholder={t("form.select")} icon={options.some((option) => option.logo) ? "currency" : "none"}
+    hint={catalogCode === REF_CURRENCY ? t("refdata.currency_hint") : undefined}
+    onChange={(code) => set(path, code)} onBlur={() => blur(path)} />;
 }
 
 /** 目录取值：字段指定 catalogCode；组织形式字段若未指定目录则用 Schema 的组织类型列表。 */
@@ -89,6 +109,10 @@ function Select(props: WidgetProps) {
   const t = useT("onboarding"), label = useSchemaText();
   const path = draftPath(props.field)!, error = props.errors[path];
   const catalog = props.field.catalogCode ? props.schema.catalogs[props.field.catalogCode] : undefined;
+  if (props.field.catalogCode?.startsWith("REF_")) return <FieldShell id={props.id} label={props.label} optional={props.optional} help={props.help} error={error}>
+    <ReferenceChoice id={props.id} path={path} value={props.values[path] ?? ""} catalogCode={props.field.catalogCode} catalog={catalog}
+      disabled={props.disabled} error={error} help={props.help} title={props.label} set={props.set} blur={props.blur} />
+  </FieldShell>;
   const options = catalog?.length
     ? catalog.map((item) => [item.itemCode, label(item.labelKey, item.itemCode)])
     : /organization_?type$/i.test(props.field.fieldKey) ? props.schema.organizationTypes.map((item) => [item.code, label(item.labelKey, item.code)]) : [];
@@ -121,7 +145,7 @@ const Money = Text({ inputMode: "numeric", mono: true });
  * <li>个人证件读回只有掩码：显示掩码与"更换"，不回显原值；更换后整号重新提交。</li>
  */
 function Identifier(props: WidgetProps) {
-  const t = useT("onboarding"), { locale } = useLocale(), label = useSchemaText(), lookup = useSchemaLookup();
+  const t = useT("onboarding"), label = useSchemaText(), lookup = useSchemaLookup();
   const alternatives = identifierAlternatives(props.field, props.schema);
   const type = selectedIdentifier(props.field, props.schema, props.values);
   const value = props.values[identifierPaths.value] ?? "", masked = props.values[identifierPaths.masked] ?? "";
@@ -151,8 +175,8 @@ function Identifier(props: WidgetProps) {
         onChange={(event) => setValue(event.target.value)} onBlur={() => props.blur(identifierPaths.value)} />}
     </FieldShell>
     {type?.issuerScopeMode === "COUNTRY" && <FieldShell id={props.id + "-issuer"} label={t("identifier.issuing_country")} error={props.errors[identifierPaths.issuer]}>
-      <Choice id={props.id + "-issuer"} path={identifierPaths.issuer} value={props.values[identifierPaths.issuer] ?? ""} options={countries(locale)}
-        disabled={props.disabled} error={props.errors[identifierPaths.issuer]} help={null} set={props.set} blur={props.blur} placeholder={t("form.select")} />
+      <CountryChoice id={props.id + "-issuer"} path={identifierPaths.issuer} value={props.values[identifierPaths.issuer] ?? ""} schema={props.schema}
+        disabled={props.disabled} error={props.errors[identifierPaths.issuer]} help={null} title={t("identifier.issuing_country")} set={props.set} blur={props.blur} />
     </FieldShell>}
     {type?.expiryRequired && <FieldShell id={props.id + "-expiry"} label={t("identifier.expiry_date")} error={props.errors[identifierPaths.expiryDate]}>
       <input id={props.id + "-expiry"} type="date" value={props.values[identifierPaths.expiryDate] ?? ""} disabled={props.disabled}
@@ -165,11 +189,12 @@ function Identifier(props: WidgetProps) {
 /** 短组件（号码、邮编）占半行，其余整行；顺序完全来自地址格式组件表。 */
 const shortComponent = /(number|pobox|po_box|postalcode|postal_code|zip|makani)$/i;
 function Address(props: WidgetProps) {
-  const label = useSchemaText(), t = useT("onboarding"), { locale } = useLocale();
+  const label = useSchemaText(), t = useT("onboarding");
   // 地址国家不是辖区国家时用通用格式；国家改变时切换布局，保留两种格式共有的组件，清空其余。
   const components = activeAddressFormat(props.schema, props.values)?.components ?? [];
   const home = props.countryCode ?? props.schema.countryCode;
   const country = components.find((component) => /^country(code)?$/i.test(component.component));
+  const addressCountry = (country ? props.values[addressPath(country)] : "") || home;
   // 国家组件默认取申请辖区；只在为空时写入一次，用户仍可更改。
   useEffect(() => {
     if (country && home && !props.disabled && !props.values[addressPath(country)]) props.set(addressPath(country), home);
@@ -185,10 +210,24 @@ function Address(props: WidgetProps) {
           for (const stale of addressPathsToClear(props.schema, props.values, { ...props.values, [path]: value })) props.set(stale, "");
         props.set(path, value);
       };
-      if (catalog || /^country(code)?$/i.test(component.component)) return <FieldShell key={component.component} id={id} label={label(component.labelKey, component.component)}
+      const title = label(component.labelKey, component.component);
+      if (/^country(code)?$/i.test(component.component)) return <FieldShell key={component.component} id={id} label={title}
         optional={!component.required} error={error} help={null}>
-        <Choice id={id} path={path} value={props.values[path] ?? (catalog ? "" : home ?? "")} disabled={props.disabled} error={error} help={null}
-          options={catalog ? catalog.map((item) => [item.itemCode, label(item.labelKey, item.itemCode)]) : countries(locale)}
+        <CountryChoice id={id} path={path} value={props.values[path] || home || ""} schema={props.schema} disabled={props.disabled} error={error}
+          help={null} title={title} set={(_, value) => onAddress(value)} blur={props.blur} />
+      </FieldShell>;
+      // 行政区随地址国家筛选；该国没有收录行政区时改为文本输入。
+      const reference = !!component.catalogCode?.startsWith("REF_");
+      const freeText = component.catalogCode === REF_COUNTRY_SUBDIVISION && !!catalog && !catalog.some((item) => item.countryCode === addressCountry);
+      if (reference && !freeText)
+        return <FieldShell key={component.component} id={id} label={title} optional={!component.required} error={error} help={null}>
+          <ReferenceChoice id={id} path={path} value={props.values[path] ?? ""} catalogCode={component.catalogCode!} catalog={catalog}
+            countryCode={addressCountry} disabled={props.disabled} error={error} help={null} title={title} set={(_, value) => onAddress(value)} blur={props.blur} />
+        </FieldShell>;
+      if (catalog && !reference) return <FieldShell key={component.component} id={id} label={title}
+        optional={!component.required} error={error} help={null}>
+        <Choice id={id} path={path} value={props.values[path] ?? ""} disabled={props.disabled} error={error} help={null}
+          options={catalog.map((item) => [item.itemCode, label(item.labelKey, item.itemCode)])}
           set={(_, value) => onAddress(value)} blur={props.blur} placeholder={t("form.select")} />
       </FieldShell>;
       return <FieldShell key={component.component} id={id} label={label(component.labelKey, component.component)} optional={!component.required}

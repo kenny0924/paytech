@@ -1,0 +1,22 @@
+PASS mortest-client-en-390 登录 | "https://localhost:28443/onboarding"
+PASS mortest-client-en-390 首页：资料与地址两项标"需要处理"（服务端参考数据校验） | {"attention":2}
+PASS mortest-client-en-390 profile：打开即显示页顶错误汇总（币种）且控件标红、说明为当前语言 | {"invalidOnOpen":1,"links":["Currency: Select a value from the list."]}
+PASS mortest-client-en-390 profile：点汇总聚焦到币种控件且标红 | {"id":"f-business-currency","invalid":"true"}
+PASS mortest-client-en-390 address：打开即显示页顶错误汇总（省州）且控件标红、说明为当前语言 | {"invalidOnOpen":1,"links":["Emirate: Select a value from the list."]}
+PASS mortest-client-en-390 address：点汇总聚焦到省州控件且标红 | {"id":"f-address-stateOrProvince","invalid":"true"}
+PASS mortest-client-en-390 币种选项为 4 个 ACTIVE 币种、Intl 本地化名称 | ["United Arab Emirates Dirham","Egyptian Pound","Saudi Riyal","US Dollar"]
+PASS mortest-client-en-390 选中后显示"本地化名称 (AED)" | "United Arab Emirates Dirham (AED)"
+PASS mortest-client-en-390 国家列表来自 Platform（249 项），无国旗时显示中性占位 | {"total":249,"placeholders":249}
+PASS mortest-client-en-390 按名称搜索（united） | ["United Arab Emirates","United Kingdom","United States"]
+PASS mortest-client-en-390 忽略变音符号搜索（émirates） | ["United Arab Emirates"]
+PASS mortest-client-en-390 按编码搜索（eg → EG 优先） | ["EG","BA","ME","SN"]
+PASS mortest-client-en-390 Enter 选中 AE | "United Arab Emirates"
+PASS mortest-client-en-390 EG-C（与 AE 不一致）按编码显示且标红 | {"text":"EG-C","emirateInvalid":"true"}
+PASS mortest-client-en-390 酋长国 7 项，名称取 refdata（缺翻译回退英文 name） | ["Abu Dhabi","Ajman","Dubai","Fujairah","Ras Al Khaimah","Sharjah","Umm Al Quwain"]
+PASS mortest-client-en-390 选中 AE-DU | "Dubai"
+PASS mortest-client-en-390 地址国家改 GB：已选酋长国清空，省州变为文本输入 | {"stateInputs":1,"emirateGone":true}
+PASS mortest-client-en-390 改回 AE：酋长国下拉回来且为空 | "Select"
+PASS mortest-client-en-390 BFF 未下发选项时字段内显示"暂时无法加载 · 重试"，不用内置列表 | {"nUnavailable":2,"text":"Options are temporarily unavailable ·\nRetry"}
+PASS mortest-client-en-390 点重试后选项恢复 | {"triggers":2}
+PASS mortest-client-en-390 核对页显示本地化币种与酋长国
+SUMMARY mortest-client-en-390 pass=21 fail=0

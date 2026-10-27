@@ -1,0 +1,224 @@
+{{Short description|Entry for Egypt in ISO 3166-2}}
+'''ISO 3166-2:EG''' is the entry for [[Egypt]] in [[ISO 3166-2]], part of the [[ISO 3166]] [[standardization|standard]] published by the [[International Organization for Standardization]] (ISO), which defines [[code]]s for the names of the principal [[country subdivision|subdivision]]s (e.g., [[province]]s or [[state (administrative division)|state]]s) of all [[country|countries]] coded in [[ISO 3166-1]].
+
+Currently for Egypt, ISO 3166-2 codes are defined for [[governorates of Egypt|27 governorates]]. [[6th of October Governorate]] and [[Helwan Governorate]], which had their codes added in [[#II-2|Newsletter II-2]], were merged back into [[Giza Governorate]] and [[Cairo Governorate]] respectively in 2011.
+
+Each code consists of two parts, separated by a hyphen. The first part is {{mono|EG}}, the [[ISO 3166-1 alpha-2]] code of Egypt. The second part is either one, two, or three letters.
+
+==Current codes==
+Subdivision names are listed as in the ISO 3166-2 standard published by the ISO 3166 Maintenance Agency (ISO 3166/MA).
+
+''Click on the button in the header to sort each column.''
+
+{| class="wikitable sortable"
+|-
+! Code
+! Subdivision name ([[Arabic language|ar]])<br />(BGN/PCGN 1956)
+! Local variant
+! Subdivision name ([[Arabic language|ar]])<br /><ref group="note">For reference only, Arabic name in Arabic script not included in the ISO 3166-2 standard.</ref>
+! Subdivision name ([[English language|en]])<br /><ref group="note">For reference only, English name not included in the ISO 3166-2 standard.</ref>
+|-
+| {{mono|EG-DK}}
+| [[Ad Daqahlīyah Governorate|Ad Daqahlīyah]]
+|
+| الدقهلية
+| Dakahlia
+|-
+| {{mono|EG-BA}}
+| [[Al Baḩr al Aḩmar Governorate|Al Baḩr al Aḩmar]]
+| Red Sea
+| البحر الأحمر
+| Red Sea
+|-
+| {{mono|EG-BH}}
+| [[Al Buḩayrah Governorate|Al Buḩayrah]]
+|
+| البحيرة
+| Beheira
+|-
+| {{mono|EG-FYM}}
+| [[Al Fayyūm Governorate|Al Fayyūm]]
+|
+| الفيوم
+| Faiyum
+|-
+| {{mono|EG-GH}}
+| [[Al Gharbīyah Governorate|Al Gharbīyah]]
+|
+| الغربية
+| Gharbia
+|-
+| {{mono|EG-ALX}}
+| [[Al Iskandarīyah Governorate|Al Iskandarīyah]]
+| Alexandria
+| الإسكندرية
+| Alexandria
+|-
+| {{mono|EG-IS}}
+| [[Ismailia Governorate|Al Ismā'īlīyah]]
+|
+| الإسماعيلية
+| Ismailia
+|-
+| {{mono|EG-GZ}}
+| [[Al Jīzah Governorate|Al Jīzah]]
+| Giza
+| الجيزة
+| Giza
+|-
+| {{mono|EG-MNF}}
+| {{sort|Al Minufīyah|[[Al Minūfīyah Governorate|Al Minūfīyah]]}}
+|
+| المنُوفيّة
+| Monufia
+|-
+| {{mono|EG-MN}}
+| [[Al Minyā Governorate|Al Minyā]]
+|
+| المنيا
+| Minya
+|-
+| {{mono|EG-C}}
+| {{sort|Al Qahirah|[[Al Qāhirah Governorate|Al Qāhirah]]}}
+| Cairo
+| القاهرة
+| Cairo
+|-
+| {{mono|EG-KB}}
+| [[Al Qalyūbīyah Governorate|Al Qalyūbīyah]]
+|
+| القليوبية
+| Qalyubia
+|-
+| {{mono|EG-LX}}
+| [[Al Uqşur Governorate|Al Uqşur]]
+| Luxor
+| الأقصر
+| Luxor
+|-
+| {{mono|EG-WAD}}
+| [[Al Wādī al Jadīd Governorate|Al Wādī al Jadīd]]
+| New Valley
+| الوادي الجديد
+| New Valley
+|-
+| {{mono|EG-SUZ}}
+| {{sort|AsSuways|[[As Suways Governorate|As Suways]]}}
+| Suez
+| السويس
+| Suez
+|-
+| {{mono|EG-SHR}}
+| [[Ash Sharqīyah Governorate|Ash Sharqīyah]]
+|
+| الشرقية
+| Al Sharqia
+|-
+| {{mono|EG-ASN}}
+| [[Aswān Governorate|Aswān]]
+|
+| أسوان
+| Aswan
+|-
+| {{mono|EG-AST}}
+| [[Asyūţ Governorate|Asyūţ]]
+|
+| أسيوط
+| Asyut
+|-
+| {{mono|EG-BNS}}
+| [[Banī Suwayf Governorate|Banī Suwayf]]
+|
+| بني سويف
+| Beni Suef
+|-
+| {{mono|EG-PTS}}
+| [[Port Said Governorate|Būr Sa‘īd]]
+| Port Said
+| بورسعيد
+| Port Said
+|-
+| {{mono|EG-DT}}
+| [[Dumyāţ Governorate|Dumyāţ]]
+| Damietta
+| دمياط
+| Damietta
+|-
+| {{mono|EG-JS}}
+| [[Janūb Sīnā' Governorate|Janūb Sīnā']]
+| South Sinai
+| جنوب سيناء
+| South Sinai
+|-
+| {{mono|EG-KFS}}
+| [[Kafr ash Shaykh Governorate|Kafr ash Shaykh]]
+|
+| كفر الشيخ
+| Kafr el-Sheikh
+|-
+| {{mono|EG-MT}}
+| [[Maţrūḩ Governorate|Maţrūḩ]]
+|
+| مطروح
+| Matrouh
+|-
+| {{mono|EG-KN}}
+| [[Qinā Governorate|Qinā]]
+|
+| قنا
+| Qena
+|-
+| {{mono|EG-SIN}}
+| [[Shamāl Sīnā' Governorate|Shamāl Sīnā']]
+| North Sinai
+| شمال سيناء
+| North Sinai
+|-
+| {{mono|EG-SHG}}
+| [[Sūhāj Governorate|Sūhāj]]
+| Sohag
+| سوهاج
+| Sohag
+|}
+
+; Notes
+<references group="note" />
+
+==Changes==
+The following changes to the entry have been announced by the ISO 3166/MA since the first publication of ISO 3166-2 in 1998:
+
+{| class="wikitable"
+|-
+! Edition/Newsletter
+! Date issued
+! Description of change
+! Code/Subdivision change
+|-
+| id="II" | [http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=39718 {{nowrap|ISO 3166-2:2007}}]
+| {{nowrap|2007-12-13}}
+| ''Second edition of ISO 3166-2 (this change was not announced in a newsletter)''<ref>{{cite web| url=http://www.statoids.com/n0801.html| title=Statoid Newsletter January 2008| publisher=Statoids.com}}</ref>
+| style=white-space:nowrap | '''Subdivision added:'''<br /> {{mono|EG-LX}} [[Al Uqşur Governorate|Al Uqşur]]
+|-
+| id="II-2" | [https://www.iso.org/files/live/sites/isoorg/files/archive/pdf/en/iso_3166-2_newsletter_ii-2_2010-06-30.pdf {{nowrap|Newsletter II-2}}]
+| {{nowrap|2010-06-30}}
+| Update of the administrative structure and of the list source
+| style=white-space:nowrap | '''Subdivisions added:'''<br /> {{mono|EG-SU}} [[As Sādis min Uktūbar Governorate|As Sādis min Uktūbar]]<br /> {{mono|EG-HU}} [[Ḩulwān Governorate|Ḩulwān]]
+|}
+
+==See also==
+* [[Subdivisions of Egypt]]
+* [[List of FIPS region codes (D-F)#EG: Egypt|FIPS region codes of Egypt]]
+* Neighbouring countries: [[ISO 3166-2:IL|IL]], [[ISO 3166-2:LY|LY]], [[ISO 3166-2:PS|PS]], [[ISO 3166-2:SD|SD]]
+
+==References==
+<references />
+
+==External links==
+* [https://www.iso.org/obp/ui/#iso:code:3166:EG ISO Online Browsing Platform: EG]
+* [http://www.statoids.com/ueg.html Governorates of Egypt], Statoids.com
+
+{{ISO 3166}}
+
+[[Category:ISO 3166|2:EG]]
+[[Category:Governorates of Egypt|*ISO 3166-2]]
+[[Category:Egypt geography-related lists]]

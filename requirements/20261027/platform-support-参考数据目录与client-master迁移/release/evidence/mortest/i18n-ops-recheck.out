@@ -1,0 +1,10 @@
+[通过] operations-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] operations-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[通过] operations-console 线上 10088 个 ACTIVE key 都在仓库中（否则 KEY_IMPORT 会废弃它们；确认废弃用 --accept-deprecations）
+[通过] operations-console 新增 0 < 3000
+[通过] operations-console 导入集合 0+ 个 key 都有仓库 zh-CN（缺 0）
+{"currentRelease": 13, "liveNamespaces": 26, "repoNamespaces": 26, "newNamespaces": [], "repoKeys": 10088, "liveActiveKeys": 10088, "added": 0, "restored": 0, "sourceChanged": 0, "missingInRepo": 0, "zhMissingForImport": 0, "keepLiveZh": 10088, "refdataZhReplaced": 0, "liveOutdatedZh": 0, "rebaseExpected": 0, "outdatedUntouched": 0}
+导入文件与计划：/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/platform-support-参考数据目录与client-master迁移/release/i18n-bundles
+计划完成（只读，未登录、未写入）：可执行
+
+== 参考数据语言包计划：通过 5，失败 0，未能验证 0

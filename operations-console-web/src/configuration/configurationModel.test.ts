@@ -45,8 +45,9 @@ test('Guard 默认项只来自服务端必需维度，数值形状保持 Rate/Co
   assert.equal(values.length, 4); assert.equal(values[0].concurrencyLimit, null); assert.equal(values[1].capacity, null); assert.equal(values[1].ruleType, 'CONCURRENCY');
 });
 test('已部署页面注册覆盖新菜单，组件及动作没有重复身份', () => {
-  assert.equal(pageCapabilities.length, 77);
-  assert.equal(new Set(pageCapabilities.map(p => p.componentKey)).size, 77);
+  assert.equal(pageCapabilities.length, 78);
+  assert.equal(new Set(pageCapabilities.map(p => p.componentKey)).size, 78);
+  assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_REFERENCE_DATA')?.frontendRoute, '/reference-data');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_ONBOARDING_CONFIG')?.frontendRoute, '/client-onboarding/config');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_ONBOARDING_CODES')?.frontendRoute, '/client-onboarding/codes');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_CLIENTS')?.frontendRoute, '/master-data/clients');

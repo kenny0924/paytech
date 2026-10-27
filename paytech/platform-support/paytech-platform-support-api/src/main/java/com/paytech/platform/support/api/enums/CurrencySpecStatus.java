@@ -2,7 +2,7 @@ package com.paytech.platform.support.api.enums;
 
 import com.paytech.foundation.common.enums.CodeEnum;
 
-/** 币种规则状态（t_currency_spec.status）；只有 ACTIVE 允许被新业务使用。HTTP 字段使用 String。 */
+/** 币种规则状态（t_ref_currency.status）；只有 ACTIVE 允许被新业务使用。HTTP 字段使用 String。 */
 public enum CurrencySpecStatus implements CodeEnum {
     /** 草稿，未生效。 */
     DRAFT("DRAFT"),

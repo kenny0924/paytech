@@ -33,6 +33,11 @@ import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
 import com.paytech.platform.support.api.authentication.ClientAuthenticationApi;
 import com.paytech.platform.support.api.enums.ClientAuthenticationErrorCode;
+import com.paytech.platform.support.api.referencedata.CountrySubdivisionQueryApi;
+import com.paytech.platform.support.api.referencedata.IndustryQueryApi;
+import com.paytech.platform.support.api.referencedata.MccQueryApi;
+import com.paytech.platform.support.api.referencedata.ReferenceCountryQueryApi;
+import com.paytech.platform.support.api.referencedata.ReferenceCurrencyQueryApi;
 import com.paytech.vault.client.VaultClient;
 import com.paytech.vault.client.autoconfigure.VaultClientAutoConfiguration;
 /** 草稿写入需明确启用恢复、CCT 数据源、Redis 协调和 Vault；不自动初始化业务表。 */
@@ -126,6 +131,18 @@ public class ClientDraftConfiguration {
         return new ClientDraftAccountClientImpl(api);
     }
     @Bean public ClientDraftContactClient clientDraftContactClient(VaultClient vault) { return new ClientDraftContactClientImpl(vault); }
+    /**
+     * Platform 参考数据目录（S-08）：提交校验与分类保存只按编码批量查询，响应小，沿用严格 JSON 与 8192 字节上限。
+     * <li>与会话核对共用 Platform 发现/测试传输边界与调用身份头；未注册专有错误码，Platform 拒绝一律按依赖不可用处理。</li>
+     */
+    @Bean public ReferenceDataClient referenceDataClient(Environment environment,ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        var factory=HttpServiceClientFactory.create(ClientOnboardingRecoveryConfiguration.platformTransport(environment,discovery),
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(8192),tokens,"platform-support-service"));
+        return new ReferenceDataClientImpl(factory.createClient(ReferenceCountryQueryApi.class),
+            factory.createClient(ReferenceCurrencyQueryApi.class),factory.createClient(CountrySubdivisionQueryApi.class),
+            factory.createClient(IndustryQueryApi.class),factory.createClient(MccQueryApi.class));
+    }
     /**
      * commercial 合同参与方引用查询（design/06 §2.2）：人员共享标记的唯一外部来源，失败关闭。
      * <li>服务发现名 commercial-service；超时与重定向策略同其他私网 Owner 客户端。</li>

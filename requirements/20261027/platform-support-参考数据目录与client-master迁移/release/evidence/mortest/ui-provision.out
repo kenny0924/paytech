@@ -1,0 +1,29 @@
+PASS SETUP  Client UI 注册 | HTTP 202 {}
+PASS SETUP  Client UI 验证链接 | source=minted challengeNo=aa24e8dc-0655-4513-bb36-70b3661215ed
+PASS SETUP  Client UI 邮箱验证 | HTTP 200 {}
+PASS SETUP  Client UI 登录 | HTTP 200 {}
+PASS UI     UI 创建申请（AE ORGANIZATION LLC） | HTTP 201 applicationId=240864297046089728 operation=CREATED 
+PASS UI     UI 主主体 保存草稿 | HTTP 200 fields=20 {}
+PASS UI     UI UBO1 新增关系人（UBO） | HTTP 201 partyId=240864299017412608 relationId=240864299046772736 {}
+PASS UI     UI UBO1 追加关系（DIRECTOR） | HTTP 201 relationId=240864299331985408 {}
+PASS UI     UI UBO1 追加关系（SIGNATORY） | HTTP 201 relationId=240864299575255040 {}
+PASS UI     UI UBO2 新增关系人（UBO） | HTTP 201 partyId=240864299818524672 relationId=240864299847884800 {}
+PASS UI     上传授权 UI-PRIMARY-BANK | HTTP 201 {}
+PASS UI     对象存储 PUT UI-PRIMARY-BANK | HTTP 200 host=s3.ap-southeast-1.amazonaws.com
+FAIL UI     上传完成 UI-PRIMARY-BANK | HTTP 504 fileAddress=None
+Traceback (most recent call last):
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/platform-support-参考数据目录与client-master迁移/release/acceptance/ui_provision_mortest.py", line 54, in <module>
+    {"provision": provision, "reset": reset}[sys.argv[1]]()
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/platform-support-参考数据目录与client-master迁移/release/acceptance/ui_provision_mortest.py", line 35, in provision
+    RA.fill(client, "UI", "UI", application_id, schema, "AE", run, OA.IDS["clientUIEmail"])
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/platform-support-参考数据目录与client-master迁移/verification/local-e2e/refdata_acceptance.py", line 274, in fill
+    
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/client-master-全球合规入驻与资格切片1/assets/acceptance/onboarding_acceptance.py", line 488, in fill_organization
+    documents[(party, material["requirementCode"])] = attach_document(
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/client-master-全球合规入驻与资格切片1/assets/acceptance/onboarding_acceptance.py", line 427, in attach_document
+    address = upload_file(client, ac, label)
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/client-master-全球合规入驻与资格切片1/assets/acceptance/onboarding_acceptance.py", line 415, in upload_file
+    require(ac, f"上传完成 {label}", status in (200, 201) and address == f"/files/v1/{file_id}", f"HTTP {status} fileAddress={address}")
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/client-master-全球合规入驻与资格切片1/assets/acceptance/onboarding_acceptance.py", line 93, in require
+    raise Stop(f"{ac} {step}")
+onboarding_acceptance.Stop: UI 上传完成 UI-PRIMARY-BANK

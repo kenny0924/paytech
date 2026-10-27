@@ -1,4 +1,5 @@
-import { formatCountry, tOr } from '../i18n/index.ts';
+import { formatCountry, tOr, translator } from '../i18n/index.ts';
+import { currencyName, refdataName } from '../referenceData/referenceData.ts';
 import type { Translate } from '../i18n/index.ts';
 
 /** 后端 label_key 前缀（client-master DML 原样返回）。 */
@@ -26,16 +27,17 @@ export function valueLabel(tReview: Translate, kind: 'group' | 'field', code: st
 /**
  * 资料值中取自目录的字段 → onboarding-schema 文案键族（与 client-master 采集 Schema 的 catalog_code 及地址 / 标识目录一致）
  * <li>`catalog:<CODE>` 为目录项 `catalog.<CODE>.<值>`；`identifierType` / `organizationType` 为对应目录（组织类型按辖区）。</li>
+ * <li>币种与省州是 Platform 参考数据（REF_CURRENCY、REF_COUNTRY_SUBDIVISION）：币种用 Intl，省州用 refdata 文案，取不到时显示编码。</li>
  */
 export const FIELD_CATALOGS: Readonly<Record<string, string>> = {
   'organization.organizationType': 'organizationType',
   'organization.registrationAuthorityCode': 'catalog:REGISTRATION_AUTHORITY',
   'business.businessModelCode': 'catalog:BUSINESS_MODEL',
-  'business.currency': 'catalog:CURRENCY',
+  'business.currency': 'currency',
   'individual.gender': 'catalog:GENDER',
   'individual.sourceOfFundsCode': 'catalog:SOURCE_OF_FUNDS',
   'address.city': 'catalog:CITY',
-  'address.stateOrProvince': 'catalog:STATE_OR_PROVINCE',
+  'address.stateOrProvince': 'subdivision',
   'identifier.identifierType': 'identifierType',
   'attributes.AE_FREE_ZONE_CODE': 'catalog:FREE_ZONE',
   'attributes.OCCUPATION': 'catalog:OCCUPATION',
@@ -53,7 +55,16 @@ export function valueText(tSchema: Translate, group: string, field: string, valu
   if (!family) return value;
   if (family === 'organizationType') return jurisdictionCode ? tOr(tSchema, `organizationType.${jurisdictionCode}.${value}`, value) : value;
   if (family === 'identifierType') return tOr(tSchema, `identifierType.${value}`, value);
+  if (family === 'currency') return currencyName(value, null);
+  if (family === 'subdivision') return subdivisionText(value);
   return tOr(tSchema, `catalog.${family.slice('catalog:'.length)}.${value}`, value);
+}
+
+/** 省州：ISO 3166-2 编码（存量下划线格式 AE_DU 按连字符查找）在 refdata 中的名称，取不到时显示原值。 */
+export function subdivisionText(value: string): string {
+  const code = /^[A-Z]{2}_[A-Z0-9]{1,3}$/.test(value) ? value.replace('_', '-') : value;
+  const name = refdataName(translator('refdata'), 'subdivision', code, null);
+  return name === code ? value : name;
 }
 
 /** 资料字段名：扩展属性（attributes 组）取属性目录名，其他取审核页字段文案，均无则拆词。 */

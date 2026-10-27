@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.referencedata.core.dal.mapper.ReferenceCurrencyMapper">
+
+    <sql id="columns">
+        id, currency_code AS currencyCode, numeric_code AS numericCode, name, symbol, minor_unit AS minorUnit,
+        rounding_mode AS roundingMode, logo_file_address AS logoFileAddress, status, version,
+        create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <select id="selectByFilter" timeout="2"
+            resultType="com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCurrency">
+        SELECT <include refid="columns"/>
+        FROM t_ref_currency
+        <where>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="codes != null">
+                AND currency_code IN
+                <foreach collection="codes" item="code" open="(" separator="," close=")">#{code}</foreach>
+            </if>
+        </where>
+        ORDER BY currency_code
+    </select>
+
+    <select id="selectByCurrencyCode" timeout="2"
+            resultType="com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCurrency">
+        SELECT <include refid="columns"/>
+        FROM t_ref_currency
+        WHERE currency_code = #{currencyCode}
+    </select>
+
+    <select id="lockByCurrencyCode" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCurrency">
+        SELECT <include refid="columns"/>
+        FROM t_ref_currency
+        WHERE currency_code = #{currencyCode}
+        FOR UPDATE
+    </select>
+
+    <insert id="insert">
+        INSERT INTO t_ref_currency (id, currency_code, numeric_code, name, symbol, minor_unit, rounding_mode,
+            logo_file_address, status, version, create_time, update_time)
+        VALUES (#{row.id}, #{row.currencyCode}, #{row.numericCode}, #{row.name}, #{row.symbol}, #{row.minorUnit},
+            #{row.roundingMode}, #{row.logoFileAddress}, #{row.status}, #{row.version}, #{row.createTime},
+            #{row.updateTime})
+    </insert>
+
+    <update id="updateAttributes">
+        UPDATE t_ref_currency
+        SET numeric_code = #{attributes.numericCode}, name = #{attributes.name}, symbol = #{attributes.symbol},
+            minor_unit = #{attributes.minorUnit}, rounding_mode = #{attributes.roundingMode},
+            logo_file_address = #{attributes.logoFileAddress}, version = version + 1, update_time = #{updateTime}
+        WHERE id = #{row.id} AND version = #{row.version} AND status = #{row.status}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE t_ref_currency
+        SET status = #{status}, version = version + 1, update_time = #{updateTime}
+        WHERE id = #{row.id} AND version = #{row.version} AND status = #{row.status}
+    </update>
+</mapper>

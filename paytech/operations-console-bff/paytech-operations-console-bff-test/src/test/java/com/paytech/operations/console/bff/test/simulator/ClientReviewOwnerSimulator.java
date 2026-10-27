@@ -72,6 +72,11 @@ public final class ClientReviewOwnerSimulator implements AutoCloseable {
                 + "\",\"requestId\":\"owner-request\",\"timestamp\":\"2026-10-13T00:00:00.000000Z\"}"));
     }
 
+    /** 配置完整 Problem 响应体（例如带 errors 的 422）。 */
+    public synchronized void problemBody(String method, String path, int status, String json) {
+        replies.put(method + " " + path, new Reply(status, "application/problem+json", json));
+    }
+
     /** 已记录的调用。 */
     public synchronized List<Request> requests() {
         return List.copyOf(requests);

@@ -279,6 +279,12 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_REFERENCE_DATA",
+    "displayName": "参考数据",
+    "frontendRoute": "/reference-data",
+    "actions": []
+  },
+  {
     "componentKey": "OPERATIONS_API_CREDENTIALS",
     "displayName": "API 凭证",
     "frontendRoute": "/api-credentials",

@@ -1,5 +1,6 @@
 import type { Flat } from "../onboarding.ts";
 import type { AddressComponent, FormSchema, IdentifierType, SchemaField, SchemaGroup, SchemaSection } from "./model.ts";
+import { REF_COUNTRY_SUBDIVISION } from "./refdata.ts";
 
 /**
  * Schema 驱动表单的纯逻辑：字段 → 草稿路径、可见条件、本地格式校验、任务归属
@@ -220,10 +221,19 @@ export function activeAddressFormat(schema: FormSchema, values: Flat): AddressFo
   if (country && schema.countryCode && country !== schema.countryCode && schema.fallbackAddressFormat) return schema.fallbackAddressFormat;
   return schema.addressFormat ?? schema.fallbackAddressFormat;
 }
-/** 国家改变导致格式切换时要清空的组件路径：新格式中不存在的组件；两边都有的组件保留。 */
+/**
+ * 国家改变时要清空的组件路径
+ * <li>格式切换：新格式中不存在的组件；两边都有的组件保留。</li>
+ * <li>已选的行政区（任一格式中取自 REF_COUNTRY_SUBDIVISION 的组件）属于原国家，国家一变就清空。</li>
+ */
 export function addressPathsToClear(schema: FormSchema, before: Flat, after: Flat): string[] {
   const from = activeAddressFormat(schema, before), to = activeAddressFormat(schema, after);
-  if (!from || !to || from.code === to.code) return [];
+  if (!from || !to) return [];
+  const filled = (path: string) => (before[path] ?? "") !== "";
   const kept = new Set(to.components.map(addressPath));
-  return from.components.map(addressPath).filter((path) => !kept.has(path) && (before[path] ?? "") !== "");
+  const dropped = from.code === to.code ? [] : from.components.map(addressPath).filter((path) => !kept.has(path) && filled(path));
+  const countryChanged = (before[ADDRESS_COUNTRY] ?? "") !== (after[ADDRESS_COUNTRY] ?? "");
+  const subdivisions = countryChanged ? [...from.components, ...to.components]
+    .filter((component) => component.catalogCode === REF_COUNTRY_SUBDIVISION).map(addressPath).filter(filled) : [];
+  return [...new Set([...dropped, ...subdivisions])];
 }

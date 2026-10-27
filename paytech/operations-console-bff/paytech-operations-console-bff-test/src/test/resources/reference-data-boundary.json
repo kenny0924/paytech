@@ -1,0 +1,114 @@
+[
+  {
+    "id": "R01",
+    "method": "GET",
+    "path": "/reference-data-admin/v1/countries",
+    "query": "?status=ACTIVE",
+    "ownerPath": "/platform/v1/reference-data/countries",
+    "ownerQuery": "status=ACTIVE",
+    "routeCode": "operations-reference-data-countries",
+    "request": null,
+    "ownerResponse": {
+      "items": [
+        {"countryCode": "AE", "alpha3Code": "ARE", "numericCode": "784", "name": "United Arab Emirates", "regionCode": "GCC",
+          "callingCode": "+971", "defaultCurrencyCode": "AED", "logoFileAddress": "/files/v1/7312345678901234101",
+          "logoPublicUrl": "https://static.local.test/public/ae.svg", "status": "ACTIVE", "version": 1},
+        {"countryCode": "AQ", "alpha3Code": "ATA", "numericCode": "010", "name": "Antarctica", "regionCode": "APAC",
+          "status": "ACTIVE", "version": 1}
+      ]
+    },
+    "response": {
+      "items": [
+        {"countryCode": "AE", "alpha3Code": "ARE", "numericCode": "784", "name": "United Arab Emirates", "regionCode": "GCC",
+          "callingCode": "+971", "defaultCurrencyCode": "AED", "logoFileAddress": "/files/v1/7312345678901234101",
+          "logoPublicUrl": "https://static.local.test/public/ae.svg", "status": "ACTIVE", "version": 1},
+        {"countryCode": "AQ", "alpha3Code": "ATA", "numericCode": "010", "name": "Antarctica", "regionCode": "APAC",
+          "callingCode": null, "defaultCurrencyCode": null, "logoFileAddress": null, "logoPublicUrl": null, "status": "ACTIVE", "version": 1}
+      ]
+    }
+  },
+  {
+    "id": "R02",
+    "method": "GET",
+    "path": "/reference-data-admin/v1/country-subdivisions",
+    "query": "?countryCode=AE",
+    "ownerPath": "/platform/v1/reference-data/country-subdivisions",
+    "ownerQuery": "countryCode=AE",
+    "routeCode": "operations-reference-data-subdivisions",
+    "request": null,
+    "ownerResponse": {
+      "items": [
+        {"subdivisionCode": "AE-AZ", "countryCode": "AE", "parentSubdivisionCode": null, "category": "EMIRATE", "name": "Abu Dhabi",
+          "localName": "أبو ظبي", "status": "ACTIVE", "version": 1},
+        {"subdivisionCode": "AE-DU", "countryCode": "AE", "category": "EMIRATE", "name": "Dubai", "status": "INACTIVE", "version": 2}
+      ]
+    },
+    "response": {
+      "items": [
+        {"subdivisionCode": "AE-AZ", "countryCode": "AE", "parentSubdivisionCode": null, "category": "EMIRATE", "name": "Abu Dhabi",
+          "localName": "أبو ظبي", "status": "ACTIVE", "version": 1},
+        {"subdivisionCode": "AE-DU", "countryCode": "AE", "parentSubdivisionCode": null, "category": "EMIRATE", "name": "Dubai",
+          "localName": null, "status": "INACTIVE", "version": 2}
+      ]
+    }
+  },
+  {
+    "id": "R03",
+    "method": "GET",
+    "path": "/reference-data-admin/v1/industries",
+    "query": "",
+    "ownerPath": "/platform/v1/reference-data/industries",
+    "ownerQuery": "",
+    "routeCode": "operations-reference-data-industries",
+    "request": null,
+    "ownerResponse": {
+      "items": [
+        {"industryCode": "RETAIL", "parentIndustryCode": null, "level": 1, "name": "Retail", "description": null, "defaultMccCode": null,
+          "logoFileAddress": null, "logoPublicUrl": null, "sortNo": 10, "status": "ACTIVE", "version": 1},
+        {"industryCode": "RETAIL_APPAREL", "parentIndustryCode": "RETAIL", "level": 2, "name": "Apparel & accessories",
+          "description": "Clothing, shoes, bags and fashion accessories sold to consumers.", "defaultMccCode": "5651",
+          "logoFileAddress": "/files/v1/7312345678901234201", "logoPublicUrl": null, "sortNo": 10, "status": "ACTIVE", "version": 1}
+      ]
+    },
+    "response": {
+      "items": [
+        {"industryCode": "RETAIL", "parentIndustryCode": null, "level": 1, "name": "Retail", "description": null, "defaultMccCode": null,
+          "logoFileAddress": null, "logoPublicUrl": null, "sortNo": 10, "status": "ACTIVE", "version": 1},
+        {"industryCode": "RETAIL_APPAREL", "parentIndustryCode": "RETAIL", "level": 2, "name": "Apparel & accessories",
+          "description": "Clothing, shoes, bags and fashion accessories sold to consumers.", "defaultMccCode": "5651",
+          "logoFileAddress": "/files/v1/7312345678901234201", "logoPublicUrl": null, "sortNo": 10, "status": "ACTIVE", "version": 1}
+      ]
+    }
+  },
+  {
+    "id": "R04",
+    "method": "GET",
+    "path": "/reference-data-admin/v1/mccs",
+    "query": "?keyword=%20digital%20&status=ACTIVE&page=2&size=20",
+    "ownerPath": "/platform/v1/reference-data/mccs",
+    "ownerQuery": "keyword=digital&status=ACTIVE&page=2&size=20",
+    "routeCode": "operations-reference-data-mccs",
+    "request": null,
+    "ownerResponse": {
+      "items": [
+        {"mccCode": "5816", "name": "Digital Goods - Games", "description": "Games and in-game items delivered digitally.",
+          "networkHighRisk": false, "status": "ACTIVE", "version": 1},
+        {"mccCode": "5967", "name": "Direct Marketing - Inbound Teleservices", "networkHighRisk": true, "status": "ACTIVE", "version": 1}
+      ],
+      "page": 2,
+      "size": 20,
+      "total": 22
+    },
+    "response": {
+      "items": [
+        {"mccCode": "5816", "name": "Digital Goods - Games", "description": "Games and in-game items delivered digitally.",
+          "networkHighRisk": false, "status": "ACTIVE", "version": 1},
+        {"mccCode": "5967", "name": "Direct Marketing - Inbound Teleservices", "description": null, "networkHighRisk": true,
+          "status": "ACTIVE", "version": 1}
+      ],
+      "page": 2,
+      "size": 20,
+      "total": 22
+    }
+  }
+]

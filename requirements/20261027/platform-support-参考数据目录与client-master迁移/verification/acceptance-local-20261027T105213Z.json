@@ -1,0 +1,188 @@
+{
+ "env": "local",
+ "startedAt": "2026-10-27T10:52:13.700165+00:00",
+ "finishedAt": "2026-10-27T10:52:14.333039+00:00",
+ "summary": {
+  "PASS": 27,
+  "FAIL": 2,
+  "SKIP": 0,
+  "INFO": 0
+ },
+ "ids": {},
+ "results": [
+  {
+   "ac": "AC-03",
+   "step": "currencies 全量：4 个 ACTIVE、标准属性齐全、无本地化名称",
+   "verdict": "PASS",
+   "evidence": "{\"keys\": [\"currencyCode\", \"logoFileAddress\", \"logoPublicUrl\", \"minorUnit\", \"name\", \"numericCode\", \"roundingMode\", \"status\", \"symbol\", \"version\"], \"codes\": [[\"AED\", \"784\", \"ACTIVE\"], [\"EGP\", \"818\", \"ACTIVE\"], [\"SAR\", \"682\", \"ACTIVE\"], [\"USD\", \"840\", \"ACTIVE\"]]}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "currencies codes 去空白转大写、不存在编码不报错",
+   "verdict": "PASS",
+   "evidence": "{\"items\": [{\"currencyCode\": \"AED\", \"logoFileAddress\": null, \"logoPublicUrl\": null, \"minorUnit\": 2, \"name\": \"United Arab Emirates Dirham\", \"numericCode\": \"784\", \"roundingMode\": \"HALF_UP\", \"status\": \"ACTIVE\", \"symbol\": \"AED\", \"version\": 1}, {\"currencyCode\": \"USD\", \"logoFileAddress\": null, \"logoPublicUrl\": null, \"minorUnit\": 2, \"name\": \"US Dollar\", \"numericCode\": \"840\", \"roundingMode\": \"HALF_UP\", \"status\": \"ACTIVE\", \"symbol\": \"$\", \"version\": 1}]}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "currencies status=INACTIVE 筛选",
+   "verdict": "PASS",
+   "evidence": "0"
+  },
+  {
+   "ac": "AC-04",
+   "step": "countries 249 行全部有三位码 / 数字码 / 英文名；区号 242；法定货币 248",
+   "verdict": "PASS",
+   "evidence": "{\"keys\": [\"alpha3Code\", \"callingCode\", \"countryCode\", \"defaultCurrencyCode\", \"logoFileAddress\", \"logoPublicUrl\", \"name\", \"numericCode\", \"regionCode\", \"status\", \"version\"], \"noCalling\": [\"AQ\", \"BV\", \"GS\", \"HM\", \"PN\", \"TF\", \"UM\"], \"noCurrency\": [\"AQ\"]}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "country-subdivisions AE：7 行、ISO 连字符编码、国家一致",
+   "verdict": "PASS",
+   "evidence": "{\"keys\": [\"category\", \"countryCode\", \"localName\", \"name\", \"parentSubdivisionCode\", \"status\", \"subdivisionCode\", \"version\"], \"sample\": [{\"category\": \"EMIRATE\", \"countryCode\": \"AE\", \"localName\": \"عجمان\", \"name\": \"‘Ajmān\", \"parentSubdivisionCode\": null, \"status\": \"ACTIVE\", \"subdivisionCode\": \"AE-AJ\", \"version\": 1}]}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "country-subdivisions SA：13 行、ISO 连字符编码、国家一致",
+   "verdict": "PASS",
+   "evidence": "{\"keys\": [\"category\", \"countryCode\", \"localName\", \"name\", \"parentSubdivisionCode\", \"status\", \"subdivisionCode\", \"version\"], \"sample\": [{\"category\": \"REGION\", \"countryCode\": \"SA\", \"localName\": \"الرياض\", \"name\": \"Ar Riyāḑ\", \"parentSubdivisionCode\": null, \"status\": \"ACTIVE\", \"subdivisionCode\": \"SA-01\", \"version\": 1}]}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "country-subdivisions EG：27 行、ISO 连字符编码、国家一致",
+   "verdict": "PASS",
+   "evidence": "{\"keys\": [\"category\", \"countryCode\", \"localName\", \"name\", \"parentSubdivisionCode\", \"status\", \"subdivisionCode\", \"version\"], \"sample\": [{\"category\": \"GOVERNORATE\", \"countryCode\": \"EG\", \"localName\": \"الإسكندرية\", \"name\": \"Al Iskandarīyah\", \"parentSubdivisionCode\": null, \"status\": \"ACTIVE\", \"subdivisionCode\": \"EG-ALX\", \"version\": 1}]}"
+  },
+  {
+   "ac": "AC-05",
+   "step": "industries：大类 10、细类 32、RETAIL 下 5 个细类，细类都有建议 MCC",
+   "verdict": "PASS",
+   "evidence": "{\"keys\": [\"defaultMccCode\", \"description\", \"industryCode\", \"level\", \"logoFileAddress\", \"logoPublicUrl\", \"name\", \"parentIndustryCode\", \"sortNo\", \"status\", \"version\"], \"retail\": [\"RETAIL_APPAREL\", \"RETAIL_ELECTRONICS\", \"RETAIL_HOME\", \"RETAIL_BEAUTY\", \"RETAIL_GENERAL\"]}"
+  },
+  {
+   "ac": "AC-05",
+   "step": "每个细类的建议 MCC 存在且 ACTIVE（32 个）",
+   "verdict": "PASS",
+   "evidence": "{\"missing\": []}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "mccs 分页：共 298、两页衔接无重复且升序、越界页为空但保留总数",
+   "verdict": "PASS",
+   "evidence": "{\"page1\": {\"page\": 1, \"size\": 200, \"total\": 298}, \"page9\": {\"page\": 9, \"size\": 200, \"total\": 298}}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "mccs keyword：名称包含 grocery、编码前缀 541",
+   "verdict": "PASS",
+   "evidence": "{\"grocery\": [\"5411\"], \"541\": [\"5411\"]}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "mccs 高风险标记 14 个",
+   "verdict": "PASS",
+   "evidence": "[\"4816\", \"5122\", \"5912\", \"5962\", \"5966\", \"5967\", \"5993\", \"6051\", \"7273\", \"7800\", \"7801\", \"7802\", \"7994\", \"7995\"]"
+  },
+  {
+   "ac": "AC-03",
+   "step": "400：未知状态",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': 'status 只能是 DRAFT、ACTIVE、INACTIVE: BOGUS', 'requestId': 'ab4f5cdd-360e-4508-9d2d-32ce22ce3b0c'}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "400：编码格式",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': '请求字段不符合约束：codes[0].<list element>', 'requestId': '4bcc873c-effa-4358-a04b-3f189501dffa'}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "400：连续逗号",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': '请求字段不符合约束：codes[1].<list element>', 'requestId': '5b373051-f31b-40a1-91ef-04be59b84f8c'}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "400：超过 50 个编码",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': '请求字段不符合约束：codes', 'requestId': '5adaf0ce-5137-4888-8a8b-7a7fad578996'}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "400：level 越界",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': '请求字段不符合约束：level', 'requestId': 'f7249ce1-8880-4ee6-b1a5-3ca7a1be0b36'}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "400：size 非允许值",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': '每页条数必须为 10、20、50、100 或 200', 'requestId': '509b92b6-da31-444b-99a5-2573b4c28985'}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "400：keyword 过长",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': '请求字段不符合约束：keyword', 'requestId': 'abcfbfb4-6af1-4ced-bd0a-37ce5cc4960c'}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "400：countryCode 格式",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': '请求字段不符合约束：countryCode', 'requestId': 'db71795e-ee71-4f7b-853e-d4470e4e5561'}"
+  },
+  {
+   "ac": "AC-02",
+   "step": "旧 /currency-specs 外层 items、元素字段不变",
+   "verdict": "PASS",
+   "evidence": "[\"currency\", \"minorUnit\", \"roundingMode\", \"status\", \"updateTime\", \"version\"]"
+  },
+  {
+   "ac": "AC-02",
+   "step": "旧 /country-regions 249 行、元素只有 countryCode / regionCode",
+   "verdict": "PASS",
+   "evidence": "249"
+  },
+  {
+   "ac": "AC-13",
+   "step": "运营参考数据 /countries：249 行、无本地化名称",
+   "verdict": "PASS",
+   "evidence": "{\"status\": 200, \"count\": 249, \"keys\": [\"alpha3Code\", \"callingCode\", \"countryCode\", \"defaultCurrencyCode\", \"logoFileAddress\", \"logoPublicUrl\", \"name\", \"numericCode\", \"regionCode\", \"status\", \"version\"]}"
+  },
+  {
+   "ac": "AC-13",
+   "step": "运营参考数据 /country-subdivisions?countryCode=SA：13 行、无本地化名称",
+   "verdict": "PASS",
+   "evidence": "{\"status\": 200, \"count\": 13, \"keys\": [\"category\", \"countryCode\", \"localName\", \"name\", \"parentSubdivisionCode\", \"status\", \"subdivisionCode\", \"version\"]}"
+  },
+  {
+   "ac": "AC-13",
+   "step": "运营参考数据 /industries：42 行、无本地化名称",
+   "verdict": "PASS",
+   "evidence": "{\"status\": 200, \"count\": 42, \"keys\": [\"defaultMccCode\", \"description\", \"industryCode\", \"level\", \"logoFileAddress\", \"logoPublicUrl\", \"name\", \"parentIndustryCode\", \"sortNo\", \"status\", \"version\"]}"
+  },
+  {
+   "ac": "AC-13",
+   "step": "运营参考数据 /mccs?page=1&size=200：200 行、无本地化名称",
+   "verdict": "PASS",
+   "evidence": "{\"status\": 200, \"count\": 200, \"keys\": [\"description\", \"mccCode\", \"name\", \"networkHighRisk\", \"status\", \"version\"]}"
+  },
+  {
+   "ac": "AC-13",
+   "step": "运营参考数据 非法 Query → 400",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': '请求参数不正确', 'requestId': 'e28b01a6-b4b5-4c3c-b3ce-ba0d63f15a6c'}"
+  },
+  {
+   "ac": "AC-13",
+   "step": "币种列表带数字码 / 名称 / 符号 / 图标字段",
+   "verdict": "FAIL",
+   "evidence": "{\"keys\": [], \"codes\": []}"
+  },
+  {
+   "ac": "C",
+   "step": "场景异常",
+   "verdict": "FAIL",
+   "evidence": "KeyError: 'USD'"
+  }
+ ]
+}

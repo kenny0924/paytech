@@ -1,0 +1,74 @@
+# 参考数据目录与 client-master 迁移：mor-test 候选覆盖（rel-dev 2026-10-27；阶段 7 由主会话执行，需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag refdata-20261027a 仅供辨认；:development 未改动）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-refdata-rel = aba76a1a + Code-MoR-refdata 未提交改动的冻结副本
+#   （2026-10-27T12:55Z，全文件清单指纹 eff2848560062d60）；构建与核对见 ../verification/rel-build-report.md。
+# 环境变量：与现网容器（切片 1 的 compose-candidate.yaml 启动）逐键逐值相同；非敏感值显式写出，敏感值只写主 compose 同一 ${...} 引用。
+# 合并文件 = 6 个 compose-candidate.<service>.yaml。一次只起一个服务（runbook 第 1 节 up()）。
+services:
+  platform-support-service:
+    # 参考数据 5 个新查询接口、币种维护新字段与冻结规则、旧 currency-specs / country-regions 读新表（响应不变）、运营菜单能力清单加 OPERATIONS_REFERENCE_DATA。
+    # 改表名：必须与 sql/10 同一窗口（先停旧镜像 → SQL → 起本镜像）；env 全部来自主 compose 与 env_file，本文件只换镜像（同切片 1）。
+    image: sha256:aec535863836669db6063a139c448ee817d00f64d6a4adea008448a413e4d5b5  # mor-test/platform-support-service:refdata-20261027a（JAR f4d03bef50208c3e）
+
+  client-master-service:
+    # REF_CURRENCY / REF_COUNTRY_SUBDIVISION 目录码、提交时向 Platform 校验国家 / 币种 / 行政区、分类保存校验行业细类与 MCC、
+    # 删除 /classification-options、管理端辖区返回 addressComponents。必须与 sql/20（DML）同一窗口，在 Platform 之后。
+    image: sha256:80257737ed090d3ba3f70b6b4ce7c4356bf7c0ac7548191d04ccaecd4d609570  # mor-test/client-master-service:refdata-20261027a（JAR 7e519598184788a0）
+    environment:
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.26
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mor_client_master?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: client_master_app
+      SPRING_DATASOURCE_PASSWORD: ${MOR_CLIENT_MASTER_DB_PASSWORD:?prepare test secrets}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SPRING_DATA_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      CCT_RABBITMQ_HOST: rabbitmq
+      CCT_RABBITMQ_PORT: "5672"
+      CCT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      CCT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      CCT_RABBITMQ_VHOST: /mor-test
+      MESSAGING_CONSUMER_SERVICE: client-master
+      MESSAGING_CONSUMERS_COMPLIANCE_PARTITIONS: "4"
+      ONBOARDING_DRAFT_ENABLED: "true"
+      ONBOARDING_RECOVERY_ENABLED: "true"
+      ONBOARDING_ID_DATACENTER: "0"
+      ONBOARDING_ID_WORKER: "26"
+      COMPENSATION_INSTANCE_ID: client-master-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: client-master-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.26
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+
+  client-console-bff:
+    # form-schema 改由 GetClientFormSchemaProcessor 组装：补 Platform ACTIVE 国家、REF_CURRENCY 币种、REF_COUNTRY_SUBDIVISION 行政区（Platform 之后）。
+    image: sha256:be79550ff3ed649758b164574e2c2a13fd389466b19cec27330746674a9e6910  # mor-test/client-console-bff:refdata-20261027a（JAR ca2888638d7a6938）
+    environment:
+      CLIENT_BFF_BIND_ADDRESS: 172.30.73.27
+      CLIENT_ONBOARDING_ENABLED: "true"
+      CLIENT_CONSOLE_ORIGIN: https://localhost:28443
+
+  operations-console-bff:
+    # 审核详情行业树与 MCC 改取 Platform、分类 MCC 搜索、参考数据只读接口、币种 4 个新字段。4 个 OPERATIONS_*_BASE_URL 必带。
+    image: sha256:481132892c9388687261370f50d5da21229b83b214deab699872907239bf57b3  # mor-test/operations-console-bff:refdata-20261027a（JAR bd03e82df00f5c8d）
+    environment:
+      OPERATIONS_BFF_BIND_ADDRESS: 172.30.73.22
+      OPERATIONS_CONSOLE_ORIGIN: http://localhost:28080
+      OPERATIONS_TEST_HTTP_ENABLED: "true"
+      OPERATIONS_LEDGER_BASE_URL: http://ledger-service:18105
+      OPERATIONS_ACCOUNT_BASE_URL: http://account-service:18114
+      OPERATIONS_BILLING_BASE_URL: http://billing-service:18113
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115
+
+  client-console-web:
+    # 国家 / 币种 / 行政区选择改用 BFF 下发的 Platform 选项（国旗、搜索、底部面板）、提交校验字段提示（P1 F-1）。nginx 镜像，无 env。
+    image: sha256:c09af02a9c4d84faa2aaf78b5d95b6b4e36e0a28c56050d1ae202c5e000e495e  # mor-test/client-console-web:refdata-20261027a（dist 11 个文件）
+
+  operations-console-web:
+    # 参考数据页、分类两级行业 + MCC 搜索、币种页新字段与换图标、入驻配置目录来源（含 F-3—F-7 与 refdata 根预加载）。nginx 镜像，无 env。
+    image: sha256:b1309a45933504f30db0e9d47fdb26d1152d0d4c87c99b7fad30c36850e8168a  # mor-test/operations-console-web:refdata-20261027a（dist 245 个文件）

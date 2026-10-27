@@ -1,0 +1,50 @@
+{
+ "env": "local",
+ "startedAt": "2026-10-27T11:43:16.225891+00:00",
+ "finishedAt": "2026-10-27T11:43:16.989878+00:00",
+ "summary": {
+  "PASS": 6,
+  "FAIL": 0,
+  "SKIP": 0,
+  "INFO": 0
+ },
+ "ids": {},
+ "results": [
+  {
+   "ac": "AC-13",
+   "step": "币种列表带数字码 / 名称 / 符号 / 图标字段",
+   "verdict": "PASS",
+   "evidence": "{\"keys\": [\"currency\", \"logoFileAddress\", \"logoPublicUrl\", \"minorUnit\", \"name\", \"numericCode\", \"roundingMode\", \"status\", \"symbol\", \"version\"], \"codes\": [\"AED\", \"EGP\", \"SAR\", \"USD\"]}"
+  },
+  {
+   "ac": "AC-13",
+   "step": "ACTIVE 币种改冻结字段 → 422，逐字段错误（name、symbol）",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'VALIDATION_ERROR', 'detail': '请求字段校验未通过', 'requestId': 'd2e2e7d7-6e27-4c11-8b7d-9827a7cdd488', 'errors': [{'field': 'name', 'message': '请检查此处配置'}, {'field': 'symbol', 'message': '请检查此处配置'}]}"
+  },
+  {
+   "ac": "AC-13",
+   "step": "logo 指向不存在 / 非公开文件 → 422（logoFileAddress）",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'VALIDATION_ERROR', 'detail': '请求字段校验未通过', 'requestId': 'dfa74c51-0e88-49d1-836c-bcbbf5c7ed23', 'errors': [{'field': 'logoFileAddress', 'message': '请检查此处配置'}]}"
+  },
+  {
+   "ac": "AC-13",
+   "step": "被拒的修改未写入（USD 版本、名称不变）",
+   "verdict": "PASS",
+   "evidence": "{\"currency\": \"USD\", \"logoFileAddress\": null, \"logoPublicUrl\": null, \"minorUnit\": 2, \"name\": \"US Dollar\", \"numericCode\": \"840\", \"roundingMode\": \"HALF_UP\", \"status\": \"ACTIVE\", \"symbol\": \"$\", \"version\": 1}"
+  },
+  {
+   "ac": "AC-13",
+   "step": "新建 DRAFT 币种 XTS（ISO 测试代码，保留供页面冒烟）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-13",
+   "step": "DRAFT 币种可改全部标准属性（符号、小数位）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {} status=DRAFT"
+  }
+ ]
+}

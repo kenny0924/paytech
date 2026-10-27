@@ -205,7 +205,9 @@ for (const line of lines.slice(sectionStart, sectionEnd)) {
   }
   if (table === 't_currency_spec') {
     // Owner platform-support; design 03 §3 copies in mor_ledger and mor_billing are step-removed on 2026-10-20.
-    add('platform-support', 'mor_platform', table);
+    // 2026-10-27 reference-data catalog (decision 2026-10-27-platform-reference-data): the Platform table is renamed
+    // t_ref_currency; the removed ledger / billing copies keep the source name so stepRemovedTables can match them.
+    add('platform-support', 'mor_platform', 't_ref_currency');
     add('ledger', 'mor_ledger', table);
     add('billing', 'mor_billing', table);
     continue;

@@ -1,0 +1,40 @@
+# 参考数据目录与 client-master 迁移：mor-test 候选覆盖（rel-dev 2026-10-27；阶段 7 由主会话执行，需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag refdata-20261027a 仅供辨认；:development 未改动）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-refdata-rel = aba76a1a + Code-MoR-refdata 未提交改动的冻结副本
+#   （2026-10-27T12:55Z，全文件清单指纹 eff2848560062d60）；构建与核对见 ../verification/rel-build-report.md。
+# 环境变量：与现网容器（切片 1 的 compose-candidate.yaml 启动）逐键逐值相同；非敏感值显式写出，敏感值只写主 compose 同一 ${...} 引用。
+services:
+  client-master-service:
+    # REF_CURRENCY / REF_COUNTRY_SUBDIVISION 目录码、提交时向 Platform 校验国家 / 币种 / 行政区、分类保存校验行业细类与 MCC、
+    # 删除 /classification-options、管理端辖区返回 addressComponents。必须与 sql/20（DML）同一窗口，在 Platform 之后。
+    image: sha256:80257737ed090d3ba3f70b6b4ce7c4356bf7c0ac7548191d04ccaecd4d609570  # mor-test/client-master-service:refdata-20261027a（JAR 7e519598184788a0）
+    environment:
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.26
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mor_client_master?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: client_master_app
+      SPRING_DATASOURCE_PASSWORD: ${MOR_CLIENT_MASTER_DB_PASSWORD:?prepare test secrets}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SPRING_DATA_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      CCT_RABBITMQ_HOST: rabbitmq
+      CCT_RABBITMQ_PORT: "5672"
+      CCT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      CCT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      CCT_RABBITMQ_VHOST: /mor-test
+      MESSAGING_CONSUMER_SERVICE: client-master
+      MESSAGING_CONSUMERS_COMPLIANCE_PARTITIONS: "4"
+      ONBOARDING_DRAFT_ENABLED: "true"
+      ONBOARDING_RECOVERY_ENABLED: "true"
+      ONBOARDING_ID_DATACENTER: "0"
+      ONBOARDING_ID_WORKER: "26"
+      COMPENSATION_INSTANCE_ID: client-master-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: client-master-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.26
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.

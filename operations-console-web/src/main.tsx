@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { App } from './App';
-import { OPS_NAMESPACES } from './i18n/namespaces';
+import { OPS_NAMESPACES, RUNTIME_DATA_NAMESPACES } from './i18n/namespaces';
 import { I18nGate, useLocale } from './i18n/react';
 import './styles.css';
 
@@ -33,7 +33,9 @@ function Root() {
   </ConfigProvider>;
 }
 
-// 根部一次加载全部命名空间（有本地缓存时直接用缓存，不等网络），登录页与控制台都在 Gate 内。
+// 根部一次加载全部命名空间（有本地缓存时直接用缓存，不等网络），登录页与控制台都在 Gate 内；
+// 含只在运行时发布的 refdata，避免页面中首次使用时再加载导致当前页重新挂载。
+const ROOT_NAMESPACES = [...OPS_NAMESPACES, ...RUNTIME_DATA_NAMESPACES];
 createRoot(document.getElementById('root')!).render(
-  <I18nGate namespaces={OPS_NAMESPACES} fallback={<div className="full-loading" />}><Root /></I18nGate>,
+  <I18nGate namespaces={ROOT_NAMESPACES} fallback={<div className="full-loading" />}><Root /></I18nGate>,
 );

@@ -8,9 +8,9 @@ import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 import com.paytech.platform.support.auditsecurity.domainservice.service.OperationsAuditService;
-import com.paytech.platform.support.referencedata.core.dal.dataobject.CurrencySpec;
+import com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCurrency;
 import com.paytech.platform.support.referencedata.domain.CurrencySpecAuditFacts;
-import com.paytech.platform.support.referencedata.domainservice.repository.CurrencySpecRepository;
+import com.paytech.platform.support.referencedata.domainservice.repository.ReferenceCurrencyRepository;
 import com.paytech.platform.support.referencedata.domainservice.service.CurrencySpecManagementService;
 import com.paytech.platform.support.referencedata.service.processor.request.CreateCurrencySpecRequest;
 import com.paytech.platform.support.referencedata.service.processor.response.CurrencySpecMutation;
@@ -19,9 +19,11 @@ import com.paytech.platform.support.service.processor.OperationsTransactionExecu
 import lombok.AllArgsConstructor;
 
 /**
- * 新建 DRAFT 币种规则，版本为 1
- * <li>按币种代码持资源锁，在一个本地事务内完成权限复核、代码查重、保存与审计登记；事务内不访问外部能力。</li>
+ * 新建 DRAFT 币种，版本为 1
+ * <li>按币种代码持资源锁，在一个本地事务内完成权限复核、代码查重、logo 核对、保存与审计登记；logo 经文件 Owner 的同库能力读取，
+ * 事务内不访问外部能力。</li>
  * <li>币种代码已存在返回 400 业务拒绝；唯一索引仍为最终保护，冲突同样转换为该拒绝。</li>
+ * <li>logo 文件不存在或不是公开文件返回 422（字段 logoFileAddress）。</li>
  */
 @Component
 @AllArgsConstructor
@@ -29,10 +31,17 @@ import lombok.AllArgsConstructor;
 public class CreateCurrencySpecProcessor extends AbstractLockProcessor<CreateCurrencySpecRequest, CurrencySpecMutation> {
 
     private final IdGenerator ids;
-    private final CurrencySpecRepository repository;
+
+    private final ReferenceDataLogos logos;
+
     private final OperationsAuditService audit;
+
+    private final ReferenceCurrencyRepository repository;
+
     private final CurrencySpecManagementService service;
+
     private final CurrencySpecManagementSupport support;
+
     private final OperationsTransactionExecutor transactions;
 
     /** 与修改、启停共用币种代码资源锁。 */
@@ -47,31 +56,38 @@ public class CreateCurrencySpecProcessor extends AbstractLockProcessor<CreateCur
         return transactions.write(() -> execute(request));
     }
 
-    /** 授权与查重通过后保存新行，保存成功才登记审计。 */
+    /** 授权、查重与 logo 核对通过后保存新行，保存成功才登记审计。 */
     CurrencySpecMutation execute(CreateCurrencySpecRequest request) {
         long tenantId = support.authorize(request.getActor(), request.getSession());
-        if (repository.findByCurrency(request.getCurrency()) != null) {
+        if (repository.findByCurrencyCode(request.getCurrency()) != null) {
             throw new BizCheckFailException("币种规则已存在: " + request.getCurrency());
         }
-        CurrencySpec spec = buildCurrencySpec(request);
-        service.create(spec);
-        var fact = CurrencySpecAuditFacts.created(request.getActor(), tenantId, spec, request.getReason());
+        if (request.getLogoFileAddress() != null) {
+            logos.requirePublicFile(request.getLogoFileAddress());
+        }
+        ReferenceCurrency currency = buildCurrency(request);
+        service.create(currency);
+        var fact = CurrencySpecAuditFacts.created(request.getActor(), tenantId, currency, request.getReason());
         audit.record(() -> fact);
-        return CurrencySpecMutation.of(spec);
+        return CurrencySpecMutation.of(currency);
     }
 
     /** 插入前准备主键、DRAFT 状态、初始版本 1 与时间。 */
-    CurrencySpec buildCurrencySpec(CreateCurrencySpecRequest request) {
+    ReferenceCurrency buildCurrency(CreateCurrencySpecRequest request) {
         var now = support.now();
-        CurrencySpec spec = new CurrencySpec();
-        spec.setId(ids.nextId());
-        spec.setCurrency(request.getCurrency());
-        spec.setMinorUnit(request.getMinorUnit());
-        spec.setRoundingMode(request.getRoundingMode());
-        spec.setStatus(CurrencySpecStatus.DRAFT);
-        spec.setVersion(1);
-        spec.setCreateTime(now);
-        spec.setUpdateTime(now);
-        return spec;
+        ReferenceCurrency currency = new ReferenceCurrency();
+        currency.setId(ids.nextId());
+        currency.setCurrencyCode(request.getCurrency());
+        currency.setNumericCode(request.getNumericCode());
+        currency.setName(request.getName());
+        currency.setSymbol(request.getSymbol());
+        currency.setMinorUnit(request.getMinorUnit());
+        currency.setRoundingMode(request.getRoundingMode());
+        currency.setLogoFileAddress(request.getLogoFileAddress());
+        currency.setStatus(CurrencySpecStatus.DRAFT);
+        currency.setVersion(1);
+        currency.setCreateTime(now);
+        currency.setUpdateTime(now);
+        return currency;
     }
 }

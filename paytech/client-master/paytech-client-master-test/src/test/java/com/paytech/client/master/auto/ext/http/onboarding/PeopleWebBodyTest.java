@@ -39,7 +39,7 @@ class PeopleWebBodyTest extends AbstractOnboardingHttpTest {
             "values":{"individual":{"givenName":"Mariam","familyName":"Al Mansoori","birthDate":"1985-03-14","birthPlace":"Dubai",
             "birthCountry":"AE","gender":"FEMALE","nationalityCountry":"AE","residenceCountry":"AE"},
             "identifier":{"identifierType":"PASSPORT","issuingCountry":"AE","identifierValue":"N1234567","expiryDate":"2031-05-01"},
-            "address":{"countryCode":"AE","addressLine1":"Villa 12, Jumeirah 1","city":"Dubai","stateOrProvince":"AE_DU"}}},
+            "address":{"countryCode":"AE","addressLine1":"Villa 12, Jumeirah 1","city":"Dubai","stateOrProvince":"AE-DU"}}},
             "relation":{"relationType":"UBO","ownershipPercentage":"55","uboBasis":"OWNERSHIP"}}""");
 
         assertEquals(201, ubo.getStatus().value(), new String(ubo.getResponseBody()));

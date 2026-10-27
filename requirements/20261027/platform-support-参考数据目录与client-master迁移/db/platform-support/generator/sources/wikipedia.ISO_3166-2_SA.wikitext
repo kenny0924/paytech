@@ -1,0 +1,122 @@
+{{Short description|Entry for Saudi Arabia in ISO 3166-2}}
+'''ISO 3166-2:SA''' is the entry for [[Saudi Arabia]] in [[ISO 3166-2]], part of the [[ISO 3166]] [[standardization|standard]] published by the [[International Organization for Standardization]] (ISO), which defines [[code]]s for the names of the principal [[country subdivision|subdivision]]s (e.g., [[province]]s or [[state (administrative division)|state]]s) of all [[country|countries]] coded in [[ISO 3166-1]].
+
+Currently for Saudi Arabia, ISO 3166-2 codes are defined for [[regions of Saudi Arabia|13 regions]].
+
+Each code consists of two parts, separated by a hyphen. The first part is {{mono|SA}}, the [[ISO 3166-1 alpha-2]] code of Saudi Arabia. The second part is two digits (01&ndash;14 except 13).
+
+==Current codes==
+Subdivision names are listed as in the ISO 3166-2 standard published by the ISO 3166 Maintenance Agency (ISO 3166/MA).
+
+''Click on the button in the header to sort each column.''
+
+{| class="wikitable sortable"
+|-
+! Code
+! Subdivision name ([[Arabic language|ar]])<br />(BGN/PCGN 1956)
+! Subdivision name ([[Arabic language|ar]])<ref group="note">For reference only, Arabic name in Arabic script not included in the ISO 3166-2 standard.</ref>
+! Subdivision name ([[English language|en]])<ref group="note">For reference only, English name not included in the ISO 3166-2 standard.</ref>
+|-
+| {{mono|SA-14}}
+| {{sort|Asīr|[[ٰĀsīr Province|'Asīr]]}}
+| عَسِيْر
+| Asir
+|-
+| {{mono|SA-11}}
+| [[Al Bāḩah Province|Al Bāḩah]]
+| ٱلْبَاحَة
+| Baha
+|-
+| {{mono|SA-08}}
+| {{sort|Al Hudūd ash Shamālīyah|[[Al Ḩudūd ash Shamālīyah Province|Al Ḩudūd ash Shamālīyah]]}}
+| الحدود الشمالية
+| Northern Borders
+|-
+| {{mono|SA-12}}
+| [[Al Jawf Province|Al Jawf]]
+| الجوف
+| Jouf
+|-
+| {{mono|SA-03}}
+| [[Medina Region|Al Madīnah al Munawwarah]]
+| ٱلْمَدِيْنَة ٱلْمُنَوَّرَة
+| Medina
+|-
+| {{mono|SA-05}}
+| [[Al Qaşīm Province|Al Qaşīm]]
+| القصيم
+| Qassim
+|-
+| {{mono|SA-01}}
+| [[Ar Riyāḑ Province|Ar Riyāḑ]]
+| الرياض
+| Riyadh
+|-
+| {{mono|SA-04}}
+| [[Ash Sharqīyah Province|Ash Sharqīyah]]
+| الشرقية
+| Eastern
+|-
+| {{mono|SA-06}}
+| {{sort|Hā'il|[[Ḩā'il Province|Ḩā'il]]}}
+| حَائِل
+| Ha’il
+|-
+| {{mono|SA-09}}
+| [[Jīzān Province|Jāzān]]
+| جازان
+| Jizan
+|-
+| {{mono|SA-02}}
+| [[Mecca Region|Makkah al Mukarramah]]
+| مكة
+| Mecca
+|-
+| {{mono|SA-10}}
+| [[Najrān Province|Najrān]]
+| نجران
+| Najran
+|-
+| {{mono|SA-07}}
+| [[Tabūk Province|Tabūk]]
+| تَبُوْك
+| Tabuk
+|}
+; Notes
+<references group="note"/>
+
+==Changes==
+The following changes to the entry have been announced in newsletters by the ISO 3166/MA since the first publication of ISO 3166-2 in 1998:
+
+{| class="wikitable"
+|-
+! Newsletter
+! Date issued
+! Description of change in newsletter
+|-
+| id="II-3" | [https://www.iso.org/files/live/sites/isoorg/files/archive/pdf/en/iso_3166-2_newsletter_ii-3_2011-12-13.pdf {{nowrap|Newsletter II-3}}]
+| {{nowrap|2011-12-13}}<br /> ''(corrected<br /> {{nowrap|2011-12-15}})''
+| Alphabetical re-ordering.
+|-
+| rowspan="2" | [https://www.iso.org/obp/ui/#iso:code:3166:SA Online Browsing<br />Platform (OBP)]
+| 2014-11-03
+| Change subdivision names of SA-02, SA-03 and SA-09; update List Source
+|-
+| 2018-11-26
+| Change of subdivision category from province to region
+|}
+
+==See also==
+* [[Subdivisions of Saudi Arabia]]
+* [[List of FIPS region codes (S-U)#SA: Saudi Arabia|FIPS region codes of Saudi Arabia]]
+* Neighbouring countries: [[ISO 3166-2:AE|AE]], [[ISO 3166-2:IQ|IQ]], [[ISO 3166-2:JO|JO]], [[ISO 3166-2:KW|KW]], [[ISO 3166-2:OM|OM]], [[ISO 3166-2:QA|QA]], [[ISO 3166-2:YE|YE]]
+
+==External links==
+* [https://www.iso.org/obp/ui/#iso:code:3166:SA ISO Online Browsing Platform: SA]
+* [https://www.statoids.com/usa.html Regions of Saudi Arabia], Statoids.com
+
+{{ISO 3166}}
+
+[[Category:ISO 3166|2:SA]]
+[[Category:Provinces of Saudi Arabia|*ISO 3166-2]]
+[[Category:Saudi Arabia geography-related lists]]

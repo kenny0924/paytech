@@ -18,7 +18,7 @@
  <select id="lockSourceUpload" useCache="false" flushCache="true" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileUpload">
  SELECT <include refid="UploadColumns"/> FROM t_file_upload WHERE upload_id=#{id} FOR UPDATE
  </select>
- <select id="describeFile" useCache="false" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileDescription">
+ <sql id="DescribeFileQuery">
  SELECT f.file_id AS fileId,f.source_system AS sourceSystem,f.reason_code AS reasonCode,
  COALESCE(cu.display_name,ou.display_name) AS displayName,
  f.mime_type AS mimeType,f.size_bytes AS sizeBytes,f.content_hash AS contentHash,f.scan_status AS scanStatus,
@@ -34,7 +34,15 @@
  LEFT JOIN t_file_upload cu ON cu.upload_id=cv.upload_id
  LEFT JOIN t_file_storage_instance i ON i.instance_code=f.storage_provider
  LEFT JOIN t_file_storage_bucket b ON b.instance_id=i.instance_id AND b.bucket_name=f.storage_container_ref
+ </sql>
+ <select id="describeFile" useCache="false" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileDescription">
+ <include refid="DescribeFileQuery"/>
  WHERE f.file_id=#{fileId}
+ </select>
+ <select id="describeFiles" useCache="false" resultType="com.paytech.platform.support.filedocument.core.dal.dataobject.FileDescription">
+ <include refid="DescribeFileQuery"/>
+ WHERE f.file_id IN
+ <foreach collection="fileIds" item="fileId" open="(" separator="," close=")">#{fileId}</foreach>
  </select>
  <select id="versionDisplayName" useCache="false" resultType="java.lang.String">
  SELECT u.display_name FROM t_file_version v JOIN t_file_upload u ON u.upload_id=v.upload_id

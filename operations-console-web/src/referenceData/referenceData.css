@@ -1,0 +1,33 @@
+/* 参考数据页（原型：平台配置 · 参考数据 01—04）与币种 / 分类页共用的国旗、图标；布局基础复用 dataQuery.css 的 dq-* 类。 */
+.refdata-readonly { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.refdata-count { display: inline-block; min-width: 22px; margin-left: 4px; padding: 0 6px; border-radius: 10px; background: #f2f4f7; color: #69717d;
+  font-size: 12px; line-height: 18px; text-align: center; }
+.ant-tabs-tab-active .refdata-count { background: #e8efff; color: #315dca; }
+.refdata-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.refdata-search { width: 300px; max-width: 100%; }
+.refdata-filter { min-width: 140px; }
+.refdata-split { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 400px); align-items: start; }
+.refdata-nowrap { white-space: nowrap; }
+.refdata-name { font-size: 13px; color: #384152; }
+.refdata-detail { align-self: start; position: sticky; top: 12px; }
+.refdata-detail-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.refdata-detail-head h2 { margin: 0 0 2px; font-size: 18px; }
+.refdata-grow { flex: 1; min-width: 0; }
+.refdata-field { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 12px; padding: 6px 0; font-size: 13px; align-items: baseline; }
+.refdata-field > span:last-child { overflow-wrap: anywhere; }
+.refdata-note { font-size: 12px; margin: 14px 0 0; border-top: 1px solid #edf0f5; padding-top: 12px; }
+.refdata-description { background: #f8fafc; border-radius: 6px; padding: 10px 14px; font-size: 13px; margin: 8px 0; }
+.refdata-subdivision-row { display: grid; grid-template-columns: 64px 1fr auto; gap: 8px; padding: 3px 0; font-size: 13px; }
+.refdata-flag { display: inline-block; width: 24px; height: 18px; border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08); vertical-align: middle; }
+.refdata-detail-head .refdata-flag { width: 36px; height: 27px; margin-top: 2px; }
+.refdata-flag.is-empty { background: #eef1f5; }
+.refdata-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 6px; object-fit: contain;
+  background: #f0f4ff; color: #315dca; flex-shrink: 0; }
+.refdata-detail-head .refdata-icon { width: 32px; height: 32px; }
+.refdata-code-cell { display: inline-flex; align-items: center; gap: 8px; }
+.refdata-code-cell .is-strong { font-weight: 600; }
+.refdata-chip { border: 1px solid #d9dee7; background: #fff; border-radius: 14px; padding: 2px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.refdata-chip.is-active { border-color: #315dca; background: #f0f5ff; color: #315dca; font-weight: 600; }
+.refdata-file { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+@media (max-width: 1200px) { .refdata-split { grid-template-columns: minmax(0, 1fr); } .refdata-detail { position: static; } }
+@media (max-width: 640px) { .refdata-search { width: 100%; } }

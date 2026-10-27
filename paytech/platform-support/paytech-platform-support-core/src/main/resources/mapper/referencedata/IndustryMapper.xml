@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.referencedata.core.dal.mapper.IndustryMapper">
+
+    <!-- 细类按所属大类的 sort_no 归组：每个大类之后紧跟其细类；大类缺失的细类按自身排序。 -->
+    <select id="selectByFilter" timeout="2"
+            resultType="com.paytech.platform.support.referencedata.core.dal.dataobject.Industry">
+        SELECT i.id, i.industry_code AS industryCode, i.parent_industry_code AS parentIndustryCode,
+            i.industry_level AS level, i.name, i.description, i.default_mcc_code AS defaultMccCode,
+            i.logo_file_address AS logoFileAddress, i.sort_no AS sortNo, i.status, i.version,
+            i.create_time AS createTime, i.update_time AS updateTime
+        FROM t_ref_industry i
+        LEFT JOIN t_ref_industry p ON p.industry_code = i.parent_industry_code
+        <where>
+            <if test="level != null">AND i.industry_level = #{level}</if>
+            <if test="parentCode != null">AND i.parent_industry_code = #{parentCode}</if>
+            <if test="status != null">AND i.status = #{status}</if>
+            <if test="codes != null">
+                AND i.industry_code IN
+                <foreach collection="codes" item="code" open="(" separator="," close=")">#{code}</foreach>
+            </if>
+        </where>
+        ORDER BY COALESCE(p.sort_no, i.sort_no), COALESCE(p.industry_code, i.industry_code), i.industry_level,
+            i.sort_no, i.industry_code
+    </select>
+</mapper>

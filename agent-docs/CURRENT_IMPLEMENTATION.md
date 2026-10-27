@@ -11,6 +11,15 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## platform-support 参考数据目录与 client-master 迁移（2026-10-27，已部署 mor-test，未提交）
+
+- **范围：** [需求](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/requirement.md>)、[技术方案](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/technique.md>)、[交付记录](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/delivery.md>)、[运行卡](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/release/runbook.md>)；依据 [参考数据决定](./decisions/2026-10-27-platform-reference-data.md)。
+- **Implemented：** Platform `t_currency_spec` → `t_ref_currency`、`t_country_region` → `t_ref_country`（补列），新建 `t_ref_country_subdivision`、`t_ref_industry`（两级）、`t_ref_mcc`；5 个只读接口 `/platform/v1/reference-data/*`（旧 `/currency-specs`、`/country-regions` 响应冻结）；币种维护加数字码 / 名称 / 符号 / 图标与冻结规则；client-master 移出 `t_catalog_item` 的 INDUSTRY / CURRENCY / STATE_OR_PROVINCE（48 行），`REF_*` 目录码、提交时事务外核对国家 / 币种 / 行政区、分类两级行业 + MCC 校验、删除 `/classification-options`、管理端辖区返回 `addressComponents`；client-console-bff 自有 form-schema 模型补全参考数据；两个 Web 的国家（国旗）/ 省州 / 币种控件、分类页、参考数据页、币种页；块 139；`refdata` / `reference-data` 语言包（429 键 / 应用，中英全覆盖）。
+- **Verified：** worktree `Code-MoR-refdata`（基于 `aba76a1a`）：Platform 参考数据 45 + 回归 47、arch-rules 68、client-master 152、client-console-bff 100、client-console-web 129、operations-console-bff 2421、operations-console-web 1565；本机 e2e 接口 231 + 98、浏览器 Client 84 / 运营 29×2；mor-test 接口 220 PASS / 0 FAIL、浏览器 Client 21×4、运营 27×2。
+- **Deployed：** mor-test 2026-10-27 15:33—15:56Z（tag `refdata-20261027a`）：platform `aec53586…`、client-master `80257737…`、client-console-bff `be79550f…`、operations-console-bff `48113289…`、client-console-web `c09af02a…`、operations-console-web `b1309a45…`；块 139 激活（Gateway 607 → 612）；语言包 client-console #6、operations-console #13；Platform 中断约 50 秒、client-master 约 40 秒。回滚目标见运行卡第 6 节与 `release/compose-rollback.yaml`。
+- **Deployed（国旗）：** mor-test 2026-10-27 16:05—16:46Z：249 个国旗 PNG 经运营公开上传并回填 `t_ref_country.logo_file_address`（期间两条上传路由限流临时放宽到 500 / 分钟，已恢复）。
+- **Pending / 遗留：** 批量导入图标应做成正式能力（内部接口，不走面向人工的上传入口）；中文 MCC 名、行业说明、行政区英文名与高风险 MCC 清单生产前需合规审核；CLDR 阿拉伯文行政区名为 provisional；arch-rules 表归属生成脚本与手工维护不一致（运行会丢 17 张表）；本机 e2e 的 ledger / billing JAR 文件已不在磁盘（仅运行进程持有）；Platform 多语言重导入不更新译文对应的英文版本（需批量确认）；运营语言包发布在 Gateway 超时内未返回（504，后台完成）。提交 / 推送另行授权。
+
 ## client-master / compliance 全球合规入驻与资格切片 1（2026-10-27，已部署 mor-test，已本地提交，未推送）
 
 - **范围：** [需求](<../requirements/20261027/client-master-全球合规入驻与资格切片1/requirement.md>)、[技术方案](<../requirements/20261027/client-master-全球合规入驻与资格切片1/technique.md>)、[交付记录](<../requirements/20261027/client-master-全球合规入驻与资格切片1/delivery.md>)、[发布运行卡](<../requirements/20261027/client-master-全球合规入驻与资格切片1/release/runbook.md>)；设计 [design-discuss/client-onboarding](<../design-discuss/client-onboarding/design.md>)，决定 [2026-10-27](<./decisions/2026-10-27-client-onboarding-global-kyc-kyb.md>)（Proposed）。AE / SA / EG 国家包、Schema 驱动入驻、PayFac 入驻码与责任方、证件 Vault Token、合规程序 / 筛查 Mock / CRR / 四眼 / 需求级退回、资格事件。

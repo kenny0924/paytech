@@ -1,0 +1,464 @@
+{
+ "plans": [
+  {
+   "app": "client-console",
+   "newNamespaces": [],
+   "maxSort": 100,
+   "added": 42,
+   "changed": 46,
+   "deprecated": 0,
+   "zhImport": 88,
+   "refdataZhReplaced": 0,
+   "zhMissing": 0,
+   "englishFilled": 0,
+   "repoNamespaces": 10,
+   "deprecatedKeys": []
+  },
+  {
+   "app": "operations-console",
+   "newNamespaces": [],
+   "maxSort": 260,
+   "added": 42,
+   "changed": 46,
+   "deprecated": 0,
+   "zhImport": 88,
+   "refdataZhReplaced": 0,
+   "zhMissing": 0,
+   "englishFilled": 0,
+   "repoNamespaces": 26,
+   "deprecatedKeys": []
+  }
+ ],
+ "results": [
+  {
+   "step": "client-console 新增 / 变更 key 都有 zh-CN（缺 0）",
+   "ok": true,
+   "evidence": []
+  },
+  {
+   "step": "operations-console 新增 / 变更 key 都有 zh-CN（缺 0）",
+   "ok": true,
+   "evidence": []
+  },
+  {
+   "step": "client-console key 导入预览 #1：{'added': 42, 'sourceChanged': 46, 'deprecated': 0, 'restored': 0}",
+   "ok": true,
+   "evidence": {
+    "code": null,
+    "detail": null,
+    "missingNamespaces": [],
+    "problems": []
+   }
+  },
+  {
+   "step": "client-console key 导入确认：200 {'addedCount': 42, 'sourceChangedCount': 46, 'deprecatedCount': 0}",
+   "ok": true,
+   "evidence": {
+    "addedCount": 42,
+    "contentRevision": 4,
+    "deprecatedCount": 0,
+    "descriptionChangedCount": 0,
+    "keySetRevision": 2,
+    "restoredCount": 0,
+    "sourceChangedCount": 46
+   }
+  },
+  {
+   "step": "client-console key 导入预览 #2：{'added': 0, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}",
+   "ok": true,
+   "evidence": {
+    "code": null,
+    "detail": null,
+    "missingNamespaces": [],
+    "problems": []
+   }
+  },
+  {
+   "step": "client-console key 集合与文件一致（不变 1423）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console zh-CN 导入：写入 42、不变 46、空 0（文件 88）",
+   "ok": true,
+   "evidence": {
+    "contentRevision": 5,
+    "emptyCount": 0,
+    "unchangedCount": 46,
+    "updatedCount": 42
+   }
+  },
+  {
+   "step": "client-console 发布预检：publishable=True 缺口 0 变更 {'addedKeyCount': 42, 'addedKeys': ['refdata.industry.DIGITAL_GAMES.description', 'refdata.industry.DIGITAL_GOODS.description', 'refdata.industry.DIGITAL_MEDIA.description', 'refdata.industry.DIGITAL_OTHER.description', 'refdata.industry.EDUCATION.description', 'refdata.industry.EDU_HIGHER.description', 'refdata.industry.EDU_ONLINE_COURSES.description', 'refdata.industry.EDU_SCHOOLS.description', 'refdata.industry.FB_FAST_FOOD.description', 'refdata.industry.FB_GROCERY.description', 'refdata.industry.FB_RESTAURANT.description', 'refdata.industry.FOOD_BEVERAGE.description', 'refdata.industry.IT_SERVICES.description', 'refdata.industry.MEDIA_ENTERTAINMENT.description', 'refdata.industry.MEDIA_EVENTS.description', 'refdata.industry.MEDIA_PUBLISHING.description', 'refdata.industry.MEDIA_STREAMING.description', 'refdata.industry.NON_PROFIT.description', 'refdata.industry.NP_CHARITY.description', 'refdata.industry.NP_MEMBERSHIP.description'], 'baseReleaseNo': 2, 'deprecatedKeyCount': 0, 'deprecatedKeys': [], 'sourceChangedKeyCount': 46, 'sourceChangedKeys': ['refdata.subdivision.AE-AJ', 'refdata.subdivision.AE-AZ', 'refdata.subdivision.AE-DU', 'refdata.subdivision.AE-FU', 'refdata.subdivision.AE-RK', 'refdata.subdivision.AE-SH', 'refdata.subdivision.AE-UQ', 'refdata.subdivision.EG-ALX', 'refdata.subdivision.EG-ASN', 'refdata.subdivision.EG-AST', 'refdata.subdivision.EG-BA', 'refdata.subdivision.EG-BH', 'refdata.subdivision.EG-BNS', 'refdata.subdivision.EG-C', 'refdata.subdivision.EG-DK', 'refdata.subdivision.EG-DT', 'refdata.subdivision.EG-FYM', 'refdata.subdivision.EG-GH', 'refdata.subdivision.EG-GZ', 'refdata.subdivision.EG-IS'], 'translationChanges': [{'changedCount': 42, 'locale': 'zh-CN', 'sampleKeys': ['refdata.industry.DIGITAL_GAMES.description', 'refdata.industry.DIGITAL_GOODS.description', 'refdata.industry.DIGITAL_MEDIA.description', 'refdata.industry.DIGITAL_OTHER.description', 'refdata.industry.EDUCATION.description', 'refdata.industry.EDU_HIGHER.description', 'refdata.industry.EDU_ONLINE_COURSES.description', 'refdata.industry.EDU_SCHOOLS.description', 'refdata.industry.FB_FAST_FOOD.description', 'refdata.industry.FB_GROCERY.description', 'refdata.industry.FB_RESTAURANT.description', 'refdata.industry.FOOD_BEVERAGE.description', 'refdata.industry.IT_SERVICES.description', 'refdata.industry.MEDIA_ENTERTAINMENT.description', 'refdata.industry.MEDIA_EVENTS.description', 'refdata.industry.MEDIA_PUBLISHING.description', 'refdata.industry.MEDIA_STREAMING.description', 'refdata.industry.NON_PROFIT.description', 'refdata.industry.NP_CHARITY.description', 'refdata.industry.NP_MEMBERSHIP.description']}]}",
+   "ok": true,
+   "evidence": {
+    "missingTotal": 0,
+    "problems": [],
+    "coverage": [
+     {
+      "coveragePercent": 100,
+      "locale": "en",
+      "required": false,
+      "satisfied": true,
+      "sourceChangedKeys": 0,
+      "totalKeys": 1423,
+      "translatedKeys": 1423
+     },
+     {
+      "coveragePercent": 100,
+      "locale": "zh-CN",
+      "required": true,
+      "satisfied": true,
+      "sourceChangedKeys": 46,
+      "totalKeys": 1423,
+      "translatedKeys": 1423
+     }
+    ]
+   }
+  },
+  {
+   "step": "client-console 发布 #3：200",
+   "ok": true,
+   "evidence": {
+    "changeSummary": {
+     "addedKeyCount": 42,
+     "addedKeys": [
+      "refdata.industry.DIGITAL_GAMES.description",
+      "refdata.industry.DIGITAL_GOODS.description",
+      "refdata.industry.DIGITAL_MEDIA.description",
+      "refdata.industry.DIGITAL_OTHER.description",
+      "refdata.industry.EDUCATION.description",
+      "refdata.industry.EDU_HIGHER.description",
+      "refdata.industry.EDU_ONLINE_COURSES.description",
+      "refdata.industry.EDU_SCHOOLS.description",
+      "refdata.industry.FB_FAST_FOOD.description",
+      "refdata.industry.FB_GROCERY.description",
+      "refdata.industry.FB_RESTAURANT.description",
+      "refdata.industry.FOOD_BEVERAGE.description",
+      "refdata.industry.IT_SERVICES.description",
+      "refdata.industry.MEDIA_ENTERTAINMENT.description",
+      "refdata.industry.MEDIA_EVENTS.description",
+      "refdata.industry.MEDIA_PUBLISHING.description",
+      "refdata.industry.MEDIA_STREAMING.description",
+      "refdata.industry.NON_PROFIT.description",
+      "refdata.industry.NP_CHARITY.description",
+      "refdata.industry.NP_MEMBERSHIP.description"
+     ],
+     "baseReleaseNo": 2,
+     "deprecatedKeyCount": 0,
+     "deprecatedKeys": [],
+     "sourceChangedKeyCount": 46,
+     "sourceChangedKeys": [
+      "refdata.subdivision.AE-AJ",
+      "refdata.subdivision.AE-AZ",
+      "refdata.subdivision.AE-DU",
+      "refdata.subdivision.AE-FU",
+      "refdata.subdivision.AE-RK",
+      "refdata.subdivision.AE-SH",
+      "refdata.subdivision.AE-UQ",
+      "refdata.subdivision.EG-ALX",
+      "refdata.subdivision.EG-ASN",
+      "refdata.subdivision.EG-AST",
+      "refdata.subdivision.EG-BA",
+      "refdata.subdivision.EG-BH",
+      "refdata.subdivision.EG-BNS",
+      "refdata.subdivision.EG-C",
+      "refdata.subdivision.EG-DK",
+      "refdata.subdivision.EG-DT",
+      "refdata.subdivision.EG-FYM",
+      "refdata.subdivision.EG-GH",
+      "refdata.subdivision.EG-GZ",
+      "refdata.subdivision.EG-IS"
+     ],
+     "translationChanges": [
+      {
+       "changedCount": 42,
+       "locale": "zh-CN",
+       "sampleKeys": [
+        "refdata.industry.DIGITAL_GAMES.description",
+        "refdata.industry.DIGITAL_GOODS.description",
+        "refdata.industry.DIGITAL_MEDIA.description",
+        "refdata.industry.DIGITAL_OTHER.description",
+        "refdata.industry.EDUCATION.description",
+        "refdata.industry.EDU_HIGHER.description",
+        "refdata.industry.EDU_ONLINE_COURSES.description",
+        "refdata.industry.EDU_SCHOOLS.description",
+        "refdata.industry.FB_FAST_FOOD.description",
+        "refdata.industry.FB_GROCERY.description",
+        "refdata.industry.FB_RESTAURANT.description",
+        "refdata.industry.FOOD_BEVERAGE.description",
+        "refdata.industry.IT_SERVICES.description",
+        "refdata.industry.MEDIA_ENTERTAINMENT.description",
+        "refdata.industry.MEDIA_EVENTS.description",
+        "refdata.industry.MEDIA_PUBLISHING.description",
+        "refdata.industry.MEDIA_STREAMING.description",
+        "refdata.industry.NON_PROFIT.description",
+        "refdata.industry.NP_CHARITY.description",
+        "refdata.industry.NP_MEMBERSHIP.description"
+       ]
+      }
+     ]
+    },
+    "createTime": "2026-10-27T12:15:47.210416Z",
+    "createdBy": "236033080844881920",
+    "current": false,
+    "failureReason": null,
+    "keyCount": 1423,
+    "readyTime": null,
+    "releaseNo": 3,
+    "releaseNote": "参考数据目录与 client-master 迁移：refdata 全部 MCC 中文译名（阶段 5，本机 2026-10-27）",
+    "status": "PENDING_CHECK"
+   }
+  },
+  {
+   "step": "client-console #3 READY 且为当前（语言包 20/20）",
+   "ok": true,
+   "evidence": {
+    "available": 20,
+    "pending": 0,
+    "rejected": 0,
+    "total": 20
+   }
+  },
+  {
+   "step": "client-console 匿名 manifest 200、#3",
+   "ok": true,
+   "evidence": "{\"application\":\"client-console\",\"bundles\":{\"en\":{\"auth\":{\"hash\":\"9f8a2b407aa03959e73efd7747e1d9cadd87cfb0de2578929f16b14a95474b2d\",\"url\":\"https://127.0.0.1:19400/mor-platform-public/i18n/client-console/3/en/auth/9f8a2b407aa03959/e95438c4-d84c-41b8-b490-77480a805545\"},\"common\":{\"hash\":\"556b162b81cce6"
+  },
+  {
+   "step": "client-console en 命名空间 10（期望 10）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console en/refdata 匿名可读：429 条，样例 {'refdata.subdivision.AE-DU': 'Dubai', 'refdata.industry.RETAIL_APPAREL': 'Apparel & accessories', 'refdata.mcc.5651': 'Family Clothing Stores', 'refdata.mcc.0742': 'Veterinary Services'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console zh-CN 命名空间 10（期望 10）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console zh-CN/refdata 匿名可读：429 条，样例 {'refdata.subdivision.AE-DU': '迪拜', 'refdata.industry.RETAIL_APPAREL': '服装与配饰', 'refdata.mcc.5651': '家庭服装店', 'refdata.mcc.0742': '兽医服务'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console key 导入预览 #1：{'added': 42, 'sourceChanged': 46, 'deprecated': 0, 'restored': 0}",
+   "ok": true,
+   "evidence": {
+    "code": null,
+    "detail": null,
+    "missingNamespaces": [],
+    "problems": []
+   }
+  },
+  {
+   "step": "operations-console key 导入确认：200 {'addedCount': 42, 'sourceChangedCount': 46, 'deprecatedCount': 0}",
+   "ok": true,
+   "evidence": {
+    "addedCount": 42,
+    "contentRevision": 34,
+    "deprecatedCount": 0,
+    "descriptionChangedCount": 0,
+    "keySetRevision": 8,
+    "restoredCount": 0,
+    "sourceChangedCount": 46
+   }
+  },
+  {
+   "step": "operations-console key 导入预览 #2：{'added': 0, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}",
+   "ok": true,
+   "evidence": {
+    "code": null,
+    "detail": null,
+    "missingNamespaces": [],
+    "problems": []
+   }
+  },
+  {
+   "step": "operations-console key 集合与文件一致（不变 10089）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN 导入：写入 42、不变 46、空 0（文件 88）",
+   "ok": true,
+   "evidence": {
+    "contentRevision": 35,
+    "emptyCount": 0,
+    "unchangedCount": 46,
+    "updatedCount": 42
+   }
+  },
+  {
+   "step": "operations-console 发布预检：publishable=True 缺口 0 变更 {'addedKeyCount': 42, 'addedKeys': ['refdata.industry.DIGITAL_GAMES.description', 'refdata.industry.DIGITAL_GOODS.description', 'refdata.industry.DIGITAL_MEDIA.description', 'refdata.industry.DIGITAL_OTHER.description', 'refdata.industry.EDUCATION.description', 'refdata.industry.EDU_HIGHER.description', 'refdata.industry.EDU_ONLINE_COURSES.description', 'refdata.industry.EDU_SCHOOLS.description', 'refdata.industry.FB_FAST_FOOD.description', 'refdata.industry.FB_GROCERY.description', 'refdata.industry.FB_RESTAURANT.description', 'refdata.industry.FOOD_BEVERAGE.description', 'refdata.industry.IT_SERVICES.description', 'refdata.industry.MEDIA_ENTERTAINMENT.description', 'refdata.industry.MEDIA_EVENTS.description', 'refdata.industry.MEDIA_PUBLISHING.description', 'refdata.industry.MEDIA_STREAMING.description', 'refdata.industry.NON_PROFIT.description', 'refdata.industry.NP_CHARITY.description', 'refdata.industry.NP_MEMBERSHIP.description'], 'baseReleaseNo': 4, 'deprecatedKeyCount': 0, 'deprecatedKeys': [], 'sourceChangedKeyCount': 46, 'sourceChangedKeys': ['refdata.subdivision.AE-AJ', 'refdata.subdivision.AE-AZ', 'refdata.subdivision.AE-DU', 'refdata.subdivision.AE-FU', 'refdata.subdivision.AE-RK', 'refdata.subdivision.AE-SH', 'refdata.subdivision.AE-UQ', 'refdata.subdivision.EG-ALX', 'refdata.subdivision.EG-ASN', 'refdata.subdivision.EG-AST', 'refdata.subdivision.EG-BA', 'refdata.subdivision.EG-BH', 'refdata.subdivision.EG-BNS', 'refdata.subdivision.EG-C', 'refdata.subdivision.EG-DK', 'refdata.subdivision.EG-DT', 'refdata.subdivision.EG-FYM', 'refdata.subdivision.EG-GH', 'refdata.subdivision.EG-GZ', 'refdata.subdivision.EG-IS'], 'translationChanges': [{'changedCount': 42, 'locale': 'zh-CN', 'sampleKeys': ['refdata.industry.DIGITAL_GAMES.description', 'refdata.industry.DIGITAL_GOODS.description', 'refdata.industry.DIGITAL_MEDIA.description', 'refdata.industry.DIGITAL_OTHER.description', 'refdata.industry.EDUCATION.description', 'refdata.industry.EDU_HIGHER.description', 'refdata.industry.EDU_ONLINE_COURSES.description', 'refdata.industry.EDU_SCHOOLS.description', 'refdata.industry.FB_FAST_FOOD.description', 'refdata.industry.FB_GROCERY.description', 'refdata.industry.FB_RESTAURANT.description', 'refdata.industry.FOOD_BEVERAGE.description', 'refdata.industry.IT_SERVICES.description', 'refdata.industry.MEDIA_ENTERTAINMENT.description', 'refdata.industry.MEDIA_EVENTS.description', 'refdata.industry.MEDIA_PUBLISHING.description', 'refdata.industry.MEDIA_STREAMING.description', 'refdata.industry.NON_PROFIT.description', 'refdata.industry.NP_CHARITY.description', 'refdata.industry.NP_MEMBERSHIP.description']}]}",
+   "ok": true,
+   "evidence": {
+    "missingTotal": 0,
+    "problems": [],
+    "coverage": [
+     {
+      "coveragePercent": 100,
+      "locale": "en",
+      "required": false,
+      "satisfied": true,
+      "sourceChangedKeys": 0,
+      "totalKeys": 10089,
+      "translatedKeys": 10089
+     },
+     {
+      "coveragePercent": 100,
+      "locale": "zh-CN",
+      "required": true,
+      "satisfied": true,
+      "sourceChangedKeys": 46,
+      "totalKeys": 10089,
+      "translatedKeys": 10089
+     }
+    ]
+   }
+  },
+  {
+   "step": "operations-console 发布 #5：200",
+   "ok": true,
+   "evidence": {
+    "changeSummary": {
+     "addedKeyCount": 42,
+     "addedKeys": [
+      "refdata.industry.DIGITAL_GAMES.description",
+      "refdata.industry.DIGITAL_GOODS.description",
+      "refdata.industry.DIGITAL_MEDIA.description",
+      "refdata.industry.DIGITAL_OTHER.description",
+      "refdata.industry.EDUCATION.description",
+      "refdata.industry.EDU_HIGHER.description",
+      "refdata.industry.EDU_ONLINE_COURSES.description",
+      "refdata.industry.EDU_SCHOOLS.description",
+      "refdata.industry.FB_FAST_FOOD.description",
+      "refdata.industry.FB_GROCERY.description",
+      "refdata.industry.FB_RESTAURANT.description",
+      "refdata.industry.FOOD_BEVERAGE.description",
+      "refdata.industry.IT_SERVICES.description",
+      "refdata.industry.MEDIA_ENTERTAINMENT.description",
+      "refdata.industry.MEDIA_EVENTS.description",
+      "refdata.industry.MEDIA_PUBLISHING.description",
+      "refdata.industry.MEDIA_STREAMING.description",
+      "refdata.industry.NON_PROFIT.description",
+      "refdata.industry.NP_CHARITY.description",
+      "refdata.industry.NP_MEMBERSHIP.description"
+     ],
+     "baseReleaseNo": 4,
+     "deprecatedKeyCount": 0,
+     "deprecatedKeys": [],
+     "sourceChangedKeyCount": 46,
+     "sourceChangedKeys": [
+      "refdata.subdivision.AE-AJ",
+      "refdata.subdivision.AE-AZ",
+      "refdata.subdivision.AE-DU",
+      "refdata.subdivision.AE-FU",
+      "refdata.subdivision.AE-RK",
+      "refdata.subdivision.AE-SH",
+      "refdata.subdivision.AE-UQ",
+      "refdata.subdivision.EG-ALX",
+      "refdata.subdivision.EG-ASN",
+      "refdata.subdivision.EG-AST",
+      "refdata.subdivision.EG-BA",
+      "refdata.subdivision.EG-BH",
+      "refdata.subdivision.EG-BNS",
+      "refdata.subdivision.EG-C",
+      "refdata.subdivision.EG-DK",
+      "refdata.subdivision.EG-DT",
+      "refdata.subdivision.EG-FYM",
+      "refdata.subdivision.EG-GH",
+      "refdata.subdivision.EG-GZ",
+      "refdata.subdivision.EG-IS"
+     ],
+     "translationChanges": [
+      {
+       "changedCount": 42,
+       "locale": "zh-CN",
+       "sampleKeys": [
+        "refdata.industry.DIGITAL_GAMES.description",
+        "refdata.industry.DIGITAL_GOODS.description",
+        "refdata.industry.DIGITAL_MEDIA.description",
+        "refdata.industry.DIGITAL_OTHER.description",
+        "refdata.industry.EDUCATION.description",
+        "refdata.industry.EDU_HIGHER.description",
+        "refdata.industry.EDU_ONLINE_COURSES.description",
+        "refdata.industry.EDU_SCHOOLS.description",
+        "refdata.industry.FB_FAST_FOOD.description",
+        "refdata.industry.FB_GROCERY.description",
+        "refdata.industry.FB_RESTAURANT.description",
+        "refdata.industry.FOOD_BEVERAGE.description",
+        "refdata.industry.IT_SERVICES.description",
+        "refdata.industry.MEDIA_ENTERTAINMENT.description",
+        "refdata.industry.MEDIA_EVENTS.description",
+        "refdata.industry.MEDIA_PUBLISHING.description",
+        "refdata.industry.MEDIA_STREAMING.description",
+        "refdata.industry.NON_PROFIT.description",
+        "refdata.industry.NP_CHARITY.description",
+        "refdata.industry.NP_MEMBERSHIP.description"
+       ]
+      }
+     ]
+    },
+    "createTime": "2026-10-27T12:15:54.263916Z",
+    "createdBy": "236033080844881920",
+    "current": false,
+    "failureReason": null,
+    "keyCount": 10089,
+    "readyTime": null,
+    "releaseNo": 5,
+    "releaseNote": "参考数据目录与 client-master 迁移：refdata 全部 MCC 中文译名（阶段 5，本机 2026-10-27）",
+    "status": "PENDING_CHECK"
+   }
+  },
+  {
+   "step": "operations-console #5 READY 且为当前（语言包 52/52）",
+   "ok": true,
+   "evidence": {
+    "available": 52,
+    "pending": 0,
+    "rejected": 0,
+    "total": 52
+   }
+  },
+  {
+   "step": "operations-console 匿名 manifest 200、#5",
+   "ok": true,
+   "evidence": "{\"application\":\"operations-console\",\"bundles\":{\"en\":{\"access\":{\"hash\":\"3acfb0e90c969bc874b6f93129df44e1574eac33e39f1b9fb1a8754f590d1166\",\"url\":\"https://127.0.0.1:19400/mor-platform-public/i18n/operations-console/5/en/access/3acfb0e90c969bc8/0add7ed3-ddbd-4533-9914-7324305b2135\"},\"auth\":{\"hash\":\"e798"
+  },
+  {
+   "step": "operations-console en 命名空间 26（期望 26）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console en/refdata 匿名可读：429 条，样例 {'refdata.subdivision.AE-DU': 'Dubai', 'refdata.industry.RETAIL_APPAREL': 'Apparel & accessories', 'refdata.mcc.5651': 'Family Clothing Stores', 'refdata.mcc.0742': 'Veterinary Services'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console en/reference-data 匿名可读：83 条，样例 {'reference-data.column.status': 'Status'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN 命名空间 26（期望 26）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN/refdata 匿名可读：429 条，样例 {'refdata.subdivision.AE-DU': '迪拜', 'refdata.industry.RETAIL_APPAREL': '服装与配饰', 'refdata.mcc.5651': '家庭服装店', 'refdata.mcc.0742': '兽医服务'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN/reference-data 匿名可读：83 条，样例 {'reference-data.column.status': '状态'}",
+   "ok": true,
+   "evidence": null
+  }
+ ]
+}

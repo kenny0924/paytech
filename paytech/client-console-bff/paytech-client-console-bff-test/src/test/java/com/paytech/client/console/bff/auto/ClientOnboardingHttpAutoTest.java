@@ -702,6 +702,8 @@ class ClientOnboardingHttpAutoTest {
             }
             body = mode.equals("schema-malformed") ? "{\"schemaId\":\"1\"}"
                 : "{\"schemaId\":\"9270000000700005\",\"versionNo\":1,\"sections\":[{\"section\":\"BASIC\",\"labelKey\":\"onboardingSchema.section.BASIC\",\"groups\":[]}],\"catalogs\":{},\"materials\":[]}";
+        } else if (path.equals("/platform-support/platform/v1/reference-data/countries")) {
+            body = "{\"items\":[{\"countryCode\":\"SA\",\"alpha3Code\":\"SAU\",\"numericCode\":\"682\",\"name\":\"Saudi Arabia\",\"regionCode\":\"GCC\",\"callingCode\":\"966\",\"defaultCurrencyCode\":\"SAR\",\"logoFileAddress\":null,\"logoPublicUrl\":null,\"status\":\"ACTIVE\",\"version\":1}]}";
         } else if (path.endsWith("/requirements")) {
             if (mode.equals("unavailable")) {
                 failure(exchange, 503);

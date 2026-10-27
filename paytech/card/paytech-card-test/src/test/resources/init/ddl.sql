@@ -126,7 +126,7 @@ CREATE TABLE `t_card_bin_range` (
   `card_level` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '卡等级，格式 [A-Z0-9_]{1,32}；未提供时为 NULL。取值来源：BIN 数据文件；非固定枚举。',
   `card_product` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '卡产品类别；未提供时为 NULL。允许值：CONSUMER、COMMERCIAL。',
   `issuer_country` CHAR(2) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '发卡国 ISO 3166-1 alpha-2。取值来源：ISO 3166-1 alpha-2；非固定枚举。',
-  `issuer_region` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '发卡区域，导入时按 Platform 国家区域映射由 issuer_country 推导并冻结；映射之后变化不影响本行。取值来源：Platform t_country_region.region_code；非固定枚举。',
+  `issuer_region` VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '发卡区域，导入时按 Platform 国家区域映射由 issuer_country 推导并冻结；映射之后变化不影响本行。取值来源：Platform t_ref_country.region_code；非固定枚举。',
   `issuer_name` VARCHAR(128) NULL COMMENT '发卡行名称，仅供运营查询展示；未提供时为 NULL。',
   `create_time` DATETIME(6) NOT NULL COMMENT '应用写入的号段创建 UTC 微秒时间。',
   `update_time` DATETIME(6) NOT NULL COMMENT '应用写入的号段最近更新 UTC 微秒时间；号段创建后不修改，与 create_time 相同。',

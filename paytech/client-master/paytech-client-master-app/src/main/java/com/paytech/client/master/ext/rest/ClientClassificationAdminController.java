@@ -10,12 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.paytech.client.contract.api.onboarding.ClientClassificationAdminApi;
 import com.paytech.client.contract.api.onboarding.request.ClassificationSetRequestBody;
-import com.paytech.client.contract.api.onboarding.response.CatalogOptionResponseBody;
 import com.paytech.client.contract.api.onboarding.response.ClassificationItemResponseBody;
-import com.paytech.client.contract.api.onboarding.response.ClassificationOptionsResponseBody;
 import com.paytech.client.contract.api.onboarding.response.ClassificationSetResponseBody;
-import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
-import com.paytech.client.master.domainservice.repository.CatalogItemRepository;
 import com.paytech.client.master.service.processor.ConfirmClientClassificationProcessor;
 import com.paytech.client.master.service.processor.GetClientClassificationProcessor;
 import com.paytech.client.master.service.processor.ReplaceClientClassificationProcessor;
@@ -31,26 +27,16 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 @RestController
 @ConditionalOnProperty(prefix = "onboarding", name = {"draft-enabled", "recovery-enabled"}, havingValue = "true")
 public class ClientClassificationAdminController implements ClientClassificationAdminApi {
-    private final CatalogItemRepository catalog;
     private final GetClientClassificationProcessor reads;
     private final ReplaceClientClassificationProcessor replaces;
     private final ConfirmClientClassificationProcessor confirms;
 
-    /** 注入目录与三个用例。 */
-    public ClientClassificationAdminController(CatalogItemRepository catalog, GetClientClassificationProcessor reads,
-        ReplaceClientClassificationProcessor replaces, ConfirmClientClassificationProcessor confirms) {
-        this.catalog = catalog;
+    /** 注入三个用例。 */
+    public ClientClassificationAdminController(GetClientClassificationProcessor reads, ReplaceClientClassificationProcessor replaces,
+        ConfirmClientClassificationProcessor confirms) {
         this.reads = reads;
         this.replaces = replaces;
         this.confirms = confirms;
-    }
-
-    /** 行业目录：通用目录 INDUSTRY 的全局 ACTIVE 项，只返回代码与文案键。 */
-    @Override
-    public ClassificationOptionsResponseBody options(String actorAccountId, String sessionId) {
-        actor(actorAccountId, sessionId);
-        return new ClassificationOptionsResponseBody(catalog.findActive(List.of("INDUSTRY"), OnboardingPack.ANY).stream()
-            .map(industry -> new CatalogOptionResponseBody(industry.getItemCode(), industry.getLabelKey())).toList());
     }
 
     /** 当前分类。 */

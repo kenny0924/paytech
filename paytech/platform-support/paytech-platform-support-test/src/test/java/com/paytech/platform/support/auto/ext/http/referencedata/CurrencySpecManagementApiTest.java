@@ -9,7 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,9 +36,10 @@ import com.paytech.platform.support.test.checker.PlatformResponseChecker;
 import com.paytech.platform.support.test.dal.AuditTestMapper;
 import com.paytech.platform.support.test.dal.ReferenceDataTestMapper;
 import com.paytech.platform.support.test.mocker.local.CurrencySpecMocker;
+import com.paytech.platform.support.test.mocker.local.ReferenceDataMocker;
 
 /**
- * 币种规则维护：新建草稿、修改草稿（启用后冻结）、启停转换、版本冲突、权限复核与每次成功变更一条审计。
+ * 币种规则维护：新建草稿、修改（启用后标准属性冻结、logo 仍可换）、logo 公开文件核对、启停转换、版本冲突、权限复核与每次成功变更一条审计。
  *
  * @see CurrencySpecManagementApi#createCurrencySpec(String, String, CreateCurrencySpecRequestBody)
  * @see CurrencySpecManagementApi#updateCurrencySpec(String, String, String, UpdateCurrencySpecRequestBody)
@@ -68,9 +71,12 @@ class CurrencySpecManagementApiTest extends OperationsApiTestBase {
     @Autowired
     AuditTestMapper auditData;
 
+    @Autowired
+    ReferenceDataMocker logos;
+
     private Operator admin;
 
-    /** 本类公共：表与 version 列就绪且只有 USD 种子，一名持有全部目录权限的平台管理员。 */
+    /** 本类公共：表就绪且只有常驻种子，一名持有全部目录权限的平台管理员。 */
     @BeforeEach
     void setUpClassMocks() {
         currencies.assertReady();
@@ -89,11 +95,17 @@ class CurrencySpecManagementApiTest extends OperationsApiTestBase {
             () -> assertEquals(CurrencySpecStatus.DRAFT.getCode(), attributes.get("after.STATUS")),
             () -> assertEquals("2", attributes.get("after.MINOR_UNIT")),
             () -> assertEquals(CurrencyRoundingMode.HALF_UP.getCode(), attributes.get("after.ROUNDING_MODE")),
+            () -> assertEquals("978", attributes.get("after.NUMERIC_CODE")),
+            () -> assertEquals("Euro", attributes.get("after.DISPLAY_NAME")),
+            () -> assertEquals("€", attributes.get("after.SYMBOL")),
+            () -> assertEquals("", attributes.get("after.LOGO_FILE_ADDRESS")),
             () -> assertEquals("1", attributes.get("after.version")),
             () -> assertEquals(REASON, attributes.get("reason")));
         assertRow("EUR", 2, CurrencySpecStatus.DRAFT, 1);
-        assertEquals(Long.toString(((Number) referenceData.currencySpec("EUR").get("id")).longValue()),
-            mutation.getObjectId());
+        Map<String, Object> row = referenceData.currency("EUR");
+        assertAll(() -> assertEquals(Long.toString(((Number) row.get("id")).longValue()), mutation.getObjectId()),
+            () -> assertEquals("978", row.get("numeric_code")), () -> assertEquals("Euro", row.get("name")),
+            () -> assertEquals("€", row.get("symbol")), () -> assertNull(row.get("logo_file_address")));
     }
 
     /** 币种代码已存在返回 400 业务拒绝且提示带币种，原行不变；同一代码第二次新建同样拒绝。 */
@@ -123,27 +135,44 @@ class CurrencySpecManagementApiTest extends OperationsApiTestBase {
         post(PATH, admin, create("EUR", -1)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
             .assertFieldError("minorUnit");
         // 负例：不存在的舍入方式，没有对应枚举。
-        post(PATH, admin, new CreateCurrencySpecRequestBody("EUR", 2, "HALF_EVEN", REASON))
+        post(PATH, admin, body("EUR", 2, "HALF_EVEN", "978", "Euro", "€", null, REASON))
             .assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("roundingMode");
-        post(PATH, admin, new CreateCurrencySpecRequestBody("EUR", 2, CurrencyRoundingMode.HALF_UP.getCode(), " "))
+        post(PATH, admin, body("EUR", 2, CurrencyRoundingMode.HALF_UP.getCode(), "978", "Euro", "€", null, " "))
             .assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("reason");
-        put(PATH + "/eur", admin, update(2, 1)).assertProblem(400, CommonErrorCode.INVALID_REQUEST);
+        post(PATH, admin, body("EUR", 2, CurrencyRoundingMode.HALF_UP.getCode(), "97", "Euro", "€", null, REASON))
+            .assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("numericCode");
+        post(PATH, admin, body("EUR", 2, CurrencyRoundingMode.HALF_UP.getCode(), "978", " ", "€", null, REASON))
+            .assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("name");
+        post(PATH, admin, body("EUR", 2, CurrencyRoundingMode.HALF_UP.getCode(), "978", "Euro", "123456789", null,
+            REASON)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("symbol");
+        post(PATH, admin, body("EUR", 2, CurrencyRoundingMode.HALF_UP.getCode(), "978", "Euro", "€", "/files/v1/0",
+            REASON)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("logoFileAddress");
+        put(PATH + "/eur", admin, update("EUR", 2, 1)).assertProblem(400, CommonErrorCode.INVALID_REQUEST);
 
-        assertNull(referenceData.currencySpec("EUR"));
-        assertEquals(1, referenceData.currencySpecCount());
+        assertNull(referenceData.currency("EUR"));
+        assertEquals(CurrencySpecMocker.SEEDS.size(), referenceData.currencyCount());
     }
 
-    /** DRAFT 可修改小数位，版本递增，审计记录前后小数位。 */
+    /** DRAFT 可修改小数位、数字代码、名称与符号，版本递增，审计记录前后值。 */
     @Test
     void test_updateDraft() {
         currencies.currency("XTS", 2, CurrencySpecStatus.DRAFT, SEEDED_AT);
 
-        assertMutation(put(PATH + "/XTS", admin, update(3, 1)), "XTS", CurrencySpecStatus.DRAFT, 2);
+        assertMutation(put(PATH + "/XTS", admin, update("XTS", 3, 1, "963", "Testing code", "T$", null)), "XTS",
+            CurrencySpecStatus.DRAFT, 2);
 
         var attributes = attributes(auditChecker.assertEvent(requestId, UPDATE, AuditModels.Result.SUCCEEDED.getCode(),
             admin.actor(), CurrencySpecAuditFacts.TARGET_TYPE, "XTS"));
+        Map<String, Object> row = referenceData.currency("XTS");
         assertAll(() -> assertEquals("2", attributes.get("before.MINOR_UNIT")),
             () -> assertEquals("3", attributes.get("after.MINOR_UNIT")),
+            () -> assertEquals(CurrencySpecMocker.numericCode(), attributes.get("before.NUMERIC_CODE")),
+            () -> assertEquals("963", attributes.get("after.NUMERIC_CODE")),
+            () -> assertEquals(CurrencySpecMocker.name("XTS"), attributes.get("before.DISPLAY_NAME")),
+            () -> assertEquals("Testing code", attributes.get("after.DISPLAY_NAME")),
+            () -> assertEquals("T$", attributes.get("after.SYMBOL")),
+            () -> assertEquals("963", row.get("numeric_code")), () -> assertEquals("Testing code", row.get("name")),
+            () -> assertEquals("T$", row.get("symbol")),
             () -> assertEquals("1", attributes.get("before.version")),
             () -> assertEquals("2", attributes.get("after.version")));
         assertRow("XTS", 3, CurrencySpecStatus.DRAFT, 2);
@@ -154,28 +183,79 @@ class CurrencySpecManagementApiTest extends OperationsApiTestBase {
     void test_updateUnchanged() {
         currencies.currency("XTS", 2, CurrencySpecStatus.DRAFT, SEEDED_AT);
 
-        assertMutation(put(PATH + "/XTS", admin, update(2, 1)), "XTS", CurrencySpecStatus.DRAFT, 1);
+        assertMutation(put(PATH + "/XTS", admin, update("XTS", 2, 1)), "XTS", CurrencySpecStatus.DRAFT, 1);
 
         awaitAudit();
         auditChecker.assertNoEvent(requestId);
         assertRow("XTS", 2, CurrencySpecStatus.DRAFT, 1);
     }
 
-    /** 启用过的规则（ACTIVE、INACTIVE）冻结小数位与舍入方式，拒绝信息带币种与状态。 */
+    /** 启用过的币种（ACTIVE、INACTIVE）冻结标准属性：改动的冻结字段逐项返回 422 字段错误，提示带币种与状态，数据不变。 */
     @Test
     void test_updateFrozenAfterActivation() {
         currencies.currency("JPY", 0, CurrencySpecStatus.ACTIVE, SEEDED_AT);
         currencies.currency("XTS", 2, CurrencySpecStatus.INACTIVE, SEEDED_AT);
 
-        var active = put(PATH + "/JPY", admin, update(2, 1)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
-        var inactive = put(PATH + "/XTS", admin, update(3, 1)).assertProblem(400,
-            CommonErrorCode.BUSINESS_CHECK_FAILED);
+        var active = put(PATH + "/JPY", admin, update("JPY", 2, 1)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
+            .assertFieldError("minorUnit");
+        var inactive = put(PATH + "/XTS", admin, update("XTS", 2, 1, "963", "Renamed", "XTS", null))
+            .assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("numericCode")
+            .assertFieldError("name");
 
-        assertAll(() -> assertTrue(detail(active).contains("JPY")),
-            () -> assertTrue(detail(active).contains(CurrencySpecStatus.ACTIVE.getCode())),
-            () -> assertTrue(detail(inactive).contains(CurrencySpecStatus.INACTIVE.getCode())));
+        assertAll(() -> assertEquals(List.of("minorUnit"), errorFields(active)),
+            () -> assertEquals(Set.of("numericCode", "name"), Set.copyOf(errorFields(inactive))),
+            () -> assertEquals(2, errorFields(inactive).size()),
+            () -> assertTrue(errorMessage(active).contains("JPY")),
+            () -> assertTrue(errorMessage(active).contains(CurrencySpecStatus.ACTIVE.getCode())),
+            () -> assertTrue(errorMessage(inactive).contains(CurrencySpecStatus.INACTIVE.getCode())));
         assertRow("JPY", 0, CurrencySpecStatus.ACTIVE, 1);
         assertRow("XTS", 2, CurrencySpecStatus.INACTIVE, 1);
+        assertEquals(CurrencySpecMocker.name("XTS"), referenceData.currency("XTS").get("name"));
+    }
+
+    /** 启用后只换 logo 允许：版本递增并审计 logo 前后值；再改回无 logo 同样允许。 */
+    @Test
+    void test_updateLogoAfterActivation() {
+        currencies.currency("JPY", 0, CurrencySpecStatus.ACTIVE, SEEDED_AT);
+        var logo = logos.publicLogo();
+
+        assertMutation(put(PATH + "/JPY", admin, update("JPY", 0, 1, CurrencySpecMocker.numericCode(),
+            CurrencySpecMocker.name("JPY"), "JPY", logo.fileAddress())), "JPY", CurrencySpecStatus.ACTIVE, 2);
+        var attributes = attributes(auditChecker.assertEvent(requestId, UPDATE, AuditModels.Result.SUCCEEDED.getCode(),
+            admin.actor(), CurrencySpecAuditFacts.TARGET_TYPE, "JPY"));
+        assertAll(() -> assertEquals("", attributes.get("before.LOGO_FILE_ADDRESS")),
+            () -> assertEquals(logo.fileAddress(), attributes.get("after.LOGO_FILE_ADDRESS")),
+            () -> assertEquals(logo.fileAddress(), referenceData.currency("JPY").get("logo_file_address")));
+
+        assertMutation(put(PATH + "/JPY", admin, update("JPY", 0, 2)), "JPY", CurrencySpecStatus.ACTIVE, 3);
+        assertNull(referenceData.currency("JPY").get("logo_file_address"));
+        assertRow("JPY", 0, CurrencySpecStatus.ACTIVE, 3);
+    }
+
+    /** logo 必须是已存在的公开文件：私有文件与不存在的文件在新建和修改时都返回 422，数据不变；公开文件可用于新建。 */
+    @Test
+    void test_logoMustBePublicFile() {
+        currencies.currency("XTS", 2, CurrencySpecStatus.DRAFT, SEEDED_AT);
+        var privateLogo = logos.privateLogo();
+        var publicLogo = logos.publicLogo();
+        String missing = "/files/v1/9" + System.nanoTime() % 1_000_000_000L;
+
+        var privateUpdate = put(PATH + "/XTS", admin, update("XTS", 2, 1, CurrencySpecMocker.numericCode(),
+            CurrencySpecMocker.name("XTS"), "XTS", privateLogo.fileAddress()))
+            .assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("logoFileAddress");
+        put(PATH + "/XTS", admin, update("XTS", 2, 1, CurrencySpecMocker.numericCode(), CurrencySpecMocker.name("XTS"),
+            "XTS", missing)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR).assertFieldError("logoFileAddress");
+        post(PATH, admin, body("EUR", 2, CurrencyRoundingMode.HALF_UP.getCode(), "978", "Euro", "€",
+            privateLogo.fileAddress(), REASON)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
+            .assertFieldError("logoFileAddress");
+        assertMutation(post(PATH, admin, body("GBP", 2, CurrencyRoundingMode.HALF_UP.getCode(), "826", "British Pound",
+            "£", publicLogo.fileAddress(), REASON)), "GBP", CurrencySpecStatus.DRAFT, 1);
+
+        assertAll(() -> assertTrue(errorMessage(privateUpdate).contains("不是公开文件")),
+            () -> assertNull(referenceData.currency("EUR")),
+            () -> assertNull(referenceData.currency("XTS").get("logo_file_address")),
+            () -> assertEquals(publicLogo.fileAddress(), referenceData.currency("GBP").get("logo_file_address")));
+        assertRow("XTS", 2, CurrencySpecStatus.DRAFT, 1);
     }
 
     /** 修改与启停的版本不符返回 409，数据不变。 */
@@ -183,7 +263,7 @@ class CurrencySpecManagementApiTest extends OperationsApiTestBase {
     void test_versionConflict() {
         currencies.currency("XTS", 2, CurrencySpecStatus.DRAFT, 3, SEEDED_AT);
 
-        put(PATH + "/XTS", admin, update(4, 2)).assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST);
+        put(PATH + "/XTS", admin, update("XTS", 4, 2)).assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST);
         patch("/XTS", status(CurrencySpecStatus.ACTIVE, 2)).assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST);
 
         assertRow("XTS", 2, CurrencySpecStatus.DRAFT, 3);
@@ -192,10 +272,10 @@ class CurrencySpecManagementApiTest extends OperationsApiTestBase {
     /** 不存在的币种：修改与启停均返回 404。 */
     @Test
     void test_noDataFound() {
-        put(PATH + "/EUR", admin, update(2, 1)).assertProblem(404, CommonErrorCode.NOT_FOUND);
+        put(PATH + "/EUR", admin, update("EUR", 2, 1)).assertProblem(404, CommonErrorCode.NOT_FOUND);
         patch("/EUR", status(CurrencySpecStatus.ACTIVE, 1)).assertProblem(404, CommonErrorCode.NOT_FOUND);
 
-        assertNull(referenceData.currencySpec("EUR"));
+        assertNull(referenceData.currency("EUR"));
     }
 
     /** 启用、停用、再启用依次成功，版本逐次递增，每次各一条审计。 */
@@ -239,11 +319,12 @@ class CurrencySpecManagementApiTest extends OperationsApiTestBase {
         Operator reader = operationsMocker.operator(OperatorBuilder.administrator().roles(role));
 
         post(PATH, reader, create("EUR", 2)).assertProblem(403, OperationsErrorCode.OPERATIONS_PERMISSION_DENIED);
-        put(PATH + "/XTS", reader, update(3, 1)).assertProblem(403, OperationsErrorCode.OPERATIONS_PERMISSION_DENIED);
+        put(PATH + "/XTS", reader, update("XTS", 3, 1)).assertProblem(403,
+            OperationsErrorCode.OPERATIONS_PERMISSION_DENIED);
         call(HttpMethod.PATCH, PATH + "/XTS/status", headers(reader), status(CurrencySpecStatus.ACTIVE, 1))
             .assertProblem(403, OperationsErrorCode.OPERATIONS_PERMISSION_DENIED);
 
-        assertNull(referenceData.currencySpec("EUR"));
+        assertNull(referenceData.currency("EUR"));
         assertRow("XTS", 2, CurrencySpecStatus.DRAFT, 1);
     }
 
@@ -270,7 +351,7 @@ class CurrencySpecManagementApiTest extends OperationsApiTestBase {
 
     /** 从数据库读取规则行，核对小数位、舍入方式、状态与版本。 */
     private void assertRow(String currency, int minorUnit, CurrencySpecStatus status, int version) {
-        Map<String, Object> row = referenceData.currencySpec(currency);
+        Map<String, Object> row = referenceData.currency(currency);
         assertAll(() -> assertEquals(minorUnit, ((Number) row.get("minor_unit")).intValue(), currency + " 小数位"),
             () -> assertEquals(CurrencyRoundingMode.HALF_UP.getCode(), row.get("rounding_mode"), currency + " 舍入方式"),
             () -> assertEquals(status.getCode(), row.get("status"), currency + " 状态"),
@@ -301,15 +382,39 @@ class CurrencySpecManagementApiTest extends OperationsApiTestBase {
         return call(HttpMethod.PATCH, PATH + currencyPath + "/status", headers(admin), body);
     }
 
-    /** 新建请求，舍入方式 HALF_UP。 */
+    /** 新建请求：舍入方式 HALF_UP，数字代码 978、名称 Euro、符号 €，没有 logo。 */
     private static CreateCurrencySpecRequestBody create(String currency, int minorUnit) {
-        return new CreateCurrencySpecRequestBody(currency, minorUnit, CurrencyRoundingMode.HALF_UP.getCode(), REASON);
+        return body(currency, minorUnit, CurrencyRoundingMode.HALF_UP.getCode(), "978", "Euro", "€", null, REASON);
     }
 
-    /** 修改请求，舍入方式 HALF_UP。 */
-    private static UpdateCurrencySpecRequestBody update(int minorUnit, int expectedVersion) {
+    /** 新建请求的全部字段。 */
+    private static CreateCurrencySpecRequestBody body(String currency, int minorUnit, String roundingMode,
+        String numericCode, String name, String symbol, String logoFileAddress, String reason) {
+        return new CreateCurrencySpecRequestBody(currency, minorUnit, roundingMode, reason, numericCode, name, symbol,
+            logoFileAddress);
+    }
+
+    /** 修改请求：其他属性与 {@link CurrencySpecMocker} 插入的行相同，没有 logo，只改小数位。 */
+    private static UpdateCurrencySpecRequestBody update(String currency, int minorUnit, int expectedVersion) {
+        return update(currency, minorUnit, expectedVersion, CurrencySpecMocker.numericCode(),
+            CurrencySpecMocker.name(currency), currency, null);
+    }
+
+    /** 修改请求的全部目标属性，舍入方式 HALF_UP。 */
+    private static UpdateCurrencySpecRequestBody update(String currency, int minorUnit, int expectedVersion,
+        String numericCode, String name, String symbol, String logoFileAddress) {
         return new UpdateCurrencySpecRequestBody(minorUnit, CurrencyRoundingMode.HALF_UP.getCode(), expectedVersion,
-            REASON);
+            REASON, numericCode, name, symbol, logoFileAddress);
+    }
+
+    /** Problem 字段错误的字段名，按返回顺序。 */
+    private static List<String> errorFields(PlatformResponseChecker checker) {
+        return checker.json().path("errors").valueStream().map(error -> error.path("field").asString()).toList();
+    }
+
+    /** 第一条字段错误的提示。 */
+    private static String errorMessage(PlatformResponseChecker checker) {
+        return checker.json().path("errors").path(0).path("message").asString();
     }
 
     /** 状态切换请求。 */

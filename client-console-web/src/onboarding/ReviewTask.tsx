@@ -5,7 +5,7 @@ import { flatten } from "../onboarding.ts";
 import type { Flat } from "../onboarding.ts";
 import { enumLabel } from "../enum-label.ts";
 import { formatDateTime } from "../i18n/index.ts";
-import { useLocale, useT } from "../i18n/react.tsx";
+import { useLocale, useOptionalT, useT } from "../i18n/react.tsx";
 import { appPath, taskPath, useApplication } from "./context.tsx";
 import { api, problemErrors, readCheck } from "./model.ts";
 import type { FormSchema, RequirementError, SchemaField } from "./model.ts";
@@ -18,18 +18,25 @@ import { inputId } from "./FormTask.tsx";
 import { personName, relationTypes } from "./PeopleTask.tsx";
 import { taskLabelKey } from "./Shell.tsx";
 import { Busy, ErrorSummary, Failure, useSchemaText } from "./ui.tsx";
-import { countryName } from "./widgets.tsx";
+import { REF_COUNTRY_SUBDIVISION, REF_CURRENCY, REFDATA_NAMESPACE, countryName, currencyName, subdivisionName } from "./refdata.ts";
 
 /** 字段的展示值：目录 / 国家显示名称，证件只显示掩码，日期按当前语言。 */
 export function useDisplayValue() {
-  const label = useSchemaText(), { locale } = useLocale(), t = useT("onboarding");
+  const label = useSchemaText(), { locale } = useLocale(), t = useT("onboarding"), refdata = useOptionalT(REFDATA_NAMESPACE);
+  /** 目录项名称：参考数据按 B7（币种 Intl、行政区 refdata 文案，再回退英文名与编码），自有目录按文案键。 */
+  const catalogText = (schema: FormSchema, catalogCode: string | null | undefined, value: string): string => {
+    const item = catalogCode ? schema.catalogs[catalogCode]?.find((entry) => entry.itemCode === value) : undefined;
+    if (catalogCode === REF_CURRENCY) return currencyName(value, locale, item?.name) + " (" + value + ")";
+    if (catalogCode === REF_COUNTRY_SUBDIVISION) return subdivisionName(item ?? { itemCode: value, name: null }, refdata);
+    return item ? label(item.labelKey, value) : value;
+  };
+  const country = (schema: FormSchema, value: string) => countryName(value, locale, schema.countries.find((entry) => entry.code === value)?.name);
   return (field: SchemaField, values: Flat, schema: FormSchema): string => {
     if (field.widget === "ADDRESS") return (activeAddressFormat(schema, values)?.components ?? []).map((component) => {
       const value = values[addressPath(component)];
       if (!value) return "";
-      if (/^country(code)?$/i.test(component.component)) return countryName(value, locale);
-      const item = component.catalogCode ? schema.catalogs[component.catalogCode]?.find((entry) => entry.itemCode === value) : undefined;
-      return item ? label(item.labelKey, value) : value;
+      if (/^country(code)?$/i.test(component.component)) return country(schema, value);
+      return catalogText(schema, component.catalogCode, value);
     }).filter(Boolean).join(", ");
     if (field.widget === "IDENTIFIER") {
       const type = selectedIdentifier(field, schema, values);
@@ -38,9 +45,10 @@ export function useDisplayValue() {
     }
     const path = draftPath(field), value = path ? values[path] ?? "" : "";
     if (!value) return "";
-    if (field.widget === "COUNTRY") return countryName(value, locale);
+    if (field.widget === "COUNTRY") return country(schema, value);
     if (field.widget === "BOOLEAN") return t(value.toUpperCase() === "TRUE" ? "form.yes" : "form.no");
     if (field.widget === "DATE") { const date = new Date(value + "T00:00:00Z"); return Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(date) : value; }
+    if (field.widget === "SELECT" && field.catalogCode?.startsWith("REF_")) return catalogText(schema, field.catalogCode, value);
     if (field.widget === "SELECT") {
       const item = (field.catalogCode ? schema.catalogs[field.catalogCode]?.find((entry) => entry.itemCode === value) : undefined)
         ?? schema.organizationTypes.map((entry) => ({ itemCode: entry.code, labelKey: entry.labelKey })).find((entry) => /organization_?type$/i.test(field.fieldKey) && entry.itemCode === value);

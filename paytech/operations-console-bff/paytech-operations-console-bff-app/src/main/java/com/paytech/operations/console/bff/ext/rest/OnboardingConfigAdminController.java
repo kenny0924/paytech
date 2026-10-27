@@ -21,12 +21,16 @@ import lombok.AllArgsConstructor;
 /**
  * 入驻配置只读：辖区包、采集 Schema、目录项（client-master CM-10）与尽调程序（compliance O14）；单 Owner 转发
  * <li>路由权限 ONBOARDING_CONFIG_READ（块 138）；程序必须按辖区查询，避免超过 compliance 的 200 个版本上限。</li>
+ * <li>REF_ 开头的目录码引用 Platform 参考数据，不在 client-master 目录表中：目录项直接返回空列表，不访问 client-master；
+ * 页面据前缀标出来源并引导到"参考数据"页。</li>
  */
 @RestController
 @AllArgsConstructor
 @RequestMapping("/onboarding-config-admin/v1")
 public class OnboardingConfigAdminController {
     private static final String JURISDICTION = "^[A-Z][A-Z0-9-]{1,15}$";
+    /** client-master 保留的参考数据目录码前缀（REF_CURRENCY、REF_COUNTRY_SUBDIVISION）。 */
+    static final String REFERENCE_CATALOG_PREFIX = "REF_";
 
     private final OnboardingAdminClient client;
     private final ClientReviewRiskClient compliance;
@@ -49,10 +53,13 @@ public class OnboardingConfigAdminController {
         return compliance.programs(operator, jurisdiction);
     }
 
-    /** 某目录的目录项；给出辖区时为全局项与该辖区项。 */
+    /** 某目录的目录项；给出辖区时为全局项与该辖区项；参考数据目录没有目录项。 */
     @GetMapping("/catalog-items")
     public List<AdminCatalogItemResponseBody> catalogItems(OperatorContext operator, @RequestParam @Pattern(regexp = "^[A-Z][A-Z0-9_]{0,63}$") String catalogCode,
         @RequestParam(required = false) @Pattern(regexp = JURISDICTION) String jurisdiction) {
+        if (catalogCode.startsWith(REFERENCE_CATALOG_PREFIX)) {
+            return List.of();
+        }
         return client.catalogItems(operator, catalogCode, jurisdiction);
     }
 }

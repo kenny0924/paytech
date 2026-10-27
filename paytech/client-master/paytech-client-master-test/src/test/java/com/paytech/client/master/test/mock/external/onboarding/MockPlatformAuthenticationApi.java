@@ -7,6 +7,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import com.paytech.client.master.test.mock.external.platform.MockPlatformReferenceDataApi;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingOwnerMocker;
 import com.paytech.platform.support.api.authentication.ClientAuthenticationApi;
 import com.paytech.platform.support.api.authentication.request.EmailRequestBody;
@@ -39,7 +40,8 @@ public class MockPlatformAuthenticationApi implements ClientAuthenticationApi, W
     public void configurePathMatch(PathMatchConfigurer configurer) {
         configurer.addPathPrefix("/platform-support", type -> ClientAuthenticationApi.class.isAssignableFrom(type)
             || InternalFileApi.class.isAssignableFrom(type)
-            || com.paytech.platform.support.api.tenantprojection.TenantProjectionApi.class.isAssignableFrom(type));
+            || com.paytech.platform.support.api.tenantprojection.TenantProjectionApi.class.isAssignableFrom(type)
+            || MockPlatformReferenceDataApi.class.isAssignableFrom(type));
     }
 
     /** 会话查询。 */

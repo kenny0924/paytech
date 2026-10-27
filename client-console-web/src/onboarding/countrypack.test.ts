@@ -7,10 +7,32 @@ import { readApplication, readSchema } from "./model.ts";
 import { availableTasks, draftPath, isIdentifierLead, selectedIdentifier, taskBlocks } from "./schema.ts";
 import { localIssues } from "./draft.ts";
 import { personSlots } from "./people.ts";
+import { REF_COUNTRY_SUBDIVISION, REF_CURRENCY, countryOptions, currencyOptions, subdivisionOptions } from "./refdata.ts";
+
+/** Platform 参考数据夹具（BFF 补全的形状）：ACTIVE 国家、币种与 AE / SA / EG 的部分一级行政区。 */
+const referenceFixture = {
+  countries: [
+    { code: "AE", name: "United Arab Emirates", logoPublicUrl: "https://cdn.example.test/flags/ae.svg", callingCode: "971" },
+    { code: "EG", name: "Egypt", logoPublicUrl: null, callingCode: "20" },
+    { code: "GB", name: "United Kingdom", logoPublicUrl: null, callingCode: "44" },
+    { code: "SA", name: "Saudi Arabia", logoPublicUrl: null, callingCode: "966" },
+  ],
+  [REF_CURRENCY]: ["AED", "EGP", "SAR", "USD"].map((code) => ({ code, labelKey: null, name: code + " name", logoPublicUrl: null, countryCode: null })),
+  [REF_COUNTRY_SUBDIVISION]: [["AE-AZ", "AE", "Abu Dhabi"], ["AE-DU", "AE", "Dubai"], ["EG-C", "EG", "Cairo"], ["SA-01", "SA", "Riyadh"]]
+    .map(([code, countryCode, name]) => ({ code, labelKey: null, name, logoPublicUrl: null, countryCode })),
+};
+/** 与 GetClientFormSchemaProcessor 一致：补国家列表；Schema 引用的 REF_ 目录才补条目。 */
+function withReferenceData(owner: ReturnType<typeof ownerResponse>) {
+  const referenced = new Set(JSON.stringify(owner).match(/"catalogCode":"REF_[A-Z_]+"/g)?.map((item) => item.split(":")[1].replaceAll('"', "")) ?? []);
+  const catalogs: Record<string, unknown> = { ...owner.catalogs };
+  for (const code of [REF_CURRENCY, REF_COUNTRY_SUBDIVISION] as const) if (referenced.has(code)) catalogs[code] = referenceFixture[code];
+  return { ...owner, catalogs, countries: referenceFixture.countries };
+}
 
 /**
  * 用仓库内国家包 DML 组装与 client-master FormSchemaConverter 同形的 form-schema 响应（含 organizationTypeCode "*"、
- * 目录项 code、规则数值字符串、个人主体 relationRules=null），核对 Web 解码与渲染前置逻辑都能处理真实形状。
+ * 目录项 code、规则数值字符串、个人主体 relationRules=null），再按 client-console-bff 的方式补上 Platform 参考数据
+ * （countries 与 REF_ 目录，数据为测试夹具），核对 Web 解码与渲染前置逻辑都能处理真实形状。
  */
 const repo = fileURLToPath(new URL("../../../", import.meta.url));
 const read = (path: string) => { try { return readFileSync(join(repo, path), "utf8"); } catch { return null; } };
@@ -122,7 +144,7 @@ const cases: [string, string, string][] = [["AE", "ORGANIZATION", "*"], ["AE", "
 for (const [jurisdiction, partyType, organizationType] of cases) {
   test("real-shaped form-schema decodes and drives the form: " + jurisdiction + " " + partyType + " " + organizationType, () => {
     assert.ok(cm && cp, "country-pack DML not found");
-    const raw = ownerResponse(jurisdiction, partyType, organizationType);
+    const raw = withReferenceData(ownerResponse(jurisdiction, partyType, organizationType));
     const schema = readSchema(JSON.parse(JSON.stringify(raw)), "unavailable");
     assert.ok(schema.sections.length > 0);
     assert.ok(schema.addressFormat && schema.addressFormat.components.length > 0);
@@ -157,14 +179,14 @@ test("application read with organizationTypeCode '*' or null decodes", () => {
 test("AE application, person living in GB: the drawer address switches to the generic format and validates it", async () => {
   const { activeAddressFormat, addressPathsToClear } = await import("./schema.ts");
   assert.ok(cm && cp, "country-pack DML not found");
-  const schema = readSchema(JSON.parse(JSON.stringify(ownerResponse("AE", "ORGANIZATION", "*"))), "x");
+  const schema = readSchema(JSON.parse(JSON.stringify(withReferenceData(ownerResponse("AE", "ORGANIZATION", "*")))), "x");
   assert.equal(activeAddressFormat(schema, {})?.code, "AE_POBOX");
   assert.equal(activeAddressFormat(schema, { "address.countryCode": "AE" })?.code, "AE_POBOX");
-  const before = { "address.countryCode": "AE", "address.addressLine1": "Unit 1", "address.city": "Dubai", "address.stateOrProvince": "DU", "address.poBox": "340512" };
+  const before = { "address.countryCode": "AE", "address.addressLine1": "Unit 1", "address.city": "Dubai", "address.stateOrProvince": "AE-DU", "address.poBox": "340512" };
   const after = { ...before, "address.countryCode": "GB" };
   assert.equal(activeAddressFormat(schema, after)?.code, "GENERIC");
-  // PO Box 只在阿联酋格式里，切到通用格式时清空；两边都有的组件保留。
-  assert.deepEqual(addressPathsToClear(schema, before, after), ["address.poBox"]);
+  // PO Box 只在阿联酋格式里，切到通用格式时清空；已选的阿联酋酋长国属于原国家，也清空；两边都有的其他组件保留。
+  assert.deepEqual(addressPathsToClear(schema, before, after).sort(), ["address.poBox", "address.stateOrProvince"]);
   const person = taskBlocks(schema, "people", "RELATED_PERSON");
   const issues = localIssues(person, { "address.countryCode": "GB", "address.addressLine1": "1 High St" }, schema, true);
   assert.ok(issues["address.city"], "generic city required");
@@ -175,7 +197,7 @@ test("AE application, person living in GB: the drawer address switches to the ge
 test("SA application with an AE business address uses the generic format; switching back restores the national layout", async () => {
   const { activeAddressFormat, addressPathsToClear } = await import("./schema.ts");
   assert.ok(cm && cp, "country-pack DML not found");
-  const schema = readSchema(JSON.parse(JSON.stringify(ownerResponse("SA", "ORGANIZATION", "*"))), "x");
+  const schema = readSchema(JSON.parse(JSON.stringify(withReferenceData(ownerResponse("SA", "ORGANIZATION", "*")))), "x");
   assert.equal(activeAddressFormat(schema, { "address.countryCode": "SA" })?.code, "SA_NATIONAL_ADDRESS");
   const saAddress = { "address.countryCode": "SA", "address.buildingNumber": "2929", "address.addressLine1": "Rayhanah Bint Zaid",
     "address.district": "Al Arid", "address.city": "RIYADH", "address.postalCode": "13337", "address.additionalNumber": "8118" };
@@ -187,4 +209,19 @@ test("SA application with an AE business address uses the generic format; switch
   assert.equal(issues["address.buildingNumber"], undefined);
   assert.equal(issues["address.postalCode"], undefined, "GENERIC postal code is optional");
   assert.deepEqual(addressPathsToClear(schema, abroad, saAddress), []);
+});
+
+test("country packs reference only the Platform catalogs the BFF fills, and the form resolves them from injected reference data", () => {
+  assert.ok(cm && cp, "country-pack DML not found");
+  const referenced = new Set([...cm!.t_onboarding_schema_field.map((f) => f.catalog_code), ...cm!.t_address_format_component.map((c) => c.catalog_code)]
+    .filter((code): code is string => typeof code === "string" && code.startsWith("REF_")));
+  assert.deepEqual([...referenced].sort(), [REF_COUNTRY_SUBDIVISION, REF_CURRENCY].sort());
+  assert.ok(cm!.t_catalog_item.every((item) => !/^(REF_|INDUSTRY$|CURRENCY$|STATE_OR_PROVINCE$)/.test(String(item.catalog_code))),
+    "reference data must not live in t_catalog_item");
+  const schema = readSchema(JSON.parse(JSON.stringify(withReferenceData(ownerResponse("AE", "ORGANIZATION", "*")))), "x");
+  const state = schema.addressFormat!.components.find((component) => component.component === "stateOrProvince")!;
+  assert.equal(state.catalogCode, REF_COUNTRY_SUBDIVISION);
+  assert.deepEqual(subdivisionOptions(schema.catalogs[REF_COUNTRY_SUBDIVISION], "AE", "en", () => null).map((option) => option.code), ["AE-AZ", "AE-DU"]);
+  assert.deepEqual(currencyOptions(schema.catalogs[REF_CURRENCY], "en").map((option) => option.code), ["AED", "EGP", "SAR", "USD"]);
+  assert.deepEqual(countryOptions(schema.countries, "en").map((option) => option.code), ["EG", "SA", "AE", "GB"]);
 });

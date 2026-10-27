@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.platform.support.auditsecurity.domainservice.service.OperationsAuditService;
-import com.paytech.platform.support.referencedata.core.dal.dataobject.CurrencySpec;
+import com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCurrency;
 import com.paytech.platform.support.referencedata.domain.ChangeCurrencySpecStatusContext;
 import com.paytech.platform.support.referencedata.domain.CurrencySpecAuditFacts;
 import com.paytech.platform.support.referencedata.domainservice.service.CurrencySpecManagementService;
@@ -48,11 +48,10 @@ public class ChangeCurrencySpecStatusProcessor
     /** 授权、行锁、版本与转换核对通过后保存，保存成功才登记审计。 */
     CurrencySpecMutation execute(ChangeCurrencySpecStatusRequest request) {
         long tenantId = support.authorize(request.getActor(), request.getSession());
-        CurrencySpec spec = support.lock(request.getCurrency(), request.getExpectedVersion());
+        ReferenceCurrency spec = support.lock(request.getCurrency(), request.getExpectedVersion());
         var context = new ChangeCurrencySpecStatusContext(spec, request.getStatus(), support.now());
         requireTransitionAllowed(context);
-        var fact = CurrencySpecAuditFacts.changed(request.getActor(), tenantId, spec, spec.getMinorUnit(),
-            spec.getRoundingMode(), context.getStatus(), request.getReason(), context.getUpdateTime());
+        var fact = CurrencySpecAuditFacts.statusChanged(request.getActor(), tenantId, context, request.getReason());
         service.changeStatus(context);
         audit.record(() -> fact);
         return CurrencySpecMutation.of(spec);
@@ -61,8 +60,8 @@ public class ChangeCurrencySpecStatusProcessor
     /** 不允许的转换带上币种与前后状态拒绝。 */
     void requireTransitionAllowed(ChangeCurrencySpecStatusContext context) {
         if (!context.transitionAllowed()) {
-            throw new BizCheckFailException("币种规则状态不能从 " + context.getSpec().getStatus().getCode() + " 变为 "
-                + context.getStatus().getCode() + ": " + context.getSpec().getCurrency());
+            throw new BizCheckFailException("币种规则状态不能从 " + context.getCurrency().getStatus().getCode() + " 变为 "
+                + context.getStatus().getCode() + ": " + context.getCurrency().getCurrencyCode());
         }
     }
 }

@@ -1,0 +1,8 @@
+{"tag":"ops-zh-CN","page":"login","kind":"console-error","text":"Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."}
+{"tag":"ops-zh-CN","page":"login","kind":"console-error","text":"Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."}
+{"tag":"ops-zh-CN","page":"refdata-industries","kind":"raw-i18n-key","keys":["refdata.industry.RETAIL_APPAREL"],"screenshot":"screens/ops-zh-CN-05-refdata-industries.png"}
+{"tag":"ops-zh-CN","page":"refdata-mccs-inactive","kind":"console-error","text":"Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."}
+{"tag":"ops-zh-CN","page":"refdata-mccs-retried","kind":"console-error","text":"Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."}
+{"tag":"ops-zh-CN","page":"classification-open","kind":"console-error","text":"Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."}
+{"tag":"ops-zh-CN","page":"onboarding-config-subdivision-preview","kind":"console-error","text":"Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."}
+{"tag":"ops-zh-CN","page":"currency-active","kind":"console-error","text":"Warning: [antd: Modal] `maskClosable` is deprecated. Please use `mask.closable` instead."}

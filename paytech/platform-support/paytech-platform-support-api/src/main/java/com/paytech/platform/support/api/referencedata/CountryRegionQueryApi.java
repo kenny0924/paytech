@@ -7,7 +7,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 import com.paytech.platform.support.api.referencedata.response.CountryRegionListResponseBody;
 
 /**
- * 全平台国家区域映射查询契约：Platform 为 t_country_region 的 Owner；内部服务经私网读取，不经过 Gateway。
+ * 全平台国家区域映射查询契约：Platform 为 t_ref_country（原 t_country_region）的 Owner；内部服务经私网读取，不经过 Gateway。
  * <li>只读；当前调用方为 card-service，导入 BIN 库时一次读取全量映射推导发卡区域。</li>
  * <li>映射只经初始化数据维护，本期没有维护接口。</li>
  */

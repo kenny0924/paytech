@@ -5,11 +5,14 @@ import { decodeCasePage, decodeDetail, decodeResponsiblePartners, latestCaseId, 
 import { decodeClientDetail, decodeClientPage } from './masterData/clients.ts';
 import { decodeCatalogItems, decodeJurisdictions, decodePrograms, decodeSchemas } from './onboardingConfig/onboardingConfig.ts';
 import { decodeCodes, decodePartnerOptions } from './onboardingCodes/onboardingCodes.ts';
-import { fieldLabel, schemaLabel, valueLabel, valueText } from './onboardingConfig/schemaLabel.ts';
+import { fieldLabel, valueLabel, valueText } from './onboardingConfig/schemaLabel.ts';
 import { testT } from './i18n/testing.ts';
 import { formatCountry } from './i18n/index.ts';
 
-/** mor-test ui-smoke 抓取的真实 BFF 200 响应（去重），逐个经页面解码器回放。 */
+/**
+ * mor-test ui-smoke 抓取的真实 BFF 200 响应（去重），逐个经页面解码器回放
+ * <li>2026-10-27 参考数据迁移：案件详情的 industries 已按新合同改写为大类形状（无细类），并补 mccsStatus=UNAVAILABLE（抓取时没有该部分）。</li>
+ */
 interface Captured { url: string; requestId: string | null; body: unknown }
 const captured = bodies as Captured[];
 const tReview = testT('client-review'), tSchema = testT('onboarding-schema');
@@ -39,13 +42,12 @@ test('every captured mor-test BFF response decodes (cases, client detail, config
     assert.ok(paths.has(path), path);
 });
 
-test('case detail: document file id comes from fileAddress; industries translate their labelKey', () => {
+test('case detail: document file id comes from fileAddress; industries form a category → subcategory tree', () => {
   const details = captured.filter(entry => /\/cases\/\d+$/.test(entry.url)).map(entry => decode(entry) as ReturnType<typeof decodeDetail>);
   assert.ok(details.length >= 3);
   for (const detail of details) {
     for (const document of detail.application?.documents ?? []) assert.equal(`/files/v1/${document.fileId}`, document.fileAddress);
-    const retail = detail.industries.find(option => option.code === 'RETAIL');
-    if (retail) assert.equal(schemaLabel(tSchema, retail.labelKey, retail.code), 'Retail');
+    for (const category of detail.industries) assert.ok(category.children.every(child => child.parentIndustryCode === category.industryCode));
   }
 });
 
@@ -71,7 +73,7 @@ test('catalog values from real bodies show catalog names, not codes; unknown val
   assert.equal(shown('identifier', 'identifierType'), tSchema('identifierType.AE_TRADE_LICENSE'));
   assert.equal(shown('individual', 'gender', application.people[0].values), tSchema('catalog.GENDER.FEMALE'));
   assert.equal(shown('identifier', 'identifierType', application.people[0].values), tSchema('identifierType.PASSPORT'));
-  assert.equal(shown('address', 'stateOrProvince'), tSchema('catalog.STATE_OR_PROVINCE.AE_AZ'), 'AE_AZ is the Abu Dhabi emirate');
+  assert.equal(shown('address', 'stateOrProvince'), 'AE_AZ', 'Platform subdivision names come from the published refdata bundle; without it the stored value shows');
   assert.equal(valueText(tSchema, 'business', 'businessModelCode', 'NOT_IN_CATALOG', jurisdiction), 'NOT_IN_CATALOG', 'a value outside the catalog stays as its code');
   assert.equal(fieldLabel(tReview, tSchema, 'attributes', 'AE_TRN'), tSchema('attribute.AE_TRN'));
 });

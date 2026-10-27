@@ -1,0 +1,48 @@
+{
+  "_status": "2026-10-27 ops-fe：参考数据页（只读）与审核分类页 MCC 搜索的 Operations 注册；未执行，阶段 6 先核对 mor-test 线上库块 139 未占用。",
+  "_decisions": [
+    "参考数据页 4 条路由绑定新权限 REFERENCE_DATA_READ（technique 8.5）。",
+    "分类页 MCC 搜索与参考数据页 MCC 是同一 BFF 能力，但一条 Gateway 路由只能绑定一个权限：分类页用独立路径 /client-onboarding-admin/v1/mccs，复用 CLIENT_ONBOARDING_CLASSIFICATION_EDIT（只有编辑分类时才搜索）。",
+    "菜单挂在 平台配置（900000000000000562）下，sort 95，排在 卡 BIN 库（90）之后；页面没有按钮。",
+    "ID 段：1391xx permission、1392xx role_permission、1393xx console_resource、1394xx gateway_route、1395xx route_header、1396xx query_param、1399xx guard_rule。"
+  ],
+  "title": "（参考数据目录：运营控制台参考数据页与分类 MCC 搜索）",
+  "idStart": {"guard": 901},
+  "permissions": [
+    {"code": "REFERENCE_DATA_READ", "resourceType": "REFERENCE_DATA", "action": "READ", "risk": "LOW"}
+  ],
+  "existingPermissions": ["CLIENT_ONBOARDING_CLASSIFICATION_EDIT"],
+  "resources": [
+    {"code": "OPERATIONS_REFERENCE_DATA", "type": "MENU", "parent": "id:900000000000000562", "displayName": "参考数据",
+      "frontendRoute": "/reference-data", "permission": "REFERENCE_DATA_READ", "sort": 95}
+  ],
+  "routes": [
+    {"routeCode": "operations-reference-data-countries", "channel": "OPERATIONS", "method": "GET",
+      "externalPath": "/api/operations/reference-data-admin/v1/countries", "downstreamPath": "/reference-data-admin/v1/countries",
+      "permission": "REFERENCE_DATA_READ", "query": ["status"]},
+    {"routeCode": "operations-reference-data-subdivisions", "channel": "OPERATIONS", "method": "GET",
+      "externalPath": "/api/operations/reference-data-admin/v1/country-subdivisions", "downstreamPath": "/reference-data-admin/v1/country-subdivisions",
+      "permission": "REFERENCE_DATA_READ", "query": ["countryCode", "status"]},
+    {"routeCode": "operations-reference-data-industries", "channel": "OPERATIONS", "method": "GET",
+      "externalPath": "/api/operations/reference-data-admin/v1/industries", "downstreamPath": "/reference-data-admin/v1/industries",
+      "permission": "REFERENCE_DATA_READ", "query": ["status"]},
+    {"routeCode": "operations-reference-data-mccs", "channel": "OPERATIONS", "method": "GET",
+      "externalPath": "/api/operations/reference-data-admin/v1/mccs", "downstreamPath": "/reference-data-admin/v1/mccs",
+      "permission": "REFERENCE_DATA_READ", "query": ["keyword", "status", "page", "size"]},
+    {"routeCode": "client-onboarding-mcc-search", "channel": "OPERATIONS", "method": "GET",
+      "externalPath": "/api/operations/client-onboarding-admin/v1/mccs", "downstreamPath": "/client-onboarding-admin/v1/mccs",
+      "permission": "CLIENT_ONBOARDING_CLASSIFICATION_EDIT", "query": ["keyword", "page", "size"]}
+  ],
+  "existingRouteQueryParams": [],
+  "disableOnActivate": [],
+  "englishHeader": [
+    "Reference data catalog, Operations part (2026-10-27, requirements/20261027/platform-support-参考数据目录与client-master迁移; technique.md 8.5).",
+    "Self-contained block: on an environment already initialized by platform-support-initial-data.sql, apply ONLY this block.",
+    "Dormant like earlier Operations features: permission ACTIVE, administrator grant REVOKED, menu and routes DISABLED.",
+    "New permission REFERENCE_DATA_READ (LOW) guards the read-only Reference Data page under 平台配置 (sort 95) and its four routes",
+    "(/reference-data-admin/v1/countries, country-subdivisions, industries, mccs). The classification MCC search",
+    "(/client-onboarding-admin/v1/mccs) reuses CLIENT_ONBOARDING_CLASSIFICATION_EDIT, resolved by code into a variable.",
+    "Shapes copy block 138 OPERATIONS GET routes: authorization + origin headers, body 0, SHARED_ROUTE 300/min + 50,",
+    "CLIENT_IP 30/min + 3, principal 30/min + 2 concurrent. The page loads its four lists one after another (principal concurrency 2)."
+  ]
+}

@@ -47,7 +47,12 @@ import com.paytech.platform.support.api.localization.LocalizationDeliveryApi;
 import com.paytech.platform.support.api.localization.LocalizationReleaseApi;
 import com.paytech.platform.support.api.operations.OperationsManagementApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi;
+import com.paytech.platform.support.api.referencedata.CountrySubdivisionQueryApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecQueryApi;
+import com.paytech.platform.support.api.referencedata.IndustryQueryApi;
+import com.paytech.platform.support.api.referencedata.MccQueryApi;
+import com.paytech.platform.support.api.referencedata.ReferenceCountryQueryApi;
+import com.paytech.platform.support.api.referencedata.ReferenceCurrencyQueryApi;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
@@ -113,6 +118,36 @@ public class PlatformClientConfiguration {
     @Bean
     CurrencySpecQueryApi currencySpecQueryApi(HttpServiceProxyFactory operationsPlatformProxyFactory) {
         return operationsPlatformProxyFactory.createClient(CurrencySpecQueryApi.class);
+    }
+
+    /** 币种页列表的完整字段（数字代码、名称、符号、logo）；宽松读取，不携带操作人。 */
+    @Bean
+    ReferenceCurrencyQueryApi referenceCurrencyQueryApi(HttpServiceProxyFactory operationsPlatformProxyFactory) {
+        return operationsPlatformProxyFactory.createClient(ReferenceCurrencyQueryApi.class);
+    }
+
+    /** 参考数据页：国家。 */
+    @Bean
+    ReferenceCountryQueryApi referenceCountryQueryApi(HttpServiceProxyFactory operationsPlatformProxyFactory) {
+        return operationsPlatformProxyFactory.createClient(ReferenceCountryQueryApi.class);
+    }
+
+    /** 参考数据页：行政区。 */
+    @Bean
+    CountrySubdivisionQueryApi countrySubdivisionQueryApi(HttpServiceProxyFactory operationsPlatformProxyFactory) {
+        return operationsPlatformProxyFactory.createClient(CountrySubdivisionQueryApi.class);
+    }
+
+    /** 参考数据页与审核分类页：两级行业。 */
+    @Bean
+    IndustryQueryApi industryQueryApi(HttpServiceProxyFactory operationsPlatformProxyFactory) {
+        return operationsPlatformProxyFactory.createClient(IndustryQueryApi.class);
+    }
+
+    /** 参考数据页与审核分类页：MCC 搜索与按编码读取。 */
+    @Bean
+    MccQueryApi mccQueryApi(HttpServiceProxyFactory operationsPlatformProxyFactory) {
+        return operationsPlatformProxyFactory.createClient(MccQueryApi.class);
     }
 
     /** 币种维护沿用配置写操作的发现与字段错误解码，并外显 Platform 业务拒绝原因（如币种已存在、已启用不可修改）。 */

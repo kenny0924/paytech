@@ -1,0 +1,334 @@
+{
+ "plans": [
+  {
+   "app": "client-console",
+   "newNamespaces": [],
+   "maxSort": 100,
+   "added": 0,
+   "changed": 0,
+   "deprecated": 0,
+   "zhImport": 266,
+   "refdataZhReplaced": 266,
+   "zhMissing": 0,
+   "englishFilled": 0,
+   "repoNamespaces": 10,
+   "deprecatedKeys": []
+  },
+  {
+   "app": "operations-console",
+   "newNamespaces": [],
+   "maxSort": 260,
+   "added": 0,
+   "changed": 0,
+   "deprecated": 0,
+   "zhImport": 266,
+   "refdataZhReplaced": 266,
+   "zhMissing": 0,
+   "englishFilled": 0,
+   "repoNamespaces": 26,
+   "deprecatedKeys": []
+  }
+ ],
+ "results": [
+  {
+   "step": "client-console 新增 / 变更 key 都有 zh-CN（缺 0）",
+   "ok": true,
+   "evidence": []
+  },
+  {
+   "step": "operations-console 新增 / 变更 key 都有 zh-CN（缺 0）",
+   "ok": true,
+   "evidence": []
+  },
+  {
+   "step": "client-console key 导入预览 #1：{'added': 0, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}",
+   "ok": true,
+   "evidence": {
+    "code": null,
+    "detail": null,
+    "missingNamespaces": [],
+    "problems": []
+   }
+  },
+  {
+   "step": "client-console key 集合与文件一致（不变 1381）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console zh-CN 导入：写入 266、不变 0、空 0（文件 266）",
+   "ok": true,
+   "evidence": {
+    "contentRevision": 3,
+    "emptyCount": 0,
+    "unchangedCount": 0,
+    "updatedCount": 266
+   }
+  },
+  {
+   "step": "client-console 发布预检：publishable=True 缺口 0 变更 {'addedKeyCount': 0, 'addedKeys': [], 'baseReleaseNo': 1, 'deprecatedKeyCount': 0, 'deprecatedKeys': [], 'sourceChangedKeyCount': 0, 'sourceChangedKeys': [], 'translationChanges': [{'changedCount': 266, 'locale': 'zh-CN', 'sampleKeys': ['refdata.mcc.0742', 'refdata.mcc.0763', 'refdata.mcc.0780', 'refdata.mcc.1520', 'refdata.mcc.1711', 'refdata.mcc.1731', 'refdata.mcc.1740', 'refdata.mcc.1750', 'refdata.mcc.1761', 'refdata.mcc.1771', 'refdata.mcc.1799', 'refdata.mcc.2791', 'refdata.mcc.2842', 'refdata.mcc.4011', 'refdata.mcc.4111', 'refdata.mcc.4112', 'refdata.mcc.4119', 'refdata.mcc.4121', 'refdata.mcc.4131', 'refdata.mcc.4214']}]}",
+   "ok": true,
+   "evidence": {
+    "missingTotal": 0,
+    "problems": [],
+    "coverage": [
+     {
+      "coveragePercent": 100,
+      "locale": "en",
+      "required": false,
+      "satisfied": true,
+      "sourceChangedKeys": 0,
+      "totalKeys": 1381,
+      "translatedKeys": 1381
+     },
+     {
+      "coveragePercent": 100,
+      "locale": "zh-CN",
+      "required": true,
+      "satisfied": true,
+      "sourceChangedKeys": 0,
+      "totalKeys": 1381,
+      "translatedKeys": 1381
+     }
+    ]
+   }
+  },
+  {
+   "step": "client-console 发布 #2：200",
+   "ok": true,
+   "evidence": {
+    "changeSummary": {
+     "addedKeyCount": 0,
+     "addedKeys": [],
+     "baseReleaseNo": 1,
+     "deprecatedKeyCount": 0,
+     "deprecatedKeys": [],
+     "sourceChangedKeyCount": 0,
+     "sourceChangedKeys": [],
+     "translationChanges": [
+      {
+       "changedCount": 266,
+       "locale": "zh-CN",
+       "sampleKeys": [
+        "refdata.mcc.0742",
+        "refdata.mcc.0763",
+        "refdata.mcc.0780",
+        "refdata.mcc.1520",
+        "refdata.mcc.1711",
+        "refdata.mcc.1731",
+        "refdata.mcc.1740",
+        "refdata.mcc.1750",
+        "refdata.mcc.1761",
+        "refdata.mcc.1771",
+        "refdata.mcc.1799",
+        "refdata.mcc.2791",
+        "refdata.mcc.2842",
+        "refdata.mcc.4011",
+        "refdata.mcc.4111",
+        "refdata.mcc.4112",
+        "refdata.mcc.4119",
+        "refdata.mcc.4121",
+        "refdata.mcc.4131",
+        "refdata.mcc.4214"
+       ]
+      }
+     ]
+    },
+    "createTime": "2026-10-27T11:47:38.864534Z",
+    "createdBy": "236033080844881920",
+    "current": false,
+    "failureReason": null,
+    "keyCount": 1381,
+    "readyTime": null,
+    "releaseNo": 2,
+    "releaseNote": "参考数据目录与 client-master 迁移：refdata 全部 MCC 中文译名（阶段 5，本机 2026-10-27）",
+    "status": "PENDING_CHECK"
+   }
+  },
+  {
+   "step": "client-console #2 READY 且为当前（语言包 20/20）",
+   "ok": true,
+   "evidence": {
+    "available": 20,
+    "pending": 0,
+    "rejected": 0,
+    "total": 20
+   }
+  },
+  {
+   "step": "client-console 匿名 manifest 200、#2",
+   "ok": true,
+   "evidence": "{\"application\":\"client-console\",\"bundles\":{\"en\":{\"auth\":{\"hash\":\"9f8a2b407aa03959e73efd7747e1d9cadd87cfb0de2578929f16b14a95474b2d\",\"url\":\"https://127.0.0.1:19400/mor-platform-public/i18n/client-console/2/en/auth/9f8a2b407aa03959/ae86b1ea-a930-4b51-b031-a3c6298bcc70\"},\"common\":{\"hash\":\"556b162b81cce6"
+  },
+  {
+   "step": "client-console en 命名空间 10（期望 10）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console en/refdata 匿名可读：387 条，样例 {'refdata.subdivision.AE-DU': 'Dubayy', 'refdata.industry.RETAIL_APPAREL': 'Apparel & accessories', 'refdata.mcc.5651': 'Family Clothing Stores', 'refdata.mcc.0742': 'Veterinary Services'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console zh-CN 命名空间 10（期望 10）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console zh-CN/refdata 匿名可读：387 条，样例 {'refdata.subdivision.AE-DU': '迪拜', 'refdata.industry.RETAIL_APPAREL': '服装与配饰', 'refdata.mcc.5651': '家庭服装店', 'refdata.mcc.0742': '兽医服务'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console key 导入预览 #1：{'added': 0, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}",
+   "ok": true,
+   "evidence": {
+    "code": null,
+    "detail": null,
+    "missingNamespaces": [],
+    "problems": []
+   }
+  },
+  {
+   "step": "operations-console key 集合与文件一致（不变 10047）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN 导入：写入 266、不变 0、空 0（文件 266）",
+   "ok": true,
+   "evidence": {
+    "contentRevision": 33,
+    "emptyCount": 0,
+    "unchangedCount": 0,
+    "updatedCount": 266
+   }
+  },
+  {
+   "step": "operations-console 发布预检：publishable=True 缺口 0 变更 {'addedKeyCount': 0, 'addedKeys': [], 'baseReleaseNo': 3, 'deprecatedKeyCount': 0, 'deprecatedKeys': [], 'sourceChangedKeyCount': 0, 'sourceChangedKeys': [], 'translationChanges': [{'changedCount': 266, 'locale': 'zh-CN', 'sampleKeys': ['refdata.mcc.0742', 'refdata.mcc.0763', 'refdata.mcc.0780', 'refdata.mcc.1520', 'refdata.mcc.1711', 'refdata.mcc.1731', 'refdata.mcc.1740', 'refdata.mcc.1750', 'refdata.mcc.1761', 'refdata.mcc.1771', 'refdata.mcc.1799', 'refdata.mcc.2791', 'refdata.mcc.2842', 'refdata.mcc.4011', 'refdata.mcc.4111', 'refdata.mcc.4112', 'refdata.mcc.4119', 'refdata.mcc.4121', 'refdata.mcc.4131', 'refdata.mcc.4214']}]}",
+   "ok": true,
+   "evidence": {
+    "missingTotal": 0,
+    "problems": [],
+    "coverage": [
+     {
+      "coveragePercent": 100,
+      "locale": "en",
+      "required": false,
+      "satisfied": true,
+      "sourceChangedKeys": 0,
+      "totalKeys": 10047,
+      "translatedKeys": 10047
+     },
+     {
+      "coveragePercent": 100,
+      "locale": "zh-CN",
+      "required": true,
+      "satisfied": true,
+      "sourceChangedKeys": 0,
+      "totalKeys": 10047,
+      "translatedKeys": 10047
+     }
+    ]
+   }
+  },
+  {
+   "step": "operations-console 发布 #4：200",
+   "ok": true,
+   "evidence": {
+    "changeSummary": {
+     "addedKeyCount": 0,
+     "addedKeys": [],
+     "baseReleaseNo": 3,
+     "deprecatedKeyCount": 0,
+     "deprecatedKeys": [],
+     "sourceChangedKeyCount": 0,
+     "sourceChangedKeys": [],
+     "translationChanges": [
+      {
+       "changedCount": 266,
+       "locale": "zh-CN",
+       "sampleKeys": [
+        "refdata.mcc.0742",
+        "refdata.mcc.0763",
+        "refdata.mcc.0780",
+        "refdata.mcc.1520",
+        "refdata.mcc.1711",
+        "refdata.mcc.1731",
+        "refdata.mcc.1740",
+        "refdata.mcc.1750",
+        "refdata.mcc.1761",
+        "refdata.mcc.1771",
+        "refdata.mcc.1799",
+        "refdata.mcc.2791",
+        "refdata.mcc.2842",
+        "refdata.mcc.4011",
+        "refdata.mcc.4111",
+        "refdata.mcc.4112",
+        "refdata.mcc.4119",
+        "refdata.mcc.4121",
+        "refdata.mcc.4131",
+        "refdata.mcc.4214"
+       ]
+      }
+     ]
+    },
+    "createTime": "2026-10-27T11:47:45.196453Z",
+    "createdBy": "236033080844881920",
+    "current": false,
+    "failureReason": null,
+    "keyCount": 10047,
+    "readyTime": null,
+    "releaseNo": 4,
+    "releaseNote": "参考数据目录与 client-master 迁移：refdata 全部 MCC 中文译名（阶段 5，本机 2026-10-27）",
+    "status": "PENDING_CHECK"
+   }
+  },
+  {
+   "step": "operations-console #4 READY 且为当前（语言包 52/52）",
+   "ok": true,
+   "evidence": {
+    "available": 52,
+    "pending": 0,
+    "rejected": 0,
+    "total": 52
+   }
+  },
+  {
+   "step": "operations-console 匿名 manifest 200、#4",
+   "ok": true,
+   "evidence": "{\"application\":\"operations-console\",\"bundles\":{\"en\":{\"access\":{\"hash\":\"3acfb0e90c969bc874b6f93129df44e1574eac33e39f1b9fb1a8754f590d1166\",\"url\":\"https://127.0.0.1:19400/mor-platform-public/i18n/operations-console/4/en/access/3acfb0e90c969bc8/3de897bf-4789-4b1a-a0b9-98519af94c63\"},\"auth\":{\"hash\":\"e798"
+  },
+  {
+   "step": "operations-console en 命名空间 26（期望 26）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console en/refdata 匿名可读：387 条，样例 {'refdata.subdivision.AE-DU': 'Dubayy', 'refdata.industry.RETAIL_APPAREL': 'Apparel & accessories', 'refdata.mcc.5651': 'Family Clothing Stores', 'refdata.mcc.0742': 'Veterinary Services'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console en/reference-data 匿名可读：83 条，样例 {'reference-data.column.status': 'Status'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN 命名空间 26（期望 26）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN/refdata 匿名可读：387 条，样例 {'refdata.subdivision.AE-DU': '迪拜', 'refdata.industry.RETAIL_APPAREL': '服装与配饰', 'refdata.mcc.5651': '家庭服装店', 'refdata.mcc.0742': '兽医服务'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN/reference-data 匿名可读：83 条，样例 {'reference-data.column.status': '状态'}",
+   "ok": true,
+   "evidence": null
+  }
+ ]
+}

@@ -1,0 +1,94 @@
+{{Short description|Entry for the United Arab Emirates in ISO 3166-2}}
+'''ISO 3166-2:AE''' is the entry for the [[United Arab Emirates]] in [[ISO 3166-2]], part of the [[ISO 3166]] [[standardization|standard]] published by the [[International Organization for Standardization]] (ISO), which defines [[code]]s for the names of the principal [[country subdivision|subdivision]]s (e.g., [[province]]s or [[state (administrative division)|state]]s) of all [[country|countries]] coded in [[ISO 3166-1]].
+
+Currently for the United Arab Emirates, ISO 3166-2 codes are defined for [[emirates of the United Arab Emirates|seven emirates]].
+
+Each code consists of two parts, separated by a hyphen. The first part is {{mono|AE}}, the [[ISO 3166-1 alpha-2]] code of the United Arab Emirates. The second part is two letters.
+
+==Current codes==
+Subdivision names are listed as in the ISO 3166-2 standard published by the ISO 3166 Maintenance Agency (ISO 3166/MA).
+
+''Click on the button in the header to sort each column.''
+
+{| class="wikitable sortable"
+|-
+! Code
+! Subdivision Name ([[Arabic language|ar]])<br />(BGN/PCGN 1956)
+! Local variant
+! Subdivision name ([[Arabic language|ar]])<br /><ref group="note">For reference only, Arabic name in Arabic script not included in the ISO 3166-2 standard.</ref>
+|-
+| {{mono|AE-AJ}}
+| {{sort|&nbsp;Ajman|{{flag|‘Ajmān}}}}
+|
+| عجمانّ
+|-
+| {{mono|AE-AZ}}
+| {{flag|Abū Z̧aby}}
+| Abu Dhabi
+| أبو ظبي
+|-
+| {{mono|AE-FU}}
+| {{flag|Al Fujayrah}}
+| Fujairah
+| الفجيرة
+|-
+| {{mono|AE-SH}}
+| {{flag|Ash Shāriqah}}
+| Sharjah
+| الشارقةّ
+|-
+| {{mono|AE-DU}}
+| {{flag|Dubayy}}
+| Dubai
+| دبي
+|-
+| {{mono|AE-RK}}
+| {{flag|Ra’s al Khaymah}}
+| Ras Al Khaimah
+| رأس الخيمة
+|-
+| {{mono|AE-UQ}}
+| {{flag|Umm al Qaywayn}}
+| Umm Al Quwain
+| أمّ القيوين
+|}
+
+; Notes
+<references group="note" />
+
+==Changes==
+The following changes to the entry have been announced by the ISO 3166/MA since the first publication of ISO 3166-2 in 1998. ISO stopped issuing newsletters in 2013.
+
+{| class="wikitable"
+|-
+! Newsletter
+! Date issued
+! Description of change in newsletter
+|-
+| id="I-2" | [https://web.archive.org/web/20081218103157/http://www.iso.org/iso/iso_3166-2_newsletter_i-2_en.pdf {{nowrap|Newsletter I-2}}]
+| 2002-05-21
+| Spelling correction in AE-RK
+|-
+| id="I-3" | [https://web.archive.org/web/20081218103236/http://www.iso.org/iso/iso_3166-2_newsletter_i-3_en.pdf {{nowrap|Newsletter I-3}}]
+| 2002-08-20
+| Error correction: Spelling correction in AE-AZ
+|-
+| [https://www.iso.org/obp/ui/#iso:code:3166:AE Online Browsing Platform (OBP)]
+| 2015-11-27
+| Change of spelling of AE-AJ, AE-RK; addition of local variation of AE-FU, AE-RK, AE-UQ; update List Source
+|}
+
+==See also==
+* [[Subdivisions of the United Arab Emirates]]
+* [[List of FIPS region codes (A-C)#AE: United Arab Emirates|FIPS region codes of the United Arab Emirates]]
+* Neighbouring countries: [[ISO 3166-2:OM|OM]], [[ISO 3166-2:SA|SA]]
+
+==External links==
+* [https://www.iso.org/obp/ui/#iso:code:3166:AE ISO Online Browsing Platform: AE]
+* [http://www.statoids.com/uae.html United Arab Emirates], Statoids.com
+
+{{ISO 3166}}
+
+[[Category:ISO 3166|2:AE]]
+[[Category:Emirates of the United Arab Emirates|*ISO 3166-2]]
+[[Category:United Arab Emirates geography-related lists]]

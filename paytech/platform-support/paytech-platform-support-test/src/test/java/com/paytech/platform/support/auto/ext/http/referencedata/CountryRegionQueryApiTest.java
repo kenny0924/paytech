@@ -3,7 +3,6 @@ package com.paytech.platform.support.auto.ext.http.referencedata;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 import java.util.Map;
@@ -17,16 +16,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
+import com.paytech.platform.support.api.enums.ReferenceDataStatus;
 import com.paytech.platform.support.api.referencedata.CountryRegionQueryApi;
 import com.paytech.platform.support.api.referencedata.response.CountryRegionListResponseBody;
 import com.paytech.platform.support.api.referencedata.response.CountryRegionResponseBody;
 import com.paytech.platform.support.test.base.MockTestBase;
 import com.paytech.platform.support.test.checker.PlatformResponseChecker;
-import com.paytech.platform.support.test.dal.ReferenceDataTestMapper;
+import com.paytech.platform.support.test.mocker.local.ReferenceDataMocker;
 
 /**
  * 全平台国家区域映射查询：经真实 Controller、Service、Repository、Mapper 读取本地 MySQL 的常驻种子（249 行）。
- * <li>映射只经初始化数据维护，用例不增删行；种子缺失时提示人工执行建表与种子语句。</li>
+ * <li>映射只经初始化数据维护，用例不增删行；种子缺失时提示人工执行建表与种子语句。表 2026-10-27 起为 t_ref_country。</li>
  *
  * @see CountryRegionQueryApi#listCountryRegions()
  */
@@ -38,20 +38,13 @@ class CountryRegionQueryApiTest extends MockTestBase {
 
     private static final Set<String> REGIONS = Set.of("GCC", "MEA", "EUROPE", "NORTH_AMERICA", "LATAM", "APAC");
 
-    private static final String SETUP = "；请在 mor_platform 人工执行 paytech/platform-support/docs/database/sql/changes/"
-        + "2026-10-22-country-region.sql 与 platform-support-initial-data.sql 的「Country region seed」块"
-        + "（或 paytech-platform-support-test/src/test/resources/init/ddl.sql 中同样的语句）";
-
     @Autowired
-    ReferenceDataTestMapper referenceData;
+    ReferenceDataMocker referenceData;
 
-    /** 表与 249 行种子已人工准备。 */
+    /** 参考数据表与 249 行国家种子已人工准备。 */
     @BeforeEach
     void setUpCountryRegions() {
-        if (referenceData.countryRegionTableCount() != 1) {
-            fail("缺少表 t_country_region" + SETUP);
-        }
-        assertEquals(SEED_ROWS, referenceData.countryRegionSeedCount(), "t_country_region 种子不完整" + SETUP);
+        referenceData.assertSeeded();
     }
 
     /** 全部映射按国家代码升序且不重复，区域取值都在六个平台区域内，海合会六国为 GCC。 */
@@ -80,6 +73,23 @@ class CountryRegionQueryApiTest extends MockTestBase {
 
         assertEquals(expected, expected.keySet().stream().filter(regions::containsKey)
             .collect(Collectors.toMap(Function.identity(), regions::get)));
+    }
+
+    /**
+     * 旧接口响应冻结（S-01）：严格 JSON 的消费方（card）不能遇到新字段
+     * <li>外层只有 items，元素只有 countryCode、regionCode 且顺序不变；停用的国家照常返回（旧接口不区分状态）。</li>
+     */
+    @Test
+    void test_responseShapeUnchanged() {
+        referenceData.countryStatus("AQ", ReferenceDataStatus.INACTIVE);
+        String requestId = "plt-cr-" + UUID.randomUUID();
+        var body = new PlatformResponseChecker(httpTestInvoker.get(PATH, TestRequestHeaders.internal(requestId)),
+            objectMapper, requestId).assertOk().json();
+
+        assertAll(() -> assertEquals(List.of("items"), List.copyOf(body.propertyNames())),
+            () -> assertEquals(SEED_ROWS, body.path("items").size()),
+            () -> body.path("items").valueStream().forEach(item -> assertEquals(List.of("countryCode", "regionCode"),
+                List.copyOf(item.propertyNames()))));
     }
 
     /** 以内部调用方身份读取全部映射。 */

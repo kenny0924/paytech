@@ -1,5 +1,6 @@
 package com.paytech.platform.support.filedocument.domainservice.repository.impl;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
@@ -20,6 +21,8 @@ public class FileLifecycleRepositoryImpl implements FileLifecycleRepository {
  @Override public FileUpload lockSourceUpload(long id) { return mapper.lockSourceUpload(id); }
  /** 文件元数据组合查询。 */
  @Override public FileDescription describeFile(long fileId) { return mapper.describeFile(fileId); }
+ /** 文件元数据批量组合查询。 */
+ @Override public List<FileDescription> describeFiles(Collection<Long> fileIds) { return mapper.describeFiles(fileIds); }
  /** 版本上传登记的展示名。 */
  @Override public String versionDisplayName(long fileId, int versionNo) { return mapper.versionDisplayName(fileId, versionNo); }
  /** 通过同库 Mapper 执行 lockFile。 */

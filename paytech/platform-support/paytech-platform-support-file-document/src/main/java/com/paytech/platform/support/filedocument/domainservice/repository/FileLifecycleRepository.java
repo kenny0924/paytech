@@ -1,5 +1,6 @@
 package com.paytech.platform.support.filedocument.domainservice.repository;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.*;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
@@ -14,6 +15,8 @@ public interface FileLifecycleRepository {
     FileUpload lockSourceUpload(long id);
     /** 文件元数据组合读取；不存在为空。 */
     FileDescription describeFile(long fileId);
+    /** 批量组合读取；只返回存在的文件，调用方保证集合非空。 */
+    List<FileDescription> describeFiles(Collection<Long> fileIds);
     /** 版本上传登记的展示名；非上传来源为空。 */
     String versionDisplayName(long fileId, int versionNo);
     /** 锁住文件，防止失去 Lease 的旧工作者覆盖新事实。 */

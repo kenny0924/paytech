@@ -28,6 +28,7 @@ import com.paytech.client.master.domain.enums.SchemaSubject;
 import com.paytech.client.master.domain.enums.WidgetCode;
 import com.paytech.client.master.domain.onboarding.pack.IdentifierRules;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
+import com.paytech.client.master.domain.onboarding.pack.ReferenceCatalogCodes;
 
 /**
  * Schema 驱动的需求清单计算（需求 B2、B3，设计第 8 节）：提交校验与 GET requirements 同源
@@ -95,6 +96,25 @@ public final class OnboardingRequirementEvaluator {
         if (fact.type() != null && fact.valuePresent() && !identifierAllowed(subject, fact.type())) {
             record(subject, "identifier.identifierType", FieldResult.error(FIELD_VALUE_NOT_IN_CATALOG, OnboardingRequirementKind.IDENTIFIER));
         }
+        if (fact.issuingCountry() != null && !input.getReferences().countryActive(fact.issuingCountry())) {
+            record(subject, "identifier.issuingCountry", FieldResult.error(FIELD_VALUE_NOT_IN_CATALOG, OnboardingRequirementKind.IDENTIFIER));
+        }
+    }
+
+    /**
+     * 目录取值判断：REF_ 目录按本次 Platform 参考数据结论，其余按辖区包目录
+     *
+     * @param catalogCode 目录码
+     * @param value 取值
+     * @param subject 主体（辖区目录按主体类型过滤）
+     * @param countryCode 地址行政区须属于的国家；非地址字段为 null
+     * @return 是否在目录中
+     */
+    boolean catalogContains(String catalogCode, String value, RequirementSubject subject, String countryCode) {
+        if (ReferenceCatalogCodes.isReference(catalogCode)) {
+            return input.getReferences().contains(catalogCode, value, countryCode);
+        }
+        return pack.catalogContains(catalogCode, value, subject.partyType());
     }
 
     /** 单个字段的结论；由其他步骤计算的控件返回 null。 */
@@ -117,8 +137,10 @@ public final class OnboardingRequirementEvaluator {
             return FieldResult.missing(field.getRequirementLevel(), OnboardingRequirementKind.FIELD);
         }
         OnboardingRequirementCode error = format(field, value);
-        if (error == null && field.getCatalogCode() != null
-            && !pack.catalogContains(field.getCatalogCode(), value, subject.partyType())) {
+        if (error == null && field.getCatalogCode() != null && !catalogContains(field.getCatalogCode(), value, subject, null)) {
+            error = FIELD_VALUE_NOT_IN_CATALOG;
+        }
+        if (error == null && ReferenceCodeCheck.countryField(pack, field) && !input.getReferences().countryActive(value)) {
             error = FIELD_VALUE_NOT_IN_CATALOG;
         }
         if (error == null) {
@@ -158,9 +180,10 @@ public final class OnboardingRequirementEvaluator {
         return null;
     }
 
-    /** 地址：按地址所在国家选择辖区格式或 GENERIC，逐组件校验必填与目录。 */
+    /** 地址：按地址所在国家选择辖区格式或 GENERIC，逐组件校验必填与目录；国家与行政区来自 Platform 参考数据。 */
     void address(RequirementSubject subject, OnboardingSchemaField field) {
-        String format = pack.addressFormatFor(subject.values().get("address.countryCode"));
+        String country = subject.values().get(ReferenceCodeCheck.ADDRESS_COUNTRY);
+        String format = pack.addressFormatFor(country);
         for (AddressFormatComponent component : pack.addressComponents(format)) {
             String key = "address." + component.getComponent();
             String value = subject.values().get(key);
@@ -168,8 +191,8 @@ public final class OnboardingRequirementEvaluator {
             if (value == null) {
                 result = pack.componentRequired(format, component)
                     ? FieldResult.missing(field.getRequirementLevel(), OnboardingRequirementKind.FIELD) : null;
-            } else if (component.getCatalogCode() != null
-                && !pack.catalogContains(component.getCatalogCode(), value, subject.partyType())) {
+            } else if ((component.getCatalogCode() != null && !catalogContains(component.getCatalogCode(), value, subject, country))
+                || (ReferenceCodeCheck.ADDRESS_COUNTRY.equals(key) && !input.getReferences().countryActive(value))) {
                 result = FieldResult.error(FIELD_VALUE_NOT_IN_CATALOG, OnboardingRequirementKind.FIELD);
             } else {
                 result = FieldResult.satisfied(OnboardingRequirementKind.FIELD);

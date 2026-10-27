@@ -15,6 +15,7 @@ import com.paytech.client.master.core.dal.dataobject.OnboardingSchemaField;
 import com.paytech.client.master.core.dal.dataobject.OrganizationType;
 import com.paytech.client.master.domain.enums.ClientType;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
+import com.paytech.client.master.domain.onboarding.pack.ReferenceCatalogCodes;
 import com.paytech.client.master.domain.onboarding.pack.RuleSettings;
 import com.paytech.client.master.domainservice.repository.AddressFormatComponentRepository;
 import com.paytech.client.master.domainservice.repository.AttributeDefinitionRepository;
@@ -107,7 +108,7 @@ public class OnboardingPackServiceImpl implements OnboardingPackService {
         return new RuleSettings(ruleSettings.findActive(scopes));
     }
 
-    /** Schema 字段、属性定义与地址组件引用的全部目录。 */
+    /** Schema 字段、属性定义与地址组件引用的本库目录；REF_ 目录来自 Platform 参考数据，不从 t_catalog_item 加载。 */
     List<String> catalogCodes(List<OnboardingSchemaField> fields, List<AttributeDefinition> attributes, Jurisdiction jurisdiction) {
         Set<String> codes = new LinkedHashSet<>();
         fields.stream().map(OnboardingSchemaField::getCatalogCode).filter(java.util.Objects::nonNull).forEach(codes::add);
@@ -115,6 +116,7 @@ public class OnboardingPackServiceImpl implements OnboardingPackService {
         addressComponents.findByFormats(List.of(jurisdiction.getAddressFormatCode())).stream()
             .map(component -> component.getCatalogCode()).filter(java.util.Objects::nonNull).forEach(codes::add);
         codes.remove(OnboardingPack.ORGANIZATION_TYPE_CATALOG);
+        codes.removeIf(ReferenceCatalogCodes::isReference);
         return new ArrayList<>(codes);
     }
 }

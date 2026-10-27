@@ -261,3 +261,52 @@ body.ob-locked{overflow:hidden}
 @media (max-width:640px){.ob-mobile-only{display:block;margin-top:var(--s6);padding-top:var(--s4);border-top:1px solid var(--hair)}}
 @media (max-width:480px){.ob-reviewer{display:none}}
 .ob-wait{margin-top:var(--s4)}
+
+/* 参考数据下拉（国家 / 币种 / 行政区）：外观与原生 select 一致；列表项 = 图标 + 本地化名称 + 等宽编码 + 选中勾。 */
+.ob-ref{position:relative}
+.ob-ref-trigger{display:flex;align-items:center;gap:var(--s2);width:100%;min-width:0;height:var(--control-h);padding:0 32px 0 var(--s3);text-align:left;cursor:pointer;
+  border:1px solid var(--border);border-radius:var(--r-control);background:var(--bg);font-size:16px;line-height:24px;
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-2) 50%),linear-gradient(135deg,var(--text-2) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 50%,calc(100% - 12px) 50%;background-size:4px 4px;background-repeat:no-repeat;
+  transition:border-color var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
+.ob-ref-trigger:hover{border-color:var(--border-strong)}
+.ob-ref-trigger:focus-visible,.ob-ref.open .ob-ref-trigger{outline:none;border-color:var(--primary);box-shadow:var(--focus)}
+.ob-ref-trigger[aria-invalid="true"]{border-color:var(--danger)}
+.ob-ref-trigger:disabled{background-color:var(--disabled);color:var(--text-2);cursor:default}
+.ob-ref-value{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-ref-placeholder{color:var(--neutral)}
+.ob-ref-panel{position:absolute;z-index:20;top:calc(100% + 4px);left:0;width:100%;min-width:280px;max-width:min(400px,calc(100vw - 32px));background:var(--bg);
+  border:1px solid var(--hair);border-radius:var(--r-float);box-shadow:0 8px 24px rgba(26,31,54,.12);padding:var(--s1);
+  animation:ob-ref-in var(--t-fast) var(--ease-enter)}
+@keyframes ob-ref-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.ob-ref-search{padding:var(--s1)}
+.ob-ref-search input{height:36px;font-size:15px;background:#f6f7f9;border-color:transparent}
+.ob-ref-search input:focus{background:var(--bg)}
+.ob-ref-panel ul{list-style:none;margin:0;padding:0;max-height:288px;overflow:auto;outline:none}
+.ob-ref-panel li[role="option"]{display:flex;align-items:center;gap:var(--s3);min-height:40px;padding:0 var(--s3);border-radius:var(--r-control);cursor:pointer;font-size:15px}
+.ob-ref-panel li.active{background:#f6f7f9}
+.ob-ref-panel li.selected{background:var(--primary-soft);color:var(--primary);font-weight:500}
+.ob-ref-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-ref-code{font-family:var(--mono);font-size:12px;color:var(--text-2);letter-spacing:.02em}
+.ob-ref-check{width:14px;font-size:13px;color:var(--primary);text-align:center}
+.ob-ref-empty{padding:var(--s3);font-size:14px;color:var(--text-2)}
+.ob-ref-hint{font-size:12px;line-height:16px;color:var(--text-2);padding:var(--s1) var(--s2) var(--s1);margin:0}
+.ob-ref-icon{flex:none;display:block;width:22px;height:16px;border-radius:2px;object-fit:cover;box-shadow:inset 0 0 0 1px rgba(26,31,54,.08)}
+.ob-ref-icon.currency{width:20px;height:20px;border-radius:50%}
+.ob-ref-icon.placeholder{background:#eef0f3}
+.ob-ref-unavailable{display:flex;align-items:center;min-height:var(--control-h);font-size:14px;color:var(--text-2);margin:0}
+.ob-ref-unavailable .text-button{font-size:14px;margin-left:var(--s1)}
+
+/* 窄屏：底部面板，搜索固定在顶部，列表在其下滚动。 */
+.ob-ref-layer{position:fixed;inset:0;z-index:40}
+.ob-ref-panel.sheet{position:absolute;top:auto;bottom:0;left:0;right:0;width:100%;max-width:none;min-width:0;max-height:80vh;display:flex;flex-direction:column;
+  border:0;border-radius:12px 12px 0 0;padding:0 0 env(safe-area-inset-bottom);box-shadow:0 -8px 24px rgba(26,31,54,.12);animation:ob-sheet-in var(--t-moderate) var(--ease-enter)}
+@keyframes ob-sheet-in{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.ob-ref-sheet-head{position:relative;display:flex;align-items:center;justify-content:space-between;padding:var(--s5) var(--s4) var(--s2)}
+.ob-ref-sheet-head strong{font-size:16px;font-weight:600}
+.ob-ref-grip{position:absolute;top:8px;left:50%;width:36px;height:4px;margin-left:-18px;border-radius:2px;background:var(--hair)}
+.ob-ref-panel.sheet .ob-ref-search{padding:var(--s1) var(--s4) var(--s2)}
+.ob-ref-panel.sheet ul{flex:1;max-height:none;padding:0 var(--s2) var(--s4)}
+.ob-ref-panel.sheet li[role="option"]{min-height:44px}
+@media (prefers-reduced-motion:reduce){.ob-ref-panel,.ob-ref-panel.sheet{animation:fade-in 110ms linear}}
+.ob-ref-trigger:disabled{opacity:1}

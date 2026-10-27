@@ -1,0 +1,175 @@
+{
+  "subIndustryDefaultMcc": {
+    "RETAIL_APPAREL": "5651",
+    "RETAIL_ELECTRONICS": "5732",
+    "RETAIL_HOME": "5712",
+    "RETAIL_BEAUTY": "5977",
+    "RETAIL_GENERAL": "5399",
+    "DIGITAL_GAMES": "5816",
+    "DIGITAL_MEDIA": "5815",
+    "DIGITAL_OTHER": "5818",
+    "SAAS_SUBSCRIPTION": "5734",
+    "SOFTWARE_APPS": "5817",
+    "IT_SERVICES": "7372",
+    "PRO_CONSULTING": "8999",
+    "PRO_MARKETING": "7311",
+    "PRO_ACCOUNTING": "8931",
+    "PRO_LEGAL": "8111",
+    "EDU_ONLINE_COURSES": "8299",
+    "EDU_SCHOOLS": "8211",
+    "EDU_HIGHER": "8220",
+    "TRAVEL_AGENCY": "4722",
+    "TRAVEL_LODGING": "7011",
+    "TRAVEL_TRANSPORT": "4789",
+    "FB_RESTAURANT": "5812",
+    "FB_FAST_FOOD": "5814",
+    "FB_GROCERY": "5411",
+    "MEDIA_STREAMING": "4899",
+    "MEDIA_EVENTS": "7922",
+    "MEDIA_PUBLISHING": "2741",
+    "NP_CHARITY": "8398",
+    "NP_RELIGIOUS": "8661",
+    "NP_MEMBERSHIP": "8699",
+    "OTHER_SERVICES": "7299",
+    "OTHER_RETAIL": "5999"
+  },
+  "highRiskMcc": [
+    "4816",
+    "5122",
+    "5912",
+    "5962",
+    "5966",
+    "5967",
+    "5993",
+    "6051",
+    "7273",
+    "7800",
+    "7801",
+    "7802",
+    "7994",
+    "7995"
+  ],
+  "countries": {
+    "AE": {
+      "id": 2002,
+      "alpha3_code": "ARE",
+      "numeric_code": "784",
+      "name": "United Arab Emirates",
+      "calling_code": "971",
+      "default_currency_code": "AED",
+      "region_code": "GCC"
+    },
+    "SA": {
+      "id": 2193,
+      "alpha3_code": "SAU",
+      "numeric_code": "682",
+      "name": "Saudi Arabia",
+      "calling_code": "966",
+      "default_currency_code": "SAR",
+      "region_code": "GCC"
+    },
+    "EG": {
+      "id": 2065,
+      "alpha3_code": "EGY",
+      "numeric_code": "818",
+      "name": "Egypt",
+      "calling_code": "20",
+      "default_currency_code": "EGP",
+      "region_code": "MEA"
+    },
+    "US": {
+      "id": 2233,
+      "alpha3_code": "USA",
+      "numeric_code": "840",
+      "name": "United States",
+      "calling_code": "1",
+      "default_currency_code": "USD",
+      "region_code": "NORTH_AMERICA"
+    }
+  },
+  "currencies": {
+    "USD": {
+      "numeric_code": "840",
+      "name": "US Dollar",
+      "symbol": "$",
+      "id": 1001,
+      "minor_unit": 2
+    },
+    "AED": {
+      "numeric_code": "784",
+      "name": "United Arab Emirates Dirham",
+      "symbol": "AED",
+      "id": 1002,
+      "minor_unit": 2
+    },
+    "SAR": {
+      "numeric_code": "682",
+      "name": "Saudi Riyal",
+      "symbol": "SAR",
+      "id": 1003,
+      "minor_unit": 2
+    },
+    "EGP": {
+      "numeric_code": "818",
+      "name": "Egyptian Pound",
+      "symbol": "EGP",
+      "id": 1004,
+      "minor_unit": 2
+    }
+  },
+  "subdivisionCodes": {
+    "AE": [
+      "AE-AJ",
+      "AE-AZ",
+      "AE-DU",
+      "AE-FU",
+      "AE-RK",
+      "AE-SH",
+      "AE-UQ"
+    ],
+    "SA": [
+      "SA-01",
+      "SA-02",
+      "SA-03",
+      "SA-04",
+      "SA-05",
+      "SA-06",
+      "SA-07",
+      "SA-08",
+      "SA-09",
+      "SA-10",
+      "SA-11",
+      "SA-12",
+      "SA-14"
+    ],
+    "EG": [
+      "EG-ALX",
+      "EG-ASN",
+      "EG-AST",
+      "EG-BA",
+      "EG-BH",
+      "EG-BNS",
+      "EG-C",
+      "EG-DK",
+      "EG-DT",
+      "EG-FYM",
+      "EG-GH",
+      "EG-GZ",
+      "EG-IS",
+      "EG-JS",
+      "EG-KB",
+      "EG-KFS",
+      "EG-KN",
+      "EG-LX",
+      "EG-MN",
+      "EG-MNF",
+      "EG-MT",
+      "EG-PTS",
+      "EG-SHG",
+      "EG-SHR",
+      "EG-SIN",
+      "EG-SUZ",
+      "EG-WAD"
+    ]
+  }
+}

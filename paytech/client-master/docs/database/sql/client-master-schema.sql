@@ -464,7 +464,7 @@ CREATE TABLE `t_address_format_component` (
   `address_format_code` VARCHAR(32) NOT NULL COMMENT '地址格式代码，与 t_jurisdiction.address_format_code 对应；GENERIC 为境外地址通用格式。取值来源：地址格式 DML；非固定枚举。',
   `component` VARCHAR(32) NOT NULL COMMENT '地址组件，对应 t_party_address 的一列及草稿 address 分区字段。允许值：addressLine1、addressLine2、city、stateOrProvince、postalCode、countryCode、buildingNumber、additionalNumber、district、poBox。',
   `required_flag` TINYINT(1) NOT NULL COMMENT '提交时该组件是否必填。允许值：0、1。',
-  `catalog_code` VARCHAR(64) NULL COMMENT '组件取值必须属于的通用目录代码，如省、城市；为空表示自由文本。取值来源：t_catalog_item.catalog_code；非固定枚举。',
+  `catalog_code` VARCHAR(64) NULL COMMENT '组件取值必须属于的目录代码，如城市；REF_COUNTRY_SUBDIVISION 表示 Platform 一级行政区（须属于地址国家）；为空表示自由文本。取值来源：t_catalog_item.catalog_code 或 REF_ 保留码；非固定枚举。',
   `label_key` VARCHAR(128) NOT NULL COMMENT '组件展示名称的界面文案键，命名空间 onboardingSchema。',
   `display_order` INT NOT NULL COMMENT '同一地址格式内的展示顺序，数值越小越靠前。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
@@ -475,7 +475,7 @@ CREATE TABLE `t_address_format_component` (
 
 CREATE TABLE `t_catalog_item` (
   `catalog_item_id` BIGINT NOT NULL COMMENT '通用目录项的内部唯一标识。',
-  `catalog_code` VARCHAR(64) NOT NULL COMMENT '目录代码，如 INDUSTRY、BUSINESS_MODEL、REGISTRATION_AUTHORITY、CITY。取值来源：目录 DML；非固定枚举。',
+  `catalog_code` VARCHAR(64) NOT NULL COMMENT '目录代码，如 BUSINESS_MODEL、REGISTRATION_AUTHORITY、CITY；不得为 REF_ 开头的保留码，也不得承载国家、币种、行政区或行业等 Platform 参考数据。取值来源：目录 DML；非固定枚举。',
   `item_code` VARCHAR(64) NOT NULL COMMENT '目录内稳定的取值代码。取值来源：目录 DML；非固定枚举。',
   `jurisdiction_code` VARCHAR(16) NOT NULL COMMENT '目录项适用的辖区代码；* 表示全局通用。取值来源：t_jurisdiction 或 *；非固定枚举。',
   `label_key` VARCHAR(128) NOT NULL COMMENT '目录项展示名称的界面文案键，命名空间 onboardingSchema。',
@@ -486,7 +486,7 @@ CREATE TABLE `t_catalog_item` (
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
   PRIMARY KEY (`catalog_item_id`),
   UNIQUE KEY `uk_catalog_item` (`catalog_code`, `jurisdiction_code`, `item_code`) COMMENT 'Unique index for catalog_item on catalog_code, jurisdiction_code, item_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='通用目录项；uk_catalog_item(catalog_code,jurisdiction_code,item_code)；SELECT 控件、属性与地址组件的取值来源；行业与经营模式目录由原 application.yml 迁入，运营分类与行业目录接口同样读取';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='通用目录项；uk_catalog_item(catalog_code,jurisdiction_code,item_code)；SELECT 控件、属性与地址组件的本服务取值来源；国家、币种、一级行政区、行业与 MCC 等全平台参考数据不得在本表维护（Platform 参考数据为 Owner），Schema 以 REF_ 保留目录码引用并在提交时向 Platform 校验；本表不得出现 REF_ 开头的目录码';
 
 CREATE TABLE `t_attribute_definition` (
   `attribute_code` VARCHAR(64) NOT NULL COMMENT '扩展属性代码，全局唯一，如 AE_FREE_ZONE_CODE、EG_TAX_CARD_NUMBER。取值来源：属性定义 DML；非固定枚举。',
@@ -545,7 +545,7 @@ CREATE TABLE `t_onboarding_schema_field` (
   `display_group` VARCHAR(64) NOT NULL COMMENT '分区内分组代码，如 IDENTITY、REGISTRATION、ADDRESS。取值来源：Schema DML；非固定枚举。',
   `field_key` VARCHAR(128) NOT NULL COMMENT '字段键，等于草稿 values 的分区.字段路径（如 individual.birthPlace、attributes.AE_FREE_ZONE_CODE）或 identifier.<标识类型>、declaration.<声明类型>、address、people。取值来源：Schema DML；非固定枚举。',
   `widget_code` VARCHAR(32) NOT NULL COMMENT '前端控件代码，由前端控件注册表解释。允许值：TEXT、TEXTAREA、DATE、COUNTRY、SELECT、IDENTIFIER、ADDRESS、NAME、PERSON_LIST、DOCUMENT_SLOT、DECLARATION、URL、MONEY、EMAIL、PHONE、BOOLEAN。',
-  `catalog_code` VARCHAR(64) NULL COMMENT 'SELECT 控件的取值目录代码；其他控件为空。取值来源：t_catalog_item.catalog_code；非固定枚举。',
+  `catalog_code` VARCHAR(64) NULL COMMENT 'SELECT 控件的取值目录代码；REF_ 开头时为 Platform 参考数据（如 REF_CURRENCY）；其他控件为空。取值来源：t_catalog_item.catalog_code 或 REF_ 保留码；非固定枚举。',
   `requirement_level` VARCHAR(16) NOT NULL COMMENT '提交要求级别：REQUIRED 提交前必填，EVENTUALLY 批准前必填，OPTIONAL 可选，HIDDEN 不展示。允许值：REQUIRED、EVENTUALLY、OPTIONAL、HIDDEN。',
   `requirement_group` VARCHAR(64) NULL COMMENT '同组字段至少满足一个的组代码，如个人证件 NID 或 Iqama 或护照；为空表示单独计算。取值来源：Schema DML；非固定枚举。',
   `applies_to_subject` VARCHAR(16) NOT NULL COMMENT '字段适用的受审主体。允许值：PRIMARY、RELATED_PERSON、BOTH。',

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canApprove, canWaive, caseStatuses, checkAwaitingResult, checkOutcomes, classificationIssues, decodeCase, decodeCasePage, decodeCommand, decodeDetail, decodeFileDownload,
+import { canApprove, canWaive, chooseCategory, chooseSubcategory, classificationChanges, classificationItems, classificationListIssues, classificationRowIssues,
+  classificationRows, classificationServerIssues, industryIndex, mccMark, rowIssueText, suggestedMcc, caseStatuses, checkAwaitingResult, checkOutcomes, decodeCase, decodeCasePage, decodeCommand, decodeDetail, decodeFileDownload,
   decodeResponsiblePartners, evidenceRejectReasons, fourEyesBlocked, isNotReady, rejectionBlocker, unmetConditions, hitResolutions, partnerName, recommendations, remediationCodes, returnErrorCodes, returnErrorIssues,
   returnPayload, returnSections, riskFactorCodes, riskRatingIssues, riskRatings, suggestedReturnErrors, withOnBehalf, workbenchCounts } from './clientReview.ts';
 import { enumLabel } from '../i18n/index.ts';
@@ -22,22 +23,42 @@ const application = {
   people: [], relations: [], documents: [{ documentId: '9501', subjectPartyId: '9001', requirementCode: 'REGISTRATION', documentType: 'REGISTRATION_CERTIFICATE', fileAddress: '/files/v1/9401', subjectInScope: true }],
 };
 
+const sub = (industryCode: string, parentIndustryCode: string, defaultMccCode: string | null, sortNo: number) => ({ industryCode, parentIndustryCode,
+  level: 2, name: industryCode, description: null, defaultMccCode, logoFileAddress: null, logoPublicUrl: null, sortNo, status: 'ACTIVE', version: 1 });
+const categories = [
+  { industryCode: 'RETAIL', name: 'Retail', logoPublicUrl: null, children: [sub('RETAIL_APPAREL', 'RETAIL', '5651', 10), sub('RETAIL_HOME', 'RETAIL', '5712', 20)] },
+  { industryCode: 'DIGITAL_GOODS', name: 'Digital goods', logoPublicUrl: null, children: [sub('DIGITAL_GAMES', 'DIGITAL_GOODS', '5816', 10)] },
+];
+const mccs = [
+  { mccCode: '5651', name: 'Family Clothing Stores', description: null, networkHighRisk: false, status: 'ACTIVE', version: 1 },
+  { mccCode: '5419', name: 'Misc. Retail', description: null, networkHighRisk: false, status: 'INACTIVE', version: 2 },
+];
+
 test('detail keeps owner facts and availability', () => {
   const detail = decodeDetail({ review: reviewCase, applicationStatus: 'AVAILABLE', application, classificationStatus: 'UNAVAILABLE', classification: null,
-    industriesStatus: 'AVAILABLE', industries: [{ code: 'RETAIL', label: '零售' }] }, '7001');
+    industriesStatus: 'AVAILABLE', industries: categories, mccsStatus: 'AVAILABLE', mccs }, '7001');
   assert.equal(detail.application?.values.organization.legalName, 'Synthetic Co');
+  assert.equal(detail.industries[0].children[0].defaultMccCode, '5651');
+  assert.equal(detail.mccs[1].status, 'INACTIVE');
   assert.equal(detail.classification, null);
   assert.equal(detail.review.subjects[0].requirements[0].evidence[0].fileId, '9401');
   assert.equal(detail.application?.documents[0].fileId, '9401', 'document file id comes from fileAddress');
 });
 
+test('detail rejects a subcategory that does not belong to its category, unknown MCC status and missing MCC availability', () => {
+  const base = { review: reviewCase, applicationStatus: 'AVAILABLE', application, classificationStatus: 'UNAVAILABLE', classification: null, industriesStatus: 'AVAILABLE' };
+  assert.throws(() => decodeDetail({ ...base, industries: [{ ...categories[0], children: [sub('DIGITAL_GAMES', 'DIGITAL_GOODS', '5816', 10)] }], mccsStatus: 'AVAILABLE', mccs }, '7001'));
+  assert.throws(() => decodeDetail({ ...base, industries: categories, mccsStatus: 'AVAILABLE', mccs: [{ ...mccs[0], status: 'ENABLED' }] }, '7001'));
+  assert.throws(() => decodeDetail({ ...base, industries: categories }, '7001'));
+});
+
 test('detail rejects mismatched case, application or inconsistent availability', () => {
   assert.throws(() => decodeDetail({ review: reviewCase, applicationStatus: 'AVAILABLE', application, classificationStatus: 'UNAVAILABLE', classification: null,
-    industriesStatus: 'AVAILABLE', industries: [] }, '7002'));
+    industriesStatus: 'AVAILABLE', industries: [], mccsStatus: 'AVAILABLE', mccs: [] }, '7002'));
   assert.throws(() => decodeDetail({ review: reviewCase, applicationStatus: 'AVAILABLE', application: { ...application, applicationId: '8002' },
-    classificationStatus: 'UNAVAILABLE', classification: null, industriesStatus: 'AVAILABLE', industries: [] }, '7001'));
+    classificationStatus: 'UNAVAILABLE', classification: null, industriesStatus: 'AVAILABLE', industries: [], mccsStatus: 'AVAILABLE', mccs: [] }, '7001'));
   assert.throws(() => decodeDetail({ review: reviewCase, applicationStatus: 'UNAVAILABLE', application, classificationStatus: 'UNAVAILABLE', classification: null,
-    industriesStatus: 'AVAILABLE', industries: [] }, '7001'));
+    industriesStatus: 'AVAILABLE', industries: [], mccsStatus: 'AVAILABLE', mccs: [] }, '7001'));
 });
 
 test('approval follows Risk blockers only', () => {
@@ -53,17 +74,52 @@ test('page and command decoders reject foreign data', () => {
   assert.throws(() => decodeCase({ ...reviewCase, returnSection: 'OTHER' }));
 });
 
-test('classification draft checks', () => {
-  assert.deepEqual(classificationIssues([{ industryCode: 'RETAIL', mccCode: '5411', primary: true }]), []);
-  assert.deepEqual(classificationIssues([]), [t('classification.issue.empty'), t('classification.issue.onePrimary')]);
-  assert.ok(classificationIssues([]).includes('Add at least one classification'));
-  assert.deepEqual(classificationIssues([{ industryCode: 'RETAIL', mccCode: '5411', primary: false }]), [t('classification.issue.onePrimary')]);
-  assert.deepEqual(classificationIssues([{ industryCode: 'RETAIL', mccCode: '54A1', primary: true }]), [t('classification.issue.mccFormat')]);
-  assert.deepEqual(classificationIssues([{ industryCode: '', mccCode: '5411', primary: true }]), [t('classification.issue.industryRequired')]);
-  assert.deepEqual(classificationIssues(Array.from({ length: 21 }, (_, i) => ({ industryCode: 'RETAIL', mccCode: String(5000 + i), primary: i === 0 }))),
-    [t('classification.issue.tooMany')]);
-  assert.deepEqual(classificationIssues([{ industryCode: 'RETAIL', mccCode: '5411', primary: true }, { industryCode: 'RETAIL', mccCode: '5411', primary: false }]),
-    [t('classification.issue.duplicate')]);
+test('classification rows: subcategory brings its category and suggested MCC; legacy category-only codes stay readable (AC-10)', () => {
+  const index = industryIndex(decodeDetail({ review: reviewCase, applicationStatus: 'AVAILABLE', application, classificationStatus: 'UNAVAILABLE',
+    classification: null, industriesStatus: 'AVAILABLE', industries: categories, mccsStatus: 'AVAILABLE', mccs }, '7001').industries);
+  const rows = classificationRows([{ industryCode: 'RETAIL_APPAREL', mccCode: '5651', primary: true }, { industryCode: 'RETAIL', mccCode: '5411', primary: false },
+    { industryCode: 'OLD_CODE', mccCode: '5999', primary: false }], index);
+  assert.deepEqual(rows.map(row => [row.categoryCode, row.industryCode]), [['RETAIL', 'RETAIL_APPAREL'], ['RETAIL', ''], ['', 'OLD_CODE']]);
+  assert.deepEqual(classificationItems(rows).map(item => item.industryCode), ['RETAIL_APPAREL', 'RETAIL', 'OLD_CODE'], 'category-only rows submit the category');
+  const picked = chooseSubcategory(chooseCategory(rows[1], 'DIGITAL_GOODS'), 'DIGITAL_GAMES', index);
+  assert.deepEqual(picked, { categoryCode: 'DIGITAL_GOODS', industryCode: 'DIGITAL_GAMES', mccCode: '5816', primary: false });
+  assert.deepEqual(chooseCategory(rows[0], 'DIGITAL_GOODS'), { categoryCode: 'DIGITAL_GOODS', industryCode: '', mccCode: '', primary: true });
+  assert.equal(suggestedMcc(rows[0], index), '5651');
+  assert.deepEqual(mccMark(rows[0], index), { kind: 'suggested' });
+  assert.deepEqual(mccMark({ ...rows[0], mccCode: '5699' }, index), { kind: 'changed', suggested: '5651' });
+  assert.equal(mccMark(rows[1], index), null);
+  assert.equal(classificationChanges(rows, [{ industryCode: 'RETAIL_APPAREL', mccCode: '5651', primary: true }]), 2);
+  assert.equal(classificationChanges([{ categoryCode: '', industryCode: '', mccCode: '', primary: true }], []), 0, 'a blank new row is not a change');
+});
+
+test('classification checks: list issues and row issues are attached to the right control', () => {
+  const index = industryIndex(categories as never);
+  const known = new Map(mccs.map(m => [m.mccCode, m] as const)) as never;
+  assert.deepEqual(classificationListIssues([]), [t('classification.issue.empty'), t('classification.issue.onePrimary')]);
+  assert.ok(classificationListIssues([]).includes('Add at least one classification'));
+  const row = (categoryCode: string, industryCode: string, mccCode: string, primary = false) => ({ categoryCode, industryCode, mccCode, primary });
+  assert.deepEqual(classificationListIssues(Array.from({ length: 21 }, (_, i) => row('RETAIL', 'RETAIL_HOME', String(5000 + i), i === 0))), [t('classification.issue.tooMany')]);
+  const issues = classificationRowIssues([row('RETAIL', 'RETAIL_APPAREL', '5651', true), row('RETAIL', '', '5651'), row('', '', '54A1'),
+    row('MEDIA', 'MEDIA_STREAMING', '5419'), row('RETAIL', 'RETAIL_APPAREL', '5651')], index, known);
+  assert.equal(issues.has(0), false);
+  assert.deepEqual(issues.get(1), [{ field: 'industryCode', code: 'categoryOnly', params: { code: 'RETAIL' } }]);
+  assert.deepEqual(issues.get(2)?.map(i => [i.field, i.code]), [['industryCode', 'industryRequired'], ['mccCode', 'mccFormat']]);
+  assert.deepEqual(issues.get(3)?.map(i => [i.field, i.code]), [['industryCode', 'industryUnavailable'], ['mccCode', 'mccInactive']]);
+  assert.deepEqual(issues.get(4)?.map(i => i.code), ['duplicate']);
+  assert.equal(rowIssueText(issues.get(1)![0]), t('classification.rowIssue.categoryOnly', { code: 'RETAIL' }));
+  assert.match(rowIssueText(issues.get(3)![1]), /5419/);
+});
+
+test('classification 422: projected field paths map to rows and controls, reason judged locally', () => {
+  const rows = [{ categoryCode: 'RETAIL', industryCode: 'RETAIL_APPAREL', mccCode: '5651', primary: true }, { categoryCode: 'RETAIL', industryCode: '', mccCode: '', primary: false },
+    { categoryCode: 'MEDIA', industryCode: 'MEDIA_STREAMING', mccCode: '5419', primary: false }];
+  const known = new Map(mccs.map(m => [m.mccCode, m] as const)) as never;
+  const issues = classificationServerIssues([{ field: 'items[1].industryCode' }, { field: 'items[2].mccCode' }, { field: 'items[0].mccCode' },
+    { field: 'items[9].mccCode' }, { field: 'privateField' }], rows, known);
+  assert.deepEqual(issues.get(1), [{ field: 'industryCode', code: 'categoryOnly', params: { code: 'RETAIL' } }]);
+  assert.deepEqual(issues.get(2), [{ field: 'mccCode', code: 'mccInactive', params: { code: '5419' } }]);
+  assert.deepEqual(issues.get(0), [{ field: 'mccCode', code: 'mccUnknown', params: { code: '5651' } }], 'an MCC the server rejected that is not known inactive');
+  assert.equal(issues.size, 3);
 });
 
 test('labels: known review codes translate, unknown codes and fields stay raw', () => {

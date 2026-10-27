@@ -78,6 +78,14 @@ final class OnboardingAdminConverter {
             item.setStatus(type.getStatus().getCode());
             return item;
         }).toList());
+        body.setAddressComponents(detail.addressComponents().stream().map(component -> {
+            var item = new AdminJurisdictionResponseBody.AddressComponentItem();
+            item.setComponent(component.getComponent());
+            item.setCatalogCode(component.getCatalogCode());
+            item.setRequired(Boolean.TRUE.equals(component.getRequiredFlag()));
+            item.setOrder(component.getDisplayOrder());
+            return item;
+        }).toList());
         return body;
     }
 

@@ -1,0 +1,24 @@
+/* 币种页（原型：平台配置 · 币种 05—06）：列表 + 右侧面板；布局复用 referenceData.css 的 refdata-split / refdata-detail。 */
+.currency-filter { margin-bottom: 12px; }
+.currency-icon { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; object-fit: contain;
+  background: #f0f4ff; color: #315dca; font-size: 11px; font-weight: 600; flex-shrink: 0; overflow: hidden; }
+.currency-icon.is-large { width: 40px; height: 40px; font-size: 14px; }
+.currency-icon.is-empty { background: #eef1f5; color: #69717d; }
+.currency-locked { display: inline-flex; align-items: center; gap: 4px; }
+.currency-locked .anticon { color: #8c95a3; font-size: 12px; }
+.currency-label { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.currency-readonly { background: #f5f6f8; border: 1px solid #e4e8f0; border-radius: 6px; padding: 6px 12px; color: #4a5568; min-height: 34px; }
+.currency-readonly-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.currency-readonly-grid > .is-wide { grid-column: 1 / -1; }
+.currency-frozen { font-size: 12px; margin: 12px 0; }
+.currency-logo-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+.currency-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.currency-logo-box { display: flex; align-items: center; gap: 12px; border: 1px dashed #c9d2e0; border-radius: 8px; padding: 12px; flex-wrap: wrap; }
+.currency-logo-hint { font-size: 12px; margin-top: 4px; }
+.currency-logo-compare { display: flex; align-items: center; gap: 16px; background: #f8fafc; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
+.currency-logo-current { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.currency-panel-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; position: sticky; bottom: 0; background: #fff;
+  border-top: 1px solid #edf0f5; margin: 16px -12px -12px; padding: 12px; }
+.currency-panel-foot > span:first-child { flex: 1; font-size: 12px; }
+.currency-dirty { color: #ad6800; }
+@media (max-width: 640px) { .currency-form-row, .currency-readonly-grid { grid-template-columns: 1fr; } }

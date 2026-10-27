@@ -23,13 +23,13 @@ import com.paytech.client.master.domainservice.repository.PartyProfileRepository
 import com.paytech.client.master.domainservice.service.impl.ClientReviewOutcomeServiceImpl;
 import com.paytech.client.master.ext.mq.ClientReviewResultListener;
 import com.paytech.client.master.ext.mq.QualificationChangedListener;
-import com.paytech.client.master.domainservice.repository.CatalogItemRepository;
 import com.paytech.client.master.domainservice.repository.ClientDraftRepository;
 import com.paytech.client.master.domainservice.repository.PartyAttributeRepository;
 import com.paytech.client.master.domainservice.service.ClientLifecycleService;
 import com.paytech.client.master.domainservice.service.impl.ClientLifecycleServiceImpl;
 import com.paytech.client.master.service.processor.ApplyQualificationChangeProcessor;
 import com.paytech.client.master.integration.ClientReviewRegistrationClient;
+import com.paytech.client.master.integration.ReferenceDataClient;
 import com.paytech.client.master.service.handler.ClientClassificationHandler;
 import com.paytech.client.master.service.processor.ApplyClientReviewResultProcessor;
 import com.paytech.client.master.service.processor.ConfirmClientClassificationProcessor;
@@ -89,12 +89,12 @@ public class ClientReviewConfiguration {
         return new GetClientReviewApplicationProcessor(applications, drafts, reads);
     }
 
-    /** O03。 */
+    /** O03；行业与 MCC 向 Platform 参考数据校验。 */
     @Bean
     public ReplaceClientClassificationProcessor replaceClientClassificationProcessor(Clock clock, IdGenerator ids,
-        RedisResourceLockProperties locks, CatalogItemRepository catalog, ClientBusinessProfileRepository profiles,
+        RedisResourceLockProperties locks, ReferenceDataClient referenceData, ClientBusinessProfileRepository profiles,
         ClientClassificationService classifications, ClientApplicationRepository applications, ClientBusinessClassificationRepository rows) {
-        return new ReplaceClientClassificationProcessor(clock, ids, locks.getWaitTime(), locks.getLeaseTime(), catalog, profiles,
+        return new ReplaceClientClassificationProcessor(clock, ids, locks.getWaitTime(), locks.getLeaseTime(), referenceData, profiles,
             classifications, applications, rows);
     }
 

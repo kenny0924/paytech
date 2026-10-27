@@ -11,7 +11,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
+import com.paytech.client.master.core.dal.dataobject.AddressFormatComponent;
 import com.paytech.client.master.core.dal.dataobject.AttributeDefinition;
 import com.paytech.client.master.core.dal.dataobject.ClientDraftFields;
 import com.paytech.client.master.core.dal.dataobject.ClientDraftIdentity;
@@ -24,6 +26,7 @@ import com.paytech.client.master.domain.onboarding.ClientDraftChanges.AttributeV
 import com.paytech.client.master.domain.onboarding.ClientDraftPatch;
 import com.paytech.client.master.domain.onboarding.pack.IdentifierRules;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
+import com.paytech.client.master.domain.onboarding.pack.ReferenceCatalogCodes;
 import com.paytech.client.master.domainservice.service.OnboardingPackService;
 import com.paytech.client.master.integration.ClientIdentifierVaultClient;
 import com.paytech.foundation.httpproblem.api.ProblemFieldError;
@@ -41,6 +44,9 @@ public class ClientDraftPreparer {
     private static final String IDENTIFIER_TYPE = "identifier.identifierType";
     private static final String ORGANIZATION_TYPE = "organization.organizationType";
     private static final String ADDRESS_FORMAT = "address.addressFormatCode";
+    private static final String ADDRESS_COUNTRY = "address.countryCode";
+    /** ISO 3166-2 一级行政区代码。 */
+    private static final Pattern SUBDIVISION_CODE = Pattern.compile("[A-Z]{2}-[A-Z0-9]{1,3}");
 
     private final OnboardingPackService packs;
     private final ClientIdentifierVaultClient identifiers;
@@ -63,6 +69,7 @@ public class ClientDraftPreparer {
         Map<String, AttributeValue> attributes = attributes(pack, patch, subjectType, errors);
         PendingIdentifier pending = identifier(pack, current, patch, subjectType, columns, errors);
         addressFormat(pack, patch, errors);
+        subdivisionFormat(pack, current, patch, errors);
         OnboardingSchema schema = primary ? organizationType(pack, application, patch, errors) : null;
         if (!errors.isEmpty()) {
             throw new RequestBodyValidationException(INVALID_DRAFT, errors, null);
@@ -71,7 +78,7 @@ public class ClientDraftPreparer {
             protect(pack, pending, columns);
         }
         if (patch.touches("address")) {
-            String country = patch.values().containsKey("address.countryCode") ? patch.values().get("address.countryCode")
+            String country = patch.values().containsKey(ADDRESS_COUNTRY) ? patch.values().get(ADDRESS_COUNTRY)
                 : current.addressCountryCode();
             columns.put("address_addressFormatCode", pack.addressFormatFor(country));
         }
@@ -127,6 +134,22 @@ public class ClientDraftPreparer {
         String format = patch.values().get(ADDRESS_FORMAT);
         if (format != null && !format.equals(pack.addressFormatFor(null)) && !OnboardingPack.GENERIC_ADDRESS_FORMAT.equals(format)) {
             errors.add(new ProblemFieldError(ADDRESS_FORMAT, "地址格式与申请辖区不符"));
+        }
+    }
+
+    /**
+     * 引用 Platform 行政区（REF_COUNTRY_SUBDIVISION）的地址组件：保存草稿只校验 ISO 3166-2 格式
+     * <li>按修改后的地址国家选择格式；境外通用格式的省州为自由文本。是否存在、ACTIVE 及与国家一致在提交时向 Platform 校验。</li>
+     */
+    static void subdivisionFormat(OnboardingPack pack, ClientDraftFields current, ClientDraftPatch patch, List<ProblemFieldError> errors) {
+        String country = patch.values().containsKey(ADDRESS_COUNTRY) ? patch.values().get(ADDRESS_COUNTRY) : current.addressCountryCode();
+        for (AddressFormatComponent component : pack.addressComponents(pack.addressFormatFor(country))) {
+            String key = "address." + component.getComponent();
+            String value = patch.values().get(key);
+            if (ReferenceCatalogCodes.REF_COUNTRY_SUBDIVISION.equals(component.getCatalogCode()) && value != null
+                && !SUBDIVISION_CODE.matcher(value).matches()) {
+                errors.add(new ProblemFieldError(key, "须为 ISO 3166-2 行政区代码，如 AE-DU"));
+            }
         }
     }
 

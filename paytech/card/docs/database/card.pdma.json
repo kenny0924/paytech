@@ -5076,7 +5076,7 @@
         {
           "defKey": "issuer_region",
           "defName": "发卡区域",
-          "comment": "发卡区域，导入时按 Platform 国家区域映射由 issuer_country 推导并冻结；映射之后变化不影响本行。取值来源：Platform t_country_region.region_code；非固定枚举。",
+          "comment": "发卡区域，导入时按 Platform 国家区域映射由 issuer_country 推导并冻结；映射之后变化不影响本行。取值来源：Platform t_ref_country.region_code；非固定枚举。",
           "type": "VARCHAR",
           "len": 16,
           "scale": "",

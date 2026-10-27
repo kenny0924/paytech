@@ -175,6 +175,15 @@ public sealed interface OperationsAuditFact permits OperationsAuditFact.Outcome,
         /** 币种金额舍入方式。 */
         ROUNDING_MODE,
 
+        /** 币种 ISO 4217 三位数字代码。 */
+        NUMERIC_CODE,
+
+        /** 币种符号。 */
+        SYMBOL,
+
+        /** 参考数据 logo 的文件服务地址。 */
+        LOGO_FILE_ADDRESS,
+
         /** 文件存储实例类型。 */
         STORAGE_TYPE,
 

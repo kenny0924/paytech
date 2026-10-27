@@ -1,0 +1,22 @@
+PASS mortest-client-zh-CN-390 登录 | "https://localhost:28443/onboarding"
+PASS mortest-client-zh-CN-390 首页：资料与地址两项标"需要处理"（服务端参考数据校验） | {"attention":2}
+PASS mortest-client-zh-CN-390 profile：打开即显示页顶错误汇总（币种）且控件标红、说明为当前语言 | {"invalidOnOpen":1,"links":["币种：请从列表中选择。"]}
+PASS mortest-client-zh-CN-390 profile：点汇总聚焦到币种控件且标红 | {"id":"f-business-currency","invalid":"true"}
+PASS mortest-client-zh-CN-390 address：打开即显示页顶错误汇总（省州）且控件标红、说明为当前语言 | {"invalidOnOpen":1,"links":["酋长国：请从列表中选择。"]}
+PASS mortest-client-zh-CN-390 address：点汇总聚焦到省州控件且标红 | {"id":"f-address-stateOrProvince","invalid":"true"}
+PASS mortest-client-zh-CN-390 币种选项为 4 个 ACTIVE 币种、Intl 本地化名称 | ["阿联酋迪拉姆","埃及镑","沙特里亚尔","美元"]
+PASS mortest-client-zh-CN-390 选中后显示"本地化名称 (AED)" | "阿联酋迪拉姆 (AED)"
+PASS mortest-client-zh-CN-390 国家列表来自 Platform（249 项），无国旗时显示中性占位 | {"total":249,"placeholders":249}
+PASS mortest-client-zh-CN-390 按名称搜索（阿拉伯） | ["阿拉伯联合酋长国","沙特阿拉伯"]
+PASS mortest-client-zh-CN-390 中文界面按英文名搜索（saudi） | ["沙特阿拉伯"]
+PASS mortest-client-zh-CN-390 按编码搜索（eg → EG 优先） | ["EG","BA","ME","SN"]
+PASS mortest-client-zh-CN-390 Enter 选中 AE | "阿拉伯联合酋长国"
+PASS mortest-client-zh-CN-390 EG-C（与 AE 不一致）按编码显示且标红 | {"text":"EG-C","emirateInvalid":"true"}
+PASS mortest-client-zh-CN-390 酋长国 7 项，名称取 refdata（缺翻译回退英文 name） | ["阿布扎比","阿治曼","迪拜","富查伊拉","哈伊马角","沙迦","乌姆盖万"]
+PASS mortest-client-zh-CN-390 选中 AE-DU | "迪拜"
+PASS mortest-client-zh-CN-390 地址国家改 GB：已选酋长国清空，省州变为文本输入 | {"stateInputs":1,"emirateGone":true}
+PASS mortest-client-zh-CN-390 改回 AE：酋长国下拉回来且为空 | "请选择"
+PASS mortest-client-zh-CN-390 BFF 未下发选项时字段内显示"暂时无法加载 · 重试"，不用内置列表 | {"nUnavailable":2,"text":"选项暂时无法加载 ·\n重试"}
+PASS mortest-client-zh-CN-390 点重试后选项恢复 | {"triggers":2}
+PASS mortest-client-zh-CN-390 核对页显示本地化币种与酋长国
+SUMMARY mortest-client-zh-CN-390 pass=21 fail=0

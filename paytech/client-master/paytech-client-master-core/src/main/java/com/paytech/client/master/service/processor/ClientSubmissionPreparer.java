@@ -38,6 +38,7 @@ import com.paytech.client.master.domain.onboarding.requirement.DocumentFact;
 import com.paytech.client.master.domain.onboarding.requirement.IdentifierFact;
 import com.paytech.client.master.domain.onboarding.requirement.MaterialRequirement;
 import com.paytech.client.master.domain.onboarding.requirement.OnboardingRequirementEvaluator;
+import com.paytech.client.master.domain.onboarding.requirement.ReferenceCodeCheck;
 import com.paytech.client.master.domain.onboarding.requirement.RelationFact;
 import com.paytech.client.master.domain.onboarding.requirement.RequirementInput;
 import com.paytech.client.master.domain.onboarding.requirement.RequirementSubject;
@@ -52,6 +53,7 @@ import com.paytech.client.master.domainservice.service.OnboardingPackService;
 import com.paytech.client.master.integration.ClientAgreementPartyClient;
 import com.paytech.client.master.integration.ClientMaterialAuthorityClient;
 import com.paytech.client.master.integration.ComplianceProgramClient;
+import com.paytech.client.master.integration.ReferenceDataClient;
 import com.paytech.compliance.api.enums.MaterialQualificationType;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.platform.support.api.files.FileAddress;
@@ -60,7 +62,8 @@ import lombok.AllArgsConstructor;
 
 /**
  * C14 提交、提交核对与需求清单共用的准备步骤（需求 B2、B3）。
- * <li>只读：查询本模块仓储与辖区包，并在数据库事务外读取 compliance 程序材料、commercial 合同引用和 Platform 文件状态。</li>
+ * <li>只读：查询本模块仓储与辖区包，并在数据库事务外读取 compliance 程序材料、commercial 合同引用、Platform 文件状态
+ * 与 Platform 参考数据（本次填写的国家、币种、行政区，按类型各批量查询一次）。</li>
  * <li>规则由辖区包数据与 OnboardingRequirementEvaluator 承担；本类只装载事实、计算证件唯一性作用域与冲突。</li>
  */
 @AllArgsConstructor
@@ -77,6 +80,7 @@ public class ClientSubmissionPreparer {
     private final ClientAgreementPartyClient agreementParties;
     private final PartyProfileIdentifierRepository identifiers;
     private final ApplicationDeclarationRepository declarations;
+    private final ReferenceDataClient referenceData;
 
     /**
      * 装载申请的全部提交事实并计算需求清单
@@ -96,15 +100,24 @@ public class ClientSubmissionPreparer {
         List<MaterialRequirement> programMaterials = programs.materials(
             OnboardingScopes.scope(pack, identity.clientType(), identity.responsiblePartnerId()));
         Set<Long> unusable = unusableDocuments(accountId, subjects, materials);
-        var input = new RequirementInput(pack, identity.organizationTypeCode(), requirementSubjects(subjects, relations, pack),
+        List<RequirementSubject> requirementSubjects = requirementSubjects(subjects, relations, pack);
+        var input = new RequirementInput(pack, identity.organizationTypeCode(), requirementSubjects,
             relations.stream().map(relation -> new RelationFact(relation.relatedPartyId(), relation.relationType(),
                 relation.ownershipPercentage(), relation.uboBasis())).toList(),
             materials.stream().map(document -> new DocumentFact(document.documentId(), document.subjectPartyId(),
                 document.requirementCode(), document.documentType(), document.issueDate(), document.expiryDate(),
                 !unusable.contains(document.documentId()))).toList(),
-            programMaterials, latestDeclarations(declared), identity.status(), identity.reviewDueTime(), now());
+            programMaterials, latestDeclarations(declared), identity.status(), identity.reviewDueTime(), now(),
+            references(pack, requirementSubjects));
         return new ClientSubmissionPreparation(subjects, relations, materials, declared,
             OnboardingRequirementEvaluator.evaluate(input));
+    }
+
+    /** 本次申请填写的国家、币种与行政区：按类型各批量查询 Platform 一次；不可用时整体 503，不写入。 */
+    ReferenceCodeCheck references(OnboardingPack pack, List<RequirementSubject> subjects) {
+        ReferenceCodeCheck.Codes codes = ReferenceCodeCheck.codes(pack, subjects);
+        return new ReferenceCodeCheck(referenceData.countries(codes.countries()), referenceData.currencies(codes.currencies()),
+            referenceData.subdivisions(codes.subdivisions()));
     }
 
     /** 主主体在前，随后是仍有 DRAFT/ACTIVE 关系的关联人员；计算作用域、已有身份键与申请内重复。 */

@@ -22,11 +22,15 @@ import com.paytech.operations.console.bff.service.model.FinanceSetupModels.Curre
 import com.paytech.operations.console.bff.service.model.FinanceSetupModels.CurrencyResponseBody;
 import com.paytech.platform.support.api.enums.CurrencyRoundingMode;
 import com.paytech.platform.support.api.enums.CurrencySpecStatus;
+import com.paytech.platform.support.api.referencedata.response.ReferenceCurrencyListResponseBody;
+import com.paytech.platform.support.api.referencedata.response.ReferenceCurrencyResponseBody;
 
 /**
  * Platform 币种合同与 BFF 页面模型之间的显式投影和回执核对
- * <li>币种代码、小数位、舍入方式、状态、版本与更新时间任一不符合合同即按上游无效响应 502 处理，未知 Code 不放行。</li>
- * <li>写回执的对象类型、币种与状态必须与本次操作一致。</li>
+ * <li>币种页列表读参考数据币种接口：币种代码、小数位、舍入方式、状态、版本任一不符合合同即按上游无效响应 502 处理，未知 Code 不放行；
+ * 数字代码、名称、符号与图标可空（历史数据未补齐时页面显示占位）。</li>
+ * <li>财务页下拉继续读旧币种规则接口，校验沿用原合同（含更新时间）。</li>
+ * <li>写回执的对象类型、币种与状态必须与本次操作一致；修改不改变状态，只要求为已知状态。</li>
  *
  * @author Claude
  */
@@ -36,15 +40,16 @@ final class CurrencySpecContractConverter {
 
     private static final String CURRENCY = "[A-Z]{3}";
     private static final String ID = "[1-9][0-9]{0,18}";
+    private static final String NUMERIC = "[0-9]{3}";
+    private static final String FILE_ADDRESS = "/files/v1/[1-9][0-9]{0,18}";
     private static final int MAX_MINOR_UNIT = 8;
 
     /** 只承载转换，禁止创建实例。 */
     private CurrencySpecContractConverter() {
     }
 
-    /** 核对并投影全部币种规则；币种代码重复视为上游无效响应。 */
-    static CurrencySpecListResponseBody toBff(
-        com.paytech.platform.support.api.referencedata.response.CurrencySpecListResponseBody value) {
+    /** 核对并投影币种页列表；币种代码重复视为上游无效响应。 */
+    static CurrencySpecListResponseBody toBff(ReferenceCurrencyListResponseBody value) {
         require(value != null && value.getItems() != null);
         List<CurrencySpecResponseBody> items = value.getItems().stream().map(CurrencySpecContractConverter::toBff)
             .toList();
@@ -54,11 +59,14 @@ final class CurrencySpecContractConverter {
         return result;
     }
 
-    /** 财务页币种下拉：按状态筛选并去掉版本与更新时间；status 为空时返回全部。 */
-    static CurrencyListResponseBody toFinance(CurrencySpecListResponseBody specs, String status) {
+    /** 财务页币种下拉：旧合同逐条核对后按状态筛选，只保留代码、小数位、舍入方式与状态；status 为空时返回全部。 */
+    static CurrencyListResponseBody toFinance(
+        com.paytech.platform.support.api.referencedata.response.CurrencySpecListResponseBody value, String status) {
+        require(value != null && value.getItems() != null);
+        List<CurrencyResponseBody> items = value.getItems().stream().map(CurrencySpecContractConverter::toFinance).toList();
+        require(new HashSet<>(items.stream().map(CurrencyResponseBody::getCurrency).toList()).size() == items.size());
         var result = new CurrencyListResponseBody();
-        result.setItems(specs.getItems().stream().filter(spec -> status == null || status.equals(spec.getStatus()))
-            .map(CurrencySpecContractConverter::toFinance).toList());
+        result.setItems(items.stream().filter(item -> status == null || status.equals(item.getStatus())).toList());
         return result;
     }
 
@@ -66,14 +74,16 @@ final class CurrencySpecContractConverter {
     static com.paytech.platform.support.api.referencedata.request.CreateCurrencySpecRequestBody toPlatform(
         CreateCurrencySpecRequestBody request) {
         return new com.paytech.platform.support.api.referencedata.request.CreateCurrencySpecRequestBody(
-            request.getCurrency(), request.getMinorUnit(), request.getRoundingMode(), request.getReason());
+            request.getCurrency(), request.getMinorUnit(), request.getRoundingMode(), request.getReason(),
+            request.getNumericCode(), request.getName(), request.getSymbol(), request.getLogoFileAddress());
     }
 
     /** 修改请求逐字段转换；expectedVersion 已由入站校验保证非空。 */
     static com.paytech.platform.support.api.referencedata.request.UpdateCurrencySpecRequestBody toPlatform(
         UpdateCurrencySpecRequestBody request) {
         return new com.paytech.platform.support.api.referencedata.request.UpdateCurrencySpecRequestBody(
-            request.getMinorUnit(), request.getRoundingMode(), request.getExpectedVersion(), request.getReason());
+            request.getMinorUnit(), request.getRoundingMode(), request.getExpectedVersion(), request.getReason(),
+            request.getNumericCode(), request.getName(), request.getSymbol(), request.getLogoFileAddress());
     }
 
     /** 启停请求逐字段转换；expectedVersion 已由入站校验保证非空。 */
@@ -88,7 +98,7 @@ final class CurrencySpecContractConverter {
      *
      * @param value Platform 回执
      * @param currency 本次操作的币种代码
-     * @param expectedStatus 本次操作后应有的状态；修改草稿为 DRAFT，启停为请求状态
+     * @param expectedStatus 本次操作后应有的状态；新建为 DRAFT，启停为请求状态，修改为 null（任一已知状态）
      * @return 浏览器回执
      */
     static ConfigurationMutationResponseBody toBff(
@@ -96,35 +106,47 @@ final class CurrencySpecContractConverter {
         String currency, String expectedStatus) {
         require(value != null && OBJECT_TYPE.equals(value.getObjectType()) && value.getObjectId() != null
             && value.getObjectId().matches(ID) && Objects.equals(currency, value.getObjectCode())
-            && Objects.equals(expectedStatus, value.getStatus()) && value.getVersion() > 0);
+            && (expectedStatus == null ? known(CurrencySpecStatus.values(), value.getStatus())
+                : Objects.equals(expectedStatus, value.getStatus())) && value.getVersion() > 0);
         return new ConfigurationMutationResponseBody(value.getObjectType(), value.getObjectId(), value.getObjectCode(),
             value.getStatus(), value.getVersion());
     }
 
-    /** 单条币种规则的字段核对与投影。 */
-    private static CurrencySpecResponseBody toBff(
+    /** 单条币种的字段核对与投影；数字代码、名称、符号与图标原样投影（可空）。 */
+    private static CurrencySpecResponseBody toBff(ReferenceCurrencyResponseBody value) {
+        require(value != null && value.getCurrencyCode() != null && value.getCurrencyCode().matches(CURRENCY)
+            && value.getMinorUnit() != null && value.getMinorUnit() >= 0 && value.getMinorUnit() <= MAX_MINOR_UNIT
+            && known(CurrencyRoundingMode.values(), value.getRoundingMode())
+            && known(CurrencySpecStatus.values(), value.getStatus()) && value.getVersion() != null && value.getVersion() > 0
+            && (value.getNumericCode() == null || value.getNumericCode().matches(NUMERIC))
+            && (value.getLogoFileAddress() == null || value.getLogoFileAddress().matches(FILE_ADDRESS)));
+        var result = new CurrencySpecResponseBody();
+        result.setCurrency(value.getCurrencyCode());
+        result.setNumericCode(value.getNumericCode());
+        result.setName(value.getName());
+        result.setSymbol(value.getSymbol());
+        result.setMinorUnit(value.getMinorUnit());
+        result.setRoundingMode(value.getRoundingMode());
+        result.setLogoFileAddress(value.getLogoFileAddress());
+        result.setLogoPublicUrl(value.getLogoPublicUrl());
+        result.setStatus(value.getStatus());
+        result.setVersion(value.getVersion());
+        return result;
+    }
+
+    /** 财务页只需要代码、小数位、舍入方式与状态；旧合同字段逐项核对（含更新时间）。 */
+    private static CurrencyResponseBody toFinance(
         com.paytech.platform.support.api.referencedata.response.CurrencySpecResponseBody value) {
         require(value != null && value.getCurrency() != null && value.getCurrency().matches(CURRENCY)
             && value.getMinorUnit() >= 0 && value.getMinorUnit() <= MAX_MINOR_UNIT
             && known(CurrencyRoundingMode.values(), value.getRoundingMode())
             && known(CurrencySpecStatus.values(), value.getStatus()) && value.getVersion() > 0);
-        var result = new CurrencySpecResponseBody();
+        instant(value.getUpdateTime());
+        var result = new CurrencyResponseBody();
         result.setCurrency(value.getCurrency());
         result.setMinorUnit(value.getMinorUnit());
         result.setRoundingMode(value.getRoundingMode());
         result.setStatus(value.getStatus());
-        result.setVersion(value.getVersion());
-        result.setUpdateTime(instant(value.getUpdateTime()));
-        return result;
-    }
-
-    /** 财务页只需要代码、小数位、舍入方式与状态。 */
-    private static CurrencyResponseBody toFinance(CurrencySpecResponseBody spec) {
-        var result = new CurrencyResponseBody();
-        result.setCurrency(spec.getCurrency());
-        result.setMinorUnit(spec.getMinorUnit());
-        result.setRoundingMode(spec.getRoundingMode());
-        result.setStatus(spec.getStatus());
         return result;
     }
 

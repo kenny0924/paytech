@@ -1,7 +1,7 @@
 package com.paytech.platform.support.referencedata.service.processor.response;
 
 import com.paytech.platform.support.api.enums.CurrencySpecStatus;
-import com.paytech.platform.support.referencedata.core.dal.dataobject.CurrencySpec;
+import com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCurrency;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,7 +24,7 @@ public class CurrencySpecMutation {
     private final int version;
 
     /** 由本次 Context 中已同步的 DataObject 构造。 */
-    public static CurrencySpecMutation of(CurrencySpec spec) {
-        return new CurrencySpecMutation(spec.getId(), spec.getCurrency(), spec.getStatus(), spec.getVersion());
+    public static CurrencySpecMutation of(ReferenceCurrency spec) {
+        return new CurrencySpecMutation(spec.getId(), spec.getCurrencyCode(), spec.getStatus(), spec.getVersion());
     }
 }

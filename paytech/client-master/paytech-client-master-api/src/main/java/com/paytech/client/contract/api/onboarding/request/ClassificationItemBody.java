@@ -9,11 +9,11 @@ import lombok.Data;
 /** 一条行业与 MCC 分类。 */
 @Data
 public class ClassificationItemBody {
-    /** 行业代码；必须在 CCT 行业目录中。 */
+    /** 行业代码；必须是 Platform 参考数据中 ACTIVE 的细类（第 2 级）。 */
     @NotBlank
     @Pattern(regexp = "^[A-Z][A-Z0-9_]{0,63}$")
     private String industryCode;
-    /** 四位 MCC，由运营按卡组织标准填写。 */
+    /** 四位 MCC；必须在 Platform 参考数据中存在且 ACTIVE。 */
     @NotBlank
     @Pattern(regexp = "^[0-9]{4}$")
     private String mccCode;

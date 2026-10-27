@@ -6,15 +6,18 @@ import com.paytech.client.contract.api.onboarding.ClientApplicationAdminApi;
 import com.paytech.client.contract.api.onboarding.ClientClassificationAdminApi;
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.ClientDraftResponseBody;
 import com.paytech.client.contract.api.onboarding.request.ClassificationItemBody;
-import com.paytech.client.contract.api.onboarding.response.ClassificationOptionsResponseBody;
 import com.paytech.client.contract.api.onboarding.response.ClassificationSetResponseBody;
+import com.paytech.foundation.httpclient.api.HttpRequestValidationException;
 import com.paytech.operations.console.bff.integration.ClientReviewCctClient;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ClassificationSetRequestBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
 import lombok.AllArgsConstructor;
 
-/** 把页面分类命令转换为 CCT 合同；响应必须对应请求的任务。 */
+/**
+ * 把页面分类命令转换为 CCT 合同；响应必须对应请求的任务
+ * <li>CCT 422 的字段路径（如 items[1].industryCode）只投影到本次页面请求体内存在的路径，页面据此把错误挂到对应控件。</li>
+ */
 @Component
 @AllArgsConstructor
 public class ClientReviewCctClientImpl implements ClientReviewCctClient {
@@ -34,13 +37,6 @@ public class ClientReviewCctClientImpl implements ClientReviewCctClient {
     }
 
     @Override
-    public ClassificationOptionsResponseBody options(OperatorContext o) {
-        var response = classifications.options(o.accountId(), o.sessionId());
-        ClientReviewRiskClientImpl.require(response != null && response.getIndustries() != null);
-        return response;
-    }
-
-    @Override
     public ClassificationSetResponseBody replace(OperatorContext o, String caseId, ClassificationSetRequestBody request) {
         var body = new com.paytech.client.contract.api.onboarding.request.ClassificationSetRequestBody();
         body.setItems(request.items().stream().map(item -> {
@@ -50,7 +46,11 @@ public class ClientReviewCctClientImpl implements ClientReviewCctClient {
             row.setPrimary(item.primary());
             return row;
         }).toList());
-        return classification(caseId, classifications.replace(o.accountId(), o.sessionId(), caseId, body));
+        try {
+            return classification(caseId, classifications.replace(o.accountId(), o.sessionId(), caseId, body));
+        } catch (HttpRequestValidationException failure) {
+            throw ConfigurationValidationConverter.local(request, failure);
+        }
     }
 
     @Override

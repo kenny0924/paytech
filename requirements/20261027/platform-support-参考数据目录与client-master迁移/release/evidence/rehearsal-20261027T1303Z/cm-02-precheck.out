@@ -1,0 +1,42 @@
++-----------------------+-------------------+----+
+| k                     | catalog_code      | n  |
++-----------------------+-------------------+----+
+| retired_catalog_items | CURRENCY          |  4 |
+| retired_catalog_items | INDUSTRY          | 10 |
+| retired_catalog_items | STATE_OR_PROVINCE | 34 |
++-----------------------+-------------------+----+
++----------------------+--------------+---+
+| k                    | catalog_code | n |
++----------------------+--------------+---+
+| schema_field_catalog | CURRENCY     | 8 |
++----------------------+--------------+---+
++---------------------------+---------------------+-----------------+-------------------+
+| k                         | address_format_code | component       | catalog_code      |
++---------------------------+---------------------+-----------------+-------------------+
+| address_component_catalog | AE_POBOX            | stateOrProvince | STATE_OR_PROVINCE |
+| address_component_catalog | EG_STANDARD         | stateOrProvince | STATE_OR_PROVINCE |
+| address_component_catalog | SA_NATIONAL_ADDRESS | city            | CITY              |
++---------------------------+---------------------+-----------------+-------------------+
++------------------------------+---------------------------------+----+
+| k                            | pattern                         | n  |
++------------------------------+---------------------------------+----+
+| party_address_state_patterns | AE/EG underscore (will convert) | 12 |
+| party_address_state_patterns | free text                       | 38 |
+| party_address_state_patterns | NULL                            |  2 |
++------------------------------+---------------------------------+----+
++---------------------------------+-------------------+----+
+| k                               | state_or_province | n  |
++---------------------------------+-------------------+----+
+| party_address_underscore_values | AE_AZ             | 10 |
+| party_address_underscore_values | AE_DU             |  2 |
++---------------------------------+-------------------+----+
++---------------------------+---------------+----------+----+
+| k                         | industry_code | mcc_code | n  |
++---------------------------+---------------+----------+----+
+| classification_industries | RETAIL        | 5999     | 38 |
++---------------------------+---------------+----------+----+
++--------------------------+-----+
+| k                        | n   |
++--------------------------+-----+
+| country_pack_rerun_guard | 109 |
++--------------------------+-----+

@@ -42,17 +42,24 @@ export function ApplicationRoot({ client }: { client: Client }) {
     setSavedAt((previous) => value.savedAt ?? previous);
     return value;
   }, [applicationId, request]);
+  const loadSchema = useCallback(async (value: Application) => {
+    if (!value.jurisdictionCode) throw new Error(t("schema.unavailable"));
+    return readSchema(await request(api.schema(value.jurisdictionCode, value.clientType, value.organizationTypeCode, value.applicationId)), t("schema.unavailable"));
+  }, [request]);
   useEffect(() => {
     let alive = true;
     setApp(null); setSchema(null); setError(null);
     (async () => {
-      const value = await reload();
-      if (!value.jurisdictionCode) throw new Error(t("schema.unavailable"));
-      const form = readSchema(await request(api.schema(value.jurisdictionCode, value.clientType, value.organizationTypeCode, value.applicationId)), t("schema.unavailable"));
+      const form = await loadSchema(await reload());
       if (alive) setSchema(form);
     })().catch((failure) => { if (alive) fail(failure); });
     return () => { alive = false; };
   }, [applicationId]);
+  // 只替换 Schema（含参考数据选项）；失败交给页面级错误。
+  const reloadSchema = useCallback(async () => {
+    if (!app) return;
+    try { setSchema(await loadSchema(app)); } catch (failure) { fail(failure); }
+  }, [app, loadSchema, fail]);
   // 离开材料页后仍在检查中的上传：申请页后台按恢复坐标续传并关联，完成后刷新申请。
   useEffect(() => {
     if (!app) return;
@@ -80,9 +87,9 @@ export function ApplicationRoot({ client }: { client: Client }) {
     return () => clearInterval(timer);
   }, [app?.applicationId]);
   const context = useMemo(() => app && schema ? {
-    client, request, app, schema, reload, savedAt, fail,
+    client, request, app, schema, reload, reloadSchema, savedAt, fail,
     touch: (value?: string) => setSavedAt(value ?? new Date().toISOString()),
-  } : null, [app, schema, savedAt, client, request, reload, fail]);
+  } : null, [app, schema, savedAt, client, request, reload, reloadSchema, fail]);
   if (!context) return <div className="ob-page"><TopBar account={grant?.context.emailMasked} />
     <main className="ob-narrow">{error ? <><Failure error={error} />
       <button className="secondary" onClick={() => window.location.reload()}>{t("page.reload")}</button></>

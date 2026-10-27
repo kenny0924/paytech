@@ -38,6 +38,18 @@ class OnboardingAdminQueryTest extends ClientMasterMockTestBase {
         assertTrue(identifiers.containsAll(List.of("AE_EMIRATES_ID", "AE_TRADE_LICENSE", "PASSPORT")), identifiers.toString());
         assertTrue(ae.path("relationTypes").valueStream().anyMatch(type -> "UBO".equals(type.path("relationTypeCode").asString())
             && type.path("uboFlag").asBoolean()));
+        // 本地地址格式组件按展示顺序；省州引用 Platform 行政区。
+        var components = ae.path("addressComponents");
+        assertEquals(List.of("addressLine1", "addressLine2", "city", "stateOrProvince", "poBox", "countryCode"),
+            components.valueStream().map(component -> component.path("component").asString()).toList());
+        var state = components.get(3);
+        assertEquals("REF_COUNTRY_SUBDIVISION", state.path("catalogCode").asString());
+        assertTrue(state.path("required").asBoolean());
+        assertEquals(40, state.path("order").asInt());
+        assertTrue(components.get(0).path("catalogCode").isNull());
+        assertEquals("REF_COUNTRY_SUBDIVISION", packs.get(1).path("addressComponents").valueStream()
+            .filter(component -> "stateOrProvince".equals(component.path("component").asString())).findFirst().orElseThrow()
+            .path("catalogCode").asString());
     }
 
     /** Schema 版本与字段、目录项。 */
@@ -56,7 +68,9 @@ class OnboardingAdminQueryTest extends ClientMasterMockTestBase {
             && "AE".equals(item.path("jurisdictionCode").asString())));
         assertTrue(authorities.valueStream().anyMatch(item -> "SA_MC".equals(item.path("itemCode").asString())
             && "SA".equals(item.path("jurisdictionCode").asString())));
-        assertEquals(10, body(get("/client-master-admin/v1/catalog-items?catalogCode=INDUSTRY")).size());
+        // 行业、币种与一级行政区已迁至 Platform 参考数据，本库目录不再提供。
+        assertEquals(0, body(get("/client-master-admin/v1/catalog-items?catalogCode=INDUSTRY")).size());
+        assertEquals(0, body(get("/client-master-admin/v1/catalog-items?catalogCode=STATE_OR_PROVINCE")).size());
     }
 
     /** Client 列表按辖区与状态过滤；详情给出主档、资料（只有脱敏证件）、人员、关系与申请历史；不存在 404。 */

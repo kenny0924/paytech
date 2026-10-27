@@ -23,13 +23,16 @@ import com.paytech.compliance.api.request.ClientReviewScreeningRunRequestBody;
 import com.paytech.compliance.api.request.ClientReviewWaiverRequestBody;
 import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
 import com.paytech.compliance.api.response.ClientReviewCommandResponseBody;
+import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.ClientReviewCctClient;
 import com.paytech.operations.console.bff.integration.ClientReviewRiskClient;
 import com.paytech.operations.console.bff.integration.EntityAdminClient;
+import com.paytech.operations.console.bff.integration.PlatformReferenceDataClient;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ClassificationSetRequestBody;
 import com.paytech.operations.console.bff.service.model.ClientReviewModels.ReviewCaseDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
+import com.paytech.operations.console.bff.service.model.ReferenceDataModels.MccResponseBody;
 import com.paytech.operations.console.bff.service.model.clientreview.response.ResponsiblePartnerListResponseBody;
 import com.paytech.operations.console.bff.service.model.response.ClientReviewFileDownloadResponseBody;
 import com.paytech.operations.console.bff.service.processor.ClientReviewCommandProcessor;
@@ -38,11 +41,13 @@ import com.paytech.operations.console.bff.service.processor.ClientReviewFileDown
 import com.paytech.operations.console.bff.service.processor.request.ClientReviewCommandRequest;
 import com.paytech.operations.console.bff.service.processor.request.ClientReviewDetailsRequest;
 import com.paytech.operations.console.bff.service.processor.request.ClientReviewFileDownloadRequest;
+import com.paytech.platform.support.api.enums.ReferenceDataStatus;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 
 /**
@@ -50,6 +55,7 @@ import lombok.AllArgsConstructor;
  * <li>O02 聚合 compliance 案件与 client-master 申请 / 分类，O10 核对案件证据后由 Platform 签发下载。</li>
  * <li>compliance 写命令使用其合同请求体；带 onBehalfOfPartnerId 时由 Processor 先核对 PayFac（S-05），其余为单 Owner 转发。</li>
  * <li>Owner 按案件状态防重，不转发 Idempotency-Key；超时后页面用原请求重试。</li>
+ * <li>分类用的 MCC 搜索只列 Platform 中 ACTIVE 的 MCC，路由复用分类编辑权限（块 139）。</li>
  */
 @RestController
 @AllArgsConstructor
@@ -64,6 +70,7 @@ public class ClientOnboardingReviewController {
     private final ClientReviewCommandProcessor commands;
     private final ClientReviewDetailsProcessor details;
     private final ClientReviewFileDownloadProcessor fileDownload;
+    private final PlatformReferenceDataClient referenceData;
 
     /** O01 案件列表，可按责任 PayFac（0 为平台自营）与辖区过滤。 */
     @GetMapping("/cases")
@@ -81,6 +88,15 @@ public class ClientOnboardingReviewController {
     @GetMapping("/responsible-partners")
     public ResponsiblePartnerListResponseBody responsiblePartners(OperatorContext operator) {
         return entityAdmin.responsiblePartners(operator);
+    }
+
+    /** O03 分类用的 MCC 搜索：编码前缀或英文名，只列 ACTIVE，按编码升序分页。 */
+    @GetMapping("/mccs")
+    public PagingResponseBody<MccResponseBody> searchMccs(@RequestParam(required = false) @Size(max = 64) String keyword,
+        @RequestParam(required = false) Integer page, @RequestParam(required = false) Integer size) {
+        PagingRequestBody paging = PagingRequestBody.of(page, size);
+        return referenceData.searchMccs(keyword == null ? null : keyword.trim(), ReferenceDataStatus.ACTIVE.getCode(),
+            paging.page(), paging.size());
     }
 
     /** O02 案件详情。 */

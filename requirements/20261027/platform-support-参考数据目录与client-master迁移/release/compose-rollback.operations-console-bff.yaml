@@ -1,0 +1,14 @@
+# 参考数据目录与 client-master 迁移：mor-test 回滚覆盖（rel-dev 2026-10-27）。镜像 = 2026-10-27 12:55Z 现网运行镜像（切片 1 最终版），env 与候选相同。
+# 用法同候选：./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# Platform 回滚必须先执行 sql/89-platform-reference-data-rollback.sql（旧镜像只认 t_currency_spec / t_country_region），见 runbook 第 6 节。
+services:
+  operations-console-bff:
+    image: sha256:c5ed58df68333390bc7c99eedf737e73d4e54d9c02bcd6da54d58089cb332f44  # 现网 2026-10-27 12:55Z（onboard-20261027a，JAR 895edb6ac1e44e1f）
+    environment:
+      OPERATIONS_BFF_BIND_ADDRESS: 172.30.73.22
+      OPERATIONS_CONSOLE_ORIGIN: http://localhost:28080
+      OPERATIONS_TEST_HTTP_ENABLED: "true"
+      OPERATIONS_LEDGER_BASE_URL: http://ledger-service:18105
+      OPERATIONS_ACCOUNT_BASE_URL: http://account-service:18114
+      OPERATIONS_BILLING_BASE_URL: http://billing-service:18113
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115

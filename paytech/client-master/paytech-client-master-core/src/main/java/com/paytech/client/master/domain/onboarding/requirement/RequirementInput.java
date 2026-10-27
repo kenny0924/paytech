@@ -34,4 +34,6 @@ public class RequirementInput {
     private final Instant reviewDueTime;
     /** 计算时点。 */
     private final Instant now;
+    /** 本次申请填写的国家、币种与行政区在 Platform 参考数据中的结论。 */
+    private final ReferenceCodeCheck references;
 }

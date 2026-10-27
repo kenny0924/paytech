@@ -101,7 +101,8 @@ test("owner schema shape: catalog items use code, rule numbers arrive as strings
     relationRules: { uboThresholdPct: "25", minSignatories: 1 }, addressFormat: null,
     fallbackAddressFormat: { code: "GENERIC", components: [{ component: "city", required: true, labelKey: "k", order: 30 }] },
     relationTypes: [{ code: "OWNERSHIP", ruleRole: "OWNER", ownershipPctRequired: true, uboFlag: false, labelKey: "k" }] }, "x");
-  assert.deepEqual(value.catalogs.CITY, [{ itemCode: "RIYADH", labelKey: "k" }]);
+  assert.deepEqual(value.catalogs.CITY, [{ itemCode: "RIYADH", labelKey: "k", name: null, logoPublicUrl: null, countryCode: null }]);
+  assert.deepEqual(value.countries, []);
   assert.equal(value.relationRules.uboThresholdPct, 25);
   assert.equal(value.addressFormat?.code, "GENERIC");
   assert.equal(value.relationTypes[0].ruleRole, "OWNER");

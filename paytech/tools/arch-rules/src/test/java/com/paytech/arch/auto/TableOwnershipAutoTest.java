@@ -23,7 +23,7 @@ class TableOwnershipAutoTest {
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 46 张表
         // （2026-10-20 渠道协议 10 表迁往 channel-connector 后由 56 张减为 46 张，总表数不变）。
-        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2 - 2 + 2 + 3 + 10 + 3 - 1 + 2 + 1 + 4 + 1 + 7 + 3 + 1 + 13 + 4, ownership.physicalTableCount(),
+        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2 - 2 + 2 + 3 + 10 + 3 - 1 + 2 + 1 + 4 + 1 + 7 + 3 + 1 + 13 + 4 + 3, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
                 + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）"
@@ -42,10 +42,12 @@ class TableOwnershipAutoTest {
                 + " + Platform t_file_version（2026-10-22 文件公开桶与同地址替换）"
                 + " + Platform 多语言七表（2026-10-23 多语言管理）"
                 + " + client-master 角色与关系三表 + acquiring t_order_relationship_binding（2026-10-24 商业关系快照与真实解析接入）"
-                + " + client-master 入驻配置与入驻码 13 表 + compliance 程序文档类型 / 命中名单 / 风险因子 / 退回错误 4 表（2026-10-27 全球合规入驻切片 1）");
+                + " + client-master 入驻配置与入驻码 13 表 + compliance 程序文档类型 / 命中名单 / 风险因子 / 退回错误 4 表（2026-10-27 全球合规入驻切片 1）"
+                + " + Platform 行政区 / 行业 / MCC 三表（2026-10-27 参考数据目录；t_currency_spec、t_country_region 改名 t_ref_currency、t_ref_country，表数不变）");
         // mor_platform：2026-10-20 渠道协议 10 表迁往 channel-connector，由 57 张减为 47 张；2026-10-22 文件存储 3 表、工作流 10 表与 data-query 3 表并入，
-        // 第二段删除 t_file_owner_ref，卡 BIN 库新增 t_country_region，文件公开桶新增 t_file_version，共 64 张；2026-10-23 多语言新增七张 t_i18n_*，共 71 张。
-        Assertions.assertEquals(71, ownership.databasesOf("platform-support").get("mor_platform").size());
+        // 第二段删除 t_file_owner_ref，卡 BIN 库新增 t_country_region，文件公开桶新增 t_file_version，共 64 张；2026-10-23 多语言新增七张 t_i18n_*，共 71 张；
+        // 2026-10-27 参考数据目录：币种与国家两表改名 t_ref_*，新增行政区、行业、MCC 三表，共 74 张。
+        Assertions.assertEquals(74, ownership.databasesOf("platform-support").get("mor_platform").size());
         Assertions.assertTrue(ownership.allowedTables("platform-support").containsAll(
             List.of("t_workflow_definition", "t_workflow_instance", "t_workflow_callback")), "2026-10-22 工作流表");
         Assertions.assertEquals(30, ownership.databasesOf("ledger").get("mor_ledger").size());
@@ -59,14 +61,16 @@ class TableOwnershipAutoTest {
 
     @Test
     void test_edgeCase() {
-        // 两边各一份；t_currency_spec 只在 Platform（2026-10-20 起 ledger、billing 读快照，不持副本）。
+        // 两边各一份；币种表只在 Platform（2026-10-20 起 ledger、billing 读快照，不持副本；2026-10-27 改名 t_ref_currency）。
         Assertions.assertTrue(ownership.allowedTables("client-master").contains("t_business_change_record"));
         Assertions.assertTrue(ownership.allowedTables("commercial").contains("t_business_change_record"));
-        Assertions.assertTrue(ownership.allowedTables("platform-support").contains("t_currency_spec"));
-        Assertions.assertTrue(ownership.allowedTables("platform-support").contains("t_country_region"));
-        Assertions.assertFalse(ownership.allowedTables("billing").contains("t_currency_spec"));
-        Assertions.assertFalse(ownership.allowedTables("ledger").contains("t_currency_spec"));
-        Assertions.assertFalse(ownership.allowedTables("tax").contains("t_currency_spec"));
+        Assertions.assertTrue(ownership.allowedTables("platform-support").containsAll(List.of("t_ref_currency",
+            "t_ref_country", "t_ref_country_subdivision", "t_ref_industry", "t_ref_mcc")), "2026-10-27 参考数据目录");
+        Assertions.assertTrue(ownership.services().stream().noneMatch(service -> ownership.allowedTables(service)
+            .contains("t_currency_spec") || ownership.allowedTables(service).contains("t_country_region")), "改名前的旧表名");
+        Assertions.assertFalse(ownership.allowedTables("billing").contains("t_ref_currency"));
+        Assertions.assertFalse(ownership.allowedTables("ledger").contains("t_ref_currency"));
+        Assertions.assertFalse(ownership.allowedTables("tax").contains("t_ref_currency"));
         // 第 07 步更名的经济事实三表已由 2026-10-19 计费事实重构删除，来源表名与第 07 步表名都不再出现。
         Assertions.assertTrue(ownership.services().stream()
             .noneMatch(service -> ownership.allowedTables(service).contains("t_transaction_economics")));

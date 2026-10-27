@@ -34,6 +34,7 @@ import tools.jackson.databind.node.ObjectNode;
 /**
  * 浏览器经真实 BFF 与 HttpExchange 读取和维护 Platform 币种规则：币种页 4 个端点（C01—C04）与财务页币种下拉（R16）
  * <li>Platform 由 Loopback Simulator 承担，PLT-I02 授权与 Owner 调用记录在同一 Simulator；ledger 不再参与币种读取。</li>
+ * <li>币种页列表读参考数据币种接口（ownerResponse 为 Platform 形状，response 为页面形状）；财务页下拉仍读旧币种规则接口。</li>
  *
  * @see CurrencySpecManagementController#listCurrencySpecs()
  * @see CurrencySpecManagementController#createCurrencySpec(com.paytech.operations.console.bff.service.model.OperatorContext,
@@ -50,6 +51,14 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
     private static final String FINANCE_CURRENCIES = "/finance/currencies/v1";
     private static final String FINANCE_CURRENCY_ROUTE = "operations-finance-currency-list";
     private static final String OWNER_REQUEST_ID = "platform-currency-request";
+    /** 旧币种规则接口：财务页下拉的数据源。 */
+    private static final String LEGACY_PATH = "/platform/v1/currency-specs";
+    private static final String LEGACY_LIST = """
+        {"items":[
+          {"currency":"AED","minorUnit":2,"roundingMode":"HALF_UP","status":"DRAFT","version":1,"updateTime":"2026-10-20T01:02:03.123456Z"},
+          {"currency":"JPY","minorUnit":0,"roundingMode":"HALF_UP","status":"INACTIVE","version":3,"updateTime":"2026-10-20T02:03:04.654321Z"},
+          {"currency":"USD","minorUnit":2,"roundingMode":"HALF_UP","status":"ACTIVE","version":2,"updateTime":"2026-10-19T00:00:00.000001Z"}]}
+        """;
 
     static Stream<JsonNode> endpoints() {
         return rows(BOUNDARY);
@@ -59,7 +68,7 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
     @ParameterizedTest(name = "{index} 币种转发")
     @MethodSource("endpoints")
     void test_normalFlow(JsonNode row) throws Exception {
-        platform.rawResponse(ownerPath(row), JSON.writeValueAsString(row.path("response")));
+        platform.rawResponse(ownerPath(row), JSON.writeValueAsString(ownerResponse(row)));
 
         var response = send(row);
 
@@ -97,8 +106,7 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
     @ParameterizedTest
     @CsvSource(value = {"?status=ACTIVE,USD", "?status=DRAFT,AED", "?status=INACTIVE,JPY", "'',AED|JPY|USD"})
     void test_financeCurrenciesFilteredFromPlatform(String query, String expectedCurrencies) throws Exception {
-        var list = row(BOUNDARY, "C01");
-        platform.rawResponse(ownerPath(list), JSON.writeValueAsString(list.path("response")));
+        platform.rawResponse(LEGACY_PATH, LEGACY_LIST);
 
         var response = send(financeCurrencies(), query, JSON.nullNode(), true);
 
@@ -108,8 +116,25 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
             .asString()).toList());
         items.forEach(item -> assertEquals(List.of("currency", "minorUnit", "roundingMode", "status"),
             item.propertyNames().stream().toList()));
-        assertNull(ownerCall().query(), "Platform 查询不带筛选参数");
+        var call = ownerCall();
+        assertEquals(LEGACY_PATH, call.path());
+        assertNull(call.query(), "Platform 查询不带筛选参数");
         assertTrue(ledger.requests().isEmpty(), ledger.requests().toString());
+    }
+
+    /** 已启用币种只更换图标：标准属性按当前值原样提交，回执状态仍为 ACTIVE 时正常返回。 */
+    @Test
+    void test_activeCurrencyLogoChange() throws Exception {
+        var update = row(BOUNDARY, "C03");
+        var request = with(update, "logoFileAddress", "/files/v1/7312345678901234002");
+        platform.rawResponse(ownerPath(update), JSON.writeValueAsString(withResponse(update, "status",
+            CurrencySpecStatus.ACTIVE.getCode())));
+
+        var response = send(update, "", request, true);
+
+        assertEquals(200, response.statusCode(), response.body());
+        assertEquals(CurrencySpecStatus.ACTIVE.getCode(), JSON.readTree(response.body()).path("status").asString());
+        assertEquals(request, JSON.readTree(ownerCall().body()));
     }
 
     /** 财务页筛选值非法时在访问 Platform 前拒绝。 */
@@ -135,6 +160,10 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertRejectedBeforePlatform(422, send(create, "", with(create, "currency", "aed"), true));
         assertRejectedBeforePlatform(422, send(create, "", with(create, "roundingMode", "HALF_EVEN"), true));
         assertRejectedBeforePlatform(422, send(create, "", with(create, "reason", " "), true));
+        assertRejectedBeforePlatform(422, send(create, "", with(create, "numericCode", "84"), true));
+        assertRejectedBeforePlatform(422, send(create, "", with(create, "name", " "), true));
+        assertRejectedBeforePlatform(422, send(create, "", with(create, "symbol", "123456789"), true));
+        assertRejectedBeforePlatform(422, send(create, "", with(create, "logoFileAddress", "https://static.local.test/aed.svg"), true));
 
         var update = row(BOUNDARY, "C03");
         var missingVersion = (ObjectNode) update.path("request").deepCopy();
@@ -213,15 +242,40 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
             () -> assertFalse(response.body().contains("privateField")));
     }
 
-    /** 列表未知状态、越界小数位、重复币种、缺失更新时间，以及写回执的类型、币种或状态与本次操作不符均按上游无效响应 502。 */
+    /** 修改被拒（Platform 422 VALIDATION_ERROR）：冻结字段与非公开图标的字段路径投影到页面请求体，顺序不依赖 Platform，远端文案不外露。 */
+    @Test
+    void test_updateFrozenFieldAndLogoRejectionsProjected() throws Exception {
+        var row = row(BOUNDARY, "C03");
+        String upstream = """
+            {"type":"about:blank","title":"Unprocessable Content","detail":"remote-private-detail","code":"VALIDATION_ERROR",
+             "requestId":"platform-fields-request","timestamp":"2026-10-27T00:00:00.123456Z","errors":[
+              {"field":"symbol","message":"remote-private AED ACTIVE"},{"field":"logoFileAddress","message":"remote-private not public"},
+              {"field":"minorUnit","message":"remote-private AED ACTIVE"}]}
+            """;
+        platform.rawResponse(ownerPath(row), 422, "application/problem+json", upstream, Map.of("X-Request-Id", "platform-fields-request"));
+
+        var response = send(row, "", with(row, "logoFileAddress", "/files/v1/7312345678901234003"), true);
+
+        assertEquals(422, response.statusCode(), response.body());
+        var body = JSON.readTree(response.body());
+        assertAll(() -> assertEquals(CommonErrorCode.VALIDATION_ERROR.getCode(), body.path("code").asString()),
+            () -> assertEquals(List.of("logoFileAddress", "minorUnit", "symbol"),
+                body.path("errors").valueStream().map(e -> e.path("field").asString()).sorted().toList()),
+            () -> assertFalse(response.body().contains("remote-private")));
+        ownerCall();
+    }
+
+    /** 列表未知状态、越界小数位、重复币种、非法数字代码或图标地址，以及写回执的类型、币种或状态与本次操作不符均按上游无效响应 502。 */
     @Test
     void test_invalidUpstreamResponse() throws Exception {
         var list = row(BOUNDARY, "C01");
         assertUpstreamInvalid(list, withItem(list, 0, "status", "ENABLED"));
         assertUpstreamInvalid(list, withItem(list, 0, "minorUnit", 9));
         assertUpstreamInvalid(list, withItem(list, 0, "roundingMode", "HALF_EVEN"));
-        assertUpstreamInvalid(list, withItem(list, 1, "currency", "AED"));
-        assertUpstreamInvalid(list, withItem(list, 2, "updateTime", null));
+        assertUpstreamInvalid(list, withItem(list, 1, "currencyCode", "AED"));
+        assertUpstreamInvalid(list, withItem(list, 2, "version", null));
+        assertUpstreamInvalid(list, withItem(list, 2, "numericCode", "84"));
+        assertUpstreamInvalid(list, withItem(list, 0, "logoFileAddress", "https://static.local.test/aed.svg"));
 
         var create = row(BOUNDARY, "C02");
         assertUpstreamInvalid(create, withResponse(create, "objectType", "PERMISSION"));
@@ -230,6 +284,9 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
         var status = row(BOUNDARY, "C04");
         assertUpstreamInvalid(status, withResponse(status, "status", CurrencySpecStatus.INACTIVE.getCode()));
         assertUpstreamInvalid(status, withResponse(status, "objectId", "0"));
+        var update = row(BOUNDARY, "C03");
+        assertUpstreamInvalid(update, withResponse(update, "status", "ENABLED"));
+        assertUpstreamInvalid(update, withResponse(update, "objectCode", "USD"));
     }
 
     /** Platform 返回合同外字段时 BFF 不投影该字段。 */
@@ -297,9 +354,14 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
         return put((ObjectNode) row.path("response").deepCopy(), field, value);
     }
 
-    /** 复制列表响应并覆盖指定条目的一个字段。 */
+    /** Platform 响应：样例给出 ownerResponse（与页面形状不同）时取之，否则与页面响应相同。 */
+    private static JsonNode ownerResponse(JsonNode row) {
+        return row.has("ownerResponse") ? row.path("ownerResponse") : row.path("response");
+    }
+
+    /** 复制列表的 Platform 响应并覆盖指定条目的一个字段。 */
     private static ObjectNode withItem(JsonNode row, int index, String field, Object value) {
-        var copy = (ObjectNode) row.path("response").deepCopy();
+        var copy = (ObjectNode) ownerResponse(row).deepCopy();
         put((ObjectNode) ((ArrayNode) copy.path("items")).get(index), field, value);
         return copy;
     }

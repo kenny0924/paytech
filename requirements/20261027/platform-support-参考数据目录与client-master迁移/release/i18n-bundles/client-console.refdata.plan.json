@@ -1,0 +1,24 @@
+{
+ "app": "client-console",
+ "currentRelease": null,
+ "liveNamespaces": null,
+ "repoNamespaces": null,
+ "newNamespaces": [
+  "refdata"
+ ],
+ "repoKeys": null,
+ "liveActiveKeys": null,
+ "added": 429,
+ "restored": 0,
+ "sourceChanged": 0,
+ "missingInRepo": null,
+ "zhImportKeys": 429,
+ "zhMissingForImport": 0,
+ "keepLiveZh": null,
+ "deprecations": [],
+ "note": "refdata namespace only; null fields depend on the live release and are filled by the stage-6 release plan. onboarding-schema catalog.INDUSTRY/CURRENCY/STATE_OR_PROVINCE deprecations are planned with the frontend change, not here.",
+ "sha256": {
+  "client-console.refdata.en.json": "7f9e712b63bcbce2ec40add2bad42d306b3e5909d73466d5bb1bc43b1c2e3eb4",
+  "client-console.refdata.zh-CN.json": "5dcef0e9b51d1dedf97b3a84700cdd626b998da767585b27ecbf20fb13b7bbfa"
+ }
+}

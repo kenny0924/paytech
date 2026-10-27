@@ -27,6 +27,9 @@ import com.paytech.platform.support.api.enums.ClientTeamErrorCode;
 import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.api.files.InternalFileApi;
 import com.paytech.platform.support.api.localization.LocalizationDeliveryApi;
+import com.paytech.platform.support.api.referencedata.CountrySubdivisionQueryApi;
+import com.paytech.platform.support.api.referencedata.ReferenceCountryQueryApi;
+import com.paytech.platform.support.api.referencedata.ReferenceCurrencyQueryApi;
 import com.paytech.foundation.common.enums.CodeMessageEnum;
 import java.util.stream.Stream;
 
@@ -35,6 +38,9 @@ import java.util.stream.Stream;
 public class PlatformClientConfiguration {
     private static final String PLATFORM_SERVICE = "platform-support-service";
     private static final String CALLER_SERVICE_HEADER = "X-Caller-Service";
+
+    /** 参考数据响应上限：国家全量约 60 KB，留出余量。 */
+    static final int REFERENCE_DATA_MAX_BYTES = 262144;
 
     /** 只在测试侧显式指定 loopback 协议替身；正常服务由 Nacos 发现。 */
     @Bean ClientAuthenticationApi clientAuthenticationApi(Environment env, PlatformDiscoveryInterceptor discovery,
@@ -86,6 +92,30 @@ public class PlatformClientConfiguration {
         return create(env, discovery, testUrl, tokens, LocalizationDeliveryApi.class);
     }
 
+    /** 入驻表单的国家选项（参考数据目录，严格 JSON）。 */
+    @Bean
+    @ConditionalOnProperty(name = "client.onboarding-enabled", havingValue = "true")
+    ReferenceCountryQueryApi referenceCountryQueryApi(Environment env, PlatformDiscoveryInterceptor discovery,
+        @Value("${client.platform-test-base-url:}") String testUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return create(env, discovery, testUrl, tokens, ReferenceCountryQueryApi.class, REFERENCE_DATA_MAX_BYTES);
+    }
+
+    /** 入驻表单的币种选项（参考数据目录，严格 JSON）。 */
+    @Bean
+    @ConditionalOnProperty(name = "client.onboarding-enabled", havingValue = "true")
+    ReferenceCurrencyQueryApi referenceCurrencyQueryApi(Environment env, PlatformDiscoveryInterceptor discovery,
+        @Value("${client.platform-test-base-url:}") String testUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return create(env, discovery, testUrl, tokens, ReferenceCurrencyQueryApi.class, REFERENCE_DATA_MAX_BYTES);
+    }
+
+    /** 入驻表单的省州选项（参考数据目录，严格 JSON）。 */
+    @Bean
+    @ConditionalOnProperty(name = "client.onboarding-enabled", havingValue = "true")
+    CountrySubdivisionQueryApi countrySubdivisionQueryApi(Environment env, PlatformDiscoveryInterceptor discovery,
+        @Value("${client.platform-test-base-url:}") String testUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return create(env, discovery, testUrl, tokens, CountrySubdivisionQueryApi.class, REFERENCE_DATA_MAX_BYTES);
+    }
+
     /** 团队与邀请接口同时使用认证类与团队类错误码（会话、权限、工作区不可用沿用认证类）。 */
     static CodeMessageEnum[] teamErrors() {
         return Stream.concat(Stream.of(ClientAuthenticationErrorCode.values()), Stream.of(ClientTeamErrorCode.values()))
@@ -98,9 +128,21 @@ public class PlatformClientConfiguration {
         return create(env, discovery, testUrl, tokens, type, ClientAuthenticationErrorCode.values());
     }
 
+    /** 只注册认证类错误码、并按严格 JSON 绑定且限制响应字节数的 Platform 接口代理。 */
+    static <T> T create(Environment env, PlatformDiscoveryInterceptor discovery, String testUrl,
+        ObjectProvider<InternalTokenSupplier> tokens, Class<T> type, int maximumBytes) {
+        return create(env, discovery, testUrl, tokens, type, maximumBytes, ClientAuthenticationErrorCode.values());
+    }
+
     /** 同一套发现、超时与严格 Problem 解码创建 Platform 接口代理；contractErrors 为该接口发布的业务错误码。 */
     static <T> T create(Environment env, PlatformDiscoveryInterceptor discovery, String testUrl,
         ObjectProvider<InternalTokenSupplier> tokens, Class<T> type, CodeMessageEnum... contractErrors) {
+        return create(env, discovery, testUrl, tokens, type, 0, contractErrors);
+    }
+
+    /** maximumBytes 为 0 时沿用宽松响应绑定；大于 0 时启用严格 JSON 并限制成功与错误响应的字节数。 */
+    static <T> T create(Environment env, PlatformDiscoveryInterceptor discovery, String testUrl,
+        ObjectProvider<InternalTokenSupplier> tokens, Class<T> type, int maximumBytes, CodeMessageEnum... contractErrors) {
         RestClient.Builder builder=RestClient.builder();
         if(testUrl.isBlank()) {
             builder.baseUrl("http://" + PLATFORM_SERVICE + "/platform-support").requestInterceptor(discovery);
@@ -118,7 +160,8 @@ public class PlatformClientConfiguration {
         var factory=new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3))
             .followRedirects(HttpClient.Redirect.NEVER).build());
         factory.setReadTimeout(Duration.ofSeconds(5));
-        var options=InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withRequestValidationFailures(),
+        var base=HttpServiceClientOptions.strict().withRequestValidationFailures();
+        var options=InternalCallTokenOptions.apply(maximumBytes > 0 ? base.withStrictJsonResponses(maximumBytes) : base,
             tokens, PLATFORM_SERVICE)
             .withDependencyFailureMapper((kind,cause)->switch(kind) {
                 case TIMEOUT -> new ErrorException(ClientBffErrorCode.DEPENDENCY_TIMEOUT,null,cause);

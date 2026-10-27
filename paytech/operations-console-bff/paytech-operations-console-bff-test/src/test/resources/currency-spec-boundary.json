@@ -3,35 +3,85 @@
     "id": "C01",
     "method": "GET",
     "path": "/currency-admin/v1/currency-specs",
-    "ownerPath": "/platform/v1/currency-specs",
+    "ownerPath": "/platform/v1/reference-data/currencies",
     "query": "",
     "routeCode": "operations-currency-spec-list",
     "request": null,
+    "ownerResponse": {
+      "items": [
+        {
+          "currencyCode": "AED",
+          "numericCode": "784",
+          "name": "UAE Dirham",
+          "symbol": "د.إ",
+          "minorUnit": 2,
+          "roundingMode": "HALF_UP",
+          "logoFileAddress": "/files/v1/7312345678901234001",
+          "logoPublicUrl": "https://static.local.test/public/aed.svg",
+          "status": "DRAFT",
+          "version": 1
+        },
+        {
+          "currencyCode": "JPY",
+          "numericCode": null,
+          "name": null,
+          "symbol": null,
+          "minorUnit": 0,
+          "roundingMode": "HALF_UP",
+          "logoFileAddress": null,
+          "logoPublicUrl": null,
+          "status": "INACTIVE",
+          "version": 3
+        },
+        {
+          "currencyCode": "USD",
+          "numericCode": "840",
+          "name": "US Dollar",
+          "symbol": "$",
+          "minorUnit": 2,
+          "roundingMode": "HALF_UP",
+          "status": "ACTIVE",
+          "version": 2
+        }
+      ]
+    },
     "response": {
       "items": [
         {
           "currency": "AED",
+          "numericCode": "784",
+          "name": "UAE Dirham",
+          "symbol": "د.إ",
           "minorUnit": 2,
           "roundingMode": "HALF_UP",
+          "logoFileAddress": "/files/v1/7312345678901234001",
+          "logoPublicUrl": "https://static.local.test/public/aed.svg",
           "status": "DRAFT",
-          "version": 1,
-          "updateTime": "2026-10-20T01:02:03.123456Z"
+          "version": 1
         },
         {
           "currency": "JPY",
+          "numericCode": null,
+          "name": null,
+          "symbol": null,
           "minorUnit": 0,
           "roundingMode": "HALF_UP",
+          "logoFileAddress": null,
+          "logoPublicUrl": null,
           "status": "INACTIVE",
-          "version": 3,
-          "updateTime": "2026-10-20T02:03:04.654321Z"
+          "version": 3
         },
         {
           "currency": "USD",
+          "numericCode": "840",
+          "name": "US Dollar",
+          "symbol": "$",
           "minorUnit": 2,
           "roundingMode": "HALF_UP",
+          "logoFileAddress": null,
+          "logoPublicUrl": null,
           "status": "ACTIVE",
-          "version": 2,
-          "updateTime": "2026-10-19T00:00:00.000001Z"
+          "version": 2
         }
       ]
     }
@@ -45,6 +95,10 @@
     "routeCode": "operations-currency-spec-create",
     "request": {
       "currency": "AED",
+      "numericCode": "784",
+      "name": "UAE Dirham",
+      "symbol": "د.إ",
+      "logoFileAddress": "/files/v1/7312345678901234001",
       "minorUnit": 2,
       "roundingMode": "HALF_UP",
       "reason": "新增迪拉姆"
@@ -65,6 +119,10 @@
     "query": "",
     "routeCode": "operations-currency-spec-update",
     "request": {
+      "numericCode": "784",
+      "name": "UAE Dirham",
+      "symbol": "د.إ",
+      "logoFileAddress": null,
       "minorUnit": 3,
       "roundingMode": "HALF_UP",
       "expectedVersion": 1,

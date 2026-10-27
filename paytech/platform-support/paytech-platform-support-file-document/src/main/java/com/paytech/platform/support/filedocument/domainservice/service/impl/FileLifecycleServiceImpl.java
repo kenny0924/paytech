@@ -2,8 +2,12 @@ package com.paytech.platform.support.filedocument.domainservice.service.impl;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -77,6 +81,16 @@ public class FileLifecycleServiceImpl implements FileLifecycleService {
             throw new FailException(FileErrorCode.FILE_NOT_FOUND);
         }
         return StoredFileView.of(row);
+    }
+
+    /** 空集合不访问数据库；公开地址的计算规则与单条查询相同。 */
+    @Override
+    public Map<Long, StoredFileView> describeAll(Collection<Long> fileIds) {
+        if (fileIds.isEmpty()) {
+            return Map.of();
+        }
+        return repository.describeFiles(Set.copyOf(fileIds)).stream().map(StoredFileView::of)
+            .collect(Collectors.toMap(StoredFileView::getFileId, view -> view));
     }
 
     /** 文件当前版本坐标与状态。 */

@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.client.master.test.base.onboarding.AbstractOnboardingHttpTest;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingOwnerMocker.Material;
+import com.paytech.client.master.test.mocker.platform.ReferenceDataMocker.Catalog;
+import com.paytech.platform.support.api.enums.ReferenceDataStatus;
 
 /**
  * 只用数据新增国家（AC-11）：测试辖区 ZZ 的辖区、规则开关、组织类型、自有标识类型、自有关系类型（规则角色 MANAGER）、
@@ -24,6 +26,8 @@ class NewJurisdictionByDataTest extends AbstractOnboardingHttpTest {
     @BeforeEach
     void setUpZz() {
         packs.loadZzPack();
+        // 测试辖区 ZZ 的国家只存在于本例的 Platform 参考数据配置中（新增国家同样只改数据）。
+        referenceData.mock(Catalog.COUNTRY, "ZZ", ReferenceDataStatus.ACTIVE);
         owners.mockProgram("ORGANIZATION", "CLIENT", new Material("REGISTRATION", "REGISTRATION_CERTIFICATE", true));
         owners.mockProgram("INDIVIDUAL", "RELATED_PERSON", new Material("IDENTITY", "IDENTITY_DOCUMENT", true));
         vault.mockProtect();

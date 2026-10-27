@@ -1,32 +1,48 @@
 package com.paytech.platform.support.referencedata.domain;
 
 import java.time.Instant;
+import java.util.List;
 
-import com.paytech.platform.support.api.enums.CurrencyRoundingMode;
-import com.paytech.platform.support.referencedata.core.dal.dataobject.CurrencySpec;
+import com.paytech.platform.support.api.enums.CurrencySpecStatus;
+import com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCurrency;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-/** 修改 DRAFT 币种规则的本地保存上下文。 */
+/** 修改币种的本地保存上下文。 */
 @Getter
 @AllArgsConstructor
 public class UpdateCurrencySpecContext {
 
-    /** 已锁定并核对版本的 DRAFT 规则。 */
-    private final CurrencySpec spec;
+    /** 已锁定并核对版本的币种。 */
+    private final ReferenceCurrency currency;
 
-    /** 目标小数位。 */
-    private final int minorUnit;
-
-    /** 目标舍入方式。 */
-    private final CurrencyRoundingMode roundingMode;
+    /** 目标属性。 */
+    private final CurrencyAttributes attributes;
 
     /** 本次 UTC 微秒时间。 */
     private final Instant updateTime;
 
-    /** 小数位与舍入方式都未变化时不写库、不递增版本。 */
+    /** 全部属性都未变化时不写库、不递增版本。 */
     public boolean unchanged() {
-        return spec.getMinorUnit() == minorUnit && spec.getRoundingMode() == roundingMode;
+        return attributes.sameAs(CurrencyAttributes.of(currency));
+    }
+
+    /**
+     * 启用过（非 DRAFT）的币种被要求修改的冻结字段
+     *
+     * @return 请求字段名；DRAFT 或没有修改标准属性时为空
+     */
+    public List<String> frozenFieldChanges() {
+        if (currency.getStatus() == CurrencySpecStatus.DRAFT) {
+            return List.of();
+        }
+        return attributes.changedStandardFields(CurrencyAttributes.of(currency));
+    }
+
+    /** logo 改为另一个非空地址时需要核对文件。 */
+    public boolean logoReplaced() {
+        return attributes.getLogoFileAddress() != null
+            && !attributes.getLogoFileAddress().equals(currency.getLogoFileAddress());
     }
 }

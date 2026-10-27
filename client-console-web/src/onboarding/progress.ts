@@ -16,6 +16,21 @@ const open = new Set(["CURRENTLY_DUE", "PAST_DUE"]);
 const missingCodes = new Set(["FIELD_MISSING", "DOCUMENT_MISSING", "DECLARATION_MISSING", "UBO_MISSING", "SIGNATORY_MISSING",
   "DIRECTOR_MISSING", "RELATED_PERSON_INCOMPLETE"]);
 
+/**
+ * 主主体在给定草稿路径上的未满足、非"缺少"类问题（如编码不在目录或已停用）：路径 → 错误码
+ * <li>这类问题本地校验发现不了（值来自下拉、后来被停用），任务页打开时据此把错误挂到字段上。</li>
+ */
+export function fieldRequirementIssues(app: Application, paths: Set<string>): Record<string, string> {
+  if (app.requirementsStatus !== "AVAILABLE") return {};
+  const issues: Record<string, string> = {};
+  for (const item of app.requirements ?? []) {
+    if (!open.has(item.status) || !item.errorCode || missingCodes.has(item.errorCode)) continue;
+    if (item.subjectPartyId && item.subjectPartyId !== app.subjectPartyId) continue;
+    if (paths.has(item.requirementKey)) issues[item.requirementKey] ??= item.errorCode;
+  }
+  return issues;
+}
+
 /** 把需求键或错误键定位到任务与具体字段 / 人员 / 材料槽 / 声明。 */
 export function locate(key: string, subjectPartyId: string | null, kind: string | null, app: Application, schema: FormSchema): Anchor {
   const person = subjectPartyId && subjectPartyId !== app.subjectPartyId ? subjectPartyId : undefined;

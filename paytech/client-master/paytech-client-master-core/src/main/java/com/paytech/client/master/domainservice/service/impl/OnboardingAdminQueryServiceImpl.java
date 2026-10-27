@@ -2,11 +2,16 @@ package com.paytech.client.master.domainservice.service.impl;
 
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.paytech.client.master.api.enums.CheckoutCandidateErrorCode;
 import com.paytech.client.master.api.enums.EntityAdminErrorCode;
+import com.paytech.client.master.core.dal.dataobject.AddressFormatComponent;
 import com.paytech.client.master.core.dal.dataobject.CatalogItem;
+import com.paytech.client.master.core.dal.dataobject.Jurisdiction;
 import com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission;
 import com.paytech.client.master.core.dal.dataobject.OnboardingSchema;
 import com.paytech.client.master.core.dal.dataobject.OrganizationType;
@@ -15,6 +20,7 @@ import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
 import com.paytech.client.master.domain.onboardingadmin.ClientAdminView;
 import com.paytech.client.master.domain.onboardingadmin.JurisdictionAdminDetail;
 import com.paytech.client.master.domain.onboardingadmin.SchemaAdminDetail;
+import com.paytech.client.master.domainservice.repository.AddressFormatComponentRepository;
 import com.paytech.client.master.domainservice.repository.CatalogItemRepository;
 import com.paytech.client.master.domainservice.repository.ClientApplicationRepository;
 import com.paytech.client.master.domainservice.repository.ClientRepository;
@@ -49,12 +55,17 @@ public class OnboardingAdminQueryServiceImpl implements OnboardingAdminQueryServ
     private final OrganizationTypeRepository organizationTypes;
     private final OnboardingSchemaFieldRepository schemaFields;
     private final PartnerOnboardingCodeRepository onboardingCodes;
+    private final AddressFormatComponentRepository addressComponents;
 
-    /** 每个辖区的规则取其辖区、组织类型、标识类型作用域与 * 默认。 */
+    /** 每个辖区的规则取其辖区、组织类型、标识类型作用域与 * 默认；本地地址格式组件一次读出后按格式分组。 */
     @Override
     public List<JurisdictionAdminDetail> jurisdictions() {
         var allRules = ruleSettings.findAll();
-        return jurisdictions.findAll().stream().map(jurisdiction -> {
+        List<Jurisdiction> all = jurisdictions.findAll();
+        Map<String, List<AddressFormatComponent>> components = addressComponents.findByFormats(all.stream()
+            .map(Jurisdiction::getAddressFormatCode).filter(Objects::nonNull).distinct().toList()).stream()
+            .collect(Collectors.groupingBy(AddressFormatComponent::getAddressFormatCode));
+        return all.stream().map(jurisdiction -> {
             String code = jurisdiction.getJurisdictionCode();
             List<OrganizationType> types = organizationTypes.findByJurisdiction(code);
             var identifiers = identifierTypes.findForJurisdiction(code);
@@ -62,7 +73,8 @@ public class OnboardingAdminQueryServiceImpl implements OnboardingAdminQueryServ
             types.forEach(type -> scopes.add(code + ":" + type.getTypeCode()));
             identifiers.forEach(type -> scopes.add(type.getIdentifierTypeCode()));
             return new JurisdictionAdminDetail(jurisdiction, allRules.stream().filter(rule -> scopes.contains(rule.getScopeCode())).toList(),
-                types, identifiers, relationTypes.findForJurisdiction(code));
+                types, identifiers, relationTypes.findForJurisdiction(code),
+                components.getOrDefault(jurisdiction.getAddressFormatCode(), List.of()));
         }).toList();
     }
 

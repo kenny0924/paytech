@@ -36,6 +36,8 @@ public interface ClientOnboardingCatalogApi {
      * @param partyType INDIVIDUAL 或 ORGANIZATION；未提供 applicationId 时必填
      * @param organizationType 组织类型代码，可空；有专用 Schema 时返回专用版本，否则返回 * 默认版本
      * @return Schema、目录、规则、材料槽与声明
+     *         <li>catalogs 只含本服务目录；引用 Platform 参考数据的 REF_CURRENCY、REF_COUNTRY_SUBDIVISION 与国家选项不在其中，
+     *         由 client-console-bff 向 Platform 查询后补全。</li>
      *         <li>辖区不存在、未启用、准入 CLOSED 或无 ACTIVE Schema：422 JURISDICTION_NOT_ACCEPTED。</li>
      *         <li>compliance 程序不可用：503 ONBOARDING_DEPENDENCY_UNAVAILABLE（不返回缺少材料槽的半成品）。</li>
      */

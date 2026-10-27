@@ -4,7 +4,7 @@ import java.time.Instant;
 
 import com.paytech.platform.support.api.enums.CurrencyRoundingMode;
 import com.paytech.platform.support.api.enums.CurrencySpecStatus;
-import com.paytech.platform.support.referencedata.core.dal.dataobject.CurrencySpec;
+import com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCurrency;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -33,8 +33,8 @@ public class CurrencySpecResult {
     private final Instant updateTime;
 
     /** 由本模块 DataObject 构造。 */
-    public static CurrencySpecResult of(CurrencySpec spec) {
-        return new CurrencySpecResult(spec.getCurrency(), spec.getMinorUnit(), spec.getRoundingMode(),
+    public static CurrencySpecResult of(ReferenceCurrency spec) {
+        return new CurrencySpecResult(spec.getCurrencyCode(), spec.getMinorUnit(), spec.getRoundingMode(),
             spec.getStatus(), spec.getVersion(), spec.getUpdateTime());
     }
 }

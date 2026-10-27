@@ -216,3 +216,27 @@ test('published-only: an English start still discovers zh-CN for the switcher', 
   assert.deepEqual(i18n.locales().map((item) => item.code), ['en', 'zh-CN']);
   assert.ok(http.calls.some((call) => call.url === '/manifest?locale=zh-CN'));
 });
+
+test('find: data-owned namespaces without built-in text resolve from runtime bundles, else null without warning', async () => {
+  const refdataManifest = (locale: string): Manifest => ({
+    application: 'client-console', releaseNo: 7, defaultLocale: 'en', locales,
+    bundles: {
+      en: { refdata: { hash: 'e2', url: 'https://cdn.test/r7/en/refdata.e2.json' } },
+      ...(locale === 'en' ? {} : { [locale]: { refdata: { hash: 'z2', url: 'https://cdn.test/r7/' + locale + '/refdata.z2.json' } } }),
+    },
+  });
+  const route: Route = (url) => {
+    if (url.startsWith('/manifest')) return json(refdataManifest(new URL(url, 'http://x').searchParams.get('locale')!));
+    if (url.endsWith('/en/refdata.e2.json')) return json({ 'refdata.subdivision.AE-DU': 'Dubai', 'refdata.subdivision.AE-AZ': 'Abu Dhabi' });
+    if (url.endsWith('/zh-CN/refdata.z2.json')) return json({ 'refdata.subdivision.AE-DU': '迪拜' });
+    return new Response('missing', { status: 404 });
+  };
+  const { i18n, warnings } = setup({ publishedOnly: true }, route);
+  assert.equal(i18n.find('refdata', 'subdivision.AE-DU'), null);
+  await i18n.start({ search: '?lang=zh-CN' });
+  await i18n.loadNeeded();
+  assert.equal(i18n.find('refdata', 'subdivision.AE-DU'), '迪拜');
+  assert.equal(i18n.find('refdata', 'subdivision.AE-AZ'), 'Abu Dhabi');
+  assert.equal(i18n.find('refdata', 'subdivision.AE-SH'), null);
+  assert.deepEqual(warnings, []);
+});

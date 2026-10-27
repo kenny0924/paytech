@@ -1,5 +1,6 @@
 package com.paytech.platform.support.filedocument.core.dal.mapper;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.paytech.platform.support.filedocument.core.dal.dataobject.*;
@@ -15,6 +16,8 @@ public interface FileLifecycleMapper {
     FileUpload lockSourceUpload(@Param("id") long id);
     /** 文件、当前版本上传、首次上传与存储桶基础地址组合的元数据。 */
     FileDescription describeFile(@Param("fileId") long fileId);
+    /** 同一组合读取的批量形式；只返回存在的文件，调用方保证集合非空。 */
+    List<FileDescription> describeFiles(@Param("fileIds") Collection<Long> fileIds);
     /** 版本上传登记的展示名；非上传来源为空。 */
     String versionDisplayName(@Param("fileId") long fileId, @Param("versionNo") int versionNo);
     /** 锁住文件，防止失去 Lease 的旧工作者覆盖新事实。 */

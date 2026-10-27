@@ -12,7 +12,6 @@ import com.paytech.client.master.api.onboarding.ClientOnboardingApplicationApi;
 import com.paytech.client.master.api.onboarding.ClientOnboardingCatalogApi;
 import com.paytech.client.master.api.onboarding.request.DeclarationRequestBody;
 import com.paytech.client.master.api.onboarding.response.DeclarationResponseBody;
-import com.paytech.client.master.api.onboarding.response.FormSchemaResponseBody;
 import com.paytech.client.master.api.onboarding.response.JurisdictionResponseBody;
 import com.paytech.client.master.api.onboarding.response.RequirementsResponseBody;
 import com.paytech.client.master.api.onboarding.response.WithdrawalResponseBody;
@@ -22,10 +21,13 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.common.error.ServiceUnavailableException;
 import com.paytech.client.console.bff.service.model.ClientActor;
 import com.paytech.client.console.bff.service.model.response.ApplicationResponseBody;
+import com.paytech.client.console.bff.service.model.response.ClientFormSchemaResponseBody;
 import com.paytech.client.console.bff.service.model.response.StartResponseBody;
 import com.paytech.client.console.bff.service.processor.ClientApplicationDetailsProcessor;
 import com.paytech.client.console.bff.service.processor.ClientOnboardingStartProcessor;
+import com.paytech.client.console.bff.service.processor.GetClientFormSchemaProcessor;
 import com.paytech.client.console.bff.service.processor.request.ClientApplicationDetailsRequest;
+import com.paytech.client.console.bff.service.processor.request.GetClientFormSchemaRequest;
 import com.paytech.client.contract.api.onboarding.ClientDocumentApi;
 import com.paytech.client.contract.api.onboarding.ClientDocumentModels.DocumentCommandReceiptResponseBody;
 import com.paytech.client.contract.api.onboarding.ClientDocumentModels.DocumentReferenceRequestBody;
@@ -41,7 +43,7 @@ import com.paytech.client.contract.api.onboarding.ClientPeopleModels.RelationPat
 import com.paytech.client.contract.api.onboarding.ClientSubmissionApi;
 import com.paytech.client.contract.api.onboarding.response.SubmissionResponseBody;
 
-/** 入驻路径的薄适配：三个页面查询交给 Processor 聚合，写命令只直接转发 CCT，不协调跨服务业务。 */
+/** 入驻路径的薄适配：开始页、申请详情与采集 Schema 三个页面查询交给 Processor 聚合，写命令只直接转发 CCT，不协调跨服务业务。 */
 @RestController
 @lombok.AllArgsConstructor
 @RequestMapping("/client-onboarding/v1")
@@ -56,6 +58,7 @@ public class ClientOnboardingController {
     private final ClientOnboardingApplicationApi onboardingApplications;
     private final ClientOnboardingStartProcessor startPage;
     private final ClientApplicationDetailsProcessor applicationDetails;
+    private final GetClientFormSchemaProcessor formSchemaPage;
 
     /** 当前账号的原申请导航。 */
     @GetMapping("/start")
@@ -74,9 +77,10 @@ public class ClientOnboardingController {
      * CM-2 采集 Schema
      * <li>有 applicationId 时 Owner 返回该申请冻结的版本与责任方材料（其余参数可省略，申请归属由 Owner 核对）；否则辖区与主体类型必填。</li>
      * <li>Query 已由拦截器限定为这四个单值参数。</li>
+     * <li>Processor 补全 Platform 参考数据选项（国家、REF_ 目录）；参考数据读取失败时整页失败。</li>
      */
     @GetMapping("/form-schema")
-    public ResponseEntity<FormSchemaResponseBody> formSchema(
+    public ResponseEntity<ClientFormSchemaResponseBody> formSchema(
         ClientActor actor,
         @RequestParam(required = false) String applicationId,
         @RequestParam(required = false) String jurisdiction,
@@ -90,9 +94,8 @@ public class ClientOnboardingController {
             || (organizationType != null && !organizationType.matches(CODE))) {
             throw new InvalidParameterException("入驻查询参数无效");
         }
-        var value = catalogs.formSchema(CallerServiceCodes.CLIENT_CONSOLE_BFF, actor.getAccountId(), actor.getSessionId(),
-            applicationId, jurisdiction, partyType, organizationType);
-        return ok(requireShape(value, value != null && value.getSchemaId() != null && value.getSections() != null));
+        return ok(formSchemaPage.process(
+            new GetClientFormSchemaRequest(actor, applicationId, jurisdiction, partyType, organizationType)));
     }
 
     /** CM-6 逐条声明；只接受声明代码与 TRUE/FALSE，账号、时间、IP 与浏览器由 Owner 记录。 */

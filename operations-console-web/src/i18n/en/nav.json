@@ -136,6 +136,7 @@
   "nav.resource.OPERATIONS_QUALIFICATIONS": "Qualifications",
   "nav.resource.OPERATIONS_QUALIFICATIONS_MANAGE": "Register & Revoke",
   "nav.resource.OPERATIONS_QUERY_TEMPLATES": "Query Templates",
+  "nav.resource.OPERATIONS_REFERENCE_DATA": "Reference Data",
   "nav.resource.OPERATIONS_RISK_DECISION_FLOWS": "Decision Flows",
   "nav.resource.OPERATIONS_RISK_DECISION_FLOW_DELETE": "Delete",
   "nav.resource.OPERATIONS_RISK_DECISION_FLOW_SAVE": "Save Configuration",

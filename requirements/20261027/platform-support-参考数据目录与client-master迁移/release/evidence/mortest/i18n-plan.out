@@ -1,0 +1,16 @@
+[通过] client-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] client-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[通过] client-console 线上 48 个 ACTIVE key 不在仓库中，按 --accept-deprecations 计划废弃（见 plan.json deprecations）
+[通过] client-console 新增 436 < 3000
+[通过] client-console 导入集合 436+ 个 key 都有仓库 zh-CN（缺 0）
+{"currentRelease": 5, "liveNamespaces": 9, "repoNamespaces": 10, "newNamespaces": [{"code": "refdata", "name": "参考数据名称", "sort": 100}], "repoKeys": 1423, "liveActiveKeys": 1035, "added": 436, "restored": 0, "sourceChanged": 0, "missingInRepo": 48, "zhMissingForImport": 0, "keepLiveZh": 1035, "refdataZhReplaced": 0, "liveOutdatedZh": 2, "rebaseExpected": 0, "outdatedUntouched": 2}
+[通过] operations-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] operations-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[通过] operations-console 线上 59 个 ACTIVE key 不在仓库中，按 --accept-deprecations 计划废弃（见 plan.json deprecations）
+[通过] operations-console 新增 645 < 3000
+[通过] operations-console 导入集合 646+ 个 key 都有仓库 zh-CN（缺 0）
+{"currentRelease": 12, "liveNamespaces": 24, "repoNamespaces": 26, "newNamespaces": [{"code": "reference-data", "name": "参考数据", "sort": 250}, {"code": "refdata", "name": "参考数据名称", "sort": 260}], "repoKeys": 10088, "liveActiveKeys": 9502, "added": 645, "restored": 0, "sourceChanged": 1, "missingInRepo": 59, "zhMissingForImport": 0, "keepLiveZh": 9501, "refdataZhReplaced": 0, "liveOutdatedZh": 0, "rebaseExpected": 0, "outdatedUntouched": 0}
+导入文件与计划：/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/platform-support-参考数据目录与client-master迁移/release/i18n-bundles
+计划完成（只读，未登录、未写入）：可执行
+
+== 参考数据语言包计划：通过 10，失败 0，未能验证 0

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import com.paytech.client.master.domainservice.repository.AddressFormatComponentRepository;
 import com.paytech.client.master.domainservice.repository.CatalogItemRepository;
 import com.paytech.client.master.domainservice.repository.ClientApplicationRepository;
 import com.paytech.client.master.domainservice.repository.ClientRepository;
@@ -41,9 +42,10 @@ public class ClientOnboardingAdminConfiguration {
         RuleSettingRepository ruleSettings, JurisdictionRepository jurisdictions, LocalPartnerRepository localPartners,
         RelationTypeRepository relationTypes, OnboardingSchemaRepository schemas, IdentifierTypeRepository identifierTypes,
         ClientApplicationRepository applications, OrganizationTypeRepository organizationTypes,
-        OnboardingSchemaFieldRepository schemaFields, PartnerOnboardingCodeRepository onboardingCodes) {
+        OnboardingSchemaFieldRepository schemaFields, PartnerOnboardingCodeRepository onboardingCodes,
+        AddressFormatComponentRepository addressComponents) {
         return new OnboardingAdminQueryServiceImpl(clients, catalogItems, ruleSettings, jurisdictions, localPartners, relationTypes,
-            schemas, identifierTypes, applications, organizationTypes, schemaFields, onboardingCodes);
+            schemas, identifierTypes, applications, organizationTypes, schemaFields, onboardingCodes, addressComponents);
     }
 
     /** Client 详情：快照在 REPEATABLE READ 只读事务内读取。 */

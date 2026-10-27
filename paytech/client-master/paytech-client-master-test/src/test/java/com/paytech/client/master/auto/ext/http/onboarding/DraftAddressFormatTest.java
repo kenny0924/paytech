@@ -58,7 +58,7 @@ class DraftAddressFormatTest extends AbstractOnboardingHttpTest {
             {"dirtyFields":["address.countryCode","address.addressFormatCode","address.addressLine1","address.city",
             "address.stateOrProvince","address.poBox"],
             "values":{"address":{"countryCode":"AE","addressFormatCode":"AE_POBOX","addressLine1":"Office 1204, Marina Plaza",
-            "city":"Dubai","stateOrProvince":"AE_DU","poBox":"112233"}}}""");
+            "city":"Dubai","stateOrProvince":"AE-DU","poBox":"112233"}}}""");
 
         assertEquals(200, local.getStatus().value(), new String(local.getResponseBody()));
         long profileId = mapper.applicationProfile(applicationId);
@@ -89,6 +89,31 @@ class DraftAddressFormatTest extends AbstractOnboardingHttpTest {
         assertTrue(vault.calls().isEmpty());
     }
 
+    /**
+     * 行政区（REF_COUNTRY_SUBDIVISION）保存草稿只校验 ISO 3166-2 格式：旧下划线目录码 422 指向 address.stateOrProvince；
+     * 境外通用格式的省州为自由文本照常保存。保存草稿不查询 Platform 参考数据。
+     */
+    @Test
+    void test_subdivisionFormat() {
+        long applicationId = started("INDIVIDUAL", "AE", null, null);
+
+        var legacy = patch(applicationId, """
+            {"dirtyFields":["address.countryCode","address.stateOrProvince"],
+            "values":{"address":{"countryCode":"AE","stateOrProvince":"AE_DU"}}}""");
+
+        assertEquals(422, legacy.getStatus().value(), new String(legacy.getResponseBody()));
+        assertEquals("INVALID_DRAFT", body(legacy).path("code").asString());
+        assertEquals("address.stateOrProvince", body(legacy).path("errors").get(0).path("field").asString());
+
+        var foreign = patch(applicationId, """
+            {"dirtyFields":["address.countryCode","address.stateOrProvince"],
+            "values":{"address":{"countryCode":"GB","stateOrProvince":"Greater London"}}}""");
+
+        assertEquals(200, foreign.getStatus().value(), new String(foreign.getResponseBody()));
+        assertEquals("Greater London", mapper.address(mapper.applicationProfile(applicationId)).get("state_or_province"));
+        assertEquals(0, referenceData.count());
+    }
+
     /** 页面省略格式码：沙特草稿地址与同批联系方式照常保存，落库为 SA_NATIONAL_ADDRESS。 */
     @Test
     void test_saDraftWithoutFormatCode() {
@@ -111,7 +136,7 @@ class DraftAddressFormatTest extends AbstractOnboardingHttpTest {
         long ae = started("INDIVIDUAL", "AE", null, null);
         var aeSaved = patch(ae, """
             {"dirtyFields":["address.countryCode","address.addressLine1","address.city","address.stateOrProvince"],
-            "values":{"address":{"countryCode":"AE","addressLine1":"Marina Plaza","city":"Dubai","stateOrProvince":"AE_DU"}}}""");
+            "values":{"address":{"countryCode":"AE","addressLine1":"Marina Plaza","city":"Dubai","stateOrProvince":"AE-DU"}}}""");
 
         assertEquals(200, aeSaved.getStatus().value(), new String(aeSaved.getResponseBody()));
         assertEquals("AE_POBOX", mapper.address(mapper.applicationProfile(ae)).get("address_format_code"));

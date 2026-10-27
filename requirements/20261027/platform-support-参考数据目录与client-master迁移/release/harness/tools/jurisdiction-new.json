@@ -1,0 +1,1 @@
+{"jurisdictionCode":"AE","countryCode":"AE","labelKey":"x","addressFormatCode":"AE_POBOX","status":"ACTIVE","changeVersion":1,"rules":[],"organizationTypes":[],"identifierTypes":[],"relationTypes":[],"addressComponents":[{"component":"stateOrProvince","catalogCode":"REF_COUNTRY_SUBDIVISION","required":true,"order":3}]}

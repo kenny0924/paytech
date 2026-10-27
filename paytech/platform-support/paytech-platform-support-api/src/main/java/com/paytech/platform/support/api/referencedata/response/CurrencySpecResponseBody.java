@@ -3,7 +3,7 @@ package com.paytech.platform.support.api.referencedata.response;
 import lombok.Getter;
 import lombok.Setter;
 
-/** 一条币种规则；字段与 t_currency_spec 的业务列一致。 */
+/** 一条币种规则；字段与 t_ref_currency 的规则列一致。 */
 @Getter
 @Setter
 public class CurrencySpecResponseBody {

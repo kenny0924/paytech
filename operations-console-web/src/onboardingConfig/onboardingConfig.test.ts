@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decodeCatalogItems, decodeJurisdictions, decodePrograms, decodeSchemas, groupFields, programInUse, referencedCatalogs } from './onboardingConfig.ts';
+import { catalogSource, catalogUsages, decodeCatalogItems, decodeJurisdictions, decodePrograms, decodeSchemas, groupFields, programInUse, referenceCatalogHref,
+  referencedCatalogs } from './onboardingConfig.ts';
 
 const field = (fieldKey: string, section: string, displayGroup: string | null, displayOrder: number, catalogCode: string | null = null) => ({ section, displayGroup, fieldKey,
   widgetCode: 'TEXT', catalogCode, requirementLevel: 'REQUIRED', requirementGroup: null, appliesToSubject: null, validationPattern: null, minLength: null, maxLength: null,
@@ -60,4 +61,35 @@ test('real AE schema list: organizationTypeCode * is the default schema for all 
     schema('9270000000700003', 'INDIVIDUAL', '*')], 'AE');
   assert.deepEqual(decoded.map(s => s.organizationTypeCode), [null, 'FZ_LLC', null]);
   assert.throws(() => decodeSchemas([schema('9270000000700009', 'ORGANIZATION', '**')], 'AE'), 'only the exact wildcard is accepted');
+});
+
+test('jurisdictions decode optional address-format components; absent means none', () => {
+  const ae = { jurisdictionCode: 'AE', countryCode: 'AE', labelKey: null, addressFormatCode: 'AE_POBOX', status: 'ACTIVE', changeVersion: 1, rules: [],
+    organizationTypes: [], identifierTypes: [], relationTypes: [] };
+  assert.deepEqual(decodeJurisdictions([ae])[0].addressComponents, []);
+  assert.deepEqual(decodeJurisdictions([{ ...ae, addressComponents: [{ component: 'stateOrProvince', catalogCode: 'REF_COUNTRY_SUBDIVISION', required: true, order: 3 }] }])[0]
+    .addressComponents, [{ component: 'stateOrProvince', catalogCode: 'REF_COUNTRY_SUBDIVISION' }]);
+  assert.throws(() => decodeJurisdictions([{ ...ae, addressComponents: [{ component: 'stateOrProvince', catalogCode: 'ref_x' }] }]));
+});
+
+test('catalog sources: REF_ catalogs come from Platform reference data and link to their maintenance page; others are onboarding catalogs', () => {
+  const field = (fieldKey: string, catalogCode: string | null) => ({ section: 'BUSINESS', group: null, fieldKey, widget: 'SELECT', catalogCode, requirementLevel: 'REQUIRED',
+    requirementGroup: null, appliesTo: null, visibleWhen: null, labelKey: null, order: 1 });
+  const schema = (fields: ReturnType<typeof field>[]) => ({ schemaId: '1', jurisdictionCode: 'AE', partyType: 'ORGANIZATION', roleType: 'CLIENT',
+    organizationTypeCode: null, versionNo: 1, status: 'ACTIVE', fields });
+  const usages = catalogUsages([schema([field('business.businessModelCode', 'BUSINESS_MODEL'), field('business.currency', 'REF_CURRENCY'), field('organization.legalName', null)]),
+    schema([field('address.stateOrProvince', 'REF_COUNTRY_SUBDIVISION'), field('business.currency', 'REF_CURRENCY')])]);
+  assert.deepEqual(usages, [
+    { catalogCode: 'BUSINESS_MODEL', source: 'ONBOARDING', fieldKeys: ['business.businessModelCode'] },
+    { catalogCode: 'REF_CURRENCY', source: 'PLATFORM', fieldKeys: ['business.currency'] },
+    { catalogCode: 'REF_COUNTRY_SUBDIVISION', source: 'PLATFORM', fieldKeys: ['address.stateOrProvince'] },
+  ]);
+  assert.equal(catalogSource('REF_ANYTHING'), 'PLATFORM');
+  const withAddress = catalogUsages([schema([field('business.currency', 'REF_CURRENCY')])], { addressFormatCode: 'AE_POBOX',
+    addressComponents: [{ component: 'line1', catalogCode: null }, { component: 'stateOrProvince', catalogCode: 'REF_COUNTRY_SUBDIVISION' }] });
+  assert.deepEqual(withAddress.map(u => [u.catalogCode, u.fieldKeys]), [['REF_CURRENCY', ['business.currency']],
+    ['REF_COUNTRY_SUBDIVISION', ['address.stateOrProvince (AE_POBOX)']]], 'address-format components list their catalogs too (prototype 09)');
+  assert.equal(referenceCatalogHref('REF_COUNTRY_SUBDIVISION', 'AE'), '/reference-data?tab=subdivisions&country=AE');
+  assert.equal(referenceCatalogHref('REF_CURRENCY', 'AE'), '/currency-specs');
+  assert.equal(referenceCatalogHref('BUSINESS_MODEL', 'AE'), null);
 });

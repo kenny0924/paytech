@@ -49,7 +49,7 @@ public class CurrencySpecManagementController {
         return client.createCurrencySpec(context, request);
     }
 
-    /** 修改 DRAFT 币种规则的小数位与舍入方式；已启用的规则由 Platform 拒绝。 */
+    /** 修改币种规则：DRAFT 可改全部属性；启用或停用后只能更换图标，其他字段不同由 Platform 以 422 拒绝。 */
     @PutMapping("/{currency}")
     public ConfigurationMutationResponseBody updateCurrencySpec(OperatorContext context,
         @PathVariable("currency") @Pattern(regexp = CURRENCY) String currency,

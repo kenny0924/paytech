@@ -88,7 +88,10 @@ class OnboardingAdminBrowserAutoTest extends OperationsBffHttpTestBase {
     void test_configurationForwardsReadOnlyQueries() throws Exception {
         owners.reply("GET", MASTER + "/jurisdictions", 200, "[{\"jurisdictionCode\":\"SA\",\"countryCode\":\"SA\",\"labelKey\":\"onboardingSchema.jurisdiction.SA\","
             + "\"addressFormatCode\":\"SA_NATIONAL\",\"status\":\"ACTIVE\",\"changeVersion\":1,\"rules\":[{\"scopeType\":\"JURISDICTION\",\"scopeCode\":\"SA\","
-            + "\"ruleCode\":\"UBO_THRESHOLD_PCT\",\"ruleValue\":\"25\",\"status\":\"ACTIVE\"}],\"organizationTypes\":[],\"identifierTypes\":[],\"relationTypes\":[]}]");
+            + "\"ruleCode\":\"UBO_THRESHOLD_PCT\",\"ruleValue\":\"25\",\"status\":\"ACTIVE\"}],\"organizationTypes\":[],\"identifierTypes\":[],\"relationTypes\":[],"
+            + "\"addressComponents\":[{\"component\":\"city\",\"catalogCode\":\"CITY\",\"required\":true,\"order\":30},"
+            + "{\"component\":\"stateOrProvince\",\"catalogCode\":\"REF_COUNTRY_SUBDIVISION\",\"required\":true,\"order\":40},"
+            + "{\"component\":\"addressLine2\",\"catalogCode\":null,\"required\":false,\"order\":20}]}]");
         owners.reply("GET", MASTER + "/onboarding-schemas", 200, "[{\"schemaId\":\"6101\",\"jurisdictionCode\":\"SA\",\"partyType\":\"ORGANIZATION\","
             + "\"roleType\":\"CLIENT\",\"organizationTypeCode\":null,\"versionNo\":1,\"status\":\"ACTIVE\",\"approvedTime\":null,\"fields\":[{\"section\":\"BASIC\","
             + "\"displayGroup\":\"IDENTITY\",\"fieldKey\":\"organization.legalName\",\"widgetCode\":\"TEXT\",\"catalogCode\":null,\"requirementLevel\":\"REQUIRED\","
@@ -104,6 +107,10 @@ class OnboardingAdminBrowserAutoTest extends OperationsBffHttpTestBase {
 
         assertOk(jurisdictions);
         assertEquals("25", JSON.readTree(jurisdictions.body()).get(0).path("rules").get(0).path("ruleValue").asString());
+        var components = JSON.readTree(jurisdictions.body()).get(0).path("addressComponents");
+        assertEquals(3, components.size(), "地址格式组件原样到达页面（F-5：目录页据此列出 REF_COUNTRY_SUBDIVISION）");
+        assertEquals("REF_COUNTRY_SUBDIVISION", components.get(1).path("catalogCode").asString());
+        assertTrue(components.get(2).path("catalogCode").isNull());
         assertOk(schemas);
         assertEquals("organization.legalName", JSON.readTree(schemas.body()).get(0).path("fields").get(0).path("fieldKey").asString());
         assertOk(items);
@@ -120,6 +127,19 @@ class OnboardingAdminBrowserAutoTest extends OperationsBffHttpTestBase {
         owners.reply("GET", MASTER + "/onboarding-schemas", 200, "[{\"schemaId\":\"6101\",\"jurisdictionCode\":\"AE\",\"partyType\":\"ORGANIZATION\","
             + "\"versionNo\":1,\"status\":\"ACTIVE\",\"fields\":[]}]");
         assertEquals(502, send("GET", "/onboarding-config-admin/v1/onboarding-schemas?jurisdiction=SA", "operations-onboarding-config-schemas", null).statusCode());
+    }
+
+    /** 参考数据目录（REF_ 前缀）的选项来自 Platform，不在 client-master 目录表中：返回空列表且不访问 client-master。 */
+    @Test
+    void test_referenceCatalogHasNoClientMasterItems() throws Exception {
+        for (String catalog : List.of("REF_CURRENCY", "REF_COUNTRY_SUBDIVISION")) {
+            var response = send("GET", "/onboarding-config-admin/v1/catalog-items?catalogCode=" + catalog + "&jurisdiction=AE",
+                "operations-onboarding-config-catalog-items", null);
+
+            assertOk(response);
+            assertEquals(0, JSON.readTree(response.body()).size(), catalog);
+        }
+        assertTrue(owners.requests().isEmpty(), owners.requests().toString());
     }
 
     /** O14 程序：按辖区转发 compliance（不带状态，展示全部版本）；全局程序可见；其他辖区的程序为 502。 */

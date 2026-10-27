@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Empty, Segmented, Select, Table, Tag } from 'antd';
+import { DatabaseOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { session } from '../api/session';
 import { Loading, QueryFailure } from '../tenantAccess/TenantAccessView';
 import { StatusDot, tone } from '../clientReview/reviewParts';
 import { enumLabel, tOr } from '../i18n/index';
 import type { Translate } from '../i18n/index';
 import { useT } from '../i18n/react';
-import { configApi, decodeCatalogItems, decodeJurisdictions, decodePrograms, decodeSchemas, programInUse, groupFields, referencedCatalogs } from './onboardingConfig';
-import type { CatalogItem, Jurisdiction, OnboardingSchema, Program, ProgramItem, SchemaField } from './onboardingConfig';
+import { catalogUsages, configApi, decodeCatalogItems, decodeJurisdictions, decodePrograms, decodeSchemas, programInUse, groupFields, referenceCatalogHref } from './onboardingConfig';
+import type { CatalogItem, CatalogUsage, Jurisdiction, OnboardingSchema, Program, ProgramItem, SchemaField } from './onboardingConfig';
+import { decodeSubdivisions, refdataName, referenceDataPaths } from '../referenceData/referenceData';
 import '../clientReview/clientReview.css';
+import '../dataQuery/dataQuery.css';
 import './onboardingConfig.css';
 import { schemaLabel } from './schemaLabel';
 
@@ -83,7 +87,7 @@ function JurisdictionDetail({ jurisdiction }: { jurisdiction: Jurisdiction }) {
     <Segmented value={tab} onChange={value => setTab(String(value))} options={['schemas', 'catalogs', 'programs'].map(value => ({ value, label: t('config.tab.' + value) }))} />
     {tab === 'schemas' && (schemas.loading ? <Loading /> : schemas.failure || !schemas.data ? <QueryFailure failure={schemas.failure} retry={schemas.refresh} />
       : <SchemaBrowser schemas={schemas.data} />)}
-    {tab === 'catalogs' && <CatalogBrowser catalogs={referencedCatalogs(schemas.data ?? [])} jurisdictionCode={jurisdiction.jurisdictionCode} />}
+    {tab === 'catalogs' && <CatalogBrowser catalogs={catalogUsages(schemas.data ?? [], jurisdiction)} jurisdiction={jurisdiction} />}
     {tab === 'programs' && (programs.loading ? <Loading /> : programs.failure || !programs.data ? <QueryFailure failure={programs.failure} retry={programs.refresh} />
       : <ProgramBrowser programs={programs.data} />)}
   </div>;
@@ -115,23 +119,90 @@ function SchemaBrowser({ schemas }: { schemas: OnboardingSchema[] }) {
   </div>;
 }
 
-function CatalogBrowser({ catalogs, jurisdictionCode }: { catalogs: string[]; jurisdictionCode: string }) {
-  const t = useT('client-review'), tSchema = useT('onboarding-schema');
-  const [catalog, setCatalog] = useState(catalogs[0]);
-  const decode = useMemo(() => (value: unknown) => decodeCatalogItems(value, catalog ?? ''), [catalog]);
-  const result = useLoad(catalog ? `${configApi}/catalog-items?catalogCode=${encodeURIComponent(catalog)}` : null, decode);
+/**
+ * 目录（原型 入驻配置 · 目录来源）：左侧列出 Schema 引用的目录与来源，右侧为所选目录
+ * <li>入驻目录：目录项（全局项与本辖区项）。</li>
+ * <li>Platform 参考数据（REF_ 开头）：不在入驻目录中，说明来源、引用字段，并引导到参考数据页或币种页；行政区按辖区国家预览（无参考数据查看权限时不预览）。</li>
+ */
+function CatalogBrowser({ catalogs, jurisdiction }: { catalogs: CatalogUsage[]; jurisdiction: Jurisdiction }) {
+  const t = useT('client-review');
+  const [selected, setSelected] = useState(catalogs[0]?.catalogCode);
   if (catalogs.length === 0) return <div className="obw-card"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('config.noCatalogs')} /></div>;
+  const current = catalogs.find(c => c.catalogCode === selected) ?? catalogs[0];
+  return <div className="obc-catalogs">
+    <div className="obw-card">
+      <Table<CatalogUsage> size="small" rowKey="catalogCode" tableLayout="fixed" pagination={false} dataSource={catalogs} scroll={{ x: 760 }}
+        rowClassName={row => `dq-clickable${row.catalogCode === current.catalogCode ? ' dq-selected-row' : ''}`}
+        onRow={row => ({ onClick: () => setSelected(row.catalogCode) })} columns={[
+          { title: t('config.catalog.name'), width: 160, render: (_, c) => <strong>{catalogName(t, c.catalogCode)}</strong> },
+          { title: t('config.catalog.code'), width: 240, render: (_, c) => <span className="qualification-mono">{c.catalogCode}</span> },
+          { title: t('config.catalog.source'), width: 180, render: (_, c) => <CatalogSourceTag usage={c} /> },
+          { title: t('config.catalog.fields'), render: (_, c) => <span className="qualification-mono obc-field-list">{c.fieldKeys.join(', ')}</span> },
+        ]} />
+      <div className="cell-meta obc-catalog-foot">{t('config.catalog.footnote')}</div>
+    </div>
+    <div className="obw-card">{current.source === 'PLATFORM'
+      ? <ReferenceCatalog key={current.catalogCode} usage={current} jurisdiction={jurisdiction} />
+      : <CatalogItems key={current.catalogCode} catalog={current.catalogCode} jurisdictionCode={jurisdiction.jurisdictionCode} />}</div>
+  </div>;
+}
+
+/** 目录显示名：`client-review.config.catalogName.<CODE>`，没有时显示编码。 */
+function catalogName(t: Translate, catalogCode: string): string {
+  return tOr(t, 'config.catalogName.' + catalogCode, catalogCode);
+}
+
+function CatalogSourceTag({ usage }: { usage: CatalogUsage }) {
+  const t = useT('client-review');
+  return usage.source === 'PLATFORM' ? <Tag color="green">{t('config.catalog.sourcePlatform')}</Tag> : <span className="cell-meta">{t('config.catalog.sourceOnboarding')}</span>;
+}
+
+function CatalogItems({ catalog, jurisdictionCode }: { catalog: string; jurisdictionCode: string }) {
+  const t = useT('client-review'), tSchema = useT('onboarding-schema');
+  const decode = useMemo(() => (value: unknown) => decodeCatalogItems(value, catalog), [catalog]);
+  const result = useLoad(`${configApi}/catalog-items?catalogCode=${encodeURIComponent(catalog)}`, decode);
   const rows = (result.data ?? []).filter(item => item.jurisdictionCode === null || item.jurisdictionCode === jurisdictionCode);
-  return <div className="obw-card"><div className="obw-card-title"><Select style={{ minWidth: 260 }} value={catalog} onChange={setCatalog} options={catalogs.map(value => ({ value }))} />
-    <span className="muted">{t('config.catalogScope', { jurisdiction: jurisdictionCode })}</span></div>
+  return <><div className="obw-card-title">{catalogName(t, catalog)}<span className="muted">{t('config.catalogScope', { jurisdiction: jurisdictionCode })}</span></div>
     {result.failure ? <QueryFailure failure={result.failure} retry={result.refresh} /> :
-      <Table<CatalogItem> size="small" rowKey="itemCode" loading={result.loading} pagination={false} dataSource={rows} columns={[
+      <Table<CatalogItem> size="small" rowKey="itemCode" tableLayout="fixed" loading={result.loading} pagination={false} dataSource={rows} scroll={{ x: 640 }} columns={[
         { title: t('config.catalog.item'), render: (_, i) => <div>{labelText(tSchema, i.labelKey, i.itemCode)}<div className="cell-meta qualification-mono">{i.itemCode}</div></div> },
         { title: t('config.catalog.scope'), width: 120, render: (_, i) => i.jurisdictionCode ?? t('config.global') },
         { title: t('config.catalog.clientTypes'), width: 180, render: (_, i) => i.clientTypes ?? t('config.allClientTypes') },
         { title: t('config.field.status'), width: 110, render: (_, i) => <StatusDot tone={tone(i.status)}>{enumLabel(t, 'config.enum.status', i.status)}</StatusDot> },
-      ]} />}
-  </div>;
+      ]} />}</>;
+}
+
+function ReferenceCatalog({ usage, jurisdiction }: { usage: CatalogUsage; jurisdiction: Jurisdiction }) {
+  const t = useT('client-review'), tRef = useT('refdata'); const navigate = useNavigate();
+  const href = referenceCatalogHref(usage.catalogCode, jurisdiction.countryCode);
+  const subdivisions = usage.catalogCode === 'REF_COUNTRY_SUBDIVISION';
+  const decode = useMemo(() => (value: unknown) => decodeSubdivisions(value, jurisdiction.countryCode), [jurisdiction.countryCode]);
+  const preview = useQuiet(subdivisions ? `${referenceDataPaths.subdivisions}?countryCode=${jurisdiction.countryCode}&status=ACTIVE` : null, decode);
+  return <>
+    <div className="obw-card-title">{catalogName(t, usage.catalogCode)}<span className="obw-grow" /><Tag color="green">{t('config.catalog.sourcePlatform')}</Tag></div>
+    <div className="cell-meta qualification-mono">{usage.catalogCode}</div>
+    <div className="obc-reference-note"><DatabaseOutlined /> <span>{tOr(t, 'config.catalog.platformNote.' + usage.catalogCode, t('config.catalog.platformNoteDefault'))}</span></div>
+    <div className="obw-label">{t('config.catalog.fields')}</div>
+    {usage.fieldKeys.map(field => <div key={field} className="qualification-mono cell-meta">{field}</div>)}
+    {subdivisions && preview && preview.length > 0 && <>
+      <div className="obw-label" style={{ marginTop: 12 }}>{t('config.catalog.preview', { country: jurisdiction.countryCode, count: preview.length })}</div>
+      {preview.slice(0, 6).map(s => <div key={s.subdivisionCode} className="obc-kv"><strong>{s.subdivisionCode}</strong><span>{refdataName(tRef, 'subdivision', s.subdivisionCode, s.name)}</span></div>)}
+    </>}
+    {href && <Button type="link" className="obc-reference-link" onClick={() => void navigate(href)}>{usage.catalogCode === 'REF_CURRENCY'
+      ? t('config.catalog.openCurrencies') : t('config.catalog.openReferenceData')}</Button>}
+  </>;
+}
+
+/** 只在 path 非空时读取；失败（例如没有参考数据查看权限）不提示、不展示。 */
+function useQuiet<T>(path: string | null, decode: (value: unknown) => T): T | undefined {
+  const [data, setData] = useState<T>();
+  useEffect(() => {
+    if (path === null) return;
+    const controller = new AbortController();
+    session.request<T>(path, { signal: controller.signal }, decode).then(value => { if (!controller.signal.aborted) setData(value); }).catch(() => undefined);
+    return () => controller.abort();
+  }, [path, decode]);
+  return data;
 }
 
 /** 程序项附加事实的展示：文件类型、时效、模式、阻断、监控。 */

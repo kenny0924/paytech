@@ -9,9 +9,13 @@ export const configApi = '/onboarding-config-admin/v1';
 export const configRoute = '/client-onboarding/config';
 
 export interface RuleSetting { scopeType: string; scopeCode: string; ruleCode: string; ruleValue: string }
+/** 地址格式的一个组件；catalogCode 以 REF_ 开头时引用 Platform 参考数据（例如省州 REF_COUNTRY_SUBDIVISION）。 */
+export interface AddressComponent { component: string; catalogCode: string | null }
 export interface Jurisdiction {
   jurisdictionCode: string; countryCode: string; labelKey: string | null; addressFormatCode: string | null; status: string;
   acceptancePolicy: string; ruleSettings: RuleSetting[];
+  /** client-master 返回地址格式组件时才有（旧响应没有该字段时为空列表）。 */
+  addressComponents: AddressComponent[];
 }
 export interface SchemaField {
   section: string; group: string | null; fieldKey: string; widget: string; catalogCode: string | null; requirementLevel: string;
@@ -63,8 +67,14 @@ export function decodeJurisdictions(value: unknown): Jurisdiction[] {
       return { scopeType: r.scopeType, scopeCode: r.scopeCode, ruleCode: r.ruleCode, ruleValue: r.ruleValue }; });
     const policy = ruleSettings.find(r => r.scopeType === 'JURISDICTION' && r.scopeCode === v.jurisdictionCode && r.ruleCode === ACCEPTANCE_POLICY)?.ruleValue
       ?? DEFAULT_ACCEPTANCE_POLICY;
+    const components = opt(v.addressComponents as unknown[] | undefined, []);
+    require(list(components, 50));
+    const addressComponents = components.map(raw => { const c = raw as Record<string, unknown>;
+      const catalogCode = opt(c?.catalogCode as string | null | undefined, null);
+      require(c && text(c.component, 64) && nullableCode(catalogCode)); return { component: c.component as string, catalogCode }; });
     return { jurisdictionCode: v.jurisdictionCode as string, countryCode: v.countryCode as string, labelKey: opt(v.labelKey as string | null | undefined, null),
-      addressFormatCode: opt(v.addressFormatCode as string | null | undefined, null), status: v.status as string, acceptancePolicy: policy, ruleSettings };
+      addressFormatCode: opt(v.addressFormatCode as string | null | undefined, null), status: v.status as string, acceptancePolicy: policy, ruleSettings,
+      addressComponents };
   });
   require(new Set(result.map(j => j.jurisdictionCode)).size === result.length);
   return result;
@@ -161,3 +171,30 @@ export function groupFields(fields: readonly SchemaField[]): { section: string; 
 /** Schema 中引用的目录代码（去重保序），供目录分区快速切换。 */
 export const referencedCatalogs = (schemas: readonly OnboardingSchema[]) =>
   [...new Set(schemas.flatMap(s => s.fields.map(f => f.catalogCode)).filter((c): c is string => c !== null))];
+
+/**
+ * 目录来源：REF_ 开头的目录码引用 Platform 参考数据（REF_CURRENCY、REF_COUNTRY_SUBDIVISION），不在入驻目录表中，
+ * BFF 对其目录项返回空列表；其他为 client-master 入驻目录。
+ */
+export const referenceCatalogPrefix = 'REF_';
+export type CatalogSource = 'ONBOARDING' | 'PLATFORM';
+export const catalogSource = (catalogCode: string): CatalogSource => catalogCode.startsWith(referenceCatalogPrefix) ? 'PLATFORM' : 'ONBOARDING';
+
+/**
+ * 一个目录及引用它的字段（去重，按首次出现排序）：采集 Schema 字段，以及辖区地址格式组件（显示为 `address.<组件>（<地址格式>）`，原型 09）。
+ */
+export interface CatalogUsage { catalogCode: string; source: CatalogSource; fieldKeys: string[] }
+export function catalogUsages(schemas: readonly OnboardingSchema[], jurisdiction?: Pick<Jurisdiction, 'addressFormatCode' | 'addressComponents'>): CatalogUsage[] {
+  const references = [...schemas.flatMap(s => s.fields.filter(f => f.catalogCode !== null).map(f => ({ catalogCode: f.catalogCode as string, fieldKey: f.fieldKey }))),
+    ...(jurisdiction?.addressComponents ?? []).filter(c => c.catalogCode !== null).map(c => ({ catalogCode: c.catalogCode as string,
+      fieldKey: `address.${c.component}${jurisdiction?.addressFormatCode ? ` (${jurisdiction.addressFormatCode})` : ''}` }))];
+  return [...new Set(references.map(r => r.catalogCode))].map(catalogCode => ({ catalogCode, source: catalogSource(catalogCode),
+    fieldKeys: [...new Set(references.filter(r => r.catalogCode === catalogCode).map(r => r.fieldKey))] }));
+}
+
+/** Platform 参考数据目录的查看位置：行政区在"参考数据"页（按辖区国家），币种在"币种"页；其他目录没有。 */
+export function referenceCatalogHref(catalogCode: string, countryCode: string | null): string | null {
+  if (catalogCode === 'REF_COUNTRY_SUBDIVISION') return `/reference-data?${new URLSearchParams({ tab: 'subdivisions', ...(countryCode ? { country: countryCode } : {}) })}`;
+  if (catalogCode === 'REF_CURRENCY') return '/currency-specs';
+  return catalogSource(catalogCode) === 'PLATFORM' ? '/reference-data' : null;
+}

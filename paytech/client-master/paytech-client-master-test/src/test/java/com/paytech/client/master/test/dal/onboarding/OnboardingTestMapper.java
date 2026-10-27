@@ -51,7 +51,7 @@ public class OnboardingTestMapper {
         }
         jdbc.update("INSERT INTO t_party_address(address_id,profile_id,address_type,address_line1,city,state_or_province,country_code,"
             + "address_format_code,create_time,update_time) VALUES(?,?,?,?,?,?,?,?,?,?)", ids.getAsLong(), profileId, addressType,
-            "1 Fixture Road", "Dubai", "AE_DU", "AE", "AE_POBOX", at, at);
+            "1 Fixture Road", "Dubai", "AE-DU", "AE", "AE_POBOX", at, at);
         if (organization) {
             String license = OnboardingFixtures.tradeLicense(partyId);
             jdbc.update("INSERT INTO t_party_profile_identifier(profile_identifier_id,profile_id,identifier_type,issuing_country,"
@@ -248,6 +248,12 @@ public class OnboardingTestMapper {
         return jdbc.queryForList("SELECT c.industry_code,c.mcc_code,c.primary_slot FROM t_client_business_classification c "
             + "JOIN t_client_business_profile p ON p.business_profile_id=c.business_profile_id WHERE p.client_id=? ORDER BY c.industry_code",
             clientId);
+    }
+
+    /** 把某 Client 经营资料的全部分类行改为指定行业（模拟迁移前保存的一级行业）。 */
+    public void setClassificationIndustry(long clientId, String industryCode) {
+        jdbc.update("UPDATE t_client_business_classification c JOIN t_client_business_profile p "
+            + "ON p.business_profile_id=c.business_profile_id SET c.industry_code=? WHERE p.client_id=?", industryCode, clientId);
     }
 
     /** 某类补偿任务。 */

@@ -23,6 +23,14 @@ export function useT(namespace: string): (key: string, params?: Params) => strin
     [instance, namespace, revision]);
 }
 
+/** `find(key)` for one namespace: the text, or null when no bundle has the key (caller supplies the fallback). */
+export function useOptionalT(namespace: string): (key: string, params?: Params) => string | null {
+  const instance = useContext(Context), revision = useRevision(instance);
+  useEffect(() => { instance.use(namespace); }, [instance, namespace]);
+  return useMemo(() => (key: string, params?: Params) => instance.find(namespace, key, params),
+    [instance, namespace, revision]);
+}
+
 /** Current locale, enabled locales and `setLocale`. */
 export function useLocale() {
   const instance = useContext(Context);

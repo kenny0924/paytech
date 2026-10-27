@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.referencedata.core.dal.mapper.MccMapper">
+
+    <!-- 关键字匹配编码前缀或英文名包含；name 列的排序规则不区分大小写。 -->
+    <sql id="filter">
+        <where>
+            <if test="keywordPattern != null">
+                AND (mcc_code LIKE CONCAT(#{keywordPattern}, '%') ESCAPE '!'
+                    OR name LIKE CONCAT('%', #{keywordPattern}, '%') ESCAPE '!')
+            </if>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="codes != null">
+                AND mcc_code IN
+                <foreach collection="codes" item="code" open="(" separator="," close=")">#{code}</foreach>
+            </if>
+        </where>
+    </sql>
+
+    <select id="search" timeout="2"
+            resultType="com.paytech.platform.support.referencedata.core.dal.dataobject.Mcc">
+        SELECT id, mcc_code AS mccCode, name, description, network_high_risk AS networkHighRisk, status, version,
+            create_time AS createTime, update_time AS updateTime
+        FROM t_ref_mcc
+        <include refid="filter"/>
+        ORDER BY mcc_code
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="count" timeout="2" resultType="long">
+        SELECT COUNT(*)
+        FROM t_ref_mcc
+        <include refid="filter"/>
+    </select>
+</mapper>

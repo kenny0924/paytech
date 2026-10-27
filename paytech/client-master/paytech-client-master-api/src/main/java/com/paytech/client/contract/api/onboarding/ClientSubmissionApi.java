@@ -25,6 +25,8 @@ public interface ClientSubmissionApi {
      *         <li>DRAFT/RETURNED 检查通过后返回 202 并生成新 submissionId。</li>
      *         <li>已是 SUBMITTED/UNDER_REVIEW 返回 200 和当前 submissionId，不重新检查。</li>
      *         <li>资料或材料不完整返回 422 SUBMISSION_INCOMPLETE，逐项问题由 check 查询；证件号属于其他主体返回 409 IDENTITY_CONFLICT。</li>
+     *         <li>国家、币种、行政区不在 Platform 参考数据或不是 ACTIVE、行政区与地址国家不一致：对应字段 FIELD_VALUE_NOT_IN_CATALOG，
+     *         按资料不完整拒绝；Platform 不可用返回 503 ONBOARDING_DEPENDENCY_UNAVAILABLE，不写入。</li>
      *         <li>Body 为空；不读取 Idempotency-Key，重复提交按申请当前状态处理。</li>
      */
     @PostExchange("/{applicationId}/submissions")

@@ -4,10 +4,10 @@ import { Link, Navigate, useLocation, useNavigate, useParams } from "react-route
 import { useT } from "../i18n/react.tsx";
 import { appPath, taskPath, useApplication } from "./context.tsx";
 import { api } from "./model.ts";
-import { taskSummaries } from "./progress.ts";
-import { availableTasks, taskBlocks } from "./schema.ts";
+import { fieldRequirementIssues, taskSummaries } from "./progress.ts";
+import { SCHEMA_NAMESPACE, availableTasks, taskBlocks } from "./schema.ts";
 import type { TaskKey } from "./schema.ts";
-import { serverIssues } from "./draft.ts";
+import { errorText, fieldPaths, serverIssues } from "./draft.ts";
 import { RequestFailure } from "../auth.ts";
 import { SchemaFields, summaryItems, useDraftForm, useFieldLabel } from "./FormTask.tsx";
 import { PeopleTask } from "./PeopleTask.tsx";
@@ -90,6 +90,24 @@ function FormTask({ task }: { task: "profile" | "address" }) {
   });
   const disabled = !app.editable;
   const labelOf = useFieldLabel(blocks, schema, form.values);
+  // 需求清单里本页字段的非"缺少"类问题（如已停用的编码）：打开即挂到字段并显示页顶汇总，不让任务只标"需要处理"却找不到原因。
+  // 文案在国家包语言包加载后（tSchema 变化）重新取；只替换本处挂上且用户尚未改动的错误。
+  const tSchema = useT(SCHEMA_NAMESPACE), seeded = useRef<Record<string, string>>({});
+  useEffect(() => {
+    const paths = new Set(blocks.flatMap((block) => block.fields.flatMap((field) => fieldPaths(field, schema, form.values).map((item) => item.path))));
+    const issues = fieldRequirementIssues(app, paths);
+    if (!Object.keys(issues).length) return;
+    const texts = Object.fromEntries(Object.entries(issues).map(([path, code]) => [path, errorText(code)]));
+    const before = { ...seeded.current };
+    form.setErrors((previous) => {
+      const next = { ...previous };
+      for (const [path, text] of Object.entries(texts))
+        if (path in before ? next[path] === before[path] : next[path] === undefined) next[path] = text;
+      return next;
+    });
+    seeded.current = { ...before, ...texts };
+    setSummary(true);
+  }, [app.requirements, tSchema]);
   async function leave(target: string, validate: boolean) {
     setError(null);
     if (validate && form.validate().length) { setSummary(true); return; }

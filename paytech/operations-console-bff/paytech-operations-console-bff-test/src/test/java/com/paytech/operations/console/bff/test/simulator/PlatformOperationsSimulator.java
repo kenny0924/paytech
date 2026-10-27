@@ -161,7 +161,9 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("client-onboarding-hit-resolution", "900000000000138101"),
         Map.entry("client-onboarding-risk-rating", "900000000000041002"),
         Map.entry("client-onboarding-recommendation", "900000000000138103"),
-        Map.entry("client-onboarding-waiver", "900000000000138104"));
+        Map.entry("client-onboarding-waiver", "900000000000138104"),
+        // 块 139 分类用 MCC 搜索复用分类编辑权限
+        Map.entry("client-onboarding-mcc-search", "900000000000041002"));
 
     /**
      * 财务路由权限：GET 为 FINANCE_ACCOUNTING_READ，POST 为 FINANCE_ACCOUNTING_MANAGE，审批与驳回为 FINANCE_ACCOUNTING_APPROVE（块 100）；

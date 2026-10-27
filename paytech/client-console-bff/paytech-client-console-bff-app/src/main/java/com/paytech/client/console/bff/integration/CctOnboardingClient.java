@@ -3,6 +3,7 @@ package com.paytech.client.console.bff.integration;
 import java.util.List;
 
 import com.paytech.client.console.bff.service.model.ClientActor;
+import com.paytech.client.master.api.onboarding.response.FormSchemaResponseBody;
 import com.paytech.client.master.api.onboarding.response.RequirementItemResponseBody;
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.ClientDraftResponseBody;
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.StartResponseBody;
@@ -35,4 +36,17 @@ public interface CctOnboardingClient {
      * @return 需求项（有界）；形状不符按依赖不可用抛出
      */
     List<RequirementItemResponseBody> requirements(ClientActor actor, String applicationId);
+
+    /**
+     * 读取采集 Schema（CM-2）。
+     *
+     * @param actor 当前可信身份
+     * @param applicationId 可选申请 ID；有值时 Owner 返回该申请冻结的版本
+     * @param jurisdiction 可选辖区代码
+     * @param partyType 可选主体类型
+     * @param organizationType 可选组织类型
+     * @return 带 Schema 版本与分区的 Schema；形状不符按依赖不可用抛出
+     */
+    FormSchemaResponseBody formSchema(ClientActor actor, String applicationId, String jurisdiction, String partyType,
+        String organizationType);
 }

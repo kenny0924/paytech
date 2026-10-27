@@ -32,7 +32,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Client 入驻审核、主档维护与资格登记请求的严格边界
- * <li>覆盖 /client-onboarding-admin/v1、/entity-admin/v1、/qualification-admin/v1 与入驻管理 /onboarding-config-admin/v1、/client-admin/v1、/onboarding-code-admin/v1。</li>
+ * <li>覆盖 /client-onboarding-admin/v1、/entity-admin/v1、/qualification-admin/v1 与入驻管理 /onboarding-config-admin/v1、/client-admin/v1、/onboarding-code-admin/v1，
+ * 以及只读的参考数据 /reference-data-admin/v1。</li>
  * <li>Query 只接受 Controller 声明的参数，不能重复或为空；GET 不接受 Body。</li>
  * <li>写 Body 最多 64 KiB，必须为对象，拒绝重复键、未知字段和标量隐式转换。</li>
  */
@@ -89,7 +90,7 @@ public class ClientReviewRequestConfiguration implements WebMvcConfigurer {
                 return true;
             }
         }).addPathPatterns("/client-onboarding-admin/v1/**", "/entity-admin/v1/**", "/qualification-admin/v1/**", "/onboarding-config-admin/v1/**",
-            "/client-admin/v1/**", "/onboarding-code-admin/v1/**");
+            "/client-admin/v1/**", "/onboarding-code-admin/v1/**", "/reference-data-admin/v1/**");
     }
 
     @Override

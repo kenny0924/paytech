@@ -2,6 +2,7 @@ package com.paytech.platform.support.auto.ext.http.referencedata;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -38,7 +39,7 @@ class CurrencySpecQueryApiTest extends MockTestBase {
     @Autowired
     CurrencySpecMocker currencies;
 
-    /** 表就绪且只有常驻 USD 种子，再插入本类公共的另外两条规则。 */
+    /** 表就绪且只有常驻种子，再插入本类公共的另外两条规则。 */
     @BeforeEach
     void setUpCurrencySpecs() {
         currencies.assertReady();
@@ -51,15 +52,16 @@ class CurrencySpecQueryApiTest extends MockTestBase {
     void test_normalFlow() {
         var body = get(PATH).assertOk().as(CurrencySpecListResponseBody.class);
 
-        assertEquals(List.of("JPY", "USD", "XTS"), body.getItems().stream().map(CurrencySpecResponseBody::getCurrency).toList());
-        var jpy = body.getItems().getFirst();
+        assertEquals(List.of("AED", "EGP", "JPY", "SAR", "USD", "XTS"),
+            body.getItems().stream().map(CurrencySpecResponseBody::getCurrency).toList());
+        var jpy = body.getItems().get(2);
         assertAll(() -> assertEquals(0, jpy.getMinorUnit()),
             () -> assertEquals(CurrencyRoundingMode.HALF_UP.getCode(), jpy.getRoundingMode()),
             () -> assertEquals(CurrencySpecStatus.ACTIVE.getCode(), jpy.getStatus()),
             () -> assertEquals(1, jpy.getVersion()),
             () -> assertEquals(NOW.toString(), jpy.getUpdateTime()),
-            () -> assertEquals(CurrencySpecStatus.INACTIVE.getCode(), body.getItems().get(2).getStatus()),
-            () -> assertEquals(3, body.getItems().get(2).getVersion()));
+            () -> assertEquals(CurrencySpecStatus.INACTIVE.getCode(), body.getItems().get(5).getStatus()),
+            () -> assertEquals(3, body.getItems().get(5).getVersion()));
     }
 
     /** 按币种代码查询单条规则：人工初始化的 USD 种子。 */
@@ -71,6 +73,24 @@ class CurrencySpecQueryApiTest extends MockTestBase {
             () -> assertEquals(CurrencyRoundingMode.HALF_UP.getCode(), usd.getRoundingMode()),
             () -> assertEquals(CurrencySpecStatus.ACTIVE.getCode(), usd.getStatus()),
             () -> assertEquals(1, usd.getVersion()));
+    }
+
+    /**
+     * 旧接口响应冻结（S-01）：严格 JSON 的消费方（ledger、billing）不能遇到新字段
+     * <li>列表外层只有 items，元素与单条查询都只有原六个字段且顺序不变；新增的数字代码、名称、符号与 logo 不出现。</li>
+     */
+    @Test
+    void test_responseShapeUnchanged() {
+        var list = get(PATH).assertOk().json();
+        var single = get(PATH + "/USD").assertOk().json();
+
+        List<String> fields = List.of("currency", "minorUnit", "roundingMode", "status", "updateTime", "version");
+        assertAll(() -> assertEquals(List.of("items"), List.copyOf(list.propertyNames())),
+            () -> list.path("items").valueStream().forEach(item -> assertEquals(fields,
+                List.copyOf(item.propertyNames()))),
+            () -> assertEquals(fields, List.copyOf(single.propertyNames())),
+            () -> assertEquals("USD", single.path("currency").asString()),
+            () -> assertTrue(single.path("minorUnit").isInt()), () -> assertTrue(single.path("version").isInt()));
     }
 
     /** 未登记的币种：404。 */

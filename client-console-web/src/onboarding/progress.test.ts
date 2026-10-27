@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { applicationFixture, schemaFixture } from "./fixture.test-data.ts";
-import { daysLeft, locate, phaseOf, taskSummaries } from "./progress.ts";
+import { daysLeft, fieldRequirementIssues, locate, phaseOf, taskSummaries } from "./progress.ts";
 import { errorText } from "./draft.ts";
 
 const schema = schemaFixture();
@@ -33,6 +33,20 @@ test("task state: not started, in progress, complete, needs attention; review lo
   assert.equal(invalid.find((item) => item.key === "profile")?.state, "attention");
   const done = taskSummaries(applicationFixture({ values: { organization: { legalName: "Noor" } } }), schema);
   assert.equal(done.find((item) => item.key === "profile")?.state, "done");
+});
+
+test("field requirement issues: only open, non-missing codes of the primary subject on the given paths", () => {
+  const app = applicationFixture({ requirements: [
+    requirement("business.currency", { errorCode: "FIELD_VALUE_NOT_IN_CATALOG" }),
+    requirement("address.stateOrProvince", { errorCode: "FIELD_VALUE_NOT_IN_CATALOG" }),
+    requirement("organization.legalName"),
+    requirement("organization.tradeName", { errorCode: "FIELD_FORMAT_INVALID", status: "SATISFIED" }),
+    requirement("individual.nationality", { errorCode: "FIELD_VALUE_NOT_IN_CATALOG", subjectPartyId: "402" }),
+  ] });
+  const paths = new Set(["business.currency", "organization.legalName", "organization.tradeName", "individual.nationality"]);
+  assert.deepEqual(fieldRequirementIssues(app, paths), { "business.currency": "FIELD_VALUE_NOT_IN_CATALOG" });
+  assert.deepEqual(fieldRequirementIssues(applicationFixture({ requirementsStatus: "UNAVAILABLE",
+    requirements: [requirement("business.currency", { errorCode: "FIELD_VALUE_NOT_IN_CATALOG" })] }), paths), {});
 });
 
 test("returned errors mark their task as needing attention even without open requirements", () => {

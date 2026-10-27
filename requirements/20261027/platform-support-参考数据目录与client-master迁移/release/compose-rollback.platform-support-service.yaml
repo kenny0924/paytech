@@ -1,0 +1,6 @@
+# 参考数据目录与 client-master 迁移：mor-test 回滚覆盖（rel-dev 2026-10-27）。镜像 = 2026-10-27 12:55Z 现网运行镜像（切片 1 最终版），env 与候选相同。
+# 用法同候选：./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# Platform 回滚必须先执行 sql/89-platform-reference-data-rollback.sql（旧镜像只认 t_currency_spec / t_country_region），见 runbook 第 6 节。
+services:
+  platform-support-service:
+    image: sha256:cad6dc14cc7c2c7687cc7aacdaf0a77804e529c6f492adacab56ba1045659ba2  # 现网 2026-10-27 12:55Z（onboard-20261027a，JAR 478c53dea4ac7f92）

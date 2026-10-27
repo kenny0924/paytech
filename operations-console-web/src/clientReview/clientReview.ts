@@ -1,6 +1,8 @@
 import { ApiError } from '../api/session.ts';
 import type { PagingResponseBody } from '../api/types.ts';
 import { translator } from '../i18n/index.ts';
+import { decodeIndustryCategory, decodeMcc } from '../referenceData/referenceData.ts';
+import type { IndustryCategory, RefIndustry, RefMcc } from '../referenceData/referenceData.ts';
 
 const t = translator('client-review');
 
@@ -75,12 +77,14 @@ export interface Application {
   values: Record<string, Record<string, string | null>>; people: Person[]; relations: Relation[]; documents: DocumentRef[];
 }
 export interface ClassificationSet { caseId: string; applicationId: string; confirmed: boolean; confirmedBy: string | null; confirmedAt: string | null; items: Classification[] }
-/** 行业选项：client-master 返回 labelKey（onboarding-schema 文案键）；旧接口可能给 label。 */
-export interface Option { code: string; label: string | null; labelKey: string | null }
 export type Availability = 'AVAILABLE' | 'UNAVAILABLE';
+/**
+ * 审核详情：industries 为 Platform ACTIVE 行业树（大类 → 细类，细类带建议 MCC）；mccs 为当前分类与建议 MCC 涉及的编码（任意状态）。
+ * 名称显示见 referenceData.ts（refdata 文案 → 后端英文 name → 编码）。
+ */
 export interface ReviewDetail {
   review: ReviewCase; applicationStatus: Availability; application: Application | null; classificationStatus: Availability;
-  classification: ClassificationSet | null; industriesStatus: Availability; industries: Option[];
+  classification: ClassificationSet | null; industriesStatus: Availability; industries: IndustryCategory[]; mccsStatus: Availability; mccs: RefMcc[];
 }
 export interface Command { caseId: string; status: string }
 /** 可被设为责任方 / 代操作对象的 PayFac（OE_PROVIDER 角色的 ACTIVE Local Partner）。 */
@@ -320,12 +324,12 @@ const availability = (v: unknown): v is Availability => v === 'AVAILABLE' || v =
 export function decodeDetail(value: unknown, caseId: string): ReviewDetail {
   const v = value as ReviewDetail;
   require(v && availability(v.applicationStatus) && availability(v.classificationStatus) && availability(v.industriesStatus) && list(v.industries, 200)
+    && availability(v.mccsStatus) && list(v.mccs, 2000)
     && (v.applicationStatus === 'AVAILABLE') === (v.application !== null) && (v.classificationStatus === 'AVAILABLE') === (v.classification !== null));
   const review = decodeCase(v.review, caseId);
   return { review, applicationStatus: v.applicationStatus, application: v.application === null ? null : decodeApplication(v.application, review.applicationId),
     classificationStatus: v.classificationStatus, classification: v.classification === null ? null : decodeClassificationSet(v.classification, caseId),
-    industriesStatus: v.industriesStatus, industries: v.industries.map(o => { const label = opt(o?.label, null); const labelKey = opt(o?.labelKey, null);
-      require(o && code(o.code) && nullable(label, 128) && nullable(labelKey, 128)); return { code: o.code, label, labelKey }; }) };
+    industriesStatus: v.industriesStatus, industries: v.industries.map(decodeIndustryCategory), mccsStatus: v.mccsStatus, mccs: v.mccs.map(decodeMcc) };
 }
 export function decodeCommand(value: unknown, caseId: string): Command {
   const v = value as Command; require(v && v.caseId === caseId && code(v.status));
@@ -406,17 +410,130 @@ export function workbenchCounts(review: ReviewCase) {
   const checks = review.checks.filter(checkAwaitingResult).length;
   return { evidence, checks, hits: openHits(review).length };
 }
-/** 分类草稿的前端校验；最终以 client-master 为准。 */
-export function classificationIssues(items: Classification[]): string[] {
+// ---------- 行业与 MCC 分类（O03 / O04） ----------
+
+/** 编辑中的一行：categoryCode 只用于界面联动，提交的是 industryCode（细类；只选到大类时为空，提交大类编码由 client-master 拒绝）。 */
+export interface ClassificationRow { categoryCode: string; industryCode: string; mccCode: string; primary: boolean }
+/** 一个行业编码在 ACTIVE 行业树中的位置：大类本身（subcategory 为 null）或细类及其大类。 */
+export interface IndustryPosition { category: IndustryCategory; subcategory: RefIndustry | null }
+export type ClassificationField = 'industryCode' | 'mccCode';
+/** 行内问题：显示在对应控件下；文案为 `client-review.classification.rowIssue.<code>`。 */
+export interface RowIssue { field: ClassificationField; code: 'industryRequired' | 'categoryOnly' | 'industryUnavailable' | 'mccFormat' | 'mccInactive'
+  | 'mccUnknown' | 'duplicate' | 'rejected'; params?: Record<string, string> }
+export const maxClassifications = 20;
+
+/** 大类与细类编码 → 在树中的位置。 */
+export function industryIndex(categories: readonly IndustryCategory[]): Map<string, IndustryPosition> {
+  const index = new Map<string, IndustryPosition>();
+  for (const category of categories) {
+    index.set(category.industryCode, { category, subcategory: null });
+    for (const child of category.children) index.set(child.industryCode, { category, subcategory: child });
+  }
+  return index;
+}
+
+/** 已保存的分类转为编辑行：细类带出大类；存量只到大类的编码（AC-10）只选中大类、细类留空；树中没有的编码原样保留。 */
+export function classificationRows(items: readonly Classification[], index: Map<string, IndustryPosition>): ClassificationRow[] {
+  return items.map(item => {
+    const position = index.get(item.industryCode);
+    if (position && !position.subcategory) return { categoryCode: item.industryCode, industryCode: '', mccCode: item.mccCode, primary: item.primary };
+    return { categoryCode: position?.category.industryCode ?? '', industryCode: item.industryCode, mccCode: item.mccCode, primary: item.primary };
+  });
+}
+
+/** 提交内容：细类为空时提交大类编码（由 client-master 以"只选到大类"拒绝），保持与页面所见一致。 */
+export function classificationItems(rows: readonly ClassificationRow[]): Classification[] {
+  return rows.map(row => ({ industryCode: row.industryCode || row.categoryCode, mccCode: row.mccCode, primary: row.primary }));
+}
+
+/** 细类的建议 MCC；没有细类或细类没有建议时为 null。 */
+export function suggestedMcc(row: ClassificationRow, index: Map<string, IndustryPosition>): string | null {
+  return index.get(row.industryCode)?.subcategory?.defaultMccCode ?? null;
+}
+
+/** 选择细类：带出建议 MCC（运营可再改选）；选择大类：清空细类与 MCC。 */
+export function chooseSubcategory(row: ClassificationRow, industryCode: string, index: Map<string, IndustryPosition>): ClassificationRow {
+  const position = index.get(industryCode);
+  return { ...row, categoryCode: position?.category.industryCode ?? row.categoryCode, industryCode,
+    mccCode: position?.subcategory?.defaultMccCode ?? row.mccCode };
+}
+export function chooseCategory(row: ClassificationRow, categoryCode: string): ClassificationRow {
+  return row.categoryCode === categoryCode ? row : { ...row, categoryCode, industryCode: '', mccCode: '' };
+}
+
+/** MCC 标记：等于建议为"建议"，不同为"已改 · 建议 xxxx"，没有建议时不标。 */
+export function mccMark(row: ClassificationRow, index: Map<string, IndustryPosition>): { kind: 'suggested' } | { kind: 'changed'; suggested: string } | null {
+  const suggested = suggestedMcc(row, index);
+  if (!suggested || !row.mccCode) return null;
+  return row.mccCode === suggested ? { kind: 'suggested' } : { kind: 'changed', suggested };
+}
+
+/** 整组问题（不属于某一行）：至少一行、至多 20 行、恰好一个主要分类。 */
+export function classificationListIssues(rows: readonly ClassificationRow[]): string[] {
   const issues: string[] = [];
-  if (items.length === 0) issues.push(t('classification.issue.empty'));
-  if (items.length > 20) issues.push(t('classification.issue.tooMany'));
-  if (items.filter(i => i.primary).length !== 1) issues.push(t('classification.issue.onePrimary'));
-  if (items.some(i => !/^[0-9]{4}$/.test(i.mccCode))) issues.push(t('classification.issue.mccFormat'));
-  if (items.some(i => !i.industryCode)) issues.push(t('classification.issue.industryRequired'));
-  if (new Set(items.map(i => `${i.industryCode}:${i.mccCode}`)).size !== items.length) issues.push(t('classification.issue.duplicate'));
+  if (rows.length === 0) issues.push(t('classification.issue.empty'));
+  if (rows.length > maxClassifications) issues.push(t('classification.issue.tooMany'));
+  if (rows.filter(row => row.primary).length !== 1) issues.push(t('classification.issue.onePrimary'));
   return issues;
 }
+
+/**
+ * 行内问题（前端预检，最终以 client-master 为准）：行业必须选到 ACTIVE 细类；MCC 必须四位数字，已知停用的 MCC 直接标出；行业 + MCC 不得重复
+ * <li>mccs 为详情带回的 MCC（任意状态）与本页搜索选中的 MCC；不在其中的编码不预判，交给服务端。</li>
+ */
+export function classificationRowIssues(rows: readonly ClassificationRow[], index: Map<string, IndustryPosition>,
+  mccs: ReadonlyMap<string, RefMcc>): Map<number, RowIssue[]> {
+  const result = new Map<number, RowIssue[]>();
+  const add = (row: number, issue: RowIssue) => result.set(row, [...(result.get(row) ?? []), issue]);
+  const seen = new Set<string>();
+  rows.forEach((row, i) => {
+    if (!row.industryCode && !row.categoryCode) add(i, { field: 'industryCode', code: 'industryRequired' });
+    else if (!row.industryCode) add(i, { field: 'industryCode', code: 'categoryOnly', params: { code: row.categoryCode } });
+    else if (!index.get(row.industryCode)?.subcategory) add(i, { field: 'industryCode', code: 'industryUnavailable', params: { code: row.industryCode } });
+    const mcc = mccs.get(row.mccCode);
+    if (!/^[0-9]{4}$/.test(row.mccCode)) add(i, { field: 'mccCode', code: 'mccFormat' });
+    else if (mcc && mcc.status !== 'ACTIVE') add(i, { field: 'mccCode', code: 'mccInactive', params: { code: row.mccCode } });
+    const key = `${row.industryCode || row.categoryCode}:${row.mccCode}`;
+    if (seen.has(key)) add(i, { field: 'mccCode', code: 'duplicate' });
+    seen.add(key);
+  });
+  return result;
+}
+
+/**
+ * client-master 422 的字段路径（items[i].industryCode / items[i].mccCode，BFF 已投影到本次请求体）转为行内问题
+ * <li>远端文案不外显，原因按本地数据判断：大类 → 只选到大类；行业不在 ACTIVE 树 → 不存在或已停用；MCC 已知停用 → 已停用，否则不存在或已停用。</li>
+ */
+export function classificationServerIssues(fieldErrors: readonly { field: string }[], rows: readonly ClassificationRow[],
+  mccs: ReadonlyMap<string, RefMcc>): Map<number, RowIssue[]> {
+  const result = new Map<number, RowIssue[]>();
+  for (const error of fieldErrors) {
+    const match = /^items\[(\d+)\]\.(industryCode|mccCode)$/.exec(error.field);
+    if (!match || Number(match[1]) >= rows.length) continue;
+    const row = rows[Number(match[1])]; const field = match[2] as ClassificationField;
+    const issue: RowIssue = field === 'industryCode'
+      ? (!row.industryCode && row.categoryCode ? { field, code: 'categoryOnly', params: { code: row.categoryCode } }
+        : { field, code: 'industryUnavailable', params: { code: row.industryCode || row.categoryCode } })
+      : mccs.get(row.mccCode)?.status === 'INACTIVE' || mccs.get(row.mccCode)?.status === 'DRAFT'
+        ? { field, code: 'mccInactive', params: { code: row.mccCode } } : { field, code: 'mccUnknown', params: { code: row.mccCode } };
+    result.set(Number(match[1]), [...(result.get(Number(match[1])) ?? []), issue]);
+  }
+  return result;
+}
+
+/** 行内问题文案（调用时取，随语言）。 */
+export function rowIssueText(issue: RowIssue): string {
+  return t('classification.rowIssue.' + issue.code, issue.params);
+}
+
+/** 与已保存内容相比的修改处：按行比较（行数变化计入差值；新增的空白行不算修改）。 */
+export function classificationChanges(rows: readonly ClassificationRow[], saved: readonly Classification[]): number {
+  const items = classificationItems(rows);
+  const changed = items.filter((item, i) => saved[i] ? saved[i].industryCode !== item.industryCode || saved[i].mccCode !== item.mccCode
+    || saved[i].primary !== item.primary : !!(item.industryCode || item.mccCode)).length;
+  return changed + Math.max(0, saved.length - items.length);
+}
+
 export function filters(values: Record<string, string | undefined>): Record<string, string> {
   return Object.fromEntries(Object.entries(values).filter(([, v]) => v?.trim()).map(([k, v]) => [k, v!.trim()]));
 }

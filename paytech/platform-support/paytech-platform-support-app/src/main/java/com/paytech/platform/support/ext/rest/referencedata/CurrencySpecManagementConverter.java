@@ -19,16 +19,18 @@ import com.paytech.platform.support.referencedata.service.processor.response.Cur
 @Component
 public class CurrencySpecManagementConverter {
 
-    /** 新建只接收代码、小数位、舍入方式与原因。 */
+    /** 新建接收代码、数字代码、名称、符号、可选 logo、小数位、舍入方式与原因；名称与原因去除首尾空白。 */
     public CreateCurrencySpecRequest create(String actor, String session, CreateCurrencySpecRequestBody body) {
-        return new CreateCurrencySpecRequest(actor, session, body.getCurrency(), body.getMinorUnit(),
+        return new CreateCurrencySpecRequest(actor, session, body.getCurrency(), body.getNumericCode(),
+            text(body.getName()), body.getSymbol(), body.getLogoFileAddress(), body.getMinorUnit(),
             EnumUtils.getEnumByCode(CurrencyRoundingMode.class, body.getRoundingMode()), text(body.getReason()));
     }
 
-    /** 修改以 Path 币种为身份，携带原版本。 */
+    /** 修改以 Path 币种为身份，携带全部目标属性与原版本。 */
     public UpdateCurrencySpecRequest update(String actor, String session, String currency,
         UpdateCurrencySpecRequestBody body) {
-        return new UpdateCurrencySpecRequest(actor, session, currency, body.getMinorUnit(),
+        return new UpdateCurrencySpecRequest(actor, session, currency, body.getNumericCode(), text(body.getName()),
+            body.getSymbol(), body.getLogoFileAddress(), body.getMinorUnit(),
             EnumUtils.getEnumByCode(CurrencyRoundingMode.class, body.getRoundingMode()), body.getExpectedVersion(),
             text(body.getReason()));
     }

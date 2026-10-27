@@ -148,3 +148,11 @@ test("every compliance material requirement and document type has a client label
     ...types.map((code) => "onboarding.material." + code.toLowerCase())])].filter((key) => !hasKey(key));
   assert.deepEqual(missing, []);
 });
+
+test("reference data names are not bundled: refdata is Platform-published data and the old schema catalog keys are gone", () => {
+  // 行政区等名称由 Platform 的 refdata 命名空间发布（英文基准 = 参考数据 name），前端不内置，缺失时回退后端 name。
+  assert.ok(!Object.prototype.hasOwnProperty.call(builtin, "refdata"));
+  assert.ok(!Object.prototype.hasOwnProperty.call(seed.namespaces, "refdata"));
+  const retired = /^onboarding-schema\.catalog\.(INDUSTRY|CURRENCY|STATE_OR_PROVINCE)\./;
+  assert.deepEqual(enKeys(SCHEMA_NAMESPACE).filter((key) => retired.test(key)), []);
+});

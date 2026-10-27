@@ -313,5 +313,12 @@
   "onboarding.workspaces.current": "Current workspace",
   "onboarding.workspaces.restricted": "This workspace is temporarily unavailable",
   "onboarding.workspaces.title": "My workspaces",
-  "onboarding.workspaces.unavailable": "We can't load your workspaces right now. Please refresh the page later."
+  "onboarding.workspaces.unavailable": "We can't load your workspaces right now. Please refresh the page later.",
+  "onboarding.refdata.select_country": "Select a country",
+  "onboarding.refdata.search_placeholder": "Search by name or code",
+  "onboarding.refdata.search_hint": "Matches the localized name, English name or code",
+  "onboarding.refdata.currency_hint": "Only currencies enabled on the platform are listed",
+  "onboarding.refdata.no_match": "No matches",
+  "onboarding.refdata.unavailable": "Options are temporarily unavailable",
+  "onboarding.refdata.retry": "Retry"
 }

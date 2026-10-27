@@ -1,0 +1,656 @@
+{
+ "plans": [
+  {
+   "app": "client-console",
+   "newNamespaces": [
+    "auth",
+    "common",
+    "developer",
+    "enum",
+    "invitation",
+    "onboarding-schema",
+    "onboarding",
+    "team",
+    "workspace",
+    "refdata"
+   ],
+   "maxSort": 0,
+   "added": 1381,
+   "changed": 0,
+   "deprecated": 0,
+   "zhImport": 1381,
+   "zhMissing": 0,
+   "englishFilled": 266,
+   "repoNamespaces": 10,
+   "deprecatedKeys": []
+  },
+  {
+   "app": "operations-console",
+   "newNamespaces": [
+    "onboarding-schema",
+    "reference-data",
+    "refdata"
+   ],
+   "maxSort": 230,
+   "added": 1245,
+   "changed": 1,
+   "deprecated": 11,
+   "zhImport": 1246,
+   "zhMissing": 0,
+   "englishFilled": 266,
+   "repoNamespaces": 26,
+   "deprecatedKeys": [
+    "client-review.classification.industryPlaceholder",
+    "client-review.classification.issue.duplicate",
+    "client-review.classification.issue.industryRequired",
+    "client-review.classification.issue.mccFormat",
+    "client-review.classification.saveFirst",
+    "currency.editor.frozenHint",
+    "currency.editor.minorUnitHint",
+    "currency.specs.column.actions",
+    "currency.specs.column.updatedAt",
+    "currency.specs.count",
+    "currency.specs.edit"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "step": "client-console 新增 / 变更 key 都有 zh-CN（缺 0）",
+   "ok": true,
+   "evidence": []
+  },
+  {
+   "step": "operations-console 新增 / 变更 key 都有 zh-CN（缺 0）",
+   "ok": true,
+   "evidence": []
+  },
+  {
+   "step": "client-console 新建命名空间 auth：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "auth",
+    "namespaceName": "登录与注册",
+    "sortOrder": 10,
+    "updateTime": "2026-10-27T10:47:07.036302Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "client-console 新建命名空间 common：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "common",
+    "namespaceName": "通用",
+    "sortOrder": 20,
+    "updateTime": "2026-10-27T10:47:07.095736Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "client-console 新建命名空间 developer：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "developer",
+    "namespaceName": "开发者",
+    "sortOrder": 30,
+    "updateTime": "2026-10-27T10:47:07.142885Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "client-console 新建命名空间 enum：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "enum",
+    "namespaceName": "枚举展示名",
+    "sortOrder": 40,
+    "updateTime": "2026-10-27T10:47:07.191326Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "client-console 新建命名空间 invitation：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "invitation",
+    "namespaceName": "邀请",
+    "sortOrder": 50,
+    "updateTime": "2026-10-27T10:47:07.243677Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "client-console 新建命名空间 onboarding-schema：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "onboarding-schema",
+    "namespaceName": "入驻采集表单",
+    "sortOrder": 60,
+    "updateTime": "2026-10-27T10:47:07.289396Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "client-console 新建命名空间 onboarding：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "onboarding",
+    "namespaceName": "入驻",
+    "sortOrder": 70,
+    "updateTime": "2026-10-27T10:47:07.330432Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "client-console 新建命名空间 team：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "team",
+    "namespaceName": "团队",
+    "sortOrder": 80,
+    "updateTime": "2026-10-27T10:47:07.370724Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "client-console 新建命名空间 workspace：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "workspace",
+    "namespaceName": "工作台",
+    "sortOrder": 90,
+    "updateTime": "2026-10-27T10:47:07.408450Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "client-console 新建命名空间 refdata：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "refdata",
+    "namespaceName": "参考数据名称",
+    "sortOrder": 100,
+    "updateTime": "2026-10-27T10:47:07.442326Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "client-console key 导入预览 #1：{'added': 1381, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}",
+   "ok": true,
+   "evidence": {
+    "code": null,
+    "detail": null,
+    "missingNamespaces": [],
+    "problems": []
+   }
+  },
+  {
+   "step": "client-console key 导入确认：200 {'addedCount': 1381, 'sourceChangedCount': 0, 'deprecatedCount': 0}",
+   "ok": true,
+   "evidence": {
+    "addedCount": 1381,
+    "contentRevision": 1,
+    "deprecatedCount": 0,
+    "descriptionChangedCount": 0,
+    "keySetRevision": 1,
+    "restoredCount": 0,
+    "sourceChangedCount": 0
+   }
+  },
+  {
+   "step": "client-console key 导入预览 #2：{'added': 0, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}",
+   "ok": true,
+   "evidence": {
+    "code": null,
+    "detail": null,
+    "missingNamespaces": [],
+    "problems": []
+   }
+  },
+  {
+   "step": "client-console key 集合与文件一致（不变 1381）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console zh-CN 导入：写入 1381、不变 0、空 0（文件 1381）",
+   "ok": true,
+   "evidence": {
+    "contentRevision": 2,
+    "emptyCount": 0,
+    "unchangedCount": 0,
+    "updatedCount": 1381
+   }
+  },
+  {
+   "step": "client-console 发布预检：publishable=True 缺口 0 变更 {'addedKeyCount': 1381, 'addedKeys': ['auth.account.email_status', 'auth.account.loading', 'auth.account.my_applications', 'auth.account.signed_in', 'auth.account.title', 'auth.account.verified', 'auth.action.back_to_login', 'auth.action.go_to_login', 'auth.action.resend_in', 'auth.action.sign_out', 'auth.action.signing_out', 'auth.done.sign_in_intro', 'auth.email.invalid', 'auth.email.required', 'auth.field.confirm_password', 'auth.field.email', 'auth.field.email_placeholder', 'auth.field.issue', 'auth.field.new_password', 'auth.field.password'], 'baseReleaseNo': None, 'deprecatedKeyCount': 0, 'deprecatedKeys': [], 'sourceChangedKeyCount': 0, 'sourceChangedKeys': [], 'translationChanges': [{'changedCount': 1381, 'locale': 'zh-CN', 'sampleKeys': ['auth.account.email_status', 'auth.account.loading', 'auth.account.my_applications', 'auth.account.signed_in', 'auth.account.title', 'auth.account.verified', 'auth.action.back_to_login', 'auth.action.go_to_login', 'auth.action.resend_in', 'auth.action.sign_out', 'auth.action.signing_out', 'auth.done.sign_in_intro', 'auth.email.invalid', 'auth.email.required', 'auth.field.confirm_password', 'auth.field.email', 'auth.field.email_placeholder', 'auth.field.issue', 'auth.field.new_password', 'auth.field.password']}]}",
+   "ok": true,
+   "evidence": {
+    "missingTotal": 0,
+    "problems": [],
+    "coverage": [
+     {
+      "coveragePercent": 100,
+      "locale": "en",
+      "required": false,
+      "satisfied": true,
+      "sourceChangedKeys": 0,
+      "totalKeys": 1381,
+      "translatedKeys": 1381
+     },
+     {
+      "coveragePercent": 100,
+      "locale": "zh-CN",
+      "required": true,
+      "satisfied": true,
+      "sourceChangedKeys": 0,
+      "totalKeys": 1381,
+      "translatedKeys": 1381
+     }
+    ]
+   }
+  },
+  {
+   "step": "client-console 发布 #1：200",
+   "ok": true,
+   "evidence": {
+    "changeSummary": {
+     "addedKeyCount": 1381,
+     "addedKeys": [
+      "auth.account.email_status",
+      "auth.account.loading",
+      "auth.account.my_applications",
+      "auth.account.signed_in",
+      "auth.account.title",
+      "auth.account.verified",
+      "auth.action.back_to_login",
+      "auth.action.go_to_login",
+      "auth.action.resend_in",
+      "auth.action.sign_out",
+      "auth.action.signing_out",
+      "auth.done.sign_in_intro",
+      "auth.email.invalid",
+      "auth.email.required",
+      "auth.field.confirm_password",
+      "auth.field.email",
+      "auth.field.email_placeholder",
+      "auth.field.issue",
+      "auth.field.new_password",
+      "auth.field.password"
+     ],
+     "baseReleaseNo": null,
+     "deprecatedKeyCount": 0,
+     "deprecatedKeys": [],
+     "sourceChangedKeyCount": 0,
+     "sourceChangedKeys": [],
+     "translationChanges": [
+      {
+       "changedCount": 1381,
+       "locale": "zh-CN",
+       "sampleKeys": [
+        "auth.account.email_status",
+        "auth.account.loading",
+        "auth.account.my_applications",
+        "auth.account.signed_in",
+        "auth.account.title",
+        "auth.account.verified",
+        "auth.action.back_to_login",
+        "auth.action.go_to_login",
+        "auth.action.resend_in",
+        "auth.action.sign_out",
+        "auth.action.signing_out",
+        "auth.done.sign_in_intro",
+        "auth.email.invalid",
+        "auth.email.required",
+        "auth.field.confirm_password",
+        "auth.field.email",
+        "auth.field.email_placeholder",
+        "auth.field.issue",
+        "auth.field.new_password",
+        "auth.field.password"
+       ]
+      }
+     ]
+    },
+    "createTime": "2026-10-27T10:47:11.465178Z",
+    "createdBy": "236033080844881920",
+    "current": false,
+    "failureReason": null,
+    "keyCount": 1381,
+    "readyTime": null,
+    "releaseNo": 1,
+    "releaseNote": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "status": "PENDING_CHECK"
+   }
+  },
+  {
+   "step": "client-console #1 READY 且为当前（语言包 20/20）",
+   "ok": true,
+   "evidence": {
+    "available": 20,
+    "pending": 0,
+    "rejected": 0,
+    "total": 20
+   }
+  },
+  {
+   "step": "client-console 匿名 manifest 200、#1",
+   "ok": true,
+   "evidence": "{\"application\":\"client-console\",\"bundles\":{\"en\":{\"auth\":{\"hash\":\"9f8a2b407aa03959e73efd7747e1d9cadd87cfb0de2578929f16b14a95474b2d\",\"url\":\"https://127.0.0.1:19400/mor-platform-public/i18n/client-console/1/en/auth/9f8a2b407aa03959/7bf751a3-33af-4ca2-af01-da31e4919e3a\"},\"common\":{\"hash\":\"556b162b81cce6"
+  },
+  {
+   "step": "client-console en 命名空间 10（期望 10）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console en/refdata 匿名可读：387 条，样例 {'refdata.subdivision.AE-DU': 'Dubayy', 'refdata.industry.RETAIL_APPAREL': 'Apparel & accessories', 'refdata.mcc.5651': 'Family Clothing Stores', 'refdata.mcc.0742': 'Veterinary Services'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console zh-CN 命名空间 10（期望 10）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "client-console zh-CN/refdata 匿名可读：387 条，样例 {'refdata.subdivision.AE-DU': '迪拜', 'refdata.industry.RETAIL_APPAREL': '服装与配饰', 'refdata.mcc.5651': '家庭服装店', 'refdata.mcc.0742': 'Veterinary Services'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console 新建命名空间 onboarding-schema：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "onboarding-schema",
+    "namespaceName": "入驻采集表单",
+    "sortOrder": 240,
+    "updateTime": "2026-10-27T10:47:13.194448Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "operations-console 新建命名空间 reference-data：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "reference-data",
+    "namespaceName": "参考数据",
+    "sortOrder": 250,
+    "updateTime": "2026-10-27T10:47:19.422565Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "operations-console 新建命名空间 refdata：200",
+   "ok": true,
+   "evidence": {
+    "activeKeyCount": 0,
+    "deprecatedKeyCount": 0,
+    "description": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "namespaceCode": "refdata",
+    "namespaceName": "参考数据名称",
+    "sortOrder": 260,
+    "updateTime": "2026-10-27T10:47:25.604237Z",
+    "updatedBy": "236033080844881920",
+    "version": 1
+   }
+  },
+  {
+   "step": "operations-console key 导入预览 #1：{'added': 1245, 'sourceChanged': 1, 'deprecated': 11, 'restored': 0}",
+   "ok": true,
+   "evidence": {
+    "code": null,
+    "detail": null,
+    "missingNamespaces": [],
+    "problems": []
+   }
+  },
+  {
+   "step": "operations-console key 导入确认：200 {'addedCount': 1245, 'sourceChangedCount': 1, 'deprecatedCount': 11}",
+   "ok": true,
+   "evidence": {
+    "addedCount": 1245,
+    "contentRevision": 31,
+    "deprecatedCount": 11,
+    "descriptionChangedCount": 0,
+    "keySetRevision": 7,
+    "restoredCount": 0,
+    "sourceChangedCount": 1
+   }
+  },
+  {
+   "step": "operations-console key 导入预览 #2：{'added': 0, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}",
+   "ok": true,
+   "evidence": {
+    "code": null,
+    "detail": null,
+    "missingNamespaces": [],
+    "problems": []
+   }
+  },
+  {
+   "step": "operations-console key 集合与文件一致（不变 10047）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN 导入：写入 1246、不变 0、空 0（文件 1246）",
+   "ok": true,
+   "evidence": {
+    "contentRevision": 32,
+    "emptyCount": 0,
+    "unchangedCount": 0,
+    "updatedCount": 1246
+   }
+  },
+  {
+   "step": "operations-console 发布预检：publishable=True 缺口 0 变更 {'addedKeyCount': 1245, 'addedKeys': ['client-review.application.field.additionalNumber', 'client-review.application.field.addressLine1', 'client-review.application.field.addressLine2', 'client-review.application.field.birthCountry', 'client-review.application.field.birthPlace', 'client-review.application.field.buildingNumber', 'client-review.application.field.district', 'client-review.application.field.email', 'client-review.application.field.expiryDate', 'client-review.application.field.gender', 'client-review.application.field.identifierCheckResult', 'client-review.application.field.identifierMasked', 'client-review.application.field.issueDate', 'client-review.application.field.licenseExpiryDate', 'client-review.application.field.listedCompany', 'client-review.application.field.pepSelfDeclared', 'client-review.application.field.phone', 'client-review.application.field.poBox', 'client-review.application.field.registrationAuthorityCode', 'client-review.application.field.sourceOfFundsCode'], 'baseReleaseNo': 2, 'deprecatedKeyCount': 11, 'deprecatedKeys': ['client-review.classification.industryPlaceholder', 'client-review.classification.issue.duplicate', 'client-review.classification.issue.industryRequired', 'client-review.classification.issue.mccFormat', 'client-review.classification.saveFirst', 'currency.editor.frozenHint', 'currency.editor.minorUnitHint', 'currency.specs.column.actions', 'currency.specs.column.updatedAt', 'currency.specs.count', 'currency.specs.edit'], 'sourceChangedKeyCount': 1, 'sourceChangedKeys': ['client-review.classification.mccPlaceholder'], 'translationChanges': [{'changedCount': 1257, 'locale': 'zh-CN', 'sampleKeys': ['client-review.application.field.additionalNumber', 'client-review.application.field.addressLine1', 'client-review.application.field.addressLine2', 'client-review.application.field.birthCountry', 'client-review.application.field.birthPlace', 'client-review.application.field.buildingNumber', 'client-review.application.field.district', 'client-review.application.field.email', 'client-review.application.field.expiryDate', 'client-review.application.field.gender', 'client-review.application.field.identifierCheckResult', 'client-review.application.field.identifierMasked', 'client-review.application.field.issueDate', 'client-review.application.field.licenseExpiryDate', 'client-review.application.field.listedCompany', 'client-review.application.field.pepSelfDeclared', 'client-review.application.field.phone', 'client-review.application.field.poBox', 'client-review.application.field.registrationAuthorityCode', 'client-review.application.field.sourceOfFundsCode']}]}",
+   "ok": true,
+   "evidence": {
+    "missingTotal": 0,
+    "problems": [],
+    "coverage": [
+     {
+      "coveragePercent": 100,
+      "locale": "en",
+      "required": false,
+      "satisfied": true,
+      "sourceChangedKeys": 0,
+      "totalKeys": 10047,
+      "translatedKeys": 10047
+     },
+     {
+      "coveragePercent": 100,
+      "locale": "zh-CN",
+      "required": true,
+      "satisfied": true,
+      "sourceChangedKeys": 0,
+      "totalKeys": 10047,
+      "translatedKeys": 10047
+     }
+    ]
+   }
+  },
+  {
+   "step": "operations-console 发布 #3：200",
+   "ok": true,
+   "evidence": {
+    "changeSummary": {
+     "addedKeyCount": 1245,
+     "addedKeys": [
+      "client-review.application.field.additionalNumber",
+      "client-review.application.field.addressLine1",
+      "client-review.application.field.addressLine2",
+      "client-review.application.field.birthCountry",
+      "client-review.application.field.birthPlace",
+      "client-review.application.field.buildingNumber",
+      "client-review.application.field.district",
+      "client-review.application.field.email",
+      "client-review.application.field.expiryDate",
+      "client-review.application.field.gender",
+      "client-review.application.field.identifierCheckResult",
+      "client-review.application.field.identifierMasked",
+      "client-review.application.field.issueDate",
+      "client-review.application.field.licenseExpiryDate",
+      "client-review.application.field.listedCompany",
+      "client-review.application.field.pepSelfDeclared",
+      "client-review.application.field.phone",
+      "client-review.application.field.poBox",
+      "client-review.application.field.registrationAuthorityCode",
+      "client-review.application.field.sourceOfFundsCode"
+     ],
+     "baseReleaseNo": 2,
+     "deprecatedKeyCount": 11,
+     "deprecatedKeys": [
+      "client-review.classification.industryPlaceholder",
+      "client-review.classification.issue.duplicate",
+      "client-review.classification.issue.industryRequired",
+      "client-review.classification.issue.mccFormat",
+      "client-review.classification.saveFirst",
+      "currency.editor.frozenHint",
+      "currency.editor.minorUnitHint",
+      "currency.specs.column.actions",
+      "currency.specs.column.updatedAt",
+      "currency.specs.count",
+      "currency.specs.edit"
+     ],
+     "sourceChangedKeyCount": 1,
+     "sourceChangedKeys": [
+      "client-review.classification.mccPlaceholder"
+     ],
+     "translationChanges": [
+      {
+       "changedCount": 1257,
+       "locale": "zh-CN",
+       "sampleKeys": [
+        "client-review.application.field.additionalNumber",
+        "client-review.application.field.addressLine1",
+        "client-review.application.field.addressLine2",
+        "client-review.application.field.birthCountry",
+        "client-review.application.field.birthPlace",
+        "client-review.application.field.buildingNumber",
+        "client-review.application.field.district",
+        "client-review.application.field.email",
+        "client-review.application.field.expiryDate",
+        "client-review.application.field.gender",
+        "client-review.application.field.identifierCheckResult",
+        "client-review.application.field.identifierMasked",
+        "client-review.application.field.issueDate",
+        "client-review.application.field.licenseExpiryDate",
+        "client-review.application.field.listedCompany",
+        "client-review.application.field.pepSelfDeclared",
+        "client-review.application.field.phone",
+        "client-review.application.field.poBox",
+        "client-review.application.field.registrationAuthorityCode",
+        "client-review.application.field.sourceOfFundsCode"
+       ]
+      }
+     ]
+    },
+    "createTime": "2026-10-27T10:47:33.977654Z",
+    "createdBy": "236033080844881920",
+    "current": false,
+    "failureReason": null,
+    "keyCount": 10047,
+    "readyTime": null,
+    "releaseNo": 3,
+    "releaseNote": "参考数据目录与 client-master 迁移：refdata / reference-data 及本机补齐（阶段 5，本机 2026-10-27）",
+    "status": "PENDING_CHECK"
+   }
+  },
+  {
+   "step": "operations-console #3 READY 且为当前（语言包 52/52）",
+   "ok": true,
+   "evidence": {
+    "available": 52,
+    "pending": 0,
+    "rejected": 0,
+    "total": 52
+   }
+  },
+  {
+   "step": "operations-console 匿名 manifest 200、#3",
+   "ok": true,
+   "evidence": "{\"application\":\"operations-console\",\"bundles\":{\"en\":{\"access\":{\"hash\":\"3acfb0e90c969bc874b6f93129df44e1574eac33e39f1b9fb1a8754f590d1166\",\"url\":\"https://127.0.0.1:19400/mor-platform-public/i18n/operations-console/3/en/access/3acfb0e90c969bc8/481ef2a7-0950-4f38-9d70-19d7efb1a6d2\"},\"auth\":{\"hash\":\"e798"
+  },
+  {
+   "step": "operations-console en 命名空间 26（期望 26）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console en/refdata 匿名可读：387 条，样例 {'refdata.subdivision.AE-DU': 'Dubayy', 'refdata.industry.RETAIL_APPAREL': 'Apparel & accessories', 'refdata.mcc.5651': 'Family Clothing Stores', 'refdata.mcc.0742': 'Veterinary Services'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console en/reference-data 匿名可读：83 条，样例 {'reference-data.column.status': 'Status'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN 命名空间 26（期望 26）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN/refdata 匿名可读：387 条，样例 {'refdata.subdivision.AE-DU': '迪拜', 'refdata.industry.RETAIL_APPAREL': '服装与配饰', 'refdata.mcc.5651': '家庭服装店', 'refdata.mcc.0742': 'Veterinary Services'}",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "step": "operations-console zh-CN/reference-data 匿名可读：83 条，样例 {'reference-data.column.status': '状态'}",
+   "ok": true,
+   "evidence": null
+  }
+ ]
+}

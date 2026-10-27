@@ -1,0 +1,110 @@
++--------+----------------------------------+
+| k      | v                                |
++--------+----------------------------------+
+| tables | t_country_region,t_currency_spec |
++--------+----------------------------------+
++----------+---+
+| k        | v |
++----------+---+
+| routines | 0 |
++----------+---+
++----------------------+---+
+| k                    | v |
++----------------------+---+
+| currency_version_col | 1 |
++----------------------+---+
++---------------+--------------------+----------+------------+---------------+--------+---------+
+| k             | id                 | currency | minor_unit | rounding_mode | status | version |
++---------------+--------------------+----------+------------+---------------+--------+---------+
+| currency_rows |               1001 | USD      |          2 | HALF_UP       | ACTIVE |       1 |
+| currency_rows | 238762073381748736 | AED      |          2 | HALF_UP       | ACTIVE |       2 |
++---------------+--------------------+----------+------------+---------------+--------+---------+
++-----------------------------+-----+
+| k                           | v   |
++-----------------------------+-----+
+| country_seed_rows_2001_2249 | 249 |
++-----------------------------+-----+
++--------------------+-----+
+| k                  | v   |
++--------------------+-----+
+| country_rows_total | 249 |
++--------------------+-----+
++------------+--------------------+------------------------+------------+--------+
+| k          | target_id          | target_service_code    | channel    | status |
++------------+--------------------+------------------------+------------+--------+
+| ops_target | 900000000000000001 | operations-console-bff | OPERATIONS | ACTIVE |
++------------+--------------------+------------------------+------------+--------+
++--------------------------+--------------------+-----------------------------------+---------------+--------+
+| k                        | resource_id        | resource_code                     | resource_type | status |
++--------------------------+--------------------+-----------------------------------+---------------+--------+
+| platform_config_menu_562 | 900000000000000562 | OPERATIONS_PLATFORM_CONFIGURATION | MENU          | ACTIVE |
++--------------------------+--------------------+-----------------------------------+---------------+--------+
++-------------------------+----------------------------------+------------+--------+
+| k                       | resource_code                    | sort_order | status |
++-------------------------+----------------------------------+------------+--------+
+| sibling_menus_under_562 | OPERATIONS_GATEWAY_CONFIGURATION |         10 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_CONSOLE_RESOURCES     |         20 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_PERMISSIONS           |         30 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_API_CREDENTIALS       |         40 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_API_SCOPES            |         50 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_WEBHOOKS              |         60 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_CURRENCY_SPECS        |         70 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_FILE_STORAGE          |         80 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_FILE_RECORDS          |         85 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_FILE_UPLOAD           |         86 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_CARD_BIN_LIBRARY      |         90 | ACTIVE |
++-------------------------+----------------------------------+------------+--------+
++--------------------------+--------------------+--------+
+| k                        | permission_id      | status |
++--------------------------+--------------------+--------+
+| classification_edit_perm | 236085272977162240 | ACTIVE |
++--------------------------+--------------------+--------+
++---------------------------------+----------------------+---------------------------------+--------+
+| k                               | permission_code      | route_code                      | status |
++---------------------------------+----------------------+---------------------------------+--------+
+| currency_manage_perm_and_routes | CURRENCY_SPEC_MANAGE | operations-currency-spec-create | ACTIVE |
+| currency_manage_perm_and_routes | CURRENCY_SPEC_READ   | operations-currency-spec-list   | ACTIVE |
+| currency_manage_perm_and_routes | CURRENCY_SPEC_MANAGE | operations-currency-spec-status | ACTIVE |
+| currency_manage_perm_and_routes | CURRENCY_SPEC_MANAGE | operations-currency-spec-update | ACTIVE |
++---------------------------------+----------------------+---------------------------------+--------+
++--------------------+--------------------+
+| k                  | v                  |
++--------------------+--------------------+
+| max_block_route_id | 900000000000138445 |
++--------------------+--------------------+
++--------------------------+----------+-----+
+| k                        | status   | n   |
++--------------------------+----------+-----+
+| gateway_routes_by_status | ACTIVE   | 607 |
+| gateway_routes_by_status | DISABLED |   6 |
++--------------------------+----------+-----+
++-----------+--------------------+--------------------+--------------------+----------------+------------------+----------------------------+------------------+------------------+
+| k         | application_code   | current_release_id | current_release_no | max_release_no | required_locales | coverage_threshold_percent | key_set_revision | content_revision |
++-----------+--------------------+--------------------+--------------------+----------------+------------------+----------------------------+------------------+------------------+
+| i18n_apps | checkout           |               NULL |               NULL |           NULL | ["zh-CN"]        |                        100 |                0 |                0 |
+| i18n_apps | client-console     | 240723744664928256 |                  5 |              5 | ["zh-CN"]        |                        100 |                5 |               10 |
+| i18n_apps | operations-console | 240718824666644480 |                 12 |             12 | ["zh-CN"]        |                        100 |               11 |               41 |
+| i18n_apps | partner-console    |               NULL |               NULL |           NULL | ["zh-CN"]        |                        100 |                0 |                0 |
++-----------+--------------------+--------------------+--------------------+----------------+------------------+----------------------------+------------------+------------------+
++------------------+--------------------+------------+----------+
+| k                | application_code   | namespaces | max_sort |
++------------------+--------------------+------------+----------+
+| i18n_ns_max_sort | operations-console |         24 |      240 |
+| i18n_ns_max_sort | client-console     |          9 |       90 |
++------------------+--------------------+------------+----------+
++----------------+--------------------+-------------------------------+--------------+--------+-------------------+----------------+
+| k              | bucket_id          | bucket_name                   | access_level | status | last_check_result | has_public_url |
++----------------+--------------------+-------------------------------+--------------+--------+-------------------+----------------+
+| public_buckets | 238885048240128000 | mor-platform-files            | PRIVATE      | ACTIVE | OK                |              0 |
+| public_buckets | 239048125665329152 | mor-test-platform-files-k7q2  | PRIVATE      | ACTIVE | OK                |              0 |
+| public_buckets | 239257988609687552 | mor-platform-public           | PUBLIC       | ACTIVE | OK                |              1 |
+| public_buckets | 239290413763084288 | mor-test-platform-public-k7q2 | PUBLIC       | ACTIVE | OK                |              1 |
++----------------+--------------------+-------------------------------+--------------+--------+-------------------+----------------+
++---------------+------------------------+--------------+--------------------+------------------+
+| k             | source_system          | access_level | bucket_id          | scan_policy_code |
++---------------+------------------------+--------------+--------------------+------------------+
+| public_routes | *                      | PUBLIC       | 239290413763084288 | PUBLIC_DOCUMENT  |
+| public_routes | client-console-bff     | PUBLIC       | 239290413763084288 | PUBLIC_IMAGE     |
+| public_routes | operations-console-bff | PUBLIC       | 239290413763084288 | PUBLIC_DOCUMENT  |
+| public_routes | platform-support       | PUBLIC       | 239257988609687552 | I18N_BUNDLE_JSON |
++---------------+------------------------+--------------+--------------------+------------------+

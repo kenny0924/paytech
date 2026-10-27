@@ -29,6 +29,7 @@ import com.paytech.client.master.domain.enums.RequirementLevel;
 import com.paytech.client.master.domain.enums.RuleCode;
 import com.paytech.client.master.domain.enums.WidgetCode;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
+import com.paytech.client.master.domain.onboarding.pack.ReferenceCatalogCodes;
 import com.paytech.client.master.domain.onboarding.pack.RuleSettings;
 import com.paytech.client.master.domain.onboarding.requirement.MaterialRequirement;
 
@@ -122,7 +123,10 @@ public final class FormSchemaConverter {
         return field;
     }
 
-    /** Schema 字段、地址组件与属性引用的全部目录，组织类型伪目录按机构形态列出。 */
+    /**
+     * Schema 字段、地址组件与属性引用的本库目录，组织类型伪目录按机构形态列出
+     * <li>REF_ 目录（Platform 参考数据）不放入：字段与地址组件保留 catalogCode，选项由 client-console-bff 向 Platform 取来补全。</li>
+     */
     static Map<String, List<CatalogOption>> catalogs(OnboardingPack pack, ClientType partyType) {
         Set<String> codes = new LinkedHashSet<>();
         pack.getFields().stream().map(OnboardingSchemaField::getCatalogCode).filter(Objects::nonNull).forEach(codes::add);
@@ -132,6 +136,7 @@ public final class FormSchemaConverter {
             }
         });
         pack.getAttributes().values().stream().map(AttributeDefinition::getCatalogCode).filter(Objects::nonNull).forEach(codes::add);
+        codes.removeIf(ReferenceCatalogCodes::isReference);
         Map<String, List<CatalogOption>> result = new LinkedHashMap<>();
         for (String code : codes) {
             result.put(code, OnboardingPack.ORGANIZATION_TYPE_CATALOG.equals(code)

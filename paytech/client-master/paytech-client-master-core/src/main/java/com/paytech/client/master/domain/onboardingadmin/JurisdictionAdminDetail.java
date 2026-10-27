@@ -2,6 +2,8 @@ package com.paytech.client.master.domain.onboardingadmin;
 
 import java.util.List;
 
+import com.paytech.client.master.core.dal.dataobject.AddressFormatComponent;
+
 import com.paytech.client.master.core.dal.dataobject.IdentifierType;
 import com.paytech.client.master.core.dal.dataobject.Jurisdiction;
 import com.paytech.client.master.core.dal.dataobject.OrganizationType;
@@ -16,7 +18,8 @@ import com.paytech.client.master.core.dal.dataobject.RuleSetting;
  * @param organizationTypes 组织类型
  * @param identifierTypes 辖区与全局标识类型
  * @param relationTypes 辖区与全局关系类型
+ * @param addressComponents 辖区本地地址格式的组件，按展示顺序；辖区未配置格式时为空
  */
 public record JurisdictionAdminDetail(Jurisdiction jurisdiction, List<RuleSetting> rules, List<OrganizationType> organizationTypes,
-    List<IdentifierType> identifierTypes, List<RelationType> relationTypes) {
+    List<IdentifierType> identifierTypes, List<RelationType> relationTypes, List<AddressFormatComponent> addressComponents) {
 }

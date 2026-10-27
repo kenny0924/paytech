@@ -57,9 +57,12 @@ class OnboardingFormSchemaTest extends AbstractOnboardingHttpTest {
         assertEquals("GENERIC", schema.path("fallbackAddressFormat").path("code").asString());
         var state = component(schema.path("addressFormat"), "stateOrProvince");
         assertTrue(state.path("required").asBoolean());
-        assertEquals("STATE_OR_PROVINCE", state.path("catalogCode").asString());
+        assertEquals("REF_COUNTRY_SUBDIVISION", state.path("catalogCode").asString());
         assertTrue(schema.path("catalogs").has("REGISTRATION_AUTHORITY"));
-        assertTrue(schema.path("catalogs").has("STATE_OR_PROVINCE"));
+        assertTrue(fieldKeys(schema).contains("business.currency"));
+        assertFalse(schema.path("catalogs").propertyNames().stream().anyMatch(code -> code.startsWith("REF_")),
+            "Platform 参考数据目录由 client-console-bff 补全，不出现在 catalogs");
+        assertFalse(schema.path("catalogs").has("STATE_OR_PROVINCE") || schema.path("catalogs").has("CURRENCY"));
         assertTrue(codes(schema.path("catalogs").path("ORGANIZATION_TYPE"), "code").contains("LLC"));
         assertFalse(codes(schema.path("organizationTypes"), "code").contains("SOLE_ESTABLISHMENT"), "个人经营形态不属于组织申请");
         var license = item(schema.path("identifierTypes"), "AE_TRADE_LICENSE");

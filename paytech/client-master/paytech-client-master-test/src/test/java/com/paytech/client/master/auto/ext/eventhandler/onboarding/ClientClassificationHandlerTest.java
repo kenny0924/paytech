@@ -72,7 +72,7 @@ class ClientClassificationHandlerTest extends AbstractClientReviewTest {
     /** 已设置分类的审核中任务。 */
     long confirmedReview() {
         var review = applications.underReview(ACCOUNT_ID);
-        assertEquals(200, replace(review.caseId(), List.of(item("RETAIL", "5411", true))).getStatus().value());
+        assertEquals(200, replace(review.caseId(), List.of(item("RETAIL_GROCERY", "5411", true))).getStatus().value());
         return review.caseId();
     }
 

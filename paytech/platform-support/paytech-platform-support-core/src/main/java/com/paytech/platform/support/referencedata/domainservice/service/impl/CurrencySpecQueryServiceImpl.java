@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
-import com.paytech.platform.support.referencedata.core.dal.dataobject.CurrencySpec;
-import com.paytech.platform.support.referencedata.domainservice.repository.CurrencySpecRepository;
+import com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCurrency;
+import com.paytech.platform.support.referencedata.domainservice.repository.ReferenceCurrencyRepository;
 import com.paytech.platform.support.referencedata.domainservice.service.CurrencySpecQueryService;
 
 import lombok.AllArgsConstructor;
@@ -17,21 +17,21 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class CurrencySpecQueryServiceImpl implements CurrencySpecQueryService {
 
-    private final CurrencySpecRepository repository;
+    private final ReferenceCurrencyRepository repository;
 
-    /** 全部规则。 */
+    /** 全部币种，不限状态。 */
     @Override
-    public List<CurrencySpec> listCurrencySpecs() {
-        return repository.findAll();
+    public List<ReferenceCurrency> listCurrencySpecs() {
+        return repository.find(null, null);
     }
 
     /** 不存在时返回公共 NOT_FOUND。 */
     @Override
-    public CurrencySpec getCurrencySpec(String currency) {
-        CurrencySpec spec = repository.findByCurrency(currency);
-        if (spec == null) {
+    public ReferenceCurrency getCurrencySpec(String currency) {
+        ReferenceCurrency found = repository.findByCurrencyCode(currency);
+        if (found == null) {
             throw new FailException(CommonErrorCode.NOT_FOUND);
         }
-        return spec;
+        return found;
     }
 }

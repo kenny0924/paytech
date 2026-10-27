@@ -31,6 +31,7 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_FILE_RECORDS: lazy(() => import('../pages/FileRecords').then(m => ({ default: m.FileRecords }))),
   OPERATIONS_FILE_UPLOAD: lazy(() => import('../pages/FileUpload').then(m => ({ default: m.FileUpload }))),
   OPERATIONS_CARD_BIN_LIBRARY: lazy(() => import('../pages/CardBinLibrary').then(m => ({ default: m.CardBinLibrary }))),
+  OPERATIONS_REFERENCE_DATA: lazy(() => import('../pages/ReferenceData').then(m => ({ default: m.ReferenceData }))),
   OPERATIONS_EXTERNAL_STANDARD_APIS: lazy(() => import('../pages/ExternalStandardApis').then(m => ({ default: m.ExternalStandardApis }))),
   OPERATIONS_CLIENT_ONBOARDING_REVIEW: lazy(() => import('../pages/ClientOnboardingReview').then(m => ({ default: m.ClientOnboardingReview }))),
   OPERATIONS_ONBOARDING_CONFIG: lazy(() => import('../pages/OnboardingConfig').then(m => ({ default: m.OnboardingConfig }))),

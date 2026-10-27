@@ -1,0 +1,31 @@
+PASS mortest-ops-en 登录
+PASS mortest-ops-en 菜单"平台配置 → 参考数据"可见、页面只读标记
+PASS mortest-ops-en 4 个页签带条数（国家 249、行政区 47、行业 42、MCC 298） | ["Countries 249","Subdivisions 47","Industries 42","MCC 298"]
+PASS mortest-ops-en F-3 国家表"状态"列完整显示在面板内（1440） | "Status"
+PASS mortest-ops-en 国家：本地化名称（Intl）+ 编码 / 三位码 / 数字码 / 区号 / 法定货币
+PASS mortest-ops-en 国家搜索（本地化名）
+PASS mortest-ops-en 无结果时有空状态
+PASS mortest-ops-en 行政区：按国家条、refdata 名称
+FIND {"tag":"mortest-ops-en","page":"refdata-industries","kind":"raw-i18n-key","keys":["refdata.industry.RETAIL_APPAREL"],"screenshot":"screens/mortest-ops-en-05-refdata-industries.png"}
+PASS mortest-ops-en F-4 行业名称完整显示、不截断 | "RETAIL_APPAREL\nApparel & accessories"
+PASS mortest-ops-en 行业树：大类 + 细类 + 建议 MCC
+PASS mortest-ops-en MCC 搜索名称（grocery → 5411）
+PASS mortest-ops-en MCC 状态筛选"停用" → 空状态
+PASS mortest-ops-en MCC 加载失败有明确提示与重试 | "P\nPAYTECH\nSystem\nPlatform Settings\nAPI Routes\nMenus & Buttons\nPermissions\nAPI Credentials\nAPI Scopes\nWebhooks\nCurrencies\nStorage\nFiles\nFile Upload\nCard BIN Library\nReference Data\nTenant Access\nRisk\nDa"
+PASS mortest-ops-en 重试后 MCC 列表恢复
+PASS mortest-ops-en 分类卡片：已保存的细类显示名称与 MCC | "RETAIL_APPAREL"
+PASS mortest-ops-en 选细类后带出建议 MCC 5712 并标"建议" | "Industry & MCC\nUnconfirmed\nAdd Classification\nPrimary Classification\nIndustry Category\nIndustry Subcategory\nMCC\nRetail\nRETAIL_HOME\nRETAIL_HOME\nHome & furniture\n5712\nFurniture, Home Furnishings, and Equipment Stores, Except Appliances\nSuggested\nBasis for Row 1\nSubcategory hint\nFurniture, home furnish"
+PASS mortest-ops-en F-6 "建议"标签不溢出分类行 | "Suggested"
+PASS mortest-ops-en F-6 细类说明按界面语言显示（refdata.industry.<CODE>.description） | "Basis for Row 1\nSubcategory hint\nFurniture, home furnishings, decor and household goods. Excludes major appliances sold alone.\nSuggested MCC\n5712 Furniture, Hom"
+PASS mortest-ops-en MCC 搜索（名称 grocery）出现 5411
+PASS mortest-ops-en 改选后标"已改 · 建议 5712" | "Industry & MCC\nUnconfirmed\nAdd Classification\nPrimary Classification\nIndustry Category\nIndustry Subcategory\nMCC\nRetail\nRETAIL_HOME\nHome & furniture\n5411\nGrocery Stores, Supermarkets\nChanged · suggested 5712\nBasis for Row 1\nSubcategory hint\nFurniture, home furnishings, decor and household goods. Excl"
+SKIP 服务端 422（临时停用 MCC 5411）：mor-test 不做 root 写，本机已验证
+PASS mortest-ops-en 入驻配置目录：REF_CURRENCY 标"Platform 参考数据"
+PASS mortest-ops-en F-5 地址格式组件引用的 REF_COUNTRY_SUBDIVISION 列入目录清单
+PASS mortest-ops-en F-5 选中后右侧预览本辖区行政区
+PASS mortest-ops-en F-5 "Platform 参考数据"标签不被列边缘截断
+PASS mortest-ops-en 币种列表：数字码、名称（Intl）、符号列
+PASS mortest-ops-en F-7 币种表"版本"列完整显示 | "Version"
+SKIP DRAFT 币种 XTS 面板：mor-test 不建测试币种，本机已验证
+PASS mortest-ops-en ACTIVE 币种只读（锁标）并提供"更换图标"
+SUMMARY mortest-ops-en pass=27 fail=0

@@ -1,5 +1,7 @@
 package com.paytech.platform.support.filedocument.domainservice.service;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Map;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Completed;
 import com.paytech.platform.support.filedocument.domain.file.StoredFileView;
 import com.paytech.platform.support.filedocument.domain.file.UploadModels.Upload;
@@ -12,6 +14,13 @@ public interface FileLifecycleService {
     Upload lockSourceUpload(long uploadId);
     /** 按文件 ID 查询当前版本元数据、访问级别与公开地址；不存在返回 FILE_NOT_FOUND。 */
     StoredFileView describe(long fileId);
+    /**
+     * 按文件 ID 批量查询元数据，一次数据库读取
+     *
+     * @param fileIds 文件 ID，可为空集合
+     * @return 文件 ID 到元数据；不存在的文件不出现在结果中
+     */
+    Map<Long, StoredFileView> describeAll(Collection<Long> fileIds);
     /** 按文件 ID 读取当前版本坐标与状态；不存在返回 FILE_NOT_FOUND。 */
     File file(long fileId);
     /**

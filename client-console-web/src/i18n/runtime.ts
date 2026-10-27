@@ -234,6 +234,15 @@ export function createI18n(options: I18nOptions) {
       if (!warned.has(full)) { warned.add(full); options.warn?.('i18n: missing key "' + full + '"'); }
       return full;
     },
+    /**
+     * Like `t`, but returns null instead of the raw key when neither a runtime bundle nor the built-in base has the key,
+     * and never warns: for data-owned namespaces (`refdata`) whose base text is the backend name.
+     */
+    find(namespace: string, key: string, params?: Params): string | null {
+      use(namespace);
+      const found = lookup(namespace, key);
+      return found ? format(found.text, found.locale, params) : null;
+    },
     locale: () => locale,
     locales: (): LocaleInfo[] => (options.publishedOnly ? known().filter(item => verified.has(item.code)) : known()),
     verifyOffered,

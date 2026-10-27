@@ -14,6 +14,7 @@ import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 import com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecQueryApi;
+import com.paytech.platform.support.api.referencedata.ReferenceCurrencyQueryApi;
 
 import lombok.AllArgsConstructor;
 
@@ -21,6 +22,7 @@ import lombok.AllArgsConstructor;
  * Platform 币种规则的 HTTP 转发：每个入口只调用一次 Platform，不重试
  * <li>写操作把会话 Account ID 与 Session ID 填入 X-Gateway-Actor-Subject / X-Gateway-Session-Id；请求幂等由 Gateway 负责。</li>
  * <li>Platform 422 的字段路径只投影到本次页面请求体内存在的路径。</li>
+ * <li>币种页列表读参考数据币种接口（完整字段）；财务页下拉仍读旧币种规则接口。</li>
  *
  * @author Claude
  */
@@ -28,18 +30,19 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class PlatformCurrencySpecClientImpl implements PlatformCurrencySpecClient {
     private final CurrencySpecQueryApi queryApi;
+    private final ReferenceCurrencyQueryApi referenceApi;
     private final CurrencySpecManagementApi managementApi;
 
-    /** 全部币种规则，逐条核对后投影。 */
+    /** 全部币种（含数字代码、名称、符号与图标），逐条核对后投影。 */
     @Override
     public CurrencySpecListResponseBody listCurrencySpecs() {
-        return CurrencySpecContractConverter.toBff(queryApi.listCurrencySpecs());
+        return CurrencySpecContractConverter.toBff(referenceApi.listCurrencies(null, null));
     }
 
-    /** Platform 查询接口不带筛选，按状态在 BFF 筛选。 */
+    /** Platform 旧查询接口不带筛选，按状态在 BFF 筛选。 */
     @Override
     public CurrencyListResponseBody listCurrencies(String status) {
-        return CurrencySpecContractConverter.toFinance(listCurrencySpecs(), status);
+        return CurrencySpecContractConverter.toFinance(queryApi.listCurrencySpecs(), status);
     }
 
     /** 新建草稿；回执须为本次币种且状态为 DRAFT。 */
@@ -55,14 +58,14 @@ public class PlatformCurrencySpecClientImpl implements PlatformCurrencySpecClien
         }
     }
 
-    /** 修改草稿；回执须为本次币种且仍为 DRAFT。 */
+    /** 修改；回执须为本次币种（修改不改变状态，DRAFT 与已启用 / 停用均可，后者只能换图标）。 */
     @Override
     public ConfigurationMutationResponseBody updateCurrencySpec(OperatorContext context, String currency,
         UpdateCurrencySpecRequestBody request) {
         try {
             var result = managementApi.updateCurrencySpec(context.accountId(), context.sessionId(), currency,
                 CurrencySpecContractConverter.toPlatform(request));
-            return CurrencySpecContractConverter.toBff(result, currency, CurrencySpecStatus.DRAFT.getCode());
+            return CurrencySpecContractConverter.toBff(result, currency, null);
         } catch (HttpRequestValidationException failure) {
             throw ConfigurationValidationConverter.local(request, failure);
         }

@@ -50,6 +50,7 @@ import com.paytech.client.master.domainservice.service.ClientApplicationCommandS
 import com.paytech.client.master.domainservice.service.OnboardingPackService;
 import com.paytech.client.master.domainservice.service.impl.ClientApplicationCommandServiceImpl;
 import com.paytech.client.master.integration.ComplianceProgramClient;
+import com.paytech.client.master.integration.ReferenceDataClient;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
@@ -115,9 +116,9 @@ public class ClientSubmissionConfiguration {
         ClientPeopleRepository people, ClientDocumentRepository documents, PartyAttributeRepository attributes,
         ComplianceProgramClient programs, PartyIdentityKeyRepository identityKeys, ClientMaterialAuthorityClient authority,
         ClientAgreementPartyClient agreementParties, PartyProfileIdentifierRepository identifiers,
-        ApplicationDeclarationRepository declarations) {
+        ApplicationDeclarationRepository declarations, ReferenceDataClient referenceData) {
         return new ClientSubmissionPreparer(clock, packs, drafts, people, documents, attributes, programs, identityKeys, authority,
-            agreementParties, identifiers, declarations);
+            agreementParties, identifiers, declarations, referenceData);
     }
 
     /** CM-7 需求清单。 */

@@ -11,6 +11,8 @@ export type ApplicationContext = {
   app: Application;
   schema: FormSchema;
   reload: () => Promise<Application>;
+  /** 重新读取 Schema（参考数据选项加载失败后重试）。 */
+  reloadSchema: () => Promise<void>;
   /** 写命令成功后更新"已保存"时间。 */
   touch: (savedAt?: string) => void;
   savedAt: string | null;

@@ -1,0 +1,40 @@
+# platform-support：参考数据目录与 client-master 迁移 · 交付记录
+
+| 日期 | 阶段 | 内容 | 状态 |
+|---|---|---|---|
+| 2026-10-27 | 来源 | 用户发起"系统是否要有公共字典模块"讨论（由 client-onboarding 引出），经三轮确定：专表 + `t_ref_` 前缀、字段带齐标准属性（含 logo）、后端管数据 / 前端管展示、行业三级（大类 → 细类 → MCC，不建 6 位子 MCC）；Q1—Q11 全部按建议。讨论稿 [design-discuss/reference-data](../../../design-discuss/reference-data/design.md)，决定 [2026-10-27 参考数据决定](../../../agent-docs/decisions/2026-10-27-platform-reference-data.md) | 已确认 |
+| 2026-10-27 | 来源 | 核对发现切片 1（`9f506f0f`）已在 client-master `t_catalog_item` 中放入 INDUSTRY / CURRENCY / STATE_OR_PROVINCE，国家只校验格式，MCC 只校验四位数字。用户确认：单独立项（取代决定原 Q1 的"随切片实施"）；`t_catalog_item` 保留为 client-master 业务目录表，但不得放参考数据 | 已确认 |
+| 2026-10-27 | 1 需求评审 | [需求](./requirement.md) 评审稿：范围 R1—R10、规则 B1—B8、逐系统变动点（第 7 节）、验收 AC-01—AC-14、待确认 Q1—Q7、阶段安排 | 已确认 |
+| 2026-10-27 | 1 确认 | 用户确认阶段 1，Q1—Q7 全部按建议（细类草案阶段 3 给出、生产前合规确认；存量大类编码不迁移；国旗用 MIT 开源 SVG、币种 / 行业图标留空；做运营参考数据只读页；OE 范围 / commercial 校验另立；预计流水币种取 Platform 全部 ACTIVE 并激活 AED / SAR / EGP；改名与 Platform 镜像同窗口切换），默认八阶段，进入阶段 2 | 已确认 |
+| 2026-10-27 | 2 差异与影响 | 五路只读核对（Platform、client-master、Client BFF / Web、Operations BFF / Web、消费方兼容性）+ 主会话复核，基于 main `aba76a1a`：[technique.md](./technique.md) 发现 F-01—F-17、需求项差异、逐系统影响、待决 S-01—S-10、发布顺序与风险。关键：Foundation 严格 JSON 使旧接口不能追加字段（S-01 推翻阶段 1 R3 的"只追加字段"）；省州编码为下划线格式需要转换（S-06） | 已确认 |
+| 2026-10-27 | 2 确认 | 用户确认阶段 2，S-01—S-10 全部按建议（旧接口冻结、新字段只在 `/reference-data/*`；币种新字段 DRAFT 才可改、logo 任何状态可改；提交时事务外校验；`REF_` 保留目录码 + BFF 补全选项；国家列表来自 Platform；存量省州值转 ISO；分类选项由 ops-bff 直取 Platform、删除 `/classification-options`；client-master 按编码批量查询；`refdata` 两应用各建、MCC 部分翻译；flink 管道记遗留），进入阶段 3 | 已确认 |
+| 2026-10-27 | 3 方案与原型 | [technique.md](./technique.md) 第 6—13 节：数据设计（5 表列与索引、初始数据来源、client-master DML）、行业两级草案（10 大类 32 细类 + 建议 MCC）、接口设计（Platform 5 个查询接口、币种维护加字段与冻结、client-master 校验落点、两个 BFF）、多语言、页面、研发与验证计划、写接口核对；[db/platform-support/ddl.sql](./db/platform-support/ddl.sql) 评审稿（未执行）；原型 [assets/reference-data-ui.pen](./assets/reference-data-ui.pen) 四板（A Client 入驻、B 运营分类、C 参考数据页、D 币种页）+ [PNG](./assets/prototype/)；待确认 D-01、D-03、D-04、D-06、D-07 | 已改稿 |
+| 2026-10-27 | 3 原型改画 | 用户指出原型应画进主原型。改画：`operations-console.pen` 9 张（参考数据 4 页签、币种草稿 / 已启用换图标弹窗、入驻审核分类正常 / 校验失败、入驻配置目录来源，补上阶段 2 F-15），`client-console.pen` C5（酋长国 / 注册国家 / 币种 / 提交校验失败 / 移动端）；导出 [ops](./assets/prototype/ops/)、[client](./assets/prototype/client/)；删除临时原型文件；D-07 改为画在主原型 | 已确认 |
+| 2026-10-27 | 3 确认 | 用户回复"继续"：确认阶段 3（D-01—D-07），进入阶段 4。本地 `mor_platform` / `mor_client_master` 执行 SQL 的授权另行确认 | 已确认 |
+| 2026-10-27 | 4 研发启动 | worktree `/Users/kenny/Desktop/Workspace/Code-MoR-refdata`（基于 `aba76a1a`），私有 Maven 仓库 `~/.m3-refdata`（由 `~/.m3-onboard` 克隆）；Opus agent 分工见 [verification/](./verification/) | 进行中 |
+| 2026-10-27 | 4 授权 | 用户授权：备份后在本地 `mor_platform`、`mor_client_master` 执行本需求的 DDL / DML，并在本地运行相关模块 auto 测试与本机联调。不含 mor-test、提交、推送 | 已确认 |
+| 2026-10-27 | 4 阶段 A | 接口契约（`platform-support-api`）：5 个查询接口 `/platform/v1/reference-data/*`、`ReferenceDataStatus`、币种新建 / 修改请求加 4 字段；旧 `CurrencySpecQueryApi` / `CountryRegionQueryApi` 未改；币种管理接口只返回操作结果，ops-bff 改读 `ReferenceCurrencyQueryApi`；已安装到 `~/.m3-refdata` | 已完成 |
+| 2026-10-27 | 4 研发完成 | 四路报告见 [verification/](./verification/)：pf-dev（本地 `mor_platform` 已备份并执行变更脚本，回退在临时副本验证；参考数据 45、文件 / 旧币种回归 47、arch-rules 68 通过；初始数据：币种 4 ACTIVE、国家 249 补全、行政区 7/13/27、行业 10+32、MCC 298（排除 3000–3999 品牌专用码）、高风险 14）、cm-dev（本地 `mor_client_master` 已备份，变更脚本在合成数据上执行 / 重复 / 回退 / 再执行验证；152 通过，主会话复跑 152/152）、client-fe（BFF 100、Web 128、build 通过）、ops-fe（BFF 2421、Web 1564、tsc / build 通过；块 139 共 59 行，预检 / 激活 / 停用 / 回退脚本）。主会话：核对旧接口仅注释改表名；块 139 并入 Platform 初始数据；整个 reactor `test-compile` 通过 | 已完成 |
+| 2026-10-27 | 4 确认 | 用户接受阶段 4；E-1（AED / SAR / EGP 符号）经说明后不改：本地阿拉伯文符号存在 RTL 混排、字体缺字、沙特新符号支持不足等问题，国际通用为 ISO 代码（CLDR 英文即为代码），页面金额由前端 Intl 按语言格式化；E-2（行政区阿拉伯文名）待用户答复；授权阶段 5 在本机替换并启动相关服务联调，并在本地 Platform 创建命名空间、导入语言包 | 已确认 |
+| 2026-10-27 | 5 决定 | e2e-dev 本机已替换 Platform / client-master / 两个 BFF（SQL 执行于 `mor_platform_v2e2e`、`mor_client_master_v2e2e`，块 139 激活，Gateway 497→502），并经主会话同意重启 ledger、billing 验证 AC-02。用户决定：① 本机库缺注册块 125（币种页，旧需求），允许仅在本机 `mor_platform_v2e2e` 补装并激活；② Platform 语言包要求中文 100%，MCC 名称全部翻译成中文（修订 S-09） | 已确认 |
+| 2026-10-27 | 5 决定 | E-2：行政区 `local_name` 用 CLDR 阿拉伯文名填充（ISO 不公布阿拉伯文名），列注释来源改为 CLDR；交 e2e-dev 在 worktree 与本机两个库更新 | 已确认 |
+| 2026-10-27 | 5 本机验收 | [stage5-report](./verification/stage5-report.md)：4 个 JAR（sha256 见报告）替换本机 e2e，SQL 执行于 `mor_platform_v2e2e` / `mor_client_master_v2e2e`（块 139 激活，Gateway 497→502；环境修补块 125 仅本机，→506）；接口验收 231 + 币种 6 全过；浏览器冒烟 Client 84/84、运营 21/21×2 语言；AC-01—AC-14 通过（AC-02 重启证据暂缓：本机 ledger / billing 的 JAR 文件已不在磁盘，只由运行进程持有，不能重启）；P1 F-1 已修（Client 任务页对失效参考数据编码标红并汇总）；MCC 中文 298 全覆盖、`refdata` 387/387；行政区 `local_name` 改用 CLDR 48 阿拉伯文（47/47）；P2 F-2—F-7 待用户决定 | 已确认 |
+| 2026-10-27 | 5 确认 | 用户接受阶段 5 结果；P2 F-2—F-7 按建议在本阶段修复并重新验证后再进入阶段 6 | 已确认 |
+| 2026-10-27 | 5 P2 修复 | F-2 行政区英文名改通用英文（仅 en 语言包，`name` 仍为 ISO 转写）；F-3 / F-4 / F-7 列宽与合并列；F-5 入驻配置目录列出地址组件引用的 `REF_COUNTRY_SUBDIVISION`（client-master 管理端辖区接口新增 `addressComponents`）并修复点击行页签复位（`refdata` 改为启动预加载）；F-6 分类行布局与细类说明走 `refdata.industry.<CODE>.description`（42 个，中英）。重新验证：client-master `910bfc85…` 与 ops-bff `ee26358f…` 已替换；`refdata` 429 键 / 应用中英全覆盖（client-console #4、operations-console #7）；接口 98/0；Client 冒烟 21/21；运营冒烟中英 29/29；XTS 已清理。发现 Platform 多语言重导入不更新译文对应的英文版本，需批量确认（阶段 6 手册纳入） | 已完成 |
+| 2026-10-27 | 5 确认 / 6 启动 | 用户回复"继续"：接受阶段 5（含 P2 修复），进入阶段 6；授权对 mor-test 做只读操作：读取运行镜像 ID 并复制 JAR / 静态文件比对基线、在 mor_platform / mor_client_master 跑 SELECT 预检、导出备份到断网临时 MySQL 容器演练 SQL 与网关快照编译。不停容器、不写库、不替换镜像 | 已确认 |
+| 2026-10-27 | 6 发布准备 | [rel-build-report](./verification/rel-build-report.md)、[runbook](./release/runbook.md)、[baseline](./release/baseline.md)：mor-test 6 个服务与 `aba76a1a` 干净构建一致（不回退他人线上改动）；镜像 tag `refdata-20261027a`；compose 渲染与线上 env 逐项一致；mor-test 备份在断网容器演练正反向 SQL 成功，网关编译 7 种状态 COMPILE OK（607 → 612 → 607），回退后 schema 逐字节一致；mor-test 将转换 12 条省州值、AED 已存在（回填）、SAR / EGP 新增；ops-bff 读 client-master 为非严格模式，`addressComponents` 新旧组合都可读；发布顺序：Platform 窗口 → client-bff → client-master 窗口 → client-web → ops-bff → ops-web → 块 139 → i18n → 验收；i18n 预计 client-console #5→#6、ops-console #12→#13；国旗为可选步骤（转 PNG 经运营公开上传，另行授权） | 已确认 |
+| 2026-10-27 | 6 确认 / 7 授权 | 用户回复"做一下"：接受阶段 6；授权阶段 7 在 mor-test 执行运行卡（替换 6 个服务镜像、root 执行本需求 SQL 含块 139 注册与激活、建命名空间并发布语言包、运行验收与浏览器冒烟并创建测试数据、按运行卡回滚）；并做国旗上传（PNG 经运营公开上传 + root 回填）。不含提交、推送 | 已确认 |
+| 2026-10-27 | 7 mor-test 部署与验收 | 按 [runbook](./release/runbook.md) 15:33—15:56Z 执行（证据 `release/evidence/mortest/`）：备份 → 预检与 baseline 一致 → Platform 窗口（中断约 50 秒，SQL 10/11 计数与演练一致）→ client-bff → client-master 窗口（约 40 秒，48 / 8 / 2 / 12 转换）→ client-web → ops-bff → ops-web → 块 139 休眠后激活（607→612）→ 语言包 client-console #6、operations-console #13（发布请求 504 网关超时、Platform 后台 11 秒完成，复核 52 包、10088 键与仓库一致）→ 接口验收 220 PASS / 0 FAIL / 5 SKIP（[结果](./verification/acceptance-mor-test-20261027T154327Z.json)）→ 浏览器 Client 21×4、运营 27×2 全过（首次预置遇上传完成 504 偶发、预置脚本打印缺陷已修）；ledger / billing 快照刷新 0 失败；AE / SA / EG form-schema 与草稿保存通过；已通知 code-mor-2d、code-mor-6b | 已完成 |
+| 2026-10-27 | 7 国旗上传 | flag-icons@7.5.0（MIT）249 个国家转 120×90 PNG，经运营控制台公开上传（`release/flags/flags.py`；原因码由 ops-bff 填写，文件名 `flag-<CC>.png`）→ 249 / 249 扫描通过 → root 回填 `t_ref_country.logo_file_address`（`release/flags/sql/apply.sql`，核对 249 / 249、与映射一致、无不可公开文件）；AE / SA / EG 公开地址 200 image/png；Client 冒烟国旗占位 0（原"无国旗显示占位"断言按预期不再成立）。过程：上传脚本修正 3 处（完成接口须带 JSON 内容类型且不带请求体、扫描改为最后统一核对、409 并发冲突按同一上传重试）；用户授权临时把两条上传路由限流放宽到 500 次 / 分钟（`ratelimit-500-apply.sql`，三层 RATE_LIMIT 6 条），上传后已用 `ratelimit-500-rollback.sql` 恢复 10 / 30 / 300，网关快照正常 612。前两次失败尝试在文件服务留下 1 条 AD 未完成上传记录（不被引用） | 已完成 |
+
+## 适用阶段
+
+默认八阶段（2026-10-27 用户确认）。阶段 4 本地 SQL、阶段 6—7 mor-test 发布、阶段 8 提交分别授权。
+
+## 当前阶段与下一确认点
+
+阶段 7 已完成（含国旗上传），等待用户确认并授权阶段 8（提交，不含推送）。
+
+## 实现 / 验证 / 部署状态
+
+尚未开始；进入实现后只在 [`CURRENT_IMPLEMENTATION.md`](../../../agent-docs/CURRENT_IMPLEMENTATION.md) 记录。

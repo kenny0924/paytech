@@ -1,0 +1,414 @@
+### image sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb; platform jar f4d03bef50208c3e
+### imported mortest-mor_platform-20261027T125606Z.sql.gz mortest-mor_client_master-20261027T125606Z.sql.gz
+### ===== Platform forward
+### compile baseline               COMPILE OK: routes loaded=613, effective=607, block loaded=0, block ACTIVE=0, block effective=0
+### pf-00-precheck (00-platform-release-precheck.sql) exit=0 0.09s
++--------+----------------------------------+
+| k      | v                                |
++--------+----------------------------------+
+| tables | t_country_region,t_currency_spec |
++--------+----------------------------------+
++----------+---+
+| k        | v |
++----------+---+
+| routines | 0 |
++----------+---+
++----------------------+---+
+| k                    | v |
++----------------------+---+
+| currency_version_col | 1 |
++----------------------+---+
++---------------+--------------------+----------+------------+---------------+--------+---------+
+| k             | id                 | currency | minor_unit | rounding_mode | status | version |
++---------------+--------------------+----------+------------+---------------+--------+---------+
+| currency_rows |               1001 | USD      |          2 | HALF_UP       | ACTIVE |       1 |
+| currency_rows | 238762073381748736 | AED      |          2 | HALF_UP       | ACTIVE |       2 |
++---------------+--------------------+----------+------------+---------------+--------+---------+
++-----------------------------+-----+
+| k                           | v   |
++-----------------------------+-----+
+| country_seed_rows_2001_2249 | 249 |
++-----------------------------+-----+
++--------------------+-----+
+| k                  | v   |
++--------------------+-----+
+| country_rows_total | 249 |
++--------------------+-----+
++------------+--------------------+------------------------+------------+--------+
+| k          | target_id          | target_service_code    | channel    | status |
++------------+--------------------+------------------------+------------+--------+
+| ops_target | 900000000000000001 | operations-console-bff | OPERATIONS | ACTIVE |
++------------+--------------------+------------------------+------------+--------+
++--------------------------+--------------------+-----------------------------------+---------------+--------+
+| k                        | resource_id        | resource_code                     | resource_type | status |
++--------------------------+--------------------+-----------------------------------+---------------+--------+
+| platform_config_menu_562 | 900000000000000562 | OPERATIONS_PLATFORM_CONFIGURATION | MENU          | ACTIVE |
++--------------------------+--------------------+-----------------------------------+---------------+--------+
++-------------------------+----------------------------------+------------+--------+
+| k                       | resource_code                    | sort_order | status |
++-------------------------+----------------------------------+------------+--------+
+| sibling_menus_under_562 | OPERATIONS_GATEWAY_CONFIGURATION |         10 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_CONSOLE_RESOURCES     |         20 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_PERMISSIONS           |         30 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_API_CREDENTIALS       |         40 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_API_SCOPES            |         50 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_WEBHOOKS              |         60 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_CURRENCY_SPECS        |         70 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_FILE_STORAGE          |         80 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_FILE_RECORDS          |         85 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_FILE_UPLOAD           |         86 | ACTIVE |
+| sibling_menus_under_562 | OPERATIONS_CARD_BIN_LIBRARY      |         90 | ACTIVE |
++-------------------------+----------------------------------+------------+--------+
++--------------------------+--------------------+--------+
+| k                        | permission_id      | status |
++--------------------------+--------------------+--------+
+| classification_edit_perm | 236085272977162240 | ACTIVE |
++--------------------------+--------------------+--------+
++---------------------------------+----------------------+---------------------------------+--------+
+| k                               | permission_code      | route_code                      | status |
++---------------------------------+----------------------+---------------------------------+--------+
+| currency_manage_perm_and_routes | CURRENCY_SPEC_MANAGE | operations-currency-spec-create | ACTIVE |
+| currency_manage_perm_and_routes | CURRENCY_SPEC_READ   | operations-currency-spec-list   | ACTIVE |
+| currency_manage_perm_and_routes | CURRENCY_SPEC_MANAGE | operations-currency-spec-status | ACTIVE |
+| currency_manage_perm_and_routes | CURRENCY_SPEC_MANAGE | operations-currency-spec-update | ACTIVE |
++---------------------------------+----------------------+---------------------------------+--------+
++--------------------+--------------------+
+| k                  | v                  |
++--------------------+--------------------+
+| max_block_route_id | 900000000000138445 |
++--------------------+--------------------+
++--------------------------+----------+-----+
+| k                        | status   | n   |
++--------------------------+----------+-----+
+| gateway_routes_by_status | ACTIVE   | 607 |
+| gateway_routes_by_status | DISABLED |   6 |
++--------------------------+----------+-----+
++-----------+--------------------+--------------------+--------------------+----------------+------------------+----------------------------+------------------+------------------+
+| k         | application_code   | current_release_id | current_release_no | max_release_no | required_locales | coverage_threshold_percent | key_set_revision | content_revision |
++-----------+--------------------+--------------------+--------------------+----------------+------------------+----------------------------+------------------+------------------+
+| i18n_apps | checkout           |               NULL |               NULL |           NULL | ["zh-CN"]        |                        100 |                0 |                0 |
+| i18n_apps | client-console     | 240723744664928256 |                  5 |              5 | ["zh-CN"]        |                        100 |                5 |               10 |
+| i18n_apps | operations-console | 240718824666644480 |                 12 |             12 | ["zh-CN"]        |                        100 |               11 |               41 |
+| i18n_apps | partner-console    |               NULL |               NULL |           NULL | ["zh-CN"]        |                        100 |                0 |                0 |
++-----------+--------------------+--------------------+--------------------+----------------+------------------+----------------------------+------------------+------------------+
++------------------+--------------------+------------+----------+
+| k                | application_code   | namespaces | max_sort |
++------------------+--------------------+------------+----------+
+| i18n_ns_max_sort | operations-console |         24 |      240 |
+| i18n_ns_max_sort | client-console     |          9 |       90 |
++------------------+--------------------+------------+----------+
++----------------+--------------------+-------------------------------+--------------+--------+-------------------+----------------+
+| k              | bucket_id          | bucket_name                   | access_level | status | last_check_result | has_public_url |
++----------------+--------------------+-------------------------------+--------------+--------+-------------------+----------------+
+| public_buckets | 238885048240128000 | mor-platform-files            | PRIVATE      | ACTIVE | OK                |              0 |
+| public_buckets | 239048125665329152 | mor-test-platform-files-k7q2  | PRIVATE      | ACTIVE | OK                |              0 |
+| public_buckets | 239257988609687552 | mor-platform-public           | PUBLIC       | ACTIVE | OK                |              1 |
+| public_buckets | 239290413763084288 | mor-test-platform-public-k7q2 | PUBLIC       | ACTIVE | OK                |              1 |
++----------------+--------------------+-------------------------------+--------------+--------+-------------------+----------------+
++---------------+------------------------+--------------+--------------------+------------------+
+| k             | source_system          | access_level | bucket_id          | scan_policy_code |
++---------------+------------------------+--------------+--------------------+------------------+
+| public_routes | *                      | PUBLIC       | 239290413763084288 | PUBLIC_DOCUMENT  |
+| public_routes | client-console-bff     | PUBLIC       | 239290413763084288 | PUBLIC_IMAGE     |
+| public_routes | operations-console-bff | PUBLIC       | 239290413763084288 | PUBLIC_DOCUMENT  |
+| public_routes | platform-support       | PUBLIC       | 239257988609687552 | I18N_BUNDLE_JSON |
++---------------+------------------------+--------------+--------------------+------------------+
+### pf-01-b139-precheck (01-platform-block139-precheck.sql) exit=0 0.08s
++-----------------------------+---+
+| t                           | n |
++-----------------------------+---+
+| t_permission                | 0 |
+| t_role_permission           | 0 |
+| t_console_resource          | 0 |
+| t_gateway_route             | 0 |
+| t_gateway_route_header      | 0 |
+| t_gateway_route_query_param | 0 |
+| t_gateway_guard_rule        | 0 |
++-----------------------------+---+
++----------------------+---+
+| t                    | n |
++----------------------+---+
+| new_permission_codes | 0 |
+| new_resource_codes   | 0 |
+| new_route_codes      | 0 |
++----------------------+---+
++-----------+---+
+| t         | n |
++-----------+---+
+| new_paths | 0 |
++-----------+---+
++------------------------------------------------------+---+
+| t                                                    | n |
++------------------------------------------------------+---+
+| dep:@b139_perm_client_onboarding_classification_edit | 1 |
+| dep:PLATFORM_ADMIN role                              | 1 |
++------------------------------------------------------+---+
+### pf-10-refdata (10-platform-reference-data.sql) exit=0 0.50s
+### compile after-refdata          COMPILE OK: routes loaded=613, effective=607, block loaded=0, block ACTIVE=0, block effective=0
+### pf-11-verify (11-platform-reference-data-verify.sql) exit=0 0.11s
++--------+---------------------------------------------------------------------------------+
+| k      | v                                                                               |
++--------+---------------------------------------------------------------------------------+
+| tables | t_ref_country,t_ref_country_subdivision,t_ref_currency,t_ref_industry,t_ref_mcc |
++--------+---------------------------------------------------------------------------------+
++---------------+---+
+| k             | v |
++---------------+---+
+| routines_left | 0 |
++---------------+---+
++----------+--------------------+---------------+--------------+-----------------------------+--------+--------+---------+
+| k        | id                 | currency_code | numeric_code | name                        | symbol | status | version |
++----------+--------------------+---------------+--------------+-----------------------------+--------+--------+---------+
+| currency | 238762073381748736 | AED           | 784          | United Arab Emirates Dirham | AED    | ACTIVE |       2 |
+| currency |               1004 | EGP           | 818          | Egyptian Pound              | EGP    | ACTIVE |       1 |
+| currency |               1003 | SAR           | 682          | Saudi Riyal                 | SAR    | ACTIVE |       1 |
+| currency |               1001 | USD           | 840          | US Dollar                   | $      | ACTIVE |       1 |
++----------+--------------------+---------------+--------------+-----------------------------+--------+--------+---------+
++---------+-------+----------+-------------------+---------------+--------+
+| k       | total | complete | with_calling_code | with_currency | active |
++---------+-------+----------+-------------------+---------------+--------+
+| country |   249 |      249 |               242 |           248 |    249 |
++---------+-------+----------+-------------------+---------------+--------+
++-------------+--------------+----+---------------+
+| k           | country_code | n  | no_local_name |
++-------------+--------------+----+---------------+
+| subdivision | AE           |  7 |             0 |
+| subdivision | EG           | 27 |             0 |
+| subdivision | SA           | 13 |             0 |
++-------------+--------------+----+---------------+
++----------+----------------+----+
+| k        | industry_level | n  |
++----------+----------------+----+
+| industry |              1 | 10 |
+| industry |              2 | 32 |
++----------+----------------+----+
++---------------------------------+---+
+| k                               | n |
++---------------------------------+---+
+| industry_default_mcc_not_active | 0 |
++---------------------------------+---+
++-----+-----+-----------+
+| k   | n   | high_risk |
++-----+-----+-----------+
+| mcc | 298 |        14 |
++-----+-----+-----------+
++-----------------------------+--------------+
+| k                           | approx_bytes |
++-----------------------------+--------------+
+| old_api_currency_json_bytes |          583 |
++-----------------------------+--------------+
+### pf-12-localname-optional (12-platform-subdivision-local-name.optional.sql) exit=0 0.10s
++--------+------+-----------------+
+| phase  | rows | local_name_null |
++--------+------+-----------------+
+| before |   47 |               0 |
++--------+------+-----------------+
++-------+------+-----------------+
+| phase | rows | local_name_null |
++-------+------+-----------------+
+| after |   47 |               0 |
++-------+------+-----------------+
+### local_name optional script changes vs after 10: 0 lines
+### pf-60-b139-dormant (60-platform-block139-registration.sql) exit=0 0.15s
+### compile b139-dormant           COMPILE OK: routes loaded=618, effective=607, block loaded=5, block ACTIVE=0, block effective=0
+### pf-61-b139-active (61-platform-block139-activate.sql) exit=0 0.10s
++--------+
+| routes |
++--------+
+|      5 |
++--------+
++-----------+
+| resources |
++-----------+
+|         1 |
++-----------+
++--------+
+| grants |
++--------+
+|      1 |
++--------+
++------+
+| role |
++------+
+|    1 |
++------+
+### compile b139-active            COMPILE OK: routes loaded=618, effective=612, block loaded=5, block ACTIVE=5, block effective=5
+### ===== client-master forward
+### cm-02-precheck (02-client-master-release-precheck.sql) exit=0 0.10s
++-----------------------+-------------------+----+
+| k                     | catalog_code      | n  |
++-----------------------+-------------------+----+
+| retired_catalog_items | CURRENCY          |  4 |
+| retired_catalog_items | INDUSTRY          | 10 |
+| retired_catalog_items | STATE_OR_PROVINCE | 34 |
++-----------------------+-------------------+----+
++----------------------+--------------+---+
+| k                    | catalog_code | n |
++----------------------+--------------+---+
+| schema_field_catalog | CURRENCY     | 8 |
++----------------------+--------------+---+
++---------------------------+---------------------+-----------------+-------------------+
+| k                         | address_format_code | component       | catalog_code      |
++---------------------------+---------------------+-----------------+-------------------+
+| address_component_catalog | AE_POBOX            | stateOrProvince | STATE_OR_PROVINCE |
+| address_component_catalog | EG_STANDARD         | stateOrProvince | STATE_OR_PROVINCE |
+| address_component_catalog | SA_NATIONAL_ADDRESS | city            | CITY              |
++---------------------------+---------------------+-----------------+-------------------+
++------------------------------+---------------------------------+----+
+| k                            | pattern                         | n  |
++------------------------------+---------------------------------+----+
+| party_address_state_patterns | AE/EG underscore (will convert) | 12 |
+| party_address_state_patterns | free text                       | 38 |
+| party_address_state_patterns | NULL                            |  2 |
++------------------------------+---------------------------------+----+
++---------------------------------+-------------------+----+
+| k                               | state_or_province | n  |
++---------------------------------+-------------------+----+
+| party_address_underscore_values | AE_AZ             | 10 |
+| party_address_underscore_values | AE_DU             |  2 |
++---------------------------------+-------------------+----+
++---------------------------+---------------+----------+----+
+| k                         | industry_code | mcc_code | n  |
++---------------------------+---------------+----------+----+
+| classification_industries | RETAIL        | 5999     | 38 |
++---------------------------+---------------+----------+----+
++--------------------------+-----+
+| k                        | n   |
++--------------------------+-----+
+| country_pack_rerun_guard | 109 |
++--------------------------+-----+
+### cm-20-catalog (20-client-master-reference-data-catalog.sql) exit=0 0.10s
++--------+-----------------------+------------------------+------------------------+----------------------+---------------+
+| phase  | retired_catalog_items | currency_schema_fields | subdivision_components | underscore_addresses | iso_addresses |
++--------+-----------------------+------------------------+------------------------+----------------------+---------------+
+| before |                    48 |                      8 |                      2 |                   12 |             0 |
++--------+-----------------------+------------------------+------------------------+----------------------+---------------+
++-------+-----------------------+----------------------------+----------------------------+----------------------+---------------+
+| phase | retired_catalog_items | ref_currency_schema_fields | ref_subdivision_components | underscore_addresses | iso_addresses |
++-------+-----------------------+----------------------------+----------------------------+----------------------+---------------+
+| after |                     0 |                          8 |                          2 |                    0 |            12 |
++-------+-----------------------+----------------------------+----------------------------+----------------------+---------------+
+### cm-21-comment (21-client-master-reference-data-catalog-comment.sql) exit=0 0.10s
+### cm-02-postcheck (02-client-master-release-precheck.sql) exit=0 0.09s
++----------------------+--------------+---+
+| k                    | catalog_code | n |
++----------------------+--------------+---+
+| schema_field_catalog | REF_CURRENCY | 8 |
++----------------------+--------------+---+
++---------------------------+---------------------+-----------------+-------------------------+
+| k                         | address_format_code | component       | catalog_code            |
++---------------------------+---------------------+-----------------+-------------------------+
+| address_component_catalog | AE_POBOX            | stateOrProvince | REF_COUNTRY_SUBDIVISION |
+| address_component_catalog | EG_STANDARD         | stateOrProvince | REF_COUNTRY_SUBDIVISION |
+| address_component_catalog | SA_NATIONAL_ADDRESS | city            | CITY                    |
++---------------------------+---------------------+-----------------+-------------------------+
++------------------------------+-------------+----+
+| k                            | pattern     | n  |
++------------------------------+-------------+----+
+| party_address_state_patterns | free text   | 38 |
+| party_address_state_patterns | ISO already | 12 |
+| party_address_state_patterns | NULL        |  2 |
++------------------------------+-------------+----+
++---------------------------+---------------+----------+----+
+| k                         | industry_code | mcc_code | n  |
++---------------------------+---------------+----------+----+
+| classification_industries | RETAIL        | 5999     | 38 |
++---------------------------+---------------+----------+----+
++--------------------------+----+
+| k                        | n  |
++--------------------------+----+
+| country_pack_rerun_guard | 61 |
++--------------------------+----+
+### cm-20-rerun (20-client-master-reference-data-catalog.sql) exit=0 0.10s
++--------+-----------------------+------------------------+------------------------+----------------------+---------------+
+| phase  | retired_catalog_items | currency_schema_fields | subdivision_components | underscore_addresses | iso_addresses |
++--------+-----------------------+------------------------+------------------------+----------------------+---------------+
+| before |                     0 |                      0 |                      0 |                    0 |            12 |
++--------+-----------------------+------------------------+------------------------+----------------------+---------------+
++-------+-----------------------+----------------------------+----------------------------+----------------------+---------------+
+| phase | retired_catalog_items | ref_currency_schema_fields | ref_subdivision_components | underscore_addresses | iso_addresses |
++-------+-----------------------+----------------------------+----------------------------+----------------------+---------------+
+| after |                     0 |                          8 |                          2 |                    0 |            12 |
++-------+-----------------------+----------------------------+----------------------------+----------------------+---------------+
+### ===== rollback (reverse)
+### cm-81-comment-rollback (81-client-master-comment-rollback.optional.sql) exit=0 0.22s
+### cm-80-catalog-rollback (80-client-master-reference-data-catalog-rollback.sql) exit=0 0.12s
++--------+---------------+----------------------------+----------------------------+---------------+
+| phase  | catalog_items | ref_currency_schema_fields | ref_subdivision_components | iso_addresses |
++--------+---------------+----------------------------+----------------------------+---------------+
+| before |             0 |                          8 |                          2 |            12 |
++--------+---------------+----------------------------+----------------------------+---------------+
++-------+---------------+------------------------+------------------------+----------------------+
+| phase | catalog_items | currency_schema_fields | subdivision_components | underscore_addresses |
++-------+---------------+------------------------+------------------------+----------------------+
+| after |            48 |                      8 |                      2 |                   12 |
++-------+---------------+------------------------+------------------------+----------------------+
+### pf-62-b139-deactivate (62-platform-block139-deactivate.sql) exit=0 0.09s
++--------+
+| routes |
++--------+
+|      5 |
++--------+
++-----------+
+| resources |
++-----------+
+|         1 |
++-----------+
++--------+
+| grants |
++--------+
+|      1 |
++--------+
++------+
+| role |
++------+
+|    1 |
++------+
+### compile b139-deactivated       COMPILE OK: routes loaded=618, effective=607, block loaded=5, block ACTIVE=0, block effective=0
+### pf-69-b139-rollback (69-platform-block139-rollback.sql) exit=0 0.14s
++-------------+
+| guard_rules |
++-------------+
+|          30 |
++-------------+
++--------------+
+| query_params |
++--------------+
+|           11 |
++--------------+
++---------------+
+| route_headers |
++---------------+
+|            10 |
++---------------+
++--------+
+| routes |
++--------+
+|      5 |
++--------+
++-------+
+| menus |
++-------+
+|     1 |
++-------+
++--------+
+| grants |
++--------+
+|      1 |
++--------+
++-------------+
+| permissions |
++-------------+
+|           1 |
++-------------+
++------+
+| role |
++------+
+|    1 |
++------+
+### compile b139-rolled-back       COMPILE OK: routes loaded=613, effective=607, block loaded=0, block ACTIVE=0, block effective=0
+### pf-89-refdata-rollback (89-platform-reference-data-rollback.sql) exit=0 0.64s
+### compile refdata-rolled-back    COMPILE OK: routes loaded=613, effective=607, block loaded=0, block ACTIVE=0, block effective=0
+### platform before vs final: 2 differing lines (see pf-before-vs-final.diff)
+### client-master before vs final: 46 differing lines (see cm-before-vs-final.diff)
+### DONE

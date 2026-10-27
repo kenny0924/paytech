@@ -3,9 +3,10 @@ package com.paytech.operations.console.bff.service.model;
 import java.util.List;
 
 import com.paytech.client.contract.api.onboarding.ClientDraftModels.ClientDraftResponseBody;
-import com.paytech.client.contract.api.onboarding.response.CatalogOptionResponseBody;
 import com.paytech.client.contract.api.onboarding.response.ClassificationSetResponseBody;
 import com.paytech.compliance.api.response.ClientReviewCaseResponseBody;
+import com.paytech.operations.console.bff.service.model.ReferenceDataModels.IndustryCategoryResponseBody;
+import com.paytech.operations.console.bff.service.model.ReferenceDataModels.MccResponseBody;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -32,12 +33,15 @@ public final class ClientReviewModels {
     }
 
     /**
-     * O02 审核详情：Risk 任务为主体，CCT 申请资料、分类与行业目录各自标记可用性
+     * O02 审核详情：Risk 任务为主体，CCT 申请资料与分类、Platform 行业树与 MCC 各自标记可用性
      * <li>*Status 为 AVAILABLE 或 UNAVAILABLE；不可用时对应字段为 null 或空列表，页面不得推断为“无数据”。</li>
+     * <li>industries 为 Platform ACTIVE 行业：大类带细类，细类带建议 MCC。</li>
+     * <li>mccs 为当前分类与各细类建议 MCC 涉及的编码（任意状态），供页面显示名称与停用标记。</li>
      */
     public record ReviewCaseDetailResponseBody(ClientReviewCaseResponseBody review, String applicationStatus,
         ClientDraftResponseBody application, String classificationStatus, ClassificationSetResponseBody classification,
-        String industriesStatus, List<CatalogOptionResponseBody> industries) {
+        String industriesStatus, List<IndustryCategoryResponseBody> industries, String mccsStatus,
+        List<MccResponseBody> mccs) {
         /** 申请资料含个人信息，不进入日志。 */
         @Override
         public String toString() {

@@ -17,7 +17,7 @@ import com.paytech.operations.console.bff.service.model.OperatorContext;
 public interface PlatformCurrencySpecClient {
 
     /**
-     * 币种页列表：全部状态，含版本与最后更新时间
+     * 币种页列表：全部状态，含数字代码、名称、符号、图标与版本
      *
      * @return 按币种代码升序的全部币种规则
      */
@@ -41,7 +41,7 @@ public interface PlatformCurrencySpecClient {
     ConfigurationMutationResponseBody createCurrencySpec(OperatorContext context, CreateCurrencySpecRequestBody request);
 
     /**
-     * 修改 DRAFT 币种规则
+     * 修改币种规则（DRAFT 全部属性；其他状态只换图标）
      *
      * @param context 操作人
      * @param currency 币种代码

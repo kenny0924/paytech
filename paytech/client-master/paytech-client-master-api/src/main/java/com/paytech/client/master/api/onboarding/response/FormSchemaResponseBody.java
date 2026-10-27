@@ -32,7 +32,12 @@ public class FormSchemaResponseBody {
     /** 分区与字段，按展示顺序。 */
     private List<Section> sections;
 
-    /** 目录代码到可选项；含 SELECT 字段、地址组件与属性引用的全部目录，组织类型以 ORGANIZATION_TYPE 出现。 */
+    /**
+     * 目录代码到可选项；含 SELECT 字段、地址组件与属性引用的本服务目录，组织类型以 ORGANIZATION_TYPE 出现
+     * <li>不含以 REF_ 开头的 Platform 参考数据目录（REF_CURRENCY 币种、REF_COUNTRY_SUBDIVISION 一级行政区）：
+     * 字段与地址组件的 catalogCode 仍为 REF_ 码，选项由 client-console-bff 向 Platform 参考数据查询后补全。</li>
+     * <li>国家字段（COUNTRY 控件、地址国家）不引用目录，选项同样由 client-console-bff 取 Platform ACTIVE 国家。</li>
+     */
     private Map<String, List<CatalogOption>> catalogs;
 
     /** 当前主体类型可选的组织类型（ORGANIZATION 为法人形态，INDIVIDUAL 为个人经营形态）。 */
@@ -97,7 +102,7 @@ public class FormSchemaResponseBody {
         /** 控件代码：TEXT、TEXTAREA、DATE、COUNTRY、SELECT、IDENTIFIER、ADDRESS、NAME、PERSON_LIST、DOCUMENT_SLOT、DECLARATION、URL、MONEY、EMAIL、PHONE、BOOLEAN。 */
         private String widget;
 
-        /** SELECT 取值目录代码（见 catalogs），可空。 */
+        /** SELECT 取值目录代码（见 catalogs；REF_ 开头时为 Platform 参考数据目录，不在 catalogs 中），可空。 */
         private String catalogCode;
 
         /** 要求级别：REQUIRED、EVENTUALLY、OPTIONAL（HIDDEN 不返回）。 */
@@ -206,7 +211,7 @@ public class FormSchemaResponseBody {
         /** 是否必填（已叠加 POSTAL_CODE_REQUIRED 规则）。 */
         private boolean required;
 
-        /** 取值目录代码，可空。 */
+        /** 取值目录代码（REF_ 开头时为 Platform 参考数据目录，不在 catalogs 中），可空。 */
         private String catalogCode;
 
         /** 标题文案键。 */

@@ -9,7 +9,7 @@ import com.paytech.platform.support.api.referencedata.response.CurrencySpecListR
 import com.paytech.platform.support.api.referencedata.response.CurrencySpecResponseBody;
 
 /**
- * 全平台币种规则查询契约（D41）：Platform 为 t_currency_spec 的 Owner；内部服务经私网读取，不经过 Gateway。
+ * 全平台币种规则查询契约（D41）：Platform 为 t_ref_currency（原 t_currency_spec）的 Owner；内部服务经私网读取，不经过 Gateway。
  * <li>只读；返回全部状态的规则，调用方按 status 判断是否允许新业务使用。</li>
  */
 @HttpExchange(url = "/platform/v1/currency-specs", accept = MediaType.APPLICATION_JSON_VALUE)

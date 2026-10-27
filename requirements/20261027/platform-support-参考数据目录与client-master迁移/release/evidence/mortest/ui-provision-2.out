@@ -1,0 +1,52 @@
+PASS SETUP  Client UI 注册 | HTTP 202 {}
+PASS SETUP  Client UI 验证链接 | source=minted challengeNo=fa33f88b-04c5-4bca-be66-67ec7dbedd7d
+PASS SETUP  Client UI 邮箱验证 | HTTP 200 {}
+PASS SETUP  Client UI 登录 | HTTP 200 {}
+PASS UI     UI 创建申请（AE ORGANIZATION LLC） | HTTP 201 applicationId=240864470161793024 operation=CREATED 
+PASS UI     UI 主主体 保存草稿 | HTTP 200 fields=20 {}
+PASS UI     UI UBO1 新增关系人（UBO） | HTTP 201 partyId=240864471738851328 relationId=240864471755628544 {}
+PASS UI     UI UBO1 追加关系（DIRECTOR） | HTTP 201 relationId=240864471868874752 {}
+PASS UI     UI UBO1 追加关系（SIGNATORY） | HTTP 201 relationId=240864472019869696 {}
+PASS UI     UI UBO2 新增关系人（UBO） | HTTP 201 partyId=240864472225390592 relationId=240864472242167808 {}
+PASS UI     上传授权 UI-PRIMARY-BANK | HTTP 201 {}
+PASS UI     对象存储 PUT UI-PRIMARY-BANK | HTTP 200 host=s3.ap-southeast-1.amazonaws.com
+PASS UI     上传完成 UI-PRIMARY-BANK | HTTP 200 fileAddress=/files/v1/240864488096612352
+PASS UI     文件扫描 UI-PRIMARY-BANK | scanStatus=AVAILABLE fileId=240864488096612352
+PASS UI     关联材料 UI-PRIMARY-BANK | HTTP 201 documentId=240864503649116160 {}
+PASS UI     上传授权 UI-PRIMARY-ONLINE_PRESENCE | HTTP 201 {}
+PASS UI     对象存储 PUT UI-PRIMARY-ONLINE_PRESENCE | HTTP 200 host=s3.ap-southeast-1.amazonaws.com
+PASS UI     上传完成 UI-PRIMARY-ONLINE_PRESENCE | HTTP 200 fileAddress=/files/v1/240864522947084288
+PASS UI     文件扫描 UI-PRIMARY-ONLINE_PRESENCE | scanStatus=AVAILABLE fileId=240864522947084288
+PASS UI     关联材料 UI-PRIMARY-ONLINE_PRESENCE | HTTP 201 documentId=240864538138877952 {}
+PASS UI     上传授权 UI-PRIMARY-REGISTRATION | HTTP 201 {}
+PASS UI     对象存储 PUT UI-PRIMARY-REGISTRATION | HTTP 200 host=s3.ap-southeast-1.amazonaws.com
+PASS UI     上传完成 UI-PRIMARY-REGISTRATION | HTTP 200 fileAddress=/files/v1/240864568019075072
+PASS UI     文件扫描 UI-PRIMARY-REGISTRATION | scanStatus=AVAILABLE fileId=240864568019075072
+PASS UI     关联材料 UI-PRIMARY-REGISTRATION | HTTP 201 documentId=240864584485937152 {}
+PASS UI     上传授权 UI-UBO1-IDENTITY | HTTP 201 {}
+PASS UI     对象存储 PUT UI-UBO1-IDENTITY | HTTP 200 host=s3.ap-southeast-1.amazonaws.com
+PASS UI     上传完成 UI-UBO1-IDENTITY | HTTP 200 fileAddress=/files/v1/240864600462016512
+PASS UI     文件扫描 UI-UBO1-IDENTITY | scanStatus=AVAILABLE fileId=240864600462016512
+PASS UI     关联材料 UI-UBO1-IDENTITY | HTTP 201 documentId=240864614944972800 {}
+PASS UI     上传授权 UI-UBO2-IDENTITY | HTTP 201 {}
+PASS UI     对象存储 PUT UI-UBO2-IDENTITY | HTTP 200 host=s3.ap-southeast-1.amazonaws.com
+PASS UI     上传完成 UI-UBO2-IDENTITY | HTTP 200 fileAddress=/files/v1/240864635136327680
+PASS UI     文件扫描 UI-UBO2-IDENTITY | scanStatus=AVAILABLE fileId=240864635136327680
+PASS UI     关联材料 UI-UBO2-IDENTITY | HTTP 201 documentId=240864649493454848 {}
+PASS UI     声明 OWNERSHIP_COMPLETE | HTTP 200 declarationId=240864649761890304 {}
+PASS UI     声明 DIRECTORSHIP_COMPLETE | HTTP 200 declarationId=240864649908690944 {}
+PASS UI     声明 REPRESENTATIVE_AUTHORITY | HTTP 200 declarationId=240864650076463104 {}
+PASS UI     声明 PEP_DECLARATION | HTTP 200 declarationId=240864650227458048 {}
+PASS UI     声明 INFORMATION_TRUE | HTTP 200 declarationId=240864650344898560 {}
+PASS UI     声明 PLATFORM_TERMS | HTTP 200 declarationId=240864650483310592 {}
+PASS UI     UI 置入 XYZ 与 EG-C 保存草稿 | HTTP 200 fields=6 {}
+Traceback (most recent call last):
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/platform-support-参考数据目录与client-master迁移/release/acceptance/ui_provision_mortest.py", line 54, in <module>
+    {"provision": provision, "reset": reset}[sys.argv[1]]()
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/platform-support-参考数据目录与client-master迁移/release/acceptance/ui_provision_mortest.py", line 36, in provision
+    invalid(client, application_id, schema)
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/platform-support-参考数据目录与client-master迁移/release/acceptance/ui_provision_mortest.py", line 28, in invalid
+    print("submission-check errors:", [e.get("path") or e.get("field") for e in RA.field_errors(body)])
+  File "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/platform-support-参考数据目录与client-master迁移/release/acceptance/ui_provision_mortest.py", line 28, in <listcomp>
+    print("submission-check errors:", [e.get("path") or e.get("field") for e in RA.field_errors(body)])
+AttributeError: 'tuple' object has no attribute 'get'

@@ -1,4 +1,5 @@
 import type { Values } from "../onboarding.ts";
+import { safeLogo } from "./refdata.ts";
 
 /**
  * 入驻 v2 浏览器合同（经 client-bff 的 `/onboarding/v1/*` 转发 client-master / compliance）
@@ -12,7 +13,12 @@ export type Widget =
   | "DOCUMENT_SLOT" | "DECLARATION" | "URL" | "MONEY" | "EMAIL" | "PHONE" | "BOOLEAN";
 
 export type Jurisdiction = { jurisdictionCode: string; countryCode: string; labelKey: string; acceptancePolicy: string };
-export type CatalogItem = { itemCode: string; labelKey: string };
+/**
+ * 目录项：client-master 自有目录只有代码与文案键；参考数据目录（REF_*，由 BFF 从 Platform 补全）另带英文名、图标与所属国家。
+ */
+export type CatalogItem = { itemCode: string; labelKey: string; name?: string | null; logoPublicUrl?: string | null; countryCode?: string | null };
+/** Platform ACTIVE 国家（BFF 随 Schema 下发）；名称由页面用 Intl 显示，name 是英文回退。 */
+export type ReferenceCountry = { code: string; name: string | null; logoPublicUrl: string | null; callingCode: string | null };
 export type FieldValidation = { pattern?: string | null; minLength?: number | null; maxLength?: number | null; checksumRule?: string | null };
 export type SchemaField = {
   fieldKey: string;
@@ -52,6 +58,8 @@ export type FormSchema = {
   versionNo: number;
   sections: SchemaSection[];
   catalogs: Record<string, CatalogItem[]>;
+  /** 可选国家与地区；为空表示选项未能加载（页面显示重试，不使用内置列表）。 */
+  countries: ReferenceCountry[];
   organizationTypes: OrganizationType[];
   identifierTypes: IdentifierType[];
   addressFormat: { code: string; components: AddressComponent[] } | null;
@@ -192,15 +200,21 @@ export function readSchema(value: unknown, unavailable: string): FormSchema {
     .map((field) => ({ declarationType: field.fieldKey.split(".").slice(1).join("."), labelKey: field.labelKey }));
   const relationTypes = list<RelationTypeDef & { relationTypeCode?: string; itemCode?: string }>((raw as { relationTypes?: unknown }).relationTypes)
     .map((item) => ({ ...item, code: item.code ?? item.relationTypeCode ?? item.itemCode ?? "" })).filter((item) => item.code);
-  // 目录项 Owner 用 code，旧形状用 itemCode，统一为 itemCode。
+  // 目录项 Owner 用 code，旧形状用 itemCode，统一为 itemCode；参考数据目录另保留英文名、图标与所属国家。
   const catalogs = Object.fromEntries(Object.entries(raw.catalogs && typeof raw.catalogs === "object" ? raw.catalogs : {})
-    .map(([key, items]) => [key, list<CatalogItem & { code?: string }>(items).map((item) => ({ itemCode: item.itemCode ?? item.code ?? "", labelKey: item.labelKey ?? "" }))
+    .map(([key, items]) => [key, list<CatalogItem & { code?: string }>(items).filter((item) => item && typeof item === "object")
+      .map((item) => ({ itemCode: item.itemCode ?? item.code ?? "", labelKey: item.labelKey ?? "", name: text(item.name),
+        logoPublicUrl: safeLogo(item.logoPublicUrl), countryCode: text(item.countryCode) }))
       .filter((item) => item.itemCode)])) as Record<string, CatalogItem[]>;
+  const countries = list<ReferenceCountry>((raw as { countries?: unknown }).countries)
+    .filter((item) => item && typeof item.code === "string" && /^[A-Z]{2}$/.test(item.code))
+    .map((item) => ({ code: item.code, name: text(item.name), logoPublicUrl: safeLogo(item.logoPublicUrl), callingCode: text(item.callingCode) }));
   return {
     schemaId: String(raw.schemaId),
     versionNo: Number(raw.versionNo ?? 1),
     sections,
     catalogs,
+    countries,
     organizationTypes,
     identifierTypes: list<IdentifierType>(raw.identifierTypes).filter((item) => item && typeof item.code === "string"),
     addressFormat: sortFormat(raw.addressFormat) ?? fallback,

@@ -13,8 +13,8 @@ import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsManagementPolicyService;
 import com.paytech.platform.support.referencedata.core.configuration.CurrencySpecManagementProperties;
-import com.paytech.platform.support.referencedata.core.dal.dataobject.CurrencySpec;
-import com.paytech.platform.support.referencedata.domainservice.repository.CurrencySpecRepository;
+import com.paytech.platform.support.referencedata.core.dal.dataobject.ReferenceCurrency;
+import com.paytech.platform.support.referencedata.domainservice.repository.ReferenceCurrencyRepository;
 
 import lombok.AllArgsConstructor;
 
@@ -28,7 +28,7 @@ public class CurrencySpecManagementSupport {
     public static final String MANAGE_PERMISSION = "CURRENCY_SPEC_MANAGE";
 
     private final Clock clock;
-    private final CurrencySpecRepository repository;
+    private final ReferenceCurrencyRepository repository;
     private final CurrencySpecManagementProperties properties;
     private final OperationsManagementPolicyService policy;
 
@@ -58,8 +58,8 @@ public class CurrencySpecManagementSupport {
     }
 
     /** 不存在返回公共 NOT_FOUND；存在则排他锁定并核对调用方读取的版本。 */
-    CurrencySpec lock(String currency, int expectedVersion) {
-        CurrencySpec spec = repository.lockByCurrency(currency);
+    ReferenceCurrency lock(String currency, int expectedVersion) {
+        ReferenceCurrency spec = repository.lockByCurrencyCode(currency);
         if (spec == null) {
             throw new FailException(CommonErrorCode.NOT_FOUND);
         }
