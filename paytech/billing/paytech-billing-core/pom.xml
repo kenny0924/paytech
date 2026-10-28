@@ -28,6 +28,11 @@
             <artifactId>paytech-platform-support-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Platform 参考数据进程内快照（币种精度与状态；读方法只读内存，可在登记事务内使用）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-platform-support-reference-data-client</artifactId>
+        </dependency>
         <!-- 自动 PAYMENT 事实登记事务外读取的上游内部 HTTP 契约（技术方案 4.5）。 -->
         <dependency>
             <groupId>com.paytech</groupId>

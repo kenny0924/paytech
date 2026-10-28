@@ -60,7 +60,8 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState
+          # 参考数据五类首次加载成功前不接流量（提交校验与分类保存依赖它）。
+          include: readinessState,referenceData
     info:
       access: read-only
     prometheus:
@@ -106,6 +107,14 @@ redis:
     resource-lock:
       wait-time: 500ms
       lease-time: 30s
+# 参考数据客户端（2026-10-27）：提交校验（国家、币种、行政区）与分类保存（行业、MCC）读进程内快照；启动后后台加载、每小时全量刷新，
+# 首次成功前按 10 秒重试。不配 base-url：经服务发现访问 platform-support-service/platform-support，X-Caller-Service 取
+# spring.application.name（client-master-service）。
+platform-support:
+  reference-data:
+    client:
+      kinds: [CURRENCY, COUNTRY, SUBDIVISION, INDUSTRY, MCC]
+
 vault:
   client:
     connect-timeout: 2s

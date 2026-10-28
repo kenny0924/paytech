@@ -38,6 +38,11 @@
             <artifactId>paytech-platform-support-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Platform 参考数据进程内快照（币种精度与状态；读方法只读内存，可在过账事务内使用）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-platform-support-reference-data-client</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mybatis-support</artifactId>

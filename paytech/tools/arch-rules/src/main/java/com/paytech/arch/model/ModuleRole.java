@@ -28,9 +28,16 @@ public enum ModuleRole {
     TEST,
 
     /**
-     * 服务 Java Client（如 {@code paytech-vault-client}），对调用方等价于 api。
+     * 服务 Java Client（后缀以 {@code -client} 结尾，如 {@code paytech-vault-client}、
+     * {@code paytech-platform-support-reference-data-client}），对调用方等价于 api。
      */
     CLIENT,
+
+    /**
+     * 服务 Java Client 的测试支持（后缀以 {@code -client-test-support} 结尾）：测试 HTTP 端点、Mocker 与 Builder，
+     * 只允许其他服务的 {@code -test} 模块依赖（R16）。
+     */
+    CLIENT_TEST_SUPPORT,
 
     /**
      * 服务聚合 POM（{@code paytech-<service>}）。

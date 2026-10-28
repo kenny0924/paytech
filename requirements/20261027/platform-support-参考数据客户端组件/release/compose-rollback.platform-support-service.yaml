@@ -1,0 +1,5 @@
+# 参考数据客户端组件：mor-test 回滚覆盖（scripts/gen_rollback.sh 于部署前生成，勿手改）。回滚目标 = 生成时刻现网运行镜像，env 与候选相同。
+# Platform 发布后，消费方回滚前必须先回滚 Platform（runbook 第 5 节）。
+services:
+  platform-support-service:
+    image: sha256:186347bcb7b4b4ea11d26804646d77d1f8b9fd6346577adef39ace3deef683a1  # 部署前现网（容器创建 2026-10-27T20:11:59.880575929Z，2026-10-28T03:57:58Z 生成）

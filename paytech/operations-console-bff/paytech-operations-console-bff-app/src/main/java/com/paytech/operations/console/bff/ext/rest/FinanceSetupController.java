@@ -203,7 +203,7 @@ public class FinanceSetupController {
         return client.listChartAccountChanges(chartCode, chartAccountId, paging.page(), paging.size());
     }
 
-    /** R16 币种列表，按代码升序；Platform 为币种 Owner，status 在 BFF 筛选，响应形态保持不变。 */
+    /** R16 币种列表，按代码升序；Platform 为币种 Owner，status 由 Platform 参考数据币种接口筛选，响应形态保持不变。 */
     @GetMapping("/currencies/v1")
     public CurrencyListResponseBody listCurrencies(HttpServletRequest servletRequest,
         @RequestParam(value = "status", required = false) @Pattern(regexp = "DRAFT|ACTIVE|INACTIVE") String status) {

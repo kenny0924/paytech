@@ -27,6 +27,10 @@ import java.util.Set;
  * "直接注入"指字段类型与构造器参数类型。HTTP 接口按两种方式识别：类型归属于某服务的 api / client 模块，或类型（及其方法）
  * 带 {@code @HttpExchange} 元注解。
  *
+ * <p>
+ * 例外：参考数据客户端的进程内读接口 {@link #IN_MEMORY_READ_TYPES}（只读内存快照、不发 HTTP，可在事务内调用）。同一模块中会发起
+ * HTTP 的 {@code ReferenceDataRefresher} 仍按 client 接口检查。
+ *
  * @author Claude
  */
 public final class TransactionExternalCallRule implements ArchitectureRule {
@@ -37,6 +41,12 @@ public final class TransactionExternalCallRule implements ArchitectureRule {
     private static final String TRANSACTION_OPERATIONS = "org.springframework.transaction.support.TransactionOperations";
 
     private static final String HTTP_EXCHANGE = "org.springframework.web.service.annotation.HttpExchange";
+
+    /** 参考数据客户端模块坐标。 */
+    private static final String REFERENCE_DATA_CLIENT = "com.paytech:paytech-platform-support-reference-data-client";
+
+    /** 参考数据客户端中只读内存的接口简单名。 */
+    private static final Set<String> IN_MEMORY_READ_TYPES = Set.of("ReferenceData", "ReferenceCatalog");
 
     private static final List<String> MESSAGE_TEMPLATES = List.of("org.springframework.amqp.core.AmqpTemplate",
         "org.springframework.amqp.rabbit.core.RabbitOperations",
@@ -122,6 +132,9 @@ public final class TransactionExternalCallRule implements ArchitectureRule {
             .isPresent()) {
             return " Vault 客户端";
         }
+        if (isInMemoryReferenceRead(type, ownership)) {
+            return null;
+        }
         boolean ownedByApi = ownership.ownerOf(type)
             .filter(identity -> identity.hasRole(ModuleRole.API, ModuleRole.CLIENT))
             .isPresent();
@@ -134,6 +147,12 @@ public final class TransactionExternalCallRule implements ArchitectureRule {
             }
         }
         return null;
+    }
+
+    /** 参考数据客户端的进程内读接口：读方法只读内存快照，不发 HTTP。 */
+    private static boolean isInMemoryReferenceRead(JavaClass type, ClassOwnership ownership) {
+        return IN_MEMORY_READ_TYPES.contains(type.getSimpleName()) && ownership.ownerOf(type)
+            .filter(identity -> REFERENCE_DATA_CLIENT.equals(identity.coordinate())).isPresent();
     }
 
     private static boolean isHttpExchange(JavaClass type) {

@@ -18,7 +18,7 @@ import jakarta.validation.Valid;
 
 /**
  * 全平台币种规则维护入口；Platform 为唯一 Owner，服务端再次验证 CURRENCY_SPEC_MANAGE，请求幂等由 Gateway 负责。
- * <li>查询沿用 {@link CurrencySpecQueryApi}，完整字段（数字代码、名称、符号、logo）见 {@link ReferenceCurrencyQueryApi}。</li>
+ * <li>查询使用 {@link ReferenceCurrencyQueryApi}（含数字代码、名称、符号、logo）。</li>
  * <li>启用后数字代码、名称、符号、小数位与舍入方式冻结，只允许修改 logo 文件地址。</li>
  */
 @HttpExchange(url = "/currency-admin/v1/currency-specs", accept = MediaType.APPLICATION_JSON_VALUE)

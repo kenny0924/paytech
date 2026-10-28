@@ -49,10 +49,10 @@ public final class PaymentFactConstants {
     public static final String OTHER_ENTITY_NO = BillingFactRequestBuilder.OTHER_ENTITY_NO;
 
     /** 事实币种。 */
-    public static final String USD = CurrencySpecResponseBuilder.USD;
+    public static final String USD = TestCurrencies.USD;
 
     /** 另一币种。 */
-    public static final String EUR = CurrencySpecResponseBuilder.EUR;
+    public static final String EUR = TestCurrencies.EUR;
 
     /** 支付方式。 */
     public static final String PAYMENT_METHOD = CommercialCodes.PaymentMethod.CARD;

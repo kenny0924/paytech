@@ -19,13 +19,13 @@ public class MockCommercialPriceApi implements CommercialPriceApi {
 
     @Override
     public CommercialPriceResponseBody resolve(ResolveCommercialPriceRequestBody body) {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         return mocker.resolve(body);
     }
 
     @Override
     public CommercialPriceResponseBody getPrice(String priceId) {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         throw mocker.unexpectedCall("getPrice " + priceId);
     }
 }

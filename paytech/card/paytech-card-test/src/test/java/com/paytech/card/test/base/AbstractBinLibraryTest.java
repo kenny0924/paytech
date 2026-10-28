@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.http.HttpMethod;
 
 import com.paytech.card.api.CardApiConstants;
@@ -14,12 +15,14 @@ import com.paytech.card.api.enums.CardBrand;
 import com.paytech.card.api.enums.CardFundingType;
 import com.paytech.card.api.enums.CardProduct;
 import com.paytech.platform.support.api.files.FileAddress;
+import com.paytech.platform.support.referencedata.client.ReferenceDataRefresher;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataBuilders;
 
 import tools.jackson.databind.json.JsonMapper;
 
 /**
  * BIN 库测试的公共调用与固件：以 operations-console-bff 身份经真实 HTTP 入口访问 /card/v1/bin-library，等待异步导入任务结束；不放 {@code @Test}。
- * <li>国家区域映射为 6 国合成数据；号段为公开测试卡号段与合成发卡行，不代表真实 BIN 数据。</li>
+ * <li>每例由 Platform 国家参考数据（6 国合成数据）刷新一次进程内快照，作为国家区域映射；号段为公开测试卡号段与合成发卡行，不代表真实 BIN 数据。</li>
  */
 public abstract class AbstractBinLibraryTest extends AbstractCardApiTest {
     /** 操作人 Operations Account ID。 */
@@ -36,6 +39,21 @@ public abstract class AbstractBinLibraryTest extends AbstractCardApiTest {
 
     /** 运营身份的请求路径前缀。 */
     protected static final String BASE = "/card/v1/bin-library";
+
+    /** BIN 库用例共用的国家快照：配置 6 国参考数据后同步刷新一次（自动刷新已关闭），之后导入只读内存。 */
+    @BeforeEach
+    protected final void setUpCountryRegions() {
+        REGIONS.forEach((country, region) -> referenceData.country(ReferenceDataBuilders.country(country).regionCode(region)));
+        refreshCountries();
+    }
+
+    /** 同步刷新国家快照，必须成功。 */
+    protected void refreshCountries() {
+        List<ReferenceDataRefresher.Result> results = referenceDataRefresher.refreshNow();
+        if (!results.stream().allMatch(ReferenceDataRefresher.Result::succeeded)) {
+            throw new AssertionError("国家参考数据刷新失败: " + results);
+        }
+    }
 
     /** 以 operations-console-bff 身份发请求，写请求带操作人头。 */
     protected Response ops(HttpMethod method, String path, Object body) {

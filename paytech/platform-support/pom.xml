@@ -69,6 +69,16 @@
                 <artifactId>paytech-platform-support-app</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-platform-support-reference-data-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-platform-support-reference-data-client-test-support</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <!-- Vault Java Client：02d 迁入 Reactor 前从本地仓库解析同版本快照。 -->
             <dependency>
                 <groupId>com.paytech</groupId>
@@ -141,6 +151,8 @@
         <module>paytech-platform-support-localization</module>
         <module>paytech-platform-support-core</module>
         <module>paytech-platform-support-app</module>
+        <module>paytech-platform-support-reference-data-client</module>
+        <module>paytech-platform-support-reference-data-client-test-support</module>
         <module>paytech-platform-support-test</module>
     </modules>
 </project>

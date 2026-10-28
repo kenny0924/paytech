@@ -1,0 +1,31 @@
+# platform-support：参考数据客户端组件 · 交付记录
+
+| 日期 | 阶段 | 内容 | 状态 |
+|---|---|---|---|
+| 2026-10-27 | 来源 | 用户提出"refdata 做成公共 JAR"。讨论后确认：做 Platform 的客户端 starter，不把数据打进 JAR；增加定时轮询，周期可配置，默认 1 小时；所有读方法只读内存，查不到就报错；同时迁移 ledger / billing / card / client-master，并下线旧接口 | 已确认 |
+| 2026-10-27 | 1 需求评审 | [需求](./requirement.md) 评审稿：范围 R1—R11、规则 B1—B7、逐系统变动点、验收 AC-01—AC-11、待确认 Q1—Q4、阶段安排 | 已确认 |
+| 2026-10-27 | 1 确认 | 用户确认阶段 1：Q1 所有消费方先统一用默认 1 小时刷新（ledger / billing 不保留 60 秒，也不保留查不到时提前刷新）；Q2—Q4 按建议（放 Platform、本需求内下线旧接口、starter 容忍未知字段）；补充：内存缓存可以使用 Caffeine。默认八阶段，进入阶段 2 | 已确认 |
+| 2026-10-27 | 2 差异与影响 | [technique.md](./technique.md) 评审稿（基于 `5e1f16ab`，只读核对）：发现 F-01—F-13、需求项差异、逐系统影响、待决 S-01—S-08、发布顺序与风险。关键：首次加载失败需短周期重试（S-02）；ledger 的“查不到”须保持可重投的系统异常（S-03）；ops-bff 财务页也在用旧接口（F-08）；旧接口无注册数据（F-09）；建议不用 Caffeine（S-01） | 已确认 |
+| 2026-10-27 | 2 确认 | 用户确认阶段 2，S-01—S-08 全部按建议（不用 Caffeine，用不可变 Map 原子替换），进入阶段 3 | 已确认 |
+| 2026-10-27 | 3 方案 | [technique.md](./technique.md) 第 6—14 节：规模（6 系统、2 个新模块、删除 3 个旧查询接口、0 表 / 0 DML / 0 页面）、模块与 arch-rules 角色、读接口 `ReferenceData` / `ReferenceCatalog`（require / requireActive / find / list）、配置、加载 / 刷新 / 就绪、测试支持、各系统改法、文档修订、研发与验证计划 | 已确认 |
+| 2026-10-27 | 3 确认 | 用户确认阶段 3（按建议），进入阶段 4 | 已确认 |
+| 2026-10-27 | 4 研发启动 | worktree `/Users/kenny/Desktop/Workspace/Code-MoR-refclient`（基于 `5e1f16ab`），私有 Maven 仓库 `~/.m3-refclient`（由 `~/.m3-refdata` 复制）；分工：A 客户端模块 + 测试支持 + arch-rules → B 消费方迁移（ledger / billing、card / client-master、ops-bff）→ C Platform 删除旧接口；报告见 [verification/](./verification/) | 已完成 |
+| 2026-10-27 | 4 研发完成 | 报告 [rdc-core](./verification/rdc-core.md)、[rdc-lb](./verification/rdc-lb.md)、[rdc-cc](./verification/rdc-cc.md)、[rdc-ops](./verification/rdc-ops.md)。结果：客户端两个模块 53 例、arch-rules 70 例 + reactor 5 例（新增 R16，R7 放行 `ReferenceData` / `ReferenceCatalog` 纯内存读）；ledger 331、billing 131、card 67、client-master 154、ops-bff 2424、Platform 801（首轮 48 例因 worktree 缺 MinIO 证书失败，指向主工作区 local-environment 重跑 26 类 187 例通过）全部通过；主会话复核整个 reactor test-compile 通过、全仓库无旧接口代码引用；worktree 148 个已跟踪文件变更（+864 / −3369）加新模块。偏离方案：① starter 增加始终发送 `X-Caller-Service`（`caller-service`，默认 `spring.application.name`）与服务发现（不配 `base-url` 时按 `service-id` + `context-path` 经 LoadBalancerClient），card / client-master 生产走服务发现、不新增环境变量；② billing 查不到币种保留原 422（AC-07 行为不变），ledger 为可重投系统异常；③ 客户端测试放在 test-support 模块（避免 Maven 循环）；④ AC-04 用 refreshNow + 短重试周期证明（`refresh-interval` 下限 1 分钟）。文档：两份决定、design-discuss 8.1、TECHNOLOGY_STACK、JAVA_PROJECT_STRUCTURE、compose 注释已改（worktree） | 已完成 |
+| 2026-10-27 | 4 确认 / 5 授权 | 用户回复"继续"：接受阶段 4，授权阶段 5 本机 e2e 换 JAR 联调（不含 SQL、mor-test） | 已确认 |
+| 2026-10-27 | 5 本机验收 | [stage5-report](./verification/stage5-report.md)（e2e-dev）：6 个 JAR 构建于 `e2e/staging/refclient-20261027a/`；platform / card / ops-bff 临时替换另一需求（card-BIN）的运行 JAR，经其 Owner 同意，验收后已换回并核对 sha256；ledger / billing / client-master 留在新版本。结果：referenceData 条数与 Platform 一致（4 / 249 / 47 / 42 / 298）；card 经 Nacos 服务发现，Platform 识别 5 个 X-Caller-Service；billing 精度正确，未知币种的外部响应 400 `BUSINESS_CHECK_FAILED` 与迁移前一致；ledger 未知币种建账簿被拒，真实过账与查不到→500 因本机无账簿未做（留 mor-test）；card BIN 国家核对通过（失败样本版本 6 记录留在本机库）；client-master 76 / 0 / 4 跳过（停用编码需改库，未授权）；ops-bff 下拉三次与基线一致；旧接口 404；AC-02（billing / card 停 Platform 后 OUT_OF_SERVICE、约 10 秒重试、恢复后 UP）与 AC-03（ledger 临时 1 分钟周期，停机期间 UP、失败计数 1→3、恢复后清零）通过。遗留：健康明细默认不暴露；覆盖环境变量名为 `PLATFORMSUPPORT_REFERENCEDATA_CLIENT_*` | 已完成 |
+| 2026-10-27 | 5 确认 / 6 启动 | 用户回复"继续"：接受阶段 5，进入阶段 6（mor-test 只读核对与本机构建） | 已确认 |
+| 2026-10-27 | 6 协调 | 与 card-BIN（design-discuss-1f）、国家包法务修订（code-mor-2d）约定：card-BIN 先部署并提交（20:19Z 已上 mor-test：platform 186347bc、card 380064fe、ops-bff 25f6a869、ops-web aec066e9、块 140、ops 语言包 #18），本需求 rebase 到其提交后重建；法务修订在本需求之后 | 已确认 |
+| 2026-10-27 | 6 发布准备 | [baseline](./release/baseline.md)、[runbook](./release/runbook.md)、[rel-build-report](./release/rel-build-report.md)（rel-dev）：候选 `refclient-20261028a`（基于 5e1f16ab）ledger 1ffc86a1、billing 9edb6cea、client-master 576d5422 可用；card / ops-bff / Platform 会回退 card-BIN 线上改动，标为不可用，待 card-BIN 提交后按 runbook 第 0 节用补丁（201 个文件）重建为 `refclient-20261028b`；基线脚本按 expected-diffs 分类，未知差异 0；回滚文件部署前按现网生成（`gen_rollback.sh`）；12 个 compose 渲染与现网逐键一致，不新增变量；Nacos 注册名与 context-path 与客户端缺省一致。顺序：ledger → billing → card / client-master / ops-bff → 验收 → Platform 最后。验收取舍：card 不做 BIN 上传（避免不可删的 INVALID 版本）；ledger 只做余额读取与试算，"查不到 → 可重投"沿用 auto 测试；健康明细用组合证据替代 | 已确认 |
+| 2026-10-28 | 6 重建 | card-BIN 提交 8a441c90 + c4ff0e20 后，rel-dev 按 runbook 第 0 节在 `c4ff0e20` 上重建 `refclient-20261028b`（补丁 201 个文件，无冲突；镜像 Platform 1e54f349、ledger 51a57a3b、billing cf580cfb、card 32d6f27a、client-master 64e515c6、ops-bff 4bd7574c，与构建产物逐字节一致）；基线未知差异 0（ledger 19 / billing 32 条公共库差异经 git log 确认后登记）；回滚文件按现网生成，env 12 个文件逐键一致；a 版作废。补跑 rel2 auto 测试（与 card-BIN 重叠的三个服务）：ops-bff 2433、card 82、Platform 921 全部通过（另有 1 条 manual 用例 SesRealSendTest 因缺 SES 凭据 fail-fast，默认不在 auto 范围） | 已完成 |
+| 2026-10-28 | 7 授权 | 用户：附条件授权，card-BIN 提交后直接部署 mor-test（按 ledger → billing → card / client-master / ops-bff → 验收 → Platform 顺序；任一核对不一致即停下询问；不含 SQL、提交、推送） | 已确认 |
+| 2026-10-28 | 7 mor-test 部署 | 04:00—04:08Z 按 runbook 执行：⓪ 回滚文件按现网生成（Platform 186347bc、card 380064fe、ops-bff 25f6a869、ledger 3819ff28、billing 53450948、client-master 80257737）、env 12 / 12 一致、基线未知差异 0；① 财务下拉 capture；② ledger 51a57a3b ③ billing cf580cfb ④ card 32d6f27a ⑤ client-master 64e515c6 ⑥ ops-bff 4bd7574c 全部 healthy，财务下拉 4 种逐字节相同；⑦ 验收：readiness 全 UP、刷新失败 WARN / ERROR 0、Platform 识别 4 个调用方、Nacos 健康实例 1、条数 4 / 249 / 47 / 42 / 298；ledger 余额读取 + 试算 201；billing 1.005 → 400 FACT_LINE_INVALID、JPY → 400 BUSINESS_CHECK_FAILED、1.25 → 201 后作废；client-master 76 / 0 / 4 跳过；⑧ Platform 1e54f349 healthy，Gateway 快照 routeCount=613，Platform ERROR 0；⑨ 旧接口 404、财务下拉仍逐字节相同、消费方无刷新失败。验收脚本修正 2 处（MCC 条数改用 size=10；试算改为与前端相同的无正文 JSON POST）。无回滚。留下：billing VOIDED 合成事实 241049321536086016、ledger 试算记录、client-master 验收数据。证据 `verification/acceptance-mor-test-*-20261028T04*.json` | 已完成 |
+| 2026-10-28 | 7 确认 / 8 授权 | 用户回复"继续"：接受阶段 7，授权阶段 8 本地提交（不含推送） | 已确认 |
+| 2026-10-28 | 8 提交 | 以 `c4ff0e20` 为父，经 `Code-MoR-refclient-rel2` 独立 index 提交：代码与文档 201 个文件（= mor-test 部署的 `refclient-20261028b` 源码，不含 `paytech/.mvn/maven.config`）+ 本需求目录 + requirements/README 索引行 + CURRENT_IMPLEMENTATION 条目；未推送 | 已完成 |
+
+## 适用阶段
+
+默认八阶段（2026-10-27 用户确认）。SQL、mor-test 部署、提交、推送分别授权。
+
+## 当前阶段与下一确认点
+
+阶段 1—8 完成（mor-test 已部署，已本地提交，未推送）。推送另行授权。

@@ -36,19 +36,14 @@ spring:
     publisher-returns: true
     template:
       mandatory: true
-  # 内部 HTTP 客户端：platform-support 币种规则（币种快照刷新，事务外）；commercial、channel-connector、reconciliation、ledger
-  # （自动 PAYMENT 事实登记前事务外读取，技术方案 4.5）。JDK HttpClient 不自动重试；不接服务发现，基址直接配置并含各自 Context Path
-  # （Platform /platform-support，其余无）。
+  # 内部 HTTP 客户端：commercial、channel-connector、reconciliation、ledger（自动 PAYMENT 事实登记前事务外读取，技术方案 4.5）。
+  # JDK HttpClient 不自动重试；不接服务发现，基址直接配置。platform-support 币种规则由参考数据客户端自建出站客户端读取，
+  # 见 platform-support.reference-data.client。
   http:
     clients:
       imperative:
         factory: jdk
     serviceclient:
-      platform-support-service:
-        base-url: "${BILLING_PLATFORM_SERVICE_URL:http://127.0.0.1:18106/platform-support}"
-        connect-timeout: 2s
-        read-timeout: 5s
-        redirects: dont-follow
       commercial-service:
         base-url: "${BILLING_COMMERCIAL_SERVICE_URL:http://127.0.0.1:18108}"
         connect-timeout: 2s
@@ -102,6 +97,16 @@ messaging:
 paytech:
   instance-id: "${PAYTECH_INSTANCE_ID:main}"
 
+# paytech-platform-support-reference-data-client：Platform 币种规则进程内全量快照。启动后立即加载（不阻塞启动），首次成功前按
+# initial-retry-interval（默认 PT10S）重试，之后按 refresh-interval（默认 PT1H）全量刷新；刷新失败保留上一份快照。读方法只读内存，
+# 可在登记事务内使用；查不到币种不提前回源。
+platform-support:
+  reference-data:
+    client:
+      # 直连 Platform 基址（含 Context Path /platform-support），不走服务发现；X-Caller-Service 取 spring.application.name。
+      base-url: "${BILLING_PLATFORM_SERVICE_URL:http://127.0.0.1:18106/platform-support}"
+      kinds: [CURRENCY]
+
 management:
   server:
     # 管理端口 = 业务端口 + 1000（01 §3）。
@@ -128,8 +133,8 @@ management:
         liveness:
           include: livenessState
         readiness:
-          # 币种快照首次加载成功前不就绪（Q3）。
-          include: readinessState,currencySnapshot
+          # referenceData：首次成功加载 Platform 币种快照前为 OUT_OF_SERVICE（Q3）。
+          include: readinessState,referenceData
     info:
       access: read-only
     prometheus:
@@ -144,12 +149,3 @@ billing:
     # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
     region-id: "${BILLING_SNOWFLAKE_REGION_ID}"
     worker-id: "${BILLING_SNOWFLAKE_WORKER_ID}"
-  # Platform 币种规则的进程内全量快照（技术方案 2.3）：启动即加载，未加载或业务查不到币种时按检查周期回源，就绪后按刷新间隔全量刷新；
-  # 刷新失败保留上一份快照。
-  currency-snapshot:
-    # 定时检查开关；关闭时不自动刷新（只用于自动测试），生产保持 true。
-    scheduling-enabled: true
-    # 检查周期。
-    check-interval: PT5S
-    # 就绪后的全量刷新间隔。
-    refresh-interval: PT60S

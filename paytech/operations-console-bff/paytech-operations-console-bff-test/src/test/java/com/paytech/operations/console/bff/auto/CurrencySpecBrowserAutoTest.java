@@ -34,7 +34,7 @@ import tools.jackson.databind.node.ObjectNode;
 /**
  * 浏览器经真实 BFF 与 HttpExchange 读取和维护 Platform 币种规则：币种页 4 个端点（C01—C04）与财务页币种下拉（R16）
  * <li>Platform 由 Loopback Simulator 承担，PLT-I02 授权与 Owner 调用记录在同一 Simulator；ledger 不再参与币种读取。</li>
- * <li>币种页列表读参考数据币种接口（ownerResponse 为 Platform 形状，response 为页面形状）；财务页下拉仍读旧币种规则接口。</li>
+ * <li>币种页列表与财务页下拉都读参考数据币种接口（ownerResponse 为 Platform 形状，response 为页面形状）；财务页下拉的状态筛选交给 Platform。</li>
  *
  * @see CurrencySpecManagementController#listCurrencySpecs()
  * @see CurrencySpecManagementController#createCurrencySpec(com.paytech.operations.console.bff.service.model.OperatorContext,
@@ -51,14 +51,17 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
     private static final String FINANCE_CURRENCIES = "/finance/currencies/v1";
     private static final String FINANCE_CURRENCY_ROUTE = "operations-finance-currency-list";
     private static final String OWNER_REQUEST_ID = "platform-currency-request";
-    /** 旧币种规则接口：财务页下拉的数据源。 */
-    private static final String LEGACY_PATH = "/platform/v1/currency-specs";
-    private static final String LEGACY_LIST = """
-        {"items":[
-          {"currency":"AED","minorUnit":2,"roundingMode":"HALF_UP","status":"DRAFT","version":1,"updateTime":"2026-10-20T01:02:03.123456Z"},
-          {"currency":"JPY","minorUnit":0,"roundingMode":"HALF_UP","status":"INACTIVE","version":3,"updateTime":"2026-10-20T02:03:04.654321Z"},
-          {"currency":"USD","minorUnit":2,"roundingMode":"HALF_UP","status":"ACTIVE","version":2,"updateTime":"2026-10-19T00:00:00.000001Z"}]}
-        """;
+    /** 参考数据币种接口：财务页下拉的数据源。 */
+    private static final String REFERENCE_PATH = "/platform/v1/reference-data/currencies";
+    /** Platform 参考数据币种（按币种代码升序，三种状态各一条），财务页筛选时由 Platform 只返回对应状态的条目。 */
+    private static final List<String> REFERENCE_ITEMS = List.of("""
+        {"currencyCode":"AED","numericCode":"784","name":"UAE Dirham","symbol":"د.إ","minorUnit":2,"roundingMode":"HALF_UP",\
+        "logoFileAddress":"/files/v1/7312345678901234001","logoPublicUrl":"https://static.local.test/public/aed.svg",\
+        "status":"DRAFT","version":1}""", """
+        {"currencyCode":"JPY","numericCode":null,"name":null,"symbol":null,"minorUnit":0,"roundingMode":"HALF_UP",\
+        "logoFileAddress":null,"logoPublicUrl":null,"status":"INACTIVE","version":3}""", """
+        {"currencyCode":"USD","numericCode":"840","name":"US Dollar","symbol":"$","minorUnit":2,"roundingMode":"HALF_UP",\
+        "status":"ACTIVE","version":2}""");
 
     static Stream<JsonNode> endpoints() {
         return rows(BOUNDARY);
@@ -102,24 +105,35 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertOnlyAuthorized();
     }
 
-    /** 财务页币种下拉改读 Platform 全量列表，按 status 在 BFF 筛选，响应形态不含版本与更新时间，ledger 零调用。 */
+    /** 财务页币种下拉读参考数据币种接口，status 原样作为 Platform 筛选参数（省略时不带），按 Platform 顺序投影，响应形态不含版本，ledger 零调用。 */
     @ParameterizedTest
-    @CsvSource(value = {"?status=ACTIVE,USD", "?status=DRAFT,AED", "?status=INACTIVE,JPY", "'',AED|JPY|USD"})
-    void test_financeCurrenciesFilteredFromPlatform(String query, String expectedCurrencies) throws Exception {
-        platform.rawResponse(LEGACY_PATH, LEGACY_LIST);
+    @CsvSource(value = {"ACTIVE,USD", "DRAFT,AED", "INACTIVE,JPY", "'',AED|JPY|USD"})
+    void test_financeCurrenciesFilteredByPlatform(String status, String expectedCurrencies) throws Exception {
+        var expected = List.of(expectedCurrencies.split("\\|"));
+        platform.rawResponse(REFERENCE_PATH, referenceList(expected));
 
-        var response = send(financeCurrencies(), query, JSON.nullNode(), true);
+        var response = send(financeCurrencies(), status.isEmpty() ? "" : "?status=" + status, JSON.nullNode(), true);
 
         assertEquals(200, response.statusCode(), response.body());
         var items = JSON.readTree(response.body()).path("items");
-        assertEquals(List.of(expectedCurrencies.split("\\|")), items.valueStream().map(item -> item.path("currency")
-            .asString()).toList());
+        assertEquals(expected, items.valueStream().map(item -> item.path("currency").asString()).toList());
         items.forEach(item -> assertEquals(List.of("currency", "minorUnit", "roundingMode", "status"),
             item.propertyNames().stream().toList()));
         var call = ownerCall();
-        assertEquals(LEGACY_PATH, call.path());
-        assertNull(call.query(), "Platform 查询不带筛选参数");
+        assertEquals(REFERENCE_PATH, call.path());
+        assertEquals(status.isEmpty() ? null : "status=" + status, call.query());
         assertTrue(ledger.requests().isEmpty(), ledger.requests().toString());
+    }
+
+    /** 财务页下拉：Platform 返回条目与筛选状态不符、版本缺失、未知状态、越界小数位或重复币种均按上游无效响应 502。 */
+    @Test
+    void test_financeCurrenciesInvalidUpstreamResponse() throws Exception {
+        var finance = financeCurrencies();
+        assertFinanceUpstreamInvalid(finance, "?status=ACTIVE", referenceList(List.of("AED")));
+        assertFinanceUpstreamInvalid(finance, "", referenceItem("USD", "version", null));
+        assertFinanceUpstreamInvalid(finance, "", referenceItem("USD", "status", "ENABLED"));
+        assertFinanceUpstreamInvalid(finance, "", referenceItem("USD", "minorUnit", 9));
+        assertFinanceUpstreamInvalid(finance, "", referenceList(List.of("USD", "USD")));
     }
 
     /** 已启用币种只更换图标：标准属性按当前值原样提交，回执状态仍为 ACTIVE 时正常返回。 */
@@ -306,6 +320,34 @@ class CurrencySpecBrowserAutoTest extends FinanceBrowserAutoTestBase {
         return JSON.writeValueAsString(JSON.createObjectNode().put("type", "about:blank")
             .put("title", org.springframework.http.HttpStatus.valueOf(status).getReasonPhrase()).put("detail", detail)
             .put("code", code).put("requestId", OWNER_REQUEST_ID).put("timestamp", "2026-10-20T00:00:00.123456Z"));
+    }
+
+    /** Platform 参考数据币种列表：按给定币种代码取样例条目。 */
+    private static String referenceList(List<String> currencies) {
+        var items = JSON.createArrayNode();
+        currencies.forEach(currency -> items.add(referenceItemNode(currency)));
+        return JSON.writeValueAsString(JSON.createObjectNode().set("items", items));
+    }
+
+    /** 只含一条币种的 Platform 列表，并覆盖该条目的一个字段。 */
+    private static String referenceItem(String currency, String field, Object value) {
+        var items = JSON.createArrayNode().add(put(referenceItemNode(currency), field, value));
+        return JSON.writeValueAsString(JSON.createObjectNode().set("items", items));
+    }
+
+    /** 样例中的单条 Platform 参考数据币种。 */
+    private static ObjectNode referenceItemNode(String currency) {
+        return (ObjectNode) REFERENCE_ITEMS.stream().map(JSON::readTree)
+            .filter(item -> currency.equals(item.path("currencyCode").asString())).findFirst().orElseThrow();
+    }
+
+    /** 财务页下拉收到无效 Platform 响应时 502，且本次只调用一次 Owner。 */
+    private void assertFinanceUpstreamInvalid(JsonNode finance, String query, String upstream) throws Exception {
+        resetBetweenCalls();
+        platform.rawResponse(REFERENCE_PATH, upstream);
+        var response = send(finance, query, JSON.nullNode(), true);
+        assertEquals(502, response.statusCode(), response.body());
+        ownerCall();
     }
 
     /** 财务页币种下拉的浏览器请求坐标。 */

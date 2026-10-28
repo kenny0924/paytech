@@ -3,7 +3,10 @@ package com.paytech.client.master.domain.onboarding.requirement;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.paytech.client.master.core.dal.dataobject.AddressFormatComponent;
 import com.paytech.client.master.core.dal.dataobject.AttributeDefinition;
@@ -12,11 +15,17 @@ import com.paytech.client.master.domain.enums.AttributeDataType;
 import com.paytech.client.master.domain.enums.WidgetCode;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
 import com.paytech.client.master.domain.onboarding.pack.ReferenceCatalogCodes;
-import com.paytech.client.master.domain.onboarding.pack.ReferenceDataItem;
+import com.paytech.platform.support.api.enums.ReferenceDataStatus;
+import com.paytech.platform.support.referencedata.client.ReferenceCatalog;
+import com.paytech.platform.support.referencedata.client.ReferenceCountry;
+import com.paytech.platform.support.referencedata.client.ReferenceCurrency;
+import com.paytech.platform.support.referencedata.client.ReferenceData;
+import com.paytech.platform.support.referencedata.client.ReferenceItem;
+import com.paytech.platform.support.referencedata.client.ReferenceSubdivision;
 
 /**
  * 一次需求计算所用的 Platform 参考数据结论（技术方案 S-03、S-05）：只在内存中，用完即弃
- * <li>由提交准备步骤在数据库事务外按本次申请实际填写的编码批量查询后构造；计算本身不访问外部服务。</li>
+ * <li>由提交准备步骤按本次申请实际填写的编码从进程内参考数据快照取出后构造；查找与计算都不访问外部服务。</li>
  * <li>编码不存在或不是 ACTIVE 一律视为不在目录；行政区还要求属于地址所在国家。</li>
  */
 public class ReferenceCodeCheck {
@@ -24,16 +33,35 @@ public class ReferenceCodeCheck {
     public static final String ADDRESS_COUNTRY = "address.countryCode";
     private static final String ATTRIBUTES = "attributes.";
 
-    private final Map<String, ReferenceDataItem> countries;
-    private final Map<String, ReferenceDataItem> currencies;
-    private final Map<String, ReferenceDataItem> subdivisions;
+    private final Map<String, ReferenceCountry> countries;
+    private final Map<String, ReferenceCurrency> currencies;
+    private final Map<String, ReferenceSubdivision> subdivisions;
 
-    /** 只持有查询结果。 */
-    public ReferenceCodeCheck(Map<String, ReferenceDataItem> countries, Map<String, ReferenceDataItem> currencies,
-        Map<String, ReferenceDataItem> subdivisions) {
+    /** 只持有查找结果。 */
+    public ReferenceCodeCheck(Map<String, ReferenceCountry> countries, Map<String, ReferenceCurrency> currencies,
+        Map<String, ReferenceSubdivision> subdivisions) {
         this.countries = Map.copyOf(countries);
         this.currencies = Map.copyOf(currencies);
         this.subdivisions = Map.copyOf(subdivisions);
+    }
+
+    /**
+     * 从进程内快照取出本次编码
+     * <li>快照中不存在的编码不出现在结果中；某类快照未配置或未就绪时抛 ReferenceDataUnavailableException，由调用方转换。</li>
+     *
+     * @param referenceData 进程内参考数据
+     * @param codes 本次申请填写的编码
+     * @return 参考数据结论
+     */
+    public static ReferenceCodeCheck lookup(ReferenceData referenceData, Codes codes) {
+        return new ReferenceCodeCheck(found(referenceData.countries(), codes.countries()),
+            found(referenceData.currencies(), codes.currencies()), found(referenceData.subdivisions(), codes.subdivisions()));
+    }
+
+    /** 快照中存在的编码。 */
+    static <T extends ReferenceItem> Map<String, T> found(ReferenceCatalog<T> catalog, Set<String> codes) {
+        return codes.stream().map(catalog::find).flatMap(Optional::stream)
+            .collect(Collectors.toMap(ReferenceItem::code, Function.identity()));
     }
 
     /** 国家存在且 ACTIVE。 */
@@ -60,9 +88,9 @@ public class ReferenceCodeCheck {
     }
 
     /** 编码存在且 ACTIVE。 */
-    static boolean active(Map<String, ReferenceDataItem> items, String code) {
-        ReferenceDataItem item = code == null ? null : items.get(code);
-        return item != null && item.active();
+    static boolean active(Map<String, ? extends ReferenceItem> items, String code) {
+        ReferenceItem item = code == null ? null : items.get(code);
+        return item != null && item.status() == ReferenceDataStatus.ACTIVE;
     }
 
     /**
@@ -82,7 +110,7 @@ public class ReferenceCodeCheck {
     }
 
     /**
-     * 本次申请需要向 Platform 查询的编码
+     * 本次申请需要在参考数据中查找的编码
      * <li>国家：地址国家、证件签发国、国家字段与 COUNTRY 扩展属性；币种与行政区：引用 REF_ 目录的字段与地址组件。</li>
      *
      * @param pack 辖区包与 Schema

@@ -1,0 +1,5 @@
+PUT 200
+completion {"uploadId": "240923519108517888", "fileId": "240923521595740160", "fileAddress": "/files/v1/240923521595740160", "scanStatus": "PENDING_SCAN", "completedAt": "2026-10-27T19:44:03.691229Z"}
+version 6 VALIDATING
+result {"versionNo": 6, "status": "INVALID", "totalRows": 2, "errorRows": 1, "failureReason": null}
+errors {"items": [{"columnName": "issuer_country", "errorCode": "COUNTRY_REGION_MISSING", "errorMessage": "发卡国 XX 未登记区域", "lineNo": 3, "valueExcerpt": "XX"}], "page": 1, "size": 10, "total": 1}

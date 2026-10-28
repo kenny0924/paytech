@@ -1,0 +1,40 @@
+{
+ "env": "mor-test",
+ "summary": {
+  "PASS": 2,
+  "FAIL": 1,
+  "INFO": 1
+ },
+ "results": [
+  {
+   "ac": "AC-07",
+   "check": "AE001 账簿 200：1 个",
+   "verdict": "PASS",
+   "evidence": [
+    {
+     "ledgerBookId": "238137396670066688",
+     "currency": "USD",
+     "bookStatus": "OPEN"
+    }
+   ]
+  },
+  {
+   "ac": "AC-07",
+   "check": "科目余额读取（账簿 × OPEN 期间，候选期间 2）",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-07",
+   "check": "账簿 238137396670066688（USD）期间 238137395982200832 余额样例",
+   "verdict": "INFO",
+   "evidence": "{'currency': 'USD', 'ledgerBookId': '238137396670066688', 'lines': [{'accountClass': 'ASSET', 'accountCode': 'CHANNEL_RECEIVABLES', 'accountName': '渠道应收款', 'accountNo': '1101', 'chartAccountId': '3102', 'closingBalance': '100.00', 'level': 1, 'normalSide': 'DEBIT', 'openingBalance': '0.00', 'parentC"
+  },
+  {
+   "ac": "AC-07",
+   "check": "执行试算 415（只写试算记录，不改分录 / 余额）",
+   "verdict": "FAIL",
+   "evidence": "{'type': 'about:blank', 'title': 'Unsupported Media Type', 'detail': '请求必须使用 JSON 内容类型', 'code': 'OPERATIONS_UNSUPPORTED_MEDIA_TYPE', 'requestId': '45656e50-a36d-4cba-9219-168f8bffd5e3', 'timestamp': '2026-10-28T04:03:50.813587Z'}"
+  }
+ ]
+}

@@ -5,12 +5,11 @@ import static com.paytech.billing.test.builder.BillingFactRequestBuilder.CLIENT_
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.CURRENCY;
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.ENTITY_NO;
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.LOCAL_PARTNER_ID;
-import static com.paytech.billing.test.builder.CurrencySpecResponseBuilder.GBP;
+import static com.paytech.billing.test.builder.TestCurrencies.GBP;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -159,7 +158,7 @@ class BillingFactRecordedHandlerTest extends AbstractBillingFactApiTest {
         events.assertNoEnvelope(draft);
     }
 
-    /** 已批准事实的币种不在本实例快照中（多实例刷新先后不一致）：系统异常可重试，不发布、不写 published_at，并请求刷新。 */
+    /** 已批准事实的币种不在本实例快照中（多实例刷新先后不一致）：系统异常可重试，不发布、不写 published_at，也不回源 Platform。 */
     @Test
     void test_currencyMissingFromSnapshotIsRetryable() {
         long factId = 2_000_101L;
@@ -167,9 +166,11 @@ class BillingFactRecordedHandlerTest extends AbstractBillingFactApiTest {
             "PAY-" + factId, Long.valueOf(CLIENT_ID), ENTITY_NO, null, null, GBP, BillingFactStatus.APPROVED.getCode(), 1,
             null);
 
+        int platformCalls = referenceDataMocker.totalCalls();
+
         assertThrows(ErrorException.class, () -> handler.handle(event(key(factId, 1))));
 
-        assertAll(() -> assertTrue(currencySnapshot.refreshRequested()),
+        assertAll(() -> assertEquals(platformCalls, referenceDataMocker.totalCalls()),
             () -> assertNull(factRow(factId).get("published_at")));
         events.assertNoEnvelope(factId);
     }

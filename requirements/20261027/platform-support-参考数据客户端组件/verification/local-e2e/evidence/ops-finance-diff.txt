@@ -1,0 +1,5 @@
+(all) identical 4
+?status=ACTIVE identical 4
+?status=INACTIVE identical 0
+?status=DRAFT identical 0
+status=BOGUS 400

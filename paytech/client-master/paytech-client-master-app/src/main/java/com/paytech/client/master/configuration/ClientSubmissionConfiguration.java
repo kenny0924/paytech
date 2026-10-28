@@ -50,12 +50,12 @@ import com.paytech.client.master.domainservice.service.ClientApplicationCommandS
 import com.paytech.client.master.domainservice.service.OnboardingPackService;
 import com.paytech.client.master.domainservice.service.impl.ClientApplicationCommandServiceImpl;
 import com.paytech.client.master.integration.ComplianceProgramClient;
-import com.paytech.client.master.integration.ReferenceDataClient;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
+import com.paytech.platform.support.referencedata.client.ReferenceData;
 import com.paytech.compliance.api.ClientReviewRegistrationApi;
 import com.paytech.compliance.api.ClientReviewResultApi;
 import com.paytech.client.master.integration.ClientReviewResultClient;
@@ -116,7 +116,7 @@ public class ClientSubmissionConfiguration {
         ClientPeopleRepository people, ClientDocumentRepository documents, PartyAttributeRepository attributes,
         ComplianceProgramClient programs, PartyIdentityKeyRepository identityKeys, ClientMaterialAuthorityClient authority,
         ClientAgreementPartyClient agreementParties, PartyProfileIdentifierRepository identifiers,
-        ApplicationDeclarationRepository declarations, ReferenceDataClient referenceData) {
+        ApplicationDeclarationRepository declarations, ReferenceData referenceData) {
         return new ClientSubmissionPreparer(clock, packs, drafts, people, documents, attributes, programs, identityKeys, authority,
             agreementParties, identifiers, declarations, referenceData);
     }

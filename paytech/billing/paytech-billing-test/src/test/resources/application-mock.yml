@@ -47,7 +47,7 @@ spring:
     publisher-returns: true
     template:
       mandatory: true
-  # platform-support、commercial、channel-connector、reconciliation、ledger：全部指向测试注入的同一个独立 Loopback Mock HTTP 服务
+  # commercial、channel-connector、reconciliation、ledger（以及下方参考数据客户端）：全部指向测试注入的同一个独立 Loopback Mock HTTP 服务
   # （billing.test.external.base-url 由 @EnableMockHttpServer 在应用创建客户端前注入；Mock 服务无 Context Path，各 API 路径互不冲突）。
   # 传输策略与生产一致。
   http:
@@ -55,11 +55,6 @@ spring:
       imperative:
         factory: jdk
     serviceclient:
-      platform-support-service:
-        base-url: "${billing.test.external.base-url}"
-        connect-timeout: 2s
-        read-timeout: 5s
-        redirects: dont-follow
       commercial-service:
         base-url: "${billing.test.external.base-url}"
         connect-timeout: 2s
@@ -117,6 +112,26 @@ messaging:
 paytech:
   instance-id: "main"
 
+# paytech-platform-support-reference-data-client：platform-support 参考数据查询同样由 Loopback Mock 服务承载（无 Context Path）。
+platform-support:
+  reference-data:
+    client:
+      # 配置 base-url 时直连 Mock 服务；service-id / context-path 只在不配 base-url（服务发现）时生效，保留默认值以列全字段。
+      base-url: "${billing.test.external.base-url}"
+      service-id: platform-support-service
+      context-path: /platform-support
+      # 每个请求的 X-Caller-Service；不配时取 spring.application.name，生产不配。
+      caller-service: billing-service
+      kinds: [CURRENCY]
+      # 生产 PT1H；调度关闭时不生效，保留以列全字段。
+      refresh-interval: PT1H
+      # 生产 PT10S；调度关闭时不生效。
+      initial-retry-interval: PT10S
+      # 生产 true；测试关闭，全局 BeforeEach 与用例配置 Mocker 后经 ReferenceDataRefresher.refreshNow() 显式加载。
+      scheduling-enabled: false
+      connect-timeout: 2s
+      read-timeout: 5s
+
 management:
   server:
     # 独立管理端口；测试随机分配，由 @LocalManagementPort 读取。
@@ -143,7 +158,7 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState,currencySnapshot
+          include: readinessState,referenceData
     info:
       access: read-only
     prometheus:
@@ -159,11 +174,3 @@ billing:
     # Snowflake Region / Worker 标识；生产无默认值且必填，修改需重启。测试进程固定 0/0。
     region-id: 0
     worker-id: 0
-  # Platform 币种快照。
-  currency-snapshot:
-    # 定时检查开关：生产 true；自动测试关闭，由 MockTestBase 全局 BeforeEach 与用例经同一刷新入口显式刷新，避免后台调用 Platform Mock。
-    scheduling-enabled: false
-    # 检查周期（调度关闭时不生效），与生产相同。
-    check-interval: PT5S
-    # 就绪后的全量刷新间隔，与生产相同。
-    refresh-interval: PT60S

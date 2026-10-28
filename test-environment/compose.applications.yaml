@@ -632,7 +632,7 @@ services:
       LEDGER_SNOWFLAKE_WORKER_ID: "23"
       LEDGER_ACCOUNT_SERVICE_URL: http://account-service:18114
       LEDGER_BILLING_SERVICE_URL: http://billing-service:18113
-      # 币种规则进程内快照：启动加载、每 60 秒刷新 GET /platform/v1/currency-specs；首次加载成功前就绪探针 DOWN（20261020 币种主数据）。
+      # 参考数据客户端（币种）：启动加载、默认每 1 小时刷新 GET /platform/v1/reference-data/currencies；首次加载成功前就绪探针 DOWN（20261027 参考数据客户端组件）。
       LEDGER_PLATFORM_SERVICE_URL: http://platform-support-service:18106/platform-support
       # 规则版本到时生效执行器：任务 accountingRuleVersionActivation 在 xxl-job-admin 登记（20261020 记账规则包维护）。
       XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
@@ -686,7 +686,7 @@ services:
       BILLING_SNOWFLAKE_WORKER_ID: "30"
       BILLING_COMPENSATION_INSTANCE_ID: billing-test
       PAYTECH_INSTANCE_ID: billing-test
-      # 币种规则进程内快照：启动加载、每 60 秒刷新 GET /platform/v1/currency-specs；首次加载成功前就绪探针 DOWN（20261020 币种主数据）。
+      # 参考数据客户端（币种）：启动加载、默认每 1 小时刷新 GET /platform/v1/reference-data/currencies；首次加载成功前就绪探针 DOWN（20261027 参考数据客户端组件）。
       BILLING_PLATFORM_SERVICE_URL: http://platform-support-service:18106/platform-support
       # 自动 PAYMENT 事实登记前事务外读取的四个领域服务（requirements/20261022/billing-支付事实自动登记 technique 4.10）。
       BILLING_COMMERCIAL_SERVICE_URL: http://commercial-service:18108

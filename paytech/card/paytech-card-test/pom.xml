@@ -27,6 +27,12 @@
         </dependency>
         <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>test</scope></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-test-support</artifactId><scope>test</scope></dependency>
+        <!-- Platform 参考数据查询的测试 HTTP 端点与 Mocker。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-platform-support-reference-data-client-test-support</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-card-app</artifactId>

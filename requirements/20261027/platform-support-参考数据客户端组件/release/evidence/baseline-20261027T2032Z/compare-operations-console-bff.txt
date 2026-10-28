@@ -1,0 +1,22 @@
+A=2806 B=2791 onlyA=15 onlyB=0 changed=6
+  - BOOT-INF/classes/com/paytech/operations/console/bff/integration/OperationsAccountLabelClient.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/integration/impl/OperationsAccountLabelClientImpl.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/model/binlibrary/response/LabeledBinLibraryActivationResponseBody.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/model/binlibrary/response/LabeledBinLibraryVersionResponseBody.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/GetBinLibraryVersionProcessor.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/ListBinLibraryActivationsProcessor.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/ListBinLibraryVersionsProcessor.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/OperatorLabelResolver.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/request/GetBinLibraryVersionRequest.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/request/ListBinLibraryActivationsRequest.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/request/ListBinLibraryVersionsRequest.class
+  - paytech-card-api.jar!com/paytech/card/api/binlibrary/response/BinRangeResponseBody.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/OperationsAccountLabelQueryApi.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/response/OperationsAccountLabelListResponseBody.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/response/OperationsAccountLabelResponseBody.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/configuration/PlatformClientConfiguration$1.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/configuration/PlatformClientConfiguration.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/ext/rest/CardBinLibraryController.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/CardBinLibraryClient.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/impl/CardBinLibraryClientImpl.class
+  ~ paytech-card-api.jar!com/paytech/card/api/binlibrary/CardBinLibraryApi.class

@@ -7,7 +7,7 @@ import com.paytech.arch.test.ViolationChecker;
 import org.junit.jupiter.api.Test;
 
 /**
- * R1、R2、R3、R6、R8、R13 的 Maven 依赖图部分：从 POM 树 fixture 读取模块与依赖，不调用 Maven。
+ * R1、R2、R3、R6、R8、R13、R16 的 Maven 依赖图部分：从 POM 树 fixture 读取模块与依赖，不调用 Maven。
  *
  * @see com.paytech.arch.ArchitectureRules#checkReactorDependencyGraph(java.nio.file.Path)
  * @author Claude
@@ -16,7 +16,7 @@ class DependencyGraphRulesAutoTest {
 
     @Test
     void test_normalFlow() {
-        for (String reactor : new String[] {"r1-pass", "r2-pass", "r3-pass", "r6-pass", "r8-pass", "r13-pass"}) {
+        for (String reactor : new String[] {"r1-pass", "r2-pass", "r3-pass", "r6-pass", "r8-pass", "r13-pass", "r16-pass"}) {
             ViolationChecker.of(ArchitectureRules.checkReactorDependencyGraph(Fixtures.path("graph/" + reactor)))
                 .none();
         }
@@ -73,6 +73,17 @@ class DependencyGraphRulesAutoTest {
             .allFrom("R13")
             .count(1)
             .contains("paytech-api-gateway-app", "com.paytech:platform-support-api");
+    }
+
+    @Test
+    void test_clientTestSupportDependency() {
+        // 任何范围的依赖都检查；本服务（platform-support）的 -test 也不允许。
+        ViolationChecker.of(ArchitectureRules.checkReactorDependencyGraph(Fixtures.path("graph/r16-violation")))
+            .allFrom("R16")
+            .count(3)
+            .contains("paytech-ledger-core", "reference-data-client-test-support (test)")
+            .contains("paytech-ledger-app", "reference-data-client-test-support (compile)")
+            .contains("paytech-platform-support-test", "reference-data-client-test-support (test)");
     }
 
     @Test

@@ -10,12 +10,11 @@ import static com.paytech.billing.test.builder.BillingFactRequestBuilder.LOCAL_P
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.MAKER_ID;
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.OTHER_CLIENT_ID;
 import static com.paytech.billing.test.builder.BillingFactRequestBuilder.OTHER_ENTITY_NO;
-import static com.paytech.billing.test.builder.CurrencySpecResponseBuilder.EUR;
-import static com.paytech.billing.test.builder.CurrencySpecResponseBuilder.GBP;
-import static com.paytech.billing.test.builder.CurrencySpecResponseBuilder.JPY;
+import static com.paytech.billing.test.builder.TestCurrencies.EUR;
+import static com.paytech.billing.test.builder.TestCurrencies.GBP;
+import static com.paytech.billing.test.builder.TestCurrencies.JPY;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,9 +36,9 @@ import com.paytech.billing.api.enums.FactRefType;
 import com.paytech.billing.core.enums.FactTargetBucket;
 import com.paytech.billing.test.base.AbstractBillingFactApiTest;
 import com.paytech.billing.test.builder.BillingFactRequestBuilder;
-import com.paytech.billing.test.builder.CurrencySpecResponseBuilder;
 import com.paytech.billing.test.checker.BillingResponseChecker;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
+import com.paytech.platform.support.api.enums.ReferenceDataStatus;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataBuilders;
 
 import tools.jackson.databind.JsonNode;
 
@@ -235,9 +234,8 @@ class SubmitBillingFactTest extends AbstractBillingFactApiTest {
     /** 停用（INACTIVE）只拦新用途：启用过的币种仍可登记、批准并发布计费事实（Q2、Q7）。 */
     @Test
     void test_inactiveCurrencyAccepted() {
-        currencySpecs.mockCurrencySpecs(CurrencySpecResponseBuilder.template().build(),
-            CurrencySpecResponseBuilder.template().currency(EUR).status(CurrencySpecStatus.INACTIVE).build());
-        assertTrue(currencySnapshotRefresher.refresh());
+        refreshCurrencies(ReferenceDataBuilders.currency(CURRENCY),
+            ReferenceDataBuilders.currency(EUR).status(ReferenceDataStatus.INACTIVE));
 
         long factId = submit(BillingFactRequestBuilder.template().currency(EUR)).assertSuccess(201)
             .assertText("currency", EUR).assertText("grossAmount", "10.00").id("factId");
@@ -247,39 +245,35 @@ class SubmitBillingFactTest extends AbstractBillingFactApiTest {
         assertNotNull(factRow(factId).get("published_at"));
     }
 
-    /** DRAFT 从未生效、未知币种不在快照：均业务拒绝且不保存；只有未知币种请求刷新快照。 */
+    /** DRAFT 从未生效、未知币种不在快照：均业务拒绝且不保存，登记路径不回源 Platform。 */
     @Test
     void test_draftAndUnknownCurrencyRejected() {
-        currencySpecs.mockCurrencySpecs(CurrencySpecResponseBuilder.template().build(),
-            CurrencySpecResponseBuilder.template().currency(GBP).status(CurrencySpecStatus.DRAFT).build());
-        assertTrue(currencySnapshotRefresher.refresh());
+        refreshCurrencies(ReferenceDataBuilders.currency(CURRENCY),
+            ReferenceDataBuilders.currency(GBP).status(ReferenceDataStatus.DRAFT));
+        int platformCalls = referenceDataMocker.totalCalls();
 
         submit(BillingFactRequestBuilder.template().currency(GBP))
-            .assertBusinessRejected("币种未启用: " + GBP + ", 状态 " + CurrencySpecStatus.DRAFT.getCode());
-        assertFalse(currencySnapshot.refreshRequested());
+            .assertBusinessRejected("币种未启用: " + GBP + ", 状态 " + ReferenceDataStatus.DRAFT.getCode());
         submit(BillingFactRequestBuilder.template().currency(EUR)).assertBusinessRejected("币种不存在或尚未同步: " + EUR);
 
-        assertAll(() -> assertTrue(currencySnapshot.refreshRequested()), () -> assertEquals(0L, factCount()));
+        assertAll(() -> assertEquals(platformCalls, referenceDataMocker.totalCalls(), "登记路径不得回源 Platform"),
+            () -> assertEquals(0L, factCount()));
     }
 
     /**
-     * Platform 新启用的币种：本实例快照未包含时拒绝并请求刷新，登记路径不回源 Platform；下一次检查刷新后按 Platform 精度登记
-     * （AC-05、AC-08）。
+     * Platform 新启用的币种：本实例快照未包含时拒绝，登记路径不回源 Platform、也不提前刷新；下一次全量刷新后按 Platform 精度登记
+     * （AC-05、AC-08；参考数据客户端组件 AC-04、AC-07）。
      */
     @Test
     void test_newlyActiveCurrencyRecognizedAfterRefresh() {
-        currencySpecs.mockCurrencySpecs(CurrencySpecResponseBuilder.template().build(),
-            CurrencySpecResponseBuilder.template().currency(JPY).minorUnit(0).build());
-        int platformCalls = currencySpecs.listCalls();
+        int platformCalls = referenceDataMocker.totalCalls();
 
         submit(BillingFactRequestBuilder.template().currency(JPY)).assertBusinessRejected("币种不存在或尚未同步: " + JPY);
-        assertAll(() -> assertTrue(currencySnapshot.refreshRequested()),
-            () -> assertEquals(platformCalls, currencySpecs.listCalls(), "登记路径不得回源 Platform"));
+        assertEquals(platformCalls, referenceDataMocker.totalCalls(), "登记路径不得回源 Platform");
 
-        currencySnapshotRefresher.refreshIfDue();
+        refreshCurrencies(ReferenceDataBuilders.currency(CURRENCY), ReferenceDataBuilders.currency(JPY).minorUnit(0));
 
-        assertAll(() -> assertEquals(platformCalls + 1, currencySpecs.listCalls()),
-            () -> assertFalse(currencySnapshot.refreshRequested()));
+        assertEquals(platformCalls + 1, referenceDataMocker.totalCalls(), "只有显式刷新回源一次");
         submit(BillingFactRequestBuilder.template().currency(JPY)).assertSuccess(201).assertText("currency", JPY)
             .assertText("grossAmount", "10");
         submit(BillingFactRequestBuilder.template().currency(JPY).clearLines().addLine(FactComponentType.CLIENT_PRINCIPAL,

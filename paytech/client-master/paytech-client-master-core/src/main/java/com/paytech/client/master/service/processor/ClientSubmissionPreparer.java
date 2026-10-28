@@ -53,17 +53,19 @@ import com.paytech.client.master.domainservice.service.OnboardingPackService;
 import com.paytech.client.master.integration.ClientAgreementPartyClient;
 import com.paytech.client.master.integration.ClientMaterialAuthorityClient;
 import com.paytech.client.master.integration.ComplianceProgramClient;
-import com.paytech.client.master.integration.ReferenceDataClient;
 import com.paytech.compliance.api.enums.MaterialQualificationType;
+import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.platform.support.api.files.FileAddress;
+import com.paytech.platform.support.referencedata.client.ReferenceData;
+import com.paytech.platform.support.referencedata.client.ReferenceDataUnavailableException;
 
 import lombok.AllArgsConstructor;
 
 /**
  * C14 提交、提交核对与需求清单共用的准备步骤（需求 B2、B3）。
- * <li>只读：查询本模块仓储与辖区包，并在数据库事务外读取 compliance 程序材料、commercial 合同引用、Platform 文件状态
- * 与 Platform 参考数据（本次填写的国家、币种、行政区，按类型各批量查询一次）。</li>
+ * <li>只读：查询本模块仓储与辖区包，并在数据库事务外读取 compliance 程序材料、commercial 合同引用与 Platform 文件状态；
+ * 本次填写的国家、币种、行政区从进程内参考数据快照查找，不发 HTTP。</li>
  * <li>规则由辖区包数据与 OnboardingRequirementEvaluator 承担；本类只装载事实、计算证件唯一性作用域与冲突。</li>
  */
 @AllArgsConstructor
@@ -80,7 +82,7 @@ public class ClientSubmissionPreparer {
     private final ClientAgreementPartyClient agreementParties;
     private final PartyProfileIdentifierRepository identifiers;
     private final ApplicationDeclarationRepository declarations;
-    private final ReferenceDataClient referenceData;
+    private final ReferenceData referenceData;
 
     /**
      * 装载申请的全部提交事实并计算需求清单
@@ -113,11 +115,13 @@ public class ClientSubmissionPreparer {
             OnboardingRequirementEvaluator.evaluate(input));
     }
 
-    /** 本次申请填写的国家、币种与行政区：按类型各批量查询 Platform 一次；不可用时整体 503，不写入。 */
+    /** 本次申请填写的国家、币种与行政区：从进程内快照查找；快照未就绪时整体 503 ONBOARDING_DEPENDENCY_UNAVAILABLE，不写入。 */
     ReferenceCodeCheck references(OnboardingPack pack, List<RequirementSubject> subjects) {
-        ReferenceCodeCheck.Codes codes = ReferenceCodeCheck.codes(pack, subjects);
-        return new ReferenceCodeCheck(referenceData.countries(codes.countries()), referenceData.currencies(codes.currencies()),
-            referenceData.subdivisions(codes.subdivisions()));
+        try {
+            return ReferenceCodeCheck.lookup(referenceData, ReferenceCodeCheck.codes(pack, subjects));
+        } catch (ReferenceDataUnavailableException unavailable) {
+            throw new ErrorException(ONBOARDING_DEPENDENCY_UNAVAILABLE, "Platform 参考数据未就绪", unavailable);
+        }
     }
 
     /** 主主体在前，随后是仍有 DRAFT/ACTIVE 关系的关联人员；计算作用域、已有身份键与申请内重复。 */

@@ -1,0 +1,10 @@
+# 参考数据客户端组件：mor-test 回滚覆盖（scripts/gen_rollback.sh 于部署前生成，勿手改）。回滚目标 = 生成时刻现网运行镜像，env 与候选相同。
+# Platform 发布后，消费方回滚前必须先回滚 Platform（runbook 第 5 节）。
+services:
+  billing-service:
+    image: sha256:53450948e0225e3681930b55417526f2ae51ed35fc464276791cab7105e700b0  # 部署前现网（容器创建 2026-10-23T07:45:26.070210046Z，2026-10-28T03:57:58Z 生成）
+    environment:
+      BILLING_COMMERCIAL_SERVICE_URL: http://commercial-service:18108
+      BILLING_CHANNEL_CONNECTOR_SERVICE_URL: http://channel-connector-service:18110
+      BILLING_RECONCILIATION_SERVICE_URL: http://reconciliation-service:18115
+      BILLING_LEDGER_SERVICE_URL: http://ledger-service:18105

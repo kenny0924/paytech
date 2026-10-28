@@ -1,6 +1,6 @@
 # Java 项目结构规范
 
-最后更新：2026-09-16
+最后更新：2026-10-27
 
 > 写接口结构按 [2026-09-16 Payment 基准合并决定](decisions/2026-09-16-payment-based-coding-conventions.md)统一；既有代码按具体任务迁移，本规范更新不代表全项目已完成重构。
 
@@ -88,6 +88,7 @@ test ───────→ web ───────→ api
 - 测试不得使用 `when(...).thenReturn(...)`、`@MockBean`、`@MockitoBean` 等方法级行为 Stub 替换生产链路；详细边界以 `UNIT_TEST_GUIDE.md` 为准。
 - `manual` 必须由独立 Maven Profile 显式运行，不能进入默认 `mvn test` 和 CI。
 - 其他内部 Java 服务只依赖提供方的 `api`，并在自己的外部集成适配器中使用它。
+- 提供方另可发布服务 Java Client（artifactId 以 `-client` 结尾，arch-rules 角色 CLIENT，对调用方等价于 `api`），如 `paytech-vault-client`、`paytech-platform-support-reference-data-client`；包分公共包、`autoconfigure`、`internal`，调用方只用公共包。Client 的测试支持（以 `-client-test-support` 结尾，角色 CLIENT_TEST_SUPPORT）只允许其他服务的 `-test` 模块以 test 范围依赖（R16），Client 自身的测试放在测试支持模块的 `src/test`。参考数据客户端的 `ReferenceData` / `ReferenceCatalog` 只读内存，可在事务内注入（R7 例外），`ReferenceDataRefresher` 仍按外部调用对待。
 - 父 POM 用 `dependencyManagement` 固定版本；子模块只声明所需依赖。
 - 不添加没有实际使用者的模块、依赖或占位类。
 - 拥有数据库的项目使用 `DATABASE_DESIGN_GUIDE.md` 和统一 PDManer 模板；无数据库项目不创建空模型。

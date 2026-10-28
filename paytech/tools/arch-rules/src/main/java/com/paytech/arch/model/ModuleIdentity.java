@@ -57,13 +57,23 @@ public record ModuleIdentity(String groupId, String artifactId, String service, 
         return new ModuleIdentity(groupId, artifactId, service.get(), roleOfSuffix(suffix));
     }
 
+    /**
+     * 按 artifactId 去掉服务前缀后的后缀判定角色
+     * <li>以 {@code -client-test-support} 结尾为客户端测试支持（如 {@code -reference-data-client-test-support}），先于 {@code -client} 判定。</li>
+     * <li>以 {@code -client} 结尾为服务 Java Client（如 {@code paytech-vault-client}、{@code -reference-data-client}）。</li>
+     */
     private static ModuleRole roleOfSuffix(String suffix) {
+        if (suffix.endsWith("-client-test-support")) {
+            return ModuleRole.CLIENT_TEST_SUPPORT;
+        }
+        if (suffix.endsWith("-client")) {
+            return ModuleRole.CLIENT;
+        }
         return switch (suffix) {
             case "" -> ModuleRole.SERVICE_AGGREGATOR;
             case "-api" -> ModuleRole.API;
             case "-app" -> ModuleRole.APP;
             case "-test" -> ModuleRole.TEST;
-            case "-client" -> ModuleRole.CLIENT;
             default -> ModuleRole.CORE;
         };
     }

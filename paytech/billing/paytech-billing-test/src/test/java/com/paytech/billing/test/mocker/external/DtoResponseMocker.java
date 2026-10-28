@@ -32,7 +32,7 @@ import com.paytech.foundation.testsupport.api.MockHttpFault;
  */
 public abstract class DtoResponseMocker<K, R> implements Clear {
     /** Mock 响应的 Request ID，响应头与 Problem 体一致。 */
-    public static final String REQUEST_ID = CurrencySpecMocker.REQUEST_ID;
+    public static final String REQUEST_ID = "upstream-test";
 
     private final String upstream;
 

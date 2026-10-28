@@ -1,0 +1,13 @@
+# 参考数据客户端组件：mor-test 候选覆盖（rel-dev 2026-10-28；阶段 7 由主会话执行，需用户授权）。
+# 用法：./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag refclient-20261028a 仅供辨认）。构建源 Code-MoR-refclient-rel2（c4ff0e20 + 本需求补丁 refclient-on-5e1f16ab.patch 44bc3c63，worktree 指纹 a2ea2734e76893e9）。
+# env：与现网容器渲染结果逐键逐值相同（见 ../verification 报告 / baseline.md 第 3 节）；敏感值只写主 compose 同一 ${...} 引用。
+services:
+  billing-service:
+    # 同 ledger（直连 BILLING_PLATFORM_SERVICE_URL）；4 个 BILLING_*_SERVICE_URL 来自 20261022 billing 覆盖，必须带。
+    image: sha256:cf580cfbd05786e55c0e09b9749e1c1ba1a4fe54acef383e355bef7ac6c05650  # mor-test/billing-service:refclient-20261028b（c4ff0e20 + 本需求补丁，JAR b218dc10）
+    environment:
+      BILLING_COMMERCIAL_SERVICE_URL: http://commercial-service:18108
+      BILLING_CHANNEL_CONNECTOR_SERVICE_URL: http://channel-connector-service:18110
+      BILLING_RECONCILIATION_SERVICE_URL: http://reconciliation-service:18115
+      BILLING_LEDGER_SERVICE_URL: http://ledger-service:18105

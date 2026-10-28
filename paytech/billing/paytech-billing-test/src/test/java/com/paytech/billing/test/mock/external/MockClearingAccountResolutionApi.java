@@ -19,7 +19,7 @@ public class MockClearingAccountResolutionApi implements ClearingAccountResoluti
 
     @Override
     public ClearingAccountResolutionResponseBody resolveClearingAccount(ResolveClearingAccountRequestBody body) {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         return mocker.resolve(body.getMidId());
     }
 }

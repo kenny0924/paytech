@@ -1,0 +1,4 @@
+A=1854 B=1857 onlyA=0 onlyB=3 changed=0
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/OperationsAccountLabelQueryApi.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/response/OperationsAccountLabelListResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/response/OperationsAccountLabelResponseBody.class

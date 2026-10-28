@@ -9,32 +9,31 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.client.master.service.handler.ClientClassificationHandler;
 import com.paytech.client.master.test.base.onboarding.AbstractClientReviewTest;
-import com.paytech.client.master.test.mocker.platform.ReferenceDataMocker.Catalog;
 import com.paytech.platform.support.api.enums.ReferenceDataStatus;
+import com.paytech.platform.support.referencedata.client.ReferenceDataKind;
 
 /**
- * O03/O04 及分类读取：真实 HTTP 进入，行业与 MCC 经真实出站客户端向 Platform 参考数据测试接口校验，分类与确认真实落库，
+ * O03/O04 及分类读取：真实 HTTP 进入，行业与 MCC 按参考数据客户端的进程内快照（由 Platform 参考数据测试接口刷新）校验，分类与确认真实落库，
  * 确认后经补偿任务交给 Risk I02 测试接口。
  *
  * @see com.paytech.client.contract.api.onboarding.ClientClassificationAdminApi
  */
 class ClientClassificationAdminTest extends AbstractClientReviewTest {
 
-    /** 设置、替换、确认并交付 Risk；确认重放不重复交付；确认后不能再改。行业与 MCC 每次保存各查询 Platform 一次。 */
+    /** 设置、替换、确认并交付 Risk；确认重放不重复交付；确认后不能再改。保存只读快照，不向 Platform 发参考数据请求。 */
     @Test
     void test_normalFlow() {
         var review = applications.underReview(ACCOUNT_ID);
         owners.mockClassificationsReceived();
         assertEquals(0, body(classifications(review.caseId())).path("items").size());
+        long calls = referenceData.count();
 
         assertEquals(200, replace(review.caseId(), List.of(item("RETAIL_GROCERY", "5411", true))).getStatus().value());
         var replaced = replace(review.caseId(), List.of(item("SAAS_SUBSCRIPTION", "5734", true), item("RETAIL_GROCERY", "5411", false)));
         assertEquals(200, replaced.getStatus().value());
         assertFalse(body(replaced).path("confirmed").asBoolean());
         assertEquals(2, mapper.classifications(review.app().clientId()).size());
-        assertEquals("SAAS_SUBSCRIPTION,RETAIL_GROCERY", referenceData.calls(Catalog.INDUSTRY).getLast().codes());
-        assertEquals("5734,5411", referenceData.calls(Catalog.MCC).getLast().codes());
-        assertEquals(2, referenceData.calls(Catalog.INDUSTRY).size());
+        assertEquals(calls, referenceData.count());
 
         var confirmed = confirm(review.caseId());
         assertEquals(200, confirmed.getStatus().value());
@@ -56,7 +55,7 @@ class ClientClassificationAdminTest extends AbstractClientReviewTest {
         assertEquals(1, owners.count("classifications:"));
     }
 
-    /** 两个主要分类、MCC 格式、未设置即确认 422；未知任务 404；均不落库，且输入校验失败时不查询 Platform。 */
+    /** 两个主要分类、MCC 格式、未设置即确认 422；未知任务 404；均不落库，也不产生 Platform 参考数据请求。 */
     @Test
     void test_invalidParameter() {
         var review = applications.underReview(ACCOUNT_ID);
@@ -65,9 +64,10 @@ class ClientClassificationAdminTest extends AbstractClientReviewTest {
             .getStatus().value());
         assertEquals(422, replace(review.caseId(), List.of(item("RETAIL_GROCERY", "54A1", true))).getStatus().value());
         assertEquals("CLASSIFICATION_INVALID", body(confirm(review.caseId())).path("code").asString());
+        long calls = referenceData.count();
         assertEquals(404, replace(applications.nextId(), List.of(item("RETAIL_GROCERY", "5411", true))).getStatus().value());
 
-        assertEquals(0, referenceData.count());
+        assertEquals(calls, referenceData.count());
         assertEquals(0, mapper.classifications(review.app().clientId()).size());
         assertNull(mapper.classificationProfile(review.app().clientId()).get("classification_confirmed_time"));
         assertEquals(0, owners.count("classifications:"));
@@ -77,7 +77,7 @@ class ClientClassificationAdminTest extends AbstractClientReviewTest {
     @Test
     void test_industryNotDetail() {
         var review = applications.underReview(ACCOUNT_ID);
-        referenceData.mockIndustry("RETAIL_GENERAL", 2, ReferenceDataStatus.INACTIVE);
+        referenceData.mockIndustry("RETAIL_GENERAL", "RETAIL", ReferenceDataStatus.INACTIVE);
 
         var rejected = replace(review.caseId(), List.of(item("RETAIL", "5411", true), item("GAMBLING", "5399", false),
             item("RETAIL_GENERAL", "7372", false), item("RETAIL_GROCERY", "5734", false)));
@@ -93,7 +93,7 @@ class ClientClassificationAdminTest extends AbstractClientReviewTest {
     @Test
     void test_mccNotInCatalog() {
         var review = applications.underReview(ACCOUNT_ID);
-        referenceData.mock(Catalog.MCC, "7372", ReferenceDataStatus.INACTIVE);
+        referenceData.mock(ReferenceDataKind.MCC, "7372", ReferenceDataStatus.INACTIVE);
 
         var rejected = replace(review.caseId(), List.of(item("RETAIL_GROCERY", "9999", true), item("SAAS_SUBSCRIPTION", "7372", false)));
 
@@ -109,23 +109,24 @@ class ClientClassificationAdminTest extends AbstractClientReviewTest {
             .map(error -> error.path("field").asString() + "=" + error.path("message").asString()).toList();
     }
 
-    /** Platform 参考数据不可用：503 ONBOARDING_DEPENDENCY_UNAVAILABLE，已有分类保持不变。 */
+    /** 快照已加载后 Platform 参考数据不可用：刷新失败但保留原快照，替换仍按原数据成功；快照未就绪的 503 见 {@link ReferenceDataUnavailableTest}。 */
     @Test
-    void test_platformUnavailable() {
+    void test_platformUnavailableKeepsSnapshot() {
         var review = applications.underReview(ACCOUNT_ID);
         assertEquals(200, replace(review.caseId(), List.of(item("RETAIL_GROCERY", "5411", true))).getStatus().value());
-        referenceData.mockUnavailable(Catalog.MCC);
+        referenceData.mockUnavailable(ReferenceDataKind.MCC);
 
-        var unavailable = replace(review.caseId(), List.of(item("SAAS_SUBSCRIPTION", "5734", true)));
+        var refreshed = referenceData.refreshNow();
+        var replaced = replace(review.caseId(), List.of(item("SAAS_SUBSCRIPTION", "5734", true)));
 
-        assertEquals(503, unavailable.getStatus().value());
-        assertEquals("ONBOARDING_DEPENDENCY_UNAVAILABLE", body(unavailable).path("code").asString());
+        assertFalse(refreshed.stream().filter(result -> result.kind() == ReferenceDataKind.MCC).findFirst().orElseThrow().succeeded());
+        assertEquals(200, replaced.getStatus().value());
         var rows = mapper.classifications(review.app().clientId());
         assertEquals(1, rows.size());
-        assertEquals("RETAIL_GROCERY", rows.getFirst().get("industry_code"));
+        assertEquals("SAAS_SUBSCRIPTION", rows.getFirst().get("industry_code"));
     }
 
-    /** 迁移前保存的一级行业仍可读取：GET 不向 Platform 校验。 */
+    /** 迁移前保存的一级行业仍可读取：GET 不按参考数据校验，也不产生请求。 */
     @Test
     void test_legacyIndustryReadable() {
         var review = applications.underReview(ACCOUNT_ID);

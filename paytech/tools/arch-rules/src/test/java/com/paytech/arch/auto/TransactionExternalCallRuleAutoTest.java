@@ -39,4 +39,19 @@ class TransactionExternalCallRuleAutoTest {
             .containsMessage("LedgerRevealService", "Vault 客户端", "VaultClient")
             .containsMessage("LedgerRevealService", "HTTP 接口", "ExchangeRateClient");
     }
+
+    /** 参考数据客户端的进程内读接口可在事务内注入；同模块会发 HTTP 的刷新入口仍违规。 */
+    @Test
+    void test_edgeCase() {
+        ServiceArchitectureScope scope = Fixtures.scope("ledger")
+            .module(Fixtures.module("ledger", "core"), Fixtures.classes("r7.refdata.ledgercore"))
+            .module(Fixtures.module("platform-support", "reference-data-client"),
+                Fixtures.classes("r7.refdata.referencedataclient"))
+            .build();
+
+        ViolationChecker.of(new TransactionExternalCallRule().check(scope))
+            .allFrom("R7")
+            .count(1)
+            .containsMessage("LedgerRefreshService", "HTTP 接口", "ReferenceDataRefresher");
+    }
 }

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 
@@ -40,12 +39,6 @@ import com.paytech.platform.support.api.files.FileAddress;
 class BinLibraryVersionHttpTest extends AbstractBinLibraryTest {
     private static final String FILE_ID = "7409912387612";
     private static final String FILE_ADDRESS = FileAddress.of(Long.parseLong(FILE_ID)).value();
-
-    /** 本类每例都使用 6 国区域映射。 */
-    @BeforeEach
-    void setUpClassMocks() {
-        platform.mockCountryRegions(REGIONS);
-    }
 
     /** 合法文件：201 VALIDATING，异步写入后 VALID，行数与进度正确，号段区域按映射推导；生效版本仍是 v1，查询结果不变。 */
     @Test

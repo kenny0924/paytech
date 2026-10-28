@@ -56,7 +56,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
-        <!-- 币种快照刷新读取 platform-support-api 币种规则的内部 HTTP 客户端（技术方案 2.3）。 -->
+        <!-- commercial、channel-connector、reconciliation、ledger 的内部 HTTP 客户端（技术方案 4.5）。 -->
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-http-client-support</artifactId>

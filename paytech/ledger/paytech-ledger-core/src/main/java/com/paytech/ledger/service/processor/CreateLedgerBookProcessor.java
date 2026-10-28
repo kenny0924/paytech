@@ -74,8 +74,7 @@ public class CreateLedgerBookProcessor extends AbstractLockProcessor<CreateLedge
 
     /**
      * 币种必须在 Platform 币种规则快照中为 ACTIVE（新开账簿属于新用途，INACTIVE、DRAFT 与未知币种均拒绝）
-     * <li>转换为调用方区分处理的 CURRENCY_NOT_ACTIVE（沿用原默认提示），具体原因保留为 Cause；对新用途而言快照中没有的币种同样视为未启用，
-     * 同时触发快照刷新。</li>
+     * <li>转换为调用方区分处理的 CURRENCY_NOT_ACTIVE（沿用原默认提示），具体原因保留为 Cause；对新用途而言快照中没有的币种同样视为未启用。</li>
      */
     void checkActiveCurrency(String currency) {
         try {

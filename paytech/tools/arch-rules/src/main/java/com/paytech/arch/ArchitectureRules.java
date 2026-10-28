@@ -5,6 +5,7 @@ import com.paytech.arch.pom.PomReader;
 import com.paytech.arch.rule.ApiDependencyRule;
 import com.paytech.arch.rule.ArchitectureRule;
 import com.paytech.arch.rule.CardDataIsolationRule;
+import com.paytech.arch.rule.ClientTestSupportDependencyRule;
 import com.paytech.arch.rule.CompensationHandlerRule;
 import com.paytech.arch.rule.CoreIsolationRule;
 import com.paytech.arch.rule.CoreWebBootstrapRule;
@@ -28,7 +29,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * R1–R12、R14、R15 服务级规则与 R13 依赖图规则的入口（design/02；R15 见 2026-10-20 统一对外渠道出口决定）。
+ * R1–R12、R14、R15 服务级规则与 R13、R16 依赖图规则的入口（design/02；R15 见 2026-10-20 统一对外渠道出口决定；R16 见
+ * 2026-10-27 参考数据客户端组件需求）。
  *
  * <p>
  * 服务 {@code -test} 模块的 {@code ArchitectureAutoTest} 调用 {@link #checkService(String, Collection)}；Reactor 级测试调用
@@ -55,14 +57,14 @@ public final class ArchitectureRules {
     }
 
     /**
-     * 返回含 Maven 依赖图部分的规则 R1、R2、R3、R6、R8、R15，以及只有依赖图部分的 R13。
+     * 返回含 Maven 依赖图部分的规则 R1、R2、R3、R6、R8、R15，以及只有依赖图部分的 R13、R16。
      *
      * @return 规则
      */
     public static List<DependencyGraphRule> dependencyGraphRules() {
         return List.of(new CoreIsolationRule(), new ApiDependencyRule(), new DomainLayerRule(),
             new RemoteApiBindingRule(), new MessagingDependencyRule(), new ReactorCoordinateRule(),
-            new ExternalEgressRule());
+            new ExternalEgressRule(), new ClientTestSupportDependencyRule());
     }
 
     /**
@@ -82,7 +84,7 @@ public final class ArchitectureRules {
     }
 
     /**
-     * 读取 Reactor 全部模块，对依赖图执行 R1、R2、R3、R6、R8、R13、R15。
+     * 读取 Reactor 全部模块，对依赖图执行 R1、R2、R3、R6、R8、R13、R15、R16。
      *
      * @param aggregatorRoot 聚合 POM 所在目录（{@code paytech/}）
      * @return 全部违规

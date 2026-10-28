@@ -22,13 +22,17 @@ import com.paytech.client.master.test.mocker.onboarding.JurisdictionPackMocker;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingOwnerMocker;
 import com.paytech.client.master.test.mocker.onboarding.VaultMocker;
-import com.paytech.client.master.test.mocker.platform.ReferenceDataMocker;
+import com.paytech.client.master.test.mocker.platform.ReferenceCatalogFixture;
 import com.paytech.client.master.test.mocker.commercial.CommercialAgreementPartyMocker;
 import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataMocker;
 
-/** client-master Mock 测试基类：真实生产链、本机 MySQL/Redis/RabbitMQ，Platform/Risk/commercial 走测试 HTTP 服务。 */
+/**
+ * client-master Mock 测试基类：真实生产链、本机 MySQL/Redis/RabbitMQ，Platform/Risk/commercial 走测试 HTTP 服务。
+ * <li>Platform 参考数据由参考数据客户端的进程内快照提供：Mock 配置关闭自动刷新，每例由 {@link ReferenceCatalogFixture} 写入测试 HTTP 服务后同步刷新。</li>
+ */
 @ActiveProfiles("mock")
 @AutoConfigureRestTestClient
 @SpringBootTest(classes = ClientMasterTestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -65,7 +69,10 @@ public abstract class ClientMasterMockTestBase extends TestBase {
     protected VaultMocker vault;
 
     @Autowired
-    protected ReferenceDataMocker referenceData;
+    protected ReferenceCatalogFixture referenceData;
+
+    @Autowired
+    private ReferenceDataMocker referenceDataApi;
 
     @Autowired
     private CompensationEventDispatcher compensationDispatcher;
@@ -84,7 +91,7 @@ public abstract class ClientMasterMockTestBase extends TestBase {
         owners.mockSession(ACCOUNT_ID, SESSION_ID);
         // commercial 合同参与方引用的公共基线：可用且无引用；人员共享场景在用例内覆盖。
         agreementParties.mockNoReferences();
-        // Platform 参考数据的公共基线：测试会填写的国家、币种、行政区、行业与 MCC 均为 ACTIVE；停用、不存在与不可用在用例内覆盖。
+        // Platform 参考数据的公共基线（刷新进程内快照）：测试会填写的国家、币种、行政区、行业与 MCC 均为 ACTIVE；停用、不存在与不可用在用例内覆盖。
         referenceData.mockStandardCatalog();
     }
 
@@ -99,7 +106,7 @@ public abstract class ClientMasterMockTestBase extends TestBase {
             asynchronousWorkStopped = false;
             throw failure;
         }
-        assertAll("检查外部 Mock 调用", ownerServer::assertNoUnexpectedRequests);
+        assertAll("检查外部 Mock 调用", ownerServer::assertNoUnexpectedRequests, referenceDataApi::assertNoUnexpectedCalls);
     }
 
     /** 异步无法停止时保留现场。 */

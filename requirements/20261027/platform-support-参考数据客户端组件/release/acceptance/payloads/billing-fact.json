@@ -1,0 +1,14 @@
+{
+ "_status": "READY",
+ "_source": "verification/local-e2e/stage5-requests.json（e2e-dev，阶段 5 本机原始请求）；billing 私网 POST /billing/v1/facts，Header X-Gateway-Actor-Subject / X-Gateway-Session-Id。占位：__RUN__（%m%d%H%M%S）、__OE__（ZZ9 + run 末两位，合成 OE，不触及 AE001）、__AMOUNT__、__CURRENCY__、__REF__（sourceReference 后缀，每次唯一）。",
+ "factType": "MANUAL_ADJUSTMENT",
+ "sourceSystem": "REFCLIENT_STAGE5",
+ "sourceReference": "refclient-__RUN__-__REF__",
+ "clientId": "9__RUN__",
+ "entityNo": "__OE__",
+ "currency": "__CURRENCY__",
+ "lines": [
+  {"componentType": "CLIENT_PRINCIPAL", "payerRole": "OPERATING_ENTITY", "payerId": "__OE__", "payeeRole": "CLIENT",
+   "payeeId": "9__RUN__", "amount": "__AMOUNT__", "direction": "ADJUSTMENT"}
+ ]
+}

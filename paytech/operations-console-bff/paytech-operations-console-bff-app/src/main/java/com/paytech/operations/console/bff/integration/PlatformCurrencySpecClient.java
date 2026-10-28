@@ -24,7 +24,7 @@ public interface PlatformCurrencySpecClient {
     CurrencySpecListResponseBody listCurrencySpecs();
 
     /**
-     * 财务页币种下拉：按状态在 BFF 筛选，不含版本与更新时间
+     * 财务页币种下拉：由 Platform 按状态筛选，不含版本与更新时间
      *
      * @param status 可选状态；省略时返回全部
      * @return 按币种代码升序的币种

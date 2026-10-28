@@ -64,7 +64,7 @@ class OperationsHttpBodyNamingAutoTest {
         com.paytech.operations.console.bff.ext.rest.WebhookManagementController.class,
         com.paytech.operations.console.bff.ext.rest.FinanceSetupController.class,
         com.paytech.operations.console.bff.ext.rest.CurrencySpecManagementController.class,
-        com.paytech.platform.support.api.referencedata.CurrencySpecQueryApi.class,
+        com.paytech.platform.support.api.referencedata.ReferenceCurrencyQueryApi.class,
         com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi.class,
         com.paytech.operations.console.bff.ext.rest.FileStorageAdminController.class,
         com.paytech.platform.support.api.filestorage.FileStorageManagementApi.class,

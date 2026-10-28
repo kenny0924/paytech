@@ -31,7 +31,7 @@ spring:
         register-enabled: false
   http:
     serviceclient:
-      # BIN 库导入：Platform 内部文件接口与国家区域映射，经 simple discovery 指向 Mock 服务（Mock 加 /platform-support 前缀）。
+      # BIN 库导入：Platform 内部文件接口，经 simple discovery 指向 Mock 服务（Mock 加 /platform-support 前缀）。
       platform-support-service:
         base-url: lb://platform-support-service/platform-support
         connect-timeout: 2s
@@ -134,6 +134,18 @@ card:
   instrument-purge:
     grace: P1D
     batch-size: 100
+
+# 参考数据客户端：Mock 服务根地址（参考数据端点没有 Context Path）；关闭自动刷新，BIN 库用例在 BeforeEach 配置国家后调用 refreshNow()。
+platform-support:
+  reference-data:
+    client:
+      base-url: "${test.mock-http.base-url}"
+      kinds: [COUNTRY]
+      refresh-interval: PT1H
+      initial-retry-interval: PT10S
+      scheduling-enabled: false
+      connect-timeout: 2s
+      read-timeout: 5s
 
 vault:
   client:

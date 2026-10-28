@@ -11,12 +11,13 @@ import com.paytech.foundation.messaging.testkit.PartitionQueueBaselineConfigurat
 import com.paytech.foundation.testsupport.api.EnableMockHttpServer;
 
 /**
- * 只增加测试 Mapper、独立的 Vault HTTP Mock 与分区队列基线，生产装配由正式应用完成。
+ * 只增加测试 Mapper、独立的 Vault / Platform HTTP Mock（含参考数据测试支持模块的 Platform 参考数据端点）与分区队列基线，生产装配由正式应用完成。
  * <li>{@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空 card.payment.p0..p3 与 DLQ（其他模块测试的残留消息）。</li>
  */
 @TestConfiguration(proxyBeanMethods = false)
 @MapperScan("com.paytech.card.test.dal")
-@EnableMockHttpServer(basePackages = {"com.paytech.card.test.mocker", "com.paytech.card.test.mock"},
+@EnableMockHttpServer(basePackages = {"com.paytech.card.test.mocker", "com.paytech.card.test.mock",
+    "com.paytech.platform.support.referencedata.client.test"},
     baseUrlProperty = "test.mock-http.base-url")
 @Import(PartitionQueueBaselineConfiguration.class)
 public class CardTestConfiguration {

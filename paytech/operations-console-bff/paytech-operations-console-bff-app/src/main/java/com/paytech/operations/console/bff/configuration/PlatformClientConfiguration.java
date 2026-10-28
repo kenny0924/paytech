@@ -49,7 +49,6 @@ import com.paytech.platform.support.api.operations.OperationsAccountLabelQueryAp
 import com.paytech.platform.support.api.operations.OperationsManagementApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi;
 import com.paytech.platform.support.api.referencedata.CountrySubdivisionQueryApi;
-import com.paytech.platform.support.api.referencedata.CurrencySpecQueryApi;
 import com.paytech.platform.support.api.referencedata.IndustryQueryApi;
 import com.paytech.platform.support.api.referencedata.MccQueryApi;
 import com.paytech.platform.support.api.referencedata.ReferenceCountryQueryApi;
@@ -117,13 +116,7 @@ public class PlatformClientConfiguration {
         return operationsConfigurationPlatformProxyFactory.createClient(com.paytech.platform.support.api.permissionmanagement.PermissionManagementApi.class);
     }
 
-    /** 币种列表复用 Platform 私网发现与 Problem 解码；该查询不携带操作人。 */
-    @Bean
-    CurrencySpecQueryApi currencySpecQueryApi(HttpServiceProxyFactory operationsPlatformProxyFactory) {
-        return operationsPlatformProxyFactory.createClient(CurrencySpecQueryApi.class);
-    }
-
-    /** 币种页列表的完整字段（数字代码、名称、符号、logo）；宽松读取，不携带操作人。 */
+    /** 币种页列表（完整字段）与财务页币种下拉（按状态筛选）；宽松读取，不携带操作人。 */
     @Bean
     ReferenceCurrencyQueryApi referenceCurrencyQueryApi(HttpServiceProxyFactory operationsPlatformProxyFactory) {
         return operationsPlatformProxyFactory.createClient(ReferenceCurrencyQueryApi.class);

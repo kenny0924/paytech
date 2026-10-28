@@ -218,7 +218,7 @@ MCC 不放行业层级（7.6）。
 
 | 读法 | 何时用 | 例子 |
 |---|---|---|
-| **A. 直接调 API** | 低频、不在事务内、Platform 暂不可用时可以失败重试 | Card 导入 BIN 读国家；onboarding 提交 / 审核时校验国家、行业、MCC、行政区；ops-bff、client-bff 下拉 |
+| **A. 直接调 API** | 低频、不在事务内、Platform 暂不可用时可以失败重试 | ops-bff、client-bff 转发给前端（2026-10-27 起 card 与 client-master 改用读法 B） 下拉 |
 | **B. 进程内快照** | 在高频路径或**事务内**读取，或 Platform 不可用时业务也不能停 | ledger / billing 过账与舍入读币种 |
 | **C. 写入时冻结编码** | 业务事实需要固定当时的编码 | 订单冻结 `mcc_code`、Payment Intent 冻结 MCC、客户资格冻结 `industry_code` + `mcc_code` |
 
@@ -226,9 +226,11 @@ MCC 不放行业层级（7.6）。
 
 - 校验在**事务外**完成（事务公理）；事务内只能读快照或已冻结的编码。
 - 停用的编码不拦截既有数据的读取与后续处理，只拦新用途（与币种一致）。
-- 未知编码：A 读法拒绝本次请求并给出明确错误；B 读法拒绝并请求刷新（与币种一致）。
+- 未知编码：A 读法拒绝本次请求并给出明确错误；B 读法拒绝（2026-10-27 起不再请求提前刷新，等待下一次定时刷新）。
 
 ### 8.1 什么时候抽通用快照组件
+
+> **已实施（2026-10-27）：** 由 [参考数据客户端组件](../../requirements/20261027/platform-support-参考数据客户端组件/requirement.md)提前实施，组件放在 Platform（`paytech-platform-support-reference-data-client`），ledger、billing、card、client-master 已迁移。下文为当时的触发条件，保留作背景。
 
 现在 ledger 与 billing 各有一份几乎相同的快照实现（快照类、`@Scheduled` 刷新、健康检查，合计约 350 行）。满足**任一条件**时，在触发它的那个需求里抽成 Foundation 小组件（如 `ReferenceSnapshot<T>`：启动加载、首次成功前不就绪、定时全量刷新、失败保留旧快照、原子替换、健康指标），并同时迁移 ledger、billing：
 

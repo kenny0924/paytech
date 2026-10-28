@@ -4,6 +4,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.junit.jupiter.api.AfterEach;
@@ -21,9 +22,7 @@ import org.springframework.test.web.servlet.client.EntityExchangeResult;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 import com.paytech.billing.BillingApplication;
-import com.paytech.billing.app.ext.job.CurrencySnapshotRefreshScheduler;
-import com.paytech.billing.core.common.CurrencySpecSnapshot;
-import com.paytech.billing.test.builder.CurrencySpecResponseBuilder;
+import com.paytech.billing.test.builder.TestCurrencies;
 import com.paytech.billing.test.checker.BillingResponseChecker;
 import com.paytech.billing.test.clear.BillingDataCleaner;
 import com.paytech.billing.test.clear.BillingRedisCleaner;
@@ -31,7 +30,6 @@ import com.paytech.billing.test.configuration.BillingTestMockConfiguration;
 import com.paytech.billing.test.mocker.external.ChannelCostMocker;
 import com.paytech.billing.test.mocker.external.ClearingAccountMocker;
 import com.paytech.billing.test.mocker.external.CommercialPriceMocker;
-import com.paytech.billing.test.mocker.external.CurrencySpecMocker;
 import com.paytech.billing.test.mocker.external.FinanceEntityMocker;
 import com.paytech.billing.test.probe.BillingFactEventProbe;
 import com.paytech.billing.test.probe.AcquiringEventPublisher;
@@ -41,15 +39,22 @@ import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
+import com.paytech.platform.support.referencedata.client.ReferenceData;
+import com.paytech.platform.support.referencedata.client.ReferenceDataKind;
+import com.paytech.platform.support.referencedata.client.ReferenceDataRefresher;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataBuilders;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataBuilders.CurrencyBuilder;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataMocker;
 
 import tools.jackson.databind.ObjectMapper;
 
 /**
  * Billing 服务级入口测试基类
  * <li>复用正式启动类 BillingApplication 与生产组件扫描，只附加 mock Profile 与测试组件；本地 MySQL（mor_billing）/Redis/RabbitMQ 需预先就绪。</li>
- * <li>外部依赖为 platform-support 币种规则全量查询，以及自动 PAYMENT 事实登记读取的 commercial、channel-connector、reconciliation、
- * ledger 四个上游，均由同一独立 Loopback Mock HTTP 服务按用例配置的 DTO 应答；自动测试关闭快照定时刷新，每例由全局 BeforeEach 配置默认
- * USD（2 位、HALF_UP、ACTIVE）并经真实刷新入口与出站客户端刷新一次快照。四个上游默认不配置任何应答。</li>
+ * <li>外部依赖为 platform-support 参考数据（币种）全量查询，以及自动 PAYMENT 事实登记读取的 commercial、channel-connector、reconciliation、
+ * ledger 四个上游，均由同一独立 Loopback Mock HTTP 服务按用例配置的 DTO 应答；自动测试关闭参考数据客户端的调度，每例由全局 BeforeEach
+ * 配置默认 USD（2 位、HALF_UP、ACTIVE）并经正式刷新入口 {@link ReferenceDataRefresher#refreshNow()} 与客户端出站链路加载一次快照，
+ * 用例需要其他币种时调用 {@link #refreshCurrencies}。四个上游默认不配置任何应答。</li>
  * <li>OrderPaymentSucceeded 由 {@link AcquiringEventPublisher} 扮演 acquiring 发布到真实 acquiring.events，经正式消费链路处理；
  * {@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空 billing.acquiring.p0..p3 与 DLQ（其他模块测试的残留消息），每例前后再清空。</li>
  * <li>BillingFactRecorded 经补偿任务异步发布到真实本地 Broker，每例为 billing.events 绑定一个临时观察队列（发布端 unroutable-policy 为
@@ -81,7 +86,7 @@ public abstract class MockTestBase extends TestBase {
     protected BillingFactEventProbe events;
 
     @Autowired
-    protected CurrencySpecMocker currencySpecs;
+    protected ReferenceDataMocker referenceDataMocker;
 
     @Autowired
     protected AcquiringEventPublisher acquiringEvents;
@@ -99,10 +104,10 @@ public abstract class MockTestBase extends TestBase {
     protected FinanceEntityMocker financeEntities;
 
     @Autowired
-    protected CurrencySpecSnapshot currencySnapshot;
+    protected ReferenceData referenceData;
 
     @Autowired
-    protected CurrencySnapshotRefreshScheduler currencySnapshotRefresher;
+    protected ReferenceDataRefresher referenceDataRefresher;
 
     @Autowired
     protected MockHttpServer mockHttpServer;
@@ -122,18 +127,18 @@ public abstract class MockTestBase extends TestBase {
 
     /**
      * 全局初始化：检查空基线、绑定本例观察队列，并以默认 USD 刷新一次币种快照
-     * <li>整体替换会覆盖上一例改配的币种、待刷新标记与失败计数，不承接上一例状态，也不删除任何数据。</li>
+     * <li>整体替换会覆盖上一例改配的币种，不承接上一例状态，也不删除任何数据。</li>
      */
     @BeforeEach
     protected final void setUpGlobalMocks() {
         Assertions.assertTrue(asynchronousWorkStopped, "前例异步处理未结束，禁止复用环境");
         acquiringEvents.purge();
         dataCleaner.assertEmpty();
-        assertAll("外部 Mock 应处于空基线", currencySpecs::assertEmpty, commercialPrices::assertEmpty,
-            channelCosts::assertEmpty, clearingAccounts::assertEmpty, financeEntities::assertEmpty);
+        assertAll("外部 Mock 应处于空基线", () -> Assertions.assertEquals(0, referenceDataMocker.totalCalls()),
+            commercialPrices::assertEmpty, channelCosts::assertEmpty, clearingAccounts::assertEmpty,
+            financeEntities::assertEmpty);
         events.bind();
-        currencySpecs.mockCurrencySpecs(CurrencySpecResponseBuilder.template().build());
-        Assertions.assertTrue(currencySnapshotRefresher.refresh(), "默认币种快照刷新失败");
+        refreshCurrencies(ReferenceDataBuilders.currency(TestCurrencies.USD));
     }
 
     /** 等待 OrderPaymentSucceeded 消费与补偿发布结束后删除观察队列，检查外部 Mock 意外调用；父类随后执行全部 Clear。 */
@@ -154,7 +159,7 @@ public abstract class MockTestBase extends TestBase {
             acquiringEvents.purge();
         }
         mockHttpServer.awaitIdle();
-        assertAll("检查外部 Mock 调用", currencySpecs::assertNoUnexpectedCalls, commercialPrices::assertNoUnexpectedCalls,
+        assertAll("检查外部 Mock 调用", referenceDataMocker::assertNoUnexpectedCalls, commercialPrices::assertNoUnexpectedCalls,
             channelCosts::assertNoUnexpectedCalls, clearingAccounts::assertNoUnexpectedCalls,
             financeEntities::assertNoUnexpectedCalls, mockHttpServer::assertNoUnexpectedRequests);
     }
@@ -163,6 +168,13 @@ public abstract class MockTestBase extends TestBase {
     @Override
     protected void checkClearAllowed() {
         Assertions.assertTrue(asynchronousWorkStopped, "异步处理未结束，禁止清理环境");
+    }
+
+    /** 配置 Platform 返回的全部币种，并经正式刷新入口立即整体替换本进程快照；刷新必须成功。 */
+    protected void refreshCurrencies(CurrencyBuilder... currencies) {
+        referenceDataMocker.reset(ReferenceDataKind.CURRENCY).currency(currencies);
+        List<ReferenceDataRefresher.Result> results = referenceDataRefresher.refreshNow();
+        Assertions.assertTrue(results.stream().allMatch(ReferenceDataRefresher.Result::succeeded), "币种快照刷新失败: " + results);
     }
 
     /** 发送内部 POST 请求。 */

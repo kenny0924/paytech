@@ -1,0 +1,7 @@
+billing USD 三位小数（超精度） HTTP 400 {"code": "FACT_LINE_INVALID", "detail": "明细行不合法：金额组件、收付方、目标余额桶或金额精度不符合规则", "errors": null, "factId": null, "status": null, "grossAmount": null, "currency": null}
+billing 未知币种 JPY HTTP 400 {"code": "BUSINESS_CHECK_FAILED", "detail": "币种不存在或尚未同步: JPY, 等待 Platform 币种快照下一次刷新后重试", "errors": null, "factId": null, "status": null, "grossAmount": null, "currency": null}
+billing 合法 USD 两位小数 HTTP 201 {"code": null, "detail": null, "errors": null, "factId": "240923121639534592", "status": "DRAFT", "grossAmount": "1.25", "currency": "USD"}
+entityNo ZZ927
+billing 作废测试草稿 HTTP 200 240923121639534592 VOIDED
+ledger 建账簿 JPY（快照无此币种）HTTP 400 {"type":"about:blank","title":"Bad Request","detail":"币种未启用","code":"CURRENCY_NOT_ACTIVE","requestId":"1979adb6-6fae-4baa-8e6d-f859dc871d93","timestamp":"2026-10-27T19:42:48.374183Z"}
+ledger 追平（无账簿的流）HTTP 400 {"type":"about:blank","title":"Bad Request","detail":"请求参数不正确","code":"INVALID_REQUEST","requestId":"d87e2f52-cb87-4d1a-bb9f-6c757eea20fd","timestamp":"2026-10-27T19:42:48.376563Z"}

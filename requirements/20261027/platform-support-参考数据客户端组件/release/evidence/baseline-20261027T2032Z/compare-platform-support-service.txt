@@ -1,0 +1,13 @@
+A=3102 B=3096 onlyA=6 onlyB=0 changed=6
+  - BOOT-INF/classes/com/paytech/platform/support/ext/rest/authentication/OperationsAccountLabelController.class
+  - paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/service/processor/ListOperationsAccountLabelsProcessor.class
+  - paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/service/processor/request/ListOperationsAccountLabelsRequest.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/OperationsAccountLabelQueryApi.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/response/OperationsAccountLabelListResponseBody.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/response/OperationsAccountLabelResponseBody.class
+  ~ paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/core/dal/mapper/OperationsPersonnelMapper.class
+  ~ paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/domainservice/repository/OperationsPersonnelRepository.class
+  ~ paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/domainservice/repository/impl/OperationsPersonnelRepositoryImpl.class
+  ~ paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/domainservice/service/OperationsPersonnelService.class
+  ~ paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/domainservice/service/impl/OperationsPersonnelServiceImpl.class
+  ~ paytech-platform-support-access-control.jar!mapper/access-control/OperationsPersonnelMapper.xml

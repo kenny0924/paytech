@@ -20,18 +20,21 @@ account 明细账，总账每账簿每 Owner 科目一个以账簿主体为 Owne
 | 模块 | 职责 |
 |---|---|
 | paytech-ledger-api | 内部 HTTP 契约：Finance Entity、财务日历与期间、账簿与科目账户、规则集、人工调整、试算与关账、过账流追平 `PostingStreamCommandApi`；`LedgerReadApi`（`/ledger/v1`：账簿、批量科目）；`LedgerOwnerType`、`RuleOwnerRole`、`LedgerErrorCode`、`AmountSource`、`AutoInstructionType` |
-| paytech-ledger-core | 过账内核、`AccountPosted` 消费 Handler 与控制科目过账、追平、规则、人工调整、试算、关账、account / billing / platform-support 出站客户端、币种规则快照 `CurrencySpecSnapshot` 与 `CurrencyRuleService`；包根 `com.paytech.ledger` |
-| paytech-ledger-app | 唯一 Spring Boot 启动模块：Controller、DataSource / MyBatis / TypeHandler、Snowflake、Redis 锁、paytech-messaging 消费端、account / billing / platform-support HTTP 客户端、币种快照刷新调度与就绪探针 |
-| paytech-ledger-test | auto 测试、Mocker / Checker / 清理器、扮演 account 的 `AccountPosted` 发布 Probe、account / billing / platform-support DTO Mock、`init/ddl.sql` |
+| paytech-ledger-core | 过账内核、`AccountPosted` 消费 Handler 与控制科目过账、追平、规则、人工调整、试算、关账、account / billing 出站客户端、`CurrencyRuleService`（读参考数据客户端的币种快照）；包根 `com.paytech.ledger` |
+| paytech-ledger-app | 唯一 Spring Boot 启动模块：Controller、DataSource / MyBatis / TypeHandler、Snowflake、Redis 锁、paytech-messaging 消费端、account / billing HTTP 客户端 |
+| paytech-ledger-test | auto 测试、Mocker / Checker / 清理器、扮演 account 的 `AccountPosted` 发布 Probe、account / billing DTO Mock、参考数据测试支持模块（`MockReferenceDataApi` / `ReferenceDataMocker`）、`init/ddl.sql` |
 
 - ledger-core 依赖 `paytech-account-api`（`AccountPosted` 载荷与过账流身份、过账进度 / 批次合同、`OwnerAccountType` 目录、余额桶与标准科目代码）、
   `paytech-billing-api`（计费事实类型、外部引用类型与事实详情 / 进度查询合同 `BillingFactQueryApi`）、`paytech-ledger-api`
-  （金额来源 `AmountSource`、自动指令类型 `AutoInstructionType`）与 `paytech-platform-support-api`（币种规则查询合同 `CurrencySpecQueryApi` 与状态、舍入枚举）；不依赖其他服务的 core。
+  （金额来源 `AmountSource`、自动指令类型 `AutoInstructionType`）、`paytech-platform-support-api`（参考数据状态、舍入枚举）与
+  `paytech-platform-support-reference-data-client`（Platform 参考数据进程内快照）；不依赖其他服务的 core。
 - 币种规则（2026-10-20，[币种主数据维护与读取缓存](../../requirements/20261020/platform-support-币种主数据维护与读取缓存/technique.md) §2.3）：本库不再持有
   `t_currency_spec` 副本，业务只经 `CurrencyRuleService` 读进程内全量快照（`requireUsable`：ACTIVE / INACTIVE，用于过账、调整、试算、关账与查询；
-  `requireActive`：只用于新开账簿），从不在事务内回源；查不到币种时拒绝并置“待刷新”。`CurrencySnapshotRefreshScheduler` 在事务外调用 Platform
-  `GET /platform/v1/currency-specs`：启动后立即加载，未加载或有刷新请求时每 5 秒回源，就绪后每 60 秒全量刷新，失败保留上一份快照；就绪组
-  `currencySnapshot` 在首次加载成功前为 DOWN。被拒的过账批次由死信 + 追平恢复。
+  `requireActive`：只用于新开账簿），从不在事务内回源。2026-10-27 起快照由
+  [参考数据客户端](../../requirements/20261027/platform-support-参考数据客户端组件/technique.md)提供（`kinds: [CURRENCY]`）：启动后立即加载，
+  首次成功前每 10 秒重试，之后每 1 小时全量刷新，失败保留上一份快照；就绪组 `referenceData` 在首次加载成功前为 OUT_OF_SERVICE。
+  查不到币种抛 `ReferenceDataNotFoundException`（系统异常）：`AccountPosted` 按失败重投、不进死信，追平命令返回 500，不提前回源；
+  DRAFT 等状态不允许属业务拒绝，被拒的过账批次由死信 + 追平恢复。
 - 控制科目过账：`AccountPostedPostingHandler`（`HANDLER_MANAGED`、按过账流 `strictOrder`）消费 `account.events`（分区队列 `ledger.account.p0..p3`）。
   事务外：过账流尚无消费进度且序号不是 1 时等待重投；桶移动批次与 SKIPPED 批次只推进进度；其余经 billing `GET /billing/v1/facts/{factId}`
   读事实（版本不一致等待重投）。事务内生成 `origin_type = ACCOUNT_POSTING` 的指令并过账：Owner 行逐条来自 account 流水（`account_entry_id`），

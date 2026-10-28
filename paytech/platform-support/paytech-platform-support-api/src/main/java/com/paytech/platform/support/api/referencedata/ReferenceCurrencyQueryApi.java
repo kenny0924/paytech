@@ -10,7 +10,7 @@ import com.paytech.platform.support.api.referencedata.response.ReferenceCurrency
 /**
  * 参考数据目录：币种查询契约；Platform 为 t_ref_currency 的 Owner，内部服务经私网读取，不经过 Gateway。
  * <li>只读；返回编码、标准属性、名称、状态与版本，有 logo 的同时返回文件地址与公开地址。</li>
- * <li>旧接口 {@link CurrencySpecQueryApi} 保持不变，继续供只需小数位与舍入方式的调用方使用。</li>
+ * <li>后端服务经 {@code paytech-platform-support-reference-data-client} 全量加载到进程内快照；旧接口 /platform/v1/currency-specs 已下线。</li>
  */
 @HttpExchange(url = "/platform/v1/reference-data", accept = MediaType.APPLICATION_JSON_VALUE)
 public interface ReferenceCurrencyQueryApi {

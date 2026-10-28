@@ -32,8 +32,8 @@ spring:
     password: "${LEDGER_RABBITMQ_PASSWORD:}"
     virtual-host: "${LEDGER_RABBITMQ_VHOST:/mor-local}"
     connection-timeout: 2s
-  # 内部 HTTP 客户端：account 过账进度与批次（关账步骤 3、过账流追平），billing 计费事实与发布进度（AccountPosted 消费读事实、关账步骤 3），
-  # platform-support 币种规则（快照刷新，基址含 Platform Context Path /platform-support）。
+  # 内部 HTTP 客户端：account 过账进度与批次（关账步骤 3、过账流追平），billing 计费事实与发布进度（AccountPosted 消费读事实、关账步骤 3）。
+  # platform-support 币种规则由参考数据客户端自建出站客户端读取，见 platform-support.reference-data.client。
   # JDK HttpClient 不自动重试；Finance 后继服务不接服务发现，基址直接配置。
   http:
     clients:
@@ -50,14 +50,19 @@ spring:
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow
-      platform-support-service:
-        base-url: "${LEDGER_PLATFORM_SERVICE_URL:http://127.0.0.1:18106/platform-support}"
-        connect-timeout: 2s
-        read-timeout: 5s
-        redirects: dont-follow
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-platform-support-reference-data-client：Platform 币种规则进程内全量快照（不持本地副本，不用 Caffeine）。
+# 启动后立即加载（不阻塞启动），首次成功前按 initial-retry-interval（默认 PT10S）重试，之后按 refresh-interval（默认 PT1H）全量刷新；
+# 刷新失败保留上一份快照。读方法只读内存，可在过账事务内使用；查不到币种为可重试的系统异常，不提前回源。
+platform-support:
+  reference-data:
+    client:
+      # 直连 Platform 基址（含 Context Path /platform-support），不走服务发现；X-Caller-Service 取 spring.application.name。
+      base-url: "${LEDGER_PLATFORM_SERVICE_URL:http://127.0.0.1:18106/platform-support}"
+      kinds: [CURRENCY]
 
 # paytech-redis-starter：人工调整复核、期间创建、试算与关账的资源锁使用 AbstractLockProcessor。
 redis:
@@ -106,8 +111,8 @@ management:
         liveness:
           include: livenessState
         readiness:
-          # currencySnapshot：首次成功加载 Platform 币种规则快照前为 DOWN。
-          include: readinessState,currencySnapshot
+          # referenceData：首次成功加载 Platform 币种快照前为 OUT_OF_SERVICE。
+          include: readinessState,referenceData
     info:
       access: read-only
     prometheus:
@@ -118,12 +123,3 @@ ledger:
     # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
     region-id: "${LEDGER_SNOWFLAKE_REGION_ID}"
     worker-id: "${LEDGER_SNOWFLAKE_WORKER_ID}"
-  # Platform 币种规则进程内快照（不持本地副本，不用 Caffeine）：启动后立即加载，未加载或有刷新请求时每个检查周期回源，
-  # 就绪后按刷新间隔全量刷新；刷新失败保留上一份快照。
-  currency-snapshot:
-    # 是否开启进程内调度；关闭时只能经刷新入口手动触发（自动测试）。
-    scheduling-enabled: true
-    # 检查周期（固定延迟）。
-    check-interval: PT5S
-    # 就绪后的全量刷新间隔。
-    refresh-interval: PT60S

@@ -23,13 +23,11 @@ import com.paytech.foundation.testsupport.api.Clear;
 import com.paytech.foundation.testsupport.api.MockHttpFault;
 import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
-import com.paytech.platform.support.api.referencedata.response.CountryRegionListResponseBody;
-import com.paytech.platform.support.api.referencedata.response.CountryRegionResponseBody;
 import com.paytech.platform.support.api.files.FileAddress;
 
 /**
- * Platform 内部文件接口、对象存储短时下载与国家区域映射的合成 DTO（card 只读文件、只读映射）
- * <li>文件元数据与字节按文件 ID 配置；未配置的文件按 Platform 合同返回 404 FILE_NOT_FOUND。国家区域映射未配置时任何查询都是意外调用。</li>
+ * Platform 内部文件接口与对象存储短时下载的合成 DTO（card 只读文件）；国家参考数据由参考数据测试支持模块的 Mocker 提供
+ * <li>文件元数据与字节按文件 ID 配置；未配置的文件按 Platform 合同返回 404 FILE_NOT_FOUND。</li>
  * <li>记录每次元数据查询、下载授权与下载，以及调用方服务名，不记录文件内容。</li>
  */
 @TestComponent
@@ -44,8 +42,6 @@ public class PlatformMocker implements Clear {
     private final List<String> fileQueries = new ArrayList<>();
     private final Set<String> callers = new HashSet<>();
     private final List<String> unexpected = new ArrayList<>();
-    private CountryRegionListResponseBody countryRegions;
-    private int countryRegionQueries;
 
     /**
      * 配置一个由 operations-console-bff 以 BIN 库导入原因上传、扫描通过的 CSV
@@ -71,18 +67,6 @@ public class PlatformMocker implements Clear {
     /** 第 downloadNumber 次下载（从 1 起）只返回前 byteLimit 个字节，模拟读取中断。 */
     public synchronized void interruptDownload(String fileId, int downloadNumber, int byteLimit) {
         interruptions.put(fileId, new int[] {downloadNumber, byteLimit});
-    }
-
-    /** 配置国家区域映射（按国家代码升序返回）。 */
-    public synchronized void mockCountryRegions(Map<String, String> regions) {
-        CountryRegionListResponseBody body = new CountryRegionListResponseBody();
-        body.setItems(regions.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(entry -> {
-            CountryRegionResponseBody item = new CountryRegionResponseBody();
-            item.setCountryCode(entry.getKey());
-            item.setRegionCode(entry.getValue());
-            return item;
-        }).toList());
-        countryRegions = body;
     }
 
     /** 由 Mock HTTP 调用：文件元数据；未配置按合同 404。 */
@@ -124,17 +108,6 @@ public class PlatformMocker implements Clear {
         return interruption != null && interruption[0] == count ? Arrays.copyOf(content, interruption[1]) : content;
     }
 
-    /** 由 Mock HTTP 调用：国家区域映射。 */
-    public synchronized CountryRegionListResponseBody countryRegions(String caller) {
-        callers.add(String.valueOf(caller));
-        countryRegionQueries++;
-        if (countryRegions == null) {
-            unexpected.add("country-regions");
-            throw new AssertionError("国家区域映射未配置");
-        }
-        return countryRegions;
-    }
-
     /** 由 Mock HTTP 调用：card 不应开始或完成上传。 */
     public synchronized AssertionError unexpectedUpload() {
         unexpected.add("upload");
@@ -156,11 +129,6 @@ public class PlatformMocker implements Clear {
         return downloadCounts.getOrDefault(fileId, 0);
     }
 
-    /** 国家区域映射的查询次数。 */
-    public synchronized int countryRegionQueryCount() {
-        return countryRegionQueries;
-    }
-
     /** 所有 Platform 请求都以 card-service 身份发出。 */
     public synchronized void assertCallerIsCard() {
         assertTrue(callers.isEmpty() || callers.equals(Set.of(CardApiConstants.SERVICE_ID)), "Platform 调用方不是 card-service: " + callers);
@@ -169,8 +137,7 @@ public class PlatformMocker implements Clear {
     /** 每例必须从完全空的 Mock 状态开始。 */
     public synchronized void assertEmpty() {
         assertTrue(files.isEmpty() && contents.isEmpty() && downloadCounts.isEmpty() && interruptions.isEmpty()
-            && fileQueries.isEmpty() && callers.isEmpty() && unexpected.isEmpty() && countryRegions == null
-            && countryRegionQueries == 0, "Platform Mock 应处于空基线");
+            && fileQueries.isEmpty() && callers.isEmpty() && unexpected.isEmpty(), "Platform Mock 应处于空基线");
     }
 
     /** 即使业务捕获 HTTP 故障，也不能掩盖意外调用。 */
@@ -188,8 +155,6 @@ public class PlatformMocker implements Clear {
         fileQueries.clear();
         callers.clear();
         unexpected.clear();
-        countryRegions = null;
-        countryRegionQueries = 0;
     }
 
     /** 文件字节的 SHA-256 小写十六进制。 */

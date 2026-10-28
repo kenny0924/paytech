@@ -1,0 +1,8 @@
+== ledger
+UP {"details": {"CURRENCY": {"count": 4, "loadedAt": "2026-10-27T19:38:16.614063Z", "consecutiveFailures": 0}}, "status": "UP"}
+== billing
+UP {"details": {"CURRENCY": {"count": 4, "loadedAt": "2026-10-27T19:38:24.992799Z", "consecutiveFailures": 0}}, "status": "UP"}
+== card
+== client-master
+UP {"details": {"CURRENCY": {"count": 4, "loadedAt": "2026-10-27T19:39:04.189060Z", "consecutiveFailures": 0}, "COUNTRY": {"count": 249, "loadedAt": "2026-10-27T19:39:04.223493Z", "consecutiveFailures": 0}, "SUBDIVISION": {"count": 47, "loadedAt": "2026-10-27T19:39:04.257507Z", "consecutiveFailures": 0}, "INDUSTRY": {"count": 42, "loadedAt": "2026-10-27T19:39:04.270539Z", "consecutiveFailures": 0}, "MCC": {"count": 298, "loadedAt": "2026-10-27T19:39:04.304615Z", "consecutiveFailures": 0}}, "status": "UP"}
+UP {"details": {"COUNTRY": {"count": 249, "loadedAt": "2026-10-27T19:39:41.556428Z", "consecutiveFailures": 0}}, "status": "UP"}

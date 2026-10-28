@@ -1,0 +1,40 @@
+{
+ "env": "mor-test",
+ "summary": {
+  "PASS": 3,
+  "FAIL": 0,
+  "INFO": 1
+ },
+ "results": [
+  {
+   "ac": "AC-07",
+   "check": "AE001 账簿 200：1 个",
+   "verdict": "PASS",
+   "evidence": [
+    {
+     "ledgerBookId": "238137396670066688",
+     "currency": "USD",
+     "bookStatus": "OPEN"
+    }
+   ]
+  },
+  {
+   "ac": "AC-07",
+   "check": "科目余额读取（账簿 × OPEN 期间，候选期间 2）",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-07",
+   "check": "账簿 238137396670066688（USD）期间 238137395982200832 余额样例",
+   "verdict": "INFO",
+   "evidence": "{'currency': 'USD', 'ledgerBookId': '238137396670066688', 'lines': [{'accountClass': 'ASSET', 'accountCode': 'CHANNEL_RECEIVABLES', 'accountName': '渠道应收款', 'accountNo': '1101', 'chartAccountId': '3102', 'closingBalance': '100.00', 'level': 1, 'normalSide': 'DEBIT', 'openingBalance': '0.00', 'parentC"
+  },
+  {
+   "ac": "AC-07",
+   "check": "执行试算 201（只写试算记录，不改分录 / 余额）",
+   "verdict": "PASS",
+   "evidence": "{\"asOfSequence\":\"12\",\"contentHash\":\"e25921f83467cbc4abf2ace0172c58d9fce3efd283e5495ecaabd11f1c014eb2\",\"createTime\":\"2026-10-28T04:05:02.330855Z\",\"exceptionCount\":0,\"ledgerBookId\":\"238137396670066688\",\"lineCount\":7,\"periodId\":\"238137395982200832\",\"runNo\":\"6\",\"status\":\"SUCCEEDED\",\"totalCredit\":\"439.30"
+  }
+ ]
+}

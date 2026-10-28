@@ -1,0 +1,8 @@
+# 参考数据客户端组件：mor-test 候选覆盖（rel-dev 2026-10-28；阶段 7 由主会话执行，需用户授权）。
+# 用法：./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag refclient-20261028a 仅供辨认）。构建源 Code-MoR-refclient-rel2（c4ff0e20 + 本需求补丁 refclient-on-5e1f16ab.patch 44bc3c63，worktree 指纹 a2ea2734e76893e9）。
+# env：与现网容器渲染结果逐键逐值相同（见 ../verification 报告 / baseline.md 第 3 节）；敏感值只写主 compose 同一 ${...} 引用。
+services:
+  platform-support-service:
+    # 删除旧接口 /currency-specs、/country-regions。b 版基于 c4ff0e20（含 card-BIN），不回退其线上工作。。最后发布。
+    image: sha256:1e54f3498feeaf7831c4fe41247cabda8ce1982d9e872bdc716d49c84f37256d  # mor-test/platform-support-service:refclient-20261028b（c4ff0e20 + 本需求补丁，JAR e8eedf4d）

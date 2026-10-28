@@ -13,7 +13,6 @@ import com.paytech.operations.console.bff.service.model.FinanceSetupModels.Curre
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.platform.support.api.enums.CurrencySpecStatus;
 import com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi;
-import com.paytech.platform.support.api.referencedata.CurrencySpecQueryApi;
 import com.paytech.platform.support.api.referencedata.ReferenceCurrencyQueryApi;
 
 import lombok.AllArgsConstructor;
@@ -22,14 +21,13 @@ import lombok.AllArgsConstructor;
  * Platform 币种规则的 HTTP 转发：每个入口只调用一次 Platform，不重试
  * <li>写操作把会话 Account ID 与 Session ID 填入 X-Gateway-Actor-Subject / X-Gateway-Session-Id；请求幂等由 Gateway 负责。</li>
  * <li>Platform 422 的字段路径只投影到本次页面请求体内存在的路径。</li>
- * <li>币种页列表读参考数据币种接口（完整字段）；财务页下拉仍读旧币种规则接口。</li>
+ * <li>币种页列表与财务页下拉都读参考数据币种接口；前者取全部状态与完整字段，后者由 Platform 按状态筛选。</li>
  *
  * @author Claude
  */
 @Component
 @AllArgsConstructor
 public class PlatformCurrencySpecClientImpl implements PlatformCurrencySpecClient {
-    private final CurrencySpecQueryApi queryApi;
     private final ReferenceCurrencyQueryApi referenceApi;
     private final CurrencySpecManagementApi managementApi;
 
@@ -39,10 +37,10 @@ public class PlatformCurrencySpecClientImpl implements PlatformCurrencySpecClien
         return CurrencySpecContractConverter.toBff(referenceApi.listCurrencies(null, null));
     }
 
-    /** Platform 旧查询接口不带筛选，按状态在 BFF 筛选。 */
+    /** 状态筛选交给 Platform（为空返回全部状态），按币种代码升序；回执逐条核对后投影。 */
     @Override
     public CurrencyListResponseBody listCurrencies(String status) {
-        return CurrencySpecContractConverter.toFinance(queryApi.listCurrencySpecs(), status);
+        return CurrencySpecContractConverter.toFinance(referenceApi.listCurrencies(status, null), status);
     }
 
     /** 新建草稿；回执须为本次币种且状态为 DRAFT。 */

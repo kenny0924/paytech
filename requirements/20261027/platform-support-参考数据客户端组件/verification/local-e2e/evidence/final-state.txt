@@ -1,0 +1,21 @@
+platform pid=39556 0f9da07541edc59c
+card pid=39828 506976c57ecdce8a
+ops-bff pid=40038 7f9670c233c0791f
+ledger pid=40150 5d2e8695d5df8a2d
+billing pid=40263 22e4b02da03b5a49
+client-master pid=40477 c2c228fdff07593a
+client-bff pid=25116 b7c34ec6385d4788
+gateway pid=38327 470dbade49ba5481
+18106/platform-support/actuator/health/readiness {"status":"UP"}
+19105/actuator/health/readiness {"status":"UP"}
+19113/actuator/health/readiness {"status":"UP"}
+19111/actuator/health/readiness {"status":"UP"}
+19101/actuator/health/readiness {"status":"UP"}
+19201/actuator/health/readiness {"status":"UP"}
+19202/actuator/health/readiness {"status":"UP"}
+currency-specs 200
+country-regions 200
+reference-data/currencies 200
+ops login ok
+final finance (all) identical
+final finance ?status=ACTIVE identical

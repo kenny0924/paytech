@@ -1,0 +1,14 @@
+# 参考数据客户端组件：mor-test 回滚覆盖（scripts/gen_rollback.sh 于部署前生成，勿手改）。回滚目标 = 生成时刻现网运行镜像，env 与候选相同。
+# Platform 发布后，消费方回滚前必须先回滚 Platform（runbook 第 5 节）。
+services:
+  operations-console-bff:
+    image: sha256:25f6a869b28091b6f26e14bc1f718d8087ffd83e194b58c2c440712211e446b7  # 部署前现网（容器创建 2026-10-27T20:14:15.323340214Z，2026-10-28T03:57:58Z 生成）
+    environment:
+      OPERATIONS_BFF_BIND_ADDRESS: 172.30.73.22
+      OPERATIONS_CONSOLE_ORIGIN: http://localhost:28080
+      OPERATIONS_TEST_HTTP_ENABLED: "true"
+      OPERATIONS_LEDGER_BASE_URL: http://ledger-service:18105
+      OPERATIONS_ACCOUNT_BASE_URL: http://account-service:18114
+      OPERATIONS_BILLING_BASE_URL: http://billing-service:18113
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115
+

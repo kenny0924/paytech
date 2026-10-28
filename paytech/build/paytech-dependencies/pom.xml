@@ -224,6 +224,17 @@
                 <artifactId>paytech-internal-auth</artifactId>
                 <version>${paytech.version}</version>
             </dependency>
+            <!-- Platform 参考数据客户端：消费方 core 以 compile 引入；测试支持只供其他服务的 -test 以 test 范围引入（arch-rules R16）。 -->
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-platform-support-reference-data-client</artifactId>
+                <version>${paytech.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-platform-support-reference-data-client-test-support</artifactId>
+                <version>${paytech.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>

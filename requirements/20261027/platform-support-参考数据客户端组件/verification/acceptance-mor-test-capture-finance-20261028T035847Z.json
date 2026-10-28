@@ -1,0 +1,40 @@
+{
+ "env": "mor-test",
+ "summary": {
+  "PASS": 5,
+  "FAIL": 0,
+  "INFO": 0
+ },
+ "results": [
+  {
+   "ac": "AC-10",
+   "check": "capture /api/operations/finance/currencies/v1 HTTP 200（315 字节）",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-10",
+   "check": "capture /api/operations/finance/currencies/v1?status=ACTIVE HTTP 200（315 字节）",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-10",
+   "check": "capture /api/operations/finance/currencies/v1?status=INACTIVE HTTP 200（12 字节）",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-10",
+   "check": "capture /api/operations/finance/currencies/v1?status=DRAFT HTTP 200（12 字节）",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-10",
+   "check": "capture 非法 status → 400",
+   "verdict": "PASS",
+   "evidence": null
+  }
+ ]
+}

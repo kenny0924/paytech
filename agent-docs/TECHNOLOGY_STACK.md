@@ -1,6 +1,6 @@
 # Code-MoR 技术栈基线
 
-最后更新：2026-10-22
+最后更新：2026-10-27
 
 状态：Confirmed technology baseline。本文只定义产品、版本与技术边界；当前组件的实现、验证和部署状态统一见 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md)。
 
@@ -57,6 +57,7 @@ Code-MoR 不追逐刚发布的最新功能线。版本选择遵循以下优先�
 | MQ 序列化 | JSON UTF-8 | 统一事件信封 | 禁止 Java 原生序列化；事件契约必须版本化 |
 | Redis Server | Redis Open Source Extended | 8.2；本地固定 8.2.1 | 早期单机；不是业务权威数据源 |
 | 进程内缓存 | Caffeine | 3.2.4；Spring Boot 4.0.8 BOM 管理 | 只加速可安全回源的数据；与 Redis CacheManager 按方法显式选用，不组成 L1/L2 |
+| 进程内参考数据 | Platform 参考数据客户端 `paytech-platform-support-reference-data-client` | `paytech-dependencies` BOM 管理 | 币种、国家、行政区、行业、MCC 的进程内快照（参考数据决定第 7 条读法 B）：按 `platform-support.reference-data.client.kinds` 加载，自带单线程调度默认每 `PT1H` 全量刷新（首次成功前每 `PT10S` 重试），按种类不可变 Map 原子替换；读方法只读内存、查不到即报错，可在事务内调用；健康指标 `referenceData` 加入 readiness。不使用 Caffeine、数据库或 Redis。测试支持 `paytech-platform-support-reference-data-client-test-support`（测试端点、Mocker、Builder）只供其他服务的 `-test` 以 test 范围引入（arch-rules R16）。BFF 不使用，继续转发 Platform 接口（[需求](../requirements/20261027/platform-support-参考数据客户端组件/technique.md)） |
 | 通用 Redis 客户端 | Spring Data Redis + Lettuce | Spring Boot BOM 管理 | Redis Starter 默认提供 Spring Cache、JSON 对象访问和字符串原子操作；Gateway 单独使用 Reactive Redis/Lua |
 | 分布式协调客户端 | Redisson Community | 4.6.1 | 仅用于锁、可过期信号量等明确协调能力 |
 | 补偿调度 | XXL-Job | 3.4.2 | 只唤醒/分片服务内扫描；数据库 Claim/Lease 才是最终互斥边界 |

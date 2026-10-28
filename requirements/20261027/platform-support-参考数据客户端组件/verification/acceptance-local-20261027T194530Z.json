@@ -1,0 +1,505 @@
+{
+ "env": "local",
+ "startedAt": "2026-10-27T19:45:30.794269+00:00",
+ "finishedAt": "2026-10-27T19:46:10.323900+00:00",
+ "summary": {
+  "PASS": 76,
+  "FAIL": 0,
+  "SKIP": 4,
+  "INFO": 1
+ },
+ "ids": {
+  "clientAAccountId": "240923889641721856",
+  "clientAEmail": "onb-a-1027194530@example.test",
+  "appAE": "240923939717525504",
+  "caseAE": "240924025168089088"
+ },
+ "results": [
+  {
+   "ac": "SETUP",
+   "step": "Client A 注册",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 验证链接",
+   "verdict": "PASS",
+   "evidence": "source=minted challengeNo=780d2e13-3c48-4b8e-b5d9-030392bd52ac"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 邮箱验证",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client A 登录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-11",
+   "step": "form-schema AE：国家 249（含名称）、REF_CURRENCY 4 个 ACTIVE 带名称、无旧三类目录",
+   "verdict": "PASS",
+   "evidence": "{\"countrySample\": [{\"callingCode\": \"376\", \"code\": \"AD\", \"logoPublicUrl\": null, \"name\": \"Andorra\"}], \"currency\": [{\"code\": \"AED\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"United Arab Emirates Dirham\"}, {\"code\": \"EGP\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"Egyptian Pound\"}, {\"code\": \"SAR\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"Saudi Riyal\"}, {\"code\": \"USD\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"US Dollar\"}], \"legacy\": [], \"catalogs\": [\"BUSINESS_MODEL\", \"FREE_ZONE\", \"GENDER\", \"OCCUPATION\", \"ORGANIZATION_TYPE\", \"REF_COUNTRY_SUBDIVISION\", \"REF_CURRENCY\", \"REGISTRATION_A"
+  },
+  {
+   "ac": "AC-11",
+   "step": "form-schema AE：省州组件 REF_COUNTRY_SUBDIVISION 补全 7 个本国行政区（countryCode、name）",
+   "verdict": "PASS",
+   "evidence": "{\"count\": 7, \"sample\": [{\"code\": \"AE-AJ\", \"countryCode\": \"AE\", \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"‘Ajmān\"}, {\"code\": \"AE-AZ\", \"countryCode\": \"AE\", \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"Abū Z̧aby\"}]}"
+  },
+  {
+   "ac": "AC-11",
+   "step": "form-schema SA：国家 249（含名称）、REF_CURRENCY 4 个 ACTIVE 带名称、无旧三类目录",
+   "verdict": "PASS",
+   "evidence": "{\"countrySample\": [{\"callingCode\": \"376\", \"code\": \"AD\", \"logoPublicUrl\": null, \"name\": \"Andorra\"}], \"currency\": [{\"code\": \"AED\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"United Arab Emirates Dirham\"}, {\"code\": \"EGP\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"Egyptian Pound\"}, {\"code\": \"SAR\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"Saudi Riyal\"}, {\"code\": \"USD\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"US Dollar\"}], \"legacy\": [], \"catalogs\": [\"BUSINESS_MODEL\", \"CITY\", \"GENDER\", \"OCCUPATION\", \"ORGANIZATION_TYPE\", \"REF_CURRENCY\", \"REGISTRATION_AUTHORITY\"]}"
+  },
+  {
+   "ac": "AC-11",
+   "step": "form-schema SA：本国地址格式不含省州目录（SA_NATIONAL_ADDRESS）",
+   "verdict": "INFO",
+   "evidence": "{\"components\": [\"buildingNumber\", \"addressLine1\", \"district\", \"city\", \"postalCode\", \"additionalNumber\", \"addressLine2\", \"countryCode\"]}"
+  },
+  {
+   "ac": "AC-11",
+   "step": "form-schema EG：国家 249（含名称）、REF_CURRENCY 4 个 ACTIVE 带名称、无旧三类目录",
+   "verdict": "PASS",
+   "evidence": "{\"countrySample\": [{\"callingCode\": \"376\", \"code\": \"AD\", \"logoPublicUrl\": null, \"name\": \"Andorra\"}], \"currency\": [{\"code\": \"AED\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"United Arab Emirates Dirham\"}, {\"code\": \"EGP\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"Egyptian Pound\"}, {\"code\": \"SAR\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"Saudi Riyal\"}, {\"code\": \"USD\", \"countryCode\": null, \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"US Dollar\"}], \"legacy\": [], \"catalogs\": [\"BUSINESS_MODEL\", \"GENDER\", \"OCCUPATION\", \"ORGANIZATION_TYPE\", \"REF_COUNTRY_SUBDIVISION\", \"REF_CURRENCY\", \"REGISTRATION_AUTHORITY\"]}"
+  },
+  {
+   "ac": "AC-11",
+   "step": "form-schema EG：省州组件 REF_COUNTRY_SUBDIVISION 补全 27 个本国行政区（countryCode、name）",
+   "verdict": "PASS",
+   "evidence": "{\"count\": 27, \"sample\": [{\"code\": \"EG-ALX\", \"countryCode\": \"EG\", \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"Al Iskandarīyah\"}, {\"code\": \"EG-ASN\", \"countryCode\": \"EG\", \"labelKey\": null, \"logoPublicUrl\": null, \"name\": \"Aswān\"}]}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 创建申请（AE ORGANIZATION LLC）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 applicationId=240923939717525504 operation=CREATED "
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 主主体 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=20 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE UBO1 新增关系人（UBO）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 partyId=240923941680459776 relationId=240923941730791424 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE UBO1 追加关系（DIRECTOR）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 relationId=240923941965672448 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE UBO1 追加关系（SIGNATORY）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 relationId=240923942150221824 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE UBO2 新增关系人（UBO）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 partyId=240923942435434496 relationId=240923942473183232 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 AE-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT AE-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 AE-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240923943135875072"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 AE-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240923943135875072"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 AE-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240923957891444736 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 AE-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT AE-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 AE-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240923958638022656"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 AE-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240923958638022656"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 AE-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240923973615890432 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 AE-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT AE-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 AE-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240923974681235456"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 AE-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240923974681235456"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 AE-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240923975398469632 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 AE-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT AE-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 AE-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240923975977275392"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 AE-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240923975977275392"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 AE-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240923989646520320 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传授权 AE-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "对象存储 PUT AE-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-07",
+   "step": "上传完成 AE-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/240923990338572288"
+  },
+  {
+   "ac": "AC-07",
+   "step": "文件扫描 AE-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=240923990338572288"
+  },
+  {
+   "ac": "AC-07",
+   "step": "关联材料 AE-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=240924004876038144 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 OWNERSHIP_COMPLETE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240924005224165376 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 DIRECTORSHIP_COMPLETE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240924005526155264 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 REPRESENTATIVE_AUTHORITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240924005794590720 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 PEP_DECLARATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240924006100774912 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 INFORMATION_TRUE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240924006356627456 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "声明 PLATFORM_TERMS",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 declarationId=240924006650228736 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 合法填写后提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 币种=XYZ（不存在） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=1 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "币种不存在 → FIELD_VALUE_NOT_IN_CATALOG 挂在 business.currency",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"business.currency\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"business.currency\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "币种停用",
+   "verdict": "SKIP",
+   "evidence": "--no-flips：不改 Platform 库"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 币种恢复 AED 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=1 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 省州=AE-ZZ（不存在） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=5 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "行政区不存在 → FIELD_VALUE_NOT_IN_CATALOG 挂在 stateOrProvince",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"address.stateOrProvince\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"address.stateOrProvince\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 地址填 EG-C（国家不一致） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=5 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "行政区与地址国家不一致 → FIELD_VALUE_NOT_IN_CATALOG 挂在 stateOrProvince",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"address.stateOrProvince\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"address.stateOrProvince\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "行政区停用",
+   "verdict": "SKIP",
+   "evidence": "--no-flips：不改 Platform 库"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 省州恢复 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=5 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE organization.incorporationCountry=XX（不存在） 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=1 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "国家不存在 → FIELD_VALUE_NOT_IN_CATALOG 挂在 organization.incorporationCountry",
+   "verdict": "PASS",
+   "evidence": "{\"hit\": [[\"organization.incorporationCountry\", \"FIELD_VALUE_NOT_IN_CATALOG\"]], \"errors\": [[\"organization.incorporationCountry\", \"FIELD_VALUE_NOT_IN_CATALOG\"]]}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "带不存在国家正式提交 → 422 SUBMISSION_INCOMPLETE，申请仍 DRAFT、无提交号",
+   "verdict": "PASS",
+   "evidence": "{\"status\": 422, \"problem\": {\"code\": \"SUBMISSION_INCOMPLETE\", \"detail\": \"资料或材料尚不完整，请按提交核对结果补全\", \"requestId\": \"68444a0c-7b51-47fb-9808-bc1b8719591a\"}, \"app\": \"DRAFT\"}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "国家停用",
+   "verdict": "SKIP",
+   "evidence": "--no-flips：不改 Platform 库"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE organization.incorporationCountry 恢复 AE 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=1 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "草稿保存：旧下划线省州 AE_DU 格式不合法 → 422",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'INVALID_DRAFT', 'detail': '入驻字段不符合约定', 'requestId': '2a4f4007-c216-476f-a8df-93d2a1ad2fa3', 'errors': [{'field': 'address.stateOrProvince', 'message': '须为 ISO 3166-2 行政区代码，如 AE-DU'}]}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "修正后提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 ready=True errors=[]"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 提交",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 submissionId=47f3bcbb-07cd-4f6d-b35b-6538bdf13d2d {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 进入审核",
+   "verdict": "PASS",
+   "evidence": "status=UNDER_REVIEW"
+  },
+  {
+   "ac": "AC-07",
+   "step": "AE 案件出现在运营工作台",
+   "verdict": "PASS",
+   "evidence": "240923939717525504"
+  },
+  {
+   "ac": "AC-08",
+   "step": "审核详情行业树：大类 10、细类 32、细类带建议 MCC（来自 Platform）",
+   "verdict": "PASS",
+   "evidence": "{\"industriesStatus\": \"AVAILABLE\", \"sample\": [{\"children\": [{\"defaultMccCode\": \"5651\", \"description\": \"Clothing, shoes, bags, jewellery and fashion accessories.\", \"industryCode\": \"RETAIL_APPAREL\", \"level\": 2, \"logoFileAddress\": null, \"logoPublicUrl\": null, \"name\": \"Apparel & accessories\", \"parentIndustryCode\": \"RETAIL\", \"sortNo\": 10, \"status\": \"ACTIVE\", \"version\": 1}, {\"defaultMccCode\": \"5732\", \"description\": \"Phones, computers, consumer electronics and their accessories. Excludes software sold separately.\", \"industryCode\": \"RETAIL_ELECTRONICS\", \"level\": 2, \"logoFileAddress\": null, \"logoPublicUrl\": null, \"name\": \"Electronics\", \"parentIndustryCode\": \"RETAIL\", \"sortNo\": 20, \"status\": \"ACTIVE\", "
+  },
+  {
+   "ac": "AC-08",
+   "step": "审核详情 mccs 带建议 MCC 名称",
+   "verdict": "PASS",
+   "evidence": "{\"mccsStatus\": \"AVAILABLE\", \"count\": 32}"
+  },
+  {
+   "ac": "AC-12",
+   "step": "分类页 MCC 搜索：名称 apparel、编码前缀 565",
+   "verdict": "PASS",
+   "evidence": "{\"apparel\": [\"5655\", \"5699\"], \"565\": [\"5651\", \"5655\"]}"
+  },
+  {
+   "ac": "AC-08",
+   "step": "分类 只选大类 RETAIL → 422，错误挂 items[0].industryCode",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'CLASSIFICATION_INVALID', 'detail': '分类不符合目录或规则', 'requestId': '8583e798-9510-4ad9-a1f3-ab3cfce33d60', 'errors': [{'field': 'items[0].industryCode', 'message': '须选择细类，RETAIL 是大类'}]}"
+  },
+  {
+   "ac": "AC-08",
+   "step": "分类 未知行业 → 422，错误挂 items[0].industryCode",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'CLASSIFICATION_INVALID', 'detail': '分类不符合目录或规则', 'requestId': '7e776b02-591c-4845-b935-b43c1e68b462', 'errors': [{'field': 'items[0].industryCode', 'message': '行业不存在: RETAIL_NOPE'}]}"
+  },
+  {
+   "ac": "AC-08",
+   "step": "分类 未知 MCC 0001 → 422，错误挂 items[0].mccCode",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'CLASSIFICATION_INVALID', 'detail': '分类不符合目录或规则', 'requestId': '52a89ea6-68a4-455c-9fad-91873bfa7a6e', 'errors': [{'field': 'items[0].mccCode', 'message': 'MCC 不存在: 0001'}]}"
+  },
+  {
+   "ac": "AC-08",
+   "step": "分类 第 2 行大类 → 422，错误挂 items[1].industryCode",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'CLASSIFICATION_INVALID', 'detail': '分类不符合目录或规则', 'requestId': '7d9a7acc-7c5a-422a-a063-aa6a0eacb369', 'errors': [{'field': 'items[1].industryCode', 'message': '须选择细类，TRAVEL 是大类'}]}"
+  },
+  {
+   "ac": "AC-08",
+   "step": "分类 停用 MCC",
+   "verdict": "SKIP",
+   "evidence": "--no-flips：不改 Platform 库"
+  },
+  {
+   "ac": "AC-08",
+   "step": "被拒的保存未写入（与拒绝前一致）",
+   "verdict": "PASS",
+   "evidence": "{\"before\": [], \"after\": []}"
+  },
+  {
+   "ac": "AC-08",
+   "step": "细类 RETAIL_APPAREL + 建议 MCC 5651 保存",
+   "verdict": "PASS",
+   "evidence": "{\"status\": 200, \"saved\": [{\"industryCode\": \"RETAIL_APPAREL\", \"mccCode\": \"5651\", \"primary\": true}]}"
+  },
+  {
+   "ac": "AC-08",
+   "step": "改选 MCC 5699 后保存的是运营选择",
+   "verdict": "PASS",
+   "evidence": "{\"status\": 200, \"saved\": [{\"industryCode\": \"RETAIL_APPAREL\", \"mccCode\": \"5699\", \"primary\": true}]}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "存量一级行业 RETAIL 案件 240674949944070144 详情可读",
+   "verdict": "PASS",
+   "evidence": "[{\"industryCode\": \"RETAIL\", \"mccCode\": \"5999\", \"primary\": true}]"
+  }
+ ]
+}

@@ -24,47 +24,47 @@ public class MockLedgerSetupQueryApi implements LedgerSetupQueryApi {
 
     @Override
     public FinanceEntityResponseBody getFinanceEntityByParty(String legalPartyId) {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         return mocker.getByParty(legalPartyId);
     }
 
     @Override
     public PagingResponseBody<FinanceEntityResponseBody> listFinanceEntities(String status, Integer page, Integer size) {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         throw mocker.unexpectedCall("listFinanceEntities");
     }
 
     @Override
     public PagingResponseBody<FiscalCalendarResponseBody> listFiscalCalendars(String entityType, String entityId,
         Integer page, Integer size) {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         throw mocker.unexpectedCall("listFiscalCalendars");
     }
 
     @Override
     public PagingResponseBody<AccountingPeriodResponseBody> listAccountingPeriods(String fiscalCalendarId,
         Integer fiscalYear, Integer page, Integer size) {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         throw mocker.unexpectedCall("listAccountingPeriods");
     }
 
     @Override
     public ChartOfAccountsListResponseBody listChartsOfAccounts() {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         throw mocker.unexpectedCall("listChartsOfAccounts");
     }
 
     @Override
     public ChartAccountListResponseBody listChartAccounts(String chartCode, Boolean postingAllowed,
         String accountStatus) {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         throw mocker.unexpectedCall("listChartAccounts");
     }
 
     @Override
     public PagingResponseBody<ChartAccountChangeResponseBody> listChartAccountChanges(String chartCode,
         String chartAccountId, Integer page, Integer size) {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         throw mocker.unexpectedCall("listChartAccountChanges");
     }
 }

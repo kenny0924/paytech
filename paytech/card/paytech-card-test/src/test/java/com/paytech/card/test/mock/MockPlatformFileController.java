@@ -23,7 +23,6 @@ import com.paytech.platform.support.api.files.response.FileUploadCompletionRespo
 import com.paytech.platform.support.api.files.response.FileUploadConstraintsResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadResponseBody;
 import com.paytech.platform.support.api.files.response.StoredFileResponseBody;
-import com.paytech.platform.support.api.referencedata.CountryRegionQueryApi;
 
 import lombok.AllArgsConstructor;
 
@@ -40,8 +39,7 @@ public class MockPlatformFileController implements InternalFileApi, WebMvcConfig
     /** Platform 的 Context Path：同一前缀只能登记一次，文件接口与国家区域映射共用。 */
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
-        configurer.addPathPrefix("/platform-support", type -> InternalFileApi.class.isAssignableFrom(type)
-            || CountryRegionQueryApi.class.isAssignableFrom(type));
+        configurer.addPathPrefix("/platform-support", InternalFileApi.class::isAssignableFrom);
     }
 
     /** card 不上传文件。 */

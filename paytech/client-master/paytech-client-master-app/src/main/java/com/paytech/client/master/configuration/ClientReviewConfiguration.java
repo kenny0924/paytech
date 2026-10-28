@@ -29,7 +29,6 @@ import com.paytech.client.master.domainservice.service.ClientLifecycleService;
 import com.paytech.client.master.domainservice.service.impl.ClientLifecycleServiceImpl;
 import com.paytech.client.master.service.processor.ApplyQualificationChangeProcessor;
 import com.paytech.client.master.integration.ClientReviewRegistrationClient;
-import com.paytech.client.master.integration.ReferenceDataClient;
 import com.paytech.client.master.service.handler.ClientClassificationHandler;
 import com.paytech.client.master.service.processor.ApplyClientReviewResultProcessor;
 import com.paytech.client.master.service.processor.ConfirmClientClassificationProcessor;
@@ -39,6 +38,7 @@ import com.paytech.client.master.service.processor.ReplaceClientClassificationPr
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
 import com.paytech.foundation.id.IdGenerator;
 import com.paytech.foundation.redis.core.autoconfigure.RedisResourceLockProperties;
+import com.paytech.platform.support.referencedata.client.ReferenceData;
 
 /**
  * Operations 审核在 CCT 侧的装配：O03/O04 分类、I02 交付、审核结果消费与 Client 激活
@@ -92,7 +92,7 @@ public class ClientReviewConfiguration {
     /** O03；行业与 MCC 向 Platform 参考数据校验。 */
     @Bean
     public ReplaceClientClassificationProcessor replaceClientClassificationProcessor(Clock clock, IdGenerator ids,
-        RedisResourceLockProperties locks, ReferenceDataClient referenceData, ClientBusinessProfileRepository profiles,
+        RedisResourceLockProperties locks, ReferenceData referenceData, ClientBusinessProfileRepository profiles,
         ClientClassificationService classifications, ClientApplicationRepository applications, ClientBusinessClassificationRepository rows) {
         return new ReplaceClientClassificationProcessor(clock, ids, locks.getWaitTime(), locks.getLeaseTime(), referenceData, profiles,
             classifications, applications, rows);

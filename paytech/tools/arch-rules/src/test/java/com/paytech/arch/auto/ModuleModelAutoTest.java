@@ -32,6 +32,9 @@ class ModuleModelAutoTest {
         assertIdentity("paytech-client-master-test", "client-master", ModuleRole.TEST);
         assertIdentity("paytech-client-console-bff-app", "client-console-bff", ModuleRole.APP);
         assertIdentity("paytech-vault-client", "vault", ModuleRole.CLIENT);
+        assertIdentity("paytech-platform-support-reference-data-client", "platform-support", ModuleRole.CLIENT);
+        assertIdentity("paytech-platform-support-reference-data-client-test-support", "platform-support",
+            ModuleRole.CLIENT_TEST_SUPPORT);
         assertIdentity("paytech-ledger", "ledger", ModuleRole.SERVICE_AGGREGATOR);
     }
 

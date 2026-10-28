@@ -2,7 +2,6 @@ package com.paytech.ledger.auto.ext.http.setup;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,9 +20,8 @@ import com.paytech.ledger.core.enums.ReferenceDataStatus;
 import com.paytech.ledger.test.base.MockTestBase;
 import com.paytech.ledger.test.builder.AccountingSetupRequestBuilder;
 import com.paytech.ledger.test.dal.AccountingTestMapper;
-import com.paytech.ledger.test.mocker.external.CurrencySpecMocker;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataBuilders;
 
 /**
  * 创建账簿：OE/FE 主体、序号初始化、唯一性和前置资料校验
@@ -75,16 +73,15 @@ class CreateLedgerBookTest extends MockTestBase {
             .assertRejected(LedgerSetupErrorCode.LEDGER_BOOK_ALREADY_EXISTS);
     }
 
-    /** 快照中没有的币种按 CURRENCY_NOT_ACTIVE 拒绝并请求刷新；请求处理期间不回源 Platform。 */
+    /** 快照中没有的币种按 CURRENCY_NOT_ACTIVE 拒绝；请求处理期间不回源 Platform。 */
     @Test
     void test_referenceDataMustBeActive() {
         var unknownCurrency = AccountingSetupRequestBuilder.ledgerBook(LedgerEntityType.OPERATING_ENTITY.getCode(),
             "AE001");
         unknownCurrency.setCurrency("EUR");
-        long platformCalls = currencySpecs.listCalls();
+        int platformCalls = referenceDataMocker.totalCalls();
         postAsOperator(PATH, unknownCurrency).assertRejected(LedgerSetupErrorCode.CURRENCY_NOT_ACTIVE);
-        assertAll(() -> assertTrue(currencySnapshot.isRefreshRequested(), "未知币种应请求刷新快照"),
-            () -> assertEquals(platformCalls, currencySpecs.listCalls(), "开账簿不应回源 Platform"));
+        assertEquals(platformCalls, referenceDataMocker.totalCalls(), "开账簿不应回源 Platform");
 
         var unknownChart = AccountingSetupRequestBuilder.ledgerBook(LedgerEntityType.OPERATING_ENTITY.getCode(),
             "AE001");
@@ -94,9 +91,9 @@ class CreateLedgerBookTest extends MockTestBase {
 
     /** Platform 中 INACTIVE（只拦新用途）与 DRAFT（从未生效）的币种都不能开新账簿。 */
     @ParameterizedTest
-    @EnumSource(value = CurrencySpecStatus.class, names = {"INACTIVE", "DRAFT"})
-    void test_nonActiveCurrencyRejected(CurrencySpecStatus status) {
-        refreshCurrencies(CurrencySpecMocker.usd(), CurrencySpecMocker.currency("AED", 2, status));
+    @EnumSource(value = com.paytech.platform.support.api.enums.ReferenceDataStatus.class, names = {"INACTIVE", "DRAFT"})
+    void test_nonActiveCurrencyRejected(com.paytech.platform.support.api.enums.ReferenceDataStatus status) {
+        refreshCurrencies(ReferenceDataBuilders.currency(USD), ReferenceDataBuilders.currency("AED").status(status));
         var request = AccountingSetupRequestBuilder.ledgerBook(LedgerEntityType.OPERATING_ENTITY.getCode(), "AE001");
         request.setCurrency("AED");
 
@@ -108,12 +105,13 @@ class CreateLedgerBookTest extends MockTestBase {
     /** Platform 停用币种后，刷新快照即拒绝新账簿；停用前开立的账簿不受影响。 */
     @Test
     void test_currencyDeactivatedInPlatformBlocksNewBooks() {
-        refreshCurrencies(CurrencySpecMocker.usd(), CurrencySpecMocker.active("AED", 2));
+        refreshCurrencies(ReferenceDataBuilders.currency(USD), ReferenceDataBuilders.currency("AED"));
         var before = AccountingSetupRequestBuilder.ledgerBook(LedgerEntityType.OPERATING_ENTITY.getCode(), "AE001");
         before.setCurrency("AED");
         long bookId = postAsOperator(PATH, before).assertSuccess(201).id("ledgerBookId");
 
-        refreshCurrencies(CurrencySpecMocker.usd(), CurrencySpecMocker.currency("AED", 2, CurrencySpecStatus.INACTIVE));
+        refreshCurrencies(ReferenceDataBuilders.currency(USD), ReferenceDataBuilders.currency("AED")
+            .status(com.paytech.platform.support.api.enums.ReferenceDataStatus.INACTIVE));
         var after = AccountingSetupRequestBuilder.ledgerBook(LedgerEntityType.OPERATING_ENTITY.getCode(), "AE002");
         after.setCurrency("AED");
         postAsOperator(PATH, after).assertRejected(LedgerSetupErrorCode.CURRENCY_NOT_ACTIVE);

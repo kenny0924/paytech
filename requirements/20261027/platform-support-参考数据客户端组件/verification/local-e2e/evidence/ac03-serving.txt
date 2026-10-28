@@ -1,0 +1,5 @@
+19:48:37 Platform 停机期间：
+  ledger 建账簿 JPY → HTTP 400 CURRENCY_NOT_ACTIVE
+  client-master 分类保存（直连）→ HTTP 200 {"caseId":"240924025168089088","applicationId":"240923939717525504","confirmed":false,"confirmedBy":null,"confirmedAt":null,"items":[{"industryCode":"RETAIL_HOME","mccCode":"5712","primary":true}]}
+  client-master 分类保存 大类（应 422）→ HTTP 422 {"type":"about:blank","title":"Unprocessable Content","detail":"分类不符合目录或规则","code":"CLASSIFICATION_INVALID","requestId":"f4877385-413c-4fb5-b65c-3ef1b2da3ddb","
+19:53:53 AC-03 停机期间 ledger 建账簿 JPY → HTTP 400 CURRENCY_NOT_ACTIVE

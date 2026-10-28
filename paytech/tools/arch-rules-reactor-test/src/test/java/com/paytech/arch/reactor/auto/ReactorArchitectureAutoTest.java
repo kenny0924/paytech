@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Reactor 级依赖图校验：读取 {@code paytech/pom.xml} 当前列出的全部模块（含 {@code foundation/} 下的嵌套模块），执行
- * R1、R2、R3、R6、R8、R13、R15 的依赖图部分。
+ * R1、R2、R3、R6、R8、R13、R15、R16 的依赖图部分。
  *
  * <p>
  * 真实 Reactor 中的服务模块除 {@code known-deviations.yaml} 登记的既有偏差外必须零违规；另以真实 Reactor 模型加注入的违规模块证明规则在该模型上确实生效，避免空断言；R8 同时以真实
@@ -39,7 +39,7 @@ class ReactorArchitectureAutoTest {
         "paytech-messaging-api", "paytech-messaging", "paytech-internal-auth");
 
     /** 依赖图部分覆盖的规则；登记偏差中属于这些规则的条目必须仍然出现。 */
-    private static final Set<String> GRAPH_RULES = Set.of("R1", "R2", "R3", "R6", "R8", "R15");
+    private static final Set<String> GRAPH_RULES = Set.of("R1", "R2", "R3", "R6", "R8", "R15", "R16");
 
     private static final Path REACTOR_ROOT = Path.of(System.getProperty("paytech.reactor.root", "../.."))
         .toAbsolutePath().normalize();
@@ -134,6 +134,30 @@ class ReactorArchitectureAutoTest {
         Assertions.assertEquals(List.of("R15"), violations.stream().map(RuleViolation::ruleId).distinct().toList(),
             () -> describe(violations));
         Assertions.assertEquals(1, violations.size(), () -> describe(violations));
+    }
+
+    /** R16：真实 Reactor 中参考数据客户端为 CLIENT、测试支持为 CLIENT_TEST_SUPPORT；注入 core 依赖测试支持后规则生效。 */
+    @Test
+    void test_clientTestSupportDependency() {
+        List<MavenModule> modules = new ArrayList<>(new PomReader().readReactor(REACTOR_ROOT));
+        Assertions.assertEquals(ModuleRole.CLIENT, roleOf(modules, "paytech-platform-support-reference-data-client"));
+        Assertions.assertEquals(ModuleRole.CLIENT_TEST_SUPPORT,
+            roleOf(modules, "paytech-platform-support-reference-data-client-test-support"));
+        KnownDeviations known = KnownDeviations.loadDefault();
+        Assertions.assertTrue(known.unregistered(ArchitectureRules.checkDependencyGraph(modules)).stream()
+            .noneMatch(violation -> "R16".equals(violation.ruleId())), "真实 Reactor 不应有 R16 违规");
+
+        modules.add(new MavenModule(REACTOR_ROOT.resolve("ledger/paytech-ledger-core"), "com.paytech",
+            "paytech-ledger-core", "jar", List.of(new MavenDependency("com.paytech",
+                "paytech-platform-support-reference-data-client-test-support", "test")), List.of()));
+        List<RuleViolation> violations = known.unregistered(ArchitectureRules.checkDependencyGraph(modules));
+        Assertions.assertEquals(List.of("R16"), violations.stream().map(RuleViolation::ruleId).distinct().toList(),
+            () -> describe(violations));
+    }
+
+    private static ModuleRole roleOf(List<MavenModule> modules, String artifactId) {
+        return modules.stream().filter(module -> artifactId.equals(module.artifactId())).findFirst()
+            .orElseThrow(() -> new AssertionError("Reactor 未包含模块: " + artifactId)).identity().role();
     }
 
     private static int declaredModuleCount(MavenModule aggregator, List<MavenModule> modules) {

@@ -2,9 +2,10 @@ package com.paytech.ledger.test.base;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,8 +25,6 @@ import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 import com.paytech.ledger.LedgerApplication;
-import com.paytech.ledger.app.ext.job.CurrencySnapshotRefreshScheduler;
-import com.paytech.ledger.integration.platform.CurrencySpecSnapshot;
 import com.paytech.ledger.test.checker.LedgerChecker;
 import com.paytech.ledger.test.checker.LedgerResponseChecker;
 import com.paytech.ledger.test.clear.LedgerDataCleaner;
@@ -33,20 +32,24 @@ import com.paytech.ledger.test.clear.LedgerRedisCleaner;
 import com.paytech.ledger.test.configuration.LedgerTestMockConfiguration;
 import com.paytech.ledger.test.mocker.external.AccountPostingMocker;
 import com.paytech.ledger.test.mocker.external.BillingFactMocker;
-import com.paytech.ledger.test.mocker.external.CurrencySpecMocker;
 import com.paytech.ledger.test.mocker.local.LedgerMocker;
 import com.paytech.ledger.test.probe.AccountPostedPublisher;
-import com.paytech.platform.support.api.referencedata.response.CurrencySpecResponseBody;
+import com.paytech.platform.support.referencedata.client.ReferenceData;
+import com.paytech.platform.support.referencedata.client.ReferenceDataKind;
+import com.paytech.platform.support.referencedata.client.ReferenceDataRefresher;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataBuilders;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataBuilders.CurrencyBuilder;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataMocker;
 
 import tools.jackson.databind.ObjectMapper;
 
 /**
  * Ledger 服务级入口测试基类
  * <li>复用正式启动类 LedgerApplication 与生产组件扫描，只附加 mock Profile 与测试组件；本地 MySQL（mor_ledger）/Redis/RabbitMQ 需预先就绪。</li>
- * <li>外部依赖：account 过账进度与批次、billing 事实详情与发布进度、platform-support 币种规则由独立 Loopback Mock HTTP 服务返回配置的
+ * <li>外部依赖：account 过账进度与批次、billing 事实详情与发布进度、platform-support 参考数据（币种）由独立 Loopback Mock HTTP 服务返回配置的
  * DTO；AccountPosted 由 {@link AccountPostedPublisher} 扮演 account 发到真实本机 RabbitMQ，经正式消费链路处理。</li>
- * <li>币种规则快照的进程内调度在测试中关闭：每例开始前配置 Platform 返回 USD 并经正式刷新入口刷新一次快照，用例需要其他币种时调用
- * {@link #refreshCurrencies}。</li>
+ * <li>参考数据客户端的调度在测试中关闭：每例开始前配置 Platform 返回 USD 并经正式刷新入口 {@link ReferenceDataRefresher#refreshNow()}
+ * 加载一次快照，用例需要其他币种时调用 {@link #refreshCurrencies}。</li>
  * <li>{@link PartitionQueueBaselineConfiguration} 在监听容器启动前清空 ledger.account.p0..p3 与 DLQ（其他模块测试的残留消息）。</li>
  * <li>每例开始前检查空基线并清空本服务的 account 分区队列；结束时等待队列与 Mock 请求静止、检查意外调用，再由 Foundation 统一清理。</li>
  * <li>Actuator 在独立管理端口（业务端口 + 1000，测试随机），由 {@link #management(String)} 访问。</li>
@@ -71,6 +74,9 @@ public abstract class MockTestBase extends TestBase {
 
     /** 测试操作人会话 ID。 */
     protected static final String OPERATOR_SESSION_ID = "ledger-test-session";
+
+    /** 测试默认币种：2 位、HALF_UP、ACTIVE。 */
+    protected static final String USD = "USD";
 
     /** 等待消费完成的上限。 */
     protected static final Duration CONSUME_WAIT = Duration.ofSeconds(20);
@@ -97,13 +103,13 @@ public abstract class MockTestBase extends TestBase {
     protected BillingFactMocker billingFacts;
 
     @Autowired
-    protected CurrencySpecMocker currencySpecs;
+    protected ReferenceDataMocker referenceDataMocker;
 
     @Autowired
-    protected CurrencySpecSnapshot currencySnapshot;
+    protected ReferenceData referenceData;
 
     @Autowired
-    protected CurrencySnapshotRefreshScheduler currencySnapshotRefresher;
+    protected ReferenceDataRefresher referenceDataRefresher;
 
     @Autowired
     protected MockHttpServer mockHttpServer;
@@ -116,14 +122,13 @@ public abstract class MockTestBase extends TestBase {
 
     /**
      * 全局初始化：清空本服务的 account 分区队列并检查空基线，不承接上一例状态，也不删除任何业务数据；Platform 返回 USD 并整体刷新币种快照，
-     * 覆盖上一例留下的快照内容与刷新请求。
+     * 覆盖上一例留下的快照内容。
      */
     @BeforeEach
     protected final void setUpGlobalMocks() {
         accountEvents.purge();
         dataCleaner.assertEmpty();
-        refreshCurrencies(CurrencySpecMocker.usd());
-        assertNotNull(currencySnapshot.find(CurrencySpecMocker.USD), "币种快照未能从 Platform Mock 加载 USD");
+        refreshCurrencies(ReferenceDataBuilders.currency(USD));
     }
 
     /** 等待分区队列消费完毕与 Mock 请求结束、检查意外调用后清空本服务队列，父类继续执行全部 Clear。 */
@@ -133,17 +138,18 @@ public abstract class MockTestBase extends TestBase {
             await().atMost(CONSUME_WAIT).until(() -> accountEvents.pending() == 0);
             mockHttpServer.awaitIdle();
             assertAll("检查外部 Mock 调用", accountPostings::assertNoUnexpectedCalls,
-                billingFacts::assertNoUnexpectedCalls, currencySpecs::assertNoUnexpectedCalls,
+                billingFacts::assertNoUnexpectedCalls, referenceDataMocker::assertNoUnexpectedCalls,
                 mockHttpServer::assertNoUnexpectedRequests);
         } finally {
             accountEvents.purge();
         }
     }
 
-    /** 配置 Platform 返回的全部币种规则，并经正式刷新入口立即整体替换本进程快照。 */
-    protected void refreshCurrencies(CurrencySpecResponseBody... currencies) {
-        currencySpecs.mockCurrencies(currencies);
-        currencySnapshotRefresher.refresh();
+    /** 配置 Platform 返回的全部币种，并经正式刷新入口立即整体替换本进程快照；刷新必须成功。 */
+    protected void refreshCurrencies(CurrencyBuilder... currencies) {
+        referenceDataMocker.reset(ReferenceDataKind.CURRENCY).currency(currencies);
+        List<ReferenceDataRefresher.Result> results = referenceDataRefresher.refreshNow();
+        assertTrue(results.stream().allMatch(ReferenceDataRefresher.Result::succeeded), "币种快照刷新失败: " + results);
     }
 
     /** 发送内部 POST 请求。 */

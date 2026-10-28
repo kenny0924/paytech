@@ -2,16 +2,12 @@ package com.paytech.operations.console.bff.integration.impl;
 
 import static com.paytech.operations.console.bff.integration.impl.FinanceContractConverter.require;
 
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
 import com.paytech.foundation.common.enums.CodeEnum;
-import com.paytech.foundation.common.error.CommonErrorCode;
-import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.operations.console.bff.service.model.ConfigurationManagementModels.ConfigurationMutationResponseBody;
 import com.paytech.operations.console.bff.service.model.CurrencySpecManagementModels.ChangeCurrencySpecStatusRequestBody;
 import com.paytech.operations.console.bff.service.model.CurrencySpecManagementModels.CreateCurrencySpecRequestBody;
@@ -29,7 +25,8 @@ import com.paytech.platform.support.api.referencedata.response.ReferenceCurrency
  * Platform 币种合同与 BFF 页面模型之间的显式投影和回执核对
  * <li>币种页列表读参考数据币种接口：币种代码、小数位、舍入方式、状态、版本任一不符合合同即按上游无效响应 502 处理，未知 Code 不放行；
  * 数字代码、名称、符号与图标可空（历史数据未补齐时页面显示占位）。</li>
- * <li>财务页下拉继续读旧币种规则接口，校验沿用原合同（含更新时间）。</li>
+ * <li>财务页下拉同样读参考数据币种接口：Platform 按状态筛选，BFF 逐条核对代码、小数位、舍入方式、状态与版本，
+ * 并要求返回状态与本次筛选一致，只投影代码、小数位、舍入方式与状态。</li>
  * <li>写回执的对象类型、币种与状态必须与本次操作一致；修改不改变状态，只要求为已知状态。</li>
  *
  * @author Claude
@@ -59,14 +56,14 @@ final class CurrencySpecContractConverter {
         return result;
     }
 
-    /** 财务页币种下拉：旧合同逐条核对后按状态筛选，只保留代码、小数位、舍入方式与状态；status 为空时返回全部。 */
-    static CurrencyListResponseBody toFinance(
-        com.paytech.platform.support.api.referencedata.response.CurrencySpecListResponseBody value, String status) {
+    /** 财务页币种下拉：逐条核对后只保留代码、小数位、舍入方式与状态；status 为空表示全部状态，否则每条都须为该状态。 */
+    static CurrencyListResponseBody toFinance(ReferenceCurrencyListResponseBody value, String status) {
         require(value != null && value.getItems() != null);
         List<CurrencyResponseBody> items = value.getItems().stream().map(CurrencySpecContractConverter::toFinance).toList();
         require(new HashSet<>(items.stream().map(CurrencyResponseBody::getCurrency).toList()).size() == items.size());
+        require(status == null || items.stream().allMatch(item -> status.equals(item.getStatus())));
         var result = new CurrencyListResponseBody();
-        result.setItems(items.stream().filter(item -> status == null || status.equals(item.getStatus())).toList());
+        result.setItems(items);
         return result;
     }
 
@@ -134,16 +131,14 @@ final class CurrencySpecContractConverter {
         return result;
     }
 
-    /** 财务页只需要代码、小数位、舍入方式与状态；旧合同字段逐项核对（含更新时间）。 */
-    private static CurrencyResponseBody toFinance(
-        com.paytech.platform.support.api.referencedata.response.CurrencySpecResponseBody value) {
-        require(value != null && value.getCurrency() != null && value.getCurrency().matches(CURRENCY)
-            && value.getMinorUnit() >= 0 && value.getMinorUnit() <= MAX_MINOR_UNIT
+    /** 财务页只需要代码、小数位、舍入方式与状态；版本同样须为正数。 */
+    private static CurrencyResponseBody toFinance(ReferenceCurrencyResponseBody value) {
+        require(value != null && value.getCurrencyCode() != null && value.getCurrencyCode().matches(CURRENCY)
+            && value.getMinorUnit() != null && value.getMinorUnit() >= 0 && value.getMinorUnit() <= MAX_MINOR_UNIT
             && known(CurrencyRoundingMode.values(), value.getRoundingMode())
-            && known(CurrencySpecStatus.values(), value.getStatus()) && value.getVersion() > 0);
-        instant(value.getUpdateTime());
+            && known(CurrencySpecStatus.values(), value.getStatus()) && value.getVersion() != null && value.getVersion() > 0);
         var result = new CurrencyResponseBody();
-        result.setCurrency(value.getCurrency());
+        result.setCurrency(value.getCurrencyCode());
         result.setMinorUnit(value.getMinorUnit());
         result.setRoundingMode(value.getRoundingMode());
         result.setStatus(value.getStatus());
@@ -155,13 +150,4 @@ final class CurrencySpecContractConverter {
         return code != null && Arrays.stream(values).anyMatch(value -> value.getCode().equals(code));
     }
 
-    /** UTC ISO-8601 时间；缺失或格式不符视为上游无效响应。 */
-    private static Instant instant(String value) {
-        require(value != null);
-        try {
-            return Instant.parse(value);
-        } catch (DateTimeParseException invalid) {
-            throw new ErrorException(CommonErrorCode.UPSTREAM_INVALID_RESPONSE, null, invalid);
-        }
-    }
 }

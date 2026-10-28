@@ -1,0 +1,15 @@
+A=1206 B=1201 onlyA=5 onlyB=0 changed=9
+  - paytech-card-api.jar!com/paytech/card/api/binlibrary/response/BinRangeResponseBody.class
+  - paytech-card-core.jar!com/paytech/card/domain/binlibrary/BinRangeFilter.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/OperationsAccountLabelQueryApi.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/response/OperationsAccountLabelListResponseBody.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/operations/response/OperationsAccountLabelResponseBody.class
+  ~ BOOT-INF/classes/com/paytech/card/ext/rest/CardBinLibraryController.class
+  ~ BOOT-INF/classes/com/paytech/card/ext/rest/converter/CardBinLibraryConverter.class
+  ~ paytech-card-api.jar!com/paytech/card/api/binlibrary/CardBinLibraryApi.class
+  ~ paytech-card-core.jar!com/paytech/card/core/dal/mapper/CardBinRangeMapper.class
+  ~ paytech-card-core.jar!com/paytech/card/domainservice/repository/CardBinRangeRepository.class
+  ~ paytech-card-core.jar!com/paytech/card/domainservice/repository/impl/CardBinRangeRepositoryImpl.class
+  ~ paytech-card-core.jar!com/paytech/card/service/CardBinLibraryQueryService.class
+  ~ paytech-card-core.jar!com/paytech/card/service/impl/CardBinLibraryQueryServiceImpl.class
+  ~ paytech-card-core.jar!mapper/card/CardBinRangeMapper.xml

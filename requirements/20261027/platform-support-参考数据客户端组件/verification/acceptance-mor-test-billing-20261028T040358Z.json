@@ -1,0 +1,103 @@
+{
+ "env": "mor-test",
+ "summary": {
+  "PASS": 4,
+  "FAIL": 0,
+  "INFO": 1
+ },
+ "results": [
+  {
+   "ac": "AC-07",
+   "check": "Platform 已登记币种 ['AED', 'EGP', 'SAR', 'USD']；未登记样本 JPY；合成 OE ZZ951",
+   "verdict": "INFO",
+   "evidence": null
+  },
+  {
+   "ac": "AC-07",
+   "check": "USD 1.005 → 400 FACT_LINE_INVALID",
+   "verdict": "PASS",
+   "evidence": {
+    "type": "about:blank",
+    "title": "Bad Request",
+    "detail": "明细行不合法：金额组件、收付方、目标余额桶或金额精度不符合规则",
+    "code": "FACT_LINE_INVALID",
+    "requestId": "0aebc840-1594-4118-a286-748a5aede8f6",
+    "timestamp": "2026-10-28T04:03:54.169062Z"
+   }
+  },
+  {
+   "ac": "AC-07",
+   "check": "JPY → 400 BUSINESS_CHECK_FAILED",
+   "verdict": "PASS",
+   "evidence": {
+    "type": "about:blank",
+    "title": "Bad Request",
+    "detail": "币种不存在或尚未同步: JPY, 等待 Platform 币种快照下一次刷新后重试",
+    "code": "BUSINESS_CHECK_FAILED",
+    "requestId": "5d30fbb6-ce3b-4fff-9620-72c356fe7b95",
+    "timestamp": "2026-10-28T04:03:55.590523Z"
+   }
+  },
+  {
+   "ac": "AC-07",
+   "check": "USD 1.25 → 201 DRAFT",
+   "verdict": "PASS",
+   "evidence": {
+    "approvedTime": null,
+    "balanceAvailableTime": null,
+    "businessTime": "2026-10-28T04:03:56.734596Z",
+    "checkerId": null,
+    "clientId": "91028040351",
+    "currency": "USD",
+    "entityNo": "ZZ951",
+    "factId": "241049321536086016",
+    "factType": "MANUAL_ADJUSTMENT",
+    "factVersion": "0",
+    "financeEntityId": null,
+    "grossAmount": "1.25",
+    "lines": [
+     {
+      "basisAmount": "1.25000000",
+      "componentType": "CLIENT_PRINCIPAL",
+      "direction": "ADJUSTMENT",
+      "lineNo": "1",
+      "payeeId": "91028040351",
+      "payeeRole": "CLIENT",
+      "payerId": "ZZ951",
+      "payerRole": "OPERATING_ENTITY",
+      "postedAmount": "1.25",
+      "rateValue": null,
+      "rawAmount": "1.25000000",
+      "sourceEvidence": null,
+      "sourcePriceId": null,
+      "sourceRuleComponentId": null,
+      "sourceRuleType": null,
+      "sourceRuleVersionId": null,
+      "targetBucket": null
+     }
+    ],
+    "links": [],
+    "localPartnerId": null,
+    "makerId": "221546852372267008",
+    "originType": "MANUAL",
+    "parentFactId": null,
+    "pricing": null,
+    "publishedAt": null,
+    "recordedTime": null,
+    "refs": [],
+    "sourceEventKey": "refclient-1028040351-USD-1.25",
+    "sourcePayloadHash": "aaf21e2d35b7028cc5da2e153361d9106fcee3d53a7997ef01ee51d5c00ae460",
+    "sourceSystem": "REFCLIENT_STAGE5",
+    "sourceVersion": "1",
+    "status": "DRAFT",
+    "supersedesFactId": null
+   }
+  },
+  {
+   "ac": "AC-07",
+   "check": "作废验收草稿 241049321536086016 → 200 VOIDED",
+   "verdict": "PASS",
+   "evidence": "{\"approvedTime\":null,\"balanceAvailableTime\":null,\"businessTime\":\"2026-10-28T04:03:56.734596Z\",\"checkerId\":null,\"clientId\":\"91028040351\",\"currency\":\"USD\",\"entityNo\":\"ZZ951\",\"factId\":\"241049321536086016"
+  }
+ ]
+}

@@ -1,0 +1,56 @@
+# 基线核对的已知差异（现网 vs 基线工作树构建），baseline_check.sh 据此分为「已知 / 未知」。
+# 2026-10-28 03:29Z 以 c4ff0e20（card-BIN 已提交）为基线重核：Platform / card / ops-bff / client-master 无差异（card-BIN 行已删除）；
+# 只剩 ledger / billing：现网是 10-23 的已提交构建（billing-b-20261023），下列公共库条目在 c4ff0e20 历史中被后续提交修改（逐条 git log 核对，
+# 并用 javap 确认现网独有成员都是更早提交中存在、后被修改或删除的成员，如 1d39cd94 的 reverifyAction 由 f707f2da 删除）。证据：evidence/baseline-c4ff0e20-*/ledger-billing-trace.tsv
+# 列：服务<TAB>条目<TAB>原因
+ledger-service	paytech-http-client-support.jar!com/paytech/foundation/httpclient/api/HttpRequestValidationException.class	公共库：c4ff0e20 历史更新（f707f2da），现网为 10-23 已提交构建
+ledger-service	paytech-http-client-support.jar!com/paytech/foundation/httpclient/core/error/HttpServiceClientInterceptor.class	公共库：c4ff0e20 历史更新（f707f2da beb21618），现网为 10-23 已提交构建
+ledger-service	paytech-messaging.jar!catalog/events.yaml	公共库：c4ff0e20 历史更新（9f506f0f 98210e0b de4f7ba4 1d39cd94），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/enums/FileStorageCheckResult.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/files/InternalFileApi.class	公共库：c4ff0e20 历史更新（3baef5f0 be688db7 73a2460d 346a1822），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/files/request/StartFileUploadRequestBody.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/files/response/FileUploadCompletionResponseBody.class	公共库：c4ff0e20 历史更新（be688db7 73a2460d 346a1822），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/files/response/StoredFileResponseBody.class	公共库：c4ff0e20 历史更新（be688db7 73a2460d 346a1822），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/filestorage/FileStorageManagementApi.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/filestorage/request/CreateStorageRouteRequestBody.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/filestorage/request/RegisterStorageBucketRequestBody.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/filestorage/response/StorageBucket.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/filestorage/response/StorageRouteResponseBody.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/referencedata/request/CreateCurrencySpecRequestBody.class	公共库：c4ff0e20 历史更新（ab27bd76 13c02c87），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/referencedata/request/UpdateCurrencySpecRequestBody.class	公共库：c4ff0e20 历史更新（ab27bd76 13c02c87），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/WorkflowInstanceApi.class	公共库：c4ff0e20 历史更新（f707f2da 1d39cd94），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowActionTemplateResponseBody.class	公共库：c4ff0e20 历史更新（f707f2da 1d39cd94），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowActivityBody.class	公共库：c4ff0e20 历史更新（f707f2da 1d39cd94），现网为 10-23 已提交构建
+ledger-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowSubmissionResponseBody.class	公共库：c4ff0e20 历史更新（f707f2da 1d39cd94），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/request/ResolveCheckoutContextRequestBody.class	公共库：c4ff0e20 历史更新（4b661830），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$Capability.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$CapabilityCondition.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$Classification.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$ClientTerms.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$Derived.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$Eligibility.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$FileEvidence.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$Legal.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$PartnerTerms.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$PartyEvidence.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody$Revisions.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-commercial-api.jar!com/paytech/commercial/api/checkout/response/ResolveCheckoutContextResponseBody.class	公共库：c4ff0e20 历史更新（4b661830 5a103f36），现网为 10-23 已提交构建
+billing-service	paytech-http-client-support.jar!com/paytech/foundation/httpclient/api/HttpRequestValidationException.class	公共库：c4ff0e20 历史更新（f707f2da），现网为 10-23 已提交构建
+billing-service	paytech-http-client-support.jar!com/paytech/foundation/httpclient/core/error/HttpServiceClientInterceptor.class	公共库：c4ff0e20 历史更新（f707f2da beb21618），现网为 10-23 已提交构建
+billing-service	paytech-messaging.jar!catalog/events.yaml	公共库：c4ff0e20 历史更新（9f506f0f 98210e0b de4f7ba4 1d39cd94），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/enums/FileStorageCheckResult.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/files/InternalFileApi.class	公共库：c4ff0e20 历史更新（3baef5f0 be688db7 73a2460d 346a1822），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/files/request/StartFileUploadRequestBody.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/files/response/FileUploadCompletionResponseBody.class	公共库：c4ff0e20 历史更新（be688db7 73a2460d 346a1822），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/files/response/StoredFileResponseBody.class	公共库：c4ff0e20 历史更新（be688db7 73a2460d 346a1822），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/filestorage/FileStorageManagementApi.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/filestorage/request/CreateStorageRouteRequestBody.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/filestorage/request/RegisterStorageBucketRequestBody.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/filestorage/response/StorageBucket.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/filestorage/response/StorageRouteResponseBody.class	公共库：c4ff0e20 历史更新（be688db7 346a1822），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/referencedata/request/CreateCurrencySpecRequestBody.class	公共库：c4ff0e20 历史更新（ab27bd76 13c02c87），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/referencedata/request/UpdateCurrencySpecRequestBody.class	公共库：c4ff0e20 历史更新（ab27bd76 13c02c87），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/WorkflowInstanceApi.class	公共库：c4ff0e20 历史更新（f707f2da 1d39cd94），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowActionTemplateResponseBody.class	公共库：c4ff0e20 历史更新（f707f2da 1d39cd94），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowActivityBody.class	公共库：c4ff0e20 历史更新（f707f2da 1d39cd94），现网为 10-23 已提交构建
+billing-service	paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowSubmissionResponseBody.class	公共库：c4ff0e20 历史更新（f707f2da 1d39cd94），现网为 10-23 已提交构建

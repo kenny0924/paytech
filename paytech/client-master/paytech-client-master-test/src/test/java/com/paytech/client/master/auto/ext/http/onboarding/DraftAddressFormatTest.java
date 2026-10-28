@@ -91,11 +91,12 @@ class DraftAddressFormatTest extends AbstractOnboardingHttpTest {
 
     /**
      * 行政区（REF_COUNTRY_SUBDIVISION）保存草稿只校验 ISO 3166-2 格式：旧下划线目录码 422 指向 address.stateOrProvince；
-     * 境外通用格式的省州为自由文本照常保存。保存草稿不查询 Platform 参考数据。
+     * 境外通用格式的省州为自由文本照常保存。保存草稿不产生 Platform 参考数据请求。
      */
     @Test
     void test_subdivisionFormat() {
         long applicationId = started("INDIVIDUAL", "AE", null, null);
+        long calls = referenceData.count();
 
         var legacy = patch(applicationId, """
             {"dirtyFields":["address.countryCode","address.stateOrProvince"],
@@ -111,7 +112,7 @@ class DraftAddressFormatTest extends AbstractOnboardingHttpTest {
 
         assertEquals(200, foreign.getStatus().value(), new String(foreign.getResponseBody()));
         assertEquals("Greater London", mapper.address(mapper.applicationProfile(applicationId)).get("state_or_province"));
-        assertEquals(0, referenceData.count());
+        assertEquals(calls, referenceData.count());
     }
 
     /** 页面省略格式码：沙特草稿地址与同批联系方式照常保存，落库为 SA_NATIONAL_ADDRESS。 */

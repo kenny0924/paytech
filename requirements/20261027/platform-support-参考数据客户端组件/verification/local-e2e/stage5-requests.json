@@ -1,0 +1,60 @@
+{
+  "_comment": "阶段 5 本机联调中 billing / ledger / card 检查的原始请求（2026-10-27，e2e-dev）。本机私网直连：billing http://127.0.0.1:18113，ledger http://127.0.0.1:18105；card 经运营入口 https://127.0.0.1:18444 + /api/operations（管理员 Bearer 登录）。<run> = 运行时间戳 %m%d%H%M%S（本次 1027194235），<oe> = 'ZZ9' + run 末两位（本次 ZZ927）；clientId = '9' + run。sourceReference 每次须唯一。所有请求带 Accept: application/json。",
+  "billing": {
+    "headers": {"X-Gateway-Actor-Subject": "900001", "X-Gateway-Session-Id": "refclient-stage5"},
+    "calls": [
+      {"name": "USD 超精度 → 400 FACT_LINE_INVALID", "method": "POST", "url": "http://127.0.0.1:18113/billing/v1/facts",
+       "body": {"factType": "MANUAL_ADJUSTMENT", "sourceSystem": "REFCLIENT_STAGE5", "sourceReference": "refclient-<run>-USD-1.005",
+                "clientId": "9<run>", "entityNo": "<oe>", "currency": "USD",
+                "lines": [{"componentType": "CLIENT_PRINCIPAL", "payerRole": "OPERATING_ENTITY", "payerId": "<oe>", "payeeRole": "CLIENT",
+                           "payeeId": "9<run>", "amount": "1.005", "direction": "ADJUSTMENT"}]},
+       "expect": "400 FACT_LINE_INVALID"},
+      {"name": "未知币种 JPY → 400 BUSINESS_CHECK_FAILED", "method": "POST", "url": "http://127.0.0.1:18113/billing/v1/facts",
+       "body": {"factType": "MANUAL_ADJUSTMENT", "sourceSystem": "REFCLIENT_STAGE5", "sourceReference": "refclient-<run>-JPY-100",
+                "clientId": "9<run>", "entityNo": "<oe>", "currency": "JPY",
+                "lines": [{"componentType": "CLIENT_PRINCIPAL", "payerRole": "OPERATING_ENTITY", "payerId": "<oe>", "payeeRole": "CLIENT",
+                           "payeeId": "9<run>", "amount": "100", "direction": "ADJUSTMENT"}]},
+       "expect": "400 BUSINESS_CHECK_FAILED「币种不存在或尚未同步: JPY, 等待 Platform 币种快照下一次刷新后重试」（mor-test 若已启用 JPY 则换一个未登记的 ISO 代码）"},
+      {"name": "合法 USD → 201 DRAFT", "method": "POST", "url": "http://127.0.0.1:18113/billing/v1/facts",
+       "body": {"factType": "MANUAL_ADJUSTMENT", "sourceSystem": "REFCLIENT_STAGE5", "sourceReference": "refclient-<run>-USD-1.25",
+                "clientId": "9<run>", "entityNo": "<oe>", "currency": "USD",
+                "lines": [{"componentType": "CLIENT_PRINCIPAL", "payerRole": "OPERATING_ENTITY", "payerId": "<oe>", "payeeRole": "CLIENT",
+                           "payeeId": "9<run>", "amount": "1.25", "direction": "ADJUSTMENT"}]},
+       "expect": "201，status DRAFT，grossAmount 1.25；记下 factId"},
+      {"name": "作废测试草稿", "method": "POST", "url": "http://127.0.0.1:18113/billing/v1/facts/<factId>/void", "body": null,
+       "expect": "200，status VOIDED（不发布事件）"}
+    ]
+  },
+  "ledger": {
+    "headers": {"X-Gateway-Actor-Subject": "900001", "X-Gateway-Session-Id": "refclient-stage5"},
+    "calls": [
+      {"name": "快照中没有的币种建账簿 → 400 CURRENCY_NOT_ACTIVE（不写入）", "method": "POST", "url": "http://127.0.0.1:18105/ledger-books/v1",
+       "body": {"entityType": "OPERATING_ENTITY", "entityId": "<oe>", "currency": "JPY", "chartCode": "STANDARD"},
+       "expect": "400 CURRENCY_NOT_ACTIVE"},
+      {"name": "追平（本机未成功，仅供参考）", "method": "POST", "url": "http://127.0.0.1:18105/posting-streams/v1/catch-up",
+       "headers": {},
+       "body": {"entityType": "OPERATING_ENTITY", "entityId": "<oe>", "currency": "USD", "shardNo": 0},
+       "expect": "本机返回 400 INVALID_REQUEST（该 OE 没有账簿 / 流，参数被拒）。mor-test 请改用已有账簿的 entityType / entityId / currency，并按 PostingStreamCommandApi 核对 shardNo 取值与所需请求头；本请求未在本机验证通过"}
+    ]
+  },
+  "card": {
+    "entry": "https://127.0.0.1:18444/api/operations（运营管理员登录：POST /auth/v1/login {loginIdentifier, password} → Bearer accessToken；写请求带 Idempotency-Key 与 Content-Type: application/json）",
+    "csv": "bin_prefix,card_brand,funding_type,card_level,card_product,issuer_country,issuer_name\n48219901,VISA,DEBIT,,,AE,Refclient Stage5 Bank\n48219902,VISA,DEBIT,,,XX,Refclient Stage5 Bank\n",
+    "calls": [
+      {"name": "开始上传", "method": "POST", "url": "/api/operations/card-admin/v1/bin-library/uploads",
+       "body": {"fileName": "refclient-stage5-<HHMMSS>.csv", "sizeBytes": "<CSV 字节数，此 CSV 为 180>"},
+       "expect": "返回 uploadId 与 authorization {method, url, headers}"},
+      {"name": "直传对象存储", "method": "<authorization.method，通常 PUT>", "url": "<authorization.url>", "headers": "<authorization.headers>",
+       "body": "<CSV 原始字节>", "expect": "200"},
+      {"name": "完成上传", "method": "POST", "url": "/api/operations/card-admin/v1/bin-library/uploads/<uploadId>/completion", "body": null,
+       "expect": "返回 fileAddress /files/v1/<fileId>（scanStatus 可能为 PENDING_SCAN）"},
+      {"name": "建版本（扫描未完成时重试，每 3 秒）", "method": "POST", "url": "/api/operations/card-admin/v1/bin-library/versions",
+       "body": {"fileAddress": "/files/v1/<fileId>"}, "expect": "201 VALIDATING，记下 versionNo"},
+      {"name": "轮询版本（每 3 秒，直到不是 VALIDATING）", "method": "GET", "url": "/api/operations/card-admin/v1/bin-library/versions/<versionNo>", "body": null,
+       "expect": "status INVALID，totalRows 2，errorRows 1（不写号段、不激活；不要调用 activation）"},
+      {"name": "导入错误", "method": "GET", "url": "/api/operations/card-admin/v1/bin-library/versions/<versionNo>/errors?page=1&size=10", "body": null,
+       "expect": "1 条：lineNo 3，columnName issuer_country，errorCode COUNTRY_REGION_MISSING，「发卡国 XX 未登记区域」"}
+    ],
+    "residue": "留下一个 INVALID 版本与一个上传文件，没有删除接口"
+  }
+}

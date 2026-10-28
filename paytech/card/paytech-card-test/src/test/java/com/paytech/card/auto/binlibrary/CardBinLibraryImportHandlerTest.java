@@ -7,13 +7,13 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
+import com.paytech.card.api.CardApiConstants;
 import com.paytech.card.api.enums.BinImportErrorCode;
 import com.paytech.card.api.enums.BinLibraryVersionStatus;
 import com.paytech.card.api.enums.CardBrand;
@@ -26,15 +26,18 @@ import com.paytech.card.test.builder.BinLibraryCsvBuilder;
 import com.paytech.card.test.mocker.PlatformMocker;
 import com.paytech.foundation.compensation.api.CompensationEventScanner;
 import com.paytech.foundation.compensation.api.CompensationScanRequest;
+import com.paytech.platform.support.api.enums.ReferenceDataStatus;
+import com.paytech.platform.support.referencedata.client.ReferenceDataKind;
+import com.paytech.platform.support.referencedata.client.test.ReferenceDataBuilders;
 
 /**
  * BIN 库导入任务 CARD_BIN_LIBRARY_IMPORT 的独立入口：待导入版本与任务经真实登记器同事务写入，提交后由真实 Dispatcher 执行，重试经真实 Scanner 唤醒；
- * Platform 文件元数据、下载地址与国家区域映射由测试 HTTP 服务返回 DTO 与字节。
+ * Platform 文件元数据与下载地址由测试 HTTP 服务返回 DTO 与字节；国家区域映射读进程内国家参考数据快照（每例由测试 HTTP 服务刷新一次）。
  *
  * <p>
  * 覆盖：两遍读取写入 2500 行（BOM、CRLF，三批）；扫描中可重试、扫描通过后经 Scanner 完成；隔离与文件不存在、表头不符、摘要不符为 INVALID 与原因；
  * 行错误超过 200 条只记录前 200 条；第二遍下载中断后重入先清理残留再完整写入；非 VALIDATING 版本直接成功不访问 Platform；日志与错误明细不含完整卡号
- * （AC-11）。
+ * （AC-11）；DRAFT / INACTIVE 国家同样推导区域（与原国家区域接口不按状态过滤一致），导入不请求参考数据。
  *
  * @see CardBinLibraryImportHandler#handle(com.paytech.foundation.compensation.api.CompensationEvent)
  */
@@ -48,13 +51,7 @@ class CardBinLibraryImportHandlerTest extends AbstractBinLibraryTest {
     @Autowired
     private CompensationEventScanner scanner;
 
-    /** 本类每例都使用 6 国区域映射。 */
-    @BeforeEach
-    void setUpClassMocks() {
-        platform.mockCountryRegions(REGIONS);
-    }
-
-    /** 2500 行合法文件（BOM、CRLF）：三批写入，进度等于总行数，任务完成后删除；两遍各下载一次、映射查询一次。 */
+    /** 2500 行合法文件（BOM、CRLF）：三批写入，进度等于总行数，任务完成后删除；两遍各下载一次，国家映射只读快照（参考数据请求仍只有前置刷新的一次）。 */
     @Test
     void test_importLargeFile() {
         byte[] csv = rows(2500, BinLibraryCsvBuilder.template().bom().crlf());
@@ -70,7 +67,8 @@ class CardBinLibraryImportHandlerTest extends AbstractBinLibraryTest {
             () -> assertEquals(2500, ranges.size()), () -> assertEquals("400000", ranges.getFirst().get("binPrefix")),
             () -> assertEquals("NORTH_AMERICA", ranges.getFirst().get("issuerRegion")),
             () -> assertEquals(CardFundingType.CREDIT.getCode(), ranges.getFirst().get("fundingType")),
-            () -> assertEquals(2, platform.downloadCount(FILE_ID)), () -> assertEquals(1, platform.countryRegionQueryCount()));
+            () -> assertEquals(2, platform.downloadCount(FILE_ID)), () -> assertEquals(1, referenceData.totalCalls()),
+            () -> assertEquals(CardApiConstants.SERVICE_ID, referenceData.lastCallerService()));
     }
 
     /** 扫描中：可重试失败且不下载；扫描通过后经真实 Scanner 唤醒，完成导入。 */
@@ -200,7 +198,30 @@ class CardBinLibraryImportHandlerTest extends AbstractBinLibraryTest {
 
         awaitTaskDeleted();
         assertAll(() -> assertEquals(BinLibraryVersionStatus.VALID.getCode(), version(1).get("status")),
-            () -> assertEquals(0, platform.fileQueryTotal()), () -> assertEquals(0, platform.countryRegionQueryCount()));
+            () -> assertEquals(0, platform.fileQueryTotal()), () -> assertEquals(1, referenceData.totalCalls()));
+    }
+
+    /** 区域映射取快照中的全部国家：DRAFT（CN）与 INACTIVE（JP）国家同样推导区域，未收录的国家仍是行错误。 */
+    @Test
+    void test_regionFromAnyCountryStatus() {
+        referenceData.reset(ReferenceDataKind.COUNTRY).country(
+            ReferenceDataBuilders.country("US").regionCode("NORTH_AMERICA"),
+            ReferenceDataBuilders.country("JP").regionCode("APAC").status(ReferenceDataStatus.INACTIVE),
+            ReferenceDataBuilders.country("CN").regionCode("APAC").status(ReferenceDataStatus.DRAFT));
+        refreshCountries();
+        byte[] csv = BinLibraryCsvBuilder.template()
+            .row("400001", CardBrand.VISA.getCode(), null, null, null, "JP", null)
+            .row("400002", CardBrand.VISA.getCode(), null, null, null, "CN", null).build();
+        platform.mockCsvFile(FILE_ID, csv);
+
+        long versionId = binLibrary.importingVersion(1, FILE_ID, PlatformMocker.sha256(csv));
+
+        var imported = awaitImported(1);
+        awaitTaskDeleted();
+        var ranges = mapper.binRanges(versionId);
+        assertAll(() -> assertEquals(BinLibraryVersionStatus.VALID.getCode(), imported.get("status")),
+            () -> assertEquals(2, ranges.size()), () -> assertEquals("APAC", ranges.get(0).get("issuerRegion")),
+            () -> assertEquals("APAC", ranges.get(1).get("issuerRegion")), () -> assertEquals(2, referenceData.totalCalls()));
     }
 
     /** n 行合法号段：前缀 400000 起递增，交替卡组织，发卡国 US。 */

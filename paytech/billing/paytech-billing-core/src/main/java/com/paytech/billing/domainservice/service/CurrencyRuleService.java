@@ -2,7 +2,7 @@ package com.paytech.billing.domainservice.service;
 
 import com.paytech.billing.domain.CurrencyRule;
 
-/** 币种规则读取的业务唯一入口：只读进程内币种快照，从不外呼，可在事务内调用。 */
+/** 币种规则读取的业务唯一入口：只读参考数据客户端的进程内币种快照，从不外呼，可在事务内调用。 */
 public interface CurrencyRuleService {
 
     /**
@@ -11,7 +11,7 @@ public interface CurrencyRuleService {
      *
      * @param currency ISO 4217 币种代码
      * @return 该币种规则
-     * @throws com.paytech.foundation.common.error.BizCheckFailException 快照中没有该币种（同时请求刷新快照）或币种为 DRAFT
+     * @throws com.paytech.foundation.common.error.BizCheckFailException 快照中没有该币种或币种为 DRAFT
      */
     CurrencyRule requireUsable(String currency);
 }

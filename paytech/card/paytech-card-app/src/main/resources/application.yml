@@ -19,7 +19,7 @@ spring:
         enabled: false
   http:
     serviceclient:
-      # BIN 库导入（2026-10-22）：Platform 内部文件接口与国家区域映射；基址含 Platform Context Path。
+      # BIN 库导入（2026-10-22）：Platform 内部文件接口；基址含 Platform Context Path。
       platform-support-service:
         base-url: lb://platform-support-service/platform-support
         connect-timeout: 2s
@@ -107,6 +107,13 @@ card:
     grace: P1D
     batch-size: 200
 
+# 参考数据客户端（2026-10-27）：BIN 库导入由发卡国推导区域，只开启 COUNTRY；进程内快照启动后后台加载、每小时全量刷新，
+# 首次成功前按 10 秒重试。不配 base-url：经服务发现访问 platform-support-service/platform-support，X-Caller-Service 取 spring.application.name（card-service）。
+platform-support:
+  reference-data:
+    client:
+      kinds: [COUNTRY]
+
 vault:
   client:
     # 卡 DEK：数据类型 PAYMENT_CARD_DEK，Protect CARD_STORAGE、Reveal CARD_USE；Vault 访问规则须登记本 Caller。
@@ -136,6 +143,10 @@ management:
       show-components: never
       probes:
         enabled: true
+      group:
+        # 国家参考数据首次加载成功前不接流量（BIN 库导入依赖它推导发卡区域）。
+        readiness:
+          include: readinessState,referenceData
     info:
       access: read-only
     prometheus:

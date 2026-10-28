@@ -124,6 +124,18 @@ management:
     rabbit:
       enabled: false
 
+# 参考数据客户端：Mock 服务根地址（参考数据端点没有 Context Path）；关闭自动刷新，全局 BeforeEach 配置目录后调用 refreshNow()。
+platform-support:
+  reference-data:
+    client:
+      base-url: "${client-master.test.external.base-url}"
+      kinds: [CURRENCY, COUNTRY, SUBDIVISION, INDUSTRY, MCC]
+      refresh-interval: PT1H
+      initial-retry-interval: PT10S
+      scheduling-enabled: false
+      connect-timeout: 2s
+      read-timeout: 5s
+
 # 内部调用 Token（D26）：Mock 测试保持关闭；值必须带引号，裸 OFF 在 YAML 1.1 中是布尔 false。
 internal-auth:
   mode: "OFF"

@@ -1,14 +1,14 @@
 package com.paytech.billing.domain;
 
 import com.paytech.platform.support.api.enums.CurrencyRoundingMode;
-import com.paytech.platform.support.api.enums.CurrencySpecStatus;
+import com.paytech.platform.support.api.enums.ReferenceDataStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * 一条币种规则：Platform 币种主数据（t_currency_spec）在本服务内存快照中的形态
- * <li>Owner 为 platform-support；本服务不持久化，只经 {@code CurrencySpecQueryApi} 整体读取后放入快照。</li>
+ * 一条币种规则：Platform 币种参考数据在本服务内的只读形态
+ * <li>Owner 为 platform-support；本服务不持久化，由参考数据客户端的进程内快照（{@code ReferenceCurrency}）转换而来。</li>
  */
 @Getter
 @AllArgsConstructor
@@ -23,10 +23,10 @@ public class CurrencyRule {
     private final CurrencyRoundingMode roundingMode;
 
     /** Platform 状态：DRAFT 从未生效；ACTIVE、INACTIVE 为启用过。 */
-    private final CurrencySpecStatus status;
+    private final ReferenceDataStatus status;
 
     /** 是否启用过（ACTIVE 或 INACTIVE）：已有事实与登记按启用过判断，停用只拦截新用途（Q2）。 */
     public boolean usable() {
-        return status == CurrencySpecStatus.ACTIVE || status == CurrencySpecStatus.INACTIVE;
+        return status == ReferenceDataStatus.ACTIVE || status == ReferenceDataStatus.INACTIVE;
     }
 }

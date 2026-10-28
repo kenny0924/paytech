@@ -32,6 +32,12 @@
             <artifactId>paytech-platform-support-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 提交校验与分类保存读进程内参考数据快照（2026-10-27 参考数据客户端组件）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-platform-support-reference-data-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-compliance-api</artifactId>

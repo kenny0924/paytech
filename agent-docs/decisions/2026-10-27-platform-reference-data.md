@@ -30,7 +30,7 @@ client-onboarding 设计中发现：行业、组织类型等目录写在 client-
    | `t_ref_mcc` | ISO 18245 / 卡组织清单 | 新建：`mcc_code` CHAR(4)、`name`、`description`、`network_high_risk`（卡组织公布的高风险 MCC，外部事实） |
 
 6. **行业三级 = 大类 → 细类 → MCC。** 细类是平台最细的行业分类；MCC 不挂父子层级。细类只给建议 MCC，运营在 O04 确认或改选，客户资格冻结 `industry_code` + `mcc_code`。不建 PayerMax 式 6 位子 MCC：准入、费率、资质以 `industry_code` 为键由各 Owner 配置；渠道要求自有类目时，在 channel-connector 建"渠道 × `industry_code` → 渠道类目"映射，不进 `t_ref_*`。
-7. **读取方式。** 消费方只存编码字符串（开放集合，不建 Java 枚举）。A 直接调 API（低频、事务外）；B 进程内快照（高频或事务内，沿用币种决定）；C 写入时冻结编码。校验在事务外完成。出现第三个读法 B 消费方或第二种需要读法 B 的参考数据时，在触发需求中把 ledger / billing 的快照实现抽为 Foundation 组件并同时迁移。
+7. **读取方式。** 消费方只存编码字符串（开放集合，不建 Java 枚举）。A 直接调 API（低频、事务外）；B 进程内快照（高频或事务内，沿用币种决定）；C 写入时冻结编码。校验在事务外完成。读法 B 一律使用 Platform 提供的参考数据客户端 `paytech-platform-support-reference-data-client`（2026-10-27 [参考数据客户端组件需求](../../requirements/20261027/platform-support-参考数据客户端组件/requirement.md)修订本条：原定"抽为 Foundation 组件"改由 Platform 持有）：按配置加载所需种类，默认每 1 小时全量刷新（可配置；首次成功前按短周期重试），读方法只读内存、查不到即报错、从不回源，不使用 Caffeine。读法 A 只保留给 BFF 转发与运营页面。
 8. **维护。** 默认评审过的初始化 SQL 与 `changes/` 手工变更；logo 先上传文件服务，DML 只写文件地址。确有运营需要时才做维护页，沿用币种的草稿 / 启用 / 停用流程与 `t_audit_event` 审计；行业分类最可能先需要。
 9. **前后端分工。** 后端（Platform 与业务系统）只管数据：存并原样返回编码、标准属性、`name`、logo 地址与状态，不返回本地化名称、不做格式化。前端负责国际化与展示：国家 / 币种名称用 `Intl.DisplayNames`，行业 / MCC / 行政区名称用 i18n `refdata.<type>.<code>`，缺失回退 `name`、再回退编码；金额用 `Intl.NumberFormat`；logo 经文件服务解析公开 URL 渲染。后端生成给人看的单据需要本地化时由生成单据的服务自行处理。
 10. **初始数据。** MCC 以 ISO 18245 与 Visa / Mastercard 公开 MCC 清单的交集为准；行业分类参照 Adyen / Stripe 分组自拟；上线前需合规确认可商用。

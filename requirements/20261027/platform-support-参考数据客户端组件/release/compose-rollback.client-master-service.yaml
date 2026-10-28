@@ -1,0 +1,34 @@
+# 参考数据客户端组件：mor-test 回滚覆盖（scripts/gen_rollback.sh 于部署前生成，勿手改）。回滚目标 = 生成时刻现网运行镜像，env 与候选相同。
+# Platform 发布后，消费方回滚前必须先回滚 Platform（runbook 第 5 节）。
+services:
+  client-master-service:
+    image: sha256:80257737ed090d3ba3f70b6b4ce7c4356bf7c0ac7548191d04ccaecd4d609570  # 部署前现网（容器创建 2026-10-27T15:37:23.835948055Z，2026-10-28T03:57:58Z 生成）
+    environment:
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.26
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mor_client_master?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: client_master_app
+      SPRING_DATASOURCE_PASSWORD: ${MOR_CLIENT_MASTER_DB_PASSWORD:?prepare test secrets}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      SPRING_DATA_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      CCT_RABBITMQ_HOST: rabbitmq
+      CCT_RABBITMQ_PORT: "5672"
+      CCT_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      CCT_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      CCT_RABBITMQ_VHOST: /mor-test
+      MESSAGING_CONSUMER_SERVICE: client-master
+      MESSAGING_CONSUMERS_COMPLIANCE_PARTITIONS: "4"
+      ONBOARDING_DRAFT_ENABLED: "true"
+      ONBOARDING_RECOVERY_ENABLED: "true"
+      ONBOARDING_ID_DATACENTER: "0"
+      ONBOARDING_ID_WORKER: "26"
+      COMPENSATION_INSTANCE_ID: client-master-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: client-master-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.26
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+

@@ -11,11 +11,11 @@
   `node --test scripts/pdmaner/billing-model.test.mjs`；Schema 与初始化 DML 在 [docs/database/sql](docs/database/sql)，结构变更见
   [changes/](docs/database/sql/changes)（最近一次：[2026-10-20-drop-currency-spec-copy.sql](docs/database/sql/changes/2026-10-20-drop-currency-spec-copy.sql)
   删除币种副本表）。
-- 币种规则：Owner platform-support（`mor_platform.t_currency_spec`），本服务不持副本。启动后经 `CurrencySpecQueryApi`
-  （`GET /platform/v1/currency-specs`，HTTP 分组 `platform-support-service`）整体读取到进程内全量快照 `CurrencySpecSnapshot`，业务只经
-  `CurrencyRuleService.requireUsable` 读内存（可在事务内）；`CurrencySnapshotRefreshScheduler` 每 5 秒检查，未加载或业务查不到币种时回源，
-  就绪后每 60 秒全量刷新，失败保留上一份快照；首次加载成功前 readiness（`currencySnapshot`）为 DOWN。计费事实登记接受启用过（ACTIVE 或
-  INACTIVE）的币种，DRAFT 与未知币种拒绝（Q2/Q7）。
+- 币种规则：Owner platform-support（`mor_platform.t_ref_currency`），本服务不持副本。2026-10-27 起由 core 依赖的
+  [参考数据客户端](../../requirements/20261027/platform-support-参考数据客户端组件/technique.md)（`kinds: [CURRENCY]`）整体读取到进程内快照，
+  业务只经 `CurrencyRuleService.requireUsable` 读内存（可在事务内）；启动后立即加载，首次成功前每 10 秒重试，之后每 1 小时全量刷新，
+  失败保留上一份快照；首次加载成功前 readiness（`referenceData`）为 OUT_OF_SERVICE；查不到币种不提前回源。计费事实登记接受启用过（ACTIVE 或
+  INACTIVE）的币种，DRAFT 与未知币种拒绝（Q2/Q7）；已登记事实的发布与自动 PAYMENT 事实登记把查不到转为可重试的系统异常。
 
 | 模块 | 职责 |
 |---|---|

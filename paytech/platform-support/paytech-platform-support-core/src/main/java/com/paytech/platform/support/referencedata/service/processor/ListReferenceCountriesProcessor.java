@@ -15,7 +15,6 @@ import lombok.AllArgsConstructor;
 
 /**
  * 查询参考数据国家并批量换取国旗公开地址；只读，不开事务
- * <li>旧接口 /platform/v1/country-regions 也经本 Processor 读取全部国家，只投影国家与区域两列。</li>
  */
 @Component
 @AllArgsConstructor

@@ -1,0 +1,40 @@
+{
+ "env": "mor-test",
+ "summary": {
+  "PASS": 2,
+  "FAIL": 1,
+  "INFO": 1
+ },
+ "results": [
+  {
+   "ac": "AC-07",
+   "check": "AE001 账簿 200：1 个",
+   "verdict": "PASS",
+   "evidence": [
+    {
+     "ledgerBookId": "238137396670066688",
+     "currency": "USD",
+     "bookStatus": "OPEN"
+    }
+   ]
+  },
+  {
+   "ac": "AC-07",
+   "check": "科目余额读取（账簿 × OPEN 期间，候选期间 2）",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-07",
+   "check": "账簿 238137396670066688（USD）期间 238137395982200832 余额样例",
+   "verdict": "INFO",
+   "evidence": "{'currency': 'USD', 'ledgerBookId': '238137396670066688', 'lines': [{'accountClass': 'ASSET', 'accountCode': 'CHANNEL_RECEIVABLES', 'accountName': '渠道应收款', 'accountNo': '1101', 'chartAccountId': '3102', 'closingBalance': '100.00', 'level': 1, 'normalSide': 'DEBIT', 'openingBalance': '0.00', 'parentC"
+  },
+  {
+   "ac": "AC-07",
+   "check": "执行试算 405（只写试算记录，不改分录 / 余额）",
+   "verdict": "FAIL",
+   "evidence": "<html>\r\n<head><title>405 Not Allowed</title></head>\r\n<body>\r\n<center><h1>405 Not Allowed</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n"
+  }
+ ]
+}

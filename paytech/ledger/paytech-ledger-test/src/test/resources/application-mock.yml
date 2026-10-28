@@ -50,7 +50,7 @@ spring:
     connection-timeout: 2s
     publisher-confirm-type: correlated
     publisher-returns: true
-  # account（过账进度、批次）、billing（事实详情、pending）与 platform-support（币种规则）由 EnableMockHttpServer 的随机 Loopback 端口承载，
+  # account（过账进度、批次）与 billing（事实详情、pending）由 EnableMockHttpServer 的随机 Loopback 端口承载，
   # 真实客户端直连该地址（Mock 服务无 Context Path）。
   http:
     clients:
@@ -67,14 +67,29 @@ spring:
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow
-      platform-support-service:
-        base-url: "${ledger.test.external.base-url}"
-        connect-timeout: 2s
-        read-timeout: 5s
-        redirects: dont-follow
 
 mybatis:
   mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-platform-support-reference-data-client：platform-support 参考数据查询同样由 Loopback Mock 服务承载（无 Context Path）。
+platform-support:
+  reference-data:
+    client:
+      # 配置 base-url 时直连 Mock 服务；service-id / context-path 只在不配 base-url（服务发现）时生效，保留默认值以列全字段。
+      base-url: "${ledger.test.external.base-url}"
+      service-id: platform-support-service
+      context-path: /platform-support
+      # 每个请求的 X-Caller-Service；不配时取 spring.application.name，生产不配。
+      caller-service: ledger-service
+      kinds: [CURRENCY]
+      # 生产 PT1H；调度关闭时不生效，保留以列全字段。
+      refresh-interval: PT1H
+      # 生产 PT10S；调度关闭时不生效。
+      initial-retry-interval: PT10S
+      # 生产 true；测试关闭，全局 BeforeEach 与用例配置 Mocker 后经 ReferenceDataRefresher.refreshNow() 显式加载。
+      scheduling-enabled: false
+      connect-timeout: 2s
+      read-timeout: 5s
 
 # paytech-redis-starter
 redis:
@@ -126,7 +141,7 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState,currencySnapshot
+          include: readinessState,referenceData
     info:
       access: read-only
     prometheus:
@@ -139,13 +154,6 @@ ledger:
     # Snowflake Region / Worker 标识；生产无默认值且必填，修改需重启。测试进程固定 0/0。
     region-id: 0
     worker-id: 0
-  currency-snapshot:
-    # 进程内调度开关；生产默认 true。测试关闭，全局 BeforeEach 与用例经 CurrencySnapshotRefreshScheduler 的公开方法显式刷新。
-    scheduling-enabled: false
-    # 检查周期（固定延迟），生产 PT5S；调度关闭时不生效，保留以列全字段。
-    check-interval: PT5S
-    # 就绪后的全量刷新间隔，必填，生产 PT60S；测试同值。
-    refresh-interval: PT60S
   test:
     external:
       # 测试专用运行时字段；EnableMockHttpServer 在创建真实客户端之前注入 Loopback 随机端口。

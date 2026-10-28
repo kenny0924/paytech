@@ -19,7 +19,7 @@ public class MockChannelCostResolutionApi implements ChannelCostResolutionApi {
 
     @Override
     public ChannelCostResolutionResponseBody resolveChannelCost(ResolveChannelCostRequestBody body) {
-        MockCurrencySpecApi.markRequestId();
+        MockRequestId.mark();
         return mocker.resolve(body.getMidId());
     }
 }

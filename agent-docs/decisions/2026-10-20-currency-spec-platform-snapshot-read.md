@@ -2,6 +2,8 @@
 
 状态：已定（2026-10-20，用户确认）。取代 [目标架构 V2 决定](./2026-10-17-target-architecture-v2.md) D41 中“会计与计费各持同结构只读副本”的部分；D41 的 Owner 归属（Platform 持有全平台参考数据并提供查询 API）不变。需求与方案见 [platform-support：币种主数据维护与读取缓存](../../requirements/20261020/platform-support-币种主数据维护与读取缓存/requirement.md)。
 
+> **2026-10-27 修订：** 读取方式（第 4—6 条）的实现由 [参考数据客户端组件](../../requirements/20261027/platform-support-参考数据客户端组件/requirement.md)取代：ledger、billing 改用 `paytech-platform-support-reference-data-client` 读 `/platform/v1/reference-data/currencies`，旧接口 `CurrencySpecQueryApi` 已删除；刷新间隔由 60 秒改为默认 1 小时；取消"查不到时请求刷新"（查不到仍以可重试的系统异常失败）；刷新由客户端自带调度器执行，不再使用 `@Scheduled`。其余条款不变。
+
 ## 背景
 
 D41 为保证“过账与舍入不依赖远程调用”，让 ledger、billing 各持一份 `t_currency_spec` 副本，同步机制留待后续。实际三处副本由同一份 SQL 初始化后彼此独立，Platform 也没有维护入口；一旦在 Platform 维护，副本必然漂移。
