@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## client-master 国家包法务修订（2026-10-28，已部署 mor-test，已本地提交，未推送）
+## client-master 国家包法务修订（2026-10-28，已部署 mor-test，已本地提交 `ac3145f4`，未推送）
 
 - **范围：** [需求](<../requirements/20261027/client-master-国家包法务修订/requirement.md>)、[技术方案](<../requirements/20261027/client-master-国家包法务修订/technique.md>)、[交付记录](<../requirements/20261027/client-master-国家包法务修订/delivery.md>)、[运行卡](<../requirements/20261027/client-master-国家包法务修订/release/runbook.md>)；依据 [法源研究 26 项](<../design-discuss/client-onboarding/legal-research-26-items-2026-10-27.md>)，结论回写 [design.md 9.5a](<../design-discuss/client-onboarding/design.md>)。
 - **Implemented：** client-master AE / SA / EG 国家包增量 DML 与采集 Schema v2（v1 RETIRED，存量申请继续按 v1）；声明绑定资料版本 `draft_revision` 与条款版本，资料改动后声明失效并拒绝提交（`DECLARATION_STALE`，`draft_revision` 为 NULL 的存量声明按 0 处理仍有效）；受益人门槛比较方式（GTE / GT）；规则作用域 `DECLARATION` / `ATTRIBUTE`、`DATE_NOT_PAST`；修复 `RelationRules.uboSatisfied` 认定依据为空时的空指针。Client BFF / Web 声明阅读、逐项重新确认与失效提示；Operations BFF / Web 规则视图（是 / 否）、v2 声明区块与存量声明。
