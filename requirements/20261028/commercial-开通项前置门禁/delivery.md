@@ -27,7 +27,8 @@
 | 2026-10-29 | 7 旁证 | design-discuss-0e 只读复核：新 ops-bff 下财务币种下拉 4 种查询与发布前逐字节相同、非法 status 仍 400；ledger / billing / card / client-master readiness UP，20:00Z 起刷新失败与 ERROR 为 0；旧接口仍 404；参考数据条数 4/249/47/42/298 | 通过 |
 | 2026-10-29 | 7 追加修改 | 用户看页面后指出区头「新增开通项」与产品栏「+ 新增开通项」重复（两者均为既有按钮）→ 去掉区头按钮（`AgreementDetail.tsx` 一行，两个 worktree 同步；文案 key 仍被抽屉标题使用，不动语言包）；ops-web `npm test` 1581 通过、build 通过；镜像 `gate-20261029b` `sha256:8aec3df8…`，新候选 `release/compose-candidate.operations-console-web.b.yaml`；00:33（+04）替换 mor-test ops-web，healthy，浏览器 zh-CN 1440 复核区头只剩「修改订阅」。回滚目标仍为 `7a053544`（a 版）或法务修订 `45ee11cb`（需连同 commercial 回滚） | 已完成 |
 | 2026-10-29 | 7 确认 / 8 授权 | 用户回复"没有，继续阶段 8"（不需要门禁可配置）：接受阶段 7，授权本地提交（不推送）、更新台账与决定状态、清理 worktree；本机联调环境保留 | 已确认 |
-| 2026-10-29 | 8 提交 | 以 main `d0b45d54` 为父经独立 index 提交：代码 130 个文件（= mor-test 运行的 `gate-20261029a` + ops-web `gate-20261029b` 源码，基于 `ac3145f4`）、本需求目录（不含 `verification/stage5/backup/` 本机库导出）、REQ-05 / REQ-12 阶段 1 评审稿、客户上线决定、design-discuss/client-activation、requirements / design-discuss README 与 CURRENT_IMPLEMENTATION 本需求条目。`operations-console.pen` 的商务 · 14—17 画板因该文件含其他会话未提交改动，未随本提交 | 已完成 |
+| 2026-10-29 | 8 提交 | 提交 `ba0e15b5`（300 个文件，未推送）：以 main `d0b45d54` 为父经独立 index 提交：代码 130 个文件（= mor-test 运行的 `gate-20261029a` + ops-web `gate-20261029b` 源码，基于 `ac3145f4`）、本需求目录（不含 `verification/stage5/backup/` 本机库导出）、REQ-05 / REQ-12 阶段 1 评审稿、客户上线决定、design-discuss/client-activation、requirements / design-discuss README 与 CURRENT_IMPLEMENTATION 本需求条目。`operations-console.pen` 的商务 · 14—17 画板因该文件含其他会话未提交改动，未随本提交 | 已完成 |
+| 2026-10-29 | 8 收尾 | 主工作区 130 个代码文件已同步为提交内容（原为基线、无他人改动）；共享 index 已按提交同步；本记录与 `release/harness/rehearse.sh`、`release/scripts/env_check.sh` 可执行位修正另行提交；开发 worktree 待清理 | 已完成 |
 
 ## 适用阶段
 
