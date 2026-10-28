@@ -1,8 +1,12 @@
-import { Button, Form, Input, InputNumber, Radio, Select, Tag } from 'antd';
+import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { Alert, Button, Form, Input, InputNumber, Radio, Select, Tag } from 'antd';
+import { ArrowRightOutlined, WarningOutlined } from '@ant-design/icons';
+import { session } from '../api/session';
 import { DatePicker } from '../components/DatePicker';
 import {
   acceptanceBody, acceptanceMethods, agreementBody, businessModes, capabilityStatuses, commercialPaths, decodeAgreementWrite, decodeCapabilityWrite,
-  decodePlan, entityNoPattern, idPattern, localInput, offsetInstant, partnerTermTypes, partyRoles, planBody, reserveError, termTypes,
+  decodePlan, entityNoPattern, idPattern, localInput, localTime, offsetInstant, partnerTermTypes, partyRoles, planBody, reserveError, termTypes,
 } from './commercial';
 import type {
   AcceptanceFormValues, Agreement, AgreementCapability, AgreementFormValues, AgreementParty, AgreementWriteResult, PlanFormValues, TermPlan,
@@ -14,8 +18,10 @@ import type { CapabilityChoice, CapabilityFormValues, DimensionDefinition } from
 import { ConditionFields } from './ConditionFields';
 import { capabilityKindLabel } from './catalogTree';
 import { ClientIdInput } from './ClientIdInput';
-import { browserStorage, rememberClient, subscribableProductOptions } from './commercialConsole';
-import { CommandDrawer, CommandModal, CommercialNote, DrawerSection } from './CommercialParts';
+import { browserStorage, consolePaths, decodeBusinessChangePage, rememberClient, subscribableProductOptions } from './commercialConsole';
+import { lastSuspension } from './capabilityGate';
+import type { SuspensionRecord } from './capabilityGate';
+import { CommandDrawer, CommandModal, CommercialNote, DrawerSection, StatusTag } from './CommercialParts';
 import { useCatalogCapabilities, useCatalogDimensions, useCatalogProducts } from './useCatalog';
 import { useCommercialCommand } from './useCommercialCommand';
 import { enumLabel } from '../i18n/index';
@@ -202,7 +208,8 @@ export function ProductsModal({ agreement, onDone, onClose, onReload, onAuthoriz
 }
 
 /**
- * 新增或整体改写开通项（右侧抽屉，三段）：基本（OE、可开通项卡片 / 状态）、接受条件（逐维度一行 + 3DS + 汇总）、有效期与保证金。
+ * 新增或整体改写开通项（右侧抽屉，三段）：基本（OE、可开通项卡片 / 合同内状态）、接受条件（逐维度一行 + 3DS + 汇总）、有效期与保证金。
+ * <li>编辑（商务 · 17 原型）：顶部摘要标出系统维护的执行状态；合同内状态只有纳入 / 关闭，手动开通入口已取消。新增按钮为「添加」，CLIENT 合同提示添加后进入等前置。</li>
  * <li>卡片列出已订阅产品下全部启用的目录项（给出 productCode 时只列该产品）；该 OE 已有的项置灰并标「已开通」，点击切换为编辑那条开通项（onEdit）。</li>
  */
 export function CapabilityDrawer({ agreement, capability, productCode, onEdit, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
@@ -234,7 +241,13 @@ export function CapabilityDrawer({ agreement, capability, productCode, onEdit, o
   };
   return <CommandDrawer title={capability ? t('capabilityDrawer.editTitle', { entityNo: capability.entityNo, name: catalogItem?.capabilityName ?? capability.capabilityCode })
     : productName ? t('capabilityDrawer.productTitle', { product: productName }) : t('agreement.detail.addCapability')}
-    command={command} onOk={() => void submit()} onClose={onClose} onReload={onReload}>
+    command={command} okText={capability ? undefined : t('capabilityDrawer.addOk')} onOk={() => void submit()} onClose={onClose} onReload={onReload}>
+    {capability ? <CapabilitySummary items={[
+      { label: t('prerequisite.modal.capability'), value: capabilityLabel(capability, catalog.items) },
+      { label: t('prerequisite.modal.entity'), value: capability.entityNo },
+      ...(capability.status === 'ACTIVE' && agreement.agreementType === 'CLIENT' ? [{ label: t('capabilityDrawer.executionStatusSystem'),
+        value: <ExecutionStatusText status={capability.executionStatus} /> }] : []),
+    ]} /> : agreement.agreementType === 'CLIENT' && <CommercialNote>{t('capabilityDrawer.addGateHint')}</CommercialNote>}
     <Form form={form} name="commercial-capability" layout="vertical" initialValues={capability ? {
       entityNo: capability.entityNo, capabilityCode: capability.capabilityCode, status: capability.status, effectiveFrom: localInput(capability.effectiveFrom),
       effectiveTo: localInput(capability.effectiveTo), ...capabilityFormPatch(capability),
@@ -243,7 +256,9 @@ export function CapabilityDrawer({ agreement, capability, productCode, onEdit, o
         <div className="commercial-form-grid">
           <Form.Item name="entityNo" label="OE" rules={[{ required: true, message: t('capabilityDrawer.entityNoRequired') }]}>
             <Select disabled={!!capability} options={entities.map(value => ({ value, label: value }))} /></Form.Item>
-          {capability ? <Form.Item name="status" label={t('shared.column.status')}><Radio.Group optionType="button" options={buttonOptions(t, 'capabilityStatus', capabilityStatuses)} /></Form.Item>
+          {capability ? <Form.Item name="status" label={t('capabilityDrawer.membership')} extra={t('capabilityDrawer.membershipHint')}
+            rules={[{ required: true }]}>
+            <Radio.Group optionType="button" options={capabilityStatuses.map(value => ({ value, label: t('capabilityDrawer.membershipOption.' + value), title: value }))} /></Form.Item>
             : <div />}
         </div>
         {capability ? <Form.Item name="capabilityCode" hidden><Input /></Form.Item>
@@ -269,8 +284,118 @@ export function CapabilityDrawer({ agreement, capability, productCode, onEdit, o
         </div>
       </DrawerSection>
       <CommercialNote>{t('capabilityDrawer.note')}</CommercialNote>
+      {capability && agreement.agreementType === 'CLIENT' && <CommercialNote>{t('capabilityDrawer.gateNote')}</CommercialNote>}
     </Form>
   </CommandDrawer>;
+}
+
+/** 弹窗顶部摘要：开通项（代码 · 名称）、经营主体与当前执行状态等。 */
+function CapabilitySummary({ items }: { items: { label: string; value: ReactNode }[] }) {
+  return <dl className="cc-modal-summary">{items.map(item => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl>;
+}
+
+/** 开通项「代码 · 名称」（目录没有名称时只显示代码）。 */
+function capabilityLabel(capability: AgreementCapability, catalog: readonly { capabilityCode: string; capabilityName: string }[]): string {
+  const name = catalog.find(item => item.capabilityCode === capability.capabilityCode)?.capabilityName;
+  return name && name !== capability.capabilityCode ? `${capability.capabilityCode} · ${name}` : capability.capabilityCode;
+}
+
+/**
+ * 运营手动暂停开通项（商务 · 15 原型）：摘要、「暂停后立即生效」三条影响、必填原因（≤ 200 字，写入变更历史）、红色「暂停」。
+ * 暂停后前置门禁不再触碰它，须手动恢复。
+ */
+export function SuspendCapabilityModal({ agreement, capability, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
+  agreement: Agreement; capability: AgreementCapability; onDone: () => void;
+}) {
+  const t = useT('commercial');
+  const [form] = Form.useForm<{ reason: string }>();
+  const command = useCommercialCommand(onAuthorizationChanged, 'agreement', form);
+  const catalog = useCatalogCapabilities(onAuthorizationChanged);
+  const name = catalog.items.find(item => item.capabilityCode === capability.capabilityCode)?.capabilityName ?? capability.capabilityCode;
+  const submit = async () => {
+    const values = await form.validateFields();
+    const result = await command.run(commercialPaths.capabilitySuspension(agreement.agreementId, capability.agreementCapabilityId), 'POST',
+      { expectedChangeVersion: agreement.changeVersion, reason: values.reason.trim() }, decodeCapabilityWrite(agreement.agreementId),
+      t('prerequisite.suspend.failed'));
+    if (result) onDone();
+  };
+  return <CommandModal title={t('prerequisite.suspend.title', { capabilityCode: capability.capabilityCode })} command={command}
+    okText={t('prerequisite.action.suspend')} danger onOk={() => void submit()} onClose={onClose} onReload={onReload} width={640}>
+    <CapabilitySummary items={[
+      { label: t('prerequisite.modal.capability'), value: capabilityLabel(capability, catalog.items) },
+      { label: t('prerequisite.modal.entity'), value: capability.entityNo },
+      { label: t('prerequisite.modal.executionStatus'), value: <ExecutionStatusText status={capability.executionStatus} /> },
+      { label: t('prerequisite.modal.agreement'), value: agreement.agreementNo },
+    ]} />
+    <Alert type="error" showIcon icon={<WarningOutlined />} className="commercial-banner cc-modal-impact" title={t('prerequisite.suspend.impactTitle')} description={<ul>
+      <li>{t('prerequisite.suspend.impactCheckout', { name })}</li>
+      <li>{t('prerequisite.suspend.impactInFlight')}</li>
+      <li>{t('prerequisite.suspend.impactResume')}</li>
+    </ul>} />
+    <Form form={form} name="commercial-capability-suspend" layout="vertical">
+      <Form.Item name="reason" label={t('prerequisite.suspend.reason')} extra={t('prerequisite.suspend.reasonHint')} rules={[
+        required(t('prerequisite.suspend.reasonRequired')), { max: 200, message: t('prerequisite.suspend.reasonMax') }]}>
+        <Input.TextArea rows={3} maxLength={200} /></Form.Item>
+    </Form>
+  </CommandModal>;
+}
+
+/** 执行状态文字（弹窗摘要用，颜色同徽标）。 */
+function ExecutionStatusText({ status }: { status: string | null }) {
+  const t = useT('commercial');
+  if (!status) return <>—</>;
+  return <span className={`cc-execution-text is-${status}`}>{enumLabel(t, 'enum.AgreementCapabilityExecutionStatus', status)}</span>;
+}
+
+/**
+ * 运营恢复手动暂停的开通项（商务 · 16 原型）：摘要（含暂停人与时间）、暂停原因、「恢复后不会直接开通」状态流、「恢复并检查」。
+ * 暂停人、时间与原因读合同变更历史中该开通项最近一次手动暂停快照；读不到时显示「—」，不阻断恢复。
+ */
+export function ResumeCapabilityModal({ agreement, capability, onDone, onClose, onReload, onAuthorizationChanged }: Base & {
+  agreement: Agreement; capability: AgreementCapability; onDone: () => void;
+}) {
+  const t = useT('commercial');
+  const command = useCommercialCommand(onAuthorizationChanged, 'agreement');
+  const catalog = useCatalogCapabilities(onAuthorizationChanged);
+  const suspension = useLastSuspension(agreement.agreementId, capability.agreementCapabilityId);
+  const submit = async () => {
+    const result = await command.run(commercialPaths.capabilityResumption(agreement.agreementId, capability.agreementCapabilityId), 'POST',
+      { expectedChangeVersion: agreement.changeVersion }, decodeCapabilityWrite(agreement.agreementId), t('prerequisite.resume.failed'));
+    if (result) onDone();
+  };
+  const suspendedBy = suspension ? `${suspension.actorId === '0' ? t('history.system') : suspension.actorLabel ?? suspension.actorId} · ${localTime(suspension.time)}` : '—';
+  return <CommandModal title={t('prerequisite.resume.title', { capabilityCode: capability.capabilityCode })} command={command}
+    okText={t('prerequisite.resume.ok')} onOk={() => void submit()} onClose={onClose} onReload={onReload} width={640}>
+    <CapabilitySummary items={[
+      { label: t('prerequisite.modal.capability'), value: capabilityLabel(capability, catalog.items) },
+      { label: t('prerequisite.modal.executionStatus'), value: <ExecutionStatusText status={capability.executionStatus} /> },
+      { label: t('prerequisite.resume.suspendedBy'), value: suspendedBy },
+    ]} />
+    <dl className="cc-modal-reason"><dt>{t('prerequisite.resume.reason')}</dt><dd>{suspension?.reason ?? '—'}</dd></dl>
+    <Alert type="info" showIcon title={t('prerequisite.resume.flowTitle')} description={<>
+      <div className="cc-resume-flow">
+        <StatusTag status="SUSPENDED_MANUALLY" kind="AgreementCapabilityExecutionStatus" /><ArrowRightOutlined />
+        <StatusTag status="PENDING_PREREQUISITES" kind="AgreementCapabilityExecutionStatus" /><ArrowRightOutlined />
+        <StatusTag status="ENABLED" kind="AgreementCapabilityExecutionStatus" />
+        <span className="commercial-cell-meta">{t('prerequisite.resume.flowCondition')}</span>
+      </div>
+      <div>{t('prerequisite.resume.notice')}</div>
+    </>} />
+  </CommandModal>;
+}
+
+/** 读合同变更历史第一页（最新在前），取该开通项最近一次手动暂停；失败或没有时为 null。 */
+function useLastSuspension(agreementId: string, agreementCapabilityId: string): SuspensionRecord | null {
+  const [record, setRecord] = useState<SuspensionRecord | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const query = new URLSearchParams({ aggregateRootType: 'AGREEMENT', aggregateRootId: agreementId, page: '1', size: '50' });
+    session.request(`${consolePaths.businessChanges}?${query}`, {}, decodeBusinessChangePage)
+      .then(page => { if (alive) setRecord(lastSuspension(page.items, agreementCapabilityId)); })
+      .catch(() => { if (alive) setRecord(null); });
+    return () => { alive = false; };
+  }, [agreementId, agreementCapabilityId]);
+  return record;
 }
 
 /** 可开通项卡片单选：名称、代码、种类 Tag 与可配维度中文名；该 OE 已有的项置灰带标记，点击编辑那条开通项。受控于 Form.Item。 */
@@ -289,7 +414,7 @@ function CapabilityCards({ choices, loading, definitions, value, onChoose, onEdi
       className={`cc-card${selected ? ' is-selected' : ''}${existing ? ' is-existing' : ''}`}
       onClick={() => existing ? onEdit(existing) : onChoose(item.capabilityCode)}>
       <span className="cc-card-top"><span className="cc-card-name">{item.capabilityName}</span>
-        {mark && <Tag color={existing?.status === 'ENABLED' ? 'green' : 'default'} className="cc-card-mark">{mark}</Tag>}</span>
+        {mark && <Tag color={existing?.status === 'ACTIVE' && existing.executionStatus === 'ENABLED' ? 'green' : 'default'} className="cc-card-mark">{mark}</Tag>}</span>
       <span className="cc-card-line"><span className="mono cc-card-code">{item.capabilityCode}</span>
         <Tag className="cc-card-kind">{capabilityKindLabel(item.capabilityKind)}</Tag>
         {item.paymentMethodCode && item.paymentMethodCode !== item.capabilityCode && <span className="mono cc-card-code">{item.paymentMethodCode}</span>}</span>

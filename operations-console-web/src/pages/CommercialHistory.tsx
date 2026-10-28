@@ -93,7 +93,8 @@ function Timeline({ type, rootId }: { type: AggregateRootType; rootId: string })
         { title: t('history.column.rootVersion'), width: 90, render: (_, row) => `v${row.versionNo}` },
         { title: t('history.column.record'), width: 230, render: (_, row) => <div className="commercial-cell"><span>{row.recordType} · {row.operationType}</span>
           <span className="commercial-cell-meta mono">{row.recordId}</span></div> },
-        { title: t('history.column.operator'), width: 160, render: (_, row) => <span className="mono">{row.createBy === '0' ? t('history.system') : row.createBy}</span> },
+        { title: t('history.column.operator'), width: 160, render: (_, row) => row.createBy === '0' ? t('history.system')
+          : <div className="commercial-cell">{row.createByLabel && <span>{row.createByLabel}</span>}<span className="mono commercial-cell-meta">{row.createBy}</span></div> },
         { title: t('history.column.summary'), render: (_, row) => changeSummary(row) },
       ]} />
   </section>;

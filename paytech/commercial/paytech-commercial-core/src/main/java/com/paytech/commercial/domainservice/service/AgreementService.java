@@ -2,6 +2,7 @@ package com.paytech.commercial.domainservice.service;
 
 import com.paytech.commercial.domain.AgreementContext;
 import com.paytech.commercial.domain.AgreementDetailView;
+import com.paytech.commercial.domain.CapabilityPrerequisiteContext;
 import com.paytech.commercial.domain.enums.BusinessChangeReason;
 
 /**
@@ -19,7 +20,8 @@ public interface AgreementService {
 
     /**
      * 推进合同生命周期（提交签署、激活、终止）：登记新增文件、条件更新状态与时间、Root CAS 与快照；
-     * context.statusChangedEvent 非空时在同一事务登记发布任务
+     * context.statusChangedEvent 非空时在同一事务登记发布任务；context.prerequisiteCheckEvent 非空时（激活 CLIENT 合同且有等待前置的
+     * 开通项）同一事务登记前置检查任务
      *
      * @param context 带目标状态的上下文
      * @param reason 业务原因
@@ -41,18 +43,43 @@ public interface AgreementService {
     void replaceProducts(AgreementContext context);
 
     /**
-     * 新增开通项与约束行，Root CAS 并写开通项 CREATE 快照
+     * 新增开通项与约束行，Root CAS 并写开通项 CREATE 快照；同一事务登记执行状态发布任务与（等待前置时）前置检查任务
      *
      * @param context 开通项上下文
      */
     void addCapability(AgreementContext context);
 
     /**
-     * 按 context.capabilityChange 改写开通项状态与条款、整体替换约束行，Root CAS 并写开通项 UPDATE 快照
+     * 按 context.capabilityChange 改写开通项成员资格（连同执行状态）与条款、整体替换约束行，Root CAS 并写开通项 UPDATE 快照；成员资格
+     * 变化时同一事务登记执行状态发布任务与（重新纳入等待前置时）前置检查任务
      *
      * @param context 开通项上下文
      */
     void updateCapability(AgreementContext context);
+
+    /**
+     * 运营手动暂停：Root CAS，按 context.capabilityChange 的执行状态（SUSPENDED_MANUALLY）条件迁移，写开通项 UPDATE 快照（附暂停原因）
+     * 并登记执行状态发布任务
+     *
+     * @param context 开通项上下文
+     */
+    void suspendCapability(AgreementContext context);
+
+    /**
+     * 运营恢复：Root CAS，按 context.capabilityChange 的执行状态条件迁移（CLIENT 为 PENDING_PREREQUISITES），写开通项 UPDATE 快照，
+     * 登记前置检查（非空时）与执行状态发布任务
+     *
+     * @param context 开通项上下文
+     */
+    void resumeCapability(AgreementContext context);
+
+    /**
+     * 前置门禁迁移执行状态：Root 以锁内当前版本 CAS（系统命令，操作者 0、原因 AGREEMENT_CAPABILITY_EXECUTION_CHANGED），逐个条件迁移
+     * context.changes() 的执行状态并写开通项 UPDATE 快照，登记执行状态发布任务；调用方只在有迁移时调用
+     *
+     * @param context 已完成判定的门禁上下文
+     */
+    void applyCapabilityExecutionChanges(CapabilityPrerequisiteContext context);
 
     /**
      * 在同一只读快照内读取合同详情与当前 Root 版本，保证调用方据此提交的 expectedChangeVersion 对应所见内容

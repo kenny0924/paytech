@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.BusinessMode;
 import com.paytech.commercial.api.enums.FundMode;
@@ -82,10 +83,16 @@ public class CommercialTestMapper {
             productCode.getCode());
     }
 
-    /** 改写开通项状态。 */
+    /** 改写开通项成员资格；DISABLED 同时清空执行状态。 */
     public void overwriteCapabilityStatus(long agreementCapabilityId, AgreementCapabilityStatus status) {
-        jdbc.update("UPDATE t_agreement_capability SET status=? WHERE agreement_capability_id=?", status.getCode(),
-            agreementCapabilityId);
+        jdbc.update("UPDATE t_agreement_capability SET status=?, execution_status=IF(?='DISABLED', NULL, execution_status) "
+            + "WHERE agreement_capability_id=?", status.getCode(), status.getCode(), agreementCapabilityId);
+    }
+
+    /** 改写开通项执行状态。 */
+    public void overwriteCapabilityExecutionStatus(long agreementCapabilityId, AgreementCapabilityExecutionStatus status) {
+        jdbc.update("UPDATE t_agreement_capability SET execution_status=? WHERE agreement_capability_id=?",
+            status == null ? null : status.getCode(), agreementCapabilityId);
     }
 
     /** 改写开通项生效终点。 */
@@ -334,6 +341,14 @@ public class CommercialTestMapper {
             + "t_commercial_term_component c ON c.term_component_id=b.term_component_id JOIN t_commercial_term_price p "
             + "ON p.term_price_id=c.term_price_id WHERE p.term_version_id=?", Integer.class, termVersionId);
         return List.of(prices, components, bands);
+    }
+
+    /** 把开通项某版本快照改写为 2026-10-28 之前的旧格式：data 无 executionStatus、status 为 ENABLED（完整性哈希随之失效）。 */
+    public void legacyCapabilitySnapshot(long agreementCapabilityId, long versionNo) {
+        jdbc.update("UPDATE t_business_change_version v JOIN t_business_change_record r ON r.history_id = v.history_id "
+            + "SET v.snapshot_json = JSON_REMOVE(JSON_SET(v.snapshot_json, '$.data.status', 'ENABLED'), '$.data.executionStatus') "
+            + "WHERE r.record_type = 'AGREEMENT_CAPABILITY' AND r.record_id = ? AND v.version_no = ?",
+            Long.toString(agreementCapabilityId), versionNo);
     }
 
     /** 为某审计对象预先占用一个快照版本号，制造保存阶段的唯一键冲突以验证整体回滚。 */

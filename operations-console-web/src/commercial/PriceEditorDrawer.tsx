@@ -132,7 +132,7 @@ function CapabilityTag({ draft, grouping, profiles }: { draft: PriceDraft | unde
   const profile = profiles.find(item => item.pricingProfileCode === draft.pricingProfileCode);
   if (!profile?.paymentMethodCode) return null;
   const price = { entityNo: draft.entityNo, currency: draft.currency, paymentMethodCode: profile.paymentMethodCode, conditions: profile.conditions };
-  const matched = grouping.capabilities.find(item => item.status === 'ENABLED' && priceMatchesCapability(price, item, grouping.catalog))
+  const matched = grouping.capabilities.find(item => item.executionStatus === 'ENABLED' && priceMatchesCapability(price, item, grouping.catalog))
     ?? grouping.capabilities.find(item => priceMatchesCapability(price, item, grouping.catalog));
   return matched ? <Tag>{matched.capabilityCode}</Tag> : <Tag color="red">{t('priceGroup.unmatched')}</Tag>;
 }

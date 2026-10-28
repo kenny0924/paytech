@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.ProductStatus;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
@@ -13,6 +14,7 @@ import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.core.dal.dataobject.Product;
 import com.paytech.commercial.core.dal.dataobject.ProductCapability;
 import com.paytech.commercial.domain.AgreementContext;
+import com.paytech.commercial.domain.enums.AgreementAgreementType;
 import com.paytech.commercial.domainservice.repository.AgreementCapabilityRepository;
 import com.paytech.commercial.domainservice.repository.AgreementOperatingEntityRepository;
 import com.paytech.commercial.domainservice.repository.AgreementProductRepository;
@@ -22,6 +24,8 @@ import com.paytech.commercial.domainservice.repository.ProductCapabilityDimensio
 import com.paytech.commercial.domainservice.repository.ProductCapabilityRepository;
 import com.paytech.commercial.domainservice.repository.ProductRepository;
 import com.paytech.commercial.domainservice.service.AgreementService;
+import com.paytech.commercial.service.handler.AgreementCapabilityStatusChangedHandler;
+import com.paytech.commercial.service.handler.CapabilityPrerequisiteCheckHandler;
 import com.paytech.commercial.service.processor.request.AddAgreementCapabilityRequest;
 import com.paytech.commercial.service.processor.request.AgreementCapabilityTermsRequest;
 import com.paytech.commercial.service.processor.response.AgreementCapabilityResponse;
@@ -33,8 +37,10 @@ import com.paytech.foundation.id.IdGenerator;
  * 新增开通项（POST /agreements/v1/{agreementId}/capabilities），锁 {@code agreement:{id}}
  * <li>业务唯一身份 uk(agreement, entityNo, capabilityCode)：已存在返回 409（technique.md §2.2 重复语义）。</li>
  * <li>新请求：期望版本一致、合同未结束；entityNo 被合同覆盖（CLIENT 等于合同 OE，PARTNER 在覆盖 OE 内）；可开通项存在且 ACTIVE，所属
- * 产品已订阅或为基座产品；接受条件维度在可开通项可配维度内且必填维度给出。开通项（ENABLED，含 3DS 要求）、条件行、Root CAS 与
- * AGREEMENT_CAPABILITY CREATE 快照同一事务写入。</li>
+ * 产品已订阅或为基座产品；接受条件维度在可开通项可配维度内且必填维度给出。开通项（成员资格 ACTIVE，含 3DS 要求）、条件行、Root CAS
+ * 与 AGREEMENT_CAPABILITY CREATE 快照同一事务写入。</li>
+ * <li>执行状态（开通项前置门禁 technique.md §9.1）：CLIENT 合同为 PENDING_PREREQUISITES，并在同一事务登记前置检查任务，提交后由门禁核对；
+ * PARTNER 合同不进门禁，直接 ENABLED。两者都登记 AgreementCapabilityStatusChanged 发布任务（触发来源 MEMBERSHIP）。</li>
  */
 public class AddAgreementCapabilityProcessor
     extends AbstractAgreementWriteProcessor<AddAgreementCapabilityRequest, AgreementCapabilityResponse> {
@@ -128,6 +134,8 @@ public class AddAgreementCapabilityProcessor
         AgreementCapability capability = buildCapability(agreement, request, now);
         context.setCapability(capability);
         context.setCapabilityLimits(buildLimits(idGenerator, capability.getAgreementCapabilityId(), request, now));
+        registerExecutionEvents(context, AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES
+            == capability.getExecutionStatus());
         return context;
     }
 
@@ -155,14 +163,41 @@ public class AddAgreementCapabilityProcessor
         }
     }
 
-    /** ENABLED 开通项新行。 */
+    /**
+     * 执行状态变化附带的任务：发布 AgreementCapabilityStatusChanged，等待前置时再登记前置检查；新增、改写、恢复共用
+     *
+     * @param context 带期望版本的上下文
+     * @param pendingPrerequisites 本次是否进入 PENDING_PREREQUISITES
+     */
+    static void registerExecutionEvents(AgreementContext context, boolean pendingPrerequisites) {
+        long agreementId = context.getAgreement().getAgreementId();
+        long nextVersion = context.getExpectedChangeVersion() + 1;
+        context.setCapabilityStatusChangedEvent(AgreementCapabilityStatusChangedHandler.buildEvent(agreementId, nextVersion));
+        if (pendingPrerequisites) {
+            context.setPrerequisiteCheckEvent(CapabilityPrerequisiteCheckHandler.buildEvent(agreementId, nextVersion));
+        }
+    }
+
+    /**
+     * 新增或重新纳入时的执行状态：CLIENT 合同等待前置，PARTNER 合同不进门禁直接开通
+     *
+     * @param agreement 合同
+     * @return 执行状态
+     */
+    static AgreementCapabilityExecutionStatus initialExecutionStatus(Agreement agreement) {
+        return agreement.getAgreementType() == AgreementAgreementType.CLIENT
+            ? AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES : AgreementCapabilityExecutionStatus.ENABLED;
+    }
+
+    /** 成员资格 ACTIVE 的开通项新行，执行状态按合同类型决定。 */
     AgreementCapability buildCapability(Agreement agreement, AddAgreementCapabilityRequest request, Instant now) {
         AgreementCapability capability = new AgreementCapability();
         capability.setAgreementCapabilityId(idGenerator.nextId());
         capability.setAgreementId(agreement.getAgreementId());
         capability.setEntityNo(request.getEntityNo());
         capability.setCapabilityCode(request.getCapabilityCode());
-        capability.setStatus(AgreementCapabilityStatus.ENABLED);
+        capability.setStatus(AgreementCapabilityStatus.ACTIVE);
+        capability.setExecutionStatus(initialExecutionStatus(agreement));
         capability.setEffectiveFrom(request.getEffectiveFrom());
         capability.setEffectiveTo(request.getEffectiveTo());
         capability.setRollingReserveRate(request.getRollingReserveRate());
@@ -207,6 +242,7 @@ public class AddAgreementCapabilityProcessor
         response.setAgreementId(context.getAgreement().getAgreementId());
         response.setAgreementCapabilityId(context.getCapability().getAgreementCapabilityId());
         response.setStatus(context.getCapability().getStatus());
+        response.setExecutionStatus(context.getCapability().getExecutionStatus());
         response.setChangeVersion(context.getRoot().getCurrentVersion());
         return response;
     }

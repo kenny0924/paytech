@@ -90,6 +90,15 @@ public class AgreementContext {
     /** 提交后发布 AgreementStatusChanged 的补偿登记请求；只在激活与终止时非空 */
     private CompensationEventRequest statusChangedEvent;
 
+    /** 提交后执行开通项前置检查的补偿登记请求；CLIENT 合同出现等待前置或待复核的开通项时非空 */
+    private CompensationEventRequest prerequisiteCheckEvent;
+
+    /** 提交后发布 AgreementCapabilityStatusChanged 的补偿登记请求；本次有开通项执行状态变化时非空 */
+    private CompensationEventRequest capabilityStatusChangedEvent;
+
+    /** 运营手动暂停的原因；只在暂停时非空，写入开通项快照 */
+    private String suspensionReason;
+
     /**
      * 构造一次写入命令的上下文
      *

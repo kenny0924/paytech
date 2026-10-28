@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Alert, Button, Drawer, Modal, Space, Tag } from 'antd';
 import { commercialStatusColors } from './commercial';
-import type { VersionStatus } from './commercial';
+import type { CapabilityExecutionStatus, CapabilityStatus, VersionStatus } from './commercial';
 import { belowStandardText, signatureState, signatureStateColors } from './versionFlow';
 import { enumLabel } from '../i18n/index';
 import { useT } from '../i18n/react';
@@ -13,6 +13,20 @@ type Command = ReturnType<typeof useCommercialCommand>;
 export function StatusTag({ status, kind }: { status: string; kind?: string }) {
   const t = useT('commercial');
   return <Tag color={commercialStatusColors[status] ?? 'default'}>{kind ? enumLabel(t, 'enum.' + kind, status) : status}</Tag>;
+}
+
+/**
+ * 开通项「执行状态」列（商务 · 14 原型）：成员开通项显示执行状态徽标（等前置 / 已开通 / 前置失效暂停 / 手动暂停），
+ * 前置失效暂停时下方小字给出原因；关闭（DISABLED）的项没有执行状态，显示成员资格「已关闭」。
+ */
+export function CapabilityStatusTags({ status, executionStatus, reason }: {
+  status: CapabilityStatus; executionStatus: CapabilityExecutionStatus | null; reason?: string | null;
+}) {
+  return <span className="cc-status-tags">
+    {status === 'ACTIVE' && executionStatus ? <StatusTag status={executionStatus} kind="AgreementCapabilityExecutionStatus" />
+      : <StatusTag status={status} kind="AgreementCapabilityStatus" />}
+    {reason && <span className="cc-status-reason">{reason}</span>}
+  </span>;
 }
 
 /** 并发冲突横幅：commercial 返回 409 时提示重新加载。 */

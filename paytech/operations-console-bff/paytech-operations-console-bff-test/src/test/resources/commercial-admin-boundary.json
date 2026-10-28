@@ -204,7 +204,8 @@
   "response": {
    "agreementId": "7319000000000000101",
    "agreementCapabilityId": "7319000000000000301",
-   "status": "ENABLED",
+   "status": "ACTIVE",
+   "executionStatus": "PENDING_PREREQUISITES",
    "changeVersion": 7
   },
   "routeCode": "operations-commercial-capability-create"
@@ -217,7 +218,7 @@
   "query": "",
   "request": {
    "expectedChangeVersion": 7,
-   "status": "SUSPENDED",
+   "status": "DISABLED",
    "effectiveFrom": "2026-11-01T00:00:00+04:00",
    "effectiveTo": null,
    "rollingReserveRate": null,
@@ -237,10 +238,111 @@
   "response": {
    "agreementId": "7319000000000000101",
    "agreementCapabilityId": "7319000000000000301",
-   "status": "SUSPENDED",
+   "status": "DISABLED",
+   "executionStatus": null,
    "changeVersion": 8
   },
   "routeCode": "operations-commercial-capability-update"
+ },
+ {
+  "id": "C11",
+  "method": "POST",
+  "path": "/commercial-admin/v1/agreements/7319000000000000101/capabilities/7319000000000000301/suspension",
+  "ownerPath": "/agreements/v1/7319000000000000101/capabilities/7319000000000000301/suspension",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 8,
+   "reason": "合规复核期间暂停受理"
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "agreementCapabilityId": "7319000000000000301",
+   "status": "ACTIVE",
+   "executionStatus": "SUSPENDED_MANUALLY",
+   "changeVersion": 9
+  },
+  "routeCode": "operations-commercial-capability-suspend"
+ },
+ {
+  "id": "C12",
+  "method": "POST",
+  "path": "/commercial-admin/v1/agreements/7319000000000000101/capabilities/7319000000000000301/resumption",
+  "ownerPath": "/agreements/v1/7319000000000000101/capabilities/7319000000000000301/resumption",
+  "query": "",
+  "request": {
+   "expectedChangeVersion": 9
+  },
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "agreementCapabilityId": "7319000000000000301",
+   "status": "ACTIVE",
+   "executionStatus": "PENDING_PREREQUISITES",
+   "changeVersion": 10
+  },
+  "routeCode": "operations-commercial-capability-resume"
+ },
+ {
+  "id": "C13",
+  "method": "POST",
+  "path": "/commercial-admin/v1/agreements/7319000000000000101/prerequisite-checks",
+  "ownerPath": "/agreements/v1/7319000000000000101/prerequisite-checks",
+  "query": "",
+  "request": null,
+  "actorForwarded": false,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "agreementId": "7319000000000000101",
+   "changeVersion": 11,
+   "capabilities": [
+    {
+     "agreementCapabilityId": "7319000000000000301",
+     "entityNo": "AE001",
+     "capabilityCode": "CARD",
+     "capabilityKind": "PAYMENT_METHOD",
+     "status": "ACTIVE",
+     "executionStatus": "PENDING_PREREQUISITES",
+     "checks": [
+      {
+       "code": "QUALIFICATION",
+       "result": "UNSATISFIED",
+       "reasonCode": "OPERATING_ENTITY_NOT_QUALIFIED",
+       "params": {
+        "subjectType": "OPERATING_ENTITY",
+        "subjectId": "AE001",
+        "entityNo": "AE001"
+       }
+      },
+      {
+       "code": "AGREEMENT_TERM",
+       "result": "SATISFIED",
+       "reasonCode": null,
+       "params": {}
+      },
+      {
+       "code": "CHANNEL_IDENTITY",
+       "result": "SKIPPED",
+       "reasonCode": "CHANNEL_IDENTITY_NOT_CONNECTED",
+       "params": {}
+      }
+     ]
+    },
+    {
+     "agreementCapabilityId": "7319000000000000302",
+     "entityNo": "AE001",
+     "capabilityCode": "REFUND",
+     "capabilityKind": "FEATURE",
+     "status": "DISABLED",
+     "executionStatus": null,
+     "checks": []
+    }
+   ]
+  },
+  "routeCode": "operations-commercial-capability-prerequisite-check"
  },
  {
   "id": "P01",
@@ -1075,7 +1177,7 @@
        "dimensionCode": null,
        "dimensionValue": null,
        "entityNo": "AE001",
-       "status": "ENABLED",
+       "status": "ACTIVE",
        "effectiveFrom": "2026-10-01T00:00:00Z",
        "effectiveTo": null,
        "rollingReserveRate": "0.05",

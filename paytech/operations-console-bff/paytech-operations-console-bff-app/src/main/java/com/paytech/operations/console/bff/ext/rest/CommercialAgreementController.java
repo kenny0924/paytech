@@ -25,9 +25,12 @@ import com.paytech.operations.console.bff.service.model.CommercialAgreementModel
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementOverviewResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementTransitionRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.CapabilityPrerequisiteCheckResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.CreateAgreementRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.RecordAgreementAcceptanceRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.ReplaceAgreementProductsRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.ResumeAgreementCapabilityRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.SuspendAgreementCapabilityRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.TerminateAgreementRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.UpdateAgreementCapabilityRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialListModels.AgreementListItem;
@@ -43,8 +46,9 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 
 /**
- * 合同运营入口：合同列表、合同详情聚合、创建、提交签署、签署登记、激活、终止、订阅与开通项
- * <li>Gateway 为每个路由绑定 COMMERCIAL_CONTRACT_READ（GET）或 COMMERCIAL_CONTRACT_MANAGE（写入），并经 PLT-I02 实时授权。</li>
+ * 合同运营入口：合同列表、合同详情聚合、创建、提交签署、签署登记、激活、终止、订阅、开通项及其暂停 / 恢复与前置核对
+ * <li>Gateway 为每个路由绑定 COMMERCIAL_CONTRACT_READ（GET 与开通项前置核对）或 COMMERCIAL_CONTRACT_MANAGE（其余写入），并经 PLT-I02 实时授权；
+ * 前置核对只执行系统本会自动完成的执行状态迁移、不含人工判断，因此有合同查看权限即可触发（2026-10-28 用户确认）。</li>
  * <li>详情经 Processor 聚合合同与当前 / 已排期条款版本；写入简单转发 commercial，操作人取自会话，不编排跨系统事务。</li>
  * <li>合同列表（第二切片 I2）简单转发 commercial AgreementQueryApi；status 可重复，分页按公共 PagingRequestBody 校验。</li>
  *
@@ -161,5 +165,33 @@ public class CommercialAgreementController {
         @RequestBody @NotNull @Valid UpdateAgreementCapabilityRequestBody body) {
         requireQueryKeys(servletRequest, Set.of());
         return client.updateCapability(operator, agreementId, agreementCapabilityId, body);
+    }
+
+    /** C11 运营手动暂停开通项。 */
+    @PostMapping("/{agreementId}/capabilities/{agreementCapabilityId}/suspension")
+    public AgreementCapabilityResponseBody suspendCapability(HttpServletRequest servletRequest, OperatorContext operator,
+        @PathVariable("agreementId") @Pattern(regexp = ID) String agreementId,
+        @PathVariable("agreementCapabilityId") @Pattern(regexp = ID) String agreementCapabilityId,
+        @RequestBody @NotNull @Valid SuspendAgreementCapabilityRequestBody body) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.suspendCapability(operator, agreementId, agreementCapabilityId, body);
+    }
+
+    /** C12 运营恢复手动暂停的开通项。 */
+    @PostMapping("/{agreementId}/capabilities/{agreementCapabilityId}/resumption")
+    public AgreementCapabilityResponseBody resumeCapability(HttpServletRequest servletRequest, OperatorContext operator,
+        @PathVariable("agreementId") @Pattern(regexp = ID) String agreementId,
+        @PathVariable("agreementCapabilityId") @Pattern(regexp = ID) String agreementCapabilityId,
+        @RequestBody @NotNull @Valid ResumeAgreementCapabilityRequestBody body) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.resumeCapability(operator, agreementId, agreementCapabilityId, body);
+    }
+
+    /** C13 立即核对合同开通项前置（可能迁移执行状态，无 Body，不携带操作人；路由绑定合同查看权限）。 */
+    @PostMapping("/{agreementId}/prerequisite-checks")
+    public CapabilityPrerequisiteCheckResponseBody checkPrerequisites(HttpServletRequest servletRequest,
+        @PathVariable("agreementId") @Pattern(regexp = ID) String agreementId) {
+        requireQueryKeys(servletRequest, Set.of());
+        return client.checkPrerequisites(agreementId);
     }
 }

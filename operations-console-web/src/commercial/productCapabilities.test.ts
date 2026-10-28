@@ -15,7 +15,7 @@ const item = (capabilityCode: string, productCode: string, capabilityName: strin
 const catalog = [item('CARD', 'ACQUIRING', '银行卡'), item('APPLE_PAY', 'ACQUIRING', 'Apple Pay'), item('PAYOUT_LOCAL', 'PAYOUT', '本地出款'),
   item('PAYOUT_SWIFT', 'PAYOUT', 'SWIFT 出款'), item('PAYOUT_OLD', 'PAYOUT', '旧出款', 'RETIRED'), item('FX_SPOT', 'FX', '即期换汇')];
 const capability = (agreementCapabilityId: string, capabilityCode: string, entityNo = 'AE001'): AgreementCapability => ({ agreementCapabilityId, entityNo,
-  capabilityCode, status: 'ENABLED', effectiveFrom: '2026-10-01T00:00:00Z', effectiveTo: null, rollingReserveRate: null, rollingReserveDays: null,
+  capabilityCode, status: 'ACTIVE', executionStatus: 'ENABLED', effectiveFrom: '2026-10-01T00:00:00Z', effectiveTo: null, rollingReserveRate: null, rollingReserveDays: null,
   conditions: [], require3ds: false });
 
 test('F6 产品分组：目录产品顺序，开通项落到归属产品；空产品列出可开通项名称；归属不明的进「其他」', () => {

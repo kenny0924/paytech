@@ -18,8 +18,14 @@ public class AgreementCapabilityDetail {
     /** 可开通项代码 */
     private String capabilityCode;
 
-    /** 状态：ENABLED、SUSPENDED、DISABLED */
+    /** 合同成员资格：ACTIVE、DISABLED */
     private String status;
+
+    /**
+     * 执行状态：PENDING_PREREQUISITES、ENABLED、SUSPENDED_BY_PREREQUISITE、SUSPENDED_MANUALLY
+     * <li>成员资格 DISABLED 时为空。</li>
+     */
+    private String executionStatus;
 
     /** 生效起点（含），UTC ISO 8601 */
     private String effectiveFrom;

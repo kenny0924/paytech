@@ -81,9 +81,9 @@ public final class CapabilityAcceptance {
         return catalog.getCapabilityKind();
     }
 
-    /** 状态为 ENABLED。 */
-    public boolean enabled() {
-        return capability.getStatus() == AgreementCapabilityStatus.ENABLED;
+    /** 成员资格为 ACTIVE（纳入合同，价格须覆盖；与执行状态无关）。 */
+    public boolean member() {
+        return capability.getStatus() == AgreementCapabilityStatus.ACTIVE;
     }
 
     /** 开通项在某 OE 下。 */

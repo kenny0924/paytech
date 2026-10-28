@@ -8,12 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 
 import com.paytech.commercial.api.constant.CommercialCodes.Capability;
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.ProductCode;
@@ -40,7 +42,11 @@ import com.paytech.foundation.common.error.ConcurrentRequestException;
  * @see AgreementProductRepository#delete(AgreementProduct)
  * @see AgreementCapabilityRepository#findByUniqueKey(long, String, String)
  * @see AgreementCapabilityRepository#findByAgreementIds(java.util.Collection)
- * @see AgreementCapabilityRepository#updateStatus(AgreementCapability, AgreementCapabilityStatus, Instant)
+ * @see AgreementCapabilityRepository#updateMembership(AgreementCapability, AgreementCapabilityStatus,
+ *      AgreementCapabilityExecutionStatus, Instant)
+ * @see AgreementCapabilityRepository#updateExecutionStatus(AgreementCapability, AgreementCapabilityExecutionStatus, Instant)
+ * @see AgreementCapabilityRepository#findAgreementIdsByExecutionStatus(java.util.Collection, long, int, int, int)
+ * @see AgreementCapabilityRepository#findAgreementIdsByEntityNo(String)
  * @see AgreementCapabilityRepository#updateTerms(AgreementCapability, Instant, Instant, BigDecimal, Integer, Instant)
  * @see AgreementCapabilityLimitRepository#insertAll(List)
  * @see AgreementCapabilityLimitRepository#findByAgreementCapabilityIds(java.util.Collection)
@@ -108,7 +114,8 @@ class AgreementSubscriptionRepositoryTest extends CommercialMockTestBase {
             Capability.CARD);
         List<AgreementCapabilityLimit> limits = limitRepository.findByAgreementCapabilityId(capabilityId);
         assertAll(() -> assertEquals(capabilityId, read.getAgreementCapabilityId()),
-            () -> assertEquals(AgreementCapabilityStatus.ENABLED, read.getStatus()),
+            () -> assertEquals(AgreementCapabilityStatus.ACTIVE, read.getStatus()),
+            () -> assertEquals(AgreementCapabilityExecutionStatus.ENABLED, read.getExecutionStatus()),
             () -> assertEquals(AgreementCapabilityBuilder.EFFECTIVE_FROM, read.getEffectiveFrom()),
             () -> assertNull(read.getEffectiveTo()),
             () -> assertEquals(0, new BigDecimal("0.1").compareTo(read.getRollingReserveRate())),
@@ -133,19 +140,62 @@ class AgreementSubscriptionRepositoryTest extends CommercialMockTestBase {
             () -> assertEquals(1, testMapper.countCapabilityLimits(capabilityId + 1)));
     }
 
-    /** 状态以当前状态为条件、条款以 update_time 为条件更新并同步对象；陈旧对象更新失败且不改库。 */
+    /** 成员资格关闭清空执行状态、重新纳入写入新执行状态；重查 Job 的分片游标分页与按 OE 定位合同只返回符合条件的合同 ID。 */
+    @Test
+    void test_capabilityMembershipAndAgreementLookups() {
+        long base = AgreementCapabilityBuilder.AGREEMENT_CAPABILITY_ID;
+        AgreementCapability pending = subscriptionMocker.mockCapability(AgreementCapabilityBuilder.template()
+            .executionStatus(AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES)).capability();
+        subscriptionMocker.mockCapability(AgreementCapabilityBuilder.template().agreementCapabilityId(base + 1)
+            .agreementId(AGREEMENT_ID + 1).executionStatus(AgreementCapabilityExecutionStatus.SUSPENDED_BY_PREREQUISITE));
+        subscriptionMocker.mockCapability(AgreementCapabilityBuilder.template().agreementCapabilityId(base + 2)
+            .agreementId(AGREEMENT_ID + 2).entityNo("AE992"));
+        subscriptionMocker.mockCapability(AgreementCapabilityBuilder.template().agreementCapabilityId(base + 3)
+            .agreementId(AGREEMENT_ID + 3).executionStatus(AgreementCapabilityExecutionStatus.SUSPENDED_MANUALLY));
+        Set<AgreementCapabilityExecutionStatus> awaiting = Set.of(AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES,
+            AgreementCapabilityExecutionStatus.SUSPENDED_BY_PREREQUISITE);
+
+        assertAll(() -> assertEquals(List.of(AGREEMENT_ID, AGREEMENT_ID + 1),
+                capabilityRepository.findAgreementIdsByExecutionStatus(awaiting, 0L, 0, 1, 10)),
+            () -> assertEquals(List.of(AGREEMENT_ID),
+                capabilityRepository.findAgreementIdsByExecutionStatus(awaiting, 0L, 0, 1, 1)),
+            () -> assertEquals(List.of(AGREEMENT_ID + 1),
+                capabilityRepository.findAgreementIdsByExecutionStatus(awaiting, AGREEMENT_ID, 0, 1, 10)),
+            () -> assertEquals(List.of(AGREEMENT_ID + Math.floorMod(-AGREEMENT_ID, 2)),
+                capabilityRepository.findAgreementIdsByExecutionStatus(awaiting, 0L, 0, 2, 10)),
+            () -> assertEquals(List.of(AGREEMENT_ID + 2), capabilityRepository.findAgreementIdsByEntityNo("AE992")),
+            () -> assertEquals(List.of(AGREEMENT_ID, AGREEMENT_ID + 1, AGREEMENT_ID + 3),
+                capabilityRepository.findAgreementIdsByEntityNo(AgreementCapabilityBuilder.ENTITY_NO)));
+
+        AgreementCapability stale = capabilityRepository.findById(pending.getAgreementCapabilityId());
+        capabilityRepository.updateMembership(pending, AgreementCapabilityStatus.DISABLED, null, LATER);
+        AgreementCapability disabled = capabilityRepository.findById(pending.getAgreementCapabilityId());
+        assertAll(() -> assertEquals(AgreementCapabilityStatus.DISABLED, disabled.getStatus()),
+            () -> assertNull(disabled.getExecutionStatus()), () -> assertNull(pending.getExecutionStatus()),
+            () -> assertThrows(ConcurrentRequestException.class, () -> capabilityRepository.updateExecutionStatus(pending,
+                AgreementCapabilityExecutionStatus.ENABLED, LATER)),
+            () -> assertThrows(ConcurrentRequestException.class, () -> capabilityRepository.updateMembership(stale,
+                AgreementCapabilityStatus.DISABLED, null, LATER)));
+
+        capabilityRepository.updateMembership(pending, AgreementCapabilityStatus.ACTIVE,
+            AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES, LATER);
+        assertEquals(AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES,
+            capabilityRepository.findById(pending.getAgreementCapabilityId()).getExecutionStatus());
+    }
+
+    /** 执行状态与成员资格以当前状态为条件、条款以 update_time 为条件更新并同步对象；陈旧对象更新失败且不改库。 */
     @Test
     void test_capabilityConditionalUpdates() {
         AgreementCapability capability = subscriptionMocker.mockCapability(AgreementCapabilityBuilder.template()).capability();
         AgreementCapability stale = capabilityRepository.findById(capability.getAgreementCapabilityId());
         Instant effectiveTo = Instant.parse("2027-01-01T00:00:00Z");
 
-        capabilityRepository.updateStatus(capability, AgreementCapabilityStatus.SUSPENDED, LATER);
+        capabilityRepository.updateExecutionStatus(capability, AgreementCapabilityExecutionStatus.SUSPENDED_MANUALLY, LATER);
         capabilityRepository.updateTerms(capability, AgreementCapabilityBuilder.EFFECTIVE_FROM, effectiveTo,
             new BigDecimal("0.05"), 30, true, LATER.plusSeconds(1));
 
         AgreementCapability read = capabilityRepository.findById(capability.getAgreementCapabilityId());
-        assertAll(() -> assertEquals(AgreementCapabilityStatus.SUSPENDED, read.getStatus()),
+        assertAll(() -> assertEquals(AgreementCapabilityExecutionStatus.SUSPENDED_MANUALLY, read.getExecutionStatus()),
             () -> assertEquals(effectiveTo, read.getEffectiveTo()),
             () -> assertEquals(0, new BigDecimal("0.05").compareTo(read.getRollingReserveRate())),
             () -> assertEquals(30, read.getRollingReserveDays()),
@@ -153,10 +203,12 @@ class AgreementSubscriptionRepositoryTest extends CommercialMockTestBase {
             () -> assertEquals(capability.getUpdateTime(), read.getUpdateTime()),
             () -> assertEquals(Instant.parse("2026-09-12T08:30:01.123456Z"), read.getUpdateTime()),
             () -> assertThrows(ConcurrentRequestException.class,
-                () -> capabilityRepository.updateStatus(stale, AgreementCapabilityStatus.DISABLED, LATER)),
+                () -> capabilityRepository.updateMembership(stale, AgreementCapabilityStatus.DISABLED, null, LATER)),
+            () -> assertThrows(ConcurrentRequestException.class, () -> capabilityRepository.updateExecutionStatus(stale,
+                AgreementCapabilityExecutionStatus.SUSPENDED_BY_PREREQUISITE, LATER)),
             () -> assertThrows(ConcurrentRequestException.class, () -> capabilityRepository.updateTerms(stale,
                 AgreementCapabilityBuilder.EFFECTIVE_FROM, null, null, null, false, LATER)),
-            () -> assertEquals(AgreementCapabilityStatus.ENABLED, stale.getStatus()));
+            () -> assertEquals(AgreementCapabilityExecutionStatus.ENABLED, stale.getExecutionStatus()));
 
         testMapper.touchAgreementCapability(capability.getAgreementCapabilityId(), LATER.plusSeconds(5));
 

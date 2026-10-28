@@ -22,6 +22,9 @@ export const commercialPaths = {
   products: (agreementId: string) => `/commercial-admin/v1/agreements/${agreementId}/products`,
   capabilities: (agreementId: string) => `/commercial-admin/v1/agreements/${agreementId}/capabilities`,
   capability: (agreementId: string, capabilityId: string) => `/commercial-admin/v1/agreements/${agreementId}/capabilities/${capabilityId}`,
+  capabilitySuspension: (agreementId: string, capabilityId: string) => `/commercial-admin/v1/agreements/${agreementId}/capabilities/${capabilityId}/suspension`,
+  capabilityResumption: (agreementId: string, capabilityId: string) => `/commercial-admin/v1/agreements/${agreementId}/capabilities/${capabilityId}/resumption`,
+  prerequisiteChecks: (agreementId: string) => `/commercial-admin/v1/agreements/${agreementId}/prerequisite-checks`,
   profiles: '/commercial-admin/v1/pricing-profiles',
   profile: (profileId: string) => `/commercial-admin/v1/pricing-profiles/${profileId}`,
   profileAction: (profileId: string, action: 'activate' | 'retire') => `/commercial-admin/v1/pricing-profiles/${profileId}/${action}`,
@@ -77,7 +80,13 @@ export const agreementTypes = ['CLIENT', 'PARTNER'] as const;
 export const businessModes = ['MOR', 'PSP'] as const;
 export const partyRoles = ['CLIENT', 'LOCAL_PARTNER', 'PLATFORM_SIGNATORY', 'OPERATING_ENTITY'] as const;
 export const acceptanceMethods = ['E_SIGNATURE', 'CLICK_ACCEPTANCE', 'MANUAL_SIGNATURE'] as const;
-export const capabilityStatuses = ['ENABLED', 'SUSPENDED', 'DISABLED'] as const;
+/** 开通项合同成员资格：纳入 / 关闭；能否执行看 capabilityExecutionStatuses。 */
+export const capabilityStatuses = ['ACTIVE', 'DISABLED'] as const;
+/** 开通项执行状态（成员资格 DISABLED 时为空）：等前置、已开通、前置失效暂停、手动暂停。 */
+export const capabilityExecutionStatuses = ['PENDING_PREREQUISITES', 'ENABLED', 'SUSPENDED_BY_PREREQUISITE', 'SUSPENDED_MANUALLY'] as const;
+/** 前置项与结论（commercial 闭合枚举）；原因码为开放字符串，未知码显示原值。 */
+export const prerequisiteCodes = ['QUALIFICATION', 'AGREEMENT_TERM', 'CHANNEL_IDENTITY'] as const;
+export const prerequisiteResults = ['SATISFIED', 'UNSATISFIED', 'UNKNOWN', 'SKIPPED'] as const;
 export const profileKinds = ['PAYMENT_METHOD', 'PAYOUT_RAIL', 'FX_PAIR', 'DISPUTE', 'PERIODIC'] as const;
 export const profileStatuses = ['DRAFT', 'ACTIVE', 'RETIRED'] as const;
 export const dimensionCodes = ['CARD_BRAND', 'FUNDING_TYPE', 'CARD_LEVEL', 'CARD_PRODUCT', 'ISSUER_REGION', 'ISSUER_COUNTRY', 'THREE_DS_RESULT',
@@ -110,6 +119,9 @@ export type AgreementType = typeof agreementTypes[number];
 export type PartyRole = typeof partyRoles[number];
 export type AcceptanceMethod = typeof acceptanceMethods[number];
 export type CapabilityStatus = typeof capabilityStatuses[number];
+export type CapabilityExecutionStatus = typeof capabilityExecutionStatuses[number];
+export type PrerequisiteCode = typeof prerequisiteCodes[number];
+export type PrerequisiteResult = typeof prerequisiteResults[number];
 export type ProfileKind = typeof profileKinds[number];
 export type ProfileStatus = typeof profileStatuses[number];
 export type Dimension = typeof dimensionCodes[number];
@@ -120,7 +132,8 @@ export type VersionAction = 'submit' | 'approve' | 'reject' | 'schedule' | 'acti
 
 /**
  * 枚举显示名在 commercial 命名空间，用 enumLabel 取（未知代码原样显示）：enum.agreementStatus、enum.versionStatus、
- * enum.profileStatus、enum.capabilityStatus、enum.agreementType、enum.partyRole、enum.acceptanceMethod、enum.profileKind、
+ * enum.profileStatus、enum.AgreementCapabilityStatus、enum.AgreementCapabilityExecutionStatus、enum.CapabilityPrerequisiteCode、
+ * enum.CapabilityPrerequisiteResult、enum.CapabilityPrerequisiteReason、enum.agreementType、enum.partyRole、enum.acceptanceMethod、enum.profileKind、
  * enum.pricingModel、enum.feeTaxTreatment、enum.componentType、enum.termType。
  */
 /** 按当前语言连接若干段文本：kind=list 为并列项（、/ ,），kind=clauses 为分句（；/ ;）。 */
@@ -130,9 +143,10 @@ export function joinList(items: readonly string[], kind: 'list' | 'clauses' = 'l
 /** 版本口径展示：定价模型 · 含税口径，未知代码原样显示。 */
 export const versionBasisLabel = (pricingModel: string, feeTaxTreatment: string) =>
   `${enumLabel(t, 'enum.pricingModel', pricingModel)} · ${enumLabel(t, 'enum.feeTaxTreatment', feeTaxTreatment)}`;
-/** 状态标签色：生效 / 开通为绿，待办为橙或蓝，结束为灰，暂停为金。 */
+/** 状态标签色：生效 / 开通为绿，待办为橙或蓝，结束为灰，暂停为金（开通项两种暂停按原型 14—16 为红）。 */
 export const commercialStatusColors: Readonly<Record<string, string>> = {
   ACTIVE: 'green', ENABLED: 'green', SIGNED: 'cyan', APPROVED: 'cyan', CLIENT_SIGNED: 'cyan', SCHEDULED: 'blue', PENDING_SIGNATURE: 'orange', PENDING_APPROVAL: 'orange',
+  PENDING_PREREQUISITES: 'orange', SUSPENDED_BY_PREREQUISITE: 'red', SUSPENDED_MANUALLY: 'red',
   DRAFT: 'default', SUSPENDED: 'gold', DISABLED: 'default', RETIRED: 'default', SUPERSEDED: 'default', EXPIRED: 'default', TERMINATED: 'red', CANCELLED: 'default',
 };
 
@@ -144,7 +158,9 @@ export interface AgreementParty {
 }
 export interface AgreementDocument { agreementDocumentId: string; documentType: string; fileId: string; contentHash: string }
 export interface AgreementCapability {
-  agreementCapabilityId: string; entityNo: string; capabilityCode: string; status: CapabilityStatus; effectiveFrom: string; effectiveTo: string | null;
+  agreementCapabilityId: string; entityNo: string; capabilityCode: string; status: CapabilityStatus;
+  /** 执行状态；成员资格 DISABLED 时为 null。 */
+  executionStatus: CapabilityExecutionStatus | null; effectiveFrom: string; effectiveTo: string | null;
   rollingReserveRate: string | null; rollingReserveDays: number | null; conditions: CapabilityCondition[]; require3ds: boolean;
 }
 export interface Agreement {
@@ -161,7 +177,18 @@ export interface AgreementTermVersion {
 export type SectionStatus = 'AVAILABLE' | 'UNAVAILABLE' | 'NOT_APPLICABLE';
 export interface AgreementOverview { agreement: Agreement; termVersionsStatus: SectionStatus; termVersions: AgreementTermVersion[] }
 export interface AgreementWriteResult { agreementId: string; agreementNo: string; status: AgreementStatus; changeVersion: number }
-export interface CapabilityWriteResult { agreementId: string; agreementCapabilityId: string; status: CapabilityStatus; changeVersion: number }
+export interface CapabilityWriteResult {
+  agreementId: string; agreementCapabilityId: string; status: CapabilityStatus; executionStatus: CapabilityExecutionStatus | null; changeVersion: number;
+}
+/** 一项前置的结论；reasonCode 在 SATISFIED 时为 null，params 为文案参数。 */
+export interface PrerequisiteCheck { code: PrerequisiteCode; result: PrerequisiteResult; reasonCode: string | null; params: Record<string, string> }
+/** 一个开通项的前置核对结果（DISABLED 的 checks 为空）。 */
+export interface CapabilityPrerequisites {
+  agreementCapabilityId: string; entityNo: string; capabilityCode: string; capabilityKind: string; status: CapabilityStatus;
+  executionStatus: CapabilityExecutionStatus | null; checks: PrerequisiteCheck[];
+}
+/** 合同前置核对：核对后的合同 changeVersion（有状态迁移时已推进）与全部开通项结果。 */
+export interface PrerequisiteCheckResult { agreementId: string; changeVersion: number; capabilities: CapabilityPrerequisites[] }
 
 export interface ProfileCondition { dimensionCode: Dimension; conditionValue: string }
 export interface PricingProfile {
@@ -224,9 +251,9 @@ const require = (valid: boolean) => { if (!valid) throw new ApiError(502, 'INVAL
 export function decodeCapability(value: unknown): AgreementCapability {
   const v = value as AgreementCapability;
   require(object(v) && id(v.agreementCapabilityId) && typeof v.entityNo === 'string' && entityNoPattern.test(v.entityNo) && text(v.capabilityCode, 64)
-    && oneOf(capabilityStatuses)(v.status) && instant(v.effectiveFrom) && optional(instant)(v.effectiveTo) && optional(decimal)(v.rollingReserveRate)
+    && oneOf(capabilityStatuses)(v.status) && optional(oneOf(capabilityExecutionStatuses))(v.executionStatus) && instant(v.effectiveFrom) && optional(instant)(v.effectiveTo) && optional(decimal)(v.rollingReserveRate)
     && optional(positiveInteger)(v.rollingReserveDays) && array(v.conditions) && optional((x: unknown) => typeof x === 'boolean')(v.require3ds));
-  return { ...v, effectiveTo: orNull(v.effectiveTo), rollingReserveRate: orNull(v.rollingReserveRate), rollingReserveDays: orNull(v.rollingReserveDays),
+  return { ...v, executionStatus: orNull(v.executionStatus), effectiveTo: orNull(v.effectiveTo), rollingReserveRate: orNull(v.rollingReserveRate), rollingReserveDays: orNull(v.rollingReserveDays),
     conditions: v.conditions.map(decodeCapabilityCondition), require3ds: v.require3ds === true };
 }
 
@@ -293,9 +320,40 @@ export function decodeCapabilityWrite(agreementId: string) {
   return (value: unknown): CapabilityWriteResult => {
     const v = value as CapabilityWriteResult;
     require(object(v) && v.agreementId === agreementId && id(v.agreementCapabilityId) && oneOf(capabilityStatuses)(v.status)
-      && positiveInteger(v.changeVersion));
-    return v;
+      && optional(oneOf(capabilityExecutionStatuses))(v.executionStatus) && positiveInteger(v.changeVersion));
+    return { ...v, executionStatus: orNull(v.executionStatus) };
   };
+}
+
+function decodePrerequisiteCheck(value: unknown): PrerequisiteCheck {
+  const v = value as PrerequisiteCheck;
+  require(object(v) && oneOf(prerequisiteCodes)(v.code) && oneOf(prerequisiteResults)(v.result) && optional(text)(v.reasonCode)
+    && optional(object)(v.params) && Object.values(v.params ?? {}).every(param => typeof param === 'string'));
+  return { code: v.code, result: v.result, reasonCode: orNull(v.reasonCode), params: v.params ?? {} };
+}
+
+function decodeCapabilityPrerequisites(value: unknown): CapabilityPrerequisites {
+  const v = value as CapabilityPrerequisites;
+  require(object(v) && id(v.agreementCapabilityId) && typeof v.entityNo === 'string' && entityNoPattern.test(v.entityNo) && text(v.capabilityCode, 64)
+    && text(v.capabilityKind, 64) && oneOf(capabilityStatuses)(v.status) && optional(oneOf(capabilityExecutionStatuses))(v.executionStatus) && array(v.checks));
+  return { ...v, executionStatus: orNull(v.executionStatus), checks: v.checks.map(decodePrerequisiteCheck) };
+}
+
+/** 前置核对结果：合同 ID 必须与请求一致。 */
+export function decodePrerequisiteCheckResult(agreementId: string) {
+  return (value: unknown): PrerequisiteCheckResult => {
+    const v = value as PrerequisiteCheckResult;
+    require(object(v) && v.agreementId === agreementId && positiveInteger(v.changeVersion) && array(v.capabilities));
+    return { agreementId, changeVersion: v.changeVersion, capabilities: v.capabilities.map(decodeCapabilityPrerequisites) };
+  };
+}
+
+/**
+ * 立即核对合同开通项前置（POST，可能迁移执行状态；无 Body）。每次点击是一次新的核对，使用新的 Idempotency-Key。
+ */
+export function checkPrerequisites(agreementId: string): Promise<PrerequisiteCheckResult> {
+  return session.request(commercialPaths.prerequisiteChecks(agreementId), { method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() } }, decodePrerequisiteCheckResult(agreementId));
 }
 
 export function decodeCondition(value: unknown): ProfileCondition {
@@ -466,14 +524,14 @@ export function percent(rate: string | null): string {
 }
 
 /**
- * 覆盖提示（对应激活校验 3 的近似）：合同下每个 ENABLED 开通项 × 其 CURRENCY 接受条件的每个币种，在同 OE 同币种下至少应有一条价格。
+ * 覆盖提示（对应激活校验 3 的近似）：合同下每个成员资格 ACTIVE 的开通项（含等前置与已暂停）× 其 CURRENCY 接受条件的每个币种，在同 OE 同币种下至少应有一条价格。
  * 只按 OE + 币种粗查，不模拟画像条件命中；最终以 commercial 排期校验为准。
  */
 export function coverageGaps(capabilities: readonly AgreementCapability[], prices: readonly Pick<Price, 'entityNo' | 'currency'>[]): string[] {
   const priced = new Set(prices.map(price => `${price.entityNo}/${price.currency}`));
   const gaps = new Set<string>();
   for (const capability of capabilities) {
-    if (capability.status !== 'ENABLED') continue;
+    if (capability.status !== 'ACTIVE') continue;
     for (const currency of capability.conditions.find(condition => condition.dimensionCode === 'CURRENCY')?.values ?? []) {
       const key = `${capability.entityNo}/${currency}`;
       if (!priced.has(key)) gaps.add(t('coverage.gap', { key, capabilityCode: capability.capabilityCode }));

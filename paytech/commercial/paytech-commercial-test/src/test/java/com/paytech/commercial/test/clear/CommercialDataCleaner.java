@@ -25,7 +25,7 @@ public class CommercialDataCleaner implements Clear {
         "t_pricing_profile_cond", "t_commercial_term_plan", "t_commercial_term_version", "t_commercial_term_price",
         "t_commercial_term_component", "t_commercial_term_component_band", "t_term_version_acceptance",
         "t_business_change_record", "t_business_change_version", "t_compensation_event",
-        "t_consumed_event");
+        "t_consumed_event", "t_consumed_aggregate_version");
 
     private final JdbcTemplate jdbc;
 

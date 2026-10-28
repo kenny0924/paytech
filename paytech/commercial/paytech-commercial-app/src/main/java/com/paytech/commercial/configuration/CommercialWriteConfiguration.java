@@ -20,6 +20,7 @@ import com.paytech.commercial.domainservice.repository.AgreementRepository;
 import com.paytech.commercial.domainservice.repository.BusinessChangeRecordRepository;
 import com.paytech.commercial.domainservice.repository.BusinessChangeVersionRepository;
 import com.paytech.commercial.domainservice.repository.CommercialTermPlanRepository;
+import com.paytech.commercial.domainservice.repository.CommercialTermVersionRepository;
 import com.paytech.commercial.domainservice.repository.PricingProfileCondRepository;
 import com.paytech.commercial.domainservice.repository.PricingProfileRepository;
 import com.paytech.commercial.domainservice.repository.ProductCapabilityRepository;
@@ -31,13 +32,18 @@ import com.paytech.commercial.domainservice.service.impl.BusinessChangeHistoryWr
 import com.paytech.commercial.domainservice.service.impl.PricingProfileServiceImpl;
 import com.paytech.commercial.service.processor.ActivateAgreementProcessor;
 import com.paytech.commercial.service.processor.ActivatePricingProfileProcessor;
+import com.paytech.commercial.integration.CheckoutQualificationClient;
 import com.paytech.commercial.service.processor.AddAgreementCapabilityProcessor;
+import com.paytech.commercial.service.processor.CheckCapabilityPrerequisitesProcessor;
+import com.paytech.commercial.service.processor.CommercialTermLoader;
 import com.paytech.commercial.service.processor.CreateAgreementProcessor;
 import com.paytech.commercial.service.processor.CreatePricingProfileProcessor;
 import com.paytech.commercial.service.processor.RecordAgreementAcceptanceProcessor;
 import com.paytech.commercial.service.processor.ReplaceAgreementProductsProcessor;
+import com.paytech.commercial.service.processor.ResumeAgreementCapabilityProcessor;
 import com.paytech.commercial.service.processor.RetirePricingProfileProcessor;
 import com.paytech.commercial.service.processor.SubmitAgreementForSignatureProcessor;
+import com.paytech.commercial.service.processor.SuspendAgreementCapabilityProcessor;
 import com.paytech.commercial.service.processor.TerminateAgreementProcessor;
 import com.paytech.commercial.service.processor.UpdateAgreementCapabilityProcessor;
 import com.paytech.commercial.service.processor.UpdatePricingProfileProcessor;
@@ -123,9 +129,11 @@ public class CommercialWriteConfiguration {
     public ActivateAgreementProcessor activateAgreementProcessor(Clock clock, AgreementService agreementService,
         AgreementRepository agreementRepository, BusinessChangeRecordRepository businessChangeRecordRepository,
         AgreementPartyRepository agreementPartyRepository, CommercialTermPlanRepository commercialTermPlanRepository,
+        AgreementCapabilityRepository agreementCapabilityRepository,
         AgreementOperatingEntityRepository agreementOperatingEntityRepository) {
         return new ActivateAgreementProcessor(clock, agreementService, agreementRepository, businessChangeRecordRepository,
-            agreementPartyRepository, commercialTermPlanRepository, agreementOperatingEntityRepository);
+            agreementPartyRepository, commercialTermPlanRepository, agreementCapabilityRepository,
+            agreementOperatingEntityRepository);
     }
 
     /** POST /agreements/v1/{id}/terminate。 */
@@ -174,6 +182,43 @@ public class CommercialWriteConfiguration {
         return new UpdateAgreementCapabilityProcessor(clock, idGenerator, agreementService, agreementRepository,
             agreementCapabilityRepository, businessChangeRecordRepository, agreementCapabilityLimitRepository,
             productCapabilityDimensionRepository);
+    }
+
+    /** POST /agreements/v1/{id}/capabilities/{capabilityId}/suspension。 */
+    @Bean
+    public SuspendAgreementCapabilityProcessor suspendAgreementCapabilityProcessor(Clock clock,
+        AgreementService agreementService, AgreementRepository agreementRepository,
+        AgreementCapabilityRepository agreementCapabilityRepository,
+        BusinessChangeRecordRepository businessChangeRecordRepository,
+        AgreementCapabilityLimitRepository agreementCapabilityLimitRepository) {
+        return new SuspendAgreementCapabilityProcessor(clock, agreementService, agreementRepository,
+            agreementCapabilityRepository, businessChangeRecordRepository, agreementCapabilityLimitRepository);
+    }
+
+    /** POST /agreements/v1/{id}/capabilities/{capabilityId}/resumption。 */
+    @Bean
+    public ResumeAgreementCapabilityProcessor resumeAgreementCapabilityProcessor(Clock clock,
+        AgreementService agreementService, AgreementRepository agreementRepository,
+        AgreementCapabilityRepository agreementCapabilityRepository,
+        BusinessChangeRecordRepository businessChangeRecordRepository,
+        AgreementCapabilityLimitRepository agreementCapabilityLimitRepository) {
+        return new ResumeAgreementCapabilityProcessor(clock, agreementService, agreementRepository,
+            agreementCapabilityRepository, businessChangeRecordRepository, agreementCapabilityLimitRepository);
+    }
+
+    /** 开通项前置门禁唯一入口：POST /agreements/v1/{id}/prerequisite-checks、前置检查任务、资格事件与重查 Job 共用。 */
+    @Bean
+    public CheckCapabilityPrerequisitesProcessor checkCapabilityPrerequisitesProcessor(Clock clock,
+        CommercialTermLoader termLoader, AgreementService agreementService, AgreementRepository agreementRepository,
+        CheckoutQualificationClient qualificationClient, ProductCapabilityRepository productCapabilityRepository,
+        CommercialTermPlanRepository commercialTermPlanRepository,
+        AgreementCapabilityRepository agreementCapabilityRepository,
+        BusinessChangeRecordRepository businessChangeRecordRepository,
+        CommercialTermVersionRepository commercialTermVersionRepository,
+        AgreementCapabilityLimitRepository agreementCapabilityLimitRepository) {
+        return new CheckCapabilityPrerequisitesProcessor(clock, termLoader, agreementService, agreementRepository,
+            qualificationClient, productCapabilityRepository, commercialTermPlanRepository, agreementCapabilityRepository,
+            businessChangeRecordRepository, commercialTermVersionRepository, agreementCapabilityLimitRepository);
     }
 
     /** POST /pricing-profiles/v1。 */

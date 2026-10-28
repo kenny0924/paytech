@@ -12,8 +12,8 @@ import type { AgreementCapability, Price } from './commercial.ts';
 
 const agreementId = '7319000000000000101';
 const versionId = '7319000000000000601';
-const capability = (entityNo: string, currencies: string[], status = 'ENABLED') => ({ agreementCapabilityId: '7319000000000000301', entityNo,
-  capabilityCode: 'CARD_VISA', status, effectiveFrom: '2026-10-01T00:00:00Z', effectiveTo: null, rollingReserveRate: null, rollingReserveDays: null,
+const capability = (entityNo: string, currencies: string[], status = 'ACTIVE', executionStatus: string | null = 'ENABLED') => ({
+  agreementCapabilityId: '7319000000000000301', entityNo, capabilityCode: 'CARD_VISA', status, executionStatus, effectiveFrom: '2026-10-01T00:00:00Z', effectiveTo: null, rollingReserveRate: null, rollingReserveDays: null,
   conditions: [{ dimensionCode: 'CURRENCY', values: currencies }], require3ds: false });
 const agreement = {
   agreementId, agreementNo: 'AGR-1', agreementName: '示例合同', agreementType: 'CLIENT', businessMode: 'MOR', fundMode: 'SETTLE_THROUGH_PLATFORM',
@@ -103,8 +103,14 @@ test('合同详情聚合解码：合同 ID 一致、可空字段归一为 null�
 test('写入回执解码：合同、开通项、方案、版本与画像的身份与状态严格校验', () => {
   assert.equal(decodeAgreementWrite(agreementId)({ agreementId, agreementNo: 'AGR-1', status: 'ACTIVE', changeVersion: 8 }).changeVersion, 8);
   assert.throws(() => decodeAgreementWrite(agreementId)({ agreementId: '1', agreementNo: 'AGR-1', status: 'ACTIVE', changeVersion: 8 }), ApiError);
-  assert.equal(decodeCapabilityWrite(agreementId)({ agreementId, agreementCapabilityId: '3', status: 'SUSPENDED', changeVersion: 9 }).status, 'SUSPENDED');
-  assert.throws(() => decodeCapabilityWrite(agreementId)({ agreementId, agreementCapabilityId: '3', status: 'PAUSED', changeVersion: 9 }), ApiError);
+  assert.deepEqual(decodeCapabilityWrite(agreementId)({ agreementId, agreementCapabilityId: '3', status: 'ACTIVE', executionStatus: 'SUSPENDED_MANUALLY',
+    changeVersion: 9 }), { agreementId, agreementCapabilityId: '3', status: 'ACTIVE', executionStatus: 'SUSPENDED_MANUALLY', changeVersion: 9 });
+  assert.equal(decodeCapabilityWrite(agreementId)({ agreementId, agreementCapabilityId: '3', status: 'DISABLED', changeVersion: 9 }).executionStatus, null,
+    '关闭时执行状态缺省归一为 null');
+  assert.throws(() => decodeCapabilityWrite(agreementId)({ agreementId, agreementCapabilityId: '3', status: 'ENABLED', changeVersion: 9 }), ApiError,
+    '旧成员资格值 ENABLED 不再接受');
+  assert.throws(() => decodeCapabilityWrite(agreementId)({ agreementId, agreementCapabilityId: '3', status: 'ACTIVE', executionStatus: 'PAUSED',
+    changeVersion: 9 }), ApiError);
   assert.equal(decodePlan({ planId: '5', planCode: 'CP-1', termType: 'PARTNER_SHARE', agreementId: null, entityNo: null, clientId: null,
     localPartnerId: '21', status: 'DRAFT', changeVersion: '1' }).agreementId, null);
   assert.equal(decodeVersion(versionId)(version).status, 'DRAFT');
@@ -158,9 +164,10 @@ test('组件摘要与费率显示：不做浮点舍入', () => {
     bands: [{ bandId: '1', bandNo: 1, lowerBound: '0', upperBound: '1000', rate: '0.01', fixedAmount: null, currency: 'USD' }] }), 'Tiered, 1 tier · WHOLE_BASE');
 });
 
-test('覆盖提示：ENABLED 开通项的每个 CURRENCY 条件币种都应有同 OE 价格，暂停项与非币种条件不计', () => {
-  const capabilities = [capability('AE001', ['USD', 'AED']), capability('AE001', ['EUR'], 'SUSPENDED')] as AgreementCapability[];
-  assert.deepEqual(coverageGaps(capabilities, [{ entityNo: 'AE001', currency: 'USD' }]), ['AE001/AED (CARD_VISA)']);
+test('覆盖提示：成员 ACTIVE 开通项（含等前置）的每个 CURRENCY 条件币种都应有同 OE 价格，关闭项与非币种条件不计', () => {
+  const capabilities = [capability('AE001', ['USD']), capability('AE001', ['AED'], 'ACTIVE', 'PENDING_PREREQUISITES'),
+    capability('AE001', ['EUR'], 'DISABLED', null)] as AgreementCapability[];
+  assert.deepEqual(coverageGaps(capabilities, [{ entityNo: 'AE001', currency: 'USD' }]), ['AE001/AED (CARD_VISA)'], '等前置项同样需要价格，否则门禁与价格激活互相等待');
   assert.deepEqual(coverageGaps(capabilities, [{ entityNo: 'AE001', currency: 'USD' }, { entityNo: 'AE001', currency: 'AED' }]), []);
 });
 

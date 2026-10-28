@@ -14,6 +14,8 @@ import com.paytech.commercial.api.agreement.request.CapabilityConditionEntry;
 import com.paytech.commercial.api.agreement.request.CreateAgreementRequestBody;
 import com.paytech.commercial.api.agreement.request.RecordAgreementAcceptanceRequestBody;
 import com.paytech.commercial.api.agreement.request.ReplaceAgreementProductsRequestBody;
+import com.paytech.commercial.api.agreement.request.ResumeAgreementCapabilityRequestBody;
+import com.paytech.commercial.api.agreement.request.SuspendAgreementCapabilityRequestBody;
 import com.paytech.commercial.api.agreement.request.TerminateAgreementRequestBody;
 import com.paytech.commercial.api.agreement.request.UpdateAgreementCapabilityRequestBody;
 import com.paytech.commercial.api.agreement.response.AgreementCapabilityDetail;
@@ -23,6 +25,7 @@ import com.paytech.commercial.api.agreement.response.AgreementDocumentDetail;
 import com.paytech.commercial.api.agreement.response.AgreementPartyDetail;
 import com.paytech.commercial.api.agreement.response.AgreementResponseBody;
 import com.paytech.commercial.api.agreement.response.CapabilityConditionDetail;
+import com.paytech.commercial.api.agreement.response.CapabilityPrerequisiteCheckResponseBody;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.BusinessMode;
 import com.paytech.commercial.api.enums.PricingDimension;
@@ -30,6 +33,7 @@ import com.paytech.commercial.api.enums.FundMode;
 import com.paytech.commercial.api.enums.PricingAuthority;
 import com.paytech.commercial.api.enums.ProductCode;
 import com.paytech.commercial.domain.AgreementDetailView;
+import com.paytech.commercial.domain.CapabilityPrerequisiteDecision;
 import com.paytech.commercial.domain.enums.AgreementAgreementType;
 import com.paytech.commercial.domain.enums.AgreementDocumentRefDocumentType;
 import com.paytech.commercial.domain.enums.AgreementPartyAcceptanceMethod;
@@ -40,10 +44,13 @@ import com.paytech.commercial.service.processor.request.AgreementTransitionReque
 import com.paytech.commercial.service.processor.request.CreateAgreementRequest;
 import com.paytech.commercial.service.processor.request.RecordAgreementAcceptanceRequest;
 import com.paytech.commercial.service.processor.request.ReplaceAgreementProductsRequest;
+import com.paytech.commercial.service.processor.request.ResumeAgreementCapabilityRequest;
+import com.paytech.commercial.service.processor.request.SuspendAgreementCapabilityRequest;
 import com.paytech.commercial.service.processor.request.TerminateAgreementRequest;
 import com.paytech.commercial.service.processor.request.UpdateAgreementCapabilityRequest;
 import com.paytech.commercial.service.processor.response.AgreementCapabilityResponse;
 import com.paytech.commercial.service.processor.response.AgreementResponse;
+import com.paytech.commercial.service.processor.response.CapabilityPrerequisiteCheckResponse;
 import com.paytech.foundation.common.error.InvalidParameterException;
 
 /** 合同 Wire 与内部请求 / 结果的协议转换：字符串 ID、时间与 Code 解析，不访问数据库或执行业务校验。 */
@@ -183,8 +190,62 @@ final class AgreementConverter {
         body.setAgreementId(Long.toString(response.getAgreementId()));
         body.setAgreementCapabilityId(Long.toString(response.getAgreementCapabilityId()));
         body.setStatus(text(response.getStatus()));
+        body.setExecutionStatus(text(response.getExecutionStatus()));
         body.setChangeVersion(response.getChangeVersion());
         return body;
+    }
+
+    /** 暂停开通项请求。 */
+    static SuspendAgreementCapabilityRequest suspendCapabilityRequest(String actorId, String agreementId,
+        String agreementCapabilityId, SuspendAgreementCapabilityRequestBody body) {
+        SuspendAgreementCapabilityRequest request = new SuspendAgreementCapabilityRequest();
+        request.setActorId(actor(actorId));
+        request.setAgreementId(id("agreementId", agreementId));
+        request.setAgreementCapabilityId(id("agreementCapabilityId", agreementCapabilityId));
+        request.setExpectedChangeVersion(body.getExpectedChangeVersion());
+        request.setReason(body.getReason());
+        return request;
+    }
+
+    /** 恢复开通项请求。 */
+    static ResumeAgreementCapabilityRequest resumeCapabilityRequest(String actorId, String agreementId,
+        String agreementCapabilityId, ResumeAgreementCapabilityRequestBody body) {
+        ResumeAgreementCapabilityRequest request = new ResumeAgreementCapabilityRequest();
+        request.setActorId(actor(actorId));
+        request.setAgreementId(id("agreementId", agreementId));
+        request.setAgreementCapabilityId(id("agreementCapabilityId", agreementCapabilityId));
+        request.setExpectedChangeVersion(body.getExpectedChangeVersion());
+        return request;
+    }
+
+    /** 前置核对结果：每个开通项的执行状态取核对后的目标值。 */
+    static CapabilityPrerequisiteCheckResponseBody prerequisiteCheckResponse(CapabilityPrerequisiteCheckResponse response) {
+        CapabilityPrerequisiteCheckResponseBody body = new CapabilityPrerequisiteCheckResponseBody();
+        body.setAgreementId(Long.toString(response.getAgreementId()));
+        body.setChangeVersion(response.getChangeVersion());
+        body.setCapabilities(response.getDecisions().stream().map(AgreementConverter::prerequisiteCapability).toList());
+        return body;
+    }
+
+    /** 一个开通项的核对结果。 */
+    static CapabilityPrerequisiteCheckResponseBody.Capability prerequisiteCapability(
+        CapabilityPrerequisiteDecision decision) {
+        CapabilityPrerequisiteCheckResponseBody.Capability capability = new CapabilityPrerequisiteCheckResponseBody.Capability();
+        capability.setAgreementCapabilityId(Long.toString(decision.getCapability().getAgreementCapabilityId()));
+        capability.setEntityNo(decision.getCapability().getEntityNo());
+        capability.setCapabilityCode(decision.getCapability().getCapabilityCode());
+        capability.setCapabilityKind(text(decision.getCapabilityKind()));
+        capability.setStatus(text(decision.getCapability().getStatus()));
+        capability.setExecutionStatus(text(decision.getTargetExecutionStatus()));
+        capability.setChecks(decision.getChecks().stream().map(check -> {
+            CapabilityPrerequisiteCheckResponseBody.Check item = new CapabilityPrerequisiteCheckResponseBody.Check();
+            item.setCode(text(check.getCode()));
+            item.setResult(text(check.getResult()));
+            item.setReasonCode(check.getReasonCode());
+            item.setParams(check.getParams());
+            return item;
+        }).toList());
+        return capability;
     }
 
     /** 合同详情。 */
@@ -275,6 +336,7 @@ final class AgreementConverter {
         detail.setEntityNo(capability.getEntityNo());
         detail.setCapabilityCode(capability.getCapabilityCode());
         detail.setStatus(text(capability.getStatus()));
+        detail.setExecutionStatus(text(capability.getExecutionStatus()));
         detail.setEffectiveFrom(text(capability.getEffectiveFrom()));
         detail.setEffectiveTo(text(capability.getEffectiveTo()));
         detail.setRollingReserveRate(text(capability.getRollingReserveRate()));

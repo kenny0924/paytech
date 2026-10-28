@@ -17,6 +17,9 @@ import com.paytech.commercial.api.ratecard.response.RateCardResponseBody;
 import com.paytech.operations.console.bff.integration.CommercialAgreementClient;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AddAgreementCapabilityRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementCapabilityResponseBody;
+import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.SuspendAgreementCapabilityRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.ResumeAgreementCapabilityRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.CapabilityPrerequisiteCheckResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementDetail;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementTermVersion;
@@ -33,7 +36,8 @@ import lombok.AllArgsConstructor;
 /**
  * commercial 合同类接口的 HTTP 转发：每个入口只调用一次 commercial，不重试
  * <li>命令把会话 Account ID 填入 X-Gateway-Actor-Subject；不转发浏览器 Authorization、Cookie 或 Idempotency-Key。</li>
- * <li>命令回执的合同 ID 必须与路径一致（创建时与请求的合同编号一致），开通项更新回执的开通项 ID 必须与路径一致。</li>
+ * <li>命令回执的合同 ID 必须与路径一致（创建时与请求的合同编号一致），开通项更新、暂停与恢复回执的开通项 ID 必须与路径一致。</li>
+ * <li>前置核对不携带操作人（commercial 以系统身份记录迁移），回执合同 ID 必须与路径一致。</li>
  *
  * @author Claude
  */
@@ -131,12 +135,37 @@ public class CommercialAgreementClientImpl implements CommercialAgreementClient 
     @Override
     public AgreementCapabilityResponseBody updateCapability(OperatorContext operator, String agreementId,
         String agreementCapabilityId, UpdateAgreementCapabilityRequestBody request) {
-        var result = write(request, () -> agreementApi.updateCapability(operator.accountId(), agreementId,
-            agreementCapabilityId, request(request,
+        return sameCapability(agreementId, agreementCapabilityId, write(request, () -> agreementApi.updateCapability(
+            operator.accountId(), agreementId, agreementCapabilityId, request(request,
                 com.paytech.commercial.api.agreement.request.UpdateAgreementCapabilityRequestBody.class)),
-            AgreementCapabilityResponseBody.class);
+            AgreementCapabilityResponseBody.class));
+    }
+
+    /** 暂停开通项；回执合同与开通项 ID 与路径一致。 */
+    @Override
+    public AgreementCapabilityResponseBody suspendCapability(OperatorContext operator, String agreementId,
+        String agreementCapabilityId, SuspendAgreementCapabilityRequestBody request) {
+        return sameCapability(agreementId, agreementCapabilityId, write(request, () -> agreementApi.suspendCapability(
+            operator.accountId(), agreementId, agreementCapabilityId, request(request,
+                com.paytech.commercial.api.agreement.request.SuspendAgreementCapabilityRequestBody.class)),
+            AgreementCapabilityResponseBody.class));
+    }
+
+    /** 恢复开通项；回执合同与开通项 ID 与路径一致。 */
+    @Override
+    public AgreementCapabilityResponseBody resumeCapability(OperatorContext operator, String agreementId,
+        String agreementCapabilityId, ResumeAgreementCapabilityRequestBody request) {
+        return sameCapability(agreementId, agreementCapabilityId, write(request, () -> agreementApi.resumeCapability(
+            operator.accountId(), agreementId, agreementCapabilityId, request(request,
+                com.paytech.commercial.api.agreement.request.ResumeAgreementCapabilityRequestBody.class)),
+            AgreementCapabilityResponseBody.class));
+    }
+
+    /** 前置核对；回执合同 ID 与路径一致。 */
+    @Override
+    public CapabilityPrerequisiteCheckResponseBody checkPrerequisites(String agreementId) {
+        var result = convert(agreementApi.checkPrerequisites(agreementId), CapabilityPrerequisiteCheckResponseBody.class);
         requireSame(agreementId, result.getAgreementId());
-        requireSame(agreementCapabilityId, result.getAgreementCapabilityId());
         return result;
     }
 
@@ -147,6 +176,13 @@ public class CommercialAgreementClientImpl implements CommercialAgreementClient 
 
     private static AgreementResponseBody sameAgreement(String agreementId, AgreementResponseBody result) {
         requireSame(agreementId, result.getAgreementId());
+        return result;
+    }
+
+    private static AgreementCapabilityResponseBody sameCapability(String agreementId, String agreementCapabilityId,
+        AgreementCapabilityResponseBody result) {
+        requireSame(agreementId, result.getAgreementId());
+        requireSame(agreementCapabilityId, result.getAgreementCapabilityId());
         return result;
     }
 

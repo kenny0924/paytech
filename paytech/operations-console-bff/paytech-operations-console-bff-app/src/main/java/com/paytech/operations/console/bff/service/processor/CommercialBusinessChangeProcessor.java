@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
  * <li>回溯到列表末尾仍未找到：该行最早的快照（FIRST_VERSION，全部字段视为变化）；超出回溯上限：NOT_COMPARED，不猜测。</li>
  * <li>条款版本快照的 priceCount、makerAccountId、checkerAccountId 是 commercial 只在部分命令追加的命令事实：本快照没有该键时
  * 不视为变化（否则每次提交 / 排期都会多出一个"变为空"的虚假字段）；本快照记录了该键时照常比较。</li>
+ * <li>当前页操作人经 {@link OperatorLabelResolver} 批量补显示名（createByLabel）；查询失败只让显示名为 null，不影响历史。</li>
  * <li>只读组合；commercial 的 4xx（未知类型、非规范 ID）原样透传。</li>
  *
  * @author Claude
@@ -46,6 +47,7 @@ public class CommercialBusinessChangeProcessor
     static final String TERM_VERSION_RECORD = "COMMERCIAL_TERM_VERSION";
 
     private final CommercialConsoleQueryClient client;
+    private final OperatorLabelResolver labels;
 
     @Override
     protected PagingResponseBody<BusinessChangeEntry> processRequest(CommercialBusinessChangeRequest request) {
@@ -67,6 +69,8 @@ public class CommercialBusinessChangeProcessor
         for (BusinessChangeEntry entry : unresolved) {
             unresolvedResult(entry, exhausted);
         }
+        var names = labels.resolve(entries.stream().map(BusinessChangeEntry::getCreateBy));
+        entries.forEach(entry -> entry.setCreateByLabel(OperatorLabelResolver.labelOf(names, entry.getCreateBy())));
         return page;
     }
 

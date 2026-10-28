@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.BusinessMode;
 import com.paytech.commercial.api.enums.PricingDimension;
@@ -228,8 +229,11 @@ public class AgreementDetailView {
         /** 可开通项代码 */
         private final String capabilityCode;
 
-        /** 状态 */
+        /** 合同成员资格 */
         private final AgreementCapabilityStatus status;
+
+        /** 执行状态；成员资格 DISABLED 时为空 */
+        private final AgreementCapabilityExecutionStatus executionStatus;
 
         /** 生效起点 */
         private final Instant effectiveFrom;
@@ -255,6 +259,7 @@ public class AgreementDetailView {
             this.entityNo = capability.getEntityNo();
             this.capabilityCode = capability.getCapabilityCode();
             this.status = capability.getStatus();
+            this.executionStatus = capability.getExecutionStatus();
             this.effectiveFrom = capability.getEffectiveFrom();
             this.effectiveTo = capability.getEffectiveTo();
             this.rollingReserveRate = capability.getRollingReserveRate();

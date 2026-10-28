@@ -1,0 +1,177 @@
+[
+  {
+    "step": "after add",
+    "executionStatus": {
+      "CARD": "SUSPENDED_BY_PREREQUISITE",
+      "TOKEN_STORAGE": "ENABLED",
+      "APPLE_PAY": "PENDING_PREREQUISITES",
+      "GOOGLE_PAY": "PENDING_PREREQUISITES"
+    }
+  },
+  {
+    "step": "prerequisite-checks",
+    "reply": {
+      "agreementId": "900000000001390001",
+      "capabilities": [
+        {
+          "agreementCapabilityId": "241267157843865600",
+          "capabilityCode": "CARD",
+          "capabilityKind": "PAYMENT_METHOD",
+          "checks": [
+            {
+              "code": "QUALIFICATION",
+              "params": {},
+              "reasonCode": null,
+              "result": "SATISFIED"
+            },
+            {
+              "code": "AGREEMENT_TERM",
+              "params": {
+                "termType": "CLIENT_PRICING",
+                "entityNo": "AE001"
+              },
+              "reasonCode": "PRICE_NOT_COVERED",
+              "result": "UNSATISFIED"
+            },
+            {
+              "code": "CHANNEL_IDENTITY",
+              "params": {},
+              "reasonCode": "CHANNEL_IDENTITY_NOT_CONNECTED",
+              "result": "SKIPPED"
+            }
+          ],
+          "entityNo": "AE001",
+          "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+          "status": "ACTIVE"
+        },
+        {
+          "agreementCapabilityId": "241267255969607680",
+          "capabilityCode": "TOKEN_STORAGE",
+          "capabilityKind": "FEATURE",
+          "checks": [
+            {
+              "code": "QUALIFICATION",
+              "params": {},
+              "reasonCode": null,
+              "result": "SATISFIED"
+            },
+            {
+              "code": "AGREEMENT_TERM",
+              "params": {},
+              "reasonCode": null,
+              "result": "SATISFIED"
+            },
+            {
+              "code": "CHANNEL_IDENTITY",
+              "params": {},
+              "reasonCode": "NOT_APPLICABLE",
+              "result": "SKIPPED"
+            }
+          ],
+          "entityNo": "AE001",
+          "executionStatus": "ENABLED",
+          "status": "ACTIVE"
+        },
+        {
+          "agreementCapabilityId": "241267266262429696",
+          "capabilityCode": "APPLE_PAY",
+          "capabilityKind": "PAYMENT_METHOD",
+          "checks": [
+            {
+              "code": "QUALIFICATION",
+              "params": {},
+              "reasonCode": null,
+              "result": "SATISFIED"
+            },
+            {
+              "code": "AGREEMENT_TERM",
+              "params": {
+                "termType": "CLIENT_PRICING",
+                "entityNo": "AE001"
+              },
+              "reasonCode": "PRICE_NOT_COVERED",
+              "result": "UNSATISFIED"
+            },
+            {
+              "code": "CHANNEL_IDENTITY",
+              "params": {},
+              "reasonCode": "CHANNEL_IDENTITY_NOT_CONNECTED",
+              "result": "SKIPPED"
+            }
+          ],
+          "entityNo": "AE001",
+          "executionStatus": "PENDING_PREREQUISITES",
+          "status": "ACTIVE"
+        },
+        {
+          "agreementCapabilityId": "241267276458782720",
+          "capabilityCode": "GOOGLE_PAY",
+          "capabilityKind": "PAYMENT_METHOD",
+          "checks": [
+            {
+              "code": "QUALIFICATION",
+              "params": {},
+              "reasonCode": null,
+              "result": "SATISFIED"
+            },
+            {
+              "code": "AGREEMENT_TERM",
+              "params": {
+                "termType": "CLIENT_PRICING",
+                "entityNo": "AE001"
+              },
+              "reasonCode": "PRICE_NOT_COVERED",
+              "result": "UNSATISFIED"
+            },
+            {
+              "code": "CHANNEL_IDENTITY",
+              "params": {},
+              "reasonCode": "CHANNEL_IDENTITY_NOT_CONNECTED",
+              "result": "SKIPPED"
+            }
+          ],
+          "entityNo": "AE001",
+          "executionStatus": "PENDING_PREREQUISITES",
+          "status": "ACTIVE"
+        }
+      ],
+      "changeVersion": 9
+    }
+  },
+  {
+    "step": "suspend GOOGLE_PAY",
+    "reply": {
+      "agreementCapabilityId": "241267276458782720",
+      "agreementId": "900000000001390001",
+      "changeVersion": 10,
+      "executionStatus": "SUSPENDED_MANUALLY",
+      "status": "ACTIVE"
+    }
+  },
+  {
+    "step": "final",
+    "changeVersion": 10,
+    "capabilities": {
+      "CARD": [
+        "241267157843865600",
+        "ACTIVE",
+        "SUSPENDED_BY_PREREQUISITE"
+      ],
+      "TOKEN_STORAGE": [
+        "241267255969607680",
+        "ACTIVE",
+        "ENABLED"
+      ],
+      "APPLE_PAY": [
+        "241267266262429696",
+        "ACTIVE",
+        "PENDING_PREREQUISITES"
+      ],
+      "GOOGLE_PAY": [
+        "241267276458782720",
+        "ACTIVE",
+        "SUSPENDED_MANUALLY"
+      ]
+    }
+  }
+]

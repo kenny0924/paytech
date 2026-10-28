@@ -34,6 +34,15 @@
 
 `AgreementApi` 与 `PricingProfileApi` 是 technique.md §2.2 的合同 / 订阅 / 开通项 / 画像 13 个接口，调用方 operations-console-bff，操作者经 `X-Gateway-Actor-Subject` 透传。每个写入一个 Processor（Foundation `AbstractLockProcessor`，LOCK、租约 -1，Key `agreement:{agreementNo|id}`、`pricing-profile:{code|id}`）；Service 在一个本地事务内写业务表、BCR（Root `current_version` 为 CAS 令牌，请求携带 `expectedChangeVersion`；受审计 Child 为 `AGREEMENT_PRODUCT`、`AGREEMENT_CAPABILITY`；快照为 `_meta + data` 信封与 RFC 8785 完整性哈希）与 `compensation_event`。只有激活与终止登记 `AGREEMENT_STATUS_CHANGED`，提交后发布 `AgreementStatusChanged`。
 
+## 开通项前置门禁（2026-10-28 REQ-01）
+
+方案见 [technique.md §7–§16](../../requirements/20261028/commercial-开通项前置门禁/technique.md)。`t_agreement_capability.status` 只表示合同成员资格 `ACTIVE` / `DISABLED`（定价相关性与覆盖完整只看它）；新增 `execution_status`：`PENDING_PREREQUISITES` / `ENABLED` / `SUSPENDED_BY_PREREQUISITE` / `SUSPENDED_MANUALLY`（Checkout 解析只认 `ENABLED`）。存量迁移与回滚见 `docs/database/sql/changes/2026-10-28-capability-execution-status*.sql`，SQL 与新镜像必须相邻执行。
+
+- 唯一入口 `CheckCapabilityPrerequisitesProcessor`（锁 `agreement:{id}`，LOCK）：事务外查 compliance 资格（Client + 各 OE），逐开通项判定 ①资格、②合同 ACTIVE 且相关方案 ACTIVE 版本完整覆盖（FEATURE 只看合同）、④渠道身份（本期固定 `SKIPPED`）；有迁移时一个短事务 Root CAS、条件迁移、系统身份 0 快照（`AGREEMENT_CAPABILITY_EXECUTION_CHANGED`）并登记 `AGREEMENT_CAPABILITY_STATUS_CHANGED`。UNKNOWN 不迁移，`SUSPENDED_MANUALLY` 不触碰，PARTNER 合同不进门禁（400）。
+- 触发：`POST /agreements/v1/{id}/prerequisite-checks`（运营）；新增 / 恢复 / 重新纳入 / 合同激活 / Client 价格版本激活在原事务登记 `AGREEMENT_CAPABILITY_PREREQUISITE_CHECK`，提交后由 `CapabilityPrerequisiteCheckHandler` 调用门禁；消费 compliance `QualificationChanged`（`QualificationChangedListener`，分区队列 `commercial.compliance.p0..p3`，`messaging.consumer.service=commercial`）；XXL-Job `capabilityPrerequisiteRecheck`（参数空 = 等前置 / 前置失效暂停，建议每 5 分钟；`scope=ALL` 含已开通，建议每日 03:00；按合同 ID 分片）。
+- 运营：`POST .../capabilities/{id}/suspension`（→ `SUSPENDED_MANUALLY`，带原因）、`POST .../capabilities/{id}/resumption`（→ 等前置并核对）；`PUT .../capabilities/{id}` 的 `status` 只接受 `ACTIVE` / `DISABLED`。
+- 事件 `AgreementCapabilityStatusChanged`（schema 1，聚合 `AGREEMENT`、版本为合同 Root 版本）：一个合同版本一条，`changes[]` 按本版本与上一版本的开通项快照重建，触发来源 `PREREQUISITE` / `MANUAL` / `MEMBERSHIP`。
+
 ## 商业条款、价格命中与费率卡（2026-10-19 六层定价模型 C 线）
 
 接口合同见 [technique.md §2.2–§2.8](../../requirements/20261019/commercial-六层产品定价模型/technique.md)；写入 Processor 继承 `AbstractLockProcessor`（锁 `term-plan:{planId}`，创建方案锁 `agreement:{agreementId}`，LOCK），每次写入携带方案 BCR 根修订 `expectedChangeVersion` 做 CAS（冲突 409）。BCR 与 B 线共用 `BusinessChangeHistoryWriter`：方案为 `COMMERCIAL_TERM_PLAN` Root，版本为受审计 Child `COMMERCIAL_TERM_VERSION`，Maker / Checker 记在版本快照 `data`，定时激活的快照 `triggerType=SYSTEM`。操作者与合同写入一致取 `X-Gateway-Actor-Subject` 请求头（缺失或非规范十进制 400），请求体不含操作人；定时激活作业以系统操作者 0 执行。

@@ -1,0 +1,6 @@
+ℹ tests 1581
+ℹ pass 1581
+ℹ fail 0
+Wrote i18n-out/operations-console.zh-CN.json: 25 namespaces, 696.6 KiB
+Keys per namespace: access 422, auth 42, card 194, channel 1157, client-review 717, commercial 876, common 42, currency 84, data-query 372, enum 8, file 483, finance 834, gateway 247, i18n-admin 403, master-data 152, nav 204, notification 278, onboarding-schema 172, qualification 105, recon 541, reference-data 85, risk 1132, vault 194, webhook 147, workflow 989
+Total: 25 namespaces, 9880 keys

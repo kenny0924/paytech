@@ -1,0 +1,212 @@
+{
+  "at": "2026-10-28T20:01:45Z",
+  "capabilities": [
+    {
+      "agreementNo": "CL-F1105E",
+      "clientId": "237610139979456513",
+      "id": "238132082633674752",
+      "code": "CARD",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO-CL-001",
+      "clientId": "237575207592763393",
+      "id": "238331390133866496",
+      "code": "APPLE_PAY",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO-CL-001",
+      "clientId": "237575207592763393",
+      "id": "238331389471166464",
+      "code": "CARD",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO-CL-001",
+      "clientId": "237575207592763393",
+      "id": "238331390347776000",
+      "code": "PAYOUT_LOCAL",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO-CL-002",
+      "clientId": "237574764993028097",
+      "id": "238331040773509120",
+      "code": "CARD",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO-CL-002",
+      "clientId": "237574764993028097",
+      "id": "238331040869978112",
+      "code": "GOOGLE_PAY",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO2-CL-101",
+      "clientId": "237573476041465857",
+      "id": "238411009797197824",
+      "code": "CARD",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO2-CL-101",
+      "clientId": "237573476041465857",
+      "id": "238411010468286464",
+      "code": "TOKEN_STORAGE",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO2-CL-102",
+      "clientId": "237573382420406273",
+      "id": "238411679711432704",
+      "code": "APPLE_PAY",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO2-CL-102",
+      "clientId": "237573382420406273",
+      "id": "238411679887593472",
+      "code": "CARD",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO2-CL-103",
+      "clientId": "237573267559391233",
+      "id": "238411681724698624",
+      "code": "CARD",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO2-CL-103",
+      "clientId": "237573267559391233",
+      "id": "238411884146003968",
+      "code": "GOOGLE_PAY",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO2-CL-103",
+      "clientId": "237573267559391233",
+      "id": "238411897563582464",
+      "code": "STC_PAY",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO2-CL-901",
+      "clientId": "237573040244891649",
+      "id": "238411685763813376",
+      "code": "CARD",
+      "status": "ENABLED"
+    },
+    {
+      "agreementNo": "DEMO2-CL-901",
+      "clientId": "237573040244891649",
+      "id": "238417973038092288",
+      "code": "TOKEN_STORAGE",
+      "status": "ENABLED"
+    }
+  ],
+  "resolutions": [
+    {
+      "clientId": "237573040244891649",
+      "http": 422,
+      "code": "CLIENT_NOT_ELIGIBLE",
+      "entityNo": null,
+      "capabilities": []
+    },
+    {
+      "clientId": "237573267559391233",
+      "http": 422,
+      "code": "CLIENT_NOT_ELIGIBLE",
+      "entityNo": null,
+      "capabilities": []
+    },
+    {
+      "clientId": "237573382420406273",
+      "http": 422,
+      "code": "CLIENT_NOT_ELIGIBLE",
+      "entityNo": null,
+      "capabilities": []
+    },
+    {
+      "clientId": "237573476041465857",
+      "http": 422,
+      "code": "CLIENT_NOT_ELIGIBLE",
+      "entityNo": null,
+      "capabilities": []
+    },
+    {
+      "clientId": "237574764993028097",
+      "http": 422,
+      "code": "CLIENT_NOT_ELIGIBLE",
+      "entityNo": null,
+      "capabilities": []
+    },
+    {
+      "clientId": "237575207592763393",
+      "http": 503,
+      "code": "OWNER_UNAVAILABLE",
+      "entityNo": null,
+      "capabilities": []
+    },
+    {
+      "clientId": "237610139979456513",
+      "http": 422,
+      "code": "CLIENT_NOT_ELIGIBLE",
+      "entityNo": null,
+      "capabilities": []
+    }
+  ],
+  "checks": [
+    {
+      "name": "发布前 15 个开通项均为旧值 ENABLED / SUSPENDED / DISABLED",
+      "pass": true,
+      "evidence": [
+        "ENABLED"
+      ]
+    },
+    {
+      "name": "Checkout 解析已记录 7 个 Client",
+      "pass": true,
+      "evidence": [
+        [
+          "237573040244891649",
+          422,
+          []
+        ],
+        [
+          "237573267559391233",
+          422,
+          []
+        ],
+        [
+          "237573382420406273",
+          422,
+          []
+        ],
+        [
+          "237573476041465857",
+          422,
+          []
+        ],
+        [
+          "237574764993028097",
+          422,
+          []
+        ],
+        [
+          "237575207592763393",
+          503,
+          []
+        ],
+        [
+          "237610139979456513",
+          422,
+          []
+        ]
+      ]
+    }
+  ],
+  "verdict": true
+}

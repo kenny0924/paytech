@@ -10,9 +10,12 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.paytech.commercial.api.constant.CommercialCodes;
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.BusinessMode;
 import com.paytech.commercial.api.enums.CapabilityKind;
@@ -107,7 +110,7 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
         assertAll(() -> assertEquals(1, capabilities.size()),
             () -> assertEquals(Long.toString(FIRST_CARD_CAPABILITY_ID), capability.agreementCapabilityId()),
             () -> assertEquals(CommercialCodes.Capability.CARD, capability.capabilityCode()),
-            () -> assertEquals(AgreementCapabilityStatus.ENABLED.getCode(), capability.status()),
+            () -> assertEquals(AgreementCapabilityExecutionStatus.ENABLED.getCode(), capability.status()),
             () -> assertEquals(CommercialCodes.PaymentMethod.CARD, capability.paymentMethodCode()),
             () -> assertEquals(CapabilityKind.PAYMENT_METHOD.getCode(), capability.capabilityKind()),
             () -> assertEquals(List.of(PricingDimension.CARD_BRAND.getCode(), PricingDimension.CURRENCY.getCode()),
@@ -193,10 +196,14 @@ class CheckoutResolutionMatrixTest extends AbstractCheckoutApiTest {
         assertEquals(SECOND_ENTITY, first(query(CommercialCodes.PaymentMethod.CARD)).entityNo());
     }
 
-    /** SUSPENDED 的开通项不参与匹配；不给支付方式时不受影响。 */
-    @Test
-    void test_suspendedCapabilityFallsThrough() {
-        data.overwriteCapabilityStatus(FIRST_CARD_CAPABILITY_ID, AgreementCapabilityStatus.SUSPENDED);
+    /**
+     * 执行状态不是 ENABLED（等前置、前置失效暂停、手动暂停）的成员开通项不参与匹配；不给支付方式时不受影响
+     * （开通项前置门禁 technique.md §15.1 Checkout 解析）。
+     */
+    @ParameterizedTest
+    @EnumSource(value = AgreementCapabilityExecutionStatus.class, names = "ENABLED", mode = EnumSource.Mode.EXCLUDE)
+    void test_notEnabledCapabilityFallsThrough(AgreementCapabilityExecutionStatus executionStatus) {
+        data.overwriteCapabilityExecutionStatus(FIRST_CARD_CAPABILITY_ID, executionStatus);
 
         assertAll(() -> assertEquals(SECOND_ENTITY, first(query(CommercialCodes.PaymentMethod.CARD)).entityNo()),
             () -> assertEquals(FIRST_ENTITY, first(query()).entityNo()));

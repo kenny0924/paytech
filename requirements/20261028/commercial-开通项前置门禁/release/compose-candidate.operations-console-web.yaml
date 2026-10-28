@@ -1,0 +1,9 @@
+# 开通项前置门禁 REQ-01：mor-test 候选覆盖（阶段 6 准备 2026-10-28；阶段 7 由主会话执行，需用户授权）。
+# 用法：./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+# 只认 sha256（tag 仅供辨认，:development 未改动）。不加 --remove-orphans。env 抄自现网覆盖文件，渲染结果与运行容器逐键逐值比较见 scripts/env_check.sh。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-gate-rel = 663e5e4a + 国家包法务修订 93 个文件（Code-MoR-legal-rel；23:38 已提交为 ac3145f4，93 个文件逐字节相同）+ 本需求 130 个文件（Code-MoR-gate），
+#   文件清单与 SHA-256 见 evidence/legal-source-files.sha256、evidence/gate-source-files.sha256（未提交）。
+services:
+  operations-console-web:
+    # 合同详情开通项执行状态 / 还差什么 / 检查前置 / 暂停 / 恢复；含国家包法务修订（现网 45ee11cb，dist 250 个文件逐字节基线）；nginx 镜像，无 env。
+    image: sha256:7a053544076e82e1f2a016f3b64cd4324d26a6df65c64177a7f627cb306b80ad  # mor-test/operations-console-web:gate-20261029a（dist 253 个文件）

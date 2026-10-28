@@ -13,8 +13,14 @@ public class AgreementCapabilityResponseBody {
     /** 开通项 ID */
     private String agreementCapabilityId;
 
-    /** 开通项状态：ENABLED、SUSPENDED、DISABLED */
+    /** 合同成员资格：ACTIVE、DISABLED */
     private String status;
+
+    /**
+     * 执行状态：PENDING_PREREQUISITES、ENABLED、SUSPENDED_BY_PREREQUISITE、SUSPENDED_MANUALLY
+     * <li>成员资格 DISABLED 时为空。</li>
+     */
+    private String executionStatus;
 
     /** 合同 BCR Root 当前版本 */
     private Long changeVersion;

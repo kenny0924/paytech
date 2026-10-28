@@ -1,6 +1,7 @@
 package com.paytech.operations.console.bff.service.model;
 
 import java.util.List;
+import java.util.Map;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -268,7 +269,7 @@ public final class CommercialAgreementModels {
         @Positive(message = "expectedChangeVersion 必须为正")
         private Long expectedChangeVersion;
 
-        /** 状态：ENABLED、SUSPENDED、DISABLED */
+        /** 合同成员资格：ACTIVE（纳入）、DISABLED（关闭）；执行状态由前置门禁与暂停 / 恢复维护 */
         @NotBlank(message = "状态必填")
         private String status;
 
@@ -294,6 +295,31 @@ public final class CommercialAgreementModels {
         /** 是否要求 3DS 认证 */
         @NotNull(message = "3DS 要求必填")
         private Boolean require3ds;
+    }
+
+    /** 运营手动暂停开通项。 */
+    @Getter
+    @Setter
+    public static class SuspendAgreementCapabilityRequestBody {
+        /** 页面读取到的合同 changeVersion */
+        @NotNull(message = "expectedChangeVersion 必填")
+        @Positive(message = "expectedChangeVersion 必须为正")
+        private Long expectedChangeVersion;
+
+        /** 暂停原因，最长 200 字 */
+        @NotBlank(message = "暂停原因必填")
+        @Size(max = 200, message = "暂停原因最长 200 字")
+        private String reason;
+    }
+
+    /** 运营恢复手动暂停的开通项。 */
+    @Getter
+    @Setter
+    public static class ResumeAgreementCapabilityRequestBody {
+        /** 页面读取到的合同 changeVersion */
+        @NotNull(message = "expectedChangeVersion 必填")
+        @Positive(message = "expectedChangeVersion 必须为正")
+        private Long expectedChangeVersion;
     }
 
     /** 开通项的一个接受条件：一个维度及其取值。 */
@@ -339,11 +365,74 @@ public final class CommercialAgreementModels {
         /** 开通项 ID */
         private String agreementCapabilityId;
 
-        /** 开通项状态 */
+        /** 合同成员资格：ACTIVE、DISABLED */
         private String status;
+
+        /** 执行状态：PENDING_PREREQUISITES、ENABLED、SUSPENDED_BY_PREREQUISITE、SUSPENDED_MANUALLY；DISABLED 时为空 */
+        private String executionStatus;
 
         /** 合同当前 changeVersion */
         private Long changeVersion;
+    }
+
+    /**
+     * 合同开通项前置核对结果（commercial 原样）
+     * <li>结论只在本次响应返回；原因码为开放字符串，页面按 commercial.enum.CapabilityPrerequisiteReason.&lt;CODE&gt; 取文案。</li>
+     */
+    @Getter
+    @Setter
+    public static class CapabilityPrerequisiteCheckResponseBody {
+        /** 合同 ID */
+        private String agreementId;
+
+        /** 核对后的合同 changeVersion；本次有状态迁移时已加一 */
+        private Long changeVersion;
+
+        /** 合同全部开通项，按开通项 ID 升序 */
+        private List<PrerequisiteCheckedCapability> capabilities;
+    }
+
+    /** 一个开通项的前置核对结果。 */
+    @Getter
+    @Setter
+    public static class PrerequisiteCheckedCapability {
+        /** 开通项 ID */
+        private String agreementCapabilityId;
+
+        /** 准确 OE */
+        private String entityNo;
+
+        /** 可开通项代码 */
+        private String capabilityCode;
+
+        /** 可开通项种类 */
+        private String capabilityKind;
+
+        /** 合同成员资格：ACTIVE、DISABLED */
+        private String status;
+
+        /** 核对后的执行状态；DISABLED 时为空 */
+        private String executionStatus;
+
+        /** 逐项结论，按 QUALIFICATION、AGREEMENT_TERM、CHANNEL_IDENTITY 顺序；DISABLED 时为空数组 */
+        private List<CapabilityPrerequisiteCheck> checks;
+    }
+
+    /** 一项前置的结论。 */
+    @Getter
+    @Setter
+    public static class CapabilityPrerequisiteCheck {
+        /** 前置项：QUALIFICATION、AGREEMENT_TERM、CHANNEL_IDENTITY */
+        private String code;
+
+        /** 结论：SATISFIED、UNSATISFIED、UNKNOWN、SKIPPED */
+        private String result;
+
+        /** 原因码，SATISFIED 时为空 */
+        private String reasonCode;
+
+        /** 文案参数，如 subjectType、subjectId、entityNo、termType、agreementStatus */
+        private Map<String, String> params;
     }
 
     /** 合同详情：主档、参与方、文件、覆盖 OE、订阅产品与开通项（commercial 原样）。 */
@@ -479,8 +568,11 @@ public final class CommercialAgreementModels {
         /** 可开通项代码 */
         private String capabilityCode;
 
-        /** 状态 */
+        /** 合同成员资格：ACTIVE、DISABLED */
         private String status;
+
+        /** 执行状态：PENDING_PREREQUISITES、ENABLED、SUSPENDED_BY_PREREQUISITE、SUSPENDED_MANUALLY；DISABLED 时为空 */
+        private String executionStatus;
 
         /** 生效起点（含） */
         private String effectiveFrom;

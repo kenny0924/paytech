@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 
@@ -53,13 +54,46 @@ public interface AgreementCapabilityRepository {
     List<AgreementCapability> findByAgreementIds(Collection<Long> agreementIds);
 
     /**
-     * 以对象当前状态为条件迁移状态；未命中抛出并发冲突，成功后同步原对象的状态与更新时间。
+     * 以对象当前成员资格与执行状态为条件改写二者；未命中抛出并发冲突，成功后同步原对象的两个状态与更新时间。
      *
      * @param capability 已读取的开通项
-     * @param status 目标状态
+     * @param status 目标成员资格
+     * @param executionStatus 目标执行状态；DISABLED 时为空
      * @param now 本次更新时间
      */
-    void updateStatus(AgreementCapability capability, AgreementCapabilityStatus status, Instant now);
+    void updateMembership(AgreementCapability capability, AgreementCapabilityStatus status,
+        AgreementCapabilityExecutionStatus executionStatus, Instant now);
+
+    /**
+     * 以成员资格 ACTIVE 与对象当前执行状态为条件迁移执行状态；未命中抛出并发冲突，成功后同步原对象的执行状态与更新时间。
+     *
+     * @param capability 已读取的开通项
+     * @param executionStatus 目标执行状态
+     * @param now 本次更新时间
+     */
+    void updateExecutionStatus(AgreementCapability capability, AgreementCapabilityExecutionStatus executionStatus,
+        Instant now);
+
+    /**
+     * 有执行状态属于给定集合的开通项、落在本分片的合同 ID，按 ID 升序从游标之后取一页（重查 Job 使用）。
+     *
+     * @param executionStatuses 执行状态集合，非空
+     * @param afterAgreementId 游标：只取大于该值的合同 ID，首页为 0
+     * @param shardIndex 分片序号，0 起
+     * @param shardTotal 分片总数，至少 1
+     * @param limit 页大小
+     * @return 合同 ID 升序
+     */
+    List<Long> findAgreementIdsByExecutionStatus(Collection<AgreementCapabilityExecutionStatus> executionStatuses,
+        long afterAgreementId, int shardIndex, int shardTotal, int limit);
+
+    /**
+     * 在某 OE 上有开通项的合同 ID（资格事件按 OE 定位合同）。
+     *
+     * @param entityNo 准确 OE
+     * @return 合同 ID 升序
+     */
+    List<Long> findAgreementIdsByEntityNo(String entityNo);
 
     /**
      * 以对象当前 update_time 为条件改写生效区间与保证金条款；未命中抛出并发冲突，成功后同步原对象。

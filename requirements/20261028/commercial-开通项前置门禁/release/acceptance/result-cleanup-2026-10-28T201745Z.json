@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-28T20:17:45Z",
+  "agreementNo": "DEMO2-CL-103",
+  "checks": [
+    {
+      "name": "TOKEN_STORAGE → DISABLED、执行状态为空",
+      "pass": true,
+      "evidence": {
+        "agreementCapabilityId": "241293741653037056",
+        "agreementId": "238411681049415680",
+        "changeVersion": 16,
+        "executionStatus": null,
+        "status": "DISABLED"
+      }
+    },
+    {
+      "name": "APPLE_PAY → DISABLED、执行状态为空",
+      "pass": true,
+      "evidence": {
+        "agreementCapabilityId": "241293756240826368",
+        "agreementId": "238411681049415680",
+        "changeVersion": 17,
+        "executionStatus": null,
+        "status": "DISABLED"
+      }
+    }
+  ],
+  "verdict": true
+}

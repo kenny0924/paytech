@@ -10,7 +10,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.CapabilityKind;
 import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.ProductCode;
@@ -87,7 +87,7 @@ public class CheckoutSubscriptionContext {
         return catalog;
     }
 
-    /** 目录为支付方式类（给出支付方式时须相等）、状态 ENABLED、商业时点在区间内且请求事实满足约束。 */
+    /** 目录为支付方式类（给出支付方式时须相等）、执行状态 ENABLED、商业时点在区间内且请求事实满足约束。 */
     private static boolean matches(CheckoutResolutionContext context, MatchedCapability matched) {
         AgreementCapability capability = matched.capability();
         ProductCapability catalog = matched.catalog();
@@ -97,7 +97,7 @@ public class CheckoutSubscriptionContext {
             return false;
         }
         CheckoutQuery query = context.query();
-        return capability.getStatus() == AgreementCapabilityStatus.ENABLED
+        return capability.getExecutionStatus() == AgreementCapabilityExecutionStatus.ENABLED
             && applicable(capability.getEffectiveFrom(), capability.getEffectiveTo(), query.asOf())
             && matched.conditions().allows(PricingDimension.CURRENCY, query.currency())
             && matched.conditions().allows(PricingDimension.CONSUMER_COUNTRY, query.country());

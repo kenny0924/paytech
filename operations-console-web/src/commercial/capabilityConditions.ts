@@ -236,7 +236,7 @@ export function capabilityBody(expectedChangeVersion: number, values: Capability
   const common = { expectedChangeVersion, effectiveFrom: offsetInstant(values.effectiveFrom), effectiveTo: optionalInstant(values.effectiveTo),
     rollingReserveRate: percent ? rateFromPercent(percent) : null, rollingReserveDays: values.rollingReserveDays ?? null,
     conditions: conditionsBody(dimensions, values.conditions), require3ds: values.require3ds === true };
-  return update ? { ...common, status: values.status ?? 'ENABLED' }
+  return update ? { ...common, status: values.status ?? 'ACTIVE' }
     : { ...common, entityNo: values.entityNo.trim(), capabilityCode: values.capabilityCode.trim() };
 }
 
@@ -264,11 +264,16 @@ export function capabilityChoices(catalog: readonly CatalogCapability[], product
     .map(item => ({ item, existing: existing.find(capability => capability.entityNo === entityNo && capability.capabilityCode === item.capabilityCode) ?? null }));
 }
 
-/** 卡片上的已有标记：ENABLED 为「已开通」，其余为「已添加 · 暂停 / 关闭」；没有为 null。 */
-export function existingMark(existing: Pick<AgreementCapability, 'status'> | null): string | null {
+/**
+ * 卡片上的已有标记：执行状态 ENABLED 为「已开通」；其余为「已添加 · 等前置 / 前置失效暂停 / 手动暂停」，关闭的为「已添加 · 已关闭」；没有为 null。
+ */
+export function existingMark(existing: Pick<AgreementCapability, 'status' | 'executionStatus'> | null): string | null {
   if (!existing) return null;
-  return existing.status === 'ENABLED' ? t('capability.mark.enabled')
-    : t('capability.mark.added', { status: enumLabel(t, 'enum.capabilityStatus', existing.status === 'SUSPENDED' ? 'SUSPENDED' : 'DISABLED') });
+  if (existing.status === 'ACTIVE' && existing.executionStatus === 'ENABLED') return t('capability.mark.enabled');
+  const status = existing.status === 'ACTIVE' && existing.executionStatus
+    ? enumLabel(t, 'enum.AgreementCapabilityExecutionStatus', existing.executionStatus)
+    : enumLabel(t, 'enum.AgreementCapabilityStatus', existing.status);
+  return t('capability.mark.added', { status });
 }
 
 /** 卡片的可配维度说明：中文名以「、」连接，没有可配维度时写明。 */

@@ -14,6 +14,8 @@ import com.paytech.commercial.test.dal.CommercialTestMapper;
 import com.paytech.commercial.test.mocker.local.agreement.AgreementWriteMocker;
 import com.paytech.commercial.test.mocker.local.agreement.PricingProfileWriteMocker;
 import com.paytech.commercial.test.mocker.local.catalog.ProductCatalogMocker;
+import com.paytech.compliance.api.enums.QualificationEvaluationStatus;
+import com.paytech.compliance.api.enums.QualificationRoleType;
 import com.paytech.foundation.testsupport.api.HttpTestInvoker;
 import com.paytech.foundation.testsupport.api.TestRequestHeaders;
 
@@ -50,6 +52,14 @@ public abstract class AbstractCommercialWriteApiTest extends CommercialMockTestB
 
     @Autowired
     protected PricingProfileWriteMocker profiles;
+
+    /** 写入合同（AgreementBuilder 默认 Client 与 OE）资格合格：新增或恢复 CLIENT 合同开通项提交后门禁会查询资格。 */
+    protected void mockAgreementQualified() {
+        compliance.mockStatus(QualificationRoleType.CLIENT, Long.toString(AgreementBuilder.CLIENT_ID),
+            QualificationEvaluationStatus.ELIGIBLE);
+        compliance.mockStatus(QualificationRoleType.OPERATING_ENTITY, AgreementBuilder.ENTITY_NO,
+            QualificationEvaluationStatus.ELIGIBLE);
+    }
 
     /** 带操作者的 POST。 */
     protected CommercialWriteResponseChecker post(String path, Object body) {

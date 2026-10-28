@@ -2,13 +2,13 @@ package com.paytech.commercial.api.enums;
 
 import com.paytech.foundation.common.enums.CodeEnum;
 
-/** 合同开通项状态（t_agreement_capability.status）。 */
+/**
+ * 合同开通项成员资格（t_agreement_capability.status）
+ * <li>只表示开通项是否纳入合同；能否执行由 {@link AgreementCapabilityExecutionStatus} 表达。</li>
+ */
 public enum AgreementCapabilityStatus implements CodeEnum {
-    /** 已开通，可参与解析 */
-    ENABLED("ENABLED"),
-
-    /** 风控或合规临时停用，可恢复 */
-    SUSPENDED("SUSPENDED"),
+    /** 纳入合同，价格须覆盖 */
+    ACTIVE("ACTIVE"),
 
     /** 运营关闭 */
     DISABLED("DISABLED");

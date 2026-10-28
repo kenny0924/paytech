@@ -2530,7 +2530,7 @@
       },
       "defKey": "t_agreement_capability",
       "defName": "合同开通项",
-      "comment": "合同在准确OE下的开通项与保证金条款；uk_agreement_capability(agreement_id,entity_no,capability_code)；require_3ds 为开通项的 3DS 要求；所属产品必须已在合同订阅；capability_code引用时须为ACTIVE目录项；CLIENT合同entity_no等于合同entity_no，PARTNER合同须在合同覆盖OE内；状态ENABLED/SUSPENDED/DISABLED，有效区间半开；保证金比例与天数成组为空或非空，执行归account/risk；应用校验，不创建 CHECK/FK；所属产品必须已在 agreement_product 订阅；capability_code 引用时目录项须为 ACTIVE。；CLIENT 合同的 entity_no 必须等于 agreement.entity_no；PARTNER 合同的 entity_no 必须在 agreement_operating_entity 内。；CHECK (effective_to IS NULL OR effective_from < effective_to)，解析时要求 status=ENABLED 且 effective_from <= contextAsOfTime < effective_to。；rolling_reserve_rate 与 rolling_reserve_days 成组为空或成组非空；比例取值 0 至 1，保证金执行归 account / risk。",
+      "comment": "合同在准确OE下的开通项与保证金条款；uk_agreement_capability(agreement_id,entity_no,capability_code)；require_3ds 为开通项的 3DS 要求；所属产品必须已在合同订阅；capability_code引用时须为ACTIVE目录项；CLIENT合同entity_no等于合同entity_no，PARTNER合同须在合同覆盖OE内；成员资格status为ACTIVE/DISABLED，执行开关execution_status为PENDING_PREREQUISITES/ENABLED/SUSPENDED_BY_PREREQUISITE/SUSPENDED_MANUALLY（DISABLED时为空），有效区间半开；保证金比例与天数成组为空或非空，执行归account/risk；应用校验，不创建 CHECK/FK；所属产品必须已在 agreement_product 订阅；capability_code 引用时目录项须为 ACTIVE。；CLIENT 合同的 entity_no 必须等于 agreement.entity_no；PARTNER 合同的 entity_no 必须在 agreement_operating_entity 内。；CHECK (effective_to IS NULL OR effective_from < effective_to)，解析时要求 execution_status=ENABLED 且 effective_from <= contextAsOfTime < effective_to。；rolling_reserve_rate 与 rolling_reserve_days 成组为空或成组非空；比例取值 0 至 1，保证金执行归 account / risk。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -2772,8 +2772,8 @@
         },
         {
           "defKey": "status",
-          "defName": "生命周期状态",
-          "comment": "开通项状态；SUSPENDED 为风控或合规临时停用且可恢复，DISABLED 为运营关闭。允许值：ENABLED、SUSPENDED、DISABLED。",
+          "defName": "合同成员资格",
+          "comment": "合同成员资格；ACTIVE 为纳入合同（价格须覆盖），DISABLED 为运营关闭。允许值：ACTIVE、DISABLED。",
           "type": "VARCHAR",
           "len": 32,
           "scale": "",
@@ -2787,6 +2787,24 @@
           "extProps": {},
           "domain": "",
           "id": "200F42D2-23DC-5D8A-83A1-3EA1554BA23A"
+        },
+        {
+          "defKey": "execution_status",
+          "defName": "执行状态",
+          "comment": "执行开关；status=ACTIVE 时必须非空、status=DISABLED 时为空（应用校验）。PENDING_PREREQUISITES 为等待前置，ENABLED 为可执行（Checkout 只认此值），SUSPENDED_BY_PREREQUISITE 为前置失效暂停（门禁可自动恢复），SUSPENDED_MANUALLY 为运营手动暂停（门禁不触碰）。允许值：PENDING_PREREQUISITES、ENABLED、SUSPENDED_BY_PREREQUISITE、SUSPENDED_MANUALLY。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "DA198CBB-4808-4DE5-88E8-D965072DEFB0"
         },
         {
           "defKey": "effective_from",
@@ -2962,7 +2980,7 @@
           "defKey": "idx_agreement_capability_lookup",
           "defName": "Idx Agreement Capability Lookup",
           "unique": false,
-          "comment": "Access index for agreement_capability on entity_no, capability_code, status",
+          "comment": "Access index for agreement_capability on entity_no, capability_code, execution_status",
           "fields": [
             {
               "fieldDefKey": "D00CF3E8-E0C5-597F-97CC-FD173752A1F0",
@@ -2975,12 +2993,31 @@
               "id": "B1AAE95B-F109-5EF0-A430-E5D4A89EE6BC"
             },
             {
-              "fieldDefKey": "200F42D2-23DC-5D8A-83A1-3EA1554BA23A",
+              "fieldDefKey": "DA198CBB-4808-4DE5-88E8-D965072DEFB0",
               "ascOrDesc": "A",
               "id": "2996B0CD-9B2D-5798-ABDE-B860A2072912"
             }
           ],
           "id": "92F9D86A-50D4-5D7D-B812-F114A4DAE5F0"
+        },
+        {
+          "defKey": "idx_agreement_capability_execution",
+          "defName": "Idx Agreement Capability Execution",
+          "unique": false,
+          "comment": "Access index for agreement_capability on execution_status, agreement_id",
+          "fields": [
+            {
+              "fieldDefKey": "DA198CBB-4808-4DE5-88E8-D965072DEFB0",
+              "ascOrDesc": "A",
+              "id": "031C6E1C-95FA-493F-AAC8-CD49A4683841"
+            },
+            {
+              "fieldDefKey": "5DC26C7E-5783-56DA-8476-B2CBB28FD81B",
+              "ascOrDesc": "A",
+              "id": "9D22F8C7-20FB-4321-A87C-595D73E613B8"
+            }
+          ],
+          "id": "78FB3708-A99A-40BE-A7B6-3FCEB6019544"
         },
         {
           "defKey": "idx_agreement_capability_code",

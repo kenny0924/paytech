@@ -24,6 +24,12 @@
         <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><scope>test</scope></dependency>
         <dependency>
             <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
             <artifactId>paytech-test-support</artifactId>
             <scope>test</scope>
         </dependency>

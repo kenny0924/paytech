@@ -1,0 +1,9 @@
+[INFO] Tests run: 2442, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+[INFO] Tests run: 30, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.594 s -- in com.paytech.operations.console.bff.auto.ClientOnboardingReviewBrowserAutoTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.055 s -- in com.paytech.operations.console.bff.auto.CommercialAggregationAutoTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.089 s -- in com.paytech.operations.console.bff.auto.CommercialVersionDiffHistoryAutoTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.083 s -- in com.paytech.operations.console.bff.auto.CommercialConsoleQueryAutoTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.278 s -- in com.paytech.operations.console.bff.auto.CommercialPricePreviewAutoTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.116 s -- in com.paytech.operations.console.bff.auto.CommercialTemplateCatalogAutoTest
+[INFO] Tests run: 109, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.556 s -- in com.paytech.operations.console.bff.auto.CommercialBrowserAutoTest

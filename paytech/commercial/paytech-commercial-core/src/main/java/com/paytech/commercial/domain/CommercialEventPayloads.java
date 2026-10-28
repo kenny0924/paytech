@@ -1,7 +1,9 @@
 package com.paytech.commercial.domain;
 
 import java.time.Instant;
+import java.util.List;
 
+import com.paytech.commercial.api.event.AgreementCapabilityStatusChangedPayload;
 import com.paytech.commercial.api.event.AgreementStatusChangedPayload;
 import com.paytech.commercial.api.event.CommercialTermVersionActivatedPayload;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
@@ -9,11 +11,12 @@ import com.paytech.commercial.core.dal.dataobject.CommercialTermPlan;
 import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.foundation.common.enums.CodeEnum;
 
+import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 本库行到两个事件载荷的转换与事件 JSON
+ * 本库行到事件载荷的转换与事件 JSON
  * <li>事件 JSON 字段顺序固定为载荷类字段顺序；所有标量写成字符串（ID 与版本为十进制，时间为 UTC RFC 3339），缺省为 JSON null，
  * 符合 Foundation JSON Object Profile。</li>
  */
@@ -70,6 +73,26 @@ public final class CommercialEventPayloads {
     }
 
     /**
+     * 开通项执行状态变更载荷
+     *
+     * @param agreement 合同行
+     * @param changeVersion AGREEMENT 根修订版本
+     * @param occurredAt 该版本快照的创建时间（变化提交时间）
+     * @param changes 本次执行状态变化，至少一条
+     * @return 载荷
+     */
+    public static AgreementCapabilityStatusChangedPayload agreementCapabilityStatusChanged(Agreement agreement,
+        long changeVersion, Instant occurredAt, List<AgreementCapabilityStatusChangedPayload.Change> changes) {
+        AgreementCapabilityStatusChangedPayload payload = new AgreementCapabilityStatusChangedPayload();
+        payload.setAgreementId(agreement.getAgreementId());
+        payload.setClientId(agreement.getClientId());
+        payload.setChangeVersion(changeVersion);
+        payload.setOccurredAt(occurredAt);
+        payload.setChanges(List.copyOf(changes));
+        return payload;
+    }
+
+    /**
      * AgreementStatusChanged Schema v1 Payload
      *
      * @param payload 载荷
@@ -108,6 +131,32 @@ public final class CommercialEventPayloads {
         node.put("supersededVersionId", text(payload.getSupersededVersionId()));
         node.put("changeVersion", text(payload.getChangeVersion()));
         node.put("occurredAt", text(payload.getOccurredAt()));
+        return node;
+    }
+
+    /**
+     * AgreementCapabilityStatusChanged Schema v1 Payload；changes 为对象数组，字段顺序同载荷类
+     *
+     * @param payload 载荷
+     * @return JSON Object
+     */
+    public static ObjectNode json(AgreementCapabilityStatusChangedPayload payload) {
+        ObjectNode node = JsonNodeFactory.instance.objectNode();
+        node.put("agreementId", text(payload.getAgreementId()));
+        node.put("clientId", text(payload.getClientId()));
+        node.put("changeVersion", text(payload.getChangeVersion()));
+        node.put("occurredAt", text(payload.getOccurredAt()));
+        ArrayNode changes = node.putArray("changes");
+        for (AgreementCapabilityStatusChangedPayload.Change change : payload.getChanges()) {
+            ObjectNode item = changes.addObject();
+            item.put("agreementCapabilityId", text(change.getAgreementCapabilityId()));
+            item.put("entityNo", change.getEntityNo());
+            item.put("capabilityCode", change.getCapabilityCode());
+            item.put("capabilityKind", change.getCapabilityKind());
+            item.put("fromExecutionStatus", change.getFromExecutionStatus());
+            item.put("toExecutionStatus", change.getToExecutionStatus());
+            item.put("trigger", change.getTrigger());
+        }
         return node;
     }
 

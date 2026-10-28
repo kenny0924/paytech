@@ -1,0 +1,140 @@
+{
+  "agreement": "238411681049415680",
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "01-products",
+          "check": {
+            "head": "Acquiring ACQUIRING 5 个开通项 · 2 已开通 · 1 等前置 · 2 暂停 上次检查 00:16 检查前置 + 新增开通项",
+            "rows": [
+              " CARD 银行卡 币种 AED / USD — 2026-10-21 00:22 ～ 未定 已开通 编辑 暂停",
+              " GOOGLE_PAY Google Pay 币种 AED — 2026-10-21 00:23 ～ 未定 前置失效暂停 价格未覆盖 AED 编辑 暂停",
+              " STC_PAY STC Pay 币种 AED — 2026-10-21 00:23 ～ 未定 前置失效暂停 价格未覆盖 AED 编辑 暂停",
+              " TOKEN_STORAGE 存卡 — 2026-10-29 00:15 ～ 未定 已开通 编辑 暂停",
+              " APPLE_PAY Apple Pay 币种 USD — 2026-10-29 00:15 ～ 未定 等前置 编辑 暂停"
+            ],
+            "nextStep": "下一步 · 开通项生效 开通项由系统按前置条件自动开通：资格、合同与价格、渠道身份 GOOGLE_PAY 因价格未覆盖 AED 暂停；STC_PAY 因价格未覆盖 AED 暂停；APPLE_PAY 等前置：价格未覆盖 USD 去定价"
+          }
+        },
+        {
+          "step": "02-expanded",
+          "check": [
+            "还差什么 核对于 00:16 · 2 项满足 · 1 项未满足 · 全部满足后系统自动开通，无需手动操作 资格 Client 237573267559391233 与经营主体 AE001 资格有效 合同与价格 生效中的 Client 定价 条款版本没有本开通项 USD 的价格。 去定价 → 渠道身份 暂未接入校验，渠道身份查询上线后自动纳入"
+          ]
+        },
+        {
+          "step": "03-suspend-modal",
+          "check": "暂停开通项 · TOKEN_STORAGE 开通项 TOKEN_STORAGE · 存卡 经营主体 AE001 当前执行状态 已开通 合同 DEMO2-CL-103 暂停后立即生效 Checkout 不再向消费者提供 存卡；其他支付方式不受影响 已经发起的支付、退款和争议照常处理 系统不会自动恢复，需要在此开通项上点「恢复」，恢复后重新检查前置 暂停原因（写入变更历史） 必填，最多 200 字 取 消 暂 停"
+        },
+        {
+          "step": "04-edit-drawer",
+          "check": "编辑开通项 · AE001 / 银行卡 开通项 CARD · 银行卡 经营主体 AE001 执行状态（系统维护） 已开通 基本 OE AE001 合同内状态 纳入 关闭 纳入：在合同内，定价必须覆盖；关闭：退出合同，Checkout 立即不再提供 接受条件 同维度任一取值，异维度同时满足 币种 AED USD SAR EUR GBP 更多币种 卡组织 不限 VISA MASTERCARD AMEX UNIONPAY MADA DISCOVER JCB DINERS + 其他 卡等级 不限 CLASSIC GOLD PLATINUM SIGNATURE INFINITE WORLD WORLD_ELITE + 其他 消费者国家 不限 借贷记类型 不限 贷记 借记 预付 签账 + 其他 发卡国家 不限 发卡区域 不限 海湾国家 中东非洲（不含海湾） 欧洲 北美 拉丁美洲 亚太 + 其他 要求 3DS 开启后该开通项的交易必须完成 3DS（二期由 Payment 执行） 接受：币种 AED、USD · 卡组织不限 · 卡等级不限 · 消费者国家不限 · 借贷记类型不限 · 发卡国家不限 · 发卡区域不限 有效期与保证金 生效起点 生效终点（可空） 滚动保证金比例（%） % 按百分比填写，5 即 5% 保证金天数 币种为必填条件；开通项的每个币种（及有条件维度的取值组合）在条款版本激活时都必须有价格。停用目录项不影响已开通的合同。 执行状态由系统按前置条件维护，这里不能直接开通；需要临时停用请在列表中点「暂停」。改为「关闭」后开通项退出合同、不再要求定价；重新「纳入」会回到「等前置」并重新检查。 取 消 保 存"
+        },
+        {
+          "step": "05-add-drawer",
+          "check": "新增开通项 · Acquiring 添加后进入等前置，系统自动检查。 基本 OE AE001 可开通项 周期扣款 RECURRING 功能 无可配维度 STC Pay 已添加 · 前置失效暂停 STC_PAY 支付方式 可配：消费者国家、币种 Apple Pay 已添加 · 等前置 APPLE_PAY 支付方式 可配：卡组织、消费者国家、币种、借贷记类型 Google Pay 已添加 · 前置失效暂停 GOOGLE_PAY 支付方式 可配：卡组织、消费者国家、币种、借贷记类型 银行卡 已开通 CARD 支付方式 可配：卡组织、卡等级、消费者国家、币种、借贷记类型、发卡国家、发卡区域 存卡 已开通 TOKEN_STORAGE 功能 无可配维度 列出「Acquiring」下启用的项；已开通的项置灰，点击可编辑 有效期与保证金 生效起点 生效终点（可空） 滚动保证金比例（%） % 按百分比填写，5 即 5% 保证金天数 币种为必填条件；开通项的每个币种（及有条件维度的取值组合）在条款版本激活时都必须有价格。停用目录项不影响已开通的合同。 取 消 添 加"
+        },
+        {
+          "step": "90-regression-client-onboarding-config",
+          "check": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/client-onboarding/config"
+          }
+        },
+        {
+          "step": "90-regression-card-bin-library",
+          "check": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/card-bin-library"
+          }
+        },
+        {
+          "step": "90-regression-reference-data",
+          "check": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/reference-data"
+          }
+        },
+        {
+          "step": "90-regression-finance-reconciliation",
+          "check": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/finance/reconciliation"
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "01-products",
+          "check": {
+            "head": "Acquiring ACQUIRING 5 enablements · 2 enabled · 1 pending prerequisites · 2 suspended Last checked 00:17 Check Prerequisites + Add Enablement",
+            "rows": [
+              " CARD 银行卡 Currency AED / USD — 2026-10-21 00:22 – Open-ended Enabled Edit Suspend",
+              " GOOGLE_PAY Google Pay Currency AED — 2026-10-21 00:23 – Open-ended Suspended: Prerequisite Lapsed Price doesn't cover AED Edit Suspend",
+              " STC_PAY STC Pay Currency AED — 2026-10-21 00:23 – Open-ended Suspended: Prerequisite Lapsed Price doesn't cover AED Edit Suspend",
+              " TOKEN_STORAGE 存卡 — 2026-10-29 00:15 – Open-ended Enabled Edit Suspend",
+              " APPLE_PAY Apple Pay Currency USD — 2026-10-29 00:15 – Open-ended Pending Prerequisites Edit Suspend"
+            ],
+            "nextStep": "Next Step · Enablements Take Effect Enablements are switched on by the system once their prerequisites are met: qualification, agreement and pricing, and channel identity. GOOGLE_PAY suspended: Price doesn't cover AED; STC_PAY suspended: Price doesn't cover AED; APPLE_PAY pending prerequisites: Price doesn't cover USD Go to Pricing"
+          }
+        },
+        {
+          "step": "02-expanded",
+          "check": [
+            "What's Missing Checked at 00:17 · 2 satisfied · 1 not satisfied · Enabled automatically once everything is satisfied; no manual step needed Qualification Client 237573267559391233 and Operating Entity AE001 are qualified. Agreement & Pricing The active Client Pricing term version has no price for USD on this enablement. Go to Pricing → Channel Identity Not checked yet; channel identity will be included automatically once its lookup goes live."
+          ]
+        },
+        {
+          "step": "03-suspend-modal",
+          "check": "Suspend Enablement · TOKEN_STORAGE Enablement TOKEN_STORAGE · 存卡 Operating Entity AE001 Current Execution Status Enabled Agreement DEMO2-CL-103 Takes effect immediately Checkout stops offering 存卡 to consumers; other payment methods aren't affected Payments, refunds and disputes already started continue as usual The system won't resume it automatically. Click Resume on this enablement; prerequisites are checked again after resuming Suspension reason (recorded in change history) Required, up to 200 characters Cancel Suspend"
+        },
+        {
+          "step": "04-edit-drawer",
+          "check": "Edit Enablement · AE001 / 银行卡 Enablement CARD · 银行卡 Operating Entity AE001 Execution Status (System-Managed) Enabled Basics OE AE001 Status in Agreement Include Close Include: part of the agreement and must be priced. Close: leaves the agreement and Checkout stops offering it immediately. Accepted Conditions Any value within a dimension; all dimensions must match Currency AED USD SAR EUR GBP More Currencies Card Brand Any VISA MASTERCARD AMEX UNIONPAY MADA DISCOVER JCB DINERS + Other Card Level Any CLASSIC GOLD PLATINUM SIGNATURE INFINITE WORLD WORLD_ELITE + Other Consumer Country Any Funding Type Any Credit Debit Prepaid Charge + Other Issuer Country Any Issuer Region Any GCC Middle East & Africa (excl. GCC) Europe North America Latin America Asia Pacific + Other 3DS Required When on, tra"
+        },
+        {
+          "step": "05-add-drawer",
+          "check": "Add Enablement · Acquiring After it's added, the enablement is Pending Prerequisites and the system checks it automatically. Basics OE AE001 Capability 周期扣款 RECURRING Feature No configurable dimensions STC Pay Added · Suspended: Prerequisite Lapsed STC_PAY Payment Method Configurable: Consumer Country, Currency Apple Pay Added · Pending Prerequisites APPLE_PAY Payment Method Configurable: Card Brand, Consumer Country, Currency, Funding Type Google Pay Added · Suspended: Prerequisite Lapsed GOOGLE_PAY Payment Method Configurable: Card Brand, Consumer Country, Currency, Funding Type 银行卡 Enabled "
+        },
+        {
+          "step": "90-regression-client-onboarding-config",
+          "check": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/client-onboarding/config"
+          }
+        },
+        {
+          "step": "90-regression-card-bin-library",
+          "check": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/card-bin-library"
+          }
+        },
+        {
+          "step": "90-regression-reference-data",
+          "check": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/reference-data"
+          }
+        },
+        {
+          "step": "90-regression-finance-reconciliation",
+          "check": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/finance/reconciliation"
+          }
+        }
+      ]
+    }
+  ],
+  "console": [],
+  "httpErrors": [],
+  "rawKeys": []
+}

@@ -44,6 +44,9 @@ public final class CommercialChangeModels {
         /** 操作者 Account ID；系统命令为 0 */
         private String createBy;
 
+        /** 操作者显示名（BFF 经 Platform 运营账号显示名补全）；系统命令、未查到或查询失败为 null */
+        private String createByLabel;
+
         /** 快照创建时间，UTC ISO 8601 */
         private String createTime;
 

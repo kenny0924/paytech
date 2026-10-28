@@ -1,0 +1,112 @@
+{
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "01-products",
+          "check": {
+            "nextStep": "下一步 · 开通项生效 开通项由系统按前置条件自动开通：资格、合同与价格、渠道身份 CARD 因价格未覆盖 SAR 暂停；APPLE_PAY 等前置：价格未覆盖 USD；GOOGLE_PAY 已手动暂停，需手动恢复 去定价",
+            "head": "Acquiring ACQUIRING 4 个开通项 · 1 已开通 · 1 等前置 · 2 暂停 上次检查 23:04 检查前置 + 新增开通项",
+            "rows": [
+              " CARD 银行卡 币种 SAR / USD — 2026-10-20 04:00 ～ 未定 前置失效暂停 价格未覆盖 SAR 编辑 暂停",
+              " TOKEN_STORAGE 存卡 — 2026-10-20 04:00 ～ 未定 已开通 编辑 暂停",
+              " APPLE_PAY Apple Pay 币种 USD — 2026-10-20 04:00 ～ 未定 等前置 编辑 暂停",
+              " GOOGLE_PAY Google Pay 币种 USD — 2026-10-20 04:00 ～ 未定 手动暂停 编辑 恢复"
+            ]
+          }
+        },
+        {
+          "step": "02-expanded",
+          "check": [
+            "还差什么 核对于 23:04 · 2 项满足 · 1 项未满足 · 全部恢复满足后系统自动重新开通 资格 Client 240674482170114049 与经营主体 AE001 资格有效 合同与价格 生效中的 Client 定价 条款版本没有本开通项 SAR 的价格。 去定价 → 渠道身份 暂未接入校验，渠道身份查询上线后自动纳入",
+            "还差什么 核对于 23:04 · 2 项满足 · 1 项未满足 · 全部满足后系统自动开通，无需手动操作 资格 Client 240674482170114049 与经营主体 AE001 资格有效 合同与价格 生效中的 Client 定价 条款版本没有本开通项 USD 的价格。 去定价 → 渠道身份 暂未接入校验，渠道身份查询上线后自动纳入"
+          ]
+        },
+        {
+          "step": "03-checked",
+          "check": "Acquiring ACQUIRING 4 个开通项 · 1 已开通 · 1 等前置 · 2 暂停 上次检查 23:04 检查前置 + 新增开通项"
+        },
+        {
+          "step": "04-suspend-modal",
+          "check": "暂停开通项 · TOKEN_STORAGE 开通项 TOKEN_STORAGE · 存卡 经营主体 AE001 当前执行状态 已开通 合同 GATE-CLIENT-MOR-AE001 暂停后立即生效 Checkout 不再向消费者提供 存卡；其他支付方式不受影响 已经发起的支付、退款和争议照常处理 系统不会自动恢复，需要在此开通项上点「恢复」，恢复后重新检查前置 暂停原因（写入变更历史） 必填，最多 200 字 取 消 暂 停"
+        },
+        {
+          "step": "06-resume-modal",
+          "check": "恢复开通项 · GOOGLE_PAY 开通项 GOOGLE_PAY · Google Pay 当前执行状态 手动暂停 暂停人 o***@example.test · 2026-10-28 22:31 暂停原因 Client 要求暂停 Google Pay，等待商户域名续期 恢复后不会直接开通 手动暂停 等前置 已开通 （三项前置全部满足时） 系统会立刻检查资格、合同与价格、渠道身份；有未满足的项会停在「等前置」，在开通项上展开「还差什么」可以看到原因。 取 消 恢复并检查"
+        },
+        {
+          "step": "08-edit-drawer",
+          "check": "编辑开通项 · AE001 / 银行卡 开通项 CARD · 银行卡 经营主体 AE001 执行状态（系统维护） 前置失效暂停 基本 OE AE001 合同内状态 纳入 关闭 纳入：在合同内，定价必须覆盖；关闭：退出合同，Checkout 立即不再提供 接受条件 同维度任一取值，异维度同时满足 币种 AED USD SAR EUR GBP 更多币种 卡组织 不限 VISA MASTERCARD AMEX UNIONPAY MADA DISCOVER JCB DINERS + 其他 卡等级 不限 CLASSIC GOLD PLATINUM SIGNATURE INFINITE WORLD WORLD_ELITE + 其他 消费者国家 不限 借贷记类型 不限 贷记 借记 预付 签账 + 其他 发卡国 不限 发卡地区 不限 海湾国家 中东非洲（不含海湾） 欧洲 北美 拉丁美洲 亚太 + 其他 要求 3DS 开启后该开通项的交易必须完成 3DS（二期由 Payment 执行） 接受：币种 SAR、USD · 卡组织不限 · 卡等级不限 · 消费者国家不限 · 借贷记类型不限 · 发卡国不限 · 发卡地区不限 有效期与保证金 生效起点 生效终点（可空） 滚动保证金比例（%） % 按百分比填写，5 即 5% 保证金天数 币种为必填条件；开通项的每个币种（及有条件维度的取值组合）在条款版本激活时都必须有价格。停用目录项不影响已开通的合同。 执行状态由系统按前置条件维护，这里不能直接开通；需要临时停用请在列表中点「暂停」。改为「关闭」后开通项退出合同、不再要求定价；重新「纳入」会回到「等前置」并重新检查。 取 消 保 存"
+        },
+        {
+          "step": "09-add-drawer",
+          "check": "新增开通项 · Acquiring 添加后进入等前置，系统自动检查。 基本 OE AE001 可开通项 Apple Pay 已添加 · 等前置 APPLE_PAY 支付方式 可配：卡组织、消费者国家、币种、借贷记类型 Google Pay 已添加 · 手动暂停 GOOGLE_PAY 支付方式 可配：卡组织、消费者国家、币种、借贷记类型 银行卡 已添加 · 前置失效暂停 CARD 支付方式 可配：卡组织、卡等级、消费者国家、币种、借贷记类型、发卡国、发卡地区 存卡 已开通 TOKEN_STORAGE 功能 无可配维度 列出「Acquiring」下启用的项；已开通的项置灰，点击可编辑 有效期与保证金 生效起点 生效终点（可空） 滚动保证金比例（%） % 按百分比填写，5 即 5% 保证金天数 币种为必填条件；开通项的每个币种（及有条件维度的取值组合）在条款版本激活时都必须有价格。停用目录项不影响已开通的合同。 取 消 添 加"
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "zh-CN-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "08-edit-drawer",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "09-add-drawer",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "httpErrors": [
+    {
+      "run": "zh-CN-1440",
+      "step": "login",
+      "method": "GET",
+      "path": "/api/operations/commercial-admin/v1/products/dimensions",
+      "status": 404
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "08-edit-drawer",
+      "method": "GET",
+      "path": "/api/operations/commercial-admin/v1/products/dimensions",
+      "status": 404
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "09-add-drawer",
+      "method": "GET",
+      "path": "/api/operations/commercial-admin/v1/products/dimensions",
+      "status": 404
+    }
+  ],
+  "bundles": 52
+}

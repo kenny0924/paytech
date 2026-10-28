@@ -17,7 +17,7 @@ import com.paytech.commercial.api.enums.PricingDimension;
 public final class AgreementCapabilityBodyBuilder {
     private String entityNo = AgreementBuilder.ENTITY_NO;
     private String capabilityCode = CommercialCodes.Capability.CARD;
-    private String status = AgreementCapabilityStatus.ENABLED.getCode();
+    private String status = AgreementCapabilityStatus.ACTIVE.getCode();
     private String effectiveFrom = "2026-09-01T00:00:00Z";
     private String effectiveTo;
     private String rollingReserveRate;

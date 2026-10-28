@@ -43,7 +43,7 @@ class YamlEventCatalogAutoTest {
 
         assertEquals(List.of("PaymentSucceeded", "ClientReviewDecided", "QualificationChanged", "BillingFactRecorded", "AccountPosted",
             "SettlementRestrictionChanged", "AgreementStatusChanged", "CommercialTermVersionActivated",
-            "ActualChannelCostConfirmed", "ChannelBatchReconciled", "ChannelSettlementConfirmed", "ReconAdjustmentApproved",
+            "AgreementCapabilityStatusChanged", "ActualChannelCostConfirmed", "ChannelBatchReconciled", "ChannelSettlementConfirmed", "ReconAdjustmentApproved",
             "WorkflowCallbackRaised", "ChannelPaymentNotified", "OrderPaymentSucceeded"),
             catalog.entries().stream().map(EventCatalogEntry::eventType).toList());
         EventCatalogEntry orderPaid = catalog.find("OrderPaymentSucceeded").orElseThrow();
@@ -74,6 +74,12 @@ class YamlEventCatalogAutoTest {
         assertTrue(posted.strictOrder());
         assertTrue(catalog.find("BalanceMoved").isEmpty());
         assertEquals(List.of("client-master"), catalog.find("ClientReviewDecided").orElseThrow().consumers());
+        assertEquals(List.of("client-master", "commercial"), catalog.find("QualificationChanged").orElseThrow().consumers());
+        EventCatalogEntry capabilityStatus = catalog.find("AgreementCapabilityStatusChanged").orElseThrow();
+        assertEquals("commercial", capabilityStatus.producer());
+        assertEquals("AGREEMENT", capabilityStatus.aggregateType());
+        assertEquals(List.of(), capabilityStatus.consumers());
+        assertFalse(capabilityStatus.strictOrder());
         EventCatalogEntry agreement = catalog.find("AgreementStatusChanged").orElseThrow();
         assertEquals("commercial", agreement.producer());
         assertEquals(List.of("acquiring"), agreement.consumers());

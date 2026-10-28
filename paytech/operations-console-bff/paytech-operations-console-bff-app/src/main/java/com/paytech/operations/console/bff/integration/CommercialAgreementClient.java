@@ -4,6 +4,9 @@ import java.util.List;
 
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AddAgreementCapabilityRequestBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementCapabilityResponseBody;
+import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.SuspendAgreementCapabilityRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.ResumeAgreementCapabilityRequestBody;
+import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.CapabilityPrerequisiteCheckResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementDetail;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementResponseBody;
 import com.paytech.operations.console.bff.service.model.CommercialAgreementModels.AgreementTermVersion;
@@ -125,4 +128,36 @@ public interface CommercialAgreementClient {
      */
     AgreementCapabilityResponseBody updateCapability(OperatorContext operator, String agreementId,
         String agreementCapabilityId, UpdateAgreementCapabilityRequestBody request);
+
+    /**
+     * 运营手动暂停开通项
+     *
+     * @param operator 操作人
+     * @param agreementId 合同 ID
+     * @param agreementCapabilityId 开通项 ID
+     * @param request 暂停原因与版本条件
+     * @return 开通项写入结果
+     */
+    AgreementCapabilityResponseBody suspendCapability(OperatorContext operator, String agreementId,
+        String agreementCapabilityId, SuspendAgreementCapabilityRequestBody request);
+
+    /**
+     * 运营恢复手动暂停的开通项（回到等待前置）
+     *
+     * @param operator 操作人
+     * @param agreementId 合同 ID
+     * @param agreementCapabilityId 开通项 ID
+     * @param request 版本条件
+     * @return 开通项写入结果
+     */
+    AgreementCapabilityResponseBody resumeCapability(OperatorContext operator, String agreementId,
+        String agreementCapabilityId, ResumeAgreementCapabilityRequestBody request);
+
+    /**
+     * 立即核对合同全部开通项的前置，必要时由 commercial 迁移执行状态；不携带操作人
+     *
+     * @param agreementId 合同 ID
+     * @return 核对结果；回执合同 ID 与请求一致
+     */
+    CapabilityPrerequisiteCheckResponseBody checkPrerequisites(String agreementId);
 }

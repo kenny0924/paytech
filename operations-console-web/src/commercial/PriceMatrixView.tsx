@@ -7,7 +7,7 @@ import type { PriceGroup } from './benchmark';
 import { conditionTags } from './capabilityConditions';
 import type { DimensionDefinition } from './capabilityConditions';
 import type { CatalogCapability } from './commercialConsole';
-import { StatusTag } from './CommercialParts';
+import { CapabilityStatusTags } from './CommercialParts';
 import type { RelevanceWarning } from './termReview';
 import { useT } from '../i18n/react';
 import './capabilityPricing.css';
@@ -65,7 +65,7 @@ function GroupHead({ group, definitions }: { group: PriceGroup; definitions: rea
   return <div className="cc-group-head">
     <span className="cc-group-title">{group.unmatched ? '⚠ ' : ''}{group.title}</span>
     <Tag>{t('matrix.priceCount', { count: group.rows.length })}</Tag>
-    {group.capability && <StatusTag status={group.capability.status} kind="capabilityStatus" />}
+    {group.capability && <CapabilityStatusTags status={group.capability.status} executionStatus={group.capability.executionStatus} />}
     {group.capability && <span className="cc-tags">{conditionTags(group.capability, definitions).map(tag => <Tag key={tag}>{tag}</Tag>)}</span>}
     {group.unmatched && <span className="commercial-cell-meta">{group.warnings.length ? joinList(group.warnings.map(relevanceText), 'clauses')
       : t('matrix.unmatchedHint')}</span>}

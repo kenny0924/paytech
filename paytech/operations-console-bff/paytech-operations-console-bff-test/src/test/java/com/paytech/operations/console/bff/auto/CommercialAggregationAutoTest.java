@@ -185,7 +185,8 @@ class CommercialAggregationAutoTest extends CommercialBrowserAutoTestBase {
             .put("fileId", "7319000000000000701").put("contentHash", "a".repeat(64));
         node.putArray("productCodes").add("ACQUIRING");
         var capability = node.putArray("capabilities").addObject().put("agreementCapabilityId", "7319000000000000301")
-            .put("entityNo", "AE001").put("capabilityCode", "CARD_VISA").put("status", "ENABLED")
+            .put("entityNo", "AE001").put("capabilityCode", "CARD_VISA").put("status", "ACTIVE")
+            .put("executionStatus", "ENABLED")
             .put("effectiveFrom", "2026-10-01T00:00:00Z").putNull("effectiveTo").putNull("rollingReserveRate").putNull("rollingReserveDays");
         capability.putArray("conditions").addObject().put("dimensionCode", "CURRENCY").putArray("values").add("USD");
         capability.put("require3ds", false);

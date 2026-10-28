@@ -88,15 +88,22 @@ compensation:
   # 多实例 Claim/Lease 的实例标识前缀；部署多实例时由 COMMERCIAL_COMPENSATION_INSTANCE_ID 注入带实例后缀的值。
   instance-id: "${COMMERCIAL_COMPENSATION_INSTANCE_ID:commercial}"
 
+# XXL-Job 执行器：commercialTermVersionActivation（条款版本定时激活）与 capabilityPrerequisiteRecheck（开通项前置重查，参数空 = 等前置 /
+# 前置失效暂停、建议每 5 分钟；scope=ALL 含已开通、建议每日 03:00）；任务在 XXL 后台登记。
 xxl:
   job:
     executor:
       enabled: "${COMMERCIAL_XXL_JOB_ENABLED:false}"
       app-name: commercial-service
 
-# paytech-messaging 发布端：声明 commercial.events（Durable Fanout）并提供 DomainEventPublisher（design/08 §3）。commercial 不消费。
+# paytech-messaging 发布端：声明 commercial.events（Durable Fanout）并提供 DomainEventPublisher（design/08 §3）。
+# 消费端（2026-10-28 开通项前置门禁 REQ-01）：订阅 compliance.events 的 QualificationChanged，声明 commercial.compliance.hash 与
+# commercial.compliance.p0..p3（默认 4 分区，Quorum、单活消费者、delivery-limit 5、DLX commercial.compliance.dlx → .dlq），消费幂等表
+# t_consumed_event / t_consumed_aggregate_version 在 mor_commercial。上线后修改分区数需先排空分区队列。
 messaging:
   producer:
+    service: commercial
+  consumer:
     service: commercial
   publisher:
     # TODO by CLAUDE: 消费方 acquiring 尚未绑定 commercial.events；接入后改回默认 FAIL，未路由由补偿任务重试。

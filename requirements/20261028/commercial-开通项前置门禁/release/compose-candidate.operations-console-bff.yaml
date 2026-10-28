@@ -1,0 +1,17 @@
+# 开通项前置门禁 REQ-01：mor-test 候选覆盖（阶段 6 准备 2026-10-28；阶段 7 由主会话执行，需用户授权）。
+# 用法：./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-bff
+# 只认 sha256（tag 仅供辨认，:development 未改动）。不加 --remove-orphans。env 抄自现网覆盖文件，渲染结果与运行容器逐键逐值比较见 scripts/env_check.sh。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-gate-rel = 663e5e4a + 国家包法务修订 93 个文件（Code-MoR-legal-rel；23:38 已提交为 ac3145f4，93 个文件逐字节相同）+ 本需求 130 个文件（Code-MoR-gate），
+#   文件清单与 SHA-256 见 evidence/legal-source-files.sha256、evidence/gate-source-files.sha256（未提交）。
+services:
+  operations-console-bff:
+    # 3 个转发（暂停 / 恢复 / 检查前置）、开通项 executionStatus、变更历史 createByLabel；含国家包法务修订（现网 769edbce）的全部内容。4 个 OPERATIONS_*_BASE_URL 必带。
+    image: sha256:eca2df8231f999f3f977a830ad8baa758449aa8bceee12234da28d77ae3762b8  # mor-test/operations-console-bff:gate-20261029a（JAR 2534a1fa42686768）
+    environment:
+      OPERATIONS_BFF_BIND_ADDRESS: 172.30.73.22
+      OPERATIONS_CONSOLE_ORIGIN: http://localhost:28080
+      OPERATIONS_TEST_HTTP_ENABLED: "true"
+      OPERATIONS_LEDGER_BASE_URL: http://ledger-service:18105
+      OPERATIONS_ACCOUNT_BASE_URL: http://account-service:18114
+      OPERATIONS_BILLING_BASE_URL: http://billing-service:18113
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115

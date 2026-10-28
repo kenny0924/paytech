@@ -19,12 +19,14 @@ import com.paytech.commercial.domain.CommercialPriceCandidate;
 import com.paytech.commercial.domain.PriceRelevanceIssue;
 
 /**
- * Client 合同方案的价格相关性（technique.md §4.7）：每条价格须对应一个 ENABLED 开通项
+ * Client 合同方案的价格相关性（technique.md §4.7）：每条价格须对应一个成员资格 ACTIVE 的开通项
  * <li>价格行先要有锚定开通项：支付方式类画像的价格须对应一个支付方式类开通项（画像支付方式相等、币种在 CURRENCY 条件内、画像条件与接受条件相容），
  * 不满足时整行不相关，与其组件无关。</li>
  * <li>在此前提下，组件触发的计费事件挂接种类再逐项要求：无需开通的事件不要求；FEATURE 须有同代码功能开通项；其他种类须有同种类开通项且同样满足
  * 支付方式、币种与条件相容。</li>
- * <li>零开通：价格所在 OE 没有任何本方案计费事件种类的 ENABLED 开通项。</li>
+ * <li>零开通：价格所在 OE 没有任何本方案计费事件种类的 ACTIVE 成员开通项。</li>
+ * <li>只看成员资格、不看执行状态：等前置或已暂停的开通项同样要求价格（开通项前置门禁 technique.md §8、S-02），否则门禁与价格激活
+ * 互相等待。</li>
  * <li>纯计算，不访问数据库；保存价格时作为提示，排期与激活时拒绝，基于模板生成时用于筛选。</li>
  */
 public final class TermPriceRelevance {
@@ -39,7 +41,7 @@ public final class TermPriceRelevance {
      * @param feeEvents 方案条款类型登记的计费事件
      */
     public TermPriceRelevance(List<CapabilityAcceptance> capabilities, List<ProductFeeEvent> feeEvents) {
-        this.capabilities = capabilities.stream().filter(CapabilityAcceptance::enabled).toList();
+        this.capabilities = capabilities.stream().filter(CapabilityAcceptance::member).toList();
         this.feeEvents = feeEvents.stream().collect(Collectors.toMap(ProductFeeEvent::getFeeEventCode, Function.identity(),
             (left, right) -> left));
     }
@@ -127,7 +129,7 @@ public final class TermPriceRelevance {
         return candidate.profile().getProfileKind() == PricingProfileKind.PAYMENT_METHOD ? CapabilityKind.PAYMENT_METHOD : null;
     }
 
-    /** 功能类事件：须有同代码的 ENABLED 功能开通项。 */
+    /** 功能类事件：须有同代码的 ACTIVE 成员功能开通项。 */
     PriceRelevanceIssue featureIssue(CommercialPriceCandidate candidate, ProductFeeEvent event) {
         boolean enabled = capabilities.stream().anyMatch(capability -> capability.on(candidate.price().getEntityNo())
             && capability.kind() == CapabilityKind.FEATURE
@@ -155,7 +157,7 @@ public final class TermPriceRelevance {
         return issue(candidate, closest, message(closest, candidate));
     }
 
-    /** OE 是否有任何本方案计费事件种类的 ENABLED 开通项（零开通判断）。 */
+    /** OE 是否有任何本方案计费事件种类的 ACTIVE 成员开通项（零开通判断）。 */
     boolean hasPlanCapability(String entityNo) {
         Set<CapabilityKind> kinds = feeEvents.values().stream().map(ProductFeeEvent::getCapabilityKind)
             .filter(Objects::nonNull).collect(Collectors.toSet());

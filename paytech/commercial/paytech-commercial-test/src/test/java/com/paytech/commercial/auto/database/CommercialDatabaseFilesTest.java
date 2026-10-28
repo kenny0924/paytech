@@ -27,7 +27,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * 人工执行的 SQL 文件与测试基座的一致性（纯文件检查，不连接数据库）：
- * <li>测试 DDL init/ddl.sql 的每张商务表逐字等于 docs/database/sql/commercial-schema.sql，另含每库一份的 t_consumed_event；</li>
+ * <li>测试 DDL init/ddl.sql 的每张商务表逐字等于 docs/database/sql/commercial-schema.sql，另含每库一份的 t_consumed_event 与
+ * t_consumed_aggregate_version；</li>
  * <li>CommercialDataCleaner 的表集合等于测试 DDL 的表集合；</li>
  * <li>初始化 DML commercial-initial-data.sql 的目录行与测试固件 product-catalog.json 逐行逐列一致。</li>
  *
@@ -50,6 +51,7 @@ class CommercialDatabaseFilesTest {
 
         Set<String> businessTables = new LinkedHashSet<>(ddl.keySet());
         businessTables.remove("t_consumed_event");
+        businessTables.remove("t_consumed_aggregate_version");
         assertAll(() -> assertEquals(22, schema.size()), () -> assertEquals(schema.keySet(), businessTables),
             () -> schema.forEach((table, definition) -> assertEquals(definition, ddl.get(table), table + " 与生成 Schema 不一致")),
             () -> assertEquals(ddl.keySet(), new LinkedHashSet<>(CommercialDataCleaner.TABLES)));

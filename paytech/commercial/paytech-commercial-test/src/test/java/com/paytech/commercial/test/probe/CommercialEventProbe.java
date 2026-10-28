@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -91,6 +92,36 @@ public class CommercialEventProbe {
             return fail("事件信封未到达 commercial.events：" + eventKey);
         }
         assertNull(next(eventKey, 500), "同一事件键收到多条信封：" + eventKey);
+        return found;
+    }
+
+    /**
+     * 等待同一 Handler 的多个事件键全部发布，一次读取临时队列收集它们的信封（逐个 awaitEnvelope 会跳过并丢弃后到的其他事件）
+     *
+     * @param handlerEventType 补偿 Handler 类型
+     * @param eventKeys 四段式事件键
+     * @return 事件键 → 信封，覆盖全部入参
+     */
+    public Map<String, JsonNode> awaitEnvelopes(String handlerEventType, String... eventKeys) {
+        Map<String, JsonNode> found = new LinkedHashMap<>();
+        long deadline = System.currentTimeMillis() + WAIT.toMillis();
+        while (found.size() < eventKeys.length && System.currentTimeMillis() < deadline) {
+            Message message = rabbitTemplate.receive(queue, 500);
+            if (message == null) {
+                continue;
+            }
+            JsonNode envelope = json.readTree(new String(message.getBody(), StandardCharsets.UTF_8));
+            String eventId = envelope.path("eventId").asString();
+            if (List.of(eventKeys).contains(eventId)) {
+                assertNull(found.put(eventId, envelope), "同一事件键收到多条信封：" + eventId);
+            }
+        }
+        for (String eventKey : eventKeys) {
+            awaitPublished(handlerEventType, eventKey);
+            if (!found.containsKey(eventKey)) {
+                return fail("事件信封未到达 commercial.events：" + eventKey);
+            }
+        }
         return found;
     }
 

@@ -36,7 +36,8 @@ import tools.jackson.databind.json.JsonMapper;
  * 商务浏览器测试的公共入口：真实 BFF 入站 → PLT-I02（Platform Simulator）→ 真实 HttpExchange 客户端 → commercial Simulator
  * <li>每例重置 Platform 与 commercial 两个 Simulator；AfterEach 断言两者都没有意外调用，并释放挂起响应。</li>
  * <li>边界清单每行包含 id、method、BFF path、ownerPath、query、request、status、ownerStatus、response、routeCode；
- * 合同 / 模板版本写入另有 preReads（转发前读取方案或版本 Owner 类型的 GET 调用及其响应）。</li>
+ * 合同 / 模板版本写入另有 preReads（转发前读取方案或版本 Owner 类型的 GET 调用及其响应）；
+ * 不携带操作人的 POST（如开通项前置核对）标注 actorForwarded=false。</li>
  * <li>操作者是数字 Account ID（commercial 只接受规范正十进制操作人）。</li>
  *
  * @author Claude
@@ -151,7 +152,7 @@ public abstract class CommercialBrowserAutoTestBase extends OperationsBffHttpTes
 
     /**
      * 成功转发：状态与 JSON 原样返回；commercial 先收到样例 preReads 的只读调用，再收到一次写入或查询，方法、路径、Query 与 Body 一致
-     * <li>命令携带会话操作者作为 X-Gateway-Actor-Subject，查询与转发前读取不携带；Body 不含操作人字段；
+     * <li>命令携带会话操作者作为 X-Gateway-Actor-Subject，查询、转发前读取与 actorForwarded=false 的 POST 不携带；Body 不含操作人字段；
      * 全部调用带 X-Caller-Service，不转发 Authorization、Cookie、Idempotency-Key。</li>
      */
     protected void assertForwarded(JsonNode row, HttpResponse<String> response) {
@@ -170,7 +171,8 @@ public abstract class CommercialBrowserAutoTestBase extends OperationsBffHttpTes
                 () -> assertNull(read.header("X-Gateway-Actor-Subject")), () -> assertTrue(read.body().isEmpty()));
         }
         var call = commercial.requests().getLast();
-        boolean command = !"GET".equals(row.path("method").asString());
+        boolean command = !"GET".equals(row.path("method").asString())
+            && row.path("actorForwarded").asBoolean(true);
         assertAll(() -> assertEquals(row.path("method").asString(), call.method()),
             () -> assertEquals(row.path("ownerPath").asString(), call.path()),
             () -> assertEquals(query(row.path("query").asString()), query(call.query())),

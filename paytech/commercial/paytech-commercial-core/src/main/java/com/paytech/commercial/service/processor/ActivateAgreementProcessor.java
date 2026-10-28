@@ -11,9 +11,11 @@ import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.AgreementOperatingEntity;
 import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.domain.AgreementContext;
+import com.paytech.commercial.domain.CapabilityPrerequisiteContext;
 import com.paytech.commercial.domain.enums.AgreementAgreementType;
 import com.paytech.commercial.domain.enums.AgreementStatus;
 import com.paytech.commercial.domain.enums.BusinessChangeReason;
+import com.paytech.commercial.domainservice.repository.AgreementCapabilityRepository;
 import com.paytech.commercial.domainservice.repository.AgreementOperatingEntityRepository;
 import com.paytech.commercial.domainservice.repository.AgreementPartyRepository;
 import com.paytech.commercial.domainservice.repository.AgreementRepository;
@@ -22,6 +24,7 @@ import com.paytech.commercial.domainservice.repository.CommercialTermPlanReposit
 import com.paytech.commercial.domainservice.service.AgreementService;
 import com.paytech.commercial.domainservice.validator.agreement.PartnerEntityPartyValidator;
 import com.paytech.commercial.service.handler.AgreementStatusChangedHandler;
+import com.paytech.commercial.service.handler.CapabilityPrerequisiteCheckHandler;
 import com.paytech.commercial.service.processor.request.AgreementTransitionRequest;
 import com.paytech.commercial.service.processor.response.AgreementResponse;
 import com.paytech.foundation.common.error.BizCheckFailException;
@@ -33,11 +36,14 @@ import com.paytech.foundation.common.error.BizCheckFailException;
  * 区间冲突（CLIENT 按 Client + OE + 业务模式，PARTNER 按 Local Partner + 共同覆盖 OE）；Partner 有平台服务费方案时合同 OE Party
  * 必须等于 Local Partner Party（AC-10）。状态、Root CAS 与 AgreementStatusChanged
  * 发布任务同一事务，提交后由补偿 Handler 发布。</li>
+ * <li>CLIENT 合同存在等待前置或前置失效暂停的开通项时，同一事务追加登记前置检查任务（开通项前置门禁 technique.md §11.3），提交后由门禁
+ * 核对；不在持锁事务中直接调用门禁。</li>
  */
 public class ActivateAgreementProcessor extends AbstractAgreementWriteProcessor<AgreementTransitionRequest, AgreementResponse> {
     private final AgreementService agreementService;
     private final AgreementPartyRepository agreementPartyRepository;
     private final CommercialTermPlanRepository commercialTermPlanRepository;
+    private final AgreementCapabilityRepository agreementCapabilityRepository;
     private final AgreementOperatingEntityRepository agreementOperatingEntityRepository;
 
     /**
@@ -49,16 +55,19 @@ public class ActivateAgreementProcessor extends AbstractAgreementWriteProcessor<
      * @param businessChangeRecordRepository BCR 仓储
      * @param agreementPartyRepository 合同参与方仓储
      * @param commercialTermPlanRepository 条款方案仓储
+     * @param agreementCapabilityRepository 开通项仓储
      * @param agreementOperatingEntityRepository 覆盖 OE 仓储
      */
     public ActivateAgreementProcessor(Clock clock, AgreementService agreementService,
         AgreementRepository agreementRepository, BusinessChangeRecordRepository businessChangeRecordRepository,
         AgreementPartyRepository agreementPartyRepository, CommercialTermPlanRepository commercialTermPlanRepository,
+        AgreementCapabilityRepository agreementCapabilityRepository,
         AgreementOperatingEntityRepository agreementOperatingEntityRepository) {
         super(clock, agreementRepository, businessChangeRecordRepository);
         this.agreementService = agreementService;
         this.agreementPartyRepository = agreementPartyRepository;
         this.commercialTermPlanRepository = commercialTermPlanRepository;
+        this.agreementCapabilityRepository = agreementCapabilityRepository;
         this.agreementOperatingEntityRepository = agreementOperatingEntityRepository;
     }
 
@@ -110,7 +119,19 @@ public class ActivateAgreementProcessor extends AbstractAgreementWriteProcessor<
         context.setNextActivatedTime(now);
         context.setStatusChangedEvent(AgreementStatusChangedHandler.buildEvent(agreement.getAgreementId(),
             request.getExpectedChangeVersion() + 1));
+        if (awaitingPrerequisites(agreement)) {
+            context.setPrerequisiteCheckEvent(CapabilityPrerequisiteCheckHandler.buildEvent(agreement.getAgreementId(),
+                request.getExpectedChangeVersion() + 1));
+        }
         return context;
+    }
+
+    /** CLIENT 合同存在等待前置或前置失效暂停的开通项。 */
+    boolean awaitingPrerequisites(Agreement agreement) {
+        return agreement.getAgreementType() == AgreementAgreementType.CLIENT && agreementCapabilityRepository
+            .findByAgreementId(agreement.getAgreementId()).stream()
+            .anyMatch(capability -> CapabilityPrerequisiteContext.AWAITING_PREREQUISITES.contains(
+                capability.getExecutionStatus()));
     }
 
     /** 同 Owner 的其他 ACTIVE 合同在相同适用范围内区间不得重叠。 */

@@ -13,11 +13,14 @@ import com.paytech.commercial.api.agreement.request.AgreementTransitionRequestBo
 import com.paytech.commercial.api.agreement.request.CreateAgreementRequestBody;
 import com.paytech.commercial.api.agreement.request.RecordAgreementAcceptanceRequestBody;
 import com.paytech.commercial.api.agreement.request.ReplaceAgreementProductsRequestBody;
+import com.paytech.commercial.api.agreement.request.ResumeAgreementCapabilityRequestBody;
+import com.paytech.commercial.api.agreement.request.SuspendAgreementCapabilityRequestBody;
 import com.paytech.commercial.api.agreement.request.TerminateAgreementRequestBody;
 import com.paytech.commercial.api.agreement.request.UpdateAgreementCapabilityRequestBody;
 import com.paytech.commercial.api.agreement.response.AgreementCapabilityResponseBody;
 import com.paytech.commercial.api.agreement.response.AgreementDetailResponseBody;
 import com.paytech.commercial.api.agreement.response.AgreementResponseBody;
+import com.paytech.commercial.api.agreement.response.CapabilityPrerequisiteCheckResponseBody;
 
 import jakarta.validation.Valid;
 
@@ -25,7 +28,7 @@ import jakarta.validation.Valid;
  * 合同、签署、订阅与开通项的运营写入合同（technique.md §2.2；仅私网，调用方 operations-console-bff）
  * <li>写入以合同 BCR Root 版本做 CAS：请求携带 expectedChangeVersion，版本不一致返回 409；写入不处理 Idempotency-Key。</li>
  * <li>业务检查失败返回 400 BUSINESS_CHECK_FAILED 与中文 detail，资源锁不可用返回 503。</li>
- * <li>只有激活与终止在提交后发布 AgreementStatusChanged。</li>
+ * <li>只有激活与终止在提交后发布 AgreementStatusChanged；开通项执行状态变化在提交后发布 AgreementCapabilityStatusChanged。</li>
  */
 @HttpExchange("/agreements/v1")
 public interface AgreementApi {
@@ -116,7 +119,8 @@ public interface AgreementApi {
         @PathVariable("agreementId") String agreementId, @Valid @RequestBody ReplaceAgreementProductsRequestBody body);
 
     /**
-     * 新增开通项（ENABLED）及其接受条件与 3DS 要求
+     * 新增开通项及其接受条件与 3DS 要求；成员资格 ACTIVE
+     * <li>CLIENT 合同执行状态为 PENDING_PREREQUISITES，同事务登记前置检查，提交后由门禁核对；PARTNER 合同直接 ENABLED。</li>
      *
      * @param actorId 操作者 Account ID
      * @param agreementId 合同 ID
@@ -128,7 +132,8 @@ public interface AgreementApi {
         @PathVariable("agreementId") String agreementId, @Valid @RequestBody AddAgreementCapabilityRequestBody body);
 
     /**
-     * 整体改写开通项状态、区间、保证金、接受条件与 3DS 要求；内容不变时不产生变更并返回当前版本
+     * 整体改写开通项成员资格、区间、保证金、接受条件与 3DS 要求；内容不变时不产生变更并返回当前版本
+     * <li>关闭（DISABLED）清空执行状态；重新纳入（ACTIVE）时 CLIENT 合同回到 PENDING_PREREQUISITES 并登记前置检查。</li>
      *
      * @param actorId 操作者 Account ID
      * @param agreementId 合同 ID
@@ -141,4 +146,47 @@ public interface AgreementApi {
         @PathVariable("agreementId") String agreementId,
         @PathVariable("agreementCapabilityId") String agreementCapabilityId,
         @Valid @RequestBody UpdateAgreementCapabilityRequestBody body);
+
+    /**
+     * 运营手动暂停开通项：执行状态置 SUSPENDED_MANUALLY，前置门禁不再触碰
+     *
+     * @param actorId 操作者 Account ID
+     * @param agreementId 合同 ID
+     * @param agreementCapabilityId 开通项 ID
+     * @param body 暂停原因与版本条件
+     * @return 开通项写入结果
+     *         <li>合同已结束、PARTNER 合同、开通项已关闭或已是手动暂停返回 400；版本不一致返回 409。</li>
+     */
+    @PostExchange("/{agreementId}/capabilities/{agreementCapabilityId}/suspension")
+    AgreementCapabilityResponseBody suspendCapability(@RequestHeader(ACTOR_HEADER) String actorId,
+        @PathVariable("agreementId") String agreementId,
+        @PathVariable("agreementCapabilityId") String agreementCapabilityId,
+        @Valid @RequestBody SuspendAgreementCapabilityRequestBody body);
+
+    /**
+     * 运营恢复手动暂停的开通项：执行状态回到 PENDING_PREREQUISITES，同事务登记前置检查，提交后由门禁核对
+     *
+     * @param actorId 操作者 Account ID
+     * @param agreementId 合同 ID
+     * @param agreementCapabilityId 开通项 ID
+     * @param body 版本条件
+     * @return 开通项写入结果（executionStatus=PENDING_PREREQUISITES）
+     *         <li>开通项不是手动暂停返回 400；版本不一致返回 409。</li>
+     */
+    @PostExchange("/{agreementId}/capabilities/{agreementCapabilityId}/resumption")
+    AgreementCapabilityResponseBody resumeCapability(@RequestHeader(ACTOR_HEADER) String actorId,
+        @PathVariable("agreementId") String agreementId,
+        @PathVariable("agreementCapabilityId") String agreementCapabilityId,
+        @Valid @RequestBody ResumeAgreementCapabilityRequestBody body);
+
+    /**
+     * 立即核对 CLIENT 合同全部开通项的前置（资格、合同与价格、渠道身份），必要时迁移执行状态并返回逐项结论
+     * <li>可能迁移状态并推进合同版本，因此是 POST；不需要操作者，状态迁移以系统身份记录。</li>
+     *
+     * @param agreementId 合同 ID
+     * @return 核对结果
+     *         <li>合同不存在或为 PARTNER 合同返回 400；资格服务不可用时对应项为 UNKNOWN、状态不迁移，仍返回 200。</li>
+     */
+    @PostExchange("/{agreementId}/prerequisite-checks")
+    CapabilityPrerequisiteCheckResponseBody checkPrerequisites(@PathVariable("agreementId") String agreementId);
 }

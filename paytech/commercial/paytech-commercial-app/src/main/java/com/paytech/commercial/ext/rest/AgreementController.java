@@ -9,20 +9,27 @@ import com.paytech.commercial.api.agreement.request.AgreementTransitionRequestBo
 import com.paytech.commercial.api.agreement.request.CreateAgreementRequestBody;
 import com.paytech.commercial.api.agreement.request.RecordAgreementAcceptanceRequestBody;
 import com.paytech.commercial.api.agreement.request.ReplaceAgreementProductsRequestBody;
+import com.paytech.commercial.api.agreement.request.ResumeAgreementCapabilityRequestBody;
+import com.paytech.commercial.api.agreement.request.SuspendAgreementCapabilityRequestBody;
 import com.paytech.commercial.api.agreement.request.TerminateAgreementRequestBody;
 import com.paytech.commercial.api.agreement.request.UpdateAgreementCapabilityRequestBody;
 import com.paytech.commercial.api.agreement.response.AgreementCapabilityResponseBody;
 import com.paytech.commercial.api.agreement.response.AgreementDetailResponseBody;
 import com.paytech.commercial.api.agreement.response.AgreementResponseBody;
+import com.paytech.commercial.api.agreement.response.CapabilityPrerequisiteCheckResponseBody;
 import com.paytech.commercial.domainservice.service.AgreementService;
 import com.paytech.commercial.service.processor.ActivateAgreementProcessor;
 import com.paytech.commercial.service.processor.AddAgreementCapabilityProcessor;
+import com.paytech.commercial.service.processor.CheckCapabilityPrerequisitesProcessor;
 import com.paytech.commercial.service.processor.CreateAgreementProcessor;
 import com.paytech.commercial.service.processor.RecordAgreementAcceptanceProcessor;
 import com.paytech.commercial.service.processor.ReplaceAgreementProductsProcessor;
+import com.paytech.commercial.service.processor.ResumeAgreementCapabilityProcessor;
 import com.paytech.commercial.service.processor.SubmitAgreementForSignatureProcessor;
+import com.paytech.commercial.service.processor.SuspendAgreementCapabilityProcessor;
 import com.paytech.commercial.service.processor.TerminateAgreementProcessor;
 import com.paytech.commercial.service.processor.UpdateAgreementCapabilityProcessor;
+import com.paytech.commercial.service.processor.request.CheckCapabilityPrerequisitesRequest;
 
 import lombok.AllArgsConstructor;
 
@@ -38,8 +45,11 @@ public class AgreementController implements AgreementApi {
     private final AddAgreementCapabilityProcessor addAgreementCapabilityProcessor;
     private final ReplaceAgreementProductsProcessor replaceAgreementProductsProcessor;
     private final RecordAgreementAcceptanceProcessor recordAgreementAcceptanceProcessor;
+    private final ResumeAgreementCapabilityProcessor resumeAgreementCapabilityProcessor;
     private final UpdateAgreementCapabilityProcessor updateAgreementCapabilityProcessor;
+    private final SuspendAgreementCapabilityProcessor suspendAgreementCapabilityProcessor;
     private final SubmitAgreementForSignatureProcessor submitAgreementForSignatureProcessor;
+    private final CheckCapabilityPrerequisitesProcessor checkCapabilityPrerequisitesProcessor;
 
     /** 创建合同。 */
     @Override
@@ -104,5 +114,28 @@ public class AgreementController implements AgreementApi {
         String agreementCapabilityId, UpdateAgreementCapabilityRequestBody body) {
         return AgreementConverter.capabilityResponse(updateAgreementCapabilityProcessor.process(
             AgreementConverter.updateCapabilityRequest(actorId, agreementId, agreementCapabilityId, body)));
+    }
+
+    /** 暂停开通项。 */
+    @Override
+    public AgreementCapabilityResponseBody suspendCapability(String actorId, String agreementId,
+        String agreementCapabilityId, SuspendAgreementCapabilityRequestBody body) {
+        return AgreementConverter.capabilityResponse(suspendAgreementCapabilityProcessor.process(
+            AgreementConverter.suspendCapabilityRequest(actorId, agreementId, agreementCapabilityId, body)));
+    }
+
+    /** 恢复开通项。 */
+    @Override
+    public AgreementCapabilityResponseBody resumeCapability(String actorId, String agreementId,
+        String agreementCapabilityId, ResumeAgreementCapabilityRequestBody body) {
+        return AgreementConverter.capabilityResponse(resumeAgreementCapabilityProcessor.process(
+            AgreementConverter.resumeCapabilityRequest(actorId, agreementId, agreementCapabilityId, body)));
+    }
+
+    /** 核对开通项前置。 */
+    @Override
+    public CapabilityPrerequisiteCheckResponseBody checkPrerequisites(String agreementId) {
+        return AgreementConverter.prerequisiteCheckResponse(checkCapabilityPrerequisitesProcessor.process(
+            new CheckCapabilityPrerequisitesRequest(WireValues.id("agreementId", agreementId))));
     }
 }

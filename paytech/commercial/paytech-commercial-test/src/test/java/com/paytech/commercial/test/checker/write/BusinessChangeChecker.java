@@ -14,6 +14,7 @@ import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.boot.test.context.TestComponent;
 
@@ -94,7 +95,7 @@ public class BusinessChangeChecker {
                 JsonNode snapshot = json.readTree((String) version.get("snapshot_json"));
                 JsonNode meta = snapshot.path("_meta");
                 assertEquals(1, meta.path("schemaVersion").asInt());
-                assertEquals("COMMAND", meta.path("triggerType").asString());
+                assertTrue(Set.of("COMMAND", "SYSTEM").contains(meta.path("triggerType").asString()), "triggerType 不符");
                 assertEquals("SHA-256", meta.path("integrityAlgorithm").asString());
                 assertTrue(meta.path("triggerId").asString().matches("[1-9][0-9]{0,18}"), "triggerId 格式不符");
                 assertEquals(meta.path("integrityHash").asString(), recompute(version), "完整性哈希不符");

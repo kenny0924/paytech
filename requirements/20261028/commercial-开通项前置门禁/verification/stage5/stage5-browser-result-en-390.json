@@ -1,0 +1,111 @@
+{
+  "runs": [
+    {
+      "locale": "en",
+      "width": 390,
+      "steps": [
+        {
+          "step": "01-products",
+          "check": {
+            "nextStep": "Next Step · Enablements Take Effect Enablements are switched on by the system once their prerequisites are met: qualification, agreement and pricing, and channel identity. CARD suspended: Price doesn't cover it; APPLE_PAY pending prerequisites: Price doesn't cover it; GOOGLE_PAY suspended manually; resume it to continue Go to Pricing",
+            "head": "Acquiring ACQUIRING 4 enablements · 1 enabled · 1 pending prerequisites · 2 suspended Last checked 22:49 Check Prerequisites + Add Enablement",
+            "rows": [
+              " CARD 银行卡 Currency SAR / USD — 2026-10-20 04:00 – Open-ended Suspended: Prerequisite Lapsed Price doesn't cover it Edit Suspend",
+              " TOKEN_STORAGE 存卡 — 2026-10-20 04:00 – Open-ended Enabled Edit Suspend",
+              " APPLE_PAY Apple Pay Currency USD — 2026-10-20 04:00 – Open-ended Pending Prerequisites Edit Suspend",
+              " GOOGLE_PAY Google Pay Currency USD — 2026-10-20 04:00 – Open-ended Suspended Manually Edit Resume"
+            ]
+          }
+        },
+        {
+          "step": "02-expanded",
+          "check": [
+            "What's Missing Checked at 22:49 · 2 satisfied · 1 not satisfied · Re-enabled automatically once everything is satisfied again Qualification Client 240674482170114049 and Operating Entity AE001 are qualified. Agreement & Pricing The active Client Pricing term version doesn't price every currency and condition of this enablement. Go to Pricing → Channel Identity Not checked yet; channel identity will be included automatically once its lookup goes live.",
+            "What's Missing Checked at 22:49 · 2 satisfied · 1 not satisfied · Enabled automatically once everything is satisfied; no manual step needed Qualification Client 240674482170114049 and Operating Entity AE001 are qualified. Agreement & Pricing The active Client Pricing term version doesn't price every currency and condition of this enablement. Go to Pricing → Channel Identity Not checked yet; channel identity will be included automatically once its lookup goes live."
+          ]
+        },
+        {
+          "step": "03-checked",
+          "check": "Acquiring ACQUIRING 4 enablements · 1 enabled · 1 pending prerequisites · 2 suspended Last checked 22:49 Check Prerequisites + Add Enablement"
+        },
+        {
+          "step": "04-suspend-modal",
+          "check": "Suspend Enablement · TOKEN_STORAGE Enablement TOKEN_STORAGE · 存卡 Operating Entity AE001 Current Execution Status Enabled Agreement GATE-CLIENT-MOR-AE001 Takes effect immediately Checkout stops offering 存卡 to consumers; other payment methods aren't affected Payments, refunds and disputes already started continue as usual The system won't resume it automatically. Click Resume on this enablement; prerequisites are checked again after resuming Suspension reason (recorded in change history) Required, up to 200 characters Cancel Suspend"
+        },
+        {
+          "step": "06-resume-modal",
+          "check": "Resume Enablement · GOOGLE_PAY Enablement GOOGLE_PAY · Google Pay Current Execution Status Suspended Manually Suspended By o***@example.test · 2026-10-28 22:31 Suspension Reason Client 要求暂停 Google Pay，等待商户域名续期 Resuming doesn't enable it directly Suspended Manually Pending Prerequisites Enabled (when all three prerequisites are satisfied) The system checks qualification, agreement and pricing, and channel identity right away. If anything is missing it stays Pending Prerequisites; expand \"What's Missing\" on the enablement to see why. Cancel Resume and Check"
+        },
+        {
+          "step": "08-edit-drawer",
+          "check": "Edit Enablement · AE001 / 银行卡 Enablement CARD · 银行卡 Operating Entity AE001 Execution Status (System-Managed) Suspended: Prerequisite Lapsed Basics OE AE001 Status in Agreement Include Close Include: part of the agreement and must be priced. Close: leaves the agreement and Checkout stops offering it immediately. Accepted Conditions Any value within a dimension; all dimensions must match Currency AED USD SAR EUR GBP More Currencies Card Brand Any VISA MASTERCARD AMEX UNIONPAY MADA DISCOVER JCB DINERS + Other Card Level Any CLASSIC GOLD PLATINUM SIGNATURE INFINITE WORLD WORLD_ELITE + Other Consumer Country Any Funding Type Any Credit Debit Prepaid Charge + Other Issuer Country Any Issuer Region Any GCC Middle East & Africa (excl. GCC) Europe North America Latin America Asia Pacific + Other 3D"
+        },
+        {
+          "step": "09-add-drawer",
+          "check": "Add Enablement · Acquiring After it's added, the enablement is Pending Prerequisites and the system checks it automatically. Basics OE AE001 Capability Apple Pay Added · Pending Prerequisites APPLE_PAY Payment Method Configurable: Card Brand, Consumer Country, Currency, Funding Type Google Pay Added · Suspended Manually GOOGLE_PAY Payment Method Configurable: Card Brand, Consumer Country, Currency, Funding Type 银行卡 Added · Suspended: Prerequisite Lapsed CARD Payment Method Configurable: Card Brand, Card Level, Consumer Country, Currency, Funding Type, Issuer Country, Issuer Region 存卡 Enabled T"
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "en-390",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "login",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "en-390",
+      "step": "08-edit-drawer",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "en-390",
+      "step": "09-add-drawer",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "httpErrors": [
+    {
+      "run": "en-390",
+      "step": "login",
+      "method": "GET",
+      "path": "/api/operations/commercial-admin/v1/products/dimensions",
+      "status": 404
+    },
+    {
+      "run": "en-390",
+      "step": "08-edit-drawer",
+      "method": "GET",
+      "path": "/api/operations/commercial-admin/v1/products/dimensions",
+      "status": 404
+    },
+    {
+      "run": "en-390",
+      "step": "09-add-drawer",
+      "method": "GET",
+      "path": "/api/operations/commercial-admin/v1/products/dimensions",
+      "status": 404
+    }
+  ]
+}

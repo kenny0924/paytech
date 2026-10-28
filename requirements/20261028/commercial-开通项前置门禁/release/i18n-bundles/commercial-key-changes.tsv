@@ -1,0 +1,102 @@
+change	key	en	zh-CN
+新增	commercial.capabilityDrawer.addGateHint	After it's added, the enablement is Pending Prerequisites and the system checks it automatically.	添加后进入等前置，系统自动检查。
+新增	commercial.capabilityDrawer.addOk	Add	添加
+新增	commercial.capabilityDrawer.executionStatusSystem	Execution Status (System-Managed)	执行状态（系统维护）
+新增	commercial.capabilityDrawer.gateNote	Execution status is maintained by the system from prerequisites and can't be switched on here. To stop it temporarily, use Suspend in the list. Closing removes it from the agreement and its pricing requirement; including it again returns it to Pending Prerequisites and checks it again.	执行状态由系统按前置条件维护，这里不能直接开通；需要临时停用请在列表中点「暂停」。改为「关闭」后开通项退出合同、不再要求定价；重新「纳入」会回到「等前置」并重新检查。
+新增	commercial.capabilityDrawer.membership	Status in Agreement	合同内状态
+新增	commercial.capabilityDrawer.membershipHint	Include: part of the agreement and must be priced. Close: leaves the agreement and Checkout stops offering it immediately.	纳入：在合同内，定价必须覆盖；关闭：退出合同，Checkout 立即不再提供
+新增	commercial.capabilityDrawer.membershipOption.ACTIVE	Include	纳入
+新增	commercial.capabilityDrawer.membershipOption.DISABLED	Close	关闭
+英文基准变更	commercial.capabilityDrawer.productTitle	Add Enablement · {product}	新增开通项 · {product}
+新增	commercial.enum.AgreementCapabilityExecutionStatus.ENABLED	Enabled	已开通
+新增	commercial.enum.AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES	Pending Prerequisites	等前置
+新增	commercial.enum.AgreementCapabilityExecutionStatus.SUSPENDED_BY_PREREQUISITE	Suspended: Prerequisite Lapsed	前置失效暂停
+新增	commercial.enum.AgreementCapabilityExecutionStatus.SUSPENDED_MANUALLY	Suspended Manually	手动暂停
+新增	commercial.enum.AgreementCapabilityStatus.ACTIVE	Included	已纳入
+新增	commercial.enum.AgreementCapabilityStatus.DISABLED	Closed	已关闭
+新增	commercial.enum.CapabilityPrerequisiteCode.AGREEMENT_TERM	Agreement & Pricing	合同与价格
+新增	commercial.enum.CapabilityPrerequisiteCode.CHANNEL_IDENTITY	Channel Identity	渠道身份
+新增	commercial.enum.CapabilityPrerequisiteCode.QUALIFICATION	Qualification	资格
+新增	commercial.enum.CapabilityPrerequisiteReason.AGREEMENT_NOT_ACTIVE	The agreement isn't in effect (status: {agreementStatus}).	合同不在生效期内（当前状态：{agreementStatus}）。
+新增	commercial.enum.CapabilityPrerequisiteReason.CAPABILITY_NOT_EFFECTIVE	This enablement isn't within its effective period.	开通项不在有效期内。
+新增	commercial.enum.CapabilityPrerequisiteReason.CHANNEL_IDENTITY_NOT_CONNECTED	Not checked yet; channel identity will be included automatically once its lookup goes live.	暂未接入校验，渠道身份查询上线后自动纳入
+新增	commercial.enum.CapabilityPrerequisiteReason.CHECK_UNAVAILABLE	The qualification service couldn't be reached; the status stays unchanged. Check again later.	资格服务暂时无法查询，状态保持不变，请稍后重新检查。
+新增	commercial.enum.CapabilityPrerequisiteReason.CLIENT_NOT_QUALIFIED	Client {clientId} isn't qualified yet. Complete the Client's due diligence first.	Client {clientId} 尚未取得资格，请先完成该 Client 的尽调。
+新增	commercial.enum.CapabilityPrerequisiteReason.NOT_APPLICABLE	Not applicable to this kind of enablement.	不适用于此类开通项。
+新增	commercial.enum.CapabilityPrerequisiteReason.OPERATING_ENTITY_NOT_QUALIFIED	Operating Entity {entityNo} isn't qualified yet.	Operating Entity {entityNo} 尚未取得资格。
+新增	commercial.enum.CapabilityPrerequisiteReason.PRICE_NOT_COVERED	{currencies, select, none {The active {termType} term version doesn't price every currency and condition of this enablement.} other {The active {termType} term version has no price for {currencies} on this enablement.}}	{currencies, select, none {生效中的 {termType} 条款版本未覆盖本开通项的全部币种与条件。} other {生效中的 {termType} 条款版本没有本开通项 {currencies} 的价格。}}
+新增	commercial.enum.CapabilityPrerequisiteReason.TERM_VERSION_NOT_ACTIVE	There's no active {termType} term version for this agreement.	该合同没有生效中的 {termType} 条款版本。
+新增	commercial.enum.CapabilityPrerequisiteResult.SATISFIED	Satisfied	满足
+新增	commercial.enum.CapabilityPrerequisiteResult.SKIPPED	Not Connected	未接入
+新增	commercial.enum.CapabilityPrerequisiteResult.UNKNOWN	Check Failed	检查失败
+新增	commercial.enum.CapabilityPrerequisiteResult.UNSATISFIED	Not Satisfied	不满足
+废弃	commercial.enum.capabilityStatus.DISABLED	Disabled	关闭
+废弃	commercial.enum.capabilityStatus.ENABLED	Enabled	开通
+废弃	commercial.enum.capabilityStatus.SUSPENDED	Suspended	暂停
+新增	commercial.nextStep.blocked.manual	{code} suspended manually; resume it to continue	{code} 已手动暂停，需手动恢复
+新增	commercial.nextStep.blocked.pendingReason	{code} pending prerequisites: {reason}	{code} 等前置：{reason}
+新增	commercial.nextStep.blocked.status	{code}: {status}	{code}：{status}
+新增	commercial.nextStep.blocked.suspendedReason	{code} suspended: {reason}	{code} 因{reason} 暂停
+新增	commercial.nextStep.description	Enablements are switched on by the system once their prerequisites are met: qualification, agreement and pricing, and channel identity.	开通项由系统按前置条件自动开通：资格、合同与价格、渠道身份
+新增	commercial.nextStep.goPricing	Go to Pricing	去定价
+新增	commercial.nextStep.name	Enablements Take Effect	开通项生效
+新增	commercial.nextStep.tabDot	Some enablements aren't enabled yet	有开通项尚未开通
+新增	commercial.nextStep.title	Next Step	下一步
+新增	commercial.prerequisite.action.check	Check Prerequisites	检查前置
+新增	commercial.prerequisite.action.resume	Resume	恢复
+新增	commercial.prerequisite.action.suspend	Suspend	暂停
+新增	commercial.prerequisite.checkedAt	Checked at {time}	核对于 {time}
+新增	commercial.prerequisite.counts	{satisfied} satisfied · {unsatisfied} not satisfied	{satisfied} 项满足 · {unsatisfied} 项未满足
+新增	commercial.prerequisite.failed	Couldn't check prerequisites. Try again.	前置检查失败，请重试。
+新增	commercial.prerequisite.link.client	View Client →	查看 Client →
+新增	commercial.prerequisite.link.entity	View Operating Entity →	查看经营主体 →
+新增	commercial.prerequisite.link.pricing	Go to Pricing →	去定价 →
+新增	commercial.prerequisite.link.recheck	Check Again	重新检查
+新增	commercial.prerequisite.loading	Checking prerequisites…	正在检查前置…
+新增	commercial.prerequisite.manualNote	Suspended manually: the prerequisite gate won't change it. Resume it to check again.	已手动暂停：前置门禁不会改变它，恢复后重新检查。
+新增	commercial.prerequisite.modal.agreement	Agreement	合同
+新增	commercial.prerequisite.modal.capability	Enablement	开通项
+新增	commercial.prerequisite.modal.entity	Operating Entity	经营主体
+新增	commercial.prerequisite.modal.executionStatus	Current Execution Status	当前执行状态
+新增	commercial.prerequisite.noChecks	No prerequisite results for this enablement.	该开通项没有前置检查结果。
+新增	commercial.prerequisite.resume.failed	Couldn't resume the enablement	恢复开通项失败
+新增	commercial.prerequisite.resume.flowCondition	(when all three prerequisites are satisfied)	（三项前置全部满足时）
+新增	commercial.prerequisite.resume.flowTitle	Resuming doesn't enable it directly	恢复后不会直接开通
+新增	commercial.prerequisite.resume.notice	The system checks qualification, agreement and pricing, and channel identity right away. If anything is missing it stays Pending Prerequisites; expand "What's Missing" on the enablement to see why.	系统会立刻检查资格、合同与价格、渠道身份；有未满足的项会停在「等前置」，在开通项上展开「还差什么」可以看到原因。
+新增	commercial.prerequisite.resume.ok	Resume and Check	恢复并检查
+新增	commercial.prerequisite.resume.reason	Suspension Reason	暂停原因
+新增	commercial.prerequisite.resume.suspendedBy	Suspended By	暂停人
+新增	commercial.prerequisite.resume.title	Resume Enablement · {capabilityCode}	恢复开通项 · {capabilityCode}
+新增	commercial.prerequisite.satisfied.AGREEMENT_TERM	The agreement is in effect and the active price version covers this enablement.	合同生效，生效中的价格版本已覆盖本开通项
+新增	commercial.prerequisite.satisfied.CHANNEL_IDENTITY	The channel identity is ready.	渠道身份已就绪
+新增	commercial.prerequisite.satisfied.QUALIFICATION	Client {clientId} and Operating Entity {entityNo} are qualified.	Client {clientId} 与经营主体 {entityNo} 资格有效
+新增	commercial.prerequisite.shortReason.AGREEMENT_NOT_ACTIVE	Agreement not in effect	合同未生效
+新增	commercial.prerequisite.shortReason.CAPABILITY_NOT_EFFECTIVE	Outside effective period	不在有效期内
+新增	commercial.prerequisite.shortReason.CHANNEL_IDENTITY_NOT_CONNECTED	Channel identity not connected	渠道身份未接入
+新增	commercial.prerequisite.shortReason.CHECK_UNAVAILABLE	Qualification check unavailable	资格暂时无法查询
+新增	commercial.prerequisite.shortReason.CLIENT_NOT_QUALIFIED	Client not qualified	Client 资格未通过
+新增	commercial.prerequisite.shortReason.NOT_APPLICABLE	Not applicable	不适用
+新增	commercial.prerequisite.shortReason.OPERATING_ENTITY_NOT_QUALIFIED	{entityNo} not qualified	经营主体 {entityNo} 资格未通过
+新增	commercial.prerequisite.shortReason.PRICE_NOT_COVERED	{currencies, select, none {Price doesn't cover it} other {Price doesn't cover {currencies}}}	{currencies, select, none {价格未覆盖} other {价格未覆盖 {currencies}}}
+新增	commercial.prerequisite.shortReason.TERM_VERSION_NOT_ACTIVE	No active price version	没有生效的价格版本
+新增	commercial.prerequisite.suspend.failed	Couldn't suspend the enablement	暂停开通项失败
+新增	commercial.prerequisite.suspend.impactCheckout	Checkout stops offering {name} to consumers; other payment methods aren't affected	Checkout 不再向消费者提供 {name}；其他支付方式不受影响
+新增	commercial.prerequisite.suspend.impactInFlight	Payments, refunds and disputes already started continue as usual	已经发起的支付、退款和争议照常处理
+新增	commercial.prerequisite.suspend.impactResume	The system won't resume it automatically. Click Resume on this enablement; prerequisites are checked again after resuming	系统不会自动恢复，需要在此开通项上点「恢复」，恢复后重新检查前置
+新增	commercial.prerequisite.suspend.impactTitle	Takes effect immediately	暂停后立即生效
+新增	commercial.prerequisite.suspend.reason	Suspension reason (recorded in change history)	暂停原因（写入变更历史）
+新增	commercial.prerequisite.suspend.reasonHint	Required, up to 200 characters	必填，最多 200 字
+新增	commercial.prerequisite.suspend.reasonMax	Use 200 characters or fewer	暂停原因最长 200 字
+新增	commercial.prerequisite.suspend.reasonRequired	Enter a reason	请填写暂停原因
+新增	commercial.prerequisite.suspend.title	Suspend Enablement · {capabilityCode}	暂停开通项 · {capabilityCode}
+新增	commercial.prerequisite.tail.ENABLED	Everything is satisfied; suspended automatically if anything lapses	前置全部满足；任一项失效时系统自动暂停
+新增	commercial.prerequisite.tail.PENDING_PREREQUISITES	Enabled automatically once everything is satisfied; no manual step needed	全部满足后系统自动开通，无需手动操作
+新增	commercial.prerequisite.tail.SUSPENDED_BY_PREREQUISITE	Re-enabled automatically once everything is satisfied again	全部恢复满足后系统自动重新开通
+新增	commercial.prerequisite.title	What's Missing	还差什么
+新增	commercial.prerequisite.unknownCount	{count} couldn't be checked	{count} 项检查失败
+英文基准变更	commercial.productSections.add	+ Add Enablement	+ 新增开通项
+废弃	commercial.productSections.capabilityCount	{count, plural, one {# enablement} other {# enablements}}	{count} 个开通项
+新增	commercial.productSections.column.executionStatus	Execution Status	执行状态
+新增	commercial.productSections.lastChecked	Last checked {time}	上次检查 {time}
+新增	commercial.productSections.noCapabilities	This agreement has no enablements yet. Add them under a subscribed product; each one starts as Pending Prerequisites until qualification, the agreement and pricing are in place.	该合同还没有开通项。请在已订阅的产品下添加；新开通项先处于等前置，资格、合同与价格就绪后自动开通。
+新增	commercial.productSections.summary	{total, plural, one {# enablement} other {# enablements}} · {enabled} enabled · {pending} pending prerequisites · {suspended} suspended	{total} 个开通项 · {enabled} 已开通 · {pending} 等前置 · {suspended} 暂停

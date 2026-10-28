@@ -1,0 +1,78 @@
++---------------------+------+
+| t                   | n    |
++---------------------+------+
+| block141_rows_total |    0 |
++---------------------+------+
++-----------------+---+
+| t               | n |
++-----------------+---+
+| new_route_code  | 0 |
+| new_method_path | 0 |
++-----------------+---+
++----------------+--------------------+------------------------------------------+--------+
+| t              | id                 | code                                     | status |
++----------------+--------------------+------------------------------------------+--------+
+| dep_permission | 900000000000095101 | COMMERCIAL_CONTRACT_READ                 | ACTIVE |
+| dep_permission | 900000000000095102 | COMMERCIAL_CONTRACT_MANAGE               | ACTIVE |
+| dep_target_001 | 900000000000000001 | operations-console-bff                   | ACTIVE |
+| shape_route    | 900000000000095405 | operations-commercial-agreement-activate | ACTIVE |
+| shape_route    | 900000000000095409 | operations-commercial-capability-update  | ACTIVE |
++----------------+--------------------+------------------------------------------+--------+
++------------------+--------------------+------------+-------------+-----------------------+--------------------+--------------------+---------------------+----------------------+------------------+------------------+-----------------------------+-------------------------+--------------------+
+| t                | route_id           | channel    | http_method | security_profile_code | authorization_mode | permission_id      | request_cookie_mode | response_cookie_mode | idempotency_mode | body_limit_bytes | body_receive_timeout_millis | response_timeout_millis | target_id          |
++------------------+--------------------+------------+-------------+-----------------------+--------------------+--------------------+---------------------+----------------------+------------------+------------------+-----------------------------+-------------------------+--------------------+
+| shape_route_attr | 900000000000095405 | OPERATIONS | POST        | OPERATIONS_JWT        | HUMAN_PERMISSION   | 900000000000095102 | DROP                | NONE                 | NONE             |             8192 |                        5000 |                   10000 | 900000000000000001 |
+| shape_route_attr | 900000000000095409 | OPERATIONS | PUT         | OPERATIONS_JWT        | HUMAN_PERMISSION   | 900000000000095102 | DROP                | NONE                 | NONE             |             8192 |                        5000 |                   10000 | 900000000000000001 |
++------------------+--------------------+------------+-------------+-----------------------+--------------------+--------------------+---------------------+----------------------+------------------+------------------+-----------------------------+-------------------------+--------------------+
++--------------+--------------------+-----------------+----------------------+
+| t            | route_id           | header_name     | header_use           |
++--------------+--------------------+-----------------+----------------------+
+| shape_header | 900000000000095405 | authorization   | CORS_REQUEST_ALLOWED |
+| shape_header | 900000000000095405 | origin          | FORWARD_REQUEST      |
+| shape_header | 900000000000095405 | content-type    | CORS_REQUEST_ALLOWED |
+| shape_header | 900000000000095405 | content-type    | FORWARD_REQUEST      |
+| shape_header | 900000000000095405 | idempotency-key | CORS_REQUEST_ALLOWED |
+| shape_header | 900000000000095405 | idempotency-key | FORWARD_REQUEST      |
+| shape_header | 900000000000095409 | authorization   | CORS_REQUEST_ALLOWED |
+| shape_header | 900000000000095409 | origin          | FORWARD_REQUEST      |
+| shape_header | 900000000000095409 | content-type    | CORS_REQUEST_ALLOWED |
+| shape_header | 900000000000095409 | content-type    | FORWARD_REQUEST      |
+| shape_header | 900000000000095409 | idempotency-key | CORS_REQUEST_ALLOWED |
+| shape_header | 900000000000095409 | idempotency-key | FORWARD_REQUEST      |
++--------------+--------------------+-----------------+----------------------+
++-------------+--------------------+-------------+-------------------------+----------+---------------+----------------------+-------------------+
+| t           | route_id           | rule_type   | dimension               | capacity | refill_tokens | refill_period_millis | concurrency_limit |
++-------------+--------------------+-------------+-------------------------+----------+---------------+----------------------+-------------------+
+| shape_guard | 900000000000095405 | RATE_LIMIT  | SHARED_ROUTE            |      300 |           300 |                60000 |              NULL |
+| shape_guard | 900000000000095405 | CONCURRENCY | SHARED_ROUTE            |     NULL |          NULL |                 NULL |                50 |
+| shape_guard | 900000000000095405 | RATE_LIMIT  | CLIENT_IP               |       30 |            30 |                60000 |              NULL |
+| shape_guard | 900000000000095405 | CONCURRENCY | CLIENT_IP               |     NULL |          NULL |                 NULL |                 3 |
+| shape_guard | 900000000000095405 | RATE_LIMIT  | AUTHENTICATED_PRINCIPAL |       10 |            10 |                60000 |              NULL |
+| shape_guard | 900000000000095405 | CONCURRENCY | AUTHENTICATED_PRINCIPAL |     NULL |          NULL |                 NULL |                 2 |
+| shape_guard | 900000000000095409 | RATE_LIMIT  | SHARED_ROUTE            |      300 |           300 |                60000 |              NULL |
+| shape_guard | 900000000000095409 | CONCURRENCY | SHARED_ROUTE            |     NULL |          NULL |                 NULL |                50 |
+| shape_guard | 900000000000095409 | RATE_LIMIT  | CLIENT_IP               |       30 |            30 |                60000 |              NULL |
+| shape_guard | 900000000000095409 | CONCURRENCY | CLIENT_IP               |     NULL |          NULL |                 NULL |                 3 |
+| shape_guard | 900000000000095409 | RATE_LIMIT  | AUTHENTICATED_PRINCIPAL |       10 |            10 |                60000 |              NULL |
+| shape_guard | 900000000000095409 | CONCURRENCY | AUTHENTICATED_PRINCIPAL |     NULL |          NULL |                 NULL |                 2 |
++-------------+--------------------+-------------+-------------------------+----------+---------------+----------------------+-------------------+
++------------------+----------+-----+
+| t                | status   | n   |
++------------------+----------+-----+
+| routes_by_status | ACTIVE   | 613 |
+| routes_by_status | DISABLED |   6 |
++------------------+----------+-----+
++-----------------------------+--------------------+--------------------------------------------+--------+-------------+---------------------------------------------------------------------------------------------------+
+| t                           | route_id           | route_code                                 | status | http_method | external_path_template                                                                            |
++-----------------------------+--------------------+--------------------------------------------+--------+-------------+---------------------------------------------------------------------------------------------------+
+| commercial_agreement_routes | 900000000000093401 | operations-commercial-agreement-list       | ACTIVE | GET         | /api/operations/commercial-admin/v1/agreements                                                    |
+| commercial_agreement_routes | 900000000000095401 | operations-commercial-agreement-detail     | ACTIVE | GET         | /api/operations/commercial-admin/v1/agreements/{agreementId}                                      |
+| commercial_agreement_routes | 900000000000095402 | operations-commercial-agreement-create     | ACTIVE | POST        | /api/operations/commercial-admin/v1/agreements                                                    |
+| commercial_agreement_routes | 900000000000095403 | operations-commercial-agreement-submit     | ACTIVE | POST        | /api/operations/commercial-admin/v1/agreements/{agreementId}/submit-for-signature                 |
+| commercial_agreement_routes | 900000000000095404 | operations-commercial-agreement-acceptance | ACTIVE | POST        | /api/operations/commercial-admin/v1/agreements/{agreementId}/parties/{partyId}/acceptance         |
+| commercial_agreement_routes | 900000000000095405 | operations-commercial-agreement-activate   | ACTIVE | POST        | /api/operations/commercial-admin/v1/agreements/{agreementId}/activate                             |
+| commercial_agreement_routes | 900000000000095406 | operations-commercial-agreement-terminate  | ACTIVE | POST        | /api/operations/commercial-admin/v1/agreements/{agreementId}/terminate                            |
+| commercial_agreement_routes | 900000000000095407 | operations-commercial-agreement-products   | ACTIVE | PUT         | /api/operations/commercial-admin/v1/agreements/{agreementId}/products                             |
+| commercial_agreement_routes | 900000000000095408 | operations-commercial-capability-create    | ACTIVE | POST        | /api/operations/commercial-admin/v1/agreements/{agreementId}/capabilities                         |
+| commercial_agreement_routes | 900000000000095409 | operations-commercial-capability-update    | ACTIVE | PUT         | /api/operations/commercial-admin/v1/agreements/{agreementId}/capabilities/{agreementCapabilityId} |
++-----------------------------+--------------------+--------------------------------------------+--------+-------------+---------------------------------------------------------------------------------------------------+

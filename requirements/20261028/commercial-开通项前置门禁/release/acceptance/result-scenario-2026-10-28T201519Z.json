@@ -1,0 +1,433 @@
+{
+  "at": "2026-10-28T20:15:18Z",
+  "agreementNo": "DEMO2-CL-103",
+  "replies": {
+    "TOKEN_STORAGE": {
+      "agreementCapabilityId": "241293741653037056",
+      "agreementId": "238411681049415680",
+      "changeVersion": 10,
+      "executionStatus": "PENDING_PREREQUISITES",
+      "status": "ACTIVE"
+    },
+    "APPLE_PAY": {
+      "agreementCapabilityId": "241293756240826368",
+      "agreementId": "238411681049415680",
+      "changeVersion": 12,
+      "executionStatus": "PENDING_PREREQUISITES",
+      "status": "ACTIVE"
+    }
+  },
+  "prerequisiteCheck": {
+    "agreementId": "238411681049415680",
+    "capabilities": [
+      {
+        "agreementCapabilityId": "238411681724698624",
+        "capabilityCode": "CARD",
+        "capabilityKind": "PAYMENT_METHOD",
+        "checks": [
+          {
+            "code": "QUALIFICATION",
+            "params": {},
+            "reasonCode": null,
+            "result": "SATISFIED"
+          },
+          {
+            "code": "AGREEMENT_TERM",
+            "params": {},
+            "reasonCode": null,
+            "result": "SATISFIED"
+          },
+          {
+            "code": "CHANNEL_IDENTITY",
+            "params": {},
+            "reasonCode": "CHANNEL_IDENTITY_NOT_CONNECTED",
+            "result": "SKIPPED"
+          }
+        ],
+        "entityNo": "AE001",
+        "executionStatus": "ENABLED",
+        "status": "ACTIVE"
+      },
+      {
+        "agreementCapabilityId": "238411884146003968",
+        "capabilityCode": "GOOGLE_PAY",
+        "capabilityKind": "PAYMENT_METHOD",
+        "checks": [
+          {
+            "code": "QUALIFICATION",
+            "params": {},
+            "reasonCode": null,
+            "result": "SATISFIED"
+          },
+          {
+            "code": "AGREEMENT_TERM",
+            "params": {
+              "termType": "CLIENT_PRICING",
+              "currencies": "AED",
+              "entityNo": "AE001"
+            },
+            "reasonCode": "PRICE_NOT_COVERED",
+            "result": "UNSATISFIED"
+          },
+          {
+            "code": "CHANNEL_IDENTITY",
+            "params": {},
+            "reasonCode": "CHANNEL_IDENTITY_NOT_CONNECTED",
+            "result": "SKIPPED"
+          }
+        ],
+        "entityNo": "AE001",
+        "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+        "status": "ACTIVE"
+      },
+      {
+        "agreementCapabilityId": "238411897563582464",
+        "capabilityCode": "STC_PAY",
+        "capabilityKind": "PAYMENT_METHOD",
+        "checks": [
+          {
+            "code": "QUALIFICATION",
+            "params": {},
+            "reasonCode": null,
+            "result": "SATISFIED"
+          },
+          {
+            "code": "AGREEMENT_TERM",
+            "params": {
+              "termType": "CLIENT_PRICING",
+              "currencies": "AED",
+              "entityNo": "AE001"
+            },
+            "reasonCode": "PRICE_NOT_COVERED",
+            "result": "UNSATISFIED"
+          },
+          {
+            "code": "CHANNEL_IDENTITY",
+            "params": {},
+            "reasonCode": "CHANNEL_IDENTITY_NOT_CONNECTED",
+            "result": "SKIPPED"
+          }
+        ],
+        "entityNo": "AE001",
+        "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+        "status": "ACTIVE"
+      },
+      {
+        "agreementCapabilityId": "241293741653037056",
+        "capabilityCode": "TOKEN_STORAGE",
+        "capabilityKind": "FEATURE",
+        "checks": [
+          {
+            "code": "QUALIFICATION",
+            "params": {},
+            "reasonCode": null,
+            "result": "SATISFIED"
+          },
+          {
+            "code": "AGREEMENT_TERM",
+            "params": {},
+            "reasonCode": null,
+            "result": "SATISFIED"
+          },
+          {
+            "code": "CHANNEL_IDENTITY",
+            "params": {},
+            "reasonCode": "NOT_APPLICABLE",
+            "result": "SKIPPED"
+          }
+        ],
+        "entityNo": "AE001",
+        "executionStatus": "ENABLED",
+        "status": "ACTIVE"
+      },
+      {
+        "agreementCapabilityId": "241293756240826368",
+        "capabilityCode": "APPLE_PAY",
+        "capabilityKind": "PAYMENT_METHOD",
+        "checks": [
+          {
+            "code": "QUALIFICATION",
+            "params": {},
+            "reasonCode": null,
+            "result": "SATISFIED"
+          },
+          {
+            "code": "AGREEMENT_TERM",
+            "params": {
+              "termType": "CLIENT_PRICING",
+              "currencies": "USD",
+              "entityNo": "AE001"
+            },
+            "reasonCode": "PRICE_NOT_COVERED",
+            "result": "UNSATISFIED"
+          },
+          {
+            "code": "CHANNEL_IDENTITY",
+            "params": {},
+            "reasonCode": "CHANNEL_IDENTITY_NOT_CONNECTED",
+            "result": "SKIPPED"
+          }
+        ],
+        "entityNo": "AE001",
+        "executionStatus": "PENDING_PREREQUISITES",
+        "status": "ACTIVE"
+      }
+    ],
+    "changeVersion": 12
+  },
+  "final": {
+    "CARD": [
+      "238411681724698624",
+      "ACTIVE",
+      "ENABLED"
+    ],
+    "GOOGLE_PAY": [
+      "238411884146003968",
+      "ACTIVE",
+      "SUSPENDED_BY_PREREQUISITE"
+    ],
+    "STC_PAY": [
+      "238411897563582464",
+      "ACTIVE",
+      "SUSPENDED_BY_PREREQUISITE"
+    ],
+    "TOKEN_STORAGE": [
+      "241293741653037056",
+      "ACTIVE",
+      "ENABLED"
+    ],
+    "APPLE_PAY": [
+      "241293756240826368",
+      "ACTIVE",
+      "PENDING_PREREQUISITES"
+    ]
+  },
+  "checks": [
+    {
+      "name": "DEMO2-CL-103 原有开通项（['CARD', 'GOOGLE_PAY', 'STC_PAY']）全部 ACTIVE + ENABLED",
+      "pass": true,
+      "evidence": {
+        "CARD": [
+          "ACTIVE",
+          "ENABLED"
+        ],
+        "GOOGLE_PAY": [
+          "ACTIVE",
+          "ENABLED"
+        ],
+        "STC_PAY": [
+          "ACTIVE",
+          "ENABLED"
+        ]
+      }
+    },
+    {
+      "name": "新增 TOKEN_STORAGE 回执 ACTIVE + PENDING_PREREQUISITES",
+      "pass": true,
+      "evidence": {
+        "agreementCapabilityId": "241293741653037056",
+        "status": "ACTIVE",
+        "executionStatus": "PENDING_PREREQUISITES"
+      }
+    },
+    {
+      "name": "新增 APPLE_PAY 回执 ACTIVE + PENDING_PREREQUISITES",
+      "pass": true,
+      "evidence": {
+        "agreementCapabilityId": "241293756240826368",
+        "status": "ACTIVE",
+        "executionStatus": "PENDING_PREREQUISITES"
+      }
+    },
+    {
+      "name": "补偿任务自动核对：TOKEN_STORAGE → ENABLED（≤ 90 秒）",
+      "pass": true,
+      "evidence": "ENABLED"
+    },
+    {
+      "name": "TOKEN_STORAGE 资格 SATISFIED、渠道身份 SKIPPED",
+      "pass": true,
+      "evidence": {
+        "QUALIFICATION": {
+          "code": "QUALIFICATION",
+          "params": {},
+          "reasonCode": null,
+          "result": "SATISFIED"
+        },
+        "AGREEMENT_TERM": {
+          "code": "AGREEMENT_TERM",
+          "params": {},
+          "reasonCode": null,
+          "result": "SATISFIED"
+        },
+        "CHANNEL_IDENTITY": {
+          "code": "CHANNEL_IDENTITY",
+          "params": {},
+          "reasonCode": "NOT_APPLICABLE",
+          "result": "SKIPPED"
+        }
+      }
+    },
+    {
+      "name": "TOKEN_STORAGE 执行状态与逐项结果一致（ENABLED）",
+      "pass": true,
+      "evidence": {
+        "QUALIFICATION": {
+          "code": "QUALIFICATION",
+          "params": {},
+          "reasonCode": null,
+          "result": "SATISFIED"
+        },
+        "AGREEMENT_TERM": {
+          "code": "AGREEMENT_TERM",
+          "params": {},
+          "reasonCode": null,
+          "result": "SATISFIED"
+        },
+        "CHANNEL_IDENTITY": {
+          "code": "CHANNEL_IDENTITY",
+          "params": {},
+          "reasonCode": "NOT_APPLICABLE",
+          "result": "SKIPPED"
+        }
+      }
+    },
+    {
+      "name": "APPLE_PAY 资格 SATISFIED、渠道身份 SKIPPED",
+      "pass": true,
+      "evidence": {
+        "QUALIFICATION": {
+          "code": "QUALIFICATION",
+          "params": {},
+          "reasonCode": null,
+          "result": "SATISFIED"
+        },
+        "AGREEMENT_TERM": {
+          "code": "AGREEMENT_TERM",
+          "params": {
+            "termType": "CLIENT_PRICING",
+            "currencies": "USD",
+            "entityNo": "AE001"
+          },
+          "reasonCode": "PRICE_NOT_COVERED",
+          "result": "UNSATISFIED"
+        },
+        "CHANNEL_IDENTITY": {
+          "code": "CHANNEL_IDENTITY",
+          "params": {},
+          "reasonCode": "CHANNEL_IDENTITY_NOT_CONNECTED",
+          "result": "SKIPPED"
+        }
+      }
+    },
+    {
+      "name": "APPLE_PAY 价格未覆盖时原因 PRICE_NOT_COVERED 且 currencies 含 USD",
+      "pass": true,
+      "evidence": {
+        "code": "AGREEMENT_TERM",
+        "params": {
+          "termType": "CLIENT_PRICING",
+          "currencies": "USD",
+          "entityNo": "AE001"
+        },
+        "reasonCode": "PRICE_NOT_COVERED",
+        "result": "UNSATISFIED"
+      }
+    },
+    {
+      "name": "APPLE_PAY 执行状态与逐项结果一致（PENDING_PREREQUISITES）",
+      "pass": true,
+      "evidence": {
+        "QUALIFICATION": {
+          "code": "QUALIFICATION",
+          "params": {},
+          "reasonCode": null,
+          "result": "SATISFIED"
+        },
+        "AGREEMENT_TERM": {
+          "code": "AGREEMENT_TERM",
+          "params": {
+            "termType": "CLIENT_PRICING",
+            "currencies": "USD",
+            "entityNo": "AE001"
+          },
+          "reasonCode": "PRICE_NOT_COVERED",
+          "result": "UNSATISFIED"
+        },
+        "CHANNEL_IDENTITY": {
+          "code": "CHANNEL_IDENTITY",
+          "params": {},
+          "reasonCode": "CHANNEL_IDENTITY_NOT_CONNECTED",
+          "result": "SKIPPED"
+        }
+      }
+    },
+    {
+      "name": "暂停 TOKEN_STORAGE → SUSPENDED_MANUALLY",
+      "pass": true,
+      "evidence": {
+        "agreementCapabilityId": "241293741653037056",
+        "agreementId": "238411681049415680",
+        "changeVersion": 13,
+        "executionStatus": "SUSPENDED_MANUALLY",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "重复暂停 → 400",
+      "pass": true,
+      "evidence": 400
+    },
+    {
+      "name": "恢复 → PENDING_PREREQUISITES",
+      "pass": true,
+      "evidence": {
+        "agreementCapabilityId": "241293741653037056",
+        "agreementId": "238411681049415680",
+        "changeVersion": 14,
+        "executionStatus": "PENDING_PREREQUISITES",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "恢复后补偿任务核对回到 ENABLED",
+      "pass": true,
+      "evidence": "ENABLED"
+    },
+    {
+      "name": "合同原有开通项执行状态未被门禁改变",
+      "pass": false,
+      "evidence": {
+        "before": {
+          "CARD": [
+            "ACTIVE",
+            "ENABLED"
+          ],
+          "GOOGLE_PAY": [
+            "ACTIVE",
+            "ENABLED"
+          ],
+          "STC_PAY": [
+            "ACTIVE",
+            "ENABLED"
+          ]
+        },
+        "after": {
+          "CARD": [
+            "ACTIVE",
+            "ENABLED"
+          ],
+          "GOOGLE_PAY": [
+            "ACTIVE",
+            "SUSPENDED_BY_PREREQUISITE"
+          ],
+          "STC_PAY": [
+            "ACTIVE",
+            "SUSPENDED_BY_PREREQUISITE"
+          ]
+        }
+      }
+    }
+  ],
+  "verdict": false
+}

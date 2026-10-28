@@ -175,6 +175,7 @@ class ProductCatalogWriteHttpTest extends AbstractCommercialWriteApiTest {
         post(CAPABILITIES + "/" + applePayId + "/activate", transition(1)).assertConflict();
         post(CAPABILITIES + "/" + applePayId + "/activate", transition(2)).assertOk()
             .assertText("status", ProductStatus.ACTIVE.getCode());
+        mockAgreementQualified();
         post(agreementPath, AgreementCapabilityBodyBuilder.template().capabilityCode(CommercialCodes.Capability.APPLE_PAY)
             .buildAdd(6)).assertOk();
 

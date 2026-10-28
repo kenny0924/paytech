@@ -1,0 +1,2 @@
+[INFO] BUILD SUCCESS
+121 modules SUCCESS (clean test-compile)

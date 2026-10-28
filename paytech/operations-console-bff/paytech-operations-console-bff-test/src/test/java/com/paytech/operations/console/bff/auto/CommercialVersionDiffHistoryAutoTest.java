@@ -1,5 +1,6 @@
 package com.paytech.operations.console.bff.auto;
 
+import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.ACCOUNT_LABELS_PATH;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.COMMERCIAL_CONTRACT_READ_PERMISSION_ID;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.COMMERCIAL_PRICING_READ_PERMISSION_ID;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -141,9 +142,13 @@ class CommercialVersionDiffHistoryAutoTest extends CommercialBrowserAutoTestBase
         }
     }
 
-    /** 本页内比较：同一行的上一快照在本页；本页已到列表末尾时，找不到上一快照的为首版（全部字段）。 */
+    /**
+     * 本页内比较：同一行的上一快照在本页；本页已到列表末尾时，找不到上一快照的为首版（全部字段）。
+     * 操作人经 Platform 运营账号显示名一次批量补全（createByLabel，用于恢复开通项弹窗的暂停人）。
+     */
     @Test
     void test_normalFlow_historyComparedWithinPage() throws Exception {
+        platform.accountLabels(Map.of("10001", "ops.zhang"));
         var items = JSON.createArrayNode()
             .add(change("1004", "AGREEMENT", AGREEMENT_ID, 3, Map.of("status", "ACTIVE", "agreementName", "A")))
             .add(change("1003", "AGREEMENT_CAPABILITY", "7319000000000000301", 3, Map.of("status", "ENABLED", "entityNo", "AE001")))
@@ -165,7 +170,30 @@ class CommercialVersionDiffHistoryAutoTest extends CommercialBrowserAutoTestBase
             () -> assertEquals(List.of("status"), strings(entries.get(2).path("changedFields"))),
             () -> assertEquals(BusinessChangeComparison.FIRST_VERSION.getCode(), entries.get(3).path("comparison").asString()),
             () -> assertEquals("AGREEMENT_ACTIVATED", entries.get(0).path("meta").path("reasonCode").asString()),
-            () -> assertEquals(1, commercial.requests().size()));
+            () -> assertEquals("ops.zhang", entries.get(0).path("createByLabel").asString()),
+            () -> assertEquals(1, commercial.requests().size()),
+            () -> assertEquals(List.of("accountIds=10001"), platform.requests().stream()
+                .filter(request -> ACCOUNT_LABELS_PATH.equals(request.path())).map(request -> request.query()).toList()));
+    }
+
+    /** 显示名降级：系统命令（操作人 0）不查询 Platform；Platform 没有该账号时 createByLabel 为 null，历史照常返回。 */
+    @Test
+    void test_edgeCase_operatorLabelUnavailable() throws Exception {
+        platform.accountLabels(Map.of());
+        var system = change("1002", "AGREEMENT_CAPABILITY", "7319000000000000301", 2, Map.of("executionStatus", "ENABLED"));
+        system.put("createBy", "0");
+        var items = JSON.createArrayNode().add(system)
+            .add(change("1001", "AGREEMENT_CAPABILITY", "7319000000000000301", 1, Map.of("executionStatus", "PENDING_PREREQUISITES")));
+        commercial.reply("GET", OWNER_HISTORY + "?" + ROOT_QUERY + "&page=1&size=10", 200, JSON.writeValueAsString(page(items, 1, 10, 2)));
+
+        var response = send("GET", HISTORY + "?" + ROOT_QUERY, HISTORY_ROUTE, null);
+
+        assertEquals(200, response.statusCode(), response.body());
+        var entries = JSON.readTree(response.body()).path("items");
+        assertAll(() -> assertTrue(entries.get(0).path("createByLabel").isNull()),
+            () -> assertTrue(entries.get(1).path("createByLabel").isNull()),
+            () -> assertEquals(List.of("accountIds=10001"), platform.requests().stream()
+                .filter(request -> ACCOUNT_LABELS_PATH.equals(request.path())).map(request -> request.query()).toList()));
     }
 
     /** 条款版本快照：本快照没有记录的命令事实（priceCount、makerAccountId）不算变化；本快照记录且不同的照常比较。 */

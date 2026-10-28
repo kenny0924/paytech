@@ -82,7 +82,7 @@ function AgreementCard({ agreement }: { agreement: AgreementRateCard }) {
       locale={{ emptyText: t('rateCards.noCapabilities') }} columns={[
         { title: t('rateCards.capability'), render: (_, row) => <span className="mono">{capabilityLabel(row)}</span> },
         { title: 'OE', width: 80, dataIndex: 'entityNo' },
-        { title: t('shared.column.status'), width: 90, render: (_, row) => <StatusTag status={row.status} kind="capabilityStatus" /> },
+        { title: t('shared.column.status'), width: 90, render: (_, row) => <StatusTag status={row.status} kind="AgreementCapabilityStatus" /> },
         { title: t('productSections.column.conditions'), render: (_, row) => <div className="commercial-limits">{row.conditions.length || row.require3ds
           ? conditionTags(row).map(tag => <Tag key={tag} color={tag === require3dsTag() ? 'blue' : undefined}>{tag}</Tag>)
           : row.limits.map(limit => <Tag key={`${limit.limitCode}-${limit.limitValue}`}>{limit.limitCode}={limit.limitValue}</Tag>)}</div> },

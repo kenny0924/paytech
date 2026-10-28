@@ -1,5 +1,6 @@
 package com.paytech.operations.console.bff.auto;
 
+import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.COMMERCIAL_CONTRACT_READ_PERMISSION_ID;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.COMMERCIAL_PRICING_APPROVE_PERMISSION_ID;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.COMMERCIAL_PRICING_MANAGE_PERMISSION_ID;
@@ -108,6 +109,32 @@ class CommercialBrowserAutoTest extends CommercialBrowserAutoTestBase {
         var list = row("P01");
         replyAsOwner(list);
         assertForwarded(list, send(list));
+    }
+
+    /**
+     * 开通项前置门禁的权限（2026-10-28 用户确认）：合同只读可以立即核对前置（只做系统本会自动完成的迁移），
+     * 但不能暂停 / 恢复开通项；暂停与恢复需要合同维护权限。
+     */
+    @Test
+    void test_capabilityGatePermissions() throws Exception {
+        platform.grantPermissions(COMMERCIAL_CONTRACT_READ_PERMISSION_ID);
+        var check = row("C13");
+        replyAsOwner(check);
+        assertForwarded(check, send(check));
+
+        resetBetweenCalls();
+        platform.grantPermissions(COMMERCIAL_CONTRACT_READ_PERMISSION_ID);
+        assertDenied(send(row("C11")));
+
+        resetBetweenCalls();
+        platform.grantPermissions(COMMERCIAL_CONTRACT_READ_PERMISSION_ID);
+        assertDenied(send(row("C12")));
+
+        resetBetweenCalls();
+        platform.grantPermissions(COMMERCIAL_CONTRACT_MANAGE_PERMISSION_ID);
+        var suspend = row("C11");
+        replyAsOwner(suspend);
+        assertForwarded(suspend, send(suspend));
     }
 
     /** commercial 的公共业务拒绝保留公共 Code，Owner 的拒绝原因经 Foundation Owner detail 开关到达浏览器（F9）；Owner Request ID 不外露。 */
@@ -229,6 +256,49 @@ class CommercialBrowserAutoTest extends CommercialBrowserAutoTestBase {
         assertEquals(502, mismatched.statusCode(), mismatched.body());
         assertEquals(CommonErrorCode.UPSTREAM_INVALID_RESPONSE.getCode(),
             JSON.readTree(mismatched.body()).path("code").asString());
+    }
+
+    /**
+     * 开通项暂停 / 恢复 / 前置核对的边界：暂停原因缺失或超过 200 字、前置核对带 Body 均在访问 commercial 前拒绝；
+     * 暂停回执的开通项 ID 与路径不符、核对回执的合同 ID 与路径不符均映射 502。
+     */
+    @Test
+    void test_capabilityGateBoundary() throws Exception {
+        var suspend = row("C11");
+        var longReason = (ObjectNode) suspend.path("request").deepCopy();
+        longReason.put("reason", "审".repeat(201));
+        var tooLong = send("POST", suspend.path("path").asString(), suspend.path("routeCode").asString(), longReason);
+        assertRejectedLocally(422, tooLong);
+        assertEquals("reason", JSON.readTree(tooLong.body()).path("errors").get(0).path("field").asString());
+
+        resetBetweenCalls();
+        var blankReason = (ObjectNode) suspend.path("request").deepCopy();
+        blankReason.put("reason", " ");
+        assertRejectedLocally(422, send("POST", suspend.path("path").asString(), suspend.path("routeCode").asString(),
+            blankReason));
+
+        resetBetweenCalls();
+        var check = row("C13");
+        assertRejectedLocally(400, send("POST", check.path("path").asString(), check.path("routeCode").asString(),
+            JSON.createObjectNode().put("agreementId", "7319000000000000101")));
+
+        resetBetweenCalls();
+        var otherCapability = (ObjectNode) suspend.path("response").deepCopy();
+        otherCapability.put("agreementCapabilityId", "7319000000000000999");
+        commercial.reply("POST", suspend.path("ownerPath").asString(), 200, JSON.writeValueAsString(otherCapability));
+        var mismatched = send(suspend);
+        assertEquals(502, mismatched.statusCode(), mismatched.body());
+        assertEquals(CommonErrorCode.UPSTREAM_INVALID_RESPONSE.getCode(),
+            JSON.readTree(mismatched.body()).path("code").asString());
+
+        resetBetweenCalls();
+        var otherAgreement = (ObjectNode) check.path("response").deepCopy();
+        otherAgreement.put("agreementId", "7319000000000000999");
+        commercial.reply("POST", check.path("ownerPath").asString(), 200, JSON.writeValueAsString(otherAgreement));
+        var wrongAgreement = send(check);
+        assertEquals(502, wrongAgreement.statusCode(), wrongAgreement.body());
+        assertEquals(CommonErrorCode.UPSTREAM_INVALID_RESPONSE.getCode(),
+            JSON.readTree(wrongAgreement.body()).path("code").asString());
     }
 
     /** 未知 Query、未知 Body 字段、非法路径 ID、查询带 Body 与缺少必填字段均在访问 commercial 前拒绝。 */

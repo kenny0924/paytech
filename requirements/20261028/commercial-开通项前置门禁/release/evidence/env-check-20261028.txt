@@ -1,0 +1,6 @@
+candidate commercial-service         image=806043a320cf keys live=37 rendered=37 missing=[] extra=[] valuediff=[]
+candidate operations-console-bff     image=eca2df8231f9 keys live=20 rendered=20 missing=[] extra=[] valuediff=[]
+candidate operations-console-web     image=7a053544076e keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+rollback  commercial-service         image=e5c1ee6b0d03 keys live=37 rendered=37 missing=[] extra=[] valuediff=[]
+rollback  operations-console-bff     image=769edbcebd21 keys live=20 rendered=20 missing=[] extra=[] valuediff=[]
+rollback  operations-console-web     image=45ee11cb4e8c keys live=7 rendered=7 missing=[] extra=[] valuediff=[]

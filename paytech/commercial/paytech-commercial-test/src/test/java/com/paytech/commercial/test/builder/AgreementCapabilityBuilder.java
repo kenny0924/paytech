@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 import com.paytech.commercial.api.constant.CommercialCodes;
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.test.mocker.local.checkout.CheckoutFixture;
@@ -28,7 +29,7 @@ public final class AgreementCapabilityBuilder {
     }
 
     /**
-     * 合成 CLIENT 合同在 AE991 下 ENABLED 的 CARD，自 2026-09-01 起无结束，无保证金、不要求 3DS。
+     * 合成 CLIENT 合同在 AE991 下成员资格 ACTIVE、执行状态 ENABLED 的 CARD，自 2026-09-01 起无结束，无保证金、不要求 3DS。
      *
      * @return 新 Builder
      */
@@ -38,7 +39,8 @@ public final class AgreementCapabilityBuilder {
             .agreementId(AgreementProductBuilder.AGREEMENT_ID)
             .entityNo(ENTITY_NO)
             .capabilityCode(CommercialCodes.Capability.CARD)
-            .status(AgreementCapabilityStatus.ENABLED)
+            .status(AgreementCapabilityStatus.ACTIVE)
+            .executionStatus(AgreementCapabilityExecutionStatus.ENABLED)
             .effectiveFrom(EFFECTIVE_FROM)
             .effectiveTo(null)
             .rollingReserveRate(null)
@@ -78,9 +80,15 @@ public final class AgreementCapabilityBuilder {
         return this;
     }
 
-    /** 设置开通项状态。 */
+    /** 设置合同成员资格。 */
     public AgreementCapabilityBuilder status(AgreementCapabilityStatus value) {
         agreementCapability.setStatus(value);
+        return this;
+    }
+
+    /** 设置执行状态（成员资格 DISABLED 时为空）。 */
+    public AgreementCapabilityBuilder executionStatus(AgreementCapabilityExecutionStatus value) {
+        agreementCapability.setExecutionStatus(value);
         return this;
     }
 

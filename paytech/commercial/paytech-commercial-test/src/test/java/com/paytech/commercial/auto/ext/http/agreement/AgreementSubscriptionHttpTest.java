@@ -18,6 +18,7 @@ import com.paytech.commercial.api.agreement.request.AddAgreementCapabilityReques
 import com.paytech.commercial.api.agreement.request.ReplaceAgreementProductsRequestBody;
 import com.paytech.commercial.api.agreement.request.UpdateAgreementCapabilityRequestBody;
 import com.paytech.commercial.api.constant.CommercialCodes;
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.api.enums.PricingDimension;
 import com.paytech.commercial.api.enums.ProductBusinessModeScope;
@@ -136,13 +137,15 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
     @Test
     void test_capability_add_normalFlow() {
         mockAcquiringSubscription();
+        mockAgreementQualified();
 
         long capabilityId = post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template().reserve("0.05", 180)
             .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CARD_BRAND, CommercialCodes.CardBrand.VISA,
                     CommercialCodes.CardBrand.MASTERCARD),
                 AgreementCapabilityBodyBuilder.condition(PricingDimension.FUNDING_TYPE, "DEBIT"),
                 AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "AED", "USD"))
-            .require3ds(true).buildAdd(5)).assertOk().assertText("status", AgreementCapabilityStatus.ENABLED.getCode())
+            .require3ds(true).buildAdd(5)).assertOk().assertText("status", AgreementCapabilityStatus.ACTIVE.getCode())
+            .assertText("executionStatus", AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES.getCode())
             .assertVersion(6).id("agreementCapabilityId");
 
         Map<String, Object> row = testMapper.agreementCapability(capabilityId);
@@ -171,6 +174,7 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
     /** 同 (OE, 可开通项) 已存在为 409；OE 未覆盖、产品未订阅、目录项未启用、合同已结束为业务检查失败。 */
     @Test
     void test_capability_add_businessRuleViolation() {
+        mockAgreementQualified();
         post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template().buildAdd(5))
             .assertBusinessCheckFailed("可开通项所属产品未订阅");
         mockAcquiringSubscription();
@@ -229,6 +233,7 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
     /** 币种对条件取「三位/三位」：FX_SPOT 开通 USD/AED 成功并读回；USDAED 与小写为取值格式错误。 */
     @Test
     void test_capability_add_currencyPair() {
+        mockAgreementQualified();
         long fxProductRowId = PRODUCT_ROW_ID + 1;
         subscriptions.mockProduct(AgreementProductBuilder.template().agreementProductId(fxProductRowId)
             .agreementId(AGREEMENT_ID).productCode(ProductCode.FX));
@@ -246,25 +251,26 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
         assertEquals(List.of("CURRENCY_PAIR:USD/AED"), testMapper.capabilityLimitValues(capabilityId));
     }
 
-    /** 改写开通项：SUSPENDED、终点、单币种与要求 3DS，版本 6，开通项 Child UPDATE 快照为改写后的完整内容。 */
+    /** 改写开通项：关闭（DISABLED，执行状态清空）、终点、单币种与要求 3DS，版本 6，开通项 Child UPDATE 快照为改写后的完整内容。 */
     @Test
     void test_capability_update_normalFlow() {
         mockExistingCapability();
 
         put(BASE + "/capabilities/" + CAPABILITY_ID, AgreementCapabilityBodyBuilder.template()
-            .status(AgreementCapabilityStatus.SUSPENDED).effectiveTo("2027-01-01T00:00:00Z")
+            .status(AgreementCapabilityStatus.DISABLED).effectiveTo("2027-01-01T00:00:00Z")
             .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "USD")).require3ds(true)
-            .buildUpdate(5)).assertOk().assertText("status", AgreementCapabilityStatus.SUSPENDED.getCode()).assertVersion(6);
+            .buildUpdate(5)).assertOk().assertText("status", AgreementCapabilityStatus.DISABLED.getCode()).assertVersion(6);
 
         Map<String, Object> row = testMapper.agreementCapability(CAPABILITY_ID);
-        assertAll(() -> assertEquals(AgreementCapabilityStatus.SUSPENDED.getCode(), row.get("status")),
+        assertAll(() -> assertEquals(AgreementCapabilityStatus.DISABLED.getCode(), row.get("status")),
+            () -> assertNull(row.get("execution_status")),
             () -> assertEquals(List.of("CURRENCY:USD"), testMapper.capabilityLimitValues(CAPABILITY_ID)),
             () -> assertEquals(Boolean.TRUE, row.get("require_3ds")),
             () -> assertNull(row.get("rolling_reserve_rate")));
         history.record(BusinessChangeRecordRecordType.AGREEMENT_CAPABILITY.getCode(), CAPABILITY_ID)
             .assertCurrentVersion(6).assertVersions("6:UPDATE")
             .assertLastReason(BusinessChangeReason.AGREEMENT_CAPABILITY_UPDATED.getCode())
-            .assertLastData("status", AgreementCapabilityStatus.SUSPENDED.getCode())
+            .assertLastData("status", AgreementCapabilityStatus.DISABLED.getCode())
             .assertLastData("effectiveTo", "2027-01-01T00:00:00.000000Z").assertIntegrity();
     }
 
@@ -282,7 +288,7 @@ class AgreementSubscriptionHttpTest extends AbstractCommercialWriteApiTest {
         put(BASE + "/capabilities/" + CAPABILITY_ID, AgreementCapabilityBodyBuilder.template()
             .status(AgreementCapabilityStatus.DISABLED).buildUpdate(4)).assertConflict();
 
-        assertEquals(AgreementCapabilityStatus.ENABLED.getCode(), testMapper.agreementCapability(CAPABILITY_ID).get("status"));
+        assertEquals(AgreementCapabilityStatus.ACTIVE.getCode(), testMapper.agreementCapability(CAPABILITY_ID).get("status"));
         history.record(BusinessChangeRecordRecordType.AGREEMENT.getCode(), AGREEMENT_ID).assertCurrentVersion(5);
     }
 

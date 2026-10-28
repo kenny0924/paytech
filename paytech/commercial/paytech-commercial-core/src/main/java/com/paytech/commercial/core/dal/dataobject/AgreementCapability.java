@@ -3,6 +3,7 @@ package com.paytech.commercial.core.dal.dataobject;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 
 import lombok.EqualsAndHashCode;
@@ -38,10 +39,16 @@ public class AgreementCapability {
     private String capabilityCode;
 
     /**
-     * 开通项状态
-     * <li>SUSPENDED 为风控或合规临时停用且可恢复，DISABLED 为运营关闭。</li>
+     * 合同成员资格
+     * <li>ACTIVE 为纳入合同（价格须覆盖），DISABLED 为运营关闭。</li>
      */
     private AgreementCapabilityStatus status;
+
+    /**
+     * 执行状态
+     * <li>status=ACTIVE 时必须非空，DISABLED 时为空（应用校验）；Checkout 只认 ENABLED。</li>
+     */
+    private AgreementCapabilityExecutionStatus executionStatus;
 
     /** 开通生效区间的 UTC 微秒起点，包含该时刻 */
     private Instant effectiveFrom;

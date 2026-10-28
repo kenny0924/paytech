@@ -1,0 +1,15 @@
+-- =====================================================================================================================
+-- REQ-01 commercial 开通项前置门禁 · DDL 索引（只作指引，本文件不含可执行语句，不在任何数据库执行）
+--
+-- 执行文件（mor_commercial，人工审阅后由具备 ALTER / CREATE 权限的账号执行；部署顺序见 technique.md §8.3：停 commercial → SQL → 新镜像）：
+--   前滚：paytech/commercial/docs/database/sql/changes/2026-10-28-capability-execution-status.sql
+--         t_agreement_capability 新增 execution_status、status 值域改为 ACTIVE / DISABLED 并迁移存量、改注释、
+--         重建 idx_agreement_capability_lookup、新增 idx_agreement_capability_execution；
+--         另建 paytech-messaging 消费幂等表 t_consumed_event / t_consumed_aggregate_version（IF NOT EXISTS，commercial 首个 MQ 消费者需要）。
+--   回滚：paytech/commercial/docs/database/sql/changes/2026-10-28-capability-execution-status-rollback.sql
+--         ACTIVE + ENABLED → ENABLED，其余 ACTIVE → SUSPENDED（含 PENDING，回滚后不能凭空开通），恢复索引与注释，删除 execution_status；
+--         保留两张消费幂等表。
+-- 完整定义：paytech/commercial/docs/database/sql/commercial-schema.sql（t_agreement_capability）与
+--           paytech/commercial/docs/database/commercial.pdma.json（PDManer）。
+-- 初始化 DML：无变化。
+-- =====================================================================================================================

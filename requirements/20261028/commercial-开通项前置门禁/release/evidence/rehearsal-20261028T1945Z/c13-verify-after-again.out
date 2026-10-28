@@ -1,0 +1,24 @@
++-----------+--------+------------------+----+
+| t         | status | execution_status | n  |
++-----------+--------+------------------+----+
+| by_status | ACTIVE | ENABLED          | 15 |
++-----------+--------+------------------+----+
++------------+---+
+| t          | n |
++------------+---+
+| violations | 0 |
++------------+---+
++-------+------------------------------------+--------------------------------------------+
+| t     | INDEX_NAME                         | cols                                       |
++-------+------------------------------------+--------------------------------------------+
+| index | idx_agreement_capability_code      | capability_code                            |
+| index | idx_agreement_capability_execution | execution_status,agreement_id              |
+| index | idx_agreement_capability_lookup    | entity_no,capability_code,execution_status |
+| index | PRIMARY                            | agreement_capability_id                    |
+| index | uk_agreement_capability            | agreement_id,entity_no,capability_code     |
++-------+------------------------------------+--------------------------------------------+
++-----------------+---+
+| t               | n |
++-----------------+---+
+| consumed_tables | 2 |
++-----------------+---+

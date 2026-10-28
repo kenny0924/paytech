@@ -165,6 +165,7 @@ public final class BusinessChangeSnapshot {
         data.put("entityNo", capability.getEntityNo());
         data.put("capabilityCode", capability.getCapabilityCode());
         data.put("status", code(capability.getStatus()));
+        data.put("executionStatus", code(capability.getExecutionStatus()));
         data.put("effectiveFrom", time(capability.getEffectiveFrom()));
         data.put("effectiveTo", time(capability.getEffectiveTo()));
         data.put("rollingReserveRate", decimal(capability.getRollingReserveRate()));
@@ -303,6 +304,29 @@ public final class BusinessChangeSnapshot {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("feeEvent", row);
         return data;
+    }
+
+    /**
+     * 读取快照 data 中的一个字符串字段
+     *
+     * @param snapshotJson 快照 JSON
+     * @param field data 字段名
+     * @return 字段值；缺失或为 null 时为 null
+     */
+    public static String dataText(String snapshotJson, String field) {
+        JsonNode value = JSON.readTree(snapshotJson).path("data").path(field);
+        return value.isString() ? value.asString() : null;
+    }
+
+    /**
+     * 快照 data 是否含有某字段（含 null 值）
+     *
+     * @param snapshotJson 快照 JSON
+     * @param field data 字段名
+     * @return 含有为 true
+     */
+    public static boolean hasData(String snapshotJson, String field) {
+        return JSON.readTree(snapshotJson).path("data").has(field);
     }
 
     /**

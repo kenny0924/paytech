@@ -1,0 +1,3 @@
+commercial-service id=sha256:806043a320cfce7eaaf0eed19d0ef202487ec0a6559aaa5b74f8fe3d1085f728 jar_in_image=40be77e24894562b built=40be77e24894562b probe=same meta_vs_live=same
+operations-console-bff id=sha256:eca2df8231f999f3f977a830ad8baa758449aa8bceee12234da28d77ae3762b8 jar_in_image=2534a1fa42686768 built=2534a1fa42686768 probe=same meta_vs_live=same
+operations-console-web id=sha256:7a053544076e82e1f2a016f3b64cd4324d26a6df65c64177a7f627cb306b80ad dist_files=253 dist_vs_build=same nginx_vs_live=same

@@ -27,11 +27,12 @@ public class UpdateAgreementCapabilityRequestBody {
     private Long expectedChangeVersion;
 
     /**
-     * 开通项状态
-     * <li>SUSPENDED 为风控 / 合规临时停用，DISABLED 为运营关闭。</li>
+     * 合同成员资格
+     * <li>ACTIVE 纳入合同，DISABLED 运营关闭；执行状态由前置门禁与暂停 / 恢复接口维护，不能在此设置。</li>
+     * <li>DISABLED → ACTIVE（重新纳入）时，CLIENT 合同的开通项回到 PENDING_PREREQUISITES 并登记前置检查。</li>
      */
     @NotBlank(message = "status 必填")
-    @Pattern(regexp = "ENABLED|SUSPENDED|DISABLED", message = "status 只能为 ENABLED、SUSPENDED、DISABLED")
+    @Pattern(regexp = "ACTIVE|DISABLED", message = "status 只能为 ACTIVE、DISABLED")
     private String status;
 
     /** 开通生效起点（含），带时区偏移的 ISO 8601 */

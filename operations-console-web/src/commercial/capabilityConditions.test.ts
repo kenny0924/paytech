@@ -21,7 +21,7 @@ const catalogItem = (capabilityCode: string, productCode = 'ACQUIRING', status =
   productCode, capabilityCode, capabilityName: capabilityCode, capabilityKind: 'PAYMENT_METHOD', paymentMethodCode: capabilityCode, dimensionCode: null,
   dimensionValue: null, status, dimensions: cardDimensions, changeVersion: 1 });
 const capability = (extra: Partial<AgreementCapability> = {}): AgreementCapability => ({ agreementCapabilityId: '7319000000000000301', entityNo: 'AE001',
-  capabilityCode: 'CARD', status: 'ENABLED', effectiveFrom: '2026-10-01T00:00:00Z', effectiveTo: null, rollingReserveRate: '0.05', rollingReserveDays: 90,
+  capabilityCode: 'CARD', status: 'ACTIVE', executionStatus: 'ENABLED', effectiveFrom: '2026-10-01T00:00:00Z', effectiveTo: null, rollingReserveRate: '0.05', rollingReserveDays: 90,
   conditions: [{ dimensionCode: 'CARD_BRAND', values: ['VISA', 'MASTERCARD'] }, { dimensionCode: 'FUNDING_TYPE', values: ['DEBIT'] },
     { dimensionCode: 'CURRENCY', values: ['AED', 'USD'] }], require3ds: true, ...extra });
 
@@ -57,9 +57,10 @@ test('保证金按百分比输入：5 → 0.05，读回 0.05 → 5；超出 0–
   assert.equal(created.require3ds, true);
   assert.deepEqual(created.conditions, [{ dimensionCode: 'CURRENCY', values: ['AED'] }, { dimensionCode: 'CARD_BRAND', values: ['VISA'] }]);
   assert.deepEqual([(created as { entityNo?: string }).entityNo, Object.hasOwn(created, 'status'), Object.hasOwn(created, 'limits')], ['AE001', false, false]);
-  const updated = capabilityBody(7, { ...values, status: 'SUSPENDED', reservePercent: ' ', rollingReserveDays: null, require3ds: undefined }, cardDimensions, true);
+  const updated = capabilityBody(7, { ...values, status: 'DISABLED', reservePercent: ' ', rollingReserveDays: null, require3ds: undefined }, cardDimensions, true);
   assert.deepEqual([(updated as { status?: string }).status, Object.hasOwn(updated, 'entityNo'), updated.rollingReserveRate, updated.require3ds],
-    ['SUSPENDED', false, null, false]);
+    ['DISABLED', false, null, false]);
+  assert.equal((capabilityBody(7, values, cardDimensions, true) as { status?: string }).status, 'ACTIVE', '修改缺省成员资格为纳入');
   assert.equal(reservePercent('0.05'), '5');
   assert.equal(reservePercent(null), undefined);
   assert.equal(reservePercentIssue('101'), 'Enter a percentage from 0 to 100 with up to 8 decimal places.');
@@ -86,14 +87,15 @@ test('O3 列表接受条件列：取值同抽屉（枚举中文、国家「代�
 test('F1 可开通卡片：已订阅产品下 ACTIVE 的项全部列出，该 OE 已有的项带上那条开通项（置灰、点击编辑）；可配维度目录缺失时按已有条件推出', () => {
   const catalog = [catalogItem('CARD'), catalogItem('APPLE_PAY'), catalogItem('STC_PAY', 'ACQUIRING', 'RETIRED'), catalogItem('PAYOUT_LOCAL', 'PAYOUT')];
   const card = capability();
-  const suspended = capability({ agreementCapabilityId: '7319000000000000302', capabilityCode: 'APPLE_PAY', status: 'SUSPENDED' });
+  const suspended = capability({ agreementCapabilityId: '7319000000000000302', capabilityCode: 'APPLE_PAY', executionStatus: 'SUSPENDED_MANUALLY' });
   const choices = capabilityChoices(catalog, ['ACQUIRING'], [card, suspended, capability({ entityNo: 'SA001', capabilityCode: 'PAYOUT_LOCAL' })], 'AE001');
   assert.deepEqual(choices.map(choice => [choice.item.capabilityCode, choice.existing?.agreementCapabilityId ?? null]),
     [['CARD', card.agreementCapabilityId], ['APPLE_PAY', suspended.agreementCapabilityId]], '已开通的 CARD 仍显示；停用目录项与未订阅产品不列');
   assert.deepEqual(capabilityChoices(catalog, ['ACQUIRING', 'PAYOUT'], [card], 'SA001').map(choice => [choice.item.capabilityCode, !!choice.existing]),
     [['CARD', false], ['APPLE_PAY', false], ['PAYOUT_LOCAL', false]], '其他 OE 的开通项不影响本 OE');
-  assert.deepEqual([existingMark(card), existingMark(suspended), existingMark(capability({ status: 'DISABLED' })), existingMark(null)],
-    ['Enabled', 'Added · Suspended', 'Added · Disabled', null]);
+  assert.deepEqual([existingMark(card), existingMark(suspended), existingMark(capability({ executionStatus: 'PENDING_PREREQUISITES' })),
+    existingMark(capability({ status: 'DISABLED', executionStatus: null })), existingMark(null)],
+  ['Enabled', 'Added · Suspended Manually', 'Added · Pending Prerequisites', 'Added · Closed', null]);
   assert.equal(dimensionNames(cardDimensions, definitions), 'Configurable: Currency, Consumer Country, Card Brand, Funding Type');
   assert.equal(dimensionNames([]), 'No configurable dimensions');
   assert.equal(capabilityDimensions(catalogItem('CARD')), cardDimensions);

@@ -2,6 +2,7 @@ package com.paytech.commercial.domainservice.service.impl;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.transaction.support.TransactionTemplate;
@@ -15,6 +16,8 @@ import com.paytech.commercial.core.dal.dataobject.BusinessChangeRecord;
 import com.paytech.commercial.domain.AgreementContext;
 import com.paytech.commercial.domain.AgreementDetailView;
 import com.paytech.commercial.domain.BusinessChangeSnapshot;
+import com.paytech.commercial.domain.CapabilityPrerequisiteContext;
+import com.paytech.commercial.domain.CapabilityPrerequisiteDecision;
 import com.paytech.commercial.domain.enums.BusinessChangeOperation;
 import com.paytech.commercial.domain.enums.BusinessChangeReason;
 import com.paytech.commercial.domain.enums.BusinessChangeRecordAggregateRootType;
@@ -79,6 +82,7 @@ public class AgreementServiceImpl implements AgreementService {
             if (context.getStatusChangedEvent() != null) {
                 compensationEventRegistrar.register(context.getStatusChangedEvent());
             }
+            registerCapabilityEvents(context);
         });
     }
 
@@ -135,6 +139,7 @@ public class AgreementServiceImpl implements AgreementService {
                 capability.getAgreementCapabilityId(), triggerId, BusinessChangeReason.AGREEMENT_CAPABILITY_ADDED,
                 BusinessChangeSnapshot.agreementCapabilityData(capability, context.getCapabilityLimits()),
                 context.getActorId(), context.getNow());
+            registerCapabilityEvents(context);
         });
     }
 
@@ -146,7 +151,8 @@ public class AgreementServiceImpl implements AgreementService {
             AgreementCapability capability = context.getCapability();
             AgreementCapability change = context.getCapabilityChange();
             if (capability.getStatus() != change.getStatus()) {
-                agreementCapabilityRepository.updateStatus(capability, change.getStatus(), context.getNow());
+                agreementCapabilityRepository.updateMembership(capability, change.getStatus(), change.getExecutionStatus(),
+                    context.getNow());
             }
             if (termsChanged(capability, change)) {
                 agreementCapabilityRepository.updateTerms(capability, change.getEffectiveFrom(), change.getEffectiveTo(),
@@ -159,6 +165,46 @@ public class AgreementServiceImpl implements AgreementService {
                 BusinessChangeReason.AGREEMENT_CAPABILITY_UPDATED,
                 BusinessChangeSnapshot.agreementCapabilityData(capability, context.getCapabilityLimits()),
                 context.getActorId(), context.getNow());
+            registerCapabilityEvents(context);
+        });
+    }
+
+    /** Root、执行状态、开通项快照（含暂停原因）与发布任务同一事务写入。 */
+    @Override
+    public void suspendCapability(AgreementContext context) {
+        writeTransaction.executeWithoutResult(status -> changeExecutionStatus(context,
+            BusinessChangeReason.AGREEMENT_CAPABILITY_SUSPENDED));
+    }
+
+    /** Root、执行状态、开通项快照、前置检查任务与发布任务同一事务写入。 */
+    @Override
+    public void resumeCapability(AgreementContext context) {
+        writeTransaction.executeWithoutResult(status -> changeExecutionStatus(context,
+            BusinessChangeReason.AGREEMENT_CAPABILITY_RESUMED));
+    }
+
+    /**
+     * 门禁迁移：Root 以锁内读取的当前版本 CAS 推进（系统命令，操作者 0），逐个迁移执行状态并写开通项快照，登记发布任务
+     * <li>CAS 或任一行数不符整体回滚，由调用方按并发冲突处理。</li>
+     */
+    @Override
+    public void applyCapabilityExecutionChanges(CapabilityPrerequisiteContext context) {
+        writeTransaction.executeWithoutResult(status -> {
+            BusinessChangeRecord root = context.getRoot();
+            BusinessChangeReason reason = BusinessChangeReason.AGREEMENT_CAPABILITY_EXECUTION_CHANGED;
+            long triggerId = historyWriter.advanceRoot(root, root.getCurrentVersion(),
+                BusinessChangeSnapshot.TRIGGER_SYSTEM, reason, BusinessChangeSnapshot.agreementData(context.getAgreement()),
+                CapabilityPrerequisiteContext.SYSTEM_ACTOR_ID, context.getNow());
+            for (CapabilityPrerequisiteDecision decision : context.changes()) {
+                AgreementCapability capability = decision.getCapability();
+                agreementCapabilityRepository.updateExecutionStatus(capability, decision.getTargetExecutionStatus(),
+                    context.getNow());
+                historyWriter.changeChild(root, BusinessChangeRecordRecordType.AGREEMENT_CAPABILITY,
+                    capability.getAgreementCapabilityId(), BusinessChangeOperation.UPDATE, BusinessChangeSnapshot.TRIGGER_SYSTEM,
+                    triggerId, reason, BusinessChangeSnapshot.agreementCapabilityData(capability,
+                        context.limitsOf(capability)), CapabilityPrerequisiteContext.SYSTEM_ACTOR_ID, context.getNow());
+            }
+            compensationEventRegistrar.register(context.getCapabilityStatusChangedEvent());
         });
     }
 
@@ -183,6 +229,35 @@ public class AgreementServiceImpl implements AgreementService {
                 agreementOperatingEntityRepository.findByAgreementId(agreementId),
                 agreementProductRepository.findByAgreementId(agreementId), capabilities, limits);
         });
+    }
+
+    /**
+     * 运营暂停 / 恢复的共同写入：Root CAS、以当前执行状态为条件迁移到 capabilityChange 的执行状态、开通项 UPDATE 快照（暂停时附原因）
+     * 与附带任务；调用方已处于写事务中
+     */
+    void changeExecutionStatus(AgreementContext context, BusinessChangeReason reason) {
+        long triggerId = advanceRoot(context, reason);
+        AgreementCapability capability = context.getCapability();
+        agreementCapabilityRepository.updateExecutionStatus(capability, context.getCapabilityChange().getExecutionStatus(),
+            context.getNow());
+        Map<String, Object> data = BusinessChangeSnapshot.agreementCapabilityData(capability, context.getCapabilityLimits());
+        if (context.getSuspensionReason() != null) {
+            data.put("suspensionReason", context.getSuspensionReason());
+        }
+        historyWriter.changeChild(context.getRoot(), BusinessChangeRecordRecordType.AGREEMENT_CAPABILITY,
+            capability.getAgreementCapabilityId(), BusinessChangeOperation.UPDATE, triggerId, reason, data,
+            context.getActorId(), context.getNow());
+        registerCapabilityEvents(context);
+    }
+
+    /** 登记本次开通项写入附带的前置检查与执行状态发布任务（非空时）。 */
+    void registerCapabilityEvents(AgreementContext context) {
+        if (context.getPrerequisiteCheckEvent() != null) {
+            compensationEventRegistrar.register(context.getPrerequisiteCheckEvent());
+        }
+        if (context.getCapabilityStatusChangedEvent() != null) {
+            compensationEventRegistrar.register(context.getCapabilityStatusChangedEvent());
+        }
     }
 
     /** 以当前状态为条件写入目标状态与三个时间。 */

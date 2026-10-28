@@ -95,12 +95,13 @@ const otherKey = 'OTHER';
 /**
  * 价格按开通项分组（编辑器展示用，最终以 commercial 相关性校验为准）：
  * <li>commercial 返回相关性提示的行、以及带支付方式却找不到对应开通项的行，单列「未对应开通项」并标红。</li>
- * <li>其余带支付方式的行归到第一个对应的开通项（ENABLED 优先）；无支付方式的价格（出款、外汇等）归「其他价格」。</li>
+ * <li>其余带支付方式的行归到第一个对应的开通项（执行状态 ENABLED 优先，其次合同成员，关闭的最后）；无支付方式的价格（出款、外汇等）归「其他价格」。</li>
  * <li>分组顺序：合同开通项顺序 → 其他价格 → 未对应开通项；空分组不显示。</li>
  */
 export function groupPricesByCapability(rows: readonly MatrixRow[], capabilities: readonly AgreementCapability[],
   catalog: readonly Pick<CatalogCapability, 'capabilityCode' | 'paymentMethodCode'>[], warnings: readonly RelevanceWarning[]): PriceGroup[] {
-  const ordered = [...capabilities].sort((a, b) => Number(b.status === 'ENABLED') - Number(a.status === 'ENABLED'));
+  const rank = (item: AgreementCapability) => item.executionStatus === 'ENABLED' ? 2 : item.status === 'ACTIVE' ? 1 : 0;
+  const ordered = [...capabilities].sort((a, b) => rank(b) - rank(a));
   const groups = new Map<string, PriceGroup>();
   const group = (key: string, make: () => Omit<PriceGroup, 'rows' | 'warnings'>) => {
     const existing = groups.get(key) ?? { ...make(), rows: [], warnings: [] };

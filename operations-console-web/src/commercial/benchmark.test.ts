@@ -17,8 +17,8 @@ const price = (currency: string, pricingProfileCode: string, paymentMethodCode: 
   benchmark: ComponentBenchmark | null = null): Price => ({ priceId: '1', entityNo: 'AE001', currency, pricingProfileCode, paymentMethodCode, priorityNo: 1,
   conditions: conditions.map(([dimensionCode, conditionValue]) => ({ dimensionCode: dimensionCode as Price['conditions'][number]['dimensionCode'], conditionValue })),
   components: [component(benchmark)], settlement: null, sourceTemplatePriceId: null });
-const capability = (agreementCapabilityId: string, capabilityCode: string, conditions: [string, string[]][], status: AgreementCapability['status'] = 'ENABLED'):
-  AgreementCapability => ({ agreementCapabilityId, entityNo: 'AE001', capabilityCode, status, effectiveFrom: '2026-10-01T00:00:00Z', effectiveTo: null,
+const capability = (agreementCapabilityId: string, capabilityCode: string, conditions: [string, string[]][], executionStatus: AgreementCapability['executionStatus'] = 'ENABLED'):
+  AgreementCapability => ({ agreementCapabilityId, entityNo: 'AE001', capabilityCode, status: 'ACTIVE', executionStatus, effectiveFrom: '2026-10-01T00:00:00Z', effectiveTo: null,
   rollingReserveRate: null, rollingReserveDays: null, conditions: conditions.map(([dimensionCode, values]) => ({ dimensionCode, values })), require3ds: false });
 const catalog = [{ capabilityCode: 'CARD', paymentMethodCode: 'CARD' }, { capabilityCode: 'APPLE_PAY', paymentMethodCode: 'APPLE_PAY' }] as CatalogCapability[];
 
@@ -62,7 +62,7 @@ test('AC-12 按开通项分组：开通项顺序 → 其他价格 → 未对应�
   assert.equal(groups[0].title, 'AE001 · CARD');
   assert.equal(priceKey(warnings[0]), 'AE001|AED|CARD_ANY');
   const suspendedFirst = groupPricesByCapability(priceMatrix([price('AED', 'APPLE', 'APPLE_PAY')]).rows,
-    [capability('3', 'APPLE_PAY', [], 'SUSPENDED'), capability('2', 'APPLE_PAY', [['CURRENCY', ['AED']]])], catalog, []);
-  assert.equal(suspendedFirst[0].key, '2', '多个可对应时 ENABLED 优先');
+    [capability('3', 'APPLE_PAY', [], 'SUSPENDED_MANUALLY'), capability('2', 'APPLE_PAY', [['CURRENCY', ['AED']]])], catalog, []);
+  assert.equal(suspendedFirst[0].key, '2', '多个可对应时执行状态 ENABLED 优先');
   assert.deepEqual(groupPricesByCapability([], capabilities, catalog, []), []);
 });

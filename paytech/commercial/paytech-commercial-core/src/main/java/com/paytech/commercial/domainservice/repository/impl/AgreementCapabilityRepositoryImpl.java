@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
 import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.mapper.AgreementCapabilityMapper;
@@ -58,15 +59,43 @@ public class AgreementCapabilityRepositoryImpl implements AgreementCapabilityRep
         return List.copyOf(mapper.selectByAgreementIds(agreementIds));
     }
 
-    /** 条件迁移，成功后同步原对象。 */
+    /** 条件改写成员资格与执行状态，成功后同步原对象。 */
     @Override
-    public void updateStatus(AgreementCapability capability, AgreementCapabilityStatus status, Instant now) {
+    public void updateMembership(AgreementCapability capability, AgreementCapabilityStatus status,
+        AgreementCapabilityExecutionStatus executionStatus, Instant now) {
         Instant time = micros(now);
-        if (mapper.updateStatus(capability, status, time) != 1) {
+        if (mapper.updateMembership(capability, status, executionStatus, time) != 1) {
             throw new ConcurrentRequestException("开通项状态已变化: " + describe(capability));
         }
         capability.setStatus(status);
+        capability.setExecutionStatus(executionStatus);
         capability.setUpdateTime(time);
+    }
+
+    /** 条件迁移执行状态，成功后同步原对象。 */
+    @Override
+    public void updateExecutionStatus(AgreementCapability capability, AgreementCapabilityExecutionStatus executionStatus,
+        Instant now) {
+        Instant time = micros(now);
+        if (mapper.updateExecutionStatus(capability, executionStatus, time) != 1) {
+            throw new ConcurrentRequestException("开通项执行状态已变化: " + describe(capability));
+        }
+        capability.setExecutionStatus(executionStatus);
+        capability.setUpdateTime(time);
+    }
+
+    /** 分片分页读取合同 ID。 */
+    @Override
+    public List<Long> findAgreementIdsByExecutionStatus(Collection<AgreementCapabilityExecutionStatus> executionStatuses,
+        long afterAgreementId, int shardIndex, int shardTotal, int limit) {
+        return List.copyOf(mapper.selectAgreementIdsByExecutionStatus(executionStatuses, afterAgreementId, shardIndex,
+            shardTotal, limit));
+    }
+
+    /** 按 OE 读取合同 ID。 */
+    @Override
+    public List<Long> findAgreementIdsByEntityNo(String entityNo) {
+        return List.copyOf(mapper.selectAgreementIdsByEntityNo(entityNo));
     }
 
     /** 以 update_time 为条件改写，成功后同步原对象。 */

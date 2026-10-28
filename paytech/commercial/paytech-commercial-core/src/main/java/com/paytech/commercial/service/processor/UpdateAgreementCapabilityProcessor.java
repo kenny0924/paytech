@@ -7,6 +7,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
+import com.paytech.commercial.api.enums.AgreementCapabilityStatus;
 import com.paytech.commercial.core.dal.dataobject.Agreement;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapability;
 import com.paytech.commercial.core.dal.dataobject.AgreementCapabilityLimit;
@@ -27,8 +29,9 @@ import com.paytech.foundation.id.IdGenerator;
  * 整体改写开通项（PUT /agreements/v1/{agreementId}/capabilities/{agreementCapabilityId}），锁 {@code agreement:{id}}
  * <li>原请求：开通项必须属于该合同；状态、区间、保证金、接受条件与 3DS 要求均与当前一致时不写入，直接返回当前版本。</li>
  * <li>新请求：期望版本一致（合同 BCR Root CAS）、合同未结束；接受条件维度在可开通项可配维度内且必填维度给出（目录已停用不影响已开通项）；
- * 状态在 ENABLED / SUSPENDED / DISABLED 间自由切换。状态与条款条件更新、条件行整体替换、Root CAS 与 AGREEMENT_CAPABILITY UPDATE 快照
- * 同一事务写入。</li>
+ * 成员资格只在 ACTIVE / DISABLED 间切换（开通项前置门禁 technique.md §9.1，执行状态不能在此设置）：关闭时执行状态清空；重新纳入时
+ * CLIENT 合同回到 PENDING_PREREQUISITES 并登记前置检查，PARTNER 合同直接 ENABLED；成员资格变化同时登记 AgreementCapabilityStatusChanged
+ * 发布任务。状态与条款条件更新、条件行整体替换、Root CAS 与 AGREEMENT_CAPABILITY UPDATE 快照同一事务写入。</li>
  */
 public class UpdateAgreementCapabilityProcessor
     extends AbstractAgreementWriteProcessor<UpdateAgreementCapabilityRequest, AgreementCapabilityResponse> {
@@ -136,6 +139,7 @@ public class UpdateAgreementCapabilityProcessor
             productCapabilityDimensionRepository.findByCapabilityCodes(List.of(capabilityCode)), capabilityCode);
         AgreementCapability change = new AgreementCapability();
         change.setStatus(request.getStatus());
+        change.setExecutionStatus(targetExecutionStatus(context, request.getStatus()));
         change.setEffectiveFrom(request.getEffectiveFrom());
         change.setEffectiveTo(request.getEffectiveTo());
         change.setRollingReserveRate(request.getRollingReserveRate());
@@ -145,5 +149,22 @@ public class UpdateAgreementCapabilityProcessor
         Instant now = context.getNow();
         context.setCapabilityLimits(AddAgreementCapabilityProcessor.buildLimits(idGenerator,
             context.getCapability().getAgreementCapabilityId(), request, now));
+        if (context.getCapability().getStatus() != request.getStatus()) {
+            AddAgreementCapabilityProcessor.registerExecutionEvents(context,
+                change.getExecutionStatus() == AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES);
+        }
+    }
+
+    /** 成员资格不变时执行状态不变；关闭清空；重新纳入按合同类型回到等待前置或直接开通。 */
+    static AgreementCapabilityExecutionStatus targetExecutionStatus(AgreementContext context,
+        AgreementCapabilityStatus status) {
+        AgreementCapability capability = context.getCapability();
+        if (capability.getStatus() == status) {
+            return capability.getExecutionStatus();
+        }
+        if (status == AgreementCapabilityStatus.DISABLED) {
+            return null;
+        }
+        return AddAgreementCapabilityProcessor.initialExecutionStatus(context.getAgreement());
     }
 }

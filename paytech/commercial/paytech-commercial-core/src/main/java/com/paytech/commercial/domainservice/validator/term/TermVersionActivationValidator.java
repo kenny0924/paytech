@@ -37,7 +37,7 @@ import com.paytech.foundation.common.error.BizCheckFailException;
  * <li>1 版本状态（排期：合同方案 CLIENT_SIGNED 或免签 APPROVED，模板 APPROVED；激活 SCHEDULED）；合同 ACTIVE 且区间覆盖生效起点。</li>
  * <li>2 每条价格引用的画像 ACTIVE、OE 被合同覆盖；Client 合同方案还要求零开通与相关性（TermPriceRelevance），Partner 方案要求币种在该 OE
  * 开通项的 CURRENCY 条件内。</li>
- * <li>3 完整性：合同下与本方案计费事件种类相关的每个 ENABLED 开通项（功能项除外）× CURRENCY 每个值 × 其余条件维度取值组合，至少命中一条价格；
+ * <li>3 完整性：合同下与本方案计费事件种类相关的每个成员资格 ACTIVE 的开通项（功能项除外，含等前置与已暂停项）× CURRENCY 每个值 × 其余条件维度取值组合，至少命中一条价格；
  * 组合数上限 1000。</li>
  * <li>4 组件：币种等于价格币种；TIERED 档位从 0 开始、连续、无重叠、末档上界为空；本期只接受 BLENDED、TRANSACTION_AMOUNT，拒绝
  * RETROACTIVE。</li>
@@ -168,14 +168,14 @@ public final class TermVersionActivationValidator {
             .anyMatch(capability -> capability.conditions().allows(PricingDimension.CURRENCY, price.getCurrency()));
     }
 
-    /** 3：每个 ENABLED 相关开通项（功能项除外）× CURRENCY 每个值 × 其余条件组合至少命中一条价格。 */
+    /** 3：每个 ACTIVE 成员相关开通项（功能项除外）× CURRENCY 每个值 × 其余条件组合至少命中一条价格。 */
     static void checkCoverage(CommercialTermVersionContext context) {
         if (context.getPrices().isEmpty()) {
             throw new BizCheckFailException("激活校验 3（覆盖完整）：版本没有价格: " + context.getVersion().getTermVersionId());
         }
         List<CommercialPriceCandidate> candidates = candidates(context);
         for (CapabilityAcceptance capability : relevantCapabilities(context)) {
-            if (!capability.enabled() || capability.kind() == CapabilityKind.FEATURE || !context.covers(
+            if (!capability.member() || capability.kind() == CapabilityKind.FEATURE || !context.covers(
                 capability.capability().getEntityNo())) {
                 continue;
             }
@@ -185,28 +185,73 @@ public final class TermVersionActivationValidator {
 
     /** 3：单个开通项的条件空间；没有 CURRENCY 条件时价格中出现的任一币种命中即可。 */
     static void checkCapabilityCoverage(List<CommercialPriceCandidate> candidates, CapabilityAcceptance capability) {
-        Set<String> currencies = capability.conditions().values(PricingDimension.CURRENCY);
-        List<Map<PricingDimension, String>> combinations = capability.conditions().combinations(MAX_COMBINATIONS);
-        if (combinations == null || (long) Math.max(currencies.size(), 1) * combinations.size() > MAX_COMBINATIONS) {
+        if (!withinCombinationLimit(capability)) {
             throw new BizCheckFailException("激活校验 3（覆盖完整）：开通项条件组合超过 " + MAX_COMBINATIONS + "，请收窄接受条件: "
                 + capabilityLabel(capability));
         }
+        Map.Entry<String, Map<PricingDimension, String>> gap = firstGap(candidates, capability);
+        if (gap != null) {
+            throw coverageGap(capability, gap.getKey(), gap.getValue());
+        }
+    }
+
+    /**
+     * 单个开通项是否被一组价格完整覆盖（第 3 条的纯判断，供开通项前置门禁复用）
+     * <li>条件组合超过上限视为未覆盖；与激活校验同一口径：同 OE、同币种、支付方式精确、价格条件全部由已知事实满足。</li>
+     *
+     * @param candidates 某 ACTIVE 版本的价格与画像
+     * @param capability 开通项、目录与接受条件
+     * @return 完整覆盖为 true
+     */
+    public static boolean coversCapability(List<CommercialPriceCandidate> candidates, CapabilityAcceptance capability) {
+        return withinCombinationLimit(capability) && firstGap(candidates, capability) == null;
+    }
+
+    /**
+     * 开通项未被完整覆盖的币种（开通项前置门禁的原因参数，按币种字典序）
+     * <li>某币种下任一其余条件组合没有命中价格即算未覆盖；只报币种，不报条件组合。</li>
+     * <li>没有 CURRENCY 条件或条件组合超过上限时无法归到具体币种，返回空列表。</li>
+     *
+     * @param candidates 某 ACTIVE 版本的价格与画像
+     * @param capability 开通项、目录与接受条件
+     * @return 未覆盖的币种；完整覆盖或无法归到币种时为空
+     */
+    public static List<String> uncoveredCurrencies(List<CommercialPriceCandidate> candidates, CapabilityAcceptance capability) {
+        if (!withinCombinationLimit(capability)) {
+            return List.of();
+        }
+        List<Map<PricingDimension, String>> combinations = capability.conditions().combinations(MAX_COMBINATIONS);
+        return capability.conditions().values(PricingDimension.CURRENCY).stream().sorted()
+            .filter(currency -> combinations.stream().anyMatch(combination -> !hits(candidates, capability, currency, combination)))
+            .toList();
+    }
+
+    /** 币种数与其余条件组合数之积不超过上限。 */
+    static boolean withinCombinationLimit(CapabilityAcceptance capability) {
+        Set<String> currencies = capability.conditions().values(PricingDimension.CURRENCY);
+        List<Map<PricingDimension, String>> combinations = capability.conditions().combinations(MAX_COMBINATIONS);
+        return combinations != null && (long) Math.max(currencies.size(), 1) * combinations.size() <= MAX_COMBINATIONS;
+    }
+
+    /** 第一个没有命中价格的币种与条件组合；没有 CURRENCY 条件时以“任一币种”与空组合表示；完整覆盖为 null。 */
+    static Map.Entry<String, Map<PricingDimension, String>> firstGap(List<CommercialPriceCandidate> candidates,
+        CapabilityAcceptance capability) {
+        Set<String> currencies = capability.conditions().values(PricingDimension.CURRENCY);
+        List<Map<PricingDimension, String>> combinations = capability.conditions().combinations(MAX_COMBINATIONS);
         if (currencies.isEmpty()) {
             boolean anyCurrency = candidates.stream().map(candidate -> candidate.price().getCurrency()).distinct()
                 .anyMatch(currency -> combinations.stream().allMatch(combination -> hits(candidates, capability, currency,
                     combination)));
-            if (!anyCurrency) {
-                throw coverageGap(capability, "任一币种", Map.of());
-            }
-            return;
+            return anyCurrency ? null : Map.entry("任一币种", Map.of());
         }
         for (String currency : currencies) {
             for (Map<PricingDimension, String> combination : combinations) {
                 if (!hits(candidates, capability, currency, combination)) {
-                    throw coverageGap(capability, currency, combination);
+                    return Map.entry(currency, combination);
                 }
             }
         }
+        return null;
     }
 
     /** 某开通项在某币种与条件组合下是否命中一条价格：同 OE、同币种、支付方式精确、价格条件全部由已知事实满足。 */

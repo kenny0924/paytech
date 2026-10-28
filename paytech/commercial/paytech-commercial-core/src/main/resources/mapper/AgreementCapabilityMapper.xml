@@ -7,6 +7,7 @@
         <result column="entity_no" property="entityNo"/>
         <result column="capability_code" property="capabilityCode"/>
         <result column="status" property="status"/>
+        <result column="execution_status" property="executionStatus"/>
         <result column="effective_from" property="effectiveFrom"/>
         <result column="effective_to" property="effectiveTo"/>
         <result column="rolling_reserve_rate" property="rollingReserveRate"/>
@@ -17,13 +18,13 @@
     </resultMap>
 
     <sql id="columns">
-        agreement_capability_id, agreement_id, entity_no, capability_code, status, effective_from, effective_to,
+        agreement_capability_id, agreement_id, entity_no, capability_code, status, execution_status, effective_from, effective_to,
         rolling_reserve_rate, rolling_reserve_days, require_3ds, create_time, update_time
     </sql>
 
     <insert id="insert">
         INSERT INTO t_agreement_capability (<include refid="columns"/>)
-        VALUES (#{agreementCapabilityId}, #{agreementId}, #{entityNo}, #{capabilityCode}, #{status}, #{effectiveFrom},
+        VALUES (#{agreementCapabilityId}, #{agreementId}, #{entityNo}, #{capabilityCode}, #{status}, #{executionStatus}, #{effectiveFrom},
             #{effectiveTo}, #{rollingReserveRate}, #{rollingReserveDays}, #{require3ds}, #{createTime}, #{updateTime})
     </insert>
 
@@ -47,10 +48,28 @@
         ORDER BY agreement_capability_id
     </select>
 
-    <update id="updateStatus">
-        UPDATE t_agreement_capability SET status = #{status}, update_time = #{now}
+    <update id="updateMembership">
+        UPDATE t_agreement_capability SET status = #{status}, execution_status = #{executionStatus}, update_time = #{now}
         WHERE agreement_capability_id = #{capability.agreementCapabilityId} AND status = #{capability.status}
+            AND execution_status &lt;=&gt; #{capability.executionStatus}
     </update>
+
+    <update id="updateExecutionStatus">
+        UPDATE t_agreement_capability SET execution_status = #{executionStatus}, update_time = #{now}
+        WHERE agreement_capability_id = #{capability.agreementCapabilityId} AND status = 'ACTIVE'
+            AND execution_status = #{capability.executionStatus}
+    </update>
+
+    <select id="selectAgreementIdsByExecutionStatus" resultType="java.lang.Long">
+        SELECT DISTINCT agreement_id FROM t_agreement_capability
+        WHERE execution_status IN <foreach collection="executionStatuses" item="status" open="(" separator="," close=")">#{status}</foreach>
+            AND agreement_id &gt; #{afterAgreementId} AND MOD(agreement_id, #{shardTotal}) = #{shardIndex}
+        ORDER BY agreement_id LIMIT #{limit}
+    </select>
+
+    <select id="selectAgreementIdsByEntityNo" resultType="java.lang.Long">
+        SELECT DISTINCT agreement_id FROM t_agreement_capability WHERE entity_no = #{entityNo} ORDER BY agreement_id
+    </select>
 
     <update id="updateTerms">
         UPDATE t_agreement_capability

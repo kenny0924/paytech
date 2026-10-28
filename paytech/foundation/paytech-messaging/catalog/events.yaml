@@ -33,13 +33,14 @@ events:
   # 角色资格状态迁移（2026-10-27 全球合规入驻切片 1，R7）：compliance 在案件决定、运营手工登记与撤销的同一本地事务登记补偿任务
   # QUALIFICATION_CHANGED，提交后回读 t_qualification_state_change 与决定发布。aggregateId 为 qualification_id，aggregateVersion 取
   # 该次迁移的资格版本（同一资格连续递增）；client-master 只按 status 幂等处理（REVOKED → Client SUSPENDED），故 strictOrder=false。
+  # commercial（2026-10-28 开通项前置门禁 REQ-01）按 roleType / roleId 定位受影响的 CLIENT 合同并重查开通项前置，结论以同步资格查询为准。
   # Payload 见 paytech-compliance-api 的 com.paytech.compliance.api.event.QualificationChangedPayload。
   - eventType: QualificationChanged
     schemaVersion: 1
     producer: compliance
     aggregateType: ROLE_QUALIFICATION
     aggregateVersionField: qualificationVersion
-    consumers: [client-master]
+    consumers: [client-master, commercial]
     strictOrder: false
     payloadSchemaRef: paytech-compliance-api/event/QualificationChanged/v1
   # 唯一计费事实（决定 2026-10-19 计费事实引擎；需求 billing-计费事实模型重构与渠道成本迁出，替代原经济事实事件）：Payload 为
@@ -106,6 +107,21 @@ events:
     consumers: [acquiring]
     strictOrder: false
     payloadSchemaRef: paytech-commercial-api/event/CommercialTermVersionActivated/v1
+  # 开通项执行状态变更（2026-10-28 commercial 开通项前置门禁 technique.md §11.1，REQ-01）：commercial 在开通项执行状态变化的本地事务
+  # （前置门禁、运营暂停 / 恢复、新增、关闭 / 重新纳入）登记补偿任务 AGREEMENT_CAPABILITY_STATUS_CHANGED，提交后由
+  # AgreementCapabilityStatusChangedHandler 按本版本与上一版本的开通项 BCR 快照重建 changes[] 发布；aggregateId 为合同 ID，
+  # aggregateVersion 取合同 BCR Root 的 changeVersion（与 AgreementStatusChanged 同口径、跳号，故 strictOrder=false）。一个合同版本一条事件，
+  # changes[] 列出本次全部变化（修订 REQ-00 契约 3.1 的"每个开通项一条"）。本期无消费方（risk-decision 在 REQ-04 接入），发布端
+  # unroutable-policy 维持 ACK_AND_WARN。Payload 见 paytech-commercial-api 的
+  # com.paytech.commercial.api.event.AgreementCapabilityStatusChangedPayload。
+  - eventType: AgreementCapabilityStatusChanged
+    schemaVersion: 1
+    producer: commercial
+    aggregateType: AGREEMENT
+    aggregateVersionField: changeVersion
+    consumers: []
+    strictOrder: false
+    payloadSchemaRef: paytech-commercial-api/event/AgreementCapabilityStatusChanged/v1
   # 对账四类事件（2026-10-20 需求 reconciliation-渠道资金对账切片1，technique.md §2.4）：reconciliation 在本地事务登记同名补偿发布任务，
   # 提交后由 Handler 回读本库发布到 reconciliation.events。四个事件的聚合都只发一次，aggregateVersion 固定为 1（载荷类常量
   # AGGREGATE_VERSION，载荷不带版本字段，故 aggregateVersionField 记为 none）；不同聚合之间无顺序依赖，strictOrder=false。

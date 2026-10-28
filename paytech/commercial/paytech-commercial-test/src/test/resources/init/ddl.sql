@@ -1,6 +1,6 @@
 -- 仅供人工审阅并初始化 local-environment 的空本地 Schema；应用和测试绝不自动执行，已有库勿重复建表或重置。
 -- 2026-10-20 开通与定价模型调整：全部 22 张商务表与生成 Schema 一致（新增 t_product_capability_dimension、t_term_version_acceptance）。
--- 完整表定义逐字摘自 paytech/commercial/docs/database/sql/commercial-schema.sql；t_consumed_event 逐字摘自
+-- 完整表定义逐字摘自 paytech/commercial/docs/database/sql/commercial-schema.sql；t_consumed_event 与 t_consumed_aggregate_version 逐字摘自
 -- paytech/foundation/paytech-messaging/src/main/resources/schema/messaging-consumed-event.sql（每库一份，design/01 §3）。
 -- commercial_app 为仓库隔离的本地测试账号，密码与 application-mock.yml 的默认值及 local-environment/.env.example 一致；真实/共享环境不得使用本文件。
 CREATE DATABASE IF NOT EXISTS mor_commercial CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
@@ -103,7 +103,8 @@ CREATE TABLE `t_agreement_capability` (
   `agreement_id` BIGINT NOT NULL COMMENT '商业合同稳定身份的内部唯一标识。',
   `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '开通项适用的准确 OE；CLIENT 合同须等于合同 entity_no，PARTNER 合同须在合同覆盖 OE 内。',
   `capability_code` VARCHAR(64) NOT NULL COMMENT '开通的可开通项代码；引用时目录项须为 ACTIVE。取值来源：t_product_capability.capability_code 可开通项目录；非固定枚举。',
-  `status` VARCHAR(32) NOT NULL COMMENT '开通项状态；SUSPENDED 为风控或合规临时停用且可恢复，DISABLED 为运营关闭。允许值：ENABLED、SUSPENDED、DISABLED。',
+  `status` VARCHAR(32) NOT NULL COMMENT '合同成员资格；ACTIVE 为纳入合同（价格须覆盖），DISABLED 为运营关闭。允许值：ACTIVE、DISABLED。',
+  `execution_status` VARCHAR(32) NULL COMMENT '执行开关；status=ACTIVE 时必须非空、status=DISABLED 时为空（应用校验）。PENDING_PREREQUISITES 为等待前置，ENABLED 为可执行（Checkout 只认此值），SUSPENDED_BY_PREREQUISITE 为前置失效暂停（门禁可自动恢复），SUSPENDED_MANUALLY 为运营手动暂停（门禁不触碰）。允许值：PENDING_PREREQUISITES、ENABLED、SUSPENDED_BY_PREREQUISITE、SUSPENDED_MANUALLY。',
   `effective_from` DATETIME(6) NOT NULL COMMENT '开通生效区间的 UTC 微秒精度起点，包含该时刻。',
   `effective_to` DATETIME(6) NULL COMMENT '开通生效区间的 UTC 微秒精度终点，不包含该时刻；为空表示未预定结束。',
   `rolling_reserve_rate` DECIMAL(18,10) NULL COMMENT '滚动保证金按交易金额计提的小数比例，取值范围为 0 至 1；无保证金时为空。',
@@ -113,9 +114,10 @@ CREATE TABLE `t_agreement_capability` (
   `update_time` DATETIME(6) NOT NULL COMMENT '数据库记录最后一次更新的 UTC 时间，精确到微秒。',
   PRIMARY KEY (`agreement_capability_id`),
   UNIQUE KEY `uk_agreement_capability` (`agreement_id`, `entity_no`, `capability_code`) COMMENT 'Unique index for agreement_capability on agreement_id, entity_no, capability_code',
-  KEY `idx_agreement_capability_lookup` (`entity_no`, `capability_code`, `status`) COMMENT 'Access index for agreement_capability on entity_no, capability_code, status',
+  KEY `idx_agreement_capability_lookup` (`entity_no`, `capability_code`, `execution_status`) COMMENT 'Access index for agreement_capability on entity_no, capability_code, execution_status',
+  KEY `idx_agreement_capability_execution` (`execution_status`, `agreement_id`) COMMENT 'Access index for agreement_capability on execution_status, agreement_id',
   KEY `idx_agreement_capability_code` (`capability_code`) COMMENT 'Access index for agreement_capability on capability_code'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='合同在准确OE下的开通项与保证金条款；uk_agreement_capability(agreement_id,entity_no,capability_code)；require_3ds 为开通项的 3DS 要求；所属产品必须已在合同订阅；capability_code引用时须为ACTIVE目录项；CLIENT合同entity_no等于合同entity_no，PARTNER合同须在合同覆盖OE内；状态ENABLED/SUSPENDED/DISABLED，有效区间半开；保证金比例与天数成组为空或非空，执行归account/risk；应用校验，不创建 CHECK/FK；所属产品必须已在 agreement_product 订阅；capability_code 引用时目录项须为 ACTIVE。；CLIENT 合同的 entity_no 必须等于 agreement.entity_no；PARTNER 合同的 entity_no 必须在 agreement_operating_entity 内。；CHECK (effective_to IS NULL OR effective_from < effective_to)，解析时要求 status=ENABLED 且 effective_from <= contextAsOfTime < effective_to。；rolling_reserve_rate 与 rolling_reserve_days 成组为空或成组非空；比例取值 0 至 1，保证金执行归 account / risk。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='合同在准确OE下的开通项与保证金条款；uk_agreement_capability(agreement_id,entity_no,capability_code)；require_3ds 为开通项的 3DS 要求；所属产品必须已在合同订阅；capability_code引用时须为ACTIVE目录项；CLIENT合同entity_no等于合同entity_no，PARTNER合同须在合同覆盖OE内；成员资格status为ACTIVE/DISABLED，执行开关execution_status为PENDING_PREREQUISITES/ENABLED/SUSPENDED_BY_PREREQUISITE/SUSPENDED_MANUALLY（DISABLED时为空），有效区间半开；保证金比例与天数成组为空或非空，执行归account/risk；应用校验，不创建 CHECK/FK；所属产品必须已在 agreement_product 订阅；capability_code 引用时目录项须为 ACTIVE。；CLIENT 合同的 entity_no 必须等于 agreement.entity_no；PARTNER 合同的 entity_no 必须在 agreement_operating_entity 内。；CHECK (effective_to IS NULL OR effective_from < effective_to)，解析时要求 execution_status=ENABLED 且 effective_from <= contextAsOfTime < effective_to。；rolling_reserve_rate 与 rolling_reserve_days 成组为空或成组非空；比例取值 0 至 1，保证金执行归 account / risk。';
 
 CREATE TABLE `t_agreement_capability_limit` (
   `agreement_capability_limit_id` BIGINT NOT NULL COMMENT '开通项约束行的内部唯一标识。',
@@ -393,3 +395,11 @@ CREATE TABLE t_consumed_event (
     PRIMARY KEY (event_id),
     KEY idx_consumed_event_aggregate (aggregate_type, aggregate_id, aggregate_version)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_bin COMMENT = '已消费领域事件：按事件 ID 去重';
+
+CREATE TABLE t_consumed_aggregate_version (
+    aggregate_type VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '聚合类型（大写 Code）',
+    aggregate_id VARCHAR(40) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '聚合标识（分区键）',
+    last_version BIGINT NOT NULL COMMENT '本服务已处理的最大聚合版本',
+    update_time DATETIME(6) NOT NULL COMMENT '最近推进时间（UTC）',
+    PRIMARY KEY (aggregate_type, aggregate_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_bin COMMENT = '已消费聚合版本：判定乱序、重放与缺口';

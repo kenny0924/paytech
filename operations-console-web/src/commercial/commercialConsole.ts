@@ -73,6 +73,8 @@ export interface CatalogFeeEvent {
 export type ChangeComparison = 'FIRST_VERSION' | 'COMPARED' | 'NOT_COMPARED';
 export interface BusinessChangeEntry {
   historyId: string; recordType: string; recordId: string; versionNo: number; operationType: string; createBy: string; createTime: string;
+  /** 操作人显示名（BFF 补全）；系统命令、未查到或旧 BFF 为 null。 */
+  createByLabel: string | null;
   meta: { triggerType: string; triggerId: string; reasonCode: string } | null; data: Record<string, unknown>; comparison: ChangeComparison;
   previousVersionNo: number | null; previousData: Record<string, unknown> | null; changedFields: string[] | null;
 }
@@ -187,11 +189,11 @@ export function decodeFeeEvents(value: unknown): CatalogFeeEvent[] {
 export function decodeBusinessChange(value: unknown): BusinessChangeEntry {
   const v = value as BusinessChangeEntry;
   require(object(v) && id(v.historyId) && text(v.recordType, 64) && typeof v.recordId === 'string' && Number.isSafeInteger(v.versionNo)
-    && text(v.operationType, 16) && typeof v.createBy === 'string' && instant(v.createTime) && object(v.data)
+    && text(v.operationType, 16) && typeof v.createBy === 'string' && optional(text)(v.createByLabel) && instant(v.createTime) && object(v.data)
     && oneOf(['FIRST_VERSION', 'COMPARED', 'NOT_COMPARED'])(v.comparison) && optional(object)(v.meta) && optional(object)(v.previousData)
     && (v.changedFields === null || (array(v.changedFields) && v.changedFields.every(f => typeof f === 'string')))
     && (v.comparison === 'NOT_COMPARED') === (v.changedFields === null));
-  return { ...v, meta: orNull(v.meta), previousVersionNo: orNull(v.previousVersionNo), previousData: orNull(v.previousData) };
+  return { ...v, createByLabel: orNull(v.createByLabel), meta: orNull(v.meta), previousVersionNo: orNull(v.previousVersionNo), previousData: orNull(v.previousData) };
 }
 
 export const decodeBusinessChangePage = decodePage(decodeBusinessChange);
