@@ -20,6 +20,10 @@
 
 阶段 1—8 完成。推送另行授权；客户门户 v2 表单的 mor-test 补验如需要，由用户选择账号方式后再做。
 
+## 后续发布（2026-10-29）
+
+- commercial 开通项前置门禁（REQ-01）在 mor-test 替换 operations-console-bff `eca2df82…`、operations-console-web `7a053544…`（源 = `ac3145f4` + 该需求，对方逐字节核对包含本需求）；ops 语言包 #20（只改 commercial 命名空间）。本需求 `release/compose-candidate.operations-console-{bff,web}.yaml` 已失效，不得再执行；这两个服务的回滚与后续发布以上述镜像为基线，回滚前与该需求会话确认。client-master / client-console-bff / client-console-web 仍为本需求镜像（`c9bb7b8e` / `8fe7f24c` / `3db62571`，复核 healthy）。
+
 ## 阶段 8 结果（2026-10-28）
 
 - 提交：`ac3145f4`（父 `663e5e4a`，164 个文件），在 main 上以私有索引提交（未推送），范围 = `Code-MoR-legal` 的 93 个代码 / 设计文件（排除 worktree 专用 `paytech/.mvn/maven.config`）+ 本需求目录 + 法源研究文件 + `requirements/README.md` 本行 + `CURRENT_IMPLEMENTATION.md` 本节；与 `e2185c1b..HEAD` 无重叠文件。验收截图、请求 / 响应体、运行日志和样例 PDF 不入库（本机保留在 `verification/ui-smoke/`）。
