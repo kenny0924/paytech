@@ -1,0 +1,100 @@
+{
+ "env": "mor-test",
+ "summary": {
+  "PASS": 11,
+  "FAIL": 0,
+  "INFO": 2
+ },
+ "results": [
+  {
+   "ac": "AC-11",
+   "check": "ledger-service readiness（含 referenceData）200 {\"status\":\"UP\"}",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-11",
+   "check": "ledger-service 2026-10-28T20:00:00Z 之后：刷新失败 WARN 0、ERROR 0",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-11",
+   "check": "billing-service readiness（含 referenceData）200 {\"status\":\"UP\"}",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-11",
+   "check": "billing-service 2026-10-28T20:00:00Z 之后：刷新失败 WARN 0、ERROR 0",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-11",
+   "check": "card-service readiness（含 referenceData）200 {\"status\":\"UP\"}",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-11",
+   "check": "card-service 2026-10-28T20:00:00Z 之后：刷新失败 WARN 0、ERROR 0",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-11",
+   "check": "client-master-service readiness（含 referenceData）200 {\"status\":\"UP\"}",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-11",
+   "check": "client-master-service 2026-10-28T20:00:00Z 之后：刷新失败 WARN 0、ERROR 0",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-11",
+   "check": "Platform 识别到的 X-Caller-Service 调用方（DUAL 回退日志）",
+   "verdict": "INFO",
+   "evidence": []
+  },
+  {
+   "ac": "AC-10",
+   "check": "旧接口 /platform/v1/currency-specs → 404（期望 404）",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-10",
+   "check": "旧接口 /platform/v1/country-regions → 404（期望 404）",
+   "verdict": "PASS",
+   "evidence": null
+  },
+  {
+   "ac": "AC-11",
+   "check": "Platform 参考数据条数（各消费方快照的来源；全部状态）",
+   "verdict": "INFO",
+   "evidence": {
+    "CURRENCY": 4,
+    "COUNTRY": 249,
+    "SUBDIVISION": 47,
+    "INDUSTRY": 42,
+    "MCC": 298
+   }
+  },
+  {
+   "ac": "AC-11",
+   "check": "Nacos 解析 platform-support-service（mor-test / DEFAULT_GROUP）健康实例 1",
+   "verdict": "PASS",
+   "evidence": [
+    [
+     "172.30.73.21",
+     18106,
+     true
+    ]
+   ]
+  }
+ ]
+}

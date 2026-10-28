@@ -22,6 +22,7 @@
 | 2026-10-28 | 7 确认 / 8 授权 | 用户回复"继续"：接受阶段 7，授权阶段 8 本地提交（不含推送） | 已确认 |
 | 2026-10-28 | 8 提交 | 以 `c4ff0e20` 为父，经 `Code-MoR-refclient-rel2` 独立 index 提交：代码与文档 201 个文件（= mor-test 部署的 `refclient-20261028b` 源码，不含 `paytech/.mvn/maven.config`）+ 本需求目录 + requirements/README 索引行 + CURRENT_IMPLEMENTATION 条目，提交 `e2185c1b` | 已完成 |
 | 2026-10-28 | 推送 | 用户推送，核对 `origin/main` = `e2185c1b`（含 `ab27bd76` / `554072a5` / `8a441c90` / `c4ff0e20`）；随后清理本需求 worktree 与私有 Maven 仓库；国家包法务修订部署 mor-test 后复核（只读）：client-master readiness UP、刷新失败 0、财务下拉逐字节相同、旧接口 404，证据 `verification/acceptance-mor-test-*-20261028T0551*.json` | 已完成 |
+| 2026-10-29 | 复核 | commercial 开通项前置门禁（REQ-01，design-discuss-6e）发布 mor-test 后只读复核：新 ops-bff `eca2df82` 财务下拉 4 种查询与发布前逐字节相同、非法 status 400；ledger / billing / card / client-master readiness UP，20:00Z 后刷新失败与 ERROR 0；旧接口 404；条数 4 / 249 / 47 / 42 / 298；Nacos 健康实例 1。证据 `verification/acceptance-mor-test-*-20261028T2018*.json` | 已完成 |
 
 ## 适用阶段
 

@@ -1,0 +1,56 @@
+{
+ "env": "mor-test",
+ "summary": {
+  "PASS": 5,
+  "FAIL": 0,
+  "INFO": 0
+ },
+ "results": [
+  {
+   "ac": "AC-10",
+   "check": "财务下拉 （不带参数） 与发布前逐字节相同（315 字节）",
+   "verdict": "PASS",
+   "evidence": {
+    "status": 200,
+    "before": "{\"items\":[{\"currency\":\"AED\",\"minorUnit\":2,\"roundingMode\":\"HALF_UP\",\"status\":\"ACTIVE\"},{\"currency\":\"EGP\",\"minorUnit\":2,\"roundingMode\":\"HALF_UP\",\"status\":\"ACTIVE\"},{\"currency\":\"SAR\",\"minorUnit\":2,\"round",
+    "after": "{\"items\":[{\"currency\":\"AED\",\"minorUnit\":2,\"roundingMode\":\"HALF_UP\",\"status\":\"ACTIVE\"},{\"currency\":\"EGP\",\"minorUnit\":2,\"roundingMode\":\"HALF_UP\",\"status\":\"ACTIVE\"},{\"currency\":\"SAR\",\"minorUnit\":2,\"round"
+   }
+  },
+  {
+   "ac": "AC-10",
+   "check": "财务下拉 ?status=ACTIVE 与发布前逐字节相同（315 字节）",
+   "verdict": "PASS",
+   "evidence": {
+    "status": 200,
+    "before": "{\"items\":[{\"currency\":\"AED\",\"minorUnit\":2,\"roundingMode\":\"HALF_UP\",\"status\":\"ACTIVE\"},{\"currency\":\"EGP\",\"minorUnit\":2,\"roundingMode\":\"HALF_UP\",\"status\":\"ACTIVE\"},{\"currency\":\"SAR\",\"minorUnit\":2,\"round",
+    "after": "{\"items\":[{\"currency\":\"AED\",\"minorUnit\":2,\"roundingMode\":\"HALF_UP\",\"status\":\"ACTIVE\"},{\"currency\":\"EGP\",\"minorUnit\":2,\"roundingMode\":\"HALF_UP\",\"status\":\"ACTIVE\"},{\"currency\":\"SAR\",\"minorUnit\":2,\"round"
+   }
+  },
+  {
+   "ac": "AC-10",
+   "check": "财务下拉 ?status=INACTIVE 与发布前逐字节相同（12 字节）",
+   "verdict": "PASS",
+   "evidence": {
+    "status": 200,
+    "before": "{\"items\":[]}",
+    "after": "{\"items\":[]}"
+   }
+  },
+  {
+   "ac": "AC-10",
+   "check": "财务下拉 ?status=DRAFT 与发布前逐字节相同（12 字节）",
+   "verdict": "PASS",
+   "evidence": {
+    "status": 200,
+    "before": "{\"items\":[]}",
+    "after": "{\"items\":[]}"
+   }
+  },
+  {
+   "ac": "AC-10",
+   "check": "非法 status 仍 400",
+   "verdict": "PASS",
+   "evidence": null
+  }
+ ]
+}
