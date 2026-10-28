@@ -17,6 +17,16 @@
             <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
     </select>
 
+    <!-- 显示名：OPERATIONS Realm 的全部账号（含 Bootstrap），只读登录名与脱敏邮箱，按账号升序。 -->
+    <select id="selectLabelsByIds" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsPersonnel">
+        SELECT account_id AS accountId, login_name AS loginName, email_masked AS emailMasked
+        FROM t_user_account
+        WHERE realm = 'OPERATIONS'
+            AND account_id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+        ORDER BY account_id
+    </select>
+
     <!-- 选人：只取 ACTIVE 的 OPERATIONS 人员账号（账号、内部租户成员与租户均 ACTIVE）；
          emailToken 非空时按登录邮箱稳定 Token 精确匹配，否则按登录名前缀或脱敏邮箱片段匹配，fragment 为空时不过滤。 -->
     <select id="searchActive" resultType="com.paytech.platform.support.accesscontrol.core.dal.dataobject.OperationsPersonnel">

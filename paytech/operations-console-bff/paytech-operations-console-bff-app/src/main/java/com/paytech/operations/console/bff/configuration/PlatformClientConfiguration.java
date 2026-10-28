@@ -45,6 +45,7 @@ import com.paytech.platform.support.api.localization.LocalizationCatalogApi;
 import com.paytech.platform.support.api.localization.LocalizationContentApi;
 import com.paytech.platform.support.api.localization.LocalizationDeliveryApi;
 import com.paytech.platform.support.api.localization.LocalizationReleaseApi;
+import com.paytech.platform.support.api.operations.OperationsAccountLabelQueryApi;
 import com.paytech.platform.support.api.operations.OperationsManagementApi;
 import com.paytech.platform.support.api.referencedata.CurrencySpecManagementApi;
 import com.paytech.platform.support.api.referencedata.CountrySubdivisionQueryApi;
@@ -67,6 +68,8 @@ public class PlatformClientConfiguration {
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
     /** 存储管理会在 Platform 事务外访问 Vault 与存储（桶检查依次多次调用），取 Gateway 10 秒响应上限内的 9 秒。 */
     private static final Duration FILE_STORAGE_READ_TIMEOUT = Duration.ofSeconds(9);
+    /** 操作人显示名只是页面补充信息，读取超时缩短到 2 秒，避免拖慢所在列表。 */
+    private static final Duration ACCOUNT_LABEL_READ_TIMEOUT = Duration.ofSeconds(2);
     private static final JsonMapper PROBLEM_JSON = JsonMapper.builder().build();
 
     /** 租户访问复用既有 Platform 私网发现及字段错误解码。 */
@@ -313,6 +316,14 @@ public class PlatformClientConfiguration {
         @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
         return platformProxy(environment, discovery, testBaseUrl, tokens, false,
             FileErrorCode.values()).createClient(InternalFileApi.class);
+    }
+
+    /** 运营账号显示名：Platform 私网发现与 Problem 解码，读取超时 2 秒；失败由聚合方降级为不显示显示名。 */
+    @Bean
+    OperationsAccountLabelQueryApi operationsAccountLabelQueryApi(Environment environment, PlatformDiscoveryInterceptor discovery,
+        @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, false, false, ACCOUNT_LABEL_READ_TIMEOUT)
+            .createClient(OperationsAccountLabelQueryApi.class);
     }
 
     @Bean

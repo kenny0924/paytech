@@ -19,6 +19,15 @@ public interface OperationsPersonnelService {
     Map<Long, OperationsPersonnelInfo> personnel(Collection<Long> accountIds);
 
     /**
+     * 按账号批量读取显示名：登录名非空白时取登录名，否则取脱敏邮箱。
+     * <li>包含 Bootstrap 账号；不存在、不是 OPERATIONS Realm 或两者都为空白的账号不在结果中。</li>
+     *
+     * @param accountIds 账号，非空
+     * @return 按账号升序的账号到显示名
+     */
+    Map<Long, String> labels(Collection<Long> accountIds);
+
+    /**
      * 选人：ACTIVE 的 OPERATIONS 人员，按登录名排序。
      *
      * @param fragment 关键字：登录名前缀或脱敏邮箱片段；为空时不过滤

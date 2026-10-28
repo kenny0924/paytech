@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## card BIN 库页面重设计与号段列表（2026-10-27，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [需求](<../requirements/20261027/card-BIN库页面重设计与号段列表/requirement.md>)、[技术方案](<../requirements/20261027/card-BIN库页面重设计与号段列表/technique.md>)、[交付记录](<../requirements/20261027/card-BIN库页面重设计与号段列表/delivery.md>)、[运行卡](<../requirements/20261027/card-BIN库页面重设计与号段列表/release/runbook.md>)。
+- **Implemented：** card `GET /card/v1/bin-library/versions/{versionNo}/ranges`（前缀 / 卡组织 / 借贷记 / 发卡国筛选、公共分页，只允许 ops-bff）；Platform 内部 `GET /operations-accounts/v1/labels`（登录名或脱敏邮箱，只允许 ops-bff，无公开路由）；ops-bff 号段转发与版本 / 激活记录 `createdByLabel` / `operatorLabel`（Platform 失败降级为 null）；ops-web 卡 BIN 库页面重做（号段数据 / 版本两个页签、筛选 chip、最长前缀匹配条、390 卡片列表）；块 140（号段列表路由）。
+- **Verified：** worktree `Code-MoR-binlist`（基于 `5e1f16ab`）：card 18、platform-support 19、ops-bff 91、ops-web 1571；本机 e2e 浏览器 en / zh-CN × 1440 / 390 各 16 项；mor-test 接口 45 PASS（1 项为验收脚本默认分页期望错误：公共分页默认 10，前端显式传 50）、浏览器 4 组 0 失败（中文文案与国旗正常）。
+- **Deployed：** mor-test 2026-10-27 20:12—20:19Z（tag `binlist-20261027a`）：platform `186347bc…`、card `380064fe…`、operations-console-bff `25f6a869…`、operations-console-web `aec066e9…`（源 = `c4b99e2d` + 本需求 ops-web 文件）；块 140 激活（Gateway 612 → 613）；语言包 operations-console #18（card 命名空间 +121 / 改 7 / 废弃 68）。回滚目标见运行卡第 6 节与 `release/compose-rollback.*.yaml`。
+- **Pending：** 推送；`Code-MoR-refclient`、`Code-MoR-legal` 会话后续发布须基于本需求提交重建。
+
 ## platform-support 参考数据目录与 client-master 迁移（2026-10-27，已部署 mor-test，已本地提交 `ab27bd76`，未推送）
 
 - **范围：** [需求](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/requirement.md>)、[技术方案](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/technique.md>)、[交付记录](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/delivery.md>)、[运行卡](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/release/runbook.md>)；依据 [参考数据决定](./decisions/2026-10-27-platform-reference-data.md)。

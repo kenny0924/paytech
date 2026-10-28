@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import com.paytech.card.core.dal.dataobject.CardBinRange;
 import com.paytech.card.core.dal.mapper.CardBinRangeMapper;
+import com.paytech.card.domain.binlibrary.BinRangeFilter;
 import com.paytech.card.domain.binlibrary.CardBinMatchView;
 import com.paytech.card.domainservice.repository.CardBinRangeRepository;
 import com.paytech.foundation.common.error.ErrorException;
@@ -41,6 +42,16 @@ public class CardBinRangeRepositoryImpl implements CardBinRangeRepository {
     @Override
     public CardBinMatchView findMatch(String cardBin, Integer versionNo) {
         return cardBinRangeMapper.selectMatch(prefixes(cardBin), versionNo);
+    }
+
+    @Override
+    public long countRanges(long versionId, BinRangeFilter filter) {
+        return cardBinRangeMapper.countRanges(versionId, filter);
+    }
+
+    @Override
+    public List<CardBinRange> listRanges(long versionId, BinRangeFilter filter, int offset, int limit) {
+        return cardBinRangeMapper.selectRanges(versionId, filter, offset, limit);
     }
 
     /** 由长到短的候选前缀：BIN 自身到 6 位。 */

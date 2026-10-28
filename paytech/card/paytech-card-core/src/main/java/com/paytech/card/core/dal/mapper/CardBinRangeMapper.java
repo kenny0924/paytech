@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.paytech.card.core.dal.dataobject.CardBinRange;
+import com.paytech.card.domain.binlibrary.BinRangeFilter;
 import com.paytech.card.domain.binlibrary.CardBinMatchView;
 
 /** BIN 号段 SQL 映射 */
@@ -25,4 +26,11 @@ public interface CardBinRangeMapper {
      * @return 匹配结果；所查版本不存在时为 null
      */
     CardBinMatchView selectMatch(@Param("prefixes") List<String> prefixes, @Param("versionNo") Integer versionNo);
+
+    /** 某版本内满足筛选条件的号段数。 */
+    long countRanges(@Param("versionId") long versionId, @Param("filter") BinRangeFilter filter);
+
+    /** 某版本内满足筛选条件的号段，按前缀升序分页。 */
+    List<CardBinRange> selectRanges(@Param("versionId") long versionId, @Param("filter") BinRangeFilter filter,
+        @Param("offset") int offset, @Param("limit") int limit);
 }

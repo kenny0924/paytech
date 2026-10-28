@@ -15,6 +15,31 @@
         <result column="issuer_name" property="issuerName"/>
     </resultMap>
 
+    <resultMap id="row" type="com.paytech.card.core.dal.dataobject.CardBinRange">
+        <id column="range_id" property="rangeId"/>
+        <result column="version_id" property="versionId"/>
+        <result column="bin_prefix" property="binPrefix"/>
+        <result column="prefix_length" property="prefixLength"/>
+        <result column="card_brand" property="cardBrand" javaType="com.paytech.card.api.enums.CardBrand" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="funding_type" property="fundingType" javaType="com.paytech.card.api.enums.CardFundingType" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="card_level" property="cardLevel"/>
+        <result column="card_product" property="cardProduct" javaType="com.paytech.card.api.enums.CardProduct" typeHandler="com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler"/>
+        <result column="issuer_country" property="issuerCountry"/>
+        <result column="issuer_region" property="issuerRegion"/>
+        <result column="issuer_name" property="issuerName"/>
+        <result column="create_time" property="createTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+        <result column="update_time" property="updateTime" typeHandler="com.paytech.foundation.mybatis.typehandler.InstantTypeHandler"/>
+    </resultMap>
+
+    <!-- 号段列表的计数与分页共用条件；binPrefix 入口已限定为 1～8 位数字，不含 LIKE 通配符 -->
+    <sql id="RangeFilter">
+        WHERE version_id = #{versionId}
+        <if test="filter.binPrefix != null">AND bin_prefix LIKE CONCAT(#{filter.binPrefix}, '%')</if>
+        <if test="filter.cardBrand != null">AND card_brand = #{filter.cardBrand,javaType=com.paytech.card.api.enums.CardBrand,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR}</if>
+        <if test="filter.fundingType != null">AND funding_type = #{filter.fundingType,javaType=com.paytech.card.api.enums.CardFundingType,typeHandler=com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler,jdbcType=VARCHAR}</if>
+        <if test="filter.issuerCountry != null">AND issuer_country = #{filter.issuerCountry}</if>
+    </sql>
+
     <insert id="insertRanges">
         INSERT INTO t_card_bin_range (range_id, version_id, bin_prefix, prefix_length, card_brand, funding_type, card_level,
             card_product, issuer_country, issuer_region, issuer_name, create_time, update_time)
@@ -51,5 +76,20 @@
         </where>
         ORDER BY r.prefix_length DESC
         LIMIT 1
+    </select>
+
+    <select id="countRanges" resultType="long">
+        SELECT COUNT(*) FROM t_card_bin_range
+        <include refid="RangeFilter"/>
+    </select>
+
+    <!-- bin_prefix 在版本内唯一（uk_card_bin_range），排序稳定 -->
+    <select id="selectRanges" resultMap="row">
+        SELECT range_id, version_id, bin_prefix, prefix_length, card_brand, funding_type, card_level, card_product,
+            issuer_country, issuer_region, issuer_name, create_time, update_time
+        FROM t_card_bin_range
+        <include refid="RangeFilter"/>
+        ORDER BY bin_prefix
+        LIMIT #{limit} OFFSET #{offset}
     </select>
 </mapper>

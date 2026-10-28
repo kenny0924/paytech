@@ -3,6 +3,7 @@ package com.paytech.card.domainservice.repository;
 import java.util.List;
 
 import com.paytech.card.core.dal.dataobject.CardBinRange;
+import com.paytech.card.domain.binlibrary.BinRangeFilter;
 import com.paytech.card.domain.binlibrary.CardBinMatchView;
 
 /** BIN 号段数据访问 */
@@ -21,4 +22,10 @@ public interface CardBinRangeRepository {
      * @return 匹配结果；所查版本不存在（或没有生效版本）时为 null
      */
     CardBinMatchView findMatch(String cardBin, Integer versionNo);
+
+    /** 某版本内满足筛选条件的号段数。 */
+    long countRanges(long versionId, BinRangeFilter filter);
+
+    /** 某版本内满足筛选条件的号段，按前缀升序分页。 */
+    List<CardBinRange> listRanges(long versionId, BinRangeFilter filter, int offset, int limit);
 }

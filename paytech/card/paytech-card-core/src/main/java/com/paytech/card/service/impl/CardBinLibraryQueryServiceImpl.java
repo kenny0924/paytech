@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service;
 import com.paytech.card.api.enums.BinLibraryVersionStatus;
 import com.paytech.card.core.dal.dataobject.CardBinImportError;
 import com.paytech.card.core.dal.dataobject.CardBinLibraryVersion;
+import com.paytech.card.core.dal.dataobject.CardBinRange;
 import com.paytech.card.domain.binlibrary.BinLibraryActivationView;
+import com.paytech.card.domain.binlibrary.BinRangeFilter;
 import com.paytech.card.domain.binlibrary.CardBinMatchView;
 import com.paytech.card.domainservice.repository.CardBinImportErrorRepository;
 import com.paytech.card.domainservice.repository.CardBinLibraryActivationRepository;
@@ -59,6 +61,20 @@ public class CardBinLibraryQueryServiceImpl implements CardBinLibraryQueryServic
         long versionId = getVersion(versionNo).getVersionId();
         return new PagingResponseBody<>(cardBinImportErrorRepository.listErrors(versionId, paging.offset(), paging.size()),
             paging.page(), paging.size(), cardBinImportErrorRepository.countErrors(versionId));
+    }
+
+    /** 只有号段已写完的版本（VALID、ACTIVE、RETIRED）可浏览；同一筛选条件下计数与分页。 */
+    @Override
+    public PagingResponseBody<CardBinRange> listRanges(int versionNo, BinRangeFilter filter, PagingRequestBody paging) {
+        CardBinLibraryVersion version = getVersion(versionNo);
+        if (version.getStatus() == BinLibraryVersionStatus.VALIDATING
+            || version.getStatus() == BinLibraryVersionStatus.INVALID) {
+            throw new BizCheckFailException(
+                "版本尚未校验通过，无号段可浏览: v" + versionNo + ", 状态: " + version.getStatus().getCode());
+        }
+        long versionId = version.getVersionId();
+        return new PagingResponseBody<>(cardBinRangeRepository.listRanges(versionId, filter, paging.offset(), paging.size()),
+            paging.page(), paging.size(), cardBinRangeRepository.countRanges(versionId, filter));
     }
 
     @Override

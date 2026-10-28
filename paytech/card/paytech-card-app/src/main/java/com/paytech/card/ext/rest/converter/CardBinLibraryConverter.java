@@ -8,11 +8,16 @@ import com.paytech.card.api.binlibrary.response.BinImportErrorResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLibraryActivationResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLibraryVersionResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLookupResponseBody;
+import com.paytech.card.api.binlibrary.response.BinRangeResponseBody;
 import com.paytech.card.api.enums.BinLibraryVersionStatus;
+import com.paytech.card.api.enums.CardBrand;
+import com.paytech.card.api.enums.CardFundingType;
 import com.paytech.card.core.dal.dataobject.CardBinImportError;
 import com.paytech.card.core.dal.dataobject.CardBinLibraryVersion;
+import com.paytech.card.core.dal.dataobject.CardBinRange;
 import com.paytech.card.domain.binlibrary.BinLibraryActivationContext;
 import com.paytech.card.domain.binlibrary.BinLibraryActivationView;
+import com.paytech.card.domain.binlibrary.BinRangeFilter;
 import com.paytech.card.domain.binlibrary.CardBinMatchView;
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.common.error.InvalidParameterException;
@@ -23,11 +28,13 @@ import com.paytech.platform.support.api.files.FileAddress;
 public class CardBinLibraryConverter {
     /** 解析可选状态筛选。 */
     public BinLibraryVersionStatus convertStatus(String status) {
-        if (status == null) {
-            return null;
-        }
-        return Arrays.stream(BinLibraryVersionStatus.values()).filter(value -> value.getCode().equals(status))
-            .findFirst().orElseThrow(() -> new InvalidParameterException("版本状态无效"));
+        return parseCode(BinLibraryVersionStatus.values(), status, "版本状态无效");
+    }
+
+    /** 号段列表的组合筛选；入口已校验格式，Code 仍按枚举显式解析。 */
+    public BinRangeFilter convertRangeFilter(String binPrefix, String cardBrand, String fundingType, String issuerCountry) {
+        return new BinRangeFilter(binPrefix, parseCode(CardBrand.values(), cardBrand, "卡组织无效"),
+            parseCode(CardFundingType.values(), fundingType, "借贷记类型无效"), issuerCountry);
     }
 
     /** 用 Platform {@link FileAddress} 解析文件地址；不符合地址格式（例如文件 ID 超出范围）按参数无效 400。 */
@@ -55,6 +62,21 @@ public class CardBinLibraryConverter {
         body.setCreatedBy(version.getCreatedBy() == null ? null : version.getCreatedBy().toString());
         body.setCreateTime(version.getCreateTime());
         body.setUpdateTime(version.getUpdateTime());
+        return body;
+    }
+
+    /** 版本内的一个号段。 */
+    public BinRangeResponseBody convertRange(CardBinRange range) {
+        BinRangeResponseBody body = new BinRangeResponseBody();
+        body.setBinPrefix(range.getBinPrefix());
+        body.setPrefixLength(range.getPrefixLength());
+        body.setCardBrand(code(range.getCardBrand()));
+        body.setFundingType(code(range.getFundingType()));
+        body.setCardLevel(range.getCardLevel());
+        body.setCardProduct(code(range.getCardProduct()));
+        body.setIssuerCountry(range.getIssuerCountry());
+        body.setIssuerRegion(range.getIssuerRegion());
+        body.setIssuerName(range.getIssuerName());
         return body;
     }
 
@@ -112,6 +134,15 @@ public class CardBinLibraryConverter {
         body.setIssuerRegion(match.getIssuerRegion());
         body.setIssuerName(match.getIssuerName());
         return body;
+    }
+
+    /** 可选查询参数按稳定代码解析为枚举；null 表示未筛选，未知代码 400。 */
+    static <E extends CodeEnum> E parseCode(E[] values, String code, String message) {
+        if (code == null) {
+            return null;
+        }
+        return Arrays.stream(values).filter(value -> value.getCode().equals(code)).findFirst()
+            .orElseThrow(() -> new InvalidParameterException(message));
     }
 
     /** 可空枚举的稳定代码。 */

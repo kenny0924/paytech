@@ -6,6 +6,7 @@ import com.paytech.card.api.binlibrary.response.BinImportErrorResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLibraryActivationResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLibraryVersionResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLookupResponseBody;
+import com.paytech.card.api.binlibrary.response.BinRangeResponseBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
@@ -46,6 +47,21 @@ public interface CardBinLibraryClient {
      * @return 错误分页
      */
     PagingResponseBody<BinImportErrorResponseBody> listImportErrors(int versionNo, int page, int size);
+
+    /**
+     * 版本号段分页，筛选条件原样透传
+     *
+     * @param versionNo 版本号
+     * @param binPrefix 可选 1～8 位数字前缀
+     * @param cardBrand 可选卡组织
+     * @param fundingType 可选借贷记类型
+     * @param issuerCountry 可选发卡国
+     * @param page 已校验页码
+     * @param size 已校验条数
+     * @return 号段分页
+     */
+    PagingResponseBody<BinRangeResponseBody> listRanges(int versionNo, String binPrefix, String cardBrand,
+        String fundingType, String issuerCountry, int page, int size);
 
     /**
      * 激活历史分页

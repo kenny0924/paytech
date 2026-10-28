@@ -3,12 +3,14 @@ package com.paytech.card.service;
 import com.paytech.card.api.enums.BinLibraryVersionStatus;
 import com.paytech.card.core.dal.dataobject.CardBinImportError;
 import com.paytech.card.core.dal.dataobject.CardBinLibraryVersion;
+import com.paytech.card.core.dal.dataobject.CardBinRange;
 import com.paytech.card.domain.binlibrary.BinLibraryActivationView;
+import com.paytech.card.domain.binlibrary.BinRangeFilter;
 import com.paytech.card.domain.binlibrary.CardBinMatchView;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 
-/** BIN 库只读查询：版本、导入错误、激活历史与单个 BIN；不开事务、不缓存，每次读取已提交状态。 */
+/** BIN 库只读查询：版本、导入错误、版本号段、激活历史与单个 BIN；不开事务、不缓存，每次读取已提交状态。 */
 public interface CardBinLibraryQueryService {
     /**
      * 按主键读取版本（导入任务使用）
@@ -45,6 +47,17 @@ public interface CardBinLibraryQueryService {
      *         <li>版本不存在时抛出 NOT_FOUND。</li>
      */
     PagingResponseBody<CardBinImportError> listImportErrors(int versionNo, PagingRequestBody paging);
+
+    /**
+     * 分页列出某版本的号段
+     *
+     * @param versionNo 版本号
+     * @param filter 组合筛选条件
+     * @param paging 已校验的分页参数
+     * @return 按号段前缀升序的分页结果
+     *         <li>版本不存在时抛出 NOT_FOUND；版本仍在校验或校验失败时抛出业务检查失败。</li>
+     */
+    PagingResponseBody<CardBinRange> listRanges(int versionNo, BinRangeFilter filter, PagingRequestBody paging);
 
     /**
      * 分页列出激活历史

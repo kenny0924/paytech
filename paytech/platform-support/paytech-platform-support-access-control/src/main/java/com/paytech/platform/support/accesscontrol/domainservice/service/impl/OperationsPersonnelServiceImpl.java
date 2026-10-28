@@ -33,6 +33,19 @@ public class OperationsPersonnelServiceImpl implements OperationsPersonnelServic
         return result;
     }
 
+    /** 批量读取显示名，跳过没有可展示值的账号。 */
+    @Override
+    public Map<Long, String> labels(Collection<Long> accountIds) {
+        Map<Long, String> result = new LinkedHashMap<>();
+        for (OperationsPersonnel row : repository.findLabelsByIds(accountIds)) {
+            String label = label(row);
+            if (label != null) {
+                result.put(row.getAccountId(), label);
+            }
+        }
+        return result;
+    }
+
     /** 选人查询并转换为领域结果。 */
     @Override
     public List<OperationsPersonnelCandidate> searchActive(String fragment, String emailToken, int limit) {
@@ -40,6 +53,14 @@ public class OperationsPersonnelServiceImpl implements OperationsPersonnelServic
             .map(row -> new OperationsPersonnelCandidate(row.getAccountId(), row.getLoginName(), row.getEmailMasked(),
                 displayName(row)))
             .toList();
+    }
+
+    /** 页面显示名：登录名非空白时取登录名，否则取非空白的脱敏邮箱；两者都没有时为 null。 */
+    static String label(OperationsPersonnel row) {
+        if (row.getLoginName() != null && !row.getLoginName().isBlank()) {
+            return row.getLoginName();
+        }
+        return row.getEmailMasked() != null && !row.getEmailMasked().isBlank() ? row.getEmailMasked() : null;
     }
 
     /** 显示名：登录名，没有时为脱敏邮箱（Q11）。 */

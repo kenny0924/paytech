@@ -15,6 +15,7 @@ export const binLibraryPaths = {
   errors: (versionNo: number) => `${admin}/versions/${versionNo}/errors`,
   activation: (versionNo: number) => `${admin}/versions/${versionNo}/activation`,
   activations: `${admin}/activations`,
+  ranges: (versionNo: number) => `${admin}/versions/${versionNo}/ranges`,
   lookup: (bin: string, versionNo: number | null) => `${admin}/bins/${bin}${versionNo === null ? '' : `?versionNo=${versionNo}`}`,
   uploads: `${admin}/uploads`,
   uploadCompletion: (uploadId: string) => `${admin}/uploads/${uploadId}/completion`,
@@ -31,17 +32,39 @@ export type VersionStatus = typeof versionStatuses[number];
 export const versionStatusColors: Readonly<Record<VersionStatus, string>> = {
   VALIDATING: 'processing', VALID: 'blue', INVALID: 'red', ACTIVE: 'green', RETIRED: 'default',
 };
+/** 校验通过、有号段可浏览的状态；VALIDATING / INVALID 不能浏览号段。 */
+export const browsableStatuses: readonly VersionStatus[] = ['VALID', 'ACTIVE', 'RETIRED'];
+export const isBrowsable = (version: Pick<BinLibraryVersion, 'status'>) => browsableStatuses.includes(version.status);
+
+/** Card 允许的卡属性取值；显示名为 `card.enum.cardBrand.<值>`、`card.enum.fundingType.<值>`、`card.enum.cardProduct.<值>`。 */
+export const cardBrands = ['VISA', 'MASTERCARD', 'AMEX', 'UNIONPAY', 'MADA', 'DISCOVER', 'JCB', 'DINERS'] as const;
+export const fundingTypes = ['CREDIT', 'DEBIT', 'PREPAID', 'CHARGE'] as const;
+/** 卡组织标识：品牌缩写（品牌名称，不翻译）与底色；未知卡组织用灰底原始编码。 */
+export const brandMarks: Readonly<Record<string, { mark: string; color: string }>> = {
+  VISA: { mark: 'VISA', color: '#1a1f71' }, MASTERCARD: { mark: 'MC', color: '#252525' }, AMEX: { mark: 'AMEX', color: '#2e77bc' },
+  UNIONPAY: { mark: 'UP', color: '#d6262d' }, MADA: { mark: 'mada', color: '#14805e' }, DISCOVER: { mark: 'DISC', color: '#e8762c' },
+  JCB: { mark: 'JCB', color: '#0b7a3e' }, DINERS: { mark: 'DC', color: '#004a97' },
+};
+/** 发卡国筛选的常用国家；有参考数据权限时改用 Platform 国家清单。 */
+export const commonIssuerCountries: readonly string[] = ['AE', 'SA', 'EG', 'KW', 'QA', 'BH', 'OM', 'JO', 'US', 'GB', 'CN'];
 
 export interface BinLibraryVersion {
   versionNo: number; status: VersionStatus; active: boolean; fileAddress: string | null; fileName: string | null;
   fileContentHash: string | null; totalRows: number | null; processedRows: number; errorRows: number; failureReason: string | null;
-  createdBy: string | null; createTime: string; updateTime: string;
+  createdBy: string | null; createdByLabel: string | null; createTime: string; updateTime: string;
 }
 
 export interface BinImportError { lineNo: number; columnName: string | null; errorCode: string; errorMessage: string; valueExcerpt: string | null }
 
 export interface BinLibraryActivation {
-  activationType: 'ACTIVATE' | 'ROLLBACK'; versionNo: number; previousVersionNo: number | null; operatorAccountId: string | null; activatedAt: string;
+  activationType: 'ACTIVATE' | 'ROLLBACK'; versionNo: number; previousVersionNo: number | null; operatorAccountId: string | null;
+  operatorLabel: string | null; activatedAt: string;
+}
+
+/** 版本内一个号段；fundingType、cardLevel、cardProduct、issuerName 可空。 */
+export interface BinRange {
+  binPrefix: string; prefixLength: number; cardBrand: string; fundingType: string | null; cardLevel: string | null; cardProduct: string | null;
+  issuerCountry: string; issuerRegion: string; issuerName: string | null;
 }
 
 export interface BinLookup {
@@ -70,11 +93,12 @@ export function decodeVersion(value: unknown): BinLibraryVersion {
     && typeof value.active === 'boolean' && isNullableText(value.fileAddress) && isNullableText(value.fileName)
     && isNullableText(value.fileContentHash) && isNullableInteger(value.totalRows) && isInteger(value.processedRows)
     && isInteger(value.errorRows) && isNullableText(value.failureReason) && isNullableText(value.createdBy)
-    && isText(value.createTime) && isText(value.updateTime));
+    && isNullableText(value.createdByLabel) && isText(value.createTime) && isText(value.updateTime));
   const v = value as unknown as BinLibraryVersion;
   return { versionNo: v.versionNo, status: v.status, active: v.active, fileAddress: orNull(v.fileAddress), fileName: orNull(v.fileName),
     fileContentHash: orNull(v.fileContentHash), totalRows: orNull(v.totalRows), processedRows: v.processedRows, errorRows: v.errorRows,
-    failureReason: orNull(v.failureReason), createdBy: orNull(v.createdBy), createTime: v.createTime, updateTime: v.updateTime };
+    failureReason: orNull(v.failureReason), createdBy: orNull(v.createdBy), createdByLabel: orNull(v.createdByLabel),
+    createTime: v.createTime, updateTime: v.updateTime };
 }
 
 export function decodeImportError(value: unknown): BinImportError {
@@ -86,10 +110,22 @@ export function decodeImportError(value: unknown): BinImportError {
 
 export function decodeActivation(value: unknown): BinLibraryActivation {
   require(isRecord(value) && (value.activationType === 'ACTIVATE' || value.activationType === 'ROLLBACK') && isInteger(value.versionNo, 1)
-    && isNullableInteger(value.previousVersionNo, 1) && isNullableText(value.operatorAccountId) && isText(value.activatedAt));
+    && isNullableInteger(value.previousVersionNo, 1) && isNullableText(value.operatorAccountId) && isNullableText(value.operatorLabel)
+    && isText(value.activatedAt));
   const v = value as unknown as BinLibraryActivation;
   return { activationType: v.activationType, versionNo: v.versionNo, previousVersionNo: orNull(v.previousVersionNo),
-    operatorAccountId: orNull(v.operatorAccountId), activatedAt: v.activatedAt };
+    operatorAccountId: orNull(v.operatorAccountId), operatorLabel: orNull(v.operatorLabel), activatedAt: v.activatedAt };
+}
+
+/** 号段：前缀 6～8 位数字且长度与 prefixLength 一致，卡组织与发卡国必填；四个可空字段只接受 null（或缺省）与字符串。 */
+export function decodeRange(value: unknown): BinRange {
+  require(isRecord(value) && isText(value.binPrefix) && /^[0-9]{6,8}$/.test(value.binPrefix) && value.prefixLength === value.binPrefix.length
+    && isText(value.cardBrand) && value.cardBrand !== '' && isText(value.issuerCountry) && /^[A-Z]{2}$/.test(value.issuerCountry)
+    && isText(value.issuerRegion) && ['fundingType', 'cardLevel', 'cardProduct', 'issuerName'].every(key => isNullableText(value[key])));
+  const v = value as unknown as BinRange;
+  return { binPrefix: v.binPrefix, prefixLength: v.prefixLength, cardBrand: v.cardBrand, fundingType: orNull(v.fundingType),
+    cardLevel: orNull(v.cardLevel), cardProduct: orNull(v.cardProduct), issuerCountry: v.issuerCountry, issuerRegion: v.issuerRegion,
+    issuerName: orNull(v.issuerName) };
 }
 
 export function decodeLookup(value: unknown): BinLookup {
@@ -130,6 +166,7 @@ function pageDecoder<T>(decodeItem: (value: unknown) => T) {
 export const decodeVersionPage = pageDecoder(decodeVersion);
 export const decodeImportErrorPage = pageDecoder(decodeImportError);
 export const decodeActivationPage = pageDecoder(decodeActivation);
+export const decodeRangePage = pageDecoder(decodeRange);
 
 // ---------- 版本动作与进度 ----------
 
@@ -161,19 +198,55 @@ export const formatCount = (value: number | null | undefined) => value === null 
 /** 409：页面看到的生效版本已被他人切换。 */
 export const activationConflictMessage = () => t('activation.conflict');
 
-// ---------- BIN 输入 ----------
+// ---------- BIN 前缀筛选与号段查询 ----------
 
-/** 6～8 位数字才可查询；超过 8 位的输入可能是卡号，不发送。 */
-export function binInputIssue(input: string): string | null {
+/**
+ * BIN 前缀输入：空或 1～8 位数字可筛选；非数字或超过 8 位（可能是卡号）即时提示且不发请求。
+ * 两种提示都说明"只按 BIN 查询"，不回显输入内容。
+ */
+export function binPrefixIssue(input: string): string | null {
   const value = input.trim();
   if (!value) return null;
   if (!/^[0-9]*$/.test(value)) return t('binInput.digitsOnly');
   if (value.length > 8) return t('binInput.tooLong');
-  if (value.length < 6) return t('binInput.tooShort');
   return null;
 }
 
+/** 6～8 位数字时另外做最长前缀匹配（与单 BIN 查询接口一致）。 */
 export const isQueryableBin = (input: string) => /^[0-9]{6,8}$/.test(input.trim());
+
+export interface RangeFilters { binPrefix: string; cardBrand: string | null; fundingType: string | null; issuerCountry: string | null }
+export const emptyRangeFilters: RangeFilters = { binPrefix: '', cardBrand: null, fundingType: null, issuerCountry: null };
+
+/** 号段列表 Query：只带有值的条件；BIN 前缀不合法时返回 null（不发请求）。分页参数由公共分页加载器追加。 */
+export function rangeQueryFilters(filters: RangeFilters): Record<string, string> | null {
+  const binPrefix = filters.binPrefix.trim();
+  if (binPrefixIssue(binPrefix)) return null;
+  const query: Record<string, string> = {};
+  if (binPrefix) query.binPrefix = binPrefix;
+  if (filters.cardBrand) query.cardBrand = filters.cardBrand;
+  if (filters.fundingType) query.fundingType = filters.fundingType;
+  if (filters.issuerCountry) query.issuerCountry = filters.issuerCountry;
+  return query;
+}
+
+/** 已选筛选条件个数（BIN 前缀为空不计）。 */
+export function activeFilterCount(filters: RangeFilters): number {
+  return [filters.binPrefix.trim(), filters.cardBrand, filters.fundingType, filters.issuerCountry].filter(Boolean).length;
+}
+
+// ---------- 操作人显示 ----------
+
+/**
+ * 操作人：BFF 补全的显示名优先；没有时非数字原值（如 system）原样显示，数字账号 ID 显示"…"加末 6 位，悬停看完整 ID。
+ * 原值为空（初始化种子数据）时显示系统。
+ */
+export function operatorDisplay(label: string | null, raw: string | null): { text: string; full: string | null } {
+  if (label) return { text: label, full: raw && raw !== label ? raw : null };
+  if (!raw) return { text: t('operator.system'), full: null };
+  if (!/^[0-9]+$/.test(raw) || raw.length <= 6) return { text: raw, full: null };
+  return { text: `…${raw.slice(-6)}`, full: raw };
+}
 
 // ---------- CSV 本地预检（完整校验由 Card 在创建版本后进行） ----------
 
@@ -183,6 +256,9 @@ export const maxCsvBytes = 50 * 1024 * 1024;
 
 /** 示例模板：表头加两行合成数据（测试卡号段）。 */
 export const csvTemplate = `${csvHeader}\n41111111,VISA,CREDIT,CLASSIC,CONSUMER,US,TEST BANK\n510510,MASTERCARD,DEBIT,,CONSUMER,GB,"EXAMPLE BANK, LTD"\n`;
+/** 模板下载：页头"CSV 模板"与导入弹窗共用。 */
+export const csvTemplateHref = `data:text/csv;charset=utf-8,${encodeURIComponent(csvTemplate)}`;
+export const csvTemplateFileName = 'card-bin-library-template.csv';
 
 /** 文件选择检查：.csv 扩展名、非空、不超过 50 MiB。 */
 export function csvFileIssue(file: { name: string; size: number }): string | null {

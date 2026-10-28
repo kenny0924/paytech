@@ -263,6 +263,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "GET /card-admin/v1/bin-library/versions",
             "GET /card-admin/v1/bin-library/versions/{versionNo}",
             "GET /card-admin/v1/bin-library/versions/{versionNo}/errors",
+            "GET /card-admin/v1/bin-library/versions/{versionNo}/ranges",
             "GET /card-admin/v1/bin-library/activations",
             "GET /card-admin/v1/bin-library/bins/{bin}",
             "POST /card-admin/v1/bin-library/uploads",

@@ -1,0 +1,11 @@
+# card：BIN 库页面重设计与号段列表 · mor-test 候选覆盖（阶段 6 准备 2026-10-27；阶段 7 由主会话执行，需用户授权）。
+# D-1：构建基线是 c4b99e2d（现网 ops-web 的实际来源），不是研发基线 5e1f16ab；team-lead 已同意，阶段 7 由用户确认后使用。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+# 只认 sha256（tag 仅供辨认）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-binlist-webrel = c4b99e2d + Code-MoR-binlist 的 11 个 ops-web 文件（与 c4b99e2d 改动 0 重叠）。
+#   c4b99e2d 干净构建的 dist 245 个文件与现网 2e179d6f 逐字节相同（baseline.md 第 2 节），所以本镜像 = 现网 + 本需求页面，不回退文件上传 / 参考数据页签整理。
+# 环境变量：镜像自带 7 个，现网覆盖只换镜像；本文件同样只换镜像。
+services:
+  operations-console-web:
+    image: sha256:aec066e9d896fd69fe4340ff7cd90eee54f95a780cf335bde7bed4382dbae3e1  # mor-test/operations-console-web:binlist-20261027a（dist 250 个文件）

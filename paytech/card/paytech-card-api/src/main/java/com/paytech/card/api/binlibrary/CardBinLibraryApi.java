@@ -17,14 +17,15 @@ import com.paytech.card.api.binlibrary.response.BinImportErrorResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLibraryActivationResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLibraryVersionResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLookupResponseBody;
+import com.paytech.card.api.binlibrary.response.BinRangeResponseBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 
 /**
- * BIN 库运营私网接口（2026-10-22 BIN 库需求 technique §3.5.1）：版本列表与详情、导入错误、用已上传文件创建版本、激活与回切、激活历史、单个 BIN
- * 查询。
+ * BIN 库运营私网接口（2026-10-22 BIN 库需求 technique §3.5.1）：版本列表与详情、导入错误、版本号段列表（2026-10-27 号段列表需求 technique
+ * §3.1）、用已上传文件创建版本、激活与回切、激活历史、单个 BIN 查询。
  * <li>唯一调用方 operations-console-bff，其他调用方返回 404；写接口要求 {@link CardApiConstants#ACTOR_HEADER}，缺失或格式错误返回 400。</li>
  * <li>只按 BIN（6～8 位）查询，任何接口都不接收或返回完整卡号。错误只用公共代码：INVALID_REQUEST、BUSINESS_CHECK_FAILED、NOT_FOUND、
  * CONCURRENT_REQUEST、SERVICE_UNAVAILABLE。</li>
@@ -72,6 +73,30 @@ public interface CardBinLibraryApi {
     PagingResponseBody<BinImportErrorResponseBody> listImportErrors(
         @RequestHeader(CardApiConstants.CALLER_HEADER) String caller,
         @PathVariable("versionNo") @Pattern(regexp = "[1-9][0-9]{0,8}", message = "版本号无效") String versionNo,
+        @RequestParam(value = "page", required = false) Integer page,
+        @RequestParam(value = "size", required = false) Integer size);
+
+    /**
+     * 分页列出某版本的号段，可按前缀、卡组织、借贷记与发卡国组合筛选
+     *
+     * @param caller 调用方服务名，只接受 operations-console-bff
+     * @param versionNo 版本号
+     * @param binPrefix 可选 1～8 位数字，匹配以其开头的号段
+     * @param cardBrand 可选卡组织：VISA、MASTERCARD、AMEX、UNIONPAY、MADA、DISCOVER、JCB、DINERS
+     * @param fundingType 可选借贷记类型：CREDIT、DEBIT、PREPAID、CHARGE
+     * @param issuerCountry 可选发卡国 ISO 3166-1 alpha-2
+     * @param page 页码，默认 1
+     * @param size 每页条数，默认 10，只允许 10、20、50、100、200
+     * @return 按号段前缀升序的分页结果
+     *         <li>参数格式错误 400；版本不存在 404；版本仍在校验或校验失败 400。</li>
+     */
+    @GetExchange("/versions/{versionNo}/ranges")
+    PagingResponseBody<BinRangeResponseBody> listRanges(@RequestHeader(CardApiConstants.CALLER_HEADER) String caller,
+        @PathVariable("versionNo") @Pattern(regexp = "[1-9][0-9]{0,8}", message = "版本号无效") String versionNo,
+        @RequestParam(value = "binPrefix", required = false) @Pattern(regexp = "[0-9]{1,8}", message = "BIN 前缀必须为 1 至 8 位数字") String binPrefix,
+        @RequestParam(value = "cardBrand", required = false) @Pattern(regexp = "VISA|MASTERCARD|AMEX|UNIONPAY|MADA|DISCOVER|JCB|DINERS", message = "卡组织无效") String cardBrand,
+        @RequestParam(value = "fundingType", required = false) @Pattern(regexp = "CREDIT|DEBIT|PREPAID|CHARGE", message = "借贷记类型无效") String fundingType,
+        @RequestParam(value = "issuerCountry", required = false) @Pattern(regexp = "[A-Z]{2}", message = "发卡国无效") String issuerCountry,
         @RequestParam(value = "page", required = false) Integer page,
         @RequestParam(value = "size", required = false) Integer size);
 

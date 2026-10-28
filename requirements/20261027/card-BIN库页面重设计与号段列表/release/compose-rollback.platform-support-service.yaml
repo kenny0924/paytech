@@ -1,0 +1,8 @@
+# card：BIN 库页面重设计与号段列表 · mor-test 回滚覆盖（阶段 6 准备 2026-10-27；阶段 7 由主会话执行，需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 platform-support-service
+# 只认 sha256（tag 仅供辨认；:development 未改动）。不加 --remove-orphans。
+# 镜像 = 2026-10-27 现网运行镜像（参考数据发布 refdata-20261027a），env 同候选（只换镜像）。
+services:
+  platform-support-service:
+    image: sha256:aec535863836669db6063a139c448ee817d00f64d6a4adea008448a413e4d5b5  # 现网 refdata-20261027a（JAR f4d03bef50208c3e）

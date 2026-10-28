@@ -7,7 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -78,6 +80,8 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
     public static final String ROLE_DELETE_PERMISSION_ID = "900000000000000531";
     public static final String ROLE_COUNTS_PATH = "/operations/v1/roles/employee-counts";
     public static final String AUDIT_PATH = "/operations/v1/audit-events";
+    /** 运营账号显示名内部查询（不经 Gateway，不带会话身份）。 */
+    public static final String ACCOUNT_LABELS_PATH = "/operations-accounts/v1/labels";
     public static final String AUDIT_READ_PERMISSION_ID = "900000000000000523";
     public static final String UPSTREAM_REQUEST_ID = "platform-upstream-request";
     public static final String UPSTREAM_DETAIL_CANARY = "platform-private-detail-canary";
@@ -427,6 +431,8 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
     private ProblemResponse problemResponse;
     private RawResponse rawResponse;
     private final Map<String, RawResponse> groupedResponses = new LinkedHashMap<>();
+    /** 已配置的运营账号显示名；null 表示未配置，显示名查询计为意外调用。 */
+    private Map<String, String> accountLabels;
     private String activeAccountId;
     private int completedAuthorizationCount;
     private boolean riskIdentity;
@@ -531,6 +537,15 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         values.forEach((path, body) -> groupedResponses.put(path, new RawResponse(path, 200, "application/json", body, Map.of())));
     }
 
+    /**
+     * 配置运营账号显示名查询的 DTO：按请求 accountIds 返回其中已配置的账号（升序），未配置的账号不返回，与 Platform 合同一致
+     *
+     * @param labels 账号 ID 到显示名
+     */
+    public synchronized void accountLabels(Map<String, String> labels) {
+        accountLabels = Map.copyOf(labels);
+    }
+
     public void reset() {
         releaseAuthorizationResponse();
         synchronized (this) {
@@ -561,6 +576,7 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
             problemResponse = null;
             rawResponse = null;
             groupedResponses.clear();
+            accountLabels = null;
         }
     }
 
@@ -593,8 +609,22 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
                 return;
             }
             if (groupedResponses.containsKey(path)) { writeRaw(exchange, groupedResponses.get(path)); return; }
+            if (accountLabels != null && path.equals(ACCOUNT_LABELS_PATH) && method(exchange, "GET")) {
+                accountLabels(exchange);
+                return;
+            }
             route(exchange, path, body);
         }
+    }
+
+    /** 按 accountIds 返回已配置的显示名，账号 ID 升序。 */
+    private void accountLabels(HttpExchange exchange) throws IOException {
+        String query = exchange.getRequestURI().getQuery();
+        String ids = query == null ? "" : query.replaceFirst("^accountIds=", "");
+        var items = Arrays.stream(ids.split(",")).filter(accountLabels::containsKey).distinct()
+            .sorted(Comparator.comparing(Long::valueOf))
+            .map(id -> Map.of("accountId", id, "label", accountLabels.get(id))).toList();
+        write(exchange, 200, Map.of("items", items));
     }
 
     private void route(HttpExchange exchange, String path, String body) throws IOException {

@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ApiError } from '../api/session.ts';
+import { pagingQuery } from '../api/paging.ts';
 import { pageCapabilities } from '../navigation/pageCapabilities.ts';
 import {
-  binInputIssue, binLibraryManageButton, binLibraryPaths, csvFileIssue, csvHeader, csvTemplate, decodeActivationPage, decodeImportErrorPage,
-  decodeLookup, decodeUploadCompletion, decodeUploadStart, decodeVersion, decodeVersionPage, isQueryableBin, maxCsvBytes, previewCsv,
-  rowDelta, splitCsvLine, versionAction, versionProgress,
+  activeFilterCount, binLibraryManageButton, binLibraryPaths, binPrefixIssue, csvFileIssue, csvHeader, csvTemplate, decodeActivationPage,
+  decodeImportErrorPage, decodeLookup, decodeRange, decodeRangePage, decodeUploadCompletion, decodeUploadStart, decodeVersion, decodeVersionPage,
+  emptyRangeFilters, isBrowsable, isQueryableBin, maxCsvBytes, operatorDisplay, previewCsv, rangeQueryFilters, rowDelta, splitCsvLine,
+  versionAction, versionProgress,
 } from './binLibrary.ts';
 import { testT } from '../i18n/testing.ts';
 
@@ -27,6 +29,7 @@ test('路径：查询版本可选，未指定时查当前生效版本', () => {
   assert.equal(binLibraryPaths.lookup('41111111', null), '/card-admin/v1/bin-library/bins/41111111');
   assert.equal(binLibraryPaths.lookup('411111', 2), '/card-admin/v1/bin-library/bins/411111?versionNo=2');
   assert.equal(binLibraryPaths.activation(4), '/card-admin/v1/bin-library/versions/4/activation');
+  assert.equal(binLibraryPaths.ranges(6), '/card-admin/v1/bin-library/versions/6/ranges');
   assert.equal(binLibraryPaths.uploadCompletion('7409912387001'), '/card-admin/v1/bin-library/uploads/7409912387001/completion');
 });
 
@@ -34,6 +37,9 @@ test('版本解码：可空字段统一为 null，未知状态或缺字段按无
   const seed = decodeVersion({ ...version, versionNo: 1, status: 'RETIRED', fileAddress: undefined, fileName: null, fileContentHash: null, createdBy: null });
   assert.equal(seed.fileAddress, null);
   assert.equal(seed.createdBy, null);
+  assert.equal(seed.createdByLabel, null);
+  assert.equal(decodeVersion({ ...version, createdByLabel: 'kenny' }).createdByLabel, 'kenny');
+  assert.throws(() => decodeVersion({ ...version, createdByLabel: 10001 }));
   for (const broken of [{ ...version, status: 'DELETED' }, { ...version, versionNo: 0 }, { ...version, processedRows: '1' }, { ...version, active: 'false' }]) {
     assert.throws(() => decodeVersion(broken), (error: unknown) => error instanceof ApiError && error.status === 502);
   }
@@ -50,6 +56,9 @@ test('错误明细与激活历史解码', () => {
     activatedAt: '2026-10-22T09:00:00.000000Z' }, { activationType: 'ACTIVATE', versionNo: 1, previousVersionNo: null, operatorAccountId: null,
     activatedAt: '2026-10-01T00:00:00.000000Z' }], page: 1, size: 10, total: 2 });
   assert.equal(history.items[1].previousVersionNo, null);
+  assert.equal(history.items[0].operatorLabel, null);
+  assert.equal(decodeActivationPage({ items: [{ activationType: 'ACTIVATE', versionNo: 1, previousVersionNo: null, operatorAccountId: '221546852372267008',
+    operatorLabel: 'ke***@gmail.com', activatedAt: '2026-10-22T09:00:00Z' }], page: 1, size: 10, total: 1 }).items[0].operatorLabel, 'ke***@gmail.com');
   assert.throws(() => decodeActivationPage({ items: [{ activationType: 'SWITCH', versionNo: 2, activatedAt: 'x' }], page: 1, size: 10, total: 1 }));
 });
 
@@ -90,13 +99,59 @@ test('进度：总行数未知为不定进度，已知时向下取整且不超�
   assert.equal(rowDelta(null, 1), '');
 });
 
-test('BIN 输入：6～8 位数字可查询，非数字与超过 8 位（疑似卡号）即时提示', () => {
-  assert.equal(binInputIssue(''), null);
-  assert.equal(binInputIssue('4111a'), t('binInput.digitsOnly'));
-  assert.equal(binInputIssue('41111'), 'At least 6 digits');
-  assert.match(binInputIssue('4111111111111111') ?? '', /never a full card number/);
+test('号段解码：真实响应形状，四个可空字段接受 null 与缺省，必填字段与前缀长度严格校验', () => {
+  const page = decodeRangePage({ items: [
+    { binPrefix: '41111111', prefixLength: 8, cardBrand: 'VISA', fundingType: 'CREDIT', cardLevel: 'CLASSIC', cardProduct: 'CONSUMER',
+      issuerCountry: 'US', issuerRegion: 'NORTH_AMERICA', issuerName: 'TEST BANK' },
+    { binPrefix: '621483', prefixLength: 6, cardBrand: 'UNIONPAY', fundingType: null, cardLevel: null, cardProduct: null,
+      issuerCountry: 'CN', issuerRegion: 'ASIA_PACIFIC', issuerName: null },
+  ], page: 1, size: 50, total: 17 });
+  assert.equal(page.total, 17);
+  assert.deepEqual(page.items[1], { binPrefix: '621483', prefixLength: 6, cardBrand: 'UNIONPAY', fundingType: null, cardLevel: null, cardProduct: null,
+    issuerCountry: 'CN', issuerRegion: 'ASIA_PACIFIC', issuerName: null });
+  const range = { binPrefix: '411111', prefixLength: 6, cardBrand: 'VISA', issuerCountry: 'US', issuerRegion: 'NORTH_AMERICA' };
+  assert.equal(decodeRange(range).cardLevel, null);
+  for (const broken of [{ ...range, prefixLength: 8 }, { ...range, binPrefix: '41111' }, { ...range, binPrefix: '411111111', prefixLength: 9 },
+    { ...range, cardBrand: null }, { ...range, issuerCountry: 'usa' }, { ...range, issuerRegion: null }, { ...range, fundingType: 1 }, { ...range, issuerName: false }]) {
+    assert.throws(() => decodeRange(broken), (error: unknown) => error instanceof ApiError && error.status === 502);
+  }
+  assert.throws(() => decodeRangePage({ items: [range], page: 1, size: 50 }));
+});
+
+test('BIN 前缀：1～8 位数字可筛选；非数字与超过 8 位（疑似卡号）即时提示且不生成查询', () => {
+  assert.equal(binPrefixIssue(''), null);
+  assert.equal(binPrefixIssue('4'), null);
+  assert.equal(binPrefixIssue(' 41111111 '), null);
+  assert.equal(binPrefixIssue('4111a'), t('binInput.digitsOnly'));
+  assert.equal(binPrefixIssue('4111 1111'), t('binInput.digitsOnly'));
+  assert.match(binPrefixIssue('411111111') ?? '', /never a full card number/);
+  assert.match(binPrefixIssue('4111111111111111') ?? '', /never a full card number/);
+  assert.equal(rangeQueryFilters({ ...emptyRangeFilters, binPrefix: '4111111111111111' }), null);
+  assert.equal(rangeQueryFilters({ ...emptyRangeFilters, binPrefix: '41x' }), null);
   assert.equal(isQueryableBin(' 41111111 '), true);
+  assert.equal(isQueryableBin('41111'), false);
   assert.equal(isQueryableBin('411111111'), false);
+});
+
+test('号段查询参数：只带有值的条件，分页参数在后', () => {
+  assert.equal(pagingQuery(rangeQueryFilters(emptyRangeFilters) ?? {}, { page: 1, size: 50 }).toString(), 'page=1&size=50');
+  const filters = { binPrefix: ' 4111 ', cardBrand: 'VISA', fundingType: null, issuerCountry: 'US' };
+  assert.deepEqual(rangeQueryFilters(filters), { binPrefix: '4111', cardBrand: 'VISA', issuerCountry: 'US' });
+  assert.equal(pagingQuery(rangeQueryFilters(filters) ?? {}, { page: 2, size: 50 }).toString(), 'binPrefix=4111&cardBrand=VISA&issuerCountry=US&page=2&size=50');
+  assert.equal(activeFilterCount(filters), 3);
+  assert.equal(activeFilterCount({ ...emptyRangeFilters, binPrefix: '  ' }), 0);
+});
+
+test('可浏览版本：VALID / ACTIVE / RETIRED', () => {
+  assert.deepEqual((['VALIDATING', 'VALID', 'INVALID', 'ACTIVE', 'RETIRED'] as const).filter(status => isBrowsable({ status })), ['VALID', 'ACTIVE', 'RETIRED']);
+});
+
+test('操作人：显示名优先；非数字原值原样；数字 ID 截断为末 6 位并保留完整 ID；空为 system', () => {
+  assert.deepEqual(operatorDisplay('kenny', '221546852372267008'), { text: 'kenny', full: '221546852372267008' });
+  assert.deepEqual(operatorDisplay(null, '221546852372267008'), { text: '…267008', full: '221546852372267008' });
+  assert.deepEqual(operatorDisplay(null, 'system'), { text: 'system', full: null });
+  assert.deepEqual(operatorDisplay(null, '10001'), { text: '10001', full: null });
+  assert.deepEqual(operatorDisplay(null, null), { text: t('operator.system'), full: null });
 });
 
 test('CSV 文件检查：扩展名、空文件与 50 MB 上限', () => {

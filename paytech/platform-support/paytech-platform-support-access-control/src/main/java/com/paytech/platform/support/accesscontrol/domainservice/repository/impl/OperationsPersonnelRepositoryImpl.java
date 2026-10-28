@@ -24,6 +24,12 @@ public class OperationsPersonnelRepositoryImpl implements OperationsPersonnelRep
         return ids.isEmpty() ? List.of() : mapper.selectByIds(ids);
     }
 
+    /** 按账号批量读取显示名事实。 */
+    @Override
+    public List<OperationsPersonnel> findLabelsByIds(Collection<Long> ids) {
+        return mapper.selectLabelsByIds(ids);
+    }
+
     /** 选人查询；关键字中的 LIKE 通配符按字面匹配。 */
     @Override
     public List<OperationsPersonnel> searchActive(String fragment, String emailToken, int limit) {

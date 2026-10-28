@@ -14,6 +14,9 @@ import java.util.List;
 import org.springframework.boot.test.context.TestComponent;
 
 import com.paytech.foundation.testsupport.api.Clear;
+import com.paytech.platform.support.accesscontrol.domain.enums.AuthenticationRealm;
+import com.paytech.platform.support.api.enums.OperationsAccountStatus;
+import com.paytech.platform.support.api.enums.OperationsAccountType;
 import com.paytech.platform.support.test.builder.OperationsCatalog;
 import com.paytech.platform.support.test.builder.OperatorBuilder;
 import com.paytech.platform.support.test.builder.OperatorBuilder.Operator;
@@ -133,6 +136,22 @@ public class OperationsMocker implements Clear {
             memberId, spec.sessionStatus(), now.plus(Duration.ofMinutes(30)), now.plus(Duration.ofHours(8)), now));
         String refresh = refresh("OPERATIONS", "operations-refresh-v1", sessionId, now.plus(Duration.ofHours(8)));
         return new Operator(spec.accountId(), spec.email(), memberId, sessionId, refresh, spec.password());
+    }
+
+    /**
+     * 只插入一行 ACTIVE 账号（不含密码、成员与会话），用于只读取账号事实的查询。
+     *
+     * @param realm 认证域
+     * @param type 账号类型
+     * @param loginName 登录名，可空
+     * @param emailMasked 脱敏邮箱，可空；不登记邮箱 Token
+     * @return 账号 ID
+     */
+    public long account(AuthenticationRealm realm, OperationsAccountType type, String loginName, String emailMasked) {
+        long accountId = OperatorBuilder.nextId();
+        assertEquals(1, mapper.insertAccount(accountId, realm.getCode(), type.getCode(), loginName, null, emailMasked,
+            null, OperationsAccountStatus.ACTIVE.getCode(), null, now()));
+        return accountId;
     }
 
     /** 为成员追加一条指定有效期和状态的平台角色授权。 */

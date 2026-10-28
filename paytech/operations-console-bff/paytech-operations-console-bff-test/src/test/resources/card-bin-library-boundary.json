@@ -31,7 +31,33 @@
    "size": 20,
    "total": 1
   },
-  "routeCode": "operations-card-bin-version-list"
+  "routeCode": "operations-card-bin-version-list",
+  "accountLabels": {
+   "10001": "ops.reviewer"
+  },
+  "bffResponse": {
+   "items": [
+    {
+     "versionNo": 4,
+     "status": "VALID",
+     "active": false,
+     "fileAddress": "/files/v1/7409912387612",
+     "fileName": "bin-2026-10-21.csv",
+     "fileContentHash": "9f2c000000000000000000000000000000000000000000000000000000000000",
+     "totalRows": 315902,
+     "processedRows": 315902,
+     "errorRows": 0,
+     "failureReason": null,
+     "createdBy": "10001",
+     "createTime": "2026-10-21T08:40:00.123456Z",
+     "updateTime": "2026-10-21T08:46:12.654321Z",
+     "createdByLabel": "ops.reviewer"
+    }
+   ],
+   "page": 1,
+   "size": 20,
+   "total": 1
+  }
  },
  {
   "id": "B1D",
@@ -80,7 +106,49 @@
    "size": 10,
    "total": 2
   },
-  "routeCode": "operations-card-bin-version-list"
+  "routeCode": "operations-card-bin-version-list",
+  "accountLabels": {
+   "10001": "ops.reviewer"
+  },
+  "bffResponse": {
+   "items": [
+    {
+     "versionNo": 4,
+     "status": "VALID",
+     "active": false,
+     "fileAddress": "/files/v1/7409912387612",
+     "fileName": "bin-2026-10-21.csv",
+     "fileContentHash": "9f2c000000000000000000000000000000000000000000000000000000000000",
+     "totalRows": 315902,
+     "processedRows": 315902,
+     "errorRows": 0,
+     "failureReason": null,
+     "createdBy": "10001",
+     "createTime": "2026-10-21T08:40:00.123456Z",
+     "updateTime": "2026-10-21T08:46:12.654321Z",
+     "createdByLabel": "ops.reviewer"
+    },
+    {
+     "versionNo": 3,
+     "status": "ACTIVE",
+     "active": true,
+     "fileAddress": "/files/v1/7409912387600",
+     "fileName": "bin-2026-10-20.csv",
+     "fileContentHash": "9f2c000000000000000000000000000000000000000000000000000000000000",
+     "totalRows": 312480,
+     "processedRows": 312480,
+     "errorRows": 0,
+     "failureReason": null,
+     "createdBy": "10001",
+     "createTime": "2026-10-21T08:40:00.123456Z",
+     "updateTime": "2026-10-21T08:46:12.654321Z",
+     "createdByLabel": "ops.reviewer"
+    }
+   ],
+   "page": 1,
+   "size": 10,
+   "total": 2
+  }
  },
  {
   "id": "B2",
@@ -107,7 +175,26 @@
    "createTime": "2026-10-21T08:40:00.123456Z",
    "updateTime": "2026-10-21T08:46:12.654321Z"
   },
-  "routeCode": "operations-card-bin-version-detail"
+  "routeCode": "operations-card-bin-version-detail",
+  "accountLabels": {
+   "10001": "ops.reviewer"
+  },
+  "bffResponse": {
+   "versionNo": 3,
+   "status": "ACTIVE",
+   "active": true,
+   "fileAddress": "/files/v1/7409912387600",
+   "fileName": "bin-2026-10-20.csv",
+   "fileContentHash": "9f2c000000000000000000000000000000000000000000000000000000000000",
+   "totalRows": 312480,
+   "processedRows": 312480,
+   "errorRows": 0,
+   "failureReason": null,
+   "createdBy": "10001",
+   "createTime": "2026-10-21T08:40:00.123456Z",
+   "updateTime": "2026-10-21T08:46:12.654321Z",
+   "createdByLabel": "ops.reviewer"
+  }
  },
  {
   "id": "B3",
@@ -159,7 +246,25 @@
    "size": 10,
    "total": 1
   },
-  "routeCode": "operations-card-bin-activation-list"
+  "routeCode": "operations-card-bin-activation-list",
+  "accountLabels": {
+   "10001": "ops.reviewer"
+  },
+  "bffResponse": {
+   "items": [
+    {
+     "activationType": "ROLLBACK",
+     "versionNo": 2,
+     "previousVersionNo": 3,
+     "operatorAccountId": "10001",
+     "activatedAt": "2026-10-22T09:00:00.250001Z",
+     "operatorLabel": "ops.reviewer"
+    }
+   ],
+   "page": 1,
+   "size": 10,
+   "total": 1
+  }
  },
  {
   "id": "B5",
@@ -210,6 +315,77 @@
    "issuerName": null
   },
   "routeCode": "operations-card-bin-lookup"
+ },
+ {
+  "id": "B10",
+  "method": "GET",
+  "path": "/card-admin/v1/bin-library/versions/3/ranges",
+  "ownerPath": "/card/v1/bin-library/versions/3/ranges",
+  "query": "?binPrefix=4111&cardBrand=VISA&fundingType=CREDIT&issuerCountry=US&page=2&size=50",
+  "ownerQuery": "?binPrefix=4111&cardBrand=VISA&fundingType=CREDIT&issuerCountry=US&page=2&size=50",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "items": [
+    {
+     "binPrefix": "41111111",
+     "prefixLength": 8,
+     "cardBrand": "VISA",
+     "fundingType": "CREDIT",
+     "cardLevel": "CLASSIC",
+     "cardProduct": "CONSUMER",
+     "issuerCountry": "US",
+     "issuerRegion": "NORTH_AMERICA",
+     "issuerName": "TEST BANK"
+    }
+   ],
+   "page": 2,
+   "size": 50,
+   "total": 51
+  },
+  "routeCode": "operations-card-bin-range-list"
+ },
+ {
+  "id": "B10D",
+  "method": "GET",
+  "path": "/card-admin/v1/bin-library/versions/3/ranges",
+  "ownerPath": "/card/v1/bin-library/versions/3/ranges",
+  "query": "",
+  "ownerQuery": "?page=1&size=10",
+  "request": null,
+  "status": 200,
+  "ownerStatus": 200,
+  "response": {
+   "items": [
+    {
+     "binPrefix": "41111111",
+     "prefixLength": 8,
+     "cardBrand": "VISA",
+     "fundingType": "CREDIT",
+     "cardLevel": "CLASSIC",
+     "cardProduct": "CONSUMER",
+     "issuerCountry": "US",
+     "issuerRegion": "NORTH_AMERICA",
+     "issuerName": "TEST BANK"
+    },
+    {
+     "binPrefix": "411112",
+     "prefixLength": 6,
+     "cardBrand": "VISA",
+     "fundingType": null,
+     "cardLevel": null,
+     "cardProduct": null,
+     "issuerCountry": "US",
+     "issuerRegion": "NORTH_AMERICA",
+     "issuerName": null
+    }
+   ],
+   "page": 1,
+   "size": 10,
+   "total": 2
+  },
+  "routeCode": "operations-card-bin-range-list"
  },
  {
   "id": "B8",

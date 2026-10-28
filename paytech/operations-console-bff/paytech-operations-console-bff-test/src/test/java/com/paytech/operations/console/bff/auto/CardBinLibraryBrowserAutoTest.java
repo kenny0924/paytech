@@ -1,5 +1,6 @@
 package com.paytech.operations.console.bff.auto;
 
+import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.ACCOUNT_LABELS_PATH;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.AUTHORIZE_PATH;
 import static com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator.SESSION_ID;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -33,7 +34,9 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 import com.paytech.card.api.CardApiConstants;
+import com.paytech.card.api.enums.BinLibraryActivationType;
 import com.paytech.card.api.enums.BinLibraryVersionStatus;
+import com.paytech.card.api.enums.CardBrand;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
 import com.paytech.operations.console.bff.ext.rest.CardBinLibraryController;
@@ -44,21 +47,26 @@ import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimul
 import com.paytech.platform.support.api.enums.FileScanStatus;
 import com.paytech.platform.support.api.enums.FileErrorCode;
 import com.paytech.platform.support.api.files.FileAddress;
+import com.paytech.platform.support.api.operations.OperationsAccountLabelQueryApi;
 
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 浏览器经真实 BFF 与 HttpExchange 维护卡 BIN 库：Card 运营接口 7 条转发（B1—B5、B8、B9）与 Platform 内部文件上传 2 条（B6、B7）
- * <li>Card 与 Platform 均由 Loopback Simulator 承担；PLT-I02 授权与 Platform 文件调用记录在同一 Platform Simulator。</li>
+ * 浏览器经真实 BFF 与 HttpExchange 维护卡 BIN 库：Card 运营接口 8 条转发（B1—B5、B8—B10）与 Platform 内部文件上传 2 条（B6、B7）
+ * <li>Card 与 Platform 均由 Loopback Simulator 承担；PLT-I02 授权、Platform 文件调用与运营账号显示名查询记录在同一 Platform Simulator。</li>
  * <li>覆盖转发契约（调用方、操作人、Query、Body 与状态码）、授权拒绝、本地边界拒绝、Owner 错误透传、依赖故障与上传授权不进入日志。</li>
+ * <li>B1、B2、B4 的操作人显示名：去重批量查询、50 个分批、非账号操作人跳过，Platform 失败 / 超时 / 无效回执时显示名为 null 且列表仍成功。</li>
  *
  * @see CardBinLibraryController#listVersions(jakarta.servlet.http.HttpServletRequest, String, Integer, Integer)
  * @see CardBinLibraryController#getVersion(jakarta.servlet.http.HttpServletRequest, Integer)
  * @see CardBinLibraryController#listImportErrors(jakarta.servlet.http.HttpServletRequest, Integer, Integer, Integer)
  * @see CardBinLibraryController#listActivations(jakarta.servlet.http.HttpServletRequest, Integer, Integer)
  * @see CardBinLibraryController#lookupBin(jakarta.servlet.http.HttpServletRequest, String, Integer)
+ * @see CardBinLibraryController#listRanges(jakarta.servlet.http.HttpServletRequest, Integer, String, String, String, String,
+ *      Integer, Integer)
  * @see CardBinLibraryController#startUpload(jakarta.servlet.http.HttpServletRequest,
  *      com.paytech.operations.console.bff.service.model.OperatorContext,
  *      com.paytech.operations.console.bff.service.model.binlibrary.request.StartBinLibraryUploadRequestBody)
@@ -130,12 +138,20 @@ class CardBinLibraryBrowserAutoTest extends OperationsBffHttpTestBase {
     @MethodSource("endpoints")
     void test_normalFlow(JsonNode row) throws Exception {
         replyAsOwner(row);
+        boolean labeled = row.has("accountLabels");
+        if (labeled) {
+            platform.accountLabels(JSON.convertValue(row.path("accountLabels"), new TypeReference<Map<String, String>>() { }));
+        }
 
         var response = send(row);
 
         assertEquals(row.path("status").asInt(), response.statusCode(), response.body());
-        assertEquals(row.path("response"), JSON.readTree(response.body()));
-        assertEquals(List.of(AUTHORIZE_PATH), platform.requests().stream().map(RecordedRequest::path).toList());
+        assertEquals(row.has("bffResponse") ? row.path("bffResponse") : row.path("response"), JSON.readTree(response.body()));
+        assertEquals(labeled ? List.of(AUTHORIZE_PATH, ACCOUNT_LABELS_PATH) : List.of(AUTHORIZE_PATH),
+            platform.requests().stream().map(RecordedRequest::path).toList());
+        if (labeled) {
+            assertLabelQueries(List.of(String.join(",", row.path("accountLabels").propertyNames())));
+        }
         assertEquals(1, card.requests().size(), card.requests().toString());
         var call = card.requests().getFirst();
         boolean command = !"GET".equals(row.path("method").asString());
@@ -334,6 +350,154 @@ class CardBinLibraryBrowserAutoTest extends OperationsBffHttpTestBase {
         assertRejectedLocally(400, send("POST", "/card-admin/v1/bin-library/uploads/" + UPLOAD_ID + "/completion",
             "operations-card-bin-upload-complete", JSON.createObjectNode().put("fileId", FILE_ID)));
         assertOnlyAuthorized();
+    }
+
+    /** 号段列表：Card 的版本不可浏览（400）与版本不存在（404）保留公共 Code 与 Owner detail；分页窗口不符映射 502。 */
+    @Test
+    void test_rangeOwnerFailures() throws Exception {
+        var ranges = row("B10");
+        assertOwnerProblem(ranges, 400, CommonErrorCode.BUSINESS_CHECK_FAILED);
+        resetBetweenCalls();
+        assertOwnerProblem(ranges, 404, CommonErrorCode.NOT_FOUND);
+        resetBetweenCalls();
+
+        var page = (ObjectNode) ranges.path("response").deepCopy();
+        page.put("size", 20);
+        card.reply("GET", ranges.path("ownerPath").asString(), 200, JSON.writeValueAsString(page));
+        assertUpstreamInvalid(send(ranges));
+    }
+
+    /** 号段筛选格式（含 9 位以上数字与完整卡号）、未知 Query、非法条数与版本号在访问 Card 前拒绝。 */
+    @Test
+    void test_rangeInvalidParameter() throws Exception {
+        var ranges = row("B10");
+        String path = ranges.path("path").asString();
+        String routeCode = ranges.path("routeCode").asString();
+        for (String query : List.of("?binPrefix=411111111", "?binPrefix=4111111111111111", "?binPrefix=41a",
+            "?cardBrand=visa", "?cardBrand=" + CardBrand.VISA.getCode() + "X", "?fundingType=CREDITCARD",
+            "?issuerCountry=us", "?issuerCountry=USA", "?size=15", "?page=0", "?bin=411111")) {
+            assertRejectedLocally(400, send("GET", path + query, routeCode, null));
+            assertOnlyAuthorized();
+            resetBetweenCalls();
+        }
+        assertRejectedLocally(400, send("GET", "/card-admin/v1/bin-library/versions/0/ranges", routeCode, null));
+    }
+
+    /** 本页操作人去重后一次查询；Platform 未返回的账号、system 与空操作人的显示名为 null，其余字段不变。 */
+    @Test
+    void test_operatorLabelEdgeCase() throws Exception {
+        String unknown = "20002";
+        var activations = row("B4");
+        var page = JSON.createObjectNode().put("page", 1).put("size", 10).put("total", 5);
+        page.putArray("items").add(activation(ACTOR)).add(activation(unknown)).add(activation("system"))
+            .add(activation(null)).add(activation(ACTOR));
+        card.reply("GET", activations.path("ownerPath").asString(), 200, JSON.writeValueAsString(page));
+        platform.accountLabels(Map.of(ACTOR, "ops.reviewer"));
+
+        var response = send("GET", activations.path("path").asString(), activations.path("routeCode").asString(), null);
+
+        assertEquals(200, response.statusCode(), response.body());
+        var items = JSON.readTree(response.body()).path("items");
+        assertAll(() -> assertEquals("ops.reviewer", items.get(0).path("operatorLabel").asString()),
+            () -> assertTrue(items.get(1).path("operatorLabel").isNull()),
+            () -> assertTrue(items.get(2).path("operatorLabel").isNull()),
+            () -> assertEquals("system", items.get(2).path("operatorAccountId").asString()),
+            () -> assertTrue(items.get(3).path("operatorLabel").isNull()),
+            () -> assertTrue(items.get(3).path("operatorAccountId").isNull()),
+            () -> assertEquals("ops.reviewer", items.get(4).path("operatorLabel").asString()),
+            () -> assertEquals(BinLibraryActivationType.ACTIVATE.getCode(), items.get(0).path("activationType").asString()));
+        assertLabelQueries(List.of(ACTOR + "," + unknown));
+        resetBetweenCalls();
+
+        var seed = row("B2");
+        var version = (ObjectNode) seed.path("response").deepCopy();
+        version.putNull("createdBy");
+        card.reply("GET", seed.path("ownerPath").asString(), 200, JSON.writeValueAsString(version));
+        var seeded = send(seed);
+        assertEquals(200, seeded.statusCode(), seeded.body());
+        assertTrue(JSON.readTree(seeded.body()).path("createdByLabel").isNull());
+        assertOnlyAuthorized();
+    }
+
+    /** 一页超过 50 个不同操作人时按 Platform 上限分批查询（200 条、60 个账号 → 50 + 10），显示名全部补齐。 */
+    @Test
+    void test_operatorLabelBatches() throws Exception {
+        var activations = row("B4");
+        var page = JSON.createObjectNode().put("page", 1).put("size", 200).put("total", 60);
+        var items = page.putArray("items");
+        var labels = new HashMap<String, String>();
+        for (int index = 0; index < 60; index++) {
+            String accountId = String.valueOf(30001 + index);
+            items.add(activation(accountId));
+            labels.put(accountId, "ops." + accountId);
+        }
+        card.reply("GET", activations.path("ownerPath").asString() + "?page=1&size=200", 200, JSON.writeValueAsString(page));
+        platform.accountLabels(labels);
+
+        var response = send("GET", activations.path("path").asString() + "?page=1&size=200",
+            activations.path("routeCode").asString(), null);
+
+        assertEquals(200, response.statusCode(), response.body());
+        JSON.readTree(response.body()).path("items").forEach(item -> assertEquals(
+            "ops." + item.path("operatorAccountId").asString(), item.path("operatorLabel").asString()));
+        var sorted = labels.keySet().stream().sorted().toList();
+        assertLabelQueries(List.of(String.join(",", sorted.subList(0, 50)), String.join(",", sorted.subList(50, 60))));
+    }
+
+    /** Platform 不可用、超时或回执包含未请求的账号时，版本与激活列表仍为 200，显示名为 null，Card 字段不变。 */
+    @Test
+    void test_operatorLabelUnavailable() throws Exception {
+        var versions = row("B1");
+        replyAsOwner(versions);
+        platform.problem(ACCOUNT_LABELS_PATH, 503, CommonErrorCode.SERVICE_UNAVAILABLE.getCode());
+        assertLabelsMissing(versions, send(versions));
+        resetBetweenCalls();
+
+        var activations = row("B4");
+        replyAsOwner(activations);
+        platform.rawResponse(ACCOUNT_LABELS_PATH, "{\"items\":[{\"accountId\":\"99999\",\"label\":\"other\"}]}");
+        assertLabelsMissing(activations, send(activations));
+        resetBetweenCalls();
+
+        var detail = row("B2");
+        replyAsOwner(detail);
+        platform.delay(ACCOUNT_LABELS_PATH);
+        var slow = send(detail);
+        platform.releaseDelay();
+        assertLabelsMissing(detail, slow);
+    }
+
+    /** 显示名不可用：状态 200，Card 字段原样，显示名为 null；确实查询过 Platform。 */
+    private void assertLabelsMissing(JsonNode row, HttpResponse<String> response) {
+        assertEquals(200, response.statusCode(), response.body());
+        var expected = (ObjectNode) row.path("bffResponse").deepCopy();
+        if (expected.has("items")) {
+            expected.path("items").forEach(item -> ((ObjectNode) item).properties().stream()
+                .filter(entry -> entry.getKey().endsWith("Label")).toList()
+                .forEach(entry -> ((ObjectNode) item).putNull(entry.getKey())));
+        } else {
+            expected.putNull("createdByLabel");
+        }
+        assertEquals(expected, JSON.readTree(response.body()));
+        assertEquals(List.of(AUTHORIZE_PATH, ACCOUNT_LABELS_PATH), platform.requests().stream().map(RecordedRequest::path).toList());
+    }
+
+    /** 显示名查询依次为给定 accountIds，调用方为本 BFF，不带浏览器凭据与会话身份。 */
+    private void assertLabelQueries(List<String> accountIds) {
+        var calls = platform.requests().stream().filter(request -> ACCOUNT_LABELS_PATH.equals(request.path())).toList();
+        assertEquals(accountIds.stream().map(ids -> "accountIds=" + ids).toList(),
+            calls.stream().map(call -> URLDecoder.decode(call.query(), StandardCharsets.UTF_8)).toList());
+        calls.forEach(call -> assertAll(() -> assertEquals("GET", call.method()),
+            () -> assertEquals(CardApiConstants.OPERATIONS_CONSOLE_BFF, call.header(OperationsAccountLabelQueryApi.CALLER_SERVICE_HEADER)),
+            () -> assertNull(call.header("X-Gateway-Actor-Subject")), () -> assertNull(call.header("Cookie")),
+            () -> assertEquals(REQUEST_ID, call.header("X-Request-Id"))));
+    }
+
+    /** Card 激活记录样例。 */
+    private static ObjectNode activation(String operatorAccountId) {
+        return JSON.createObjectNode().put("activationType", BinLibraryActivationType.ACTIVATE.getCode()).put("versionNo", 4)
+            .put("previousVersionNo", 3).put("operatorAccountId", operatorAccountId)
+            .put("activatedAt", "2026-10-22T09:00:00.250001Z");
     }
 
     /** Owner Problem 的状态、公共 Code、detail 与本次 Request ID。 */

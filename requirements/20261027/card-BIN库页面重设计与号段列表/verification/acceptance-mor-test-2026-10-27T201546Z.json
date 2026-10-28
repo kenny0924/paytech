@@ -1,0 +1,287 @@
+{
+ "env": "mor-test",
+ "since": "2026-10-27T20:11:35Z",
+ "pass": 45,
+ "fail": 1,
+ "results": [
+  {
+   "group": "R",
+   "name": "有且只有一个 ACTIVE 版本（[['1']]）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "v1 ranges 无筛选 → 17 条、total 与顺序一致",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "v1 ranges binPrefix=4 → 5 条、total 与顺序一致",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "v1 ranges binPrefix=40128888 → 1 条、total 与顺序一致",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "v1 ranges cardBrand=VISA → 5 条、total 与顺序一致",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "v1 ranges fundingType=DEBIT → 6 条、total 与顺序一致",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "v1 ranges issuerCountry=US → 11 条、total 与顺序一致",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "v1 ranges binPrefix=5&cardBrand=MASTERCARD&fundingType=DEBIT&issuerCountry=AE → 1 条、total 与顺序一致",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "v1 ranges binPrefix=999999 → 0 条、total 与顺序一致",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "缺省分页 size=50、page=1",
+   "ok": false,
+   "evidence": {
+    "status": 200,
+    "body": "{'items': [{'binPrefix': '222300', 'cardBrand': 'MASTERCARD', 'cardLevel': 'WORLD', 'cardProduct': 'COMMERCIAL', 'fundingType': 'CREDIT', 'issuerCountry': 'US', 'issuerName': 'SYNTHETIC TEST ISSUER US"
+   }
+  },
+  {
+   "group": "R",
+   "name": "第 2 页 size=10 → 7 条",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "号段字段齐全（prefixLength 与前缀位数一致）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "VALID 版本 v2 可浏览（total = 8）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "RETIRED 版本 v5 可浏览（total = 8）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "VALID 版本 v6 可浏览（total = 8）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "INVALID 版本 v3 → 400 BUSINESS_CHECK_FAILED",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "不存在版本 v106 → 404",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "前缀超过 8 位 → 400",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "前缀非数字 → 400",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "非法卡组织 → 400",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "非法借贷记 → 400",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "非法发卡国 → 400",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "R",
+   "name": "size=0 → 400",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "G",
+   "name": "未登录 → 401",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "G",
+   "name": "白名单外 Query 参数被 Gateway 拒绝（4xx）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "G",
+   "name": "Platform labels 内部接口没有公开路由（4xx）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "G",
+   "name": "Platform labels 经 /api/platform 也不可达（4xx）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "版本列表 200（6 个）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "v6 createdBy=…267008 → createdByLabel 有值",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "v5 createdBy=…267008 → createdByLabel 有值",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "v4 createdBy=…267008 → createdByLabel 有值",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "v3 createdBy=…267008 → createdByLabel 有值",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "v2 createdBy=…267008 → createdByLabel 有值",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "v1 createdBy=None → createdByLabel null",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "版本详情 v6 createdByLabel 同列表",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "显示名不含完整邮箱（脱敏或登录名）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "激活记录 200（3 条）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "激活 v1 ROLLBACK → operatorLabel 有值",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "激活 v5 ACTIVATE → operatorLabel 有值",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "L",
+   "name": "激活 v1 ACTIVATE → operatorLabel null",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "H",
+   "name": "card-service --since 2026-10-27T20:11:35Z ERROR 0（0）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "H",
+   "name": "card-service healthy",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "H",
+   "name": "operations-console-bff --since 2026-10-27T20:11:35Z ERROR 0（0）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "H",
+   "name": "operations-console-bff healthy",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "H",
+   "name": "platform-support-service --since 2026-10-27T20:11:35Z ERROR 0（0）",
+   "ok": true,
+   "evidence": null
+  },
+  {
+   "group": "H",
+   "name": "platform-support-service healthy",
+   "ok": true,
+   "evidence": null
+  }
+ ]
+}

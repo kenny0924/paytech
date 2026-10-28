@@ -1,0 +1,10 @@
+# card：BIN 库页面重设计与号段列表 · mor-test 候选覆盖（阶段 6 准备 2026-10-27；阶段 7 由主会话执行，需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 card-service
+# 只认 sha256（tag 仅供辨认；:development 未改动）。不加 --remove-orphans。
+# 构建源同 Platform 候选。环境变量：现网容器由文件公开桶发布的覆盖文件启动，该文件对 card 只换镜像；本文件同样只换镜像。
+services:
+  card-service:
+    # 新增 GET /card/v1/bin-library/versions/{versionNo}/ranges（调用方只认 operations-console-bff）；
+    # 另随 5e1f16ab 带上已提交的共享库变化（platform-support-api 多语言 / 参考数据类型、http-client-support 422 字段错误、messaging 事件目录），card 自身类与现网 0 差异（baseline.md 第 2 节）。
+    image: sha256:380064febe8fbc3883c81292f7e034b6378f8262c0b7bee0503434f5facf6754  # mor-test/card-service:binlist-20261027a（JAR d41f3ada4ec33f4c）

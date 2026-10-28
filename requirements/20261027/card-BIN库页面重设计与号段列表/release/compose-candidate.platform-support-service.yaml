@@ -1,0 +1,10 @@
+# card：BIN 库页面重设计与号段列表 · mor-test 候选覆盖（阶段 6 准备 2026-10-27；阶段 7 由主会话执行，需用户授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 platform-support-service
+# 只认 sha256（tag 仅供辨认；:development 未改动）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-binlist-rel = 5e1f16ab + Code-MoR-binlist 未提交改动的冻结副本（指纹见 baseline.md 第 2 节）。
+# 环境变量：现网容器由参考数据发布的覆盖文件启动，该文件只换镜像；本文件同样只换镜像（渲染后与现网逐键逐值相同，baseline.md 第 3 节）。
+services:
+  platform-support-service:
+    # 新增内部只读接口 GET /operations-accounts/v1/labels（调用方只认 operations-console-bff，不经 Gateway）；其余与现网 0 差异。
+    image: sha256:186347bcb7b4b4ea11d26804646d77d1f8b9fd6346577adef39ace3deef683a1  # mor-test/platform-support-service:binlist-20261027a（JAR 93a3fb441d773f39）

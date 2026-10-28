@@ -1,0 +1,145 @@
+### image sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb; platform jar 93a3fb441d773f39; dump 870ab8e41a98f512
+### imported mortest-mor_platform-20261027T193210Z.sql.gz
+### ===== forward
+### compile baseline               COMPILE OK: routes loaded=618, effective=612, block loaded=0, block ACTIVE=0, block effective=0
+### 00-precheck (00-platform-block140-precheck.sql) exit=0 expect=ok 0.34s
++---------------------+------+
+| t                   | n    |
++---------------------+------+
+| block140_rows_total |    0 |
++---------------------+------+
++----------------------+---+
+| t                    | n |
++----------------------+---+
+| new_route_code       | 0 |
+| new_method_path      | 0 |
+| same_downstream_path | 0 |
++----------------------+---+
++-----------------------+--------------------+----------------------------+--------+
+| t                     | id                 | code                       | status |
++-----------------------+--------------------+----------------------------+--------+
+| dep_permission_132101 | 900000000000132101 | CARD_BIN_LIBRARY_READ      | ACTIVE |
+| dep_target_001        | 900000000000000001 | operations-console-bff     | ACTIVE |
+| shape_route_132405    | 900000000000132405 | operations-card-bin-lookup | ACTIVE |
++-----------------------+--------------------+----------------------------+--------+
++--------------+------------+-------------+-----------------------+--------------------+--------------------+---------------------+----------------------+------------------+------------------+-----------------------------+-------------------------+--------------------+
+| t            | channel    | http_method | security_profile_code | authorization_mode | permission_id      | request_cookie_mode | response_cookie_mode | idempotency_mode | body_limit_bytes | body_receive_timeout_millis | response_timeout_millis | target_id          |
++--------------+------------+-------------+-----------------------+--------------------+--------------------+---------------------+----------------------+------------------+------------------+-----------------------------+-------------------------+--------------------+
+| shape_132405 | OPERATIONS | GET         | OPERATIONS_JWT        | HUMAN_PERMISSION   | 900000000000132101 | DROP                | NONE                 | NONE             |                0 |                        5000 |                   10000 | 900000000000000001 |
++--------------+------------+-------------+-----------------------+--------------------+--------------------+---------------------+----------------------+------------------+------------------+-----------------------------+-------------------------+--------------------+
++---------------------+---------------+----------------------+
+| t                   | header_name   | header_use           |
++---------------------+---------------+----------------------+
+| shape_132405_header | authorization | CORS_REQUEST_ALLOWED |
+| shape_132405_header | origin        | FORWARD_REQUEST      |
++---------------------+---------------+----------------------+
++--------------------+-------------+-------------------------+----------+---------------+----------------------+-------------------+
+| t                  | rule_type   | dimension               | capacity | refill_tokens | refill_period_millis | concurrency_limit |
++--------------------+-------------+-------------------------+----------+---------------+----------------------+-------------------+
+| shape_132405_guard | CONCURRENCY | AUTHENTICATED_PRINCIPAL |     NULL |          NULL |                 NULL |                 2 |
+| shape_132405_guard | CONCURRENCY | CLIENT_IP               |     NULL |          NULL |                 NULL |                 3 |
+| shape_132405_guard | CONCURRENCY | SHARED_ROUTE            |     NULL |          NULL |                 NULL |                50 |
+| shape_132405_guard | RATE_LIMIT  | AUTHENTICATED_PRINCIPAL |       30 |            30 |                60000 |              NULL |
+| shape_132405_guard | RATE_LIMIT  | CLIENT_IP               |       30 |            30 |                60000 |              NULL |
+| shape_132405_guard | RATE_LIMIT  | SHARED_ROUTE            |      300 |           300 |                60000 |              NULL |
++--------------------+-------------+-------------------------+----------+---------------+----------------------+-------------------+
++------------------+----------+-----+
+| t                | status   | n   |
++------------------+----------+-----+
+| routes_by_status | ACTIVE   | 612 |
+| routes_by_status | DISABLED |   6 |
++------------------+----------+-----+
++-------------+--------------------+--------------------------------------+--------+-------------+---------------------------------------------------------------------------+
+| t           | route_id           | route_code                           | status | http_method | external_path_template                                                    |
++-------------+--------------------+--------------------------------------+--------+-------------+---------------------------------------------------------------------------+
+| card_routes | 900000000000132401 | operations-card-bin-version-list     | ACTIVE | GET         | /api/operations/card-admin/v1/bin-library/versions                        |
+| card_routes | 900000000000132402 | operations-card-bin-version-detail   | ACTIVE | GET         | /api/operations/card-admin/v1/bin-library/versions/{versionNo}            |
+| card_routes | 900000000000132403 | operations-card-bin-version-errors   | ACTIVE | GET         | /api/operations/card-admin/v1/bin-library/versions/{versionNo}/errors     |
+| card_routes | 900000000000132404 | operations-card-bin-activation-list  | ACTIVE | GET         | /api/operations/card-admin/v1/bin-library/activations                     |
+| card_routes | 900000000000132405 | operations-card-bin-lookup           | ACTIVE | GET         | /api/operations/card-admin/v1/bin-library/bins/{bin}                      |
+| card_routes | 900000000000132406 | operations-card-bin-upload-start     | ACTIVE | POST        | /api/operations/card-admin/v1/bin-library/uploads                         |
+| card_routes | 900000000000132407 | operations-card-bin-upload-complete  | ACTIVE | POST        | /api/operations/card-admin/v1/bin-library/uploads/{uploadId}/completion   |
+| card_routes | 900000000000132408 | operations-card-bin-version-create   | ACTIVE | POST        | /api/operations/card-admin/v1/bin-library/versions                        |
+| card_routes | 900000000000132409 | operations-card-bin-version-activate | ACTIVE | POST        | /api/operations/card-admin/v1/bin-library/versions/{versionNo}/activation |
++-------------+--------------------+--------------------------------------+--------+-------------+---------------------------------------------------------------------------+
+### 10-register (10-platform-block140-registration.sql) exit=0 expect=ok 0.30s
+### compile dormant                COMPILE OK: routes loaded=619, effective=612, block loaded=1, block ACTIVE=0, block effective=0
+### 13-verify-dormant (13-platform-block140-verify.sql) exit=0 expect=ok 0.13s
++--------------------+--------------------------------+----------+---------+--------------------+--------------------+
+| route_id           | route_code                     | status   | version | permission_id      | target_id          |
++--------------------+--------------------------------+----------+---------+--------------------+--------------------+
+| 900000000000140401 | operations-card-bin-range-list | DISABLED |       1 | 900000000000132101 | 900000000000000001 |
++--------------------+--------------------------------+----------+---------+--------------------+--------------------+
++------------------+-----+
+| t                | n   |
++------------------+-----+
+| headers          |   2 |
+| query_params     |   6 |
+| guards           |   6 |
+| guard_shape_diff |   0 |
+| routes_active    | 612 |
++------------------+-----+
+### 10-register-again (10-platform-block140-registration.sql) exit=1 expect=fail 0.08s
+ERROR 1062 (23000) at line 41: Duplicate entry '900000000000140401' for key 't_gateway_route.PRIMARY'
+### 11-activate (11-platform-block140-activate.sql) exit=0 expect=ok 0.15s
++--------+
+| routes |
++--------+
+|      1 |
++--------+
+### compile active                 COMPILE OK: routes loaded=619, effective=613, block loaded=1, block ACTIVE=1, block effective=1
+### 13-verify-active (13-platform-block140-verify.sql) exit=0 expect=ok 0.10s
++--------------------+--------------------------------+--------+---------+--------------------+--------------------+
+| route_id           | route_code                     | status | version | permission_id      | target_id          |
++--------------------+--------------------------------+--------+---------+--------------------+--------------------+
+| 900000000000140401 | operations-card-bin-range-list | ACTIVE |       2 | 900000000000132101 | 900000000000000001 |
++--------------------+--------------------------------+--------+---------+--------------------+--------------------+
++------------------+-----+
+| t                | n   |
++------------------+-----+
+| headers          |   2 |
+| query_params     |   6 |
+| guards           |   6 |
+| guard_shape_diff |   0 |
+| routes_active    | 613 |
++------------------+-----+
+### 19-rollback-while-active (19-platform-block140-rollback.sql) exit=1 expect=fail 0.10s
+ERROR 1242 (21000) at line 6: Subquery returns more than 1 row
+### compile still-active           COMPILE OK: routes loaded=619, effective=613, block loaded=1, block ACTIVE=1, block effective=1
+### ===== rollback
+### 12-deactivate (12-platform-block140-deactivate.sql) exit=0 expect=ok 0.11s
++--------+
+| routes |
++--------+
+|      1 |
++--------+
+### compile deactivated            COMPILE OK: routes loaded=619, effective=612, block loaded=1, block ACTIVE=0, block effective=0
+### 19-rollback (19-platform-block140-rollback.sql) exit=0 expect=ok 0.10s
++------------------+
+| must_be_disabled |
++------------------+
+|                0 |
++------------------+
++-------------+
+| guard_rules |
++-------------+
+|           6 |
++-------------+
++--------------+
+| query_params |
++--------------+
+|            6 |
++--------------+
++---------------+
+| route_headers |
++---------------+
+|             2 |
++---------------+
++--------+
+| routes |
++--------+
+|      1 |
++--------+
+### compile rolled-back            COMPILE OK: routes loaded=618, effective=612, block loaded=0, block ACTIVE=0, block effective=0
+### platform before vs final: 0 differing lines (see pf-before-vs-final.diff)
+### DONE

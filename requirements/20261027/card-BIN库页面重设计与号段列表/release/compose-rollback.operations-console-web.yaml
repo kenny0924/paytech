@@ -1,0 +1,6 @@
+# card：BIN 库页面重设计与号段列表 · mor-test 回滚覆盖（阶段 6 准备 2026-10-27）。
+# 镜像 = 现网运行镜像（operations-console 文件上传页面整理第四轮 fileupload-ux-20261027d，= c4b99e2d），env 镜像自带。
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+services:
+  operations-console-web:
+    image: sha256:2e179d6f1bc3635a427f50246aa86fea338e740995d703868799cdf54efb9a4c  # 现网 fileupload-ux-20261027d

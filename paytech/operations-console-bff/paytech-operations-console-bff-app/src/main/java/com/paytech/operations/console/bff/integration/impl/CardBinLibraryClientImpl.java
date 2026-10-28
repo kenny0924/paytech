@@ -16,6 +16,7 @@ import com.paytech.card.api.binlibrary.response.BinImportErrorResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLibraryActivationResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLibraryVersionResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLookupResponseBody;
+import com.paytech.card.api.binlibrary.response.BinRangeResponseBody;
 import com.paytech.foundation.httpclient.api.HttpRequestValidationException;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.integration.CardBinLibraryClient;
@@ -55,6 +56,14 @@ public class CardBinLibraryClientImpl implements CardBinLibraryClient {
     @Override
     public PagingResponseBody<BinImportErrorResponseBody> listImportErrors(int versionNo, int page, int size) {
         return window(api.listImportErrors(CALLER, String.valueOf(versionNo), page, size), page, size);
+    }
+
+    /** 版本号段分页，筛选条件原样透传，核对分页窗口。 */
+    @Override
+    public PagingResponseBody<BinRangeResponseBody> listRanges(int versionNo, String binPrefix, String cardBrand,
+        String fundingType, String issuerCountry, int page, int size) {
+        return window(api.listRanges(CALLER, String.valueOf(versionNo), binPrefix, cardBrand, fundingType, issuerCountry,
+            page, size), page, size);
     }
 
     /** 激活历史分页，核对分页窗口。 */

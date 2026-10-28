@@ -12,6 +12,7 @@ import com.paytech.card.api.binlibrary.response.BinImportErrorResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLibraryActivationResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLibraryVersionResponseBody;
 import com.paytech.card.api.binlibrary.response.BinLookupResponseBody;
+import com.paytech.card.api.binlibrary.response.BinRangeResponseBody;
 import com.paytech.card.ext.rest.converter.CardBinLibraryConverter;
 import com.paytech.card.service.CardBinLibraryQueryService;
 import com.paytech.card.service.CardCallerService;
@@ -60,6 +61,16 @@ public class CardBinLibraryController implements CardBinLibraryApi {
         requireOperations(caller);
         return queryService.listImportErrors(Integer.parseInt(versionNo), PagingRequestBody.of(page, size))
             .map(converter::convertError);
+    }
+
+    /** 分页列出版本号段 */
+    @Override
+    public PagingResponseBody<BinRangeResponseBody> listRanges(String caller, String versionNo, String binPrefix,
+        String cardBrand, String fundingType, String issuerCountry, Integer page, Integer size) {
+        requireOperations(caller);
+        return queryService.listRanges(Integer.parseInt(versionNo),
+            converter.convertRangeFilter(binPrefix, cardBrand, fundingType, issuerCountry), PagingRequestBody.of(page, size))
+            .map(converter::convertRange);
     }
 
     /** 用已上传文件创建版本：新建 201，同一文件的原版本 200 */
