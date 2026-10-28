@@ -1,0 +1,52 @@
+[
+ {
+  "method": "POST",
+  "path": "/api/client/onboarding/v1/applications/240935015863562240/declarations",
+  "body": "{\"declarationType\":\"OWNERSHIP_COMPLETE\",\"declaredValue\":\"TRUE\"}"
+ },
+ {
+  "method": "POST",
+  "path": "/api/client/onboarding/v1/applications/240935015863562240/declarations",
+  "body": "{\"declarationType\":\"DIRECTORSHIP_COMPLETE\",\"declaredValue\":\"TRUE\"}"
+ },
+ {
+  "method": "POST",
+  "path": "/api/client/onboarding/v1/applications/240935015863562240/declarations",
+  "body": "{\"declarationType\":\"OWNERSHIP_COMPLETE\",\"declaredValue\":\"TRUE\"}"
+ },
+ {
+  "method": "POST",
+  "path": "/api/client/onboarding/v1/applications/240935015863562240/declarations",
+  "body": "{\"declarationType\":\"DIRECTORSHIP_COMPLETE\",\"declaredValue\":\"TRUE\"}"
+ },
+ {
+  "method": "POST",
+  "path": "/api/client/onboarding/v1/applications/240935015863562240/declarations",
+  "body": "{\"declarationType\":\"REPRESENTATIVE_AUTHORITY\",\"declaredValue\":\"TRUE\"}"
+ },
+ {
+  "method": "POST",
+  "path": "/api/client/onboarding/v1/applications/240935015863562240/declarations",
+  "body": "{\"declarationType\":\"RELATED_PERSON_DATA_AUTHORITY\",\"declaredValue\":\"TRUE\"}"
+ },
+ {
+  "method": "POST",
+  "path": "/api/client/onboarding/v1/applications/240935015863562240/declarations",
+  "body": "{\"declarationType\":\"PEP_DECLARATION\",\"declaredValue\":\"TRUE\"}"
+ },
+ {
+  "method": "POST",
+  "path": "/api/client/onboarding/v1/applications/240935015863562240/declarations",
+  "body": "{\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"TRUE\"}"
+ },
+ {
+  "method": "POST",
+  "path": "/api/client/onboarding/v1/applications/240935015863562240/declarations",
+  "body": "{\"declarationType\":\"PLATFORM_TERMS_ACCEPTANCE\",\"declaredValue\":\"TRUE\",\"termsVersion\":\"2026-10-draft\"}"
+ },
+ {
+  "method": "POST",
+  "path": "/api/client/onboarding/v1/applications/240935015863562240/declarations",
+  "body": "{\"declarationType\":\"PRIVACY_NOTICE_ACKNOWLEDGED\",\"declaredValue\":\"TRUE\",\"termsVersion\":\"2026-10-draft\"}"
+ }
+]

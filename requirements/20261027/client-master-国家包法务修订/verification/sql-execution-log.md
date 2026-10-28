@@ -52,3 +52,15 @@ legal-client-fe 为 5 个 `legal-ui-*@example.test` 测试账号完成邮箱验�
 | 09:4x | mor-test `mor_platform` | 语言包计划（`release/legal_bundles.py`，READ ONLY 会话）与 2 个 key 的译文查询 | 只读 |
 
 两个临时库保留到阶段 7 结束后删除（不含凭据，`client_master_app` 未授权）。
+
+## 本机遗留清理（2026-10-29，用户"清理一下"）
+
+范围只限阶段 5 浏览器验收产生的数据；按"引用本批 ID 的行"逐轮扩展求闭包，跨全部 `*_v2e2e` 库与 `mor_vault` 复核无其他引用。删除前备份到 `Code-MoR-backups/legal-20261028/local-cleanup-20261028T204919Z/`（逐表 mysqldump + MinIO 对象原始文件，目录权限 700）。每个库一个事务，删除行数与备份逐表相同。
+
+| 库 / 存储 | 删除 |
+|---|---|
+| `mor_platform_v2e2e` | 5 个 `legal-ui-*@example.test` 账号（含 5 条被改过 `secret_hmac` 的注册挑战）、口令 5、会话 22、刷新令牌代 94、租户 5、角色 5、成员 5、成员角色 5、文件上传 / 对象 / 版本 / 扫描结果各 40、审计事件 109 及属性 689 |
+| `mor_compliance_v2e2e` | 孤立案件 240934496831033344 及其 2 个子案件：案件 3、依赖 4、状态变更 3、主体 3、检查 5、要求 10、证据引用 10、筛查运行 9 |
+| `mor_vault` | 上述账号邮箱 5 条 + 验收申请的证件号 / 邮箱 / 电话 14 条（由 `local-mor_client_master_v2e2e-post-stage5.sql` 与 `-pre.sql` 比对确认只属于这批申请）：记录 19、保护请求 43、访问事件 303 |
+| 本机 MinIO `mor-platform-files` | 40 个对象（桶开启版本控制，已删除全部版本） |
+| scratchpad | 测试账号凭据文件 `legal-ui-accounts.json` |

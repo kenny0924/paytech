@@ -19,14 +19,14 @@
 - **Deployed：** mor-test 2026-10-28 20:09—20:18Z（tag `gate-20261029a`）：commercial `806043a3…`、operations-console-bff `eca2df82…`、operations-console-web `7a053544…`，20:33Z 再换 `8aec3df8…`（`gate-20261029b`，去掉区头重复的新增开通项按钮）；`mor_commercial` 迁移（15 行 → ACTIVE + ENABLED）；`mor_platform` 注册块 141（3 路由，ACTIVE）；XXL 任务 25（scope=PENDING，每 5 分钟）、26（scope=ALL，每日 03:00 UTC）；语言包 operations-console #20；MQ `commercial.compliance.p0..p3`。回滚目标：commercial `e5c1ee6b…`、ops-bff `769edbce…`、ops-web `45ee11cb…`（须连同迁移回滚、注册块回滚与 XXL 停用，见运行卡第 5 节）。
 - **Pending / 遗留：** 推送另行授权；注册块 141 未写入 `platform-support-initial-data.sql`；data-query 数据源（复用 `MOR_COMMERCIAL_REPLICA`）与 3 条 `GOLIVE_*` 模板未登记（随 REQ-05）；演示合同 CL-F1105E、DEMO-CL-002、DEMO2-CL-102、DEMO2-CL-901 缺生效价格版本、DEMO2-CL-103 的 GOOGLE_PAY / STC_PAY 缺 AED 价格，门禁已 / 将暂停（用户接受）；本机 e2e 仍运行本需求 JAR、worktree ops-web 18311 与 MinIO 跨域（含 18311，用户决定保留）。
 
-## client-master 国家包法务修订（2026-10-28，已部署 mor-test，已本地提交 `ac3145f4`，未推送）
+## client-master 国家包法务修订（2026-10-28，已部署 mor-test，已提交 `ac3145f4` 并推送）
 
 - **范围：** [需求](<../requirements/20261027/client-master-国家包法务修订/requirement.md>)、[技术方案](<../requirements/20261027/client-master-国家包法务修订/technique.md>)、[交付记录](<../requirements/20261027/client-master-国家包法务修订/delivery.md>)、[运行卡](<../requirements/20261027/client-master-国家包法务修订/release/runbook.md>)；依据 [法源研究 26 项](<../design-discuss/client-onboarding/legal-research-26-items-2026-10-27.md>)，结论回写 [design.md 9.5a](<../design-discuss/client-onboarding/design.md>)。
 - **Implemented：** client-master AE / SA / EG 国家包增量 DML 与采集 Schema v2（v1 RETIRED，存量申请继续按 v1）；声明绑定资料版本 `draft_revision` 与条款版本，资料改动后声明失效并拒绝提交（`DECLARATION_STALE`，`draft_revision` 为 NULL 的存量声明按 0 处理仍有效）；受益人门槛比较方式（GTE / GT）；规则作用域 `DECLARATION` / `ATTRIBUTE`、`DATE_NOT_PAST`；修复 `RelationRules.uboSatisfied` 认定依据为空时的空指针。Client BFF / Web 声明阅读、逐项重新确认与失效提示；Operations BFF / Web 规则视图（是 / 否）、v2 声明区块与存量声明。
 - **Verified：** 基于 `e2185c1b`：client-master 164、client-console-bff 101、operations-console-bff 2433、client-console-web 141、operations-console-web 1576；SQL 在 mor-test 只读导出副本试跑（DDL → DML → 重跑 → 回滚拒绝分支 → 回滚 → 再应用），与全新建库逐表一致；本机 e2e 浏览器 5 种主体 en / zh-CN × 1440 / 390 通过；mor-test 运营 Playwright 44 / 45 / 44 / 45、卡 BIN 页回归 4 组通过，参考数据会话复核通过。
 - **Deployed：** mor-test 2026-10-28 05:40—06:00Z（tag `legal-20261028a`）：client-master `c9bb7b8e…`、client-console-bff `8fe7f24c…`、operations-console-bff `769edbce…`、client-console-web `3db62571…`、operations-console-web `45ee11cb…`；DDL（2 列）+ DML 已执行；语言包 client-console #7、operations-console #19。回滚目标：client-master `64e515c6…`、client-console-bff `be79550f…`、operations-console-bff `4bd7574c…`、client-console-web `c09af02a…`、operations-console-web `aec066e9…`；出现 v2 申请后 DML 回滚脚本拒绝执行，client-master 只能向前修复。
 - **后续发布（2026-10-29）：** commercial 开通项前置门禁替换 operations-console-bff `eca2df82…`、operations-console-web `7a053544…`（含本需求）；这两个服务不再以本需求候选文件发布，回滚基线以该需求为准。
-- **Pending / 遗留：** 推送另行授权。mor-test 未在客户门户验 v2 表单与声明阅读 / 失效（本机已验同一代码）；自由职业文件到期日"不得早于今天"只在服务端校验；本期之外法务项见需求第 7 节（"待决定 / 待确认"项在生产发布前处理）。
+- **Pending / 遗留：** mor-test 未在客户门户验 v2 表单与声明阅读 / 失效（本机已验同一代码）；自由职业文件到期日"不得早于今天"只在服务端校验；本期之外法务项见需求第 7 节（"待决定 / 待确认"项在生产发布前处理）。
 
 ## platform-support 参考数据客户端组件（2026-10-28，已部署 mor-test，已提交 `e2185c1b` 并推送）
 
