@@ -20,7 +20,8 @@
 | 2026-10-28 | 7 授权 | 用户：附条件授权，card-BIN 提交后直接部署 mor-test（按 ledger → billing → card / client-master / ops-bff → 验收 → Platform 顺序；任一核对不一致即停下询问；不含 SQL、提交、推送） | 已确认 |
 | 2026-10-28 | 7 mor-test 部署 | 04:00—04:08Z 按 runbook 执行：⓪ 回滚文件按现网生成（Platform 186347bc、card 380064fe、ops-bff 25f6a869、ledger 3819ff28、billing 53450948、client-master 80257737）、env 12 / 12 一致、基线未知差异 0；① 财务下拉 capture；② ledger 51a57a3b ③ billing cf580cfb ④ card 32d6f27a ⑤ client-master 64e515c6 ⑥ ops-bff 4bd7574c 全部 healthy，财务下拉 4 种逐字节相同；⑦ 验收：readiness 全 UP、刷新失败 WARN / ERROR 0、Platform 识别 4 个调用方、Nacos 健康实例 1、条数 4 / 249 / 47 / 42 / 298；ledger 余额读取 + 试算 201；billing 1.005 → 400 FACT_LINE_INVALID、JPY → 400 BUSINESS_CHECK_FAILED、1.25 → 201 后作废；client-master 76 / 0 / 4 跳过；⑧ Platform 1e54f349 healthy，Gateway 快照 routeCount=613，Platform ERROR 0；⑨ 旧接口 404、财务下拉仍逐字节相同、消费方无刷新失败。验收脚本修正 2 处（MCC 条数改用 size=10；试算改为与前端相同的无正文 JSON POST）。无回滚。留下：billing VOIDED 合成事实 241049321536086016、ledger 试算记录、client-master 验收数据。证据 `verification/acceptance-mor-test-*-20261028T04*.json` | 已完成 |
 | 2026-10-28 | 7 确认 / 8 授权 | 用户回复"继续"：接受阶段 7，授权阶段 8 本地提交（不含推送） | 已确认 |
-| 2026-10-28 | 8 提交 | 以 `c4ff0e20` 为父，经 `Code-MoR-refclient-rel2` 独立 index 提交：代码与文档 201 个文件（= mor-test 部署的 `refclient-20261028b` 源码，不含 `paytech/.mvn/maven.config`）+ 本需求目录 + requirements/README 索引行 + CURRENT_IMPLEMENTATION 条目；未推送 | 已完成 |
+| 2026-10-28 | 8 提交 | 以 `c4ff0e20` 为父，经 `Code-MoR-refclient-rel2` 独立 index 提交：代码与文档 201 个文件（= mor-test 部署的 `refclient-20261028b` 源码，不含 `paytech/.mvn/maven.config`）+ 本需求目录 + requirements/README 索引行 + CURRENT_IMPLEMENTATION 条目，提交 `e2185c1b` | 已完成 |
+| 2026-10-28 | 推送 | 用户推送，核对 `origin/main` = `e2185c1b`（含 `ab27bd76` / `554072a5` / `8a441c90` / `c4ff0e20`）；随后清理本需求 worktree 与私有 Maven 仓库；国家包法务修订部署 mor-test 后复核（只读）：client-master readiness UP、刷新失败 0、财务下拉逐字节相同、旧接口 404，证据 `verification/acceptance-mor-test-*-20261028T0551*.json` | 已完成 |
 
 ## 适用阶段
 
@@ -28,4 +29,4 @@
 
 ## 当前阶段与下一确认点
 
-阶段 1—8 完成（mor-test 已部署，已本地提交，未推送）。推送另行授权。
+阶段 1—8 完成（mor-test 已部署，已提交 `e2185c1b` 并推送）。

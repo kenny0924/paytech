@@ -11,13 +11,13 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## platform-support 参考数据客户端组件（2026-10-28，已部署 mor-test，已本地提交，未推送）
+## platform-support 参考数据客户端组件（2026-10-28，已部署 mor-test，已提交 `e2185c1b` 并推送）
 
 - **范围：** [需求](<../requirements/20261027/platform-support-参考数据客户端组件/requirement.md>)、[技术方案](<../requirements/20261027/platform-support-参考数据客户端组件/technique.md>)、[交付记录](<../requirements/20261027/platform-support-参考数据客户端组件/delivery.md>)、[运行卡](<../requirements/20261027/platform-support-参考数据客户端组件/release/runbook.md>)。
 - **Implemented：** 新模块 `paytech-platform-support-reference-data-client`（starter，配置前缀 `platform-support.reference-data.client`：按 `kinds` 加载 CURRENCY / COUNTRY / SUBDIVISION / INDUSTRY / MCC 到不可变内存快照，原子替换；全量轮询默认 PT1H，首次加载失败每 PT10S 重试；`ReferenceData` / `ReferenceCatalog` 的 require / requireActive / find / list 只读内存，查不到抛 `ReferenceDataNotFoundException`；MCC 每页 200 并核对总数；自带 1 MiB 上限 HTTP 客户端，容忍未知字段；始终发送 `X-Caller-Service`；不配 `base-url` 时经服务发现访问 `platform-support-service` / `/platform-support`；就绪组含 `referenceData` 健康项；`ReferenceDataRefresher.refreshNow()`）与 `-client-test-support`；arch-rules 新增 CLIENT / CLIENT_TEST_SUPPORT 角色与 R16。消费方：ledger、billing 删除复制的币种快照实现（ledger 查不到为可重投系统异常，billing 保持原 `BizCheckFailException` → 400 `BUSINESS_CHECK_FAILED`），card 国家核对、client-master 参考数据校验改用客户端，ops-bff 财务币种下拉改读 `/reference-data/currencies`。Platform 删除旧接口 `/platform/v1/currency-specs`、`/platform/v1/country-regions` 及其查询实现。0 表 / 0 DML / 0 注册 / 0 页面。
 - **Verified：** worktree `Code-MoR-refclient`（基于 `5e1f16ab`）：客户端 53、arch-rules 70 + reactor 5、ledger 331、billing 131、card 67、client-master 154、ops-bff 2424、Platform 801；在 `c4ff0e20` 上重建后（`Code-MoR-refclient-rel2`）复跑 ops-bff 2433、card 82、Platform 921；本机 e2e（AC-02 / AC-03 停启 Platform、条数、调用方、旧接口 404）；mor-test 验收全部 PASS（ledger 余额 + 试算、billing 精度 / 未登记币种、client-master 76 / 0 / 4 跳过、财务下拉逐字节一致）。
 - **Deployed：** mor-test 2026-10-28 04:00—04:08Z（tag `refclient-20261028b`，源 = `c4ff0e20` + 本需求）：ledger `51a57a3b…`、billing `cf580cfb…`、card `32d6f27a…`、client-master `64e515c6…`、operations-console-bff `4bd7574c…`、platform `1e54f349…`（最后发布）；Gateway 仍 613 条路由。回滚目标见 `release/rollback-targets.tsv` 与 `release/compose-rollback.*.yaml`；Platform 发布后任何消费方回滚须先回滚 Platform。
-- **Pending / 遗留：** 推送；健康明细默认不暴露（`show-details: never`），覆盖环境变量名为 `PLATFORMSUPPORT_REFERENCEDATA_CLIENT_*`；本机库残留 card INVALID 版本 6 验收记录；`Code-MoR-legal`（国家包法务修订）须基于本提交重建。
+- **Pending / 遗留：** 健康明细默认不暴露（`show-details: never`），覆盖环境变量名为 `PLATFORMSUPPORT_REFERENCEDATA_CLIENT_*`；本机库残留 card INVALID 版本 6 验收记录；国家包法务修订已基于本提交重建并于 2026-10-28 部署 mor-test（client-master / ops-bff 回滚目标为本需求镜像 `64e515c6` / `4bd7574c`），部署后复核参考数据加载、财务下拉与旧接口 404 均正常。
 
 ## card BIN 库页面重设计与号段列表（2026-10-27，已部署 mor-test，已提交 `8a441c90` / `c4ff0e20` 并推送）
 
@@ -28,7 +28,7 @@
 - **后续发布（2026-10-28）：** 参考数据客户端组件（`refclient-20261028b`：platform `1e54f349…`、card `32d6f27a…`、operations-console-bff `4bd7574c…`）与国家包法务修订（operations-console-bff 再次替换、operations-console-web `45ee11cb…`）均基于本需求提交重建上线，mor-test 复核卡 BIN 页接口 44 PASS（另 2 项为脚本分页期望与宿主机睡眠导致的 Platform 事务超时，非缺陷）、浏览器 4 组全部通过。上面 Deployed 中的镜像不再是回滚目标：回滚任一服务前须与对应需求会话确认。
 - **Pending：** 无。
 
-## platform-support 参考数据目录与 client-master 迁移（2026-10-27，已部署 mor-test，已本地提交 `ab27bd76`，未推送）
+## platform-support 参考数据目录与 client-master 迁移（2026-10-27，已部署 mor-test，已提交 `ab27bd76` / `554072a5` 并推送）
 
 - **范围：** [需求](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/requirement.md>)、[技术方案](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/technique.md>)、[交付记录](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/delivery.md>)、[运行卡](<../requirements/20261027/platform-support-参考数据目录与client-master迁移/release/runbook.md>)；依据 [参考数据决定](./decisions/2026-10-27-platform-reference-data.md)。
 - **Implemented：** Platform `t_currency_spec` → `t_ref_currency`、`t_country_region` → `t_ref_country`（补列），新建 `t_ref_country_subdivision`、`t_ref_industry`（两级）、`t_ref_mcc`；5 个只读接口 `/platform/v1/reference-data/*`（旧 `/currency-specs`、`/country-regions` 响应冻结）；币种维护加数字码 / 名称 / 符号 / 图标与冻结规则；client-master 移出 `t_catalog_item` 的 INDUSTRY / CURRENCY / STATE_OR_PROVINCE（48 行），`REF_*` 目录码、提交时事务外核对国家 / 币种 / 行政区、分类两级行业 + MCC 校验、删除 `/classification-options`、管理端辖区返回 `addressComponents`；client-console-bff 自有 form-schema 模型补全参考数据；两个 Web 的国家（国旗）/ 省州 / 币种控件、分类页、参考数据页、币种页；块 139；`refdata` / `reference-data` 语言包（429 键 / 应用，中英全覆盖）。
@@ -36,7 +36,7 @@
 - **Deployed：** mor-test 2026-10-27 15:33—15:56Z（tag `refdata-20261027a`）：platform `aec53586…`、client-master `80257737…`、client-console-bff `be79550f…`、operations-console-bff `48113289…`、client-console-web `c09af02a…`、operations-console-web `b1309a45…`；块 139 激活（Gateway 607 → 612）；语言包 client-console #6、operations-console #13；Platform 中断约 50 秒、client-master 约 40 秒。回滚目标见运行卡第 6 节与 `release/compose-rollback.yaml`。
 - **Deployed（合并币种页）：** mor-test 2026-10-27 17:12Z：operations-console-web `f3da39ad…`（币种页并入参考数据页第一个页签，侧栏不再单列"币种"，`/currency-specs` 跳转），语言包 operations-console #14；未提交。
 - **Deployed（国旗）：** mor-test 2026-10-27 16:05—16:46Z：249 个国旗 PNG 经运营公开上传并回填 `t_ref_country.logo_file_address`（期间两条上传路由限流临时放宽到 500 / 分钟，已恢复）。
-- **Pending / 遗留：** 批量导入图标应做成正式能力（内部接口，不走面向人工的上传入口）；中文 MCC 名、行业说明、行政区英文名与高风险 MCC 清单生产前需合规审核；CLDR 阿拉伯文行政区名为 provisional；arch-rules 表归属生成脚本与手工维护不一致（运行会丢 17 张表）；本机 e2e 的 ledger / billing JAR 文件已不在磁盘（仅运行进程持有）；Platform 多语言重导入不更新译文对应的英文版本（需批量确认）；运营语言包发布在 Gateway 超时内未返回（504，后台完成）。推送另行授权；`.pen` 原型（operations-console.pen y≈94400/95600 九张、client-console.pen C5）待与其他会话改动一并提交。
+- **Pending / 遗留：** 批量导入图标应做成正式能力（内部接口，不走面向人工的上传入口）；中文 MCC 名、行业说明、行政区英文名与高风险 MCC 清单生产前需合规审核；CLDR 阿拉伯文行政区名为 provisional；arch-rules 表归属生成脚本与手工维护不一致（运行会丢 17 张表）；本机 e2e 的 ledger / billing JAR 文件已不在磁盘（仅运行进程持有）；Platform 多语言重导入不更新译文对应的英文版本（需批量确认）；运营语言包发布在 Gateway 超时内未返回（504，后台完成）。`.pen` 原型（operations-console.pen y≈94400/95600 九张、client-console.pen C5）待与其他会话改动一并提交。
 
 ## client-master / compliance 全球合规入驻与资格切片 1（2026-10-27，已部署 mor-test，已本地提交，未推送）
 
