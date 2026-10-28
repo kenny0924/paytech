@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## card BIN 库页面重设计与号段列表（2026-10-27，已部署 mor-test，已本地提交，未推送）
+## card BIN 库页面重设计与号段列表（2026-10-27，已部署 mor-test，已本地提交 `8a441c90`，未推送）
 
 - **范围：** [需求](<../requirements/20261027/card-BIN库页面重设计与号段列表/requirement.md>)、[技术方案](<../requirements/20261027/card-BIN库页面重设计与号段列表/technique.md>)、[交付记录](<../requirements/20261027/card-BIN库页面重设计与号段列表/delivery.md>)、[运行卡](<../requirements/20261027/card-BIN库页面重设计与号段列表/release/runbook.md>)。
 - **Implemented：** card `GET /card/v1/bin-library/versions/{versionNo}/ranges`（前缀 / 卡组织 / 借贷记 / 发卡国筛选、公共分页，只允许 ops-bff）；Platform 内部 `GET /operations-accounts/v1/labels`（登录名或脱敏邮箱，只允许 ops-bff，无公开路由）；ops-bff 号段转发与版本 / 激活记录 `createdByLabel` / `operatorLabel`（Platform 失败降级为 null）；ops-web 卡 BIN 库页面重做（号段数据 / 版本两个页签、筛选 chip、最长前缀匹配条、390 卡片列表）；块 140（号段列表路由）。
