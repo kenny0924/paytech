@@ -145,3 +145,12 @@ test("people drawer maps 422 relation and person field errors onto its controls"
   assert.equal(result.mapped, true);
   assert.equal(drawerErrors({}, text).mapped, false);
 });
+
+test("identifier number label does not repeat 'number' when the type name already is a number", async () => {
+  const { identifierNumberLabel } = await import("./schema.ts");
+  const en = (type: string) => type + " number", zh = (type: string) => type + "号码";
+  assert.equal(identifierNumberLabel("Unified Commercial Registration Number", en), "Unified Commercial Registration Number");
+  assert.equal(identifierNumberLabel("National ID", en), "National ID number");
+  assert.equal(identifierNumberLabel("统一商业登记号", zh), "统一商业登记号");
+  assert.equal(identifierNumberLabel("护照", zh), "护照号码");
+});

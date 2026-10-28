@@ -59,6 +59,24 @@ public class JurisdictionPackMocker implements Clear {
         }
     }
 
+    /**
+     * 设置一条 ACTIVE 规则开关：已有同作用域同代码的行则改值，否则新增
+     *
+     * @param scopeType 作用层级，如 JURISDICTION、DECLARATION
+     * @param scopeCode 作用对象代码
+     * @param ruleCode 规则代码
+     * @param value 取值
+     */
+    public void rule(String scopeType, String scopeCode, String ruleCode, String value) {
+        int updated = jdbc.update("UPDATE t_rule_setting SET rule_value=?, status='ACTIVE' WHERE scope_type=? AND scope_code=? "
+            + "AND rule_code=?", value, scopeType, scopeCode, ruleCode);
+        if (updated == 0) {
+            jdbc.update("INSERT INTO t_rule_setting(rule_setting_id,scope_type,scope_code,rule_code,rule_value,status,create_time,"
+                + "update_time) SELECT MAX(rule_setting_id)+1,?,?,?,?,'ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6) FROM t_rule_setting",
+                scopeType, scopeCode, ruleCode, value);
+        }
+    }
+
     /** 包数据由全量清理器删除。 */
     @Override
     public void clear() {

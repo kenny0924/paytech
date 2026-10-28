@@ -44,7 +44,9 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
         + "\"subjects\":[],\"classifications\":[],\"approvalBlockers\":[\"EVIDENCE_PENDING\"]}";
     private static final String APPLICATION = "{\"applicationId\":\"8001\",\"applicationNo\":\"APP8001\",\"clientId\":\"8101\","
         + "\"clientType\":\"ORGANIZATION\",\"subjectPartyId\":\"8201\",\"status\":\"UNDER_REVIEW\",\"savedAt\":\"2026-10-13T00:00:00.000000Z\","
-        + "\"editable\":false,\"values\":{\"organization\":{\"legalName\":\"Synthetic Co\"},\"contact\":{}},\"people\":[],\"relations\":[],\"documents\":[]}";
+        + "\"editable\":false,\"values\":{\"organization\":{\"legalName\":\"Synthetic Co\"},\"contact\":{}},\"people\":[],\"relations\":[],\"documents\":[],"
+        + "\"draftRevision\":\"4\",\"declarations\":[{\"declarationId\":\"8301\",\"applicationId\":\"8001\",\"declarationType\":\"PLATFORM_TERMS_ACCEPTANCE\","
+        + "\"declaredValue\":\"TRUE\",\"termsVersion\":\"2026-10-draft\",\"declaredAt\":\"2026-10-12T00:00:00.000000Z\",\"draftRevision\":\"3\",\"current\":false}]}";
     private static final String CLASSIFICATION = "{\"caseId\":\"7001\",\"applicationId\":\"8001\",\"confirmed\":false,\"confirmedBy\":null,"
         + "\"confirmedAt\":null,\"items\":[{\"industryCode\":\"RETAIL\",\"mccCode\":\"5411\",\"primary\":true}]}";
     private static final String INDUSTRIES_PATH = "/platform/v1/reference-data/industries";
@@ -125,6 +127,7 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
         assertEquals(CASE, body.path("review").path("caseId").asString());
         assertEquals("AVAILABLE", body.path("applicationStatus").asString());
         assertEquals("Synthetic Co", body.path("application").path("values").path("organization").path("legalName").asString());
+        assertDeclarationPassedThrough(body.path("application"));
         assertEquals("AVAILABLE", body.path("classificationStatus").asString());
         assertEquals("5411", body.path("classification").path("items").get(0).path("mccCode").asString());
         assertEquals("AVAILABLE", body.path("industriesStatus").asString());
@@ -145,6 +148,19 @@ class ClientOnboardingReviewBrowserAutoTest extends OperationsBffHttpTestBase {
         assertNull(industryCall.header("X-Gateway-Actor-Subject"), "参考数据查询不携带操作人");
         assertEquals("client-review-browser", industryCall.header("X-Request-Id"));
         assertEquals(Map.of("codes", "5399,5411,5712", "page", "1", "size", "50"), query(platformCall(MCCS_PATH).query()));
+    }
+
+    /** AC-08：client-master 声明及其资料版本、是否针对当前资料原样到达页面。 */
+    private static void assertDeclarationPassedThrough(JsonNode application) {
+        assertEquals("4", application.path("draftRevision").asString());
+        var declaration = application.path("declarations").get(0);
+        assertEquals("PLATFORM_TERMS_ACCEPTANCE", declaration.path("declarationType").asString());
+        assertEquals("TRUE", declaration.path("declaredValue").asString());
+        assertEquals("2026-10-draft", declaration.path("termsVersion").asString());
+        assertEquals("2026-10-12T00:00:00.000000Z", declaration.path("declaredAt").asString());
+        assertEquals("3", declaration.path("draftRevision").asString());
+        assertTrue(declaration.path("current").isBoolean());
+        assertFalse(declaration.path("current").asBoolean());
     }
 
     /** Platform 行业不可用：只把行业标为 UNAVAILABLE，MCC 只按当前分类读取，其余部分照常返回。 */

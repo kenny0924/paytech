@@ -1,0 +1,38 @@
+[
+ {
+  "lang": "en",
+  "width": 1440,
+  "overviewDeclarations": "Declarations | 0 of 4 confirmed | Needs attention",
+  "summary": "You changed your details after confirming. Confirm the 4 marked declarations again.",
+  "rowMarkers": 4,
+  "panelHead": "Platform Terms of Use × / Draft Version 2026-10-draft",
+  "findings": []
+ },
+ {
+  "lang": "en",
+  "width": 390,
+  "overviewDeclarations": "Declarations | 0 of 4 confirmed | Needs attention",
+  "summary": "You changed your details after confirming. Confirm the 4 marked declarations again.",
+  "rowMarkers": 4,
+  "panelHead": "Platform Terms of Use × / Draft Version 2026-10-draft",
+  "findings": []
+ },
+ {
+  "lang": "zh-CN",
+  "width": 1440,
+  "overviewDeclarations": "声明 | 已确认 0 / 4 项 | 需要处理",
+  "summary": "You changed your details after confirming. Confirm the 4 marked declarations again.",
+  "rowMarkers": 4,
+  "panelHead": "Platform Terms of Use × / Draft Version 2026-10-draft",
+  "findings": []
+ },
+ {
+  "lang": "zh-CN",
+  "width": 390,
+  "overviewDeclarations": "声明 | 已确认 0 / 4 项 | 需要处理",
+  "summary": "You changed your details after confirming. Confirm the 4 marked declarations again.",
+  "rowMarkers": 4,
+  "panelHead": "Platform Terms of Use × / Draft Version 2026-10-draft",
+  "findings": []
+ }
+]

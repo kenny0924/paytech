@@ -1,9 +1,11 @@
 import { ApiError } from '../api/session.ts';
+import { enumLabel } from '../i18n/index.ts';
+import type { Translate } from '../i18n/index.ts';
 
 /**
  * 入驻配置（只读）：辖区包、采集 Schema、目录项（client-master CM-10）与尽调程序（compliance O14）的 BFF 路径与页面模型
  * <li>后端 label_key 为 `onboardingSchema.x`，对应 `onboarding-schema` 命名空间的 `onboarding-schema.x`；没有译文时显示代码，不推断名称。</li>
- * <li>显示名为 `client-review.config.enum.<type>.<code>`（status、acceptancePolicy、partyType、roleType、requirementLevel、widget）。</li>
+ * <li>显示名为 `client-review.config.enum.<type>.<code>`（status、acceptancePolicy、partyType、roleType、requirementLevel、widget、ruleScope、ruleCode、uboThresholdComparison、acquireMode、uboFallbackRule、uboCollectionMode、flag）。</li>
  */
 export const configApi = '/onboarding-config-admin/v1';
 export const configRoute = '/client-onboarding/config';
@@ -52,6 +54,26 @@ function items(value: unknown, max = 2000): unknown[] {
 }
 /** client-master 的通配值（OnboardingPack.ANY）：目录项辖区与 Schema 组织类型为 * 表示全局 / 默认。 */
 const WILDCARD = '*';
+/** 取值为枚举的规则：值按对应枚举显示，其他规则原样显示。 */
+const RULE_VALUE_ENUMS: Readonly<Record<string, string>> = { ACCEPTANCE_POLICY: 'acceptancePolicy', UBO_THRESHOLD_COMPARISON: 'uboThresholdComparison',
+  PARTY_TYPE: 'partyType', ACQUIRE_MODE: 'acquireMode', UBO_FALLBACK_RULE: 'uboFallbackRule', UBO_COLLECTION_MODE: 'uboCollectionMode' };
+/** 取值 0 / 1 的开关规则，按是 / 否文字显示；数值门槛（MIN_AGE、UBO_THRESHOLD_PCT、MIN_SIGNATORIES）保持数字。 */
+const FLAG_RULES: ReadonlySet<string> = new Set(['POSTAL_CODE_REQUIRED', 'CONTROL_PERSON_REQUIRED', 'REQUIRES_MANAGER', 'REQUIRES_DIRECTORS',
+  'EXPIRY_REQUIRED', 'VAULT_REQUIRED', 'DATE_NOT_PAST']);
+const FLAG_VALUES: Readonly<Record<string, string>> = { '1': 'YES', '0': 'NO' };
+function ruleValueText(t: Translate, r: RuleSetting): string {
+  const valueEnum = RULE_VALUE_ENUMS[r.ruleCode];
+  if (valueEnum) return enumLabel(t, 'config.enum.' + valueEnum, r.ruleValue);
+  const flag = FLAG_RULES.has(r.ruleCode) ? FLAG_VALUES[r.ruleValue] : undefined;
+  return flag ? enumLabel(t, 'config.enum.flag', flag) : r.ruleValue;
+}
+export interface RuleRow { key: string; rule: string; ruleCode: string; scope: string; value: string }
+/** 规则开关的显示行：规则与作用域类型取文案（未登记显示代码），作用域代码原样；未知作用域类型与规则不拒绝。 */
+export function ruleRows(t: Translate, rules: RuleSetting[]): RuleRow[] {
+  return rules.map(r => ({ key: `${r.scopeType}:${r.scopeCode}:${r.ruleCode}`, rule: enumLabel(t, 'config.enum.ruleCode', r.ruleCode), ruleCode: r.ruleCode,
+    scope: `${enumLabel(t, 'config.enum.ruleScope', r.scopeType)} · ${r.scopeCode}`, value: ruleValueText(t, r) }));
+}
+
 /** 受理策略来自辖区级规则开关 ACCEPTANCE_POLICY（OPEN / ENHANCED_ONLY / CLOSED）；没有该规则即内置默认 OPEN。 */
 const ACCEPTANCE_POLICY = 'ACCEPTANCE_POLICY';
 const DEFAULT_ACCEPTANCE_POLICY = 'OPEN';

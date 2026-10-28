@@ -1,0 +1,23 @@
+{
+ "otherNameVisible": true,
+ "otherNameOptionalMark": false,
+ "otherNameError": "Fill in this field",
+ "staleNotices": 8,
+ "uncheckedAfterEdit": 8,
+ "panelText": "Platform Terms of Use × Draft Version 2026-10-draft DRAFT — placeholder text for review. This is not the final agreement and will be replaced before launch. These terms govern your use of the platform to accept payments from your customers. The platform acts a",
+ "submitEnabledWhileStale": null,
+ "blockedText": "",
+ "staleAfterReconfirm": 0,
+ "finalText": "In review Your application is in review This usually takes 1–3 business days. We'll email you if anything else is needed. Application number CA-240933106532495360 Submitted by l***@example.test View submitted application",
+ "declarationRequests": [
+  "{\"declarationType\":\"OWNERSHIP_COMPLETE\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"DIRECTORSHIP_COMPLETE\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"REPRESENTATIVE_AUTHORITY\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"RELATED_PERSON_DATA_AUTHORITY\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"PEP_DECLARATION\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"PLATFORM_TERMS_ACCEPTANCE\",\"declaredValue\":\"TRUE\",\"termsVersion\":\"2026-10-draft\"}",
+  "{\"declarationType\":\"PRIVACY_NOTICE_ACKNOWLEDGED\",\"declaredValue\":\"TRUE\",\"termsVersion\":\"2026-10-draft\"}"
+ ],
+ "findings": []
+}

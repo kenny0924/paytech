@@ -49,5 +49,7 @@ public interface ClientDraftMapper {
     void saveContact(@Param("id") long id, @Param("profileId") long profileId, @Param("contact") ClientDraftContact contact, @Param("now") Instant now);
     void clearContact(@Param("profileId") long profileId, @Param("contactType") String contactType);
     int touchApplication(@Param("applicationId") long applicationId, @Param("now") Instant now);
+    /** 申请资料版本加一；只对可编辑申请生效。 */
+    int bumpDraftRevision(@Param("applicationId") long applicationId);
     int touchProfile(@Param("profileId") long profileId, @Param("now") Instant now);
 }

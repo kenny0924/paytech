@@ -6582,6 +6582,24 @@
           "autoIncrement": false,
           "defaultValue": "",
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "draft_revision",
+          "defName": "申请资料版本",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "3729B47D-7465-4DDF-8AC9-B07430C4C660",
+          "comment": "申请资料版本：每次实际改动草稿（主体、证件、地址、业务、属性、关系人、关系、文件）在同一事务加一；声明绑定此值，不等即失效。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
         }
       ],
       "correlations": [
@@ -15051,7 +15069,7 @@
           "extProps": {},
           "domain": "",
           "id": "DF4709D8-A680-46D5-984D-DF61DA71589A",
-          "comment": "规则开关作用的目录层级。允许值：JURISDICTION、ORGANIZATION_TYPE、IDENTIFIER_TYPE。",
+          "comment": "规则开关作用的目录层级；DECLARATION 的 scope_code 为声明类型代码（Schema 字段 declaration.<类型>），ATTRIBUTE 的 scope_code 为扩展属性代码。允许值：JURISDICTION、ORGANIZATION_TYPE、IDENTIFIER_TYPE、DECLARATION、ATTRIBUTE。",
           "type": "VARCHAR",
           "len": 32,
           "scale": "",
@@ -19291,6 +19309,24 @@
           "autoIncrement": false,
           "defaultValue": "",
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098"
+        },
+        {
+          "defKey": "draft_revision",
+          "defName": "声明针对的资料版本",
+          "hideInGraph": false,
+          "refDict": "",
+          "extProps": {},
+          "domain": "",
+          "id": "8984E61E-7A35-4BA0-A787-BC0583EBB2A3",
+          "comment": "声明针对的申请资料版本；2026-10-27 之前的存量行为空，按 0 解释。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540"
         }
       ],
       "correlations": [],

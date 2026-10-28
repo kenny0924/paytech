@@ -16,6 +16,8 @@
 .obw-ok-text { color: var(--obw-ok); } .obw-warn-text { color: var(--obw-warn); }
 .obw-split { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
 .obw-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+/* 窄屏时分区页签在自身范围内横向滚动，不撑宽整页 */
+.obw-main > .ant-segmented { max-width: 100%; overflow-x: auto; align-self: flex-start; }
 .obw-decision { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 12px; }
 .obw-card { background: #fff; border: 1px solid var(--obw-border); border-radius: 8px; padding: 14px 16px; min-width: 0; }
 .obw-card-title { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-weight: 600; font-size: 13px; flex-wrap: wrap; }

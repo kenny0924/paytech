@@ -33,6 +33,13 @@ class OnboardingAdminQueryTest extends ClientMasterMockTestBase {
         assertEquals("AE_POBOX", ae.path("addressFormatCode").asString());
         assertTrue(ae.path("rules").valueStream().anyMatch(rule -> "UBO_THRESHOLD_PCT".equals(rule.path("ruleCode").asString())
             && "25".equals(rule.path("ruleValue").asString())));
+        assertTrue(hasRule(ae, "JURISDICTION", "AE", "UBO_THRESHOLD_COMPARISON", "GTE"));
+        // 声明与属性规则按辖区 Schema 的引用归入：AE 有条款版本，SA 自由职业者文件到期日规则只出现在 SA。
+        assertTrue(hasRule(ae, "DECLARATION", "PLATFORM_TERMS_ACCEPTANCE", "DOCUMENT_VERSION", "2026-10-draft"), ae.path("rules").toString());
+        assertTrue(hasRule(ae, "DECLARATION", "PRIVACY_NOTICE_ACKNOWLEDGED", "DOCUMENT_VERSION", "2026-10-draft"));
+        assertFalse(hasRule(ae, "ATTRIBUTE", "SA_FREELANCE_DOCUMENT_EXPIRY_DATE", "DATE_NOT_PAST", "1"));
+        assertTrue(hasRule(packs.get(2), "ATTRIBUTE", "SA_FREELANCE_DOCUMENT_EXPIRY_DATE", "DATE_NOT_PAST", "1"),
+            packs.get(2).path("rules").toString());
         assertTrue(ae.path("organizationTypes").valueStream().anyMatch(type -> "FZ_LLC".equals(type.path("typeCode").asString())));
         var identifiers = ae.path("identifierTypes").valueStream().map(type -> type.path("identifierTypeCode").asString()).toList();
         assertTrue(identifiers.containsAll(List.of("AE_EMIRATES_ID", "AE_TRADE_LICENSE", "PASSPORT")), identifiers.toString());
@@ -57,8 +64,10 @@ class OnboardingAdminQueryTest extends ClientMasterMockTestBase {
     void test_schemasAndCatalogs() {
         var schemas = body(get("/client-master-admin/v1/onboarding-schemas?jurisdiction=AE"));
 
-        assertEquals(4, schemas.size());
-        var defaultOrganization = schemas.valueStream().filter(node -> "9270000000700001".equals(node.path("schemaId").asString()))
+        assertEquals(8, schemas.size(), "AE 的 4 个 v1（已退役）与 4 个 v2");
+        assertEquals("RETIRED", schemas.valueStream().filter(node -> "9270000000700001".equals(node.path("schemaId").asString()))
+            .findFirst().orElseThrow().path("status").asString());
+        var defaultOrganization = schemas.valueStream().filter(node -> "9270000000900301".equals(node.path("schemaId").asString()))
             .findFirst().orElseThrow();
         assertEquals("ACTIVE", defaultOrganization.path("status").asString());
         assertTrue(defaultOrganization.path("fields").valueStream().anyMatch(field -> "identifier.AE_TRADE_LICENSE".equals(
@@ -134,5 +143,12 @@ class OnboardingAdminQueryTest extends ClientMasterMockTestBase {
         headers.set("X-Gateway-Actor-Subject", Long.toString(OPERATOR_ID));
         headers.set("X-Gateway-Session-Id", "ops-session-1");
         headers.set("X-Request-Id", "cct-admin-query-test");
+    }
+
+    /** 辖区包规则中是否有指定作用域、代码与取值的一行。 */
+    static boolean hasRule(tools.jackson.databind.JsonNode pack, String scopeType, String scopeCode, String ruleCode, String value) {
+        return pack.path("rules").valueStream().anyMatch(rule -> scopeType.equals(rule.path("scopeType").asString())
+            && scopeCode.equals(rule.path("scopeCode").asString()) && ruleCode.equals(rule.path("ruleCode").asString())
+            && value.equals(rule.path("ruleValue").asString()));
     }
 }

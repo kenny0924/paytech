@@ -1,0 +1,11 @@
+# 国家包法务修订：mor-test 回滚覆盖（阶段 6 准备 2026-10-28；阶段 7 由主会话执行，需用户授权）。
+# 用法：./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 client-console-bff
+# 只认 sha256（tag 仅供辨认）。不加 --remove-orphans。env 抄自现网覆盖文件，渲染结果与运行容器逐键逐值相同（scripts/env_check.sh）。
+# 回滚目标 = 2026-10-28 阶段 6 读取的现网运行镜像；部署前须重读 docker inspect，若已被其他会话替换则改写本文件。
+services:
+  client-console-bff:
+    image: sha256:be79550ff3ed649758b164574e2c2a13fd389466b19cec27330746674a9e6910  # 部署前现网（容器创建 2026-10-27T15:36:34.933766754Z）
+    environment:
+      CLIENT_BFF_BIND_ADDRESS: 172.30.73.27
+      CLIENT_ONBOARDING_ENABLED: "true"
+      CLIENT_CONSOLE_ORIGIN: https://localhost:28443

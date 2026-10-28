@@ -9,7 +9,7 @@
       b.business_profile_id AS businessProfileId, a.create_time AS createdAt, a.update_time AS savedAt,
       a.jurisdiction_code AS jurisdictionCode, a.organization_type_code AS organizationTypeCode, a.schema_id AS schemaId,
       a.responsible_partner_id AS responsiblePartnerId, a.due_diligence_case_id AS dueDiligenceCaseId,
-      a.review_due_time AS reviewDueTime
+      a.review_due_time AS reviewDueTime, a.draft_revision AS draftRevision
     FROM t_client_application a JOIN t_client c ON c.client_id=a.client_id
     JOIN t_party p ON p.party_id=c.party_id
     LEFT JOIN t_party_profile f ON f.party_id=p.party_id AND f.current_slot=1
@@ -209,6 +209,9 @@
       contact_masked_value=incoming.contact_masked_value,update_time=incoming.update_time</insert>
   <delete id="clearContact">DELETE FROM t_party_contact WHERE profile_id=#{profileId} AND contact_type=#{contactType}</delete>
   <update id="touchApplication">UPDATE t_client_application SET update_time=#{now} WHERE application_id=#{applicationId}
+    AND active_slot=1 AND status IN ('DRAFT','RETURNED')</update>
+  <!-- 资料版本加一：与本次草稿写入同一事务，只对仍可编辑的申请生效。 -->
+  <update id="bumpDraftRevision">UPDATE t_client_application SET draft_revision=draft_revision+1 WHERE application_id=#{applicationId}
     AND active_slot=1 AND status IN ('DRAFT','RETURNED')</update>
   <update id="touchProfile">UPDATE t_party_profile SET update_time=#{now} WHERE profile_id=#{profileId} AND approved_time IS NULL</update>
 </mapper>

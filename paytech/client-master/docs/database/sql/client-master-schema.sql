@@ -281,6 +281,7 @@ CREATE TABLE `t_client_application` (
   `submission_round` INT NOT NULL COMMENT '正式提交轮次：创建为 0，每次提交加一；退回后重提为下一轮。',
   `previous_case_id` BIGINT NULL COMMENT '退回重提时上一轮的 Risk & Compliance 尽调 Case，供新案件串联复用；首轮为空。',
   `review_due_time` DATETIME(6) NULL COMMENT '退回时审核给出的补件截止 UTC 时间；非退回状态为空或保留上次值。',
+  `draft_revision` BIGINT NOT NULL DEFAULT 0 COMMENT '申请资料版本：每次实际改动草稿（主体、证件、地址、业务、属性、关系人、关系、文件）在同一事务加一；声明绑定此值，不等即失效。',
   PRIMARY KEY (`application_id`),
   UNIQUE KEY `uk_client_application_no` (`application_no`) COMMENT 'Unique index for client_application on application_no',
   UNIQUE KEY `uk_client_application_active` (`client_id`, `active_slot`) COMMENT 'Unique index for client_application on client_id, active_slot',
@@ -400,7 +401,7 @@ CREATE TABLE `t_jurisdiction` (
 
 CREATE TABLE `t_rule_setting` (
   `rule_setting_id` BIGINT NOT NULL COMMENT '规则开关行的内部唯一标识。',
-  `scope_type` VARCHAR(32) NOT NULL COMMENT '规则开关作用的目录层级。允许值：JURISDICTION、ORGANIZATION_TYPE、IDENTIFIER_TYPE。',
+  `scope_type` VARCHAR(32) NOT NULL COMMENT '规则开关作用的目录层级；DECLARATION 的 scope_code 为声明类型代码（Schema 字段 declaration.<类型>），ATTRIBUTE 的 scope_code 为扩展属性代码。允许值：JURISDICTION、ORGANIZATION_TYPE、IDENTIFIER_TYPE、DECLARATION、ATTRIBUTE。',
   `scope_code` VARCHAR(64) NOT NULL COMMENT '作用对象代码：辖区为辖区码，组织类型为 辖区码:组织类型码，标识类型为标识类型码；* 表示该层级的全局默认。',
   `rule_code` VARCHAR(64) NOT NULL COMMENT '已在代码 RuleCode 注册表登记的规则代码；未登记的代码被忽略并告警。取值来源：RuleCode 注册表；非固定枚举。',
   `rule_value` VARCHAR(64) NOT NULL COMMENT '规则取值的文本形式；数值、0/1 布尔或代码由对应 rule_code 定义解析。',
@@ -573,6 +574,7 @@ CREATE TABLE `t_application_declaration` (
   `user_agent` VARCHAR(512) NULL COMMENT '作出声明时的浏览器 User-Agent，超长截断；未提供时为空。',
   `terms_version` VARCHAR(64) NULL COMMENT '声明所针对的条款或告知文本版本；为空表示声明不对应版本化文本。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 时间，精确到微秒。',
+  `draft_revision` BIGINT NULL COMMENT '声明针对的申请资料版本；2026-10-27 之前的存量行为空，按 0 解释。',
   PRIMARY KEY (`declaration_id`),
   KEY `idx_app_declaration` (`client_application_id`, `declaration_type`) COMMENT 'Access index for application_declaration on client_application_id, declaration_type'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='申请声明证据；不可变、只追加；同一申请同一类型以最新一行为准；记录账号、时间、IP 与 User-Agent 作为电子声明证据';

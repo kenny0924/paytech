@@ -31,6 +31,7 @@ Access Token 只保存在内存；Refresh Token 由 BFF 的 HttpOnly Cookie 管�
 - 需求清单（CM-7）决定任务状态；提交前核对与 422 统一为需求级 `errors[]`，页顶错误汇总逐条跳到字段 / 人员 / 材料 / 声明；文案按错误码本地化，不显示服务端原文。
 - 材料直传文件服务，状态机：未上传 → 上传中（进度 + 取消）→ 检查中（扫描）→ 已完成；失败可重试或删除。关联只提交 `/files/v1/{fileId}`。
 - 视觉按 N0 token（`src/style.css` 顶部 CSS 变量，IBM Plex 本地字体包）；状态只用圆点 + 灰字，不用彩色底框；动效时长与缓动见 token，遵守 prefers-reduced-motion。
+- 声明每项一行，勾选即记录；带文档的声明（Schema `documentVersion`）可在侧边面板阅读并在确认时带上 `termsVersion`。条款正文随语言包发布在 `onboarding.legal.<声明类型>.<版本>.title|body`（段名小写，非字母数字转下划线），草案文本标"草案"；改版本时同时改 client-master DML 与语言包，覆盖测试核对 DML 里的版本都有正文。确认后改了资料的声明（`current=false`）显示失效、复选框回到未选，进度与核对按未完成计。受益人门槛文案按 `relationRules.uboThresholdComparison` 选"{n}% 或以上"（GTE）或"超过 {n}%"（GT，`_gt` 键）。
 - 国家包文案在命名空间 `onboarding-schema`（`src/i18n/en/onboarding-schema.json`；client-master 初始化 DML 的 label_key 为 `onboardingSchema.*`，由 `schemaI18nKey()` 映射到 `onboarding-schema.*`，测试核对）；页面文案在 `onboarding`。
 
 纯界面预览：先 `npm run build`，再运行需求目录的 `requirements/20261027/client-master-全球合规入驻与资格切片1/verification/preview-onboarding-v2.mjs`（loopback 模拟器，Schema 由仓库 DML 现场解析；文件直传不可用）。

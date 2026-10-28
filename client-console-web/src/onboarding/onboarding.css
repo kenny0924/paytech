@@ -107,7 +107,17 @@ a.ob-rail-item:hover{background:#f6f7f9;text-decoration:none}
 .ob-ownership-confirm{border-top:1px solid var(--hair);margin-top:var(--s3)}
 .ob-declarations .ob-declaration{border-bottom:1px solid var(--hair)}
 .ob-declarations .ob-declaration:first-child{border-top:1px solid var(--hair)}
+.ob-declaration{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:var(--s4);align-items:start}
+.ob-declaration>.checkline{margin:0;font-size:14px;line-height:22px}
+.ob-declaration>.checkline input{margin-top:3px}
+.ob-declaration-read{font-size:14px;line-height:22px;white-space:nowrap}
+/* 失效提示与陈述文字左对齐（复选框 16px + 间距）。 */
+.ob-declaration-stale{grid-column:1/-1;margin:var(--s1) 0 0 calc(16px + var(--s2))}
+.ob-declaration-stale .status-dot{white-space:normal}
 .ob-declarant{margin-top:var(--s4)}
+.ob-legal-meta{display:flex;align-items:center;gap:var(--s2);font-size:13px;line-height:18px;margin:0 0 var(--s4)}
+.ob-draft-mark{border:1px solid var(--border);border-radius:var(--r-control);padding:0 var(--s2);color:var(--text-2);font-weight:500;font-size:12px;line-height:18px}
+.ob-legal-text p{color:var(--text);font-size:14px;line-height:22px;margin:0 0 var(--s3)}
 .ob-person-docs h3{margin-top:var(--s2)}
 
 /* 抽屉。 */
@@ -310,3 +320,5 @@ body.ob-locked{overflow:hidden}
 .ob-ref-panel.sheet li[role="option"]{min-height:44px}
 @media (prefers-reduced-motion:reduce){.ob-ref-panel,.ob-ref-panel.sheet{animation:fade-in 110ms linear}}
 .ob-ref-trigger:disabled{opacity:1}
+@media (max-width:640px){.ob-declaration{grid-template-columns:minmax(0,1fr)}.ob-declaration-read{justify-self:start;margin:var(--s1) 0 0 calc(16px + var(--s2))}}
+.ob-declarations-stale{border-left-color:var(--warning);color:var(--text);margin:0 0 var(--s4)}

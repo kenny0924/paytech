@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { readApplication, readSchema } from "./model.ts";
@@ -76,6 +76,13 @@ function parseInserts(sql: string): Record<string, Row[]> {
 }
 
 const cmSql = read("paytech/client-master/docs/database/sql/client-master-initial-data.sql");
+/** 增量 DML（changes/）：只用于核对正则，表单形状仍以初始化文件为准。 */
+const cmChanges = (() => {
+  try {
+    const dir = join(repo, "paytech/client-master/docs/database/sql/changes");
+    return readdirSync(dir).filter((name) => name.endsWith(".sql")).map((name) => readFileSync(join(dir, name), "utf8"));
+  } catch { return []; }
+})();
 const cpSql = read("paytech/compliance/docs/database/sql/compliance-initial-data.sql");
 const cm = cmSql ? parseInserts(cmSql) : null, cp = cpSql ? parseInserts(cpSql) : null;
 const rule = (scope: string, code: string, ruleCode: string) =>
@@ -94,8 +101,10 @@ function materials(jurisdiction: string, partyType: string, roleType: string, su
 /** 与 FormSchemaConverter.convert 同形。 */
 function ownerResponse(jurisdiction: string, partyType: string, organizationType: string) {
   const j = cm!.t_jurisdiction.find((row) => row.jurisdiction_code === jurisdiction)!;
-  const schema = cm!.t_onboarding_schema.find((s) => s.jurisdiction_code === jurisdiction && s.party_type === partyType && s.organization_type_code === organizationType)
-    ?? cm!.t_onboarding_schema.find((s) => s.jurisdiction_code === jurisdiction && s.party_type === partyType && s.organization_type_code === "*")!;
+  // 同一组合有多个版本时取 ACTIVE（法务修订后 v1 RETIRED、v2 ACTIVE）。
+  const versions = [...cm!.t_onboarding_schema].sort((a, b) => Number(b.status === "ACTIVE") - Number(a.status === "ACTIVE"));
+  const schema = versions.find((s) => s.jurisdiction_code === jurisdiction && s.party_type === partyType && s.organization_type_code === organizationType)
+    ?? versions.find((s) => s.jurisdiction_code === jurisdiction && s.party_type === partyType && s.organization_type_code === "*")!;
   const fields = cm!.t_onboarding_schema_field.filter((f) => String(f.schema_id) === String(schema.schema_id) && f.requirement_level !== "HIDDEN")
     .sort((a, b) => Number(a.display_order) - Number(b.display_order));
   const sections: { section: unknown; labelKey: string; groups: { group: unknown; labelKey: string; fields: unknown[] }[] }[] = [];
@@ -130,11 +139,13 @@ function ownerResponse(jurisdiction: string, partyType: string, organizationType
     relationRules: partyType === "ORGANIZATION" ? { uboThresholdPct: rule("JURISDICTION", jurisdiction, "UBO_THRESHOLD_PCT"),
       uboFallbackRule: rule("JURISDICTION", jurisdiction, "UBO_FALLBACK_RULE"), controlPersonRequired: rule("JURISDICTION", jurisdiction, "CONTROL_PERSON_REQUIRED") === "1",
       minSignatories: Number(rule("ORGANIZATION_TYPE", scope, "MIN_SIGNATORIES") ?? 0), requiresManager: rule("ORGANIZATION_TYPE", scope, "REQUIRES_MANAGER") === "1",
-      requiresDirectors: rule("ORGANIZATION_TYPE", scope, "REQUIRES_DIRECTORS") === "1", uboCollectionMode: rule("ORGANIZATION_TYPE", scope, "UBO_COLLECTION_MODE") } : null,
+      requiresDirectors: rule("ORGANIZATION_TYPE", scope, "REQUIRES_DIRECTORS") === "1", uboCollectionMode: rule("ORGANIZATION_TYPE", scope, "UBO_COLLECTION_MODE"),
+      uboThresholdComparison: rule("JURISDICTION", jurisdiction, "UBO_THRESHOLD_COMPARISON") ?? "GTE" } : null,
     materials: [...materials(jurisdiction, partyType, "CLIENT", "PRIMARY"),
       ...(partyType === "ORGANIZATION" ? materials(jurisdiction, "INDIVIDUAL", "RELATED_PERSON", "ANY_RELATED") : [])],
     declarations: fields.filter((f) => f.widget_code === "DECLARATION").map((f) => ({
-      declarationType: String(f.field_key).split(".")[1], labelKey: f.label_key, requirementLevel: f.requirement_level })),
+      declarationType: String(f.field_key).split(".")[1], labelKey: f.label_key, requirementLevel: f.requirement_level,
+      documentVersion: rule("DECLARATION", String(f.field_key).split(".")[1], "DOCUMENT_VERSION") })),
   };
 }
 
@@ -224,4 +235,34 @@ test("country packs reference only the Platform catalogs the BFF fills, and the 
   assert.deepEqual(subdivisionOptions(schema.catalogs[REF_COUNTRY_SUBDIVISION], "AE", "en", () => null).map((option) => option.code), ["AE-AZ", "AE-DU"]);
   assert.deepEqual(currencyOptions(schema.catalogs[REF_CURRENCY], "en").map((option) => option.code), ["AED", "EGP", "SAR", "USD"]);
   assert.deepEqual(countryOptions(schema.countries, "en").map((option) => option.code), ["EG", "SA", "AE", "GB"]);
+});
+
+test("every country-pack validation pattern compiles as a JavaScript RegExp (otherwise the browser skips the format check)", () => {
+  assert.ok(cmSql, "country-pack DML not found");
+  const invalid: string[] = [];
+  for (const tables of [cmSql!, ...cmChanges].map(parseInserts)) {
+    // 标识类型、属性定义与 Schema 字段（含增量文件的临时表）里的全部正则列。
+    const patterns = Object.values(tables).flat().flatMap((row) => [row.format_regex, row.validation_pattern]);
+    for (const pattern of patterns) {
+      if (typeof pattern !== "string" || !pattern) continue;
+      try { new RegExp("^(?:" + pattern + ")$"); } catch { invalid.push(pattern); }
+    }
+  }
+  assert.deepEqual(invalid, []);
+});
+
+test("active v2 packs: versioned terms and privacy declarations, GTE threshold, EG commercial registration choice", () => {
+  assert.ok(cm && cp, "country-pack DML not found");
+  for (const [jurisdiction, partyType] of [["AE", "ORGANIZATION"], ["SA", "INDIVIDUAL"], ["EG", "ORGANIZATION"]] as const) {
+    const schema = readSchema(JSON.parse(JSON.stringify(withReferenceData(ownerResponse(jurisdiction, partyType, "*")))), "x");
+    const declarations = Object.fromEntries(schema.declarations.map((item) => [item.declarationType, item.documentVersion]));
+    assert.equal(declarations.PLATFORM_TERMS_ACCEPTANCE, "2026-10-draft", jurisdiction + " " + partyType);
+    assert.equal(declarations.PRIVACY_NOTICE_ACKNOWLEDGED, "2026-10-draft", jurisdiction + " " + partyType);
+    assert.ok(!("PLATFORM_TERMS" in declarations), "v1 PLATFORM_TERMS is not in v2");
+    assert.equal("RELATED_PERSON_DATA_AUTHORITY" in declarations, partyType === "ORGANIZATION");
+    if (partyType === "ORGANIZATION") assert.equal(schema.relationRules.uboThresholdComparison, "GTE");
+  }
+  const eg = readSchema(JSON.parse(JSON.stringify(withReferenceData(ownerResponse("EG", "ORGANIZATION", "*")))), "x");
+  const codes = eg.identifierTypes.map((item) => item.code);
+  assert.ok(codes.includes("EG_UNIFIED_CR") && codes.includes("EG_LOCAL_CR"), codes.join(","));
 });

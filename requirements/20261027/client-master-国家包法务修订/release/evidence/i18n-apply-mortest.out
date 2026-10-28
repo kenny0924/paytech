@@ -1,0 +1,120 @@
+[通过] client-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] client-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[通过] client-console 线上 1423 个 ACTIVE key 都在仓库中（否则 KEY_IMPORT 会废弃它们；确认废弃用 --accept-deprecations）
+[通过] client-console 新增 31 < 3000
+[通过] client-console 导入集合 31+ 个 key 都有仓库 zh-CN（缺 0）
+[通过] client-console 废弃 key 只在 ['onboarding-schema']（{}）
+[通过] client-console 仓库 zh-CN 与线上不同但不会导入的 key 为 0（0）
+{"addedByNamespace": {"onboarding-schema": 15, "onboarding": 16}, "deprecationsByNamespace": {}, "zhChangedNotImported": []}
+{"currentRelease": 6, "liveNamespaces": 10, "repoNamespaces": 10, "newNamespaces": [], "repoKeys": 1454, "liveActiveKeys": 1423, "added": 31, "restored": 0, "sourceChanged": 0, "missingInRepo": 0, "zhMissingForImport": 0, "keepLiveZh": 1423, "refdataZhReplaced": 0, "liveOutdatedZh": 2, "rebaseExpected": 0, "outdatedUntouched": 2}
+[通过] operations-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] operations-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[通过] operations-console 线上 10157 个 ACTIVE key 都在仓库中（否则 KEY_IMPORT 会废弃它们；确认废弃用 --accept-deprecations）
+[通过] operations-console 新增 61 < 3000
+[通过] operations-console 导入集合 61+ 个 key 都有仓库 zh-CN（缺 0）
+[通过] operations-console 废弃 key 只在 ['onboarding-schema']（{}）
+[通过] operations-console 仓库 zh-CN 与线上不同但不会导入的 key 为 0（0）
+{"addedByNamespace": {"client-review": 47, "onboarding-schema": 14}, "deprecationsByNamespace": {}, "zhChangedNotImported": []}
+{"currentRelease": 18, "liveNamespaces": 26, "repoNamespaces": 26, "newNamespaces": [], "repoKeys": 10218, "liveActiveKeys": 10157, "added": 61, "restored": 0, "sourceChanged": 0, "missingInRepo": 0, "zhMissingForImport": 0, "keepLiveZh": 10157, "refdataZhReplaced": 0, "liveOutdatedZh": 0, "rebaseExpected": 0, "outdatedUntouched": 0}
+导入文件与计划：/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261027/client-master-国家包法务修订/release/i18n-bundles
+[通过] client-console key 导入预览（第 1 次）：{'added': 31, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}
+[通过] client-console key 导入预览（第 2 次）：{'added': 0, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}
+[通过] client-console key 与仓库一致（1454 个不变）
+[通过] client-console zh-CN 导入：写入 31、不变 0（文件 31）
+[通过] client-console 导入集合外的 1423 条已有 zh-CN 文案与版本未变
+[通过] client-console 新增 31 个 key ACTIVE 且有 zh-CN
+[通过] client-console 没有基准已变更待确认的 zh-CN
+[通过] client-console 预检可发布（缺口 0，下一发布号 7，新增 31、废弃 0、基准变更 0）
+[通过] client-console 发布 #7（200）
+[通过] client-console #7 READY 且为当前（语言包 20/20，期望 20）
+[通过] client-console 匿名 manifest 200、#7
+[通过] client-console en 列出 10 个命名空间（期望 10）
+[通过] client-console en/auth 匿名 200 且摘要 = hash
+[通过] client-console en/common 匿名 200 且摘要 = hash
+[通过] client-console en/developer 匿名 200 且摘要 = hash
+[通过] client-console en/enum 匿名 200 且摘要 = hash
+[通过] client-console en/invitation 匿名 200 且摘要 = hash
+[通过] client-console en/onboarding 匿名 200 且摘要 = hash
+[通过] client-console en/onboarding-schema 匿名 200 且摘要 = hash
+[通过] client-console en/refdata 匿名 200 且摘要 = hash
+[通过] client-console en/team 匿名 200 且摘要 = hash
+[通过] client-console en/workspace 匿名 200 且摘要 = hash
+[通过] client-console zh-CN 列出 10 个命名空间（期望 10）
+[通过] client-console zh-CN/auth 匿名 200 且摘要 = hash
+[通过] client-console zh-CN/common 匿名 200 且摘要 = hash
+[通过] client-console zh-CN/developer 匿名 200 且摘要 = hash
+[通过] client-console zh-CN/enum 匿名 200 且摘要 = hash
+[通过] client-console zh-CN/invitation 匿名 200 且摘要 = hash
+[通过] client-console zh-CN/onboarding 匿名 200 且摘要 = hash
+[通过] client-console zh-CN/onboarding-schema 匿名 200 且摘要 = hash
+[通过] client-console zh-CN/refdata 匿名 200 且摘要 = hash
+[通过] client-console zh-CN/team 匿名 200 且摘要 = hash
+[通过] client-console zh-CN/workspace 匿名 200 且摘要 = hash
+[通过] operations-console key 导入预览（第 1 次）：{'added': 61, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}
+[通过] operations-console key 导入预览（第 2 次）：{'added': 0, 'sourceChanged': 0, 'deprecated': 0, 'restored': 0}
+[通过] operations-console key 与仓库一致（10218 个不变）
+[通过] operations-console zh-CN 导入：写入 61、不变 0（文件 61）
+[通过] operations-console 导入集合外的 10157 条已有 zh-CN 文案与版本未变
+[通过] operations-console 新增 61 个 key ACTIVE 且有 zh-CN
+[通过] operations-console 没有基准已变更待确认的 zh-CN
+[通过] operations-console 预检可发布（缺口 0，下一发布号 19，新增 61、废弃 0、基准变更 0）
+[通过] operations-console 发布 #19（200）
+[通过] operations-console #19 READY 且为当前（语言包 52/52，期望 52）
+[通过] operations-console 匿名 manifest 200、#19
+[通过] operations-console en 列出 26 个命名空间（期望 26）
+[通过] operations-console en/access 匿名 200 且摘要 = hash
+[通过] operations-console en/auth 匿名 200 且摘要 = hash
+[通过] operations-console en/card 匿名 200 且摘要 = hash
+[通过] operations-console en/channel 匿名 200 且摘要 = hash
+[通过] operations-console en/client-review 匿名 200 且摘要 = hash
+[通过] operations-console en/commercial 匿名 200 且摘要 = hash
+[通过] operations-console en/common 匿名 200 且摘要 = hash
+[通过] operations-console en/currency 匿名 200 且摘要 = hash
+[通过] operations-console en/data-query 匿名 200 且摘要 = hash
+[通过] operations-console en/enum 匿名 200 且摘要 = hash
+[通过] operations-console en/file 匿名 200 且摘要 = hash
+[通过] operations-console en/finance 匿名 200 且摘要 = hash
+[通过] operations-console en/gateway 匿名 200 且摘要 = hash
+[通过] operations-console en/i18n-admin 匿名 200 且摘要 = hash
+[通过] operations-console en/master-data 匿名 200 且摘要 = hash
+[通过] operations-console en/nav 匿名 200 且摘要 = hash
+[通过] operations-console en/notification 匿名 200 且摘要 = hash
+[通过] operations-console en/onboarding-schema 匿名 200 且摘要 = hash
+[通过] operations-console en/qualification 匿名 200 且摘要 = hash
+[通过] operations-console en/recon 匿名 200 且摘要 = hash
+[通过] operations-console en/refdata 匿名 200 且摘要 = hash
+[通过] operations-console en/reference-data 匿名 200 且摘要 = hash
+[通过] operations-console en/risk 匿名 200 且摘要 = hash
+[通过] operations-console en/vault 匿名 200 且摘要 = hash
+[通过] operations-console en/webhook 匿名 200 且摘要 = hash
+[通过] operations-console en/workflow 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN 列出 26 个命名空间（期望 26）
+[通过] operations-console zh-CN/access 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/auth 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/card 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/channel 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/client-review 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/commercial 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/common 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/currency 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/data-query 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/enum 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/file 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/finance 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/gateway 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/i18n-admin 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/master-data 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/nav 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/notification 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/onboarding-schema 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/qualification 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/recon 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/refdata 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/reference-data 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/risk 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/vault 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/webhook 匿名 200 且摘要 = hash
+[通过] operations-console zh-CN/workflow 匿名 200 且摘要 = hash
+运行记录： /Users/kenny/Code-MoR-backups/legal-20261028-i18n/refdata-bundles-2026-10-28T054339Z.json
+
+== 参考数据语言包：通过 112，失败 0，未能验证 0

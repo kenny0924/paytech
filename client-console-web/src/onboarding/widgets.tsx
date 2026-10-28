@@ -6,7 +6,7 @@ import { Ctx } from "./context.tsx";
 import type { CatalogItem, FormSchema, SchemaField } from "./model.ts";
 import { REF_COUNTRY_SUBDIVISION, REF_CURRENCY, REFDATA_NAMESPACE, countryOptions, currencyOptions, subdivisionOptions } from "./refdata.ts";
 import { OptionsUnavailable, RefSelect } from "./RefSelect.tsx";
-import { ADDRESS_COUNTRY, activeAddressFormat, addressPath, addressPathsToClear, draftPath, identifierAlternatives, identifierPaths, selectedIdentifier } from "./schema.ts";
+import { ADDRESS_COUNTRY, activeAddressFormat, addressPath, addressPathsToClear, draftPath, identifierAlternatives, identifierNumberLabel, identifierPaths, selectedIdentifier } from "./schema.ts";
 import { FieldShell, useSchemaLookup, useSchemaText } from "./ui.tsx";
 
 /**
@@ -165,7 +165,7 @@ function Identifier(props: WidgetProps) {
         return <label className="checkline" key={code}><input type="radio" name={props.id + "-type"} checked={type?.code === code} disabled={props.disabled}
           onChange={() => choose(code)} />{label(item.labelKey, code)}</label>; })}</div>
     </fieldset>}
-    <FieldShell id={props.id} label={alternatives.length > 1 ? t("identifier.number", { type: typeLabel }) : props.label} optional={props.optional}
+    <FieldShell id={props.id} label={alternatives.length > 1 ? identifierNumberLabel(typeLabel, (type) => t("identifier.number", { type })) : props.label} optional={props.optional}
       help={props.help} error={error} mono>
       {showMasked ? <div className="ob-masked">
         <span className="mono">{masked}</span>

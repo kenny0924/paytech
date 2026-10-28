@@ -14,6 +14,7 @@ import com.paytech.client.master.core.dal.dataobject.RelationType;
 import com.paytech.client.master.domain.enums.RuleCode;
 import com.paytech.client.master.domain.enums.RuleRole;
 import com.paytech.client.master.domain.enums.UboCollectionMode;
+import com.paytech.client.master.domain.enums.UboThresholdComparison;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
 import com.paytech.foundation.common.error.ErrorException;
 
@@ -82,16 +83,19 @@ final class RelationRules {
         }
     }
 
-    /** 有达到门槛（或以控制认定）的受益人，或在兜底规则下有控制人 / 高级管理人员。 */
+    /** 有按比较方式达到门槛（或以控制认定）的受益人，或在兜底规则下有控制人 / 高级管理人员。 */
     boolean uboSatisfied() {
         BigDecimal threshold = pack.getRules().decimal(RuleCode.UBO_THRESHOLD_PCT, pack.jurisdictionCode());
+        UboThresholdComparison comparison = pack.uboThresholdComparison();
         for (RelationFact relation : relations) {
             RelationType type = pack.relationType(relation.relationTypeCode());
             if (type == null || !Boolean.TRUE.equals(type.getUboFlag())) {
                 continue;
             }
-            boolean byOwnership = relation.ownershipPercentage() != null && relation.ownershipPercentage().compareTo(threshold) >= 0;
-            if (byOwnership || NON_OWNERSHIP_BASIS.contains(relation.uboBasis())) {
+            boolean byOwnership = relation.ownershipPercentage() != null && comparison.satisfiedBy(relation.ownershipPercentage(), threshold);
+            // Set.of 不接受 null 查询；未填认定依据即不以控制认定。
+            boolean byControl = relation.uboBasis() != null && NON_OWNERSHIP_BASIS.contains(relation.uboBasis());
+            if (byOwnership || byControl) {
                 return true;
             }
         }

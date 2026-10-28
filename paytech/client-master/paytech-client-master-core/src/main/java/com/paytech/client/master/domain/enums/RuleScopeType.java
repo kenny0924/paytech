@@ -11,7 +11,13 @@ public enum RuleScopeType implements CodeEnum {
     ORGANIZATION_TYPE,
 
     /** 标识类型。 */
-    IDENTIFIER_TYPE;
+    IDENTIFIER_TYPE,
+
+    /** 声明类型，scope_code 为声明类型代码（Schema 字段 declaration.<类型>）。 */
+    DECLARATION,
+
+    /** 扩展属性，scope_code 为属性代码（t_attribute_definition.attribute_code）。 */
+    ATTRIBUTE;
 
     /** 稳定 Code，等于常量名。 */
     @Override

@@ -1,0 +1,53 @@
+SHOT ops-screens/ops-zh-CN-390-config-AE.png
+PASS ops-zh-CN-390 config-AE: no raw i18n keys | []
+PASS ops-zh-CN-390 config-AE: no true/false values
+PASS ops-zh-CN-390 config AE: comparison row labelled | "阿联酋\nAE\n国家\nAE\n接受策略\n开放\n地址格式\nAE_POBOX\n状态\n生效\n规则\t范围\t取值\n文档版本\nDOCUMENT_VERSION\n\t声明 · PLATFORM_TERMS_ACCEPTANCE\t2026-10-draft\n文档版本\nDOCUMENT_VERSION\n\t声明 · PRIVACY_NOTICE_ACKNOWLEDGED\t2026-10-draft\n采集方式\nACQUIRE_MODE\n\t标识类型 · AE_EMIRATES_ID\t手工录入\n到期日必填\nEXPIRY_REQUIRED\n\t标识类型 · AE_EMIRATES_ID\t是\n须存入 Vault\nVAULT_REQ"
+PASS ops-zh-CN-390 config AE: document version rows
+PASS ops-zh-CN-390 config AE: /声明 · PLATFORM_TERMS_ACCEPTANCE/
+PASS ops-zh-CN-390 config AE: 15 flag rules as words | []
+PASS ops-zh-CN-390 config AE: numeric thresholds stay numbers | ["最低年龄 MIN_AGE 辖区 · AE 18","受益所有人门槛（%） UBO_THRESHOLD_PCT 辖区 · AE 25"]
+PASS ops-zh-CN-390 config AE: schemas v2 ACTIVE / v1 RETIRED | ["INDIVIDUAL/*/v1/RETIRED","INDIVIDUAL/*/v2/ACTIVE","INDIVIDUAL/SOLE_ESTABLISHMENT/v1/RETIRED","INDIVIDUAL/SOLE_ESTABLISHMENT/v2/ACTIVE","ORGANIZATION/*/v1/RETIRED","ORGANIZATION/*/v2/ACTIVE","ORGANIZATION/FZ_LLC/v1/RETIRED","ORGANIZATION/FZ_LLC/v2/ACTIVE"]
+SHOT ops-screens/ops-zh-CN-390-config-AE-schema-list.png
+PASS ops-zh-CN-390 config AE: schema list shows v2 启用 and v1 已退役 | ["个人 · Client · 默认（全部组织类型） · v1 · 已下线","个人 · Client · 默认（全部组织类型） · v2 · 生效","个人 · Client · 独资机构 · v1 · 已下线","个人 · Client · 独资机构 · v2 · 生效","机构 · Client · 默认（全部组织类型） · v1 · 已下线","机构 · Client · 默认（全部组织类型） · v2 · 生效","机构 · Client · 自贸区有限责任公司 · v1 · 已下线","机构 · Client · 自贸区有限责任公司 · v2 · 生效"]
+SHOT ops-screens/ops-zh-CN-390-config-SA.png
+PASS ops-zh-CN-390 config-SA: no raw i18n keys | []
+PASS ops-zh-CN-390 config-SA: no true/false values
+PASS ops-zh-CN-390 config SA: comparison row labelled | "沙特阿拉伯\nSA\n国家\nSA\n接受策略\n开放\n地址格式\nSA_NATIONAL_ADDRESS\n状态\n生效\n规则\t范围\t取值\n日期不得早于今天\nDATE_NOT_PAST\n\t属性 · SA_FREELANCE_DOCUMENT_EXPIRY_DATE\t是\n文档版本\nDOCUMENT_VERSION\n\t声明 · PLATFORM_TERMS_ACCEPTANCE\t2026-10-draft\n文档版本\nDOCUMENT_VERSION\n\t声明 · PRIVACY_NOTICE_ACKNOWLEDGED\t2026-10-draft\n采集方式\nACQUIRE_MODE\n\t标识类型 · PASSPORT"
+PASS ops-zh-CN-390 config SA: document version rows
+PASS ops-zh-CN-390 config SA: /属性 · SA_FREELANCE_DOCUMENT_EXPIRY_DATE/
+PASS ops-zh-CN-390 config SA: 15 flag rules as words | []
+PASS ops-zh-CN-390 config SA: numeric thresholds stay numbers | ["最低年龄 MIN_AGE 辖区 · SA 18","受益所有人门槛（%） UBO_THRESHOLD_PCT 辖区 · SA 25"]
+PASS ops-zh-CN-390 config SA: schemas v2 ACTIVE / v1 RETIRED | ["INDIVIDUAL/*/v1/RETIRED","INDIVIDUAL/*/v2/ACTIVE","INDIVIDUAL/FREELANCER/v1/ACTIVE","ORGANIZATION/*/v1/RETIRED","ORGANIZATION/*/v2/ACTIVE"]
+SHOT ops-screens/ops-zh-CN-390-config-SA-schema-list.png
+PASS ops-zh-CN-390 config SA: schema list shows v2 启用 and v1 已退役 | ["个人 · Client · 默认（全部组织类型） · v1 · 已下线","个人 · Client · 默认（全部组织类型） · v2 · 生效","个人 · Client · 自由职业者 · v1 · 生效","机构 · Client · 默认（全部组织类型） · v1 · 已下线","机构 · Client · 默认（全部组织类型） · v2 · 生效"]
+SHOT ops-screens/ops-zh-CN-390-config-EG.png
+PASS ops-zh-CN-390 config-EG: no raw i18n keys | []
+PASS ops-zh-CN-390 config-EG: no true/false values
+PASS ops-zh-CN-390 config EG: comparison row labelled | "埃及\nEG\n国家\nEG\n接受策略\n开放\n地址格式\nEG_STANDARD\n状态\n生效\n规则\t范围\t取值\n文档版本\nDOCUMENT_VERSION\n\t声明 · PLATFORM_TERMS_ACCEPTANCE\t2026-10-draft\n文档版本\nDOCUMENT_VERSION\n\t声明 · PRIVACY_NOTICE_ACKNOWLEDGED\t2026-10-draft\n采集方式\nACQUIRE_MODE\n\t标识类型 · EG_COMMERCIAL_REGISTER\t手工录入\n到期日必填\nEXPIRY_REQUIRED\n\t标识类型 · EG_COMMERCIAL_REGISTER\t否\n须"
+PASS ops-zh-CN-390 config EG: document version rows
+PASS ops-zh-CN-390 config EG: /声明 · PRIVACY_NOTICE_ACKNOWLEDGED/
+PASS ops-zh-CN-390 config EG: 17 flag rules as words | []
+PASS ops-zh-CN-390 config EG: numeric thresholds stay numbers | ["最低年龄 MIN_AGE 辖区 · EG 18","受益所有人门槛（%） UBO_THRESHOLD_PCT 辖区 · EG 25"]
+PASS ops-zh-CN-390 config EG: schemas v2 ACTIVE / v1 RETIRED | ["INDIVIDUAL/*/v1/RETIRED","INDIVIDUAL/*/v2/ACTIVE","ORGANIZATION/*/v1/RETIRED","ORGANIZATION/*/v2/ACTIVE"]
+SHOT ops-screens/ops-zh-CN-390-config-EG-schema-list.png
+PASS ops-zh-CN-390 config EG: schema list shows v2 启用 and v1 已退役 | ["个人 · Client · 默认（全部组织类型） · v1 · 已下线","个人 · Client · 默认（全部组织类型） · v2 · 生效","机构 · Client · 默认（全部组织类型） · v1 · 已下线","机构 · Client · 默认（全部组织类型） · v2 · 生效"]
+SHOT ops-screens/ops-zh-CN-390-case-legacy.png
+PASS ops-zh-CN-390 case-legacy: no raw i18n keys | []
+PASS ops-zh-CN-390 case-legacy: no true/false values
+PASS ops-zh-CN-390 legacy: declarations section | ["OWNERSHIP_COMPLETE=TRUE/null/true/240708898032533504","DIRECTORSHIP_COMPLETE=TRUE/null/true/240708898032533504","REPRESENTATIVE_AUTHORITY=TRUE/null/true/240708898032533504","PEP_DECLARATION=TRUE/null/true/240708898032533504","INFORMATION_TRUE=TRUE/null/true/240708898032533504","PLATFORM_TERMS=TRUE/null/true/240708898032533504"]
+PASS ops-zh-CN-390 legacy: answers are words
+PASS ops-zh-CN-390 legacy: OWNERSHIP_COMPLETE code shown
+PASS ops-zh-CN-390 legacy: OWNERSHIP_COMPLETE declared-by 240708898032533504
+PASS ops-zh-CN-390 legacy: DIRECTORSHIP_COMPLETE code shown
+PASS ops-zh-CN-390 legacy: DIRECTORSHIP_COMPLETE declared-by 240708898032533504
+PASS ops-zh-CN-390 legacy: REPRESENTATIVE_AUTHORITY code shown
+PASS ops-zh-CN-390 legacy: REPRESENTATIVE_AUTHORITY declared-by 240708898032533504
+PASS ops-zh-CN-390 legacy: PEP_DECLARATION code shown
+PASS ops-zh-CN-390 legacy: PEP_DECLARATION declared-by 240708898032533504
+PASS ops-zh-CN-390 legacy: INFORMATION_TRUE code shown
+PASS ops-zh-CN-390 legacy: INFORMATION_TRUE declared-by 240708898032533504
+PASS ops-zh-CN-390 legacy: PLATFORM_TERMS code shown
+PASS ops-zh-CN-390 legacy: PLATFORM_TERMS declared-by 240708898032533504
+PASS ops-zh-CN-390 legacy: legacy declaration shown with label
+PASS ops-zh-CN-390 legacy: no horizontal page scroll at 390 | 0
+SUMMARY ops-zh-CN-390 pass=45 fail=0

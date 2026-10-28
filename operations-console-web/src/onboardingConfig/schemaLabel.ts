@@ -40,6 +40,7 @@ export const FIELD_CATALOGS: Readonly<Record<string, string>> = {
   'address.stateOrProvince': 'subdivision',
   'identifier.identifierType': 'identifierType',
   'attributes.AE_FREE_ZONE_CODE': 'catalog:FREE_ZONE',
+  'attributes.AE_LICENSE_AUTHORITY': 'catalog:REGISTRATION_AUTHORITY',
   'attributes.OCCUPATION': 'catalog:OCCUPATION',
 };
 
@@ -47,9 +48,11 @@ export const FIELD_CATALOGS: Readonly<Record<string, string>> = {
 export const COUNTRY_FIELDS: ReadonlySet<string> = new Set(['countryCode', 'incorporationCountry', 'issuingCountry', 'nationalityCountry',
   'residenceCountry', 'birthCountry', 'TAX_RESIDENCE_COUNTRY']);
 
-/** 资料值显示：国家字段显示当前语言的国家名称，目录字段翻译为目录项名称，其他原样；没有译文时显示代码。 */
+/** 资料值显示：布尔值为是 / 否，国家字段显示当前语言的国家名称，目录字段翻译为目录项名称，其他原样；没有译文时显示代码。 */
 export function valueText(tSchema: Translate, group: string, field: string, value: string | null, jurisdictionCode: string | null): string {
   if (value === null || value === '') return '—';
+  // 布尔资料（如 listedCompany、pepSelfDeclared）以是 / 否文字显示，从不显示 true / false。
+  if (value === 'true' || value === 'false') return translator('client-review')(value === 'true' ? 'config.enum.flag.YES' : 'config.enum.flag.NO');
   if (COUNTRY_FIELDS.has(field)) return formatCountry(value);
   const family = FIELD_CATALOGS[`${group}.${field}`];
   if (!family) return value;

@@ -69,7 +69,7 @@ public final class FormSchemaConverter {
         body.setRelationRules(partyType == ClientType.ORGANIZATION ? relationRules(pack, organizationTypeCode) : null);
         body.setMaterials(materials.stream().map(FormSchemaConverter::material).toList());
         body.setDeclarations(pack.getFields().stream().filter(field -> field.getWidgetCode() == WidgetCode.DECLARATION
-            && field.getRequirementLevel() != RequirementLevel.HIDDEN).map(FormSchemaConverter::declaration).toList());
+            && field.getRequirementLevel() != RequirementLevel.HIDDEN).map(field -> declaration(pack, field)).toList());
         return body;
     }
 
@@ -211,6 +211,7 @@ public final class FormSchemaConverter {
         result.setRequiresManager(rules.flag(RuleCode.REQUIRES_MANAGER, scope));
         result.setRequiresDirectors(rules.flag(RuleCode.REQUIRES_DIRECTORS, scope));
         result.setUboCollectionMode(rules.value(RuleCode.UBO_COLLECTION_MODE, scope));
+        result.setUboThresholdComparison(pack.uboThresholdComparison().getCode());
         return result;
     }
 
@@ -225,12 +226,13 @@ public final class FormSchemaConverter {
         return material;
     }
 
-    /** 声明要求。 */
-    static Declaration declaration(OnboardingSchemaField field) {
+    /** 声明要求及其文档的当前版本。 */
+    static Declaration declaration(OnboardingPack pack, OnboardingSchemaField field) {
         var declaration = new Declaration();
         declaration.setDeclarationType(field.getFieldKey().substring("declaration.".length()));
         declaration.setLabelKey(field.getLabelKey());
         declaration.setRequirementLevel(field.getRequirementLevel().getCode());
+        declaration.setDocumentVersion(pack.documentVersion(declaration.getDeclarationType()));
         return declaration;
     }
 

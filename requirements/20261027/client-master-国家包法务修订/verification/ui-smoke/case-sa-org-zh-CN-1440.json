@@ -1,0 +1,28 @@
+{
+ "case": "sa-org",
+ "app": "240935015863562240",
+ "lang": "zh-CN",
+ "width": "1440",
+ "fields": [
+  "f-organization-legalName",
+  "f-organization-tradeName",
+  "f-organization-organizationType",
+  "f-organization-incorporationCountry",
+  "f-organization-incorporationDate",
+  "f-organization-registrationAuthorityCode",
+  "f-attributes-SA_CR_ANNUAL_CONFIRMATION_DATE",
+  "f-organization-listedCompany",
+  "f-identifier-SA_CR_NUMBER",
+  "f-attributes-SA_VAT_NUMBER",
+  "f-business-businessModelCode",
+  "f-business-businessDescription",
+  "f-business-websiteUrl",
+  "f-business-currency",
+  "f-business-expectedVolume",
+  "f-business-expectedTicket"
+ ],
+ "licenseExpiryPresent": false,
+ "annualConfirmationPresent": true,
+ "annualLabel": "CR Annual Confirmation Date可选",
+ "findings": []
+}

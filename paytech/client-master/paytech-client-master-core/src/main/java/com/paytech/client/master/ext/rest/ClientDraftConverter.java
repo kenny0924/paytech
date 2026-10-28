@@ -64,17 +64,28 @@ public final class ClientDraftConverter {
             row.jurisdictionCode(),row.organizationTypeCode(),row.schemaId()==null?null:row.schemaId().toString(),
             row.reviewDueTime()==null?null:formatter.format(row.reviewDueTime()),
             row.responsiblePartnerId()==null?null:row.responsiblePartnerId().toString(),view.responsiblePartnerName(),
-            view.declarations().stream().map(declaration -> declaration(declaration,formatter)).toList());
+            view.declarations().stream().map(declaration -> declaration(declaration,view.currentDeclaration(declaration),formatter)).toList(),
+            Long.toString(row.draftRevision()));
     }
-    /** 一条声明的读回。 */
-    private static DeclarationResponseBody declaration(ApplicationDeclaration row,java.time.format.DateTimeFormatter formatter) {
+    /**
+     * 一条声明的读回
+     *
+     * @param row 声明
+     * @param current 是否针对申请当前资料与文档版本
+     * @param formatter UTC 微秒格式
+     * @return 声明响应
+     */
+    private static DeclarationResponseBody declaration(ApplicationDeclaration row,boolean current,java.time.format.DateTimeFormatter formatter) {
         var body=new DeclarationResponseBody();
         body.setDeclarationId(row.getDeclarationId().toString());
         body.setApplicationId(row.getClientApplicationId().toString());
         body.setDeclarationType(row.getDeclarationType());
         body.setDeclaredValue(row.getDeclaredValue());
         body.setTermsVersion(row.getTermsVersion());
+        body.setDeclaredByAccountId(row.getDeclaredByAccountId().toString());
         body.setDeclaredAt(formatter.format(row.getDeclaredTime()));
+        body.setDraftRevision(Long.toString(row.getDraftRevision()==null?0L:row.getDraftRevision()));
+        body.setCurrent(current);
         return body;
     }
     private static String text(LocalDate value) { return value==null?null:value.toString(); }

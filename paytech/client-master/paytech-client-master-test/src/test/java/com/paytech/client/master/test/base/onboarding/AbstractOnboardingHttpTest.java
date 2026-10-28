@@ -88,9 +88,17 @@ public abstract class AbstractOnboardingHttpTest extends ClientMasterMockTestBas
 
     /** CM-6 签署声明。 */
     protected EntityExchangeResult<byte[]> declare(long applicationId, String type) {
+        return declare(applicationId, type, "2026-10");
+    }
+
+    /** CM-6 以指定条款版本签署声明；termsVersion 为 null 时不出现在请求体。 */
+    protected EntityExchangeResult<byte[]> declare(long applicationId, String type, String termsVersion) {
+        Map<String, String> body = new LinkedHashMap<>();
+        body.put("declarationType", type);
+        body.put("declaredValue", "TRUE");
+        put(body, "termsVersion", termsVersion);
         return http.post().uri("/client-onboarding/v1/applications/{id}/declarations", applicationId).headers(this::client)
-            .header("Content-Type", "application/json")
-            .body(JSON.writeValueAsString(Map.of("declarationType", type, "declaredValue", "TRUE", "termsVersion", "2026-10")))
+            .header("Content-Type", "application/json").body(JSON.writeValueAsString(body))
             .exchange().expectBody(byte[].class).returnResult();
     }
 

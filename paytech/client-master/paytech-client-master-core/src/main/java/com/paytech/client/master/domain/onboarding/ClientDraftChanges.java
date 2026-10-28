@@ -30,6 +30,11 @@ public class ClientDraftChanges {
         return columns.keySet().stream().anyMatch(key -> key.startsWith(group + "_"));
     }
 
+    /** 没有任何资料列、扩展属性、标识或 Schema 修改。 */
+    public boolean isEmpty() {
+        return columns.isEmpty() && attributes.isEmpty() && !identifierChanged && !schemaChanged();
+    }
+
     /** 是否需要重新冻结 Schema。 */
     public boolean schemaChanged() {
         return schemaId != null;

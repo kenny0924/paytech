@@ -58,6 +58,8 @@ class ResubmitAfterReturnTest extends AbstractClientReviewTest {
         assertEquals(OnboardingFixtures.masked(normalized), identifier.get("identifier_masked_value"));
         assertNull(identifier.get("public_identifier_value"));
         assertEquals(1, vault.count(OnboardingFixtures.IDENTIFIER_DATA_TYPE));
+        // 退回后改资料使原声明失效（声明绑定资料版本），重提前须逐项重新确认。
+        OnboardingFixtures.INDIVIDUAL_DECLARATIONS.forEach(type -> assertEquals(200, redeclare(app, type).getStatus().value()));
 
         submitAndWaitUnderReview(app, applications.nextId());
 
@@ -81,6 +83,16 @@ class ResubmitAfterReturnTest extends AbstractClientReviewTest {
         String submissionId = body(result).path("submissionId").asString();
         waitUntil(() -> "UNDER_REVIEW".equals(mapper.application(app.applicationId()).get("status")), Duration.ofSeconds(10));
         return new ReviewFixture(app, submissionId, caseId, null);
+    }
+
+    /** 通过真实 HTTP 调用 CM-6 重新确认一项声明。 */
+    EntityExchangeResult<byte[]> redeclare(ApplicationFixture app, String type) {
+        return http.post().uri("/client-onboarding/v1/applications/{id}/declarations", app.applicationId())
+            .header("X-Caller-Service", "client-console-bff").header("X-Gateway-Actor-Subject", Long.toString(ACCOUNT_ID))
+            .header("X-Gateway-Session-Id", Long.toString(SESSION_ID)).header("X-Request-Id", "cct-resubmit-test")
+            .header("Content-Type", "application/json")
+            .body(JSON.writeValueAsString(Map.of("declarationType", type, "declaredValue", "TRUE"))).exchange().expectBody(byte[].class)
+            .returnResult();
     }
 
     /** 通过真实 HTTP 调用 C04，只改证件号。 */

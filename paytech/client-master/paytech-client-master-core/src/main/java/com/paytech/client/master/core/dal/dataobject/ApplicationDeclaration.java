@@ -27,6 +27,11 @@ public class ApplicationDeclaration {
     private String userAgent;
     /** 条款版本，可空。 */
     private String termsVersion;
+    /**
+     * 声明针对的申请资料版本
+     * <li>2026-10-27 之前的存量行为空，按 0 解释。</li>
+     */
+    private Long draftRevision;
     /** 创建 UTC 时间。 */
     private Instant createTime;
 

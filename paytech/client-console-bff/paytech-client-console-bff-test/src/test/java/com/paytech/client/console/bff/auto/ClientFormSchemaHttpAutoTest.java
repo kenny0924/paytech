@@ -138,6 +138,9 @@ class ClientFormSchemaHttpAutoTest {
         assertEquals(List.of("SERVICES"), codes(business));
         assertEquals("onboardingSchema.catalog.BUSINESS_MODEL.SERVICES", business.path(0).path("labelKey").asString());
         assertTrue(business.path(0).path("name").isNull());
+        // 门槛比较方式与声明文档版本沿用 client-master 合同类型原样返回。
+        assertEquals("GT", page.path("relationRules").path("uboThresholdComparison").asString());
+        assertEquals("2026-10-draft", page.path("declarations").path(0).path("documentVersion").asString());
         assertEquals(List.of(SCHEMA_PATH, COUNTRIES + "?status=" + ACTIVE, CURRENCIES + "?status=" + ACTIVE,
             SUBDIVISIONS + "?countryCode=AE&status=" + ACTIVE), CALLS);
     }
@@ -276,8 +279,17 @@ class ClientFormSchemaHttpAutoTest {
         schema.setAddressFormat(local);
         schema.setFallbackAddressFormat(generic);
         schema.setRelationTypes(List.of());
+        var rules = new FormSchemaResponseBody.RelationRules();
+        rules.setUboThresholdPct("25");
+        rules.setUboThresholdComparison("GT");
+        schema.setRelationRules(rules);
         schema.setMaterials(List.of());
-        schema.setDeclarations(List.of());
+        var terms = new FormSchemaResponseBody.Declaration();
+        terms.setDeclarationType("PLATFORM_TERMS_ACCEPTANCE");
+        terms.setLabelKey("onboardingSchema.declaration.PLATFORM_TERMS_ACCEPTANCE");
+        terms.setRequirementLevel("REQUIRED");
+        terms.setDocumentVersion("2026-10-draft");
+        schema.setDeclarations(List.of(terms));
         return schema;
     }
 

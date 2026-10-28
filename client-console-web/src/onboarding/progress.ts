@@ -130,15 +130,30 @@ function taskContent(app: Application, schema: FormSchema, task: TaskKey): { fil
   return primaryFilled(app, schema, task);
 }
 
+/** 声明状态：已确认 / 已失效（确认后改了资料或条款版本更新，需要重新确认）/ 未确认。 */
+export type DeclarationState = "confirmed" | "stale" | "open";
+
 /**
- * 当前生效的声明：同一类型取最新一条，值为 TRUE 才算已确认
- * <li>草稿读出没有声明记录时，退回用需求清单判断：没有未满足的 `declaration.<TYPE>` 即已确认。</li>
+ * 声明状态：同一类型取最新一条
+ * <li>最新为 TRUE 且 current 不为 false 才算已确认；current 为 false 是已失效，进度与核对按未完成计。</li>
+ * <li>草稿读出没有声明记录时，退回用需求清单判断：没有未满足的 `declaration.<TYPE>` 即已确认，未满足项为 DECLARATION_STALE 即已失效。</li>
  */
-export function declared(app: Application, type: string): boolean {
+export function declarationState(app: Application, type: string): DeclarationState {
   const records = app.declarations.filter((item) => item.declarationType === type);
-  if (records.length) return records[records.length - 1].declaredValue === "TRUE";
-  if (app.requirementsStatus !== "AVAILABLE" || !["DRAFT", "RETURNED"].includes(app.status)) return false;
-  return !(app.requirements ?? []).some((item) => item.requirementKey === "declaration." + type && open.has(item.status));
+  if (records.length) {
+    const latest = records[records.length - 1];
+    if (latest.declaredValue !== "TRUE") return "open";
+    return latest.current === false ? "stale" : "confirmed";
+  }
+  if (app.requirementsStatus !== "AVAILABLE" || !["DRAFT", "RETURNED"].includes(app.status)) return "open";
+  const pending = (app.requirements ?? []).find((item) => item.requirementKey === "declaration." + type && open.has(item.status));
+  if (!pending) return "confirmed";
+  return pending.errorCode === "DECLARATION_STALE" ? "stale" : "open";
+}
+
+/** 声明是否当前有效（已确认且未失效）。 */
+export function declared(app: Application, type: string): boolean {
+  return declarationState(app, type) === "confirmed";
 }
 
 /** 结果页阶段：申请状态为主，撤回时由案件结果区分"逾期"与"主动撤回"。 */

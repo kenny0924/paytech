@@ -26,8 +26,8 @@ public class RequirementInput {
     private final List<DocumentFact> documents;
     /** compliance 程序材料要求：主主体与关联人员合并。 */
     private final List<MaterialRequirement> materials;
-    /** 声明类型到最新取值。 */
-    private final Map<String, String> declarations;
+    /** 声明类型到最新一条声明的取值与时效。 */
+    private final Map<String, DeclarationFact> declarations;
     /** 申请状态。 */
     private final ClientApplicationStatus applicationStatus;
     /** 退回补件截止时间，可空。 */

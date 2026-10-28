@@ -113,9 +113,10 @@ public class ClientDraftConfiguration {
     }
     @Bean public ClientDraftService clientDraftService(ClientDraftRepository repository,ClientPeopleRepository people,ClientDocumentRepository documents,
         IdGenerator ids,Clock clock,CompensationEventRegistrar events,PartyRoleRepository partyRoles,PartyAttributeRepository partyAttributes,
-        PartnerOnboardingCodeRepository onboardingCodes,ApplicationDeclarationRepository declarations,LocalPartnerRepository localPartners) {
+        PartnerOnboardingCodeRepository onboardingCodes,ApplicationDeclarationRepository declarations,LocalPartnerRepository localPartners,
+        RuleSettingRepository ruleSettings) {
         return new ClientDraftServiceImpl(repository,people,documents,ids,clock,events,partyRoles,partyAttributes,onboardingCodes,
-            declarations,localPartners);
+            declarations,localPartners,ruleSettings);
     }
     @Bean public ClientDraftAccountClient clientDraftAccountClient(Environment environment,ObjectProvider<LoadBalancerClient> discovery,
         ObjectProvider<InternalTokenSupplier> tokens) {

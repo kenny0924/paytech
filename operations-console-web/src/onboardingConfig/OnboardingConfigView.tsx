@@ -8,8 +8,8 @@ import { StatusDot, tone } from '../clientReview/reviewParts';
 import { enumLabel, tOr } from '../i18n/index';
 import type { Translate } from '../i18n/index';
 import { useT } from '../i18n/react';
-import { catalogUsages, configApi, decodeCatalogItems, decodeJurisdictions, decodePrograms, decodeSchemas, programInUse, groupFields, referenceCatalogHref } from './onboardingConfig';
-import type { CatalogItem, CatalogUsage, Jurisdiction, OnboardingSchema, Program, ProgramItem, SchemaField } from './onboardingConfig';
+import { catalogUsages, configApi, decodeCatalogItems, decodeJurisdictions, decodePrograms, decodeSchemas, programInUse, groupFields, referenceCatalogHref, ruleRows } from './onboardingConfig';
+import type { CatalogItem, CatalogUsage, Jurisdiction, OnboardingSchema, Program, ProgramItem, RuleRow, SchemaField } from './onboardingConfig';
 import { decodeSubdivisions, refdataName, referenceDataPaths } from '../referenceData/referenceData';
 import '../clientReview/clientReview.css';
 import '../dataQuery/dataQuery.css';
@@ -79,10 +79,10 @@ function JurisdictionDetail({ jurisdiction }: { jurisdiction: Jurisdiction }) {
         <div><div className="obw-label">{t('config.field.addressFormat')}</div>{jurisdiction.addressFormatCode ?? '—'}</div>
         <div><div className="obw-label">{t('config.field.status')}</div><StatusDot tone={tone(jurisdiction.status)}>{enumLabel(t, 'config.enum.status', jurisdiction.status)}</StatusDot></div>
       </div>
-      {jurisdiction.ruleSettings.length > 0 && <Table size="small" rowKey={r => `${r.scopeType}:${r.scopeCode}:${r.ruleCode}`} pagination={false} dataSource={jurisdiction.ruleSettings}
-        columns={[{ title: t('config.rule.code'), render: (_, r) => <span className="qualification-mono">{r.ruleCode}</span> },
-          { title: t('config.rule.scope'), width: 220, render: (_, r) => `${r.scopeType} · ${r.scopeCode}` },
-          { title: t('config.rule.value'), width: 160, render: (_, r) => <span className="qualification-mono">{r.ruleValue}</span> }]} />}
+      {jurisdiction.ruleSettings.length > 0 && <Table<RuleRow> size="small" rowKey="key" pagination={false} dataSource={ruleRows(t, jurisdiction.ruleSettings)}
+        columns={[{ title: t('config.rule.code'), render: (_, r) => <>{r.rule}<div className="cell-meta qualification-mono">{r.ruleCode}</div></> },
+          { title: t('config.rule.scope'), width: 280, render: (_, r) => r.scope },
+          { title: t('config.rule.value'), width: 160, render: (_, r) => r.value }]} />}
     </div>
     <Segmented value={tab} onChange={value => setTab(String(value))} options={['schemas', 'catalogs', 'programs'].map(value => ({ value, label: t('config.tab.' + value) }))} />
     {tab === 'schemas' && (schemas.loading ? <Loading /> : schemas.failure || !schemas.data ? <QueryFailure failure={schemas.failure} retry={schemas.refresh} />
@@ -95,7 +95,8 @@ function JurisdictionDetail({ jurisdiction }: { jurisdiction: Jurisdiction }) {
 
 function SchemaBrowser({ schemas }: { schemas: OnboardingSchema[] }) {
   const t = useT('client-review'), tSchema = useT('onboarding-schema');
-  const [selected, setSelected] = useState(schemas[0]?.schemaId);
+  // 默认打开启用中的版本；存量退役版本仍可在下拉中查看。
+  const [selected, setSelected] = useState((schemas.find(s => s.status === 'ACTIVE') ?? schemas[0])?.schemaId);
   const schema = schemas.find(s => s.schemaId === selected) ?? schemas[0];
   if (!schema) return <div className="obw-card"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('config.noSchemas')} /></div>;
   return <div className="obw-card">

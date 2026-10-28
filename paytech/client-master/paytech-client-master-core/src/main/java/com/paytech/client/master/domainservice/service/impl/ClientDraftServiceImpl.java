@@ -8,6 +8,8 @@ import com.paytech.client.contract.api.onboarding.ClientDraftModels.CommandRecei
 import com.paytech.client.master.core.dal.dataobject.*;
 import com.paytech.client.master.domain.enums.*;
 import com.paytech.client.master.domain.onboarding.*;
+import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
+import com.paytech.client.master.domain.onboarding.pack.RuleSettings;
 import com.paytech.client.master.domainservice.ClientProjectionSnapshot;
 import com.paytech.client.master.domainservice.repository.*;
 import com.paytech.client.master.domainservice.service.ClientDraftService;
@@ -30,12 +32,13 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
     private final PartnerOnboardingCodeRepository onboardingCodes;
     private final ApplicationDeclarationRepository declarations;
     private final LocalPartnerRepository localPartners;
+    private final RuleSettingRepository ruleSettings;
     public ClientDraftServiceImpl(ClientDraftRepository repository,ClientPeopleRepository people,ClientDocumentRepository documents,IdGenerator ids,Clock clock,CompensationEventRegistrar events,
         PartyRoleRepository partyRoles,PartyAttributeRepository partyAttributes,PartnerOnboardingCodeRepository onboardingCodes,
-        ApplicationDeclarationRepository declarations,LocalPartnerRepository localPartners) {
+        ApplicationDeclarationRepository declarations,LocalPartnerRepository localPartners,RuleSettingRepository ruleSettings) {
         this.repository=repository;this.people=people;this.documents=documents;this.ids=ids;this.clock=clock;this.events=events;
         this.partyRoles=partyRoles;this.partyAttributes=partyAttributes;this.onboardingCodes=onboardingCodes;
-        this.declarations=declarations;this.localPartners=localPartners;
+        this.declarations=declarations;this.localPartners=localPartners;this.ruleSettings=ruleSettings;
     }
     public CommandReceiptResponseBody create(ClientDraftCommand command,ClientType type,ClientApplicationTerms terms,PartnerOnboardingCode code) {
         requireTransaction();
@@ -86,9 +89,28 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
         var profileIds=new java.util.ArrayList<Long>();
         profileIds.add(row.profileId());
         persons.forEach(person -> profileIds.add(person.identity().profileId()));
+        var latest=latestDeclarations(applicationId);
         return new ClientDraftView(row,repository.fields(row),repository.contacts(row.profileId()),persons,relations,
-            documents.documents(applicationId),partyAttributes.findByProfiles(profileIds),latestDeclarations(applicationId),
-            responsiblePartnerName(row.responsiblePartnerId()));
+            documents.documents(applicationId),partyAttributes.findByProfiles(profileIds),latest,
+            responsiblePartnerName(row.responsiblePartnerId()),documentVersions(latest));
+    }
+    /** 已有声明类型配置的文档版本（DECLARATION 作用域的 DOCUMENT_VERSION，含 * 默认）；未配置的类型不出现。 */
+    private Map<String,String> documentVersions(List<ApplicationDeclaration> latest) {
+        if (latest.isEmpty()) {
+            return Map.of();
+        }
+        var scopes=new ArrayList<String>();
+        latest.forEach(row -> scopes.add(row.getDeclarationType()));
+        scopes.add(OnboardingPack.ANY);
+        var rules=new RuleSettings(ruleSettings.findActive(scopes));
+        var versions=new HashMap<String,String>();
+        latest.forEach(row -> {
+            String version=rules.value(RuleCode.DOCUMENT_VERSION,row.getDeclarationType());
+            if (version!=null) {
+                versions.put(row.getDeclarationType(),version);
+            }
+        });
+        return versions;
     }
     /** 每种声明的最新一条（按声明时间追加），保持首次出现顺序。 */
     private List<ApplicationDeclaration> latestDeclarations(long applicationId) {
@@ -113,6 +135,7 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
     /**
      * 保存事务外已准备的写入
      * <li>重新加锁读取申请并复核可编辑；资料列、扩展属性、联系方式与 Schema 切换同一事务提交。</li>
+     * <li>有实际写入时资料版本加一，此前的声明随之失效。</li>
      */
     public CommandReceiptResponseBody save(ClientDraftCommand command,long applicationId,ClientDraftChanges changes,
         Map<String,ClientDraftContact> contacts) {
@@ -122,6 +145,9 @@ public final class ClientDraftServiceImpl implements ClientDraftService {
         Instant now=now();
         repository.save(row,changes,contacts,now);
         saveAttributes(row.profileId(),changes,now);
+        if (!changes.isEmpty() || !contacts.isEmpty()) {
+            repository.bumpDraftRevision(applicationId);
+        }
         return receipt(row,"SAVED",now);
     }
     /** 扩展属性逐项写入或清空。 */

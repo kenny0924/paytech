@@ -6,7 +6,8 @@ import { useLocale, useT } from "../i18n/react.tsx";
 import { appPath, taskPath, useApplication } from "./context.tsx";
 import { api } from "./model.ts";
 import type { Application, FormSchema, Person, Relation } from "./model.ts";
-import { declared } from "./progress.ts";
+import { DeclarationRow, useDeclare } from "./DeclarationRow.tsx";
+import { thresholdKey } from "./declarations.ts";
 import { today } from "./documentDates.ts";
 import { drawerErrors, ownershipRole, personSlots, relationTypes } from "./people.ts";
 import { RequestFailure } from "../auth.ts";
@@ -45,11 +46,10 @@ function missingDocuments(app: Application, schema: FormSchema, person: Person) 
  * <li>"已列出全部 UBO / 经理"的确认放在人员页末尾，与声明页同一记录。</li>
  */
 export function PeopleTask() {
-  const { app, schema, request, reload, touch } = useApplication(), t = useT("onboarding"), label = useSchemaText(), { locale } = useLocale();
+  const { app, schema } = useApplication(), t = useT("onboarding"), label = useSchemaText(), { locale } = useLocale();
   const navigate = useNavigate(), slotTitle = useSlotTitle();
   const [editing, setEditing] = useState<Person | "new" | null>(null), [flash, setFlash] = useState<string | null>(null);
-  const [error, setError] = useState<Error | null>(null), [busy, setBusy] = useState(false);
-  const rules = schema.relationRules, threshold = rules.uboThresholdPct ?? null;
+  const rules = schema.relationRules, threshold = rules.uboThresholdPct ?? null, comparison = rules.uboThresholdComparison;
   const types = relationTypes(schema);
   const roleLabel = (code: string) => label(types.find((type) => type.code === code)?.labelKey, enumLabel("relation_type", code) ?? code);
   const people = app.people.filter((person) => activeRelations(app, person.partyId).length > 0);
@@ -61,7 +61,7 @@ export function PeopleTask() {
   const checks: { ok: boolean; text: string }[] = [];
   if (rules.uboCollectionMode !== "EXEMPT" && rules.uboCollectionMode !== "CONTROL_ONLY") {
     checks.push({ ok: total > 0 && total <= 100, text: t("people.check_total", { total: Math.round(total * 100) / 100 }) });
-    if (threshold !== null) checks.push({ ok: counts("UBO") + counts("OWNER") > 0, text: t("people.check_ubo", { threshold, count: counts("UBO") + counts("OWNER") }) });
+    if (threshold !== null) checks.push({ ok: counts("UBO") + counts("OWNER") > 0, text: t(thresholdKey("people.check_ubo", comparison), { threshold, count: counts("UBO") + counts("OWNER") }) });
   }
   if (rules.minSignatories) checks.push({ ok: counts("SIGNATORY") >= rules.minSignatories, text: t("people.check_signatories", { count: rules.minSignatories }) });
   if (rules.requiresManager) checks.push({ ok: counts("MANAGER") + counts("DIRECTOR") > 0, text: t("people.check_manager") });
@@ -71,19 +71,13 @@ export function PeopleTask() {
     : { ok: people.length > 0, text: t("people.check_documents") });
   const next = nextTask(availableTasks(schema), "people");
   const confirmations = schema.declarations.filter((item) => ownershipDeclarations.includes(item.declarationType));
-  async function declare(type: string, value: boolean) {
-    setBusy(true); setError(null);
-    try {
-      await request(api.declarations(app.applicationId), { method: "POST", key: crypto.randomUUID(), body: { declarationType: type, declaredValue: value ? "TRUE" : "FALSE" } });
-      touch(); await reload();
-    } catch (failure) { setError(failure as Error); } finally { setBusy(false); }
-  }
+  const declaring = useDeclare();
   return <>
     <h1>{t("task.people")}</h1>
-    <p className="ob-intro">{threshold !== null ? t("people.intro", { threshold }) : t("people.intro_generic")}</p>
+    <p className="ob-intro">{threshold !== null ? t(thresholdKey("people.intro", comparison), { threshold }) : t("people.intro_generic")}</p>
     <ul className="ob-checks">{checks.map((check) => <li key={check.text} className={check.ok ? "ok" : ""}>
       <span aria-hidden="true">{check.ok ? "✓" : "○"}</span>{check.text}<span className="sr-only">{t(check.ok ? "people.met" : "people.not_met")}</span></li>)}</ul>
-    <Failure error={error} />
+    <Failure error={declaring.error} />
     {people.length > 0 && <table className="ob-people">
       <thead><tr><th>{t("people.col_name")}</th><th>{t("people.col_roles")}</th><th className="num">{t("people.col_ownership")}</th><th>{t("people.col_documents")}</th></tr></thead>
       <tbody>{people.map((person) => {
@@ -103,11 +97,9 @@ export function PeopleTask() {
     </table>}
     {!people.length && <p className="ob-muted">{t("people.empty")}</p>}
     {app.editable && <button type="button" className="text-button ob-add" onClick={() => setEditing("new")}>+ {t("people.add")}</button>}
-    {confirmations.map((item) => <label className="ob-declaration checkline ob-ownership-confirm" key={item.declarationType} id={"declaration-" + item.declarationType}>
-      <input type="checkbox" checked={declared(app, item.declarationType)} disabled={!app.editable || busy}
-        onChange={(event) => void declare(item.declarationType, event.target.checked)} />
-      <span>{label(item.labelKey, item.declarationType)}</span></label>)}
-    {app.editable && <TaskFooter saving={busy} busy={false}
+    {confirmations.map((item) => <DeclarationRow key={item.declarationType} item={item} className="ob-ownership-confirm"
+      busy={declaring.busy !== null} onDeclare={(def, value) => void declaring.declare(def, value)} />)}
+    {app.editable && <TaskFooter saving={declaring.busy !== null} busy={false}
       primary={next ? t("action.continue_to", { task: t(taskLabelKey(next, app.clientType)) }) : t("action.back_to_overview")}
       onPrimary={() => navigate(next ? taskPath(app.applicationId, next) : appPath(app.applicationId))}
       onLater={() => navigate(appPath(app.applicationId))} />}

@@ -1,0 +1,52 @@
+SHOT ops-screens/ops-en-1440-config-AE.png
+PASS ops-en-1440 config-AE: no raw i18n keys | []
+PASS ops-en-1440 config-AE: no true/false values
+PASS ops-en-1440 config AE: comparison row labelled | "United Arab Emirates\nAE\nCountry\nAE\nAcceptance\nOpen\nAddress Format\nAE_POBOX\nStatus\nActive\nRule\tScope\tValue\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PLATFORM_TERMS_ACCEPTANCE\t2026-10-draft\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PRIVACY_NOTICE_ACKNOWLEDGED\t2026-10-draft\nAcquisition mo"
+PASS ops-en-1440 config AE: document version rows
+PASS ops-en-1440 config AE: /Declaration · PLATFORM_TERMS_ACCEPTANCE/
+PASS ops-en-1440 config AE: 15 flag rules as words | []
+PASS ops-en-1440 config AE: numeric thresholds stay numbers | ["Minimum age MIN_AGE Jurisdiction · AE 18","Beneficial owner threshold (%) UBO_THRESHOLD_PCT Jurisdiction · AE 25"]
+PASS ops-en-1440 config AE: schemas v2 ACTIVE / v1 RETIRED | ["INDIVIDUAL/*/v1/RETIRED","INDIVIDUAL/*/v2/ACTIVE","INDIVIDUAL/SOLE_ESTABLISHMENT/v1/RETIRED","INDIVIDUAL/SOLE_ESTABLISHMENT/v2/ACTIVE","ORGANIZATION/*/v1/RETIRED","ORGANIZATION/*/v2/ACTIVE","ORGANIZATION/FZ_LLC/v1/RETIRED","ORGANIZATION/FZ_LLC/v2/ACTIVE"]
+SHOT ops-screens/ops-en-1440-config-AE-schema-list.png
+PASS ops-en-1440 config AE: schema list shows v2 Active and v1 Retired | ["Individual · Client · Default (all types) · v1 · Retired","Individual · Client · Default (all types) · v2 · Active","Individual · Client · Sole Establishment · v1 · Retired","Individual · Client · Sole Establishment · v2 · Active","Organization · Client · Default (all types) · v1 · Retired","Organization · Client · Default (all types) · v2 · Active","Organization · Client · Free Zone Limited Liability Company · v1 · Retired","Organization · Client · Free Zone Limited Liability Company · v2 · A
+SHOT ops-screens/ops-en-1440-config-SA.png
+PASS ops-en-1440 config-SA: no raw i18n keys | []
+PASS ops-en-1440 config-SA: no true/false values
+PASS ops-en-1440 config SA: comparison row labelled | "Saudi Arabia\nSA\nCountry\nSA\nAcceptance\nOpen\nAddress Format\nSA_NATIONAL_ADDRESS\nStatus\nActive\nRule\tScope\tValue\nDate must not be in the past\nDATE_NOT_PAST\n\tAttribute · SA_FREELANCE_DOCUMENT_EXPIRY_DATE\tYes\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PLATFORM_TERMS_ACCEPTANCE\t2026-10-draft\nDocument"
+PASS ops-en-1440 config SA: document version rows
+PASS ops-en-1440 config SA: /Attribute · SA_FREELANCE_DOCUMENT_EXPIRY_DATE/
+PASS ops-en-1440 config SA: 15 flag rules as words | []
+PASS ops-en-1440 config SA: numeric thresholds stay numbers | ["Minimum age MIN_AGE Jurisdiction · SA 18","Beneficial owner threshold (%) UBO_THRESHOLD_PCT Jurisdiction · SA 25"]
+PASS ops-en-1440 config SA: schemas v2 ACTIVE / v1 RETIRED | ["INDIVIDUAL/*/v1/RETIRED","INDIVIDUAL/*/v2/ACTIVE","INDIVIDUAL/FREELANCER/v1/ACTIVE","ORGANIZATION/*/v1/RETIRED","ORGANIZATION/*/v2/ACTIVE"]
+SHOT ops-screens/ops-en-1440-config-SA-schema-list.png
+PASS ops-en-1440 config SA: schema list shows v2 Active and v1 Retired | ["Individual · Client · Default (all types) · v1 · Retired","Individual · Client · Default (all types) · v2 · Active","Individual · Client · Freelancer · v1 · Active","Organization · Client · Default (all types) · v1 · Retired","Organization · Client · Default (all types) · v2 · Active"]
+SHOT ops-screens/ops-en-1440-config-EG.png
+PASS ops-en-1440 config-EG: no raw i18n keys | []
+PASS ops-en-1440 config-EG: no true/false values
+PASS ops-en-1440 config EG: comparison row labelled | "Egypt\nEG\nCountry\nEG\nAcceptance\nOpen\nAddress Format\nEG_STANDARD\nStatus\nActive\nRule\tScope\tValue\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PLATFORM_TERMS_ACCEPTANCE\t2026-10-draft\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PRIVACY_NOTICE_ACKNOWLEDGED\t2026-10-draft\nAcquisition mode\nACQUIRE_M"
+PASS ops-en-1440 config EG: document version rows
+PASS ops-en-1440 config EG: /Declaration · PRIVACY_NOTICE_ACKNOWLEDGED/
+PASS ops-en-1440 config EG: 17 flag rules as words | []
+PASS ops-en-1440 config EG: numeric thresholds stay numbers | ["Minimum age MIN_AGE Jurisdiction · EG 18","Beneficial owner threshold (%) UBO_THRESHOLD_PCT Jurisdiction · EG 25"]
+PASS ops-en-1440 config EG: schemas v2 ACTIVE / v1 RETIRED | ["INDIVIDUAL/*/v1/RETIRED","INDIVIDUAL/*/v2/ACTIVE","ORGANIZATION/*/v1/RETIRED","ORGANIZATION/*/v2/ACTIVE"]
+SHOT ops-screens/ops-en-1440-config-EG-schema-list.png
+PASS ops-en-1440 config EG: schema list shows v2 Active and v1 Retired | ["Individual · Client · Default (all types) · v1 · Retired","Individual · Client · Default (all types) · v2 · Active","Organization · Client · Default (all types) · v1 · Retired","Organization · Client · Default (all types) · v2 · Active"]
+SHOT ops-screens/ops-en-1440-case-legacy.png
+PASS ops-en-1440 case-legacy: no raw i18n keys | []
+PASS ops-en-1440 case-legacy: no true/false values
+PASS ops-en-1440 legacy: declarations section | ["OWNERSHIP_COMPLETE=TRUE/null/true/240708898032533504","DIRECTORSHIP_COMPLETE=TRUE/null/true/240708898032533504","REPRESENTATIVE_AUTHORITY=TRUE/null/true/240708898032533504","PEP_DECLARATION=TRUE/null/true/240708898032533504","INFORMATION_TRUE=TRUE/null/true/240708898032533504","PLATFORM_TERMS=TRUE/null/true/240708898032533504"]
+PASS ops-en-1440 legacy: answers are words
+PASS ops-en-1440 legacy: OWNERSHIP_COMPLETE code shown
+PASS ops-en-1440 legacy: OWNERSHIP_COMPLETE declared-by 240708898032533504
+PASS ops-en-1440 legacy: DIRECTORSHIP_COMPLETE code shown
+PASS ops-en-1440 legacy: DIRECTORSHIP_COMPLETE declared-by 240708898032533504
+PASS ops-en-1440 legacy: REPRESENTATIVE_AUTHORITY code shown
+PASS ops-en-1440 legacy: REPRESENTATIVE_AUTHORITY declared-by 240708898032533504
+PASS ops-en-1440 legacy: PEP_DECLARATION code shown
+PASS ops-en-1440 legacy: PEP_DECLARATION declared-by 240708898032533504
+PASS ops-en-1440 legacy: INFORMATION_TRUE code shown
+PASS ops-en-1440 legacy: INFORMATION_TRUE declared-by 240708898032533504
+PASS ops-en-1440 legacy: PLATFORM_TERMS code shown
+PASS ops-en-1440 legacy: PLATFORM_TERMS declared-by 240708898032533504
+PASS ops-en-1440 legacy: legacy declaration shown with label
+SUMMARY ops-en-1440 pass=44 fail=0

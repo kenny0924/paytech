@@ -156,6 +156,17 @@ public class OnboardingTestMapper {
         jdbc.update("DELETE FROM t_application_declaration WHERE client_application_id=? AND declaration_type=?", applicationId, type);
     }
 
+    /** 申请当前资料版本。 */
+    public long draftRevision(long applicationId) {
+        return jdbc.queryForObject("SELECT draft_revision FROM t_client_application WHERE application_id=?", Long.class, applicationId);
+    }
+
+    /** 申请的全部声明行（类型、条款版本、资料版本），按追加顺序。 */
+    public List<Map<String, Object>> declarations(long applicationId) {
+        return jdbc.queryForList("SELECT declaration_type,declared_value,terms_version,draft_revision FROM t_application_declaration "
+            + "WHERE client_application_id=? ORDER BY declared_time,declaration_id", applicationId);
+    }
+
     /** 设置关系的持股比例。 */
     public void ownership(long relationId, java.math.BigDecimal percentage) {
         jdbc.update("UPDATE t_party_relation SET ownership_percentage=? WHERE relation_id=?", percentage, relationId);

@@ -23,7 +23,11 @@ public final class ClientPeopleServiceImpl implements ClientPeopleService {
     private final Clock clock;
     private final RelationTypeRepository relationTypes;
     private final PartyAttributeRepository partyAttributes;
-    private record Change(long partyId,long relationId) {}
+    /** 本次处理的人员与关系；modified 为 false 表示同内容重复到达，未改动资料。 */
+    private record Change(long partyId,long relationId,boolean modified) {
+        /** 实际改动了资料。 */
+        Change(long partyId,long relationId) { this(partyId,relationId,true); }
+    }
     public ClientPeopleServiceImpl(ClientDraftRepository drafts,ClientPeopleRepository people,IdGenerator ids,Clock clock,
         RelationTypeRepository relationTypes,PartyAttributeRepository partyAttributes) {
         this.drafts=drafts;this.people=people;this.ids=ids;this.clock=clock;this.relationTypes=relationTypes;
@@ -73,7 +77,7 @@ public final class ClientPeopleServiceImpl implements ClientPeopleService {
             person(application,partyId);requireCatalog(application,relation);
             var same=sameRelation(application,partyId,relation);
             if (same!=null) {
-                return new Change(partyId,same.relationId());
+                return new Change(partyId,same.relationId(),false);
             }
             unique(application,partyId,relation,0);long id=ids.nextId();
             people.createRelation(application,id,partyId,relation,now);return new Change(partyId,id);
@@ -109,6 +113,10 @@ public final class ClientPeopleServiceImpl implements ClientPeopleService {
             return null;
         }
         people.touch(application,now);
+        // 实际改动人员或关系时资料版本加一，此前的声明随之失效。
+        if (change.modified()) {
+            drafts.bumpDraftRevision(applicationId);
+        }
         return receipt(applicationId,operation,change,now);
     }
     private ClientPersonIdentity person(ClientDraftIdentity application,long id) {

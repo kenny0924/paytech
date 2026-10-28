@@ -39,13 +39,14 @@ public final class ClientDraftModels {
      * <li>jurisdictionCode、organizationTypeCode、schemaId 决定 form-schema；reviewDueTime 为退回补件截止时间（可空）。</li>
      * <li>responsiblePartnerId / responsiblePartnerName 为入驻码冻结的责任 PayFac 及其法定名称，平台自营为空。</li>
      * <li>declarations 为每种声明的最新一条（声明属于申请，重新申请须重签）。</li>
+     * <li>draftRevision 为申请资料版本（十进制字符串），每次实际改动草稿加一；声明的 draftRevision 与之不等即失效。</li>
      */
     public record ClientDraftResponseBody(String applicationId, String applicationNo, String clientId,
         String clientType, String subjectPartyId, String status, String savedAt, boolean editable, Map<String, Map<String, String>> values,
         List<ClientPeopleModels.PersonResponseBody> people,List<ClientPeopleModels.RelationResponseBody> relations,
         List<ClientDocumentModels.DocumentResponseBody> documents, String jurisdictionCode, String organizationTypeCode,
         String schemaId, String reviewDueTime, String responsiblePartnerId, String responsiblePartnerName,
-        List<com.paytech.client.master.api.onboarding.response.DeclarationResponseBody> declarations) {
+        List<com.paytech.client.master.api.onboarding.response.DeclarationResponseBody> declarations, String draftRevision) {
         @Override public String toString() { return "ClientDraftResponseBody[redacted]"; }
     }
 }

@@ -46,7 +46,10 @@ public enum ClientDraftErrorCode implements CodeMessageEnum {
 
     CLASSIFICATION_INVALID("CLASSIFICATION_INVALID", "分类不符合目录或规则"),
 
-    CLASSIFICATION_CONFIRMED("CLASSIFICATION_CONFIRMED", "本任务分类已确认，不能修改");
+    CLASSIFICATION_CONFIRMED("CLASSIFICATION_CONFIRMED", "本任务分类已确认，不能修改"),
+
+    /** 声明所附条款或告知已更新，termsVersion 与当前版本不符；客户端提示重新阅读后确认。 */
+    DECLARATION_DOCUMENT_OUTDATED("DECLARATION_DOCUMENT_OUTDATED", "条款已更新，请重新阅读后确认");
     private final String code;
     private final String message;
     ClientDraftErrorCode(String code, String message) { this.code=code; this.message=message; }

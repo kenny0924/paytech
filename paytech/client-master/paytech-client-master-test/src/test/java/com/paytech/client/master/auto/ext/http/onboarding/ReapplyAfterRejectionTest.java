@@ -64,8 +64,9 @@ class ReapplyAfterRejectionTest extends AbstractClientReviewTest {
         var unsigned = http.post().uri("/client-onboarding/v1/applications/{id}/submissions", newId).headers(this::client).exchange()
             .expectBody(byte[].class).returnResult();
         assertEquals(422, unsigned.getStatus().value());
-        assertTrue(new String(unsigned.getResponseBody()).contains("declaration.PLATFORM_TERMS"));
-        OnboardingFixtures.ORGANIZATION_DECLARATIONS.forEach(type -> declare(newId, type));
+        assertTrue(new String(unsigned.getResponseBody()).contains("declaration.PLATFORM_TERMS_ACCEPTANCE"));
+        // 新申请使用 v2 Schema：拆分后的声明，条款与隐私告知须带当前文档版本。
+        OnboardingFixtures.ORGANIZATION_DECLARATIONS_V2.forEach(type -> declare(newId, type));
         submitAndWaitUnderReview(again, applications.nextId());
 
         assertEquals(1, mapper.identityKeys(app.partyId()).size());
@@ -101,11 +102,16 @@ class ReapplyAfterRejectionTest extends AbstractClientReviewTest {
             .body(JSON.writeValueAsString(Map.of("clientType", clientType, "jurisdictionCode", "AE"))).exchange().expectBody(byte[].class).returnResult();
     }
 
-    /** 通过真实 HTTP 调用 CM-6 签署一项声明。 */
+    /** 通过真实 HTTP 调用 CM-6 签署一项声明；附版本化文档的声明带当前文档版本。 */
     void declare(long applicationId, String type) {
+        var body = new java.util.LinkedHashMap<String, String>(Map.of("declarationType", type, "declaredValue", "TRUE"));
+        String termsVersion = OnboardingFixtures.termsVersion(type);
+        if (termsVersion != null) {
+            body.put("termsVersion", termsVersion);
+        }
         var result = http.post().uri("/client-onboarding/v1/applications/{id}/declarations", applicationId).headers(this::client)
             .header("Content-Type", "application/json")
-            .body(JSON.writeValueAsString(Map.of("declarationType", type, "declaredValue", "TRUE", "termsVersion", "2026-10")))
+            .body(JSON.writeValueAsString(body))
             .exchange().expectBody(byte[].class).returnResult();
         assertEquals(200, result.getStatus().value(), new String(result.getResponseBody()));
     }

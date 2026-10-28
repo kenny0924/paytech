@@ -14,6 +14,9 @@ public enum RuleCode implements CodeEnum {
     /** 最终受益人持股门槛百分比。 */
     UBO_THRESHOLD_PCT(RuleScopeType.JURISDICTION, "25"),
 
+    /** 持股与门槛的比较方式：GTE 达到即计入（25% 或以上），GT 须超过门槛。 */
+    UBO_THRESHOLD_COMPARISON(RuleScopeType.JURISDICTION, "GTE"),
+
     /** 没有达到门槛的受益人时的兜底规则：CONTROL_THEN_SMO 允许以控制人或高级管理人员兜底，NONE 不兜底。 */
     UBO_FALLBACK_RULE(RuleScopeType.JURISDICTION, "NONE"),
 
@@ -51,7 +54,16 @@ public enum RuleCode implements CodeEnum {
     EXPIRY_REQUIRED(RuleScopeType.IDENTIFIER_TYPE, "0"),
 
     /** 号码是否只以 Vault Token 保存（0/1）；未配置时按 1 保守处理。 */
-    VAULT_REQUIRED(RuleScopeType.IDENTIFIER_TYPE, "1");
+    VAULT_REQUIRED(RuleScopeType.IDENTIFIER_TYPE, "1"),
+
+    /**
+     * 声明所附文档（条款、告知）的当前版本
+     * <li>配置后写入声明须携带相同的 termsVersion，版本变化后旧声明失效；未配置的声明不要求版本。</li>
+     */
+    DOCUMENT_VERSION(RuleScopeType.DECLARATION, null),
+
+    /** DATE 类扩展属性是否不得早于当天（0/1），如证件类文件的到期日；早于当天报 IDENTIFIER_EXPIRED。 */
+    DATE_NOT_PAST(RuleScopeType.ATTRIBUTE, "0");
 
     private final RuleScopeType scopeType;
     private final String defaultValue;

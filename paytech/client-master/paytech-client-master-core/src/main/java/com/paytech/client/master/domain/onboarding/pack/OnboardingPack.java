@@ -21,6 +21,8 @@ import com.paytech.client.master.domain.enums.CatalogStatus;
 import com.paytech.client.master.domain.enums.ClientType;
 import com.paytech.client.master.domain.enums.RuleCode;
 import com.paytech.client.master.domain.enums.SchemaSubject;
+import com.paytech.client.master.domain.enums.UboThresholdComparison;
+import com.paytech.foundation.common.error.ErrorException;
 
 import lombok.Getter;
 
@@ -166,6 +168,20 @@ public class OnboardingPack {
     /** 标识是否必须填写到期日。 */
     public boolean expiryRequired(String identifierTypeCode) {
         return rules.flag(RuleCode.EXPIRY_REQUIRED, identifierTypeCode);
+    }
+
+    /** 受益人门槛比较方式；取值不合法属于目录配置错误，失败关闭。 */
+    public UboThresholdComparison uboThresholdComparison() {
+        UboThresholdComparison comparison = UboThresholdComparison.fromCode(rules.value(RuleCode.UBO_THRESHOLD_COMPARISON, jurisdictionCode()));
+        if (comparison == null) {
+            throw new ErrorException("规则开关取值不合法: UBO_THRESHOLD_COMPARISON@" + jurisdictionCode());
+        }
+        return comparison;
+    }
+
+    /** 声明所附文档的当前版本；未配置的声明为 null。 */
+    public String documentVersion(String declarationType) {
+        return rules.value(RuleCode.DOCUMENT_VERSION, declarationType);
     }
 
     /** 尽调档次：准入策略 ENHANCED_ONLY 时强制 ENHANCED，否则 STANDARD（自动评级后续另立需求）。 */

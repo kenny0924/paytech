@@ -1,0 +1,20 @@
+PASS mortest-zh-CN-390 00 index.html 入口为候选 dist | "assets/index-DyIsZQao.js"
+PASS mortest-zh-CN-390 01 默认显示生效版本 v1 的 17 个号段 | 17
+PASS mortest-zh-CN-390 01 页头生效徽标与元信息 | "卡 BIN 库\nv1 生效中\n17 个号段\n10-22 22:29 由 o***@example.test 激活\n2 个版本待激活"
+PASS mortest-zh-CN-390 01 无旧摘要卡与长说明
+PASS mortest-zh-CN-390 01 ranges 请求 200 | ["200 /api/operations/card-admin/v1/bin-library/versions?page=1&size=100","200 /api/operations/card-admin/v1/bin-library/activations?page=1&size=20","200 /api/operations/card-admin/v1/bin-library/versions/1/ranges?page=1&size=50"]
+PASS mortest-zh-CN-390 01 页签文案为中文（语言包已发布） | "号段数据\n17|版本\n6"
+PASS mortest-zh-CN-390 01 国旗渲染（至少 1 个且全部加载成功） | {"count":17,"bad":[]}
+PASS mortest-zh-CN-390 02 前缀 401288 → 2 个号段（含 8 位 40128888） | 2
+PASS mortest-zh-CN-390 02 最长前缀匹配条显示 | "BIN 401288 识别为 401288\n6 位最长前缀\nVISA\n贷记\nGOLD\n个人\n美国\nSYNTHETIC TEST ISSUER US\n输入 8 位可命中更长号段"
+PASS mortest-zh-CN-390 02 请求带 binPrefix 经 Gateway 白名单 200 | ["200 /api/operations/card-admin/v1/bin-library/versions/1/ranges?page=1&size=50","200 /api/operations/card-admin/v1/bin-library/bins/401288?versionNo=1","200 /api/operations/card-admin/v1/bin-library/versions/1/ranges?binPrefix=401288&page=1&size=50"]
+PASS mortest-zh-CN-390 03 无结果空状态 + 未识别匹配条
+PASS mortest-zh-CN-390 03c 超过 8 位提示且不发请求 | []
+PASS mortest-zh-CN-390 04 版本列表含 v1–v6
+PASS mortest-zh-CN-390 04 操作人显示名（不是 18 位 ID） | null
+PASS mortest-zh-CN-390 04 操作人为脱敏邮箱 | ["o***@example.test","o***@example.test","o***@example.test","o***@example.test","o***@example.test","o***@example.test","o***@example.test","o***@example.test","o***@example.test"]
+PASS mortest-zh-CN-390 05 v3 校验失败显示错误行
+PASS mortest-zh-CN-390 04b v2 号段预览 | 6
+PASS mortest-zh-CN-390 04b 激活记录操作人非 18 位 ID
+PASS mortest-zh-CN-390 06 激活弹窗打开（不提交）
+DONE mortest-zh-CN-390 fails=0

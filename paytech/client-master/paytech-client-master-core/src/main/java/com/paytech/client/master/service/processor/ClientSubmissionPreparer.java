@@ -26,6 +26,7 @@ import com.paytech.client.master.domain.enums.IssuerScopeMode;
 import com.paytech.client.master.domain.enums.PartyRelationStatus;
 import com.paytech.client.master.domain.enums.RuleRole;
 import com.paytech.client.master.domain.enums.SchemaSubject;
+import com.paytech.client.master.domain.onboarding.ApplicationDeclarationPolicy;
 import com.paytech.client.master.domain.onboarding.ClientAgreementPartyUsage;
 import com.paytech.client.master.domain.onboarding.ClientDraftPolicy;
 import com.paytech.client.master.domain.onboarding.ClientDraftValues;
@@ -34,6 +35,7 @@ import com.paytech.client.master.domain.onboarding.ClientPersonView;
 import com.paytech.client.master.domain.onboarding.ClientSubmissionPreparation;
 import com.paytech.client.master.domain.onboarding.ClientSubmissionSubject;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
+import com.paytech.client.master.domain.onboarding.requirement.DeclarationFact;
 import com.paytech.client.master.domain.onboarding.requirement.DocumentFact;
 import com.paytech.client.master.domain.onboarding.requirement.IdentifierFact;
 import com.paytech.client.master.domain.onboarding.requirement.MaterialRequirement;
@@ -109,7 +111,7 @@ public class ClientSubmissionPreparer {
             materials.stream().map(document -> new DocumentFact(document.documentId(), document.subjectPartyId(),
                 document.requirementCode(), document.documentType(), document.issueDate(), document.expiryDate(),
                 !unusable.contains(document.documentId()))).toList(),
-            programMaterials, latestDeclarations(declared), identity.status(), identity.reviewDueTime(), now(),
+            programMaterials, latestDeclarations(declared, identity.draftRevision(), pack), identity.status(), identity.reviewDueTime(), now(),
             references(pack, requirementSubjects));
         return new ClientSubmissionPreparation(subjects, relations, materials, declared,
             OnboardingRequirementEvaluator.evaluate(input));
@@ -244,10 +246,20 @@ public class ClientSubmissionPreparer {
         return roles;
     }
 
-    /** 同一类型的最新声明取值。 */
-    static Map<String, String> latestDeclarations(List<ApplicationDeclaration> declared) {
-        Map<String, String> result = new HashMap<>();
-        declared.forEach(row -> result.put(row.getDeclarationType(), row.getDeclaredValue()));
+    /**
+     * 同一类型的最新声明及其时效
+     *
+     * @param declared 按时间先后的全部声明
+     * @param draftRevision 申请当前资料版本
+     * @param pack 申请冻结的辖区包，提供声明的文档版本
+     * @return 声明类型到最新一条的取值与是否仍针对当前资料
+     */
+    static Map<String, DeclarationFact> latestDeclarations(List<ApplicationDeclaration> declared, long draftRevision, OnboardingPack pack) {
+        Map<String, ApplicationDeclaration> latest = new HashMap<>();
+        declared.forEach(row -> latest.put(row.getDeclarationType(), row));
+        Map<String, DeclarationFact> result = new HashMap<>();
+        latest.forEach((type, row) -> result.put(type, new DeclarationFact(row.getDeclaredValue(),
+            ApplicationDeclarationPolicy.isCurrent(row, draftRevision, pack.documentVersion(type)))));
         return result;
     }
 

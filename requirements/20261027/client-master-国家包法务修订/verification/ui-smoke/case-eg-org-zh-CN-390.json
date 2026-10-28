@@ -1,0 +1,34 @@
+{
+ "case": "eg-org",
+ "app": "240937710473195530",
+ "lang": "zh-CN",
+ "width": "390",
+ "fields": [
+  "f-organization-legalName",
+  "f-organization-tradeName",
+  "f-organization-organizationType",
+  "f-organization-incorporationCountry",
+  "f-organization-incorporationDate",
+  "f-organization-registrationAuthorityCode",
+  "f-organization-licenseExpiryDate",
+  "f-organization-listedCompany",
+  "f-identifier-EG_UNIFIED_CR-type",
+  "f-identifier-EG_UNIFIED_CR",
+  "f-attributes-EG_TAX_CARD_NUMBER",
+  "f-attributes-EG_VAT_REGISTRATION_NUMBER",
+  "f-business-businessModelCode",
+  "f-business-businessDescription",
+  "f-business-websiteUrl",
+  "f-business-currency",
+  "f-business-expectedVolume",
+  "f-business-expectedTicket"
+ ],
+ "identifierChoices": [
+  "Unified Commercial Registration Number",
+  "Local Commercial Registration Number"
+ ],
+ "identifierFieldCount": 2,
+ "vatPresent": true,
+ "taxCardPresent": true,
+ "findings": []
+}

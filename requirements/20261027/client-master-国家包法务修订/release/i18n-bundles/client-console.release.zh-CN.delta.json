@@ -1,0 +1,42 @@
+{
+  "format": "code-mor-i18n-translation/1",
+  "application": "client-console",
+  "locale": "zh-CN",
+  "namespaces": {
+    "onboarding-schema": {
+      "onboarding-schema.attribute.AE_ERN": "经济登记编号（ERN）",
+      "onboarding-schema.attribute.AE_LICENSE_AUTHORITY_NAME": "发照机关名称",
+      "onboarding-schema.attribute.AE_LICENSE_ERN": "经济登记编号（ERN）",
+      "onboarding-schema.attribute.AE_REGISTRATION_AUTHORITY_NAME": "登记机关名称",
+      "onboarding-schema.attribute.EG_VAT_REGISTRATION_NUMBER": "增值税登记号",
+      "onboarding-schema.attribute.SA_CR_ANNUAL_CONFIRMATION_DATE": "商业登记年度确认日",
+      "onboarding-schema.attribute.SA_FREELANCE_DOCUMENT_EXPIRY_DATE": "自由职业文件到期日",
+      "onboarding-schema.attribute.SA_FREELANCE_DOCUMENT_NUMBER": "自由职业文件号",
+      "onboarding-schema.catalog.REGISTRATION_AUTHORITY.AE_OTHER": "其他",
+      "onboarding-schema.declaration.PLATFORM_TERMS_ACCEPTANCE": "我接受平台使用条款。",
+      "onboarding-schema.declaration.PRIVACY_NOTICE_ACKNOWLEDGED": "我确认已收到隐私告知。",
+      "onboarding-schema.declaration.RELATED_PERSON_DATA_AUTHORITY": "我确认有权提交关系人资料，并会向其提供隐私告知。",
+      "onboarding-schema.error.DECLARATION_STALE": "你在确认后修改了资料，请重新确认此声明。",
+      "onboarding-schema.identifierType.EG_LOCAL_CR": "本地商业登记号",
+      "onboarding-schema.identifierType.EG_UNIFIED_CR": "统一商业登记号"
+    },
+    "onboarding": {
+      "onboarding.declarations.agree": "我同意",
+      "onboarding.declarations.confirm_again": "需重新确认",
+      "onboarding.declarations.draft": "草案",
+      "onboarding.declarations.read": "阅读",
+      "onboarding.declarations.stale": "你在确认后修改了资料，请重新确认标出的 {count} 项声明。",
+      "onboarding.declarations.stale_row": "你在确认后修改了资料，请重新确认。",
+      "onboarding.declarations.text_unavailable": "该文件暂时无法显示。请稍后再试，或联系支持团队。",
+      "onboarding.declarations.version": "版本 {version}",
+      "onboarding.legal.platform_terms_acceptance.2026_10_draft.body": "草案——供评审的占位文本，并非最终协议，上线前将替换。\n\n本条款适用于你使用平台向你的客户收款。平台作为托管收银台交易的记录商户（Merchant of Record），在扣除费用、退款、拒付及作为保证金留存的金额后向你结算款项。\n\n你同意提供准确的信息并及时更新，只销售你的业务允许销售的商品和服务，并配合法律或支付合作方要求的审核。为管理风险或遵守法律，我们可能暂停交易处理或结算。\n\n最终条款将载明费用、结算周期、责任、终止和适用法律。",
+      "onboarding.legal.platform_terms_acceptance.2026_10_draft.title": "平台使用条款",
+      "onboarding.legal.privacy_notice_acknowledged.2026_10_draft.body": "草案——供评审的占位文本，并非最终告知，上线前将替换。\n\n我们收集本申请中关于你的业务及相关人员的信息，用于核实身份、评估资格、履行反洗钱与制裁合规义务并提供服务。\n\n我们可能将这些信息提供给支付合作方、身份核验与筛查服务商，以及法律要求的主管机关。在双方关系结束后，我们按法律要求的期限保存这些信息。\n\n最终告知将说明你的权利及行使方式、跨境传输以及联系方式。",
+      "onboarding.legal.privacy_notice_acknowledged.2026_10_draft.title": "隐私告知",
+      "onboarding.people.check_ubo_gt": "持股超过 {threshold}% 的自然人已全部添加（{count} 位）",
+      "onboarding.people.intro_gt": "添加所有持股超过 {threshold}% 的自然人、全部经理，以及至少一位授权签字人。一个人可以同时有多个角色，只需添加一次。",
+      "onboarding.request_error.declaration_document_outdated": "该文件已更新，请阅读新版本后重新确认。",
+      "onboarding.start.checklist_people_gt": "持股超过 {threshold}% 的股东、经理与签字人都需要"
+    }
+  }
+}

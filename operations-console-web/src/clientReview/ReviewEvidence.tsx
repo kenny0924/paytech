@@ -3,13 +3,13 @@ import { Alert, Button, Descriptions, Form, Input, Select, Space, Table, Tag } f
 import { ApiError, session } from '../api/session';
 import { useErrorNotification } from '../feedback/useErrorNotification';
 import { date } from '../tenantAccess/TenantAccessView';
-import { enumLabel } from '../i18n/index';
+import { enumLabel, tOr } from '../i18n/index';
 import type { Translate } from '../i18n/index';
 import { useT } from '../i18n/react';
-import { fieldLabel, valueLabel, valueText } from '../onboardingConfig/schemaLabel';
+import { fieldLabel, humanize, valueLabel, valueText } from '../onboardingConfig/schemaLabel';
 import { Link } from 'react-router-dom';
-import { canWaive, decodeCommand, decodeFileDownload, evidenceRejectReasons, reviewApi, reviewRoute, withOnBehalf } from './clientReview';
-import type { Application, Evidence, Requirement, ReviewDetail, Subject } from './clientReview';
+import { canWaive, declarationRows, decodeCommand, decodeFileDownload, evidenceRejectReasons, reviewApi, reviewRoute, withOnBehalf } from './clientReview';
+import type { Application, DeclarationRow, Evidence, Requirement, ReviewDetail, Subject } from './clientReview';
 import { ReviewCommandModal, StatusDot, tone } from './reviewParts';
 import { useReviewCommand } from './useReviewCommand';
 
@@ -50,7 +50,27 @@ export function ApplicationPanel({ data, currentCaseId }: { data: ReviewDetail; 
         relations: relations.map(r => relationText(r.relationType, r.ownershipPercentage)).join(t('application.listSeparator')) || t('application.noRelations') })}</div>
         <Values values={person.values} jurisdictionCode={jurisdiction} /></div>;
     })}</>}
+    <Declarations declarations={application.declarations} />
   </div>;
+}
+
+const declarationTone = { CURRENT: 'ok', STALE: 'warn', UNKNOWN: 'muted' } as const;
+
+/** 声明：每类最新一条，含取值（是 / 否）、时间、声明账号、条款版本，以及是否针对当前提交的资料版本。 */
+function Declarations({ declarations }: { declarations: Application['declarations'] }) {
+  const t = useT('client-review'), tSchema = useT('onboarding-schema');
+  const rows = declarationRows(t, declarations);
+  return <><h3 className="obw-subhead">{t('declarations.title')}</h3>
+    {rows.length === 0 ? <span className="muted">{t('declarations.empty')}</span>
+      : <Table<DeclarationRow> size="small" rowKey="key" pagination={false} scroll={{ x: 820 }} dataSource={rows} columns={[
+        { title: t('declarations.column.declaration'), render: (_, row) => <>{tOr(tSchema, `declaration.${row.declarationType}`, humanize(row.declarationType))}
+          <div className="cell-meta">{row.declarationType}</div></> },
+        { title: t('declarations.column.answer'), width: 64, render: (_, row) => row.answer },
+        { title: t('declarations.column.declared'), width: 180, render: (_, row) => <>{date(row.declaredAt)}
+          <div className="cell-meta">{t('declarations.declaredBy', { account: row.declaredBy ?? '—' })}</div></> },
+        { title: t('declarations.column.termsVersion'), width: 110, render: (_, row) => row.termsVersion },
+        { title: t('declarations.column.status'), width: 180, render: (_, row) => <StatusDot tone={declarationTone[row.status]}>{row.statusText}</StatusDot> },
+      ]} />}</>;
 }
 
 /**

@@ -1,0 +1,22 @@
+{"tag":"ops-zh-CN-390","page":"login","kind":"console-error","text":"Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."}
+{"tag":"ops-zh-CN-390","page":"login","kind":"console-error","text":"Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."}
+{"tag":"ops-zh-CN-390","page":"login","kind":"console-error","text":"Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."}
+{"tag":"ops-zh-CN-390","page":"config-AE","kind":"check-failed","name":"config AE: comparison row labelled","evidence":"阿联酋\nAE\n国家\nAE\n接受策略\n开放\n地址格式\nAE_POBOX\n状态\n生效\n规则\t范围\t取值\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PLATFORM_TERMS_ACCEPTANCE\t2026-10-draft\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PRIVACY_NOTICE_ACKNOWLEDGED\t2026-10-draft\nAcquisition mode\nACQUIRE_MODE\n\tIdentifier type · AE_EMIRATES_ID\tManual"}
+{"tag":"ops-zh-CN-390","page":"config-AE","kind":"check-failed","name":"config AE: document version rows"}
+{"tag":"ops-zh-CN-390","page":"config-AE","kind":"check-failed","name":"config AE: /声明 · PLATFORM_TERMS_ACCEPTANCE/"}
+{"tag":"ops-zh-CN-390","page":"config-AE","kind":"check-failed","name":"config AE: 15 flag rules as words","evidence":["Expiry date required EXPIRY_REQUIRED Identifier type · AE_EMIRATES_ID Yes","Vault storage required VAULT_REQUIRED Identifier type · AE_EMIRATES_ID Yes","Expiry date required EXPIRY_REQUIRED Identifier type · AE_TRADE_LICENSE No"]}
+{"tag":"ops-zh-CN-390","page":"config-SA","kind":"check-failed","name":"config SA: comparison row labelled","evidence":"沙特阿拉伯\nSA\n国家\nSA\n接受策略\n开放\n地址格式\nSA_NATIONAL_ADDRESS\n状态\n生效\n规则\t范围\t取值\nDate must not be in the past\nDATE_NOT_PAST\n\tAttribute · SA_FREELANCE_DOCUMENT_EXPIRY_DATE\tYes\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PLATFORM_TERMS_ACCEPTANCE\t2026-10-draft\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PRIVA"}
+{"tag":"ops-zh-CN-390","page":"config-SA","kind":"check-failed","name":"config SA: document version rows"}
+{"tag":"ops-zh-CN-390","page":"config-SA","kind":"check-failed","name":"config SA: /属性 · SA_FREELANCE_DOCUMENT_EXPIRY_DATE/"}
+{"tag":"ops-zh-CN-390","page":"config-SA","kind":"check-failed","name":"config SA: 15 flag rules as words","evidence":["Date must not be in the past DATE_NOT_PAST Attribute · SA_FREELANCE_DOCUMENT_EXPIRY_DATE Yes","Expiry date required EXPIRY_REQUIRED Identifier type · PASSPORT Yes","Vault storage required VAULT_REQUIRED Identifier type · PASSPORT Yes"]}
+{"tag":"ops-zh-CN-390","page":"config-EG","kind":"check-failed","name":"config EG: comparison row labelled","evidence":"埃及\nEG\n国家\nEG\n接受策略\n开放\n地址格式\nEG_STANDARD\n状态\n生效\n规则\t范围\t取值\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PLATFORM_TERMS_ACCEPTANCE\t2026-10-draft\nDocument version\nDOCUMENT_VERSION\n\tDeclaration · PRIVACY_NOTICE_ACKNOWLEDGED\t2026-10-draft\nAcquisition mode\nACQUIRE_MODE\n\tIdentifier type · EG_COMMERCIAL_REGIS"}
+{"tag":"ops-zh-CN-390","page":"config-EG","kind":"check-failed","name":"config EG: document version rows"}
+{"tag":"ops-zh-CN-390","page":"config-EG","kind":"check-failed","name":"config EG: /声明 · PRIVACY_NOTICE_ACKNOWLEDGED/"}
+{"tag":"ops-zh-CN-390","page":"config-EG","kind":"check-failed","name":"config EG: 17 flag rules as words","evidence":["Expiry date required EXPIRY_REQUIRED Identifier type · EG_COMMERCIAL_REGISTER No","Vault storage required VAULT_REQUIRED Identifier type · EG_COMMERCIAL_REGISTER No","Expiry date required EXPIRY_REQUIRED Identifier type · EG_LOCAL_CR No"]}
+{"tag":"ops-zh-CN-390","page":"config-EG","kind":"console-error","text":"Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."}
+{"tag":"ops-zh-CN-390","page":"case-new","kind":"check-failed","name":"new: answers are words"}
+{"tag":"ops-zh-CN-390","page":"case-new","kind":"check-failed","name":"new: status matches submitted data"}
+{"tag":"ops-zh-CN-390","page":"case-new","kind":"check-failed","name":"new: new declaration labels"}
+{"tag":"ops-zh-CN-390","page":"case-new","kind":"check-failed","name":"new: new field labels (ERN / authority name)","evidence":["AE_ERN","AE_REGISTRATION_AUTHORITY_NAME","AE_TRN"]}
+{"tag":"ops-zh-CN-390","page":"case-new","kind":"console-error","text":"Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."}
+{"tag":"ops-zh-CN-390","page":"case-legacy","kind":"check-failed","name":"legacy: answers are words"}

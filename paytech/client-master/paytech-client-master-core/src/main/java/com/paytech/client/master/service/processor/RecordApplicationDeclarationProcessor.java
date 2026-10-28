@@ -1,6 +1,7 @@
 package com.paytech.client.master.service.processor;
 
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.APPLICATION_NOT_EDITABLE;
+import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.DECLARATION_DOCUMENT_OUTDATED;
 import static com.paytech.client.contract.api.enums.ClientDraftErrorCode.INVALID_DRAFT;
 
 import java.time.Clock;
@@ -16,7 +17,9 @@ import com.paytech.client.master.core.dal.dataobject.ApplicationDeclaration;
 import com.paytech.client.master.core.dal.dataobject.ClientDraftIdentity;
 import com.paytech.client.master.domain.enums.RequirementLevel;
 import com.paytech.client.master.domain.enums.WidgetCode;
+import com.paytech.client.master.domain.onboarding.ApplicationDeclarationPolicy;
 import com.paytech.client.master.domain.onboarding.ClientDraftPolicy;
+import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
 import com.paytech.client.master.domainservice.repository.ApplicationDeclarationRepository;
 import com.paytech.client.master.domainservice.repository.ClientDraftRepository;
 import com.paytech.client.master.domainservice.service.ClientApplicationCommandService;
@@ -34,7 +37,8 @@ import lombok.AllArgsConstructor;
 /**
  * CM-6 记录 Client 声明：账号、时间、可信 IP 与 User-Agent 作为电子声明证据，只追加
  * <li>与草稿写入共用申请锁；只在 DRAFT/RETURNED 可写；声明类型须为申请冻结 Schema 的 declaration.<类型> 字段。</li>
- * <li>同类型的最新一条取值与条款版本都相同时返回原记录，不重复追加。</li>
+ * <li>声明配置了文档版本（DOCUMENT_VERSION）时 termsVersion 必须等于该版本，否则 422 DECLARATION_DOCUMENT_OUTDATED；未配置的不要求。</li>
+ * <li>记录作出时的申请资料版本；同类型最新一条的取值、条款版本与资料版本都相同时返回原记录，不重复追加。</li>
  */
 @AllArgsConstructor
 public class RecordApplicationDeclarationProcessor
@@ -55,7 +59,7 @@ public class RecordApplicationDeclarationProcessor
         return LockCommand.tryLocks(List.of(ClientOnboardingLocks.application(request.getApplicationId())), lockWait, lockLease);
     }
 
-    /** 归属与可编辑 → 类型在 Schema 中 → 同内容返回原记录，否则追加。 */
+    /** 归属与可编辑 → 类型在 Schema 中且文档版本一致 → 同内容同资料版本返回原记录，否则追加。 */
     @Override
     protected DeclarationResponseBody processWithinLock(RecordDeclarationRequest request) {
         accounts.authorize(request.getAccountId(), request.getSessionId());
@@ -64,11 +68,15 @@ public class RecordApplicationDeclarationProcessor
         if (!ClientDraftPolicy.isEditable(application)) {
             throw new FailException(APPLICATION_NOT_EDITABLE);
         }
-        requireSchemaDeclaration(application, request.getDeclarationType());
+        OnboardingPack pack = packs.load(application.schemaId());
+        requireSchemaDeclaration(pack, request.getDeclarationType());
+        String documentVersion = pack.documentVersion(request.getDeclarationType());
+        requireDocumentVersion(documentVersion, request.getTermsVersion());
         ApplicationDeclaration latest = declarations.findByApplication(application.applicationId()).stream()
             .filter(row -> row.getDeclarationType().equals(request.getDeclarationType())).reduce((first, second) -> second).orElse(null);
         if (latest != null && latest.getDeclaredValue().equals(request.getDeclaredValue())
-            && Objects.equals(latest.getTermsVersion(), request.getTermsVersion())) {
+            && Objects.equals(latest.getTermsVersion(), request.getTermsVersion())
+            && ApplicationDeclarationPolicy.isCurrent(latest, application.draftRevision(), documentVersion)) {
             return response(latest);
         }
         ApplicationDeclaration row = declaration(application, request);
@@ -77,13 +85,21 @@ public class RecordApplicationDeclarationProcessor
     }
 
     /** 声明类型须为申请冻结 Schema 中未隐藏的 declaration.<类型> 字段。 */
-    void requireSchemaDeclaration(ClientDraftIdentity application, String type) {
-        boolean known = packs.load(application.schemaId()).getFields().stream()
+    void requireSchemaDeclaration(OnboardingPack pack, String type) {
+        boolean known = pack.getFields().stream()
             .anyMatch(field -> field.getWidgetCode() == WidgetCode.DECLARATION && field.getRequirementLevel() != RequirementLevel.HIDDEN
                 && field.getFieldKey().equals("declaration." + type));
         if (!known) {
             throw new RequestBodyValidationException(INVALID_DRAFT,
                 List.of(new ProblemFieldError("declarationType", "当前申请不需要此声明")), null);
+        }
+    }
+
+    /** 配置了文档版本的声明：termsVersion 必须是页面展示的当前版本，为空或旧版本都拒绝。 */
+    void requireDocumentVersion(String documentVersion, String termsVersion) {
+        if (documentVersion != null && !documentVersion.equals(termsVersion)) {
+            throw new RequestBodyValidationException(DECLARATION_DOCUMENT_OUTDATED,
+                List.of(new ProblemFieldError("termsVersion", "条款已更新，请重新阅读后确认")), null);
         }
     }
 
@@ -101,11 +117,12 @@ public class RecordApplicationDeclarationProcessor
         row.setUserAgent(request.getUserAgent() == null ? null
             : request.getUserAgent().substring(0, Math.min(512, request.getUserAgent().length())));
         row.setTermsVersion(request.getTermsVersion());
+        row.setDraftRevision(application.draftRevision());
         row.setCreateTime(now);
         return row;
     }
 
-    /** 声明响应。 */
+    /** 声明响应；返回的记录总是针对申请当前资料与文档版本。 */
     DeclarationResponseBody response(ApplicationDeclaration row) {
         var body = new DeclarationResponseBody();
         body.setDeclarationId(row.getDeclarationId().toString());
@@ -113,7 +130,10 @@ public class RecordApplicationDeclarationProcessor
         body.setDeclarationType(row.getDeclarationType());
         body.setDeclaredValue(row.getDeclaredValue());
         body.setTermsVersion(row.getTermsVersion());
+        body.setDeclaredByAccountId(row.getDeclaredByAccountId().toString());
         body.setDeclaredAt(new DateTimeFormatterBuilder().appendInstant(6).toFormatter().format(row.getDeclaredTime()));
+        body.setDraftRevision(Long.toString(row.getDraftRevision() == null ? 0L : row.getDraftRevision()));
+        body.setCurrent(true);
         return body;
     }
 }

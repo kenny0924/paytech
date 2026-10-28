@@ -155,7 +155,7 @@ class DraftIdentifierVaultTest extends AbstractOnboardingHttpTest {
         assertEquals("CLIENT", givenName.path("awaitingActionFrom").asString());
         assertTrue(list.path("items").valueStream().anyMatch(item -> "attributes.OCCUPATION".equals(item.path("requirementKey").asString())
             && "SATISFIED".equals(item.path("status").asString())));
-        assertTrue(list.path("items").valueStream().anyMatch(item -> "declaration.PLATFORM_TERMS".equals(item.path("requirementKey").asString())
+        assertTrue(list.path("items").valueStream().anyMatch(item -> "declaration.PLATFORM_TERMS_ACCEPTANCE".equals(item.path("requirementKey").asString())
             && "SIGN_DECLARATION".equals(item.path("remediationCode").asString())));
     }
 

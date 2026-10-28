@@ -68,7 +68,10 @@ public enum OnboardingRequirementCode implements CodeEnum {
     DOCUMENT_SUBJECT_REMOVED,
 
     /** 声明未确认。 */
-    DECLARATION_MISSING;
+    DECLARATION_MISSING,
+
+    /** 声明后资料或条款已变化，须重新确认。 */
+    DECLARATION_STALE;
 
     /** 稳定 Code，等于常量名。 */
     @Override

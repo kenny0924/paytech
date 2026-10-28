@@ -94,8 +94,14 @@ public class ApplicationResponseBody {
     /** 责任 PayFac 的展示名，由 client-master 解析；平台直连为空，页面不显示审核方 */
     private final String responsiblePartnerName;
 
-    /** 已记录的声明（每类型最新一条），页面据此回显勾选 */
+    /**
+     * 已记录的声明（每类型最新一条），页面据此回显勾选
+     * <li>current 为 false 表示声明后资料或条款已变化，页面显示失效并要求重新确认。</li>
+     */
     private final List<DeclarationResponseBody> declarations;
+
+    /** 申请资料版本（十进制字符串），每次实际改动草稿加一；按 client-master 原样投影 */
+    private final String draftRevision;
 
     /** 表单和文件展示名不打印到日志。 */
     @Override

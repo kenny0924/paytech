@@ -23,4 +23,5 @@ public record ClientDraftIdentity(
     /** 申请冻结的采集 Schema 版本。 */ Long schemaId,
     /** 责任 PayFac；平台自营为空。 */ Long responsiblePartnerId,
     /** 当前审核任务；未登记或首次提交前为空。 */ Long dueDiligenceCaseId,
-    /** 退回补件截止时间，可空。 */ Instant reviewDueTime) {}
+    /** 退回补件截止时间，可空。 */ Instant reviewDueTime,
+    /** 申请资料版本；每次实际改动草稿加一，声明绑定此值。 */ long draftRevision) {}

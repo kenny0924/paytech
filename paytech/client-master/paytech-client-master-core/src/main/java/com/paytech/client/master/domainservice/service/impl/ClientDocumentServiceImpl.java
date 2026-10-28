@@ -35,7 +35,7 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
         return new ClientMaterialTarget(applicationId,app.clientId(),subjectPartyId,app.partyId()==subjectPartyId,app.jurisdictionCode(),
             app.clientType(),app.responsiblePartnerId());
     }
-    /** 原申请锁内再次校验本地目标；同一申请、主体、要求、类型和文件已关联时返回原引用。 */
+    /** 原申请锁内再次校验本地目标；同一申请、主体、要求、类型和文件已关联时返回原引用，否则新增并使资料版本加一。 */
     @Override public DocumentCommandReceiptResponseBody associate(ClientDraftCommand command,ClientMaterialTarget expected,DocumentReferenceRequestBody request,String hash) {
         requireTransaction();var app=application(command.accountId(),expected.applicationId(),true);
         var current=target(command.accountId(),expected.applicationId(),expected.subjectPartyId(),true);
@@ -48,10 +48,10 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
         }
         var document=new ClientApplicationDocument(ids.nextId(),current.subjectPartyId(),request.requirementCode(),request.documentType(),fileAddress,hash,
             date(request.issueDate()),date(request.expiryDate()));
-        documents.insert(app.applicationId(),document,now);people.touch(app,now);
+        documents.insert(app.applicationId(),document,now);people.touch(app,now);drafts.bumpDraftRevision(app.applicationId());
         return receipt(command,app.applicationId(),document,now);
     }
-    /** 本申请下已不存在的引用视为已删除，不改动申请。 */
+    /** 本申请下已不存在的引用视为已删除，不改动申请；实际删除时资料版本加一。 */
     @Override public void remove(ClientDraftCommand command,long applicationId,long documentId) {
         requireTransaction();var app=application(command.accountId(),applicationId,true);
         editable(app);var document=documents.document(applicationId,documentId);
@@ -59,7 +59,7 @@ public final class ClientDocumentServiceImpl implements ClientDocumentService {
             return;
         }
         if (documents.remove(applicationId,documentId)!=1) throw new FailException(MATERIAL_CONTEXT_CHANGED);
-        var now=clock.instant().truncatedTo(ChronoUnit.MICROS);people.touch(app,now);
+        var now=clock.instant().truncatedTo(ChronoUnit.MICROS);people.touch(app,now);drafts.bumpDraftRevision(applicationId);
     }
     /** 已由入口校验格式的可空日期。 */
     private static java.time.LocalDate date(String value) { return value==null?null:java.time.LocalDate.parse(value); }

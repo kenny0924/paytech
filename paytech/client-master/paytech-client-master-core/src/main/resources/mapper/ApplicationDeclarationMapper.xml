@@ -3,15 +3,16 @@
 <mapper namespace="com.paytech.client.master.core.dal.mapper.ApplicationDeclarationMapper">
   <insert id="insert">
     INSERT INTO t_application_declaration(declaration_id,client_application_id,declaration_type,declared_value,
-      declared_by_account_id,declared_time,client_ip,user_agent,terms_version,create_time)
+      declared_by_account_id,declared_time,client_ip,user_agent,terms_version,draft_revision,create_time)
     VALUES(#{row.declarationId},#{row.clientApplicationId},#{row.declarationType},#{row.declaredValue},#{row.declaredByAccountId},
-      #{row.declaredTime},#{row.clientIp},#{row.userAgent},#{row.termsVersion},#{row.createTime})
+      #{row.declaredTime},#{row.clientIp},#{row.userAgent},#{row.termsVersion},#{row.draftRevision},#{row.createTime})
   </insert>
   <!-- 追加记录按时间与 ID 排序，同类型以最后一行为准。 -->
   <select id="findByApplication" resultType="com.paytech.client.master.core.dal.dataobject.ApplicationDeclaration">
     SELECT declaration_id AS declarationId, client_application_id AS clientApplicationId, declaration_type AS declarationType,
       declared_value AS declaredValue, declared_by_account_id AS declaredByAccountId, declared_time AS declaredTime,
-      client_ip AS clientIp, user_agent AS userAgent, terms_version AS termsVersion, create_time AS createTime
+      client_ip AS clientIp, user_agent AS userAgent, terms_version AS termsVersion, draft_revision AS draftRevision,
+      create_time AS createTime
     FROM t_application_declaration WHERE client_application_id=#{applicationId}
     ORDER BY declared_time, declaration_id
   </select>

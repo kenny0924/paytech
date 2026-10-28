@@ -4,6 +4,7 @@ import type { Flat } from "../onboarding.ts";
 import { translator } from "../i18n/index.ts";
 import type { FormSchema, RequirementError, SchemaField } from "./model.ts";
 import { problemErrors } from "./model.ts";
+import { isDocumentOutdated } from "./declarations.ts";
 import { SCHEMA_NAMESPACE, activeAddressFormat, addressPath, draftPath, fieldIssue, findField, identifierPaths, isIdentifierLead, isLocalKey, isVisible, selectedIdentifier } from "./schema.ts";
 import type { FieldBlock, Issue } from "./schema.ts";
 
@@ -103,7 +104,7 @@ export function requirementPath(item: Pick<RequirementError, "requirementKey">, 
 /** 入驻接口会返回、页面需要单独说明的 Problem 代码；其余按状态码给通用说明。 */
 export const requestErrorCodes = ["INVALID_DRAFT", "APPLICATION_NOT_EDITABLE", "APPLICATION_NOT_WITHDRAWABLE", "APPLICATION_NOT_FOUND",
   "ONBOARDING_CODE_INVALID", "JURISDICTION_NOT_ACCEPTED", "SUBMISSION_INCOMPLETE", "IDENTITY_CONFLICT", "IDENTIFIER_CONFLICT",
-  "GATEWAY_CONCURRENCY_LIMITED"] as const;
+  "GATEWAY_CONCURRENCY_LIMITED", "DECLARATION_DOCUMENT_OUTDATED"] as const;
 /**
  * 请求失败的页面文案：只用代码与状态码映射本地化文案，不显示服务端 detail（可能是另一种语言或内部说明）
  * <li>网络失败（状态 0）沿用认证客户端已本地化的说明。</li>
@@ -115,6 +116,8 @@ export function requestErrorText(error: unknown): string {
   if (error.code === "INVALID_DRAFT" && !Object.keys(error.fields).length && !problemErrors(error.problem).length)
     return to("request_error.invalid_draft_unspecified");
   if ((requestErrorCodes as readonly string[]).includes(error.code)) return to("request_error." + error.code.toLowerCase());
+  // 条款版本过期以字段错误（termsVersion）下发，Problem 代码可能是通用的参数错误。
+  if (isDocumentOutdated(error)) return to("request_error.declaration_document_outdated");
   if (error.status === 429) return to("request_error.gateway_concurrency_limited");
   if (error.status >= 500) return to("request_error.unavailable");
   return to("page.action_failed");

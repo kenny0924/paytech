@@ -20,12 +20,14 @@ import com.paytech.client.master.api.enums.OnboardingRequirementStatus;
 import com.paytech.client.master.core.dal.dataobject.AddressFormatComponent;
 import com.paytech.client.master.core.dal.dataobject.IdentifierType;
 import com.paytech.client.master.core.dal.dataobject.OnboardingSchemaField;
+import com.paytech.client.master.domain.enums.AttributeDataType;
 import com.paytech.client.master.domain.enums.ClientApplicationStatus;
 import com.paytech.client.master.domain.enums.ClientType;
 import com.paytech.client.master.domain.enums.RequirementLevel;
 import com.paytech.client.master.domain.enums.RuleCode;
 import com.paytech.client.master.domain.enums.SchemaSubject;
 import com.paytech.client.master.domain.enums.WidgetCode;
+import com.paytech.client.master.domain.onboarding.ApplicationDeclarationPolicy;
 import com.paytech.client.master.domain.onboarding.pack.IdentifierRules;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
 import com.paytech.client.master.domain.onboarding.pack.ReferenceCatalogCodes;
@@ -41,6 +43,8 @@ public final class OnboardingRequirementEvaluator {
     private static final String ANY_RELATED = "ANY_RELATED";
     /** 主主体材料的适用角色。 */
     private static final String PRIMARY = "PRIMARY";
+    /** 扩展属性字段键前缀。 */
+    private static final String ATTRIBUTES = "attributes.";
 
     private final RequirementInput input;
     private final OnboardingPack pack;
@@ -168,7 +172,7 @@ public final class OnboardingRequirementEvaluator {
         return null;
     }
 
-    /** 出生日期最低年龄（MIN_AGE 规则）与执照到期日。 */
+    /** 出生日期最低年龄（MIN_AGE 规则）、执照到期日与配置了 DATE_NOT_PAST 的日期属性。 */
     OnboardingRequirementCode dateRule(String fieldKey, String value) {
         if ("individual.birthDate".equals(fieldKey)) {
             int minAge = pack.getRules().number(RuleCode.MIN_AGE, pack.jurisdictionCode());
@@ -177,7 +181,17 @@ public final class OnboardingRequirementEvaluator {
         if ("organization.licenseExpiryDate".equals(fieldKey) && LocalDate.parse(value).isBefore(today)) {
             return IDENTIFIER_EXPIRED;
         }
+        if (fieldKey.startsWith(ATTRIBUTES) && pastDateAttribute(fieldKey.substring(ATTRIBUTES.length()), value)) {
+            return IDENTIFIER_EXPIRED;
+        }
         return null;
+    }
+
+    /** DATE 属性配置了 DATE_NOT_PAST 且取值早于当天。 */
+    boolean pastDateAttribute(String attributeCode, String value) {
+        var attribute = pack.attribute(attributeCode);
+        return attribute != null && attribute.getDataType() == AttributeDataType.DATE
+            && pack.getRules().flag(RuleCode.DATE_NOT_PAST, attributeCode) && LocalDate.parse(value).isBefore(today);
     }
 
     /** 地址：按地址所在国家选择辖区格式或 GENERIC，逐组件校验必填与目录；国家与行政区来自 Platform 参考数据。 */
@@ -347,7 +361,7 @@ public final class OnboardingRequirementEvaluator {
         return null;
     }
 
-    /** Schema 声明字段：最新取值须为 TRUE。 */
+    /** Schema 声明字段：最新取值须为 TRUE，且针对当前资料与文档版本；TRUE 但已失效报 DECLARATION_STALE。 */
     void declarations(RequirementSubject primary) {
         for (OnboardingSchemaField field : pack.fieldsFor(SchemaSubject.PRIMARY)) {
             if (field.getWidgetCode() != WidgetCode.DECLARATION || field.getRequirementLevel() == RequirementLevel.HIDDEN
@@ -355,11 +369,17 @@ public final class OnboardingRequirementEvaluator {
                 continue;
             }
             String type = field.getFieldKey().substring("declaration.".length());
-            FieldResult result = "TRUE".equals(input.getDeclarations().get(type))
-                ? FieldResult.satisfied(OnboardingRequirementKind.DECLARATION)
-                : FieldResult.error(DECLARATION_MISSING, OnboardingRequirementKind.DECLARATION).withLevel(field.getRequirementLevel());
-            record(primary, field.getFieldKey(), result);
+            record(primary, field.getFieldKey(), declaration(input.getDeclarations().get(type)).withLevel(field.getRequirementLevel()));
         }
+    }
+
+    /** 一项声明的结论：未声明或取值非 TRUE 为缺失，TRUE 但已失效为过期。 */
+    static FieldResult declaration(DeclarationFact fact) {
+        if (fact == null || !ApplicationDeclarationPolicy.TRUE.equals(fact.declaredValue())) {
+            return FieldResult.error(DECLARATION_MISSING, OnboardingRequirementKind.DECLARATION);
+        }
+        return fact.current() ? FieldResult.satisfied(OnboardingRequirementKind.DECLARATION)
+            : FieldResult.error(DECLARATION_STALE, OnboardingRequirementKind.DECLARATION);
     }
 
     /** 记录一项字段结论；可选字段缺失不形成清单项。 */
@@ -373,7 +393,7 @@ public final class OnboardingRequirementEvaluator {
             return;
         }
         boolean eventually = result.error() == FIELD_MISSING || result.error() == DECLARATION_MISSING
-            ? result.level() == RequirementLevel.EVENTUALLY : false;
+            || result.error() == DECLARATION_STALE ? result.level() == RequirementLevel.EVENTUALLY : false;
         items.add(new OnboardingRequirement(result.kind(), key, subject.partyId(),
             eventually ? OnboardingRequirementStatus.EVENTUALLY_DUE : OnboardingRequirementStatus.CURRENTLY_DUE,
             OnboardingAwaitingParty.CLIENT, result.error(), remediation(result.error()), null));
@@ -413,7 +433,7 @@ public final class OnboardingRequirementEvaluator {
             case UBO_OWNERSHIP_EXCEEDS_100 -> OnboardingRemediationCode.ADD_RELATION;
             case DOCUMENT_MISSING, DOCUMENT_EXPIRED, DOCUMENT_TOO_OLD, DOCUMENT_UNREADABLE, DOCUMENT_TYPE_INVALID,
                  DOCUMENT_SUBJECT_REMOVED -> OnboardingRemediationCode.UPLOAD_DOCUMENT;
-            case DECLARATION_MISSING -> OnboardingRemediationCode.SIGN_DECLARATION;
+            case DECLARATION_MISSING, DECLARATION_STALE -> OnboardingRemediationCode.SIGN_DECLARATION;
             default -> OnboardingRemediationCode.PROVIDE_FIELD;
         };
     }

@@ -121,6 +121,7 @@ public class ClientApplicationDetailsProcessor
             draft.clientType(), draft.subjectPartyId(), draft.status(), draft.savedAt(), draft.editable(),
             draft.values(), draft.people(), draft.relations(), documents, reviewStatus, review, draft.jurisdictionCode(),
             draft.organizationTypeCode(), draft.schemaId(), draft.reviewDueTime(), requirementsStatus, requirements,
-            draft.responsiblePartnerId(), draft.responsiblePartnerName(), draft.declarations() == null ? List.of() : draft.declarations());
+            draft.responsiblePartnerId(), draft.responsiblePartnerName(), draft.declarations() == null ? List.of() : draft.declarations(),
+            draft.draftRevision());
     }
 }

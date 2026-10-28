@@ -69,6 +69,9 @@ public final class ClientDraftRepositoryImpl implements ClientDraftRepository {
         }
         one(mapper.touchProfile(row.profileId(),now));one(mapper.touchApplication(row.applicationId(),now));
     }
+    /** 必须恰好更新一行：申请已不可编辑说明锁内状态被改变，整体回滚。 */
+    @Override
+    public void bumpDraftRevision(long applicationId) { one(mapper.bumpDraftRevision(applicationId)); }
     private static String addressType(ClientDraftIdentity row) { return row.clientType()==ClientType.INDIVIDUAL?"RESIDENTIAL":"REGISTERED"; }
     private static boolean has(Map<String,Object> values,String group) { return values.keySet().stream().anyMatch(k -> k.startsWith(group+"_")); }
     private static void one(int count) { if (count!=1) throw new ErrorException(DRAFT_CONTEXT_INVALID); }

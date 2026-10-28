@@ -14,6 +14,7 @@ import { useSlotTitle } from "./DocumentSlot.tsx";
 import { TopBar } from "./Shell.tsx";
 import { Busy, Failure, StatusDot, useSchemaText } from "./ui.tsx";
 import { countryName } from "./widgets.tsx";
+import { thresholdKey } from "./declarations.ts";
 
 function useAuthFailure(client: Client) {
   const navigate = useNavigate();
@@ -200,7 +201,7 @@ export function StartFlow({ client }: { client: Client }) {
             <small>{[slot.required ? "" : t("materials.if_applicable"), slot.maxAgeDays ? t("materials.max_age", { months: Math.max(1, Math.round(slot.maxAgeDays / 30)) }) : ""].filter(Boolean).join(" · ")}</small></li>)}
           {people.map((slot) => <li key={"person-" + slot.requirementCode}>
             <strong>{slotTitle(slot)}</strong>
-            <small>{checklist.relationRules.uboThresholdPct ? t("start.checklist_people", { threshold: checklist.relationRules.uboThresholdPct }) : t("home.per_person")}</small></li>)}
+            <small>{checklist.relationRules.uboThresholdPct ? t(thresholdKey("start.checklist_people", checklist.relationRules.uboThresholdComparison), { threshold: checklist.relationRules.uboThresholdPct }) : t("home.per_person")}</small></li>)}
         </ul>
         <p className="ob-muted">{t("materials.requirements_line")}</p>
         <div className="ob-row-actions">

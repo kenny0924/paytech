@@ -504,22 +504,41 @@ class ClientOnboardingHttpAutoTest {
             "JURISDICTION_NOT_ACCEPTED");
     }
 
-    /** CM-6：只接受声明代码与 TRUE/FALSE，原样转发并带上浏览器标识；非法值不到达 Owner。 */
+    /** CM-6：只接受声明代码与 TRUE/FALSE，原样转发所读条款版本并带上浏览器标识；非法值不到达 Owner。 */
     @Test
     void declarationsForwardValidatedBody() throws Exception {
         var result = send("POST", "/client-onboarding/v1/applications/10/declarations",
-            "{\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"TRUE\"}");
+            "{\"declarationType\":\"PLATFORM_TERMS_ACCEPTANCE\",\"declaredValue\":\"TRUE\",\"termsVersion\":\"2026-10-draft\"}");
         assertEquals(200, result.statusCode(), result.body());
-        assertEquals("70", JSON.readTree(result.body()).path("declarationId").asString());
+        var receipt = JSON.readTree(result.body());
+        assertEquals("70", receipt.path("declarationId").asString());
+        assertEquals("5", receipt.path("draftRevision").asString());
+        assertTrue(receipt.path("current").asBoolean());
         var call = CALLS.stream().filter(c -> c.path().endsWith("/declarations")).findFirst().orElseThrow();
         assertEquals("/client-onboarding/v1/applications/10/declarations", call.path());
-        assertEquals("INFORMATION_TRUE", JSON.readTree(call.body()).path("declarationType").asString());
+        var forwarded = JSON.readTree(call.body());
+        assertEquals("PLATFORM_TERMS_ACCEPTANCE", forwarded.path("declarationType").asString());
+        assertEquals("2026-10-draft", forwarded.path("termsVersion").asString());
         CALLS.clear();
         for (String body : List.of("{\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"YES\"}",
             "{\"declarationType\":\"bad type\",\"declaredValue\":\"TRUE\"}")) {
             assertEquals(400, send("POST", "/client-onboarding/v1/applications/10/declarations", body).statusCode(), body);
         }
         assertTrue(CALLS.stream().noneMatch(c -> c.path().endsWith("/declarations")));
+    }
+
+    /** CM-6：条款版本已更新时 Owner 的 422 DECLARATION_DOCUMENT_OUTDATED 与 termsVersion 字段错误原样到达浏览器，页面据此重新读取 Schema。 */
+    @Test
+    void outdatedTermsVersionReachesBrowserAs422() throws Exception {
+        mode = "terms-outdated";
+        var result = send("POST", "/client-onboarding/v1/applications/10/declarations",
+            "{\"declarationType\":\"PLATFORM_TERMS_ACCEPTANCE\",\"declaredValue\":\"TRUE\",\"termsVersion\":\"2026-09-draft\"}");
+        assertEquals(422, result.statusCode(), result.body());
+        var body = JSON.readTree(result.body());
+        assertEquals("DECLARATION_DOCUMENT_OUTDATED", body.path("code").asString());
+        assertEquals("termsVersion", body.path("errors").get(0).path("field").asString());
+        assertFalse(result.body().contains("fixture-owner"));
+        assertEquals(1, CALLS.size());
     }
 
     /** CM-8：撤回 Body 为空；带 Body 的请求不到达 Owner。 */
@@ -548,6 +567,10 @@ class ClientOnboardingHttpAutoTest {
         assertEquals("880000000701", draft.path("responsiblePartnerId").asString());
         assertEquals("INFORMATION_TRUE", draft.path("declarations").get(0).path("declarationType").asString());
         assertEquals("TRUE", draft.path("declarations").get(0).path("declaredValue").asString());
+        // 资料版本与声明是否仍针对当前资料原样透传，页面据 current 显示失效声明。
+        assertEquals("6", draft.path("draftRevision").asString());
+        assertEquals("5", draft.path("declarations").get(0).path("draftRevision").asString());
+        assertFalse(draft.path("declarations").get(0).path("current").asBoolean(true));
         mode = "unavailable";
         var unavailable = JSON.readTree(send("GET", "/client-onboarding/v1/applications/10", null).body());
         assertEquals("UNAVAILABLE", unavailable.path("requirementsStatus").asString());
@@ -711,8 +734,13 @@ class ClientOnboardingHttpAutoTest {
             }
             body = "{\"applicationId\":\"10\",\"status\":\"DRAFT\",\"ready\":false,\"dueTime\":null,\"items\":[{\"requirementKind\":\"FIELD\",\"requirementKey\":\"organization.legalName\",\"subjectPartyId\":\"30\",\"status\":\"CURRENTLY_DUE\",\"awaitingActionFrom\":\"CLIENT\",\"errorCode\":\"FIELD_MISSING\",\"remediationCode\":\"PROVIDE_FIELD\",\"dueTime\":null}]}";
         } else if (path.endsWith("/declarations")) {
+            if (mode.equals("terms-outdated")) {
+                exchange.getResponseHeaders().set("X-Request-Id", "fixture-owner");
+                write(exchange, 422, "{\"type\":\"about:blank\",\"title\":\"Unprocessable Content\",\"detail\":\"条款已更新，请重新阅读后确认\",\"code\":\"DECLARATION_DOCUMENT_OUTDATED\",\"requestId\":\"fixture-owner\",\"timestamp\":\"2026-10-27T00:00:00.000000Z\",\"errors\":[{\"field\":\"termsVersion\",\"message\":\"条款已更新，请重新阅读后确认\"}]}", "application/problem+json");
+                return;
+            }
             status = 201;
-            body = "{\"declarationId\":\"70\",\"applicationId\":\"10\",\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"TRUE\",\"termsVersion\":null,\"declaredAt\":\"2026-10-27T00:00:00Z\"}";
+            body = "{\"declarationId\":\"70\",\"applicationId\":\"10\",\"declarationType\":\"PLATFORM_TERMS_ACCEPTANCE\",\"declaredValue\":\"TRUE\",\"termsVersion\":\"2026-10-draft\",\"declaredAt\":\"2026-10-27T00:00:00Z\",\"draftRevision\":\"5\",\"current\":true}";
         } else if (path.endsWith("/withdrawal")) {
             body = "{\"applicationId\":\"10\",\"status\":\"WITHDRAWN\",\"withdrawnAt\":\"2026-10-27T00:00:00Z\"}";
         } else if (path.endsWith("/applications/10") && method.equals("GET")) {
@@ -723,7 +751,7 @@ class ClientOnboardingHttpAutoTest {
                 organization +
                 "},\"people\":[{\"partyId\":\"31\",\"editable\":true,\"values\":{\"individual\":" +
                 individual +
-                "}}"+(mode.equals("two-people") ? ",{\"partyId\":\"33\",\"editable\":true,\"values\":{}}" : "")+"],\"relations\":[{\"relationId\":\"32\",\"relatedPartyId\":\"31\",\"relationType\":\"DIRECTOR\",\"ownershipPercentage\":null,\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true,\"uboBasis\":null,\"jobTitle\":null,\"nomineeFlag\":null,\"controlNature\":null}"+(mode.equals("two-people") ? ",{\"relationId\":\"34\",\"relatedPartyId\":\"33\",\"relationType\":\"UBO\",\"ownershipPercentage\":\"30\",\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true,\"uboBasis\":null,\"jobTitle\":null,\"nomineeFlag\":null,\"controlNature\":null}" : "")+"],\"documents\":[{\"documentId\":\"50\",\"subjectPartyId\":\"30\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileAddress\":\"/files/v1/40\",\"subjectInScope\":true,\"issueDate\":null,\"expiryDate\":null},{\"documentId\":\"51\",\"subjectPartyId\":\"30\",\"requirementCode\":\"ADDRESS\",\"documentType\":\"ADDRESS_PROOF\",\"fileAddress\":\"/files/v1/40\",\"subjectInScope\":true,\"issueDate\":null,\"expiryDate\":null}],\"jurisdictionCode\":\"SA\",\"organizationTypeCode\":\"LLC\",\"schemaId\":\"9270000000700005\",\"reviewDueTime\":null,\"responsiblePartnerId\":\"880000000701\",\"responsiblePartnerName\":\"Gulf Pay\",\"declarations\":[{\"declarationId\":\"70\",\"applicationId\":\"10\",\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"TRUE\",\"termsVersion\":null,\"declaredAt\":\"2026-10-27T00:00:00Z\"}]}";
+                "}}"+(mode.equals("two-people") ? ",{\"partyId\":\"33\",\"editable\":true,\"values\":{}}" : "")+"],\"relations\":[{\"relationId\":\"32\",\"relatedPartyId\":\"31\",\"relationType\":\"DIRECTOR\",\"ownershipPercentage\":null,\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true,\"uboBasis\":null,\"jobTitle\":null,\"nomineeFlag\":null,\"controlNature\":null}"+(mode.equals("two-people") ? ",{\"relationId\":\"34\",\"relatedPartyId\":\"33\",\"relationType\":\"UBO\",\"ownershipPercentage\":\"30\",\"effectiveFrom\":\"2026-01-01\",\"effectiveTo\":null,\"status\":\"DRAFT\",\"editable\":true,\"uboBasis\":null,\"jobTitle\":null,\"nomineeFlag\":null,\"controlNature\":null}" : "")+"],\"documents\":[{\"documentId\":\"50\",\"subjectPartyId\":\"30\",\"requirementCode\":\"REGISTRATION\",\"documentType\":\"REGISTRATION_CERTIFICATE\",\"fileAddress\":\"/files/v1/40\",\"subjectInScope\":true,\"issueDate\":null,\"expiryDate\":null},{\"documentId\":\"51\",\"subjectPartyId\":\"30\",\"requirementCode\":\"ADDRESS\",\"documentType\":\"ADDRESS_PROOF\",\"fileAddress\":\"/files/v1/40\",\"subjectInScope\":true,\"issueDate\":null,\"expiryDate\":null}],\"jurisdictionCode\":\"SA\",\"organizationTypeCode\":\"LLC\",\"schemaId\":\"9270000000700005\",\"reviewDueTime\":null,\"responsiblePartnerId\":\"880000000701\",\"responsiblePartnerName\":\"Gulf Pay\",\"draftRevision\":\"6\",\"declarations\":[{\"declarationId\":\"70\",\"applicationId\":\"10\",\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"TRUE\",\"termsVersion\":null,\"declaredAt\":\"2026-10-27T00:00:00Z\",\"draftRevision\":\"5\",\"current\":false}]}";
         } else if (path.endsWith("/applications/10/result")) {
             if (mode.equals("review-down")) {
                 failure(exchange, 503);

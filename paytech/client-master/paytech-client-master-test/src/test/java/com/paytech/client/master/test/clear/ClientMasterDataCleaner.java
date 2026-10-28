@@ -14,7 +14,7 @@ import com.paytech.foundation.testsupport.api.Clear;
 /**
  * client-master 测试专用库的全量清理（design/10 §3.1）：表集合等于 init/ddl.sql 的表集合，不触碰其他服务的库。
  * <li>在各 Mocker 定向清理之后执行，删除本库全部测试数据，包括生产链随之生成的补偿任务与审计行。</li>
- * <li>只连接 mor_client_master；其他库与共享开发数据不受影响。</li>
+ * <li>只连接 mor_client_master，或以 -Dclient-master.test.database 显式指定的独立测试库（如并行工作区专用库）；其他库与共享开发数据不受影响。</li>
  */
 @TestComponent
 @Order(Ordered.LOWEST_PRECEDENCE)
@@ -44,8 +44,9 @@ public class ClientMasterDataCleaner implements Clear {
     @Override
     public void clear() {
         String database = jdbc.queryForObject("SELECT DATABASE()", String.class);
-        if (!"mor_client_master".equals(database)) {
-            throw new IllegalStateException("清理器只允许连接 mor_client_master，实际: " + database);
+        String allowed = System.getProperty("client-master.test.database", "mor_client_master");
+        if (!allowed.equals(database)) {
+            throw new IllegalStateException("清理器只允许连接 " + allowed + "，实际: " + database);
         }
         for (String table : TABLES) {
             jdbc.update("DELETE FROM " + table);

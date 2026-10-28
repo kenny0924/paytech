@@ -14,6 +14,7 @@ import com.paytech.client.master.core.dal.dataobject.OnboardingSchema;
 import com.paytech.client.master.core.dal.dataobject.OnboardingSchemaField;
 import com.paytech.client.master.core.dal.dataobject.OrganizationType;
 import com.paytech.client.master.domain.enums.ClientType;
+import com.paytech.client.master.domain.enums.WidgetCode;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
 import com.paytech.client.master.domain.onboarding.pack.ReferenceCatalogCodes;
 import com.paytech.client.master.domain.onboarding.pack.RuleSettings;
@@ -67,7 +68,9 @@ public class OnboardingPackServiceImpl implements OnboardingPackService {
             .filter(row -> OnboardingPack.active(row.getStatus())).toList();
         List<AttributeDefinition> attributes = attributeDefinitions.findForJurisdiction(code).stream()
             .filter(row -> OnboardingPack.active(row.getStatus())).toList();
-        return new OnboardingPack(jurisdiction, rules(code), organizations, identifiers,
+        List<String> scopes = new ArrayList<>(declarationTypes(fields));
+        attributes.forEach(attribute -> scopes.add(attribute.getAttributeCode()));
+        return new OnboardingPack(jurisdiction, rules(code, scopes), organizations, identifiers,
             relationTypes.findForJurisdiction(code).stream().filter(row -> OnboardingPack.active(row.getStatus())).toList(),
             addressComponents.findByFormats(List.of(jurisdiction.getAddressFormatCode(), OnboardingPack.GENERIC_ADDRESS_FORMAT)),
             catalogItems.findActive(catalogCodes(fields, attributes, jurisdiction), code), attributes, schema, fields);
@@ -100,12 +103,23 @@ public class OnboardingPackServiceImpl implements OnboardingPackService {
     /** 辖区、其组织类型与可用标识类型的规则，以及三层 * 默认。 */
     @Override
     public RuleSettings rules(String jurisdictionCode) {
-        Set<String> scopes = new LinkedHashSet<>();
+        return rules(jurisdictionCode, List.of());
+    }
+
+    /** 在辖区规则之外加上 Schema 声明类型的 DECLARATION 规则（如 DOCUMENT_VERSION）与扩展属性的 ATTRIBUTE 规则（如 DATE_NOT_PAST）。 */
+    RuleSettings rules(String jurisdictionCode, List<String> extraScopes) {
+        Set<String> scopes = new LinkedHashSet<>(extraScopes);
         scopes.add(OnboardingPack.ANY);
         scopes.add(jurisdictionCode);
         organizationTypes.findByJurisdiction(jurisdictionCode).forEach(row -> scopes.add(jurisdictionCode + ":" + row.getTypeCode()));
         identifierTypes.findForJurisdiction(jurisdictionCode).forEach(row -> scopes.add(row.getIdentifierTypeCode()));
         return new RuleSettings(ruleSettings.findActive(scopes));
+    }
+
+    /** Schema 中 declaration.<类型> 字段的声明类型。 */
+    static List<String> declarationTypes(List<OnboardingSchemaField> fields) {
+        return fields.stream().filter(field -> field.getWidgetCode() == WidgetCode.DECLARATION)
+            .map(field -> field.getFieldKey().substring("declaration.".length())).toList();
     }
 
     /** Schema 字段、属性定义与地址组件引用的本库目录；REF_ 目录来自 Platform 参考数据，不从 t_catalog_item 加载。 */

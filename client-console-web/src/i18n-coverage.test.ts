@@ -10,6 +10,7 @@ import { fallbackReasons, homeNoticeCodes } from "./workspace.ts";
 import { graceOptions } from "./developer.ts";
 import { SCHEMA_NAMESPACE, schemaI18nKey } from "./onboarding/schema.ts";
 import { requestErrorCodes } from "./onboarding/draft.ts";
+import { legalTextKey, thresholdKeys } from "./onboarding/declarations.ts";
 
 const src = fileURLToPath(new URL(".", import.meta.url));
 const seed = JSON.parse(readFileSync(join(src, "../i18n/client-console.zh-CN.seed.json"), "utf8")) as {
@@ -114,6 +115,7 @@ test("every dynamic key family resolves in the English base", () => {
     ...["met", "not_met"].map((key) => "onboarding.people." + key),
     ...["yes", "no"].map((key) => "onboarding.form." + key),
     ...[...requestErrorCodes.map((code) => code.toLowerCase()), "gateway_concurrency_limited", "unavailable"].map((key) => "onboarding.request_error." + key),
+    ...thresholdKeys.flatMap((key) => ["onboarding." + key, "onboarding." + key + "_gt"]),
     ...graceOptions.map((option) => "developer.grace.m" + option.minutes),
     ...["invalid", "closed", "unavailable", "missing"].map((kind) => "invitation.problem." + kind),
     ...["login", "register", "forgot", "reset", "verify", "sent"].flatMap((kind) => ["auth." + kind + ".title", "auth." + kind + ".intro", "auth.submit." + kind]),
@@ -130,12 +132,24 @@ test("Platform namespace codes are lowercase with hyphens", () => {
   for (const ns of Object.keys(builtin)) assert.match(ns, /^[a-z][a-z0-9-]{0,63}$/, ns);
 });
 
+const clientMasterSql = () => readSql("paytech/client-master/docs/database/sql/client-master-initial-data.sql");
+
 test("every label and help key of the client-master country packs exists in the onboarding-schema base after mapping", () => {
-  const sql = readSql("paytech/client-master/docs/database/sql/client-master-initial-data.sql");
+  const sql = clientMasterSql();
   if (sql === null) return;
   const keys = [...new Set([...sql.matchAll(/'(onboardingSchema\.[A-Za-z0-9_.]+)'/g)].map((match) => match[1]))];
   assert.ok(keys.length > 50, "country pack label keys not found");
   assert.deepEqual(keys.map(schemaI18nKey).filter((key) => !hasKey(key)), []);
+});
+
+test("every declaration document version configured in the client-master country packs has a bundled title and body", () => {
+  const sql = clientMasterSql();
+  if (sql === null) return;
+  const versions = [...sql.matchAll(/'DECLARATION', '([A-Z][A-Z0-9_]*)', 'DOCUMENT_VERSION', '([^']+)'/g)];
+  assert.ok(versions.length > 0, "declaration document versions not found");
+  const missing = versions.flatMap(([, type, version]) => (["title", "body"] as const).map((part) => "onboarding." + legalTextKey(type, version, part)))
+    .filter((key) => !hasKey(key));
+  assert.deepEqual(missing, []);
 });
 
 test("every compliance material requirement and document type has a client label", () => {

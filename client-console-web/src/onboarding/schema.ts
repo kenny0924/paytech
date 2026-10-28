@@ -156,7 +156,8 @@ export function fieldIssue(field: SchemaField, value: string, requireFilled: boo
     return { key: "error.too_long", params: { max: validation.maxLength } };
   if (regex) {
     let ok = true;
-    try { ok = new RegExp(regex.startsWith("^") ? regex : "^(?:" + regex + ")$").test(normalized); } catch { ok = true; }
+    try { ok = new RegExp(regex.startsWith("^") ? regex : "^(?:" + regex + ")$").test(normalized); }
+    catch { ok = true; warnInvalidPattern(regex); }
     if (!ok) {
       const digits = fixedDigits(regex);
       return digits && /^\d+$/.test(normalized)
@@ -205,6 +206,24 @@ export const isLocalKey = (key: string) => key.startsWith("~") || key.endsWith("
 /** 国家包文案的 Platform 命名空间（命名空间码只允许小写字母、数字与连字符）。 */
 export const SCHEMA_NAMESPACE = "onboarding-schema";
 /** 后端 label_key（`onboardingSchema.*`，来自 client-master DML）→ 本应用多语言键（`onboarding-schema.*`）；其他键原样返回。 */
+const reportedPatterns = new Set<string>();
+/**
+ * 国家包正则在浏览器里编译失败（如 Java 的 (?i)）时本地不校验格式，交给服务端；只警告一次，便于发现配置问题
+ * <li>countrypack 测试核对仓库 DML 的全部正则都能在 JavaScript 中编译。</li>
+ */
+function warnInvalidPattern(pattern: string) {
+  if (reportedPatterns.has(pattern)) return;
+  reportedPatterns.add(pattern);
+  console.warn("Onboarding schema pattern is not valid in JavaScript; format check skipped:", pattern);
+}
+
+/**
+ * 多证件可选时号码输入框的标签："{类型}号码"；类型名本身已是号码（以"号"、"号码"、"编号"或 Number 结尾）时直接用类型名，避免"登记号号码"
+ */
+export function identifierNumberLabel(typeLabel: string, template: (type: string) => string): string {
+  return /(number|no\.?|\u53f7|\u53f7\u7801|\u7f16\u53f7)\s*$/i.test(typeLabel) ? typeLabel : template(typeLabel);
+}
+
 export function schemaI18nKey(labelKey: string): string {
   return labelKey.startsWith("onboardingSchema.") ? SCHEMA_NAMESPACE + labelKey.slice("onboardingSchema".length) : labelKey;
 }

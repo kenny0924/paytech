@@ -265,6 +265,9 @@ public class FormSchemaResponseBody {
 
         /** 受益人采集方式：OWNERS_AND_CONTROL、CONTROL_ONLY、EXEMPT。 */
         private String uboCollectionMode;
+
+        /** 持股与门槛的比较方式：GTE 达到门槛即计入（或以上），GT 须超过门槛。 */
+        private String uboThresholdComparison;
     }
 
     /** 材料槽。 */
@@ -299,5 +302,11 @@ public class FormSchemaResponseBody {
 
         /** 要求级别。 */
         private String requirementLevel;
+
+        /**
+         * 声明所附文档（条款、告知）的当前版本
+         * <li>不为空时，写入声明须以 termsVersion 携带此值；为空表示声明不附版本化文档。</li>
+         */
+        private String documentVersion;
     }
 }

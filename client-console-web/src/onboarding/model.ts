@@ -44,14 +44,18 @@ export type IdentifierType = {
 export type AddressComponent = { component: string; required: boolean; labelKey: string; order: number; catalogCode?: string | null };
 /** 关系类型目录（t_relation_type）：持股是否必填、是否属于受益所有人。 */
 export type RelationTypeDef = { code: string; labelKey: string; ruleRole?: string | null; uboFlag?: boolean | null; ownershipPctRequired?: boolean | null };
+/** 受益人门槛比较方式：GTE 为"达到门槛"，GT 为"超过门槛"；未下发按 GTE。 */
+export type ThresholdComparison = "GTE" | "GT";
 export type RelationRules = {
   uboThresholdPct?: number | null; uboFallbackRule?: string | null; controlPersonRequired?: boolean | null;
   minSignatories?: number | null; requiresManager?: boolean | null; requiresDirectors?: boolean | null; uboCollectionMode?: string | null;
+  uboThresholdComparison: ThresholdComparison;
 };
 /** 程序材料槽（CP-1 经 CM-2 合并）；maxAgeDays 按签发日期计算，expiryRequired 表示须填写到期日（未下发视为可选）。 */
 export type MaterialSlot = { requirementCode: string; subjectRole: string; documentTypes: string[]; required: boolean; maxAgeDays?: number | null;
   expiryRequired?: boolean | null };
-export type DeclarationDef = { declarationType: string; labelKey: string };
+/** 声明定义；documentVersion 是需要阅读的条款 / 告知当前版本，确认时须原样带回（无文档为空）。 */
+export type DeclarationDef = { declarationType: string; labelKey: string; documentVersion?: string | null };
 export type OrganizationType = { code: string; labelKey: string };
 export type FormSchema = {
   schemaId: string;
@@ -87,7 +91,14 @@ export type DocumentRef = {
   documentId: string; subjectPartyId: string; fileId: string; fileAddress: string; requirementCode: string;
   documentType: string; subjectInScope: boolean; fileStatus?: string; file: FileInfo | null; issueDate?: string | null; expiryDate?: string | null;
 };
-export type DeclarationRecord = { declarationType: string; declaredValue: string; declaredAt?: string | null; declaredBy?: string | null };
+/**
+ * 声明记录（每类型最新一条）
+ * <li>current 为 false 表示确认后资料或条款版本已变化，需要重新确认；旧服务未下发时按有效处理。</li>
+ */
+export type DeclarationRecord = {
+  declarationType: string; declaredValue: string; declaredAt?: string | null; declaredBy?: string | null;
+  termsVersion?: string | null; draftRevision?: string | number | null; current?: boolean | null;
+};
 
 /** 需求清单一项（CM-7，实时计算）；带期限的项来自案件退回。 */
 export type RequirementItem = {
@@ -198,6 +209,8 @@ export function readSchema(value: unknown, unavailable: string): FormSchema {
   const declarationFields = sections.flatMap((section) => section.groups.flatMap((group) => group.fields))
     .filter((field) => field.widget === "DECLARATION" && field.requirementLevel !== "HIDDEN")
     .map((field) => ({ declarationType: field.fieldKey.split(".").slice(1).join("."), labelKey: field.labelKey }));
+  const declarationDefs = list<DeclarationDef>(raw.declarations).filter((item) => item && typeof item.declarationType === "string")
+    .map((item) => ({ ...item, documentVersion: text(item.documentVersion) }));
   const relationTypes = list<RelationTypeDef & { relationTypeCode?: string; itemCode?: string }>((raw as { relationTypes?: unknown }).relationTypes)
     .map((item) => ({ ...item, code: item.code ?? item.relationTypeCode ?? item.itemCode ?? "" })).filter((item) => item.code);
   // 目录项 Owner 用 code，旧形状用 itemCode，统一为 itemCode；参考数据目录另保留英文名、图标与所属国家。
@@ -225,8 +238,7 @@ export function readSchema(value: unknown, unavailable: string): FormSchema {
       : (catalogs.RELATION_TYPE ?? []).map((item) => ({ code: item.itemCode, labelKey: item.labelKey })),
     materials: list<MaterialSlot>(raw.materials).filter((item) => item && typeof item.requirementCode === "string")
       .map((item) => ({ ...item, documentTypes: list<string>(item.documentTypes) })),
-    declarations: list<DeclarationDef>(raw.declarations).filter((item) => item && typeof item.declarationType === "string").length
-      ? list<DeclarationDef>(raw.declarations).filter((item) => item && typeof item.declarationType === "string") : declarationFields,
+    declarations: declarationDefs.length ? declarationDefs : declarationFields,
   };
 }
 
@@ -234,7 +246,8 @@ export function readSchema(value: unknown, unavailable: string): FormSchema {
 function relationRules(value: unknown): RelationRules {
   const raw = (value ?? {}) as Record<string, unknown>;
   const number = (item: unknown) => item === null || item === undefined || item === "" ? null : Number.isFinite(Number(item)) ? Number(item) : null;
-  return { ...(raw as RelationRules), uboThresholdPct: number(raw.uboThresholdPct), minSignatories: number(raw.minSignatories) };
+  return { ...(raw as RelationRules), uboThresholdPct: number(raw.uboThresholdPct), minSignatories: number(raw.minSignatories),
+    uboThresholdComparison: raw.uboThresholdComparison === "GT" ? "GT" : "GTE" };
 }
 
 function readErrors(value: unknown): RequirementError[] {

@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { catalogSource, catalogUsages, decodeCatalogItems, decodeJurisdictions, decodePrograms, decodeSchemas, groupFields, programInUse, referenceCatalogHref,
-  referencedCatalogs } from './onboardingConfig.ts';
+  referencedCatalogs, ruleRows } from './onboardingConfig.ts';
+import { testT } from '../i18n/testing.ts';
+import { valueText } from './schemaLabel.ts';
 
 const field = (fieldKey: string, section: string, displayGroup: string | null, displayOrder: number, catalogCode: string | null = null) => ({ section, displayGroup, fieldKey,
   widgetCode: 'TEXT', catalogCode, requirementLevel: 'REQUIRED', requirementGroup: null, appliesToSubject: null, validationPattern: null, minLength: null, maxLength: null,
@@ -92,4 +94,32 @@ test('catalog sources: REF_ catalogs come from Platform reference data and link 
   assert.equal(referenceCatalogHref('REF_COUNTRY_SUBDIVISION', 'AE'), '/reference-data?tab=subdivisions&country=AE');
   assert.equal(referenceCatalogHref('REF_CURRENCY', 'AE'), '/reference-data?tab=currencies');
   assert.equal(referenceCatalogHref('BUSINESS_MODEL', 'AE'), null);
+});
+
+test('packs with declaration / attribute scopes and the threshold comparison decode and show localized labels; unknown codes show as is', () => {
+  const ae = { jurisdictionCode: 'AE', countryCode: 'AE', labelKey: null, addressFormatCode: null, status: 'ACTIVE',
+    rules: [{ scopeType: 'JURISDICTION', scopeCode: 'AE', ruleCode: 'UBO_THRESHOLD_COMPARISON', ruleValue: 'GT', status: 'ACTIVE' },
+      { scopeType: 'DECLARATION', scopeCode: 'PLATFORM_TERMS_ACCEPTANCE', ruleCode: 'DOCUMENT_VERSION', ruleValue: '2026-10-draft', status: 'ACTIVE' },
+      { scopeType: 'ATTRIBUTE', scopeCode: 'SA_FREELANCE_DOCUMENT_EXPIRY_DATE', ruleCode: 'DATE_NOT_PAST', ruleValue: '1', status: 'ACTIVE' },
+      { scopeType: 'IDENTIFIER_TYPE', scopeCode: 'EG_LOCAL_CR', ruleCode: 'VAULT_REQUIRED', ruleValue: '0', status: 'ACTIVE' },
+      { scopeType: 'JURISDICTION', scopeCode: 'AE', ruleCode: 'MIN_AGE', ruleValue: '18', status: 'ACTIVE' },
+      { scopeType: 'IDENTIFIER_TYPE', scopeCode: 'PASSPORT', ruleCode: 'ACQUIRE_MODE', ruleValue: 'MANUAL_ENTRY', status: 'ACTIVE' },
+      { scopeType: 'FUTURE_SCOPE', scopeCode: 'X', ruleCode: 'FUTURE_RULE', ruleValue: 'V' }] };
+  const rows = ruleRows(testT('client-review'), decodeJurisdictions([ae])[0].ruleSettings);
+  assert.deepEqual(rows.map(r => [r.rule, r.scope, r.value]), [
+    ['Beneficial owner threshold comparison', 'Jurisdiction · AE', 'Above threshold'],
+    ['Document version', 'Declaration · PLATFORM_TERMS_ACCEPTANCE', '2026-10-draft'],
+    ['Date must not be in the past', 'Attribute · SA_FREELANCE_DOCUMENT_EXPIRY_DATE', 'Yes'],
+    ['Vault storage required', 'Identifier type · EG_LOCAL_CR', 'No'],
+    ['Minimum age', 'Jurisdiction · AE', '18'],
+    ['Acquisition mode', 'Identifier type · PASSPORT', 'Manual entry'],
+    ['FUTURE_RULE', 'FUTURE_SCOPE · X', 'V'],
+  ]);
+});
+
+test('boolean application values read as Yes / No, never true / false', () => {
+  const tSchema = testT('onboarding-schema');
+  assert.equal(valueText(tSchema, 'organization', 'listedCompany', 'false', 'AE'), 'No');
+  assert.equal(valueText(tSchema, 'individual', 'pepSelfDeclared', 'true', 'AE'), 'Yes');
+  assert.equal(valueText(tSchema, 'organization', 'legalName', 'Synthetic Co', 'AE'), 'Synthetic Co');
 });

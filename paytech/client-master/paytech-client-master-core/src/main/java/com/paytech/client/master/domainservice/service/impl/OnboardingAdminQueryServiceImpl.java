@@ -16,6 +16,8 @@ import com.paytech.client.master.core.dal.dataobject.ClientApplicationSubmission
 import com.paytech.client.master.core.dal.dataobject.OnboardingSchema;
 import com.paytech.client.master.core.dal.dataobject.OrganizationType;
 import com.paytech.client.master.core.dal.dataobject.PartnerOnboardingCode;
+import com.paytech.client.master.core.dal.dataobject.RuleSetting;
+import com.paytech.client.master.domain.enums.RuleScopeType;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
 import com.paytech.client.master.domain.onboardingadmin.ClientAdminView;
 import com.paytech.client.master.domain.onboardingadmin.JurisdictionAdminDetail;
@@ -43,6 +45,10 @@ import lombok.AllArgsConstructor;
 /** 运营只读查询：组合辖区包目录、Schema 字段、Client 与入驻码；只读本库。 */
 @AllArgsConstructor
 public class OnboardingAdminQueryServiceImpl implements OnboardingAdminQueryService {
+    /** 声明字段键前缀。 */
+    private static final String DECLARATION_PREFIX = "declaration.";
+    /** 扩展属性字段键前缀。 */
+    private static final String ATTRIBUTE_PREFIX = "attributes.";
     private final ClientRepository clients;
     private final CatalogItemRepository catalogItems;
     private final RuleSettingRepository ruleSettings;
@@ -57,7 +63,10 @@ public class OnboardingAdminQueryServiceImpl implements OnboardingAdminQueryServ
     private final PartnerOnboardingCodeRepository onboardingCodes;
     private final AddressFormatComponentRepository addressComponents;
 
-    /** 每个辖区的规则取其辖区、组织类型、标识类型作用域与 * 默认；本地地址格式组件一次读出后按格式分组。 */
+    /**
+     * 每个辖区的规则取其辖区、组织类型、标识类型作用域与 * 默认，另加该辖区全部 Schema 版本引用的声明类型（DECLARATION）
+     * 与扩展属性（ATTRIBUTE）规则；本地地址格式组件一次读出后按格式分组。
+     */
     @Override
     public List<JurisdictionAdminDetail> jurisdictions() {
         var allRules = ruleSettings.findAll();
@@ -72,10 +81,37 @@ public class OnboardingAdminQueryServiceImpl implements OnboardingAdminQueryServ
             Set<String> scopes = new LinkedHashSet<>(List.of(OnboardingPack.ANY, code));
             types.forEach(type -> scopes.add(code + ":" + type.getTypeCode()));
             identifiers.forEach(type -> scopes.add(type.getIdentifierTypeCode()));
-            return new JurisdictionAdminDetail(jurisdiction, allRules.stream().filter(rule -> scopes.contains(rule.getScopeCode())).toList(),
+            Set<String> schemaScopes = schemaRuleScopes(code);
+            return new JurisdictionAdminDetail(jurisdiction, allRules.stream().filter(rule -> schemaScoped(rule)
+                ? schemaScopes.contains(rule.getScopeType().getCode() + ":" + rule.getScopeCode())
+                : scopes.contains(rule.getScopeCode())).toList(),
                 types, identifiers, relationTypes.findForJurisdiction(code),
                 components.getOrDefault(jurisdiction.getAddressFormatCode(), List.of()));
         }).toList();
+    }
+
+    /** 声明与属性规则按 Schema 引用归属辖区，不按 scope_code 本身。 */
+    static boolean schemaScoped(RuleSetting rule) {
+        return rule.getScopeType() == RuleScopeType.DECLARATION || rule.getScopeType() == RuleScopeType.ATTRIBUTE;
+    }
+
+    /** 辖区全部 Schema 版本（含已退役，在途申请仍按其冻结版本）引用的 DECLARATION:类型 与 ATTRIBUTE:属性码，以及两层 * 默认。 */
+    Set<String> schemaRuleScopes(String jurisdictionCode) {
+        Set<String> result = new LinkedHashSet<>(List.of(RuleScopeType.DECLARATION.getCode() + ":" + OnboardingPack.ANY,
+            RuleScopeType.ATTRIBUTE.getCode() + ":" + OnboardingPack.ANY));
+        List<Long> schemaIds = schemas.findByJurisdiction(jurisdictionCode).stream().map(OnboardingSchema::getSchemaId).toList();
+        if (schemaIds.isEmpty()) {
+            return result;
+        }
+        schemaFields.findBySchemas(schemaIds).forEach(field -> {
+            String key = field.getFieldKey();
+            if (key.startsWith(DECLARATION_PREFIX)) {
+                result.add(RuleScopeType.DECLARATION.getCode() + ":" + key.substring(DECLARATION_PREFIX.length()));
+            } else if (key.startsWith(ATTRIBUTE_PREFIX)) {
+                result.add(RuleScopeType.ATTRIBUTE.getCode() + ":" + key.substring(ATTRIBUTE_PREFIX.length()));
+            }
+        });
+        return result;
     }
 
     /** 辖区全部版本，字段一次读出。 */

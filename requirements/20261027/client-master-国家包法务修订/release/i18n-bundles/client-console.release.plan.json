@@ -1,0 +1,32 @@
+{
+ "app": "client-console",
+ "currentRelease": 6,
+ "liveNamespaces": 10,
+ "repoNamespaces": 10,
+ "newNamespaces": [],
+ "repoKeys": 1454,
+ "liveActiveKeys": 1423,
+ "added": 31,
+ "restored": 0,
+ "sourceChanged": 0,
+ "missingInRepo": 0,
+ "zhImportKeys": 31,
+ "zhMissingForImport": 0,
+ "keepLiveZh": 1423,
+ "refdataZhReplaced": 0,
+ "liveOutdatedZh": 2,
+ "rebaseExpected": 0,
+ "rebaseScope": 429,
+ "outdatedUntouched": 2,
+ "zhChangedNotImported": 0,
+ "deprecationsByNamespace": {},
+ "addedByNamespace": {
+  "onboarding-schema": 15,
+  "onboarding": 16
+ },
+ "deprecations": [],
+ "sha256": {
+  "client-console.release.en.json": "26f08952ae55458ff7247b7a6ab21f5d885e2e180e44e851874b01137d64c8b3",
+  "client-console.release.zh-CN.delta.json": "fe945e943ccc7bf91fe3a73a4f252d78414024d4e1244bceb7994e805630aecb"
+ }
+}

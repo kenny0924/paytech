@@ -26,7 +26,10 @@ public class AdminJurisdictionResponseBody {
     /** 目录并发版本。 */
     private long changeVersion;
 
-    /** 辖区、其组织类型与标识类型作用域的规则开关（含 * 默认）。 */
+    /**
+     * 辖区、其组织类型与标识类型作用域的规则开关（含 * 默认）
+     * <li>另含该辖区全部 Schema 版本（含已退役）引用的声明类型（DECLARATION）与扩展属性（ATTRIBUTE）规则，如 DOCUMENT_VERSION、DATE_NOT_PAST。</li>
+     */
     private List<RuleSettingItem> rules;
 
     /** 组织类型（全部状态）。 */
@@ -45,10 +48,10 @@ public class AdminJurisdictionResponseBody {
     @Getter
     @Setter
     public static class RuleSettingItem {
-        /** 作用层级。 */
+        /** 作用层级：JURISDICTION、ORGANIZATION_TYPE、IDENTIFIER_TYPE、DECLARATION、ATTRIBUTE。 */
         private String scopeType;
 
-        /** 作用对象代码。 */
+        /** 作用对象代码：辖区码、辖区码:组织类型码、标识类型码、声明类型码、属性码，或 * 默认。 */
         private String scopeCode;
 
         /** 规则代码。 */

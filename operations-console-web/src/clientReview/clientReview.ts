@@ -1,6 +1,7 @@
 import { ApiError } from '../api/session.ts';
 import type { PagingResponseBody } from '../api/types.ts';
 import { translator } from '../i18n/index.ts';
+import type { Translate } from '../i18n/index.ts';
 import { decodeIndustryCategory, decodeMcc } from '../referenceData/referenceData.ts';
 import type { IndustryCategory, RefIndustry, RefMcc } from '../referenceData/referenceData.ts';
 
@@ -72,9 +73,18 @@ export interface ReviewCase {
 export interface Person { partyId: string; values: Record<string, Record<string, string | null>> }
 export interface Relation { relationId: string; relatedPartyId: string; relationType: string; ownershipPercentage: string | null; status: string }
 export interface DocumentRef { documentId: string; subjectPartyId: string; requirementCode: string; documentType: string; fileAddress: string; fileId: string; subjectInScope: boolean }
+/**
+ * client-master 声明（每类最新一条）
+ * <li>draftRevision 为声明针对的申请资料版本；current 表示与当前资料版本及条款版本一致，false 即声明后资料又被修改。</li>
+ * <li>draftRevision、current、declaredByAccountId 为 2026-10-27 新增字段，旧响应缺省按 null 显示为未知。</li>
+ */
+export interface Declaration {
+  declarationId: string; declarationType: string; declaredValue: 'TRUE' | 'FALSE'; termsVersion: string | null; declaredAt: string;
+  declaredByAccountId: string | null; draftRevision: string | null; current: boolean | null;
+}
 export interface Application {
   applicationId: string; applicationNo: string; clientId: string; clientType: string; subjectPartyId: string; status: string;
-  values: Record<string, Record<string, string | null>>; people: Person[]; relations: Relation[]; documents: DocumentRef[];
+  values: Record<string, Record<string, string | null>>; people: Person[]; relations: Relation[]; documents: DocumentRef[]; declarations: Declaration[];
 }
 export interface ClassificationSet { caseId: string; applicationId: string; confirmed: boolean; confirmedBy: string | null; confirmedAt: string | null; items: Classification[] }
 export type Availability = 'AVAILABLE' | 'UNAVAILABLE';
@@ -311,7 +321,42 @@ export function decodeApplication(value: unknown, applicationId: string): Applic
     documents: v.documents.map(d => { require(d && isId(d.documentId) && isId(d.subjectPartyId) && code(d.requirementCode) && code(d.documentType) && typeof d.subjectInScope === 'boolean');
       // 材料只存文件服务地址 /files/v1/{fileId}；文件 ID 由地址解析，供下载使用。
       return { documentId: d.documentId, subjectPartyId: d.subjectPartyId, requirementCode: d.requirementCode, documentType: d.documentType,
-        fileAddress: d.fileAddress, fileId: fileIdOf(d.fileAddress), subjectInScope: d.subjectInScope }; }) };
+        fileAddress: d.fileAddress, fileId: fileIdOf(d.fileAddress), subjectInScope: d.subjectInScope }; }),
+    declarations: decodeDeclarations(v.declarations) };
+}
+/** 资料版本为非负整数；client-master 以数字或数字字符串返回，页面统一为字符串。 */
+const revision = (v: unknown): string | null => {
+  if (v === undefined || v === null) return null;
+  require((typeof v === 'number' && Number.isSafeInteger(v) && v >= 0) || (typeof v === 'string' && /^(0|[1-9][0-9]{0,18})$/.test(v)));
+  return String(v);
+};
+function decodeDeclarations(value: unknown): Declaration[] {
+  const rows = opt(value as unknown[] | undefined, []);
+  require(list(rows, 64));
+  return rows.map(raw => {
+    const d = raw as Declaration;
+    require(d && isId(d.declarationId) && code(d.declarationType) && (d.declaredValue === 'TRUE' || d.declaredValue === 'FALSE')
+      && nullable(opt(d.termsVersion, null), 64) && instant(d.declaredAt) && nullableId(opt(d.declaredByAccountId, null))
+      && (d.current === undefined || d.current === null || typeof d.current === 'boolean'));
+    return { declarationId: d.declarationId, declarationType: d.declarationType, declaredValue: d.declaredValue, termsVersion: opt(d.termsVersion, null),
+      declaredAt: d.declaredAt, declaredByAccountId: opt(d.declaredByAccountId, null), draftRevision: revision(d.draftRevision), current: opt(d.current, null) };
+  });
+}
+/** 声明是否针对当前资料：CURRENT 一致、STALE 声明后资料或条款已变、UNKNOWN 旧响应未给出。 */
+export type DeclarationStatus = 'CURRENT' | 'STALE' | 'UNKNOWN';
+export interface DeclarationRow {
+  key: string; declarationType: string; answer: string; declaredAt: string; declaredBy: string | null; termsVersion: string; status: DeclarationStatus; statusText: string;
+}
+/**
+ * 声明区块的行：声明名称由页面按 onboarding-schema 取文案；取值显示为是 / 否文字，从不显示 TRUE / FALSE
+ * <li>条款版本为空时显示“—”；状态按 current 翻译。</li>
+ */
+export function declarationRows(tReview: Translate, declarations: Declaration[]): DeclarationRow[] {
+  return declarations.map(d => {
+    const status: DeclarationStatus = d.current === true ? 'CURRENT' : d.current === false ? 'STALE' : 'UNKNOWN';
+    return { key: d.declarationId, declarationType: d.declarationType, answer: tReview(`declarations.answer.${d.declaredValue}`), declaredAt: d.declaredAt,
+      declaredBy: d.declaredByAccountId, termsVersion: d.termsVersion ?? '—', status, statusText: tReview(`declarations.status.${status}`) };
+  });
 }
 export function decodeClassificationSet(value: unknown, caseId: string): ClassificationSet {
   const v = value as ClassificationSet;

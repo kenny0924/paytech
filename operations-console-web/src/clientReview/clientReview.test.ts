@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canApprove, canWaive, chooseCategory, chooseSubcategory, classificationChanges, classificationItems, classificationListIssues, classificationRowIssues,
+import { canApprove, canWaive, chooseCategory, declarationRows, chooseSubcategory, classificationChanges, classificationItems, classificationListIssues, classificationRowIssues,
   classificationRows, classificationServerIssues, industryIndex, mccMark, rowIssueText, suggestedMcc, caseStatuses, checkAwaitingResult, checkOutcomes, decodeCase, decodeCasePage, decodeCommand, decodeDetail, decodeFileDownload,
   decodeResponsiblePartners, evidenceRejectReasons, fourEyesBlocked, isNotReady, rejectionBlocker, unmetConditions, hitResolutions, partnerName, recommendations, remediationCodes, returnErrorCodes, returnErrorIssues,
   returnPayload, returnSections, riskFactorCodes, riskRatingIssues, riskRatings, suggestedReturnErrors, withOnBehalf, workbenchCounts } from './clientReview.ts';
@@ -261,4 +261,46 @@ test('422 NOT_READY shows the refreshed case approvalBlockers, never parsed text
   assert.deepEqual(unmetConditions(refreshed, 'REJECT', '502'), ['RECOMMENDATION_NOT_REJECT'], 'reject under four-eyes shows the recommendation condition');
   assert.deepEqual(unmetConditions({ ...refreshed, fourEyesRequired: false, approvalBlockers: ['FOUR_EYES_SAME_PERSON', 'RISK_RATING_MISSING'] }, 'REJECT', '501'),
     ['FOUR_EYES_SAME_PERSON'], 'rejection only lists conditions that apply to rejecting');
+});
+
+const declaration = (type: string, value: 'TRUE' | 'FALSE', extra: Record<string, unknown> = {}) => ({ declarationId: String(9600 + type.length), applicationId: '8001',
+  declarationType: type, declaredValue: value, termsVersion: null, declaredAt: '2026-10-27T08:00:00.000000Z', ...extra });
+const withDeclarations = (declarations: unknown) => ({ review: reviewCase, applicationStatus: 'AVAILABLE', application: { ...application, draftRevision: 4, declarations },
+  classificationStatus: 'UNAVAILABLE', classification: null, industriesStatus: 'AVAILABLE', industries: [], mccsStatus: 'AVAILABLE', mccs: [] });
+
+test('declarations: draft revision, current flag and declaring account reach the page model; legacy rows without them stay unknown', () => {
+  const detail = decodeDetail(withDeclarations([
+    declaration('PLATFORM_TERMS_ACCEPTANCE', 'TRUE', { termsVersion: '2026-10-draft', declaredByAccountId: '8801', draftRevision: 4, current: true }),
+    declaration('PEP_DECLARATION', 'FALSE', { draftRevision: '2', current: false }),
+    declaration('PLATFORM_TERMS', 'TRUE'),
+  ]), '7001');
+  const [terms, pep, legacy] = detail.application!.declarations;
+  assert.deepEqual([terms.draftRevision, terms.current, terms.declaredByAccountId, terms.termsVersion], ['4', true, '8801', '2026-10-draft']);
+  assert.deepEqual([pep.draftRevision, pep.current, pep.declaredByAccountId], ['2', false, null]);
+  assert.deepEqual([legacy.draftRevision, legacy.current, legacy.declaredByAccountId], [null, null, null]);
+  assert.deepEqual(decodeDetail({ ...withDeclarations([]), application }, '7001').application!.declarations, [], 'responses without declarations decode as none');
+});
+
+test('declarations: rejects booleans as values, unknown flags and malformed revisions', () => {
+  assert.throws(() => decodeDetail(withDeclarations([declaration('PEP_DECLARATION', true as never)]), '7001'));
+  assert.throws(() => decodeDetail(withDeclarations([declaration('PEP_DECLARATION', 'TRUE', { current: 'yes' })]), '7001'));
+  assert.throws(() => decodeDetail(withDeclarations([declaration('PEP_DECLARATION', 'TRUE', { draftRevision: -1 })]), '7001'));
+  assert.throws(() => decodeDetail(withDeclarations([declaration('PEP_DECLARATION', 'TRUE', { draftRevision: '01' })]), '7001'));
+  assert.throws(() => decodeDetail(withDeclarations([declaration('PEP_DECLARATION', 'TRUE', { declaredByAccountId: 'acct' })]), '7001'));
+});
+
+test('declaration rows: answers are words, missing terms version is a dash, status follows current', () => {
+  const detail = decodeDetail(withDeclarations([
+    declaration('PRIVACY_NOTICE_ACKNOWLEDGED', 'TRUE', { termsVersion: '2026-10-draft', current: true }),
+    declaration('PEP_DECLARATION', 'FALSE', { current: false }),
+    declaration('PLATFORM_TERMS', 'TRUE'),
+  ]), '7001');
+  const rows = declarationRows(t, detail.application!.declarations);
+  assert.deepEqual(rows.map(r => [r.declarationType, r.answer, r.termsVersion, r.status, r.statusText]), [
+    ['PRIVACY_NOTICE_ACKNOWLEDGED', 'Yes', '2026-10-draft', 'CURRENT', 'Matches submitted data'],
+    ['PEP_DECLARATION', 'No', '—', 'STALE', 'Stale (changed after declaration)'],
+    ['PLATFORM_TERMS', 'Yes', '—', 'UNKNOWN', 'Not reported'],
+  ]);
+  assert.ok(rows.every(r => !/true|false/i.test(r.answer)), 'never true / false');
+  assert.equal(rows[0].declaredAt, '2026-10-27T08:00:00.000000Z');
 });

@@ -21,4 +21,11 @@ public interface ClientDraftRepository {
     void create(ClientDraftCreation creation,String snapshot);
     /** 保存事务外准备好的资料列、联系方式与 Schema 切换；扩展属性由 PartyAttributeRepository 保存。 */
     void save(ClientDraftIdentity identity,ClientDraftChanges changes,Map<String,ClientDraftContact> contacts,Instant now);
+    /**
+     * 申请资料版本加一
+     * <li>由草稿、人员、关系与材料写入在各自写事务末尾调用；声明记录的版本与之不等即失效。</li>
+     *
+     * @param applicationId 仍可编辑的申请
+     */
+    void bumpDraftRevision(long applicationId);
 }
