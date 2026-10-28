@@ -1,0 +1,24 @@
+{
+ "otherNameVisible": true,
+ "otherNameOptionalMark": false,
+ "otherNameError": "Fill in this field",
+ "staleNotices": 8,
+ "uncheckedAfterEdit": 8,
+ "panelText": "Platform Terms of Use × Draft Version 2026-10-draft DRAFT — placeholder text for review. This is not the final agreement and will be replaced before launch. These terms govern your use of the platform to accept payments from your customers. The platform acts a",
+ "submitEnabledWhileStale": null,
+ "blockedText": "",
+ "staleAfterReconfirm": 0,
+ "submitEnabledAfterReconfirm": true,
+ "finalText": "Complete your application UI Smoke AE Trading AEO LLC · United Arab Emirates · Free Zone Limited Liability Company 5 of 5 complete Saved · just now Company details Registration, Identification, Tax, and Operations Complete › Address and contact Address and Contact Complete › People 2 people Complete",
+ "declarationRequests": [
+  "{\"declarationType\":\"OWNERSHIP_COMPLETE\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"DIRECTORSHIP_COMPLETE\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"REPRESENTATIVE_AUTHORITY\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"RELATED_PERSON_DATA_AUTHORITY\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"PEP_DECLARATION\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"INFORMATION_TRUE\",\"declaredValue\":\"TRUE\"}",
+  "{\"declarationType\":\"PLATFORM_TERMS_ACCEPTANCE\",\"declaredValue\":\"TRUE\",\"termsVersion\":\"2026-10-draft\"}",
+  "{\"declarationType\":\"PRIVACY_NOTICE_ACKNOWLEDGED\",\"declaredValue\":\"TRUE\",\"termsVersion\":\"2026-10-draft\"}"
+ ],
+ "findings": []
+}

@@ -26,7 +26,7 @@
 - **Verified：** 基于 `e2185c1b`：client-master 164、client-console-bff 101、operations-console-bff 2433、client-console-web 141、operations-console-web 1576；SQL 在 mor-test 只读导出副本试跑（DDL → DML → 重跑 → 回滚拒绝分支 → 回滚 → 再应用），与全新建库逐表一致；本机 e2e 浏览器 5 种主体 en / zh-CN × 1440 / 390 通过；mor-test 运营 Playwright 44 / 45 / 44 / 45、卡 BIN 页回归 4 组通过，参考数据会话复核通过。
 - **Deployed：** mor-test 2026-10-28 05:40—06:00Z（tag `legal-20261028a`）：client-master `c9bb7b8e…`、client-console-bff `8fe7f24c…`、operations-console-bff `769edbce…`、client-console-web `3db62571…`、operations-console-web `45ee11cb…`；DDL（2 列）+ DML 已执行；语言包 client-console #7、operations-console #19。回滚目标：client-master `64e515c6…`、client-console-bff `be79550f…`、operations-console-bff `4bd7574c…`、client-console-web `c09af02a…`、operations-console-web `aec066e9…`；出现 v2 申请后 DML 回滚脚本拒绝执行，client-master 只能向前修复。
 - **后续发布（2026-10-29）：** commercial 开通项前置门禁替换 operations-console-bff `eca2df82…`、operations-console-web `7a053544…`（含本需求）；这两个服务不再以本需求候选文件发布，回滚基线以该需求为准。
-- **Pending / 遗留：** mor-test 未在客户门户验 v2 表单与声明阅读 / 失效（本机已验同一代码）；自由职业文件到期日"不得早于今天"只在服务端校验；本期之外法务项见需求第 7 节（"待决定 / 待确认"项在生产发布前处理）。
+- **Pending / 遗留：** mor-test 客户门户 v2 表单与声明阅读 / 失效已于 2026-10-29 用测试账号补验通过（草稿已撤回）；自由职业文件到期日"不得早于今天"只在服务端校验；本期之外法务项见需求第 7 节（"待决定 / 待确认"项在生产发布前处理）。
 
 ## platform-support 参考数据客户端组件（2026-10-28，已部署 mor-test，已提交 `e2185c1b` 并推送）
 

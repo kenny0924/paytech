@@ -1,0 +1,10 @@
+import { open, WEB, account, login } from './lib.mjs';
+const [acc, app] = process.argv.slice(2);
+const s = await open({ lang: 'en', width: 1440, tag: `WD-${acc}` }); const { page } = s;
+await login(s, account(acc));
+await page.goto(`${WEB}/onboarding/applications/${app}`); await s.settle(1500);
+await page.getByRole('button', { name: /Withdraw application/ }).first().click(); await page.waitForTimeout(600); await s.scan('withdraw confirm');
+await page.getByRole('button', { name: /^(Withdraw|Confirm withdrawal|Withdraw application)$/ }).last().click(); await s.settle(2500);
+await s.scan('withdrawn');
+console.log((await page.locator('main').innerText()).replace(/\s+/g, ' ').slice(0, 400));
+await s.close();

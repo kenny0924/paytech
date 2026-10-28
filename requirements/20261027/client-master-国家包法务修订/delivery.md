@@ -18,7 +18,7 @@
 
 ## 当前阶段与下一确认点
 
-阶段 1—8 完成，代码已推送；客户门户 v2 表单的 mor-test 补验如需要，由用户选择账号方式后再做。
+阶段 1—8 完成，代码已推送；客户门户 v2 表单已于 2026-10-29 在 mor-test 补验通过。
 
 ## 后续发布（2026-10-29）
 
@@ -41,7 +41,8 @@
   - 回归：卡 BIN 库页冒烟（对方脚本，改写输出到 scratchpad）4 组 22 / 19 / 22 / 19 全通过（[evidence/binlist-regression-*.log](./release/evidence/)）。
   - 客户门户（用户 Chrome 已登录会话，只读）：Al Waha 申请（已于 10-27 提交，审核中）的提交内容页声明"Confirmed 6 / 6"，控制台无错误——存量声明在新代码下仍有效。
   - 参考数据会话复核（在本需求镜像上）：client-master 参考数据就绪 UP、刷新失败 0；ops-bff 财务币种下拉 4 种查询与发布前逐字节相同、非法 status 仍 400；旧接口仍 404。
-  - **未验**：客户门户 v2 表单与声明阅读 / 失效（需新建草稿，未在用户账号下擅自创建）；本机阶段 5 已覆盖同一代码。
+  - 客户门户补验（2026-10-29，用户选择"注册测试账号"）：经 Client 入口注册 1 个 `legal-mt-aeo-*@example.test` 账号，mor-test 验证邮件走 SES 收不到，按用户同意用 V2 公共件 `mint_signup_link` 改写 mor-test `mor_platform` 中本账号这 1 条 PENDING 注册挑战的 `secret_hmac` 后完成验证（凭据只在 scratchpad 0600 文件）。新建 AE 自贸区有限责任公司申请 241304866566283264（Schema v2 ACTIVE），填写全部任务后：登记机关选 Other → 名称字段出现且必填；8 项声明，条款 / 隐私有阅读面板（Draft、Version 2026-10-draft、I agree），这两项请求带 `termsVersion`；改资料后 8 项全部"需重新确认"、页顶一条汇总、概览"0 / 8 · 需处理"、核对并提交不可进入，接口需求清单含 `DECLARATION_STALE`；逐项重新确认后可提交（未提交）。en 1440 与 zh-CN 390 两组 0 个问题，语言包 #7 中文全部生效。随后撤回：申请 WITHDRAWN、`active_slot` 清空，未产生合规案件。client-master 期间日志只有 XXL 注册超时（xxl-job-admin 被其他会话重启），与本需求无关。脚本与结果：[verification/ui-smoke/mortest/](./verification/ui-smoke/mortest/)。
+  - 观察（既有，非本需求）：声明页说明的中文译文没有英文的"IP 地址和浏览器"（切片 1 `9f506f0f` 的文案），另行修正。
 - 未做：CURRENT_IMPLEMENTATION 更新与临时库 / 发布工作树清理留到阶段 8。
 
 ## 阶段 6 结果（2026-10-28）
