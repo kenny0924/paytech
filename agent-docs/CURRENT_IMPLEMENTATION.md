@@ -19,13 +19,14 @@
 - **Deployed：** mor-test 2026-10-28 04:00—04:08Z（tag `refclient-20261028b`，源 = `c4ff0e20` + 本需求）：ledger `51a57a3b…`、billing `cf580cfb…`、card `32d6f27a…`、client-master `64e515c6…`、operations-console-bff `4bd7574c…`、platform `1e54f349…`（最后发布）；Gateway 仍 613 条路由。回滚目标见 `release/rollback-targets.tsv` 与 `release/compose-rollback.*.yaml`；Platform 发布后任何消费方回滚须先回滚 Platform。
 - **Pending / 遗留：** 推送；健康明细默认不暴露（`show-details: never`），覆盖环境变量名为 `PLATFORMSUPPORT_REFERENCEDATA_CLIENT_*`；本机库残留 card INVALID 版本 6 验收记录；`Code-MoR-legal`（国家包法务修订）须基于本提交重建。
 
-## card BIN 库页面重设计与号段列表（2026-10-27，已部署 mor-test，已本地提交 `8a441c90`，未推送）
+## card BIN 库页面重设计与号段列表（2026-10-27，已部署 mor-test，已提交 `8a441c90` / `c4ff0e20` 并推送）
 
 - **范围：** [需求](<../requirements/20261027/card-BIN库页面重设计与号段列表/requirement.md>)、[技术方案](<../requirements/20261027/card-BIN库页面重设计与号段列表/technique.md>)、[交付记录](<../requirements/20261027/card-BIN库页面重设计与号段列表/delivery.md>)、[运行卡](<../requirements/20261027/card-BIN库页面重设计与号段列表/release/runbook.md>)。
 - **Implemented：** card `GET /card/v1/bin-library/versions/{versionNo}/ranges`（前缀 / 卡组织 / 借贷记 / 发卡国筛选、公共分页，只允许 ops-bff）；Platform 内部 `GET /operations-accounts/v1/labels`（登录名或脱敏邮箱，只允许 ops-bff，无公开路由）；ops-bff 号段转发与版本 / 激活记录 `createdByLabel` / `operatorLabel`（Platform 失败降级为 null）；ops-web 卡 BIN 库页面重做（号段数据 / 版本两个页签、筛选 chip、最长前缀匹配条、390 卡片列表）；块 140（号段列表路由）。
 - **Verified：** worktree `Code-MoR-binlist`（基于 `5e1f16ab`）：card 18、platform-support 19、ops-bff 91、ops-web 1571；本机 e2e 浏览器 en / zh-CN × 1440 / 390 各 16 项；mor-test 接口 45 PASS（1 项为验收脚本默认分页期望错误：公共分页默认 10，前端显式传 50）、浏览器 4 组 0 失败（中文文案与国旗正常）。
 - **Deployed：** mor-test 2026-10-27 20:12—20:19Z（tag `binlist-20261027a`）：platform `186347bc…`、card `380064fe…`、operations-console-bff `25f6a869…`、operations-console-web `aec066e9…`（源 = `c4b99e2d` + 本需求 ops-web 文件）；块 140 激活（Gateway 612 → 613）；语言包 operations-console #18（card 命名空间 +121 / 改 7 / 废弃 68）。回滚目标见运行卡第 6 节与 `release/compose-rollback.*.yaml`。
-- **Pending：** 推送；`Code-MoR-legal` 会话后续发布须基于本需求提交重建（`Code-MoR-refclient` 已于 2026-10-28 基于本需求重建并发布）。
+- **后续发布（2026-10-28）：** 参考数据客户端组件（`refclient-20261028b`：platform `1e54f349…`、card `32d6f27a…`、operations-console-bff `4bd7574c…`）与国家包法务修订（operations-console-bff 再次替换、operations-console-web `45ee11cb…`）均基于本需求提交重建上线，mor-test 复核卡 BIN 页接口 44 PASS（另 2 项为脚本分页期望与宿主机睡眠导致的 Platform 事务超时，非缺陷）、浏览器 4 组全部通过。上面 Deployed 中的镜像不再是回滚目标：回滚任一服务前须与对应需求会话确认。
+- **Pending：** 无。
 
 ## platform-support 参考数据目录与 client-master 迁移（2026-10-27，已部署 mor-test，已本地提交 `ab27bd76`，未推送）
 
