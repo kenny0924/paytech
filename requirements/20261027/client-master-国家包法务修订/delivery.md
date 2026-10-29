@@ -27,7 +27,7 @@
 ## 阶段 8 结果（2026-10-28）
 
 - 提交：`ac3145f4`（父 `663e5e4a`，164 个文件），在 main 上以私有索引提交（2026-10-29 已随其他会话推送 main 一起推送到 `origin/main`），范围 = `Code-MoR-legal` 的 93 个代码 / 设计文件（排除 worktree 专用 `paytech/.mvn/maven.config`）+ 本需求目录 + 法源研究文件 + `requirements/README.md` 本行 + `CURRENT_IMPLEMENTATION.md` 本节；与 `e2185c1b..HEAD` 无重叠文件。验收截图、请求 / 响应体、运行日志和样例 PDF 不入库（本机保留在 `verification/ui-smoke/`）。
-- 清理：删除本机临时库 `mor_client_master_legal_mt`、`mor_client_master_legal_fresh` 和发布工作树 `Code-MoR-legal-rel`；保留 `Code-MoR-legal`（研发工作树）与测试库 `mor_client_master_legal`、`mor_client_master_legal_inc`（阶段 4 增量验证库）。
+- 清理：删除本机临时库 `mor_client_master_legal_mt`、`mor_client_master_legal_fresh` 和发布工作树 `Code-MoR-legal-rel`；保留 `Code-MoR-legal`（研发工作树）与测试库 `mor_client_master_legal`、`mor_client_master_legal_inc`（阶段 4 增量验证库）。2026-10-29 已一并删除工作树和两个测试库（删除前导出），mor-test 补验测试账号及其撤回的申请也已清理；审计事件、共用电话令牌和 S3 上的 10 个测试文件保留，原因见 [sql-execution-log](./verification/sql-execution-log.md)。
 - 本机遗留（未清理，需另行决定）：本机 Platform 测试账号 `legal-ui-*@example.test`、`mor_compliance_v2e2e` 孤立案件 240934496831033344、`mor_platform_v2e2e` 5 条 `secret_hmac` 更新（见 [sql-execution-log](./verification/sql-execution-log.md)）。
 
 ## 阶段 7 结果（2026-10-28 05:40—06:0xZ）

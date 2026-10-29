@@ -64,3 +64,28 @@ legal-client-fe 为 5 个 `legal-ui-*@example.test` 测试账号完成邮箱验�
 | `mor_vault` | 上述账号邮箱 5 条 + 验收申请的证件号 / 邮箱 / 电话 14 条（由 `local-mor_client_master_v2e2e-post-stage5.sql` 与 `-pre.sql` 比对确认只属于这批申请）：记录 19、保护请求 43、访问事件 303 |
 | 本机 MinIO `mor-platform-files` | 40 个对象（桶开启版本控制，已删除全部版本） |
 | scratchpad | 测试账号凭据文件 `legal-ui-accounts.json` |
+
+## mor-test 测试账号与本机遗留清理（2026-10-29，用户"一起清掉吧"）
+
+### mor-test
+
+范围：客户门户补验注册的 `legal-mt-aeo-*@example.test` 账号 241303975540899840、其租户 241304868910874624、已撤回申请 241304866566283264（客户 241304866566283265、当事人 3、档案 3）。按"引用本批 ID 的行"逐轮求闭包，并扫描全部 `mor_*` 库的 bigint 列与 `*token*` 列，确认没有其他系统引用。删除前逐表备份到 `Code-MoR-backups/legal-20261028/mortest-account-cleanup-20261029T034039Z/`（每行一条 INSERT，行数与库内逐表相同，目录权限 700）。每个库一个事务。
+
+| 库 | 删除 |
+|---|---|
+| `mor_client_master` | 声明 27、申请文件 10、当事人关系 4、地址 3、属性 4、联系方式 2、证件号 3、个人档案 2、组织档案 1、当事人档案 3、当事人角色 1、当事人 3、客户经营档案 1、申请 1、客户 1、业务变更版本 1 与记录 1 |
+| `mor_platform` | 账号 1、口令 1、注册挑战 1（即补验时改写过 `secret_hmac` 的那条）、会话 7、刷新令牌代 29、成员 1、成员角色 1、角色 1、租户 1 |
+| `mor_vault` | 账号邮箱、申请联系人邮箱、2 个证件号共 4 条记录，保护请求 11、访问事件 72 |
+
+保留：
+
+- 电话令牌记录 236087248691494912：另有 49 条其他联系人引用，不删。
+- 审计事件 32 条（链 `OPERATIONS-2026-10-28` 第 53–84 号）：审计是哈希链，`t_audit_chain` 记着链尾序号和哈希，删除会破坏链校验，所以保留。
+- 文件服务 11 条上传记录及其中 10 个文件的对象 / 版本 / 扫描结果：对象在 S3_TEST 存储（`mor-test-platform-files-k7q2`，真实 AWS S3），平台没有删除文件的接口，删对象需要用 AWS 凭据另行处理；先保留记录，避免出现无记录的孤立对象。
+
+账号凭据文件 `scratchpad/mortest-legal/accounts.json` 已删除。
+
+### 本机
+
+- 删除前导出到 `Code-MoR-backups/legal-20261028/final-cleanup-20261029073516/`，随后 DROP `mor_client_master_legal`、`mor_client_master_legal_inc`（各 45 张表，删除时无连接）。
+- 删除研发工作树 `Code-MoR-legal`：删除前逐文件比对，93 个改动文件与 `ae6b01b2` 中的版本完全一致；另一个文件是工作树专用的 `paytech/.mvn/maven.config`（本机 Maven 仓库路径），不入库。
