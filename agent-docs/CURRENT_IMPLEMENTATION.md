@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## client-master 业务信息补采（REQ-12，2026-10-28—29，已部署 mor-test，已本地提交）
+## client-master 业务信息补采（REQ-12，2026-10-28—29，已部署 mor-test，已本地提交 `88453366`）
 
 - **范围：** [需求](<../requirements/20261028/client-master-业务信息补采/requirement.md>)、[技术方案](<../requirements/20261028/client-master-业务信息补采/technique.md>)、[交付记录](<../requirements/20261028/client-master-业务信息补采/delivery.md>)、[运行卡](<../requirements/20261028/client-master-业务信息补采/release/runbook.md>)；依据 [2026-10-28 客户上线决定](./decisions/2026-10-28-client-go-live-orchestration.md)（Proposed）。
 - **Implemented：** `t_client_business_profile` 新增 `expected_payment_methods`（规范化逗号串，编码为 commercial `capability_code`）、`refund_policy_url`（https）、`fulfillment_type`（INSTANT / PRE_ORDER / SUBSCRIPTION / SERVICE）、`fulfillment_days`（PRE_ORDER 时 1—365）；入驻 Schema v3（三辖区 9 个，v2 退役；增量 `paytech/client-master/docs/database/sql/changes/2026-10-29-business-info-collection{,-ddl}{,-rollback}.sql`，ID 段 `92812000…`）：期望支付方式 `MULTI_SELECT` + 外部目录 `COMMERCIAL_PAYMENT_METHOD`（client-master 事务外读 commercial `ProductCatalogApi#listCapabilities` 的 ACTIVE PAYMENT_METHOD，不可用时 client-master 503 `ONBOARDING_DEPENDENCY_UNAVAILABLE`、门户经 BFF 为 503 `SERVICE_UNAVAILABLE`）、退款政策机构 EVENTUALLY / 个人 OPTIONAL（EVENTUALLY 不阻断批准，B6）、交付方式目录 `FULFILLMENT_TYPE`、天数 `visible_when fulfillmentType=PRE_ORDER`（改离 PRE_ORDER 时服务端清空）；草稿 `Kind.CODE_LIST / HTTPS_URL / INTEGER`；四项进入批准时 `t_party_profile.content_hash`。门户多选控件（390 底部面板）与校验；运营审核"申请资料"与 Client 详情展示（四项全空"未采集"、部分为空"未填写"），值解码上限 2048。两个 BFF、commercial、Gateway 无代码改动。

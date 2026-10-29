@@ -19,7 +19,7 @@
 | 2026-10-29 | 6 确认 / 7 授权 | 用户"可以，按建议，继续"：接受阶段 6；P-1 授权阶段 7（mor-test 停 / 起 client-master、client-console-web、operations-console-web，`mor_client_master` DDL + v3 DML，两个语言包发布，验收新账号注册挑战改写）；P-2 不在 mor-test 提交测试申请；P-3 选项顺序按现状（STC_PAY 在前）。主会话按 release/runbook.md 执行 | 已确认 |
 | 2026-10-29 | 7 mor-test 发布 | 主会话按 release/runbook.md 执行（13:00—13:05Z）：备份 `Code-MoR-backups/rq12-20261029/mortest-20261029T130046Z`；预检同基线；DDL 4 列；client-master `2b12c2e2`（34 秒 healthy，无 ERROR）、client-console-web `e17a9a0a`（11 文件）、operations-console-web `0b456b8a`（256 文件）；语言包 client-console #8、operations-console #22 READY 且为当前；v3 DML 先 DRAFT 核对（退款政策机构 EVENTUALLY ×4、个人 OPTIONAL ×5），13:03:54Z ACTIVE（v3 ACTIVE 9、v2 RETIRED 9、字段 965）。API 验收 `rq12_api.py --env test` 全部 PASS（验收账号注册挑战改写、两份草稿已撤回）；浏览器走查 B1—B12 zh-CN / en × 1440 / 390 通过（76 张，[release/stage7-report-browser.md](./release/stage7-report-browser.md)），走查草稿 2 份已撤回、未提交；REQ-05 工作流页与合同详情回归通过；已通知 design-discuss-24 | 已完成 |
 | 2026-10-29 | 7 确认 / 8 授权 | 用户"你提交吧，我来推送"：授权提交（私有索引）；推送由用户执行 | 已确认 |
-| 2026-10-29 | 8 提交 | 工作树改动合入主树并提交（代码、SQL、PDManer、文档、验证与发布材料，不含本机测试数据备份 `verification/stage5/backup/`、`.vite-cache` 与 node_modules 链接；`client-console.pen` / `operations-console.pen` 混有其他会话改动未纳入，原型以 `prototypes/` PNG 为准） | 已完成 |
+| 2026-10-29 | 8 提交 | 提交 `88453366`（父 `6753faba`，344 个文件，私有索引）：工作树改动合入主树并提交（代码、SQL、PDManer、文档、验证与发布材料，不含本机测试数据备份 `verification/stage5/backup/`、`.vite-cache` 与 node_modules 链接；`client-console.pen` / `operations-console.pen` 混有其他会话改动未纳入，原型以 `prototypes/` PNG 为准） | 已完成 |
 
 ## 适用阶段
 
@@ -27,7 +27,7 @@
 
 ## 当前阶段与下一确认点
 
-阶段 1—8 已完成（2026-10-29）。mor-test 自 2026-10-29 13:01Z 运行 rq12-20261029a（client-master `2b12c2e2`、client-console-web `e17a9a0a`、operations-console-web `0b456b8a`），`mor_client_master` 4 列 + 入驻 Schema v3 ACTIVE，语言包 client-console #8、operations-console #22。推送由用户执行。本机 e2e 保留新 client-master / client-console-bff（`*.pre-rq12`，一起回滚）、门户 Vite 18312、运营 Vite 18313；本机语言包 client-console #5、operations-console #14。遗留：F-07 业务资料摘要列无写入（未立项）；compliance 登记体不含三项（随 REQ-03）；运营入驻配置页与 REQ-05 动作目录页 390 宽横向滚动（既有）；同一 Client 业务资料单行，撤回草稿值会带到新草稿（既有设计）。
+阶段 1—8 已完成（2026-10-29），提交 `88453366`。mor-test 自 2026-10-29 13:01Z 运行 rq12-20261029a（client-master `2b12c2e2`、client-console-web `e17a9a0a`、operations-console-web `0b456b8a`），`mor_client_master` 4 列 + 入驻 Schema v3 ACTIVE，语言包 client-console #8、operations-console #22。推送由用户执行。本机 e2e 保留新 client-master / client-console-bff（`*.pre-rq12`，一起回滚）、门户 Vite 18312、运营 Vite 18313；本机语言包 client-console #5、operations-console #14。遗留：F-07 业务资料摘要列无写入（未立项）；compliance 登记体不含三项（随 REQ-03）；运营入驻配置页与 REQ-05 动作目录页 390 宽横向滚动（既有）；同一 Client 业务资料单行，撤回草稿值会带到新草稿（既有设计）。
 
 ## 阶段 4 实施记录（前端）
 
