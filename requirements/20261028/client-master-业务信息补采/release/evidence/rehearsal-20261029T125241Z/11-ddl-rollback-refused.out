@@ -1,0 +1,11 @@
++---------------------+-----------------+
+| v3_schemas_expect_0 | present_columns |
++---------------------+-----------------+
+|                   9 |               4 |
++---------------------+-----------------+
++----------------------------+
+| rows_with_collected_values |
++----------------------------+
+|                          0 |
++----------------------------+
+ERROR 1644 (45000) at line 36: STOP: v3 onboarding schemas still exist; run 2026-10-29-business-info-collection-rollback.sql first

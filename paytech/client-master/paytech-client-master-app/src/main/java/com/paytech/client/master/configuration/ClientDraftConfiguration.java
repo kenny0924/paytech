@@ -6,6 +6,7 @@ import org.springframework.cloud.client.loadbalancer.LoadBalancerRequestFactory;
 import java.time.Duration;
 import java.net.http.HttpClient;
 import com.paytech.commercial.api.agreement.AgreementPartyQueryApi;
+import com.paytech.commercial.api.catalog.ProductCatalogApi;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import java.time.Clock;
 import javax.sql.DataSource;
@@ -58,10 +59,10 @@ public class ClientDraftConfiguration {
     @Bean public GetOnboardingJurisdictionsProcessor getOnboardingJurisdictionsProcessor(OnboardingPackService packs,ClientDraftAccountClient accounts) {
         return new GetOnboardingJurisdictionsProcessor(packs,accounts);
     }
-    /** CM-2 表单渲染规格；材料槽由 compliance 程序解析。 */
+    /** CM-2 表单渲染规格；材料槽由 compliance 程序解析，支付方式选项由 commercial 产品能力目录提供。 */
     @Bean public GetOnboardingFormSchemaProcessor getOnboardingFormSchemaProcessor(OnboardingPackService packs,ClientDraftRepository drafts,
-        ClientDraftAccountClient accounts,ComplianceProgramClient programs) {
-        return new GetOnboardingFormSchemaProcessor(packs,drafts,accounts,programs);
+        ClientDraftAccountClient accounts,ComplianceProgramClient programs,ClientPaymentMethodCatalogClient paymentMethods) {
+        return new GetOnboardingFormSchemaProcessor(packs,drafts,accounts,programs,paymentMethods);
     }
     /** 工作区摘要复用真实 Platform 会话验证，只读不开事务。 */
     @Bean public GetClientWorkspaceSummariesProcessor getClientWorkspaceSummariesProcessor(ClientDraftAccountClient accounts,
@@ -137,6 +138,17 @@ public class ClientDraftConfiguration {
             InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(65536),tokens,"commercial-service"))
             .createClient(AgreementPartyQueryApi.class);
         return new ClientAgreementPartyClientImpl(api);
+    }
+    /**
+     * commercial 产品能力目录（业务信息补采 S-05）：期望支付方式的选项与提交校验来源，失败关闭为 503。
+     * <li>服务发现名 commercial-service；传输、超时与内部调用凭据同合同参与方查询。</li>
+     */
+    @Bean public ClientPaymentMethodCatalogClient clientPaymentMethodCatalogClient(ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        var api=HttpServiceClientFactory.create(discoveryTransport(discovery,"commercial-service",""),
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(65536),tokens,"commercial-service"))
+            .createClient(ProductCatalogApi.class);
+        return new ClientPaymentMethodCatalogClientImpl(api);
     }
     /**
      * 私网服务发现传输：每次请求按发现名选实例，禁止重定向，连接 2 秒、读取 3 秒。

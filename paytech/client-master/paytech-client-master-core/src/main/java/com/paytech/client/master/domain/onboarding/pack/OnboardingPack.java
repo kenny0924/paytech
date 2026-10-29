@@ -19,6 +19,7 @@ import com.paytech.client.master.core.dal.dataobject.OrganizationType;
 import com.paytech.client.master.core.dal.dataobject.RelationType;
 import com.paytech.client.master.domain.enums.CatalogStatus;
 import com.paytech.client.master.domain.enums.ClientType;
+import com.paytech.client.master.domain.enums.RequirementLevel;
 import com.paytech.client.master.domain.enums.RuleCode;
 import com.paytech.client.master.domain.enums.SchemaSubject;
 import com.paytech.client.master.domain.enums.UboThresholdComparison;
@@ -138,6 +139,12 @@ public class OnboardingPack {
         return fields.stream()
             .filter(field -> field.getAppliesToSubject() == subject || field.getAppliesToSubject() == SchemaSubject.BOTH)
             .toList();
+    }
+
+    /** 是否有不隐藏的 Schema 字段引用该目录码；外部目录据此决定是否需要向 Owner 取选项。 */
+    public boolean usesCatalog(String catalogCode) {
+        return fields.stream().anyMatch(field -> catalogCode.equals(field.getCatalogCode())
+            && field.getRequirementLevel() != RequirementLevel.HIDDEN);
     }
 
     /** 字段键前缀为 prefix 的字段（如 declaration.、identifier.）。 */

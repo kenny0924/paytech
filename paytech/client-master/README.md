@@ -26,7 +26,7 @@
 ## 数据库与 PDManer
 
 - 模型：[client-master.pdma.json](docs/database/client-master.pdma.json)；Schema：[client-master-schema.sql](docs/database/sql/client-master-schema.sql)；初始化 DML：[client-master-initial-data.sql](docs/database/sql/client-master-initial-data.sql)（首期无种子行）；物理决定：[CLIENT_MASTER_PHYSICAL_DECISIONS.md](docs/database/CLIENT_MASTER_PHYSICAL_DECISIONS.md)。
-- 生成器：`scripts/pdmaner/generate-client-master-model.mjs`；Schema 由 `scripts/pdmaner/generate-oe-client-schemas.mjs` 从模型生成。
+- 生成器（历史）：`scripts/pdmaner/generate-client-master-model.mjs`、`scripts/pdmaner/generate-oe-client-schemas.mjs`；2026-10-22 起模型与 Schema SQL 直接编辑、不再经生成器。已有库的增量变更与回退脚本在 [docs/database/sql/changes/](docs/database/sql/changes/)（如 2026-10-29 业务信息补采：DDL 4 列 + 采集 Schema v3 DML）。
 - 应用与测试都不建表、不执行初始化 DML；测试库 DDL 见 `paytech-client-master-test/src/test/resources/init/ddl.sql`。
 
 ## 开关与配置

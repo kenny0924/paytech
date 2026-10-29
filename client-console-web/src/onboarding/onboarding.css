@@ -322,3 +322,38 @@ body.ob-locked{overflow:hidden}
 .ob-ref-trigger:disabled{opacity:1}
 @media (max-width:640px){.ob-declaration{grid-template-columns:minmax(0,1fr)}.ob-declaration-read{justify-self:start;margin:var(--s1) 0 0 calc(16px + var(--s2))}}
 .ob-declarations-stale{border-left-color:var(--warning);color:var(--text);margin:0 0 var(--s4)}
+
+/* 目录多选（MULTI_SELECT）：外框与单选下拉一致；已选项为可移除标签（名称 + ×），列表项 = 勾选框 + 本地化名称 + 等宽编码；勾选不关闭。 */
+.ob-multi-control{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-height:var(--control-h);padding:5px 32px 5px 6px;cursor:pointer;
+  border:1px solid var(--border);border-radius:var(--r-control);background:var(--bg);
+  background-image:linear-gradient(45deg,transparent 50%,var(--text-2) 50%),linear-gradient(135deg,var(--text-2) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 50%,calc(100% - 12px) 50%;background-size:4px 4px;background-repeat:no-repeat;
+  transition:border-color var(--t-fast) var(--ease),box-shadow var(--t-fast) var(--ease)}
+.ob-multi-control:hover{border-color:var(--border-strong)}
+.ob-multi-control:focus-within,.ob-multi.open .ob-multi-control{border-color:var(--primary);box-shadow:var(--focus)}
+.ob-multi-control.invalid{border-color:var(--danger)}
+.ob-multi-control.invalid:focus-within{border-color:var(--danger);box-shadow:0 0 0 3px rgba(223,27,65,.2)}
+.ob-multi-control.disabled{background-color:var(--disabled);cursor:default}
+.ob-multi-trigger{flex:1 1 24px;min-width:24px;height:28px;padding:0 6px;border:0;background:none;text-align:left;cursor:pointer;font-size:16px;line-height:24px}
+.ob-multi-trigger:focus,.ob-multi-trigger:focus-visible{outline:none;box-shadow:none}
+.ob-multi-trigger:disabled{opacity:1;cursor:default}
+.ob-chip{display:inline-flex;align-items:center;gap:2px;max-width:100%;height:26px;padding:0 2px 0 8px;border-radius:4px;background:var(--primary-soft);color:var(--primary);
+  font-size:13px;font-weight:500;line-height:18px;animation:ob-chip-in var(--t-fast) var(--ease-enter)}
+.ob-multi-control.disabled .ob-chip{padding-right:8px;background:#eef0f3;color:var(--text-2)}
+@keyframes ob-chip-in{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.ob-chip-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-chip-remove{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;border:0;border-radius:3px;background:none;
+  color:inherit;font-size:15px;line-height:1;cursor:pointer;opacity:.7}
+.ob-chip-remove:hover{opacity:1;background:rgba(43,92,214,.12)}
+.ob-chip-remove:focus-visible{outline:none;opacity:1;box-shadow:var(--focus)}
+.ob-multi-panel li[role="option"].checked{color:var(--text);font-weight:500}
+.ob-multi-box{flex:none;position:relative;width:16px;height:16px;border:1px solid var(--border-strong);border-radius:4px;background:var(--bg);
+  transition:background-color var(--t-instant) var(--ease),border-color var(--t-instant) var(--ease)}
+li.checked .ob-multi-box{background:var(--primary);border-color:var(--primary)}
+li.checked .ob-multi-box::after{content:"";position:absolute;left:4px;top:1px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.ob-multi-panel ul:focus,.ob-multi-panel ul:focus-visible{box-shadow:none}
+.ob-multi-panel .ob-ref-sheet-head{gap:var(--s3)}
+.ob-multi-panel .ob-ref-sheet-head strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ob-multi-count{flex:none;font-size:13px;font-weight:400;color:var(--text-2)}
+.ob-multi-done{padding:var(--s2) var(--s4) var(--s4);border-top:1px solid var(--hair)}
+@media (prefers-reduced-motion:reduce){.ob-chip{animation:none}}

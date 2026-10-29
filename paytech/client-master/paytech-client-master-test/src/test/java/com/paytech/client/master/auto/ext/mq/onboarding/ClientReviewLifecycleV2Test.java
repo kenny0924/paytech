@@ -12,7 +12,9 @@ import org.junit.jupiter.api.Test;
 
 import com.paytech.client.master.service.handler.ClientTenantProjectionHandler;
 import com.paytech.client.master.test.base.onboarding.AbstractClientReviewTest;
+import com.paytech.client.master.test.mocker.onboarding.OnboardingFixtures;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingApplicationMocker.ReviewFixture;
+import com.paytech.foundation.jsoncanonicalization.api.Rfc8785JsonCanonicalizer;
 import com.paytech.foundation.messaging.api.DomainEvent;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -43,6 +45,58 @@ class ClientReviewLifecycleV2Test extends AbstractClientReviewTest {
         assertEquals(Boolean.TRUE, profile.get("current_slot"));
         assertNotNull(profile.get("approved_time"));
         assertEquals("ACTIVE", mapper.clientStatus(review.app().clientId()));
+    }
+
+    /**
+     * 批准摘要覆盖业务信息补采四项（AC-06）：t_party_profile.content_hash 等于用例按审核端读到的资料（含四个新键）独立复算的
+     * RFC 8785 + SHA-256；去掉四个新键复算的摘要与之不同，证明它们是摘要输入
+     */
+    @Test
+    void test_approvedHashCoversBusinessInfo() throws Exception {
+        var review = applications.underReview(ACCOUNT_ID);
+        mapper.businessInfo(review.app().clientId(), "APPLE_PAY,CARD", "https://shop.example.test/refunds", OnboardingFixtures.PRE_ORDER, 21);
+        var reviewed = http.get().uri("/client-onboarding-admin/v1/cases/{caseId}/application", review.caseId())
+            .header("X-Gateway-Actor-Subject", Long.toString(OPERATOR_ID)).header("X-Gateway-Session-Id", "ops-session-1")
+            .header("X-Request-Id", "cct-review-test").exchange().expectBody(byte[].class).returnResult();
+        assertEquals(200, reviewed.getStatus().value(), new String(reviewed.getResponseBody()));
+        Map<String, Map<String, String>> values = JSON.readValue(JSON.readTree(reviewed.getResponseBody()).path("values").toString(),
+            new tools.jackson.core.type.TypeReference<Map<String, Map<String, String>>>() {});
+        var business = values.get("business");
+        assertEquals(List.of("APPLE_PAY,CARD", "https://shop.example.test/refunds", OnboardingFixtures.PRE_ORDER, "21"),
+            List.of(business.get("expectedPaymentMethods"), business.get("refundPolicyUrl"), business.get("fulfillmentType"),
+                business.get("fulfillmentDays")));
+        owners.mockTenantProjection(review.app().clientId(), ACCOUNT_ID, review.firstPayloadHash());
+
+        complianceEvents.publish(v2(review, "APPROVED", applications.nextId(), null));
+
+        waitUntil(() -> owners.projectionRequests().size() == 1, Duration.ofSeconds(10));
+        String stored = String.valueOf(mapper.applicationProfileState(review.app().applicationId()).get("content_hash"));
+        assertEquals(profileDigest(review, values), stored);
+        var withoutBusinessInfo = new LinkedHashMap<>(values);
+        var trimmed = new LinkedHashMap<>(business);
+        List.of("expectedPaymentMethods", "refundPolicyUrl", "fulfillmentType", "fulfillmentDays").forEach(trimmed::remove);
+        withoutBusinessInfo.put("business", trimmed);
+        assertNotEquals(profileDigest(review, withoutBusinessInfo), stored);
+    }
+
+    /** 用例侧复算的主体资料摘要：资料 ID、Party ID、辖区、资料分区（不含联系方式与扩展属性）与扩展属性的 RFC 8785 规范 JSON 的 SHA-256。 */
+    static String profileDigest(ReviewFixture review, Map<String, Map<String, String>> values) throws Exception {
+        Map<String, Object> content = new LinkedHashMap<>();
+        content.put("profileId", Long.toString(review.app().profileId()));
+        content.put("partyId", Long.toString(review.app().partyId()));
+        content.put("jurisdictionCode", OnboardingFixtures.JURISDICTION);
+        var profile = new LinkedHashMap<>(values);
+        profile.remove("contact");
+        // 申请读取响应省略个人申请不适用的组织分区；批准摘要的资料分区按完整字段集计算，该分区全为空值。
+        Map<String, String> organization = new LinkedHashMap<>();
+        List.of("legalName", "tradeName", "incorporationCountry", "organizationType", "incorporationDate", "registrationAuthorityCode",
+            "licenseExpiryDate", "listedCompany").forEach(key -> organization.put(key, null));
+        profile.putIfAbsent("organization", organization);
+        var attributes = profile.remove("attributes");
+        content.put("values", profile);
+        content.put("attributes", attributes == null ? Map.of() : attributes);
+        byte[] canonical = Rfc8785JsonCanonicalizer.canonicalizeObject(JSON.writeValueAsBytes(content));
+        return java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(canonical));
     }
 
     /**

@@ -1,0 +1,394 @@
+{
+ "locale": "en",
+ "width": 390,
+ "steps": [
+  {
+   "step": "B1-org-business",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": {
+     "label": "Expected delivery time (days)",
+     "value": "",
+     "chips": [],
+     "error": null
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B1b-multiselect-open",
+   "check": {
+    "options": [
+     "STC_PAY",
+     "APPLE_PAY",
+     "GOOGLE_PAY",
+     "CARD"
+    ],
+    "labels": [
+     "STC Pay",
+     "Apple Pay",
+     "Google Pay",
+     "Cards"
+    ],
+    "sheet": 1
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B2a-two-selected",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "STC Pay",
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": {
+     "label": "Expected delivery time (days)",
+     "value": "",
+     "chips": [],
+     "error": null
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B2b-after-remove-reload",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": {
+     "label": "Expected delivery time (days)",
+     "value": "",
+     "chips": [],
+     "error": null
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B3a-pre-order-21",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": {
+     "label": "Expected delivery time (days)",
+     "value": "21",
+     "chips": [],
+     "error": null
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B3b-instant-hides-days",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "INSTANT",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": null
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B3c-pre-order-again-reload",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": {
+     "label": "Expected delivery time (days)",
+     "value": "",
+     "chips": [],
+     "error": null
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B4-https-and-400",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "http://shop.example.test/refunds",
+     "chips": [],
+     "error": "Use a link that starts with https://"
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": {
+     "label": "Expected delivery time (days)",
+     "value": "400",
+     "chips": [],
+     "error": "Enter a whole number from 1 to 365"
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B5-days-0-summary",
+   "check": {
+    "business": {
+     "expectedPaymentMethods": {
+      "label": "Payment methods you plan to accept",
+      "value": "",
+      "chips": [
+       "Cards"
+      ],
+      "error": null
+     },
+     "refundPolicyUrl": {
+      "label": "Refund policy URLDue before approval",
+      "value": "http://shop.example.test/refunds",
+      "chips": [],
+      "error": "Use a link that starts with https://"
+     },
+     "fulfillmentType": {
+      "label": "How you deliver",
+      "value": "PRE_ORDER",
+      "chips": [],
+      "error": null,
+      "options": [
+       "INSTANT",
+       "PRE_ORDER",
+       "SUBSCRIPTION",
+       "SERVICE"
+      ]
+     },
+     "fulfillmentDays": {
+      "label": "Expected delivery time (days)",
+      "value": "0",
+      "chips": [],
+      "error": "Enter a whole number from 1 to 365"
+     }
+    },
+    "summary": "13 items need changes Refund policy URL: Use a link that starts with https:// Expected delivery time (days): Enter a whole number from 1 to 365 Legal Name: Fill in this field Country of Incorporation: Fill in this field Date of Incorporation: Fill in this field Registration Authority: Fill in this field License Expiry Date: Fill in this field Trade License Number: Fill in this field Business Model: Fill in this field Business Description: Fill in this field Currency: Fill in this field Expected Monthly Volume: Fill in this field Expected Average Transaction: Fill in this field"
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  }
+ ],
+ "console": [],
+ "httpErrors": [],
+ "requests": [
+  {
+   "step": "B1b-multiselect-open",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241548336132366336/draft",
+   "body": "{\"dirtyFields\":[\"business.expectedPaymentMethods\"],\"values\":{\"business\":{\"expectedPaymentMethods\":\"CARD,STC_PAY\"}}}"
+  },
+  {
+   "step": "B2a-two-selected",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241548336132366336/draft",
+   "body": "{\"dirtyFields\":[\"business.expectedPaymentMethods\"],\"values\":{\"business\":{\"expectedPaymentMethods\":\"CARD\"}}}"
+  },
+  {
+   "step": "B2b-after-remove-reload",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241548336132366336/draft",
+   "body": "{\"dirtyFields\":[\"business.fulfillmentDays\"],\"values\":{\"business\":{\"fulfillmentDays\":\"21\"}}}"
+  },
+  {
+   "step": "B3a-pre-order-21",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241548336132366336/draft",
+   "body": "{\"dirtyFields\":[\"business.fulfillmentType\",\"business.fulfillmentDays\"],\"values\":{\"business\":{\"fulfillmentType\":\"INSTANT\",\"fulfillmentDays\":null}}}"
+  },
+  {
+   "step": "B3b-instant-hides-days",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241548336132366336/draft",
+   "body": "{\"dirtyFields\":[\"business.fulfillmentType\"],\"values\":{\"business\":{\"fulfillmentType\":\"PRE_ORDER\"}}}"
+  }
+ ],
+ "bundles": {
+  "ok": 20,
+  "failed": 0
+ },
+ "application": "241548336132366336"
+}

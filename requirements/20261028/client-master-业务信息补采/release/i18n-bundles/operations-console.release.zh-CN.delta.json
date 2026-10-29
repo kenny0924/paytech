@@ -1,0 +1,33 @@
+{
+  "format": "code-mor-i18n-translation/1",
+  "application": "operations-console",
+  "locale": "zh-CN",
+  "namespaces": {
+    "client-review": {
+      "client-review.application.field.expectedPaymentMethods": "期望支付方式",
+      "client-review.application.field.fulfillmentDays": "预计交付天数",
+      "client-review.application.field.fulfillmentType": "交付方式",
+      "client-review.application.field.refundPolicyUrl": "退款政策",
+      "client-review.application.fulfillmentDaysValue": "{count} 天",
+      "client-review.application.notCollected": "未采集",
+      "client-review.application.notFilled": "未填写",
+      "client-review.application.openLink": "在新标签页打开",
+      "client-review.config.enum.widget.MULTI_SELECT": "多选"
+    },
+    "onboarding-schema": {
+      "onboarding-schema.catalog.FULFILLMENT_TYPE.INSTANT": "即时交付",
+      "onboarding-schema.catalog.FULFILLMENT_TYPE.PRE_ORDER": "预售",
+      "onboarding-schema.catalog.FULFILLMENT_TYPE.SERVICE": "服务交付",
+      "onboarding-schema.catalog.FULFILLMENT_TYPE.SUBSCRIPTION": "订阅",
+      "onboarding-schema.field.business.expectedPaymentMethods": "期望开通的支付方式",
+      "onboarding-schema.field.business.fulfillmentDays": "预计交付天数",
+      "onboarding-schema.field.business.fulfillmentType": "交付方式",
+      "onboarding-schema.field.business.refundPolicyUrl": "退款政策链接",
+      "onboarding-schema.group.FULFILLMENT": "交付",
+      "onboarding-schema.paymentMethod.APPLE_PAY": "Apple Pay",
+      "onboarding-schema.paymentMethod.CARD": "银行卡",
+      "onboarding-schema.paymentMethod.GOOGLE_PAY": "Google Pay",
+      "onboarding-schema.paymentMethod.STC_PAY": "STC Pay"
+    }
+  }
+}

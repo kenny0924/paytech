@@ -65,7 +65,8 @@ class ReapplyAfterRejectionTest extends AbstractClientReviewTest {
             .expectBody(byte[].class).returnResult();
         assertEquals(422, unsigned.getStatus().value());
         assertTrue(new String(unsigned.getResponseBody()).contains("declaration.PLATFORM_TERMS_ACCEPTANCE"));
-        // 新申请使用 v2 Schema：拆分后的声明，条款与隐私告知须带当前文档版本。
+        // 新申请使用 v3 Schema：业务信息补采的支付方式与交付方式必填（以夹具补齐经营资料）；拆分后的声明，条款与隐私告知须带当前文档版本。
+        mapper.businessInfo(app.clientId(), "CARD", null, OnboardingFixtures.INSTANT, null);
         OnboardingFixtures.ORGANIZATION_DECLARATIONS_V2.forEach(type -> declare(newId, type));
         submitAndWaitUnderReview(again, applications.nextId());
 

@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.client.EntityExchangeResult;
 
+import com.paytech.client.master.domain.enums.WidgetCode;
+import com.paytech.client.master.domain.onboarding.pack.ReferenceCatalogCodes;
 import com.paytech.client.master.test.base.ClientMasterMockTestBase;
 import com.paytech.client.master.test.mocker.onboarding.OnboardingFixtures;
 
@@ -64,14 +66,24 @@ class OnboardingAdminQueryTest extends ClientMasterMockTestBase {
     void test_schemasAndCatalogs() {
         var schemas = body(get("/client-master-admin/v1/onboarding-schemas?jurisdiction=AE"));
 
-        assertEquals(8, schemas.size(), "AE 的 4 个 v1（已退役）与 4 个 v2");
+        assertEquals(12, schemas.size(), "AE 的 4 个 v1、4 个 v2（均已退役）与 4 个 v3");
         assertEquals("RETIRED", schemas.valueStream().filter(node -> "9270000000700001".equals(node.path("schemaId").asString()))
             .findFirst().orElseThrow().path("status").asString());
-        var defaultOrganization = schemas.valueStream().filter(node -> "9270000000900301".equals(node.path("schemaId").asString()))
+        assertEquals("RETIRED", schemas.valueStream().filter(node -> "9270000000900301".equals(node.path("schemaId").asString()))
+            .findFirst().orElseThrow().path("status").asString());
+        var defaultOrganization = schemas.valueStream().filter(node -> "9281200000900301".equals(node.path("schemaId").asString()))
             .findFirst().orElseThrow();
         assertEquals("ACTIVE", defaultOrganization.path("status").asString());
         assertTrue(defaultOrganization.path("fields").valueStream().anyMatch(field -> "identifier.AE_TRADE_LICENSE".equals(
             field.path("fieldKey").asString()) && "ORGANIZATION_ID".equals(field.path("requirementGroup").asString())));
+        // 业务信息补采：多选控件与外部目录码原样给出；外部目录不在本库目录项中，交付方式目录 4 项。
+        assertTrue(defaultOrganization.path("fields").valueStream().anyMatch(field -> "business.expectedPaymentMethods".equals(
+            field.path("fieldKey").asString()) && WidgetCode.MULTI_SELECT.getCode().equals(field.path("widgetCode").asString())
+            && ReferenceCatalogCodes.COMMERCIAL_PAYMENT_METHOD.equals(field.path("catalogCode").asString())), defaultOrganization.toString());
+        assertEquals(0, body(get("/client-master-admin/v1/catalog-items?catalogCode=" + ReferenceCatalogCodes.COMMERCIAL_PAYMENT_METHOD)).size());
+        assertEquals(OnboardingFixtures.FULFILLMENT_TYPES,
+            body(get("/client-master-admin/v1/catalog-items?catalogCode=" + OnboardingFixtures.FULFILLMENT_TYPE_CATALOG)).valueStream()
+                .map(item -> item.path("itemCode").asString()).toList());
         var authorities = body(get("/client-master-admin/v1/catalog-items?catalogCode=REGISTRATION_AUTHORITY"));
         assertTrue(authorities.valueStream().anyMatch(item -> "AE_DED_DUBAI".equals(item.path("itemCode").asString())
             && "AE".equals(item.path("jurisdictionCode").asString())));
@@ -87,7 +99,8 @@ class OnboardingAdminQueryTest extends ClientMasterMockTestBase {
     void test_clients() {
         var app = applications.organization(ACCOUNT_ID);
         var person = applications.staffedPerson(app);
-        applications.individual(ACCOUNT_ID + 1);
+        var individual = applications.individual(ACCOUNT_ID + 1);
+        mapper.businessInfo(app.clientId(), "APPLE_PAY,CARD", "https://shop.example.test/refunds", OnboardingFixtures.PRE_ORDER, 30);
 
         var page = body(get("/client-master-admin/v1/clients?jurisdiction=AE&status=PENDING&size=10"));
         assertEquals(2, page.path("total").asInt(), page.toString());
@@ -108,6 +121,16 @@ class OnboardingAdminQueryTest extends ClientMasterMockTestBase {
         assertEquals(3, detail.path("relations").size());
         assertEquals(Long.toString(app.applicationId()), detail.path("applications").get(0).path("applicationId").asString());
         assertEquals(404, get("/client-master-admin/v1/clients/" + applications.nextId()).getStatus().value());
+        // 业务信息补采（AC-05）：Client 详情 values.business 带四项；未采集的为 null。
+        var business = detail.path("values").path("business");
+        assertEquals("APPLE_PAY,CARD", business.path("expectedPaymentMethods").asString());
+        assertEquals("https://shop.example.test/refunds", business.path("refundPolicyUrl").asString());
+        assertEquals(OnboardingFixtures.PRE_ORDER, business.path("fulfillmentType").asString());
+        assertEquals("30", business.path("fulfillmentDays").asString());
+        var uncollected = body(get("/client-master-admin/v1/clients/" + individual.clientId())).path("values").path("business");
+        for (String key : List.of("expectedPaymentMethods", "refundPolicyUrl", "fulfillmentType", "fulfillmentDays")) {
+            assertTrue(uncollected.has(key) && uncollected.path(key).isNull(), key + " 应以 null 返回: " + uncollected);
+        }
     }
 
     /** 遗留 Client（发布回填后：辖区 LEGACY、无 Schema、证件已脱敏）的列表与详情照常渲染，不出现原文。 */

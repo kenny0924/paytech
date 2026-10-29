@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Alert, Button, Descriptions, Form, Input, Select, Space, Table, Tag } from 'antd';
+import { Alert, Button, Form, Input, Select, Space, Table, Tag } from 'antd';
 import { ApiError, session } from '../api/session';
 import { useErrorNotification } from '../feedback/useErrorNotification';
 import { date } from '../tenantAccess/TenantAccessView';
 import { enumLabel, tOr } from '../i18n/index';
 import type { Translate } from '../i18n/index';
 import { useT } from '../i18n/react';
-import { fieldLabel, humanize, valueLabel, valueText } from '../onboardingConfig/schemaLabel';
+import { humanize, valueLabel } from '../onboardingConfig/schemaLabel';
+import { ProfileDescriptions } from '../onboardingConfig/ProfileValues';
 import { Link } from 'react-router-dom';
 import { canWaive, declarationRows, decodeCommand, decodeFileDownload, evidenceRejectReasons, reviewApi, reviewRoute, withOnBehalf } from './clientReview';
 import type { Application, DeclarationRow, Evidence, Requirement, ReviewDetail, Subject } from './clientReview';
@@ -24,12 +25,11 @@ export function displayName(t: Translate, application: Application | null): stri
 }
 
 function Values({ values, jurisdictionCode }: { values: Application['values']; jurisdictionCode: string | null }) {
-  const t = useT('client-review'), tSchema = useT('onboarding-schema');
+  const t = useT('client-review');
   const groups = Object.entries(values).filter(([group, fields]) => group !== 'contact' && Object.keys(fields).length > 0);
   if (groups.length === 0) return <span className="muted">{t('application.empty')}</span>;
   return <>{groups.map(([group, fields]) => <div key={group} className="obw-values"><h3>{valueLabel(t, 'group', group)}</h3>
-    <Descriptions size="small" column={{ xs: 1, sm: 2, lg: 3 }} items={Object.entries(fields).map(([field, value]) => ({ key: field, label: fieldLabel(t, tSchema, group, field),
-      children: valueText(tSchema, group, field, value, jurisdictionCode) }))} /></div>)}</>;
+    <ProfileDescriptions group={group} fields={fields} jurisdictionCode={jurisdictionCode} /></div>)}</>;
 }
 
 /** 申请资料：client-master 冻结的提交内容；证件号只有掩码。 */

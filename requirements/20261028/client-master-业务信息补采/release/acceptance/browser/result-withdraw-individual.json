@@ -1,0 +1,31 @@
+{
+ "locale": "en",
+ "width": 1440,
+ "steps": [
+  {
+   "step": "W-withdrawn-241549066402635776",
+   "check": "Withdrawn You withdrew this application The reviewer no longer processes this application. You can start a new one at any time. Withdrawn by o***@example.test Start a new application",
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  }
+ ],
+ "console": [],
+ "httpErrors": [],
+ "requests": [
+  {
+   "step": "login#1",
+   "method": "POST",
+   "path": "/api/client/onboarding/v1/applications/241549066402635776/withdrawal",
+   "body": null
+  }
+ ],
+ "bundles": {
+  "ok": 8,
+  "failed": 0
+ },
+ "withdrawn": [
+  "241549066402635776"
+ ]
+}

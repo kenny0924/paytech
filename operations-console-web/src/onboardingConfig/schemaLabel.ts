@@ -33,6 +33,7 @@ export const FIELD_CATALOGS: Readonly<Record<string, string>> = {
   'organization.organizationType': 'organizationType',
   'organization.registrationAuthorityCode': 'catalog:REGISTRATION_AUTHORITY',
   'business.businessModelCode': 'catalog:BUSINESS_MODEL',
+  'business.fulfillmentType': 'catalog:FULFILLMENT_TYPE',
   'business.currency': 'currency',
   'individual.gender': 'catalog:GENDER',
   'individual.sourceOfFundsCode': 'catalog:SOURCE_OF_FUNDS',
@@ -73,4 +74,49 @@ export function subdivisionText(value: string): string {
 /** 资料字段名：扩展属性（attributes 组）取属性目录名，其他取审核页字段文案，均无则拆词。 */
 export function fieldLabel(tReview: Translate, tSchema: Translate, group: string, field: string): string {
   return group === 'attributes' ? tOr(tSchema, `attribute.${field}`, valueLabel(tReview, 'field', field)) : valueLabel(tReview, 'field', field);
+}
+
+/**
+ * 业务信息补采（REQ-12）的四个字段：client-master 资料 values 对所有申请都带这些键，旧版 Schema 冻结的申请值为空
+ * <li>四项全空表示该申请的表单没有采集它们（"未采集"）；有任一项有值时，空项是申请人未填写的可选 / 批准前补充项（"未填写"）。</li>
+ */
+export const BUSINESS_INFO_FIELDS: readonly string[] = ['expectedPaymentMethods', 'refundPolicyUrl', 'fulfillmentType', 'fulfillmentDays'];
+/** 交付方式为预售时才有天数。 */
+const PRE_ORDER = 'PRE_ORDER';
+/** 显示为可点击链接（新标签页打开）的网址字段。 */
+export const LINK_FIELDS: ReadonlySet<string> = new Set(['websiteUrl', 'refundPolicyUrl']);
+
+/** 资料值的展示形态：文字、空值说明、外部链接、单个目录标签（交付方式）、多值目录标签（逐项"名称 编码"）。 */
+export type ValueView =
+  | { kind: 'text'; text: string }
+  | { kind: 'empty'; text: string }
+  | { kind: 'link'; href: string; text: string }
+  | { kind: 'tag'; text: string }
+  | { kind: 'tags'; tags: { code: string; label: string }[] };
+
+/**
+ * 资料值 → 展示形态；返回 null 表示该行不显示（非预售且未填天数）
+ * <li>期望支付方式为规范化逗号串（client-master CODE_LIST），逐项取 `paymentMethod.<代码>` 文案，无译文时只显示代码。</li>
+ * <li>网址只有 http / https 才成为链接，其他按文字显示。其余字段沿用 valueText。</li>
+ *
+ * @param fields 同一分组的全部值（判断"未采集"与天数是否适用）
+ */
+export function valueView(tSchema: Translate, group: string, field: string, value: string | null, jurisdictionCode: string | null,
+  fields: Readonly<Record<string, string | null>>): ValueView | null {
+  const tReview = translator('client-review');
+  const businessInfo = group === 'business' && BUSINESS_INFO_FIELDS.includes(field);
+  if (value === null || value === '') {
+    if (!businessInfo) return { kind: 'empty', text: '—' };
+    if (field === 'fulfillmentDays' && fields.fulfillmentType && fields.fulfillmentType !== PRE_ORDER) return null;
+    const collected = BUSINESS_INFO_FIELDS.some(key => fields[key]);
+    return { kind: 'empty', text: tReview(collected ? 'application.notFilled' : 'application.notCollected') };
+  }
+  if (group === 'business' && field === 'expectedPaymentMethods')
+    return { kind: 'tags', tags: [...new Set(value.split(',').map(code => code.trim()).filter(Boolean))]
+      .map(code => ({ code, label: tOr(tSchema, `paymentMethod.${code}`, code) })) };
+  if (group === 'business' && field === 'fulfillmentDays' && /^\d{1,3}$/.test(value))
+    return { kind: 'text', text: tReview('application.fulfillmentDaysValue', { count: Number(value) }) };
+  if (group === 'business' && field === 'fulfillmentType') return { kind: 'tag', text: valueText(tSchema, group, field, value, jurisdictionCode) };
+  if (LINK_FIELDS.has(field) && /^https?:\/\/\S+$/i.test(value)) return { kind: 'link', href: value, text: value };
+  return { kind: 'text', text: valueText(tSchema, group, field, value, jurisdictionCode) };
 }

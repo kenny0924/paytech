@@ -1,0 +1,65 @@
++-------------------+
+| read_only_session |
++-------------------+
+|                 1 |
++-------------------+
++------------+---------+-------------+--------------+
+| generation | status  | active_slot | schema_count |
++------------+---------+-------------+--------------+
+| v1         | RETIRED |        NULL |            8 |
+| v2         | ACTIVE  |           1 |            9 |
+| v3         | DRAFT   |        NULL |            9 |
++------------+---------+-------------+--------------+
++--------+-----------+
+| fields | v3_fields |
++--------+-----------+
+|    965 |       363 |
++--------+-----------+
++--------------+--------+---------------+
+| item_code    | status | display_order |
++--------------+--------+---------------+
+| INSTANT      | DRAFT  |            10 |
+| PRE_ORDER    | DRAFT  |            20 |
+| SUBSCRIPTION | DRAFT  |            30 |
+| SERVICE      | DRAFT  |            40 |
++--------------+--------+---------------+
++------------------+------------+---------------------------------+--------------+---------------------------+-------------------+---------------+---------------+------------------------------------+
+| schema_id        | version_no | field_key                       | widget_code  | catalog_code              | requirement_level | display_group | display_order | visible_when                       |
++------------------+------------+---------------------------------+--------------+---------------------------+-------------------+---------------+---------------+------------------------------------+
+| 9281200000900301 |          3 | business.expectedPaymentMethods | MULTI_SELECT | COMMERCIAL_PAYMENT_METHOD | REQUIRED          | OPERATIONS    |          2200 | NULL                               |
+| 9281200000900301 |          3 | business.refundPolicyUrl        | URL          | NULL                      | EVENTUALLY        | OPERATIONS    |          2210 | NULL                               |
+| 9281200000900301 |          3 | business.fulfillmentType        | SELECT       | FULFILLMENT_TYPE          | REQUIRED          | FULFILLMENT   |          2220 | NULL                               |
+| 9281200000900301 |          3 | business.fulfillmentDays        | TEXT         | NULL                      | REQUIRED          | FULFILLMENT   |          2230 | business.fulfillmentType=PRE_ORDER |
+| 9281200000900302 |          3 | business.expectedPaymentMethods | MULTI_SELECT | COMMERCIAL_PAYMENT_METHOD | REQUIRED          | OPERATIONS    |          2210 | NULL                               |
+| 9281200000900302 |          3 | business.refundPolicyUrl        | URL          | NULL                      | EVENTUALLY        | OPERATIONS    |          2220 | NULL                               |
+| 9281200000900302 |          3 | business.fulfillmentType        | SELECT       | FULFILLMENT_TYPE          | REQUIRED          | FULFILLMENT   |          2230 | NULL                               |
+| 9281200000900302 |          3 | business.fulfillmentDays        | TEXT         | NULL                      | REQUIRED          | FULFILLMENT   |          2240 | business.fulfillmentType=PRE_ORDER |
+| 9281200000900303 |          3 | business.expectedPaymentMethods | MULTI_SELECT | COMMERCIAL_PAYMENT_METHOD | REQUIRED          | OPERATIONS    |          2250 | NULL                               |
+| 9281200000900303 |          3 | business.refundPolicyUrl        | URL          | NULL                      | OPTIONAL          | OPERATIONS    |          2260 | NULL                               |
+| 9281200000900303 |          3 | business.fulfillmentType        | SELECT       | FULFILLMENT_TYPE          | REQUIRED          | FULFILLMENT   |          2270 | NULL                               |
+| 9281200000900303 |          3 | business.fulfillmentDays        | TEXT         | NULL                      | REQUIRED          | FULFILLMENT   |          2280 | business.fulfillmentType=PRE_ORDER |
+| 9281200000900304 |          3 | business.expectedPaymentMethods | MULTI_SELECT | COMMERCIAL_PAYMENT_METHOD | REQUIRED          | OPERATIONS    |          2280 | NULL                               |
+| 9281200000900304 |          3 | business.refundPolicyUrl        | URL          | NULL                      | OPTIONAL          | OPERATIONS    |          2290 | NULL                               |
+| 9281200000900304 |          3 | business.fulfillmentType        | SELECT       | FULFILLMENT_TYPE          | REQUIRED          | FULFILLMENT   |          2300 | NULL                               |
+| 9281200000900304 |          3 | business.fulfillmentDays        | TEXT         | NULL                      | REQUIRED          | FULFILLMENT   |          2310 | business.fulfillmentType=PRE_ORDER |
+| 9281200000900305 |          3 | business.expectedPaymentMethods | MULTI_SELECT | COMMERCIAL_PAYMENT_METHOD | REQUIRED          | OPERATIONS    |          2210 | NULL                               |
+| 9281200000900305 |          3 | business.refundPolicyUrl        | URL          | NULL                      | EVENTUALLY        | OPERATIONS    |          2220 | NULL                               |
+| 9281200000900305 |          3 | business.fulfillmentType        | SELECT       | FULFILLMENT_TYPE          | REQUIRED          | FULFILLMENT   |          2230 | NULL                               |
+| 9281200000900305 |          3 | business.fulfillmentDays        | TEXT         | NULL                      | REQUIRED          | FULFILLMENT   |          2240 | business.fulfillmentType=PRE_ORDER |
+| 9281200000900306 |          3 | business.expectedPaymentMethods | MULTI_SELECT | COMMERCIAL_PAYMENT_METHOD | REQUIRED          | OPERATIONS    |          2260 | NULL                               |
+| 9281200000900306 |          3 | business.refundPolicyUrl        | URL          | NULL                      | OPTIONAL          | OPERATIONS    |          2270 | NULL                               |
+| 9281200000900306 |          3 | business.fulfillmentType        | SELECT       | FULFILLMENT_TYPE          | REQUIRED          | FULFILLMENT   |          2280 | NULL                               |
+| 9281200000900306 |          3 | business.fulfillmentDays        | TEXT         | NULL                      | REQUIRED          | FULFILLMENT   |          2290 | business.fulfillmentType=PRE_ORDER |
+| 9281200000900307 |          3 | business.expectedPaymentMethods | MULTI_SELECT | COMMERCIAL_PAYMENT_METHOD | REQUIRED          | OPERATIONS    |          2200 | NULL                               |
+| 9281200000900307 |          3 | business.refundPolicyUrl        | URL          | NULL                      | EVENTUALLY        | OPERATIONS    |          2210 | NULL                               |
+| 9281200000900307 |          3 | business.fulfillmentType        | SELECT       | FULFILLMENT_TYPE          | REQUIRED          | FULFILLMENT   |          2220 | NULL                               |
+| 9281200000900307 |          3 | business.fulfillmentDays        | TEXT         | NULL                      | REQUIRED          | FULFILLMENT   |          2230 | business.fulfillmentType=PRE_ORDER |
+| 9281200000900308 |          3 | business.expectedPaymentMethods | MULTI_SELECT | COMMERCIAL_PAYMENT_METHOD | REQUIRED          | OPERATIONS    |          2250 | NULL                               |
+| 9281200000900308 |          3 | business.refundPolicyUrl        | URL          | NULL                      | OPTIONAL          | OPERATIONS    |          2260 | NULL                               |
+| 9281200000900308 |          3 | business.fulfillmentType        | SELECT       | FULFILLMENT_TYPE          | REQUIRED          | FULFILLMENT   |          2270 | NULL                               |
+| 9281200000900308 |          3 | business.fulfillmentDays        | TEXT         | NULL                      | REQUIRED          | FULFILLMENT   |          2280 | business.fulfillmentType=PRE_ORDER |
+| 9281200000900309 |          2 | business.expectedPaymentMethods | MULTI_SELECT | COMMERCIAL_PAYMENT_METHOD | REQUIRED          | OPERATIONS    |          2260 | NULL                               |
+| 9281200000900309 |          2 | business.refundPolicyUrl        | URL          | NULL                      | OPTIONAL          | OPERATIONS    |          2270 | NULL                               |
+| 9281200000900309 |          2 | business.fulfillmentType        | SELECT       | FULFILLMENT_TYPE          | REQUIRED          | FULFILLMENT   |          2280 | NULL                               |
+| 9281200000900309 |          2 | business.fulfillmentDays        | TEXT         | NULL                      | REQUIRED          | FULFILLMENT   |          2290 | business.fulfillmentType=PRE_ORDER |
++------------------+------------+---------------------------------+--------------+---------------------------+-------------------+---------------+---------------+------------------------------------+

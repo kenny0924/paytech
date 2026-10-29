@@ -1,0 +1,7 @@
+# 候选镜像（本机 Docker 构建，mor-test 同主机直接可用；未推送任何仓库；:development 未动）
+mor-test/client-master-service:rq12-20261029a sha256:2b12c2e2184bb9e926c5fb6a74822c103ba5a659a53dcbacb9a4d6bb60c414bc 2026-10-29T12:49:39.498637218Z
+mor-test/client-console-web:rq12-20261029a sha256:e17a9a0a43b936ebc2344338df1e934f6cece672081385c2841b0bde358f0cf0 2026-10-29T12:49:44.47951347Z
+mor-test/operations-console-web:rq12-20261029a sha256:0b456b8aed53df0d31719f995a755d8f74d1abbd2a8b05e6de53ef5e0c34ae72 2026-10-29T12:49:45.195598179Z
+源码：/Users/kenny/Desktop/Workspace/Code-MoR-rq12-rel = 6753faba + 72 个本需求文件（evidence/rq12-source-files.sha256）
+client-master JAR sha256 ca0b61fba694929dad010d1af35fc8a66c68eea4d111dd26233a72a4d91f3faf
+Web 测试（候选源码）：client-console-web npm test 153/153、tsc 0；operations-console-web npm test 1601/1601、tsc 0；后端 auto 测试见阶段 4（client-master 176/0、client-console-bff 102/0，同一源码文件）

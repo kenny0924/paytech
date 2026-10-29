@@ -1,0 +1,470 @@
+{
+ "locale": "en",
+ "width": 1440,
+ "steps": [
+  {
+   "step": "E1-business",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Apple Pay",
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentDays": {
+     "label": "Expected delivery time (days)",
+     "value": "21",
+     "chips": [],
+     "error": null
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "E2-multiselect-open",
+   "check": {
+    "panel": "Apple Pay APPLE_PAY Google Pay GOOGLE_PAY Cards CARD",
+    "sheet": 0
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "E3-chip-removed",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Apple Pay"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentDays": {
+     "label": "Expected delivery time (days)",
+     "value": "21",
+     "chips": [],
+     "error": null
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "E4-https-and-400",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Apple Pay",
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "http://shop.example.test/refunds",
+     "chips": [],
+     "error": "Use a link that starts with https://"
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentDays": {
+     "label": "Expected delivery time (days)",
+     "value": "400",
+     "chips": [],
+     "error": "Enter a whole number from 1 to 365"
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "E4b-error-summary",
+   "check": {
+    "url": "tasks/profile",
+    "summary": "13 items need changes Refund policy URL: Use a link that starts with https:// Expected delivery time (days): Enter a whole number from 1 to 365 Legal Name: Fill in this field Country of Incorporation: Fill in this field Date of Incorporation: Fill in this field Registration Authority: Fill in this field License Expiry Date: Fill in this field Trade License Number: Fill in this field Business Model: Fill in this field Business Description: Fill in this field Currency: Fill in this field Expected Monthly Volume: Fill in this field Expected Average Transaction: Fill in this field"
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "E5-days-0",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Apple Pay",
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "http://shop.example.test/refunds",
+     "chips": [],
+     "error": "Use a link that starts with https://"
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentDays": {
+     "label": "Expected delivery time (days)",
+     "value": "0",
+     "chips": [],
+     "error": "Enter a whole number from 1 to 365"
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "E6-instant-hides-days",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [
+      "Apple Pay",
+      "Cards"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLDue before approval",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "INSTANT",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentDays": null
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "E7-home",
+   "check": "Complete your application United Arab Emirates · Limited Liability Company (Mainland) 0 of 5 complete Saved · just now Company details Registration, Identification, Tax, and Operations In progress › Address and contact Address and Contact Not started › People Owners, managers and signatories Not started › Company documents 8 needed, 0 uploaded Not started › Declarations 0 of 8 confirmed Not started › Review and submit Available after the steps above are complete Not available yet › After you submit, your application is reviewed, usually within 1–3 business days. You can't edit it during review",
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "E8-review",
+   "check": "Complete your application United Arab Emirates · Limited Liability Company (Mainland) 0 of 5 complete Saved · just now Company details Registration, Identification, Tax, and Operations In progress › Address and contact Address and Contact Not started › People Owners, managers and signatories Not started › Company documents 8 needed, 0 uploaded Not started › Declarations 0 of 8 confirmed Not started › Review and submit Available after the steps above are complete Not available yet › After you submit, your application is reviewed, usually within 1–3 business days. You can't edit it during review",
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "D1-individual-business",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLOptional",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentDays": null
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "F1-v2-profile",
+   "check": {
+    "business": {
+     "expectedPaymentMethods": null,
+     "refundPolicyUrl": null,
+     "fulfillmentType": null,
+     "fulfillmentDays": null
+    },
+    "groups": [
+     "Registration",
+     "Identification",
+     "Tax",
+     "Operations",
+     "Expected Volume"
+    ]
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "O1-review-B",
+   "check": {
+    "title": "Business Information",
+    "items": [
+     "Business Model Physical Goods",
+     "Website —",
+     "Business Description Sells home goods online through its own website (acceptance test data).",
+     "Expected Monthly Volume 50000",
+     "Expected Ticket Size 100",
+     "Currency US Dollar",
+     "Expected Payment Methods CardsCARD",
+     "Refund Policy https://shop.example.test/refunds?v=2",
+     "Fulfillment Pre-order",
+     "Delivery Time 14 days"
+    ],
+    "links": [
+     {
+      "href": "https://shop.example.test/refunds?v=2",
+      "target": "_blank",
+      "rel": "noopener noreferrer"
+     }
+    ]
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "O2-review-C-v2",
+   "check": {
+    "title": "Business Information",
+    "items": [
+     "Business Model Physical Goods",
+     "Website —",
+     "Business Description Sells home goods online through its own website (acceptance test data).",
+     "Expected Monthly Volume 50000",
+     "Expected Ticket Size 100",
+     "Currency US Dollar",
+     "Expected Payment Methods Not collected",
+     "Refund Policy Not collected",
+     "Fulfillment Not collected",
+     "Delivery Time Not collected"
+    ],
+    "links": []
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "O3-review-v1",
+   "check": {
+    "title": "Business Information",
+    "items": [
+     "Business Model Physical Goods",
+     "Website —",
+     "Business Description Sells home goods online through its own website (acceptance test data).",
+     "Expected Monthly Volume 50000",
+     "Expected Ticket Size 100",
+     "Currency United Arab Emirates Dirham",
+     "Expected Payment Methods Not collected",
+     "Refund Policy Not collected",
+     "Fulfillment Not collected",
+     "Delivery Time Not collected"
+    ],
+    "links": []
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "O4-client-A",
+   "check": {
+    "title": "Business Information",
+    "items": [
+     "Business Model Physical Goods",
+     "Website —",
+     "Business Description Sells home goods online through its own website (acceptance test data).",
+     "Expected Monthly Volume 50000",
+     "Expected Ticket Size 100",
+     "Currency US Dollar",
+     "Expected Payment Methods Apple PayAPPLE_PAY Google PayGOOGLE_PAY",
+     "Refund Policy Not filled in",
+     "Fulfillment Instant delivery"
+    ],
+    "links": []
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  }
+ ],
+ "console": [
+  {
+   "step": "ops login",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "step": "ops login",
+   "type": "error",
+   "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+  },
+  {
+   "step": "ops login",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "step": "O1-review-B",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "step": "O2-review-C-v2",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  },
+  {
+   "step": "O3-review-v1",
+   "type": "error",
+   "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+  }
+ ],
+ "httpErrors": [],
+ "requests": [
+  {
+   "step": "E2-multiselect-open",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241533895114240000/draft",
+   "body": "{\"dirtyFields\":[\"business.expectedPaymentMethods\"],\"values\":{\"business\":{\"expectedPaymentMethods\":\"APPLE_PAY\"}}}"
+  },
+  {
+   "step": "E3-chip-removed",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241533895114240000/draft",
+   "body": "{\"dirtyFields\":[\"business.expectedPaymentMethods\"],\"values\":{\"business\":{\"expectedPaymentMethods\":\"APPLE_PAY,CARD\"}}}"
+  },
+  {
+   "step": "E5-days-0",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241533895114240000/draft",
+   "body": "{\"dirtyFields\":[\"business.fulfillmentType\",\"business.fulfillmentDays\"],\"values\":{\"business\":{\"fulfillmentType\":\"INSTANT\",\"fulfillmentDays\":null}}}"
+  },
+  {
+   "step": "E6-instant-hides-days",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241533895114240000/draft",
+   "body": "{\"dirtyFields\":[\"business.fulfillmentType\",\"business.fulfillmentDays\"],\"values\":{\"business\":{\"fulfillmentType\":\"PRE_ORDER\",\"fulfillmentDays\":\"21\"}}}"
+  }
+ ],
+ "bundles": 60,
+ "popups": [
+  {
+   "opened": true,
+   "url": "chrome-error://chromewebdata/",
+   "opener": true
+  }
+ ],
+ "chipsBefore": [
+  "Apple Pay",
+  "Cards"
+ ],
+ "chipsAfterRestore": [
+  "Apple Pay",
+  "Cards"
+ ],
+ "endState": {
+  "expectedPaymentMethods": {
+   "label": "Payment methods you plan to accept",
+   "value": "",
+   "chips": [
+    "Apple Pay",
+    "Cards"
+   ],
+   "error": null
+  },
+  "refundPolicyUrl": {
+   "label": "Refund policy URLDue before approval",
+   "value": "",
+   "chips": [],
+   "error": null
+  },
+  "fulfillmentType": {
+   "label": "How you deliver",
+   "value": "PRE_ORDER",
+   "chips": [],
+   "error": null
+  },
+  "fulfillmentDays": {
+   "label": "Expected delivery time (days)",
+   "value": "21",
+   "chips": [],
+   "error": null
+  }
+ },
+ "applicationD": "241536278410047488"
+}

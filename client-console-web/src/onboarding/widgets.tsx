@@ -6,7 +6,8 @@ import { Ctx } from "./context.tsx";
 import type { CatalogItem, FormSchema, SchemaField } from "./model.ts";
 import { REF_COUNTRY_SUBDIVISION, REF_CURRENCY, REFDATA_NAMESPACE, countryOptions, currencyOptions, subdivisionOptions } from "./refdata.ts";
 import { OptionsUnavailable, RefSelect } from "./RefSelect.tsx";
-import { ADDRESS_COUNTRY, activeAddressFormat, addressPath, addressPathsToClear, draftPath, identifierAlternatives, identifierNumberLabel, identifierPaths, selectedIdentifier } from "./schema.ts";
+import { MultiSelect } from "./MultiSelect.tsx";
+import { ADDRESS_COUNTRY, activeAddressFormat, addressPath, addressPathsToClear, draftPath, identifierAlternatives, identifierNumberLabel, identifierPaths, integerRange, selectedIdentifier } from "./schema.ts";
 import { FieldShell, useSchemaLookup, useSchemaText } from "./ui.tsx";
 
 /**
@@ -15,7 +16,9 @@ import { FieldShell, useSchemaLookup, useSchemaText } from "./ui.tsx";
  * <li>未登记的 widget 按单行文本渲染，不丢字段。</li>
  */
 export type WidgetProps = {
-  field: SchemaField; schema: FormSchema; values: Flat; id: string; label: string; help: string | null; optional: boolean;
+  field: SchemaField; schema: FormSchema; values: Flat; id: string; label: string; help: string | null;
+  /** 非必填标记：true 为"可选"，文字为替代说明（批准前补充），false 不显示。 */
+  optional: boolean | string;
   errors: Record<string, string>; disabled: boolean; set: (path: string, value: string) => void; blur: (path: string) => void;
   countryCode: string | null;
 };
@@ -33,7 +36,8 @@ function Text({ type = "text", mono, inputMode, autoComplete }: { type?: string;
     const path = draftPath(props.field)!, error = props.errors[path];
     return <FieldShell id={props.id} label={props.label} optional={props.optional} help={props.help} error={error} mono={mono}>
       <input id={props.id} name={path} type={type} value={props.values[path] ?? ""} disabled={props.disabled}
-        maxLength={props.field.validation?.maxLength ?? undefined} inputMode={inputMode} autoComplete={autoComplete ?? "off"}
+        maxLength={props.field.validation?.maxLength ?? undefined} autoComplete={autoComplete ?? "off"}
+        inputMode={inputMode ?? (integerRange(props.field.validation?.pattern) ? "numeric" : undefined)}
         spellCheck={false} className={mono ? "mono" : undefined} aria-invalid={!!error} aria-describedby={described(props.id, props.help, error)}
         onChange={(event) => props.set(path, event.target.value)} onBlur={() => props.blur(path)} />
     </FieldShell>;
@@ -122,12 +126,28 @@ function Select(props: WidgetProps) {
   </FieldShell>;
 }
 
+/**
+ * 目录多选：选项只来自 Schema 下发的目录（如 commercial 支付方式 COMMERCIAL_PAYMENT_METHOD）；名称取文案键，没有译文时显示编码
+ * <li>目录未下发表示未能加载：显示重试，不回退到内置列表。</li>
+ */
+function MultiSelectField(props: WidgetProps) {
+  const t = useT("onboarding"), lookup = useSchemaLookup(), retry = useContext(Ctx)?.reloadSchema;
+  const path = draftPath(props.field)!, error = props.errors[path];
+  const catalog = props.field.catalogCode ? props.schema.catalogs[props.field.catalogCode] : undefined;
+  return <FieldShell id={props.id} label={props.label} optional={props.optional} help={props.help} error={error}>
+    {!catalog?.length ? <OptionsUnavailable id={props.id} onRetry={retry ? () => void retry() : undefined} />
+      : <MultiSelect id={props.id} value={props.values[path] ?? ""} options={catalog.map((item) => ({ code: item.itemCode, label: lookup(item.labelKey) ?? item.itemCode }))}
+        disabled={props.disabled} invalid={!!error} describedBy={described(props.id, props.help, error)} title={props.label}
+        placeholder={t("form.multi_select_placeholder")} onChange={(value) => props.set(path, value)} onBlur={() => props.blur(path)} />}
+  </FieldShell>;
+}
+
 /** 是 / 否单选（如政治公众人物自述、上市公司）；草稿值为 "true" / "false"。 */
 function Boolean_(props: WidgetProps) {
   const t = useT("onboarding");
   const path = draftPath(props.field)!, error = props.errors[path], value = props.values[path] ?? "";
   return <fieldset className="ob-field wide" data-field={props.id} aria-describedby={described(props.id, props.help, error)}>
-    <legend>{props.label}{props.optional && <span className="ob-optional">{t("form.optional")}</span>}</legend>
+    <legend>{props.label}{props.optional && <span className="ob-optional">{typeof props.optional === "string" ? props.optional : t("form.optional")}</span>}</legend>
     {props.help && <p className="ob-help" id={props.id + "-help"}>{props.help}</p>}
     <div className="ob-radios">{(["false", "true"] as const).map((option) =>
       <label className="checkline" key={option}><input type="radio" id={option === "false" ? props.id : undefined} name={path}
@@ -248,6 +268,7 @@ export const widgets: Record<string, Render> = {
   DATE: Text({ type: "date" }),
   COUNTRY: Country,
   SELECT: Select,
+  MULTI_SELECT: MultiSelectField,
   BOOLEAN: Boolean_,
   IDENTIFIER: Identifier,
   ADDRESS: Address,
@@ -257,7 +278,9 @@ export const widgets: Record<string, Render> = {
   MONEY: Money,
 };
 /** 占整行的控件；其余在宽屏上两两并排。 */
-export const wideWidgets = new Set(["TEXT", "NAME", "TEXTAREA", "ADDRESS", "URL", "BOOLEAN"]);
+export const wideWidgets = new Set(["TEXT", "NAME", "TEXTAREA", "ADDRESS", "URL", "BOOLEAN", "MULTI_SELECT"]);
+/** 字段是否占整行：整数区间的短文本（如预计交付天数）与其他短控件一样占半行。 */
+export const isWideField = (field: SchemaField) => wideWidgets.has(field.widget) && !integerRange(field.validation?.pattern);
 export function RenderWidget(props: WidgetProps) {
   const Widget = widgets[props.field.widget] ?? widgets.TEXT;
   return <Widget {...props} />;

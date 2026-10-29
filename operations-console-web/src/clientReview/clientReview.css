@@ -102,3 +102,12 @@
 @media (max-width: 900px) { .obc-grid-head { display: none; } .obc-row { grid-template-columns: 32px 1fr; } .obc-row > *:nth-child(n+3) { grid-column: 2; } }
 .obc-error-text { color: var(--obw-danger, #c43c3c); }
 .obc-grid-head > span { white-space: nowrap; }
+/* 资料值：外部链接单行截断 + 新标签页图标；多值目录标签"名称 编码"（编码等宽灰字）。 */
+.profile-link { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
+.profile-link-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-link-icon { flex: none; font-size: 12px; }
+.profile-tag-code { margin-left: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; opacity: .75; }
+/* 多值标签在窄屏换行，不撑出说明列表（内容格可收缩）。 */
+.profile-tags { display: inline-flex; flex-wrap: wrap; gap: 4px; max-width: 100%; min-width: 0; }
+.profile-tags .ant-tag { margin-inline-end: 0; max-width: 100%; white-space: normal; }
+.obw-values .ant-descriptions-item-content, .client-values .ant-descriptions-item-content { min-width: 0; }

@@ -1,0 +1,48 @@
+{
+ "locale": "zh-CN",
+ "width": 390,
+ "steps": [
+  {
+   "step": "B7-individual-business",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "期望开通的支付方式",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "退款政策链接可选",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "交付方式",
+     "value": "",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": null
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  }
+ ],
+ "console": [],
+ "httpErrors": [],
+ "requests": [],
+ "bundles": {
+  "ok": 24,
+  "failed": 0
+ },
+ "application": "241549066402635776"
+}

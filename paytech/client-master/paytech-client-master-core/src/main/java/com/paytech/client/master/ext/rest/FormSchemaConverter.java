@@ -48,10 +48,11 @@ public final class FormSchemaConverter {
      * @param partyType 主主体类型
      * @param organizationTypeCode 组织类型（关系人门槛按它解析），可空
      * @param materials 程序材料槽
+     * @param paymentMethods commercial ACTIVE 支付方式代码；Schema 不引用 COMMERCIAL_PAYMENT_METHOD 时不使用
      * @return 渲染规格
      */
     public static FormSchemaResponseBody convert(OnboardingPack pack, ClientType partyType, String organizationTypeCode,
-        List<MaterialRequirement> materials) {
+        List<MaterialRequirement> materials, List<String> paymentMethods) {
         var body = new FormSchemaResponseBody();
         body.setSchemaId(pack.getSchema().getSchemaId().toString());
         body.setVersionNo(pack.getSchema().getVersionNo());
@@ -59,7 +60,7 @@ public final class FormSchemaConverter {
         body.setPartyType(partyType.getCode());
         body.setOrganizationTypeCode(pack.getSchema().getOrganizationTypeCode());
         body.setSections(sections(pack.getFields()));
-        body.setCatalogs(catalogs(pack, partyType));
+        body.setCatalogs(catalogs(pack, partyType, paymentMethods));
         body.setOrganizationTypes(pack.organizationTypesFor(partyType).stream()
             .map(type -> option(type.getTypeCode(), type.getLabelKey())).toList());
         body.setIdentifierTypes(identifierTypes(pack));
@@ -126,8 +127,9 @@ public final class FormSchemaConverter {
     /**
      * Schema 字段、地址组件与属性引用的本库目录，组织类型伪目录按机构形态列出
      * <li>REF_ 目录（Platform 参考数据）不放入：字段与地址组件保留 catalogCode，选项由 client-console-bff 向 Platform 取来补全。</li>
+     * <li>COMMERCIAL_PAYMENT_METHOD 只在 Schema 引用时放入，选项为 commercial ACTIVE 支付方式，文案键 onboardingSchema.paymentMethod.&lt;代码&gt;。</li>
      */
-    static Map<String, List<CatalogOption>> catalogs(OnboardingPack pack, ClientType partyType) {
+    static Map<String, List<CatalogOption>> catalogs(OnboardingPack pack, ClientType partyType, List<String> paymentMethods) {
         Set<String> codes = new LinkedHashSet<>();
         pack.getFields().stream().map(OnboardingSchemaField::getCatalogCode).filter(Objects::nonNull).forEach(codes::add);
         pack.addressComponents(pack.getJurisdiction().getAddressFormatCode()).forEach(component -> {
@@ -139,6 +141,10 @@ public final class FormSchemaConverter {
         codes.removeIf(ReferenceCatalogCodes::isReference);
         Map<String, List<CatalogOption>> result = new LinkedHashMap<>();
         for (String code : codes) {
+            if (ReferenceCatalogCodes.COMMERCIAL_PAYMENT_METHOD.equals(code)) {
+                result.put(code, paymentMethods.stream().map(method -> option(method, KEY_PREFIX + "paymentMethod." + method)).toList());
+                continue;
+            }
             result.put(code, OnboardingPack.ORGANIZATION_TYPE_CATALOG.equals(code)
                 ? pack.organizationTypesFor(ClientType.ORGANIZATION).stream().map(type -> option(type.getTypeCode(), type.getLabelKey())).toList()
                 : pack.catalogItems(code, partyType).stream().map(item -> option(item.getItemCode(), item.getLabelKey())).toList());

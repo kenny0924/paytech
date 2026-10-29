@@ -37,6 +37,8 @@ public class FormSchemaResponseBody {
      * <li>不含以 REF_ 开头的 Platform 参考数据目录（REF_CURRENCY 币种、REF_COUNTRY_SUBDIVISION 一级行政区）：
      * 字段与地址组件的 catalogCode 仍为 REF_ 码，选项由 client-console-bff 向 Platform 参考数据查询后补全。</li>
      * <li>国家字段（COUNTRY 控件、地址国家）不引用目录，选项同样由 client-console-bff 取 Platform ACTIVE 国家。</li>
+     * <li>Schema 引用 COMMERCIAL_PAYMENT_METHOD 时含该目录：选项为 commercial 产品能力目录中 ACTIVE 的支付方式，code 为 capability_code，
+     * labelKey 为 onboardingSchema.paymentMethod.&lt;代码&gt;，顺序为 commercial 返回顺序；commercial 不可用时整个响应 503。</li>
      */
     private Map<String, List<CatalogOption>> catalogs;
 
@@ -99,10 +101,13 @@ public class FormSchemaResponseBody {
         /** 字段键。 */
         private String fieldKey;
 
-        /** 控件代码：TEXT、TEXTAREA、DATE、COUNTRY、SELECT、IDENTIFIER、ADDRESS、NAME、PERSON_LIST、DOCUMENT_SLOT、DECLARATION、URL、MONEY、EMAIL、PHONE、BOOLEAN。 */
+        /**
+         * 控件代码：TEXT、TEXTAREA、DATE、COUNTRY、SELECT、MULTI_SELECT、IDENTIFIER、ADDRESS、NAME、PERSON_LIST、DOCUMENT_SLOT、DECLARATION、URL、MONEY、EMAIL、PHONE、BOOLEAN。
+         * <li>MULTI_SELECT 的草稿取值为英文逗号分隔的代码串（大写、去重、按代码升序，如 APPLE_PAY,CARD）。</li>
+         */
         private String widget;
 
-        /** SELECT 取值目录代码（见 catalogs；REF_ 开头时为 Platform 参考数据目录，不在 catalogs 中），可空。 */
+        /** SELECT / MULTI_SELECT 取值目录代码（见 catalogs；REF_ 开头时为 Platform 参考数据目录，不在 catalogs 中），可空。 */
         private String catalogCode;
 
         /** 要求级别：REQUIRED、EVENTUALLY、OPTIONAL（HIDDEN 不返回）。 */

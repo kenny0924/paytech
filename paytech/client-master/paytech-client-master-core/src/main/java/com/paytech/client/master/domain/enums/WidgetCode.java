@@ -19,6 +19,9 @@ public enum WidgetCode implements CodeEnum {
     /** 目录选择。 */
     SELECT,
 
+    /** 目录多选；取值为规范化逗号串（大写、去重、按代码升序）。 */
+    MULTI_SELECT,
+
     /** 法律标识（类型、号码、签发国、日期）。 */
     IDENTIFIER,
 

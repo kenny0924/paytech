@@ -1,0 +1,1106 @@
+{
+ "startedAt": "2026-10-29T12:03:19.881122+00:00",
+ "finishedAt": "2026-10-29T12:05:20.909539+00:00",
+ "summary": {
+  "PASS": 169,
+  "FAIL": 4,
+  "SKIP": 0,
+  "INFO": 4
+ },
+ "ids": {
+  "reviewerAccountId": "240674286610681856",
+  "reviewerRoleId": "240674285423693824",
+  "clientRQ12AAccountId": "241532355062272000",
+  "clientRQ12AEmail": "onb-rq12a-1029120319@example.test",
+  "clientAEmail": "onb-rq12a-1029120319@example.test",
+  "clientAAccountId": "241532355062272000",
+  "clientRQ12BAccountId": "241532400817934336",
+  "clientRQ12BEmail": "onb-rq12b-1029120319@example.test",
+  "clientBEmail": "onb-rq12b-1029120319@example.test",
+  "clientBAccountId": "241532400817934336",
+  "clientRQ12CAccountId": "241532444719714304",
+  "clientRQ12CEmail": "onb-rq12c-1029120319@example.test",
+  "clientCEmail": "onb-rq12c-1029120319@example.test",
+  "clientCAccountId": "241532444719714304",
+  "appA": "241532493927297024",
+  "clientIdA": "241532493927297025",
+  "submissionA": "10244f98-6d93-4453-a98f-5f170e777ef4",
+  "appAStatus": "UNDER_REVIEW",
+  "appB": "241532599334350848",
+  "clientIdB": "241532599334350849",
+  "submissionB": "20d3e900-d4c3-43ee-a5dd-905bdf1fc095",
+  "appBStatus": "UNDER_REVIEW",
+  "appC": "241532771674107904",
+  "clientIdC": "241532771674107905",
+  "submissionC": "48b27f9d-5c91-4cad-8927-c8e72869bd6b",
+  "appCStatus": "UNDER_REVIEW",
+  "caseA": "241532585883226112",
+  "caseB": "241532757572866048",
+  "legacyV1App": "240923939717525504",
+  "legacyV1Case": "240924025168089088"
+ },
+ "results": [
+  {
+   "ac": "SETUP",
+   "step": "复核人 B 登录（复用已建的合成复核人）",
+   "verdict": "PASS",
+   "evidence": "accountId=240674286610681856"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12A 注册",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12A 验证链接",
+   "verdict": "PASS",
+   "evidence": "source=minted challengeNo=8c91524c-3ec7-44b5-9522-6fca08aac0d0"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12A 邮箱验证",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12A 登录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12B 注册",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12B 验证链接",
+   "verdict": "PASS",
+   "evidence": "source=minted challengeNo=3b4a03e5-32af-408c-b1f5-8c1b2a63a346"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12B 邮箱验证",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12B 登录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12C 注册",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12C 验证链接",
+   "verdict": "PASS",
+   "evidence": "source=minted challengeNo=14cb66db-462a-4ef0-a190-1406a11b0401"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12C 邮箱验证",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12C 登录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "F",
+   "step": "本机 commercial ACTIVE 支付方式",
+   "verdict": "INFO",
+   "evidence": "HTTP 200 ['APPLE_PAY', 'GOOGLE_PAY', 'CARD']"
+  },
+  {
+   "ac": "AC-01",
+   "step": "AE 机构 form-schema",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "AE 个人 form-schema",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "v3 Schema",
+   "verdict": "PASS",
+   "evidence": "org=9281200000900301 v3 ind=9281200000900303 v3"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构 BUSINESS 分区四个新字段",
+   "verdict": "PASS",
+   "evidence": "{\"business.expectedPaymentMethods\": \"MULTI_SELECT\", \"business.refundPolicyUrl\": \"URL\", \"business.fulfillmentType\": \"SELECT\", \"business.fulfillmentDays\": \"TEXT\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构 期望支付方式 MULTI_SELECT / COMMERCIAL_PAYMENT_METHOD / REQUIRED",
+   "verdict": "PASS",
+   "evidence": "{\"appliesTo\": \"PRIMARY\", \"catalogCode\": \"COMMERCIAL_PAYMENT_METHOD\", \"fieldKey\": \"business.expectedPaymentMethods\", \"helpKey\": \"onboardingSchema.help.business.expectedPaymentMethods\", \"labelKey\": \"onboardingSchema.field.business.expectedPaymentMethods\", \"order\": 2200, \"requirementGroup\": null, \"requirementGroupLabelKey\": null, \"requirementLevel\": \"REQUIRED\", \"validation\": {\"checksumRule\": null, \"maxLength\": 512, \"minLength\": null, \"pattern\": null}, \"visibleWhen\": null, \"widget\": \"MULTI_SELECT\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构 退款政策 EVENTUALLY、https 正则",
+   "verdict": "PASS",
+   "evidence": "{\"appliesTo\": \"PRIMARY\", \"catalogCode\": null, \"fieldKey\": \"business.refundPolicyUrl\", \"helpKey\": \"onboardingSchema.help.business.refundPolicyUrl\", \"labelKey\": \"onboardingSchema.field.business.refundPolicyUrl\", \"order\": 2210, \"requirementGroup\": null, \"requirementGroupLabelKey\": null, \"requirementLevel\": \"EVENTUALLY\", \"validation\": {\"checksumRule\": null, \"maxLength\": 2048, \"minLength\": null, \"pattern\": \"^https://\\\\S+$\"}, \"visibleWhen\": null, \"widget\": \"URL\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构 交付方式 SELECT / FULFILLMENT_TYPE / REQUIRED；天数仅 PRE_ORDER 可见",
+   "verdict": "PASS",
+   "evidence": "{\"type\": {\"appliesTo\": \"PRIMARY\", \"catalogCode\": \"FULFILLMENT_TYPE\", \"fieldKey\": \"business.fulfillmentType\", \"helpKey\": \"onboardingSchema.help.business.fulfillmentType\", \"labelKey\": \"onboardingSchema.field.business.fulfillmentType\", \"order\": 2220, \"requirementGroup\": null, \"requirementGroupLabelKey\": null, \"requirementLevel\": \"REQUIRED\", \"validation\": {\"checksumRule\": null, \"maxLength\": null, \"minLength\": null, \"pattern\": null}, \"visibleWhen\": null, \"widget\": \"SELECT\"}, \"days\": {\"appliesTo\": \"PRIMARY\", \"catalogCode\": null, \"fieldKey\": \"business.fulfillmentDays\", \"helpKey\": \"onboardingSchema.help.business.fulfillmentDays\", \"labelKey\": \"onboardingSchema.field.business.fulfillmentDays\", \"order\""
+  },
+  {
+   "ac": "AC-02",
+   "step": "机构 支付方式选项 = 本机 commercial ACTIVE 支付方式（顺序一致）、文案键 paymentMethod.<代码>",
+   "verdict": "PASS",
+   "evidence": "['APPLE_PAY', 'GOOGLE_PAY', 'CARD'] ['onboardingSchema.paymentMethod.APPLE_PAY', 'onboardingSchema.paymentMethod.GOOGLE_PAY', 'onboardingSchema.paymentMethod.CARD']"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构 交付方式目录 4 项",
+   "verdict": "PASS",
+   "evidence": "[{\"code\": \"INSTANT\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.INSTANT\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"PRE_ORDER\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.PRE_ORDER\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"SUBSCRIPTION\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.SUBSCRIPTION\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"SERVICE\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.SERVICE\", \"logoPublicUrl\": null, \"name\": null}]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人 BUSINESS 分区四个新字段",
+   "verdict": "PASS",
+   "evidence": "{\"business.expectedPaymentMethods\": \"MULTI_SELECT\", \"business.refundPolicyUrl\": \"URL\", \"business.fulfillmentType\": \"SELECT\", \"business.fulfillmentDays\": \"TEXT\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人 期望支付方式 MULTI_SELECT / COMMERCIAL_PAYMENT_METHOD / REQUIRED",
+   "verdict": "PASS",
+   "evidence": "{\"appliesTo\": \"PRIMARY\", \"catalogCode\": \"COMMERCIAL_PAYMENT_METHOD\", \"fieldKey\": \"business.expectedPaymentMethods\", \"helpKey\": \"onboardingSchema.help.business.expectedPaymentMethods\", \"labelKey\": \"onboardingSchema.field.business.expectedPaymentMethods\", \"order\": 2250, \"requirementGroup\": null, \"requirementGroupLabelKey\": null, \"requirementLevel\": \"REQUIRED\", \"validation\": {\"checksumRule\": null, \"maxLength\": 512, \"minLength\": null, \"pattern\": null}, \"visibleWhen\": null, \"widget\": \"MULTI_SELECT\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人 退款政策 OPTIONAL、https 正则",
+   "verdict": "PASS",
+   "evidence": "{\"appliesTo\": \"PRIMARY\", \"catalogCode\": null, \"fieldKey\": \"business.refundPolicyUrl\", \"helpKey\": \"onboardingSchema.help.business.refundPolicyUrl\", \"labelKey\": \"onboardingSchema.field.business.refundPolicyUrl\", \"order\": 2260, \"requirementGroup\": null, \"requirementGroupLabelKey\": null, \"requirementLevel\": \"OPTIONAL\", \"validation\": {\"checksumRule\": null, \"maxLength\": 2048, \"minLength\": null, \"pattern\": \"^https://\\\\S+$\"}, \"visibleWhen\": null, \"widget\": \"URL\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人 交付方式 SELECT / FULFILLMENT_TYPE / REQUIRED；天数仅 PRE_ORDER 可见",
+   "verdict": "PASS",
+   "evidence": "{\"type\": {\"appliesTo\": \"PRIMARY\", \"catalogCode\": \"FULFILLMENT_TYPE\", \"fieldKey\": \"business.fulfillmentType\", \"helpKey\": \"onboardingSchema.help.business.fulfillmentType\", \"labelKey\": \"onboardingSchema.field.business.fulfillmentType\", \"order\": 2270, \"requirementGroup\": null, \"requirementGroupLabelKey\": null, \"requirementLevel\": \"REQUIRED\", \"validation\": {\"checksumRule\": null, \"maxLength\": null, \"minLength\": null, \"pattern\": null}, \"visibleWhen\": null, \"widget\": \"SELECT\"}, \"days\": {\"appliesTo\": \"PRIMARY\", \"catalogCode\": null, \"fieldKey\": \"business.fulfillmentDays\", \"helpKey\": \"onboardingSchema.help.business.fulfillmentDays\", \"labelKey\": \"onboardingSchema.field.business.fulfillmentDays\", \"order\""
+  },
+  {
+   "ac": "AC-02",
+   "step": "个人 支付方式选项 = 本机 commercial ACTIVE 支付方式（顺序一致）、文案键 paymentMethod.<代码>",
+   "verdict": "PASS",
+   "evidence": "['APPLE_PAY', 'GOOGLE_PAY', 'CARD'] ['onboardingSchema.paymentMethod.APPLE_PAY', 'onboardingSchema.paymentMethod.GOOGLE_PAY', 'onboardingSchema.paymentMethod.CARD']"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人 交付方式目录 4 项",
+   "verdict": "PASS",
+   "evidence": "[{\"code\": \"INSTANT\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.INSTANT\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"PRE_ORDER\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.PRE_ORDER\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"SUBSCRIPTION\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.SUBSCRIPTION\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"SERVICE\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.SERVICE\", \"logoPublicUrl\": null, \"name\": null}]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A 创建申请（AE ORGANIZATION LLC）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 applicationId=241532493927297024 operation=CREATED "
+  },
+  {
+   "ac": "AC-01",
+   "step": "A 创建机构申请",
+   "verdict": "PASS",
+   "evidence": "{\"commandId\": null, \"applicationId\": \"241532493927297024\", \"applicationNo\": \"CA-241532493927297024\", \"clientId\": \"241532493927297025\", \"clientType\": \"ORGANIZATION\", \"operation\": \"CREATED\", \"completedAt\": \"2026-10-29T12:03:53.999884Z\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A 冻结 v3",
+   "verdict": "PASS",
+   "evidence": "9281200000900301"
+  },
+  {
+   "ac": "AC-02",
+   "step": "草稿 CODE_LIST 规范化与天数去前导零",
+   "verdict": "PASS",
+   "evidence": "HTTP 200  values={'expectedPaymentMethods': 'APPLE_PAY,CARD', 'refundPolicyUrl': 'https://shop.example.test/refunds', 'fulfillmentType': 'PRE_ORDER', 'fulfillmentDays': '7'}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "改 INSTANT 同一写入清空天数",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 values={'expectedPaymentMethods': 'APPLE_PAY,CARD', 'refundPolicyUrl': 'https://shop.example.test/refunds', 'fulfillmentType': 'INSTANT', 'fulfillmentDays': None}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "非预售单独填天数 → 422 INVALID_DRAFT（business.fulfillmentDays）",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'INVALID_DRAFT', 'detail': '入驻字段不符合约定', 'requestId': '90b98720-dc7b-45b0-ba4a-aa973367aef1', 'errors': [{'field': 'business.fulfillmentDays', 'message': '仅在交付方式为预售时填写'}]}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "http 退款政策 → 422 INVALID_DRAFT（须为 https 网址）",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'INVALID_DRAFT', 'detail': '入驻字段不符合约定', 'requestId': 'bf0c40b4-2b7c-4cb0-a932-91d7b1caa34a', 'errors': [{'field': 'business.refundPolicyUrl', 'message': '须为 https 网址'}]}"
+  },
+  {
+   "ac": "AC-02",
+   "step": "非法支付方式代码 → 422",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'INVALID_DRAFT', 'detail': '入驻字段不符合约定', 'requestId': '20cce815-fe2e-4152-b9c1-dd25c8cd5eee', 'errors': [{'field': 'business.expectedPaymentMethods', 'message': '须为以逗号分隔的代码，最多 20 项'}]}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "天数 0：草稿可存，需求清单 FIELD_FORMAT_INVALID / CURRENTLY_DUE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 item={'awaitingActionFrom': 'CLIENT', 'dueTime': None, 'errorCode': 'FIELD_FORMAT_INVALID', 'remediationCode': 'PROVIDE_FIELD', 'requirementKey': 'business.fulfillmentDays', 'requirementKind': 'FIELD', 'status': 'CURRENTLY_DUE', 'subjectPartyId': '241532493927297026'}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "天数 400：草稿可存，需求清单 FIELD_FORMAT_INVALID / CURRENTLY_DUE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 item={'awaitingActionFrom': 'CLIENT', 'dueTime': None, 'errorCode': 'FIELD_FORMAT_INVALID', 'remediationCode': 'PROVIDE_FIELD', 'requirementKey': 'business.fulfillmentDays', 'requirementKind': 'FIELD', 'status': 'CURRENTLY_DUE', 'subjectPartyId': '241532493927297026'}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "PRE_ORDER 缺天数 → CURRENTLY_DUE FIELD_MISSING",
+   "verdict": "PASS",
+   "evidence": "{\"awaitingActionFrom\": \"CLIENT\", \"dueTime\": null, \"errorCode\": \"FIELD_MISSING\", \"remediationCode\": \"PROVIDE_FIELD\", \"requirementKey\": \"business.fulfillmentDays\", \"requirementKind\": \"FIELD\", \"status\": \"CURRENTLY_DUE\", \"subjectPartyId\": \"241532493927297026\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构缺退款政策 → EVENTUALLY_DUE（不阻断提交）",
+   "verdict": "PASS",
+   "evidence": "{\"awaitingActionFrom\": \"CLIENT\", \"dueTime\": null, \"errorCode\": \"FIELD_MISSING\", \"remediationCode\": \"PROVIDE_FIELD\", \"requirementKey\": \"business.refundPolicyUrl\", \"requirementKind\": \"FIELD\", \"status\": \"EVENTUALLY_DUE\", \"subjectPartyId\": \"241532493927297026\"}"
+  },
+  {
+   "ac": "AC-02",
+   "step": "支付方式与交付方式 SATISFIED",
+   "verdict": "PASS",
+   "evidence": "{\"business.expectedPaymentMethods\": {\"awaitingActionFrom\": null, \"dueTime\": null, \"errorCode\": null, \"remediationCode\": null, \"requirementKey\": \"business.expectedPaymentMethods\", \"requirementKind\": \"FIELD\", \"status\": \"SATISFIED\", \"subjectPartyId\": \"241532493927297026\"}, \"business.fulfillmentType\": {\"awaitingActionFrom\": null, \"dueTime\": null, \"errorCode\": null, \"remediationCode\": null, \"requirementKey\": \"business.fulfillmentType\", \"requirementKind\": \"FIELD\", \"status\": \"SATISFIED\", \"subjectPartyId\": \"241532493927297026\"}}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A 主主体 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=21 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A UBO1 新增关系人（UBO）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 partyId=241532504882819072 relationId=241532504970899456 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A UBO1 追加关系（DIRECTOR）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 relationId=241532505209974784 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A UBO1 追加关系（SIGNATORY）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 relationId=241532505423884288 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A UBO2 新增关系人（UBO）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 partyId=241532505734262784 relationId=241532505788788736 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 A-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT A-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 A-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532507495862272"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 A-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532507495862272"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 A-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532521869750272 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 A-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT A-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 A-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532522788294656"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 A-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532522788294656"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 A-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532537141211136 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 A-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT A-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 A-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532538034589696"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 A-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532538034589696"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 A-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532552051961856 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 A-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT A-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 A-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532552630767616"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 A-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532552630767616"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 A-UBO1-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532565880582144 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 A-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT A-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 A-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532566300004352"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 A-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532566300004352"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 A-UBO2-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532579495292928 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 OWNERSHIP_COMPLETE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 DIRECTORSHIP_COMPLETE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 REPRESENTATIVE_AUTHORITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 RELATED_PERSON_DATA_AUTHORITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 PEP_DECLARATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 INFORMATION_TRUE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 PLATFORM_TERMS_ACCEPTANCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 PRIVACY_NOTICE_ACKNOWLEDGED",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A 填满：ready，退款政策仍 EVENTUALLY_DUE",
+   "verdict": "PASS",
+   "evidence": "ready=True open=[('business.refundPolicyUrl', 'FIELD_MISSING', 'EVENTUALLY_DUE')]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A 提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 ready=True errors=[]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A 提交",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 submissionId=10244f98-6d93-4453-a98f-5f170e777ef4 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "A 进入审核",
+   "verdict": "PASS",
+   "evidence": "status=UNDER_REVIEW"
+  },
+  {
+   "ac": "AC-01",
+   "step": "B 创建申请（AE INDIVIDUAL ）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 applicationId=241532599334350848 operation=CREATED "
+  },
+  {
+   "ac": "AC-01",
+   "step": "B 创建个人申请",
+   "verdict": "PASS",
+   "evidence": "{\"commandId\": null, \"applicationId\": \"241532599334350848\", \"applicationNo\": \"CA-241532599334350848\", \"clientId\": \"241532599334350849\", \"clientType\": \"INDIVIDUAL\", \"operation\": \"CREATED\", \"completedAt\": \"2026-10-29T12:04:19.139287Z\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人缺退款政策：无清单项（OPTIONAL）；支付方式 / 交付方式 CURRENTLY_DUE",
+   "verdict": "PASS",
+   "evidence": "{\"business.expectedPaymentMethods\": \"CURRENTLY_DUE\", \"business.refundPolicyUrl\": null, \"business.fulfillmentType\": \"CURRENTLY_DUE\", \"business.fulfillmentDays\": null}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "B 主主体 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=33 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 B-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT B-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 B-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532602274549760"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 B-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532602274549760"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 B-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532615922823168 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 B-PRIMARY-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT B-PRIMARY-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 B-PRIMARY-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532616556154880"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 B-PRIMARY-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532616556154880"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 B-PRIMARY-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532630481252352 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 B-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT B-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 B-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532631307522048"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 B-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532631307522048"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 B-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532645530415104 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 B-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT B-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 B-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532646625120256"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 B-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532646625120256"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 B-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532660697018368 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 PEP_DECLARATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 INFORMATION_TRUE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 PLATFORM_TERMS_ACCEPTANCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 PRIVACY_NOTICE_ACKNOWLEDGED",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "B 填满后 ready",
+   "verdict": "PASS",
+   "evidence": "open=[]"
+  },
+  {
+   "ac": "U",
+   "step": "停本机 commercial",
+   "verdict": "INFO",
+   "evidence": "pid 27614 at 2026-10-29T16:04:34+0400"
+  },
+  {
+   "ac": "U",
+   "step": "commercial 不可用：form-schema 503 ONBOARDING_DEPENDENCY_UNAVAILABLE",
+   "verdict": "FAIL",
+   "evidence": "HTTP 503 {'code': 'SERVICE_UNAVAILABLE', 'detail': '服务暂时不可用，请稍后重试', 'requestId': '660b193a-b9fd-421a-9d3b-a79607e108ac'}"
+  },
+  {
+   "ac": "U",
+   "step": "commercial 不可用：需求清单 503",
+   "verdict": "FAIL",
+   "evidence": "HTTP 503 {'code': 'SERVICE_UNAVAILABLE', 'detail': '服务暂时不可用，请稍后重试', 'requestId': '64997176-15a2-487e-9ec3-b88472deb9cf'}"
+  },
+  {
+   "ac": "U",
+   "step": "commercial 不可用：提交 503，申请仍 DRAFT、资料版本不变",
+   "verdict": "FAIL",
+   "evidence": "HTTP 503 {'code': 'SERVICE_UNAVAILABLE', 'detail': '服务暂时不可用，请稍后重试', 'requestId': '29b4cd4a-2cc9-44b1-8d25-faf028784b9e'} status=DRAFT revision=5"
+  },
+  {
+   "ac": "U",
+   "step": "commercial 不可用时草稿保存不受影响",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "U",
+   "step": "恢复本机 commercial",
+   "verdict": "INFO",
+   "evidence": "pid 21331"
+  },
+  {
+   "ac": "U",
+   "step": "commercial 恢复后目录照常",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 ['APPLE_PAY', 'GOOGLE_PAY', 'CARD']"
+  },
+  {
+   "ac": "U",
+   "step": "声明 PEP_DECLARATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "U",
+   "step": "声明 INFORMATION_TRUE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "U",
+   "step": "声明 PLATFORM_TERMS_ACCEPTANCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "U",
+   "step": "声明 PRIVACY_NOTICE_ACKNOWLEDGED",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "U",
+   "step": "B（commercial 恢复后） 提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 ready=True errors=[]"
+  },
+  {
+   "ac": "U",
+   "step": "B（commercial 恢复后） 提交",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 submissionId=20d3e900-d4c3-43ee-a5dd-905bdf1fc095 {}"
+  },
+  {
+   "ac": "U",
+   "step": "B（commercial 恢复后） 进入审核",
+   "verdict": "PASS",
+   "evidence": "status=UNDER_REVIEW"
+  },
+  {
+   "ac": "AC-04",
+   "step": "C 创建申请（AE INDIVIDUAL ）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 applicationId=241532771674107904 operation=CREATED "
+  },
+  {
+   "ac": "AC-04",
+   "step": "C 创建个人申请",
+   "verdict": "PASS",
+   "evidence": "{\"commandId\": null, \"applicationId\": \"241532771674107904\", \"applicationNo\": \"CA-241532771674107904\", \"clientId\": \"241532771674107905\", \"clientType\": \"INDIVIDUAL\", \"operation\": \"CREATED\", \"completedAt\": \"2026-10-29T12:05:00.227099Z\"}"
+  },
+  {
+   "ac": "AC-04",
+   "step": "本机测试数据：C 改冻结 v2（模拟在途）",
+   "verdict": "INFO",
+   "evidence": "UPDATE t_client_application SET schema_id=9270000000900303 WHERE application_id=241532771674107904 AND status='DRAFT'"
+  },
+  {
+   "ac": "AC-04",
+   "step": "C form-schema 为 v2：无四个新字段、无 commercial 目录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 schemaId=9270000000900303"
+  },
+  {
+   "ac": "AC-01",
+   "step": "C 主主体 保存草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fields=29 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 C-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT C-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 C-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532775591579648"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 C-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532775591579648"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 C-PRIMARY-BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532789629923328 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 C-PRIMARY-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT C-PRIMARY-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 C-PRIMARY-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532790363918336"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 C-PRIMARY-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532790363918336"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 C-PRIMARY-IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532804473565184 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 C-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT C-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 C-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532805689905152"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 C-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532805689905152"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 C-PRIMARY-ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532819438841856 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传授权 C-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "对象存储 PUT C-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 host=127.0.0.1:19400"
+  },
+  {
+   "ac": "AC-01",
+   "step": "上传完成 C-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 fileAddress=/files/v1/241532820059590656"
+  },
+  {
+   "ac": "AC-01",
+   "step": "文件扫描 C-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "scanStatus=AVAILABLE fileId=241532820059590656"
+  },
+  {
+   "ac": "AC-01",
+   "step": "关联材料 C-PRIMARY-REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 documentId=241532833548480512 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 PEP_DECLARATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 INFORMATION_TRUE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 PLATFORM_TERMS_ACCEPTANCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "声明 PRIVACY_NOTICE_ACKNOWLEDGED",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-04",
+   "step": "C 需求清单无新字段且 ready",
+   "verdict": "PASS",
+   "evidence": "ready=True open=[]"
+  },
+  {
+   "ac": "AC-04",
+   "step": "C（v2 在途） 提交核对 ready",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 ready=True errors=[]"
+  },
+  {
+   "ac": "AC-04",
+   "step": "C（v2 在途） 提交",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 submissionId=48b27f9d-5c91-4cad-8927-c8e72869bd6b {}"
+  },
+  {
+   "ac": "AC-04",
+   "step": "C（v2 在途） 进入审核",
+   "verdict": "PASS",
+   "evidence": "status=UNDER_REVIEW"
+  },
+  {
+   "ac": "AC-04",
+   "step": "C 全程不调用 commercial 支付方式目录（commercial 访问日志）",
+   "verdict": "PASS",
+   "evidence": "before=0 after=0"
+  },
+  {
+   "ac": "AC-05",
+   "step": "A 案件出现在工作台",
+   "verdict": "PASS",
+   "evidence": "241532493927297024"
+  },
+  {
+   "ac": "AC-05",
+   "step": "运营案件详情 application.values.business 三项",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {'expectedPaymentMethods': 'APPLE_PAY,GOOGLE_PAY', 'refundPolicyUrl': None, 'fulfillmentType': 'INSTANT', 'fulfillmentDays': None}"
+  },
+  {
+   "ac": "AC-05",
+   "step": "B 案件详情：PRE_ORDER 14 天、退款政策链接",
+   "verdict": "PASS",
+   "evidence": "{\"expectedPaymentMethods\": \"CARD\", \"refundPolicyUrl\": \"https://shop.example.test/refunds?v=2\", \"fulfillmentType\": \"PRE_ORDER\", \"fulfillmentDays\": \"14\"}"
+  },
+  {
+   "ac": "AC-05",
+   "step": "运营 Client 详情 values.business 三项",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {'expectedPaymentMethods': 'APPLE_PAY,GOOGLE_PAY', 'refundPolicyUrl': None, 'fulfillmentType': 'INSTANT', 'fulfillmentDays': None}"
+  },
+  {
+   "ac": "AC-04",
+   "step": "在途 v1 案件详情：三项为空（页面显示“未采集”）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 case=240924025168089088 {'expectedPaymentMethods': None, 'refundPolicyUrl': None, 'fulfillmentType': None, 'fulfillmentDays': None}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "A 材料接受 BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=241532585887420420 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "A 材料接受 ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=241532585891614722 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "A 材料接受 REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=241532585891614725 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "A 材料接受 IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=241532585908391939 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "A 材料接受 IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=241532585912586246 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "A 人工检查 MANUAL_SCREENING PASS（case 241532585883226112）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=241532585891614727 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "A 人工检查 TERMINATED_MERCHANT_LOOKUP PASS（case 241532585883226112）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=241532585891614728 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "A 人工检查 WEBSITE_REVIEW PASS（case 241532585883226112）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=241532585891614729 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "A 人工检查 MANUAL_SCREENING PASS（case 241532585908391936）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=241532585908391940 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "A 人工检查 MANUAL_SCREENING PASS（case 241532585912586243）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=241532585912586247 "
+  },
+  {
+   "ac": "P",
+   "step": "场景异常",
+   "verdict": "FAIL",
+   "evidence": "KeyError: 'code'"
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+-- REQ-12 client-master 业务信息补采：SQL 索引（本文件不执行）。执行文件与权威定义均在服务目录，不在此复制。
+-- 执行顺序（technique 第 13 节）：DDL → client-master 新镜像 → client-console-web、operations-console-web → 两个语言包 → v3 DML。
+--   1. DDL（4 列 + 3 处注释，可重跑）：paytech/client-master/docs/database/sql/changes/2026-10-29-business-info-collection-ddl.sql
+--      回退（须先回退 DML；删除 4 列会丢失已采集数据）：paytech/client-master/docs/database/sql/changes/2026-10-29-business-info-collection-ddl-rollback.sql
+--   2. Schema v3 DML（可先 SET @cm_bizinfo_status = 'DRAFT'; 写入核对，再以 ACTIVE 重跑发布）：
+--      paytech/client-master/docs/database/sql/changes/2026-10-29-business-info-collection.sql
+--      回退（存在 v3 申请或已填交付方式的资料时拒绝）：paytech/client-master/docs/database/sql/changes/2026-10-29-business-info-collection-rollback.sql
+-- 当前完整定义：paytech/client-master/docs/database/sql/client-master-schema.sql、client-master-initial-data.sql（最终状态，v3 ACTIVE）；
+--   测试建表：paytech/client-master/paytech-client-master-test/src/test/resources/init/ddl.sql。

@@ -37,13 +37,16 @@ export function humanize(code: string): string {
   return words ? words[0].toUpperCase() + words.slice(1) : code;
 }
 
-/** 字段外框：标签在上，"可选"灰字跟在标签后；帮助文字在标签下；错误在控件下（红框 + 红字）。 */
+/**
+ * 字段外框：标签在上，"可选"灰字跟在标签后；帮助文字在标签下；错误在控件下（红框 + 红字）
+ * <li>optional 为文字时显示该文字代替"可选"（如批准前补充的字段显示"批准前提供"）。</li>
+ */
 export function FieldShell({ id, label, optional, help, error, children, wide, mono }: {
-  id: string; label: string; optional?: boolean; help?: string | null; error?: string | null; children: ReactNode; wide?: boolean; mono?: boolean;
+  id: string; label: string; optional?: boolean | string; help?: string | null; error?: string | null; children: ReactNode; wide?: boolean; mono?: boolean;
 }) {
   const t = useT("onboarding");
   return <div className={"ob-field" + (wide ? " wide" : "") + (mono ? " mono-field" : "")} data-field={id}>
-    <label htmlFor={id}>{label}{optional && <span className="ob-optional">{t("form.optional")}</span>}</label>
+    <label htmlFor={id}>{label}{optional && <span className="ob-optional">{typeof optional === "string" ? optional : t("form.optional")}</span>}</label>
     {help && <p className="ob-help" id={id + "-help"}>{help}</p>}
     {children}
     {error && <p className="ob-error" id={id + "-error"} role="alert">{error}</p>}

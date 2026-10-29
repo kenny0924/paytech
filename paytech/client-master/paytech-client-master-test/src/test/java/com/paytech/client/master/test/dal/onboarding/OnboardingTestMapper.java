@@ -97,6 +97,28 @@ public class OnboardingTestMapper {
             VaultMocker.token("PHONE_E164_V1", "+97150" + contactId % 10_000_000), "+971****0000", at, at);
     }
 
+    /** 改写夹具申请冻结的 Schema（如 v2 在途申请、v3 新申请）。 */
+    public void freezeSchema(long applicationId, long schemaId) {
+        jdbc.update("UPDATE t_client_application SET schema_id=? WHERE application_id=?", schemaId, applicationId);
+    }
+
+    /** 直接写入经营资料的业务信息补采四列（夹具；不经草稿入口）。 */
+    public void businessInfo(long clientId, String paymentMethods, String refundPolicyUrl, String fulfillmentType, Integer fulfillmentDays) {
+        jdbc.update("UPDATE t_client_business_profile SET expected_payment_methods=?,refund_policy_url=?,fulfillment_type=?,"
+            + "fulfillment_days=? WHERE client_id=?", paymentMethods, refundPolicyUrl, fulfillmentType, fulfillmentDays, clientId);
+    }
+
+    /** 经营资料的业务信息补采四列。 */
+    public Map<String, Object> businessInfo(long clientId) {
+        return jdbc.queryForMap("SELECT expected_payment_methods,refund_policy_url,fulfillment_type,fulfillment_days "
+            + "FROM t_client_business_profile WHERE client_id=?", clientId);
+    }
+
+    /** 申请的 Client。 */
+    public long applicationClient(long applicationId) {
+        return jdbc.queryForObject("SELECT client_id FROM t_client_application WHERE application_id=?", Long.class, applicationId);
+    }
+
     /** 插入申请声明（TRUE）。 */
     public void insertDeclarations(long applicationId, List<String> types, long accountId, LongSupplier ids, Instant now) {
         var at = Timestamp.from(now);

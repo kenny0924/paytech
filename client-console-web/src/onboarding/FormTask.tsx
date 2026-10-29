@@ -3,7 +3,7 @@ import { flatten } from "../onboarding.ts";
 import type { Flat, Values } from "../onboarding.ts";
 import type { FormSchema } from "./model.ts";
 import { draftPatch, fieldPaths, issueText, localIssues, sendIsolating, serialQueue, serverIssues, withBackoff } from "./draft.ts";
-import { addressPath, identifierPaths, isIdentifierLead, isVisible, selectedIdentifier } from "./schema.ts";
+import { addressPath, identifierPaths, isIdentifierLead, isVisible, optionalNote, pathsHiddenByChange, selectedIdentifier } from "./schema.ts";
 import { RequestFailure } from "../auth.ts";
 import { translator } from "../i18n/index.ts";
 
@@ -11,7 +11,7 @@ const to = translator("onboarding");
 import { useT } from "../i18n/react.tsx";
 import type { FieldBlock } from "./schema.ts";
 import { useSchemaLookup, useSchemaText } from "./ui.tsx";
-import { RenderWidget, wideWidgets } from "./widgets.tsx";
+import { RenderWidget, isWideField } from "./widgets.tsx";
 
 /**
  * 草稿表单状态：本地值、已保存基线、字段错误；失焦后自动保存改动且格式通过的字段
@@ -30,10 +30,14 @@ export function useDraftForm(initial: Values, schema: FormSchema, blocks: FieldB
   /** 被服务端拒绝（422）的字段：显示错误并停止重发，直到用户再次修改该字段。 */
   const rejected = useRef(new Set<string>());
 
+  /** 改值；登记为隐藏即清空的字段（预计交付天数）因此变为不可见时同时清空，随本次改动一起保存。 */
   function set(path: string, value: string) {
-    rejected.current.delete(path);
-    setValues((previous) => ({ ...previous, [path]: value }));
-    setErrors((previous) => { if (!previous[path]) return previous; const next = { ...previous }; delete next[path]; return next; });
+    const next = { ...current.current, [path]: value };
+    const cleared = [path, ...pathsHiddenByChange(schema, current.current, next)];
+    for (const key of cleared) { rejected.current.delete(key); if (key !== path) next[key] = ""; }
+    current.current = next;
+    setValues((previous) => { const merged = { ...previous }; for (const key of cleared) merged[key] = next[key]; return merged; });
+    setErrors((previous) => { if (!cleared.some((key) => previous[key])) return previous; const rest = { ...previous }; for (const key of cleared) delete rest[key]; return rest; });
   }
   function check(path: string) {
     const issue = localIssues(blocks, current.current, schema, false)[path];
@@ -158,10 +162,10 @@ export function SchemaFields({ prefix, blocks, schema, form, disabled, countryCo
     lastGroup = block.group.group;
     return <section className="ob-group" key={block.section.section + ":" + block.group.group}>
       {heading && <h2>{label(block.group.labelKey, block.group.group)}</h2>}
-      <div className="ob-grid">{visible.map((field) => <div className={wideWidgets.has(field.widget) ? "ob-cell wide" : "ob-cell"} key={field.fieldKey}>
+      <div className="ob-grid">{visible.map((field) => <div className={isWideField(field) ? "ob-cell wide" : "ob-cell"} key={field.fieldKey}>
         <RenderWidget field={field} schema={schema} values={form.values} id={inputId(prefix, field.fieldKey)}
           label={label(field.labelKey, field.fieldKey)} help={help(field.helpKey)}
-          optional={field.requirementLevel !== "REQUIRED"} errors={form.errors} disabled={disabled}
+          optional={optionalNote(field, help)} errors={form.errors} disabled={disabled}
           set={form.set} blur={form.blur} countryCode={countryCode} />
       </div>)}</div>
     </section>;

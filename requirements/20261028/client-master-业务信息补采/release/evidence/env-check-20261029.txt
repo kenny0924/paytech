@@ -1,0 +1,6 @@
+candidate client-master-service      image=2b12c2e2184b keys live=40 rendered=40 missing=[] extra=[] valuediff=[]
+candidate client-console-web         image=e17a9a0a43b9 keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+candidate operations-console-web     image=0b456b8aed53 keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+rollback  client-master-service      image=c9bb7b8e30f6 keys live=40 rendered=40 missing=[] extra=[] valuediff=[]
+rollback  client-console-web         image=3db62571940f keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+rollback  operations-console-web     image=96992aba5774 keys live=7 rendered=7 missing=[] extra=[] valuediff=[]

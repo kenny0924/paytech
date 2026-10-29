@@ -24,6 +24,7 @@ import com.paytech.client.master.test.mocker.onboarding.OnboardingOwnerMocker;
 import com.paytech.client.master.test.mocker.onboarding.VaultMocker;
 import com.paytech.client.master.test.mocker.platform.ReferenceCatalogFixture;
 import com.paytech.client.master.test.mocker.commercial.CommercialAgreementPartyMocker;
+import com.paytech.client.master.test.mocker.commercial.CommercialProductCatalogMocker;
 import com.paytech.foundation.compensation.core.execution.CompensationEventDispatcher;
 import com.paytech.foundation.testsupport.api.MockHttpServer;
 import com.paytech.foundation.testsupport.api.TestBase;
@@ -63,6 +64,9 @@ public abstract class ClientMasterMockTestBase extends TestBase {
     protected CommercialAgreementPartyMocker agreementParties;
 
     @Autowired
+    protected CommercialProductCatalogMocker productCatalog;
+
+    @Autowired
     protected JurisdictionPackMocker packs;
 
     @Autowired
@@ -91,6 +95,8 @@ public abstract class ClientMasterMockTestBase extends TestBase {
         owners.mockSession(ACCOUNT_ID, SESSION_ID);
         // commercial 合同参与方引用的公共基线：可用且无引用；人员共享场景在用例内覆盖。
         agreementParties.mockNoReferences();
+        // commercial 产品能力目录的公共基线：4 个 ACTIVE 支付方式（期望支付方式的选项与校验来源）；过滤、不可用与零调用在用例内覆盖。
+        productCatalog.mockStandardCatalog();
         // Platform 参考数据的公共基线（刷新进程内快照）：测试会填写的国家、币种、行政区、行业与 MCC 均为 ACTIVE；停用、不存在与不可用在用例内覆盖。
         referenceData.mockStandardCatalog();
     }

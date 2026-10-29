@@ -1,0 +1,218 @@
+{
+ "env": "test",
+ "startedAt": "2026-10-29T13:04:01.957277+00:00",
+ "finishedAt": "2026-10-29T13:04:18.137037+00:00",
+ "summary": {
+  "PASS": 32,
+  "FAIL": 0,
+  "SKIP": 0,
+  "INFO": 1
+ },
+ "ids": {
+  "accountId": "241547629140459520",
+  "email": "onb-rq12acc-1029130401@example.test",
+  "organizationApplication": "241547681481203712",
+  "individualApplication": "241547688804458496",
+  "legacyCase": "241049829650845696"
+ },
+ "results": [
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12ACC 注册",
+   "verdict": "PASS",
+   "evidence": "HTTP 202 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12ACC 验证链接",
+   "verdict": "PASS",
+   "evidence": "source=minted challengeNo=ea6b140b-1dc0-469a-84f1-81ad8fda62e8"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12ACC 邮箱验证",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "Client RQ12ACC 登录",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "F",
+   "step": "commercial ACTIVE 支付方式（只读 SQL）",
+   "verdict": "INFO",
+   "evidence": "[\"STC_PAY\", \"APPLE_PAY\", \"GOOGLE_PAY\", \"CARD\"]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构 form-schema",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构 为 v3",
+   "verdict": "PASS",
+   "evidence": "schemaId=9281200000900301 v3"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构 四个新字段",
+   "verdict": "PASS",
+   "evidence": "{\"business.expectedPaymentMethods\": \"MULTI_SELECT\", \"business.refundPolicyUrl\": \"URL\", \"business.fulfillmentType\": \"SELECT\", \"business.fulfillmentDays\": \"TEXT\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构 控件 / 目录 / 级别",
+   "verdict": "PASS",
+   "evidence": "{\"methods\": \"MULTI_SELECT\", \"refund\": \"EVENTUALLY\", \"days\": \"business.fulfillmentType=PRE_ORDER\"}"
+  },
+  {
+   "ac": "AC-02",
+   "step": "机构 支付方式选项 = commercial ACTIVE（顺序一致）",
+   "verdict": "PASS",
+   "evidence": "[\"STC_PAY\", \"APPLE_PAY\", \"GOOGLE_PAY\", \"CARD\"]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构 交付方式目录 4 项",
+   "verdict": "PASS",
+   "evidence": "[{\"code\": \"INSTANT\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.INSTANT\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"PRE_ORDER\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.PRE_ORDER\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"SUBSCRIPTION\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.SUBSCRIPTION\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"SERVICE\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.SERVICE\", \"logoPublicUrl\": null, \"name\": null}]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人 form-schema",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人 为 v3",
+   "verdict": "PASS",
+   "evidence": "schemaId=9281200000900303 v3"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人 四个新字段",
+   "verdict": "PASS",
+   "evidence": "{\"business.expectedPaymentMethods\": \"MULTI_SELECT\", \"business.refundPolicyUrl\": \"URL\", \"business.fulfillmentType\": \"SELECT\", \"business.fulfillmentDays\": \"TEXT\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人 控件 / 目录 / 级别",
+   "verdict": "PASS",
+   "evidence": "{\"methods\": \"MULTI_SELECT\", \"refund\": \"OPTIONAL\", \"days\": \"business.fulfillmentType=PRE_ORDER\"}"
+  },
+  {
+   "ac": "AC-02",
+   "step": "个人 支付方式选项 = commercial ACTIVE（顺序一致）",
+   "verdict": "PASS",
+   "evidence": "[\"STC_PAY\", \"APPLE_PAY\", \"GOOGLE_PAY\", \"CARD\"]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人 交付方式目录 4 项",
+   "verdict": "PASS",
+   "evidence": "[{\"code\": \"INSTANT\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.INSTANT\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"PRE_ORDER\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.PRE_ORDER\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"SUBSCRIPTION\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.SUBSCRIPTION\", \"logoPublicUrl\": null, \"name\": null}, {\"code\": \"SERVICE\", \"countryCode\": null, \"labelKey\": \"onboardingSchema.catalog.FULFILLMENT_TYPE.SERVICE\", \"logoPublicUrl\": null, \"name\": null}]"
+  },
+  {
+   "ac": "AC-01",
+   "step": "RQ12 创建申请（AE ORGANIZATION LLC）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 applicationId=241547681481203712 operation=CREATED "
+  },
+  {
+   "ac": "AC-01",
+   "step": "创建 AE 机构草稿",
+   "verdict": "PASS",
+   "evidence": "{\"commandId\": null, \"applicationId\": \"241547681481203712\", \"applicationNo\": \"CA-241547681481203712\", \"clientId\": \"241547681481203713\", \"clientType\": \"ORGANIZATION\", \"operation\": \"CREATED\", \"completedAt\": \"2026-10-29T13:04:14.996481Z\"}"
+  },
+  {
+   "ac": "AC-02",
+   "step": "CODE_LIST 规范化与天数去前导零",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {'businessModelCode': None, 'websiteUrl': None, 'businessDescription': None, 'expectedVolume': None, 'expectedTicket': None, 'currency': None, 'expectedPaymentMethods': 'APPLE_PAY,CARD', 'refundPolicyUrl': 'https://shop.example.test/refunds', 'fulfillmentType': 'PRE_ORDER', 'fulfillmentDays': '7'}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "改 INSTANT 清空天数",
+   "verdict": "PASS",
+   "evidence": "{\"businessModelCode\": null, \"websiteUrl\": null, \"businessDescription\": null, \"expectedVolume\": null, \"expectedTicket\": null, \"currency\": null, \"expectedPaymentMethods\": \"APPLE_PAY,CARD\", \"refundPolicyUrl\": \"https://shop.example.test/refunds\", \"fulfillmentType\": \"INSTANT\", \"fulfillmentDays\": null}"
+  },
+  {
+   "ac": "AC-03",
+   "step": "http 退款政策 422",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'INVALID_DRAFT', 'detail': '入驻字段不符合约定', 'requestId': '741a18f4-36fe-4c74-b073-758709e5b363', 'errors': [{'field': 'business.refundPolicyUrl', 'message': '须为 https 网址'}]}"
+  },
+  {
+   "ac": "AC-02",
+   "step": "非法支付方式代码 422",
+   "verdict": "PASS",
+   "evidence": "HTTP 422 {'code': 'INVALID_DRAFT', 'detail': '入驻字段不符合约定', 'requestId': '0d38e19b-2b18-49e3-bcb5-614bb7530b1a', 'errors': [{'field': 'business.expectedPaymentMethods', 'message': '须为以逗号分隔的代码，最多 20 项'}]}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "天数 0：清单 FIELD_FORMAT_INVALID",
+   "verdict": "PASS",
+   "evidence": "{\"awaitingActionFrom\": \"CLIENT\", \"dueTime\": null, \"errorCode\": \"FIELD_FORMAT_INVALID\", \"remediationCode\": \"PROVIDE_FIELD\", \"requirementKey\": \"business.fulfillmentDays\", \"requirementKind\": \"FIELD\", \"status\": \"CURRENTLY_DUE\", \"subjectPartyId\": \"241547681481203714\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "天数 400：清单 FIELD_FORMAT_INVALID",
+   "verdict": "PASS",
+   "evidence": "{\"awaitingActionFrom\": \"CLIENT\", \"dueTime\": null, \"errorCode\": \"FIELD_FORMAT_INVALID\", \"remediationCode\": \"PROVIDE_FIELD\", \"requirementKey\": \"business.fulfillmentDays\", \"requirementKind\": \"FIELD\", \"status\": \"CURRENTLY_DUE\", \"subjectPartyId\": \"241547681481203714\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "机构缺退款政策 EVENTUALLY_DUE；支付方式 / 交付方式 SATISFIED",
+   "verdict": "PASS",
+   "evidence": "{\"business.expectedPaymentMethods\": \"SATISFIED\", \"business.refundPolicyUrl\": \"EVENTUALLY_DUE\", \"business.fulfillmentType\": \"SATISFIED\", \"business.fulfillmentDays\": null}"
+  },
+  {
+   "ac": "CLEAN",
+   "step": "撤回机构草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 "
+  },
+  {
+   "ac": "AC-01",
+   "step": "RQ12 创建申请（AE INDIVIDUAL ）",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 applicationId=241547688804458496 operation=CREATED "
+  },
+  {
+   "ac": "AC-01",
+   "step": "创建 AE 个人草稿",
+   "verdict": "PASS",
+   "evidence": "{\"commandId\": null, \"applicationId\": \"241547688804458496\", \"applicationNo\": \"CA-241547688804458496\", \"clientId\": \"241547688804458497\", \"clientType\": \"INDIVIDUAL\", \"operation\": \"CREATED\", \"completedAt\": \"2026-10-29T13:04:16.749184Z\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "个人缺退款政策无清单项；支付方式 / 交付方式 CURRENTLY_DUE",
+   "verdict": "PASS",
+   "evidence": "{\"business.expectedPaymentMethods\": \"CURRENTLY_DUE\", \"business.refundPolicyUrl\": null, \"business.fulfillmentType\": \"CURRENTLY_DUE\", \"business.fulfillmentDays\": null}"
+  },
+  {
+   "ac": "CLEAN",
+   "step": "撤回个人草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 "
+  },
+  {
+   "ac": "AC-04",
+   "step": "在途 v1 案件 application.values.business 四键为空（页面\"未采集\"）",
+   "verdict": "PASS",
+   "evidence": "case=241049829650845696 {'expectedPaymentMethods': None, 'refundPolicyUrl': None, 'fulfillmentType': None, 'fulfillmentDays': None}"
+  },
+  {
+   "ac": "AC-05",
+   "step": "运营 Schema 查看：v3 ACTIVE、v2 RETIRED、v3 含 MULTI_SELECT",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 v3=ACTIVE v2=RETIRED"
+  }
+ ]
+}

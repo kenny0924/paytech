@@ -122,7 +122,7 @@ public class OnboardingPackServiceImpl implements OnboardingPackService {
             .map(field -> field.getFieldKey().substring("declaration.".length())).toList();
     }
 
-    /** Schema 字段、属性定义与地址组件引用的本库目录；REF_ 目录来自 Platform 参考数据，不从 t_catalog_item 加载。 */
+    /** Schema 字段、属性定义与地址组件引用的本库目录；外部目录（REF_ 参考数据、commercial 支付方式）不从 t_catalog_item 加载。 */
     List<String> catalogCodes(List<OnboardingSchemaField> fields, List<AttributeDefinition> attributes, Jurisdiction jurisdiction) {
         Set<String> codes = new LinkedHashSet<>();
         fields.stream().map(OnboardingSchemaField::getCatalogCode).filter(java.util.Objects::nonNull).forEach(codes::add);
@@ -130,7 +130,7 @@ public class OnboardingPackServiceImpl implements OnboardingPackService {
         addressComponents.findByFormats(List.of(jurisdiction.getAddressFormatCode())).stream()
             .map(component -> component.getCatalogCode()).filter(java.util.Objects::nonNull).forEach(codes::add);
         codes.remove(OnboardingPack.ORGANIZATION_TYPE_CATALOG);
-        codes.removeIf(ReferenceCatalogCodes::isReference);
+        codes.removeIf(ReferenceCatalogCodes::isExternal);
         return new ArrayList<>(codes);
     }
 }

@@ -98,6 +98,9 @@ function materials(jurisdiction: string, partyType: string, roleType: string, su
   }));
 }
 
+const COMMERCIAL_PAYMENT_METHOD = "COMMERCIAL_PAYMENT_METHOD";
+const paymentMethodFixture = ["CARD", "APPLE_PAY", "GOOGLE_PAY", "STC_PAY"];
+
 /** 与 FormSchemaConverter.convert 同形。 */
 function ownerResponse(jurisdiction: string, partyType: string, organizationType: string) {
   const j = cm!.t_jurisdiction.find((row) => row.jurisdiction_code === jurisdiction)!;
@@ -119,8 +122,12 @@ function ownerResponse(jurisdiction: string, partyType: string, organizationType
       visibleWhen: f.visible_when, labelKey: f.label_key, helpKey: f.help_key, order: f.display_order });
   }
   const catalogs: Record<string, { code: unknown; labelKey: unknown }[]> = {};
-  for (const item of cm!.t_catalog_item.filter((c) => !c.jurisdiction_code || c.jurisdiction_code === jurisdiction))
+  // 与 CatalogItemMapper 一致：本辖区与全局（'*'）目录项。
+  for (const item of cm!.t_catalog_item.filter((c) => !c.jurisdiction_code || c.jurisdiction_code === "*" || c.jurisdiction_code === jurisdiction))
     (catalogs[String(item.catalog_code)] ??= []).push({ code: item.item_code, labelKey: item.label_key });
+  // commercial 支付方式目录由 client-master 向 commercial 取来补全（Schema 引用时才有；数据为测试夹具）。
+  if (fields.some((f) => f.catalog_code === COMMERCIAL_PAYMENT_METHOD))
+    catalogs[COMMERCIAL_PAYMENT_METHOD] = paymentMethodFixture.map((code) => ({ code, labelKey: "onboardingSchema.paymentMethod." + code }));
   const individual = new Set(cm!.t_rule_setting.filter((r) => r.rule_code === "PARTY_TYPE" && r.rule_value === "INDIVIDUAL").map((r) => r.scope_code));
   const address = (code: unknown) => ({ code, components: cm!.t_address_format_component.filter((c) => c.address_format_code === code)
     .map((c) => ({ component: c.component, required: Number(c.required_flag) === 1, catalogCode: c.catalog_code, labelKey: c.label_key, order: c.display_order })) });
@@ -265,4 +272,26 @@ test("active v2 packs: versioned terms and privacy declarations, GTE threshold, 
   const eg = readSchema(JSON.parse(JSON.stringify(withReferenceData(ownerResponse("EG", "ORGANIZATION", "*")))), "x");
   const codes = eg.identifierTypes.map((item) => item.code);
   assert.ok(codes.includes("EG_UNIFIED_CR") && codes.includes("EG_LOCAL_CR"), codes.join(","));
+});
+
+/** REQ-12 v3 国家包：仓库 DML 已发布业务信息补采时核对四个字段的形状；DML 尚未包含时跳过并说明。 */
+const businessInfoPublished = !!cmSql?.includes("business.expectedPaymentMethods");
+test("v3 packs collect payment methods, refund policy and fulfillment (REQ-12)", { skip: businessInfoPublished ? false : "client-master DML has no REQ-12 fields yet" }, async () => {
+  const { fieldIssue, findField, integerRange, isVisible } = await import("./schema.ts");
+  for (const [jurisdiction, partyType, organizationType] of cases) {
+    const schema = readSchema(JSON.parse(JSON.stringify(withReferenceData(ownerResponse(jurisdiction, partyType, organizationType)))), "x");
+    const scope = jurisdiction + " " + partyType + " " + organizationType;
+    const methods = findField(schema, "business.expectedPaymentMethods"), refund = findField(schema, "business.refundPolicyUrl");
+    const type = findField(schema, "business.fulfillmentType"), days = findField(schema, "business.fulfillmentDays");
+    assert.ok(methods && refund && type && days, scope);
+    assert.equal(methods!.widget, "MULTI_SELECT", scope);
+    assert.equal(methods!.requirementLevel, "REQUIRED", scope);
+    assert.deepEqual(schema.catalogs[COMMERCIAL_PAYMENT_METHOD].map((item) => item.itemCode), paymentMethodFixture, scope);
+    assert.equal(refund!.requirementLevel, partyType === "ORGANIZATION" ? "EVENTUALLY" : "OPTIONAL", scope);
+    assert.deepEqual(fieldIssue(refund!, "http://example.test/refund", false), { key: "error.https_url" }, scope);
+    assert.deepEqual(schema.catalogs[type!.catalogCode!].map((item) => item.itemCode).sort(), ["INSTANT", "PRE_ORDER", "SERVICE", "SUBSCRIPTION"], scope);
+    assert.deepEqual(integerRange(days!.validation?.pattern), { min: 1, max: 365 }, scope);
+    assert.equal(isVisible(days!, { "business.fulfillmentType": "INSTANT" }, schema), false, scope);
+    assert.equal(isVisible(days!, { "business.fulfillmentType": "PRE_ORDER" }, schema), true, scope);
+  }
 });

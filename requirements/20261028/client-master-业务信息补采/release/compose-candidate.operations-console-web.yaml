@@ -1,0 +1,8 @@
+# REQ-12 业务信息补采：mor-test 候选覆盖（阶段 6 准备 2026-10-29；阶段 7 由主会话执行，需用户明确授权）。
+# 用法：./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+# 只认 sha256（tag 仅供辨认）。不加 --remove-orphans。nginx 镜像，无 env。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-rq12-rel = 6753faba + Code-MoR-rq12 本需求 72 个文件（清单 evidence/rq12-source-files.sha256）。
+services:
+  operations-console-web:
+    # 审核"申请"页签与 Client 详情：支付方式标签、退款政策链接新开页、交付方式与天数、未采集；Schema 查看页 MULTI_SELECT。
+    image: sha256:0b456b8aed53df0d31719f995a755d8f74d1abbd2a8b05e6de53ef5e0c34ae72  # mor-test/operations-console-web:rq12-20261029a（dist 256 个文件）

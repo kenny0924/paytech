@@ -1,0 +1,13 @@
+client-master-service sha256:2b12c2e2184bb9e926c5fb6a74822c103ba5a659a53dcbacb9a4d6bb60c414bc created=2026-10-29T12:49:39.498637218Z
+client-console-web sha256:e17a9a0a43b936ebc2344338df1e934f6cece672081385c2841b0bde358f0cf0 created=2026-10-29T12:49:44.47951347Z
+operations-console-web sha256:0b456b8aed53df0d31719f995a755d8f74d1abbd2a8b05e6de53ef5e0c34ae72 created=2026-10-29T12:49:45.195598179Z
+client-master-service sha256:c9bb7b8e30f6a44ae528b5054fd15a67e52a52743fc4fbed11436b08f21b8155: entry=["java","-Xms128m","-Xmx512m","-Duser.home=/tmp","-Djava.io.tmpdir=/tmp","-jar","/app/application.jar"] cmd=null user=10001:10001 ports=null health=null workdir=/app
+client-master-service mor-test/client-master-service:rq12-20261029a: entry=["java","-Xms128m","-Xmx512m","-Duser.home=/tmp","-Djava.io.tmpdir=/tmp","-jar","/app/application.jar"] cmd=null user=10001:10001 ports=null health=null workdir=/app
+client-console-web sha256:3db62571940f24d50c87fa2e07143e3536a2b956ffb6db8542994bcd5011a9eb: entry=["nginx"] cmd=["-g","daemon off;"] user=nginx ports={"80/tcp":{},"8080/tcp":{}} health=null workdir=/
+client-console-web mor-test/client-console-web:rq12-20261029a: entry=["nginx"] cmd=["-g","daemon off;"] user=nginx ports={"80/tcp":{},"8080/tcp":{}} health=null workdir=/
+operations-console-web sha256:96992aba577492309ef4932e2b68cc507bdd587b26c8edb40c7127967ed0312d: entry=["nginx"] cmd=["-g","daemon off;"] user=nginx ports={"80/tcp":{},"8080/tcp":{}} health=null workdir=/
+operations-console-web mor-test/operations-console-web:rq12-20261029a: entry=["nginx"] cmd=["-g","daemon off;"] user=nginx ports={"80/tcp":{},"8080/tcp":{}} health=null workdir=/
+client-master jar: image ca0b61fba694929d build ca0b61fba694929d
+health-probe vs live: identical
+client-console-web dist vs build: identical files=11; nginx.conf vs live: identical
+operations-console-web dist vs build: identical files=256; nginx.conf vs live: identical

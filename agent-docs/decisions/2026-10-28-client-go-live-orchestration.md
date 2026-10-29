@@ -1,7 +1,7 @@
 # 客户上线（Client Go-live）：开通项门禁、限额档位与上线流程编排决定
 
 - Decision status: Proposed（2026-10-28 用户在讨论中逐条确认 Q1–Q9、Q-1–Q-10 及同日复核调整；作为仓库决定仍待用户确认登记）
-- Implementation status: Partially implemented（REQ-01 已实现并部署 mor-test、已本地提交；REQ-05 / REQ-12 阶段 1 评审稿，见第 5 节）
+- Implementation status: Partially implemented（REQ-01 已实现并部署 mor-test、已本地提交；REQ-05 已实现并部署 mor-test、已本地提交 `af972805`；REQ-12 已实现并部署 mor-test、已本地提交，见第 5 节）
 - Deployment status: REQ-01 deployed to mor-test（2026-10-28 20:09—20:33Z，见 CURRENT_IMPLEMENTATION）
 - Decision date: 2026-10-28
 - 详细设计：[design-discuss/client-activation/design.md](../../design-discuss/client-activation/design.md)（全流程 P0–P7、门禁、缺口）、[requirement-plan.md](../../design-discuss/client-activation/requirement-plan.md)（逐步设计、系统结合、需求拆分 REQ-00–19、里程碑 M1–M4）、[ops-line.md](../../design-discuss/client-activation/ops-line.md)（内部运营作业线路 T01–T28）、`client-activation.pen`（七张画板）。
@@ -96,8 +96,8 @@
 | 编号 | 目录 | 阶段 |
 |---|---|---|
 | REQ-00 | 本决定 | 评审稿 |
-| REQ-01 | [requirements/20261028/commercial-开通项前置门禁](../../requirements/20261028/commercial-开通项前置门禁/requirement.md) | 阶段 1—8 完成：已部署 mor-test，已本地提交 |
-| REQ-05 | [requirements/20261028/platform-support-workflow按钮发起与数据验证](../../requirements/20261028/platform-support-workflow按钮发起与数据验证/requirement.md) | 阶段 1 评审稿 |
-| REQ-12 | [requirements/20261028/client-master-业务信息补采](../../requirements/20261028/client-master-业务信息补采/requirement.md) | 阶段 1 评审稿 |
+| REQ-01 | [requirements/20261028/commercial-开通项前置门禁](../../requirements/20261028/commercial-开通项前置门禁/requirement.md) | 阶段 1—8 完成：已部署 mor-test，已本地提交 `ba0e15b5` |
+| REQ-05 | [requirements/20261028/platform-support-workflow按钮发起与数据验证](../../requirements/20261028/platform-support-workflow按钮发起与数据验证/requirement.md) | 已实现，2026-10-29 部署 mor-test，提交 `af972805`（未推送） |
+| REQ-12 | [requirements/20261028/client-master-业务信息补采](../../requirements/20261028/client-master-业务信息补采/requirement.md) | 已实现，2026-10-29 部署 mor-test（rq12-20261029a、入驻 Schema v3），已本地提交 |
 
 是否登记到 `agent-docs/README.md` 与 `DOCUMENT_GOVERNANCE.md` 路由表，由用户决定。

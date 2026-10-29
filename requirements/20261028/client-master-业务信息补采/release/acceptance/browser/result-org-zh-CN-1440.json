@@ -1,0 +1,394 @@
+{
+ "locale": "zh-CN",
+ "width": 1440,
+ "steps": [
+  {
+   "step": "N0-new-organization",
+   "check": "你的业务在哪里注册？ 我们会按注册国家和主体类型准备需要填写的信息与材料。提交前可以修改。 注册国家 阿联酋 埃及 沙特阿拉伯 主体类型 公司 有限责任公司、自贸区公司、分支机构等 个人经营 独资机构、自由职业者 组织形式 请选择 有限责任公司（大陆） 民事合伙公司 自贸区独资公司 自贸区公司 自贸区有限责任公司 外国公司分支机构 公众股份公司 上一步 查看需要准备的材料",
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B1-org-business",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "期望开通的支付方式",
+     "value": "",
+     "chips": [
+      "STC Pay"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "退款政策链接批准前提供",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "交付方式",
+     "value": "INSTANT",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": null
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B1b-multiselect-open",
+   "check": {
+    "options": [
+     "STC_PAY",
+     "APPLE_PAY",
+     "GOOGLE_PAY",
+     "CARD"
+    ],
+    "labels": [
+     "STC Pay",
+     "Apple Pay",
+     "Google Pay",
+     "银行卡"
+    ],
+    "sheet": 0
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B2a-two-selected",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "期望开通的支付方式",
+     "value": "",
+     "chips": [
+      "STC Pay",
+      "银行卡"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "退款政策链接批准前提供",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "交付方式",
+     "value": "INSTANT",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": null
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B2b-after-remove-reload",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "期望开通的支付方式",
+     "value": "",
+     "chips": [
+      "银行卡"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "退款政策链接批准前提供",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "交付方式",
+     "value": "INSTANT",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": null
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B3a-pre-order-21",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "期望开通的支付方式",
+     "value": "",
+     "chips": [
+      "银行卡"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "退款政策链接批准前提供",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "交付方式",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": {
+     "label": "预计交付天数",
+     "value": "21",
+     "chips": [],
+     "error": null
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B3b-instant-hides-days",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "期望开通的支付方式",
+     "value": "",
+     "chips": [
+      "银行卡"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "退款政策链接批准前提供",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "交付方式",
+     "value": "INSTANT",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": null
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B3c-pre-order-again-reload",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "期望开通的支付方式",
+     "value": "",
+     "chips": [
+      "银行卡"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "退款政策链接批准前提供",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "交付方式",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": {
+     "label": "预计交付天数",
+     "value": "",
+     "chips": [],
+     "error": null
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B4-https-and-400",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "期望开通的支付方式",
+     "value": "",
+     "chips": [
+      "银行卡"
+     ],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "退款政策链接批准前提供",
+     "value": "http://shop.example.test/refunds",
+     "chips": [],
+     "error": "请填写以 https:// 开头的链接"
+    },
+    "fulfillmentType": {
+     "label": "交付方式",
+     "value": "PRE_ORDER",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": {
+     "label": "预计交付天数",
+     "value": "400",
+     "chips": [],
+     "error": "请输入 1—365 的整数"
+    }
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B5-days-0-summary",
+   "check": {
+    "business": {
+     "expectedPaymentMethods": {
+      "label": "期望开通的支付方式",
+      "value": "",
+      "chips": [
+       "银行卡"
+      ],
+      "error": null
+     },
+     "refundPolicyUrl": {
+      "label": "退款政策链接批准前提供",
+      "value": "http://shop.example.test/refunds",
+      "chips": [],
+      "error": "请填写以 https:// 开头的链接"
+     },
+     "fulfillmentType": {
+      "label": "交付方式",
+      "value": "PRE_ORDER",
+      "chips": [],
+      "error": null,
+      "options": [
+       "INSTANT",
+       "PRE_ORDER",
+       "SUBSCRIPTION",
+       "SERVICE"
+      ]
+     },
+     "fulfillmentDays": {
+      "label": "预计交付天数",
+      "value": "0",
+      "chips": [],
+      "error": "请输入 1—365 的整数"
+     }
+    },
+    "summary": "有 13 处需要修改 退款政策链接：请填写以 https:// 开头的链接 预计交付天数：请输入 1—365 的整数 法定名称：请填写此项 注册国家：请填写此项 成立日期：请填写此项 登记机关：请填写此项 执照到期日：请填写此项 营业执照号：请填写此项 经营模式：请填写此项 经营说明：请填写此项 币种：请填写此项 预计月交易额：请填写此项 预计客单价：请填写此项"
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  }
+ ],
+ "console": [],
+ "httpErrors": [],
+ "requests": [
+  {
+   "step": "N0-new-organization",
+   "method": "POST",
+   "path": "/api/client/onboarding/v1/applications",
+   "body": "{\"clientType\":\"ORGANIZATION\",\"jurisdictionCode\":\"AE\",\"organizationTypeCode\":\"LLC\",\"onboardingCode\":null}"
+  },
+  {
+   "step": "B1b-multiselect-open",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241548336132366336/draft",
+   "body": "{\"dirtyFields\":[\"business.expectedPaymentMethods\"],\"values\":{\"business\":{\"expectedPaymentMethods\":\"CARD,STC_PAY\"}}}"
+  },
+  {
+   "step": "B2a-two-selected",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241548336132366336/draft",
+   "body": "{\"dirtyFields\":[\"business.expectedPaymentMethods\"],\"values\":{\"business\":{\"expectedPaymentMethods\":\"CARD\"}}}"
+  },
+  {
+   "step": "B2b-after-remove-reload",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241548336132366336/draft",
+   "body": "{\"dirtyFields\":[\"business.fulfillmentType\",\"business.fulfillmentDays\"],\"values\":{\"business\":{\"fulfillmentType\":\"PRE_ORDER\",\"fulfillmentDays\":\"21\"}}}"
+  },
+  {
+   "step": "B3a-pre-order-21",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241548336132366336/draft",
+   "body": "{\"dirtyFields\":[\"business.fulfillmentType\",\"business.fulfillmentDays\"],\"values\":{\"business\":{\"fulfillmentType\":\"INSTANT\",\"fulfillmentDays\":null}}}"
+  },
+  {
+   "step": "B3b-instant-hides-days",
+   "method": "PATCH",
+   "path": "/api/client/onboarding/v1/applications/241548336132366336/draft",
+   "body": "{\"dirtyFields\":[\"business.fulfillmentType\"],\"values\":{\"business\":{\"fulfillmentType\":\"PRE_ORDER\"}}}"
+  }
+ ],
+ "bundles": {
+  "ok": 40,
+  "failed": 0
+ },
+ "created": "241548336132366336",
+ "application": "241548336132366336"
+}

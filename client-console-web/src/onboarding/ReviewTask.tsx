@@ -11,18 +11,18 @@ import { api, problemErrors, readCheck } from "./model.ts";
 import type { FormSchema, RequirementError, SchemaField } from "./model.ts";
 import { declared, locate } from "./progress.ts";
 import type { Anchor } from "./progress.ts";
-import { activeAddressFormat, addressPath, availableTasks, draftPath, identifierPaths, isIdentifierLead, isPersonRole, isVisible, selectedIdentifier, taskBlocks } from "./schema.ts";
+import { activeAddressFormat, addressPath, availableTasks, draftPath, identifierPaths, isIdentifierLead, isPersonRole, isVisible, selectedIdentifier, splitCodeList, taskBlocks } from "./schema.ts";
 import type { TaskKey } from "./schema.ts";
 import { errorText } from "./draft.ts";
 import { inputId } from "./FormTask.tsx";
 import { personName, relationTypes } from "./PeopleTask.tsx";
 import { taskLabelKey } from "./Shell.tsx";
-import { Busy, ErrorSummary, Failure, useSchemaText } from "./ui.tsx";
+import { Busy, ErrorSummary, Failure, useSchemaLookup, useSchemaText } from "./ui.tsx";
 import { REF_COUNTRY_SUBDIVISION, REF_CURRENCY, REFDATA_NAMESPACE, countryName, currencyName, subdivisionName } from "./refdata.ts";
 
 /** 字段的展示值：目录 / 国家显示名称，证件只显示掩码，日期按当前语言。 */
 export function useDisplayValue() {
-  const label = useSchemaText(), { locale } = useLocale(), t = useT("onboarding"), refdata = useOptionalT(REFDATA_NAMESPACE);
+  const label = useSchemaText(), lookup = useSchemaLookup(), { locale } = useLocale(), t = useT("onboarding"), refdata = useOptionalT(REFDATA_NAMESPACE);
   /** 目录项名称：参考数据按 B7（币种 Intl、行政区 refdata 文案，再回退英文名与编码），自有目录按文案键。 */
   const catalogText = (schema: FormSchema, catalogCode: string | null | undefined, value: string): string => {
     const item = catalogCode ? schema.catalogs[catalogCode]?.find((entry) => entry.itemCode === value) : undefined;
@@ -48,6 +48,15 @@ export function useDisplayValue() {
     if (field.widget === "COUNTRY") return country(schema, value);
     if (field.widget === "BOOLEAN") return t(value.toUpperCase() === "TRUE" ? "form.yes" : "form.no");
     if (field.widget === "DATE") { const date = new Date(value + "T00:00:00Z"); return Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(date) : value; }
+    if (field.widget === "MULTI_SELECT") {
+      // 按目录顺序列出名称（没有译文或不在目录时显示编码），用当前语言的列表连接方式。
+      const codes = splitCodeList(value), catalog = (field.catalogCode ? schema.catalogs[field.catalogCode] : undefined) ?? [];
+      const ordered = [...catalog.map((item) => item.itemCode).filter((code) => codes.includes(code)), ...codes.filter((code) => !catalog.some((item) => item.itemCode === code))];
+      return new Intl.ListFormat(locale, { type: "conjunction" }).format(ordered.map((code) => {
+        const item = catalog.find((entry) => entry.itemCode === code);
+        return item ? lookup(item.labelKey) ?? code : code;
+      }));
+    }
     if (field.widget === "SELECT" && field.catalogCode?.startsWith("REF_")) return catalogText(schema, field.catalogCode, value);
     if (field.widget === "SELECT") {
       const item = (field.catalogCode ? schema.catalogs[field.catalogCode]?.find((entry) => entry.itemCode === value) : undefined)

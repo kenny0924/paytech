@@ -1,0 +1,48 @@
+{
+ "locale": "en",
+ "width": 390,
+ "steps": [
+  {
+   "step": "B7-individual-business",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "Payment methods you plan to accept",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "Refund policy URLOptional",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "How you deliver",
+     "value": "",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": null
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  }
+ ],
+ "console": [],
+ "httpErrors": [],
+ "requests": [],
+ "bundles": {
+  "ok": 12,
+  "failed": 0
+ },
+ "application": "241549066402635776"
+}

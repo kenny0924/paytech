@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button, Descriptions, Empty, Space, Table, Tag } from 'antd';
+import { Button, Empty, Space, Table, Tag } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { Loading, QueryFailure, date, useDetail } from '../tenantAccess/TenantAccessView';
 import { QualificationSummaryCard } from '../qualification/QualificationParts';
@@ -7,18 +7,18 @@ import { StatusDot, tone } from '../clientReview/reviewParts';
 import { decodeResponsiblePartners, partnerName, reviewRoute } from '../clientReview/clientReview';
 import { enumLabel } from '../i18n/index';
 import { useT } from '../i18n/react';
-import { fieldLabel, valueLabel, valueText } from '../onboardingConfig/schemaLabel';
+import { valueLabel } from '../onboardingConfig/schemaLabel';
+import { ProfileDescriptions } from '../onboardingConfig/ProfileValues';
 import { clientAdminApi, clientRoutes, decodeClientDetail } from './clients';
 import type { ClientApplication, ClientDetail, ClientPerson, ClientRelation, Values } from './clients';
 
 /** 资料值按组展示；组 / 字段名沿用入驻审核的文案，未知名原样显示；contact 与证件只有掩码。 */
 function ValueGroups({ values, jurisdictionCode }: { values: Values; jurisdictionCode: string | null }) {
-  const t = useT('client-review'), tm = useT('master-data'), tSchema = useT('onboarding-schema');
+  const t = useT('client-review'), tm = useT('master-data');
   const groups = Object.entries(values).filter(([, fields]) => Object.keys(fields).length > 0);
   if (groups.length === 0) return <span className="muted">{tm('client.profile.empty')}</span>;
   return <>{groups.map(([group, fields]) => <div key={group} className="client-values"><h3>{valueLabel(t, 'group', group)}</h3>
-    <Descriptions size="small" column={{ xs: 1, sm: 2, lg: 3 }} items={Object.entries(fields).map(([field, value]) =>
-      ({ key: field, label: fieldLabel(t, tSchema, group, field), children: valueText(tSchema, group, field, value, jurisdictionCode) }))} /></div>)}</>;
+    <ProfileDescriptions group={group} fields={fields} jurisdictionCode={jurisdictionCode} /></div>)}</>;
 }
 
 /** 组织类型目录按辖区：Client 无辖区（迁移存量）时取最近一份申请的辖区。 */

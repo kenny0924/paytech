@@ -1,0 +1,64 @@
+{
+ "locale": "zh-CN",
+ "width": 1440,
+ "steps": [
+  {
+   "step": "N0-new-individual",
+   "check": "你的业务在哪里注册？ 我们会按注册国家和主体类型准备需要填写的信息与材料。提交前可以修改。 注册国家 阿联酋 埃及 沙特阿拉伯 主体类型 公司 有限责任公司、自贸区公司、分支机构等 个人经营 独资机构、自由职业者 组织形式 请选择 独资机构 上一步 查看需要准备的材料",
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B7-individual-business",
+   "check": {
+    "expectedPaymentMethods": {
+     "label": "期望开通的支付方式",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "refundPolicyUrl": {
+     "label": "退款政策链接可选",
+     "value": "",
+     "chips": [],
+     "error": null
+    },
+    "fulfillmentType": {
+     "label": "交付方式",
+     "value": "",
+     "chips": [],
+     "error": null,
+     "options": [
+      "INSTANT",
+      "PRE_ORDER",
+      "SUBSCRIPTION",
+      "SERVICE"
+     ]
+    },
+    "fulfillmentDays": null
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  }
+ ],
+ "console": [],
+ "httpErrors": [],
+ "requests": [
+  {
+   "step": "N0-new-individual",
+   "method": "POST",
+   "path": "/api/client/onboarding/v1/applications",
+   "body": "{\"clientType\":\"INDIVIDUAL\",\"jurisdictionCode\":\"AE\",\"organizationTypeCode\":\"SOLE_ESTABLISHMENT\",\"onboardingCode\":null}"
+  }
+ ],
+ "bundles": {
+  "ok": 24,
+  "failed": 0
+ },
+ "created": "241549066402635776",
+ "application": "241549066402635776"
+}

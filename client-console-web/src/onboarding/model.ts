@@ -10,7 +10,7 @@ export type RequirementLevel = "REQUIRED" | "OPTIONAL" | "HIDDEN" | "EVENTUALLY"
 export type AppliesTo = "PRIMARY" | "RELATED_PERSON" | "BOTH";
 export type Widget =
   | "TEXT" | "TEXTAREA" | "DATE" | "COUNTRY" | "SELECT" | "IDENTIFIER" | "ADDRESS" | "NAME" | "PERSON_LIST"
-  | "DOCUMENT_SLOT" | "DECLARATION" | "URL" | "MONEY" | "EMAIL" | "PHONE" | "BOOLEAN";
+  | "DOCUMENT_SLOT" | "DECLARATION" | "URL" | "MONEY" | "EMAIL" | "PHONE" | "BOOLEAN" | "MULTI_SELECT";
 
 export type Jurisdiction = { jurisdictionCode: string; countryCode: string; labelKey: string; acceptancePolicy: string };
 /**

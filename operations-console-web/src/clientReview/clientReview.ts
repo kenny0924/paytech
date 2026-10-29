@@ -295,6 +295,8 @@ export function decodeCasePage(value: unknown): PagingResponseBody<ReviewCase> {
   const items = v.items.map(item => decodeCase(item)); require(new Set(items.map(i => i.caseId)).size === items.length);
   return { items, page: v.page, size: v.size, total: v.total };
 }
+/** 资料值长度上限：client-master 最长的资料字段为退款政策链接（2048）。 */
+const MAX_VALUE_LENGTH = 2048;
 function decodeValues(value: unknown): Record<string, Record<string, string | null>> {
   require(value && typeof value === 'object' && !Array.isArray(value));
   const result: Record<string, Record<string, string | null>> = {};
@@ -303,7 +305,7 @@ function decodeValues(value: unknown): Record<string, Record<string, string | nu
     result[group] = {};
     for (const [field, raw] of Object.entries(fields as Record<string, unknown>)) {
       require(raw === null || typeof raw === 'string' || typeof raw === 'boolean' || typeof raw === 'number');
-      require(raw === null || String(raw).length <= 2000);
+      require(raw === null || String(raw).length <= MAX_VALUE_LENGTH);
       result[group][field] = raw === null ? null : String(raw);
     }
   }

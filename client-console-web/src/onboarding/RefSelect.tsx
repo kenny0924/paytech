@@ -30,9 +30,11 @@ function subscribeNarrow(listener: () => void) {
   return () => query.removeEventListener("change", listener);
 }
 const isNarrow = () => matchMedia(narrowQuery).matches;
+/** 窄屏（≤640px）：下拉改为底部面板。 */
+export const useNarrow = () => useSyncExternalStore(subscribeNarrow, isNarrow, () => false);
 
 export function RefSelect(props: RefSelectProps) {
-  const t = useT("onboarding"), listId = useId(), narrow = useSyncExternalStore(subscribeNarrow, isNarrow, () => false);
+  const t = useT("onboarding"), listId = useId(), narrow = useNarrow();
   const [open, setOpen] = useState(false), [query, setQuery] = useState(""), [active, setActive] = useState(0);
   const root = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null), search = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLUListElement>(null);

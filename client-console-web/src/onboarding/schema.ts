@@ -62,6 +62,26 @@ export function isVisible(field: SchemaField, values: Flat, schema: FormSchema):
   });
 }
 
+/**
+ * 隐藏即清空的字段：client-master 在交付方式改为非预售时同事务清空预计交付天数（REQ-12），页面保持同一口径
+ * <li>只登记服务端也清空的字段；其他带可见条件的字段（如发证机关为 AE_OTHER 时的机关名称）隐藏后保留原值，行为不变。</li>
+ */
+export const CLEARED_WHEN_HIDDEN: ReadonlySet<string> = new Set(["business.fulfillmentDays"]);
+
+/**
+ * 改值后因可见条件变为不可见、且仍有值、且登记在 CLEARED_WHEN_HIDDEN 的字段路径
+ * <li>页面随改动一起清空这些字段（同一 PATCH 发 null），隐藏的旧天数不会留在草稿与资料摘要里。</li>
+ */
+export function pathsHiddenByChange(schema: FormSchema, before: Flat, after: Flat): string[] {
+  const paths: string[] = [];
+  for (const field of allFields(schema)) {
+    if (!CLEARED_WHEN_HIDDEN.has(field.fieldKey) || !field.visibleWhen || !isDraftField(field)) continue;
+    const path = draftPath(field);
+    if (path && (after[path] ?? "") !== "" && isVisible(field, before, schema) && !isVisible(field, after, schema)) paths.push(path);
+  }
+  return paths;
+}
+
 export function findField(schema: FormSchema, fieldKey: string): SchemaField | undefined {
   for (const section of schema.sections) for (const group of section.groups)
     for (const field of group.fields) if (field.fieldKey === fieldKey) return field;
@@ -105,7 +125,55 @@ export function availableTasks(schema: FormSchema): TaskKey[] {
 /** 材料槽的主体角色：主申请主体之外的一律视为关系人材料，在人员抽屉里上传。 */
 export const isPersonRole = (role: string) => !["CLIENT", "PRIMARY", "SUBJECT", "APPLICANT"].includes(role.toUpperCase());
 
+/**
+ * 字段标签后的非必填说明：EVENTUALLY（提交时可空、批准前须补，如机构的退款政策链接）显示"批准前提供"而不是"可选"；其余非必填显示"可选"
+ * <li>文案取需求状态 EVENTUALLY_DUE 的国家包文案；缺失时按"可选"显示。</li>
+ */
+export function optionalNote(field: SchemaField, lookup: (key: string) => string | null): boolean | string {
+  if (field.requirementLevel === "REQUIRED") return false;
+  return field.requirementLevel === "EVENTUALLY" ? lookup("onboardingSchema.requirementStatus.EVENTUALLY_DUE") ?? true : true;
+}
+
 export type Issue = { key: string; params?: Record<string, string | number> };
+
+/**
+ * 多选（MULTI_SELECT）取值：草稿与服务端都是规范化逗号串（如 `APPLE_PAY,CARD`），与 client-master `ClientDraftPatch` 的 CODE_LIST 规范化一致
+ * <li>拆分：按英文逗号拆分、去空白、转大写、丢弃空项、去重（保留首次出现顺序，供页面按目录排序前使用）。</li>
+ * <li>连接：拆分后按代码升序以 `,` 连接；页面写入草稿只经此函数，读回值原样拆分。</li>
+ */
+export const CODE_LIST_ITEM = /^[A-Z][A-Z0-9_]{0,63}$/;
+export const CODE_LIST_MAX = 20;
+export const splitCodeList = (value: string | null | undefined): string[] =>
+  [...new Set((value ?? "").split(",").map((item) => item.trim().toUpperCase()).filter(Boolean))];
+export const joinCodeList = (codes: Iterable<string>): string => splitCodeList([...codes].join(",")).sort().join(",");
+const codeListValid = (value: string) => { const codes = splitCodeList(value); return codes.length <= CODE_LIST_MAX && codes.every((code) => CODE_LIST_ITEM.test(code)); };
+
+/** 正则只接受 https 链接（如 `^https://\S+$`）：不以 https:// 开头的值提示"须以 https:// 开头"，而不是笼统的格式不符。 */
+const httpsOnly = (pattern: string) => /^\^?https:\/\//i.test(pattern);
+
+const integerRanges = new Map<string, { min: number; max: number } | null>();
+/**
+ * 正则是否等价于"连续整数区间"（如天数 `1—365`）：探测 0—9999，只接受十进制整数且命中值连续时返回区间，否则为空
+ * <li>用于给出"请输入 1—365 的整数"并在手机上弹数字键盘；区间完全来自 Schema 数据，不按字段名分支。</li>
+ */
+export function integerRange(pattern: string | null | undefined): { min: number; max: number } | null {
+  if (!pattern) return null;
+  if (integerRanges.has(pattern)) return integerRanges.get(pattern)!;
+  let range: { min: number; max: number } | null = null;
+  try {
+    const regex = new RegExp(pattern.startsWith("^") ? pattern : "^(?:" + pattern + ")$");
+    if (!["", "a", "-1", "1.5", " 1", "1 "].some((sample) => regex.test(sample))) {
+      for (let n = 0; n <= 9999; n++) {
+        if (!regex.test(String(n))) continue;
+        if (range && n !== range.max + 1) { range = null; break; }
+        range = range ? { min: range.min, max: n } : { min: n, max: n };
+      }
+      if (range?.max === 9999) range = null;
+    }
+  } catch { range = null; }
+  integerRanges.set(pattern, range);
+  return range;
+}
 
 /** 当前长度与正则中的固定位数，用来写"应为 10 位数字，当前 9 位"。 */
 function fixedDigits(pattern: string): number | null {
@@ -150,6 +218,7 @@ export function fieldIssue(field: SchemaField, value: string, requireFilled: boo
   const validation = field.validation ?? {};
   const normalized = field.widget === "IDENTIFIER" ? normalizeIdentifier(raw) : raw;
   const regex = pattern ?? validation.pattern;
+  if (field.widget === "MULTI_SELECT" && !codeListValid(raw)) return { key: "error.format" };
   if (validation.minLength && normalized.length < validation.minLength)
     return { key: "error.too_short", params: { min: validation.minLength } };
   if (validation.maxLength && normalized.length > validation.maxLength)
@@ -159,10 +228,10 @@ export function fieldIssue(field: SchemaField, value: string, requireFilled: boo
     try { ok = new RegExp(regex.startsWith("^") ? regex : "^(?:" + regex + ")$").test(normalized); }
     catch { ok = true; warnInvalidPattern(regex); }
     if (!ok) {
-      const digits = fixedDigits(regex);
-      return digits && /^\d+$/.test(normalized)
-        ? { key: "error.digits", params: { expected: digits, actual: normalized.length } }
-        : { key: "error.format" };
+      const digits = fixedDigits(regex), range = integerRange(regex);
+      if (digits && /^\d+$/.test(normalized)) return { key: "error.digits", params: { expected: digits, actual: normalized.length } };
+      if (field.widget === "URL" && httpsOnly(regex) && !/^https:\/\//i.test(raw)) return { key: "error.https_url" };
+      return range ? { key: "error.days_range", params: range } : { key: "error.format" };
     }
   }
   const rule = checksumRule ?? validation.checksumRule;

@@ -35,6 +35,7 @@ import com.paytech.client.master.domain.onboarding.ClientPersonView;
 import com.paytech.client.master.domain.onboarding.ClientSubmissionPreparation;
 import com.paytech.client.master.domain.onboarding.ClientSubmissionSubject;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
+import com.paytech.client.master.domain.onboarding.pack.ReferenceCatalogCodes;
 import com.paytech.client.master.domain.onboarding.requirement.DeclarationFact;
 import com.paytech.client.master.domain.onboarding.requirement.DocumentFact;
 import com.paytech.client.master.domain.onboarding.requirement.IdentifierFact;
@@ -54,6 +55,7 @@ import com.paytech.client.master.domainservice.repository.PartyProfileIdentifier
 import com.paytech.client.master.domainservice.service.OnboardingPackService;
 import com.paytech.client.master.integration.ClientAgreementPartyClient;
 import com.paytech.client.master.integration.ClientMaterialAuthorityClient;
+import com.paytech.client.master.integration.ClientPaymentMethodCatalogClient;
 import com.paytech.client.master.integration.ComplianceProgramClient;
 import com.paytech.compliance.api.enums.MaterialQualificationType;
 import com.paytech.foundation.common.error.ErrorException;
@@ -68,6 +70,8 @@ import lombok.AllArgsConstructor;
  * C14 提交、提交核对与需求清单共用的准备步骤（需求 B2、B3）。
  * <li>只读：查询本模块仓储与辖区包，并在数据库事务外读取 compliance 程序材料、commercial 合同引用与 Platform 文件状态；
  * 本次填写的国家、币种、行政区从进程内参考数据快照查找，不发 HTTP。</li>
+ * <li>Schema 引用 COMMERCIAL_PAYMENT_METHOD 时在事务外读取 commercial ACTIVE 支付方式（业务信息补采 S-05），不可用时整体 503、不写入；
+ * 不引用（在途旧版本申请）时不调用 commercial。</li>
  * <li>规则由辖区包数据与 OnboardingRequirementEvaluator 承担；本类只装载事实、计算证件唯一性作用域与冲突。</li>
  */
 @AllArgsConstructor
@@ -85,6 +89,7 @@ public class ClientSubmissionPreparer {
     private final PartyProfileIdentifierRepository identifiers;
     private final ApplicationDeclarationRepository declarations;
     private final ReferenceData referenceData;
+    private final ClientPaymentMethodCatalogClient paymentMethods;
 
     /**
      * 装载申请的全部提交事实并计算需求清单
@@ -112,7 +117,7 @@ public class ClientSubmissionPreparer {
                 document.requirementCode(), document.documentType(), document.issueDate(), document.expiryDate(),
                 !unusable.contains(document.documentId()))).toList(),
             programMaterials, latestDeclarations(declared, identity.draftRevision(), pack), identity.status(), identity.reviewDueTime(), now(),
-            references(pack, requirementSubjects));
+            references(pack, requirementSubjects), activePaymentMethods(pack));
         return new ClientSubmissionPreparation(subjects, relations, materials, declared,
             OnboardingRequirementEvaluator.evaluate(input));
     }
@@ -124,6 +129,14 @@ public class ClientSubmissionPreparer {
         } catch (ReferenceDataUnavailableException unavailable) {
             throw new ErrorException(ONBOARDING_DEPENDENCY_UNAVAILABLE, "Platform 参考数据未就绪", unavailable);
         }
+    }
+
+    /** Schema 引用 commercial 支付方式目录时读取 ACTIVE 代码，否则为空集合且不调用 commercial；不可用时 503 ONBOARDING_DEPENDENCY_UNAVAILABLE。 */
+    Set<String> activePaymentMethods(OnboardingPack pack) {
+        if (!pack.usesCatalog(ReferenceCatalogCodes.COMMERCIAL_PAYMENT_METHOD)) {
+            return Set.of();
+        }
+        return Set.copyOf(paymentMethods.activePaymentMethodCodes());
     }
 
     /** 主主体在前，随后是仍有 DRAFT/ACTIVE 关系的关联人员；计算作用域、已有身份键与申请内重复。 */

@@ -51,6 +51,10 @@ public final class ClientDraftValues {
         put(values,"business","expectedVolume",fields.businessExpectedVolume());
         put(values,"business","expectedTicket",fields.businessExpectedTicket());
         put(values,"business","currency",fields.businessCurrency());
+        put(values,"business","expectedPaymentMethods",fields.businessExpectedPaymentMethods());
+        put(values,"business","refundPolicyUrl",fields.businessRefundPolicyUrl());
+        put(values,"business","fulfillmentType",fields.businessFulfillmentType());
+        put(values,"business","fulfillmentDays",fields.businessFulfillmentDays());
         return values;
     }
     /** 某份资料的扩展属性：属性代码到文本。 */

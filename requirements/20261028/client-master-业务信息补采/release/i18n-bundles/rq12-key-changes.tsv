@@ -1,0 +1,46 @@
+app	namespace	key	zh-CN
+client-console	onboarding-schema	onboarding-schema.catalog.FULFILLMENT_TYPE.INSTANT	即时交付
+client-console	onboarding-schema	onboarding-schema.catalog.FULFILLMENT_TYPE.PRE_ORDER	预售
+client-console	onboarding-schema	onboarding-schema.catalog.FULFILLMENT_TYPE.SERVICE	服务交付
+client-console	onboarding-schema	onboarding-schema.catalog.FULFILLMENT_TYPE.SUBSCRIPTION	订阅
+client-console	onboarding-schema	onboarding-schema.field.business.expectedPaymentMethods	期望开通的支付方式
+client-console	onboarding-schema	onboarding-schema.field.business.fulfillmentDays	预计交付天数
+client-console	onboarding-schema	onboarding-schema.field.business.fulfillmentType	交付方式
+client-console	onboarding-schema	onboarding-schema.field.business.refundPolicyUrl	退款政策链接
+client-console	onboarding-schema	onboarding-schema.group.FULFILLMENT	交付
+client-console	onboarding-schema	onboarding-schema.help.business.expectedPaymentMethods	可多选。仅供审核参考，不会直接为您开通。
+client-console	onboarding-schema	onboarding-schema.help.business.fulfillmentDays	从付款到交付的天数，1—365。
+client-console	onboarding-schema	onboarding-schema.help.business.fulfillmentType	客户付款后如何获得商品或服务；特殊情况请在业务描述中说明。
+client-console	onboarding-schema	onboarding-schema.help.business.refundPolicyUrl	公开可访问的 https 页面，说明客户如何申请退款。
+client-console	onboarding-schema	onboarding-schema.paymentMethod.APPLE_PAY	Apple Pay
+client-console	onboarding-schema	onboarding-schema.paymentMethod.CARD	银行卡
+client-console	onboarding-schema	onboarding-schema.paymentMethod.GOOGLE_PAY	Google Pay
+client-console	onboarding-schema	onboarding-schema.paymentMethod.STC_PAY	STC Pay
+client-console	onboarding	onboarding.error.days_range	请输入 {min}—{max} 的整数
+client-console	onboarding	onboarding.error.https_url	请填写以 https:// 开头的链接
+client-console	onboarding	onboarding.form.multi_select_count	{count, plural, =0 {未选择} other {已选 # 项}}
+client-console	onboarding	onboarding.form.multi_select_done	完成
+client-console	onboarding	onboarding.form.multi_select_placeholder	请选择（可多选）
+client-console	onboarding	onboarding.form.remove_option	移除 {label}
+operations-console	client-review	client-review.application.field.expectedPaymentMethods	期望支付方式
+operations-console	client-review	client-review.application.field.fulfillmentDays	预计交付天数
+operations-console	client-review	client-review.application.field.fulfillmentType	交付方式
+operations-console	client-review	client-review.application.field.refundPolicyUrl	退款政策
+operations-console	client-review	client-review.application.fulfillmentDaysValue	{count} 天
+operations-console	client-review	client-review.application.notCollected	未采集
+operations-console	client-review	client-review.application.notFilled	未填写
+operations-console	client-review	client-review.application.openLink	在新标签页打开
+operations-console	client-review	client-review.config.enum.widget.MULTI_SELECT	多选
+operations-console	onboarding-schema	onboarding-schema.catalog.FULFILLMENT_TYPE.INSTANT	即时交付
+operations-console	onboarding-schema	onboarding-schema.catalog.FULFILLMENT_TYPE.PRE_ORDER	预售
+operations-console	onboarding-schema	onboarding-schema.catalog.FULFILLMENT_TYPE.SERVICE	服务交付
+operations-console	onboarding-schema	onboarding-schema.catalog.FULFILLMENT_TYPE.SUBSCRIPTION	订阅
+operations-console	onboarding-schema	onboarding-schema.field.business.expectedPaymentMethods	期望开通的支付方式
+operations-console	onboarding-schema	onboarding-schema.field.business.fulfillmentDays	预计交付天数
+operations-console	onboarding-schema	onboarding-schema.field.business.fulfillmentType	交付方式
+operations-console	onboarding-schema	onboarding-schema.field.business.refundPolicyUrl	退款政策链接
+operations-console	onboarding-schema	onboarding-schema.group.FULFILLMENT	交付
+operations-console	onboarding-schema	onboarding-schema.paymentMethod.APPLE_PAY	Apple Pay
+operations-console	onboarding-schema	onboarding-schema.paymentMethod.CARD	银行卡
+operations-console	onboarding-schema	onboarding-schema.paymentMethod.GOOGLE_PAY	Google Pay
+operations-console	onboarding-schema	onboarding-schema.paymentMethod.STC_PAY	STC Pay

@@ -3,6 +3,7 @@ package com.paytech.client.master.domain.onboarding.requirement;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.paytech.client.master.domain.enums.ClientApplicationStatus;
 import com.paytech.client.master.domain.onboarding.pack.OnboardingPack;
@@ -36,4 +37,6 @@ public class RequirementInput {
     private final Instant now;
     /** 本次申请填写的国家、币种与行政区在 Platform 参考数据中的结论。 */
     private final ReferenceCodeCheck references;
+    /** commercial 产品能力目录中 ACTIVE 的支付方式代码；Schema 不引用 COMMERCIAL_PAYMENT_METHOD 时为空集合。 */
+    private final Set<String> activePaymentMethods;
 }

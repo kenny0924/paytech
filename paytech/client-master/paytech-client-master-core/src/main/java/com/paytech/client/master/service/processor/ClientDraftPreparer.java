@@ -45,6 +45,10 @@ public class ClientDraftPreparer {
     private static final String ORGANIZATION_TYPE = "organization.organizationType";
     private static final String ADDRESS_FORMAT = "address.addressFormatCode";
     private static final String ADDRESS_COUNTRY = "address.countryCode";
+    private static final String FULFILLMENT_TYPE = "business.fulfillmentType";
+    private static final String FULFILLMENT_DAYS = "business.fulfillmentDays";
+    /** 唯一需要预计交付天数的交付方式（FULFILLMENT_TYPE 目录项）。 */
+    static final String PRE_ORDER = "PRE_ORDER";
     /** ISO 3166-2 一级行政区代码。 */
     private static final Pattern SUBDIVISION_CODE = Pattern.compile("[A-Z]{2}-[A-Z0-9]{1,3}");
 
@@ -70,6 +74,7 @@ public class ClientDraftPreparer {
         PendingIdentifier pending = identifier(pack, current, patch, subjectType, columns, errors);
         addressFormat(pack, patch, errors);
         subdivisionFormat(pack, current, patch, errors);
+        fulfillmentDays(current, patch, columns, errors);
         OnboardingSchema schema = primary ? organizationType(pack, application, patch, errors) : null;
         if (!errors.isEmpty()) {
             throw new RequestBodyValidationException(INVALID_DRAFT, errors, null);
@@ -134,6 +139,27 @@ public class ClientDraftPreparer {
         String format = patch.values().get(ADDRESS_FORMAT);
         if (format != null && !format.equals(pack.addressFormatFor(null)) && !OnboardingPack.GENERIC_ADDRESS_FORMAT.equals(format)) {
             errors.add(new ProblemFieldError(ADDRESS_FORMAT, "地址格式与申请辖区不符"));
+        }
+    }
+
+    /**
+     * 预计交付天数只随预售保留（技术方案 S-07）：按"本次值或当前值"的有效交付方式判断
+     * <li>本次改了交付方式且不是 PRE_ORDER：同一写入清空天数，隐藏字段的旧值不进入资料与批准摘要。</li>
+     * <li>本次填写非空天数而有效交付方式不是 PRE_ORDER：拒绝。天数 1—365 的范围由 Schema 在提交时校验。</li>
+     */
+    static void fulfillmentDays(ClientDraftFields current, ClientDraftPatch patch, Map<String, Object> columns,
+        List<ProblemFieldError> errors) {
+        boolean typeChanged = patch.values().containsKey(FULFILLMENT_TYPE);
+        String type = typeChanged ? patch.values().get(FULFILLMENT_TYPE) : current.businessFulfillmentType();
+        if (PRE_ORDER.equals(type)) {
+            return;
+        }
+        if (patch.values().get(FULFILLMENT_DAYS) != null) {
+            errors.add(new ProblemFieldError(FULFILLMENT_DAYS, "仅在交付方式为预售时填写"));
+            return;
+        }
+        if (typeChanged) {
+            columns.put(FULFILLMENT_DAYS.replace('.', '_'), null);
         }
     }
 

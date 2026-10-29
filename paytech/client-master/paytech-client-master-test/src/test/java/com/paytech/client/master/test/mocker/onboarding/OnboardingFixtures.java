@@ -45,6 +45,32 @@ public final class OnboardingFixtures {
         "PLATFORM_TERMS_ACCEPTANCE", "PRIVACY_NOTICE_ACKNOWLEDGED");
     /** 正式 DML 为条款与隐私告知配置的文档版本（DOCUMENT_VERSION）。 */
     public static final String DOCUMENT_VERSION = "2026-10-draft";
+    /** 法务修订 v2：AE 组织默认 Schema（已由业务信息补采退役）。 */
+    public static final long AE_ORGANIZATION_SCHEMA_V2 = 9_270_000_000_900_301L;
+    /** 法务修订 v2：AE 个人默认 Schema（已由业务信息补采退役）。 */
+    public static final long AE_INDIVIDUAL_SCHEMA_V2 = 9_270_000_000_900_303L;
+    /** 业务信息补采 v3：AE 组织默认 Schema。 */
+    public static final long AE_ORGANIZATION_SCHEMA_V3 = 9_281_200_000_900_301L;
+    /** 业务信息补采 v3：AE FZ_LLC 专用 Schema。 */
+    public static final long AE_FZ_LLC_SCHEMA_V3 = 9_281_200_000_900_302L;
+    /** 业务信息补采 v3：AE 个人默认 Schema。 */
+    public static final long AE_INDIVIDUAL_SCHEMA_V3 = 9_281_200_000_900_303L;
+    /** 业务信息补采字段：期望支付方式。 */
+    public static final String EXPECTED_PAYMENT_METHODS = "business.expectedPaymentMethods";
+    /** 业务信息补采字段：退款政策链接。 */
+    public static final String REFUND_POLICY_URL = "business.refundPolicyUrl";
+    /** 业务信息补采字段：交付方式。 */
+    public static final String FULFILLMENT_TYPE = "business.fulfillmentType";
+    /** 业务信息补采字段：预计交付天数。 */
+    public static final String FULFILLMENT_DAYS = "business.fulfillmentDays";
+    /** 交付方式目录（client-master 自有目录 FULFILLMENT_TYPE）。 */
+    public static final String FULFILLMENT_TYPE_CATALOG = "FULFILLMENT_TYPE";
+    /** 交付方式目录项：即时交付、预售、订阅、服务交付。 */
+    public static final List<String> FULFILLMENT_TYPES = List.of("INSTANT", "PRE_ORDER", "SUBSCRIPTION", "SERVICE");
+    /** 唯一需要预计交付天数的交付方式。 */
+    public static final String PRE_ORDER = "PRE_ORDER";
+    /** 即时交付。 */
+    public static final String INSTANT = "INSTANT";
 
     private OnboardingFixtures() {
     }

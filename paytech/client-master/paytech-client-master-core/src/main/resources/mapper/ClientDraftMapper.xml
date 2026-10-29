@@ -103,7 +103,11 @@
       b.business_description AS businessBusinessDescription,
       b.expected_volume AS businessExpectedVolume,
       b.expected_ticket AS businessExpectedTicket,
-      b.currency AS businessCurrency
+      b.currency AS businessCurrency,
+      b.expected_payment_methods AS businessExpectedPaymentMethods,
+      b.refund_policy_url AS businessRefundPolicyUrl,
+      b.fulfillment_type AS businessFulfillmentType,
+      b.fulfillment_days AS businessFulfillmentDays
     FROM t_party_profile p LEFT JOIN t_individual_profile i ON i.profile_id=p.profile_id
       LEFT JOIN t_organization_profile o ON o.profile_id=p.profile_id
       LEFT JOIN t_party_address a ON a.profile_id=p.profile_id AND a.address_type=#{addressType}
@@ -202,6 +206,10 @@
     <if test="changes.containsKey('business_expectedVolume')">,expected_volume=#{changes[business_expectedVolume],jdbcType=DECIMAL}</if>
     <if test="changes.containsKey('business_expectedTicket')">,expected_ticket=#{changes[business_expectedTicket],jdbcType=DECIMAL}</if>
     <if test="changes.containsKey('business_currency')">,currency=#{changes[business_currency],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('business_expectedPaymentMethods')">,expected_payment_methods=#{changes[business_expectedPaymentMethods],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('business_refundPolicyUrl')">,refund_policy_url=#{changes[business_refundPolicyUrl],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('business_fulfillmentType')">,fulfillment_type=#{changes[business_fulfillmentType],jdbcType=VARCHAR}</if>
+    <if test="changes.containsKey('business_fulfillmentDays')">,fulfillment_days=#{changes[business_fulfillmentDays],jdbcType=SMALLINT}</if>
     WHERE client_id=#{clientId}</update>
   <insert id="saveContact">INSERT INTO t_party_contact(contact_id,profile_id,contact_type,contact_vault_token,contact_masked_value,create_time,update_time)
     VALUES(#{id},#{profileId},#{contact.contactType},#{contact.token},#{contact.maskedValue},#{now},#{now}) AS incoming

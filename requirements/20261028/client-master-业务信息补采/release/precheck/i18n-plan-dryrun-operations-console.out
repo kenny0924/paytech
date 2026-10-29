@@ -1,0 +1,18 @@
+[通过] operations-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] operations-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[通过] operations-console 线上 10419 个 ACTIVE key 都在仓库中（否则 KEY_IMPORT 会废弃它们；确认废弃用 --accept-deprecations）
+[通过] operations-console 新增 22 < 3000
+[通过] operations-console 导入集合 22+ 个 key 都有仓库 zh-CN（缺 0）
+[通过] operations-console added 只在 ['client-review', 'onboarding-schema']（{'client-review': 9, 'onboarding-schema': 13}）
+[通过] operations-console sourceChanged 只在 ['client-review', 'onboarding-schema']（{}）
+[通过] operations-console deprecated 只在 ['client-review', 'onboarding-schema']（{}）
+[通过] operations-console restored 只在 ['client-review', 'onboarding-schema']（{}）
+[通过] operations-console zhImport 只在 ['client-review', 'onboarding-schema']（{'client-review': 9, 'onboarding-schema': 13}）
+[通过] operations-console 仓库 zh-CN 与线上不同但不会导入的 key 为 0（0）
+[通过] operations-console 不新建命名空间（[]）
+{"byNamespace": {"added": {"client-review": 9, "onboarding-schema": 13}, "sourceChanged": {}, "deprecated": {}, "restored": {}, "zhImport": {"client-review": 9, "onboarding-schema": 13}}, "zhChangedNotImported": []}
+{"currentRelease": 21, "liveNamespaces": 26, "repoNamespaces": 26, "newNamespaces": [], "repoKeys": 10441, "liveActiveKeys": 10419, "added": 22, "restored": 0, "sourceChanged": 0, "missingInRepo": 0, "zhMissingForImport": 0, "keepLiveZh": 10419, "refdataZhReplaced": 0, "liveOutdatedZh": 0, "rebaseExpected": 0, "outdatedUntouched": 0}
+导入文件与计划：/Users/kenny/Desktop/Workspace/Code-MoR-rq12/requirements/20261028/client-master-业务信息补采/release/i18n-bundles
+计划完成（只读，未登录、未写入）：可执行
+
+== 参考数据语言包计划：通过 12，失败 0，未能验证 0

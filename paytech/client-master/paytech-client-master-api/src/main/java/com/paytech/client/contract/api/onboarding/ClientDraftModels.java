@@ -26,7 +26,11 @@ public final class ClientDraftModels {
         String onboardingCode) {
         @Override public String toString() { return "StartApplicationRequestBody[redacted]"; }
     }
-    /** values 的叶字段与 dirtyFields 精确对应，null 表示清空。 */
+    /**
+     * values 的叶字段与 dirtyFields 精确对应，null 表示清空。
+     * <li>business.expectedPaymentMethods 为英文逗号分隔的代码，服务端规范化为大写、去重、按代码升序（最多 20 项）；
+     * business.refundPolicyUrl 只收 https；business.fulfillmentDays 为整数，仅交付方式为 PRE_ORDER 时可填，交付方式改为其他值时服务端同时清空。</li>
+     */
     public record DraftPatchRequestBody(List<String> dirtyFields, Map<String, Map<String, String>> values) {
         @Override public String toString() { return "DraftPatchRequestBody[redacted]"; }
     }
@@ -36,6 +40,8 @@ public final class ClientDraftModels {
      * C05 申请资料
      * <li>values 分区：individual / organization / address / identifier / business / contact / attributes；identifier 只给
      * identifierType、issuingCountry、identifierMasked（末 4 位）、identifierCheckResult、issueDate、expiryDate，不回显号码原值。</li>
+     * <li>business 另含 expectedPaymentMethods（规范化逗号串，如 APPLE_PAY,CARD）、refundPolicyUrl、fulfillmentType、fulfillmentDays（十进制字符串）；
+     * 未填为 null。</li>
      * <li>jurisdictionCode、organizationTypeCode、schemaId 决定 form-schema；reviewDueTime 为退回补件截止时间（可空）。</li>
      * <li>responsiblePartnerId / responsiblePartnerName 为入驻码冻结的责任 PayFac 及其法定名称，平台自营为空。</li>
      * <li>declarations 为每种声明的最新一条（声明属于申请，重新申请须重签）。</li>

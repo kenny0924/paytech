@@ -17,11 +17,14 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 import com.paytech.client.master.domain.onboarding.pack.ReferenceCatalogCodes;
+import com.paytech.client.master.test.mocker.onboarding.OnboardingFixtures;
 
 /**
  * 参考数据守卫（需求 R7、AC-06）：Platform 参考数据（国家、币种、一级行政区、行业）不得回到 t_catalog_item
  * <li>读取正式初始化 DML 与测试夹具中 t_catalog_item 的全部 INSERT：catalog_code 不得为 INDUSTRY、CURRENCY、STATE_OR_PROVINCE，
  * 也不得以保留前缀 REF_ 开头（REF_ 码只能出现在 Schema 字段与地址组件上，由代码识别为来自 Platform）。</li>
+ * <li>业务信息补采：commercial 外部目录码（COMMERCIAL_ 开头，如 COMMERCIAL_PAYMENT_METHOD）同样不得进入 t_catalog_item；
+ * 本库自有目录 FULFILLMENT_TYPE 恰为 4 项。</li>
  */
 class ReferenceCatalogGuardTest {
     /** 迁出 t_catalog_item 的旧目录码。 */
@@ -48,6 +51,8 @@ class ReferenceCatalogGuardTest {
         assertEquals(List.of(), violations("zz-pack.sql", zzCodes), "t_catalog_item 出现参考数据目录");
         assertTrue(initialData.contains("'" + ReferenceCatalogCodes.REF_CURRENCY + "'")
             && initialData.contains("'" + ReferenceCatalogCodes.REF_COUNTRY_SUBDIVISION + "'"), "Schema 应以 REF_ 码引用 Platform 参考数据");
+        assertTrue(initialData.contains("'" + ReferenceCatalogCodes.COMMERCIAL_PAYMENT_METHOD + "'"), "v3 Schema 应以外部目录码引用 commercial 支付方式");
+        assertEquals(4, initialCodes.stream().filter(OnboardingFixtures.FULFILLMENT_TYPE_CATALOG::equals).count(), "交付方式目录应为 4 项");
     }
 
     /** 某文件中 t_catalog_item 全部 INSERT 行的 catalog_code。 */
@@ -65,7 +70,8 @@ class ReferenceCatalogGuardTest {
 
     /** 违反守卫的目录码。 */
     static List<String> violations(String file, List<String> codes) {
-        return codes.stream().filter(code -> RETIRED.contains(code) || ReferenceCatalogCodes.isReference(code)).distinct()
+        return codes.stream().filter(code -> RETIRED.contains(code) || ReferenceCatalogCodes.isReference(code)
+            || code.startsWith(ReferenceCatalogCodes.COMMERCIAL_PREFIX)).distinct()
             .map(code -> file + ": " + code).toList();
     }
 }

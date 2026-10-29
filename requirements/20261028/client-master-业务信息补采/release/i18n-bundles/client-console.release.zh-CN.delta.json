@@ -1,0 +1,34 @@
+{
+  "format": "code-mor-i18n-translation/1",
+  "application": "client-console",
+  "locale": "zh-CN",
+  "namespaces": {
+    "onboarding-schema": {
+      "onboarding-schema.catalog.FULFILLMENT_TYPE.INSTANT": "即时交付",
+      "onboarding-schema.catalog.FULFILLMENT_TYPE.PRE_ORDER": "预售",
+      "onboarding-schema.catalog.FULFILLMENT_TYPE.SERVICE": "服务交付",
+      "onboarding-schema.catalog.FULFILLMENT_TYPE.SUBSCRIPTION": "订阅",
+      "onboarding-schema.field.business.expectedPaymentMethods": "期望开通的支付方式",
+      "onboarding-schema.field.business.fulfillmentDays": "预计交付天数",
+      "onboarding-schema.field.business.fulfillmentType": "交付方式",
+      "onboarding-schema.field.business.refundPolicyUrl": "退款政策链接",
+      "onboarding-schema.group.FULFILLMENT": "交付",
+      "onboarding-schema.help.business.expectedPaymentMethods": "可多选。仅供审核参考，不会直接为您开通。",
+      "onboarding-schema.help.business.fulfillmentDays": "从付款到交付的天数，1—365。",
+      "onboarding-schema.help.business.fulfillmentType": "客户付款后如何获得商品或服务；特殊情况请在业务描述中说明。",
+      "onboarding-schema.help.business.refundPolicyUrl": "公开可访问的 https 页面，说明客户如何申请退款。",
+      "onboarding-schema.paymentMethod.APPLE_PAY": "Apple Pay",
+      "onboarding-schema.paymentMethod.CARD": "银行卡",
+      "onboarding-schema.paymentMethod.GOOGLE_PAY": "Google Pay",
+      "onboarding-schema.paymentMethod.STC_PAY": "STC Pay"
+    },
+    "onboarding": {
+      "onboarding.error.days_range": "请输入 {min}—{max} 的整数",
+      "onboarding.error.https_url": "请填写以 https:// 开头的链接",
+      "onboarding.form.multi_select_count": "{count, plural, =0 {未选择} other {已选 # 项}}",
+      "onboarding.form.multi_select_done": "完成",
+      "onboarding.form.multi_select_placeholder": "请选择（可多选）",
+      "onboarding.form.remove_option": "移除 {label}"
+    }
+  }
+}

@@ -37,7 +37,16 @@ public final class ClientDraftPatch {
 
         PHONE,
 
-        BOOLEAN
+        BOOLEAN,
+
+        /** 逗号分隔的代码列表：规范化为大写、去重、按代码升序。 */
+        CODE_LIST,
+
+        /** 只收 https 的网址。 */
+        HTTPS_URL,
+
+        /** 非负十进制整数，去前导零。 */
+        INTEGER
     }
     private record Field(Kind kind, int length) {}
     /** 单字段校验结果：合规时 value 为规范化值，否则 message 为外显约束说明。 */
@@ -46,6 +55,9 @@ public final class ClientDraftPatch {
         static Checked fail(String message) { return new Checked(null, message); }
     }
     private record EmailValue(@Email String value) {}
+    /** 代码列表的单项格式与项数上限。 */
+    private static final String CODE_PATTERN="[A-Z][A-Z0-9_]{0,63}";
+    private static final int MAX_CODES=20;
     private static final Map<String,Field> FIELDS=Map.ofEntries(
         Map.entry("individual.givenName", new Field(Kind.TEXT,128)),
         Map.entry("individual.middleName", new Field(Kind.TEXT,128)),
@@ -88,6 +100,10 @@ public final class ClientDraftPatch {
         Map.entry("business.expectedVolume", new Field(Kind.MONEY,25)),
         Map.entry("business.expectedTicket", new Field(Kind.MONEY,25)),
         Map.entry("business.currency", new Field(Kind.CURRENCY,3)),
+        Map.entry("business.expectedPaymentMethods", new Field(Kind.CODE_LIST,512)),
+        Map.entry("business.refundPolicyUrl", new Field(Kind.HTTPS_URL,2048)),
+        Map.entry("business.fulfillmentType", new Field(Kind.TEXT,32)),
+        Map.entry("business.fulfillmentDays", new Field(Kind.INTEGER,3)),
         Map.entry("contact.email", new Field(Kind.EMAIL,320)),
         Map.entry("contact.phone", new Field(Kind.PHONE,32)));
     /** 扩展属性分区：字段名为属性代码，类型与辖区适用性由辖区包属性定义在保存前校验。 */
@@ -214,6 +230,7 @@ public final class ClientDraftPatch {
                 case DATE -> LocalDate.parse(value);
                 case MONEY -> new BigDecimal(value);
                 case BOOLEAN -> Boolean.valueOf(value);
+                case INTEGER -> Integer.valueOf(value);
                 default -> value;
             });
         });
@@ -278,11 +295,13 @@ public final class ClientDraftPatch {
             }
             case BOOLEAN -> "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)
                 ?Checked.ok(value.toLowerCase(Locale.ROOT)):Checked.fail(message(kind));
-            case URL -> {
+            case URL, HTTPS_URL -> {
                 URI uri=URI.create(value);
-                boolean web="https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme());
+                boolean web="https".equalsIgnoreCase(uri.getScheme()) || (kind==Kind.URL && "http".equalsIgnoreCase(uri.getScheme()));
                 yield web && uri.getHost()!=null && uri.getUserInfo()==null?Checked.ok(value):Checked.fail(message(kind));
             }
+            case CODE_LIST -> codeList(value);
+            case INTEGER -> value.matches("[0-9]+")?Checked.ok(Integer.valueOf(value).toString()):Checked.fail(message(kind));
             default -> Checked.ok(value);
         };
     }
@@ -297,6 +316,28 @@ public final class ClientDraftPatch {
             return Checked.fail(message(Kind.MONEY));
         }
         return Checked.ok(number.stripTrailingZeros().toPlainString());
+    }
+
+    /**
+     * 代码列表的唯一规范化：按英文逗号拆分，逐项去空白转大写、丢弃空项，校验格式后去重并按代码升序以逗号连接
+     * <li>全部为空项时视为清空；超过 20 项或任一项不合规时拒绝。页面与需求计算只拆分，不再改写，摘要输入即存储值。</li>
+     */
+    private static Checked codeList(String value) {
+        var codes=new TreeSet<String>();
+        for (String item:value.split(",",-1)) {
+            String code=item.strip().toUpperCase(Locale.ROOT);
+            if (code.isEmpty()) {
+                continue;
+            }
+            if (!code.matches(CODE_PATTERN)) {
+                return Checked.fail(message(Kind.CODE_LIST));
+            }
+            codes.add(code);
+        }
+        if (codes.size()>MAX_CODES) {
+            return Checked.fail(message(Kind.CODE_LIST));
+        }
+        return Checked.ok(codes.isEmpty()?null:String.join(",",codes));
     }
 
     /** 代码和日期是定长格式，超长时直接说明格式比说明长度更有用。 */
@@ -314,6 +355,9 @@ public final class ClientDraftPatch {
             case EMAIL -> "邮箱格式不正确";
             case PHONE -> "手机号须为 E.164 格式，如 +8613800138000";
             case URL -> "须为 http 或 https 网址";
+            case HTTPS_URL -> "须为 https 网址";
+            case CODE_LIST -> "须为以逗号分隔的代码，最多 "+MAX_CODES+" 项";
+            case INTEGER -> "须为整数";
             case BOOLEAN -> "须为 true 或 false";
             default -> "字段不符合约定";
         };

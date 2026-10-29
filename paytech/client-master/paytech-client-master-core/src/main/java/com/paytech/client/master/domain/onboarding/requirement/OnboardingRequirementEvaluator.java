@@ -106,7 +106,7 @@ public final class OnboardingRequirementEvaluator {
     }
 
     /**
-     * 目录取值判断：REF_ 目录按本次 Platform 参考数据结论，其余按辖区包目录
+     * 目录取值判断：REF_ 目录按本次 Platform 参考数据结论，COMMERCIAL_PAYMENT_METHOD 按本次 commercial ACTIVE 支付方式，其余按辖区包目录
      *
      * @param catalogCode 目录码
      * @param value 取值
@@ -117,6 +117,9 @@ public final class OnboardingRequirementEvaluator {
     boolean catalogContains(String catalogCode, String value, RequirementSubject subject, String countryCode) {
         if (ReferenceCatalogCodes.isReference(catalogCode)) {
             return input.getReferences().contains(catalogCode, value, countryCode);
+        }
+        if (ReferenceCatalogCodes.COMMERCIAL_PAYMENT_METHOD.equals(catalogCode)) {
+            return input.getActivePaymentMethods().contains(value);
         }
         return pack.catalogContains(catalogCode, value, subject.partyType());
     }
@@ -141,7 +144,8 @@ public final class OnboardingRequirementEvaluator {
             return FieldResult.missing(field.getRequirementLevel(), OnboardingRequirementKind.FIELD);
         }
         OnboardingRequirementCode error = format(field, value);
-        if (error == null && field.getCatalogCode() != null && !catalogContains(field.getCatalogCode(), value, subject, null)) {
+        if (error == null && field.getCatalogCode() != null && !catalogValues(field, value).stream()
+            .allMatch(item -> catalogContains(field.getCatalogCode(), item, subject, null))) {
             error = FIELD_VALUE_NOT_IN_CATALOG;
         }
         if (error == null && ReferenceCodeCheck.countryField(pack, field) && !input.getReferences().countryActive(value)) {
@@ -152,6 +156,11 @@ public final class OnboardingRequirementEvaluator {
         }
         return error == null ? FieldResult.satisfied(OnboardingRequirementKind.FIELD)
             : FieldResult.error(error, OnboardingRequirementKind.FIELD);
+    }
+
+    /** 目录字段的各个取值：MULTI_SELECT 按草稿规范化的逗号串拆分（不再改写），其余为单值。 */
+    static List<String> catalogValues(OnboardingSchemaField field, String value) {
+        return field.getWidgetCode() == WidgetCode.MULTI_SELECT ? List.of(value.split(",")) : List.of(value);
     }
 
     /** 正则、长度、金额与属性定义的格式。 */

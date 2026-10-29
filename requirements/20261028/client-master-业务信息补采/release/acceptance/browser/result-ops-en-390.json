@@ -1,0 +1,124 @@
+{
+ "locale": "en",
+ "width": 390,
+ "steps": [
+  {
+   "step": "B9-v1-case-application",
+   "check": {
+    "title": "Business Information",
+    "items": [
+     "Business Model Physical Goods",
+     "Website —",
+     "Business Description Sells home goods online through its own website (acceptance test data).",
+     "Expected Monthly Volume 50000",
+     "Expected Ticket Size 100",
+     "Currency United Arab Emirates Dirham",
+     "Expected Payment Methods Not collected",
+     "Refund Policy Not collected",
+     "Fulfillment Not collected",
+     "Delivery Time Not collected"
+    ]
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B10-client-detail",
+   "check": {
+    "title": "Business Information",
+    "items": [
+     "Business Model Physical Goods",
+     "Website https://example.test",
+     "Business Description 通过自有网站销售家居用品（验收测试数据）",
+     "Expected Monthly Volume 50000",
+     "Expected Ticket Size 100",
+     "Currency US Dollar",
+     "Expected Payment Methods Not collected",
+     "Refund Policy Not collected",
+     "Fulfillment Not collected",
+     "Delivery Time Not collected"
+    ]
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "B11a-config-schema",
+   "check": {
+    "title": "United Arab Emirates AE",
+    "multi": 1,
+    "rows": [
+     "Payment methods you plan to accept\nbusiness.expectedPaymentMethods\n\tMulti-select\t\nRequired\n\tCOMMERCIAL_PAYMENT_METHOD\tPRIMARY"
+    ]
+   },
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 80
+   }
+  },
+  {
+   "step": "B11b-schema-versions",
+   "check": [
+    "Individual · Client · Default (all types) · v1 · Retired",
+    "Individual · Client · Default (all types) · v2 · Retired",
+    "Individual · Client · Default (all types) · v3 · Active",
+    "Individual · Client · Sole Establishment · v1 · Retired",
+    "Individual · Client · Sole Establishment · v2 · Retired",
+    "Individual · Client · Sole Establishment · v3 · Active",
+    "Organization · Client · Default (all types) · v1 · Retired",
+    "Organization · Client · Default (all types) · v2 · Retired",
+    "Organization · Client · Default (all types) · v3 · Active",
+    "Organization · Client · Free Zone Limited Liability Company · v1 · Retired"
+   ],
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 80
+   }
+  },
+  {
+   "step": "R1-workflow-my-tasks",
+   "check": "My Tasks To Do 6 Handled All 6 Fill In 4 Approval 2 Bulk Approval 上线验收 · 237573267559391233 REQ-05 验收 · 客户上线（commercial） · N8 收款开通检查 3 hours ago 上线验收 · 237573699337822209 REQ-05 验收 · 客户上线（commercial） · N3 合同起草检查 3 hours ago 上线验收 · 237573382420406273 REQ-05 验收 · 客户上线（commercial） · N4 合同生效检查 3 hours ago DEMO-CL-001 定价上线核对（待处理） 客户定价上线核对 · 上线审批 Overdue by 6 days DEMO-CL-001 合同变更复盘（待处理） 合同变更复盘 · 变更复盘 · 2 actions Overdue by 6 days WF-INLINE-20261022 内嵌预览实例 WF-INLINE-20261022 内嵌预览流程 · 上传待审文件 Overdue by 6 days 上线验收 · 237573267559391233 REQ-05 验收 · 客户上线（commercial） v1 · Initiator o***@example.test · Started 10-29 13:47 · At this node for 3 hours 开始 N3 合同起草检查 N4 合同生效检查 N8 收款开通检查 Current 结束 View Diagra",
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "R2-workflow-definitions",
+   "check": "Process Definitions New Process All 8 Published 8 Draft 0 Disabled 0 Sorted by last change REQ-05 验收 · 客户上线（commercial） Published v1 Updated 10-29 Start 合同变更复盘 Published v1 Updated 10-23 · 演示：页面任务带常量参数、可选人工确认 Start 客户定价上线核对 Published v1 Updated 10-23 · 演示：页面任务与人工确认 Start WF-UX-20261023 多动作流程 Published v1 Updated 10-23 · mor-test 体验优化验收 Start WF-INLINE-20261022-C 内嵌预览流程 Published v1 Updated 10-22 · mor-test 内嵌预览验收 Start WF-INLINE-20261022-B 内嵌预览流程 Published v1 Updated 10-22 · mor-test 内嵌预览验收 Start WF-INLINE-20261022 内嵌预览流程 Published v1 Updated 10-22 · mor-test 内嵌预览验收 Start WF-SMOKE-20261022 冒烟流程 Published v1 Updated 10-22 · mor-test 写数据冒烟 Start",
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  },
+  {
+   "step": "R3-workflow-action-templates",
+   "check": "Action Catalog New Action All 14 Form 2 File Upload 4 Page Task 2 Manual Confirmation 3 Data Query 3 Name Type Used By Status Last Changed PSP 人工复核 Manual Confirmation 1 process Enabled o***@example.test 10-29 13:46 收款开通检查 Data Query 1 process Enabled o***@example.test 10-29 13:46 合同生效检查 Data Query 1 process Enabled o***@example.test 10-29 13:46 合同已起草检查 Data Query 1 process Enabled o***@example.test 10-29 13:46 确认已通知客户成功经理 演示：可选的人工确认 Manual Confirmation 1 process Enabled o***@example.test 10-23 11:56 确认合同原件已归档 演示：线下动作的人工确认 Manual Confirmation 1 process Enabled o***@example.test 10-23 11:56 合同变更历史查看 演示：跳到合同变更历史时间线 Page Task 1 process Enabled o***@example.test 10-23 11:56 价格试算核对 演示：跳到价格试算页按客户 ",
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 353
+   }
+  },
+  {
+   "step": "R4-contract-detail",
+   "check": "PayFac Partner Agreement · AE001 Back Refresh Change History Terminate Agreement No. PAYFAC-AE001-PARTNER Type Partner Agreement Status Active Local Partner 900000000001370001 OE AE001 Effective Period 2026-10-25 18:06 – Open-ended Signed / Activated 2026-10-25 18:06 / 2026-10-25 18:06 Version 5 Parties & Signing (3) Products & Enablements (0) Term Versions Role Party / Profile Version Signing Actions Role Party / Profile Version Signing Actions Local Partner 880000000702 881000000702 Click Acceptance2026-10-25 18:06 ACC-PAYFAC-AE001-PARTNER-880000000702 Operating Entity 880000000702 881000000702 Click Acceptance2026-10-25 18:06 ACC-PAYFAC-AE001-PARTNER-880000000702 Platform Signatory 880000",
+   "page": {
+    "rawKeys": [],
+    "horizontalScroll": 0
+   }
+  }
+ ],
+ "console": [],
+ "httpErrors": [],
+ "requests": [],
+ "bundles": {
+  "ok": 26,
+  "failed": 0
+ },
+ "clientDetail": "http://localhost:28080/master-data/clients/239260386824658945",
+ "agreementDetail": "http://localhost:28080/commercial/agreements/240113831739723776"
+}

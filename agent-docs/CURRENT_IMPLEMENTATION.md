@@ -11,6 +11,15 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## client-master 业务信息补采（REQ-12，2026-10-28—29，已部署 mor-test，已本地提交）
+
+- **范围：** [需求](<../requirements/20261028/client-master-业务信息补采/requirement.md>)、[技术方案](<../requirements/20261028/client-master-业务信息补采/technique.md>)、[交付记录](<../requirements/20261028/client-master-业务信息补采/delivery.md>)、[运行卡](<../requirements/20261028/client-master-业务信息补采/release/runbook.md>)；依据 [2026-10-28 客户上线决定](./decisions/2026-10-28-client-go-live-orchestration.md)（Proposed）。
+- **Implemented：** `t_client_business_profile` 新增 `expected_payment_methods`（规范化逗号串，编码为 commercial `capability_code`）、`refund_policy_url`（https）、`fulfillment_type`（INSTANT / PRE_ORDER / SUBSCRIPTION / SERVICE）、`fulfillment_days`（PRE_ORDER 时 1—365）；入驻 Schema v3（三辖区 9 个，v2 退役；增量 `paytech/client-master/docs/database/sql/changes/2026-10-29-business-info-collection{,-ddl}{,-rollback}.sql`，ID 段 `92812000…`）：期望支付方式 `MULTI_SELECT` + 外部目录 `COMMERCIAL_PAYMENT_METHOD`（client-master 事务外读 commercial `ProductCatalogApi#listCapabilities` 的 ACTIVE PAYMENT_METHOD，不可用时 client-master 503 `ONBOARDING_DEPENDENCY_UNAVAILABLE`、门户经 BFF 为 503 `SERVICE_UNAVAILABLE`）、退款政策机构 EVENTUALLY / 个人 OPTIONAL（EVENTUALLY 不阻断批准，B6）、交付方式目录 `FULFILLMENT_TYPE`、天数 `visible_when fulfillmentType=PRE_ORDER`（改离 PRE_ORDER 时服务端清空）；草稿 `Kind.CODE_LIST / HTTPS_URL / INTEGER`；四项进入批准时 `t_party_profile.content_hash`。门户多选控件（390 底部面板）与校验；运营审核"申请资料"与 Client 详情展示（四项全空"未采集"、部分为空"未填写"），值解码上限 2048。两个 BFF、commercial、Gateway 无代码改动。
+- **Verified：** client-master 176、client-console-bff 102、client-console-web 153、ops-web 1601；本机 e2e 接口 179 PASS、浏览器 60 步；mor-test 发布前离线演练 16 步。
+- **本机：** auto 库 `mor_client_master` 已执行本需求 DDL 与补执行 2026-10-27 法务修订 DDL；e2e 库 `mor_client_master_v2e2e` 已补跑法务修订 DDL / DML 并执行本需求 DDL + v3 DML；e2e client-master 与 client-console-bff 为本需求构建（`*.pre-rq12`，一起回滚）；门户 Vite 18312、运营 Vite 18313；本机语言包 client-console #5、operations-console #14。
+- **mor-test（2026-10-29 13:01Z）：** client-master-service `2b12c2e2…`、client-console-web `e17a9a0a…`、operations-console-web `0b456b8a…`（`rq12-20261029a`）；`mor_client_master` DDL + v3 ACTIVE（13:03:54Z）；语言包 client-console #8、operations-console #22。验收 API 全 PASS、浏览器 76 张通过；未提交任何申请（验收草稿已撤回）。v3 已有申请后 DML 回滚会拒绝，只能前滚修复。
+- **Known gaps：** `t_client_business_profile.content_hash` 无写入路径而 Checkout 分类要求它（F-07，未立项）；compliance 登记体不含三项（随 REQ-03）；commercial 故障时出站 GET 重发约 1 秒多后 503（接受）；运营入驻配置页与 REQ-05 动作目录页 390 宽横向滚动（既有）；同一 Client 业务资料单行，撤回草稿值带到新草稿（既有设计）。
+
 ## platform-support workflow 按钮发起与数据验证（REQ-05，2026-10-28—29，已部署 mor-test，已本地提交 `af972805`，未推送）
 
 - **范围：** [需求](<../requirements/20261028/platform-support-workflow按钮发起与数据验证/requirement.md>)、[技术方案](<../requirements/20261028/platform-support-workflow按钮发起与数据验证/technique.md>)、[交付记录](<../requirements/20261028/platform-support-workflow按钮发起与数据验证/delivery.md>)、[运行卡](<../requirements/20261028/platform-support-workflow按钮发起与数据验证/release/runbook.md>)；依据 [2026-10-28 客户上线决定](./decisions/2026-10-28-client-go-live-orchestration.md)（Proposed）。

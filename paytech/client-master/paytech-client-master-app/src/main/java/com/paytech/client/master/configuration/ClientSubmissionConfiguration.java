@@ -34,6 +34,7 @@ import com.paytech.client.master.domainservice.service.impl.ClientReviewRegistra
 import com.paytech.client.master.domainservice.service.impl.ClientSubmissionServiceImpl;
 import com.paytech.client.master.integration.ClientDraftAccountClient;
 import com.paytech.client.master.integration.ClientMaterialAuthorityClient;
+import com.paytech.client.master.integration.ClientPaymentMethodCatalogClient;
 import com.paytech.client.master.integration.ClientReviewRegistrationClient;
 import com.paytech.client.master.integration.impl.ClientReviewRegistrationClientImpl;
 import com.paytech.client.master.service.handler.ClientReviewRegistrationHandler;
@@ -116,9 +117,9 @@ public class ClientSubmissionConfiguration {
         ClientPeopleRepository people, ClientDocumentRepository documents, PartyAttributeRepository attributes,
         ComplianceProgramClient programs, PartyIdentityKeyRepository identityKeys, ClientMaterialAuthorityClient authority,
         ClientAgreementPartyClient agreementParties, PartyProfileIdentifierRepository identifiers,
-        ApplicationDeclarationRepository declarations, ReferenceData referenceData) {
+        ApplicationDeclarationRepository declarations, ReferenceData referenceData, ClientPaymentMethodCatalogClient paymentMethods) {
         return new ClientSubmissionPreparer(clock, packs, drafts, people, documents, attributes, programs, identityKeys, authority,
-            agreementParties, identifiers, declarations, referenceData);
+            agreementParties, identifiers, declarations, referenceData, paymentMethods);
     }
 
     /** CM-7 需求清单。 */

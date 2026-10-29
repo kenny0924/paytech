@@ -186,6 +186,56 @@ class ClientFormSchemaHttpAutoTest {
         assertEquals(List.of(SCHEMA_PATH, COUNTRIES + "?status=" + ACTIVE), CALLS);
     }
 
+    /**
+     * 业务信息补采（REQ-12）回归：client-master 的多选控件、commercial 支付方式外部目录与交付方式目录、天数可见条件与正则原样到达页面；
+     * 外部目录不是 REF_ 目录，不触发额外的 Platform 查询
+     */
+    @Test
+    void test_businessInfoFieldsPassThrough() throws Exception {
+        var schema = schema("AE", localAddress(null), genericAddress(null), null);
+        var methods = new FormSchemaResponseBody.Field();
+        methods.setFieldKey("business.expectedPaymentMethods");
+        methods.setWidget("MULTI_SELECT");
+        methods.setCatalogCode("COMMERCIAL_PAYMENT_METHOD");
+        methods.setRequirementLevel("REQUIRED");
+        methods.setAppliesTo("PRIMARY");
+        methods.setLabelKey("onboardingSchema.field.business.expectedPaymentMethods");
+        var days = new FormSchemaResponseBody.Field();
+        days.setFieldKey("business.fulfillmentDays");
+        days.setWidget("TEXT");
+        days.setRequirementLevel("REQUIRED");
+        days.setAppliesTo("PRIMARY");
+        days.setVisibleWhen("business.fulfillmentType=PRE_ORDER");
+        var validation = new FormSchemaResponseBody.Validation();
+        validation.setPattern("^(36[0-5]|3[0-5][0-9]|[12][0-9]{2}|[1-9][0-9]?)$");
+        validation.setMaxLength(3);
+        days.setValidation(validation);
+        days.setLabelKey("onboardingSchema.field.business.fulfillmentDays");
+        var group = schema.getSections().getFirst().getGroups().getFirst();
+        group.setFields(List.of(group.getFields().get(0), group.getFields().get(1), methods, days));
+        schema.setCatalogs(Map.of("BUSINESS_MODEL", schema.getCatalogs().get("BUSINESS_MODEL"),
+            "COMMERCIAL_PAYMENT_METHOD", List.of(option("APPLE_PAY", "onboardingSchema.paymentMethod.APPLE_PAY"),
+                option("CARD", "onboardingSchema.paymentMethod.CARD")),
+            "FULFILLMENT_TYPE", List.of(option("INSTANT", "onboardingSchema.catalog.FULFILLMENT_TYPE.INSTANT"),
+                option("PRE_ORDER", "onboardingSchema.catalog.FULFILLMENT_TYPE.PRE_ORDER"))));
+        RESPONSES.put(SCHEMA_PATH, schema);
+
+        var result = get("/client-onboarding/v1/form-schema?applicationId=10");
+
+        assertEquals(200, result.statusCode(), result.body());
+        var page = JSON.readTree(result.body());
+        var fields = page.path("sections").path(0).path("groups").path(0).path("fields");
+        assertEquals("MULTI_SELECT", fields.path(2).path("widget").asString());
+        assertEquals("COMMERCIAL_PAYMENT_METHOD", fields.path(2).path("catalogCode").asString());
+        assertEquals("business.fulfillmentType=PRE_ORDER", fields.path(3).path("visibleWhen").asString());
+        assertEquals("^(36[0-5]|3[0-5][0-9]|[12][0-9]{2}|[1-9][0-9]?)$", fields.path(3).path("validation").path("pattern").asString());
+        var paymentMethods = page.path("catalogs").path("COMMERCIAL_PAYMENT_METHOD");
+        assertEquals(List.of("APPLE_PAY", "CARD"), codes(paymentMethods));
+        assertEquals("onboardingSchema.paymentMethod.CARD", paymentMethods.path(1).path("labelKey").asString());
+        assertEquals(List.of("INSTANT", "PRE_ORDER"), codes(page.path("catalogs").path("FULFILLMENT_TYPE")));
+        assertEquals(List.of(SCHEMA_PATH, COUNTRIES + "?status=" + ACTIVE), CALLS);
+    }
+
     /** Platform 任一参考数据不可用：整页返回 Problem，不返回缺少选项的 Schema。 */
     @Test
     void test_platformUnavailable() throws Exception {
@@ -291,6 +341,13 @@ class ClientFormSchemaHttpAutoTest {
         terms.setDocumentVersion("2026-10-draft");
         schema.setDeclarations(List.of(terms));
         return schema;
+    }
+
+    private static FormSchemaResponseBody.CatalogOption option(String code, String labelKey) {
+        var option = new FormSchemaResponseBody.CatalogOption();
+        option.setCode(code);
+        option.setLabelKey(labelKey);
+        return option;
     }
 
     private static FormSchemaResponseBody.AddressFormat localAddress(String stateCatalog) {

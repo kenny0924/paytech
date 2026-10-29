@@ -1,0 +1,13 @@
+{
+ "locale": "en",
+ "width": 1440,
+ "steps": [],
+ "console": [],
+ "httpErrors": [],
+ "requests": [],
+ "bundles": {
+  "ok": 5,
+  "failed": 0
+ },
+ "withdrawn": []
+}

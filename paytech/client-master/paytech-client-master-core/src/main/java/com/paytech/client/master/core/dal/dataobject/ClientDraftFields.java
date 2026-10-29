@@ -46,7 +46,11 @@ public record ClientDraftFields(
     /** 当前 business.businessDescription 值。 */ String businessBusinessDescription,
     /** 当前 business.expectedVolume 值。 */ BigDecimal businessExpectedVolume,
     /** 当前 business.expectedTicket 值。 */ BigDecimal businessExpectedTicket,
-    /** 当前 business.currency 值。 */ String businessCurrency) {
+    /** 当前 business.currency 值。 */ String businessCurrency,
+    /** 当前 business.expectedPaymentMethods 值：规范化逗号串。 */ String businessExpectedPaymentMethods,
+    /** 当前 business.refundPolicyUrl 值。 */ String businessRefundPolicyUrl,
+    /** 当前 business.fulfillmentType 值。 */ String businessFulfillmentType,
+    /** 当前 business.fulfillmentDays 值；仅 PRE_ORDER 有值。 */ Integer businessFulfillmentDays) {
     /** 是否已保存号码（Token 或公开登记号）。 */
     public boolean identifierPresent() {
         return identifierVaultToken != null || identifierPublicValue != null;
@@ -57,7 +61,7 @@ public record ClientDraftFields(
     }
     /** 新建人员尚无资料时的空白取值。 */
     public static ClientDraftFields empty() {
-        return new ClientDraftFields(0L, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        return new ClientDraftFields(0L, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
     @Override public String toString() { return "ClientDraftFields[redacted]"; }
 }

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import en from '../i18n/en/onboarding-schema.json' with { type: 'json' };
 
 /** 配置页、审核工作台与 Client 详情使用的文案键族（镜像自 client-console-web 的 onboarding-schema）。 */
-const families = ['jurisdiction', 'field', 'catalog', 'group', 'declaration', 'identifierType', 'attribute', 'section', 'requirementGroup', 'organizationType'];
+const families = ['jurisdiction', 'field', 'catalog', 'group', 'declaration', 'identifierType', 'attribute', 'section', 'requirementGroup', 'organizationType', 'paymentMethod'];
 
 test('every onboardingSchema.* label key of the displayed families in client-master DML has an onboarding-schema.* English base text (S-04)', () => {
   const sql = readFileSync(new URL('../../../paytech/client-master/docs/database/sql/client-master-initial-data.sql', import.meta.url), 'utf8');

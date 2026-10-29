@@ -65,6 +65,8 @@ export function decodeClientPage(value: unknown): PagingResponseBody<ClientListI
 }
 /** 原值证件号键：出现即视为上游违反“只给掩码”。 */
 const RAW_IDENTIFIER_KEYS = new Set(['identifierValue', 'normalizedIdentifierValue']);
+/** 资料值长度上限：client-master 最长的资料字段为退款政策链接（2048）。 */
+const MAX_VALUE_LENGTH = 2048;
 function decodeValues(value: unknown): Values {
   if (value === null || value === undefined) return {};
   require(typeof value === 'object' && !Array.isArray(value));
@@ -74,7 +76,7 @@ function decodeValues(value: unknown): Values {
     require(typeof fields === 'object' && !Array.isArray(fields));
     result[group] = {};
     for (const [field, raw] of Object.entries(fields as Record<string, unknown>)) {
-      require(!RAW_IDENTIFIER_KEYS.has(field) && (raw === null || ['string', 'number', 'boolean'].includes(typeof raw)) && String(raw).length <= 2000);
+      require(!RAW_IDENTIFIER_KEYS.has(field) && (raw === null || ['string', 'number', 'boolean'].includes(typeof raw)) && String(raw).length <= MAX_VALUE_LENGTH);
       result[group][field] = raw === null ? null : String(raw);
     }
   }
