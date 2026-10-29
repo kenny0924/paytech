@@ -122,14 +122,15 @@ public class PersistenceConfiguration {
         registerLocalizationHandlers(registry);
     }
 
-    /** 多语言七张表的闭合枚举列。 */
+    /** 多语言八张表的闭合枚举列。 */
     private void registerLocalizationHandlers(TypeHandlerRegistry registry) {
         for (Class<?> type : java.util.List.of(
             com.paytech.platform.support.localization.core.enums.TextDirection.class,
             com.paytech.platform.support.localization.core.enums.LocaleStatus.class,
             com.paytech.platform.support.localization.core.enums.ApplicationStatus.class,
             com.paytech.platform.support.localization.core.enums.KeyStatus.class,
-            com.paytech.platform.support.localization.core.enums.ReleaseStatus.class)) {
+            com.paytech.platform.support.localization.core.enums.ReleaseStatus.class,
+            com.paytech.platform.support.localization.core.enums.ReleaseChangeType.class)) {
             registry.register(type, CodeEnumTypeHandler.class);
         }
     }

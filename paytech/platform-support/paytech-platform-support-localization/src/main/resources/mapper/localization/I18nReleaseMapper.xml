@@ -6,15 +6,15 @@
 
     <sql id="columns">
         release_id AS releaseId, application_id AS applicationId, release_no AS releaseNo,
-        based_on_content_revision AS basedOnContentRevision, status, key_count AS keyCount,
+        based_on_content_revision AS basedOnContentRevision, status, key_count AS keyCount, change_count AS changeCount,
         coverage AS coverageJson, report AS reportJson, release_note AS releaseNote,
         failure_reason AS failureReason, ready_time AS readyTime, created_by AS createdBy,
         create_time AS createTime, update_time AS updateTime
     </sql>
 
     <insert id="insert">
-        INSERT INTO t_i18n_release (release_id, application_id, release_no, based_on_content_revision, status, key_count, coverage, report, release_note, failure_reason, ready_time, created_by, create_time, update_time)
-        VALUES (#{row.releaseId}, #{row.applicationId}, #{row.releaseNo}, #{row.basedOnContentRevision}, #{row.status}, #{row.keyCount}, #{row.coverageJson}, #{row.reportJson}, #{row.releaseNote}, #{row.failureReason}, #{row.readyTime}, #{row.createdBy}, #{row.createTime}, #{row.updateTime})
+        INSERT INTO t_i18n_release (release_id, application_id, release_no, based_on_content_revision, status, key_count, change_count, coverage, report, release_note, failure_reason, ready_time, created_by, create_time, update_time)
+        VALUES (#{row.releaseId}, #{row.applicationId}, #{row.releaseNo}, #{row.basedOnContentRevision}, #{row.status}, #{row.keyCount}, #{row.changeCount}, #{row.coverageJson}, #{row.reportJson}, #{row.releaseNote}, #{row.failureReason}, #{row.readyTime}, #{row.createdBy}, #{row.createTime}, #{row.updateTime})
     </insert>
 
     <select id="selectById" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nRelease">
@@ -39,6 +39,12 @@
         SELECT MAX(release_no)
         FROM t_i18n_release
         WHERE application_id = #{applicationId} AND release_no &lt; #{releaseNo}
+    </select>
+
+    <select id="countUnrecorded" resultType="int">
+        SELECT COUNT(*)
+        FROM t_i18n_release
+        WHERE application_id = #{applicationId} AND release_no &lt;= #{releaseNo} AND change_count IS NULL
     </select>
 
     <select id="selectPage" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nRelease">

@@ -41520,6 +41520,24 @@
           "id": "EE2C8628-439B-56B1-92EB-AD3205BB0896"
         },
         {
+          "defKey": "change_count",
+          "defName": "变化条数",
+          "comment": "该发布在 t_i18n_release_change 中登记的变化条数（可为 0）；NULL 表示尚未生成变更明细，此时不能用明细还原该发布及其后的发布。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "74078A8C-6DAD-4933-97CC-82F1BBE05ED5"
+        },
+        {
           "defKey": "coverage",
           "defName": "覆盖率",
           "comment": "发布时各语言覆盖率 JSON 数组，每项含 locale、required、totalKeys、translatedKeys、sourceChangedKeys、coveragePercent、satisfied。",
@@ -42065,6 +42083,398 @@
           "myField": "863045C8-0366-5006-845D-E9A4AE978F2E",
           "refEntity": "B4146D9E-8777-56EB-9038-B146F18DA865",
           "refField": "AED0DE5F-DD30-5D19-B704-1FE6E1E34E12",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ]
+    },
+    {
+      "id": "400BECA2-EB45-4D39-A934-4E88854FBC44",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_i18n_release_change",
+      "defName": "发布文案变化",
+      "comment": "保存每次发布相对上一发布号的文案变化（新增、修改、移除），只记变化不记全量；按发布号顺序累积即可还原任意发布的完整文案，用于发布预检、发布摘要与版本差异，不读语言包文件。创建后不修改。",
+      "properties": {
+        "logicalTableKey": "i18n_release_change",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "type": "P",
+      "fields": [
+        {
+          "defKey": "change_id",
+          "defName": "变化标识",
+          "comment": "服务侧生成的文案变化 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "30E106A6-8775-46D6-B423-1473908C3205"
+        },
+        {
+          "defKey": "application_id",
+          "defName": "应用标识",
+          "comment": "所属应用，取值为 t_i18n_application.application_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A8F102C4-A9EE-401C-912E-6820CECAA534"
+        },
+        {
+          "defKey": "release_no",
+          "defName": "发布号",
+          "comment": "发生变化的发布号，取值为同一应用的 t_i18n_release.release_no；变化相对该应用发布号减一的发布，发布号 1 相对空内容。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "2255BAF7-63D7-4B5D-B6CC-C0418D2A48D8"
+        },
+        {
+          "defKey": "locale_code",
+          "defName": "语言代码",
+          "comment": "文案语言，取值为 t_i18n_locale.locale_code；en 为英文基准。",
+          "type": "VARCHAR",
+          "len": 35,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "9FA4F689-3F4C-4372-B3A8-79C0BF1300F0"
+        },
+        {
+          "defKey": "key_code",
+          "defName": "完整 key",
+          "comment": "完整 key，发布时的 t_i18n_key.key_code。",
+          "type": "VARCHAR",
+          "len": 191,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "BD9C6307-8AA6-444A-8BBC-BBAB3187A13C"
+        },
+        {
+          "defKey": "change_type",
+          "defName": "变化类型",
+          "comment": "变化类型；ADDED 上一发布没有该文案，CHANGED 文字不同，REMOVED 本发布不再包含该文案。允许值：ADDED、CHANGED、REMOVED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "A8C70115-28CB-4852-B553-5D0EE3130626"
+        },
+        {
+          "defKey": "text",
+          "defName": "文案",
+          "comment": "本发布中的文案（ICU MessageFormat）；change_type 为 REMOVED 时为 NULL。改前文字取同一应用、语言、key 在更小发布号中的最后一条变化。",
+          "type": "TEXT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "FD480BDC-EC05-4D22-ACD0-1E1AEEE0BF87"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间；创建后不可变，没有更新时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "DD3FE200-826E-4A87-B166-FD69FA34AF2A"
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_i18n_release_change",
+          "defName": "唯一索引 application_id、locale_code、key_code、release_no",
+          "unique": true,
+          "comment": "保证业务唯一性：一次发布中每个语言、key 最多一条变化；同时支持按发布号还原版本内容",
+          "fields": [
+            {
+              "fieldDefKey": "A8F102C4-A9EE-401C-912E-6820CECAA534",
+              "ascOrDesc": "A",
+              "id": "5040FF74-8463-404C-97BB-6F655DF42966"
+            },
+            {
+              "fieldDefKey": "9FA4F689-3F4C-4372-B3A8-79C0BF1300F0",
+              "ascOrDesc": "A",
+              "id": "3895F2F1-AD53-473A-812A-248171FB1FD5"
+            },
+            {
+              "fieldDefKey": "BD9C6307-8AA6-444A-8BBC-BBAB3187A13C",
+              "ascOrDesc": "A",
+              "id": "76175AE0-9395-4E7C-A3E4-2849B8314BBD"
+            },
+            {
+              "fieldDefKey": "2255BAF7-63D7-4B5D-B6CC-C0418D2A48D8",
+              "ascOrDesc": "A",
+              "id": "D81B9FD0-6A10-4843-9DC3-3BC102D7CF92"
+            }
+          ],
+          "id": "5614B57A-36F2-4484-8937-09EB1719AD7F"
+        },
+        {
+          "defKey": "idx_i18n_change_release",
+          "defName": "访问索引 application_id、release_no",
+          "unique": false,
+          "comment": "支持访问路径：按应用与发布号列出一次发布的变化",
+          "fields": [
+            {
+              "fieldDefKey": "A8F102C4-A9EE-401C-912E-6820CECAA534",
+              "ascOrDesc": "A",
+              "id": "634F26F2-E42D-4B08-8719-3A5083D00B10"
+            },
+            {
+              "fieldDefKey": "2255BAF7-63D7-4B5D-B6CC-C0418D2A48D8",
+              "ascOrDesc": "A",
+              "id": "F6DDFB03-22B1-417B-8F31-237C547BA26D"
+            }
+          ],
+          "id": "1BC03157-E36B-4BCD-BC3D-25FA22F997C8"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "8B357BF5-4AFE-41F5-B81F-6E095AE1194C",
+          "myField": "A8F102C4-A9EE-401C-912E-6820CECAA534",
+          "refEntity": "891D83D1-86BB-5314-8886-544CD68482E4",
+          "refField": "A7AF2646-6664-536A-84B0-9D978E475671",
           "myRows": "n",
           "refRows": "1",
           "innerType": ""
@@ -46206,7 +46616,8 @@
           "t_i18n_key",
           "t_i18n_translation",
           "t_i18n_release",
-          "t_i18n_release_bundle"
+          "t_i18n_release_bundle",
+          "t_i18n_release_change"
         ],
         "referenceTables": []
       },
@@ -46301,7 +46712,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 388
+              "height": 412
             }
           },
           {
@@ -46313,6 +46724,21 @@
             },
             "count": 0,
             "originKey": "C36F5329-6EAC-57E0-8095-A7366E9FFE01",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 244
+            }
+          },
+          {
+            "id": "4768DC6F-FABC-4473-9729-99B6522A8E71",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 600
+            },
+            "count": 0,
+            "originKey": "400BECA2-EB45-4D39-A934-4E88854FBC44",
             "type": "P",
             "size": {
               "width": 390,
@@ -46462,6 +46888,28 @@
             "target": {
               "cell": "E8FB659C-5C2F-5BFB-9AA2-90B8A4D79448",
               "port": "AED0DE5F-DD30-5D19-B704-1FE6E1E34E12%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "56E2A9F7-3FA4-431C-8CA5-CA8A21E156A4",
+            "shape": "erdRelation",
+            "originKey": "8B357BF5-4AFE-41F5-B81F-6E095AE1194C",
+            "source": {
+              "cell": "4768DC6F-FABC-4473-9729-99B6522A8E71",
+              "port": "A8F102C4-A9EE-401C-912E-6820CECAA534%out"
+            },
+            "target": {
+              "cell": "BD06CEA3-B098-5DC8-B1E3-5219804620D0",
+              "port": "A7AF2646-6664-536A-84B0-9D978E475671%in"
             },
             "relation": "n:1",
             "vertices": [],

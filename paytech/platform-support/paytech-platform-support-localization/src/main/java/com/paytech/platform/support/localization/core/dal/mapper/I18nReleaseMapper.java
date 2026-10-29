@@ -25,6 +25,9 @@ public interface I18nReleaseMapper {
     /** 小于给定发布号的最大发布号；没有时为 null。 */
     Integer selectPreviousNo(@Param("applicationId") long applicationId, @Param("releaseNo") int releaseNo);
 
+    /** 发布号不大于给定值、尚未登记变化条数（change_count 为 NULL）的发布数。 */
+    int countUnrecorded(@Param("applicationId") long applicationId, @Param("releaseNo") int releaseNo);
+
     /** 分页查询，按发布号倒序。 */
     List<I18nRelease> selectPage(@Param("applicationId") long applicationId, @Param("offset") int offset,
         @Param("size") int size);

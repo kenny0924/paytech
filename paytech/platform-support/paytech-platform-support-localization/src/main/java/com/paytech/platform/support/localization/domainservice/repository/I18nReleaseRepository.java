@@ -29,6 +29,15 @@ public interface I18nReleaseRepository {
     /** 小于给定发布号的最大发布号；没有时为 null。 */
     Integer previousReleaseNo(long applicationId, int releaseNo);
 
+    /**
+     * 发布号不大于给定值、尚未生成变更明细（change_count 为 NULL）的发布数；为 0 时才能用明细还原该发布。
+     *
+     * @param applicationId 应用 ID
+     * @param releaseNo 发布号
+     * @return 未生成明细的发布数
+     */
+    int countUnrecorded(long applicationId, int releaseNo);
+
     /** 分页查询，按发布号倒序。 */
     List<I18nRelease> findPage(long applicationId, PagingRequestBody paging);
 

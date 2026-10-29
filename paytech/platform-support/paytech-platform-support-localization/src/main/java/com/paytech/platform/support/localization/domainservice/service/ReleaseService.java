@@ -22,7 +22,7 @@ public interface ReleaseService {
     ReleaseCheckTarget loadCheckTarget(long releaseId);
 
     /**
-     * 登记发布：核对文案修订号未变，插入 PENDING_CHECK 发布与语言包，并登记上线补偿任务。
+     * 登记发布：核对文案修订号未变，插入 PENDING_CHECK 发布（含变化条数）、语言包与相对上一发布号的文案变化，并登记上线补偿任务。
      *
      * @param context 发布上下文
      * @throws com.paytech.foundation.common.error.FailException 文案修订号已变（I18N_CONTENT_CHANGED）

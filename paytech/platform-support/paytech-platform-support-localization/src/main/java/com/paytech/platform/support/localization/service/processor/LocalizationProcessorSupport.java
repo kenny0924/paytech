@@ -31,6 +31,7 @@ import com.paytech.platform.support.localization.core.dal.dataobject.I18nLocale;
 import com.paytech.platform.support.localization.core.enums.KeyStatus;
 import com.paytech.platform.support.localization.core.enums.LocaleStatus;
 import com.paytech.platform.support.localization.domain.LocalizationJson;
+import com.paytech.platform.support.localization.domain.release.CurrentTexts;
 import com.paytech.platform.support.localization.domain.release.ReleaseAssessment;
 import com.paytech.platform.support.localization.domain.release.ReleaseAssessor;
 import com.paytech.platform.support.localization.domainservice.repository.I18nApplicationRepository;
@@ -211,10 +212,31 @@ public class LocalizationProcessorSupport {
      * @return 评估结果
      */
     public ReleaseAssessment assess(I18nApplication application) {
-        return ReleaseAssessor.assess(keys.findByStatus(application.getApplicationId(), KeyStatus.ACTIVE),
-            translations.findActiveByApplication(application.getApplicationId()), enabledLocales(),
+        return assess(application, currentTexts(application));
+    }
+
+    /**
+     * 用已读取的当前文案评估应用：预检与发布读取一次文案，评估、变更摘要与语言包共用。
+     *
+     * @param application 应用
+     * @param texts 当前文案
+     * @return 评估结果
+     */
+    public ReleaseAssessment assess(I18nApplication application, CurrentTexts texts) {
+        return ReleaseAssessor.assess(texts.getActiveKeys(), texts.getTranslations(), texts.getEnabledLocales(),
             Set.copyOf(LocalizationJson.readLocales(application.getRequiredLocalesJson())),
             application.getCoverageThresholdPercent());
+    }
+
+    /**
+     * 读取应用的当前文案：ACTIVE key、这些 key 的翻译与 ENABLED 语言。
+     *
+     * @param application 应用
+     * @return 当前文案
+     */
+    public CurrentTexts currentTexts(I18nApplication application) {
+        return new CurrentTexts(keys.findByStatus(application.getApplicationId(), KeyStatus.ACTIVE),
+            translations.findActiveByApplication(application.getApplicationId()), enabledLocales());
     }
 
     /** 应用资源锁 Key：同一应用的命名空间、导入、翻译、发布与切换共用。 */

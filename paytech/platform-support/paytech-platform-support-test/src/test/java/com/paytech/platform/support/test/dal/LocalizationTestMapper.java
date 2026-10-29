@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 /**
- * 多语言七表与导入文件的测试数据准备和只读断言；整表回收由 PlatformDataCleaner 负责。
+ * 多语言八表与导入文件的测试数据准备和只读断言；整表回收由 PlatformDataCleaner 负责。
  * <li>上线补偿任务 I18N_RELEASE_ACTIVATE 不在整表回收范围，由 LocalizationMocker 按类型回收。</li>
  */
 public interface LocalizationTestMapper {
@@ -124,7 +124,8 @@ public interface LocalizationTestMapper {
     /** 应用的全部发布，按发布号排序。 */
     @Select("""
         SELECT release_id AS releaseId, release_no AS releaseNo, status, failure_reason AS failureReason,
-            ready_time AS readyTime, based_on_content_revision AS basedOnContentRevision
+            ready_time AS readyTime, based_on_content_revision AS basedOnContentRevision,
+            change_count AS changeCount
         FROM t_i18n_release WHERE application_id = #{applicationId} ORDER BY release_no""")
     List<Map<String, Object>> releases(@Param("applicationId") long applicationId);
 
@@ -134,6 +135,17 @@ public interface LocalizationTestMapper {
             content_hash AS contentHash, byte_size AS byteSize
         FROM t_i18n_release_bundle WHERE release_id = #{releaseId} ORDER BY locale_code, namespace_code""")
     List<Map<String, Object>> bundles(@Param("releaseId") long releaseId);
+
+    /** 应用的发布文案变化，按发布号、语言、key 排序。 */
+    @Select("""
+        SELECT release_no AS releaseNo, locale_code AS locale, key_code AS keyCode, change_type AS changeType, text
+        FROM t_i18n_release_change WHERE application_id = #{applicationId}
+        ORDER BY release_no, locale_code, key_code""")
+    List<Map<String, Object>> releaseChanges(@Param("applicationId") long applicationId);
+
+    /** 把发布的变化条数置空，构造“历史发布尚未补录变更明细”的前置状态。 */
+    @Update("UPDATE t_i18n_release SET change_count = NULL WHERE release_id = #{releaseId}")
+    int clearChangeCount(@Param("releaseId") long releaseId);
 
     /** 某原因码的全部上传与对应文件对象（未完成的上传没有文件），按上传 ID 排序。 */
     @Select("""

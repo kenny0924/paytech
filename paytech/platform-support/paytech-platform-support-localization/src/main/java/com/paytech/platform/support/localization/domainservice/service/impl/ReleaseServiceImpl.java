@@ -19,6 +19,7 @@ import com.paytech.platform.support.localization.domain.PublishContext;
 import com.paytech.platform.support.localization.domain.ReleaseCheckTarget;
 import com.paytech.platform.support.localization.domainservice.repository.I18nApplicationRepository;
 import com.paytech.platform.support.localization.domainservice.repository.I18nReleaseBundleRepository;
+import com.paytech.platform.support.localization.domainservice.repository.I18nReleaseChangeRepository;
 import com.paytech.platform.support.localization.domainservice.repository.I18nReleaseRepository;
 import com.paytech.platform.support.localization.domainservice.service.ReleaseService;
 
@@ -28,6 +29,7 @@ public class ReleaseServiceImpl implements ReleaseService {
 
     private final I18nReleaseRepository releases;
     private final I18nReleaseBundleRepository bundles;
+    private final I18nReleaseChangeRepository changes;
     private final I18nApplicationRepository applications;
     private final ObjectProvider<CompensationEventRegistrar> registrar;
 
@@ -36,13 +38,16 @@ public class ReleaseServiceImpl implements ReleaseService {
      *
      * @param releases 发布仓储
      * @param bundles 语言包仓储
+     * @param changes 发布文案变化仓储
      * @param applications 应用仓储
      * @param registrar 补偿登记器
      */
     public ReleaseServiceImpl(I18nReleaseRepository releases, I18nReleaseBundleRepository bundles,
-        I18nApplicationRepository applications, ObjectProvider<CompensationEventRegistrar> registrar) {
+        I18nReleaseChangeRepository changes, I18nApplicationRepository applications,
+        ObjectProvider<CompensationEventRegistrar> registrar) {
         this.releases = releases;
         this.bundles = bundles;
+        this.changes = changes;
         this.applications = applications;
         this.registrar = registrar;
     }
@@ -54,7 +59,7 @@ public class ReleaseServiceImpl implements ReleaseService {
         return release == null ? null : new ReleaseCheckTarget(release, bundles.findByRelease(releaseId));
     }
 
-    /** 文案修订号未变才登记；语言包与上线任务同事务提交。 */
+    /** 文案修订号未变才登记；发布（含变化条数）、语言包、文案变化与上线任务同事务提交。 */
     @Override
     public void registerRelease(PublishContext context) {
         I18nApplication current = lock(context.getApplication());
@@ -63,6 +68,7 @@ public class ReleaseServiceImpl implements ReleaseService {
         }
         releases.insert(context.getRelease());
         bundles.insertAll(context.getBundles());
+        changes.insertAll(context.getChanges());
         registrar().register(context.getActivationEvent());
     }
 

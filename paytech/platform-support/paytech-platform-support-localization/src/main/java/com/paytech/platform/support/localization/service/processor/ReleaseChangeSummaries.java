@@ -1,102 +1,83 @@
 package com.paytech.platform.support.localization.service.processor;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import com.paytech.platform.support.api.files.FileAddress;
+import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.platform.support.localization.core.dal.dataobject.I18nApplication;
 import com.paytech.platform.support.localization.core.dal.dataobject.I18nRelease;
-import com.paytech.platform.support.localization.core.dal.dataobject.I18nReleaseBundle;
-import com.paytech.platform.support.localization.core.enums.KeyStatus;
-import com.paytech.platform.support.localization.domain.LocalizationCodes;
-import com.paytech.platform.support.localization.domain.release.BundleContent;
 import com.paytech.platform.support.localization.domain.release.ReleaseChangeSummaryFact;
-import com.paytech.platform.support.localization.domain.release.ReleaseContent;
 import com.paytech.platform.support.localization.domain.release.ReleaseDiff;
-import com.paytech.platform.support.localization.domainservice.repository.I18nKeyRepository;
-import com.paytech.platform.support.localization.domainservice.repository.I18nReleaseBundleRepository;
-import com.paytech.platform.support.localization.domainservice.repository.I18nTranslationRepository;
-import com.paytech.platform.support.localization.integration.ReleaseBundleReader;
+import com.paytech.platform.support.localization.domainservice.repository.I18nReleaseChangeRepository;
+import com.paytech.platform.support.localization.domainservice.repository.I18nReleaseRepository;
+
+import lombok.AllArgsConstructor;
 
 /**
- * 预检与发布共用的“相对线上发布”变更摘要，以及按发布读取语言包内容；在事务外调用（读取语言包是对文件服务的调用）。
- * <li>线上发布的内容以它的语言包文件为准（经 {@link ReleaseBundleReader}），当前内容按发布口径由库内文案展开。</li>
- * <li>没有当前发布时与空内容比较；已有当前发布而读取端口未接入时返回 null，不伪造摘要。</li>
+ * 按发布变更明细还原任意发布的内容，以及预检与发布共用的“相对线上发布”变更摘要；只查本库，不读语言包文件，不开事务。
+ * <li>发布 N 的内容 = 每个语言、key 在发布号不大于 N 的最后一条变化（排除移除）；还原前确认发布号不大于 N 的发布都已登记变化条数，
+ * 否则返回服务端错误，不给出不完整的内容。</li>
+ * <li>摘要的当前内容由调用方按发布口径从库内文案展开；没有线上发布时与空内容比较。</li>
  */
 @Component
+@AllArgsConstructor
 @ConditionalOnProperty(name = "operations.authentication.enabled", havingValue = "true")
 public class ReleaseChangeSummaries {
 
-    private final I18nKeyRepository keys;
     private final LocalizationQueryLookups lookups;
-    private final I18nReleaseBundleRepository bundles;
-    private final I18nTranslationRepository translations;
-    private final LocalizationProcessorSupport support;
-    private final ObjectProvider<ReleaseBundleReader> reader;
+    private final I18nReleaseRepository releases;
+    private final I18nReleaseChangeRepository changes;
 
     /**
-     * 装配依赖；语言包读取端口的实现由集成卡提供。
-     *
-     * @param keys key 仓储
-     * @param lookups 查询查找
-     * @param bundles 语言包仓储
-     * @param translations 翻译仓储
-     * @param support 公共能力
-     * @param reader 语言包读取端口
-     */
-    public ReleaseChangeSummaries(I18nKeyRepository keys, LocalizationQueryLookups lookups,
-        I18nReleaseBundleRepository bundles, I18nTranslationRepository translations,
-        LocalizationProcessorSupport support, ObjectProvider<ReleaseBundleReader> reader) {
-        this.keys = keys;
-        this.lookups = lookups;
-        this.bundles = bundles;
-        this.translations = translations;
-        this.support = support;
-        this.reader = reader;
-    }
-
-    /**
-     * 当前文案相对应用当前发布的变更摘要。
+     * 还原发布的全部文案。
      *
      * @param application 应用
-     * @return 摘要；已有当前发布而读取端口未接入时为 null
+     * @param releaseNo 发布号；0 表示还没有发布，内容为空
+     * @return 语言 → key → 文案
+     * @throws ErrorException 发布号不大于它的发布中有未生成变更明细的（发布变更明细缺失）
      */
-    ReleaseChangeSummaryFact summarize(I18nApplication application) {
-        I18nRelease current = lookups.currentRelease(application);
-        Map<String, Map<String, String>> base = Map.of();
-        if (current != null) {
-            ReleaseBundleReader available = reader.getIfAvailable();
-            if (available == null) {
-                return null;
-            }
-            base = read(available, current);
+    Map<String, Map<String, String>> restore(I18nApplication application, int releaseNo) {
+        if (releaseNo <= 0) {
+            return Map.of();
         }
-        Map<String, Map<String, String>> target = ReleaseContent.current(
-            keys.findByStatus(application.getApplicationId(), KeyStatus.ACTIVE),
-            translations.findActiveByApplication(application.getApplicationId()),
-            support.enabledLocales().stream().filter(locale -> !LocalizationCodes.BASE_LOCALE.equals(locale)).toList());
-        return ReleaseChangeSummaryFact.of(ReleaseDiff.between(base, target),
-            current == null ? null : current.getReleaseNo());
+        int unrecorded = releases.countUnrecorded(application.getApplicationId(), releaseNo);
+        if (unrecorded > 0) {
+            throw new ErrorException("发布变更明细缺失: 应用 " + application.getApplicationCode() + "，发布号 " + releaseNo
+                + "，未登记明细的发布 " + unrecorded + " 个");
+        }
+        return changes.findContent(application.getApplicationId(), releaseNo);
     }
 
     /**
-     * 发布的全部文案：语言 → key → 文案，逐个读取语言包。
+     * 当前内容相对应用线上发布的变更摘要。
      *
-     * @param bundleReader 语言包读取端口
-     * @param release 发布
-     * @return 内容
+     * @param application 应用
+     * @param current 当前内容：语言 → key → 文案
+     * @return 摘要
      */
-    Map<String, Map<String, String>> read(ReleaseBundleReader bundleReader, I18nRelease release) {
-        Map<String, Map<String, String>> texts = new HashMap<>();
-        for (I18nReleaseBundle bundle : bundles.findByRelease(release.getReleaseId())) {
-            texts.computeIfAbsent(bundle.getLocaleCode(), ignored -> new TreeMap<>())
-                .putAll(BundleContent.read(bundleReader.read(FileAddress.parse(bundle.getFileAddress()))));
+    ReleaseChangeSummaryFact summarize(I18nApplication application, Map<String, Map<String, String>> current) {
+        return summarize(application, current, 0, Map.of());
+    }
+
+    /**
+     * 当前内容相对应用线上发布的变更摘要；线上发布正是调用方已还原的发布时直接使用，不再还原。
+     *
+     * @param application 应用
+     * @param current 当前内容：语言 → key → 文案
+     * @param restoredNo 调用方已还原的发布号；没有时为 0
+     * @param restored 该发布的内容
+     * @return 摘要
+     */
+    ReleaseChangeSummaryFact summarize(I18nApplication application, Map<String, Map<String, String>> current,
+        int restoredNo, Map<String, Map<String, String>> restored) {
+        I18nRelease live = lookups.currentRelease(application);
+        if (live == null) {
+            return ReleaseChangeSummaryFact.of(ReleaseDiff.between(Map.of(), current), null);
         }
-        return texts;
+        Map<String, Map<String, String>> base = live.getReleaseNo() == restoredNo ? restored
+            : restore(application, live.getReleaseNo());
+        return ReleaseChangeSummaryFact.of(ReleaseDiff.between(base, current), live.getReleaseNo());
     }
 }

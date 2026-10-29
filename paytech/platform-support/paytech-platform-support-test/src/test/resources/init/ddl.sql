@@ -2057,6 +2057,7 @@ CREATE TABLE `t_i18n_release` (
   `based_on_content_revision` INT NOT NULL COMMENT '生成语言包时应用的文案修订号；登记时与应用当前修订号一致。',
   `status` VARCHAR(16) NOT NULL COMMENT '发布状态；PENDING_CHECK 等待语言包文件检查，READY 可作为当前发布，FAILED 有文件被拒绝。允许值：PENDING_CHECK、READY、FAILED。',
   `key_count` INT NOT NULL COMMENT '发布包含的 ACTIVE key 数。',
+  `change_count` INT NULL COMMENT '该发布在 t_i18n_release_change 中登记的变化条数（可为 0）；NULL 表示尚未生成变更明细，此时不能用明细还原该发布及其后的发布。',
   `coverage` JSON NOT NULL COMMENT '发布时各语言覆盖率 JSON 数组，每项含 locale、required、totalKeys、translatedKeys、sourceChangedKeys、coveragePercent、satisfied。',
   `report` JSON NOT NULL COMMENT '发布报告 JSON 对象，含 missing（未翻译而回退英文）与 sourceChanged（基准已变更仍沿用旧翻译），各为 {locale, keyCode} 数组。',
   `release_note` VARCHAR(512) NULL COMMENT '发布说明；NULL 表示未填写。',
@@ -2081,3 +2082,17 @@ CREATE TABLE `t_i18n_release_bundle` (
   PRIMARY KEY (`bundle_id`),
   UNIQUE KEY `uk_i18n_bundle` (`release_id`, `locale_code`, `namespace_code`) COMMENT '保证业务唯一性：release_id、locale_code、namespace_code'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存发布中每个语言 × 命名空间的语言包文件地址与内容摘要；不存语言包正文，创建后不修改。';
+
+CREATE TABLE `t_i18n_release_change` (
+  `change_id` BIGINT NOT NULL COMMENT '服务侧生成的文案变化 Snowflake 主键。',
+  `application_id` BIGINT NOT NULL COMMENT '所属应用，取值为 t_i18n_application.application_id。',
+  `release_no` INT NOT NULL COMMENT '发生变化的发布号，取值为同一应用的 t_i18n_release.release_no；变化相对该应用发布号减一的发布，发布号 1 相对空内容。',
+  `locale_code` VARCHAR(35) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '文案语言，取值为 t_i18n_locale.locale_code；en 为英文基准。',
+  `key_code` VARCHAR(191) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '完整 key，发布时的 t_i18n_key.key_code。',
+  `change_type` VARCHAR(16) NOT NULL COMMENT '变化类型；ADDED 上一发布没有该文案，CHANGED 文字不同，REMOVED 本发布不再包含该文案。允许值：ADDED、CHANGED、REMOVED。',
+  `text` TEXT NULL COMMENT '本发布中的文案（ICU MessageFormat）；change_type 为 REMOVED 时为 NULL。改前文字取同一应用、语言、key 在更小发布号中的最后一条变化。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Platform Support 数据库中的 UTC 微秒创建时间；创建后不可变，没有更新时间。',
+  PRIMARY KEY (`change_id`),
+  UNIQUE KEY `uk_i18n_release_change` (`application_id`, `locale_code`, `key_code`, `release_no`) COMMENT '保证业务唯一性：一次发布中每个语言、key 最多一条变化；同时支持按发布号还原版本内容',
+  KEY `idx_i18n_change_release` (`application_id`, `release_no`) COMMENT '支持访问路径：按应用与发布号列出一次发布的变化'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存每次发布相对上一发布号的文案变化（新增、修改、移除），只记变化不记全量；按发布号顺序累积即可还原任意发布的完整文案，用于发布预检、发布摘要与版本差异，不读语言包文件。创建后不修改。';

@@ -60,6 +60,12 @@ public class I18nReleaseRepositoryImpl implements I18nReleaseRepository {
         return mapper.selectPreviousNo(applicationId, releaseNo);
     }
 
+    /** 未生成变更明细的发布数。 */
+    @Override
+    public int countUnrecorded(long applicationId, int releaseNo) {
+        return mapper.countUnrecorded(applicationId, releaseNo);
+    }
+
     /** 分页查询。 */
     @Override
     public List<I18nRelease> findPage(long applicationId, PagingRequestBody paging) {

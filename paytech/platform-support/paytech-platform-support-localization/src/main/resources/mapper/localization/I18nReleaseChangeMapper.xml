@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.localization.core.dal.mapper.I18nReleaseChangeMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO t_i18n_release_change (change_id, application_id, release_no, locale_code, key_code, change_type, text, create_time)
+        VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.changeId}, #{row.applicationId}, #{row.releaseNo}, #{row.localeCode}, #{row.keyCode}, #{row.changeType}, #{row.text}, #{row.createTime})
+        </foreach>
+    </insert>
+
+    <!-- 还原发布：每个语言、key 取发布号不大于给定值的最后一条变化，排除 REMOVED；访问路径为 uk_i18n_release_change。 -->
+    <select id="selectContent" resultType="com.paytech.platform.support.localization.core.dal.dataobject.I18nReleaseChange">
+        SELECT locale_code AS localeCode, key_code AS keyCode, text
+        FROM (
+            SELECT locale_code, key_code, change_type, text,
+                ROW_NUMBER() OVER (PARTITION BY locale_code, key_code ORDER BY release_no DESC) AS rn
+            FROM t_i18n_release_change
+            WHERE application_id = #{applicationId} AND release_no &lt;= #{releaseNo}
+        ) latest
+        WHERE rn = 1 AND change_type &lt;&gt; 'REMOVED'
+    </select>
+</mapper>

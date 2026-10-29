@@ -30,6 +30,9 @@ public class I18nRelease {
     /** 发布包含的 ACTIVE key 数。 */
     private Integer keyCount;
 
+    /** 该发布在 t_i18n_release_change 中登记的变化条数（可为 0）；NULL 表示尚未生成变更明细，不能用明细还原该发布及其后的发布。 */
+    private Integer changeCount;
+
     /** 发布时各语言覆盖率 JSON 数组，每项含 locale、required、totalKeys、translatedKeys、sourceChangedKeys、coveragePercent、satisfied。 */
     private String coverageJson;
 

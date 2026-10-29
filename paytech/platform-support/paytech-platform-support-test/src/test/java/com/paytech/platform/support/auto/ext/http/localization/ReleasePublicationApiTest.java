@@ -184,7 +184,7 @@ class ReleasePublicationApiTest extends LocalizationApiTestBase {
     }
 
     /**
-     * 生成语言包期间文案修订号被改（模拟锁租约失效后的并发写入）：第 2 步返回 409 I18N_CONTENT_CHANGED，不登记发布与上线任务；
+     * 生成语言包期间文案修订号被改（模拟锁租约失效后的并发写入）：第 2 步返回 409 I18N_CONTENT_CHANGED，不登记发布、文案变化与上线任务；
      * 已上传的语言包成为孤儿文件。
      */
     @Test
@@ -203,6 +203,7 @@ class ReleasePublicationApiTest extends LocalizationApiTestBase {
         publishing.join().assertProblem(409, LocalizationErrorCode.I18N_CONTENT_CHANGED);
         List<Map<String, Object>> uploads = localizationRows.uploads(bundleReason());
         assertAll(() -> assertEquals(0, localizationRows.releaseCount(applicationId)),
+            () -> assertTrue(localizationRows.releaseChanges(applicationId).isEmpty(), "变化行随登记一起回滚"),
             () -> assertTrue(localizationRows.activationTasks().isEmpty()),
             () -> assertEquals(24, uploads.size(), "第 1 步已上传全部 24 个语言包"),
             () -> assertTrue(uploads.stream().allMatch(row -> row.get("fileId") != null), "孤儿文件已完成登记"));
