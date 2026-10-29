@@ -27,6 +27,7 @@ import com.paytech.risk.test.checker.evaluation.SettlementRiskAssessmentChecker;
 import com.paytech.risk.test.clear.RiskDecisionDataCleaner;
 import com.paytech.risk.test.clear.RiskRedisCleaner;
 import com.paytech.risk.test.infrastructure.RiskDecisionDatabasePrecondition;
+import com.paytech.risk.test.mapper.control.UnderwritingTestMapper;
 import com.paytech.risk.test.mapper.decision.DictionaryReferenceTestMapper;
 import com.paytech.risk.test.mapper.decision.DictionaryTestMapper;
 import com.paytech.risk.test.mapper.decision.FlowTestMapper;
@@ -36,6 +37,7 @@ import com.paytech.risk.test.mapper.decision.VariableTestMapper;
 import com.paytech.risk.test.mapper.evaluation.CheckoutRiskTestMapper;
 import com.paytech.risk.test.mapper.evaluation.PaymentRiskTestMapper;
 import com.paytech.risk.test.mapper.evaluation.SettlementRiskAssessmentTestMapper;
+import com.paytech.risk.test.mocker.control.UnderwritingRuleMocker;
 import com.paytech.risk.test.mocker.decision.CandidateMocker;
 import com.paytech.risk.test.mocker.decision.DictionaryMocker;
 import com.paytech.risk.test.mocker.decision.DictionaryReferenceMocker;
@@ -64,7 +66,8 @@ import tools.jackson.databind.ObjectMapper;
     ReleaseStoreChecker.class, DictionaryTestMapper.class, DictionaryReferenceTestMapper.class, DictionaryMocker.class,
     DictionaryReferenceMocker.class, DictionaryRecordChecker.class,
     VariableTestMapper.class, VariableMocker.class, VariableDataChecker.class,
-    PaymentRiskTestMapper.class, PaymentRiskMocker.class, CheckoutRiskTestMapper.class, CheckoutRiskMocker.class})
+    PaymentRiskTestMapper.class, PaymentRiskMocker.class, CheckoutRiskTestMapper.class, CheckoutRiskMocker.class,
+    UnderwritingTestMapper.class, UnderwritingRuleMocker.class})
 public abstract class RiskDecisionMockTestBase extends TestBase {
     /** 补偿处理停止的最长等待。 */
     private static final long ASYNC_STOP_MILLIS = 10_000;

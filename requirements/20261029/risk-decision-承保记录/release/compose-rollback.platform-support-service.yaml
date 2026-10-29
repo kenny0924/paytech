@@ -1,0 +1,4 @@
+# REQ-03 risk-decision 承保记录：mor-test 回滚覆盖（= 阶段 6 读到的现网镜像）。
+services:
+  platform-support-service:
+    image: sha256:7671724696de0756d1884f64fb2478505f1d775588e1a5e80bd4febe890d567a  # mor-test/platform-support-service:wfdq-20261029a（JAR 0345c0dd5b7e7bff）

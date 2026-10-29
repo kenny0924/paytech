@@ -1,0 +1,269 @@
+{
+ "startedAt": "2026-10-29T18:52:39.845578+00:00",
+ "clients": {
+  "L": "240686705999454209",
+  "H": "241049681294106625",
+  "M": "239260386824658945"
+ },
+ "ids": {
+  "L_v1": "241635428858433536",
+  "L_v2": "241635435409936384",
+  "H_v1": "241635439478411264",
+  "H_v2": "241635444230557696",
+  "M_v1": "241635463566299136"
+ },
+ "summary": {
+  "PASS": 35,
+  "FAIL": 0,
+  "SKIP": 0,
+  "INFO": 6
+ },
+ "results": [
+  {
+   "ac": "AC-11",
+   "step": "只读：列表 200",
+   "verdict": "PASS",
+   "evidence": "HTTP 200"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 239260386824658945",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-11",
+   "step": "只读：工作台 canManage=false",
+   "verdict": "PASS",
+   "evidence": "false"
+  },
+  {
+   "ac": "AC-11",
+   "step": "只读：建草稿 403",
+   "verdict": "PASS",
+   "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': '14a63557-067d-45d6-b5d4-ebc60186a166'}"
+  },
+  {
+   "ac": "AC-11",
+   "step": "承保员（无 APPROVE）：复核 403",
+   "verdict": "PASS",
+   "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': '1ff97ce1-79a7-4801-a876-38625f0f3ad1'}"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 240686705999454209",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-02",
+   "step": "L 工作台输入与预览",
+   "verdict": "INFO",
+   "evidence": "{\"inputStatus\": \"READY\", \"sources\": {\"dueDiligenceCase\": \"AVAILABLE\", \"application\": \"AVAILABLE\", \"classification\": \"AVAILABLE\", \"mcc\": \"AVAILABLE\"}, \"autoEligible\": true, \"failed\": [], \"threshold\": [\"50000.00\", \"USD\"]}"
+  },
+  {
+   "ac": "AC-02",
+   "step": "预览 8 项固定顺序、规则 v1",
+   "verdict": "PASS",
+   "evidence": "1"
+  },
+  {
+   "ac": "AC-02",
+   "step": "L 一键自动承保 201：AUTO_RULE、规则 v1、无提交人",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "L 修订 → DRAFT v2",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "L v2 批准，supersedes = v1",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-07",
+   "step": "L 历史 v2 APPROVED / v1 SUPERSEDED",
+   "verdict": "PASS",
+   "evidence": "[[2, \"APPROVED\"], [1, \"SUPERSEDED\"]]"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 241049681294106625",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 工作台：HIGH、MCC 5967 卡组织高风险",
+   "verdict": "PASS",
+   "evidence": "{\"reviewLevel\": \"HIGH\", \"mcc\": \"5967\", \"inputStatus\": \"READY\"}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 建草稿",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 提交 DECLINE 409 DECLINE_REQUIRES_REVIEW",
+   "verdict": "PASS",
+   "evidence": "HTTP 409 {'code': 'RISK_UNDERWRITING_DECLINE_REQUIRES_REVIEW', 'detail': 'HIGH 风险承保须由复核人拒绝', 'requestId': 'c383086c-6b8c-4a89-904c-1719cfe7ec2c'}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 承保员提交 → SUBMITTED",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板：待复核",
+   "verdict": "PASS",
+   "evidence": "{\"satisfied\": \"0\", \"out_requireDeposit\": \"NULL\", \"out_depositBlocksCollection\": \"NULL\", \"out_highRiskMcc\": \"NULL\", \"out_suggestedSettlementDays\": \"NULL\", \"missing\": \"UNDERWRITING_PENDING_REVIEW\"}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 负责人拒绝 → DECLINED",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 负责人重建 v2",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 负责人本人提交 → SUBMITTED",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-08",
+   "step": "H 提交人本人复核 409 SELF_REVIEW",
+   "verdict": "PASS",
+   "evidence": "HTTP 409 {'code': 'RISK_UNDERWRITING_SELF_REVIEW', 'detail': '不能复核自己提交的承保', 'requestId': '2685b201-5d55-4824-92ab-65e6f810b78b'}"
+  },
+  {
+   "ac": "AC-08",
+   "step": "H 管理员复核批准 → APPROVED",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板：H 要求保证金且阻断收款",
+   "verdict": "PASS",
+   "evidence": "{\"satisfied\": \"1\", \"out_requireDeposit\": \"1\", \"out_depositBlocksCollection\": \"1\", \"out_highRiskMcc\": \"1\", \"out_suggestedSettlementDays\": \"14\", \"missing\": \"NULL\"}"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 239260386824658945",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-09",
+   "step": "M 工作台（LEGACY 迁移 Client）",
+   "verdict": "INFO",
+   "evidence": "{\"inputStatus\": \"READY\", \"sources\": {\"dueDiligenceCase\": \"AVAILABLE\", \"application\": \"AVAILABLE\", \"classification\": \"AVAILABLE\", \"mcc\": \"AVAILABLE\"}, \"crr\": null, \"reviewLevel\": \"MEDIUM\"}"
+  },
+  {
+   "ac": "AC-09",
+   "step": "M 自动承保 409 AUTO_NOT_ELIGIBLE",
+   "verdict": "PASS",
+   "evidence": "HTTP 409 {'code': 'RISK_UNDERWRITING_AUTO_NOT_ELIGIBLE', 'detail': '该 Client 不满足自动承保条件', 'requestId': 'dbb4734f-2b3c-426d-af09-86ce60c4be01'}"
+  },
+  {
+   "ac": "AC-09",
+   "step": "M 建草稿：crrMissing、reviewLevel MEDIUM",
+   "verdict": "PASS",
+   "evidence": "HTTP 201 {}"
+  },
+  {
+   "ac": "AC-09",
+   "step": "M 非 HIGH 直接拒绝 → DECLINED",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-12",
+   "step": "统计与库一致",
+   "verdict": "PASS",
+   "evidence": "{\"api\": {\"approvedThisMonth\": 3, \"declinedThisMonth\": 2, \"draft\": 0, \"effective\": 2, \"submitted\": 0}, \"db\": {\"APPROVED\": 2, \"DECLINED\": 2, \"SUPERSEDED\": 1}, \"effective\": 2}"
+  },
+  {
+   "ac": "AC-12",
+   "step": "全部 = 每个 Client 最新版本",
+   "verdict": "PASS",
+   "evidence": "{\"total\": 3, \"clients\": 3}"
+  },
+  {
+   "ac": "AC-12",
+   "step": "SUPERSEDED 页签 = 库中该状态行数",
+   "verdict": "PASS",
+   "evidence": "{\"api\": 1, \"db\": 1}"
+  },
+  {
+   "ac": "AC-12",
+   "step": "DECLINED 页签 = 库中该状态行数",
+   "verdict": "PASS",
+   "evidence": "{\"api\": 2, \"db\": 2}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板只读试跑 L",
+   "verdict": "INFO",
+   "evidence": "{\"satisfied\": \"1\", \"out_requireDeposit\": \"0\", \"out_depositBlocksCollection\": \"0\", \"out_highRiskMcc\": \"0\", \"out_suggestedSettlementDays\": \"7\", \"missing\": \"NULL\"}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板只读试跑 H",
+   "verdict": "INFO",
+   "evidence": "{\"satisfied\": \"1\", \"out_requireDeposit\": \"1\", \"out_depositBlocksCollection\": \"1\", \"out_highRiskMcc\": \"1\", \"out_suggestedSettlementDays\": \"14\", \"missing\": \"NULL\"}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板只读试跑 M",
+   "verdict": "INFO",
+   "evidence": "{\"satisfied\": \"0\", \"out_requireDeposit\": \"NULL\", \"out_depositBlocksCollection\": \"NULL\", \"out_highRiskMcc\": \"NULL\", \"out_suggestedSettlementDays\": \"NULL\", \"missing\": \"UNDERWRITING_DECLINED\"}"
+  },
+  {
+   "ac": "AC-01",
+   "step": "规则 v1 ACTIVE",
+   "verdict": "PASS",
+   "evidence": "[{\"rule_version_id\": \"290001\", \"version_no\": \"1\", \"status\": \"ACTIVE\", \"active_slot\": \"1\"}]"
+  },
+  {
+   "ac": "AC-12",
+   "step": "risk-decision-service 日志不含 Client 名称（承保只记元数据）",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-12",
+   "step": "risk-decision-service 最近日志 ERROR 行",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-12",
+   "step": "operations-console-bff 日志不含 Client 名称（承保只记元数据）",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-12",
+   "step": "operations-console-bff 最近日志 ERROR 行",
+   "verdict": "INFO",
+   "evidence": "[\"2026-10-29T18:48:04.091Z ERROR  1 --- [operations-console-bff] [22-18201-exec-1] c.p.f.w.error.MvcProblemExceptionMapper  : 服务暂时不可用, requestId=baa4b2f5-408f-4328-8f5e-1ad3aafe2d0c, errorCode=DEPENDENC\", \"2026-10-29T18:48:07.939Z ERROR  1 --- [operations-console-bff] [22-18201-exec-2] c.p.f.w.error.MvcProblemExceptionMapper  : 服务暂时不可用, requestId=00aea4ca-e34e-4d7b-9c65-39a149f3d84f, errorCode=DEPENDENC\", \"2026-10-29T18:48:09.996Z ERROR  1 --- [operations-console-bff] [22-18201-exec-3] c.p.f.w.error.MvcProblemExceptionMapper  : 服务暂时不可用, requestId=f4f5e84e-1d44-4200-9948-84305a2dc96b, errorCode=DEPENDENC\"]"
+  }
+ ]
+}

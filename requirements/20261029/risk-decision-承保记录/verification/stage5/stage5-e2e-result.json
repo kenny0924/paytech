@@ -1,0 +1,353 @@
+{
+ "startedAt": "2026-10-29T16:40:07.962459+00:00",
+ "finishedAt": "2026-10-29T16:40:45.731479+00:00",
+ "clients": {
+  "A": "240674874987655169",
+  "B": "241532599334350849",
+  "C": "241533316505808897",
+  "D": "241533481480368129",
+  "E": "240674482170114049",
+  "AUTO_DEMO": "241533217348268033"
+ },
+ "ids": {
+  "A_v2": "241601362595430400",
+  "B": "241601364877131776",
+  "C_pending": "241601370631716864",
+  "D": "241601372552708096",
+  "E_draft": "241601375522275328"
+ },
+ "accounts": {
+  "uw": {
+   "accountId": "241601254088773632",
+   "permissions": [
+    "READ",
+    "MANAGE"
+   ],
+   "email": "rq03-uw-2037***@example.test"
+  },
+  "lead": {
+   "accountId": "241601257913978880",
+   "permissions": [
+    "READ",
+    "MANAGE",
+    "APPROVE"
+   ],
+   "email": "rq03-lead-20***@example.test"
+  },
+  "ro": {
+   "accountId": "241601262703874048",
+   "permissions": [
+    "READ"
+   ],
+   "email": "rq03-ro-2037***@example.test"
+  }
+ },
+ "summary": {
+  "PASS": 44,
+  "FAIL": 0,
+  "SKIP": 5,
+  "INFO": 1
+ },
+ "results": [
+  {
+   "ac": "S",
+   "step": "uw 登录",
+   "verdict": "PASS",
+   "evidence": "accountId=241601254088773632 permissions=['READ', 'MANAGE']"
+  },
+  {
+   "ac": "S",
+   "step": "lead 登录",
+   "verdict": "PASS",
+   "evidence": "accountId=241601257913978880 permissions=['READ', 'MANAGE', 'APPROVE']"
+  },
+  {
+   "ac": "S",
+   "step": "ro 登录",
+   "verdict": "PASS",
+   "evidence": "accountId=241601262703874048 permissions=['READ']"
+  },
+  {
+   "ac": "AC-11",
+   "step": "只读：列表 200",
+   "verdict": "PASS",
+   "evidence": "HTTP 200"
+  },
+  {
+   "ac": "AC-11",
+   "step": "只读：统计 200",
+   "verdict": "PASS",
+   "evidence": "HTTP 200"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 241533217348268033",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-11",
+   "step": "只读：工作台 canManage=false、canSubmit=false",
+   "verdict": "PASS",
+   "evidence": "canManage=False canSubmit=False"
+  },
+  {
+   "ac": "AC-11",
+   "step": "只读：建草稿 403",
+   "verdict": "PASS",
+   "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': '64780cd2-51dd-4186-b430-3a69a769b6de'}"
+  },
+  {
+   "ac": "AC-11",
+   "step": "只读：自动承保 403",
+   "verdict": "PASS",
+   "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': 'd688bebf-b555-4ed5-aeb7-24d83a416895'}"
+  },
+  {
+   "ac": "AC-11",
+   "step": "只读：预览 403（MANAGE）",
+   "verdict": "PASS",
+   "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': 'ff698074-bbcf-487f-a132-8293536a6350'}"
+  },
+  {
+   "ac": "AC-11",
+   "step": "承保员（无 APPROVE）：复核 403",
+   "verdict": "PASS",
+   "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': 'e3922cad-92dd-4a50-b1ee-76cb4a411092'}"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 241533217348268033",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-11",
+   "step": "承保员：工作台 canManage=true",
+   "verdict": "PASS",
+   "evidence": "canManage=True"
+  },
+  {
+   "ac": "AC-11",
+   "step": "未声明查询参数被拒（Gateway 白名单 / BFF 严格参数）",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'GATEWAY_INVALID_REQUEST', 'detail': '请求参数不符合网关路由契约', 'requestId': '02f2e91e-1aaf-4264-b6c6-a5a6bd508db5'}"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 240674874987655169",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-02",
+   "step": "工作台预览：符合自动承保，8 项固定顺序全部通过，阈值 50000 USD",
+   "verdict": "PASS",
+   "evidence": "{\"autoEligible\": true, \"ruleVersionNo\": 1, \"thresholdAmount\": \"50000.00\", \"thresholdCurrency\": \"USD\", \"reviewLevel\": \"LOW\"}"
+  },
+  {
+   "ac": "AC-02",
+   "step": "无履约方式时敞口不可算（FULFILLMENT_TYPE_MISSING）",
+   "verdict": "PASS",
+   "evidence": "FULFILLMENT_TYPE_MISSING"
+  },
+  {
+   "ac": "AC-02",
+   "step": "自动承保与修订",
+   "verdict": "SKIP",
+   "evidence": "已完成（v2 241601362595430400 生效），重跑跳过"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 241532599334350849",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-03",
+   "step": "MEDIUM 人工承保",
+   "verdict": "SKIP",
+   "evidence": "已有有效版本，重跑跳过"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 241533316505808897",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-06",
+   "step": "工作台：HIGH、MCC 5967 卡组织高风险",
+   "verdict": "PASS",
+   "evidence": "{\"reviewLevel\": \"HIGH\", \"mcc\": \"5967\"}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "HIGH 拒绝与本人复核",
+   "verdict": "SKIP",
+   "evidence": "已留作待复核演示，重跑跳过"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 241533481480368129",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-08",
+   "step": "HIGH 复核批准",
+   "verdict": "SKIP",
+   "evidence": "已有有效版本，重跑跳过"
+  },
+  {
+   "ac": "WS",
+   "step": "工作台 240674482170114049",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 READY"
+  },
+  {
+   "ac": "AC-09",
+   "step": "工作台：CRR 为空 → reviewLevel MEDIUM、不符合自动承保",
+   "verdict": "PASS",
+   "evidence": "{\"crr\": null, \"reviewLevel\": \"MEDIUM\"}"
+  },
+  {
+   "ac": "AC-09",
+   "step": "CRR 为空的拒绝与草稿",
+   "verdict": "SKIP",
+   "evidence": "已留作草稿演示，重跑跳过"
+  },
+  {
+   "ac": "AC-12",
+   "step": "统计与库一致（生效中 / 草稿 / 待复核）",
+   "verdict": "PASS",
+   "evidence": "{\"api\": {\"approvedThisMonth\": 4, \"declinedThisMonth\": 2, \"draft\": 1, \"effective\": 3, \"submitted\": 1}, \"db\": {\"APPROVED\": 3, \"DECLINED\": 2, \"DRAFT\": 1, \"SUBMITTED\": 1, \"SUPERSEDED\": 1}, \"effective\": 3}"
+  },
+  {
+   "ac": "AC-12",
+   "step": "全部列表数 = 库总数，按更新时间倒序",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 total=8 db=8"
+  },
+  {
+   "ac": "AC-12",
+   "step": "筛选 status=SUPERSEDED",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 n=1"
+  },
+  {
+   "ac": "AC-12",
+   "step": "筛选 crr=HIGH",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 n=3"
+  },
+  {
+   "ac": "AC-12",
+   "step": "筛选 decisionSource=AUTO_RULE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 n=1"
+  },
+  {
+   "ac": "AC-12",
+   "step": "筛选 clientId=C",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 n=2"
+  },
+  {
+   "ac": "AC-12",
+   "step": "筛选 keyword=Layla",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 n=4"
+  },
+  {
+   "ac": "AC-12",
+   "step": "关键字按 clientId 精确匹配",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 n=1"
+  },
+  {
+   "ac": "AC-12",
+   "step": "列表行含快照列与显示名（编号 · 辖区 · 类型、敞口、提交人 / 复核人显示名）",
+   "verdict": "PASS",
+   "evidence": "{\"clientNo\": \"CL-240674874987655169\", \"jurisdictionCode\": \"AE\", \"clientType\": \"ORGANIZATION\", \"decidedByLabel\": \"r***@example.test\"}"
+  },
+  {
+   "ac": "AC-12",
+   "step": "非法状态筛选 400 INVALID_REQUEST（查询参数错误按系统约定为 400）",
+   "verdict": "PASS",
+   "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': '请求参数不正确', 'requestId': '7266dde3-04e1-4303-9094-910f426abb5d'}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板只读试跑 A：satisfied=1 missing=None",
+   "verdict": "PASS",
+   "evidence": "{\"satisfied\": \"1\", \"out_requireDeposit\": \"0\", \"out_depositBlocksCollection\": \"0\", \"out_highRiskMcc\": \"0\", \"out_suggestedSettlementDays\": \"7\", \"missing\": \"NULL\"}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板只读试跑 B：satisfied=1 missing=None",
+   "verdict": "PASS",
+   "evidence": "{\"satisfied\": \"1\", \"out_requireDeposit\": \"1\", \"out_depositBlocksCollection\": \"1\", \"out_highRiskMcc\": \"0\", \"out_suggestedSettlementDays\": \"7\", \"missing\": \"NULL\"}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板只读试跑 C：satisfied=0 missing=UNDERWRITING_PENDING_REVIEW",
+   "verdict": "PASS",
+   "evidence": "{\"satisfied\": \"0\", \"out_requireDeposit\": \"NULL\", \"out_depositBlocksCollection\": \"NULL\", \"out_highRiskMcc\": \"NULL\", \"out_suggestedSettlementDays\": \"NULL\", \"missing\": \"UNDERWRITING_PENDING_REVIEW\"}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板只读试跑 D：satisfied=1 missing=None",
+   "verdict": "PASS",
+   "evidence": "{\"satisfied\": \"1\", \"out_requireDeposit\": \"0\", \"out_depositBlocksCollection\": \"0\", \"out_highRiskMcc\": \"0\", \"out_suggestedSettlementDays\": \"3\", \"missing\": \"NULL\"}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板只读试跑 E：satisfied=0 missing=UNDERWRITING_NOT_STARTED",
+   "verdict": "PASS",
+   "evidence": "{\"satisfied\": \"0\", \"out_requireDeposit\": \"NULL\", \"out_depositBlocksCollection\": \"NULL\", \"out_highRiskMcc\": \"NULL\", \"out_suggestedSettlementDays\": \"NULL\", \"missing\": \"UNDERWRITING_NOT_STARTED\"}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "模板只读试跑 AUTO_DEMO：satisfied=0 missing=UNDERWRITING_NOT_STARTED",
+   "verdict": "PASS",
+   "evidence": "{\"satisfied\": \"0\", \"out_requireDeposit\": \"NULL\", \"out_depositBlocksCollection\": \"NULL\", \"out_highRiskMcc\": \"NULL\", \"out_suggestedSettlementDays\": \"NULL\", \"missing\": \"UNDERWRITING_NOT_STARTED\"}"
+  },
+  {
+   "ac": "AC-10",
+   "step": "不存在的 Client：单行 NOT_STARTED",
+   "verdict": "PASS",
+   "evidence": "{\"satisfied\": \"0\", \"out_requireDeposit\": \"NULL\", \"out_depositBlocksCollection\": \"NULL\", \"out_highRiskMcc\": \"NULL\", \"out_suggestedSettlementDays\": \"NULL\", \"missing\": \"UNDERWRITING_NOT_STARTED\"}"
+  },
+  {
+   "ac": "AC-12",
+   "step": "risk-decision 日志：承保请求只记元数据（不含 Client 名称）",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-12",
+   "step": "risk-decision 日志：替换后无承保相关 ERROR",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-12",
+   "step": "ops-bff 日志：承保请求只记元数据（不含 Client 名称）",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-12",
+   "step": "ops-bff 日志：替换后无承保相关 ERROR",
+   "verdict": "PASS",
+   "evidence": "[]"
+  },
+  {
+   "ac": "AC-12",
+   "step": "ops-bff 日志：与承保无关的 ERROR（另列）",
+   "verdict": "INFO",
+   "evidence": "[{\"line\": \"2026-10-29T16:32:48.868Z ERROR  27317 --- [operations-console-bff] [.1-18201-exec-8] c.p.f.w.error.MvcProblemExceptionMapper  : 系统处理结果未知, requestId=5fb18fa9-016\", \"uris\": [\"/auth/**\"]}]"
+  }
+ ]
+}

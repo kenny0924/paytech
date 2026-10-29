@@ -62,6 +62,10 @@ import tools.jackson.databind.json.JsonMapper;
 public final class PlatformOperationsSimulator implements AutoCloseable {
     public static final String ACCOUNT_ID = "account_10001";
     public static final String RISK_ACCOUNT_ID = "10001";
+    /** 注册块 143 的承保读、维护与复核权限 ID。 */
+    public static final String UNDERWRITING_READ = "900000000000143101";
+    public static final String UNDERWRITING_MANAGE = "900000000000143102";
+    public static final String UNDERWRITING_APPROVE = "900000000000143103";
     /** 风控评估查询读权限（RISK_EVALUATION_READ）的合成 ID，与注册 DML 号段一致。 */
     public static final String RISK_EVALUATION_READ_PERMISSION_ID = "900000000000111101";
     public static final String SESSION_ID = "session_10001";
@@ -137,6 +141,18 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-risk-list-create", "900000000000101102"),
         Map.entry("operations-risk-list-entry-add", "900000000000101102"),
         Map.entry("operations-risk-list-entry-deactivate", "900000000000101102"),
+        Map.entry("operations-risk-underwriting-list", UNDERWRITING_READ),
+        Map.entry("operations-risk-underwriting-detail", UNDERWRITING_READ),
+        Map.entry("operations-risk-underwriting-workspace", UNDERWRITING_READ),
+        Map.entry("operations-risk-underwriting-history", UNDERWRITING_READ),
+        Map.entry("operations-risk-underwriting-statistics", UNDERWRITING_READ),
+        Map.entry("operations-risk-underwriting-create", UNDERWRITING_MANAGE),
+        Map.entry("operations-risk-underwriting-save", UNDERWRITING_MANAGE),
+        Map.entry("operations-risk-underwriting-submit", UNDERWRITING_MANAGE),
+        Map.entry("operations-risk-underwriting-auto", UNDERWRITING_MANAGE),
+        Map.entry("operations-risk-underwriting-revision", UNDERWRITING_MANAGE),
+        Map.entry("operations-risk-underwriting-preview", UNDERWRITING_MANAGE),
+        Map.entry("operations-risk-underwriting-review", UNDERWRITING_APPROVE),
         Map.entry("operations-risk-execution-list", "900000000000000536"),
         Map.entry("operations-risk-execution-detail", "900000000000000536"),
         Map.entry("operations-risk-execution-create", "900000000000101103"),

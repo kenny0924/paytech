@@ -65,6 +65,10 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case GATEWAY_CONFIGURATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
             };
         }
+        if (errorCode instanceof com.paytech.risk.decision.api.enums.RiskUnderwritingErrorCode underwriting) {
+            return underwriting == com.paytech.risk.decision.api.enums.RiskUnderwritingErrorCode.RISK_UNDERWRITING_NOT_FOUND
+                ? HttpStatus.NOT_FOUND : HttpStatus.CONFLICT;
+        }
         if (errorCode instanceof RiskDecisionConfigurationErrorCode riskCode) {
             return switch (riskCode) {
                 case RISK_DICTIONARY_NOT_FOUND, RISK_DECISION_CONFIGURATION_NOT_FOUND -> HttpStatus.NOT_FOUND;

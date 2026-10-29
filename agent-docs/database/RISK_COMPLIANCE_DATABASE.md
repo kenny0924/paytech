@@ -466,6 +466,16 @@ MVP 不建立独立 Inbox/Outbox。领域事务原子写入业务状态、Histor
 
 Risk 补偿事件重建清单冻结在 `scripts/pdmaner/risk/model-policy.mjs`：Qualification、Compliance Restriction、Checkout/Payment Assessment、Settlement Control、Dispute 和异步 Action Effect 各自使用应用唯一 `event_type` 与业务 `sub_event_type`；`event_key` 分别由对应不可变 State Change/Assessment ID、Restriction ID 或 Action Effect `idempotency_key` 构造。Handler 从清单列出的 Risk 权威表重建 MQ 信封或本地动作，永久幂等落在对应历史/事实唯一身份。只有会被后来状态变化覆盖且确实无法回源的 Restriction 事件时点字段可进入最小非敏感 `payload_json`；其余不把 Source Version、Schema、Envelope、Payload Hash、Vault Token 或可恢复上下文复制到补偿表。
 
+### 4.9 Client 承保（3 张；2026-10-29 REQ-03，risk-decision）
+
+| 表 | 职责 | 关键结构 |
+|---|---|---|
+| client_underwriting | Client 承保版本：输入快照与来源坐标、结论（观察期、最低保证金要求、T+N 建议、卡组织登记标记、说明）、估算敞口、审批来源与四眼审计 | 每版本一行；`(client_id, version_no)`、`(client_id, open_slot)`、`(client_id, effective_slot)` 唯一；DRAFT / SUBMITTED / APPROVED / DECLINED / SUPERSEDED；`version` CAS |
+| underwriting_rule_version | 自动承保规则版本（CRR = LOW、币种月流水阈值、非高风险 MCC） | `version_no` 唯一；`active_slot` 唯一（至多一个 ACTIVE）；排除 MCC 逗号串 |
+| underwriting_rule_threshold | 规则版本的币种月流水上限 | `(rule_version_id, currency)` 唯一 |
+
+承保记录是 Risk 最低保证金要求的决策事实，不替代 compliance Settlement Control，也不触发 Finance 余额变化；下发与执行归 REQ-18。物理决策见 [RISK_DECISION_PHYSICAL_DECISIONS.md](../../paytech/risk-decision/docs/database/RISK_DECISION_PHYSICAL_DECISIONS.md) 第 10.4 节。
+
 ## 5. 核心关系图
 
 ### 5.1 Due Diligence 与资格

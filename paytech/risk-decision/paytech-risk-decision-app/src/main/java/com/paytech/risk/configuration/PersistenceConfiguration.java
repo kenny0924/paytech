@@ -3,10 +3,17 @@ package com.paytech.risk.configuration;
 import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
 import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
+import com.paytech.risk.control.core.enums.FulfillmentType;
 import com.paytech.risk.control.core.enums.RiskListEntrySource;
 import com.paytech.risk.control.core.enums.RiskListEntryStatus;
 import com.paytech.risk.control.core.enums.RiskListPurpose;
 import com.paytech.risk.control.core.enums.RiskListStatus;
+import com.paytech.risk.control.core.enums.UnderwritingClientType;
+import com.paytech.risk.control.core.enums.UnderwritingDecisionSource;
+import com.paytech.risk.control.core.enums.UnderwritingDueDiligenceTier;
+import com.paytech.risk.control.core.enums.UnderwritingRiskLevel;
+import com.paytech.risk.control.core.enums.UnderwritingRuleStatus;
+import com.paytech.risk.control.core.enums.UnderwritingStatus;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.enums.ActionCategory;
 import com.paytech.risk.decision.domain.enums.AuthenticationRequirement;
@@ -53,7 +60,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * risk-decision 单库（mor_risk_decision）持久化基础配置：决策与名单 Mapper、闭合枚举 TypeHandler。
+ * risk-decision 单库（mor_risk_decision）持久化基础配置：决策、名单与承保 Mapper、闭合枚举 TypeHandler。
  */
 @Configuration(proxyBeanMethods = false)
 @MapperScan(basePackages = {
@@ -116,6 +123,13 @@ public class PersistenceConfiguration {
             registerCodeEnumHandler(registry, RiskListStatus.class);
             registerCodeEnumHandler(registry, RiskListEntryStatus.class);
             registerCodeEnumHandler(registry, RiskListEntrySource.class);
+            registerCodeEnumHandler(registry, UnderwritingStatus.class);
+            registerCodeEnumHandler(registry, UnderwritingDecisionSource.class);
+            registerCodeEnumHandler(registry, UnderwritingRiskLevel.class);
+            registerCodeEnumHandler(registry, UnderwritingDueDiligenceTier.class);
+            registerCodeEnumHandler(registry, UnderwritingClientType.class);
+            registerCodeEnumHandler(registry, FulfillmentType.class);
+            registerCodeEnumHandler(registry, UnderwritingRuleStatus.class);
         };
     }
 

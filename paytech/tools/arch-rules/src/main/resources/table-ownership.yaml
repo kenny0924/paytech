@@ -4,7 +4,7 @@
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 73 retained-service tables added on top of design 03 (not part of the §4.2 count).
 # 23 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
-# 63 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
+# 66 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
 # Renamed services: consumer -> counterparty; databases: mor_consumer -> mor_counterparty.
@@ -367,6 +367,7 @@ services:
       - t_action_parameter_definition
       - t_action_version
       - t_checkout_input_snapshot
+      - t_client_underwriting
       - t_compensation_event
       - t_decision_evaluation
       - t_decision_flow
@@ -414,6 +415,8 @@ services:
       - t_rule_subject_tag
       - t_settlement_risk_assessment
       - t_transaction_risk_assessment
+      - t_underwriting_rule_threshold
+      - t_underwriting_rule_version
       - t_velocity_event
       - t_velocity_event_subject
       - t_velocity_feature_definition

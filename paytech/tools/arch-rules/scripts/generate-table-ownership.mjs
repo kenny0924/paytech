@@ -164,6 +164,13 @@ const stepAddedTables = [
   // 2026-10-19 chart hierarchy (decision 2026-10-19 items 5 and 7): immutable chart account change records and the
   // per book and chart account sequence of readable ledger account numbers in mor_ledger.
   { service: 'ledger', database: 'mor_ledger', tables: ['t_chart_account_change', 't_account_no_sequence'] },
+  // 2026-10-29 REQ-03 承保记录 (requirements/20261029/risk-decision-承保记录 technique §9): Client underwriting versions and
+  // the auto-underwriting rule version / currency threshold tables in mor_risk_decision.
+  {
+    service: 'risk-decision',
+    database: 'mor_risk_decision',
+    tables: ['t_client_underwriting', 't_underwriting_rule_version', 't_underwriting_rule_threshold'],
+  },
 ];
 
 const lines = readFileSync(designDocument, 'utf8').split('\n');

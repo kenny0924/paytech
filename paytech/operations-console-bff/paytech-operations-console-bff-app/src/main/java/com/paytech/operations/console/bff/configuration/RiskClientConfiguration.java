@@ -83,6 +83,13 @@ public class RiskClientConfiguration {
         return factory.createClient(com.paytech.risk.decision.api.control.RiskListManagementApi.class);
     }
 
+    /** Client 承保（REQ-03）；写入字段错误按转发 Body 路径投影。 */
+    @Bean
+    com.paytech.risk.decision.api.control.ClientUnderwritingApi clientUnderwritingApi(
+        @org.springframework.beans.factory.annotation.Qualifier("operationsRiskFlowProxyFactory") HttpServiceProxyFactory factory) {
+        return factory.createClient(com.paytech.risk.decision.api.control.ClientUnderwritingApi.class);
+    }
+
     /** 执行发布；写入字段错误沿用页面 Body 路径投影。 */
     @Bean
     com.paytech.risk.decision.api.ExecutionReleaseManagementApi executionReleaseManagementApi(
@@ -143,10 +150,11 @@ public class RiskClientConfiguration {
                 case TIMEOUT -> new ErrorException(OperationsBffErrorCode.DEPENDENCY_TIMEOUT, null, cause);
                 case UNAVAILABLE -> new ServiceUnavailableException(OperationsBffErrorCode.DEPENDENCY_UNAVAILABLE, cause);
             });
-        return HttpServiceClientFactory.create(client, options, java.util.stream.Stream.concat(
+        return HttpServiceClientFactory.create(client, options, java.util.stream.Stream.of(
             Arrays.stream(RiskDecisionConfigurationErrorCode.values()),
-            Arrays.stream(com.paytech.risk.decision.api.enums.RiskVariableErrorCode.values()))
-            .toArray(com.paytech.foundation.common.enums.CodeMessageEnum[]::new));
+            Arrays.stream(com.paytech.risk.decision.api.enums.RiskVariableErrorCode.values()),
+            Arrays.stream(com.paytech.risk.decision.api.enums.RiskUnderwritingErrorCode.values()))
+            .flatMap(codes -> codes).toArray(com.paytech.foundation.common.enums.CodeMessageEnum[]::new));
     }
 
     private SimpleClientHttpRequestFactory requestFactory() {

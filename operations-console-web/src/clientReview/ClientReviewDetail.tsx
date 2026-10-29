@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { session } from '../api/session';
 import { Button, Segmented, Select, Space } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { hasMenu, underwritingMenu, underwritingRoutes } from '../underwriting/underwriting';
 import type { ConsoleResource } from '../api/types';
 import { Loading, QueryFailure, date, useDetail } from '../tenantAccess/TenantAccessView';
 import { enumLabel } from '../i18n/index';
@@ -40,7 +41,7 @@ const tabs = ['application', 'materials', 'checks', 'screening', 'classification
  * <li>页面只发两个读请求（详情 + PayFac 选项），不按行扇出。</li>
  */
 export function ClientReviewDetail({ caseId, resources, actorId, onAuthorizationChanged }: Props) {
-  const t = useT('client-review'), tCommon = useT('common');
+  const t = useT('client-review'), tCommon = useT('common'); const navigate = useNavigate();
   const decode = useMemo(() => (value: unknown) => decodeDetail(value, caseId), [caseId]);
   const detail = useDetail(`${reviewApi}/cases/${caseId}`, decode);
   const partnerList = useDetail(`${reviewApi}/responsible-partners`, decodeResponsiblePartners);
@@ -76,6 +77,8 @@ export function ClientReviewDetail({ caseId, resources, actorId, onAuthorization
             options={[{ value: '__PLATFORM__', label: t('onBehalf.platform') }, ...partners.map(p => ({ value: p.localPartnerId, label: `${p.legalName ?? p.partnerNo} · ${p.partnerNo}` })),
               ...(responsible && !partners.some(p => p.localPartnerId === responsible) ? [{ value: responsible, label: responsible }] : [])]}
             onChange={value => setOnBehalf(value === '__PLATFORM__' ? null : value)} /></div>}
+        {review.status === 'APPROVED' && hasMenu(resources, underwritingMenu)
+          && <Button onClick={() => void navigate(underwritingRoutes.create(review.clientId))}>{t('detail.underwriting')}</Button>}
         <Button onClick={detail.refresh} loading={detail.loading}>{tCommon('action.refresh')}</Button></Space>
     </div>
     {active && actingFor !== responsible && <div className="obw-notice">{responsible

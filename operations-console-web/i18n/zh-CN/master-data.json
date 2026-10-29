@@ -56,6 +56,7 @@
   "master-data.client.profile.title": "主档",
   "master-data.client.qualifications": "资格",
   "master-data.client.qualificationsSubtitle": "compliance 中的 Client 资格",
+  "master-data.client.underwriting": "承保",
   "master-data.command.busy": "该记录正在被其他操作修改，请稍后重试。",
   "master-data.command.conflict": "记录在你打开后已被修改，请刷新后重试。",
   "master-data.command.failed": "操作未完成",

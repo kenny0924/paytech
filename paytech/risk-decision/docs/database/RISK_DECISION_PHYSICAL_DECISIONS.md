@@ -213,6 +213,19 @@ Assessment 的 Eligibility 结果与 Evaluation 只允许六组 `(eligibility_de
 
 Risk 三表、Assessment、Policy 和静态校验已实现；Manual Payout 四检查点及 Finance Projection 的 Scope/完整结果/账户门禁契约已于 2026-08-29 同 Finance、requirements 和共享入口对齐。
 
+### 10.4 Client 承保记录（2026-10-29 REQ-03）
+
+> 依据：[requirements/20261029/risk-decision-承保记录](../../../../requirements/20261029/risk-decision-承保记录/technique.md) 第 7—9 节（S-01、S-03、S-06、S-08、S-12）。新增 3 张表，不改旧表。
+
+- `t_client_underwriting` 每个承保版本一行（58 列）：`(client_id, version_no)` 唯一；两个稀疏槽位分别唯一——`open_slot`（DRAFT / SUBMITTED 为 1，终态 NULL）保证同一 Client 至多一个进行中版本，`effective_slot`（当前有效 APPROVED 为 1，被替代或非 APPROVED 为 NULL）保证有效结论唯一。没有 root + version 双表：唯一可变的 Root 属性"当前版本"由槽位表达，版本历史即版本行本身，不接入 BCR。
+- 输入快照用结构化列冻结（CRR、档次、MCC / 行业、卡组织高风险标记、预计月流水 / 客单价 / 币种、交付方式与天数、网站、退款政策、期望支付方式）与来源坐标（尽调案件 ID + 版本、申请 ID + `draft_revision`、分类确认时间），不用无 Schema JSON；草稿可缺省 MCC 与来源坐标，提交与自动承保时由应用校验必填后冻结。`review_level` = CRR，CRR 为空按 MEDIUM（存量尽调未评）。
+- 状态机：DRAFT →（LOW / MEDIUM 提交）APPROVED / DECLINED；DRAFT →（HIGH 提交）SUBMITTED →（复核人 ≠ 提交人）APPROVED / DECLINED；自动承保直接插入 APPROVED（`decision_source=AUTO_RULE`、`rule_version_id`，`submitted_by` / `decided_by` 为空）。批准时同一本地事务先把上一有效版本置 SUPERSEDED 并清 `effective_slot`，再写新决定；拒绝不影响上一有效版本。APPROVED 内容不可变，修订复制结论为新 DRAFT。
+- 并发：写入口按 Client 获取 Redis 锁（`risk-underwriting:client:{clientId}`，TRY_LOCK 500ms / 30s），每次条件更新携带期望 `status` 与 `version` 并核对行数；槽位唯一索引为最终防线（进行中槽位冲突报 `RISK_UNDERWRITING_OPEN_EXISTS`，其他唯一冲突报版本冲突）。
+- 估算敞口（B10，参考值）`estimated_exposure = expected_monthly_volume × exposure_risk_days / 30`（HALF_UP 2 位，币种 = `volume_currency`），保存与提交时按快照重算冻结；不可算时两列为空。
+- `require_deposit / deposit_amount / deposit_currency / deposit_blocks_collection` 只是 Risk 的最低保证金要求决策事实；下发为 compliance `t_settlement_control`（`MIN_SECURITY_DEPOSIT`，`source_action_effect_id` 非空唯一）与执行归 REQ-18，本表不引用也不写 compliance。`high_risk_mcc` 只记"需卡组织登记"，登记事实归 channel-connector（REQ-13）。
+- 自动承保规则：`t_underwriting_rule_version`（`active_slot` 唯一，至多一个 ACTIVE；`excluded_mcc_codes` 为升序逗号串）+ `t_underwriting_rule_threshold`（`(rule_version_id, currency)` 唯一，月流水上限含等号）。本期无维护页面，以 DML 发布新版本，ACTIVE 后不改；v1 初值 USD 50,000、排除清单为空（待风控确认）。
+- 同进程读取：`ClientUnderwritingQueryService.findEffective(clientId)` 只读有效槽位版本，供 REQ-04；data-query 模板 `GOLIVE_UNDERWRITING_APPROVED` 只读 `t_client_underwriting`。
+
 ## 11. CHECK Sidecar 逻辑约束与跨行事务边界
 
 PDManer 4.9.3 对所有数据库目标没有统一可移植约束节点。名称、逻辑表达式和绑定表冻结在 `scripts/pdmaner/risk/model-policy.mjs`，当前共 82 条 Sidecar 契约，供模型、Owner 应用校验和测试追踪，不生成物理 `CHECK`，覆盖：

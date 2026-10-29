@@ -191,6 +191,21 @@ export const pageCapabilities = [
     "actions": []
   },
   {
+    "componentKey": "OPERATIONS_RISK_UNDERWRITING",
+    "displayName": "承保",
+    "frontendRoute": "/risk/underwriting",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_UNDERWRITING_MANAGE",
+        "displayName": "维护"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_UNDERWRITING_APPROVE",
+        "displayName": "复核"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_QUALIFICATIONS",
     "displayName": "主体资格",
     "frontendRoute": "/compliance/qualifications",

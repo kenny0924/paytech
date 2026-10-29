@@ -1,0 +1,101 @@
++--------------------+-----------------------------------------+-------------------------------------------------+--------+-------------+--------------+--------------------+
+| role_id            | role_code                               | role_name                                       | status | system_role | tenant_scope | active_permissions |
++--------------------+-----------------------------------------+-------------------------------------------------+--------+-------------+--------------+--------------------+
+| 221639069631856640 | QA_ROLE_0353C501432A                    | 验收角色 0353C501432A 已编辑                    | ACTIVE |           0 | TENANT       |                  9 |
+| 221643970516697088 | QA_ACTION_F07F4C5D6912                  | 独立操作验收 F07F4C5D6912                       | ACTIVE |           0 | TENANT       |                  0 |
+| 221643982193639424 | QA_EMPTY_F07F4C5D6912                   | 独立编辑角色验收                                | ACTIVE |           0 | TENANT       |                  0 |
+| 238054065030905856 | QA_COMMERCIAL_CHECKER_89BD2A            | 商务审批验收 89BD2A                             | ACTIVE |           0 | TENANT       |                  0 |
+| 238175274431234048 | QA_COMMERCIAL_CHECKER_395AEC            | 商务二期验收 CHECKER 395AEC                     | ACTIVE |           0 | TENANT       |                  0 |
+| 238175277224640512 | QA_COMMERCIAL_PRICING_READER_395AEC     | 商务二期验收 PRICING_READER 395AEC              | ACTIVE |           0 | TENANT       |                  0 |
+| 238202317067862016 | QA_CHANNEL_CHECKER_0D659F               | 渠道控制台验收 CHECKER 0D659F                   | ACTIVE |           0 | TENANT       |                  0 |
+| 238202319701884928 | QA_CHANNEL_READER_0D659F                | 渠道控制台验收 READER 0D659F                    | ACTIVE |           0 | TENANT       |                  0 |
+| 238202661533466624 | QA_CHANNEL_BCHECKER_0D659FB81540        | 渠道控制台验收 BCHECKER 0D659FB81540            | ACTIVE |           0 | TENANT       |                  0 |
+| 238330928735272960 | DEMO_COMMERCIAL_CHECKER_202610201602    | 商务演示审批 20261020T160201Z                   | ACTIVE |           0 | TENANT       |                  0 |
+| 238331385054576640 | DEMO_COMMERCIAL_CHECKER_202610201603    | 商务演示审批 20261020T160349Z                   | ACTIVE |           0 | TENANT       |                  0 |
+| 238410797636730880 | CAP_STAGE7_CHECKER_20261020211923       | 商务开通定价验收审批 20261020T211923Z           | ACTIVE |           0 | TENANT       |                  0 |
+| 238411673684230144 | CAP_STAGE7_CHECKER_20261020212252       | 商务开通定价验收审批 20261020T212252Z           | ACTIVE |           0 | TENANT       |                  0 |
+| 238412197544411136 | CAP_STAGE7_CHECKER_20261020212457       | 商务开通定价验收审批 20261020T212457Z           | ACTIVE |           0 | TENANT       |                  0 |
+| 238417963844190208 | CAP_STAGE7_CHECKER_20261020214751       | 商务开通定价验收审批 20261020T214751Z           | ACTIVE |           0 | TENANT       |                  0 |
+| 238418218765598720 | CAP_STAGE7_CHECKER_20261020214852       | 商务开通定价验收审批 20261020T214852Z           | ACTIVE |           0 | TENANT       |                  0 |
+| 238418252001263616 | CAP_STAGE7_CHECKER_20261020214900       | 商务开通定价验收审批 20261020T214900Z           | ACTIVE |           0 | TENANT       |                  0 |
+| 238419647806914560 | CAP_STAGE7_CHECKER_20261020215433       | 商务开通定价验收审批 20261020T215433Z           | ACTIVE |           0 | TENANT       |                  0 |
+| 238508279414734848 | DEMO_RECON_CHECKER_202610210746         | 对账演示复核人 202610210746                     | ACTIVE |           0 | TENANT       |                  3 |
+| 239291461131124736 | QA_WFUX_APPROVER                        | WF-UX-20261023 合成审批人                       | ACTIVE |           0 | TENANT       |                  1 |
+| 239292995084566528 | QA_BILLB_CHECKER_CB6E8A                 | 渠道成本合成复核 CB6E8A                         | ACTIVE |           0 | TENANT       |                  4 |
+| 240113836181504000 | RELSNAP_PAYFAC_CHECKER_20261025T140636Z | PayFac 条款复核 20261025T140636Z                | ACTIVE |           0 | TENANT       |                  0 |
+| 900000000000000510 | PLATFORM_ADMIN                          | 平台管理员                                      | ACTIVE |           1 | PLATFORM     |                124 |
+| 900000000000000511 | OPERATIONS_VIEWER                       | 运营只读人员                                    | ACTIVE |           1 | PLATFORM     |                  6 |
+| 900000000000065004 | DEMO_CLIENT_VIEWER                      | 示例客户只读角色                                | ACTIVE |           0 | TENANT       |                  2 |
++--------------------+-----------------------------------------+-------------------------------------------------+--------+-------------+--------------+--------------------+
++-----------------------------------------+---------------------------------+---------+
+| role_code                               | permission_code                 | status  |
++-----------------------------------------+---------------------------------+---------+
+| OPERATIONS_VIEWER                       | RISK_DECISION_CONFIG_READ       | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_DECISION_CONFIG_READ       | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_DECISION_FLOW_DELETE       | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_DECISION_FLOW_SAVE         | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_EVALUATION_READ            | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_EXECUTION_RELEASE_ACTIVATE | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_EXECUTION_RELEASE_PREPARE  | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_LIST_MANAGE                | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_LIST_READ                  | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_REJECTION_REASON_CREATE    | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_REJECTION_REASON_STATUS    | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_REJECTION_REASON_UPDATE    | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_RULE_SET_DELETE            | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_RULE_SET_FREEZE            | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_RULE_SET_SAVE              | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_SUBJECT_TAG_CREATE         | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_SUBJECT_TAG_STATUS         | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_SUBJECT_TAG_UPDATE         | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_TEST_CANDIDATE_CREATE      | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_TEST_CANDIDATE_VALIDATE    | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_VARIABLE_DELETE            | ACTIVE  |
+| PLATFORM_ADMIN                          | RISK_VARIABLE_MANAGE            | ACTIVE  |
+| RISK_RULE_SMOKE_AUTHORIZED              | RISK_DECISION_CONFIG_READ       | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED              | RISK_RULE_SET_FREEZE            | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED              | RISK_RULE_SET_SAVE              | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED              | RISK_TEST_CANDIDATE_CREATE      | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED              | RISK_TEST_CANDIDATE_VALIDATE    | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED_3AE1A6D7D413 | RISK_DECISION_CONFIG_READ       | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED_3AE1A6D7D413 | RISK_RULE_SET_FREEZE            | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED_3AE1A6D7D413 | RISK_RULE_SET_SAVE              | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED_3AE1A6D7D413 | RISK_TEST_CANDIDATE_CREATE      | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED_3AE1A6D7D413 | RISK_TEST_CANDIDATE_VALIDATE    | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED_4754427C4A0E | RISK_DECISION_CONFIG_READ       | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED_4754427C4A0E | RISK_RULE_SET_FREEZE            | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED_4754427C4A0E | RISK_RULE_SET_SAVE              | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED_4754427C4A0E | RISK_TEST_CANDIDATE_CREATE      | REVOKED |
+| RISK_RULE_SMOKE_AUTHORIZED_4754427C4A0E | RISK_TEST_CANDIDATE_VALIDATE    | REVOKED |
++-----------------------------------------+---------------------------------+---------+
++--------------------+---------------------------------+-----------------------------+-------------------------+------------+--------+
+| permission_id      | permission_code                 | resource_type               | action_code             | risk_level | status |
++--------------------+---------------------------------+-----------------------------+-------------------------+------------+--------+
+| 900000000000000536 | RISK_DECISION_CONFIG_READ       | RISK_DECISION_CONFIGURATION | READ                    | LOW        | ACTIVE |
+| 900000000000000537 | RISK_RULE_SET_SAVE              | RISK_DECISION_CONFIGURATION | SAVE                    | HIGH       | ACTIVE |
+| 900000000000000538 | RISK_RULE_SET_FREEZE            | RISK_DECISION_CONFIGURATION | FREEZE                  | HIGH       | ACTIVE |
+| 900000000000000539 | RISK_TEST_CANDIDATE_CREATE      | RISK_DECISION_CONFIGURATION | CREATE_TEST_CANDIDATE   | HIGH       | ACTIVE |
+| 900000000000000540 | RISK_TEST_CANDIDATE_VALIDATE    | RISK_DECISION_CONFIGURATION | VALIDATE_TEST_CANDIDATE | HIGH       | ACTIVE |
+| 900000000000000541 | RISK_RULE_SET_DELETE            | RISK_DECISION_CONFIGURATION | DELETE                  | HIGH       | ACTIVE |
+| 900000000000012101 | RISK_REJECTION_REASON_CREATE    | RISK_REJECTION_REASON       | CREATE                  | MEDIUM     | ACTIVE |
+| 900000000000012102 | RISK_REJECTION_REASON_UPDATE    | RISK_REJECTION_REASON       | UPDATE                  | MEDIUM     | ACTIVE |
+| 900000000000012103 | RISK_REJECTION_REASON_STATUS    | RISK_REJECTION_REASON       | CHANGE_STATUS           | MEDIUM     | ACTIVE |
+| 900000000000012104 | RISK_SUBJECT_TAG_CREATE         | RISK_SUBJECT_TAG            | CREATE                  | MEDIUM     | ACTIVE |
+| 900000000000012105 | RISK_SUBJECT_TAG_UPDATE         | RISK_SUBJECT_TAG            | UPDATE                  | MEDIUM     | ACTIVE |
+| 900000000000012106 | RISK_SUBJECT_TAG_STATUS         | RISK_SUBJECT_TAG            | CHANGE_STATUS           | MEDIUM     | ACTIVE |
+| 900000000000021101 | RISK_DECISION_FLOW_SAVE         | RISK_DECISION_FLOW          | SAVE                    | MEDIUM     | ACTIVE |
+| 900000000000021102 | RISK_DECISION_FLOW_DELETE       | RISK_DECISION_FLOW          | DELETE                  | MEDIUM     | ACTIVE |
+| 900000000000031101 | RISK_VARIABLE_MANAGE            | RISK_VARIABLE               | MANAGE                  | MEDIUM     | ACTIVE |
+| 900000000000031102 | RISK_VARIABLE_DELETE            | RISK_VARIABLE               | DELETE                  | MEDIUM     | ACTIVE |
+| 900000000000101101 | RISK_LIST_READ                  | RISK_LIST                   | READ                    | MEDIUM     | ACTIVE |
+| 900000000000101102 | RISK_LIST_MANAGE                | RISK_LIST                   | MANAGE                  | HIGH       | ACTIVE |
+| 900000000000101103 | RISK_EXECUTION_RELEASE_PREPARE  | RISK_EXECUTION_RELEASE      | PREPARE                 | HIGH       | ACTIVE |
+| 900000000000101104 | RISK_EXECUTION_RELEASE_ACTIVATE | RISK_EXECUTION_RELEASE      | ACTIVATE                | CRITICAL   | ACTIVE |
+| 900000000000111101 | RISK_EVALUATION_READ            | RISK_EVALUATION             | READ                    | HIGH       | ACTIVE |
++--------------------+---------------------------------+-----------------------------+-------------------------+------------+--------+
++-------------------+---------+
+| role_code         | members |
++-------------------+---------+
+| PLATFORM_ADMIN    |       2 |
+| OPERATIONS_VIEWER |       2 |
++-------------------+---------+

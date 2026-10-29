@@ -1,0 +1,12 @@
+# REQ-03 risk-decision 承保记录：mor-test 回滚覆盖（= 阶段 6 读到的现网镜像；阶段 7 回滚时使用）。
+services:
+  operations-console-bff:
+    image: sha256:6833f484994be41f72ee3fb3ee73006514b9089e5a5d4330af6e3bc245c597bd  # mor-test/operations-console-bff:wfdq-20261029a（JAR 5cee8709b55af2d1）
+    environment:
+      OPERATIONS_BFF_BIND_ADDRESS: 172.30.73.22
+      OPERATIONS_CONSOLE_ORIGIN: http://localhost:28080
+      OPERATIONS_TEST_HTTP_ENABLED: "true"
+      OPERATIONS_LEDGER_BASE_URL: http://ledger-service:18105
+      OPERATIONS_ACCOUNT_BASE_URL: http://account-service:18114
+      OPERATIONS_BILLING_BASE_URL: http://billing-service:18113
+      OPERATIONS_RECONCILIATION_BASE_URL: http://reconciliation-service:18115

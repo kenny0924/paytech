@@ -64,6 +64,8 @@ web:
       # 名单主体值与统一评估输入含 IP、卡指纹等受限原值，只记元数据。
       - /risk-lists
       - /risk-decisions
+      # 承保请求与响应含 Client 法定名称（个人 Client 为姓名）、网站与承保说明，只记元数据（REQ-03）。
+      - /risk-underwriting
 
 management:
   server:

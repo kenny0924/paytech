@@ -125,6 +125,8 @@ Route Code 为 `operations-commercial-*`，权限 `COMMERCIAL_CONTRACT_READ / MA
 
 ### Risk 配置适配边界
 
+风控承保（REQ-03）见[需求技术方案](../../requirements/20261029/risk-decision-承保记录/technique.md)第 10.1 节：`RiskUnderwritingController`（`/risk-underwriting/v1`，12 个）。工作台 `UnderwritingWorkspaceProcessor` 经 `UnderwritingInputAssembler` 按 Client 取最近已批准申请的尽调案件，并发读取 compliance 案件、client-master 申请资料与分类、Platform MCC 组装输入快照（来源失败只降级该来源），按预览路由实时授权判断维护权限；写命令只接受结论字段（`RiskUnderwritingRequestConfiguration` 严格解析），由 `UnderwritingCommandProcessor` 重新读取输入（任一来源不可用 503）后转发 `RiskUnderwritingClient`，回执经 `UnderwritingLabeler` 补操作人显示名。
+
 名单维护与执行发布的现行合同见[需求技术方案](../../requirements/20261015/operations-console-支付风控配置接入/technique.md)第 8 节：`RiskListController`（`/risk-lists/v1/lists`，5 个）与 `RiskExecutionReleaseController`（`/decision-releases/v1/executions`，6 个）只委托 `RiskListClient`、`RiskExecutionReleaseClient`，由 `RiskControlConverter` 逐字段转换、`RiskControlResponsePolicy` 核对回执身份与分页；状态编码不做闭合枚举。名单成员只返回 Risk 的脱敏主体键，`/risk-lists` 只记元数据日志。校验与激活为无 Body 的 JSON POST。
 
 `RiskDecisionConfigurationController` 的具体 Handler 只使用本地 `RiskRuleSetModels`、`RiskTestCandidateModels` 和唯一 `RiskDecisionConfigurationClient` Port。唯一实现 `RiskDecisionConfigurationClientImpl` 显式逐字段转换 Owner 请求/响应；不创建 Risk Processor、业务 Service、Repository、数据库或恢复状态缓存。

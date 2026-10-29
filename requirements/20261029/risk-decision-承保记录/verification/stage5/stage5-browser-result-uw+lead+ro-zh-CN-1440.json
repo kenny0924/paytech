@@ -1,0 +1,277 @@
+{
+  "locale": "zh-CN",
+  "width": 1440,
+  "steps": [
+    {
+      "step": "uw:L1-list",
+      "check": {
+        "stats": [
+          "生效中 3",
+          "草稿 1",
+          "待复核 1",
+          "本月已批准 4",
+          "本月已拒绝 2"
+        ],
+        "tabs": [
+          "全部",
+          "草稿",
+          "待复核",
+          "已批准",
+          "已拒绝",
+          "已作废"
+        ],
+        "rows": 5,
+        "newButton": 1,
+        "pendingSwitch": 0,
+        "total": "共 5 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:P02-auto",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC 新建",
+        "meta": "CL-241533217348268033 · AE · 机构",
+        "checks": [
+          "is-pass: 客户风险等级为 LOW（当前 LOW）",
+          "is-pass: 预计月流水 USD 50,000 ≤ 阈值 USD 50,000",
+          "is-pass: MCC 5651 家庭服装店 不在高风险清单（卡组织标记 ∪ 风控排除清单）"
+        ],
+        "verdict": "符合自动承保条件 可一键生成已批准记录：审批人记为系统规则，记录规则版本与操作人，无需复核。",
+        "exposure": "USD 0.00 = USD 50,000 × 0 ÷ 30",
+        "alerts": [],
+        "history": [],
+        "buttons": [
+          {
+            "text": "改为人工承保",
+            "disabled": false
+          },
+          {
+            "text": "一键自动承保",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:P03-draft-no-crr",
+      "check": {
+        "title": "Acceptance Trading 1027031415 LLC 草稿 v2",
+        "meta": "CL-240674482170114049 · AE",
+        "checks": [
+          "is-fail: 客户风险等级为 LOW（当前 未评 CRR） 只有 CRR 为 LOW 才能自动承保。",
+          "is-pass: 预计月流水 USD 50,000 ≤ 阈值 USD 50,000",
+          "is-pass: MCC 5999 其他专门零售店 不在高风险清单（卡组织标记 ∪ 风控排除清单）"
+        ],
+        "verdict": "不符合自动承保条件 · 需人工承保 在下方填写结论；LOW / MEDIUM 提交即决定。",
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [],
+        "exposureBefore": "无法估算 未采集交付方式。",
+        "crrHint": "尽调未评 CRR，按 MEDIUM 处理",
+        "buttons": [
+          {
+            "text": "保存草稿",
+            "disabled": false
+          },
+          {
+            "text": "拒 绝",
+            "disabled": false
+          },
+          {
+            "text": "提 交",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:P04-uw-no-approve",
+      "check": {
+        "title": "Layla Bizinfo0613 待复核 v2",
+        "meta": "CL-241533316505808897 · 提交人 r***@example.test · 提交于 10-29 20:37 · 输入已冻结",
+        "checks": [],
+        "exposure": "USD 46,666.67 = USD 50,000 × (14 + 14) ÷ 30",
+        "alerts": [
+          "等待风控负责人复核。"
+        ],
+        "history": [
+          "v2 待复核 r***@example.test 提交，待复核 10-29 20:37",
+          "v1 已拒绝 人工 · r***@example.test 提交，r***@example.test 复核（HIGH） 10-29 20:37 · 拒绝原因：卡组织高风险 MCC 且预售周期长，暂不承保 查看"
+        ],
+        "reviewPanel": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "lead:L4-pending-for-me",
+      "check": {
+        "rows": [],
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "lead:P04-self",
+      "check": {
+        "title": "Layla Bizinfo0613 待复核 v2",
+        "meta": "CL-241533316505808897 · 提交人 r***@example.test · 提交于 10-29 20:37 · 输入已冻结",
+        "checks": [],
+        "exposure": "USD 46,666.67 = USD 50,000 × (14 + 14) ÷ 30",
+        "alerts": [],
+        "history": [
+          "v2 待复核 r***@example.test 提交，待复核 10-29 20:37",
+          "v1 已拒绝 人工 · r***@example.test 提交，r***@example.test 复核（HIGH） 10-29 20:37 · 拒绝原因：卡组织高风险 MCC 且预售周期长，暂不承保 查看"
+        ],
+        "buttons": [
+          {
+            "text": "拒 绝",
+            "disabled": true
+          },
+          {
+            "text": "批 准",
+            "disabled": true
+          }
+        ],
+        "hint": [
+          "风险天数 = 交付 14 天 + 结算周期 T+14。 冻结于提交时。",
+          "你是提交人，须由另一位具有复核权限的人员复核（四眼）。服务端同样校验复核人 ≠ 提交人。",
+          "10-29 20:37",
+          "10-29 20:37 · 拒绝原因：卡组织高风险 MCC 且预售周期长，暂不承保"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:L5-readonly-list",
+      "check": {
+        "stats": [
+          "生效中 3",
+          "草稿 1",
+          "待复核 1",
+          "本月已批准 4",
+          "本月已拒绝 2"
+        ],
+        "tabs": [
+          "全部",
+          "草稿",
+          "待复核",
+          "已批准",
+          "已拒绝",
+          "已作废"
+        ],
+        "rows": 5,
+        "newButton": 0,
+        "pendingSwitch": 0,
+        "total": "共 5 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:P05-history",
+      "check": {
+        "title": "Acceptance Trading 1027031549 LLC 已批准 · 生效 v2",
+        "meta": "CL-240674874987655169 · AE · 批准于 10-29 20:38 · 批准后不可修改",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v2 已批准 · 生效 人工 · r***@example.test 提交即生效（LOW） 10-29 20:38 · 修订原因：rq03 stage5：补充 T+N 与保证金",
+          "v1 已作废 自动规则 v1 · 触发人 r***@example.test 10-29 20:37 · 被 v2 取代 查看"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:P02-readonly",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC 新建",
+        "meta": "CL-241533217348268033 · AE · 机构",
+        "checks": [],
+        "exposure": "无法估算",
+        "alerts": [
+          "你可以查看输入，但没有新建承保的权限。"
+        ],
+        "history": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    }
+  ],
+  "console": [
+    {
+      "step": "login uw",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "uw:goto /risk/underwriting",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login lead",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "lead:goto /risk/underwriting?pendingReviewForMe=true&page=1&size=20",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login ro",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "ro:goto /risk/underwriting",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    }
+  ],
+  "httpErrors": [],
+  "writes": [
+    {
+      "step": "uw:goto /risk/underwriting/241601375522275328",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    },
+    {
+      "step": "uw:P03 T+N",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    }
+  ],
+  "bundles": 156
+}

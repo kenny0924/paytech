@@ -1,0 +1,250 @@
+{
+  "locale": "en",
+  "width": 1440,
+  "steps": [
+    {
+      "step": "uw:L1-list",
+      "check": {
+        "stats": [
+          "Effective 3",
+          "Drafts 1",
+          "Awaiting review 1",
+          "Approved this month 4",
+          "Declined this month 2"
+        ],
+        "tabs": [
+          "All",
+          "Draft",
+          "Awaiting review",
+          "Approved",
+          "Declined",
+          "Superseded"
+        ],
+        "rows": 5,
+        "newButton": 1,
+        "pendingSwitch": 0,
+        "total": "5 in total"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:P02-auto",
+      "check": {
+        "checks": [],
+        "alerts": [],
+        "history": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:P03-draft-no-crr",
+      "check": {
+        "title": "Acceptance Trading 1027031415 LLC Draft v2",
+        "meta": "CL-240674482170114049 · AE",
+        "checks": [
+          "is-fail: Client risk rating is LOW (current: CRR not rated) Only LOW CRR can be auto-underwritten.",
+          "is-pass: Expected monthly volume USD 50,000 ≤ threshold USD 50,000",
+          "is-pass: MCC 5999 Miscellaneous and Specialty Retail Stores isn't high-risk (card-network list ∪ Risk exclusions)"
+        ],
+        "verdict": "Doesn't meet the auto-underwriting rule · manual underwriting Fill in the decision below. LOW / MEDIUM is decided when you submit.",
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [],
+        "exposureBefore": "Can't estimate The fulfillment type wasn't collected.",
+        "crrHint": "Not rated in due diligence; treated as MEDIUM",
+        "buttons": [
+          {
+            "text": "Save draft",
+            "disabled": false
+          },
+          {
+            "text": "Decline",
+            "disabled": false
+          },
+          {
+            "text": "Submit",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:P04-uw-no-approve",
+      "check": {
+        "title": "Layla Bizinfo0613 Awaiting review v2",
+        "meta": "CL-241533316505808897 · Submitted by r***@example.test · Submitted 10-29 20:37 · Inputs frozen",
+        "checks": [],
+        "exposure": "USD 46,666.67 = USD 50,000 × (14 + 14) ÷ 30",
+        "alerts": [
+          "Waiting for a Risk lead to review."
+        ],
+        "history": [
+          "v2 Awaiting review Submitted by r***@example.test, awaiting review 10-29 20:37",
+          "v1 Declined Manual · submitted by r***@example.test, reviewed by r***@example.test (HIGH) 10-29 20:37 · Declined: 卡组织高风险 MCC 且预售周期长，暂不承保 View"
+        ],
+        "reviewPanel": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "lead:L4-pending-for-me",
+      "check": {
+        "rows": [],
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "lead:P04-self",
+      "check": {
+        "title": "Layla Bizinfo0613 Awaiting review v2",
+        "meta": "CL-241533316505808897 · Submitted by r***@example.test · Submitted 10-29 20:37 · Inputs frozen",
+        "checks": [],
+        "exposure": "USD 46,666.67 = USD 50,000 × (14 + 14) ÷ 30",
+        "alerts": [],
+        "history": [
+          "v2 Awaiting review Submitted by r***@example.test, awaiting review 10-29 20:37",
+          "v1 Declined Manual · submitted by r***@example.test, reviewed by r***@example.test (HIGH) 10-29 20:37 · Declined: 卡组织高风险 MCC 且预售周期长，暂不承保 View"
+        ],
+        "buttons": [
+          {
+            "text": "Decline",
+            "disabled": true
+          },
+          {
+            "text": "Approve",
+            "disabled": true
+          }
+        ],
+        "hint": [
+          "Risk days = 14 delivery days + settlement T+14. Frozen on submit.",
+          "You submitted this underwriting, so someone else with review permission must review it (four eyes). The server checks this too.",
+          "10-29 20:37",
+          "10-29 20:37 · Declined: 卡组织高风险 MCC 且预售周期长，暂不承保"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:L5-readonly-list",
+      "check": {
+        "stats": [
+          "Effective 3",
+          "Drafts 1",
+          "Awaiting review 1",
+          "Approved this month 4",
+          "Declined this month 2"
+        ],
+        "tabs": [
+          "All",
+          "Draft",
+          "Awaiting review",
+          "Approved",
+          "Declined",
+          "Superseded"
+        ],
+        "rows": 5,
+        "newButton": 0,
+        "pendingSwitch": 0,
+        "total": "5 in total"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:P05-history",
+      "check": {
+        "title": "Acceptance Trading 1027031549 LLC Approved · Effective v2",
+        "meta": "CL-240674874987655169 · AE · Approved 10-29 20:38 · Can't be changed after approval",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v2 Approved · Effective Manual · r***@example.test decided on submission (LOW) 10-29 20:38 · Revision reason: rq03 stage5：补充 T+N 与保证金",
+          "v1 Superseded Auto rule v1 · triggered by r***@example.test 10-29 20:37 · Superseded by v2 View"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:P02-readonly",
+      "check": {
+        "checks": [],
+        "alerts": [],
+        "history": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    }
+  ],
+  "console": [
+    {
+      "step": "login uw",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "uw:goto /risk/underwriting",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login lead",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "lead:goto /risk/underwriting?pendingReviewForMe=true&page=1&size=20",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login ro",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "ro:goto /risk/underwriting",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    }
+  ],
+  "httpErrors": [],
+  "writes": [
+    {
+      "step": "uw:P03 T+N",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    }
+  ],
+  "bundles": 78
+}

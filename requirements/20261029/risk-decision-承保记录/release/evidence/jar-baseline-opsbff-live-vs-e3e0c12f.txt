@@ -1,0 +1,17 @@
+A=2824 B=2824 onlyA=0 onlyB=0 changed=16
+  ~ paytech-client-master-api.jar!com/paytech/client/contract/api/onboarding/ClientDraftModels$ClientDraftResponseBody.class
+  ~ paytech-client-master-api.jar!com/paytech/client/contract/api/onboarding/ClientDraftModels$CommandReceiptResponseBody.class
+  ~ paytech-client-master-api.jar!com/paytech/client/contract/api/onboarding/ClientDraftModels$DraftPatchRequestBody.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$AddressComponent.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$AddressFormat.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$CatalogOption.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Declaration.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Field.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Group.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$IdentifierTypeOption.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Material.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$RelationRules.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$RelationTypeOption.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Section.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Validation.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody.class

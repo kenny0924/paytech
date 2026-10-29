@@ -1,0 +1,8 @@
+candidate risk-decision-service      image=8934f65a6cf8 keys live=33 rendered=33 missing=[] extra=[] valuediff=[]
+candidate operations-console-bff     image=4f08f1e601be keys live=20 rendered=20 missing=[] extra=[] valuediff=[]
+candidate operations-console-web     image=2f7722daa531 keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+candidate platform-support-service   image=49f710118adb keys live=59 rendered=59 missing=[] extra=[] valuediff=[]
+rollback  risk-decision-service      image=288b0ff6a607 keys live=33 rendered=33 missing=[] extra=[] valuediff=[]
+rollback  operations-console-bff     image=6833f484994b keys live=20 rendered=20 missing=[] extra=[] valuediff=[]
+rollback  operations-console-web     image=0b456b8aed53 keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+rollback  platform-support-service   image=7671724696de keys live=59 rendered=59 missing=[] extra=[] valuediff=[]

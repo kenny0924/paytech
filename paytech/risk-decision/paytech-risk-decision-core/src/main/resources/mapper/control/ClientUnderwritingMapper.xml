@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.control.core.dal.mapper.ClientUnderwritingMapper">
+    <sql id="columns">
+        underwriting_id AS underwritingId, client_id AS clientId, version_no AS versionNo, status, open_slot AS openSlot,
+        effective_slot AS effectiveSlot, supersedes_underwriting_id AS supersedesUnderwritingId,
+        decision_source AS decisionSource, rule_version_id AS ruleVersionId, client_display_name AS clientDisplayName,
+        client_no AS clientNo, client_type AS clientType, jurisdiction_code AS jurisdictionCode, crr,
+        review_level AS reviewLevel, dd_tier AS ddTier, mcc_code AS mccCode, industry_code AS industryCode,
+        network_high_risk_mcc AS networkHighRiskMcc, expected_monthly_volume AS expectedMonthlyVolume,
+        volume_currency AS volumeCurrency, expected_ticket AS expectedTicket, fulfillment_type AS fulfillmentType,
+        fulfillment_days AS fulfillmentDays, website_url AS websiteUrl, refund_policy_url AS refundPolicyUrl,
+        expected_payment_methods AS expectedPaymentMethods, source_case_id AS sourceCaseId,
+        source_case_version AS sourceCaseVersion, source_application_id AS sourceApplicationId,
+        source_draft_revision AS sourceDraftRevision,
+        source_classification_confirmed_time AS sourceClassificationConfirmedTime, observation_days AS observationDays,
+        observation_transactions AS observationTransactions, require_deposit AS requireDeposit,
+        deposit_amount AS depositAmount, deposit_currency AS depositCurrency,
+        deposit_blocks_collection AS depositBlocksCollection, suggested_settlement_days AS suggestedSettlementDays,
+        high_risk_mcc AS highRiskMcc, high_risk_mcc_reason AS highRiskMccReason,
+        estimated_exposure AS estimatedExposure, exposure_risk_days AS exposureRiskDays, limit_note AS limitNote,
+        underwriting_note AS underwritingNote, handover_note AS handoverNote, decline_reason AS declineReason,
+        revision_reason AS revisionReason, review_comment AS reviewComment, created_by AS createdBy,
+        submitted_by AS submittedBy, submitted_time AS submittedTime, decided_by AS decidedBy,
+        decided_time AS decidedTime, superseded_time AS supersededTime, version, create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+    <!-- 输入快照、结论字段与估算敞口：草稿保存、提交冻结共用同一组列。 -->
+    <sql id="contentSet">
+        client_display_name = #{values.clientDisplayName}, client_no = #{values.clientNo},
+        client_type = #{values.clientType}, jurisdiction_code = #{values.jurisdictionCode}, crr = #{values.crr},
+        review_level = #{values.reviewLevel}, dd_tier = #{values.ddTier}, mcc_code = #{values.mccCode},
+        industry_code = #{values.industryCode}, network_high_risk_mcc = #{values.networkHighRiskMcc},
+        expected_monthly_volume = #{values.expectedMonthlyVolume}, volume_currency = #{values.volumeCurrency},
+        expected_ticket = #{values.expectedTicket}, fulfillment_type = #{values.fulfillmentType},
+        fulfillment_days = #{values.fulfillmentDays}, website_url = #{values.websiteUrl},
+        refund_policy_url = #{values.refundPolicyUrl}, expected_payment_methods = #{values.expectedPaymentMethods},
+        source_case_id = #{values.sourceCaseId}, source_case_version = #{values.sourceCaseVersion},
+        source_application_id = #{values.sourceApplicationId}, source_draft_revision = #{values.sourceDraftRevision},
+        source_classification_confirmed_time = #{values.sourceClassificationConfirmedTime},
+        observation_days = #{values.observationDays}, observation_transactions = #{values.observationTransactions},
+        require_deposit = #{values.requireDeposit}, deposit_amount = #{values.depositAmount},
+        deposit_currency = #{values.depositCurrency}, deposit_blocks_collection = #{values.depositBlocksCollection},
+        suggested_settlement_days = #{values.suggestedSettlementDays}, high_risk_mcc = #{values.highRiskMcc},
+        high_risk_mcc_reason = #{values.highRiskMccReason}, estimated_exposure = #{values.estimatedExposure},
+        exposure_risk_days = #{values.exposureRiskDays}, limit_note = #{values.limitNote},
+        underwriting_note = #{values.underwritingNote}, handover_note = #{values.handoverNote}
+    </sql>
+    <sql id="filter">
+        <where>
+            <if test="filter.status != null">AND status = #{filter.status}</if>
+            <!-- 不按状态筛选（"全部"）时每个 Client 只列最新版本；按状态筛选时列出该状态的全部版本（已作废 / 已拒绝页签） -->
+            <if test="filter.status == null">
+                AND NOT EXISTS (SELECT 1 FROM t_client_underwriting n WHERE n.client_id = u.client_id AND n.version_no &gt; u.version_no)
+            </if>
+            <if test="filter.crr != null">AND crr = #{filter.crr}</if>
+            <if test="filter.decisionSource != null">AND decision_source = #{filter.decisionSource}</if>
+            <if test="filter.clientId != null">AND client_id = #{filter.clientId}</if>
+            <if test="filter.pendingReviewFor != null">
+                AND status = 'SUBMITTED' AND submitted_by &lt;&gt; #{filter.pendingReviewFor}
+            </if>
+            <if test="filter.keyword != null">
+                AND (client_display_name LIKE CONCAT('%', #{filter.keyword}, '%') OR client_no = #{filter.keyword}
+                <if test="filter.keywordClientId != null">OR client_id = #{filter.keywordClientId}</if>)
+            </if>
+        </where>
+    </sql>
+    <insert id="insert">
+        INSERT INTO t_client_underwriting(underwriting_id, client_id, version_no, status, open_slot, effective_slot,
+            supersedes_underwriting_id, decision_source, rule_version_id, client_display_name, client_no, client_type,
+            jurisdiction_code, crr, review_level, dd_tier, mcc_code, industry_code, network_high_risk_mcc,
+            expected_monthly_volume, volume_currency, expected_ticket, fulfillment_type, fulfillment_days, website_url,
+            refund_policy_url, expected_payment_methods, source_case_id, source_case_version, source_application_id,
+            source_draft_revision, source_classification_confirmed_time, observation_days, observation_transactions,
+            require_deposit, deposit_amount, deposit_currency, deposit_blocks_collection, suggested_settlement_days,
+            high_risk_mcc, high_risk_mcc_reason, estimated_exposure, exposure_risk_days, limit_note, underwriting_note,
+            handover_note, decline_reason, revision_reason, review_comment, created_by, submitted_by, submitted_time,
+            decided_by, decided_time, superseded_time, version, create_time, update_time)
+        VALUES(#{row.underwritingId}, #{row.clientId}, #{row.versionNo}, #{row.status}, #{row.openSlot},
+            #{row.effectiveSlot}, #{row.supersedesUnderwritingId}, #{row.decisionSource}, #{row.ruleVersionId},
+            #{row.clientDisplayName}, #{row.clientNo}, #{row.clientType}, #{row.jurisdictionCode}, #{row.crr},
+            #{row.reviewLevel}, #{row.ddTier}, #{row.mccCode}, #{row.industryCode}, #{row.networkHighRiskMcc},
+            #{row.expectedMonthlyVolume}, #{row.volumeCurrency}, #{row.expectedTicket}, #{row.fulfillmentType},
+            #{row.fulfillmentDays}, #{row.websiteUrl}, #{row.refundPolicyUrl}, #{row.expectedPaymentMethods},
+            #{row.sourceCaseId}, #{row.sourceCaseVersion}, #{row.sourceApplicationId}, #{row.sourceDraftRevision},
+            #{row.sourceClassificationConfirmedTime}, #{row.observationDays}, #{row.observationTransactions},
+            #{row.requireDeposit}, #{row.depositAmount}, #{row.depositCurrency}, #{row.depositBlocksCollection},
+            #{row.suggestedSettlementDays}, #{row.highRiskMcc}, #{row.highRiskMccReason}, #{row.estimatedExposure},
+            #{row.exposureRiskDays}, #{row.limitNote}, #{row.underwritingNote}, #{row.handoverNote},
+            #{row.declineReason}, #{row.revisionReason}, #{row.reviewComment}, #{row.createdBy}, #{row.submittedBy},
+            #{row.submittedTime}, #{row.decidedBy}, #{row.decidedTime}, #{row.supersededTime}, #{row.version},
+            #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="selectById" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting">
+        SELECT <include refid="columns"/> FROM t_client_underwriting WHERE underwriting_id = #{underwritingId}
+    </select>
+    <select id="selectOpen" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting">
+        SELECT <include refid="columns"/> FROM t_client_underwriting WHERE client_id = #{clientId} AND open_slot = 1
+    </select>
+    <select id="selectEffective" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting">
+        SELECT <include refid="columns"/> FROM t_client_underwriting WHERE client_id = #{clientId} AND effective_slot = 1
+    </select>
+    <select id="selectLatest" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting">
+        SELECT <include refid="columns"/> FROM t_client_underwriting WHERE client_id = #{clientId}
+        ORDER BY version_no DESC LIMIT 1
+    </select>
+    <select id="selectHistory" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting">
+        SELECT <include refid="columns"/> FROM t_client_underwriting WHERE client_id = #{clientId}
+        ORDER BY version_no DESC LIMIT #{limit}
+    </select>
+    <select id="selectPage" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting">
+        SELECT <include refid="columns"/> FROM t_client_underwriting u <include refid="filter"/>
+        ORDER BY update_time DESC, underwriting_id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="count" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_client_underwriting u <include refid="filter"/>
+    </select>
+    <select id="countEffective" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_client_underwriting WHERE status = 'APPROVED' AND effective_slot = 1
+    </select>
+    <select id="countByStatus" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_client_underwriting WHERE status = #{status}
+    </select>
+    <select id="countDecided" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_client_underwriting
+        WHERE status IN <foreach collection="statuses" item="status" open="(" separator="," close=")">#{status}</foreach>
+          AND decided_time &gt;= #{from} AND decided_time &lt; #{to}
+    </select>
+    <update id="updateDraft">
+        UPDATE t_client_underwriting SET <include refid="contentSet"/>, version = version + 1, update_time = #{now}
+        WHERE underwriting_id = #{row.underwritingId} AND version = #{row.version} AND status = 'DRAFT'
+    </update>
+    <update id="markSubmitted">
+        UPDATE t_client_underwriting SET <include refid="contentSet"/>, status = 'SUBMITTED', submitted_by = #{submittedBy},
+            submitted_time = #{now}, version = version + 1, update_time = #{now}
+        WHERE underwriting_id = #{row.underwritingId} AND version = #{row.version} AND status = 'DRAFT'
+    </update>
+    <update id="decide">
+        UPDATE t_client_underwriting SET
+        <if test="values != null"><include refid="contentSet"/>, submitted_by = #{verdict.submittedBy},
+            submitted_time = #{verdict.decidedTime},</if>
+            status = #{verdict.status}, open_slot = NULL,
+            effective_slot = <choose><when test="verdict.approved()">1</when><otherwise>NULL</otherwise></choose>,
+            decision_source = #{verdict.decisionSource}, decided_by = #{verdict.decidedBy},
+            decided_time = #{verdict.decidedTime}, decline_reason = #{verdict.declineReason},
+            review_comment = #{verdict.reviewComment}, supersedes_underwriting_id = #{verdict.supersedesUnderwritingId},
+            version = version + 1, update_time = #{verdict.decidedTime}
+        WHERE underwriting_id = #{row.underwritingId} AND version = #{row.version} AND status = #{row.status}
+          AND open_slot = 1
+    </update>
+    <update id="supersede">
+        UPDATE t_client_underwriting SET status = 'SUPERSEDED', effective_slot = NULL, superseded_time = #{now},
+            version = version + 1, update_time = #{now}
+        WHERE underwriting_id = #{row.underwritingId} AND version = #{row.version} AND status = 'APPROVED'
+          AND effective_slot = 1
+    </update>
+</mapper>

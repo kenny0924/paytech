@@ -1,0 +1,39 @@
+{
+ "startedAt": "2026-10-29T18:11:21.025287+00:00",
+ "checks": [
+  {
+   "check": "数据源 / 模板编码状态（首次登记前 0 / 0）",
+   "ok": true,
+   "evidence": {
+    "s": "0",
+    "t": "0"
+   }
+  },
+  {
+   "check": "参照数据源 MOR_COMMERCIAL_REPLICA 连接参数",
+   "ok": true,
+   "evidence": {
+    "connection_params_json": "{\"connectTimeout\": \"3000\", \"connectionTimeZone\": \"UTC\"}",
+    "max_pool_size": "3"
+   }
+  },
+  {
+   "check": "账号 data_query_demo_reader 可读 t_client_underwriting（库级或表级 SELECT）",
+   "ok": false,
+   "evidence": [
+    "GRANT USAGE ON *.* TO `data_query_demo_reader`@`%`",
+    "GRANT SELECT ON `mor_acquiring`.* TO `data_query_demo_reader`@`%`",
+    "GRANT SELECT ON `mor_channel_connector`.* TO `data_query_demo_reader`@`%`",
+    "GRANT SELECT ON `mor_client_master`.* TO `data_query_demo_reader`@`%`",
+    "GRANT SELECT ON `mor_commercial`.* TO `data_query_demo_reader`@`%`",
+    "GRANT SELECT ON `mor_ledger`.* TO `data_query_demo_reader`@`%`",
+    "GRANT SELECT ON `mor_reconciliation`.* TO `data_query_demo_reader`@`%`"
+   ]
+  },
+  {
+   "check": "t_client_underwriting 存在（runbook ① 之后）",
+   "ok": false,
+   "evidence": "0"
+  }
+ ]
+}

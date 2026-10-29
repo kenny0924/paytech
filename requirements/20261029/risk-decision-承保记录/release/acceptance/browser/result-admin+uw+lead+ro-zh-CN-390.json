@@ -1,0 +1,813 @@
+{
+  "locale": "zh-CN",
+  "width": 390,
+  "steps": [
+    {
+      "step": "admin:L1-list",
+      "check": {
+        "stats": [
+          "生效中 2",
+          "草稿 0",
+          "待复核 0",
+          "本月已批准 3",
+          "本月已拒绝 2"
+        ],
+        "tabs": [
+          "全部",
+          "草稿",
+          "待复核",
+          "已批准",
+          "已拒绝",
+          "已作废"
+        ],
+        "rows": [
+          "Accept Tester CL-239260386824658945 · AE · 个人 未评 CRR 5999 其他专门零售店 已拒绝 v1 人工 无法估算 r***@example.test — 10-29 22:53 查看",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 5967 直销：电话呼入服务商户 卡组织高风险 已批准 v2 人工 无法估算 r***@example.test o***@example.test 10-29 22:52 查看",
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · 机构 LOW 5999 其他专门零售店 已批准 v2 人工 无法估算 r***@example.test — 10-29 22:52 查看"
+        ],
+        "newButton": 1,
+        "pendingSwitch": 1,
+        "total": "共 3 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L2-tab-superseded",
+      "check": {
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · 机构 LOW 5999 其他专门零售店 已作废 v1 自动规则 v1 无法估算 — 系统规则 10-29 22:52 查看"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L3-tab-declined",
+      "check": {
+        "rows": [
+          "Accept Tester CL-239260386824658945 · AE · 个人 未评 CRR 5999 其他专门零售店 已拒绝 v1 人工 无法估算 r***@example.test — 10-29 22:53 查看",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 5967 直销：电话呼入服务商户 卡组织高风险 已拒绝 v1 人工 无法估算 r***@example.test r***@example.test 10-29 22:52 查看"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L4-filter-crr-high",
+      "check": {
+        "rows": [
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 5967 直销：电话呼入服务商户 卡组织高风险 已批准 v2 人工 无法估算 r***@example.test o***@example.test 10-29 22:52 查看"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L5-filter-auto-superseded",
+      "check": {
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · 机构 LOW 5999 其他专门零售店 已作废 v1 自动规则 v1 无法估算 — 系统规则 10-29 22:52 查看"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L6-search-client-id",
+      "check": {
+        "rows": [
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 5967 直销：电话呼入服务商户 卡组织高风险 已批准 v2 人工 无法估算 r***@example.test o***@example.test 10-29 22:52 查看"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L7-pending-for-me",
+      "check": {
+        "rows": [],
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P05-L-v2-history",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC 已批准 · 生效 v2",
+        "meta": "CL-240686705999454209 · AE · 批准于 10-29 22:52 · 批准后不可修改",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v2 已批准 · 生效 人工 · r***@example.test 提交即生效（LOW） 10-29 22:52 · 修订原因：REQ-03 mor-test 验收：补充 T+N",
+          "v1 已作废 自动规则 v1 · 触发人 r***@example.test 10-29 22:52 · 被 v2 取代 查看"
+        ],
+        "buttons": [
+          {
+            "text": "修 订",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 30 天或 100 笔，先到为准",
+          "保证金 不要求",
+          "建议结算周期 T+7",
+          "卡组织登记 不需要",
+          "额度说明 —",
+          "承保说明 REQ-03 mor-test 验收",
+          "修订原因 REQ-03 mor-test 验收：补充 T+N"
+        ],
+        "sources": [
+          "尽调案件 240686862329565184 · 版本 18",
+          "入驻申请 240686705999454208 · 草稿修订 0",
+          "分类确认 10-27 08:03"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P05-revise-dialog",
+      "check": {
+        "modal": "修订 修订会以当前生效版本为底稿新建 v3 草稿（重新带出最新尽调与业务信息）；v3 批准前 v2 仍然有效。同一客户同时只能有一份进行中的修订。 0 / 500 必填 取 消 修 订",
+        "fieldError": "必填"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D1-L-v1-superseded-auto",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC 已作废 v1",
+        "meta": "CL-240686705999454209 · AE · 批准于 10-29 22:52",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v2 已批准 · 生效 人工 · r***@example.test 提交即生效（LOW） 10-29 22:52 · 修订原因：REQ-03 mor-test 验收：补充 T+N 查看",
+          "v1 已作废 自动规则 v1 · 触发人 r***@example.test 10-29 22:52 · 被 v2 取代"
+        ],
+        "buttons": [],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 30 天或 100 笔，先到为准",
+          "保证金 不要求",
+          "建议结算周期 未填写",
+          "卡组织登记 不需要",
+          "额度说明 —"
+        ],
+        "sources": [
+          "尽调案件 240686862329565184 · 版本 18",
+          "入驻申请 240686705999454208 · 草稿修订 0",
+          "分类确认 10-27 08:03"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D2-H-v2-high-approved",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC 已批准 · 生效 v2",
+        "meta": "CL-241049681294106625 · AE · 批准于 10-29 22:52 · 批准后不可修改",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v2 已批准 · 生效 人工 · r***@example.test 提交，o***@example.test 复核（HIGH） 10-29 22:52",
+          "v1 已拒绝 人工 · r***@example.test 提交，r***@example.test 复核（HIGH） 10-29 22:52 · 拒绝原因：REQ-03 验收：拒绝路径 查看"
+        ],
+        "buttons": [
+          {
+            "text": "修 订",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 30 天或 100 笔，先到为准",
+          "保证金 要求 USD 20,000 · 未到账前阻塞收款 · 由 REQ-18 执行",
+          "建议结算周期 T+14",
+          "卡组织登记 需要",
+          "额度说明 —",
+          "承保说明 REQ-03 mor-test 验收",
+          "复核意见 REQ-03 验收：四眼批准"
+        ],
+        "sources": [
+          "尽调案件 241049829650845696 · 版本 17",
+          "入驻申请 241049681294106624 · 草稿修订 0",
+          "分类确认 10-29 22:51"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D3-H-v1-declined",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC 已拒绝 v1",
+        "meta": "CL-241049681294106625 · AE · 拒绝于 10-29 22:52",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v2 已批准 · 生效 人工 · r***@example.test 提交，o***@example.test 复核（HIGH） 10-29 22:52 查看",
+          "v1 已拒绝 人工 · r***@example.test 提交，r***@example.test 复核（HIGH） 10-29 22:52 · 拒绝原因：REQ-03 验收：拒绝路径"
+        ],
+        "buttons": [],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 30 天或 100 笔，先到为准",
+          "保证金 要求 USD 20,000 · 由 REQ-18 执行",
+          "建议结算周期 T+14",
+          "卡组织登记 需要",
+          "额度说明 —",
+          "承保说明 REQ-03 mor-test 验收",
+          "拒绝原因 REQ-03 验收：拒绝路径"
+        ],
+        "sources": [
+          "尽调案件 241049829650845696 · 版本 17",
+          "入驻申请 241049681294106624 · 草稿修订 0",
+          "分类确认 10-29 22:51"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D4-M-v1-no-crr-declined",
+      "check": {
+        "title": "Accept Tester 已拒绝 v1",
+        "meta": "CL-239260386824658945 · AE · 拒绝于 10-29 22:53",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v1 已拒绝 人工 · r***@example.test 提交即生效（MEDIUM） 10-29 22:53 · 拒绝原因：REQ-03 验收：尽调未评 CRR"
+        ],
+        "buttons": [],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 30 天或 100 笔，先到为准",
+          "保证金 不要求",
+          "建议结算周期 未填写",
+          "卡组织登记 不需要",
+          "额度说明 —",
+          "承保说明 REQ-03 mor-test 验收",
+          "拒绝原因 REQ-03 验收：尽调未评 CRR"
+        ],
+        "sources": [
+          "尽调案件 239260421964550144 · 版本 4",
+          "入驻申请 239260386824658944 · 草稿修订 0",
+          "分类确认 10-23 09:35"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:N1-new-H-effective-exists",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC 新建",
+        "meta": "CL-241049681294106625 · AE · 机构",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [
+          "该客户已有生效的承保（v2），如需变更请打开后修订。 查看"
+        ],
+        "history": [],
+        "buttons": [],
+        "decision": [],
+        "sources": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:N2-new-M-manual",
+      "check": {
+        "title": "Accept Tester 新建",
+        "meta": "CL-239260386824658945 · AE · 个人",
+        "checks": [
+          "is-fail: 客户风险等级为 LOW（当前 未评 CRR） 只有 CRR 为 LOW 才能自动承保。",
+          "is-pass: 预计月流水 USD 50,000 ≤ 阈值 USD 50,000",
+          "is-pass: MCC 5999 其他专门零售店 不在高风险清单（卡组织标记 ∪ 风控排除清单）"
+        ],
+        "verdict": "不符合自动承保条件 · 需人工承保 在下方填写结论；LOW / MEDIUM 提交即决定。",
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [],
+        "buttons": [
+          {
+            "text": "保存草稿",
+            "disabled": false
+          },
+          {
+            "text": "拒 绝",
+            "disabled": false
+          },
+          {
+            "text": "提 交",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 天 或 笔，先到为准",
+          "保证金 要求",
+          "建议结算周期 T+",
+          "卡组织登记 需要 （MCC 非卡组织高风险）",
+          "额度说明",
+          "承保说明 0 / 2000",
+          "交接备注（给商务）"
+        ],
+        "sources": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:N3-new-M-tn-preview",
+      "check": {
+        "title": "Accept Tester 新建",
+        "meta": "CL-239260386824658945 · AE · 个人",
+        "checks": [
+          "is-fail: 客户风险等级为 LOW（当前 未评 CRR） 只有 CRR 为 LOW 才能自动承保。",
+          "is-pass: 预计月流水 USD 50,000 ≤ 阈值 USD 50,000",
+          "is-pass: MCC 5999 其他专门零售店 不在高风险清单（卡组织标记 ∪ 风控排除清单）"
+        ],
+        "verdict": "不符合自动承保条件 · 需人工承保 在下方填写结论；LOW / MEDIUM 提交即决定。",
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [],
+        "buttons": [
+          {
+            "text": "保存草稿",
+            "disabled": false
+          },
+          {
+            "text": "拒 绝",
+            "disabled": false
+          },
+          {
+            "text": "提 交",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 天 或 笔，先到为准",
+          "保证金 要求",
+          "建议结算周期 T+",
+          "卡组织登记 需要 （MCC 非卡组织高风险）",
+          "额度说明",
+          "承保说明 0 / 2000",
+          "交接备注（给商务）"
+        ],
+        "sources": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:E1-client-detail-L",
+      "check": {
+        "entry": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:E2-review-case-L",
+      "check": {
+        "entry": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:E3-review-case-H",
+      "check": {
+        "entry": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:R-OPERATIONS_RISK_UNDERWRITING",
+      "check": {
+        "editor": "承保 页面菜单 OPERATIONS_RISK_UNDERWRITING 启用 编 辑 基本信息 资源名称 父级资源 风控管理 排序 页面与权限 页面组件 承保 可见性权限 RISK_UNDERWRITING_READ 前端路径 /risk/underwriting",
+        "warnings": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:R-OPERATIONS_RISK_UNDERWRITING_MANAGE",
+      "check": {
+        "editor": "维护 按钮 OPERATIONS_RISK_UNDERWRITING_MANAGE 启用 编 辑 基本信息 资源名称 所属页面 承保 排序 页面与权限 可见性权限 RISK_UNDERWRITING_MANAGE",
+        "warnings": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:R-OPERATIONS_RISK_UNDERWRITING_APPROVE",
+      "check": {
+        "editor": "复核 按钮 OPERATIONS_RISK_UNDERWRITING_APPROVE 启用 编 辑 基本信息 资源名称 所属页面 承保 排序 页面与权限 可见性权限 RISK_UNDERWRITING_APPROVE",
+        "warnings": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:G1-risk-rules",
+      "check": {
+        "heading": "新建规则集"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:G2-workflow-instances",
+      "check": {
+        "rows": [
+          "上线验收 · 237573699337822209 CLIENT:237573699337822209 REQ-05 验收 · 客户上线（commercial） · v1 0 / 4 个任务节点已完成 O* N3 合同起草检查 o***@example.test 待处理 o***@example.test · 10-29 13:47",
+          "上线验收 · 237573382420406273 CLIENT:237573382420406273 REQ-05 验收 · 客户上线（commercial） · v1 1 / 4 个任务节点已完成 O* N4 合同生效检查 o***@example.test 待处理 o***@example.test · 10-29 13:47",
+          "上线验收 · 237573267559391233 CLIENT:237573267559391233 REQ-05 验收 · 客户上线（commercial） · v1 2 / 4 个任务节点已完成 O* N8 收款开通检查 o***@example.test 待处理 o***@example.test · 10-29 13:47",
+          "DEMO-CL-001 合同变更复盘（待处理） DEMO-CL-001 合同变更复盘 · v1 0 / 1 个任务节点已完成 O* 变更复盘 o***@example.test 待处理 o***@example.test · 10-23 11:56",
+          "DEMO-CL-001 定价上线核对（待处理） DEMO-CL-001 客户定价上线核对 · v1 1 / 2 个任务节点已完成 O* 上线审批 o***@example.test 待审批 o***@example.test · 10-23 11:56",
+          "WF-INLINE-20261022 内嵌预览实例 WF-INLINE-20261022 WF-INLINE-20261022 内嵌预览流程 · v1 0 / 1 个任务节点已完成 O* 上传待审文件 o***@example.test 待审批 o***@example.test · 10-22 21:19"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 469
+      }
+    },
+    {
+      "step": "admin:G3-agreement-detail",
+      "check": {
+        "path": "/commercial/agreements/240113831739723776",
+        "heading": "PayFac Partner Agreement · AE001"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:L1-list",
+      "check": {
+        "stats": [
+          "生效中 2",
+          "草稿 0",
+          "待复核 0",
+          "本月已批准 3",
+          "本月已拒绝 2"
+        ],
+        "tabs": [
+          "全部",
+          "草稿",
+          "待复核",
+          "已批准",
+          "已拒绝",
+          "已作废"
+        ],
+        "rows": [
+          "Accept Tester CL-239260386824658945 · AE · 个人 未评 CRR 5999 其他专门零售店 已拒绝 v1 人工 无法估算 r***@example.test — 10-29 22:53 查看",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 5967 直销：电话呼入服务商户 卡组织高风险 已批准 v2 人工 无法估算 r***@example.test o***@example.test 10-29 22:52 查看",
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · 机构 LOW 5999 其他专门零售店 已批准 v2 人工 无法估算 r***@example.test — 10-29 22:52 查看"
+        ],
+        "newButton": 1,
+        "pendingSwitch": 0,
+        "total": "共 3 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:D2-H-v2",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC 已批准 · 生效 v2",
+        "meta": "CL-241049681294106625 · AE · 批准于 10-29 22:52 · 批准后不可修改",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v2 已批准 · 生效 人工 · r***@example.test 提交，o***@example.test 复核（HIGH） 10-29 22:52",
+          "v1 已拒绝 人工 · r***@example.test 提交，r***@example.test 复核（HIGH） 10-29 22:52 · 拒绝原因：REQ-03 验收：拒绝路径 查看"
+        ],
+        "buttons": [
+          {
+            "text": "修 订",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 30 天或 100 笔，先到为准",
+          "保证金 要求 USD 20,000 · 未到账前阻塞收款 · 由 REQ-18 执行",
+          "建议结算周期 T+14",
+          "卡组织登记 需要",
+          "额度说明 —",
+          "承保说明 REQ-03 mor-test 验收",
+          "复核意见 REQ-03 验收：四眼批准"
+        ],
+        "sources": [
+          "尽调案件 241049829650845696 · 版本 17",
+          "入驻申请 241049681294106624 · 草稿修订 0",
+          "分类确认 10-29 22:51"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:N2-new-M-manual",
+      "check": {
+        "title": "Accept Tester 新建",
+        "meta": "CL-239260386824658945 · AE · 个人",
+        "checks": [
+          "is-fail: 客户风险等级为 LOW（当前 未评 CRR） 只有 CRR 为 LOW 才能自动承保。",
+          "is-pass: 预计月流水 USD 50,000 ≤ 阈值 USD 50,000",
+          "is-pass: MCC 5999 其他专门零售店 不在高风险清单（卡组织标记 ∪ 风控排除清单）"
+        ],
+        "verdict": "不符合自动承保条件 · 需人工承保 在下方填写结论；LOW / MEDIUM 提交即决定。",
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [],
+        "buttons": [
+          {
+            "text": "保存草稿",
+            "disabled": false
+          },
+          {
+            "text": "拒 绝",
+            "disabled": false
+          },
+          {
+            "text": "提 交",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 天 或 笔，先到为准",
+          "保证金 要求",
+          "建议结算周期 T+",
+          "卡组织登记 需要 （MCC 非卡组织高风险）",
+          "额度说明",
+          "承保说明 0 / 2000",
+          "交接备注（给商务）"
+        ],
+        "sources": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "lead:L7-pending-for-me",
+      "check": {
+        "rows": [],
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "lead:D2-H-v2",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC 已批准 · 生效 v2",
+        "meta": "CL-241049681294106625 · AE · 批准于 10-29 22:52 · 批准后不可修改",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v2 已批准 · 生效 人工 · r***@example.test 提交，o***@example.test 复核（HIGH） 10-29 22:52",
+          "v1 已拒绝 人工 · r***@example.test 提交，r***@example.test 复核（HIGH） 10-29 22:52 · 拒绝原因：REQ-03 验收：拒绝路径 查看"
+        ],
+        "buttons": [
+          {
+            "text": "修 订",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 30 天或 100 笔，先到为准",
+          "保证金 要求 USD 20,000 · 未到账前阻塞收款 · 由 REQ-18 执行",
+          "建议结算周期 T+14",
+          "卡组织登记 需要",
+          "额度说明 —",
+          "承保说明 REQ-03 mor-test 验收",
+          "复核意见 REQ-03 验收：四眼批准"
+        ],
+        "sources": [
+          "尽调案件 241049829650845696 · 版本 17",
+          "入驻申请 241049681294106624 · 草稿修订 0",
+          "分类确认 10-29 22:51"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:L1-list",
+      "check": {
+        "stats": [
+          "生效中 2",
+          "草稿 0",
+          "待复核 0",
+          "本月已批准 3",
+          "本月已拒绝 2"
+        ],
+        "tabs": [
+          "全部",
+          "草稿",
+          "待复核",
+          "已批准",
+          "已拒绝",
+          "已作废"
+        ],
+        "rows": [
+          "Accept Tester CL-239260386824658945 · AE · 个人 未评 CRR 5999 其他专门零售店 已拒绝 v1 人工 无法估算 r***@example.test — 10-29 22:53 查看",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 5967 直销：电话呼入服务商户 卡组织高风险 已批准 v2 人工 无法估算 r***@example.test o***@example.test 10-29 22:52 查看",
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · 机构 LOW 5999 其他专门零售店 已批准 v2 人工 无法估算 r***@example.test — 10-29 22:52 查看"
+        ],
+        "newButton": 0,
+        "pendingSwitch": 0,
+        "total": "共 3 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:P05-L-v2",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC 已批准 · 生效 v2",
+        "meta": "CL-240686705999454209 · AE · 批准于 10-29 22:52 · 批准后不可修改",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v2 已批准 · 生效 人工 · r***@example.test 提交即生效（LOW） 10-29 22:52 · 修订原因：REQ-03 mor-test 验收：补充 T+N",
+          "v1 已作废 自动规则 v1 · 触发人 r***@example.test 10-29 22:52 · 被 v2 取代 查看"
+        ],
+        "buttons": [],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 30 天或 100 笔，先到为准",
+          "保证金 不要求",
+          "建议结算周期 T+7",
+          "卡组织登记 不需要",
+          "额度说明 —",
+          "承保说明 REQ-03 mor-test 验收",
+          "修订原因 REQ-03 mor-test 验收：补充 T+N"
+        ],
+        "sources": [
+          "尽调案件 240686862329565184 · 版本 18",
+          "入驻申请 240686705999454208 · 草稿修订 0",
+          "分类确认 10-27 08:03"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:N2-new-M-readonly",
+      "check": {
+        "title": "Accept Tester 新建",
+        "meta": "CL-239260386824658945 · AE · 个人",
+        "checks": [],
+        "exposure": "无法估算",
+        "alerts": [
+          "你可以查看输入，但没有新建承保的权限。"
+        ],
+        "history": [],
+        "buttons": [],
+        "decision": [],
+        "sources": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    }
+  ],
+  "console": [
+    {
+      "step": "admin:goto /console-resources?resource=OPERATIONS_RISK_UNDERWRITING_MANAGE&mode=view",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "admin:goto /console-resources?resource=OPERATIONS_RISK_UNDERWRITING_APPROVE&mode=view",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "admin:goto /risk/rule-configuration",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "admin:goto /workflow/instances",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "uw:goto /risk/underwriting",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "lead:goto /risk/underwriting?pendingReviewForMe=true&page=1&size=20",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "ro:goto /risk/underwriting",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    }
+  ],
+  "httpErrors": [],
+  "writes": [
+    {
+      "step": "admin:N2 T+N",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    }
+  ],
+  "bundles": 212
+}

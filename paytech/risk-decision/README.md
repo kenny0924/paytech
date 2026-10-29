@@ -9,12 +9,12 @@
 
 | 模块 | 职责 |
 |---|---|
-| `paytech-risk-decision-api` | 私网 `@HttpExchange` 合同（包 `com.paytech.risk.decision.api`）：规则集、Candidate、执行发布、流程、字典、配置查询、统一变量；`evaluation` 子包为统一评估、评估查询与 Manual Payout 资格；`control` 子包为名单维护；`enums`、`validation` 为错误码与字典文本校验 |
-| `paytech-risk-decision-core` | 原 `risk-decision` 与并入的 `risk-control`（design/07 §1）：决策引擎、规则 / 发布 / 影子运行 / 流程 / 变量 / 字典 Processor、结账与支付运行期评估、Velocity、名单命中与维护、RCO-I09 出款资格 Processor（Fail-Closed）、`DECISION_SHADOW_RUN` 补偿 Handler |
+| `paytech-risk-decision-api` | 私网 `@HttpExchange` 合同（包 `com.paytech.risk.decision.api`）：规则集、Candidate、执行发布、流程、字典、配置查询、统一变量；`evaluation` 子包为统一评估、评估查询与 Manual Payout 资格；`control` 子包为名单维护与 Client 承保（`ClientUnderwritingApi`，`/risk-underwriting/v1`，REQ-03）；`enums`、`validation` 为错误码与字典文本校验 |
+| `paytech-risk-decision-core` | 原 `risk-decision` 与并入的 `risk-control`（design/07 §1）：决策引擎、规则 / 发布 / 影子运行 / 流程 / 变量 / 字典 Processor、结账与支付运行期评估、Velocity、名单命中与维护、Client 承保（草稿 / 提交 / 四眼复核 / 自动承保 / 修订 Processor 与 `ClientUnderwritingQueryService` 同进程读取）、RCO-I09 出款资格 Processor（Fail-Closed）、`DECISION_SHADOW_RUN` 补偿 Handler |
 | `paytech-risk-decision-app` | 唯一可执行：`com.paytech.risk.RiskDecisionApplication`、Controller、DataSource / `@MapperScan`（decision、control 两个 Mapper 包）/ 40 余个闭合枚举 TypeHandler、Snowflake（`decision.identifier.*`）、Clock、补偿与 Redis 协调配置 |
 | `paytech-risk-decision-test` | 全部 `auto` 测试（原 risk-test 中 decision / evaluation / control / logging / domain 用例整类搬入）、`RiskDecisionArchitectureTest` 与 R1–R12 `ArchitectureAutoTest` |
 
-- 入站调用方：Operations BFF（规则配置、名单、评估查询）、acquiring（`RiskDecisionApi` CHECKOUT_PREPARE）、payment（`RiskDecisionApi` PAYMENT_ATTEMPT_RISK）。本服务没有出站 HTTP 客户端，不发布也不消费 RabbitMQ。
+- 入站调用方：Operations BFF（规则配置、名单、评估查询、承保）、acquiring（`RiskDecisionApi` CHECKOUT_PREPARE）、payment（`RiskDecisionApi` PAYMENT_ATTEMPT_RISK）。本服务没有出站 HTTP 客户端，不发布也不消费 RabbitMQ。
 - 运营请求上下文使用 Foundation `paytech-mvc-web-starter` 的 `OperationRequestContextParser`（原 `RiskOperationRequestContextParser` 已删除）。
 - `internal-auth.mode` 默认 `"OFF"`。
 - 结算资格控制（`t_settlement_control` 三表）归 compliance（C3、D38）；将来出款检查点评估经 `paytech-compliance-api` 的 `SettlementControlApi` 在评估事务前读取 ACTIVE 控制，compliance 不可用时失败关闭。`CODE-MOR:RISK:*` 哈希 Schema 标识与 `SETTLEMENT_ELIGIBILITY_INPUT:1` 不变。
@@ -78,6 +78,7 @@ Session、Vault/Consumer/网络原值、Secret、Credential 或完整 Payload。
 
 - `/risk-decisions/v1/evaluations`：同步风控点统一评估接口，按 `pointCode` 与输入合同版本区分（当前只登记支付尝试 `PAYMENT_ATTEMPT_RISK` v1，调用方用 `PaymentAttemptRiskInput` 构造请求）。同一业务身份同内容重放返回原结论，内容不同 409；输入不符合合同 422 并指出字段；本环境无生效发布 503 `RISK_DECISION_NOT_CONFIGURED`。认证要求等附加输出由放行结束节点配置。请求含消费者 IP 与卡指纹，日志为 metadata-only。
 - `/risk-lists/v1`：名单与成员维护（主体键规范化、响应脱敏）。
+- `/risk-underwriting/v1`：Client 承保记录（REQ-03，12 个接口；输入快照由 Operations BFF 从 Owner 读取后随命令带入，本服务冻结；复核人 ≠ 提交人在本服务校验）。
 - `/decision-releases/v1/executions`：执行发布创建、静态校验、回放式影子运行、TEST 一人激活与查询。
 
 运行环境由 `decision.runtime.environment`（环境变量 `RISK_DECISION_ENVIRONMENT`）决定，一期只允许激活 TEST 发布。影子运行经本地 `compensation_event`（`DECISION_SHADOW_RUN`）在事务外执行。

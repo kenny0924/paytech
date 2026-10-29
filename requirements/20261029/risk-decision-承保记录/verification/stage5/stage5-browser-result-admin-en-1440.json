@@ -1,0 +1,352 @@
+{
+  "locale": "en",
+  "width": 1440,
+  "steps": [
+    {
+      "step": "admin:L1-list",
+      "check": {
+        "stats": [
+          "Effective 3",
+          "Drafts 1",
+          "Awaiting review 1",
+          "Approved this month 4",
+          "Declined this month 2"
+        ],
+        "tabs": [
+          "All",
+          "Draft",
+          "Awaiting review",
+          "Approved",
+          "Declined",
+          "Superseded"
+        ],
+        "rows": 5,
+        "newButton": 1,
+        "pendingSwitch": 1,
+        "total": "5 in total"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L2-tab-draft",
+      "check": {
+        "rows": [
+          "Acceptance Trading 1027031415 LLC CL-240674482170114049 · AE · Organization CRR not rated 5999 Miscellaneous and Specialty Retail Stores Draft v2 Manual Can't estimate — — 10-29 20:37 Continue"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L2b-tab-superseded",
+      "check": {
+        "rows": [
+          "Acceptance Trading 1027031549 LLC CL-240674874987655169 · AE · Organization LOW 5999 Miscellaneous and Specialty Retail Stores Superseded v1 Auto rule v1 Can't estimate — System rule 10-29 20:38 View"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L3-filter-high",
+      "check": {
+        "rows": [
+          "Layla Bizinfo0613 CL-241533481480368129 · AE · Individual HIGH 5651 Family Clothing Stores Approved v1 Manual Can't estimate r***@example.test r***@example.test 10-29 20:37 View",
+          "Layla Bizinfo0613 CL-241533316505808897 · AE · Individual HIGH 5967 Direct Marketing – Inbound Teleservices Merchant Card-network high-risk Awaiting review v2 Manual USD 46,666 Pre-order · T+14 r***@example.test — 10-29 20:37 Review"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L4-pending-for-me",
+      "check": {
+        "rows": [
+          "Layla Bizinfo0613 CL-241533316505808897 · AE · Individual HIGH 5967 Direct Marketing – Inbound Teleservices Merchant Card-network high-risk Awaiting review v2 Manual USD 46,666 Pre-order · T+14 r***@example.test — 10-29 20:37 Review"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P02-auto",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC New",
+        "meta": "CL-241533217348268033 · AE · Organization",
+        "checks": [
+          "is-pass: Client risk rating is LOW (current: LOW)",
+          "is-pass: Expected monthly volume USD 50,000 ≤ threshold USD 50,000",
+          "is-pass: MCC 5651 Family Clothing Stores isn't high-risk (card-network list ∪ Risk exclusions)"
+        ],
+        "verdict": "Meets the auto-underwriting rule You can create an approved record in one click: the approver is recorded as the system rule, with the rule version and you as the operator. No review needed.",
+        "exposure": "USD 0.00 = USD 50,000 × 0 ÷ 30",
+        "alerts": [],
+        "history": [],
+        "buttons": [
+          {
+            "text": "Underwrite manually",
+            "disabled": false
+          },
+          {
+            "text": "Auto-underwrite",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P03-manual-live-exposure",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC New",
+        "meta": "CL-241533217348268033 · AE · Organization",
+        "checks": [
+          "is-pass: Client risk rating is LOW (current: LOW)",
+          "is-pass: Expected monthly volume USD 50,000 ≤ threshold USD 50,000",
+          "is-pass: MCC 5651 Family Clothing Stores isn't high-risk (card-network list ∪ Risk exclusions)"
+        ],
+        "verdict": "Meets the auto-underwriting rule You can create an approved record in one click: the approver is recorded as the system rule, with the rule version and you as the operator. No review needed.",
+        "exposure": "USD 11,666.67 = USD 50,000 × 7 ÷ 30",
+        "alerts": [],
+        "history": [],
+        "exposureBefore": "USD 0.00 = USD 50,000 × 0 ÷ 30",
+        "buttons": [
+          {
+            "text": "Save draft",
+            "disabled": false
+          },
+          {
+            "text": "Decline",
+            "disabled": false
+          },
+          {
+            "text": "Submit",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P03-draft-no-crr",
+      "check": {
+        "title": "Acceptance Trading 1027031415 LLC Draft v2",
+        "meta": "CL-240674482170114049 · AE",
+        "checks": [
+          "is-fail: Client risk rating is LOW (current: CRR not rated) Only LOW CRR can be auto-underwritten.",
+          "is-pass: Expected monthly volume USD 50,000 ≤ threshold USD 50,000",
+          "is-pass: MCC 5999 Miscellaneous and Specialty Retail Stores isn't high-risk (card-network list ∪ Risk exclusions)"
+        ],
+        "verdict": "Doesn't meet the auto-underwriting rule · manual underwriting Fill in the decision below. LOW / MEDIUM is decided when you submit.",
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [],
+        "exposureBefore": "Can't estimate The fulfillment type wasn't collected.",
+        "crrHint": "Not rated in due diligence; treated as MEDIUM",
+        "buttons": [
+          {
+            "text": "Save draft",
+            "disabled": false
+          },
+          {
+            "text": "Decline",
+            "disabled": false
+          },
+          {
+            "text": "Submit",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P04-reviewer",
+      "check": {
+        "title": "Layla Bizinfo0613 Awaiting review v2",
+        "meta": "CL-241533316505808897 · Submitted by r***@example.test · Submitted 10-29 20:37 · Inputs frozen",
+        "checks": [],
+        "exposure": "USD 46,666.67 = USD 50,000 × (14 + 14) ÷ 30",
+        "alerts": [],
+        "history": [
+          "v2 Awaiting review Submitted by r***@example.test, awaiting review 10-29 20:37",
+          "v1 Declined Manual · submitted by r***@example.test, reviewed by r***@example.test (HIGH) 10-29 20:37 · Declined: 卡组织高风险 MCC 且预售周期长，暂不承保 View"
+        ],
+        "buttons": [
+          {
+            "text": "Decline",
+            "disabled": false
+          },
+          {
+            "text": "Approve",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P05-history",
+      "check": {
+        "title": "Acceptance Trading 1027031549 LLC Approved · Effective v2",
+        "meta": "CL-240674874987655169 · AE · Approved 10-29 20:38 · Can't be changed after approval",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v2 Approved · Effective Manual · r***@example.test decided on submission (LOW) 10-29 20:38 · Revision reason: rq03 stage5：补充 T+N 与保证金",
+          "v1 Superseded Auto rule v1 · triggered by r***@example.test 10-29 20:37 · Superseded by v2 View"
+        ],
+        "buttons": [
+          {
+            "text": "Revise",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P05-revise-dialog",
+      "check": {
+        "modal": "Revise Revising creates a v3 draft from the effective version, with the latest due-diligence and business inputs. v2 stays effective until v3 is approved. Only one revision can be in progress per client. 0 / 500 Required Cancel Revise",
+        "error": "Required"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D1-medium-approved",
+      "check": {
+        "title": "Layla Bizinfo0319 Approved · Effective v1",
+        "meta": "CL-241532599334350849 · AE · Approved 10-29 20:37 · Can't be changed after approval",
+        "checks": [],
+        "exposure": "USD 35,000.00 = USD 50,000 × (14 + 7) ÷ 30",
+        "alerts": [],
+        "history": [
+          "v1 Approved · Effective Manual · r***@example.test decided on submission (MEDIUM) 10-29 20:37"
+        ],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period 30 days or 100 transactions, whichever comes first",
+          "Security deposit Required USD 5,000 · block collection until received · enforced by REQ-18",
+          "Suggested settlement (T+N) T+7",
+          "Card-network registration Not needed",
+          "Limit notes —",
+          "Underwriting notes rq03 stage5",
+          "Handover notes for Commercial 收到保证金后开通收款"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D2-high-approved",
+      "check": {
+        "title": "Layla Bizinfo0613 Approved · Effective v1",
+        "meta": "CL-241533481480368129 · AE · Approved 10-29 20:37 · Can't be changed after approval",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v1 Approved · Effective Manual · submitted by r***@example.test, reviewed by r***@example.test (HIGH) 10-29 20:37"
+        ],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period 60 days or 300 transactions, whichever comes first",
+          "Security deposit Not required",
+          "Suggested settlement (T+N) T+3",
+          "Card-network registration Not needed",
+          "Limit notes —",
+          "Underwriting notes rq03 stage5",
+          "Review comment 同意，观察期 60 天"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:E1-client-detail",
+      "check": {
+        "entry": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:E2-review-case",
+      "check": {
+        "entry": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    }
+  ],
+  "console": [
+    {
+      "step": "login admin",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "login admin",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    }
+  ],
+  "httpErrors": [],
+  "writes": [
+    {
+      "step": "admin:P03 manual",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    },
+    {
+      "step": "admin:goto /risk/underwriting/241601375522275328",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    },
+    {
+      "step": "admin:P03 T+N",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    }
+  ],
+  "bundles": 26
+}

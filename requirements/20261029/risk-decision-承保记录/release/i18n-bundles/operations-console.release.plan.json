@@ -1,0 +1,44 @@
+{
+ "app": "operations-console",
+ "currentRelease": 22,
+ "liveNamespaces": 26,
+ "repoNamespaces": 26,
+ "newNamespaces": [],
+ "repoKeys": 10688,
+ "liveActiveKeys": 10441,
+ "added": 247,
+ "restored": 0,
+ "sourceChanged": 0,
+ "missingInRepo": 0,
+ "zhImportKeys": 247,
+ "zhMissingForImport": 0,
+ "keepLiveZh": 10441,
+ "refdataZhReplaced": 0,
+ "liveOutdatedZh": 0,
+ "rebaseExpected": 0,
+ "rebaseScope": 429,
+ "outdatedUntouched": 0,
+ "zhChangedNotImported": 0,
+ "byNamespace": {
+  "added": {
+   "client-review": 1,
+   "master-data": 1,
+   "nav": 3,
+   "risk": 242
+  },
+  "sourceChanged": {},
+  "deprecated": {},
+  "restored": {},
+  "zhImport": {
+   "client-review": 1,
+   "master-data": 1,
+   "nav": 3,
+   "risk": 242
+  }
+ },
+ "deprecations": [],
+ "sha256": {
+  "operations-console.release.en.json": "a1830e067023d318e62147ee394da4c9f281bf40a0a4ffb3084f5844c4dd81f8",
+  "operations-console.release.zh-CN.delta.json": "fab3808149d16c4ba95c06f91973de34e6fcb94399ea26d2a090869f3ae7ae81"
+ }
+}

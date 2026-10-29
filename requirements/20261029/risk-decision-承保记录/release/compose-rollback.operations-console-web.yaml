@@ -1,0 +1,4 @@
+# REQ-03 risk-decision 承保记录：mor-test 回滚覆盖（= 阶段 6 读到的现网镜像；阶段 7 回滚时使用）。
+services:
+  operations-console-web:
+    image: sha256:0b456b8aed53df0d31719f995a755d8f74d1abbd2a8b05e6de53ef5e0c34ae72  # mor-test/operations-console-web:rq12-20261029a（dist 256 个文件）

@@ -1,0 +1,30 @@
++--------------------+--------+---------+
+| role_permission_id | status | version |
++--------------------+--------+---------+
+| 900000000000143201 | ACTIVE |       2 |
+| 900000000000143202 | ACTIVE |       2 |
+| 900000000000143203 | ACTIVE |       2 |
++--------------------+--------+---------+
++--------------------+--------------------------------------+--------+---------+
+| resource_id        | resource_code                        | status | version |
++--------------------+--------------------------------------+--------+---------+
+| 900000000000143301 | OPERATIONS_RISK_UNDERWRITING         | ACTIVE |       2 |
+| 900000000000143302 | OPERATIONS_RISK_UNDERWRITING_MANAGE  | ACTIVE |       2 |
+| 900000000000143303 | OPERATIONS_RISK_UNDERWRITING_APPROVE | ACTIVE |       2 |
++--------------------+--------------------------------------+--------+---------+
++--------------------+-----------------------------------------+--------+---------+
+| route_id           | route_code                              | status | version |
++--------------------+-----------------------------------------+--------+---------+
+| 900000000000143401 | operations-risk-underwriting-list       | ACTIVE |       2 |
+| 900000000000143402 | operations-risk-underwriting-detail     | ACTIVE |       2 |
+| 900000000000143403 | operations-risk-underwriting-workspace  | ACTIVE |       2 |
+| 900000000000143404 | operations-risk-underwriting-history    | ACTIVE |       2 |
+| 900000000000143405 | operations-risk-underwriting-create     | ACTIVE |       2 |
+| 900000000000143406 | operations-risk-underwriting-save       | ACTIVE |       2 |
+| 900000000000143407 | operations-risk-underwriting-submit     | ACTIVE |       2 |
+| 900000000000143408 | operations-risk-underwriting-review     | ACTIVE |       2 |
+| 900000000000143409 | operations-risk-underwriting-auto       | ACTIVE |       2 |
+| 900000000000143410 | operations-risk-underwriting-revision   | ACTIVE |       2 |
+| 900000000000143411 | operations-risk-underwriting-preview    | ACTIVE |       2 |
+| 900000000000143412 | operations-risk-underwriting-statistics | ACTIVE |       2 |
++--------------------+-----------------------------------------+--------+---------+

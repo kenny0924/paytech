@@ -11,6 +11,15 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## risk-decision 承保记录（REQ-03，2026-10-29，已部署 mor-test，已本地提交）
+
+- **范围：** [需求](<../requirements/20261029/risk-decision-承保记录/requirement.md>)、[技术方案](<../requirements/20261029/risk-decision-承保记录/technique.md>)、[交付记录](<../requirements/20261029/risk-decision-承保记录/delivery.md>)、[运行卡](<../requirements/20261029/risk-decision-承保记录/release/runbook.md>)；依据 [2026-10-28 客户上线决定](./decisions/2026-10-28-client-go-live-orchestration.md)（Proposed）。归属 risk-decision（非 compliance）。
+- **Implemented：** `mor_risk_decision` 新增 `t_client_underwriting`（每版本一行、进行中 / 生效两槽、冻结输入快照与来源坐标）、`t_underwriting_rule_version`、`t_underwriting_rule_threshold`（规则 v1、USD 50,000，排除清单空）；状态 DRAFT → SUBMITTED → APPROVED / DECLINED，修订使旧 APPROVED SUPERSEDED；自动承保（CRR LOW、流水 ≤ 币种阈值、MCC 非卡组织高风险且不在排除清单，8 项固定检查）为页面一键、按固定标准模板、来源 `AUTO_RULE`；HIGH 四眼（复核独立路由 + 复核人 ≠ 提交人）；估算敞口 = 月流水 × 风险天数 / 30（参考值）；保证金只记要求（执行归 REQ-18）；接口 `/risk-underwriting/v1` U1—U12（U1"全部"每 Client 最新版本、状态页签含旧版本），日志只记元数据；REQ-04 进程内读取 `ClientUnderwritingQueryService.findEffective`。ops-bff 承保工作台聚合（每次命令重取 compliance / client-master / Platform 输入）与转发；ops-web 风控 → 承保列表与承保页、客户详情 / 入驻审核入口；Platform 注册块 143（3 权限、菜单 + 2 按钮、12 路由）与 `console-resource-capabilities.json`；data-query 表级授权 + `MOR_RISK_DECISION_REPLICA` + `GOLIVE_UNDERWRITING_APPROVED`。角色组合：风控承保员 = `RISK_DECISION_CONFIG_READ` + `RISK_UNDERWRITING_READ` + `RISK_UNDERWRITING_MANAGE`，风控负责人再加 `RISK_UNDERWRITING_APPROVE`（"风控管理"目录由 `RISK_DECISION_CONFIG_READ` 控制）。
+- **Verified：** risk-decision 1801、ops-bff 2459、arch-rules 70、ops-web 1617；本机 e2e 接口 44 PASS、浏览器 24 步 × 4；mor-test 发布前离线演练（DDL、块 143 编译 619 → 631 → 619）。
+- **本机：** auto 库与 `mor_risk_decision_v2e2e` 已执行前滚；`mor_platform_v2e2e` 块 143 激活；e2e risk-decision 为本需求构建（`*.pre-rq03`），ops-bff 现为 tax 会话的 REQ-03 + tax 合并构建（`*.pre-tax` = 本需求构建）；运营 Vite 18314；本机语言包 operations-console #15 / #16；3 个测试角色加 `RISK_DECISION_CONFIG_READ`；本机 compliance 一个案件 CRR 置空（有回滚脚本）。
+- **mor-test（2026-10-29 18:46Z）：** risk-decision-service `8934f65a…`、operations-console-bff `4f08f1e6…`、platform-support-service `49f71011…`、operations-console-web `2f7722da…`（`rq03-20261029a`）；3 表 + 规则 v1；块 143 激活（631 路由）；语言包 operations-console #23；表级 GRANT 与数据源 / 模板；未建常设业务角色（`PLATFORM_ADMIN` 经块 143 有三权限）。验收批准了测试案件 L（240686862329565184）、H（241049829650845696），两 Client ACTIVE；3 个 `RQ03_ACCEPTANCE_*` 账号；API 与浏览器（33 步 × 4）通过。之后发布这四个服务以本需求为基线。
+- **Known gaps：** 规则数值待风控确认；REQ-03b 承保建议策略（待办，标准模板 T+N 为空）；mor-test 验收 Client 无交付方式，敞口"无法估算"；`platform-support-initial-data.sql` 全新库第 7987 行中断（存量）；能力清单另缺 `OPERATIONS_EXTERNAL_INTEGRATIONS` 与风控测试候选两个按钮（存量）。
+
 ## client-master 业务信息补采（REQ-12，2026-10-28—29，已部署 mor-test，已本地提交 `88453366`）
 
 - **范围：** [需求](<../requirements/20261028/client-master-业务信息补采/requirement.md>)、[技术方案](<../requirements/20261028/client-master-业务信息补采/technique.md>)、[交付记录](<../requirements/20261028/client-master-业务信息补采/delivery.md>)、[运行卡](<../requirements/20261028/client-master-业务信息补采/release/runbook.md>)；依据 [2026-10-28 客户上线决定](./decisions/2026-10-28-client-go-live-orchestration.md)（Proposed）。

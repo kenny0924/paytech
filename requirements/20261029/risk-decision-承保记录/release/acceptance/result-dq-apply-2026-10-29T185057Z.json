@@ -1,0 +1,272 @@
+{
+ "startedAt": "2026-10-29T18:50:57.982160+00:00",
+ "checks": [
+  {
+   "check": "连接测试（不落库）：可连接且只读权限校验通过",
+   "ok": true,
+   "evidence": {
+    "checkedAt": "2026-10-29T18:50:58.810258Z",
+    "connected": true,
+    "grants": [
+     "GRANT USAGE ON *.* TO `data_query_demo_reader`@`%`",
+     "GRANT SELECT ON `mor_acquiring`.* TO `data_query_demo_reader`@`%`",
+     "GRANT SELECT ON `mor_channel_connector`.* TO `data_query_demo_reader`@`%`",
+     "GRANT SELECT ON `mor_client_master`.* TO `data_query_demo_reader`@`%`",
+     "GRANT SELECT ON `mor_commercial`.* TO `data_query_demo_reader`@`%`",
+     "GRANT SELECT ON `mor_ledger`.* TO `data_query_demo_reader`@`%`",
+     "GRANT SELECT ON `mor_reconciliation`.* TO `data_query_demo_reader`@`%`",
+     "GRANT SELECT ON `mor_risk_decision`.`t_client_underwriting` TO `data_query_demo_reader`@`%`"
+    ],
+    "privilegesPassed": true,
+    "result": "PASSED",
+    "violations": []
+   }
+  },
+  {
+   "check": "数据源 MOR_RISK_DECISION_REPLICA ACTIVE",
+   "ok": true,
+   "evidence": {
+    "dataSourceId": "241634939987116032"
+   }
+  },
+  {
+   "check": "模板试跑 L（不落库，单行）",
+   "ok": true,
+   "evidence": {
+    "bindings": [
+     "240686705999454209",
+     "240686705999454209"
+    ],
+    "columns": [
+     {
+      "label": "satisfied",
+      "name": "satisfied"
+     },
+     {
+      "label": "out_requireDeposit",
+      "name": "out_requireDeposit"
+     },
+     {
+      "label": "out_depositBlocksCollection",
+      "name": "out_depositBlocksCollection"
+     },
+     {
+      "label": "out_highRiskMcc",
+      "name": "out_highRiskMcc"
+     },
+     {
+      "label": "out_suggestedSettlementDays",
+      "name": "out_suggestedSettlementDays"
+     },
+     {
+      "label": "missing",
+      "name": "missing"
+     }
+    ],
+    "countSql": null,
+    "elapsedMillis": 188,
+    "hasMore": false,
+    "nextCursor": null,
+    "rows": [
+     [
+      "0",
+      null,
+      null,
+      null,
+      null,
+      "UNDERWRITING_NOT_STARTED"
+     ]
+    ],
+    "sql": "SELECT IF(e.underwriting_id IS NOT NULL, 1, 0) AS satisfied, e.require_deposit AS out_requireDeposit, e.deposit_blocks_collection AS out_depositBlocksCollection, e.high_risk_mcc AS out_highRiskMcc, e.suggested_settlement_days AS out_suggestedSettlementDays, CASE WHEN e.underwriting_id IS NOT NULL THEN NULL WHEN l.status = 'SUBMITTED' THEN 'UNDERWRITING_PENDING_REVIEW' WHEN l.status = 'DECLINED' THEN 'UNDERWRITING_DECLINED' ELSE 'UNDERWRITING_NOT_STARTED' END AS missing FROM (SELECT 1 AS anchor) anchor LEFT JOIN t_client_underwriting e ON e.client_id = ? AND e.effective_slot = 1 LEFT JOIN (SELECT status FROM t_client_underwriting WHERE client_id = ? ORDER BY version_no DESC LIMIT 1) l ON 1 = 1 LIMIT 2",
+    "total": null,
+    "versionNo": 0
+   }
+  },
+  {
+   "check": "模板试跑 H（不落库，单行）",
+   "ok": true,
+   "evidence": {
+    "bindings": [
+     "241049681294106625",
+     "241049681294106625"
+    ],
+    "columns": [
+     {
+      "label": "satisfied",
+      "name": "satisfied"
+     },
+     {
+      "label": "out_requireDeposit",
+      "name": "out_requireDeposit"
+     },
+     {
+      "label": "out_depositBlocksCollection",
+      "name": "out_depositBlocksCollection"
+     },
+     {
+      "label": "out_highRiskMcc",
+      "name": "out_highRiskMcc"
+     },
+     {
+      "label": "out_suggestedSettlementDays",
+      "name": "out_suggestedSettlementDays"
+     },
+     {
+      "label": "missing",
+      "name": "missing"
+     }
+    ],
+    "countSql": null,
+    "elapsedMillis": 52,
+    "hasMore": false,
+    "nextCursor": null,
+    "rows": [
+     [
+      "0",
+      null,
+      null,
+      null,
+      null,
+      "UNDERWRITING_NOT_STARTED"
+     ]
+    ],
+    "sql": "SELECT IF(e.underwriting_id IS NOT NULL, 1, 0) AS satisfied, e.require_deposit AS out_requireDeposit, e.deposit_blocks_collection AS out_depositBlocksCollection, e.high_risk_mcc AS out_highRiskMcc, e.suggested_settlement_days AS out_suggestedSettlementDays, CASE WHEN e.underwriting_id IS NOT NULL THEN NULL WHEN l.status = 'SUBMITTED' THEN 'UNDERWRITING_PENDING_REVIEW' WHEN l.status = 'DECLINED' THEN 'UNDERWRITING_DECLINED' ELSE 'UNDERWRITING_NOT_STARTED' END AS missing FROM (SELECT 1 AS anchor) anchor LEFT JOIN t_client_underwriting e ON e.client_id = ? AND e.effective_slot = 1 LEFT JOIN (SELECT status FROM t_client_underwriting WHERE client_id = ? ORDER BY version_no DESC LIMIT 1) l ON 1 = 1 LIMIT 2",
+    "total": null,
+    "versionNo": 0
+   }
+  },
+  {
+   "check": "模板试跑 M（不落库，单行）",
+   "ok": true,
+   "evidence": {
+    "bindings": [
+     "239260386824658945",
+     "239260386824658945"
+    ],
+    "columns": [
+     {
+      "label": "satisfied",
+      "name": "satisfied"
+     },
+     {
+      "label": "out_requireDeposit",
+      "name": "out_requireDeposit"
+     },
+     {
+      "label": "out_depositBlocksCollection",
+      "name": "out_depositBlocksCollection"
+     },
+     {
+      "label": "out_highRiskMcc",
+      "name": "out_highRiskMcc"
+     },
+     {
+      "label": "out_suggestedSettlementDays",
+      "name": "out_suggestedSettlementDays"
+     },
+     {
+      "label": "missing",
+      "name": "missing"
+     }
+    ],
+    "countSql": null,
+    "elapsedMillis": 280,
+    "hasMore": false,
+    "nextCursor": null,
+    "rows": [
+     [
+      "0",
+      null,
+      null,
+      null,
+      null,
+      "UNDERWRITING_NOT_STARTED"
+     ]
+    ],
+    "sql": "SELECT IF(e.underwriting_id IS NOT NULL, 1, 0) AS satisfied, e.require_deposit AS out_requireDeposit, e.deposit_blocks_collection AS out_depositBlocksCollection, e.high_risk_mcc AS out_highRiskMcc, e.suggested_settlement_days AS out_suggestedSettlementDays, CASE WHEN e.underwriting_id IS NOT NULL THEN NULL WHEN l.status = 'SUBMITTED' THEN 'UNDERWRITING_PENDING_REVIEW' WHEN l.status = 'DECLINED' THEN 'UNDERWRITING_DECLINED' ELSE 'UNDERWRITING_NOT_STARTED' END AS missing FROM (SELECT 1 AS anchor) anchor LEFT JOIN t_client_underwriting e ON e.client_id = ? AND e.effective_slot = 1 LEFT JOIN (SELECT status FROM t_client_underwriting WHERE client_id = ? ORDER BY version_no DESC LIMIT 1) l ON 1 = 1 LIMIT 2",
+    "total": null,
+    "versionNo": 0
+   }
+  },
+  {
+   "check": "模板试跑 none（不落库，单行）",
+   "ok": true,
+   "evidence": {
+    "bindings": [
+     "1",
+     "1"
+    ],
+    "columns": [
+     {
+      "label": "satisfied",
+      "name": "satisfied"
+     },
+     {
+      "label": "out_requireDeposit",
+      "name": "out_requireDeposit"
+     },
+     {
+      "label": "out_depositBlocksCollection",
+      "name": "out_depositBlocksCollection"
+     },
+     {
+      "label": "out_highRiskMcc",
+      "name": "out_highRiskMcc"
+     },
+     {
+      "label": "out_suggestedSettlementDays",
+      "name": "out_suggestedSettlementDays"
+     },
+     {
+      "label": "missing",
+      "name": "missing"
+     }
+    ],
+    "countSql": null,
+    "elapsedMillis": 32,
+    "hasMore": false,
+    "nextCursor": null,
+    "rows": [
+     [
+      "0",
+      null,
+      null,
+      null,
+      null,
+      "UNDERWRITING_NOT_STARTED"
+     ]
+    ],
+    "sql": "SELECT IF(e.underwriting_id IS NOT NULL, 1, 0) AS satisfied, e.require_deposit AS out_requireDeposit, e.deposit_blocks_collection AS out_depositBlocksCollection, e.high_risk_mcc AS out_highRiskMcc, e.suggested_settlement_days AS out_suggestedSettlementDays, CASE WHEN e.underwriting_id IS NOT NULL THEN NULL WHEN l.status = 'SUBMITTED' THEN 'UNDERWRITING_PENDING_REVIEW' WHEN l.status = 'DECLINED' THEN 'UNDERWRITING_DECLINED' ELSE 'UNDERWRITING_NOT_STARTED' END AS missing FROM (SELECT 1 AS anchor) anchor LEFT JOIN t_client_underwriting e ON e.client_id = ? AND e.effective_slot = 1 LEFT JOIN (SELECT status FROM t_client_underwriting WHERE client_id = ? ORDER BY version_no DESC LIMIT 1) l ON 1 = 1 LIMIT 2",
+    "total": null,
+    "versionNo": 0
+   }
+  },
+  {
+   "check": "模板 GOLIVE_UNDERWRITING_APPROVED ACTIVE",
+   "ok": true,
+   "evidence": {
+    "currentVersionNo": 1,
+    "dataSourceCode": "MOR_RISK_DECISION_REPLICA",
+    "dataSourceId": "241634939987116032",
+    "dataSourceName": "风控决策（Risk Decision）从库",
+    "description": "客户上线编排 REQ-03：DATA_QUERY 系统检查（单行，satisfied / out_* / missing）",
+    "pagingMode": "NONE",
+    "parameters": [
+     {
+      "elementType": null,
+      "name": "clientId",
+      "required": true,
+      "type": "INTEGER"
+     }
+    ],
+    "status": "ACTIVE",
+    "templateCode": "GOLIVE_UNDERWRITING_APPROVED",
+    "templateId": "241634978125922304",
+    "templateName": "承保已批准（有效结论）",
+    "updateTime": "2026-10-29T18:51:08.145119Z",
+    "updatedBy": "221546852372267008",
+    "version": 1
+   }
+  }
+ ]
+}

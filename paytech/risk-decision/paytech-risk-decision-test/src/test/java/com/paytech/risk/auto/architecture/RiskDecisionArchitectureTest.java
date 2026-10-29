@@ -58,8 +58,12 @@ class RiskDecisionArchitectureTest {
 
     @Test
     void test_businessLibrariesHaveOnlyApprovedDependencies() throws Exception {
-        Assertions.assertEquals(Set.of("paytech-common-core", "spring-web", "jakarta.validation-api"),
-            values(readPom(PREFIX + "api"), "/project/dependencies/dependency/artifactId"));
+        // 承保合同（REQ-03）的多字段 Body 用 Lombok 生成访问方法，与其他服务 *-api 一致；仅编译期 provided。
+        Document api = readPom(PREFIX + "api");
+        Assertions.assertEquals(Set.of("paytech-common-core", "spring-web", "jakarta.validation-api", "lombok"),
+            values(api, "/project/dependencies/dependency/artifactId"));
+        Assertions.assertEquals(Set.of("provided"),
+            values(api, "/project/dependencies/dependency[artifactId='lombok']/scope"));
         Document core = readPom(PREFIX + "core");
         // risk-control 并入后：名单持久化与名单维护锁、影子回放补偿任务、决策哈希规范化。
         Assertions.assertEquals(Set.of("paytech-common-core", "paytech-json-canonicalization",
@@ -206,7 +210,7 @@ class RiskDecisionArchitectureTest {
             metadataOnly.add(properties.getProperty("web.logging.metadata-only-path-prefixes[" + index + "]"));
         }
         Assertions.assertEquals(Set.of("/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows",
-            "/decision-variables", "/risk-lists", "/risk-decisions"), metadataOnly);
+            "/decision-variables", "/risk-lists", "/risk-decisions", "/risk-underwriting"), metadataOnly);
         Assertions.assertEquals("${RISK_DECISION_ENVIRONMENT}", properties.getProperty("decision.runtime.environment"));
         Assertions.assertEquals("${RISK_SNOWFLAKE_REGION_ID}",
             properties.getProperty("decision.identifier.region-id"));

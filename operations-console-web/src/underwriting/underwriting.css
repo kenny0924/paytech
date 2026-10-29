@@ -1,0 +1,128 @@
+/* 风控 · 承保（原型 风控 · 承保 01—05）：白底细边框卡片、左输入右结论；1100 以下单列，520 以下标签与值上下排列。 */
+.uw-page { --uw-border: #e3e8ef; --uw-muted: #69717d; --uw-text: #1f2733; --uw-ok: #1f8a4c; --uw-ok-bg: #eaf7ef; --uw-warn: #b76e00; --uw-warn-bg: #fff6e6;
+  --uw-danger: #c43c3c; --uw-danger-bg: #fdeeee; --uw-info: #315dca; --uw-info-bg: #eef2fb; --uw-muted-bg: #f1f3f6;
+  display: flex; flex-direction: column; gap: 16px; min-width: 0; color: var(--uw-text); }
+.uw-page .muted, .uw-hint { color: var(--uw-muted); }
+.uw-hint { font-size: 12px; line-height: 1.6; margin: 6px 0 0; }
+.uw-hint-inline { color: var(--uw-muted); font-size: 12px; margin-left: 8px; }
+.uw-head { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.uw-grow { flex: 1 1 auto; min-width: 0; }
+.uw-head h1 { margin: 0; font-size: 22px; font-weight: 600; }
+.uw-title { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.uw-lead { color: var(--uw-muted); margin: 6px 0 0; max-width: 820px; }
+.uw-crumbs { color: var(--uw-muted); font-size: 12px; margin-bottom: 6px; }
+.uw-meta { color: var(--uw-muted); font-size: 13px; margin-top: 6px; overflow-wrap: anywhere; }
+.uw-draft-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: -8px; }
+.uw-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.uw-title .uw-ellipsis { max-width: 100%; }
+
+.uw-badge { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 600; white-space: nowrap; line-height: 1; }
+.uw-badge.is-ok { color: var(--uw-ok); background: var(--uw-ok-bg); }
+.uw-badge.is-warn { color: var(--uw-warn); background: var(--uw-warn-bg); }
+.uw-badge.is-danger { color: var(--uw-danger); background: var(--uw-danger-bg); }
+.uw-badge.is-info { color: var(--uw-info); background: var(--uw-info-bg); }
+.uw-badge.is-muted { color: #4a5361; background: var(--uw-muted-bg); }
+
+/* 统计卡（U12） */
+.uw-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.uw-stat { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; padding: 14px 16px; background: #fff; border: 1px solid var(--uw-border); border-radius: 8px;
+  font: inherit; color: inherit; text-align: left; min-width: 0; }
+.uw-stat.is-link { cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
+.uw-stat.is-link:hover, .uw-stat.is-link:focus-visible { border-color: #b9c6e3; box-shadow: 0 1px 4px rgba(31, 39, 51, .06); outline: none; }
+.uw-stat-label { color: var(--uw-muted); font-size: 13px; }
+.uw-stat-value { font-size: 24px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.uw-stat-value.is-warn { color: var(--uw-warn); } .uw-stat-value.is-ok { color: var(--uw-ok); } .uw-stat-value.is-danger { color: var(--uw-danger); }
+
+/* 列表面板 */
+.uw-panel { background: #fff; border: 1px solid var(--uw-border); border-radius: 8px; min-width: 0; overflow: hidden; }
+.uw-panel-body { padding: 16px; }
+.uw-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--uw-border); }
+.uw-toolbar > .ant-segmented { max-width: 100%; overflow-x: auto; }
+.uw-search { width: 260px; max-width: 100%; }
+.uw-filter { width: 190px; max-width: 100%; }
+.uw-switch { display: inline-flex; align-items: center; gap: 6px; color: var(--uw-text); cursor: pointer; white-space: nowrap; }
+.uw-clickable { cursor: pointer; }
+.uw-link-button { padding: 0; height: auto; }
+.uw-guide { margin: 0; padding: 14px 18px 14px 34px; background: #fff; border: 1px solid var(--uw-border); border-radius: 8px; color: var(--uw-muted); font-size: 12px; line-height: 1.9; }
+.uw-guide strong { color: var(--uw-text); font-weight: 600; }
+
+/* 工作台：左输入、右结论 */
+.uw-split { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(360px, 1fr); gap: 16px; align-items: start; }
+.uw-column { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.uw-card { background: #fff; border: 1px solid var(--uw-border); border-radius: 8px; padding: 16px 18px; min-width: 0; transition: opacity .2s ease; }
+.uw-card.is-loading { opacity: .6; }
+.uw-card-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding-bottom: 10px; margin-bottom: 4px; border-bottom: 1px solid var(--uw-border); }
+.uw-card-title h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.uw-card-extra { font-size: 12px; color: var(--uw-muted); min-width: 0; overflow-wrap: anywhere; }
+.uw-card-actions { margin-left: auto; }
+.uw-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-bottom: 1px solid #f0f2f6; align-items: start; }
+.uw-row:last-child { border-bottom: none; }
+.uw-row-label { color: var(--uw-muted); font-size: 13px; padding-top: 1px; }
+.uw-row-value { min-width: 0; overflow-wrap: anywhere; }
+.uw-inline { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.uw-tags { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.uw-tags .ant-tag { margin: 0; }
+.uw-link { overflow-wrap: anywhere; }
+.uw-break { overflow-wrap: anywhere; }
+.uw-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.uw-note { white-space: pre-wrap; color: var(--uw-text); }
+.uw-note.is-danger { color: var(--uw-danger); }
+.uw-plain { margin: 6px 0 0; padding-left: 18px; }
+
+/* 估算敞口 */
+.uw-exposure { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-top: 10px; }
+.uw-exposure-amount { font-size: 28px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.uw-exposure-amount.is-high { color: var(--uw-danger); }
+.uw-exposure-amount.is-muted { font-size: 20px; color: var(--uw-muted); }
+.uw-exposure-formula { color: var(--uw-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* 自动承保判定 */
+.uw-checks { list-style: none; margin: 4px 0 12px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.uw-checks li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; align-items: start; padding-top: 6px; }
+.uw-checks li .anticon { margin-top: 4px; }
+.uw-checks li.is-pass .anticon { color: var(--uw-ok); }
+.uw-checks li.is-fail .anticon { color: var(--uw-danger); }
+.uw-verdict { border-radius: 6px; padding: 10px 12px; font-size: 12px; line-height: 1.6; }
+.uw-verdict strong { display: block; font-size: 13px; margin-bottom: 2px; }
+.uw-verdict.is-ok { background: var(--uw-ok-bg); color: #2c5e40; } .uw-verdict.is-ok strong { color: var(--uw-ok); }
+.uw-verdict.is-warn { background: var(--uw-warn-bg); color: #6b4e1a; } .uw-verdict.is-warn strong { color: var(--uw-warn); }
+
+/* 结论表单 */
+.uw-inline-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.uw-num { width: 96px; }
+.uw-tn { width: 120px; }
+.uw-money { width: 220px; max-width: 100%; }
+.uw-currency { width: 70px !important; flex: none; }
+.uw-gap { margin-top: 8px; }
+.uw-gap-bottom { margin-bottom: 10px; }
+.uw-field-error { color: var(--uw-danger); font-size: 12px; margin-top: 4px; }
+.uw-callout { margin-top: 10px; padding: 8px 10px; border-radius: 6px; background: #f6f8fb; color: var(--uw-muted); font-size: 12px; line-height: 1.6; }
+.uw-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.uw-alert { margin-bottom: 12px; }
+.uw-column > .uw-alert { margin-bottom: 0; }
+
+/* 版本历史 */
+.uw-history { list-style: none; margin: 0; padding: 0; }
+.uw-history li { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; padding: 12px 0; border-bottom: 1px solid #f0f2f6; align-items: start; }
+.uw-history li:last-child { border-bottom: none; }
+.uw-history li.is-current .uw-history-no { color: var(--uw-info); }
+.uw-history-no { font-weight: 600; padding-top: 2px; }
+.uw-history-body { min-width: 0; }
+
+@media (max-width: 1280px) { .uw-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .uw-split { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .uw-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .uw-stat { padding: 10px 12px; } .uw-stat-value { font-size: 20px; }
+  .uw-search, .uw-filter { width: 100%; }
+  .uw-head h1 { font-size: 19px; }
+  .uw-exposure-amount { font-size: 24px; }
+}
+@media (max-width: 520px) {
+  .uw-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .uw-card { padding: 14px; }
+  .uw-actions > .ant-btn { flex: 1 1 auto; }
+  .uw-history li { grid-template-columns: 28px minmax(0, 1fr); }
+  .uw-history li > a { grid-column: 2; }
+}
+@media (prefers-reduced-motion: reduce) { .uw-card, .uw-stat.is-link { transition: none; } }

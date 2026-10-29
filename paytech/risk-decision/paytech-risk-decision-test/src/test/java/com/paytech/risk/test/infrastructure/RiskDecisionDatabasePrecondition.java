@@ -18,8 +18,8 @@ import org.springframework.core.env.ConfigurableEnvironment;
 public final class RiskDecisionDatabasePrecondition
     implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    /** mor_risk_decision 的表数：risk-decision-schema.sql 的 54 张表加 t_consumed_event（= init/ddl.sql 的 CREATE TABLE 数）。 */
-    public static final int EXPECTED_TABLE_COUNT = 55;
+    /** mor_risk_decision 的表数：risk-decision-schema.sql 的 57 张表加 t_consumed_event（= init/ddl.sql 的 CREATE TABLE 数）。 */
+    public static final int EXPECTED_TABLE_COUNT = 58;
 
     /**
      * 不包含凭据的本地数据库准备说明。
@@ -168,6 +168,17 @@ public final class RiskDecisionDatabasePrecondition
             + "AND table_name='t_evaluation_flow_trace'") == 11L);
         verifyCheckoutRuntime(connection);
         verifyPaymentCardAttributes(connection);
+        verifyClientUnderwriting(connection);
+    }
+
+    /** REQ-03 承保记录：三张表结构与自动承保规则 v1（ACTIVE、USD 阈值）。 */
+    private static void verifyClientUnderwriting(Connection connection) throws SQLException {
+        require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+            + "AND table_name='t_client_underwriting'") == 58L);
+        require(count(connection, "SELECT COUNT(*) FROM t_underwriting_rule_version WHERE rule_version_id=290001 "
+            + "AND version_no=1 AND status='ACTIVE' AND active_slot=1") == 1L);
+        require(count(connection, "SELECT COUNT(*) FROM t_underwriting_rule_threshold WHERE threshold_id=290101 "
+            + "AND rule_version_id=290001 AND currency='USD' AND monthly_volume_limit=50000") == 1L);
     }
 
     /** 结账点运行期评估的快照表结构、v5 结账变量与结账运行期点版本。 */

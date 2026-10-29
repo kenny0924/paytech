@@ -54,6 +54,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
     private final RiskDictionaryScenario dictionary = new RiskDictionaryScenario();
     private final RiskControlScenario control = new RiskControlScenario();
     private final RiskEvaluationScenario evaluation = new RiskEvaluationScenario();
+    private final RiskUnderwritingScenario underwriting = new RiskUnderwritingScenario();
     private final Map<String, CompletedCommand> commands = new LinkedHashMap<>();
     private volatile Mode mode = Mode.SUCCESS;
     private volatile Consumer<ObjectNode> wireMutation = ignored -> {};
@@ -135,6 +136,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         flow.reset();
         control.reset();
         evaluation.reset();
+        underwriting.reset();
         ruleSets.clear();
         ruleRoots.clear();
         candidates.clear();
@@ -252,7 +254,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
             wireMutation.accept(wire);
             String response = JSON.writeValueAsString(wire);
             responses.add(response);
-            send(exchange, request.method().equals("POST") && request.path().equals("/decision-variables/v1/variables") ? 201 : 200, "application/json", response);
+            send(exchange, successStatus(request), "application/json", response);
         } catch (SemanticFailure failure) {
             sendProblem(exchange, failure.status, failure.code);
         } catch (RuntimeException failure) {
@@ -261,7 +263,24 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
         }
     }
 
+    /** 变量创建与承保场景配置的 201，其余成功为 200。 */
+    private int successStatus(Request request) {
+        if (underwriting.known(request.method(), request.path())) return underwriting.status(request);
+        return request.method().equals("POST") && request.path().equals("/decision-variables/v1/variables") ? 201 : 200;
+    }
+
+    /** 配置一条承保接口的成功 DTO（按方法与路径匹配）。 */
+    public void underwritingReply(String method, String path, int status, Object body) {
+        underwriting.reply(method, path, status, body);
+    }
+
+    /** 配置一条承保接口的 Owner Problem（按方法与路径匹配）。 */
+    public void underwritingProblem(String method, String path, int status, String code) {
+        underwriting.problem(method, path, status, code);
+    }
+
     private boolean known(Request r) {
+        if (underwriting.known(r.method(), r.path())) return true;
         if (variables.known(r.method(), r.path())) return true;
         if (flow.known(r.method(), r.path())) return true;
         if (dictionary.known(r.method(), r.path())) return true;
@@ -289,6 +308,7 @@ public final class RiskDecisionConfigurationSimulator implements AutoCloseable {
 
     private synchronized Object dispatch(Request request) {
         String path = request.path();
+        if (underwriting.known(request.method(), path)) return underwriting.dispatch(request);
         if (variables.known(request.method(), path)) return variables.dispatch(request);
         if (flow.known(request.method(), path)) return flow.dispatch(request, ruleSets.get("30001"));
         if (dictionary.known(request.method(), path)) return dictionary.dispatch(request);

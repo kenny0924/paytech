@@ -116,3 +116,10 @@ INSERT INTO t_risk_variable (variable_id, variable_code, variable_name, descript
   (900000000000093015, 'PAY_INPUT_CARD_BRAND', '卡组织', NULL, 'INPUT', 'STRING', 'PAYMENT_ATTEMPT_RISK', 'PAYMENT_ATTEMPT', 1, 'card_brand', 1, 1, 0, 1, 'TOKEN', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ACTIVE', 1, 1, 1, @payment_card_attribute_seed_time, @payment_card_attribute_seed_time),
   (900000000000093016, 'PAY_INPUT_FUNDING_TYPE', '借贷记类型', NULL, 'INPUT', 'STRING', 'PAYMENT_ATTEMPT_RISK', 'PAYMENT_ATTEMPT', 1, 'funding_type', 1, 1, 0, 1, 'TOKEN', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'ACTIVE', 1, 1, 1, @payment_card_attribute_seed_time, @payment_card_attribute_seed_time);
 COMMIT;
+
+-- 2026-10-29 REQ-03 承保记录：自动承保规则 v1（ACTIVE）与 USD 月流水阈值 50,000，排除 MCC 清单为空（初值待风控确认，技术方案 O-1）。
+-- 已有库使用 changes/2026-10-29-client-underwriting.sql（可重跑）；新阈值以新规则版本发布，不改 v1。
+INSERT INTO `t_underwriting_rule_version` (`rule_version_id`, `version_no`, `status`, `active_slot`, `excluded_mcc_codes`, `activated_time`, `create_time`, `update_time`) VALUES
+  (290001, 1, 'ACTIVE', 1, NULL, '2026-10-29 00:00:00.000000', '2026-10-29 00:00:00.000000', '2026-10-29 00:00:00.000000');
+INSERT INTO `t_underwriting_rule_threshold` (`threshold_id`, `rule_version_id`, `currency`, `monthly_volume_limit`, `create_time`, `update_time`) VALUES
+  (290101, 290001, 'USD', 50000.00000000, '2026-10-29 00:00:00.000000', '2026-10-29 00:00:00.000000');

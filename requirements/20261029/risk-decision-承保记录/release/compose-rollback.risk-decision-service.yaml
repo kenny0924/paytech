@@ -1,0 +1,5 @@
+# REQ-03 risk-decision 承保记录：mor-test 回滚覆盖（= 阶段 6 读到的现网镜像；阶段 7 回滚时使用）。
+# 用法同候选（服务名 risk-decision-service）。回滚后旧镜像不读三张新表；表与数据去留见 runbook 回滚节。
+services:
+  risk-decision-service:
+    image: sha256:288b0ff6a607a8e82bbf7e7cd03023bcca9159fc72e599281ec2fda81fe28a88  # mor-test/risk-decision-service:relsnap-20261025a（JAR 0196699b7bac2fac）

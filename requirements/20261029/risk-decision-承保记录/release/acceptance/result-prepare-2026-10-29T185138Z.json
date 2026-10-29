@@ -1,0 +1,137 @@
+{
+ "startedAt": "2026-10-29T18:51:38.007869+00:00",
+ "clients": {
+  "L": "240686705999454209",
+  "H": "241049681294106625",
+  "M": "239260386824658945"
+ },
+ "ids": {},
+ "summary": {
+  "PASS": 20,
+  "FAIL": 0,
+  "SKIP": 0,
+  "INFO": 0
+ },
+ "results": [
+  {
+   "ac": "SETUP",
+   "step": "复核人权限（CLIENT_ONBOARDING 资源下全部权限）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 permissions=8"
+  },
+  {
+   "ac": "SETUP",
+   "step": "IAM 新建合成复核角色",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "IAM 新建合成复核人",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "SETUP",
+   "step": "合成复核人首登改密并登录",
+   "verdict": "PASS",
+   "evidence": "accountId=241635108451336192 passwordChange=HTTP 204"
+  },
+  {
+   "ac": "PREP",
+   "step": "L 合成复核人批准",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {} blockers=[]"
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 材料接受 BANK",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=241049829667622914 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 材料接受 ONLINE_PRESENCE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=241049829667622917 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 材料接受 REGISTRATION",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=241049829667622920 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 材料接受 IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=241049829713760259 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 材料接受 IDENTITY",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 evidenceId=241049829717954566 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 人工检查 MANUAL_SCREENING PASS（case 241049829650845696）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=241049829671817216 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 人工检查 TERMINATED_MERCHANT_LOOKUP PASS（case 241049829650845696）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=241049829671817217 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 人工检查 WEBSITE_REVIEW PASS（case 241049829650845696）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=241049829671817218 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 人工检查 MANUAL_SCREENING PASS（case 241049829713760256）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=241049829713760260 "
+  },
+  {
+   "ac": "AC-06",
+   "step": "H 人工检查 MANUAL_SCREENING PASS（case 241049829717954563）",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 checkId=241049829717954567 "
+  },
+  {
+   "ac": "PREP",
+   "step": "241049829650845696 设置分类 MCC 5967",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "PREP",
+   "step": "241049829650845696 确认分类",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "AC-06",
+   "step": "H CRR HIGH + 因子",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "PREP",
+   "step": "H 推荐 APPROVE",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "PREP",
+   "step": "H 合成复核人批准",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {} blockers=[]"
+  }
+ ]
+}

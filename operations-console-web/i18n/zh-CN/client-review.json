@@ -388,6 +388,7 @@
   "client-review.detail.round": "第 {round} 轮",
   "client-review.detail.submitted": "{time} 提交",
   "client-review.detail.title": "入驻审核详情",
+  "client-review.detail.underwriting": "承保",
   "client-review.enum.action.APPROVE": "批准",
   "client-review.enum.action.EXPIRE": "过期",
   "client-review.enum.action.REGISTER": "立案",

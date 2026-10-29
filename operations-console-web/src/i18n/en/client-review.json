@@ -388,6 +388,7 @@
   "client-review.detail.round": "Round {round}",
   "client-review.detail.submitted": "Submitted {time}",
   "client-review.detail.title": "Onboarding Review Details",
+  "client-review.detail.underwriting": "Underwriting",
   "client-review.enum.action.APPROVE": "Approved",
   "client-review.enum.action.EXPIRE": "Expired",
   "client-review.enum.action.REGISTER": "Case opened",

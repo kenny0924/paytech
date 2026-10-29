@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.control.core.dal.mapper.UnderwritingRuleVersionMapper">
+    <sql id="columns">
+        rule_version_id AS ruleVersionId, version_no AS versionNo, status, active_slot AS activeSlot,
+        excluded_mcc_codes AS excludedMccCodes, activated_time AS activatedTime, create_time AS createTime,
+        update_time AS updateTime
+    </sql>
+    <select id="selectActive" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.UnderwritingRuleVersion">
+        SELECT <include refid="columns"/> FROM t_underwriting_rule_version WHERE active_slot = 1 AND status = 'ACTIVE'
+    </select>
+    <select id="selectAll" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.UnderwritingRuleVersion">
+        SELECT <include refid="columns"/> FROM t_underwriting_rule_version ORDER BY version_no
+    </select>
+</mapper>

@@ -56,6 +56,7 @@
   "master-data.client.profile.title": "Profile",
   "master-data.client.qualifications": "Qualifications",
   "master-data.client.qualificationsSubtitle": "Client qualifications from compliance",
+  "master-data.client.underwriting": "Underwriting",
   "master-data.command.busy": "Another change to this record is in progress. Try again shortly.",
   "master-data.command.conflict": "This record changed after you opened it. Refresh and try again.",
   "master-data.command.failed": "Change not completed",

@@ -1,0 +1,7 @@
+-- REQ-03 risk-decision 承保记录 · DML 索引（本文件不含可执行语句）
+-- 初始化 DML：paytech/risk-decision/docs/database/sql/risk-decision-initial-data.sql 末尾
+--   自动承保规则 v1（290001，ACTIVE）与 USD 月流水阈值 50,000（290101），排除 MCC 清单为空（O-1，待风控确认正式值）。
+--   已有库随前滚文件 changes/2026-10-29-client-underwriting.sql 一并写入（INSERT ... ON DUPLICATE KEY UPDATE，不改已有行）。
+-- Platform 注册块 143：db/platform/registration-143.sql（插入）、registration-143-activate.sql、registration-143-rollback.sql；
+--   同文追加在 paytech/platform-support/docs/database/sql/platform-support-initial-data.sql 末尾。
+-- data-query：db/data-query-data-source.sql（只读授权与数据源登记步骤）、db/data-query-templates.sql（模板正文）。

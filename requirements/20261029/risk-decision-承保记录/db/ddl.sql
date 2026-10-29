@@ -1,0 +1,8 @@
+-- REQ-03 risk-decision 承保记录 · DDL 索引（本文件不含可执行语句，避免与执行文件形成两份定义）
+-- 前滚：paytech/risk-decision/docs/database/sql/changes/2026-10-29-client-underwriting.sql
+--   三张表 CREATE TABLE IF NOT EXISTS（t_client_underwriting、t_underwriting_rule_version、t_underwriting_rule_threshold）
+--   与规则 v1 / USD 阈值初值（可重跑）。
+-- 回滚：paytech/risk-decision/docs/database/sql/changes/2026-10-29-client-underwriting-rollback.sql（有承保记录时拒绝）。
+-- 当前完整 Schema：paytech/risk-decision/docs/database/sql/risk-decision-schema.sql；测试初始化：
+--   paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql。
+-- 执行记录：2026-10-29 阶段 4 已在本机 auto 库 mor_risk_decision 执行前滚（执行前已备份结构）；mor-test 未执行。

@@ -103,6 +103,7 @@ web:
       - /decision-variables
       - /risk-lists
       - /risk-decisions
+      - /risk-underwriting
 
 # paytech-redis-starter
 redis:

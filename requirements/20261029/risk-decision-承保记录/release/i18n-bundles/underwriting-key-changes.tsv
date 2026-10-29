@@ -1,0 +1,248 @@
+namespace	key	change	en	zh-CN
+client-review	client-review.detail.underwriting	ADDED	Underwriting	承保
+master-data	master-data.client.underwriting	ADDED	Underwriting	承保
+nav	nav.resource.OPERATIONS_RISK_UNDERWRITING	ADDED	Underwriting	承保
+nav	nav.resource.OPERATIONS_RISK_UNDERWRITING_APPROVE	ADDED	Review Underwriting	复核承保
+nav	nav.resource.OPERATIONS_RISK_UNDERWRITING_MANAGE	ADDED	Manage Underwriting	维护承保
+risk	risk.underwriting.action.continue	ADDED	Continue	继续
+risk	risk.underwriting.action.reload	ADDED	Reload	刷新
+risk	risk.underwriting.action.review	ADDED	Review	复核
+risk	risk.underwriting.action.view	ADDED	View	查看
+risk	risk.underwriting.auto.apply	ADDED	Auto-underwrite	一键自动承保
+risk	risk.underwriting.auto.applyHint	ADDED	The server re-checks the latest inputs and only creates the approved record if they still pass (source: auto rule v{version}, approver: system rule, operator: you).	服务端按最新输入重新判定，满足才生成已批准记录（来源 = 自动规则 v{version}，审批人 = 系统规则，操作人 = 你）。
+risk	risk.underwriting.auto.check.CLASSIFICATION_CONFIRMED	ADDED	Classification confirmed	分类已确认
+risk	risk.underwriting.auto.check.CRR_LOW	ADDED	CRR is LOW	CRR 为 LOW
+risk	risk.underwriting.auto.check.CURRENCY_CONFIGURED	ADDED	Currency has a threshold	币种有阈值
+risk	risk.underwriting.auto.check.MCC_NOT_EXCLUDED	ADDED	MCC not excluded	MCC 未被排除
+risk	risk.underwriting.auto.check.MCC_NOT_NETWORK_HIGH_RISK	ADDED	MCC not card-network high-risk	MCC 非卡组织高风险
+risk	risk.underwriting.auto.check.RULE_CONFIGURED	ADDED	Rule configured	已配置规则
+risk	risk.underwriting.auto.check.VOLUME_PROVIDED	ADDED	Volume provided	已申报流水
+risk	risk.underwriting.auto.check.VOLUME_WITHIN_THRESHOLD	ADDED	Volume within threshold	流水不超过阈值
+risk	risk.underwriting.auto.eligible	ADDED	Meets the auto-underwriting rule	符合自动承保条件
+risk	risk.underwriting.auto.eligibleHint	ADDED	You can create an approved record in one click: the approver is recorded as the system rule, with the rule version and you as the operator. No review needed.	可一键生成已批准记录：审批人记为系统规则，记录规则版本与操作人，无需复核。
+risk	risk.underwriting.auto.failed	ADDED	Not passed	未通过
+risk	risk.underwriting.auto.group.crr	ADDED	Client risk rating is LOW (current: {crr})	客户风险等级为 LOW（当前 {crr}）
+risk	risk.underwriting.auto.group.mcc	ADDED	MCC {mcc} isn't high-risk (card-network list ∪ Risk exclusions)	MCC {mcc} 不在高风险清单（卡组织标记 ∪ 风控排除清单）
+risk	risk.underwriting.auto.group.volume	ADDED	Expected monthly volume {volume} within the rule threshold	预计月流水 {volume} 不超过规则阈值
+risk	risk.underwriting.auto.group.volumeThreshold	ADDED	Expected monthly volume {volume} ≤ threshold {threshold}	预计月流水 {volume} ≤ 阈值 {threshold}
+risk	risk.underwriting.auto.manual	ADDED	Underwrite manually	改为人工承保
+risk	risk.underwriting.auto.manualHint	ADDED	Fill in the decision below. LOW / MEDIUM is decided when you submit.	在下方填写结论；LOW / MEDIUM 提交即决定。
+risk	risk.underwriting.auto.notEligible	ADDED	Doesn't meet the auto-underwriting rule · manual underwriting	不符合自动承保条件 · 需人工承保
+risk	risk.underwriting.auto.passed	ADDED	Passed	通过
+risk	risk.underwriting.auto.reason.CLASSIFICATION_CONFIRMED	ADDED	The MCC classification isn't confirmed yet.	MCC 分类尚未确认。
+risk	risk.underwriting.auto.reason.CRR_LOW	ADDED	Only LOW CRR can be auto-underwritten.	只有 CRR 为 LOW 才能自动承保。
+risk	risk.underwriting.auto.reason.CURRENCY_CONFIGURED	ADDED	The rule has no threshold for this currency.	规则没有该币种的阈值。
+risk	risk.underwriting.auto.reason.MCC_NOT_EXCLUDED	ADDED	Risk excludes this MCC from auto-underwriting.	风控已将该 MCC 排除在自动承保之外。
+risk	risk.underwriting.auto.reason.MCC_NOT_NETWORK_HIGH_RISK	ADDED	The card networks list this MCC as high-risk.	该 MCC 被卡组织列为高风险。
+risk	risk.underwriting.auto.reason.RULE_CONFIGURED	ADDED	No active auto-underwriting rule is configured.	没有生效的自动承保规则。
+risk	risk.underwriting.auto.reason.VOLUME_PROVIDED	ADDED	The application has no expected monthly volume.	申请未申报预计月流水。
+risk	risk.underwriting.auto.reason.VOLUME_WITHIN_THRESHOLD	ADDED	The expected volume is above the rule threshold.	预计月流水超过规则阈值。
+risk	risk.underwriting.auto.ruleVersion	ADDED	Rule v{version}	规则 v{version}
+risk	risk.underwriting.auto.title	ADDED	Auto-underwriting check	自动承保判定
+risk	risk.underwriting.column.actions	ADDED	Actions	操作
+risk	risk.underwriting.column.client	ADDED	Client	客户
+risk	risk.underwriting.column.reviewer	ADDED	Reviewed by	复核人
+risk	risk.underwriting.column.source	ADDED	Source	来源
+risk	risk.underwriting.column.status	ADDED	Status	状态
+risk	risk.underwriting.column.submitter	ADDED	Submitted by	提交人
+risk	risk.underwriting.column.updated	ADDED	Updated	更新时间
+risk	risk.underwriting.column.version	ADDED	Version	版本
+risk	risk.underwriting.command.conflict	ADDED	The underwriting state changed	承保状态已变化
+risk	risk.underwriting.command.failed	ADDED	Underwriting couldn't be saved	承保操作未完成
+risk	risk.underwriting.command.rejected	ADDED	Some fields need attention	部分内容需要修改
+risk	risk.underwriting.command.requestId	ADDED	Request ID: {requestId}	请求编号：{requestId}
+risk	risk.underwriting.crrNotRated	ADDED	CRR not rated	未评 CRR
+risk	risk.underwriting.crumb.APPROVED	ADDED	Details	详情
+risk	risk.underwriting.crumb.DECLINED	ADDED	Details	详情
+risk	risk.underwriting.crumb.DRAFT	ADDED	Draft	草稿
+risk	risk.underwriting.crumb.SUBMITTED	ADDED	Awaiting review	待复核
+risk	risk.underwriting.crumb.SUPERSEDED	ADDED	Details	详情
+risk	risk.underwriting.crumb.new	ADDED	New	新建
+risk	risk.underwriting.decision.blocksCollection	ADDED	block collection until received	未到账前阻塞收款
+risk	risk.underwriting.decision.byReq18	ADDED	enforced by REQ-18	由 REQ-18 执行
+risk	risk.underwriting.decision.daysOr	ADDED	days or	天 或
+risk	risk.underwriting.decision.deposit	ADDED	Security deposit	保证金
+risk	risk.underwriting.decision.depositHint	ADDED	The deposit is only recorded as Risk's requirement in this phase; REQ-18 turns it into a settlement control and enforces it (receipt and payout checks).	保证金要求本期只记录，由 REQ-18 下发为结算控制并执行（到账、出款检查）。
+risk	risk.underwriting.decision.depositRequired	ADDED	Required {amount}	要求 {amount}
+risk	risk.underwriting.decision.empty	ADDED	No decision yet.	尚未填写结论。
+risk	risk.underwriting.decision.handoverNote	ADDED	Handover notes for Commercial	交接备注（给商务）
+risk	risk.underwriting.decision.limitNote	ADDED	Limit notes	额度说明
+risk	risk.underwriting.decision.manual	ADDED	Manual	人工填写
+risk	risk.underwriting.decision.networkRegistration	ADDED	Card-network registration	卡组织登记
+risk	risk.underwriting.decision.notRequired	ADDED	Not required	不要求
+risk	risk.underwriting.decision.notSet	ADDED	Not set	未填写
+risk	risk.underwriting.decision.observation	ADDED	Observation period	观察期
+risk	risk.underwriting.decision.observationValue	ADDED	{days} days or {transactions} transactions, whichever comes first	{days} 天或 {transactions} 笔，先到为准
+risk	risk.underwriting.decision.prefilledHighRisk	ADDED	(pre-ticked: card-network high-risk MCC)	（按 MCC 预勾：卡组织高风险）
+risk	risk.underwriting.decision.prefilledNotHighRisk	ADDED	(MCC isn't card-network high-risk)	（MCC 非卡组织高风险）
+risk	risk.underwriting.decision.registrationNeeded	ADDED	Needed	需要
+risk	risk.underwriting.decision.registrationNotNeeded	ADDED	Not needed	不需要
+risk	risk.underwriting.decision.require	ADDED	Require	要求
+risk	risk.underwriting.decision.standardTemplate	ADDED	Standard template (adjustable in manual underwriting)	标准模板（可在人工承保中调整）
+risk	risk.underwriting.decision.standardTemplateNote	ADDED	Standard template	标准模板
+risk	risk.underwriting.decision.startingTierLabel	ADDED	Starting limit tier	起始额度档位
+risk	risk.underwriting.decision.submittedReadonly	ADDED	Filled in by the submitter (read-only)	提交人填写（只读）
+risk	risk.underwriting.decision.suggestedSettlementDays	ADDED	Suggested settlement (T+N)	建议结算周期
+risk	risk.underwriting.decision.title	ADDED	Underwriting decision	承保结论
+risk	risk.underwriting.decision.transactionsFirst	ADDED	transactions, whichever comes first	笔，先到为准
+risk	risk.underwriting.decision.underwritingNote	ADDED	Underwriting notes	承保说明
+risk	risk.underwriting.decline	ADDED	Decline	拒绝
+risk	risk.underwriting.declineHint	ADDED	Declining doesn't revoke the client's qualification; the client can be underwritten again later.	拒绝不影响合规资格，之后可以重新承保。
+risk	risk.underwriting.declineReason	ADDED	Reason for declining	拒绝原因
+risk	risk.underwriting.done.approved	ADDED	Underwriting approved	承保已批准
+risk	risk.underwriting.done.auto	ADDED	Approved by the auto-underwriting rule	已按自动承保规则批准
+risk	risk.underwriting.done.declined	ADDED	Underwriting declined	承保已拒绝
+risk	risk.underwriting.done.revision	ADDED	Revision draft created	已创建修订草稿
+risk	risk.underwriting.done.saved	ADDED	Draft saved	草稿已保存
+risk	risk.underwriting.done.submittedForReview	ADDED	Submitted for review	已提交复核
+risk	risk.underwriting.draftReadonly	ADDED	This is a draft; you don't have permission to edit it.	这是草稿，你没有编辑权限。
+risk	risk.underwriting.effectiveExists	ADDED	This client already has an effective underwriting (v{version}). Open it and revise to change the decision.	该客户已有生效的承保（v{version}），如需变更请打开后修订。
+risk	risk.underwriting.error.CONCURRENT_REQUEST	ADDED	Another request for this client is in progress. Try again shortly.	该客户的另一个请求正在处理，请稍后重试。
+risk	risk.underwriting.error.RISK_UNDERWRITING_AUTO_NOT_ELIGIBLE	ADDED	This client no longer meets the auto-underwriting rule.	该客户已不满足自动承保条件。
+risk	risk.underwriting.error.RISK_UNDERWRITING_DECLINE_REQUIRES_REVIEW	ADDED	HIGH underwriting can only be declined by a reviewer.	HIGH 承保只能由复核人拒绝。
+risk	risk.underwriting.error.RISK_UNDERWRITING_NOT_FOUND	ADDED	This underwriting record doesn't exist.	承保记录不存在。
+risk	risk.underwriting.error.RISK_UNDERWRITING_OPEN_EXISTS	ADDED	This client already has underwriting in progress.	该客户已有进行中的承保。
+risk	risk.underwriting.error.RISK_UNDERWRITING_SELF_REVIEW	ADDED	You can't review your own submission.	不能复核自己提交的承保。
+risk	risk.underwriting.error.RISK_UNDERWRITING_STATE_INVALID	ADDED	This action isn't allowed in the current status. Reload to see the latest.	当前状态不允许此操作，请刷新查看最新状态。
+risk	risk.underwriting.error.RISK_UNDERWRITING_VERSION_CONFLICT	ADDED	Someone else changed this underwriting. Reload and try again.	承保已被其他人修改，请刷新后重试。
+risk	risk.underwriting.exposure.assumed	ADDED	Settlement days not set; counted as 0.	未填结算周期，按 0 计。
+risk	risk.underwriting.exposure.formula	ADDED	{volume} × {days} ÷ 30	{volume} × {days} ÷ 30
+risk	risk.underwriting.exposure.frozen	ADDED	Frozen on submit.	冻结于提交时。
+risk	risk.underwriting.exposure.hint	ADDED	Reference only · not part of the decision	参考值 · 不参与判定
+risk	risk.underwriting.exposure.live	ADDED	Recalculated as fulfillment and T+N change; frozen on submit.	随交付方式与结算周期实时重算；提交时冻结。
+risk	risk.underwriting.exposure.riskDays.INSTANT	ADDED	Risk days = settlement T+{settlementDays} (instant delivery has no delivery period).	风险天数 = 结算周期 T+{settlementDays}（即时交付无交付期）。
+risk	risk.underwriting.exposure.riskDays.PRE_ORDER	ADDED	Risk days = {fulfillmentDays} delivery days + settlement T+{settlementDays}.	风险天数 = 交付 {fulfillmentDays} 天 + 结算周期 T+{settlementDays}。
+risk	risk.underwriting.exposure.riskDays.SERVICE	ADDED	Risk days = settlement T+{settlementDays} (note any longer service period in the underwriting notes).	风险天数 = 结算周期 T+{settlementDays}（服务期更长时在承保说明中写明）。
+risk	risk.underwriting.exposure.riskDays.SUBSCRIPTION	ADDED	Risk days = one 30-day billing cycle + settlement T+{settlementDays}.	风险天数 = 一个计费周期 30 天 + 结算周期 T+{settlementDays}。
+risk	risk.underwriting.exposure.short.FULFILLMENT_DAYS_MISSING	ADDED	No delivery days	缺预售天数
+risk	risk.underwriting.exposure.short.FULFILLMENT_TYPE_MISSING	ADDED	No fulfillment type	缺交付方式
+risk	risk.underwriting.exposure.short.VOLUME_MISSING	ADDED	No volume	缺流水
+risk	risk.underwriting.exposure.title	ADDED	Estimated exposure	估算敞口
+risk	risk.underwriting.exposure.unavailable	ADDED	Can't estimate	无法估算
+risk	risk.underwriting.exposure.unavailableReason.FULFILLMENT_DAYS_MISSING	ADDED	Pre-order delivery days weren't filled in.	未填预售天数。
+risk	risk.underwriting.exposure.unavailableReason.FULFILLMENT_TYPE_MISSING	ADDED	The fulfillment type wasn't collected.	未采集交付方式。
+risk	risk.underwriting.exposure.unavailableReason.VOLUME_MISSING	ADDED	No expected volume was declared.	未申报流水。
+risk	risk.underwriting.field.depositAmount	ADDED	Deposit amount	保证金金额
+risk	risk.underwriting.field.depositBlocksCollection	ADDED	Block collection until received	未到账前阻塞收款
+risk	risk.underwriting.field.depositCurrency	ADDED	Deposit currency	保证金币种
+risk	risk.underwriting.field.handoverNote	ADDED	Handover notes	交接备注
+risk	risk.underwriting.field.highRiskMcc	ADDED	Card-network registration	卡组织登记
+risk	risk.underwriting.field.highRiskMccReason	ADDED	Reason for changing the default	更改默认值的理由
+risk	risk.underwriting.field.limitNote	ADDED	Limit notes	额度说明
+risk	risk.underwriting.field.observationDays	ADDED	Observation period (days)	观察期天数
+risk	risk.underwriting.field.observationTransactions	ADDED	Observation period (transactions)	观察期笔数
+risk	risk.underwriting.field.requireDeposit	ADDED	Require a security deposit	要求保证金
+risk	risk.underwriting.field.suggestedSettlementDays	ADDED	Suggested settlement days (N)	建议结算天数 N
+risk	risk.underwriting.field.underwritingNote	ADDED	Underwriting notes	承保说明
+risk	risk.underwriting.filter.all	ADDED	All	全部
+risk	risk.underwriting.filter.crr	ADDED	Client risk rating: all	客户风险等级：全部
+risk	risk.underwriting.filter.crrPrefix	ADDED	CRR: 	CRR：
+risk	risk.underwriting.filter.pendingReviewForMe	ADDED	Awaiting my review	待我复核
+risk	risk.underwriting.filter.search	ADDED	Search client name or number	搜索客户名称 / 客户编号
+risk	risk.underwriting.filter.source	ADDED	Source: all	来源：全部
+risk	risk.underwriting.guide.auto	ADDED	Source "Auto rule v1": the client met the auto-underwriting rule and was approved in one click with the system rule as approver; manual HIGH underwriting needs a second person to review (four eyes).	来源"自动规则 v1"= 满足自动承保条件、一键生成，审批人记为系统规则；人工承保中 HIGH 须另一人复核（四眼）。
+risk	risk.underwriting.guide.entry	ADDED	New underwriting: open it from the client details or an approved onboarding review case, or here by client ID. Each client has at most one underwriting in progress and one effective.	新建承保：从客户详情或客户入驻审核（已批准案件）进入，或在此按客户 ID 新建；每个客户同时最多 1 份进行中、1 份生效。
+risk	risk.underwriting.guide.exposure	ADDED	Estimated exposure = expected monthly volume × risk days ÷ 30. Reference only; it doesn't affect the decision.	估算敞口 = 预计月流水 × 风险天数 ÷ 30，只作参考，不参与判定。
+risk	risk.underwriting.highNotice	ADDED	HIGH risk: a Risk lead must approve or decline after you submit (four eyes).	CRR 为 HIGH：提交后须由另一位具有复核权限的人员批准或拒绝（四眼）。
+risk	risk.underwriting.history.declineReason	ADDED	Declined: {reason}	拒绝原因：{reason}
+risk	risk.underwriting.history.revisionReason	ADDED	Revision reason: {reason}	修订原因：{reason}
+risk	risk.underwriting.history.supersededBy	ADDED	Superseded by v{version}	被 v{version} 取代
+risk	risk.underwriting.history.title	ADDED	Versions	版本历史
+risk	risk.underwriting.input.businessSource	ADDED	From the onboarding application	来自入驻申请
+risk	risk.underwriting.input.businessTitle	ADDED	Business information	业务信息
+risk	risk.underwriting.input.caseLink	ADDED	Case {caseId}	案件 {caseId}
+risk	risk.underwriting.input.crr	ADDED	Client risk rating (CRR)	客户风险等级 CRR
+risk	risk.underwriting.input.crrMissing	ADDED	Not rated in due diligence; treated as MEDIUM	尽调未评 CRR，按 MEDIUM 处理
+risk	risk.underwriting.input.daysMissing	ADDED	no delivery days	未填预售天数
+risk	risk.underwriting.input.ddTier	ADDED	Due-diligence tier	尽调档位
+risk	risk.underwriting.input.ddTitle	ADDED	Due diligence	尽调结论
+risk	risk.underwriting.input.fulfillment	ADDED	Fulfillment	交付方式
+risk	risk.underwriting.input.fulfillmentDays	ADDED	delivered in about {days, plural, one {# day} other {# days}}	预计 {days} 天交付
+risk	risk.underwriting.input.industry	ADDED	Industry	行业
+risk	risk.underwriting.input.mcc	ADDED	MCC	MCC
+risk	risk.underwriting.input.monthlyVolume	ADDED	Expected monthly volume	预计月流水
+risk	risk.underwriting.input.networkHighRisk	ADDED	Card-network high-risk	卡组织高风险
+risk	risk.underwriting.input.none	ADDED	No inputs were recorded for this version.	该版本没有记录输入。
+risk	risk.underwriting.input.notCollected	ADDED	Not collected	未采集
+risk	risk.underwriting.input.paymentMethods	ADDED	Expected payment methods	期望支付方式
+risk	risk.underwriting.input.refundPolicy	ADDED	Refund policy	退款政策
+risk	risk.underwriting.input.ticket	ADDED	Expected ticket size	预计客单价
+risk	risk.underwriting.input.website	ADDED	Website	网站
+risk	risk.underwriting.inputStatus.CLASSIFICATION_NOT_CONFIRMED	ADDED	MCC classification isn't confirmed	MCC 分类尚未确认
+risk	risk.underwriting.inputStatus.DD_NOT_APPROVED	ADDED	Due diligence isn't approved yet	尽调尚未批准
+risk	risk.underwriting.inputStatus.READY	ADDED	Inputs ready	输入已就绪
+risk	risk.underwriting.inputStatus.SOURCE_UNAVAILABLE	ADDED	Some inputs couldn't be loaded. Try again.	部分输入暂时无法读取，请重试
+risk	risk.underwriting.inputStatus.blocksSubmit	ADDED	You can save a draft, but you can't submit until this is resolved.	可以保存草稿，解决后才能提交。
+risk	risk.underwriting.lead	ADDED	Assess how much transaction and chargeback risk the platform takes on for a client: starting tier, security deposit and suggested settlement cycle. Approved records are immutable; changes create a new version.	评估平台愿意为客户承担的交易与拒付风险，记录额度档位起点、保证金与结算周期建议。批准后不可修改，变更通过修订产生新版本。
+risk	risk.underwriting.list.empty	ADDED	No underwriting records yet.	还没有承保记录。
+risk	risk.underwriting.list.noMatch	ADDED	No underwriting matches these filters.	没有符合筛选条件的承保记录。
+risk	risk.underwriting.list.total	ADDED	{total} in total	共 {total} 条
+risk	risk.underwriting.meta.approvedAt	ADDED	Approved {time}	批准于 {time}
+risk	risk.underwriting.meta.declinedAt	ADDED	Declined {time}	拒绝于 {time}
+risk	risk.underwriting.meta.frozen	ADDED	Inputs frozen	输入已冻结
+risk	risk.underwriting.meta.immutable	ADDED	Can't be changed after approval	批准后不可修改
+risk	risk.underwriting.meta.submittedAt	ADDED	Submitted {time}	提交于 {time}
+risk	risk.underwriting.meta.submittedBy	ADDED	Submitted by {person}	提交人 {person}
+risk	risk.underwriting.new	ADDED	New underwriting	新建承保
+risk	risk.underwriting.newModal.clientId	ADDED	Client ID	客户 ID
+risk	risk.underwriting.newModal.clientIdInvalid	ADDED	A client ID is up to 19 digits	客户 ID 为不超过 19 位的数字
+risk	risk.underwriting.newModal.clientIdRequired	ADDED	Enter the client ID	请输入客户 ID
+risk	risk.underwriting.newModal.hint	ADDED	Usually opened from the client details or an approved onboarding review case. Enter the client ID to open its underwriting page.	通常从客户详情或已批准的入驻审核案件进入。输入客户 ID 打开其承保页。
+risk	risk.underwriting.newModal.open	ADDED	Open	打开
+risk	risk.underwriting.readonlyNotice	ADDED	You can view this client's inputs but can't create underwriting.	你可以查看输入，但没有新建承保的权限。
+risk	risk.underwriting.review.allowed	ADDED	You aren't the submitter, so you can review. Declining needs a reason.	你不是提交人，可以复核。拒绝须填写原因。
+risk	risk.underwriting.review.approve	ADDED	Approve	批准
+risk	risk.underwriting.review.comment	ADDED	Review comment	复核意见
+risk	risk.underwriting.review.commentRequired	ADDED	A comment is required when declining	拒绝时须填写复核意见
+risk	risk.underwriting.review.placeholder	ADDED	Review comment (required when declining)	复核意见（拒绝时必填）
+risk	risk.underwriting.review.selfBlocked	ADDED	You submitted this underwriting, so someone else with review permission must review it (four eyes). The server checks this too.	你是提交人，须由另一位具有复核权限的人员复核（四眼）。服务端同样校验复核人 ≠ 提交人。
+risk	risk.underwriting.review.title	ADDED	Review	复核
+risk	risk.underwriting.review.waiting	ADDED	Waiting for a Risk lead to review.	等待风控负责人复核。
+risk	risk.underwriting.revise	ADDED	Revise	修订
+risk	risk.underwriting.reviseHint	ADDED	Revising creates a v{next} draft from the effective version, with the latest due-diligence and business inputs. v{current} stays effective until v{next} is approved. Only one revision can be in progress per client.	修订会以当前生效版本为底稿新建 v{next} 草稿（重新带出最新尽调与业务信息）；v{next} 批准前 v{current} 仍然有效。同一客户同时只能有一份进行中的修订。
+risk	risk.underwriting.revisionOpen	ADDED	A revision (v{version}) is in progress.	已有进行中的修订（v{version}）。
+risk	risk.underwriting.revisionReason	ADDED	Reason for revision	修订原因
+risk	risk.underwriting.saveDraft	ADDED	Save draft	保存草稿
+risk	risk.underwriting.savedAt	ADDED	Saved {time}	已保存 {time}
+risk	risk.underwriting.source.AUTO_RULE	ADDED	Auto rule	自动规则
+risk	risk.underwriting.source.MANUAL	ADDED	Manual	人工
+risk	risk.underwriting.source.autoBy	ADDED	Auto rule v{version} · triggered by {person}	自动规则 v{version} · 触发人 {person}
+risk	risk.underwriting.source.autoVersion	ADDED	Auto rule v{version}	自动规则 v{version}
+risk	risk.underwriting.source.draftBy	ADDED	Draft by {person}	{person} 的草稿
+risk	risk.underwriting.source.manualBy	ADDED	Manual · {person} decided on submission ({level})	人工 · {person} 提交即生效（{level}）
+risk	risk.underwriting.source.reviewedBy	ADDED	Manual · submitted by {submitter}, reviewed by {reviewer} (HIGH)	人工 · {submitter} 提交，{reviewer} 复核（HIGH）
+risk	risk.underwriting.source.submittedBy	ADDED	Submitted by {person}, awaiting review	{person} 提交，待复核
+risk	risk.underwriting.source.system	ADDED	System rule	系统规则
+risk	risk.underwriting.sources.application	ADDED	Onboarding application	入驻申请
+risk	risk.underwriting.sources.case	ADDED	Due-diligence case	尽调案件
+risk	risk.underwriting.sources.classification	ADDED	Classification confirmed	分类确认
+risk	risk.underwriting.sources.revision	ADDED	draft revision {revision}	草稿修订 {revision}
+risk	risk.underwriting.sources.title	ADDED	Input sources (frozen on submit)	输入来源（提交时冻结）
+risk	risk.underwriting.sources.version	ADDED	version {version}	版本 {version}
+risk	risk.underwriting.startingTier	ADDED	Verification tier → moves to Observation after the observation period (REQ-04)	验证档 → 观察期满由 REQ-04 推进到观察档
+risk	risk.underwriting.stats.approvedThisMonth	ADDED	Approved this month	本月已批准
+risk	risk.underwriting.stats.declinedThisMonth	ADDED	Declined this month	本月已拒绝
+risk	risk.underwriting.stats.draft	ADDED	Drafts	草稿
+risk	risk.underwriting.stats.effective	ADDED	Effective	生效中
+risk	risk.underwriting.stats.submitted	ADDED	Awaiting review	待复核
+risk	risk.underwriting.status.APPROVED	ADDED	Approved	已批准
+risk	risk.underwriting.status.DECLINED	ADDED	Declined	已拒绝
+risk	risk.underwriting.status.DRAFT	ADDED	Draft	草稿
+risk	risk.underwriting.status.SUBMITTED	ADDED	Awaiting review	待复核
+risk	risk.underwriting.status.SUPERSEDED	ADDED	Superseded	已作废
+risk	risk.underwriting.status.effective	ADDED	Approved · Effective	已批准 · 生效
+risk	risk.underwriting.status.new	ADDED	New	新建
+risk	risk.underwriting.submit	ADDED	Submit	提交
+risk	risk.underwriting.submitBlocked	ADDED	Inputs aren't ready, so you can't submit yet.	输入未就绪，暂不能提交。
+risk	risk.underwriting.submitForReview	ADDED	Submit for review	提交复核
+risk	risk.underwriting.submitHint.high	ADDED	After you submit it waits for review. HIGH must be approved or declined by another person with review permission (the submitter can't decline HIGH). Declining needs a reason and doesn't affect compliance qualification.	提交后进入待复核；HIGH 须由另一位具有复核权限的人员批准或拒绝（提交人不能拒绝 HIGH）。拒绝须写原因，不影响合规资格。
+risk	risk.underwriting.submitHint.standard	ADDED	LOW / MEDIUM is decided when you submit: approve, or decline with a reason.	LOW / MEDIUM 提交即决定：批准，或填写原因拒绝。
+risk	risk.underwriting.title	ADDED	Underwriting	承保
+risk	risk.underwriting.validation.depositAmount	ADDED	Enter an amount greater than 0 (up to 8 decimals)	请输入大于 0 的金额（最多 8 位小数）
+risk	risk.underwriting.validation.depositCurrency	ADDED	Use a 3-letter currency code	请输入 3 位币种代码
+risk	risk.underwriting.validation.observationDays	ADDED	Enter 1–365 days	请输入 1—365 天
+risk	risk.underwriting.validation.observationTransactions	ADDED	Enter 1–100,000 transactions	请输入 1—100,000 笔
+risk	risk.underwriting.validation.reasonRequired	ADDED	Explain why you changed the default	请说明更改默认值的理由
+risk	risk.underwriting.validation.required	ADDED	Required	必填
+risk	risk.underwriting.validation.settlementDays	ADDED	Enter a whole number from 0 to 90	请输入 0—90 的整数
+risk	risk.underwriting.validation.tooLong	ADDED	Up to {max} characters	最多 {max} 个字符

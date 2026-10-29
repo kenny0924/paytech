@@ -1,0 +1,30 @@
++--------------------+-------------------------------+-------------+-------+------+-----------------------+------------------------+----------+-------------------+----------------------------+
+| data_source_id     | data_source_code              | engine_type | host  | port | database_name         | username               | status   | last_check_result | last_check_time            |
++--------------------+-------------------------------+-------------+-------+------+-----------------------+------------------------+----------+-------------------+----------------------------+
+| 239060837141135360 | MOR_ACQUIRING_REPLICA         | MYSQL       | mysql | 3306 | mor_acquiring         | data_query_demo_reader | ACTIVE   | PASSED            | 2026-10-22 16:22:25.235883 |
+| 239060838164545536 | MOR_CLIENT_MASTER_REPLICA     | MYSQL       | mysql | 3306 | mor_client_master     | data_query_demo_reader | ACTIVE   | PASSED            | 2026-10-22 16:22:25.420117 |
+| 239060838932103168 | MOR_COMMERCIAL_REPLICA        | MYSQL       | mysql | 3306 | mor_commercial        | data_query_demo_reader | ACTIVE   | PASSED            | 2026-10-22 16:22:25.620492 |
+| 239060840412692480 | MOR_LEDGER_REPLICA            | MYSQL       | mysql | 3306 | mor_ledger            | data_query_demo_reader | ACTIVE   | PASSED            | 2026-10-22 16:22:26.036294 |
+| 239060841868115968 | MOR_RECONCILIATION_REPLICA    | MYSQL       | mysql | 3306 | mor_reconciliation    | data_query_demo_reader | ACTIVE   | PASSED            | 2026-10-22 16:26:21.744011 |
+| 239060842660839424 | MOR_CHANNEL_CONNECTOR_REPLICA | MYSQL       | mysql | 3306 | mor_channel_connector | data_query_demo_reader | INACTIVE | NULL              | NULL                       |
+| 239060843189321728 | MOR_TEST_MYSQL_INSTANCE       | MYSQL       | mysql | 3306 | NULL                  | data_query_demo_reader | ACTIVE   | PASSED            | 2026-10-22 16:45:36.289938 |
++--------------------+-------------------------------+-------------+-------+------+-----------------------+------------------------+----------+-------------------+----------------------------+
++----------------------------------------+----------------------------+----------+--------------------+
+| template_code                          | data_source_code           | status   | current_version_no |
++----------------------------------------+----------------------------+----------+--------------------+
+| DEMO_AGREEMENT_LIST                    | MOR_COMMERCIAL_REPLICA     | ACTIVE   |                  1 |
+| DEMO_CLIENT_LIST                       | MOR_CLIENT_MASTER_REPLICA  | ACTIVE   |                  1 |
+| DEMO_CLIENT_ORDER_SUMMARY              | MOR_TEST_MYSQL_INSTANCE    | ACTIVE   |                  1 |
+| DEMO_JOURNAL_LINES                     | MOR_LEDGER_REPLICA         | ACTIVE   |                  1 |
+| DEMO_ORDER_SEARCH                      | MOR_ACQUIRING_REPLICA      | ACTIVE   |                  1 |
+| DEMO_RECON_EXCEPTIONS                  | MOR_RECONCILIATION_REPLICA | ACTIVE   |                  1 |
+| DEMO_REFUND_REQUESTS                   | MOR_ACQUIRING_REPLICA      | INACTIVE |                  1 |
+| GOLIVE_AGREEMENT_ACTIVE                | MOR_COMMERCIAL_REPLICA     | ACTIVE   |                  1 |
+| GOLIVE_AGREEMENT_DRAFTED               | MOR_COMMERCIAL_REPLICA     | ACTIVE   |                  1 |
+| GOLIVE_COLLECTION_CAPABILITIES_ENABLED | MOR_COMMERCIAL_REPLICA     | ACTIVE   |                  1 |
++----------------------------------------+----------------------------+----------+--------------------+
++--------------+----------------+
+| source_taken | template_taken |
++--------------+----------------+
+|            0 |              0 |
++--------------+----------------+

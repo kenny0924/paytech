@@ -137,6 +137,7 @@ final class RiskOwnerResponseShapeValidator {
         roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.RejectionReasonReferenceResponseBody>>() {}.getType(), page(reasonReference));
         addFlowRoots(roots);
         addControlRoots(roots);
+        addUnderwritingRoots(roots);
         addEvaluationRoots(roots);
         return Map.copyOf(roots);
     }
@@ -212,6 +213,44 @@ final class RiskOwnerResponseShapeValidator {
         roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.control.response.RiskListEntryResponseBody>>() {}.getType(), page(entry));
         roots.put(com.paytech.risk.decision.api.response.ExecutionReleaseResponseBody.class, release);
         roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.response.ExecutionReleaseListItemResponseBody>>() {}.getType(), page(item));
+    }
+
+    /** Client 承保（REQ-03）的精确响应字段集；状态、级别与来源编码只校验为字符串，由页面容错未知值。 */
+    private static void addUnderwritingRoots(Map<Type, Shape> roots) {
+        Shape exposure = object(fields(TEXT, "amount currency formula"), fields(INTEGER, "riskDays"),
+            fields(BOOLEAN, "settlementDaysAssumed"));
+        Shape input = object(fields(TEXT, "clientDisplayName clientNo clientType jurisdictionCode"),
+            fields(NULLABLE_TEXT, "crr ddTier mccCode industryCode expectedMonthlyVolume volumeCurrency expectedTicket "
+                + "fulfillmentType websiteUrl refundPolicyUrl expectedPaymentMethods sourceCaseId sourceCaseVersion "
+                + "sourceApplicationId sourceDraftRevision sourceClassificationConfirmedAt"),
+            fields(nullable(INTEGER), "fulfillmentDays"), fields(BOOLEAN, "networkHighRiskMcc crrMissing"));
+        Shape decision = object(fields(nullable(INTEGER), "observationDays observationTransactions suggestedSettlementDays"),
+            fields(BOOLEAN, "requireDeposit depositBlocksCollection highRiskMcc"),
+            fields(NULLABLE_TEXT, "depositAmount depositCurrency highRiskMccReason limitNote underwritingNote handoverNote"));
+        Shape underwriting = object(fields(TEXT, "underwritingId clientId status reviewLevel createdBy createdAt updatedAt"),
+            fields(INTEGER, "versionNo version"), fields(nullable(INTEGER), "ruleVersionNo"),
+            fields(NULLABLE_TEXT, "decisionSource exposureUnavailableReason declineReason reviewComment revisionReason "
+                + "supersedesUnderwritingId submittedBy submittedAt decidedBy decidedAt supersededAt"),
+            fields(input, "input"), fields(decision, "decision"), fields(nullable(exposure), "estimatedExposure"));
+        Shape summary = object(fields(TEXT, "underwritingId clientId clientDisplayName clientNo jurisdictionCode clientType "
+                + "status reviewLevel updatedAt"),
+            fields(NULLABLE_TEXT, "crr mccCode decisionSource fulfillmentType submittedBy decidedBy"),
+            fields(BOOLEAN, "networkHighRiskMcc requireDeposit"), fields(INTEGER, "versionNo"),
+            fields(nullable(INTEGER), "ruleVersionNo suggestedSettlementDays"), fields(nullable(exposure), "estimatedExposure"));
+        Shape check = object(fields(TEXT, "code"), fields(BOOLEAN, "passed"));
+        roots.put(com.paytech.risk.decision.api.control.response.UnderwritingResponseBody.class, underwriting);
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.control.response.UnderwritingSummaryBody>>() {}.getType(),
+            page(summary));
+        roots.put(com.paytech.risk.decision.api.control.response.ClientUnderwritingCurrentResponseBody.class,
+            object(fields(nullable(underwriting), "effective open latest")));
+        roots.put(com.paytech.risk.decision.api.control.response.UnderwritingHistoryResponseBody.class,
+            object(fields(array(underwriting), "items")));
+        roots.put(com.paytech.risk.decision.api.control.response.UnderwritingStatisticsResponseBody.class,
+            object(fields(TOTAL, "effective draft submitted approvedThisMonth declinedThisMonth")));
+        roots.put(com.paytech.risk.decision.api.control.response.UnderwritingPreviewResponseBody.class,
+            object(fields(nullable(INTEGER), "ruleVersionNo"), fields(BOOLEAN, "autoEligible"), fields(array(check), "checks"),
+                fields(nullable(exposure), "estimatedExposure"), fields(NULLABLE_TEXT, "exposureUnavailableReason thresholdAmount thresholdCurrency"),
+                fields(TEXT, "reviewLevel")));
     }
 
     /**

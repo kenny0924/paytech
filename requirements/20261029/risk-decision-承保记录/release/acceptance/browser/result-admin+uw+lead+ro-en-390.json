@@ -1,0 +1,813 @@
+{
+  "locale": "en",
+  "width": 390,
+  "steps": [
+    {
+      "step": "admin:L1-list",
+      "check": {
+        "stats": [
+          "Effective 2",
+          "Drafts 0",
+          "Awaiting review 0",
+          "Approved this month 3",
+          "Declined this month 2"
+        ],
+        "tabs": [
+          "All",
+          "Draft",
+          "Awaiting review",
+          "Approved",
+          "Declined",
+          "Superseded"
+        ],
+        "rows": [
+          "Accept Tester CL-239260386824658945 · AE · Individual CRR not rated 5999 Miscellaneous and Specialty Retail Stores Declined v1 Manual Can't estimate r***@example.test — 10-29 22:53 View",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH 5967 Direct Marketing – Inbound Teleservices Merchant Card-network high-risk Approved v2 Manual Can't estimate r***@example.test o***@example.test 10-29 22:52 View",
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · Organization LOW 5999 Miscellaneous and Specialty Retail Stores Approved v2 Manual Can't estimate r***@example.test — 10-29 22:52 View"
+        ],
+        "newButton": 1,
+        "pendingSwitch": 1,
+        "total": "3 in total"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L2-tab-superseded",
+      "check": {
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · Organization LOW 5999 Miscellaneous and Specialty Retail Stores Superseded v1 Auto rule v1 Can't estimate — System rule 10-29 22:52 View"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L3-tab-declined",
+      "check": {
+        "rows": [
+          "Accept Tester CL-239260386824658945 · AE · Individual CRR not rated 5999 Miscellaneous and Specialty Retail Stores Declined v1 Manual Can't estimate r***@example.test — 10-29 22:53 View",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH 5967 Direct Marketing – Inbound Teleservices Merchant Card-network high-risk Declined v1 Manual Can't estimate r***@example.test r***@example.test 10-29 22:52 View"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L4-filter-crr-high",
+      "check": {
+        "rows": [
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH 5967 Direct Marketing – Inbound Teleservices Merchant Card-network high-risk Approved v2 Manual Can't estimate r***@example.test o***@example.test 10-29 22:52 View"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L5-filter-auto-superseded",
+      "check": {
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · Organization LOW 5999 Miscellaneous and Specialty Retail Stores Superseded v1 Auto rule v1 Can't estimate — System rule 10-29 22:52 View"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L6-search-client-id",
+      "check": {
+        "rows": [
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH 5967 Direct Marketing – Inbound Teleservices Merchant Card-network high-risk Approved v2 Manual Can't estimate r***@example.test o***@example.test 10-29 22:52 View"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L7-pending-for-me",
+      "check": {
+        "rows": [],
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P05-L-v2-history",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC Approved · Effective v2",
+        "meta": "CL-240686705999454209 · AE · Approved 10-29 22:52 · Can't be changed after approval",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v2 Approved · Effective Manual · r***@example.test decided on submission (LOW) 10-29 22:52 · Revision reason: REQ-03 mor-test 验收：补充 T+N",
+          "v1 Superseded Auto rule v1 · triggered by r***@example.test 10-29 22:52 · Superseded by v2 View"
+        ],
+        "buttons": [
+          {
+            "text": "Revise",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period 30 days or 100 transactions, whichever comes first",
+          "Security deposit Not required",
+          "Suggested settlement (T+N) T+7",
+          "Card-network registration Not needed",
+          "Limit notes —",
+          "Underwriting notes REQ-03 mor-test 验收",
+          "Reason for revision REQ-03 mor-test 验收：补充 T+N"
+        ],
+        "sources": [
+          "Due-diligence case 240686862329565184 · version 18",
+          "Onboarding application 240686705999454208 · draft revision 0",
+          "Classification confirmed 10-27 08:03"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P05-revise-dialog",
+      "check": {
+        "modal": "Revise Revising creates a v3 draft from the effective version, with the latest due-diligence and business inputs. v2 stays effective until v3 is approved. Only one revision can be in progress per client. 0 / 500 Required Cancel Revise",
+        "fieldError": "Required"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D1-L-v1-superseded-auto",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC Superseded v1",
+        "meta": "CL-240686705999454209 · AE · Approved 10-29 22:52",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v2 Approved · Effective Manual · r***@example.test decided on submission (LOW) 10-29 22:52 · Revision reason: REQ-03 mor-test 验收：补充 T+N View",
+          "v1 Superseded Auto rule v1 · triggered by r***@example.test 10-29 22:52 · Superseded by v2"
+        ],
+        "buttons": [],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period 30 days or 100 transactions, whichever comes first",
+          "Security deposit Not required",
+          "Suggested settlement (T+N) Not set",
+          "Card-network registration Not needed",
+          "Limit notes —"
+        ],
+        "sources": [
+          "Due-diligence case 240686862329565184 · version 18",
+          "Onboarding application 240686705999454208 · draft revision 0",
+          "Classification confirmed 10-27 08:03"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D2-H-v2-high-approved",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC Approved · Effective v2",
+        "meta": "CL-241049681294106625 · AE · Approved 10-29 22:52 · Can't be changed after approval",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v2 Approved · Effective Manual · submitted by r***@example.test, reviewed by o***@example.test (HIGH) 10-29 22:52",
+          "v1 Declined Manual · submitted by r***@example.test, reviewed by r***@example.test (HIGH) 10-29 22:52 · Declined: REQ-03 验收：拒绝路径 View"
+        ],
+        "buttons": [
+          {
+            "text": "Revise",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period 30 days or 100 transactions, whichever comes first",
+          "Security deposit Required USD 20,000 · block collection until received · enforced by REQ-18",
+          "Suggested settlement (T+N) T+14",
+          "Card-network registration Needed",
+          "Limit notes —",
+          "Underwriting notes REQ-03 mor-test 验收",
+          "Review comment REQ-03 验收：四眼批准"
+        ],
+        "sources": [
+          "Due-diligence case 241049829650845696 · version 17",
+          "Onboarding application 241049681294106624 · draft revision 0",
+          "Classification confirmed 10-29 22:51"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D3-H-v1-declined",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC Declined v1",
+        "meta": "CL-241049681294106625 · AE · Declined 10-29 22:52",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v2 Approved · Effective Manual · submitted by r***@example.test, reviewed by o***@example.test (HIGH) 10-29 22:52 View",
+          "v1 Declined Manual · submitted by r***@example.test, reviewed by r***@example.test (HIGH) 10-29 22:52 · Declined: REQ-03 验收：拒绝路径"
+        ],
+        "buttons": [],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period 30 days or 100 transactions, whichever comes first",
+          "Security deposit Required USD 20,000 · enforced by REQ-18",
+          "Suggested settlement (T+N) T+14",
+          "Card-network registration Needed",
+          "Limit notes —",
+          "Underwriting notes REQ-03 mor-test 验收",
+          "Reason for declining REQ-03 验收：拒绝路径"
+        ],
+        "sources": [
+          "Due-diligence case 241049829650845696 · version 17",
+          "Onboarding application 241049681294106624 · draft revision 0",
+          "Classification confirmed 10-29 22:51"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D4-M-v1-no-crr-declined",
+      "check": {
+        "title": "Accept Tester Declined v1",
+        "meta": "CL-239260386824658945 · AE · Declined 10-29 22:53",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v1 Declined Manual · r***@example.test decided on submission (MEDIUM) 10-29 22:53 · Declined: REQ-03 验收：尽调未评 CRR"
+        ],
+        "buttons": [],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period 30 days or 100 transactions, whichever comes first",
+          "Security deposit Not required",
+          "Suggested settlement (T+N) Not set",
+          "Card-network registration Not needed",
+          "Limit notes —",
+          "Underwriting notes REQ-03 mor-test 验收",
+          "Reason for declining REQ-03 验收：尽调未评 CRR"
+        ],
+        "sources": [
+          "Due-diligence case 239260421964550144 · version 4",
+          "Onboarding application 239260386824658944 · draft revision 0",
+          "Classification confirmed 10-23 09:35"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:N1-new-H-effective-exists",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC New",
+        "meta": "CL-241049681294106625 · AE · Organization",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [
+          "This client already has an effective underwriting (v2). Open it and revise to change the decision. View"
+        ],
+        "history": [],
+        "buttons": [],
+        "decision": [],
+        "sources": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:N2-new-M-manual",
+      "check": {
+        "title": "Accept Tester New",
+        "meta": "CL-239260386824658945 · AE · Individual",
+        "checks": [
+          "is-fail: Client risk rating is LOW (current: CRR not rated) Only LOW CRR can be auto-underwritten.",
+          "is-pass: Expected monthly volume USD 50,000 ≤ threshold USD 50,000",
+          "is-pass: MCC 5999 Miscellaneous and Specialty Retail Stores isn't high-risk (card-network list ∪ Risk exclusions)"
+        ],
+        "verdict": "Doesn't meet the auto-underwriting rule · manual underwriting Fill in the decision below. LOW / MEDIUM is decided when you submit.",
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [],
+        "buttons": [
+          {
+            "text": "Save draft",
+            "disabled": false
+          },
+          {
+            "text": "Decline",
+            "disabled": false
+          },
+          {
+            "text": "Submit",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period days or transactions, whichever comes first",
+          "Security deposit Require",
+          "Suggested settlement (T+N) T+",
+          "Card-network registration Needed (MCC isn't card-network high-risk)",
+          "Limit notes",
+          "Underwriting notes 0 / 2000",
+          "Handover notes for Commercial"
+        ],
+        "sources": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:N3-new-M-tn-preview",
+      "check": {
+        "title": "Accept Tester New",
+        "meta": "CL-239260386824658945 · AE · Individual",
+        "checks": [
+          "is-fail: Client risk rating is LOW (current: CRR not rated) Only LOW CRR can be auto-underwritten.",
+          "is-pass: Expected monthly volume USD 50,000 ≤ threshold USD 50,000",
+          "is-pass: MCC 5999 Miscellaneous and Specialty Retail Stores isn't high-risk (card-network list ∪ Risk exclusions)"
+        ],
+        "verdict": "Doesn't meet the auto-underwriting rule · manual underwriting Fill in the decision below. LOW / MEDIUM is decided when you submit.",
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [],
+        "buttons": [
+          {
+            "text": "Save draft",
+            "disabled": false
+          },
+          {
+            "text": "Decline",
+            "disabled": false
+          },
+          {
+            "text": "Submit",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period days or transactions, whichever comes first",
+          "Security deposit Require",
+          "Suggested settlement (T+N) T+",
+          "Card-network registration Needed (MCC isn't card-network high-risk)",
+          "Limit notes",
+          "Underwriting notes 0 / 2000",
+          "Handover notes for Commercial"
+        ],
+        "sources": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:E1-client-detail-L",
+      "check": {
+        "entry": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:E2-review-case-L",
+      "check": {
+        "entry": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:E3-review-case-H",
+      "check": {
+        "entry": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:R-OPERATIONS_RISK_UNDERWRITING",
+      "check": {
+        "editor": "承保 Page Menu OPERATIONS_RISK_UNDERWRITING Enabled Edit Basic Information Resource Name Parent Resource 风控管理 Sort Order Page & Permission Page Component 承保 Visibility Permission RISK_UNDERWRITING_READ Frontend Route /risk/underwriting",
+        "warnings": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 27
+      }
+    },
+    {
+      "step": "admin:R-OPERATIONS_RISK_UNDERWRITING_MANAGE",
+      "check": {
+        "editor": "维护 Button OPERATIONS_RISK_UNDERWRITING_MANAGE Enabled Edit Basic Information Resource Name Page 承保 Sort Order Page & Permission Visibility Permission RISK_UNDERWRITING_MANAGE",
+        "warnings": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 3
+      }
+    },
+    {
+      "step": "admin:R-OPERATIONS_RISK_UNDERWRITING_APPROVE",
+      "check": {
+        "editor": "复核 Button OPERATIONS_RISK_UNDERWRITING_APPROVE Enabled Edit Basic Information Resource Name Page 承保 Sort Order Page & Permission Visibility Permission RISK_UNDERWRITING_APPROVE",
+        "warnings": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 3
+      }
+    },
+    {
+      "step": "admin:G1-risk-rules",
+      "check": {
+        "heading": "New Rule Set"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:G2-workflow-instances",
+      "check": {
+        "rows": [
+          "上线验收 · 237573699337822209 CLIENT:237573699337822209 REQ-05 验收 · 客户上线（commercial） · v1 0 / 4 task nodes completed O* N3 合同起草检查 o***@example.test Pending o***@example.test · 10-29 13:47",
+          "上线验收 · 237573382420406273 CLIENT:237573382420406273 REQ-05 验收 · 客户上线（commercial） · v1 1 / 4 task nodes completed O* N4 合同生效检查 o***@example.test Pending o***@example.test · 10-29 13:47",
+          "上线验收 · 237573267559391233 CLIENT:237573267559391233 REQ-05 验收 · 客户上线（commercial） · v1 2 / 4 task nodes completed O* N8 收款开通检查 o***@example.test Pending o***@example.test · 10-29 13:47",
+          "DEMO-CL-001 合同变更复盘（待处理） DEMO-CL-001 合同变更复盘 · v1 0 / 1 task nodes completed O* 变更复盘 o***@example.test Pending o***@example.test · 10-23 11:56",
+          "DEMO-CL-001 定价上线核对（待处理） DEMO-CL-001 客户定价上线核对 · v1 1 / 2 task nodes completed O* 上线审批 o***@example.test Pending Approval o***@example.test · 10-23 11:56",
+          "WF-INLINE-20261022 内嵌预览实例 WF-INLINE-20261022 WF-INLINE-20261022 内嵌预览流程 · v1 0 / 1 task nodes completed O* 上传待审文件 o***@example.test Pending Approval o***@example.test · 10-22 21:19"
+        ],
+        "empty": 0
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 571
+      }
+    },
+    {
+      "step": "admin:G3-agreement-detail",
+      "check": {
+        "path": "/commercial/agreements/240113831739723776",
+        "heading": "PayFac Partner Agreement · AE001"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:L1-list",
+      "check": {
+        "stats": [
+          "Effective 2",
+          "Drafts 0",
+          "Awaiting review 0",
+          "Approved this month 3",
+          "Declined this month 2"
+        ],
+        "tabs": [
+          "All",
+          "Draft",
+          "Awaiting review",
+          "Approved",
+          "Declined",
+          "Superseded"
+        ],
+        "rows": [
+          "Accept Tester CL-239260386824658945 · AE · Individual CRR not rated 5999 Miscellaneous and Specialty Retail Stores Declined v1 Manual Can't estimate r***@example.test — 10-29 22:53 View",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH 5967 Direct Marketing – Inbound Teleservices Merchant Card-network high-risk Approved v2 Manual Can't estimate r***@example.test o***@example.test 10-29 22:52 View",
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · Organization LOW 5999 Miscellaneous and Specialty Retail Stores Approved v2 Manual Can't estimate r***@example.test — 10-29 22:52 View"
+        ],
+        "newButton": 1,
+        "pendingSwitch": 0,
+        "total": "3 in total"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:D2-H-v2",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC Approved · Effective v2",
+        "meta": "CL-241049681294106625 · AE · Approved 10-29 22:52 · Can't be changed after approval",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v2 Approved · Effective Manual · submitted by r***@example.test, reviewed by o***@example.test (HIGH) 10-29 22:52",
+          "v1 Declined Manual · submitted by r***@example.test, reviewed by r***@example.test (HIGH) 10-29 22:52 · Declined: REQ-03 验收：拒绝路径 View"
+        ],
+        "buttons": [
+          {
+            "text": "Revise",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period 30 days or 100 transactions, whichever comes first",
+          "Security deposit Required USD 20,000 · block collection until received · enforced by REQ-18",
+          "Suggested settlement (T+N) T+14",
+          "Card-network registration Needed",
+          "Limit notes —",
+          "Underwriting notes REQ-03 mor-test 验收",
+          "Review comment REQ-03 验收：四眼批准"
+        ],
+        "sources": [
+          "Due-diligence case 241049829650845696 · version 17",
+          "Onboarding application 241049681294106624 · draft revision 0",
+          "Classification confirmed 10-29 22:51"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "uw:N2-new-M-manual",
+      "check": {
+        "title": "Accept Tester New",
+        "meta": "CL-239260386824658945 · AE · Individual",
+        "checks": [
+          "is-fail: Client risk rating is LOW (current: CRR not rated) Only LOW CRR can be auto-underwritten.",
+          "is-pass: Expected monthly volume USD 50,000 ≤ threshold USD 50,000",
+          "is-pass: MCC 5999 Miscellaneous and Specialty Retail Stores isn't high-risk (card-network list ∪ Risk exclusions)"
+        ],
+        "verdict": "Doesn't meet the auto-underwriting rule · manual underwriting Fill in the decision below. LOW / MEDIUM is decided when you submit.",
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [],
+        "buttons": [
+          {
+            "text": "Save draft",
+            "disabled": false
+          },
+          {
+            "text": "Decline",
+            "disabled": false
+          },
+          {
+            "text": "Submit",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period days or transactions, whichever comes first",
+          "Security deposit Require",
+          "Suggested settlement (T+N) T+",
+          "Card-network registration Needed (MCC isn't card-network high-risk)",
+          "Limit notes",
+          "Underwriting notes 0 / 2000",
+          "Handover notes for Commercial"
+        ],
+        "sources": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "lead:L7-pending-for-me",
+      "check": {
+        "rows": [],
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "lead:D2-H-v2",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC Approved · Effective v2",
+        "meta": "CL-241049681294106625 · AE · Approved 10-29 22:52 · Can't be changed after approval",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v2 Approved · Effective Manual · submitted by r***@example.test, reviewed by o***@example.test (HIGH) 10-29 22:52",
+          "v1 Declined Manual · submitted by r***@example.test, reviewed by r***@example.test (HIGH) 10-29 22:52 · Declined: REQ-03 验收：拒绝路径 View"
+        ],
+        "buttons": [
+          {
+            "text": "Revise",
+            "disabled": false
+          }
+        ],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period 30 days or 100 transactions, whichever comes first",
+          "Security deposit Required USD 20,000 · block collection until received · enforced by REQ-18",
+          "Suggested settlement (T+N) T+14",
+          "Card-network registration Needed",
+          "Limit notes —",
+          "Underwriting notes REQ-03 mor-test 验收",
+          "Review comment REQ-03 验收：四眼批准"
+        ],
+        "sources": [
+          "Due-diligence case 241049829650845696 · version 17",
+          "Onboarding application 241049681294106624 · draft revision 0",
+          "Classification confirmed 10-29 22:51"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:L1-list",
+      "check": {
+        "stats": [
+          "Effective 2",
+          "Drafts 0",
+          "Awaiting review 0",
+          "Approved this month 3",
+          "Declined this month 2"
+        ],
+        "tabs": [
+          "All",
+          "Draft",
+          "Awaiting review",
+          "Approved",
+          "Declined",
+          "Superseded"
+        ],
+        "rows": [
+          "Accept Tester CL-239260386824658945 · AE · Individual CRR not rated 5999 Miscellaneous and Specialty Retail Stores Declined v1 Manual Can't estimate r***@example.test — 10-29 22:53 View",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH 5967 Direct Marketing – Inbound Teleservices Merchant Card-network high-risk Approved v2 Manual Can't estimate r***@example.test o***@example.test 10-29 22:52 View",
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · Organization LOW 5999 Miscellaneous and Specialty Retail Stores Approved v2 Manual Can't estimate r***@example.test — 10-29 22:52 View"
+        ],
+        "newButton": 0,
+        "pendingSwitch": 0,
+        "total": "3 in total"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:P05-L-v2",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC Approved · Effective v2",
+        "meta": "CL-240686705999454209 · AE · Approved 10-29 22:52 · Can't be changed after approval",
+        "checks": [],
+        "exposure": "Can't estimate The fulfillment type wasn't collected.",
+        "alerts": [],
+        "history": [
+          "v2 Approved · Effective Manual · r***@example.test decided on submission (LOW) 10-29 22:52 · Revision reason: REQ-03 mor-test 验收：补充 T+N",
+          "v1 Superseded Auto rule v1 · triggered by r***@example.test 10-29 22:52 · Superseded by v2 View"
+        ],
+        "buttons": [],
+        "decision": [
+          "Starting limit tier Verification tier → moves to Observation after the observation period (REQ-04)",
+          "Observation period 30 days or 100 transactions, whichever comes first",
+          "Security deposit Not required",
+          "Suggested settlement (T+N) T+7",
+          "Card-network registration Not needed",
+          "Limit notes —",
+          "Underwriting notes REQ-03 mor-test 验收",
+          "Reason for revision REQ-03 mor-test 验收：补充 T+N"
+        ],
+        "sources": [
+          "Due-diligence case 240686862329565184 · version 18",
+          "Onboarding application 240686705999454208 · draft revision 0",
+          "Classification confirmed 10-27 08:03"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "ro:N2-new-M-readonly",
+      "check": {
+        "title": "Accept Tester New",
+        "meta": "CL-239260386824658945 · AE · Individual",
+        "checks": [],
+        "exposure": "Can't estimate",
+        "alerts": [
+          "You can view this client's inputs but can't create underwriting."
+        ],
+        "history": [],
+        "buttons": [],
+        "decision": [],
+        "sources": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    }
+  ],
+  "console": [
+    {
+      "step": "admin:goto /console-resources?resource=OPERATIONS_RISK_UNDERWRITING_MANAGE&mode=view",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "admin:goto /console-resources?resource=OPERATIONS_RISK_UNDERWRITING_APPROVE&mode=view",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "admin:goto /risk/rule-configuration",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "admin:goto /workflow/instances",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "uw:goto /risk/underwriting",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "lead:goto /risk/underwriting?pendingReviewForMe=true&page=1&size=20",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "ro:goto /risk/underwriting",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    }
+  ],
+  "httpErrors": [],
+  "writes": [
+    {
+      "step": "admin:N2 T+N",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    }
+  ],
+  "bundles": 112
+}

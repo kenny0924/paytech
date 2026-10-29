@@ -18,7 +18,7 @@ import com.paytech.foundation.testsupport.api.Clear;
 /**
  * mor_risk_decision 全表清理器（design/10 §3.1、§4.2）：触碰的表集合等于本模块 init/ddl.sql 的表集合。
  * <li>各 Mocker 定向清理之后兜底删除本库全部测试数据；保留 risk-decision-initial-data.sql 的目录行（决策点、点版本、Action 目录与参数、
- * 系统变量与成员），只删除目录表中非初始化主键的行。</li>
+ * 系统变量与成员、自动承保规则 v1 与 USD 阈值），只删除目录表中非初始化主键的行。</li>
  * <li>{@link #assertBaseline()} 供全局 BeforeEach 断言空基线：非目录表为 0 行，目录表恰为初始化行数。</li>
  */
 @TestComponent
@@ -34,7 +34,9 @@ public class RiskDecisionDataCleaner implements Clear {
         "t_risk_variable", new Catalog("variable_id", Stream.concat(range(900000000000091001L, 20),
             range(900000000000093001L, 16)).toList()),
         "t_risk_variable_member", new Catalog("member_id", Stream.concat(range(900000000000092002L, 8),
-            range(900000000000094001L, 3)).toList()));
+            range(900000000000094001L, 3)).toList()),
+        "t_underwriting_rule_version", new Catalog("rule_version_id", List.of(290001L)),
+        "t_underwriting_rule_threshold", new Catalog("threshold_id", List.of(290101L)));
 
     /** 只有测试数据、没有初始化行的表（含仅 Schema 的表与每库一份的基础设施表）。 */
     static final List<String> DATA_TABLES = List.of("t_rule_reject_reason", "t_rule_subject_tag",
@@ -49,7 +51,7 @@ public class RiskDecisionDataCleaner implements Clear {
         "t_risk_restriction", "t_risk_list", "t_risk_list_entry", "t_payment_attempt_fact", "t_velocity_event",
         "t_velocity_event_subject", "t_limit_version", "t_decision_point_limit_binding", "t_limit_position",
         "t_limit_reservation_group", "t_limit_reservation", "t_limit_group_state_change", "t_limit_movement",
-        "t_compensation_event", "t_consumed_event");
+        "t_client_underwriting", "t_compensation_event", "t_consumed_event");
 
     private final JdbcTemplate jdbc;
 

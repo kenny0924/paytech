@@ -1,0 +1,89 @@
+{
+ "startedAt": "2026-10-29T18:51:25.438714+00:00",
+ "clients": {
+  "L": "240686705999454209",
+  "H": "241049681294106625",
+  "M": "239260386824658945"
+ },
+ "ids": {},
+ "summary": {
+  "PASS": 12,
+  "FAIL": 0,
+  "SKIP": 0,
+  "INFO": 0
+ },
+ "results": [
+  {
+   "ac": "S",
+   "step": "IAM 建角色 uw",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "S",
+   "step": "IAM 建账号 uw",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "S",
+   "step": "uw 首登改密",
+   "verdict": "PASS",
+   "evidence": "HTTP 204"
+  },
+  {
+   "ac": "S",
+   "step": "uw 已建",
+   "verdict": "PASS",
+   "evidence": "{\"accountId\": \"241635072367738880\", \"roleId\": \"241635063060578304\"}"
+  },
+  {
+   "ac": "S",
+   "step": "IAM 建角色 lead",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "S",
+   "step": "IAM 建账号 lead",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "S",
+   "step": "lead 首登改密",
+   "verdict": "PASS",
+   "evidence": "HTTP 204"
+  },
+  {
+   "ac": "S",
+   "step": "lead 已建",
+   "verdict": "PASS",
+   "evidence": "{\"accountId\": \"241635082190798848\", \"roleId\": \"241635079963623424\"}"
+  },
+  {
+   "ac": "S",
+   "step": "IAM 建角色 ro",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "S",
+   "step": "IAM 建账号 ro",
+   "verdict": "PASS",
+   "evidence": "HTTP 200 {}"
+  },
+  {
+   "ac": "S",
+   "step": "ro 首登改密",
+   "verdict": "PASS",
+   "evidence": "HTTP 204"
+  },
+  {
+   "ac": "S",
+   "step": "ro 已建",
+   "verdict": "PASS",
+   "evidence": "{\"accountId\": \"241635095172169728\", \"roleId\": \"241635091288244224\"}"
+  }
+ ]
+}

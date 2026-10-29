@@ -1,0 +1,352 @@
+{
+  "locale": "zh-CN",
+  "width": 1440,
+  "steps": [
+    {
+      "step": "admin:L1-list",
+      "check": {
+        "stats": [
+          "生效中 3",
+          "草稿 1",
+          "待复核 1",
+          "本月已批准 4",
+          "本月已拒绝 2"
+        ],
+        "tabs": [
+          "全部",
+          "草稿",
+          "待复核",
+          "已批准",
+          "已拒绝",
+          "已作废"
+        ],
+        "rows": 5,
+        "newButton": 1,
+        "pendingSwitch": 1,
+        "total": "共 5 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L2-tab-draft",
+      "check": {
+        "rows": [
+          "Acceptance Trading 1027031415 LLC CL-240674482170114049 · AE · 机构 未评 CRR 5999 其他专门零售店 草稿 v2 人工 无法估算 — — 10-29 20:37 继续"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L2b-tab-superseded",
+      "check": {
+        "rows": [
+          "Acceptance Trading 1027031549 LLC CL-240674874987655169 · AE · 机构 LOW 5999 其他专门零售店 已作废 v1 自动规则 v1 无法估算 — 系统规则 10-29 20:38 查看"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L3-filter-high",
+      "check": {
+        "rows": [
+          "Layla Bizinfo0613 CL-241533481480368129 · AE · 个人 HIGH 5651 家庭服装店 已批准 v1 人工 无法估算 r***@example.test r***@example.test 10-29 20:37 查看",
+          "Layla Bizinfo0613 CL-241533316505808897 · AE · 个人 HIGH 5967 直销：电话呼入服务商户 卡组织高风险 待复核 v2 人工 USD 46,666 预售 · T+14 r***@example.test — 10-29 20:37 复核"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:L4-pending-for-me",
+      "check": {
+        "rows": [
+          "Layla Bizinfo0613 CL-241533316505808897 · AE · 个人 HIGH 5967 直销：电话呼入服务商户 卡组织高风险 待复核 v2 人工 USD 46,666 预售 · T+14 r***@example.test — 10-29 20:37 复核"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P02-auto",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC 新建",
+        "meta": "CL-241533217348268033 · AE · 机构",
+        "checks": [
+          "is-pass: 客户风险等级为 LOW（当前 LOW）",
+          "is-pass: 预计月流水 USD 50,000 ≤ 阈值 USD 50,000",
+          "is-pass: MCC 5651 家庭服装店 不在高风险清单（卡组织标记 ∪ 风控排除清单）"
+        ],
+        "verdict": "符合自动承保条件 可一键生成已批准记录：审批人记为系统规则，记录规则版本与操作人，无需复核。",
+        "exposure": "USD 0.00 = USD 50,000 × 0 ÷ 30",
+        "alerts": [],
+        "history": [],
+        "buttons": [
+          {
+            "text": "改为人工承保",
+            "disabled": false
+          },
+          {
+            "text": "一键自动承保",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P03-manual-live-exposure",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC 新建",
+        "meta": "CL-241533217348268033 · AE · 机构",
+        "checks": [
+          "is-pass: 客户风险等级为 LOW（当前 LOW）",
+          "is-pass: 预计月流水 USD 50,000 ≤ 阈值 USD 50,000",
+          "is-pass: MCC 5651 家庭服装店 不在高风险清单（卡组织标记 ∪ 风控排除清单）"
+        ],
+        "verdict": "符合自动承保条件 可一键生成已批准记录：审批人记为系统规则，记录规则版本与操作人，无需复核。",
+        "exposure": "USD 11,666.67 = USD 50,000 × 7 ÷ 30",
+        "alerts": [],
+        "history": [],
+        "exposureBefore": "USD 0.00 = USD 50,000 × 0 ÷ 30",
+        "buttons": [
+          {
+            "text": "保存草稿",
+            "disabled": false
+          },
+          {
+            "text": "拒 绝",
+            "disabled": false
+          },
+          {
+            "text": "提 交",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P03-draft-no-crr",
+      "check": {
+        "title": "Acceptance Trading 1027031415 LLC 草稿 v2",
+        "meta": "CL-240674482170114049 · AE",
+        "checks": [
+          "is-fail: 客户风险等级为 LOW（当前 未评 CRR） 只有 CRR 为 LOW 才能自动承保。",
+          "is-pass: 预计月流水 USD 50,000 ≤ 阈值 USD 50,000",
+          "is-pass: MCC 5999 其他专门零售店 不在高风险清单（卡组织标记 ∪ 风控排除清单）"
+        ],
+        "verdict": "不符合自动承保条件 · 需人工承保 在下方填写结论；LOW / MEDIUM 提交即决定。",
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [],
+        "exposureBefore": "无法估算 未采集交付方式。",
+        "crrHint": "尽调未评 CRR，按 MEDIUM 处理",
+        "buttons": [
+          {
+            "text": "保存草稿",
+            "disabled": false
+          },
+          {
+            "text": "拒 绝",
+            "disabled": false
+          },
+          {
+            "text": "提 交",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P04-reviewer",
+      "check": {
+        "title": "Layla Bizinfo0613 待复核 v2",
+        "meta": "CL-241533316505808897 · 提交人 r***@example.test · 提交于 10-29 20:37 · 输入已冻结",
+        "checks": [],
+        "exposure": "USD 46,666.67 = USD 50,000 × (14 + 14) ÷ 30",
+        "alerts": [],
+        "history": [
+          "v2 待复核 r***@example.test 提交，待复核 10-29 20:37",
+          "v1 已拒绝 人工 · r***@example.test 提交，r***@example.test 复核（HIGH） 10-29 20:37 · 拒绝原因：卡组织高风险 MCC 且预售周期长，暂不承保 查看"
+        ],
+        "buttons": [
+          {
+            "text": "拒 绝",
+            "disabled": false
+          },
+          {
+            "text": "批 准",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P05-history",
+      "check": {
+        "title": "Acceptance Trading 1027031549 LLC 已批准 · 生效 v2",
+        "meta": "CL-240674874987655169 · AE · 批准于 10-29 20:38 · 批准后不可修改",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v2 已批准 · 生效 人工 · r***@example.test 提交即生效（LOW） 10-29 20:38 · 修订原因：rq03 stage5：补充 T+N 与保证金",
+          "v1 已作废 自动规则 v1 · 触发人 r***@example.test 10-29 20:37 · 被 v2 取代 查看"
+        ],
+        "buttons": [
+          {
+            "text": "修 订",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:P05-revise-dialog",
+      "check": {
+        "modal": "修订 修订会以当前生效版本为底稿新建 v3 草稿（重新带出最新尽调与业务信息）；v3 批准前 v2 仍然有效。同一客户同时只能有一份进行中的修订。 0 / 500 必填 取 消 修 订",
+        "error": "必填"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D1-medium-approved",
+      "check": {
+        "title": "Layla Bizinfo0319 已批准 · 生效 v1",
+        "meta": "CL-241532599334350849 · AE · 批准于 10-29 20:37 · 批准后不可修改",
+        "checks": [],
+        "exposure": "USD 35,000.00 = USD 50,000 × (14 + 7) ÷ 30",
+        "alerts": [],
+        "history": [
+          "v1 已批准 · 生效 人工 · r***@example.test 提交即生效（MEDIUM） 10-29 20:37"
+        ],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 30 天或 100 笔，先到为准",
+          "保证金 要求 USD 5,000 · 未到账前阻塞收款 · 由 REQ-18 执行",
+          "建议结算周期 T+7",
+          "卡组织登记 不需要",
+          "额度说明 —",
+          "承保说明 rq03 stage5",
+          "交接备注（给商务） 收到保证金后开通收款"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:D2-high-approved",
+      "check": {
+        "title": "Layla Bizinfo0613 已批准 · 生效 v1",
+        "meta": "CL-241533481480368129 · AE · 批准于 10-29 20:37 · 批准后不可修改",
+        "checks": [],
+        "exposure": "无法估算 未采集交付方式。",
+        "alerts": [],
+        "history": [
+          "v1 已批准 · 生效 人工 · r***@example.test 提交，r***@example.test 复核（HIGH） 10-29 20:37"
+        ],
+        "decision": [
+          "起始额度档位 验证档 → 观察期满由 REQ-04 推进到观察档",
+          "观察期 60 天或 300 笔，先到为准",
+          "保证金 不要求",
+          "建议结算周期 T+3",
+          "卡组织登记 不需要",
+          "额度说明 —",
+          "承保说明 rq03 stage5",
+          "复核意见 同意，观察期 60 天"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:E1-client-detail",
+      "check": {
+        "entry": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "admin:E2-review-case",
+      "check": {
+        "entry": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    }
+  ],
+  "console": [
+    {
+      "step": "login admin",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "login admin",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    }
+  ],
+  "httpErrors": [],
+  "writes": [
+    {
+      "step": "admin:P03 manual",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    },
+    {
+      "step": "admin:goto /risk/underwriting/241601375522275328",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    },
+    {
+      "step": "admin:P03 T+N",
+      "method": "POST",
+      "path": "/api/operations/risk-underwriting/v1/previews"
+    }
+  ],
+  "bundles": 52
+}
