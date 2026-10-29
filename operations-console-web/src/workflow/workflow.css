@@ -313,7 +313,7 @@ kbd { display: inline-block; min-width: 18px; padding: 0 4px; margin: 0 2px; bor
 .wf-condition-row { border-bottom: 1px dashed #eef1f5; padding-bottom: 6px; }
 .wf-option-row > .ant-input { flex: 1; }
 .wf-condition { border: 1px solid var(--wf-border, #e3e8ef); border-radius: 8px; padding: 10px; }
-.wf-rule { border: 1px solid var(--wf-border, #e3e8ef); border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+.wf-rule { border: 1px solid var(--wf-border, #e3e8ef); border-radius: 8px; padding: 12px; margin-bottom: 0; }
 .wf-exit-line { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
 .wf-variable-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .wf-settings { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
@@ -480,9 +480,9 @@ kbd { display: inline-block; min-width: 18px; padding: 0 4px; margin: 0 2px; bor
 .wf-issue-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f2f4f7; }
 .wf-issue-row:last-child { border-bottom: 0; }
 .wf-editor-stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; align-items: stretch; }
-.wf-editor-stage.has-panel { grid-template-columns: minmax(0, 1fr) 380px; }
+.wf-editor-stage.has-panel { grid-template-columns: minmax(0, 1fr) 420px; }
 .wf-editor-canvas { position: relative; min-width: 0; }
-.wf-editor-panel { background: #fff; border: 1px solid var(--wf-border, #e3e8ef); border-left: 0; border-radius: 0 8px 8px 0; padding: 14px 16px; height: calc(100vh - 176px); overflow-y: auto; animation: wf-slide-in .18s ease-out; }
+.wf-editor-panel { background: #fff; border: 1px solid var(--wf-border, #e3e8ef); border-left: 0; border-radius: 0 8px 8px 0; padding: 16px 20px; height: calc(100vh - 176px); overflow-y: auto; animation: wf-slide-in .18s ease-out; }
 .wf-editor-stage.has-panel .wf-canvas { border-radius: 8px 0 0 8px; }
 @keyframes wf-slide-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 .wf-node-toolbar { position: absolute; z-index: 6; top: 12px; left: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; background: #fff;
@@ -506,17 +506,36 @@ kbd { display: inline-block; min-width: 18px; padding: 0 4px; margin: 0 2px; bor
 .wf-panel-head { align-items: flex-start; }
 .wf-panel-head .muted { font-size: 11px; }
 .wf-panel-icon { width: 28px; height: 28px; border-radius: 6px; background: #eaf6ee; color: var(--wf-ok, #1f8a4c); display: grid; place-items: center; flex-shrink: 0; }
-.wf-panel-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; border-top: 1px solid #f2f4f7; padding-top: 8px; font-size: 11px; }
+.wf-panel-title { min-width: 0; }
+.wf-panel-name.ant-input { font-size: 15px; font-weight: 600; padding: 0 4px; margin-left: -4px; border-radius: 4px; }
+.wf-panel-name.ant-input:hover:not(:disabled), .wf-panel-name.ant-input:focus { background: #f6f8fb; }
+.wf-panel-name.ant-input[disabled] { color: inherit; cursor: default; }
+.wf-panel-tabs .ant-tabs-nav { margin-bottom: 14px; }
+.wf-panel-section { display: flex; flex-direction: column; gap: 12px; }
+.wf-panel-section > p, .wf-node-actions > p { margin: 0; font-size: 12px; }
+.wf-stack-radio { display: flex; flex-direction: column; gap: 6px; }
 
 /* 节点动作卡（原型 16） */
-.wf-node-actions { display: flex; flex-direction: column; gap: 10px; }
+.wf-node-actions { display: flex; flex-direction: column; gap: 12px; }
 .wf-node-actions > p { margin: 0; }
-.wf-node-action { border: 1px solid var(--wf-border, #e3e8ef); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
+.wf-node-action { border: 1px solid var(--wf-border, #e3e8ef); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; background: #fff; }
+.wf-node-action .wf-field { margin-bottom: 0; }
 .wf-node-action.is-dragging { opacity: .5; }
 .wf-node-action.has-problem { border-color: #f0d29a; }
-.wf-node-action-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.wf-node-action-head strong { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wf-node-action-head strong .muted { font-weight: 400; }
+.wf-node-action-head { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+.wf-node-action-head .wf-drag-handle, .wf-node-action-head .wf-action-type-icon { margin-top: 1px; }
+.wf-node-action-title { min-width: 0; }
+.wf-node-action-title strong { display: block; font-size: 13px; line-height: 20px; overflow-wrap: anywhere; }
+.wf-node-action-title .muted { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wf-node-action-foot { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; }
+.wf-mapping-block { display: flex; flex-direction: column; gap: 6px; }
+.wf-mapping-block + .wf-mapping-block { margin-top: 10px; }
+.wf-mapping-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wf-output-line { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+.wf-output-list { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.wf-rule { display: flex; flex-direction: column; gap: 10px; }
+.wf-rule .wf-field { margin-bottom: 0; }
+.wf-rule-row.is-nowrap { flex-wrap: nowrap; margin-bottom: 0; }
 .wf-drag-handle { cursor: grab; color: #a3acba; user-select: none; }
 .wf-action-type-icon { width: 22px; height: 22px; border-radius: 50%; background: #eef2fb; color: var(--wf-primary, #315dca); display: inline-grid; place-items: center; font-size: 11px; flex-shrink: 0; }
 .wf-action-type-icon.is-file_upload { background: #eaf6ee; color: var(--wf-ok, #1f8a4c); }
@@ -525,7 +544,7 @@ kbd { display: inline-block; min-width: 18px; padding: 0 4px; margin: 0 2px; bor
 .wf-action-type-icon.is-data_query { background: #e8f6f3; color: #12806e; }
 .wf-link-small { font-size: 11px; white-space: nowrap; }
 .wf-node-action-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.wf-collapse-toggle { border: 0; background: transparent; padding: 0; font: inherit; font-size: 12px; text-align: left; cursor: pointer; color: #263247; }
+.wf-collapse-toggle { border: 0; background: transparent; padding: 0; font: inherit; font-size: 12px; text-align: left; cursor: pointer; color: #263247; display: inline-flex; align-items: center; gap: 6px; }
 .wf-collapse-toggle:disabled { cursor: default; }
 .wf-node-action-inputs { margin-top: 0; }
 .wf-mapping-label { min-width: 72px; }
@@ -647,3 +666,52 @@ kbd { display: inline-block; min-width: 18px; padding: 0 4px; margin: 0 2px; bor
   .wf-canvas-footer { max-width: calc(100% - 70px); }
   .wf-canvas-footer .wf-legend { flex-wrap: wrap; white-space: normal; }
 }
+
+/* 属性面板（2026-10-29 方案 B 卡片式）：中性白底、单一主色；颜色只用在动作类型图标的浅色块上，人员带头像。 */
+.wf-editor-panel { background: #fff; }
+.wf-panel-icon { width: 34px; height: 34px; border-radius: 9px; font-size: 16px; background: #f2f3f5; color: var(--wf-primary, #315dca); }
+.wf-panel-icon.is-end { color: var(--wf-danger, #c43c3c); }
+.wf-panel-icon.is-exclusive { color: var(--wf-warn, #b76e00); }
+.wf-panel-tabs .ant-tabs-nav::before { border-bottom-color: #ebedf0; }
+.wf-panel-tabs .wf-tab-count { background: none; padding: 0 0 0 2px; color: #8a919c; }
+
+.wf-node-action { border-color: #ebedf0; border-radius: 10px; padding: 14px; gap: 12px; transition: border-color .15s, box-shadow .15s; }
+.wf-node-action:hover { border-color: #dcdfe4; box-shadow: 0 2px 8px rgba(15, 23, 42, .05); }
+.wf-node-action.has-problem { border-color: #f0d29a; }
+.wf-node-action .wf-action-type-icon { width: 32px; height: 32px; border-radius: 9px; font-size: 15px; }
+.wf-node-action .wf-node-action-head { gap: 10px; }
+.wf-node-action { position: relative; }
+.wf-node-action .wf-node-action-head .wf-drag-handle { position: absolute; left: 3px; top: 20px; margin: 0; opacity: 0; transition: opacity .15s; }
+.wf-node-action:hover .wf-drag-handle { opacity: .6; }
+.wf-node-action-title strong { font-size: 13.5px; font-weight: 600; color: #1f2329; }
+.wf-node-action-title .muted { margin-top: 2px; }
+.wf-person-line { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 10px; border-radius: 8px; background: #f7f8fa; min-width: 0; }
+.wf-person-role { font-size: 12px; color: #8a919c; flex-shrink: 0; min-width: 40px; }
+.wf-person-line .ant-select { background: transparent; border-color: transparent; box-shadow: none; }
+.wf-person-line .ant-select:hover, .wf-person-line .ant-select-focused { background: #fff; border-color: #dee0e3; }
+.wf-avatar { width: 22px; height: 22px; border-radius: 50%; background: #dbe5ff; color: #2b4fb8; font-size: 11px; font-weight: 600; display: inline-grid; place-items: center; flex-shrink: 0; }
+.wf-avatar.is-empty { background: transparent; border: 1px dashed #c4c8cf; }
+.wf-node-action-foot { font-size: 12px; }
+.wf-node-action-foot .ant-segmented { background: #f2f3f5; }
+.wf-collapse-toggle.is-link { color: var(--wf-primary, #315dca); }
+.wf-node-action-inputs { background: #f7f8fa; }
+
+.wf-add-action.ant-select { height: 40px; border: 1px dashed #d0d3d8; border-radius: 10px; background: #fff; transition: border-color .15s, background .15s; }
+.wf-add-action.ant-select .ant-select-content { justify-content: center; }
+.wf-add-action.ant-select .ant-select-placeholder { color: #646a73; width: 100%; text-align: center; }
+.wf-add-action.ant-select .ant-select-suffix { display: none; }
+.wf-add-action.ant-select:hover { border-color: var(--wf-primary, #315dca); background: #f7f9ff; }
+.wf-add-action.ant-select:hover .ant-select-placeholder { color: var(--wf-primary, #315dca); }
+
+.wf-output-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.wf-output-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 4px; background: #f2f3f5; color: #4e5969; font-size: 12px; }
+.wf-output-chip code { background: none; color: inherit; font-size: 11.5px; }
+.wf-output-chip span { color: #8a919c; }
+
+.wf-soft-note { display: flex; gap: 6px; align-items: flex-start; color: #8a919c; font-size: 12px; line-height: 18px; }
+.wf-soft-note .anticon { margin-top: 3px; }
+
+.wf-rule { border-color: #ebedf0; border-radius: 10px; padding: 14px; }
+.wf-rule-icon { width: 26px; height: 26px; border-radius: 8px; display: inline-grid; place-items: center; background: #f2f3f5; color: var(--wf-primary, #315dca); flex-shrink: 0; }
+.wf-node-action-foot { flex-wrap: wrap; row-gap: 6px; }
+.wf-node-action-foot .wf-collapse-toggle { white-space: nowrap; }

@@ -1,0 +1,4 @@
+# 回滚到 REQ-03 现网镜像（rq03-20261029a）。
+services:
+  operations-console-web:
+    image: sha256:2f7722daa531a012a8a1096a20c6b653f21b17ee6c018b2a703f9fa276bf0002

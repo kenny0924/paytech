@@ -1,0 +1,6 @@
+# 工作流节点编辑体验：mor-test 候选覆盖（2026-10-29 第四版 d：用户选定示意图方案 B 卡片式）。
+# 用法：./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+# 构建源：e3e0c12f + Code-MoR-rq03-rel 的 operations-console-web 现网源 + 本次 2 个文件（EditorPanels.tsx、workflow.css）。含 REQ-03 承保与 REQ-12 现网全部内容。
+services:
+  operations-console-web:
+    image: sha256:a9d5000088e9bc239c85734c967a17f4d7f40f43efae94438f2241bba8078aa9  # mor-test/operations-console-web:wfpanel-20261029d（方案 B 卡片式；c = 3f273f86，b = c982fb52，a = 9e8389d3）

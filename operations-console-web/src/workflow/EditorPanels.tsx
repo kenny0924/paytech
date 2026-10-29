@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Alert, Button, Dropdown, Empty, Input, Modal, Radio, Segmented, Select, Space, Switch, Tabs, Tag } from 'antd';
+import { Alert, Button, Dropdown, Empty, Input, Modal, Radio, Segmented, Select, Space, Switch, Tabs, Tag, Tooltip } from 'antd';
+import type { MenuProps } from 'antd';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  ArrowRightOutlined, CloseOutlined, DownOutlined, EllipsisOutlined, FileTextOutlined, PlusOutlined, RightOutlined, SafetyCertificateOutlined,
+  ApiOutlined, ArrowRightOutlined, BellOutlined, CloseOutlined, DeleteOutlined, DownOutlined, EllipsisOutlined, InfoCircleOutlined, PlusOutlined, RightOutlined, SafetyCertificateOutlined, TeamOutlined,
 } from '@ant-design/icons';
 import { criteriaText } from './dataQueryModel';
 import { dataQueryParameters } from './templateModel';
@@ -32,21 +33,18 @@ export interface PanelContext {
   onRequestNewAction?: (nodeKey: string) => void;
 }
 
-function NameAndKey({ node, context }: { node: GraphNode; context: PanelContext }) {
+/** 修改节点 key：与动作 key 相同的格式与唯一性；条件、驳回目标与回调事件随之引用新 key。 */
+function NodeKeyModal({ node, context, onClose }: { node: GraphNode; context: PanelContext; onClose: () => void }) {
   const t = useT('workflow');
-  const [key, setKey] = useState(node.key); const [error, setError] = useState('');
-  function commitKey() {
-    const result = renameNode(context.graph, node.key, key.trim());
-    if ('error' in result) { setError(result.error); return; }
-    setError(''); context.onChange(result.graph);
-  }
-  return <>
-    <Field label={t('panel.name')}><Input value={node.name} maxLength={64} disabled={context.readOnly}
-      onChange={event => context.onChange(updateNode(context.graph, node.key, { name: event.target.value }))} /></Field>
+  const [value, setValue] = useState(node.key);
+  const next = value.trim();
+  const result = renameNode(context.graph, node.key, next);
+  const error = 'error' in result ? result.error : '';
+  return <Modal open title={t('panel.nodeKey')} okText={t('templateEditor.save')} cancelText={t('action.cancel')} okButtonProps={{ disabled: !!error || next === node.key }}
+    onCancel={onClose} onOk={() => { if ('graph' in result) context.onChange(result.graph); onClose(); }}>
     <Field label={t('panel.nodeKey')} hint={error || t('panel.nodeKeyHint')}>
-      <Input value={key} maxLength={64} disabled={context.readOnly} status={error ? 'error' : undefined}
-        onChange={event => setKey(event.target.value)} onBlur={commitKey} onPressEnter={commitKey} /></Field>
-  </>;
+      <Input value={value} maxLength={64} status={error ? 'error' : undefined} onChange={event => setValue(event.target.value)} /></Field>
+  </Modal>;
 }
 
 function ProblemList({ problems }: { problems: Problem[] }) {
@@ -54,18 +52,33 @@ function ProblemList({ problems }: { problems: Problem[] }) {
     title={<ul className="wf-plain-list">{problems.map((problem, index) => <li key={index}>{problem.message}</li>)}</ul>} /> : null;
 }
 
-/** 面板页头：图标、名称、类型说明、关闭。 */
-function PanelHead({ icon, title, subtitle, onClose }: { icon: ReactNode; title: string; subtitle: string; onClose: () => void }) {
+/** 面板页头：图标、标题（节点名称可就地编辑）、类型说明、「⋯」菜单（key、删除等低频操作）与关闭。 */
+function PanelHead({ icon, title, subtitle, menu, onClose, tone = 'edge' }: {
+  icon: ReactNode; title: ReactNode; subtitle: string; menu?: MenuProps; onClose: () => void; tone?: string;
+}) {
   const t = useT('workflow');
-  return <div className="wf-panel-head"><span className="wf-panel-icon" aria-hidden>{icon}</span>
-    <div className="wf-grow"><h3>{title}</h3><div className="muted">{subtitle}</div></div>
+  return <div className="wf-panel-head"><span className={`wf-panel-icon is-${tone}`} aria-hidden>{icon}</span>
+    <div className="wf-grow wf-panel-title">{typeof title === 'string' ? <h3>{title}</h3> : title}<div className="muted">{subtitle}</div></div>
+    {menu?.items?.length ? <Dropdown trigger={['click']} menu={menu}><Button type="text" aria-label={t('catalog.moreActions')} icon={<EllipsisOutlined />} /></Dropdown> : null}
     <Button type="text" aria-label={t('panel.close')} icon={<CloseOutlined />} onClick={onClose} /></div>;
 }
 
-function DeleteLink({ label, context }: { label: string; context: PanelContext }) {
+/** 节点页头：名称直接在标题处编辑；修改 key 与删除收进「⋯」。 */
+function NodeHead({ node, subtitle, context }: { node: GraphNode; subtitle: string; context: PanelContext }) {
   const t = useT('workflow');
-  return context.readOnly ? null : <div className="wf-panel-foot"><Button type="link" danger size="small" onClick={context.onDelete}>{label}</Button>
-    <span className="muted">{t('panel.deleteKeyHint')}</span></div>;
+  const [editingKey, setEditingKey] = useState(false);
+  const items: MenuProps['items'] = context.readOnly ? [] : [
+    { key: 'key', label: <span className="wf-option-line"><span>{t('panel.nodeKey')}</span><code className="muted">{node.key}</code></span> },
+    ...(node.type !== 'START' ? [{ type: 'divider' as const }, { key: 'delete', danger: true, icon: <DeleteOutlined />,
+      label: <Tooltip placement="left" title={t('panel.deleteKeyHint')}>{t('panel.deleteNode')}</Tooltip> }] : []),
+  ];
+  const title = <Input className="wf-panel-name" variant="borderless" value={node.name} maxLength={64} disabled={context.readOnly} aria-label={t('panel.name')}
+    placeholder={node.key} onChange={event => context.onChange(updateNode(context.graph, node.key, { name: event.target.value }))} />;
+  return <>
+    <PanelHead icon={nodeTypeIcons[node.type]} tone={node.type.toLowerCase()} title={title} subtitle={subtitle} onClose={context.onClose}
+      menu={{ items, onClick: ({ key }) => key === 'delete' ? context.onDelete() : setEditingKey(true) }} />
+    {editingKey && <NodeKeyModal node={node} context={context} onClose={() => setEditingKey(false)} />}
+  </>;
 }
 
 /** 选中节点后的属性面板：任务节点按「基本 / 动作 / 审批 / 通知与回调」分组（原型 11、16）。 */
@@ -75,44 +88,43 @@ export function NodePanel({ node, context }: { node: GraphNode; context: PanelCo
   const actionKeys = new Set((node.actions ?? []).map(action => action.key));
   const problems = context.problems.filter(problem => problem.nodeKey === node.key && !problem.edgeKey && !(problem.itemKey && actionKeys.has(problem.itemKey)));
   if (node.type !== 'TASK') {
-    return <div className="wf-panel"><PanelHead icon={nodeTypeIcons[node.type]} title={node.name || node.key} subtitle={nodeTypeLabel(node.type)} onClose={context.onClose} />
-      <ProblemList problems={problems} /><NameAndKey key={node.key} node={node} context={context} />
+    return <div className="wf-panel"><NodeHead node={node} subtitle={nodeTypeLabel(node.type)} context={context} />
+      <ProblemList problems={problems} />
       {node.type === 'EXCLUSIVE' && <GatewayExits node={node} context={context} />}
       {node.type === 'START' && <p className="muted">{t('panel.startHint')}</p>}
       {(node.type === 'PARALLEL_SPLIT' || node.type === 'PARALLEL_JOIN') && <p className="muted">{t('panel.parallelHint')}</p>}
-      {node.type !== 'START' && <DeleteLink label={t('panel.deleteNode')} context={context} />}
     </div>;
   }
   const actions = node.actions ?? [];
   const approvers = node.approval?.approverIds ?? [];
+  const rules = node.notifications ?? [];
   const subtitle = [nodeTypeLabel('TASK'), [actions.length ? t('panel.tab.actions') : '', approvers.length ? t('panel.tab.approval') : ''].filter(Boolean).join(' + ')
     || t('panel.notConfigured')].join(' · ');
-  return <div className="wf-panel"><PanelHead icon={nodeTypeIcons.TASK} title={node.name || node.key} subtitle={subtitle} onClose={context.onClose} />
+  const count = (value: number) => value ? <span className="wf-tab-count">{value}</span> : null;
+  return <div className="wf-panel"><NodeHead node={node} subtitle={subtitle} context={context} />
     <ProblemList problems={problems} />
-    <Tabs size="small" defaultActiveKey={actions.length || !approvers.length ? 'actions' : 'approval'} items={[
-      { key: 'basic', label: t('panel.tab.basic'), children: <><NameAndKey key={node.key} node={node} context={context} />
-        <p className="muted">{t('panel.taskHint')}</p><DeleteLink label={t('panel.deleteNode')} context={context} /></> },
-      { key: 'actions', label: <span>{t('panel.tab.actions')} <span className="wf-tab-count">{actions.length}</span></span>, children: <ActionsEditor node={node} context={context} /> },
-      { key: 'approval', label: t('panel.tab.approval'), children: <ApprovalEditor node={node} context={context} /> },
-      { key: 'notify', label: `${t('panel.tab.notify')}${(node.notifications ?? []).length ? ` ${(node.notifications ?? []).length}` : ''}`, children: <RulesEditor rules={node.notifications ?? []} triggers={nodeTriggerList}
+    <Tabs size="small" className="wf-panel-tabs" defaultActiveKey={actions.length || !approvers.length ? 'actions' : 'approval'} items={[
+      { key: 'actions', label: <span>{t('panel.tab.actions')} {count(actions.length)}</span>, children: <ActionsEditor node={node} context={context} /> },
+      { key: 'approval', label: <span>{t('panel.tab.approval')} {count(approvers.length)}</span>, children: <ApprovalEditor node={node} context={context} /> },
+      { key: 'notify', label: <span>{t('panel.tab.notify')} {count(rules.length)}</span>, children: <RulesEditor rules={rules} triggers={nodeTriggerList}
         readOnly={context.readOnly} people={context.people} onChange={notifications => context.onChange(updateNode(context.graph, node.key, { notifications }))}
         note={t('panel.nodeRulesNote')} /> },
     ]} />
   </div>;
 }
 
+/** 审批：先选审批人；只有多于一人时才需要选择审批方式。 */
 function ApprovalEditor({ node, context }: { node: GraphNode; context: PanelContext }) {
   const t = useT('workflow');
   const approval = node.approval ?? { mode: 'ANY' as const, approverIds: [] };
   const set = (patch: Partial<typeof approval>) => context.onChange(updateNode(context.graph, node.key, { approval: { ...approval, ...patch } }));
-  return <>
-    <Field label={t('approval.mode')}><Radio.Group value={approval.mode} disabled={context.readOnly} onChange={event => set({ mode: event.target.value })}
-      options={[{ value: 'ANY', label: t('approval.modeAny') }, { value: 'ALL', label: t('approval.modeAll') }]} /></Field>
-    <Field label={t('approval.approvers')} hint={t('approval.approversHint')}>
+  return <div className="wf-panel-section">
+    <Field label={t('approval.approvers')} hint={approval.approverIds.length ? t('approval.approversHint') : t('approval.noApprovers')}>
       <PersonSelect multiple value={approval.approverIds} people={context.people} disabled={context.readOnly} onChange={value => set({ approverIds: value as string[] })} /></Field>
-    {!approval.approverIds.length && <p className="muted">{t('approval.noApprovers')}</p>}
-    <p className="muted">{t('approval.sameUser')}</p>
-  </>;
+    {approval.approverIds.length > 1 && <Field label={t('approval.mode')}><Radio.Group className="wf-stack-radio" value={approval.mode} disabled={context.readOnly}
+      onChange={event => set({ mode: event.target.value })} options={[{ value: 'ANY', label: t('approval.modeAny') }, { value: 'ALL', label: t('approval.modeAll') }]} /></Field>}
+    <div className="wf-soft-note"><TeamOutlined /> <span>{t('approval.sameUser')}</span></div>
+  </div>;
 }
 
 const NEW_ACTION = '__new_action__';
@@ -143,24 +155,24 @@ function ActionsEditor({ node, context }: { node: GraphNode; context: PanelConte
     const next = [...actions]; const [moved] = next.splice(dragging, 1); next.splice(target, 0, moved);
     setDragging(null); setActions(next);
   }
+  const [outputsOpen, setOutputsOpen] = useState(false);
   return <div className="wf-node-actions">
-    <p className="muted">{t('actions.hint')}</p>
     {actions.map((action, index) => <ActionCard key={`${action.key}:${index}`} node={node} action={action} context={context}
       dragging={dragging === index} onDragStart={() => setDragging(index)} onDragEnd={() => setDragging(null)} onDrop={() => drop(index)}
       onPatch={value => patch(index, value)} onRemove={() => setActions(actions.filter((_, current) => current !== index))}
       onRename={() => setRenaming(index)} />)}
+    {!actions.length && <div className="wf-soft-note"><InfoCircleOutlined /> <span>{t('actions.hint')}</span></div>}
     {!context.readOnly && actions.length < 20 && <Select className="wf-add-action" showSearch={{ filterOption: (input, option) =>
         option?.value === NEW_ACTION || String(option?.search ?? '').toLowerCase().includes(input.trim().toLowerCase()) }}
       value={null} placeholder={<><PlusOutlined /> {t('actions.add')}</>} options={options} onSelect={(value: string | null) => { if (value) add(value); }}
       notFoundContent={<span className="muted">{t('actions.none')}</span>} />}
-    <div className="wf-hint-box">
-      <div>{t('actions.requiredHint')}</div>
-      <div>{t('actions.sameUser')}</div>
-      {actions.some(action => context.templates.get(action.templateId)?.actionType === 'DATA_QUERY') && <>
-        <div>{t('actions.dataQueryHint')}</div><div>{t('actions.dataQueryOutputsHint', { actionKey: t('config.actionKey'), outputName: t('dataQuery.outputNameArg') })}</div></>}
-    </div>
-    {outputs.length > 0 && <section className="wf-subtle"><div className="wf-field-label">{t('actions.outputs')}</div>
-      {outputs.map(item => <div key={item.name}><code>{item.name}</code> · {item.label}</div>)}</section>}
+    {outputs.length > 0 && <div className="wf-panel-section">
+      <button type="button" className="wf-collapse-toggle" aria-expanded={outputsOpen} onClick={() => setOutputsOpen(!outputsOpen)}>
+        <span aria-hidden>{outputsOpen ? <DownOutlined /> : <RightOutlined />}</span> {t('actions.outputVariables')} <span className="wf-tab-count">{outputs.length}</span>
+        <Tooltip title={t('actions.outputs')}><InfoCircleOutlined className="muted" /></Tooltip></button>
+      {outputsOpen && <div className="wf-output-chips">{outputs.map(item => <span key={item.name} className="wf-output-chip" title={item.source}><code>{item.name}</code>
+        <span>{item.name.endsWith(`.${item.label}`) ? enumLabel(t, 'dataQuery.outputTypeName', item.type) : item.label}</span></span>)}</div>}
+    </div>}
     {renaming !== null && actions[renaming] && <ActionKeyModal graph={context.graph} actionKey={actions[renaming].key}
       onCancel={() => setRenaming(null)} onSave={key => { patch(renaming, { key }); setRenaming(null); }} />}
   </div>;
@@ -173,61 +185,74 @@ function ActionCard({ node, action, context, dragging, onDragStart, onDragEnd, o
   const t = useT('workflow');
   const template = context.templates.get(action.templateId);
   const dataQuery = template?.actionType === 'DATA_QUERY';
-  // 数据查询的参数与输出默认展开（原型 18）。
-  const [inputsToggle, setInputsOpen] = useState<boolean | null>(null);
-  const inputsOpen = inputsToggle ?? dataQuery;
+  // 输入参数默认收起，卡片底部显示映射进度，点开再编辑。
+  const [inputsOpen, setInputsOpen] = useState(false);
   const problems = context.problems.filter(problem => problem.nodeKey === node.key && problem.itemKey === action.key);
   const parameters = template?.actionType === 'PAGE_TASK' ? (template.config as PageTaskConfig | null)?.parameters ?? []
     : dataQuery ? dataQueryParameters(template.config as DataQueryConfig | null).map(key => ({ key, label: key })) : [];
-  const outputs = dataQuery ? actionOutputs(action.key, template) : [];
   const criteria = dataQuery ? criteriaText(template.config as DataQueryConfig | null) : '';
   const mapped = parameters.filter(parameter => action.inputs?.[parameter.key]?.value).length;
   const variables = variableCatalog(context.graph, context.startForm, context.templates, node.key);
   const instruction = template ? instructionLine(template) : '';
+  const navigate = useNavigate();
   const setInput = (key: string, mapping: { source: 'VARIABLE' | 'CONSTANT'; value: string }) => onPatch({ inputs: { ...action.inputs, [key]: mapping } });
-  return <div className={`wf-node-action${dragging ? ' is-dragging' : ''}${problems.length ? ' has-problem' : ''}`}
+  const typeLine = template ? [actionTypeLabel(template.actionType), dataQuery ? t('actions.systemCheckLine', { criteria }) : instruction].filter(Boolean).join(' · ') : '';
+  const menuItems: MenuProps['items'] = [
+    ...(action.templateId ? [{ key: 'catalog', label: <span>{t('actions.editInCatalog')} <ArrowRightOutlined /></span> }] : []),
+    ...(!context.readOnly ? [{ key: 'key', label: t('actions.renameKey', { key: action.key }) }, { type: 'divider' as const },
+      { key: 'remove', label: t('files.remove'), danger: true, icon: <DeleteOutlined /> }] : []),
+  ];
+  return <div className={`wf-node-action${template ? ` is-${template.actionType.toLowerCase()}` : ''}${dragging ? ' is-dragging' : ''}${problems.length ? ' has-problem' : ''}`}
     onDragOver={event => { if (!context.readOnly) event.preventDefault(); }} onDrop={event => { event.preventDefault(); onDrop(); }}>
     <div className="wf-node-action-head">
       {!context.readOnly && <span className="wf-drag-handle" draggable title={t('designer.dragToSort')} onDragStart={onDragStart} onDragEnd={onDragEnd}>⠿</span>}
       {template && <ActionTypeIcon type={template.actionType} />}
-      <strong className="wf-grow" title={action.key}>{template?.templateName ?? (action.templateId ? t('actions.loading') : t('actions.notSelected'))}
-        {template && <span className="muted"> · {actionTypeLabel(template.actionType)}</span>}</strong>
-      {action.templateId && <Link className="wf-link-small" to={`${workflowRoutes.templates}/${action.templateId}`}>{t('actions.editInCatalog')} <ArrowRightOutlined /></Link>}
-      {!context.readOnly && <Dropdown trigger={['click']} menu={{ items: [{ key: 'key', label: t('actions.renameKey', { key: action.key }) }, { type: 'divider' }, { key: 'remove', label: t('files.remove'), danger: true }],
-        onClick: ({ key }) => key === 'remove' ? onRemove() : onRename() }}><Button type="text" size="small" aria-label={t('actions.more')} icon={<EllipsisOutlined />} /></Dropdown>}
+      <div className="wf-grow wf-node-action-title">
+        <strong title={action.key}>{template?.templateName ?? (action.templateId ? t('actions.loading') : t('actions.notSelected'))}</strong>
+        {typeLine && <div className="muted" title={typeLine}>{dataQuery && <Tooltip title={<>{t('actions.dataQueryHint')}<br />
+          {t('actions.dataQueryOutputsHint', { actionKey: t('config.actionKey'), outputName: t('dataQuery.outputNameArg') })}</>}><SafetyCertificateOutlined /> </Tooltip>}{typeLine}</div>}
+      </div>
+      {menuItems.length > 0 && <Dropdown trigger={['click']} menu={{ items: menuItems,
+        onClick: ({ key }) => key === 'catalog' ? void navigate(`${workflowRoutes.templates}/${action.templateId}`) : key === 'remove' ? onRemove() : onRename() }}>
+        <Button type="text" size="small" aria-label={t('actions.more')} icon={<EllipsisOutlined />} /></Dropdown>}
     </div>
-    <div className="wf-node-action-row">
-      <Segmented size="small" value={action.required ? 'required' : 'optional'} disabled={context.readOnly}
-        options={[{ value: 'required', label: t('actions.required') }, { value: 'optional', label: t('actions.optional') }]} onChange={value => onPatch({ required: value === 'required' })} />
-      <span className="muted">{dataQuery ? t('actions.follower') : t('actions.executor')}</span>
+    <div className="wf-person-line"><span className="wf-person-role">{dataQuery ? t('actions.follower') : t('actions.executor')}</span>
+      <PersonAvatar name={action.executorId ? context.people[action.executorId] ?? action.executorId : ''} />
       <PersonSelect value={action.executorId} people={context.people} disabled={context.readOnly} placeholder={dataQuery ? t('actions.followerPlaceholder') : t('actions.executorPlaceholder')}
-        style={{ flex: 1, minWidth: 0 }} onChange={value => onPatch({ executorId: (value as string | undefined) || undefined })} />
+        style={{ flex: 1, minWidth: 0 }} onChange={value => onPatch({ executorId: (value as string | undefined) || undefined })} /></div>
+    <div className="wf-node-action-foot">
+      <Tooltip title={t('actions.requiredHint')}><Segmented size="small" value={action.required ? 'required' : 'optional'} disabled={context.readOnly}
+        options={[{ value: 'required', label: t('actions.required') }, { value: 'optional', label: t('actions.optional') }]} onChange={value => onPatch({ required: value === 'required' })} /></Tooltip>
+      <span className="wf-grow" />
+      {parameters.length > 0 ? <button type="button" className="wf-collapse-toggle is-link" aria-expanded={inputsOpen} onClick={() => setInputsOpen(!inputsOpen)}>
+        {t('actions.inputs')} {mapped ? t('actions.inputCountMapped', { count: parameters.length, mapped }) : t('actions.inputCount', { count: parameters.length })}
+        <span aria-hidden>{inputsOpen ? <DownOutlined /> : <RightOutlined />}</span></button>
+        : <span className="muted">{t('actions.inputs')} {t('actions.noInputs')}</span>}
     </div>
-    <button type="button" className="wf-collapse-toggle" onClick={() => setInputsOpen(!inputsOpen)} disabled={!parameters.length}>
-      <span aria-hidden>{inputsOpen && parameters.length ? <DownOutlined /> : <RightOutlined />}</span> {t('actions.inputs')} <span className="muted">{parameters.length ? (mapped ? t('actions.inputCountMapped', { count: parameters.length, mapped }) : t('actions.inputCount', { count: parameters.length })) : t('actions.noInputs')}</span></button>
     {inputsOpen && parameters.length > 0 && <div className="wf-subtle wf-node-action-inputs">{parameters.map(parameter => {
       const mapping = action.inputs?.[parameter.key];
-      return <div key={parameter.key} className="wf-mapping-row"><span className="wf-mapping-label">{parameter.label || parameter.key}</span>←
-        <Select value={mapping?.source ?? 'VARIABLE'} disabled={context.readOnly} style={{ width: 80 }} size="small"
-          options={[{ value: 'VARIABLE', label: t('actions.source.VARIABLE') }, { value: 'CONSTANT', label: t('actions.source.CONSTANT') }]}
-          onChange={source => setInput(parameter.key, { source, value: '' })} />
-        {(mapping?.source ?? 'VARIABLE') === 'VARIABLE'
-          ? <Select allowClear size="small" value={mapping?.value || undefined} disabled={context.readOnly} style={{ flex: 1, minWidth: 120 }} placeholder={t('actions.selectVariable')}
+      const source = mapping?.source ?? 'VARIABLE';
+      return <div key={parameter.key} className="wf-mapping-block">
+        <div className="wf-mapping-head"><span className="wf-field-label">{parameter.label || parameter.key}</span>
+          <Segmented size="small" value={source} disabled={context.readOnly}
+            options={[{ value: 'VARIABLE', label: t('actions.source.VARIABLE') }, { value: 'CONSTANT', label: t('actions.source.CONSTANT') }]}
+            onChange={value => setInput(parameter.key, { source: value as 'VARIABLE' | 'CONSTANT', value: '' })} /></div>
+        {source === 'VARIABLE'
+          ? <Select allowClear size="small" value={mapping?.value || undefined} disabled={context.readOnly} style={{ width: '100%' }} placeholder={t('actions.selectVariable')}
             options={variables.map(item => ({ value: item.name, label: `${item.source}.${item.label}` }))}
             onChange={(value?: string) => setInput(parameter.key, { source: 'VARIABLE', value: value ?? '' })} />
-          : <Input size="small" value={mapping?.value} disabled={context.readOnly} style={{ flex: 1, minWidth: 120 }}
+          : <Input size="small" value={mapping?.value} disabled={context.readOnly}
             onChange={event => setInput(parameter.key, { source: 'CONSTANT', value: event.target.value })} />}
       </div>;
     })}</div>}
-    {dataQuery && <div className="wf-subtle wf-node-action-inputs">
-      <div className="wf-field-label">{t('actions.outputVariables')} <span className="muted">{outputs.length ? t('actions.outputVariableCount', { count: outputs.length }) : t('actions.noOutputVariables')}</span></div>
-      {outputs.map(item => <div key={item.name} className="wf-mapping-row"><code className="wf-mapping-label">{item.name}</code>←
-        <span className="wf-variable-chip"><code>out_{item.label}</code> · {enumLabel(t, 'dataQuery.outputTypeName', item.type)}</span></div>)}</div>}
-    {dataQuery ? <div className="wf-node-action-instruction muted" title={criteria}><SafetyCertificateOutlined /> {t('actions.systemCheckLine', { criteria })}</div>
-      : instruction && <div className="wf-node-action-instruction muted" title={instruction}><FileTextOutlined /> {instruction}</div>}
     {template && template.status !== 'ACTIVE' && <div className="wf-danger-text">{t('actions.inactive')}</div>}
     {problems.map((problem, current) => <div key={current} className="wf-warn-text">{problem.message}</div>)}
   </div>;
+}
+
+/** 人员头像：取显示名首字符；未选人时显示空心占位。 */
+function PersonAvatar({ name }: { name: string }) {
+  return <span className={`wf-avatar${name ? '' : ' is-empty'}`} aria-hidden>{name ? name.trim().charAt(0).toUpperCase() : ''}</span>;
 }
 
 function ActionTypeIcon({ type }: { type: ActionType }) {
@@ -259,17 +284,19 @@ export function RulesEditor({ rules, triggers, readOnly, onChange, note, people 
 }) {
   const t = useT('workflow');
   const patch = (index: number, value: Partial<NotificationRule>) => onChange(rules.map((rule, current) => current === index ? { ...rule, ...value } : rule));
-  return <>
-    <p className="muted">{note}</p>
-    {rules.map((rule, index) => <div key={index} className="wf-rule">
-      <div className="wf-rule-row">{t('rules.when')} <Select value={rule.trigger} disabled={readOnly} style={{ width: 150 }} options={[...triggers.map(value => ({ value, label: triggerLabel(value) })),
+  return <div className="wf-panel-section">
+    {!rules.length && <div className="wf-soft-note"><BellOutlined /> <span>{note}</span></div>}
+    {rules.map((rule, index) => <div key={index} className={`wf-rule is-${rule.type.toLowerCase()}`}>
+      <div className="wf-rule-row is-nowrap"><span className="wf-rule-icon" aria-hidden>{rule.type === 'NOTIFY' ? <BellOutlined /> : <ApiOutlined />}</span>
+        <span className="wf-field-label">{t('rules.when')}</span>
+        <Select value={rule.trigger} disabled={readOnly} style={{ flex: 1, minWidth: 0 }} options={[...triggers.map(value => ({ value, label: triggerLabel(value) })),
           // 历史配置里已停用的触发只显示、不可再选，需改为其他触发。
           ...(triggers.includes(rule.trigger) ? [] : [{ value: rule.trigger, label: t('rules.retiredTrigger', { trigger: triggerLabel(rule.trigger) }), disabled: true }])]}
-        onChange={trigger => patch(index, { trigger })} /> {t('rules.then')}
-        <Radio.Group value={rule.type} disabled={readOnly} optionType="button" size="small" options={[{ value: 'NOTIFY', label: t('rules.type.NOTIFY') }, { value: 'CALLBACK', label: t('rules.type.CALLBACK') }]}
-          onChange={event => patch(index, event.target.value === 'NOTIFY' ? { type: 'NOTIFY', callbackCode: undefined, recipients: ['NODE_EXECUTORS'], channels: ['INBOX', 'EMAIL'] }
-            : { type: 'CALLBACK', recipients: undefined, channels: undefined, userIds: undefined, callbackCode: '' })} />
-        <span className="wf-grow" />{!readOnly && <Button size="small" type="text" danger onClick={() => onChange(rules.filter((_, current) => current !== index))}>{t('designer.delete')}</Button>}</div>
+          onChange={trigger => patch(index, { trigger })} />
+        {!readOnly && <Button type="text" danger icon={<DeleteOutlined />} aria-label={t('designer.delete')} onClick={() => onChange(rules.filter((_, current) => current !== index))} />}</div>
+      <Segmented block value={rule.type} disabled={readOnly} options={[{ value: 'NOTIFY', label: t('rules.type.NOTIFY') }, { value: 'CALLBACK', label: t('rules.type.CALLBACK') }]}
+        onChange={value => patch(index, value === 'NOTIFY' ? { type: 'NOTIFY', callbackCode: undefined, recipients: ['NODE_EXECUTORS'], channels: ['INBOX', 'EMAIL'] }
+          : { type: 'CALLBACK', recipients: undefined, channels: undefined, userIds: undefined, callbackCode: '' })} />
       {rule.type === 'NOTIFY' ? <>
         <Field label={t('rules.notify')}><Select mode="multiple" value={rule.recipients ?? []} disabled={readOnly} style={{ width: '100%' }}
           options={recipients.map(value => ({ value, label: recipientLabel(value) }))} onChange={value => patch(index, { recipients: value })} /></Field>
@@ -282,7 +309,7 @@ export function RulesEditor({ rules, triggers, readOnly, onChange, note, people 
           onChange={event => patch(index, { callbackCode: event.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') })} /></Field>}
     </div>)}
     {!readOnly && <Button block type="dashed" onClick={() => onChange([...rules, { trigger: triggers[0], type: 'NOTIFY', recipients: ['NODE_EXECUTORS'], channels: ['INBOX', 'EMAIL'] }])} icon={<PlusOutlined />}>{t('rules.add')}</Button>}
-  </>;
+  </div>;
 }
 
 function GatewayExits({ node, context }: { node: GraphNode; context: PanelContext }) {
@@ -302,9 +329,10 @@ export function EdgePanel({ edgeKey, context }: { edgeKey: string; context: Pane
   const edge = context.graph.edges.find(item => item.key === edgeKey);
   if (!edge) return <Empty />;
   const source = nodeOf(context.graph, edge.from); const target = nodeOf(context.graph, edge.to);
-  const header = <PanelHead icon={<ArrowRightOutlined />} title={`${source?.name || edge.from} → ${target?.name || edge.to}`} subtitle={t('edge.subtitle')} onClose={context.onClose} />;
-  if (source?.type !== 'EXCLUSIVE') return <div className="wf-panel">{header}<p className="muted">{t('edge.plainHint')}</p>
-    <DeleteLink label={t('edge.delete')} context={context} /></div>;
+  const menu: MenuProps = { items: context.readOnly ? [] : [{ key: 'delete', danger: true, icon: <DeleteOutlined />,
+    label: <Tooltip placement="left" title={t('panel.deleteKeyHint')}>{t('edge.delete')}</Tooltip> }], onClick: () => context.onDelete() };
+  const header = <PanelHead icon={<ArrowRightOutlined />} title={`${source?.name || edge.from} → ${target?.name || edge.to}`} subtitle={t('edge.subtitle')} menu={menu} onClose={context.onClose} />;
+  if (source?.type !== 'EXCLUSIVE') return <div className="wf-panel">{header}<p className="muted">{t('edge.plainHint')}</p></div>;
   const exits = gatewayExits(context.graph, source.key);
   const exit = exits.find(item => item.edge.key === edgeKey)!;
   const conditional = exits.filter(item => !item.isDefault && item.priority !== null);
@@ -326,7 +354,6 @@ export function EdgePanel({ edgeKey, context }: { edgeKey: string; context: Pane
       <div className="wf-variable-chips">{variables.map(item => <Tag key={item.name} color="purple">{item.name}</Tag>)}</div>
       <p className="muted">{t('edge.parallelVariables')}</p></section>
     <GatewayExits node={source} context={context} />
-    <DeleteLink label={t('edge.delete')} context={context} />
   </div>;
 }
 
