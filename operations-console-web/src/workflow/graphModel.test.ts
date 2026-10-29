@@ -125,6 +125,28 @@ test('可引用变量：启动表单 + 上游动作输出；并行另一分支�
   assert.deepEqual(variableCatalog(graph, form, templates, after.key).map(item => item.name), ['start.channelCode', 'profile.currency']);
 });
 
+test('数据查询输出是下游变量：<actionKey>.<名称>，枚举可选值即条件取值；变量可用于条件与输入映射', () => {
+  let graph = newGraph();
+  const check = addNode(graph, 'TASK', { x: 100, y: 0 }); graph = check.graph;
+  const gateway = addNode(graph, 'EXCLUSIVE', { x: 200, y: 0 }); graph = gateway.graph;
+  for (const [from, to] of [['start', check.key], [check.key, gateway.key], [gateway.key, 'end']]) graph = edgeOrFail(connect(graph, from, to)).graph;
+  graph = { ...graph, nodes: graph.nodes.map(node => node.key === check.key ? { ...node, actions: [{ key: 'n3', templateId: '7', required: true, executorId: '1' }] } : node) };
+  const template: ActionTemplate = { templateId: '7', templateCode: 'GOLIVE', templateName: '合同已起草', actionType: 'DATA_QUERY', description: null, status: 'ACTIVE',
+    version: 1, updatedBy: null, updateTime: '', config: { queryCode: 'GOLIVE_AGREEMENT_DRAFTED', parameters: ['clientId'], outputs: [
+      { name: 'agreement_id', type: 'TEXT' }, { name: 'business_mode', type: 'ENUM', enumValues: ['MOR', 'PSP'] }] } };
+  const variables = variableCatalog(graph, { fields: [] }, new Map([['7', template]]), gateway.key);
+  assert.deepEqual(variables.map(item => [item.name, item.type]), [['n3.agreement_id', 'TEXT'], ['n3.business_mode', 'ENUM']]);
+  assert.deepEqual(variables[1].options, [{ value: 'MOR', label: 'MOR' }, { value: 'PSP', label: 'PSP' }]);
+  const conditioned = setEdgeClauses(graph, gateway.key, graph.edges.find(edge => edge.from === gateway.key)!.key,
+    [{ variable: 'n3.business_mode', operator: 'EQ', value: 'MOR' }]);
+  assert.equal(localProblems(conditioned, new Map([['7', template]]), { fields: [] }).some(problem => problem.code === 'VARIABLE_UNAVAILABLE'), false);
+  // 列表里的模板没有配置：输出未知时不报变量不可用（与 FORM 一致），保存后以服务端为准。
+  const listed = new Map([['7', { ...template, config: null }]]);
+  assert.equal(localProblems(conditioned, listed, { fields: [] }).some(problem => problem.code === 'VARIABLE_UNAVAILABLE'), false);
+  assert.equal(localProblems(conditioned, new Map([['7', { ...template, config: { ...template.config, outputs: [] } as ActionTemplate['config'] }]]), { fields: [] })
+    .some(problem => problem.code === 'VARIABLE_UNAVAILABLE'), true);
+});
+
 test('本地检查与服务端同码同文：缺审批人且无动作、默认出口、孤立节点、到不了结束、数据查询引用', () => {
   const graph = sampleGraph();
   const withQuery = { ...graph, nodes: graph.nodes.map(node => node.key === 'task2' ? { ...node, actions: [{ key: 'ready', templateId: '9', required: true, executorId: '1' }] } : node) };
@@ -135,7 +157,8 @@ test('本地检查与服务端同码同文：缺审批人且无动作、默认�
   assert.deepEqual(find('TASK_EMPTY'), { code: 'TASK_EMPTY', message: t('graph.problem.TASK_EMPTY'), nodeKey: 'task1', edgeKey: null, itemKey: null });
   assert.equal(find('CONDITION_EMPTY')?.message, 'The condition group of connection e4 has no clauses.');
   assert.equal(find('CONDITION_EMPTY')?.edgeKey, 'e4');
-  assert.equal(find('TEMPLATE_RESERVED_TYPE')?.itemKey, 'ready');
+  // REQ-05：数据查询可以发布，本地不再报预留类型；未读到配置的数据查询输出不误报变量不可用。
+  assert.equal(problems.some(problem => problem.itemKey === 'ready'), false);
   const broken = addNode(graph, 'TASK', { x: 0, y: 300 }).graph;
   const brokenCodes = localProblems(broken, new Map()).map(problem => `${problem.code}:${problem.nodeKey}`);
   assert.ok(brokenCodes.includes('NODE_UNREACHABLE:task3'));

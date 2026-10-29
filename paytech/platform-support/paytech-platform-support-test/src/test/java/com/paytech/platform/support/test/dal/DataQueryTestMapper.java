@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 /** 数据查询三表的测试数据准备与只读断言；整表回收由 PlatformDataCleaner 负责。 */
 public interface DataQueryTestMapper {
@@ -72,4 +73,12 @@ public interface DataQueryTestMapper {
             change_note AS changeNote
         FROM t_query_template_version WHERE template_id = #{templateId} AND version_no = #{versionNo}""")
     Map<String, Object> version(@Param("templateId") long templateId, @Param("versionNo") int versionNo);
+
+    /** 被查模板由 Owner 停用或启用（工作流用例模拟发布后 data-query 模板状态变化）。 */
+    @Update("UPDATE t_query_template SET status = #{status}, version = version + 1 WHERE template_id = #{templateId}")
+    int changeTemplateStatus(@Param("templateId") long templateId, @Param("status") String status);
+
+    /** 被查模板当前版本 1 的正文由 Owner 改写（工作流用例在未满足后切换为满足）。 */
+    @Update("UPDATE t_query_template_version SET body = #{body} WHERE template_id = #{templateId} AND version_no = 1")
+    int replaceBody(@Param("templateId") long templateId, @Param("body") String body);
 }

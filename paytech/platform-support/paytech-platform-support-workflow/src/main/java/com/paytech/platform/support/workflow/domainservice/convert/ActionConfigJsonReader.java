@@ -2,9 +2,11 @@ package com.paytech.platform.support.workflow.domainservice.convert;
 
 import java.util.Set;
 
+import com.paytech.platform.support.workflow.core.enums.FormFieldType;
 import com.paytech.platform.support.workflow.core.enums.WorkflowActionType;
 import com.paytech.platform.support.workflow.domain.action.ActionConfig;
 import com.paytech.platform.support.workflow.domain.action.DataQueryActionConfig;
+import com.paytech.platform.support.workflow.domain.action.DataQueryOutput;
 import com.paytech.platform.support.workflow.domain.action.FileUploadActionConfig;
 import com.paytech.platform.support.workflow.domain.action.FormActionConfig;
 import com.paytech.platform.support.workflow.domain.action.ManualConfirmActionConfig;
@@ -16,7 +18,8 @@ import tools.jackson.databind.JsonNode;
 /**
  * 按动作类型解析动作模板 config_json（技术方案 3.3）。
  *
- * <p>DATA_QUERY 只预留：只读取 queryCode 并保留原文，不解析其余结构。</p>
+ * <p>DATA_QUERY 按 REQ-05 形状解析：queryCode、parameters、outputs、descriptionKey、instruction；旧键 passRule /
+ * evidenceColumns 不再接受。</p>
  */
 public final class ActionConfigJsonReader {
 
@@ -39,7 +42,7 @@ public final class ActionConfigJsonReader {
             case FILE_UPLOAD -> readFileUpload(root);
             case PAGE_TASK -> readPageTask(root);
             case MANUAL_CONFIRM -> readManualConfirm(root);
-            case DATA_QUERY -> readDataQuery(root, json);
+            case DATA_QUERY -> readDataQuery(root);
         };
     }
 
@@ -94,14 +97,29 @@ public final class ActionConfigJsonReader {
     }
 
     /**
-     * 解析预留的数据查询配置。
+     * 解析数据查询配置。
      *
      * @param root 配置对象
-     * @param json 原文
      * @return 数据查询配置
      */
-    private DataQueryActionConfig readDataQuery(JsonNode root, String json) {
-        StrictJson.allowOnly(root, ROOT, Set.of("queryCode", "parameters", "passRule", "evidenceColumns"));
-        return new DataQueryActionConfig(StrictJson.text(root, "queryCode", ROOT), json);
+    private DataQueryActionConfig readDataQuery(JsonNode root) {
+        StrictJson.allowOnly(root, ROOT, Set.of("queryCode", "parameters", "outputs", "descriptionKey", "instruction"));
+        return new DataQueryActionConfig(StrictJson.text(root, "queryCode", ROOT),
+            StrictJson.texts(root, "parameters", ROOT), StrictJson.array(root, "outputs", ROOT, this::readOutput),
+            StrictJson.text(root, "descriptionKey", ROOT), StrictJson.text(root, "instruction", ROOT));
+    }
+
+    /**
+     * 解析数据查询的一个输出声明。
+     *
+     * @param output 输出 JSON
+     * @param path JSON 路径
+     * @return 输出声明
+     */
+    private DataQueryOutput readOutput(JsonNode output, String path) {
+        StrictJson.object(output, path);
+        StrictJson.allowOnly(output, path, Set.of("name", "type", "enumValues"));
+        return new DataQueryOutput(StrictJson.text(output, "name", path),
+            StrictJson.code(output, "type", path, FormFieldType.class), StrictJson.texts(output, "enumValues", path));
     }
 }

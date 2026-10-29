@@ -6,6 +6,7 @@ import java.util.Map;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.platform.support.workflow.domain.action.ActionTemplateReference;
+import com.paytech.platform.support.workflow.domain.action.DataQueryActionConfig;
 import com.paytech.platform.support.workflow.domain.action.FileUploadActionConfig;
 import com.paytech.platform.support.workflow.domain.action.FormActionConfig;
 import com.paytech.platform.support.workflow.domain.action.ManualConfirmActionConfig;
@@ -24,6 +25,7 @@ import tools.jackson.databind.JsonNode;
  * <li>FORM：表单必填、值类型（网关条件依赖）与平台文本长度上限；路径 {@code output.<key>}、文件元素 {@code output.<key>[i]}。</li>
  * <li>FILE_UPLOAD：{@code {"files": [...]}}；配置 required（或存量 minFiles ≥ 1）时至少一个文件；不检查数量与类型，扫描中不挡，已确认未通过扫描的文件报告在 {@code output.files[i]}。</li>
  * <li>PAGE_TASK / MANUAL_CONFIRM：{@code {"note": "..."}} 说明选填，最长 4000；存量 noteRequired 忽略。</li>
+ * <li>DATA_QUERY：没有人工提交入口（B3），一律拒绝。</li>
  * <li>文件归属与地址格式由调用方在检查前拒绝；这里只确认文件存在、扫描未被判定为未通过且对象可用。</li>
  * </ul>
  */
@@ -57,7 +59,7 @@ final class ActionOutputChecker {
             case FileUploadActionConfig upload -> fileErrors(upload, output, files);
             case ManualConfirmActionConfig confirm -> noteErrors(output);
             case PageTaskActionConfig page -> noteErrors(output);
-            default -> throw new BizCheckFailException("该类型动作的提交暂未开放：" + template.actionType().getCode());
+            case DataQueryActionConfig query -> throw new BizCheckFailException("系统检查动作由查询结果自动完成，不能手动完成");
         };
         Map<String, String> prefixed = new LinkedHashMap<>();
         errors.forEach((path, reason) -> prefixed.put(ROOT + "." + path, reason));

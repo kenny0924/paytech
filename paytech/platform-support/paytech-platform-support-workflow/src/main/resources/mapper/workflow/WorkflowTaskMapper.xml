@@ -9,7 +9,7 @@
         SELECT * FROM (
             SELECT 'ACTION' AS taskType, a.action_run_id AS taskId, a.instance_id AS instanceId, i.title AS instanceTitle,
                 i.definition_id AS definitionId, i.definition_version_id AS definitionVersionId, n.node_run_id AS nodeRunId, n.node_key AS nodeKey, n.round_no AS roundNo,
-                a.action_key AS actionKey, n.activated_time AS waitingSince
+                a.action_key AS actionKey, a.action_type AS actionType, n.activated_time AS waitingSince
             FROM t_workflow_action_run a
             JOIN t_workflow_node_run n ON n.node_run_id = a.node_run_id
             JOIN t_workflow_instance i ON i.instance_id = a.instance_id
@@ -18,7 +18,7 @@
                 AND i.status = 'RUNNING'
             UNION ALL
             SELECT 'APPROVAL', p.approval_id, p.instance_id, i.title, i.definition_id, i.definition_version_id, n.node_run_id, n.node_key,
-                n.round_no, NULL, p.create_time
+                n.round_no, NULL, NULL, p.create_time
             FROM t_workflow_approval p
             JOIN t_workflow_node_run n ON n.node_run_id = p.node_run_id
             JOIN t_workflow_instance i ON i.instance_id = p.instance_id

@@ -1,0 +1,22 @@
++-------------------------+--------------+-------------+----------------+--------------------+
+| COLUMN_NAME             | COLUMN_TYPE  | IS_NULLABLE | COLUMN_DEFAULT | COLLATION_NAME     |
++-------------------------+--------------+-------------+----------------+--------------------+
+| last_check_time         | datetime(6)  | YES         | NULL           | NULL               |
+| check_result            | varchar(32)  | YES         | NULL           | utf8mb4_0900_ai_ci |
+| check_detail            | varchar(512) | YES         | NULL           | utf8mb4_0900_ai_ci |
+| check_failure_count     | int          | NO          | 0              | NULL               |
+| last_check_success_time | datetime(6)  | YES         | NULL           | NULL               |
+| business_key            | varchar(128) | YES         | NULL           | utf8mb4_bin        |
+| active_slot             | tinyint      | YES         | NULL           | NULL               |
++-------------------------+--------------+-------------+----------------+--------------------+
++---------------------------+------------+----------------------------------------+
+| INDEX_NAME                | NON_UNIQUE | cols                                   |
++---------------------------+------------+----------------------------------------+
+| idx_workflow_action_check |          1 | action_type,status,last_check_time     |
+| uk_workflow_inst_active   |          0 | definition_id,business_key,active_slot |
++---------------------------+------------+----------------------------------------+
++------------------+---------+---------------------+
+| running_with_key | slotted | non_running_slotted |
++------------------+---------+---------------------+
+|                3 |       3 |                   0 |
++------------------+---------+---------------------+

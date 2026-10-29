@@ -17,6 +17,7 @@
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-platform-support-audit-security</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-platform-support-delivery</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-platform-support-file-document</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-platform-support-data-query</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-common-core</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-http-problem</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-redis-starter</artifactId></dependency>
@@ -29,6 +30,8 @@
         <dependency><groupId>org.springframework</groupId><artifactId>spring-context</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-autoconfigure</artifactId></dependency>
         <dependency><groupId>org.mybatis</groupId><artifactId>mybatis</artifactId></dependency>
+        <dependency><groupId>io.micrometer</groupId><artifactId>micrometer-core</artifactId></dependency>
+        <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-api</artifactId></dependency>
         <dependency><groupId>org.projectlombok</groupId><artifactId>lombok</artifactId><optional>true</optional></dependency>
         <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
     </dependencies>

@@ -156,7 +156,7 @@ public class WorkflowInstanceDetailResponseBody {
         /** 最近一次提交的输出；未提交为空。 */
         private JsonNode output;
 
-        /** 最近一次提交人；可空。 */
+        /** 最近一次提交人；可空。DATA_QUERY 由系统完成时为空（页面显示“系统”）。 */
         private String submittedBy;
 
         /** 最近一次提交时间；可空。 */
@@ -164,6 +164,12 @@ public class WorkflowInstanceDetailResponseBody {
 
         /** 动作模板名称（发布时冻结；早期版本快照没有名称时为空）。 */
         private String templateName;
+
+        /**
+         * 系统检查块
+         * <li>只有 DATA_QUERY 动作有值，其他类型为空；详情与我的待办卡片共用。</li>
+         */
+        private WorkflowDataQueryCheckBody dataQueryCheck;
     }
 
     /** 验证记录。 */

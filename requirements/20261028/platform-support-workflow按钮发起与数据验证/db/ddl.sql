@@ -1,0 +1,15 @@
+-- =====================================================================================================================
+-- REQ-05 platform-support workflow 按钮发起与数据验证 · DDL 索引（只作指引，本文件不含可执行语句，不在任何数据库执行）
+--
+-- 执行文件（mor_platform，人工审阅后由具备 ALTER / INDEX 权限的账号执行；部署顺序见 technique.md §9.3：前滚 SQL → Platform 新镜像）：
+--   前滚：paytech/platform-support/docs/database/sql/changes/2026-10-29-workflow-data-query.sql
+--         0) 预检：同一定义下按原文重复的 RUNNING business_key 必须为 0 行；
+--         t_workflow_instance：business_key 改 utf8mb4_bin 与注释、新增 active_slot、回填 RUNNING 槽位、新增 uk_workflow_inst_active；
+--         t_workflow_action_run：action_type 注释、新增 5 个检查列与 idx_workflow_action_check；
+--         t_workflow_action_template：action_type 注释。
+--   回滚：paytech/platform-support/docs/database/sql/changes/2026-10-29-workflow-data-query-rollback.sql（新代码停止后执行）。
+-- 完整定义：paytech/platform-support/docs/database/sql/platform-support-schema.sql 与
+--           paytech/platform-support/docs/database/platform-support.pdma.json（PDManer）。
+-- 注册 DML：同目录 registration-142.sql / registration-142-activate.sql / registration-142-rollback.sql。
+-- 初始化 DML：platform-support-initial-data.sql 末尾追加块 142（与 registration-142.sql 相同）。
+-- =====================================================================================================================

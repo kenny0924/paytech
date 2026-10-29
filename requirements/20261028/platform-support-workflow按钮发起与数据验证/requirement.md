@@ -1,10 +1,10 @@
 # platform-support：workflow 按钮发起与数据验证 · 需求
 
-> 状态：**阶段 1 评审稿（2026-10-28）**。来源：[2026-10-28 客户上线决定](../../../agent-docs/decisions/2026-10-28-client-go-live-orchestration.md)第 ④⑤⑦⑪ 条与 3.3 / 3.4 契约（REQ-05）；上游讨论 [design-discuss/client-activation](../../../design-discuss/client-activation/requirement-plan.md) 第 7.6 节 W1、W2。确认记录见 [delivery.md](./delivery.md)；技术方案从阶段 2 起写入 [technique.md](./technique.md)。
+> 状态：**阶段 1 评审稿（2026-10-28，2026-10-29 补充第 9a 节代码核实）**。来源：[2026-10-28 客户上线决定](../../../agent-docs/decisions/2026-10-28-client-go-live-orchestration.md)第 ④⑤⑦⑪ 条与 3.3 / 3.4 契约（REQ-05）；上游讨论 [design-discuss/client-activation](../../../design-discuss/client-activation/requirement-plan.md) 第 7.6 节 W1、W2。确认记录见 [delivery.md](./delivery.md)；技术方案从阶段 2 起写入 [technique.md](./technique.md)。
 
 ## 1. 背景
 
-- workflow 模块（2026-10-22 交付，10-23 UX 改版）已有：定义 / 版本 / 发布、实例、TASK / EXCLUSIVE / PARALLEL_SPLIT / PARALLEL_JOIN / WAITING 节点、边条件（`ConditionOperator`）、动作模板 FORM / FILE_UPLOAD / PAGE_TASK / MANUAL_CONFIRM、审批 ANY / ALL、转交、通知、回调。
+- workflow 模块（2026-10-22 交付，10-23 UX 改版）已有：定义 / 版本 / 发布、实例、START / END / TASK / EXCLUSIVE / PARALLEL_SPLIT / PARALLEL_JOIN 节点（`WAITING` 只是并行汇合的节点运行状态，不是节点类型；"等待节点"在本期表达为只挂 DATA_QUERY 动作的 TASK 节点，阶段 2 F-17 / S-18）、边条件（`ConditionOperator`）、动作模板 FORM / FILE_UPLOAD / PAGE_TASK / MANUAL_CONFIRM、审批 ANY / ALL、转交、通知、回调。
 - 两处限制挡住了"客户上线"流程：
   1. **发起**：`StartInstanceRequest` 按 `definitionId + versionNo` 发起，`businessKey` 只是可选字段，不防重；运营无法"按模板编码发起、同一 Client 只建一次"。
   2. **`DATA_QUERY` 只预留**：`TaskNodeRules` 拒绝发布引用 DATA_QUERY 模板的定义；`ActionConfigJsonReader` 只保留 `queryCode` 原文。节点完成只能靠人提交，流程无法"查到事实就自动推进"，也没有输出变量给网关分支。
@@ -30,7 +30,7 @@
 
 | # | 范围 |
 |---|---|
-| R1 | 发起接口支持 `definitionCode`（取当前 ACTIVE 发布版本）；`businessKey` 可选但给出时在 `definitionCode + businessKey + RUNNING` 上唯一；重复发起返回已有实例（200 + 既有 instanceId，不报错）；数据库唯一索引保证并发 |
+| R1 | 发起接口支持 `definitionCode`（取当前发布版本，与 `definitionId + versionNo` 二选一）；`businessKey` 可选但给出时同一定义下只允许一个 RUNNING 实例（落库为 `(definition_id, business_key, active_slot)` 唯一索引，按编码发起先解析到 `definition_id`）；重复发起返回已有实例（200 + 既有 instanceId + `created=false`，不报错）；数据库唯一索引保证并发 |
 | R2 | `DATA_QUERY` 动作模板可创建 / 发布：配置 = data-query 模板编码 + 参数映射（实例变量 → 查询参数）+ 输出映射（查询 outputs → 实例变量名）+ 说明文案键 |
 | R3 | 运行：节点激活时执行一次；XXL-Job 定时对所有 PENDING 的 DATA_QUERY 动作重查（默认 5 分钟，可配置）；"立即检查"接口（有任务查看权限即可） |
 | R4 | 结果：`satisfied = true` → 动作 COMPLETED，`outputs` 写入实例变量（同名覆盖），节点按既有规则推进；`false` → 保持 PENDING，记录 `missing[]` 与检查时间；查询异常 → 保持 PENDING，记录失败与最近成功时间，连续失败计数 |
@@ -52,19 +52,21 @@
 | 编号 | 规则 |
 |---|---|
 | B1 | 唯一性只约束 RUNNING 实例；COMPLETED / TERMINATED 后可用同一 `businessKey` 再次发起 |
-| B2 | 按 `definitionCode` 发起时取唯一 ACTIVE 版本；无 ACTIVE 版本 → 422 `DEFINITION_NOT_PUBLISHED` |
+| B2 | 按 `definitionCode` 发起时取定义的当前发布版本；流程未发布或已停用 → 400 `BUSINESS_CHECK_FAILED`，原因"流程未发布或已停用"（2026-10-29 阶段 2 S-03，不新增 422 编码） |
 | B3 | DATA_QUERY 动作没有人工提交入口；`MANDATORY` / `OPTIONAL` 语义沿用；取消节点时动作 CANCELLED |
 | B4 | 查询返回必须符合契约形状（`satisfied / outputs / missing`）；形状不符视为失败 |
 | B5 | `outputs` 写入变量名受定义声明限制（输出映射里声明过的才写），避免查询污染任意变量 |
 | B6 | 定时重查按实例分片，单次查询超时默认 5 秒；同一动作并发重查只执行一次（按动作行 CAS） |
 | B7 | 定义发布校验：DATA_QUERY 引用的模板编码必须在 data-query 存在且 ACTIVE；参数映射引用的变量必须在定义中声明或由上游 outputs 提供 |
+| B8 | DATA_QUERY 完成是单向的：COMPLETED 后不再重查，事实回退不重开节点；业务执行门禁仍由各 Owner 自行校验（阶段 2 S-13、F-19） |
+| B9 | 流程变量没有列表类型：查询的列表输出（如决定 3.3 的 `capabilities[]`）按 TEXT（逗号分隔）声明，排他网关用 `CONTAINS` 判断（阶段 2 S-05） |
 
 ## 7. 逐系统变动点
 
 | 系统 / 模块 | 变动点 | 类型 |
 |---|---|---|
-| **Platform workflow** | `t_workflow_instance`：`definition_code` 冗余列（如无）+ 唯一索引 `(definition_code, business_key, running_slot)`（稀疏槽位）；PDManer + DDL | 表 |
-| | `t_workflow_action_run`：最近检查时间、satisfied、missing JSON、失败计数、最近成功时间（阶段 3 定列） | 表 |
+| **Platform workflow** | `t_workflow_instance`：新增 `active_slot`（RUNNING 且有 `business_key` 时为 1，其余为空）+ 唯一索引 `(definition_id, business_key, active_slot)`，`business_key` 改 `utf8mb4_bin`；不加 `definition_code` 列（阶段 2 S-01）；PDManer + DDL | 表 |
+| | `t_workflow_action_run`：`last_check_time`、`check_result`、`check_detail`、`check_failure_count`、`last_check_success_time` + 扫描索引（technique 第 9 节） | 表 |
 | | `StartInstanceRequest` 增 `definitionCode`（与 `definitionId + versionNo` 二选一）；`StartWorkflowInstanceProcessor` 防重与返回既有实例 | 接口 / 代码 |
 | | `TaskNodeRules`、`ActionConfigJsonReader`、`WorkflowTemplateConfigs`：放开 DATA_QUERY，解析参数 / 输出映射，发布校验 B7 | 代码 |
 | | 新 Processor：执行 DATA_QUERY（进程内调 data-query `QueryTemplateService`）、写结果、推进节点；"立即检查"写接口 | 代码 |
@@ -84,7 +86,7 @@
 |---|---|
 | AC-01 | 按 `definitionCode + businessKey` 发起两次（含并发）只产生一个 RUNNING 实例，第二次返回同一 instanceId |
 | AC-02 | 实例 COMPLETED 后同一 businessKey 可再次发起 |
-| AC-03 | 无 ACTIVE 版本时发起返回 422 `DEFINITION_NOT_PUBLISHED` |
+| AC-03 | 流程未发布或已停用时按编码发起返回 400 `BUSINESS_CHECK_FAILED`，原因"流程未发布或已停用" |
 | AC-04 | 引用 DATA_QUERY 模板的定义可发布；引用不存在 / 非 ACTIVE 模板或未声明变量时发布被拒并指出原因 |
 | AC-05 | 节点激活即执行查询；`satisfied = true` 时动作 COMPLETED、outputs 写入变量、节点推进 |
 | AC-06 | `satisfied = false` 时动作保持 PENDING，任务卡返回 missing[] 与检查时间；定时重查后满足即推进 |
@@ -113,6 +115,18 @@
 | Q1 | 定时重查默认 5 分钟、单次超时 5 秒是否可接受 | 可配置，按建议 |
 | Q2 | "立即检查"权限：任务查看者即可，还是仅执行人 / 跟进人 | 任务查看者即可（只读查询，无副作用） |
 | Q3 | 按 `definitionCode` 发起是否同时保留 `definitionId + versionNo`（现有 UI 用） | 保留，二选一 |
+
+
+## 9a. 阶段 1 核实（2026-10-29，按代码只读核对）
+
+| 编号 | 事实 | 对需求的修正 |
+|---|---|---|
+| V-1 | `t_workflow_definition` 已有 `definition_code`；`t_workflow_instance` 有 `definition_id`、`business_key`，无唯一约束 | R1 唯一性改为 `(definition_id, business_key, running_slot)`（稀疏槽位，RUNNING 为 1；阶段 2 S-01 定名 `active_slot`），**不给实例加 definition_code 列**；按 `definitionCode` 发起时先解析到 definition_id 与当前发布版本 |
+| V-2 | 实例变量不单独建表：`start.*` 取 `start_values_json`，`<actionKey>.*` 取该动作最新一轮 COMPLETED 的 `output_json`（`WorkflowVariables`），EXCLUSIVE 条件按变量名求值（`WorkflowConditionEvaluator`） | R4 / R5 简化：DATA_QUERY 满足时把 `out_*` 列写入本动作 `output_json`，变量名即 `<actionKey>.<name>`，网关直接引用，**不新增变量存储**；B5 改为"只写输出映射声明过的列" |
+| V-3 | data-query 为 Platform 同部署模块，`QueryTemplateService.findExecutableTemplate(templateCode)` 已存在；HTTP 执行入口按 `X-Caller-Service` 白名单放行 | workflow 进程内经 data-query 公开的执行入口调用（阶段 2 核实执行引擎是否已有可复用的 Processor / Service，不走 HTTP 白名单） |
+| V-4 | Platform 已作为 XXL 执行器（`platform-support-service`，用于补偿扫描） | R3 定时重查新增一个 Platform JobHandler，无需新执行器 |
+| V-5 | 查询返回形状已在 REQ-00 3.3 定为**单行**：`satisfied`、`out_<name>`、`missing`（逗号分隔原因码）；模板编码规则 `[A-Z][A-Z0-9_]{1,63}`，客户上线模板统一 `GOLIVE_*` | B4"形状不符视为失败"按单行约定实现 |
+| V-6 | 本需求含页面改动（任务卡"系统检查"块、定义编辑页 DATA_QUERY 配置） | 阶段 3 必须先在 `operations-console.pen` 出原型并经确认，再写前端 |
 
 ## 10. 阶段安排
 

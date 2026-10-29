@@ -86,10 +86,16 @@ export interface PageParameter { key: string; label: string }
 export interface PageTaskConfig { pageRoute: string; parameters?: PageParameter[]; instruction?: string }
 /** noteRequired 为旧配置，已忽略：说明一律选填。 */
 export interface ManualConfirmConfig { instruction?: string; noteRequired?: boolean }
-/** DATA_QUERY 预留：内部结构为前端假设，后端只限制顶层四个键。 */
+/** 数据查询输出的类型（与表单字段类型同名，不含长文本与文件）。 */
+export type DataQueryOutputType = 'TEXT' | 'NUMBER' | 'BOOLEAN' | 'ENUM' | 'DATE';
+/** 一个输出：读取查询结果列 out_<name>，写入变量 <actionKey>.<name>；ENUM 必须给出 enumValues。 */
+export interface DataQueryOutput { name: string; type: DataQueryOutputType; enumValues?: string[] }
+/**
+ * 数据查询（REQ-05 technique 8.4）：queryCode 为 data-query 模板编码，parameters 为模板声明的参数名（取值在流程节点 inputs 映射），
+ * descriptionKey / instruction 为任务卡「系统检查」块的完成标准说明。
+ */
 export interface DataQueryConfig {
-  queryCode: string; parameters?: { key: string; source: InputSource; value: string }[];
-  passRule?: { column: string; operator: ConditionOperator; value: string }; evidenceColumns?: string[];
+  queryCode: string; parameters?: string[]; outputs?: DataQueryOutput[]; descriptionKey?: string | null; instruction?: string | null;
 }
 export type ActionConfig = FormDefinition | FileUploadConfig | PageTaskConfig | ManualConfirmConfig | DataQueryConfig;
 
@@ -110,7 +116,11 @@ export interface ActionTemplate {
   /** 被引用的流程定义数（当前发布版本冻结了该模板，按定义去重）；只在列表接口返回，旧响应或详情为 null。 */
   referencedDefinitionCount?: number | null;
 }
-export interface Mutation { objectType: string; objectId: string; status: string | null; version: number }
+export interface Mutation {
+  objectType: string; objectId: string; status: string | null; version: number;
+  /** 只有发起返回：true 新建，false 同一业务关联已有运行中实例（返回该实例）。 */
+  created?: boolean | null;
+}
 export interface Problem { code: string; nodeKey: string | null; edgeKey: string | null; itemKey: string | null; message: string }
 export interface DefinitionSummary {
   definitionId: string; definitionCode: string; definitionName: string; description: string | null; status: ConfigStatus;
@@ -156,6 +166,33 @@ export interface ActionRun {
   status: ActionRunStatus; output: Record<string, unknown> | null; submittedBy: string | null; submittedTime: string | null;
   /** 发布时冻结的模板名称；早期快照为空。 */
   templateName?: string | null;
+  /** 数据查询动作的系统检查块；其他类型为 null。 */
+  dataQueryCheck?: DataQueryCheck | null;
+}
+/** 系统检查结果；从未检查为 null。 */
+export type DataQueryCheckResult = 'SATISFIED' | 'UNSATISFIED' | 'FAILED';
+/** 系统检查块（technique 8.3）。 */
+export interface DataQueryCheck {
+  queryCode: string; descriptionKey: string | null; instruction: string | null; result: DataQueryCheckResult | null;
+  /** 未满足的原因码（result=UNSATISFIED）。 */
+  missing: string[];
+  /** 检查失败码（result=FAILED）。 */
+  failureCode: string | null; lastCheckedAt: string | null;
+  /** 查询成功执行的最近时间（满足或未满足都算）。 */
+  lastSucceededAt: string | null; consecutiveFailures: number;
+  /** 动作待处理且首查尚未完成。 */
+  checking: boolean;
+}
+/** 立即检查的响应（technique 8.2）：inProgress 为 true 时已有检查在进行，本次未执行查询。 */
+export interface DataQueryCheckResponse {
+  actionRunId: string; actionStatus: ActionRunStatus; instanceStatus: InstanceStatus; inProgress: boolean; check: DataQueryCheck | null;
+}
+/** data-query 模板选择项（technique 8.5）：只有编码、名称、说明、数据源名称与参数声明。 */
+export interface DataQueryTemplateOption {
+  templateCode: string; templateName: string; description: string | null; dataSourceName: string | null;
+  /** 当前生效版本号与模板超时（秒）；旧响应没有时为 null。 */
+  versionNo: number | null; timeoutSeconds: number | null;
+  parameters: { name: string; type: string; required: boolean }[];
 }
 /** 历史验证记录（2026-10-22 起不再产生）：实例详情仍返回，只用于解码，界面不展示。 */
 export interface Verification {
@@ -194,6 +231,8 @@ export interface Activity {
 export interface Task {
   taskType: TaskType; taskId: string; instanceId: string; instanceTitle: string; nodeKey: string; roundNo: number;
   actionKey: string | null; waitingSince: string; definitionName?: string | null; nodeName?: string | null;
+  /** 填写类待办的动作类型；审批为 null。 */
+  actionType?: ActionType | null;
 }
 /** 接口 26：已处理。result 为动作运行状态或审批决定。 */
 export interface HandledTask {
@@ -216,8 +255,9 @@ export interface SaveDraftRequest {
   definitionName: string; description?: string; graph: WorkflowGraph; startForm: FormDefinition; expectedVersion: number;
 }
 export interface PublishRequest { expectedVersion: number }
+/** 发起：definitionCode（当前发布版本）与 definitionId + versionNo 二选一。 */
 export interface StartInstanceRequest {
-  definitionId: string; versionNo: number; title: string; businessKey?: string; startValues: Record<string, unknown>;
+  definitionCode?: string; definitionId?: string; versionNo?: number; title: string; businessKey?: string; startValues: Record<string, unknown>;
   approvers?: { nodeKey: string; approverIds: string[] }[]; executors?: { actionKey: string; executorId: string }[];
 }
 export interface TerminateRequest { reason: string }

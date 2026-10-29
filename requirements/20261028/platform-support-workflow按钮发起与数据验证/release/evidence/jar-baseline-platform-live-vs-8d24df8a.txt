@@ -1,0 +1,2 @@
+A=3086 B=3086 onlyA=0 onlyB=0 changed=1
+  ~ paytech-messaging.jar!catalog/events.yaml

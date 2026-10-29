@@ -1,0 +1,1141 @@
+{
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "17a-template",
+          "check": {
+            "meta": "数据源 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） 单次超时 5 秒 REQ-05 阶段 5 本机联调",
+            "editor": "查询模板 * 只列出启用中的数据查询模板。 GOLIVE_AGREEMENT_DRAFTED 合同已起草且价格版本已批准 生效中 · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） 数据源 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） 单次超时 5 秒 REQ-05 阶段 5 本机联调 查询参数 参数在流程节点上映射取值。 参数 是否必填 取值 clientId · INTEGER 必填 在流程节点上映射 输出变量 每个输出读取列 out_<名称>，写入变量 <动作键>.<名称>。 名称 来源列 类型 可选值 流程变量 out_agreement_id 文本 — <动作键>.agreement_id out_business_mode 枚举 MOR PSP <动作键>.business_mode out_capability_codes 文本 — <动作键>.capability_codes 多个值以逗号分隔，条件用「包含」判断 添加输出 完成标准说明 显示在任务卡的「系统检查」块，告诉跟进人系统在等什么。 完成标准文案键 当前语言显示 完成标准说明",
+            "contract": "查询返回约定 系统只读第一行。多行、缺少声明的列或类型不符，都按「检查失败」处理，节点保持未完成。 satisfied 1 / 0 或 true / false。为真即完成该动作。 out_<名称> 按上表声明的类型转换后写入流程变量。 missing 未满足的原因码，逗号分隔，例如 CASE_NOT_APPROVED。 执行方式 节点开始时立即检查一次 之后每 5 分钟自动重查 跟进人可随时点「立即检查」 执行人是跟进人：没有完成按钮，满足后由系统完成 满足后不会因为数据回退而重新打开。能否交易仍由各业务系统自己控制，流程只负责引导。"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "17b-picker",
+          "check": "GOLIVE_AGREEMENT_ACTIVE GOLIVE_AGREEMENT_DRAFTED E2E_REQ05_SLOW REQ-05 慢查询（1 秒超时） 生效中 · v1 本机被查库 fixture（REQ-05） GOLIVE_COLLECTION_CAPABILITIES_ENABLED 收款开通项全部已开通 生效中 · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） GOLIVE_AGREEMENT_ACTIVE 合同已生效且价格版本生效 生效中 · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） GOLIVE_AGREEMENT_DRAFTED 合同已起草且价格版本已批准 生效中 · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA）",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "17c-validation",
+          "check": {
+            "rows": [
+              "\tout_client_name\n模板未声明此列\n\t\n文本\n\t—\t<动作键>.client_name\t"
+            ],
+            "alert": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "18a-node-actions",
+          "check": "处理人在本节点需要完成的动作，执行人逐个完成。 ⠿ 合同已起草检查 · 数据查询 在动作目录中编辑 必选 可选 跟进人 o***@example.test 输入参数 1 项 · 已映射 1 clientId ← 变量 启动表单.Client ID 输出变量 3 项 · 写入流程变量 drafted.agreement_id ← out_agreement_id · 文本 drafted.business_mode ← out_business_mode · 枚举 drafted.capability_codes ← out_capability_codes · 文本 系统检查：客户合同已起草且价格版本已批准 · 每 5 分钟重查 添加动作 必选动作全部完成后，节点才进入审批；可选动作不阻塞放行 同一人不能既执行本节点动作又审批本节点 数据查询动作没有提交入口：查到满足即由系统完成；执行人是跟进人，只能「立即检查」。 输出写入 <动作键>.<名称>，可在后续连线条件中引用。 本节点产出的变量（下游节点与条件可引用） drafted.agreement_id · agreement_id drafted.business_mode · business_mode drafted.capability_codes · capability_codes",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "18b-gateway",
+          "check": "业务模式 排他网关 名称 节点 key 版本内全局唯一；条件、驳回目标与回调事件都引用它 该网关的出口（按优先级依次判断，第一个满足的生效；都不满足走默认出口） 1 N4 合同生效检查 business_mode 等于 MOR 默认 PSP 人工复核 以上都不满足 点击连线配置条件、优先级与默认出口。 删除节点 也可选中后按 Delete",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19a-unsatisfied-n8",
+          "check": "上线 · 240674482170114049 REQ-05 验收 · 客户上线（commercial） v1 · 发起人 o***@example.test · 10-29 11:33 发起 · 已在本节点停留 33 分钟 开始 N3 合同起草检查 N4 合同生效检查 N8 收款开通检查 当前 结束 查看流程图 背景 启动信息 1 项 收起 Client ID 240674482170114049 我跟进的检查 N8 收款开通检查 · 1 个系统检查，满足后由系统自动完成 必选 1 项 · 已完成 0 项 收款开通检查 必选 数据查询 · 未满足 1 项 我 我跟进 尚未满足 尚未满足 最近检查 10-29 11:33 每 5 分钟自动重查 完成标准：合同内每个支付方式开通项都已开通 还差 有支付方式开通项尚未开通 CAPABILITY_NOT_ENABLED 检查通过后自动完成，每 5 分钟重查一次。 立即检查 该动作由系统检查自动完成。 还有 1 项检查未满足；全部满足后系统自动推进，无需你提交。 更多",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19b-unsatisfied-n3",
+          "check": "上线 · 240674874987655169 REQ-05 验收 · 客户上线（commercial） v1 · 发起人 o***@example.test · 10-29 11:33 发起 · 已在本节点停留 33 分钟 开始 N3 合同起草检查 当前 … 查看流程图 背景 启动信息 1 项 收起 Client ID 240674874987655169 我跟进的检查 N3 合同起草检查 · 1 个系统检查，满足后由系统自动完成 必选 1 项 · 已完成 0 项 合同已起草检查 必选 数据查询 · 未满足 1 项 我 我跟进 尚未满足 尚未满足 最近检查 10-29 11:51 每 5 分钟自动重查 完成标准：客户合同已起草且价格版本已批准 还差 尚未起草客户合同 AGREEMENT_NOT_DRAFTED 检查通过后自动完成，每 5 分钟重查一次。 立即检查 该动作由系统检查自动完成。 还有 1 项检查未满足；全部满足后系统自动推进，无需你提交。 更多",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19c-checking-now",
+          "check": "合同已起草检查 必选 数据查询 · 未满足 1 项 我 我跟进 尚未满足 尚未满足 最近检查 10-29 12:07 每 5 分钟自动重查 完成标准：客户合同已起草且价格版本已批准 还差 尚未起草客户合同 AGREEMENT_NOT_DRAFTED 检查通过后自动完成，每 5 分钟重查一次。 立即检查 已检查：仍有 1 项未满足。",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19d-after-check",
+          "check": "合同已起草检查 必选 数据查询 · 未满足 1 项 我 我跟进 尚未满足 尚未满足 最近检查 10-29 12:07 每 5 分钟自动重查 完成标准：客户合同已起草且价格版本已批准 还差 尚未起草客户合同 AGREEMENT_NOT_DRAFTED 检查通过后自动完成，每 5 分钟重查一次。 立即检查 已检查：仍有 1 项未满足。",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19e-failed",
+          "check": "检查失败 · 超时 REQ-05 验收 · 检查失败与终止 v1 · 发起人 o***@example.test · 10-29 11:33 发起 · 已在本节点停留 33 分钟 开始 慢检查 当前 结束 查看流程图 我跟进的检查 慢检查 · 1 个系统检查，满足后由系统自动完成 必选 1 项 · 已完成 0 项 慢查询检查（超时） 必选 数据查询 · 检查失败 我 我跟进 检查失败 检查失败 最近检查 10-29 11:33 连续失败 2 次 完成标准：E2E_REQ05_SLOW 查询超时。 QUERY_TIMEOUT 尚无成功检查 · 节点保持未完成，系统会继续重查，不会因此报错或通知。 立即检查 该动作由系统检查自动完成。 还有 1 项检查未满足；全部满足后系统自动推进，无需你提交。 更多",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19f-manual-confirm",
+          "check": "上线 · 900000000001380201 REQ-05 验收 · 客户上线（commercial） v1 · 发起人 o***@example.test · 10-29 11:33 发起 · 已在本节点停留 33 分钟 开始 N3 合同起草检查 PSP 人工复核 当前 结束（PSP） 查看流程图 背景 启动信息 1 项 收起 Client ID 900000000001380201 我的任务 PSP 人工复核 必选 1 项 · 已完成 0 项 PSP 人工复核 必选 人工确认 · PSP 模式人工复核 我 我 待处理 PSP 模式人工复核 说明（选填） 完 成 还有 1 项必选动作未完成，完成后进入下一步 更多",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19g-checking",
+          "check": {
+            "instance": "241473091241250816",
+            "row": "慢查询检查（超时） 必选 数据查询 · 检查中… 我 我跟进 检查中… 检查中… 完成标准：E2E_REQ05_SLOW 检查通过后自动完成，每 5 分钟重查一次。 立即检查 该动作由系统检查自动完成。"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20a-activity",
+          "check": {
+            "timeline": "全部 6 人工操作 0 状态变化 3 系统完成 3 通知 0 业务回调 0 10-29 11:33 节点 · 「N8 收款开通检查」 已通过 10-29 11:33 提交 · 系统 「N8 收款开通检查」 已完成 collection 系统 10-29 11:33 节点 · 「N4 合同生效检查」 已通过 10-29 11:33 提交 · 系统 「N4 合同生效检查」 已完成 active 系统 10-29 11:33 节点 · 「N3 合同起草检查」 已通过 10-29 11:33 提交 · 系统 「N3 合同起草检查」 已完成 drafted 系统",
+            "aside": "系统检查 3 已满足 0 尚未满足 0 检查失败 系统完成的动作由系统记录，提交人为空；「立即检查」只记入操作审计，不进入活动记录。检查失败只记日志与告警。 通知与回调投递 0 已送达 0 重试中 0 失败 业务回调经 topic_platform_workflow_event 可靠投递（本地事务登记、提交后发送、失败退避重试，超过 5 次标记失败并告警）。订阅方按回调编码自行处理，执行前须自行校验业务事实。 本流程的回调编码 未配置业务回调"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20b-node-drawer-satisfied",
+          "check": "N3 合同起草检查 第 1 轮 · 无审批人 第 1 轮 · 已通过 动作 1 审批 0 记录 0 合同已起草检查 必选 数据查询 · 10-29 11:33 系统完成 我 我跟进 已满足 本节点通知与回调 本节点没有配置通知或回调",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20c-node-drawer-unsatisfied",
+          "check": "N8 收款开通检查 第 1 轮 · 无审批人 第 1 轮 · 待处理 动作 1 审批 0 记录 0 收款开通检查 必选 数据查询 · 未满足 1 项 我 我跟进 尚未满足 尚未满足 最近检查 10-29 11:33 每 5 分钟自动重查 完成标准：合同内每个支付方式开通项都已开通 还差 有支付方式开通项尚未开通 CAPABILITY_NOT_ENABLED 检查通过后自动完成，每 5 分钟重查一次。 立即检查 该动作由系统检查自动完成。 本节点通知与回调 本节点没有配置通知或回调 轮到你执行 去处理",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "99-req01-agreement",
+          "check": "Gate Demo MOR Client Agreement 返 回 刷 新 变更历史 终 止 合同编号 GATE-CLIENT-MOR-AE001 类型 Client 合同 状态 生效 Client 240674482170114049 OE AE001 模式 MOR · SETTLE_THROUGH_PLATFORM · PLATFORM 生效区间 2026-10-01 04:00 ～ 未定 签署 / 激活 2026-10-01 04:00 / 2026-10-01 04:00 版本 31 下一步 · 开通项生效 开通项由系统按前置条件自动开通：资格、合同与价格、渠道身份 CARD 因价格未覆盖 SAR 暂停；APPLE_PAY 等前置：价格未覆盖 USD；GOOGLE_PAY 已手动暂停，需手动恢复 去定价 参与方与签署（2） 产品与开通（4） 条款版本 角色 Party / 资料版本 签署 操作 角色 Party / 资料版本 签署 操作 Client 240674482170114050 240674482170114051 点击接受2026-10-01 04:00 GATE-SIGN-MOR-CLIENT 经营主体 900000000001380102 900000000001380111 点击接受2026-10-01 04:00 GATE-SIGN-MOR-OE 合同文件 用途 文件 ID SHA-256 SIGNING_DOCUMENT 900000000001390003 bbbbbbbbbbbbbbbb…",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        }
+      ]
+    },
+    {
+      "locale": "zh-CN",
+      "width": 390,
+      "steps": [
+        {
+          "step": "17a-template",
+          "check": {
+            "meta": "数据源 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） 单次超时 5 秒 REQ-05 阶段 5 本机联调",
+            "editor": "查询模板 * 只列出启用中的数据查询模板。 GOLIVE_AGREEMENT_DRAFTED 合同已起草且价格版本已批准 生效中 · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） 数据源 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） 单次超时 5 秒 REQ-05 阶段 5 本机联调 查询参数 参数在流程节点上映射取值。 参数 是否必填 取值 clientId · INTEGER 必填 在流程节点上映射 输出变量 每个输出读取列 out_<名称>，写入变量 <动作键>.<名称>。 名称 来源列 类型 可选值 流程变量 out_agreement_id 文本 — <动作键>.agreement_id out_business_mode 枚举 MOR PSP <动作键>.business_mode out_capability_codes 文本 — <动作键>.capability_codes 多个值以逗号分隔，条件用「包含」判断 添加输出 完成标准说明 显示在任务卡的「系统检查」块，告诉跟进人系统在等什么。 完成标准文案键 当前语言显示 完成标准说明",
+            "contract": "查询返回约定 系统只读第一行。多行、缺少声明的列或类型不符，都按「检查失败」处理，节点保持未完成。 satisfied 1 / 0 或 true / false。为真即完成该动作。 out_<名称> 按上表声明的类型转换后写入流程变量。 missing 未满足的原因码，逗号分隔，例如 CASE_NOT_APPROVED。 执行方式 节点开始时立即检查一次 之后每 5 分钟自动重查 跟进人可随时点「立即检查」 执行人是跟进人：没有完成按钮，满足后由系统完成 满足后不会因为数据回退而重新打开。能否交易仍由各业务系统自己控制，流程只负责引导。"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": [
+              "span.:432",
+              "span.wf-inline:875",
+              "table.wf-table.wf-dq-table:765"
+            ]
+          }
+        },
+        {
+          "step": "17b-picker",
+          "check": "GOLIVE_AGREEMENT_ACTIVE GOLIVE_AGREEMENT_DRAFTED E2E_REQ05_SLOW REQ-05 慢查询（1 秒超时） 生效中 · v1 本机被查库 fixture（REQ-05） GOLIVE_COLLECTION_CAPABILITIES_ENABLED 收款开通项全部已开通 生效中 · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） GOLIVE_AGREEMENT_ACTIVE 合同已生效且价格版本生效 生效中 · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） GOLIVE_AGREEMENT_DRAFTED 合同已起草且价格版本已批准 生效中 · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA）",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": [
+              "span.:433",
+              "span.wf-inline:876",
+              "table.wf-table.wf-dq-table:765",
+              "span.wf-inline:616",
+              "span.:501"
+            ]
+          }
+        },
+        {
+          "step": "17c-validation",
+          "check": {
+            "rows": [
+              "\tout_client_name\n模板未声明此列\n\t\n文本\n\t—\t<动作键>.client_name\t"
+            ],
+            "alert": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": [
+              "span.:433",
+              "span.wf-inline:876",
+              "table.wf-table.wf-dq-table:680"
+            ]
+          }
+        },
+        {
+          "step": "18a-node-actions",
+          "check": "处理人在本节点需要完成的动作，执行人逐个完成。 ⠿ 合同已起草检查 · 数据查询 在动作目录中编辑 必选 可选 跟进人 o***@example.test 输入参数 1 项 · 已映射 1 clientId ← 变量 启动表单.Client ID 输出变量 3 项 · 写入流程变量 drafted.agreement_id ← out_agreement_id · 文本 drafted.business_mode ← out_business_mode · 枚举 drafted.capability_codes ← out_capability_codes · 文本 系统检查：客户合同已起草且价格版本已批准 · 每 5 分钟重查 添加动作 必选动作全部完成后，节点才进入审批；可选动作不阻塞放行 同一人不能既执行本节点动作又审批本节点 数据查询动作没有提交入口：查到满足即由系统完成；执行人是跟进人，只能「立即检查」。 输出写入 <动作键>.<名称>，可在后续连线条件中引用。 本节点产出的变量（下游节点与条件可引用） drafted.agreement_id · agreement_id drafted.business_mode · business_mode drafted.capability_codes · capability_codes",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "18b-gateway",
+          "check": "业务模式 排他网关 名称 节点 key 版本内全局唯一；条件、驳回目标与回调事件都引用它 该网关的出口（按优先级依次判断，第一个满足的生效；都不满足走默认出口） 1 N4 合同生效检查 business_mode 等于 MOR 默认 PSP 人工复核 以上都不满足 点击连线配置条件、优先级与默认出口。 删除节点 也可选中后按 Delete",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19a-unsatisfied-n8",
+          "check": "上线 · 240674482170114049 REQ-05 验收 · 客户上线（commercial） v1 · 发起人 o***@example.test · 10-29 11:33 发起 · 已在本节点停留 35 分钟 开始 N3 合同起草检查 N4 合同生效检查 N8 收款开通检查 当前 结束 查看流程图 背景 启动信息 1 项 收起 Client ID 240674482170114049 我跟进的检查 N8 收款开通检查 · 1 个系统检查，满足后由系统自动完成 必选 1 项 · 已完成 0 项 收款开通检查 必选 数据查询 · 未满足 1 项 我 我跟进 尚未满足 尚未满足 最近检查 10-29 11:33 每 5 分钟自动重查 完成标准：合同内每个支付方式开通项都已开通 还差 有支付方式开通项尚未开通 CAPABILITY_NOT_ENABLED 检查通过后自动完成，每 5 分钟重查一次。 立即检查 该动作由系统检查自动完成。 还有 1 项检查未满足；全部满足后系统自动推进，无需你提交。 更多",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19b-unsatisfied-n3",
+          "check": "上线 · 240674874987655169 REQ-05 验收 · 客户上线（commercial） v1 · 发起人 o***@example.test · 10-29 11:33 发起 · 已在本节点停留 35 分钟 开始 N3 合同起草检查 当前 … 查看流程图 背景 启动信息 1 项 收起 Client ID 240674874987655169 我跟进的检查 N3 合同起草检查 · 1 个系统检查，满足后由系统自动完成 必选 1 项 · 已完成 0 项 合同已起草检查 必选 数据查询 · 未满足 1 项 我 我跟进 尚未满足 尚未满足 最近检查 10-29 12:07 每 5 分钟自动重查 完成标准：客户合同已起草且价格版本已批准 还差 尚未起草客户合同 AGREEMENT_NOT_DRAFTED 检查通过后自动完成，每 5 分钟重查一次。 立即检查 该动作由系统检查自动完成。 还有 1 项检查未满足；全部满足后系统自动推进，无需你提交。 更多",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19e-failed",
+          "check": "检查失败 · 超时 REQ-05 验收 · 检查失败与终止 v1 · 发起人 o***@example.test · 10-29 11:33 发起 · 已在本节点停留 35 分钟 开始 慢检查 当前 结束 查看流程图 我跟进的检查 慢检查 · 1 个系统检查，满足后由系统自动完成 必选 1 项 · 已完成 0 项 慢查询检查（超时） 必选 数据查询 · 检查失败 我 我跟进 检查失败 检查失败 最近检查 10-29 11:33 连续失败 2 次 完成标准：E2E_REQ05_SLOW 查询超时。 QUERY_TIMEOUT 尚无成功检查 · 节点保持未完成，系统会继续重查，不会因此报错或通知。 立即检查 该动作由系统检查自动完成。 还有 1 项检查未满足；全部满足后系统自动推进，无需你提交。 更多",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19f-manual-confirm",
+          "check": "上线 · 900000000001380201 REQ-05 验收 · 客户上线（commercial） v1 · 发起人 o***@example.test · 10-29 11:33 发起 · 已在本节点停留 35 分钟 开始 N3 合同起草检查 PSP 人工复核 当前 结束（PSP） 查看流程图 背景 启动信息 1 项 收起 Client ID 900000000001380201 我的任务 PSP 人工复核 必选 1 项 · 已完成 0 项 PSP 人工复核 必选 人工确认 · PSP 模式人工复核 我 我 待处理 PSP 模式人工复核 说明（选填） 完 成 还有 1 项必选动作未完成，完成后进入下一步 更多",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19g-checking",
+          "check": {
+            "instance": "241473528933650432",
+            "row": "慢查询检查（超时） 必选 数据查询 · 检查中… 我 我跟进 检查中… 检查中… 完成标准：E2E_REQ05_SLOW 检查通过后自动完成，每 5 分钟重查一次。 立即检查 该动作由系统检查自动完成。"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20a-activity",
+          "check": {
+            "timeline": "全部 6 人工操作 0 状态变化 3 系统完成 3 通知 0 业务回调 0 10-29 11:33 节点 · 「N8 收款开通检查」 已通过 10-29 11:33 提交 · 系统 「N8 收款开通检查」 已完成 collection 系统 10-29 11:33 节点 · 「N4 合同生效检查」 已通过 10-29 11:33 提交 · 系统 「N4 合同生效检查」 已完成 active 系统 10-29 11:33 节点 · 「N3 合同起草检查」 已通过 10-29 11:33 提交 · 系统 「N3 合同起草检查」 已完成 drafted 系统",
+            "aside": "系统检查 3 已满足 0 尚未满足 0 检查失败 系统完成的动作由系统记录，提交人为空；「立即检查」只记入操作审计，不进入活动记录。检查失败只记日志与告警。 通知与回调投递 0 已送达 0 重试中 0 失败 业务回调经 topic_platform_workflow_event 可靠投递（本地事务登记、提交后发送、失败退避重试，超过 5 次标记失败并告警）。订阅方按回调编码自行处理，执行前须自行校验业务事实。 本流程的回调编码 未配置业务回调"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20b-node-drawer-satisfied",
+          "check": "N3 合同起草检查 第 1 轮 · 无审批人 第 1 轮 · 已通过 动作 1 审批 0 记录 0 合同已起草检查 必选 数据查询 · 10-29 11:33 系统完成 我 我跟进 已满足 本节点通知与回调 本节点没有配置通知或回调",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20c-node-drawer-unsatisfied",
+          "check": "N8 收款开通检查 第 1 轮 · 无审批人 第 1 轮 · 待处理 动作 1 审批 0 记录 0 收款开通检查 必选 数据查询 · 未满足 1 项 我 我跟进 尚未满足 尚未满足 最近检查 10-29 11:33 每 5 分钟自动重查 完成标准：合同内每个支付方式开通项都已开通 还差 有支付方式开通项尚未开通 CAPABILITY_NOT_ENABLED 检查通过后自动完成，每 5 分钟重查一次。 立即检查 该动作由系统检查自动完成。 本节点通知与回调 本节点没有配置通知或回调 轮到你执行 去处理",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "99-req01-agreement",
+          "check": "Gate Demo MOR Client Agreement 返 回 刷 新 变更历史 终 止 合同编号 GATE-CLIENT-MOR-AE001 类型 Client 合同 状态 生效 Client 240674482170114049 OE AE001 模式 MOR · SETTLE_THROUGH_PLATFORM · PLATFORM 生效区间 2026-10-01 04:00 ～ 未定 签署 / 激活 2026-10-01 04:00 / 2026-10-01 04:00 版本 31 下一步 · 开通项生效 开通项由系统按前置条件自动开通：资格、合同与价格、渠道身份 CARD 因价格未覆盖 SAR 暂停；APPLE_PAY 等前置：价格未覆盖 USD；GOOGLE_PAY 已手动暂停，需手动恢复 去定价 参与方与签署（2） 产品与开通（4） 条款版本 角色 Party / 资料版本 签署 操作 角色 Party / 资料版本 签署 操作 Client 240674482170114050 240674482170114051 点击接受2026-10-01 04:00 GATE-SIGN-MOR-CLIENT 经营主体 900000000001380102 900000000001380111 点击接受2026-10-01 04:00 GATE-SIGN-MOR-OE 合同文件 用途 文件 ID SHA-256 SIGNING_DOCUMENT 900000000001390003 bbbbbbbbbbbbbbbb…",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": [
+              "div.ant-tabs-nav-list:393",
+              "table.:968"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "17a-template",
+          "check": {
+            "meta": "Data source 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） Timeout per check 5s REQ-05 阶段 5 本机联调",
+            "editor": "Query template * Only active data-query templates are listed. GOLIVE_AGREEMENT_DRAFTED 合同已起草且价格版本已批准 Active · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） Data source 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） Timeout per check 5s REQ-05 阶段 5 本机联调 Query Parameters Map each parameter on the process node. Parameter Required Value clientId · INTEGER Required Mapped on the process node Outputs Each output reads the column out_<name> and becomes the variable <actionKey>.<name>. Name Source column Type Allowed values Process variable out_agreement_id Text — <actionKey>.agreement_id out_business_mode Enum MOR PSP <actionKey>.business_mode out_capability_codes Text — <actionKey>.capability_codes Comma-separated values can be tested with Contains Add output Completion criteria Shown in the System check block of the task card so the follower knows what the system is waiting for. Criteria text",
+            "contract": "Query result contract Only the first row is read. Several rows, a missing declared column or a wrong type count as a failed check, and the node stays open. satisfied 1 / 0 or true / false. True completes the action. out_<name> Converted to the declared type and written to the process variable. missing Reason codes when not satisfied, comma-separated, e.g. CASE_NOT_APPROVED. How it runs Checked once as soon as the node starts Then rechecked automatically every 5 minutes The follower can click \"Check now\" at any time The assignee is a follower: there is no Complete button; the system completes it once satisfied Once satisfied it isn't reopened if the data later changes; each business system still controls its own transactions."
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "17b-picker",
+          "check": "GOLIVE_AGREEMENT_ACTIVE GOLIVE_AGREEMENT_DRAFTED E2E_REQ05_SLOW REQ-05 慢查询（1 秒超时） Active · v1 本机被查库 fixture（REQ-05） GOLIVE_COLLECTION_CAPABILITIES_ENABLED 收款开通项全部已开通 Active · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） GOLIVE_AGREEMENT_ACTIVE 合同已生效且价格版本生效 Active · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） GOLIVE_AGREEMENT_DRAFTED 合同已起草且价格版本已批准 Active · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA）",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "17c-validation",
+          "check": {
+            "rows": [
+              "\tout_client_name\nThe template doesn't declare this column\n\t\nText\n\t—\t<actionKey>.client_name\t"
+            ],
+            "alert": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "18a-node-actions",
+          "check": "Actions to complete on this node; assignees complete them one by one. ⠿ 合同已起草检查 · Data Query Edit in Action Catalog Required Optional Follower o***@example.test Input Parameters 1 · 1 mapped clientId ← Variable Start Form.Client ID Output variables 3 items · written to process variables drafted.agreement_id ← out_agreement_id · Text drafted.business_mode ← out_business_mode · Enum drafted.capability_codes ← out_capability_codes · Text System check: The client agreement is drafted and its pricing version is approved · rechecked every 5 minutes Add Action The node goes to approval only after all required actions are done; optional actions don't block it. The same person can't both perform this node's actions and approve it. Data query actions have no submit step: the system completes them when the query is satisfied; the follower can only \"Check now\". Outputs are written to <actionKey>.<na",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "18b-gateway",
+          "check": "业务模式 Exclusive Gateway Name Node Key Unique within the version; conditions, rejection targets and callback events reference it Gateway Exits (Checked in Priority Order; the First Match Wins, Otherwise the Default Exit) 1 N4 合同生效检查 business_mode equals MOR Default PSP 人工复核 None of the above match Click a connection to configure its condition, priority and default exit. Delete Node Or select it and press Delete",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19a-unsatisfied-n8",
+          "check": "上线 · 240674482170114049 REQ-05 验收 · 客户上线（commercial） v1 · Initiator o***@example.test · Started 10-29 11:33 · At this node for 36 minutes 开始 N3 合同起草检查 N4 合同生效检查 N8 收款开通检查 Current 结束 View Diagram Background 1 start field Collapse Client ID 240674482170114049 Checks I follow N8 收款开通检查 · 1 system check, completed automatically once satisfied 1 required · 0 completed 收款开通检查 Required Data Query · 1 item not yet satisfied M Followed by Me Not yet satisfied Not yet satisfied Last checked 10-29 11:33 Rechecked every 5 minutes Criteria: Every payment-method capability on the agreement is enabled Still missing Some payment-method capabilities aren't enabled CAPABILITY_NOT_ENABLED Completes automatically when the check passes; rechecked every 5 minutes. Check now This action completes automatically. 1 check is still not satisfied. Once all are, the system moves on automatically; you don't need to s",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19b-unsatisfied-n3",
+          "check": "上线 · 240674874987655169 REQ-05 验收 · 客户上线（commercial） v1 · Initiator o***@example.test · Started 10-29 11:33 · At this node for 36 minutes 开始 N3 合同起草检查 Current … View Diagram Background 1 start field Collapse Client ID 240674874987655169 Checks I follow N3 合同起草检查 · 1 system check, completed automatically once satisfied 1 required · 0 completed 合同已起草检查 Required Data Query · 1 item not yet satisfied M Followed by Me Not yet satisfied Not yet satisfied Last checked 10-29 12:07 Rechecked every 5 minutes Criteria: The client agreement is drafted and its pricing version is approved Still missing No client agreement has been drafted yet AGREEMENT_NOT_DRAFTED Completes automatically when the check passes; rechecked every 5 minutes. Check now This action completes automatically. 1 check is still not satisfied. Once all are, the system moves on automatically; you don't need to submit anything. More",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19c-checking-now",
+          "check": "合同已起草检查 Required Data Query · 1 item not yet satisfied M Followed by Me Not yet satisfied Not yet satisfied Last checked 10-29 12:10 Rechecked every 5 minutes Criteria: The client agreement is drafted and its pricing version is approved Still missing No client agreement has been drafted yet AGREEMENT_NOT_DRAFTED Completes automatically when the check passes; rechecked every 5 minutes. Check now Checked: 1 item is still not satisfied.",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19d-after-check",
+          "check": "合同已起草检查 Required Data Query · 1 item not yet satisfied M Followed by Me Not yet satisfied Not yet satisfied Last checked 10-29 12:10 Rechecked every 5 minutes Criteria: The client agreement is drafted and its pricing version is approved Still missing No client agreement has been drafted yet AGREEMENT_NOT_DRAFTED Completes automatically when the check passes; rechecked every 5 minutes. Check now Checked: 1 item is still not satisfied.",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19e-failed",
+          "check": "检查失败 · 超时 REQ-05 验收 · 检查失败与终止 v1 · Initiator o***@example.test · Started 10-29 11:33 · At this node for 37 minutes 开始 慢检查 Current 结束 View Diagram Checks I follow 慢检查 · 1 system check, completed automatically once satisfied 1 required · 0 completed 慢查询检查（超时） Required Data Query · Check failed M Followed by Me Check failed Check failed Last checked 10-29 11:33 2 failures in a row Criteria: E2E_REQ05_SLOW The query timed out. QUERY_TIMEOUT No successful check yet · The node stays open and the system keeps rechecking; no alert is sent for this. Check now This action completes automatically. 1 check is still not satisfied. Once all are, the system moves on automatically; you don't need to submit anything. More",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19f-manual-confirm",
+          "check": "上线 · 900000000001380201 REQ-05 验收 · 客户上线（commercial） v1 · Initiator o***@example.test · Started 10-29 11:33 · At this node for 37 minutes 开始 N3 合同起草检查 PSP 人工复核 Current 结束（PSP） View Diagram Background 1 start field Collapse Client ID 900000000001380201 My Task PSP 人工复核 1 required · 0 completed PSP 人工复核 Required Manual Confirmation · PSP 模式人工复核 M Me Pending PSP 模式人工复核 Note (Optional) Complete 1 required action is still open. Once done, the process moves to the next step. More",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19g-checking",
+          "check": {
+            "instance": "241473904302886912",
+            "row": "慢查询检查（超时） Required Data Query · Checking… M Followed by Me Checking… Checking… Criteria: E2E_REQ05_SLOW Completes automatically when the check passes; rechecked every 5 minutes. Check now This action completes automatically."
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20a-activity",
+          "check": {
+            "timeline": "All 6 Manual Actions 0 Status Changes 3 Completed by System 3 Notifications 0 Business Callbacks 0 10-29 11:33 Node · \"N8 收款开通检查\" Passed 10-29 11:33 Submission · System \"N8 收款开通检查\" Completed collection System 10-29 11:33 Node · \"N4 合同生效检查\" Passed 10-29 11:33 Submission · System \"N4 合同生效检查\" Completed active System 10-29 11:33 Node · \"N3 合同起草检查\" Passed 10-29 11:33 Submission · System \"N3 合同起草检查\" Completed drafted System",
+            "aside": "System check 3 Satisfied 0 Not yet satisfied 0 Check failed Actions completed by the system have no submitter. \"Check now\" goes to the operation audit only, not to this activity log; failed checks are only logged and alerted. Notification & Callback Delivery 0 Delivered 0 Retrying 0 Failed Business callbacks are delivered reliably through topic_platform_workflow_event (recorded in a local transaction, sent after commit, retried with backoff, and marked failed with an alert after 5 attempts). Subscribers handle them by callback code and must verify the business facts before acting. Callback Codes in This Process No business callbacks configured"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20b-node-drawer-satisfied",
+          "check": "N3 合同起草检查 Round 1 · No approvers Round 1 · Passed Actions 1 Approval 0 Records 0 合同已起草检查 Required Data Query · Completed by the system 10-29 11:33 M Followed by Me Satisfied Notifications & Callbacks for This Node No notifications or callbacks are configured for this node",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20c-node-drawer-unsatisfied",
+          "check": "N8 收款开通检查 Round 1 · No approvers Round 1 · Pending Actions 1 Approval 0 Records 0 收款开通检查 Required Data Query · 1 item not yet satisfied M Followed by Me Not yet satisfied Not yet satisfied Last checked 10-29 11:33 Rechecked every 5 minutes Criteria: Every payment-method capability on the agreement is enabled Still missing Some payment-method capabilities aren't enabled CAPABILITY_NOT_ENABLED Completes automatically when the check passes; rechecked every 5 minutes. Check now This action completes automatically. Notifications & Callbacks for This Node No notifications or callbacks are configured for this node It's your turn to act Go to Task",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        },
+        {
+          "step": "99-req01-agreement",
+          "check": "Gate Demo MOR Client Agreement Back Refresh Change History Terminate Agreement No. GATE-CLIENT-MOR-AE001 Type Client Agreement Status Active Client 240674482170114049 OE AE001 Mode MOR · SETTLE_THROUGH_PLATFORM · PLATFORM Effective Period 2026-10-01 04:00 – Open-ended Signed / Activated 2026-10-01 04:00 / 2026-10-01 04:00 Version 31 Next Step · Enablements Take Effect Enablements are switched on by the system once their prerequisites are met: qualification, agreement and pricing, and channel identity. CARD suspended: Price doesn't cover SAR; APPLE_PAY pending prerequisites: Price doesn't cover USD; GOOGLE_PAY suspended manually; resume it to continue Go to Pricing Parties & Signing (2) Products & Enablements (4) Term Versions Role Party / Profile Version Signing Actions Role Party / Profile Version Signing Actions Client 240674482170114050 240674482170114051 Click Acceptance2026-10-01 04",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "overflow": []
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "steps": [
+        {
+          "step": "17a-template",
+          "check": {
+            "meta": "Data source 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） Timeout per check 5s REQ-05 阶段 5 本机联调",
+            "editor": "Query template * Only active data-query templates are listed. GOLIVE_AGREEMENT_DRAFTED 合同已起草且价格版本已批准 Active · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） Data source 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） Timeout per check 5s REQ-05 阶段 5 本机联调 Query Parameters Map each parameter on the process node. Parameter Required Value clientId · INTEGER Required Mapped on the process node Outputs Each output reads the column out_<name> and becomes the variable <actionKey>.<name>. Name Source column Type Allowed values Process variable out_agreement_id Text — <actionKey>.agreement_id out_business_mode Enum MOR PSP <actionKey>.business_mode out_capability_codes Text — <actionKey>.capability_codes Comma-separated values can be tested with Contains Add output Completion criteria Shown in the System check block of the task card so the follower knows what the system is waiting for. Criteria text",
+            "contract": "Query result contract Only the first row is read. Several rows, a missing declared column or a wrong type count as a failed check, and the node stays open. satisfied 1 / 0 or true / false. True completes the action. out_<name> Converted to the declared type and written to the process variable. missing Reason codes when not satisfied, comma-separated, e.g. CASE_NOT_APPROVED. How it runs Checked once as soon as the node starts Then rechecked automatically every 5 minutes The follower can click \"Check now\" at any time The assignee is a follower: there is no Complete button; the system completes it once satisfied Once satisfied it isn't reopened if the data later changes; each business system still controls its own transactions."
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": [
+              "span.:432",
+              "span.wf-inline:874",
+              "table.wf-table.wf-dq-table:765"
+            ]
+          }
+        },
+        {
+          "step": "17b-picker",
+          "check": "GOLIVE_AGREEMENT_ACTIVE GOLIVE_AGREEMENT_DRAFTED E2E_REQ05_SLOW REQ-05 慢查询（1 秒超时） Active · v1 本机被查库 fixture（REQ-05） GOLIVE_COLLECTION_CAPABILITIES_ENABLED 收款开通项全部已开通 Active · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） GOLIVE_AGREEMENT_ACTIVE 合同已生效且价格版本生效 Active · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA） GOLIVE_AGREEMENT_DRAFTED 合同已起草且价格版本已批准 Active · v1 本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA）",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": [
+              "span.:433",
+              "span.wf-inline:875",
+              "table.wf-table.wf-dq-table:765",
+              "span.wf-inline:614",
+              "span.:501"
+            ]
+          }
+        },
+        {
+          "step": "17c-validation",
+          "check": {
+            "rows": [
+              "\tout_client_name\nThe template doesn't declare this column\n\t\nText\n\t—\t<actionKey>.client_name\t"
+            ],
+            "alert": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": [
+              "span.:433",
+              "span.wf-inline:875",
+              "table.wf-table.wf-dq-table:680"
+            ]
+          }
+        },
+        {
+          "step": "18a-node-actions",
+          "check": "Actions to complete on this node; assignees complete them one by one. ⠿ 合同已起草检查 · Data Query Edit in Action Catalog Required Optional Follower o***@example.test Input Parameters 1 · 1 mapped clientId ← Variable Start Form.Client ID Output variables 3 items · written to process variables drafted.agreement_id ← out_agreement_id · Text drafted.business_mode ← out_business_mode · Enum drafted.capability_codes ← out_capability_codes · Text System check: The client agreement is drafted and its pricing version is approved · rechecked every 5 minutes Add Action The node goes to approval only after all required actions are done; optional actions don't block it. The same person can't both perform this node's actions and approve it. Data query actions have no submit step: the system completes them when the query is satisfied; the follower can only \"Check now\". Outputs are written to <actionKey>.<na",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": [
+              "div.ant-tabs-nav-list:474"
+            ]
+          }
+        },
+        {
+          "step": "18b-gateway",
+          "check": "业务模式 Exclusive Gateway Name Node Key Unique within the version; conditions, rejection targets and callback events reference it Gateway Exits (Checked in Priority Order; the First Match Wins, Otherwise the Default Exit) 1 N4 合同生效检查 business_mode equals MOR Default PSP 人工复核 None of the above match Click a connection to configure its condition, priority and default exit. Delete Node Or select it and press Delete",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19a-unsatisfied-n8",
+          "check": "上线 · 240674482170114049 REQ-05 验收 · 客户上线（commercial） v1 · Initiator o***@example.test · Started 10-29 11:33 · At this node for 38 minutes 开始 N3 合同起草检查 N4 合同生效检查 N8 收款开通检查 Current 结束 View Diagram Background 1 start field Collapse Client ID 240674482170114049 Checks I follow N8 收款开通检查 · 1 system check, completed automatically once satisfied 1 required · 0 completed 收款开通检查 Required Data Query · 1 item not yet satisfied M Followed by Me Not yet satisfied Not yet satisfied Last checked 10-29 11:33 Rechecked every 5 minutes Criteria: Every payment-method capability on the agreement is enabled Still missing Some payment-method capabilities aren't enabled CAPABILITY_NOT_ENABLED Completes automatically when the check passes; rechecked every 5 minutes. Check now This action completes automatically. 1 check is still not satisfied. Once all are, the system moves on automatically; you don't need to s",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19b-unsatisfied-n3",
+          "check": "上线 · 240674874987655169 REQ-05 验收 · 客户上线（commercial） v1 · Initiator o***@example.test · Started 10-29 11:33 · At this node for 38 minutes 开始 N3 合同起草检查 Current … View Diagram Background 1 start field Collapse Client ID 240674874987655169 Checks I follow N3 合同起草检查 · 1 system check, completed automatically once satisfied 1 required · 0 completed 合同已起草检查 Required Data Query · 1 item not yet satisfied M Followed by Me Not yet satisfied Not yet satisfied Last checked 10-29 12:10 Rechecked every 5 minutes Criteria: The client agreement is drafted and its pricing version is approved Still missing No client agreement has been drafted yet AGREEMENT_NOT_DRAFTED Completes automatically when the check passes; rechecked every 5 minutes. Check now This action completes automatically. 1 check is still not satisfied. Once all are, the system moves on automatically; you don't need to submit anything. More",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19e-failed",
+          "check": "检查失败 · 超时 REQ-05 验收 · 检查失败与终止 v1 · Initiator o***@example.test · Started 10-29 11:33 · At this node for 38 minutes 开始 慢检查 Current 结束 View Diagram Checks I follow 慢检查 · 1 system check, completed automatically once satisfied 1 required · 0 completed 慢查询检查（超时） Required Data Query · Check failed M Followed by Me Check failed Check failed Last checked 10-29 11:33 2 failures in a row Criteria: E2E_REQ05_SLOW The query timed out. QUERY_TIMEOUT No successful check yet · The node stays open and the system keeps rechecking; no alert is sent for this. Check now This action completes automatically. 1 check is still not satisfied. Once all are, the system moves on automatically; you don't need to submit anything. More",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19f-manual-confirm",
+          "check": "上线 · 900000000001380201 REQ-05 验收 · 客户上线（commercial） v1 · Initiator o***@example.test · Started 10-29 11:33 · At this node for 38 minutes 开始 N3 合同起草检查 PSP 人工复核 Current 结束（PSP） View Diagram Background 1 start field Collapse Client ID 900000000001380201 My Task PSP 人工复核 1 required · 0 completed PSP 人工复核 Required Manual Confirmation · PSP 模式人工复核 M Me Pending PSP 模式人工复核 Note (Optional) Complete 1 required action is still open. Once done, the process moves to the next step. More",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "19g-checking",
+          "check": {
+            "instance": "241474348857167872",
+            "row": "慢查询检查（超时） Required Data Query · Checking… M Followed by Me Checking… Checking… Criteria: E2E_REQ05_SLOW Completes automatically when the check passes; rechecked every 5 minutes. Check now This action completes automatically."
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20a-activity",
+          "check": {
+            "timeline": "All 6 Manual Actions 0 Status Changes 3 Completed by System 3 Notifications 0 Business Callbacks 0 10-29 11:33 Node · \"N8 收款开通检查\" Passed 10-29 11:33 Submission · System \"N8 收款开通检查\" Completed collection System 10-29 11:33 Node · \"N4 合同生效检查\" Passed 10-29 11:33 Submission · System \"N4 合同生效检查\" Completed active System 10-29 11:33 Node · \"N3 合同起草检查\" Passed 10-29 11:33 Submission · System \"N3 合同起草检查\" Completed drafted System",
+            "aside": "System check 3 Satisfied 0 Not yet satisfied 0 Check failed Actions completed by the system have no submitter. \"Check now\" goes to the operation audit only, not to this activity log; failed checks are only logged and alerted. Notification & Callback Delivery 0 Delivered 0 Retrying 0 Failed Business callbacks are delivered reliably through topic_platform_workflow_event (recorded in a local transaction, sent after commit, retried with backoff, and marked failed with an alert after 5 attempts). Subscribers handle them by callback code and must verify the business facts before acting. Callback Codes in This Process No business callbacks configured"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20b-node-drawer-satisfied",
+          "check": "N3 合同起草检查 Round 1 · No approvers Round 1 · Passed Actions 1 Approval 0 Records 0 合同已起草检查 Required Data Query · Completed by the system 10-29 11:33 M Followed by Me Satisfied Notifications & Callbacks for This Node No notifications or callbacks are configured for this node",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "20c-node-drawer-unsatisfied",
+          "check": "N8 收款开通检查 Round 1 · No approvers Round 1 · Pending Actions 1 Approval 0 Records 0 收款开通检查 Required Data Query · 1 item not yet satisfied M Followed by Me Not yet satisfied Not yet satisfied Last checked 10-29 11:33 Rechecked every 5 minutes Criteria: Every payment-method capability on the agreement is enabled Still missing Some payment-method capabilities aren't enabled CAPABILITY_NOT_ENABLED Completes automatically when the check passes; rechecked every 5 minutes. Check now This action completes automatically. Notifications & Callbacks for This Node No notifications or callbacks are configured for this node It's your turn to act Go to Task",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": []
+          }
+        },
+        {
+          "step": "99-req01-agreement",
+          "check": "Gate Demo MOR Client Agreement Back Refresh Change History Terminate Agreement No. GATE-CLIENT-MOR-AE001 Type Client Agreement Status Active Client 240674482170114049 OE AE001 Mode MOR · SETTLE_THROUGH_PLATFORM · PLATFORM Effective Period 2026-10-01 04:00 – Open-ended Signed / Activated 2026-10-01 04:00 / 2026-10-01 04:00 Version 31 Next Step · Enablements Take Effect Enablements are switched on by the system once their prerequisites are met: qualification, agreement and pricing, and channel identity. CARD suspended: Price doesn't cover SAR; APPLE_PAY pending prerequisites: Price doesn't cover USD; GOOGLE_PAY suspended manually; resume it to continue Go to Pricing Parties & Signing (2) Products & Enablements (4) Term Versions Role Party / Profile Version Signing Actions Role Party / Profile Version Signing Actions Client 240674482170114050 240674482170114051 Click Acceptance2026-10-01 04",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "overflow": [
+              "div.ant-tabs-nav-list:501",
+              "table.:968"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "zh-CN-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/action-templates/241464538459803648",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/definitions/241464540657618944",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/definitions/241464540657618944",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464542679273472%3An8%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464542872211456%3An3%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464545422348288%3Aslow%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464543132258304%3Apsp%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "19g-checking",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/instances/241464542310174720",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/instances/241464542310174720",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/instances/241464542679273472",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/workflow/instances/241464542679273472",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/commercial/agreements/900000000001390001",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "/commercial/agreements/900000000001390001",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/action-templates/241464538459803648",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/definitions/241464540657618944",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/definitions/241464540657618944",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464542679273472%3An8%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464542872211456%3An3%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464545422348288%3Aslow%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464543132258304%3Apsp%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "19g-checking",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/instances/241464542310174720",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/instances/241464542310174720",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/instances/241464542679273472",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/workflow/instances/241464542679273472",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/commercial/agreements/900000000001390001",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/commercial/agreements/900000000001390001",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "en-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/action-templates/241464538459803648",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/definitions/241464540657618944",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/definitions/241464540657618944",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464542679273472%3An8%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464542872211456%3An3%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464545422348288%3Aslow%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464543132258304%3Apsp%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "19g-checking",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/instances/241464542310174720",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/instances/241464542310174720",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/instances/241464542679273472",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "/workflow/instances/241464542679273472",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "en-1440",
+      "step": "/commercial/agreements/900000000001390001",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "/commercial/agreements/900000000001390001",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "en-390",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/action-templates/241464538459803648",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/definitions/241464540657618944",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/definitions/241464540657618944",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464542679273472%3An8%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464542872211456%3An3%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464545422348288%3Aslow%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/my-tasks?task=ACTION%3A241464543132258304%3Apsp%3A1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "19g-checking",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/instances/241464542310174720",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/instances/241464542310174720",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/instances/241464542679273472",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "/workflow/instances/241464542679273472",
+      "type": "warning",
+      "text": "React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr\n%cYou can ignore this warning if you are subscribed. font-style: italic;"
+    },
+    {
+      "run": "en-390",
+      "step": "/commercial/agreements/900000000001390001",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "step": "/commercial/agreements/900000000001390001",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "httpErrors": [
+    {
+      "run": "zh-CN-1440",
+      "step": "/commercial/agreements/900000000001390001",
+      "method": "GET",
+      "path": "/api/operations/commercial-admin/v1/products/dimensions",
+      "status": 404
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "/commercial/agreements/900000000001390001",
+      "method": "GET",
+      "path": "/api/operations/commercial-admin/v1/products/dimensions",
+      "status": 404
+    },
+    {
+      "run": "en-1440",
+      "step": "/commercial/agreements/900000000001390001",
+      "method": "GET",
+      "path": "/api/operations/commercial-admin/v1/products/dimensions",
+      "status": 404
+    },
+    {
+      "run": "en-390",
+      "step": "/commercial/agreements/900000000001390001",
+      "method": "GET",
+      "path": "/api/operations/commercial-admin/v1/products/dimensions",
+      "status": 404
+    }
+  ],
+  "bundles": 156
+}

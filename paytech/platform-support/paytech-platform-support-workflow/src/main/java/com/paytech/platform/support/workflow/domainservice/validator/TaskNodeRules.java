@@ -7,20 +7,23 @@ import java.util.Set;
 import com.paytech.platform.support.workflow.core.common.WorkflowValueFormats;
 import com.paytech.platform.support.workflow.core.enums.ActionTemplateStatus;
 import com.paytech.platform.support.workflow.core.enums.InputMappingSource;
-import com.paytech.platform.support.workflow.core.enums.WorkflowActionType;
 import com.paytech.platform.support.workflow.core.enums.WorkflowNodeType;
 import com.paytech.platform.support.workflow.core.enums.WorkflowProblemCode;
 import com.paytech.platform.support.workflow.domain.action.ActionTemplateReference;
+import com.paytech.platform.support.workflow.domain.action.DataQueryActionConfig;
 import com.paytech.platform.support.workflow.domain.graph.InputMapping;
 import com.paytech.platform.support.workflow.domain.graph.NodeAction;
 import com.paytech.platform.support.workflow.domain.graph.NodeApproval;
 import com.paytech.platform.support.workflow.domain.graph.WorkflowNode;
+import com.paytech.platform.support.workflow.domain.validation.DataQueryTemplateFact;
 import com.paytech.platform.support.workflow.domain.validation.WorkflowPublicationInput;
 import com.paytech.platform.support.workflow.domain.variable.VariableDeclaration;
 
 /**
  * 校验任务节点（技术方案 3.4 第 5、6 项与动作上限）：至少一个审批人或动作；审批人与执行人是 ACTIVE 的
- * Operations 账号且审批人不重复；动作 key 全局唯一；引用模板 ACTIVE 且不是 DATA_QUERY；输入映射的参数已在模板声明。
+ * Operations 账号且审批人不重复；动作 key 全局唯一；引用模板 ACTIVE；输入映射的参数已在模板声明。
+ * <li>引用 DATA_QUERY 模板时（REQ-05）按发布时读取的 data-query 模板事实重做模板配置的一致性校验，
+ * 并要求必填查询参数在节点动作 inputs 中有映射；执行人仍必填（跟进人）。</li>
  */
 final class TaskNodeRules {
 
@@ -32,6 +35,8 @@ final class TaskNodeRules {
     private final ProblemCollector problems;
 
     private final Set<String> actionKeys = new HashSet<>();
+
+    private final DataQueryTemplateRules dataQueryRules = new DataQueryTemplateRules();
 
     /**
      * 绑定校验输入。
@@ -111,6 +116,31 @@ final class TaskNodeRules {
         if (template != null) {
             checkInputs(node, action, template);
         }
+        if (template != null && template.config() instanceof DataQueryActionConfig query) {
+            checkDataQuery(node, action, query);
+        }
+    }
+
+    /**
+     * DATA_QUERY 动作：模板配置与当前 data-query 模板事实一致（模板可能在动作模板保存后被修改），
+     * 且事实中的必填参数在节点 inputs 中有映射。
+     *
+     * @param node 任务节点
+     * @param action 节点动作
+     * @param query 数据查询配置
+     */
+    private void checkDataQuery(WorkflowNode node, NodeAction action, DataQueryActionConfig query) {
+        DataQueryTemplateFact fact = input.dataQueryTemplates().get(query.queryCode());
+        problems.addAll(dataQueryRules.check(query, fact, node.key(), action.key()));
+        if (fact == null) {
+            return;
+        }
+        fact.parameterRequired().forEach((key, required) -> {
+            if (required && query.parameters().contains(key) && !action.inputs().containsKey(key)) {
+                problems.item(WorkflowProblemCode.DATA_QUERY_INPUT_MISSING, node.key(), action.key(),
+                    "动作 " + action.key() + " 的必填查询参数 " + key + " 没有映射取值");
+            }
+        });
     }
 
     /**
@@ -131,7 +161,7 @@ final class TaskNodeRules {
     }
 
     /**
-     * 校验引用模板存在、ACTIVE 且不是预留类型。
+     * 校验引用模板存在且 ACTIVE。
      *
      * @param node 任务节点
      * @param action 节点动作
@@ -148,10 +178,6 @@ final class TaskNodeRules {
         if (template.status() != ActionTemplateStatus.ACTIVE) {
             problems.item(WorkflowProblemCode.TEMPLATE_INACTIVE, node.key(), action.key(),
                 "动作引用的模板已停用：" + action.templateId());
-        }
-        if (template.actionType() == WorkflowActionType.DATA_QUERY) {
-            problems.item(WorkflowProblemCode.TEMPLATE_RESERVED_TYPE, node.key(), action.key(),
-                "数据查询动作本期未开放，不能被发布的流程引用");
         }
         return template;
     }

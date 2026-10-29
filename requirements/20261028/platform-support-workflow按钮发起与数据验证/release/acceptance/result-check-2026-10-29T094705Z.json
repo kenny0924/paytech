@@ -1,0 +1,79 @@
+{
+  "target": "test",
+  "checks": [
+    {
+      "name": "模板选择：GOLIVE_* 3 条，带 versionNo / timeoutSeconds / 参数",
+      "pass": true,
+      "evidence": {
+        "total": 3,
+        "item": {
+          "templateCode": "GOLIVE_AGREEMENT_DRAFTED",
+          "templateName": "合同已起草且价格版本已批准",
+          "description": "客户上线编排 REQ-05：DATA_QUERY 系统检查（单行，satisfied / out_* / missing）",
+          "dataSourceName": "商务（Commercial）从库",
+          "parameters": [
+            {
+              "name": "clientId",
+              "type": "INTEGER",
+              "required": true
+            }
+          ],
+          "versionNo": 1,
+          "timeoutSeconds": 5
+        }
+      }
+    },
+    {
+      "name": "配置校验：合法配置无问题",
+      "pass": true,
+      "evidence": {
+        "problems": []
+      }
+    },
+    {
+      "name": "配置校验：参数未声明 / 必填缺失 / 输出列未声明，itemKey 定位",
+      "pass": true,
+      "evidence": {
+        "problems": [
+          {
+            "code": "DATA_QUERY_PARAMETER_UNDECLARED",
+            "nodeKey": null,
+            "edgeKey": null,
+            "itemKey": "agreementId",
+            "message": "查询模板 GOLIVE_AGREEMENT_DRAFTED 未声明参数 agreementId"
+          },
+          {
+            "code": "DATA_QUERY_PARAMETER_MISSING",
+            "nodeKey": null,
+            "edgeKey": null,
+            "itemKey": "clientId",
+            "message": "未列出查询模板 GOLIVE_AGREEMENT_DRAFTED 的必填参数 clientId"
+          },
+          {
+            "code": "DATA_QUERY_OUTPUT_UNDECLARED",
+            "nodeKey": null,
+            "edgeKey": null,
+            "itemKey": "client_name",
+            "message": "查询模板 GOLIVE_AGREEMENT_DRAFTED 没有返回列 out_client_name"
+          }
+        ]
+      }
+    },
+    {
+      "name": "配置校验：模板不存在 itemKey 为空",
+      "pass": true,
+      "evidence": {
+        "problems": [
+          {
+            "code": "DATA_QUERY_TEMPLATE_NOT_FOUND",
+            "nodeKey": null,
+            "edgeKey": null,
+            "itemKey": null,
+            "message": "查询模板不存在：GOLIVE_NOPE"
+          }
+        ]
+      }
+    }
+  ],
+  "verdict": true
+}

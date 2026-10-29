@@ -1,9 +1,11 @@
 package com.paytech.platform.support.workflow.service.processor;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -14,6 +16,7 @@ import com.paytech.foundation.httpproblem.api.RequestBodyValidationException;
 import com.paytech.platform.support.workflow.core.common.WorkflowLimits;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionTemplate;
 import com.paytech.platform.support.workflow.domain.action.ActionTemplateReference;
+import com.paytech.platform.support.workflow.domain.action.DataQueryActionConfig;
 import com.paytech.platform.support.workflow.domain.form.FormDefinition;
 import com.paytech.platform.support.workflow.domain.graph.WorkflowGraph;
 import com.paytech.platform.support.workflow.domain.validation.WorkflowGraphProblem;
@@ -28,7 +31,8 @@ import com.paytech.platform.support.workflow.domainservice.validator.WorkflowGra
 import lombok.RequiredArgsConstructor;
 
 /**
- * 草稿保存与发布共用的解析与发布校验：读取被引用的模板当前事实与人员是否 ACTIVE，再执行 B1 校验。只读本库。
+ * 草稿保存与发布共用的解析与发布校验：读取被引用的模板当前事实、人员是否 ACTIVE 与 DATA_QUERY 所指 data-query 模板事实，
+ * 再执行 B1 校验。只读本库。
  */
 @Component
 @RequiredArgsConstructor
@@ -42,6 +46,7 @@ public class WorkflowDraftChecker {
     private static final String FORM_ROOT = "start_form_json";
 
     private final WorkflowProcessorSupport support;
+    private final WorkflowTemplateConfigs configs;
     private final WorkflowActionTemplateRepository templates;
     private final WorkflowGraphValidator validator = new WorkflowGraphValidator();
     private final ActionConfigJsonReader configReader = new ActionConfigJsonReader();
@@ -74,7 +79,8 @@ public class WorkflowDraftChecker {
         Map<Long, ActionTemplateReference> references = new LinkedHashMap<>();
         rows.values().forEach(row -> references.put(row.getActionTemplateId(), reference(row)));
         List<WorkflowGraphProblem> problems = validator.validate(new WorkflowPublicationInput(graph, bytes, form,
-            references, support.activeAmong(graph.referencedAccountIds()), formBytes));
+            references, support.activeAmong(graph.referencedAccountIds()), formBytes,
+            configs.facts(queryCodes(references.values()))));
         return new Checked(graph, form, rows, problems);
     }
 
@@ -109,6 +115,18 @@ public class WorkflowDraftChecker {
             }
         }
         return path;
+    }
+
+    /**
+     * 被引用的 DATA_QUERY 模板所指的 data-query 模板编码。
+     *
+     * @param references 被引用的动作模板事实
+     * @return 模板编码，去重；编码为空的配置不出现
+     */
+    static List<String> queryCodes(Collection<ActionTemplateReference> references) {
+        return references.stream().map(ActionTemplateReference::config)
+            .filter(DataQueryActionConfig.class::isInstance).map(config -> ((DataQueryActionConfig) config).queryCode())
+            .filter(Objects::nonNull).distinct().toList();
     }
 
     /**

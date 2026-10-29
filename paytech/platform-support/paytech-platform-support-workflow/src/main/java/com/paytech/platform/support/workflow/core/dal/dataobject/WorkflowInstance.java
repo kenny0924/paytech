@@ -32,6 +32,9 @@ public class WorkflowInstance {
     /** 实例运行状态；COMPLETED、TERMINATED 为终态，终态后只读。允许值：RUNNING、COMPLETED、TERMINATED。 */
     private WorkflowInstanceStatus status;
 
+    /** 业务关联键防重槽位：实例 RUNNING 且 business_key 非空时为 1，完成或终止时置空；与 definition_id、business_key 组成唯一索引。 */
+    private Integer activeSlot;
+
     /** 启动表单提交值，作为 start.* 实例变量；发起后不可修改。 */
     private String startValuesJson;
 

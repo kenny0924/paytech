@@ -25,16 +25,21 @@ import com.paytech.operations.console.bff.service.model.WorkflowModels.SubmitWor
 import com.paytech.operations.console.bff.service.model.WorkflowModels.TerminateWorkflowInstanceRequestBody;
 import com.paytech.operations.console.bff.service.model.WorkflowModels.TransferWorkflowTaskRequestBody;
 import com.paytech.operations.console.bff.service.model.WorkflowModels.UpdateWorkflowActionTemplateRequestBody;
+import com.paytech.operations.console.bff.service.model.WorkflowModels.ValidateWorkflowActionTemplateRequestBody;
 import com.paytech.platform.support.api.workflow.WorkflowActionTemplateManagementApi;
 import com.paytech.platform.support.api.workflow.WorkflowDefinitionManagementApi;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadResponseBody;
 import com.paytech.platform.support.api.workflow.WorkflowAttachmentApi;
+import com.paytech.platform.support.api.workflow.WorkflowDataQueryTemplateApi;
 import com.paytech.platform.support.api.workflow.WorkflowInstanceApi;
 import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateValidationResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActivityListResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowAssigneeCandidateListResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowDataQueryCheckResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowDataQueryTemplateBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDefinitionDetailResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDefinitionSummaryBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDraftResponseBody;
@@ -49,6 +54,8 @@ import com.paytech.platform.support.api.workflow.response.WorkflowTemplateRefere
 import com.paytech.platform.support.api.workflow.response.WorkflowVersionBody;
 
 import lombok.AllArgsConstructor;
+
+import tools.jackson.databind.node.JsonNodeFactory;
 
 /**
  * Platform 工作流的 HTTP 转发：每个入口只调用一次 Platform，不重试，请求幂等由 Gateway 负责
@@ -68,6 +75,7 @@ public class PlatformWorkflowClientImpl implements PlatformWorkflowClient {
     private final WorkflowDefinitionManagementApi definitions;
     private final WorkflowInstanceApi runtime;
     private final WorkflowAttachmentApi attachments;
+    private final WorkflowDataQueryTemplateApi dataQueryTemplates;
 
     @Override
     public PagingResponseBody<WorkflowActionTemplateResponseBody> listActionTemplates(OperatorContext context,
@@ -98,6 +106,18 @@ public class PlatformWorkflowClientImpl implements PlatformWorkflowClient {
         return mutation(write(request, () -> templates.createActionTemplate(context.accountId(), context.sessionId(),
             toPlatform(request, com.paytech.platform.support.api.workflow.request.CreateWorkflowActionTemplateRequestBody.class))),
             TEMPLATE, null);
+    }
+
+    @Override
+    public WorkflowActionTemplateValidationResponseBody validateActionTemplate(OperatorContext context,
+        ValidateWorkflowActionTemplateRequestBody request) {
+        WorkflowActionTemplateValidationResponseBody result = write(request, () -> templates.validateActionTemplate(
+            context.accountId(), context.sessionId(), toPlatform(request,
+                com.paytech.platform.support.api.workflow.request.ValidateWorkflowActionTemplateRequestBody.class)));
+        if (result.getProblems() == null) {
+            throw new ErrorException(CommonErrorCode.UPSTREAM_INVALID_RESPONSE);
+        }
+        return result;
     }
 
     @Override
@@ -295,6 +315,23 @@ public class PlatformWorkflowClientImpl implements PlatformWorkflowClient {
         String keyword, Integer page, Integer size) {
         return require(runtime.listHandledTasks(context.accountId(), context.sessionId(), taskType, keyword, page,
             size));
+    }
+
+    @Override
+    public WorkflowDataQueryCheckResponseBody checkDataQuery(OperatorContext context, String actionRunId) {
+        WorkflowDataQueryCheckResponseBody result = require(runtime.checkDataQuery(context.accountId(),
+            context.sessionId(), actionRunId, JsonNodeFactory.instance.objectNode()));
+        if (!actionRunId.equals(result.getActionRunId())) {
+            throw new ErrorException(CommonErrorCode.UPSTREAM_INVALID_RESPONSE);
+        }
+        return result;
+    }
+
+    @Override
+    public PagingResponseBody<WorkflowDataQueryTemplateBody> listDataQueryTemplates(OperatorContext context,
+        String keyword, Integer page, Integer size) {
+        return require(dataQueryTemplates.listDataQueryTemplates(context.accountId(), context.sessionId(), keyword,
+            page, size));
     }
 
     @Override

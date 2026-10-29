@@ -320,16 +320,16 @@ PDManer 4.9.3 仍须人工打开并检查七个 Diagram、关系方向、中文�
 | --- | --- | --- |
 | 配置 | `t_workflow_definition` | 流程定义根：编码唯一、ACTIVE / INACTIVE；`current_version_no` 指向最新发布版本，`draft_version_no` 指向唯一草稿，两者在定义锁加 `version` CAS 下切换 |
 | 配置 | `t_workflow_definition_version` | 草稿或已发布版本：`graph_json`（≤ 256 KiB）、`start_form_json`（≤ 50 字段）；发布时写 `action_snapshot_json` 冻结引用模板的 ID、版本、类型与配置，此后不可变 |
-| 配置 | `t_workflow_action_template` | 动作目录：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM 四类可用，DATA_QUERY 只预留、不能被发布引用；停用只拦新发布 |
-| 运行 | `t_workflow_instance` | 一次运行：绑定发起时的已发布版本，冻结启动值（`start.*` 变量）与人员分配；RUNNING → COMPLETED / TERMINATED |
+| 配置 | `t_workflow_action_template` | 动作目录：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM、DATA_QUERY 五类可用；DATA_QUERY（2026-10-29 REQ-05）引用 data-query 模板编码，配置参数与输出声明，由系统按查询结果自动完成；停用只拦新发布 |
+| 运行 | `t_workflow_instance` | 一次运行：绑定发起时的已发布版本，冻结启动值（`start.*` 变量）与人员分配；RUNNING → COMPLETED / TERMINATED。`business_key`（`utf8mb4_bin`）给出时同一定义只允许一个 RUNNING 实例：`active_slot` RUNNING 时为 1、结束时置空，`uk_workflow_inst_active (definition_id, business_key, active_slot)` 保证并发，重复发起返回已有实例（REQ-05） |
 | 运行 | `t_workflow_node_run` | 节点的一轮运行：`(instance_id, node_key, round_no)` 唯一；`branch_key` 标记并行分支，`previous_node_run_id` 记录实际来源（START 与汇合为空），驳回沿它跳过网关定位上一 TASK |
-| 运行 | `t_workflow_action_run` | 动作在一轮节点中的执行：`(node_run_id, action_key)` 唯一，以最后一次验证为准，VERIFIED 后不再接受提交 |
+| 运行 | `t_workflow_action_run` | 动作在一轮节点中的执行：`(node_run_id, action_key)` 唯一，PENDING → COMPLETED / CANCELLED。DATA_QUERY 另记最近一次检查（`last_check_time`、`check_result` SATISFIED / UNSATISFIED / FAILED、`check_detail` 原因码或失败码、`check_failure_count`、`last_check_success_time`），`idx_workflow_action_check` 供定时重查扫描；系统完成时 `submitted_by` 为空（REQ-05） |
 | 证据 | `t_workflow_verification` | 每次验证的结论、证据与原因；只追加 |
 | 运行 | `t_workflow_approval` | 每位审批人一行：`(node_run_id, approver_id)` 唯一；ANY / ALL 放行，退回修改（RETURNED）与驳回（REJECTED）时其余行 WITHDRAWN |
 | 证据 | `t_workflow_transfer` | 动作执行人或审批人的转交历史；只追加 |
 | 投递 | `t_workflow_callback` | 状态变化按规则登记的一次邮件通知或 MQ 业务回调，与状态变化同事务写入并登记 `compensation_event`，提交后执行；PENDING / SENT / FAILED |
 
-- 实例变量不建表：`start.*` 取实例启动值，`<actionKey>.*` 取该动作最新一轮 VERIFIED 的 `output_json`。
+- 实例变量不建表：`start.*` 取实例启动值，`<actionKey>.*` 取该动作最新一轮 COMPLETED 的 `output_json`；DATA_QUERY 只写动作模板声明的输出，并在写入前按声明类型规整。
 - 人员字段保存 `t_user_account.account_id`，只允许 ACTIVE 的 Operations 账号；同一人不能既提交某节点的动作又审批该节点，在审批决定时校验。
 - 工作流只写本库，不复制业务对象、不调用业务写接口；业务回调只发布 `topic_platform_workflow_event`，订阅方执行前自行校验业务事实（D13）。
 - 运行表不接入 BCR；配置表的修改由统一审计记录。

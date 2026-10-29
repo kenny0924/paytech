@@ -17,20 +17,28 @@ import lombok.Setter;
 
 import tools.jackson.databind.JsonNode;
 
-/** 发起流程实例。 */
+/**
+ * 发起流程实例
+ * <li>definitionCode 与 definitionId + versionNo 二选一：给出 definitionCode 时另两项必须为空，按编码取当前发布版本；
+ * 否则 definitionId 与 versionNo 都必填。违反返回 400 INVALID_REQUEST。</li>
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class StartWorkflowInstanceRequestBody {
 
-    /** 流程定义 ID。 */
-    @NotBlank
+    /**
+     * 流程定义 ID
+     * <li>按 ID 发起时必填；按 definitionCode 发起时必须为空。</li>
+     */
     @Pattern(regexp = "[1-9][0-9]{0,18}", message = "ID 必须是十进制字符串")
     private String definitionId;
 
-    /** 页面读取时的当前发布版本号；发布中途换版本时拒绝，防止按旧表单发起。 */
-    @NotNull
+    /**
+     * 页面读取时的当前发布版本号
+     * <li>按 ID 发起时必填，发布中途换版本时拒绝，防止按旧表单发起；按 definitionCode 发起时必须为空。</li>
+     */
     @Positive
     private Integer versionNo;
 
@@ -44,7 +52,8 @@ public class StartWorkflowInstanceRequestBody {
 
     /**
      * 可选业务关联键
-     * <li>只用于检索与展示，最长 128。</li>
+     * <li>最长 128，按原文精确匹配（区分大小写）；给出时同一流程定义下只允许一个 RUNNING 实例，重复发起返回已有实例
+     * （created=false）。</li>
      */
     @Size(max = 128)
     private String businessKey;
@@ -69,6 +78,13 @@ public class StartWorkflowInstanceRequestBody {
      */
     @Size(max = 2000)
     private List<@Valid ActionExecutor> executors;
+
+    /**
+     * 流程定义编码
+     * <li>与 definitionId + versionNo 二选一；给出时取该定义的当前发布版本。</li>
+     */
+    @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}", message = "definitionCode 格式不合法")
+    private String definitionCode;
 
     /** 某节点审批人的修改。 */
     @Getter

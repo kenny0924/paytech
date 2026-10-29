@@ -36,8 +36,17 @@ public final class DataQueryRun {
     /** CURSOR 游标，可为 null。 */
     private final String cursor;
 
-    /** 操作人账号 ID，注入为 __operator.accountId。 */
-    private final long operatorAccountId;
+    /**
+     * 操作人账号 ID，注入为 __operator.accountId
+     * <li>没有操作人（如工作流系统检查）时为 null，模板引用 __operator.accountId 时得到 null。</li>
+     */
+    private final Long operatorAccountId;
+
+    /**
+     * 调用方的单次超时上限秒数
+     * <li>实际超时取 min(模板 timeoutSeconds, 系统上限, 本值)；为 null 时不额外限制。</li>
+     */
+    private final Integer timeoutCapSeconds;
 
     /** 调用方服务名，只用于日志；试运行为 null。 */
     private final String callerService;

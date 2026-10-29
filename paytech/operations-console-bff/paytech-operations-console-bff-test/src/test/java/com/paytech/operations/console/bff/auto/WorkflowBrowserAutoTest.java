@@ -23,6 +23,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.operations.console.bff.ext.rest.WorkflowActionTemplateController;
 import com.paytech.operations.console.bff.ext.rest.WorkflowAttachmentController;
+import com.paytech.operations.console.bff.ext.rest.WorkflowDataQueryTemplateController;
 import com.paytech.operations.console.bff.ext.rest.WorkflowDefinitionController;
 import com.paytech.operations.console.bff.ext.rest.WorkflowInstanceController;
 import com.paytech.operations.console.bff.test.base.FinanceBrowserAutoTestBase;
@@ -32,15 +33,16 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 浏览器经真实 BFF 与 HttpExchange 转发 Platform 工作流的 32 个端点（WF01—WF28：技术方案第 7 节接口 1—25，另含回调重试、
- * 我已处理与模板引用；WF29—WF32：重新验证与附件开始上传、完成上传、下载授权，即接口 20、26—28）：同路径、同方法、同 Query 与 Body，
- * 查询与命令都携带会话操作人；开始上传返回 201。
+ * 浏览器经真实 BFF 与 HttpExchange 转发 Platform 工作流的端点（WF01—WF28：技术方案第 7 节接口 1—25，另含回调重试、
+ * 我已处理与模板引用；WF29—WF32：重新验证与附件开始上传、完成上传、下载授权，即接口 20、26—28；WF33—WF36：REQ-05 立即检查、
+ * data-query 模板选择、按编码发起与动作模板配置校验）：同路径、同方法、同 Query 与 Body，查询与命令都携带会话操作人；开始上传返回 201。
  * <li>Platform 由 Loopback Simulator 承担，PLT-I02 授权与 Owner 调用记录在同一 Simulator。</li>
  *
  * @see WorkflowActionTemplateController
  * @see WorkflowDefinitionController
  * @see WorkflowInstanceController
  * @see WorkflowAttachmentController
+ * @see WorkflowDataQueryTemplateController
  */
 class WorkflowBrowserAutoTest extends FinanceBrowserAutoTestBase {
     private static final String BOUNDARY = "/workflow-boundary.json";
@@ -281,6 +283,10 @@ class WorkflowBrowserAutoTest extends FinanceBrowserAutoTestBase {
         assertUpstreamInvalid(retry, withResponse(retry, "objectType", "WORKFLOW_INSTANCE"));
         var complete = row(BOUNDARY, "WF31");
         assertUpstreamInvalid(complete, withResponse(complete, "uploadId", "7300000000000000999"));
+        var validation = row(BOUNDARY, "WF36");
+        assertUpstreamInvalid(validation, withResponse(validation, "problems", null));
+        var check = row(BOUNDARY, "WF33");
+        assertUpstreamInvalid(check, withResponse(check, "actionRunId", "7300000000000000999"));
     }
 
     /** Platform 严格 Problem 响应体。 */

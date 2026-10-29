@@ -8,6 +8,8 @@ import { AttachmentList } from './WorkflowFiles';
 import { nodeOf } from './graphModel';
 import { actionLabel, currentHandlers, frozenTemplate, hadRevision, isCompleted, isPendingAction, latestRuns, progressOf, traversedEdges, visualState, waitingText } from './runtimeModel';
 import { useWorkflowCommand } from './useWorkflowCommand';
+import { checkCounts } from './dataQueryModel';
+import { DataQueryRow } from './DataQueryCheck';
 import { WorkflowCanvas } from './WorkflowCanvas';
 import type { CanvasSelection } from './WorkflowCanvas';
 import { decodeActivities, decodeInstanceDetail, decodeMutation, workflowPaths } from './workflowApi';
@@ -53,7 +55,7 @@ export function InstanceDetailView({ instanceId, resources, actorId, onAuthoriza
       <span className="wf-grow" />
       <Segmented value={tab} onChange={next => setTab(String(next))} options={[{ value: 'graph', label: t('publish.area.graph') }, { value: 'activity', label: t('instance.tab.activity') }, { value: 'start', label: t('instance.tab.start') }]} />
     </div>
-    {tab === 'graph' && <InstanceGraph detail={value} actorId={actorId} instanceId={instanceId} />}
+    {tab === 'graph' && <InstanceGraph detail={value} actorId={actorId} instanceId={instanceId} onRefresh={detail.refresh} onAuthorizationChanged={onAuthorizationChanged} />}
     {tab === 'activity' && <ActivityLog detail={value} instanceId={instanceId} canRetry={hasButton(resources, workflowButtons.instanceManage)} onAuthorizationChanged={onAuthorizationChanged} />}
     {tab === 'start' && <StartInfo detail={value} />}
     {terminating && <TerminateModal instanceId={instanceId} onClose={() => setTerminating(false)} onDone={() => { setTerminating(false); detail.refresh(); }}
@@ -68,7 +70,9 @@ function involvesMe(detail: InstanceDetail, nodeKey: string, actorId: string) {
     || detail.approvals.some(item => runIds.has(item.nodeRunId) && item.approverId === actorId);
 }
 
-function InstanceGraph({ detail, actorId, instanceId }: { detail: InstanceDetail; actorId: string; instanceId: string }) {
+function InstanceGraph({ detail, actorId, instanceId, onRefresh, onAuthorizationChanged }: {
+  detail: InstanceDetail; actorId: string; instanceId: string; onRefresh: () => void; onAuthorizationChanged: () => void;
+}) {
   const t = useT('workflow');
   const [selection, setSelection] = useState<CanvasSelection>(null);
   const [mine, setMine] = useState(false);
@@ -99,13 +103,16 @@ function InstanceGraph({ detail, actorId, instanceId }: { detail: InstanceDetail
       footer={<div className="wf-legend"><span className="is-done">{t('instance.legend.done')}</span><span className="is-active">{t('instance.legend.active')}</span><span className="is-pending">{t('instance.legend.pending')}</span><span className="is-rejected">{t('instance.legend.rejected')}</span>
         <span className="muted">{t('instance.legend.hint')}</span></div>} />
     <Drawer open={!!node && node.type === 'TASK'} size={520} onClose={() => setSelection(null)} title={node?.name} destroyOnHidden>
-      {node && <NodeDrawer detail={detail} node={node} actorId={actorId} instanceId={instanceId} />}
+      {node && <NodeDrawer detail={detail} node={node} actorId={actorId} instanceId={instanceId} onRefresh={onRefresh} onAuthorizationChanged={onAuthorizationChanged} />}
     </Drawer>
   </>;
 }
 
-function NodeDrawer({ detail, node, actorId, instanceId }: { detail: InstanceDetail; node: GraphNode; actorId: string; instanceId: string }) {
+function NodeDrawer({ detail, node, actorId, instanceId, onRefresh, onAuthorizationChanged }: {
+  detail: InstanceDetail; node: GraphNode; actorId: string; instanceId: string; onRefresh: () => void; onAuthorizationChanged: () => void;
+}) {
   const t = useT('workflow');
+  const command = useWorkflowCommand(onAuthorizationChanged);
   const nodeRuns = detail.nodeRuns.filter(run => run.nodeKey === node.key).sort((left, right) => right.roundNo - left.roundNo);
   const latest = nodeRuns[0];
   const runIds = new Set(nodeRuns.map(run => run.nodeRunId));
@@ -126,6 +133,8 @@ function NodeDrawer({ detail, node, actorId, instanceId }: { detail: InstanceDet
       {t('instance.round', { round: run.roundNo })} · {nodeRunStatusLabel(run.status)}</Tag>)}</div>
     <Tabs items={[
       { key: 'actions', label: `${t('panel.tab.actions')} ${actions.length}`, children: actions.length ? actions.map(run => {
+        if (run.actionType === 'DATA_QUERY') return <DataQueryRow key={run.actionRunId} detail={detail} run={run} nodeRun={latest} actorId={actorId} command={command}
+          onChecked={() => onRefresh()} />;
         const template = frozenTemplate(detail, run.actionKey);
         return <div key={run.actionRunId} className="wf-action is-expanded">
           <div className="wf-action-head"><strong>{actionLabel(detail, run)}</strong><Tag color="blue">{actionTypeLabel(run.actionType)}</Tag>
@@ -158,12 +167,15 @@ function NodeDrawer({ detail, node, actorId, instanceId }: { detail: InstanceDet
   </div>;
 }
 
-type ActivityFilter = 'ALL' | 'MANUAL' | 'STATE' | 'NOTIFY' | 'CALLBACK';
+type ActivityFilter = 'ALL' | 'MANUAL' | 'STATE' | 'SYSTEM' | 'NOTIFY' | 'CALLBACK';
+/** 系统完成：没有操作人的提交（数据查询满足后由系统完成）。 */
+const isSystemSubmission = (item: Activity) => item.activityType === 'SUBMISSION' && !item.actorId;
 export const isDelivery = (item: Activity) => item.activityType === 'NOTIFY' || item.activityType === 'CALLBACK';
 const activityGroups: Record<ActivityFilter, (item: Activity) => boolean> = {
   ALL: () => true,
-  MANUAL: item => item.activityType === 'SUBMISSION' || item.activityType === 'APPROVAL' || item.activityType === 'TRANSFER',
+  MANUAL: item => (item.activityType === 'SUBMISSION' && !isSystemSubmission(item)) || item.activityType === 'APPROVAL' || item.activityType === 'TRANSFER',
   STATE: item => item.activityType === 'NODE' || item.activityType === 'INSTANCE',
+  SYSTEM: isSystemSubmission,
   NOTIFY: item => item.activityType === 'NOTIFY',
   CALLBACK: item => item.activityType === 'CALLBACK',
 };
@@ -177,6 +189,7 @@ function ActivityLog({ detail, instanceId, canRetry, onAuthorizationChanged }: {
   const command = useWorkflowCommand(onAuthorizationChanged);
   const items = (activities.data ?? []).slice().sort((left, right) => right.time.localeCompare(left.time));
   const callbacks = items.filter(isDelivery);
+  const checks = detail.actionRuns.some(run => run.actionType === 'DATA_QUERY') ? checkCounts(detail.actionRuns) : null;
   const callbackCodes = detail.graph.nodes.flatMap(node => (node.notifications ?? []).filter(rule => rule.type === 'CALLBACK').map(rule => ({ code: rule.callbackCode, node: node.name, trigger: rule.trigger })))
     .concat((detail.graph.settings?.notifications ?? []).filter(rule => rule.type === 'CALLBACK').map(rule => ({ code: rule.callbackCode, node: t('enum.activityType.INSTANCE'), trigger: rule.trigger })));
   async function retry(callbackId: string) {
@@ -186,13 +199,14 @@ function ActivityLog({ detail, instanceId, canRetry, onAuthorizationChanged }: {
   if (activities.failure) return <LoadFailed failure={activities.failure} retry={activities.refresh} title={t('activity.loadFailed')} />;
   return <div className="wf-activity">
     <section className="wf-card">
-      <div className="wf-chips">{(['ALL', 'MANUAL', 'STATE', 'NOTIFY', 'CALLBACK'] as ActivityFilter[]).map(value => <button type="button" key={value}
+      <div className="wf-chips">{(['ALL', 'MANUAL', 'STATE', 'SYSTEM', 'NOTIFY', 'CALLBACK'] as ActivityFilter[]).map(value => <button type="button" key={value}
         className={`wf-chip${filter === value ? ' is-active' : ''}`} onClick={() => setFilter(value)}>
         {enumLabel(t, 'activity.filter', value)} {items.filter(activityGroups[value]).length}</button>)}</div>
       {activities.loading && !activities.data ? <Spinner /> : <ul className="wf-timeline">{items.filter(activityGroups[filter]).map((item, index) => <li key={`${item.time}:${index}`}>
         <span className="wf-time">{shortTime(item.time)}</span>
         <span className={`wf-activity-icon is-${item.activityType.toLowerCase()}`} />
         <span className="wf-grow">{activityText(item, detail)}</span>
+        {isSystemSubmission(item) && <Tag color="green">{t('activity.system')}</Tag>}
         {isDelivery(item) && item.status && <Tag color={callbackStatusColors[item.status] ?? 'default'}>{callbackStatusLabel(item.status)}</Tag>}
         {isDelivery(item) && canRetry && item.referenceId && item.status !== 'SENT' &&
           <Button size="small" loading={command.saving} onClick={() => void retry(item.referenceId!)}>{t('activity.retryNow')}</Button>}
@@ -200,6 +214,12 @@ function ActivityLog({ detail, instanceId, canRetry, onAuthorizationChanged }: {
       {command.formError && <Alert type="error" showIcon title={command.formError} />}
     </section>
     <aside>
+      {checks && <section className="wf-card"><div className="wf-card-title">{t('dataQuery.check.title')}</div>
+        <div className="wf-counters"><div><strong className="wf-ok-text">{checks.satisfied}</strong>{t('dataQuery.check.SATISFIED')}</div>
+          <div><strong className="wf-warn-text">{checks.unsatisfied}</strong>{t('dataQuery.check.UNSATISFIED')}</div>
+          <div><strong className="wf-danger-text">{checks.failed}</strong>{t('dataQuery.check.FAILED')}</div></div>
+        <p className="muted">{t('activity.systemNote')}</p>
+      </section>}
       <section className="wf-card"><div className="wf-card-title">{t('activity.deliveries')}</div>
         <div className="wf-counters"><div><strong className="wf-ok-text">{callbacks.filter(item => item.status === 'SENT').length}</strong>{callbackStatusLabel('SENT')}</div>
           <div><strong className="wf-warn-text">{callbacks.filter(item => item.status === 'PENDING').length}</strong>{callbackStatusLabel('PENDING')}</div>
@@ -218,7 +238,9 @@ function ActivityLog({ detail, instanceId, canRetry, onAuthorizationChanged }: {
 /** actorId 给出时本人显示为“你”。 */
 export function activityText(item: Activity, detail: InstanceDetail, actorId?: string): string {
   const node = item.nodeKey ? nodeOf(detail.graph, item.nodeKey)?.name ?? item.nodeKey : '';
-  const actor = actorId && item.actorId === actorId ? tw('people.youLead') : item.actorName ?? (item.actorId ? personName(item.actorId, detail.people) : '');
+  // 系统完成的动作（数据查询满足）没有提交人，显示「系统」。
+  const actor = actorId && item.actorId === actorId ? tw('people.youLead') : item.actorName ?? (item.actorId ? personName(item.actorId, detail.people)
+    : item.activityType === 'SUBMISSION' ? tw('activity.system') : '');
   const round = item.roundNo && item.roundNo > 1 ? tw('instance.round', { round: item.roundNo }) : '';
   const status = item.status && !isDelivery(item) ? anyStatusLabel(item.status) : '';
   const text = [actor, node ? tw('publish.subject', { subject: node }) : '', round, status, item.detail ?? ''].filter(Boolean).join(' ');

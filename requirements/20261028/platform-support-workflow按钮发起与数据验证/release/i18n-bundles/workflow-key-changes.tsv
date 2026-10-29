@@ -1,0 +1,141 @@
+change	key	en	zh-CN
+ADDED	workflow.actions.dataQueryHint	Data query actions have no submit step: the system completes them when the query is satisfied; the follower can only "Check now".	数据查询动作没有提交入口：查到满足即由系统完成；执行人是跟进人，只能「立即检查」。
+ADDED	workflow.actions.dataQueryOutputsHint	Outputs are written to {actionKey}.{outputName} and can be used in later edge conditions.	输出写入 {actionKey}.{outputName}，可在后续连线条件中引用。
+ADDED	workflow.actions.follower	Follower	跟进人
+ADDED	workflow.actions.followerPlaceholder	Can only check now or transfer	只能立即检查，可转交
+ADDED	workflow.actions.noOutputVariables	No outputs declared	未声明输出
+ADDED	workflow.actions.outputVariableCount	{count, plural, one {# item} other {# items}} · written to process variables	{count} 项 · 写入流程变量
+ADDED	workflow.actions.outputVariables	Output variables	输出变量
+ADDED	workflow.actions.systemCheckLine	System check: {criteria} · rechecked every 5 minutes	系统检查：{criteria} · 每 5 分钟重查
+ADDED	workflow.activity.filter.SYSTEM	Completed by System	系统完成
+ADDED	workflow.activity.system	System	系统
+ADDED	workflow.activity.systemNote	Actions completed by the system have no submitter. "Check now" goes to the operation audit only, not to this activity log; failed checks are only logged and alerted.	系统完成的动作由系统记录，提交人为空；「立即检查」只记入操作审计，不进入活动记录。检查失败只记日志与告警。
+ADDED	workflow.config.descriptionKeyPattern	The criteria text key must start with a lowercase letter and use letters, digits, ".", "_" or "-" (up to 128).	完成标准文案键须以小写字母开头，只含字母、数字、“.”、“_”或“-”，最长 128 位。
+ADDED	workflow.config.outputEnumRequired	Enum output "{name}" needs at least one allowed value, without duplicates.	枚举输出“{name}”至少需要一个可选值，且不能重复。
+ADDED	workflow.config.outputNameDuplicate	Output name "{name}" is used more than once (case-insensitive).	输出名“{name}”重复（不区分大小写）。
+ADDED	workflow.config.outputNamePattern	Output name "{name}" must start with a letter and contain only letters, digits and underscores.	输出名“{name}”须以字母开头，只含字母、数字与下划线。
+ADDED	workflow.config.outputsTooMany	At most {max} outputs.	最多 {max} 个输出。
+ADDED	workflow.config.queryCodePattern	The query template code must be uppercase letters, digits and underscores (2–64), starting with a letter.	查询模板编码须为大写字母、数字与下划线（2—64 位），以字母开头。
+ADDED	workflow.dataQuery.activeVersion	Active · v{version}	生效中 · v{version}
+ADDED	workflow.dataQuery.addOutput	Add output	添加输出
+ADDED	workflow.dataQuery.check.FAILED	Check failed	检查失败
+ADDED	workflow.dataQuery.check.SATISFIED	Satisfied	已满足
+ADDED	workflow.dataQuery.check.UNSATISFIED	Not yet satisfied	尚未满足
+ADDED	workflow.dataQuery.check.autoComplete	Completes automatically when the check passes; rechecked every 5 minutes.	检查通过后自动完成，每 5 分钟重查一次。
+ADDED	workflow.dataQuery.check.checked	Checked.	已检查。
+ADDED	workflow.dataQuery.check.checking	Checking…	检查中…
+ADDED	workflow.dataQuery.check.completed	"{name}" is satisfied and completed.	“{name}”已满足，已自动完成。
+ADDED	workflow.dataQuery.check.completedBySystem	Completed by the system {time}	{time} 系统完成
+ADDED	workflow.dataQuery.check.criteria	Criteria: {criteria}	完成标准：{criteria}
+ADDED	workflow.dataQuery.check.failed	Couldn't run the check.	无法执行检查。
+ADDED	workflow.dataQuery.check.failedKeepsWaiting	The node stays open and the system keeps rechecking; no alert is sent for this.	节点保持未完成，系统会继续重查，不会因此报错或通知。
+ADDED	workflow.dataQuery.check.failures	{count, plural, one {# failure} other {# failures}} in a row	连续失败 {count} 次
+ADDED	workflow.dataQuery.check.followHint	{count, plural, one {# system check} other {# system checks}}, completed automatically once satisfied	{count} 个系统检查，满足后由系统自动完成
+ADDED	workflow.dataQuery.check.followTitle	Checks I follow	我跟进的检查
+ADDED	workflow.dataQuery.check.followedBy	Followed by {name}	{name}跟进
+ADDED	workflow.dataQuery.check.inProgress	A check is already running. Refresh in a moment.	已有检查在进行，请稍后刷新。
+ADDED	workflow.dataQuery.check.lastChecked	Last checked {time}	最近检查 {time}
+ADDED	workflow.dataQuery.check.lastSucceeded	Last successful check {time}	上次成功 {time}
+ADDED	workflow.dataQuery.check.missing	Still missing	还差
+ADDED	workflow.dataQuery.check.missingCount	{count, plural, one {# item} other {# items}} not yet satisfied	未满足 {count} 项
+ADDED	workflow.dataQuery.check.neverSucceeded	No successful check yet	尚无成功检查
+ADDED	workflow.dataQuery.check.now	Check now	立即检查
+ADDED	workflow.dataQuery.check.recheckEvery	Rechecked every 5 minutes	每 5 分钟自动重查
+ADDED	workflow.dataQuery.check.stillMissing	Checked: {count, plural, one {# item is} other {# items are}} still not satisfied.	已检查：仍有 {count} 项未满足。
+ADDED	workflow.dataQuery.check.title	System check	系统检查
+ADDED	workflow.dataQuery.check.waitingAuto	{open, plural, one {# check is} other {# checks are}} still not satisfied. Once all are, the system moves on automatically; you don't need to submit anything.	还有 {open} 项检查未满足；全部满足后系统自动推进，无需你提交。
+ADDED	workflow.dataQuery.contract.checkNow	The follower can click "Check now" at any time	跟进人可随时点「立即检查」
+ADDED	workflow.dataQuery.contract.execution	How it runs	执行方式
+ADDED	workflow.dataQuery.contract.firstRow	Only the first row is read. Several rows, a missing declared column or a wrong type count as a failed check, and the node stays open.	系统只读第一行。多行、缺少声明的列或类型不符，都按「检查失败」处理，节点保持未完成。
+ADDED	workflow.dataQuery.contract.follower	The assignee is a follower: there is no Complete button; the system completes it once satisfied	执行人是跟进人：没有完成按钮，满足后由系统完成
+ADDED	workflow.dataQuery.contract.missing	Reason codes when not satisfied, comma-separated, e.g. CASE_NOT_APPROVED.	未满足的原因码，逗号分隔，例如 CASE_NOT_APPROVED。
+ADDED	workflow.dataQuery.contract.onActivate	Checked once as soon as the node starts	节点开始时立即检查一次
+ADDED	workflow.dataQuery.contract.oneWay	Once satisfied it isn't reopened if the data later changes; each business system still controls its own transactions.	满足后不会因为数据回退而重新打开。能否交易仍由各业务系统自己控制，流程只负责引导。
+ADDED	workflow.dataQuery.contract.out	Converted to the declared type and written to the process variable.	按上表声明的类型转换后写入流程变量。
+ADDED	workflow.dataQuery.contract.recheck	Then rechecked automatically every 5 minutes	之后每 5 分钟自动重查
+ADDED	workflow.dataQuery.contract.satisfied	1 / 0 or true / false. True completes the action.	1 / 0 或 true / false。为真即完成该动作。
+ADDED	workflow.dataQuery.contract.title	Query result contract	查询返回约定
+ADDED	workflow.dataQuery.criteria	Completion criteria	完成标准说明
+ADDED	workflow.dataQuery.criteria.GOLIVE_AGREEMENT_ACTIVE	The agreement and its pricing version are active	合同及其价格版本已生效
+ADDED	workflow.dataQuery.criteria.GOLIVE_AGREEMENT_DRAFTED	The client agreement is drafted and its pricing version is approved	客户合同已起草且价格版本已批准
+ADDED	workflow.dataQuery.criteria.GOLIVE_COLLECTION_CAPABILITIES_ENABLED	Every payment-method capability on the agreement is enabled	合同内每个支付方式开通项都已开通
+ADDED	workflow.dataQuery.criteriaHint	Shown in the System check block of the task card so the follower knows what the system is waiting for.	显示在任务卡的「系统检查」块，告诉跟进人系统在等什么。
+ADDED	workflow.dataQuery.currentLanguage	In the current language	当前语言显示
+ADDED	workflow.dataQuery.dataSource	Data source {name}	数据源 {name}
+ADDED	workflow.dataQuery.descriptionKey	Criteria text key	完成标准文案键
+ADDED	workflow.dataQuery.enumValuesPlaceholder	Type a value and press Enter	输入取值后回车
+ADDED	workflow.dataQuery.failure.DATA_SOURCE_UNAVAILABLE	The data source can't be reached.	数据源无法连接。
+ADDED	workflow.dataQuery.failure.PARAMETER_INVALID	Query parameters are invalid.	查询参数不合法。
+ADDED	workflow.dataQuery.failure.QUERY_FAILED	The query failed.	查询失败。
+ADDED	workflow.dataQuery.failure.QUERY_TIMEOUT	The query timed out.	查询超时。
+ADDED	workflow.dataQuery.failure.RESULT_SHAPE_INVALID	The query result doesn't match the expected shape.	查询结果不符合约定形状。
+ADDED	workflow.dataQuery.failure.RESULT_TOO_LARGE	The query returned too much data.	查询结果过大。
+ADDED	workflow.dataQuery.failure.TEMPLATE_UNAVAILABLE	The query template or its data source is unavailable.	查询模板或数据源不可用。
+ADDED	workflow.dataQuery.instruction	Criteria description	完成标准说明
+ADDED	workflow.dataQuery.keyUntranslated	No translation for this key yet; the description is shown	该文案键暂无译文，将显示说明
+ADDED	workflow.dataQuery.mappedOnNode	Mapped on the process node	在流程节点上映射
+ADDED	workflow.dataQuery.missing.AGREEMENT_NOT_ACTIVE	The agreement isn't active	合同尚未生效
+ADDED	workflow.dataQuery.missing.AGREEMENT_NOT_DRAFTED	No client agreement has been drafted yet	尚未起草客户合同
+ADDED	workflow.dataQuery.missing.CAPABILITY_NOT_ENABLED	Some payment-method capabilities aren't enabled	有支付方式开通项尚未开通
+ADDED	workflow.dataQuery.missing.TERM_VERSION_NOT_ACTIVE	The pricing version isn't active	价格版本尚未生效
+ADDED	workflow.dataQuery.missing.TERM_VERSION_NOT_APPROVED	The pricing version isn't approved yet	价格版本尚未批准
+ADDED	workflow.dataQuery.noParameters	This template has no parameters.	该模板没有参数。
+ADDED	workflow.dataQuery.optional	Optional	选填
+ADDED	workflow.dataQuery.outputColumn	Source column	来源列
+ADDED	workflow.dataQuery.outputEnumValues	Allowed values	可选值
+ADDED	workflow.dataQuery.outputMasked	This column is masked in the template	模板已屏蔽此列
+ADDED	workflow.dataQuery.outputName	Name	名称
+ADDED	workflow.dataQuery.outputNameArg	<name>	<名称>
+ADDED	workflow.dataQuery.outputType	Type	类型
+ADDED	workflow.dataQuery.outputTypeName.BOOLEAN	Boolean	布尔
+ADDED	workflow.dataQuery.outputTypeName.DATE	Date	日期
+ADDED	workflow.dataQuery.outputTypeName.ENUM	Enum	枚举
+ADDED	workflow.dataQuery.outputTypeName.NUMBER	Number	数字
+ADDED	workflow.dataQuery.outputTypeName.TEXT	Text	文本
+ADDED	workflow.dataQuery.outputUndeclared	The template doesn't declare this column	模板未声明此列
+ADDED	workflow.dataQuery.outputVariable	Process variable	流程变量
+ADDED	workflow.dataQuery.outputs	Outputs	输出变量
+ADDED	workflow.dataQuery.outputsHint	Each output reads the column out_{name} and becomes the variable {actionKey}.{name}.	每个输出读取列 out_{name}，写入变量 {actionKey}.{name}。
+ADDED	workflow.dataQuery.parameterRequired	Required	是否必填
+ADDED	workflow.dataQuery.parameterValue	Value	取值
+ADDED	workflow.dataQuery.parametersHint	Map each parameter on the process node.	参数在流程节点上映射取值。
+ADDED	workflow.dataQuery.parametersOutdated	The template's parameters have changed since this action was saved.	模板参数声明已变化，与本动作保存的参数不一致。
+ADDED	workflow.dataQuery.pickTemplateFirst	Pick a query template first.	请先选择查询模板。
+ADDED	workflow.dataQuery.removeOutput	Remove output	删除输出
+ADDED	workflow.dataQuery.required	Required	必填
+ADDED	workflow.dataQuery.syncParameters	Use current parameters	按当前声明更新
+ADDED	workflow.dataQuery.template	Query template *	查询模板 *
+ADDED	workflow.dataQuery.templateEmpty	No active query templates match.	没有匹配的启用模板。
+ADDED	workflow.dataQuery.templateHint	Only active data-query templates are listed.	只列出启用中的数据查询模板。
+ADDED	workflow.dataQuery.templatePlaceholder	Search by template code or name	按模板编码或名称搜索
+ADDED	workflow.dataQuery.templateUnavailable	Query template {code} isn't active or no longer exists. Pick another one.	查询模板 {code} 未启用或已不存在，请重新选择。
+ADDED	workflow.dataQuery.textContainsHint	Comma-separated values can be tested with Contains	多个值以逗号分隔，条件用「包含」判断
+ADDED	workflow.dataQuery.timeout	Timeout per check {seconds}s	单次超时 {seconds} 秒
+ADDED	workflow.dataQuery.timeoutCapped	Timeout per check {seconds}s (template {template}s; the smaller applies)	单次超时 {seconds} 秒（模板 {template} 秒，取小值）
+ADDED	workflow.dataQuery.validationFailed	{count, plural, one {# problem} other {# problems}} found. Fix them before saving.	发现 {count} 个问题，修正后才能保存。
+ADDED	workflow.graph.problem.DATA_QUERY_INPUT_MISSING	Map a value for required parameter {key}.	请为必填参数 {key} 映射取值。
+ADDED	workflow.graph.problem.DATA_QUERY_OUTPUT_MASKED	Column {column} of query template {code} is masked and can't be used.	查询模板 {code} 的列 {column} 已屏蔽，不能用于判断。
+ADDED	workflow.graph.problem.DATA_QUERY_OUTPUT_UNDECLARED	Query template {code} doesn't return column {column}.	查询模板 {code} 没有返回列 {column}。
+ADDED	workflow.graph.problem.DATA_QUERY_PARAMETER_MISSING	Required parameter {key} of query template {code} isn't listed.	未列出查询模板 {code} 的必填参数 {key}。
+ADDED	workflow.graph.problem.DATA_QUERY_PARAMETER_UNDECLARED	Parameter {key} isn't declared by query template {code}.	查询模板 {code} 未声明参数 {key}。
+ADDED	workflow.graph.problem.DATA_QUERY_TEMPLATE_INACTIVE	Query template {code} or its data source is disabled.	查询模板 {code} 或其数据源已停用。
+ADDED	workflow.graph.problem.DATA_QUERY_TEMPLATE_NOT_FOUND	Query template {code} doesn't exist.	查询模板 {code} 不存在。
+ADDED	workflow.launch.reused	This business key already has a running instance; opened it instead.	该业务关联已有运行中的实例，已为你打开。
+ADDED	workflow.task.dataQueryNoComplete	This action completes automatically.	该动作由系统检查自动完成。
+EN_CHANGED	workflow.dataQuery.parameter	Parameter	参数
+EN_CHANGED	workflow.dataQuery.parameters	Query Parameters	查询参数
+EN_CHANGED	workflow.dataQuery.queryCode	Query Template	查询模板
+EN_CHANGED	workflow.templateEditor.step.query	Query & Outputs	查询与输出
+DEPRECATED	workflow.actions.dataQueryUnavailable	Data query isn't available yet. Remove or replace it.	
+DEPRECATED	workflow.dataQuery.column	Column	
+DEPRECATED	workflow.dataQuery.evidence	Evidence Columns	
+DEPRECATED	workflow.dataQuery.evidenceHint	Columns kept in the verification record for approvers to review	
+DEPRECATED	workflow.dataQuery.firstRow	First row's	
+DEPRECATED	workflow.dataQuery.passRule	Pass Rule *	
+DEPRECATED	workflow.dataQuery.passRuleHint	Verification passes only if the first row of the result meets the condition.	
+DEPRECATED	workflow.dataQuery.queryCodeHint	The data-service query catalog isn't connected yet, so you can't pick a query or see its SQL here.	
+DEPRECATED	workflow.dataQuery.reserved	Reserved type: you can configure it now, but a published process can't use it.	
+DEPRECATED	workflow.dataQuery.reservedHint	It will be enabled once data-service provides a query catalog. data-service maintains the SQL; if a query is wrong, fix it in data-service and have the assignee verify again, without changing the process. The structure on this page is provisional, and the query code must be entered manually.	
+DEPRECATED	workflow.graph.problem.TEMPLATE_RESERVED_TYPE	Data query actions aren't available yet and can't be used by a published process.	
+DEPRECATED	workflow.preview.dataQuerySoon	Data query is coming soon; processes can't use it yet.	
+DEPRECATED	workflow.templateEditor.dataQueryUnavailable	Data query actions are coming soon and can't be created yet.	

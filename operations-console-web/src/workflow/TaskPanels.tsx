@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Alert, App, Button, Dropdown, Empty, Form, Input, Modal, Select, Tag } from 'antd';
-import { CheckOutlined, CloseOutlined, DownOutlined, InfoCircleOutlined, RightOutlined, UpOutlined, WarningOutlined } from '@ant-design/icons';
+import {
+  CheckOutlined, CloseOutlined, DownOutlined, InfoCircleOutlined, RightOutlined, UpOutlined, WarningOutlined,
+} from '@ant-design/icons';
 import { actionTypeIcons } from './workflowIcons';
 import type { TextAreaRef } from 'antd/es/input/TextArea';
 import { Link, useNavigate } from 'react-router-dom';
 import { changeSummary, diffOutputs, displayValue, outputOf } from './formModel';
 import { nodeOf } from './graphModel';
 import {
-  actionLabel, batchSubmission, batchSummary, currentHandlers, decisionError, decisionOptions, frozenTemplate, isCompleted, latestRuns, nodeActionOf,
+  actionLabel, batchSubmission, batchSummary, currentHandlers, decisionError, decisionOptions, frozenTemplate, isCompleted, isPendingAction, latestRuns, nodeActionOf,
   nodeApproverIds, pageTaskLink, previousRoundAction, revisionOf, runtimeVariables, traversedEdges, visualState, waitingText,
 } from './runtimeModel';
 import type { BatchResult, BatchStatus } from './runtimeModel';
@@ -18,6 +20,8 @@ import {
 } from './taskModel';
 import type { TaskStep } from './taskModel';
 import { decodeActivities, decodeMutation, decodeSubmission, workflowPaths } from './workflowApi';
+import { allDataQuery, completedBySystem } from './dataQueryModel';
+import { DataQueryRow } from './DataQueryCheck';
 import { actionRunStatusColors, actionRunStatusLabel, actionTypeLabel, approvalStatusLabel, instanceStatusColors, instanceStatusLabel } from './workflowLabels';
 import { enumLabel } from '../i18n/index';
 import { useT } from '../i18n/react';
@@ -133,7 +137,7 @@ function PriorOutputs({ detail, nodeRun }: { detail: InstanceDetail; nodeRun: No
   if (!previous) return null;
   const outputs = detail.actionRuns.filter(item => item.nodeRunId === previous.nodeRunId && item.output && isCompleted(item));
   if (!outputs.length) return null;
-  const submitters = [...new Set(outputs.map(item => personName(item.submittedBy, detail.people)))].join(t('list.comma'));
+  const submitters = [...new Set(outputs.map(item => completedBySystem(item) ? t('activity.system') : personName(item.submittedBy, detail.people)))].join(t('list.comma'));
   const last = outputs.map(item => item.submittedTime ?? '').sort().at(-1);
   return <section className="wf-section">
     <div className="wf-section-title">{t('task.prior')}<span className="muted">{t('task.priorMeta', { node: nodeOf(detail.graph, previous.nodeKey)?.name ?? previous.nodeKey, people: submitters, time: shortTime(last) })}</span></div>
@@ -222,7 +226,10 @@ function ActionTaskDetail(props: PanelProps & { nodeRun: NodeRun }) {
   const progress = actionProgress(runs);
   const node = nodeOf(detail.graph, task.nodeKey);
   const hasApprovers = nodeApproverIds(detail, task.nodeKey, nodeRun.nodeRunId).length > 0;
-  const status = progressText(progress, null, hasApprovers);
+  const checksOnly = allDataQuery(runs);
+  const open = progress.required - progress.requiredDone;
+  // 只有系统检查的节点不需要人提交：底部提示改为满足后自动推进（原型 19）。
+  const status = checksOnly && open > 0 ? { text: t('dataQuery.check.waitingAuto', { open }), warn: true } : progressText(progress, null, hasApprovers);
   const focused = mine.find(item => item.actionRunId === expanded && completionMode(item, nodeRun, running, actorId) !== 'LOCKED');
   const transferTask: Task = focused ? { ...task, taskId: focused.actionRunId, actionKey: focused.actionKey } : task;
   function completed(run: ActionRun) {
@@ -236,7 +243,8 @@ function ActionTaskDetail(props: PanelProps & { nodeRun: NodeRun }) {
       <DetailHeader detail={detail} task={task} canOpenInstance={props.canOpenInstance} />
       <Background detail={detail} />
       <section className="wf-section">
-        <div className="wf-section-title">{t('task.mine')}<span className="muted">{node?.name ?? task.nodeKey}{runs.length > 1 ? ` · ${t('task.actionsOneByOne', { count: runs.length })}` : ''}
+        <div className="wf-section-title">{checksOnly ? t('dataQuery.check.followTitle') : t('task.mine')}<span className="muted">{node?.name ?? task.nodeKey}
+          {checksOnly ? ` · ${t('dataQuery.check.followHint', { count: runs.length })}` : runs.length > 1 ? ` · ${t('task.actionsOneByOne', { count: runs.length })}` : ''}
           {hasApprovers ? ` · ${t('task.thenApproval')}` : ''}</span></div>
         <RevisionBanner detail={detail} nodeRun={nodeRun} viewer="executor" />
         {!running && <Alert type="info" showIcon title={t('decision.blocked.instanceEnded')} />}
@@ -244,8 +252,11 @@ function ActionTaskDetail(props: PanelProps & { nodeRun: NodeRun }) {
         {progress.required > 0 && <div className="wf-required">
           <span><strong>{t('progress.done', { required: progress.required, done: progress.requiredDone })}</strong>{progress.optional ? <span className="muted"> {t('task.optionalNotBlocking', { count: progress.optional })}</span> : null}</span>
           <div className="wf-required-bar"><span style={{ width: `${Math.round(progress.requiredDone / progress.required * 100)}%` }} /></div></div>}
-        {runs.map(run => <ActionRow key={run.actionRunId} {...props} run={run} nodeRun={nodeRun} open={expanded === run.actionRunId}
-          onToggle={() => setExpanded(expanded === run.actionRunId ? null : run.actionRunId)} onCompleted={completed} />)}
+        {runs.map(run => run.actionType === 'DATA_QUERY'
+          ? <DataQueryRow key={run.actionRunId} detail={detail} run={run} nodeRun={nodeRun} actorId={actorId} command={props.command}
+            onChecked={completedNow => onChanged(completedNow && mine.every(item => item.actionRunId === run.actionRunId || !isPendingAction(item)))} />
+          : <ActionRow key={run.actionRunId} {...props} run={run} nodeRun={nodeRun} open={expanded === run.actionRunId}
+            onToggle={() => setExpanded(expanded === run.actionRunId ? null : run.actionRunId)} onCompleted={completed} />)}
       </section>
     </div>
     <ActionBar status={status.text} warn={status.warn} more={<MoreMenu {...props} task={transferTask} />} />
@@ -502,7 +513,7 @@ function SubmissionTable({ detail, runs }: { detail: InstanceDetail; runs: Actio
         const expanded = open === run.actionRunId;
         const rows = [<tr key={run.actionRunId} className={expanded ? 'is-open' : undefined}>
           <td><span className="wf-action-icon is-small">{actionTypeIcons[run.actionType]}</span> {actionLabel(detail, run)} <Tag color={run.required ? 'blue' : 'default'}>{run.required ? t('actions.required') : t('actions.optional')}</Tag></td>
-          <td>{personName(run.submittedBy ?? run.assigneeId, detail.people)}</td>
+          <td>{completedBySystem(run) ? t('activity.system') : personName(run.submittedBy ?? run.assigneeId, detail.people)}</td>
           <td><Tag color={actionRunStatusColors[run.status]}>{actionRunStatusLabel(run.status)}</Tag></td>
           <td>{isCompleted(run) ? shortTime(run.submittedTime) : '—'}</td>
           <td>{submissionSummary(run, template, known)}</td>

@@ -8,6 +8,7 @@ import com.paytech.platform.support.dataquery.domain.CreateQueryTemplateCommand;
 import com.paytech.platform.support.dataquery.domain.ExecutableQueryTemplate;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateChange;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateDetail;
+import com.paytech.platform.support.dataquery.domain.QueryTemplateSignature;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateSummary;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateVersionDetail;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateVersionSummary;
@@ -51,6 +52,14 @@ public interface QueryTemplateService {
      * @return 事实；模板不存在时为 null
      */
     ExecutableQueryTemplate findExecutableTemplate(String templateCode);
+
+    /**
+     * 按编码读取模板签名：状态、当前版本数据源是否可用、参数与出参列声明。只读本库，可在事务内调用。
+     *
+     * @param templateCode 模板编码
+     * @return 签名；模板不存在时为 null
+     */
+    QueryTemplateSignature findTemplateSignature(String templateCode);
 
     /** 新建模板，保存为版本 1，状态 ACTIVE。 */
     QueryTemplateChange createQueryTemplate(CreateQueryTemplateCommand command);

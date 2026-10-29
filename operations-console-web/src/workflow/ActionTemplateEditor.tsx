@@ -8,12 +8,12 @@ import { useUnsavedRuleGuard } from '../risk/useUnsavedRuleGuard';
 import { currentReferences, draftOf, editorSteps, isDirty, needsLeaveConfirm, suggestTemplateCode } from './catalogModel';
 import type { EditorStep, TemplateDraft } from './catalogModel';
 import { configProblems, normalizeConfig, templateCodePattern } from './templateModel';
-import { ActionTypeTag, ConfigEditor, DeactivateModal, ExecutorPreview, ReferencesView, useTemplateReferences } from './TemplateEditors';
-import { useWorkflowCommand } from './useWorkflowCommand';
-import { decodeMutation, decodePage, decodeTemplate, workflowPaths } from './workflowApi';
+import { ActionTypeTag, ConfigEditor, DataQueryContract, DeactivateModal, ExecutorPreview, ReferencesView, useTemplateReferences } from './TemplateEditors';
+import { sendWorkflowCommand, useWorkflowCommand, workflowCommand } from './useWorkflowCommand';
+import { decodeMutation, decodePage, decodeTemplate, decodeTemplateValidation, workflowPaths } from './workflowApi';
 import { actionTypeLabel, configStatusLabel } from './workflowLabels';
 import { useT } from '../i18n/react';
-import type { ActionTemplate, ActionType, FormDefinition } from './workflowTypes';
+import type { ActionConfig, ActionTemplate, ActionType, FormDefinition, Problem } from './workflowTypes';
 import { Field, LoadFailed, Spinner, personName, shortTime, useLoad, workflowRoutes } from './WorkflowParts';
 
 const decodeTemplates = decodePage(decodeTemplate);
@@ -23,7 +23,7 @@ export interface ActionTemplateEditorProps {
   mode: 'page' | 'drawer';
   /** 已有动作 ID；新建时省略，并给出 actionType。 */
   templateId?: string;
-  /** 新建动作的类型（先由 ActionTypePicker 选择；数据查询不可新建）。 */
+  /** 新建动作的类型（先由 ActionTypePicker 选择）。 */
   actionType?: ActionType;
   /** 持有「维护动作」按钮权限；没有时只读。 */
   canManage: boolean;
@@ -85,6 +85,8 @@ export function ActionTemplateEditor(props: ActionTemplateEditorProps) {
     modal.confirm({ title: t('templateEditor.leave.title'), content: t('templateEditor.leave.content'), okText: t('templateEditor.leave.ok'), cancelText: t('templateEditor.leave.cancel'), onOk: () => resolve(true), onCancel: () => resolve(false) });
   }), [modal, t]);
   const problems = useMemo(() => configProblems(type, draft.config), [type, draft.config]);
+  const [validation, setValidation] = useState<{ config: string; problems: Problem[] } | null>(null);
+  useDataQueryRevalidation(type, draft.config, validation, setValidation);
   const code = isNew && !codeTouched ? suggestTemplateCode(draft.templateName, type, existingCodes) : draft.templateCode;
   const codeProblem = !isNew ? null : !templateCodePattern.test(code) ? t('templateEditor.codePattern')
     : existingCodes.has(code) ? t('templateEditor.codeUsed', { code }) : null;
@@ -92,7 +94,6 @@ export function ActionTemplateEditor(props: ActionTemplateEditorProps) {
 
   if (!isNew && loaded.loading && !template) return <Spinner />;
   if (!isNew && !template) return <LoadFailed failure={loaded.failure} retry={loaded.refresh} title={t('templateEditor.loadFailed')} />;
-  if (isNew && type === 'DATA_QUERY') return <Alert type="info" showIcon title={t('templateEditor.dataQueryUnavailable')} />;
 
   const change = (patch: Partial<TemplateDraft>) => setDraft(current => ({ ...current, ...patch }));
   async function reload(id: string): Promise<ActionTemplate | null> {
@@ -102,6 +103,13 @@ export function ActionTemplateEditor(props: ActionTemplateEditorProps) {
     if (blocker) { void message.warning(blocker); return; }
     const body = { templateName: draft.templateName.trim(), ...(draft.description.trim() ? { description: draft.description.trim() } : {}),
       config: normalizeConfig(type, draft.config) };
+    // 数据查询先校验（不保存）：有问题时标到参数 / 输出行或模板选择处，不保存。
+    if (type === 'DATA_QUERY') {
+      const found = await command.run(workflowPaths.templateValidation, 'POST', { actionType: type, config: body.config }, decodeTemplateValidation, t('templateEditor.saveFailed'));
+      if (!found) return;
+      setValidation({ config: JSON.stringify(body.config), problems: found });
+      if (found.length) { setStep('config'); void message.warning(t('dataQuery.validationFailed', { count: found.length })); return; }
+    }
     if (isNew) {
       const result = await command.run(workflowPaths.templates, 'POST', { templateCode: code, actionType: type, ...body }, decodeMutation, t('templateEditor.createFailed'));
       if (!result) return;
@@ -167,11 +175,12 @@ export function ActionTemplateEditor(props: ActionTemplateEditorProps) {
         {step === 'config' && (type === 'FORM'
           ? <><ConfigProblems problems={canManage ? problems : []} /><ConfigEditor type={type} config={draft.config} readOnly={readOnly} savedKeys={savedKeys}
             templateName={draft.templateName} description={draft.description} onChange={config => change({ config })} /></>
-          : <div className="wf-tpl-instruction">
+          : <div className={`wf-tpl-instruction${type === 'DATA_QUERY' ? ' is-data-query' : ''}`}>
             <div><ConfigProblems problems={canManage ? problems : []} />
-              <ConfigEditor type={type} config={draft.config} readOnly={readOnly} onChange={config => change({ config })} /></div>
-            <section><div className="wf-section-title">{t('templateEditor.executorView')}<span className="muted">{t('templateEditor.readOnlyPreview')}</span></div>
-              <ExecutorPreview template={{ templateName: draft.templateName, actionType: type, config: draft.config }} /></section>
+              <ConfigEditor type={type} config={draft.config} readOnly={readOnly} validationProblems={validation?.problems} onChange={config => change({ config })} /></div>
+            {type === 'DATA_QUERY' ? <section><DataQueryContract /></section>
+              : <section><div className="wf-section-title">{t('templateEditor.executorView')}<span className="muted">{t('templateEditor.readOnlyPreview')}</span></div>
+                <ExecutorPreview template={{ templateName: draft.templateName, actionType: type, config: draft.config }} /></section>}
           </div>)}
         {step === 'references' && template && <ReferencesView template={template} state={references} />}
       </div>
@@ -215,6 +224,26 @@ function BasicInfo({ draft, change, type, template, readOnly, isNew, code, codeP
         : <span className="muted">{t('templateEditor.enabledAfterCreate')}</span>}</Field>
     </div>
   </section>;
+}
+
+/**
+ * 数据查询校验有问题后，修改模板、参数或输出时防抖重新校验（只读、不保存），让已修正的行及时清除标红；
+ * 没有待清除的问题时不发请求。读取失败保留上次结果，保存时仍会再校验。
+ */
+function useDataQueryRevalidation(type: ActionType, config: ActionConfig, validation: { config: string; problems: Problem[] } | null,
+  setValidation: (value: { config: string; problems: Problem[] }) => void) {
+  const normalized = type === 'DATA_QUERY' ? JSON.stringify(normalizeConfig(type, config)) : '';
+  const pending = !!validation?.problems.length && validation.config !== normalized;
+  useEffect(() => {
+    if (!pending) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      sendWorkflowCommand(workflowCommand(workflowPaths.templateValidation, 'POST', { actionType: type, config: JSON.parse(normalized) }), decodeTemplateValidation)
+        .then(problems => { if (!cancelled) setValidation({ config: normalized, problems }); })
+        .catch(() => undefined);
+    }, 600);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [pending, normalized, type, setValidation]);
 }
 
 /** 新建时读取已有编码，用于编码建议与重复提示（服务端仍以唯一约束为准）。 */

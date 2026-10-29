@@ -73,12 +73,14 @@
 | `GOLIVE_PRODUCTION_VERIFIED` | N9 | acquiring + payment + Platform delivery | `failedChecks[]` |
 | `GOLIVE_LIMIT_TIER` | N10 / N11 | risk-decision | `tier` |
 
+> **补注（2026-10-29，REQ-05 阶段 2 S-05）**：流程变量没有列表类型。上表带 `[]` 的列表输出一律以 TEXT 返回、逗号分隔（如 REQ-01 `GOLIVE_AGREEMENT_DRAFTED` 的 `out_capability_codes`），排他网关用 `CONTAINS` 判断。`out_<name>` 的 `<name>` 由 DATA_QUERY 动作模板的输出声明给出，按不区分大小写匹配列名，流程变量名为 `<actionKey>.<name>`。
+
 ### 3.4 workflow 发起与节点约定
 
-- 发起：`definitionCode + businessKey`，同一 `definitionCode + businessKey` 只允许一个 RUNNING 实例，重复发起返回已有实例；发起人为登录运营账号（不新增系统身份）。
+- 发起：`definitionCode + businessKey`，同一 `definitionCode + businessKey` 只允许一个 RUNNING 实例，重复发起返回已有实例（REQ-05 落库为 `t_workflow_instance(definition_id, business_key, active_slot)` 唯一索引）；发起人为登录运营账号（不新增系统身份）。
 - 实例变量：`clientId, applicationId, caseId, payfacPartnerId, payfacType, jurisdiction, onboardingOwner`，加各节点 `outputs`。
 - `DATA_QUERY` 动作：引用 data-query 模板编码；节点激活时查一次；之后由 XXL-Job 定时重查（默认 5 分钟）与卡片"立即检查"触发；`satisfied` 即完成动作并写 `outputs`。
-- 等待节点（WAITING 已有）：无提交表单；跟进人 = 实例变量 `onboardingOwner` 或节点配置；催办经 Platform notification。
+- 等待节点（更正 2026-10-29，REQ-05 阶段 2 S-18：workflow 没有 WAITING 节点类型，`WAITING` 只是并行汇合的节点运行状态；"等待节点"表达为只挂 `DATA_QUERY` 动作、不配审批的 TASK 节点，该动作的执行人即跟进人）：无提交表单；跟进人 = 实例变量 `onboardingOwner` 或节点配置；催办经 Platform notification。
 - 四眼：复核节点候选人排除指定前序节点的执行人（节点配置 `excludeExecutorsOf: [nodeKey]`）。
 
 ### 3.5 Owner 页面深链

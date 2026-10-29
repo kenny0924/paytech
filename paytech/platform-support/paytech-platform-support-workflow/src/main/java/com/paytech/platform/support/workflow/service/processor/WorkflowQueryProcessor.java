@@ -18,9 +18,14 @@ import com.paytech.foundation.common.utils.EnumUtils;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsSessionService.SessionContext;
+import com.paytech.platform.support.dataquery.core.enums.QueryTemplateStatus;
+import com.paytech.platform.support.dataquery.domain.QueryTemplateSummary;
+import com.paytech.platform.support.dataquery.domainservice.service.QueryTemplateService;
 import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateValidationResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActivityBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActivityListResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowDataQueryTemplateBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDefinitionDetailResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDefinitionSummaryBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowHandledTaskBody;
@@ -74,6 +79,12 @@ import lombok.RequiredArgsConstructor;
 @ConditionalOnProperty(name = "operations.authentication.enabled", havingValue = "true")
 public class WorkflowQueryProcessor {
 
+    /** 查询模板选择的默认每页条数。 */
+    static final int DATA_QUERY_TEMPLATE_PAGE_SIZE = 20;
+
+    /** 查询模板选择的每页上限。 */
+    static final int MAX_DATA_QUERY_TEMPLATE_PAGE_SIZE = 50;
+
     private final WorkflowDraftChecker checker;
     private final WorkflowProcessorSupport support;
     private final WorkflowAttachments attachments;
@@ -84,6 +95,8 @@ public class WorkflowQueryProcessor {
     private final WorkflowActionTemplateRepository templates;
     private final WorkflowDefinitionVersionRepository versions;
     private final WorkflowListEnricher enricher;
+    private final QueryTemplateService queryTemplates;
+    private final WorkflowTemplateConfigs configs;
     private final WorkflowNavigator navigator = new WorkflowNavigator();
     private final WorkflowResponseAssembler assembler = new WorkflowResponseAssembler();
     private final WorkflowRuntimeJson runtimeJson = new WorkflowRuntimeJson();
@@ -256,7 +269,8 @@ public class WorkflowQueryProcessor {
             run))).toList());
         Map<Long, String> templateNames = runtimeJson.snapshotNames(context.getVersion().getActionSnapshotJson());
         body.setActionRuns(context.getActionRuns().stream()
-            .map(run -> assembler.actionRun(run, templateNames.get(run.getActionTemplateId()))).toList());
+            .map(run -> assembler.actionRun(run, templateNames.get(run.getActionTemplateId()),
+                context.getTemplates().get(run.getActionTemplateId()))).toList());
         body.setVerifications(context.getVerifications().stream().map(assembler::verification).toList());
         body.setApprovals(context.getApprovals().stream().map(assembler::approval).toList());
         body.setTransfers(context.getTransfers().stream().map(assembler::transfer).toList());
@@ -315,6 +329,60 @@ public class WorkflowQueryProcessor {
             row.getNodeRunId() == null ? null : context.nodeRun(row.getNodeRunId()).orElse(null))));
         items.sort(WorkflowResponseAssembler.byTime());
         return new WorkflowActivityListResponseBody(items);
+    }
+
+    /**
+     * 动作目录选择 DATA_QUERY 查询模板（REQ-05，technique 8.5）：只列 ACTIVE 模板的编码、名称、说明、数据源名称与参数声明。
+     * <li>需 WORKFLOW_ACTION_TEMPLATE_MANAGE，不要求 data-query 权限；不返回 SQL 正文与列声明。</li>
+     * <li>默认第 1 页、每页 20 条，每页最多 50 条。</li>
+     *
+     * @param actor 可信操作人账号
+     * @param session 可信会话
+     * @param keyword 编码或名称关键字；可空
+     * @param page 页码；可空
+     * @param size 每页条数；可空
+     * @return 模板分页
+     */
+    public PagingResponseBody<WorkflowDataQueryTemplateBody> listDataQueryTemplates(String actor, String session,
+        String keyword, Integer page, Integer size) {
+        support.authorize(actor, session, WorkflowPermissions.ACTION_TEMPLATE_MANAGE);
+        if (size != null && size > MAX_DATA_QUERY_TEMPLATE_PAGE_SIZE) {
+            throw new InvalidParameterException("size 不能超过 " + MAX_DATA_QUERY_TEMPLATE_PAGE_SIZE);
+        }
+        PagingRequestBody paging = PagingRequestBody.of(page, size == null ? DATA_QUERY_TEMPLATE_PAGE_SIZE : size);
+        String trimmed = keyword == null || keyword.isBlank() ? null : keyword.strip();
+        return queryTemplates.listQueryTemplates(null, QueryTemplateStatus.ACTIVE, trimmed, paging)
+            .map(WorkflowQueryProcessor::dataQueryTemplate);
+    }
+
+    /**
+     * data-query 模板摘要转为选择项。
+     *
+     * @param summary 模板摘要
+     * @return 选择项
+     */
+    static WorkflowDataQueryTemplateBody dataQueryTemplate(QueryTemplateSummary summary) {
+        return new WorkflowDataQueryTemplateBody(summary.getTemplate().getTemplateCode(),
+            summary.getTemplate().getTemplateName(), summary.getTemplate().getDescription(), summary.getDataSourceName(),
+            summary.getParameters().stream().map(parameter -> new WorkflowDataQueryTemplateBody.Parameter(
+                parameter.getName(), parameter.getType().getCode(),
+                parameter.isRequired() && parameter.getDefaultValue() == null)).toList(),
+            summary.getTemplate().getCurrentVersionNo(), summary.getTimeoutSeconds());
+    }
+
+    /**
+     * 校验动作模板配置，不保存（REQ-05）：与新建、修改相同口径的语义问题；需 WORKFLOW_ACTION_TEMPLATE_MANAGE。
+     *
+     * @param actor 可信操作人账号
+     * @param session 可信会话
+     * @param type 动作类型
+     * @param configJson 配置文本
+     * @return 问题列表；结构错误抛 422
+     */
+    public WorkflowActionTemplateValidationResponseBody validateTemplate(String actor, String session,
+        WorkflowActionType type, String configJson) {
+        support.authorize(actor, session, WorkflowPermissions.ACTION_TEMPLATE_MANAGE);
+        return new WorkflowActionTemplateValidationResponseBody(assembler.problems(configs.problems(type, configJson)));
     }
 
     /** 我的待办分页。 */

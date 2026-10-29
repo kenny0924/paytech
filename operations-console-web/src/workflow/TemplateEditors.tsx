@@ -1,20 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, AutoComplete, Button, Empty, Input, Modal, Select, Spin, Switch, Table, Tag } from 'antd';
 import { actionTypeIcons } from './workflowIcons';
-import { CheckOutlined, CloseOutlined, PlusOutlined, StopOutlined, UndoOutlined } from '@ant-design/icons';
+import {
+  CheckOutlined, CloseOutlined, FieldTimeOutlined, PlusOutlined, StopOutlined, SyncOutlined, ThunderboltOutlined, UndoOutlined, UserOutlined,
+} from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { session } from '../api/session';
 import { pageCapabilities } from '../navigation/pageCapabilities';
 import { creatableTypes } from './catalogModel';
 import { FieldDesigner, FormPreview } from './FieldDesigner';
-import { operatorsByType } from './graphModel';
-import { configDiff, defaultConfig, frozenConfig, instructionLimit, referenceSummary } from './templateModel';
-import { decodeReferences, decodeVersion, workflowPaths } from './workflowApi';
-import { actionTypeLabel, operatorLabel } from './workflowLabels';
-import { tOr } from '../i18n/index';
+import {
+  configDiff, dataQueryLimits, dataQueryOutputs, dataQueryOutputTypes, dataQueryParameters, defaultConfig, effectiveTimeout, frozenConfig, groupDataQueryProblems,
+  instructionLimit, parametersOutdated, referenceSummary, selectQueryTemplate,
+} from './templateModel';
+import { decodeDataQueryTemplate, decodePage, decodeReferences, decodeVersion, workflowPaths } from './workflowApi';
+import { actionTypeLabel } from './workflowLabels';
+import { enumLabel, tOr, translator } from '../i18n/index';
 import { useT } from '../i18n/react';
 import type {
-  ActionConfig, ActionTemplate, ActionType, DataQueryConfig, FileUploadConfig, FormDefinition, ManualConfirmConfig, PageTaskConfig, TemplateReferenceItem,
+  ActionConfig, ActionTemplate, ActionType, DataQueryConfig, DataQueryOutput, DataQueryTemplateOption, FileUploadConfig, Problem, FormDefinition, ManualConfirmConfig, PageTaskConfig, TemplateReferenceItem,
   TemplateReferences,
 } from './workflowTypes';
 import { Field, LoadFailed, workflowRoutes } from './WorkflowParts';
@@ -28,12 +32,14 @@ export function ActionTypeTag({ type }: { type: ActionType }) {
 }
 
 /** 按类型的配置编辑：表单为字段设计，其他类型为说明（原型 08，需求 E1）。 */
-export function ConfigEditor({ type, config, onChange, readOnly, templateName, description, savedKeys }: {
+export function ConfigEditor({ type, config, onChange, readOnly, templateName, description, savedKeys, validationProblems }: {
   type: ActionType; config: ActionConfig; onChange: (config: ActionConfig) => void; readOnly?: boolean;
   /** 表单画布标题与说明（执行人在待办里看到的动作名称与描述）。 */
   templateName?: string; description?: string;
   /** 已保存配置的字段键，键不再随显示名称自动生成。 */
   savedKeys?: ReadonlySet<string>;
+  /** 数据查询保存前校验返回的问题（按 itemKey 标到参数行、输出行或模板选择处）。 */
+  validationProblems?: readonly Problem[];
 }) {
   const t = useT('workflow');
   switch (type) {
@@ -42,7 +48,7 @@ export function ConfigEditor({ type, config, onChange, readOnly, templateName, d
     case 'FILE_UPLOAD': return <FileUploadEditor config={config as FileUploadConfig} onChange={onChange} readOnly={readOnly} />;
     case 'PAGE_TASK': return <PageTaskEditor config={config as PageTaskConfig} onChange={onChange} readOnly={readOnly} />;
     case 'MANUAL_CONFIRM': return <ManualConfirmEditor config={config as ManualConfirmConfig} onChange={onChange} readOnly={readOnly} />;
-    case 'DATA_QUERY': return <DataQueryEditor config={config as DataQueryConfig} onChange={onChange} readOnly={readOnly} />;
+    case 'DATA_QUERY': return <DataQueryEditor config={config as DataQueryConfig} onChange={onChange} readOnly={readOnly} problems={validationProblems} />;
   }
 }
 
@@ -90,35 +96,166 @@ function ManualConfirmEditor({ config, onChange, readOnly }: { config: ManualCon
   </section>;
 }
 
-function DataQueryEditor({ config, onChange, readOnly }: { config: DataQueryConfig; onChange: (config: DataQueryConfig) => void; readOnly?: boolean }) {
+/** 按关键字读取启用中的 data-query 模板（接口 8.5，第一页 50 条）；关键字为空时列出全部。loaded 为已读完的关键字。 */
+export function useDataQueryTemplates(keyword: string, enabled = true) {
+  const [state, setState] = useState<{ loading: boolean; items: DataQueryTemplateOption[]; failure: unknown; loaded: string | null }>(
+    { loading: false, items: [], failure: undefined, loaded: null });
+  useEffect(() => {
+    if (!enabled) return;
+    const controller = new AbortController();
+    const query = new URLSearchParams({ page: '1', size: '50', ...(keyword.trim() ? { keyword: keyword.trim() } : {}) });
+    setState(current => ({ ...current, loading: true, failure: undefined }));
+    const timer = window.setTimeout(() => {
+      session.request(`${workflowPaths.dataQueryTemplates}?${query}`, { signal: controller.signal }, decodeQueryTemplates)
+        .then(page => { if (!controller.signal.aborted) setState({ loading: false, items: page.items, failure: undefined, loaded: keyword }); })
+        .catch(failure => { if (!controller.signal.aborted) setState({ loading: false, items: [], failure, loaded: keyword }); });
+    }, keyword ? 300 : 0);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [keyword, enabled]);
+  return state;
+}
+const decodeQueryTemplates = decodePage(decodeDataQueryTemplate);
+
+/** 已选模板的声明：按编码查询后取编码完全相同的一项；不存在或已停用为 null，读取中或读取失败为 undefined。 */
+function useSelectedQueryTemplate(code: string): DataQueryTemplateOption | null | undefined {
+  const search = useDataQueryTemplates(code, !!code);
+  if (!code) return null;
+  const match = search.items.find(item => item.templateCode === code);
+  if (match) return match;
+  return search.loaded === code && !search.loading && !search.failure ? null : undefined;
+}
+
+/** 校验问题的一行文字：列未声明 / 已屏蔽用本地文案，其余用服务端说明。 */
+function problemLine(problem: Problem): string {
+  const t = translator('workflow');
+  if (problem.code === 'DATA_QUERY_OUTPUT_UNDECLARED') return t('dataQuery.outputUndeclared');
+  if (problem.code === 'DATA_QUERY_OUTPUT_MASKED') return t('dataQuery.outputMasked');
+  return problem.message || problem.code;
+}
+
+/**
+ * 数据查询（原型 17）：选择启用中的 data-query 模板，参数只读取自模板声明（取值在流程节点映射）；
+ * 输出声明 out_<名称> 列写入变量 <动作键>.<名称>；完成标准文案键与说明显示在任务卡「系统检查」块。
+ */
+function DataQueryEditor({ config, onChange, readOnly, problems = [] }: {
+  config: DataQueryConfig; onChange: (config: DataQueryConfig) => void; readOnly?: boolean; problems?: readonly Problem[];
+}) {
   const t = useT('workflow');
+  const [keyword, setKeyword] = useState('');
+  const search = useDataQueryTemplates(keyword, !readOnly);
+  const selected = useSelectedQueryTemplate(config.queryCode ?? '');
+  const outputs = dataQueryOutputs(config);
+  const parameters = dataQueryParameters(config);
+  const groups = useMemo(() => groupDataQueryProblems(problems, config), [problems, config]);
+  const timeout = selected ? effectiveTimeout(selected.timeoutSeconds) : null;
   const set = (patch: Partial<DataQueryConfig>) => onChange({ ...config, ...patch });
-  const parameters = config.parameters ?? [];
-  const rule = config.passRule ?? { column: '', operator: 'GTE' as const, value: '' };
-  return <>
-    <Alert type="warning" showIcon title={t('dataQuery.reserved')}
-      description={t('dataQuery.reservedHint')} />
+  const setOutput = (index: number, patch: Partial<DataQueryOutput>) => set({ outputs: outputs.map((item, current) => current === index ? { ...item, ...patch } : item) });
+  const options = [...search.items, ...(selected && !search.items.some(item => item.templateCode === selected.templateCode) ? [selected] : [])]
+    .map(item => ({ value: item.templateCode, label: <span className="wf-option-line"><span><code>{item.templateCode}</code> {item.templateName}</span>
+      <span className="wf-inline">{item.versionNo !== null && <Tag color="green" className="wf-dq-version">{t('dataQuery.activeVersion', { version: item.versionNo })}</Tag>}
+        <span className="muted">{item.dataSourceName ?? ''}</span></span></span> }));
+  const declared = selected?.parameters ?? parameters.map(name => ({ name, type: '', required: null as boolean | null }));
+  const parameterRows = new Set(declared.map(item => item.name));
+  const descriptionKey = config.descriptionKey?.trim() ?? '';
+  const keyText = descriptionKey.startsWith('workflow.') && t.has(descriptionKey.slice('workflow.'.length)) ? t(descriptionKey.slice('workflow.'.length)) : null;
+  return <div className="wf-dq-editor">
+    {groups.general.length > 0 && <Alert type="error" showIcon title={t('dataQuery.validationFailed', { count: problems.length })}
+      description={<ul className="wf-plain-list">{groups.general.map((problem, index) => <li key={index}>{problemLine(problem)}</li>)}</ul>} />}
     <section className="wf-card">
-      <Field label={t('dataQuery.queryCode')} hint={t('dataQuery.queryCodeHint')}><Input value={config.queryCode} disabled={readOnly} maxLength={64}
-        onChange={event => set({ queryCode: event.target.value.toUpperCase() })} placeholder="CHANNEL_MID_COUNT" /></Field>
-      <Field label={t('dataQuery.parameters')}>
-        {parameters.map((parameter, index) => <div key={index} className="wf-option-row">
-          <Input value={parameter.key} disabled={readOnly} placeholder={t('dataQuery.parameter')} onChange={event => set({ parameters: parameters.map((item, current) => current === index ? { ...item, key: event.target.value } : item) })} />
-          <Select value={parameter.source} disabled={readOnly} style={{ width: 110 }} options={[{ value: 'VARIABLE', label: t('dataQuery.source.VARIABLE') }, { value: 'CONSTANT', label: t('dataQuery.source.CONSTANT') }]}
-            onChange={source => set({ parameters: parameters.map((item, current) => current === index ? { ...item, source } : item) })} />
-          <Input value={parameter.value} disabled={readOnly} placeholder={parameter.source === 'VARIABLE' ? 'start.channelCode' : 'ACTIVE'}
-            onChange={event => set({ parameters: parameters.map((item, current) => current === index ? { ...item, value: event.target.value } : item) })} />
-          {!readOnly && <Button type="text" danger aria-label={t('config.deleteParameter')} icon={<CloseOutlined />} onClick={() => set({ parameters: parameters.filter((_, current) => current !== index) })} />}</div>)}
-        {!readOnly && <Button type="link" onClick={() => set({ parameters: [...parameters, { key: '', source: 'VARIABLE', value: '' }] })} icon={<PlusOutlined />}>{t('config.addParameter')}</Button>}</Field>
-      <Field label={t('dataQuery.passRule')} hint={t('dataQuery.passRuleHint')}><div className="wf-inline">{t('dataQuery.firstRow')}
-        <Input value={rule.column} disabled={readOnly} style={{ width: 180 }} placeholder={t('dataQuery.column')} onChange={event => set({ passRule: { ...rule, column: event.target.value } })} />
-        <Select value={rule.operator} disabled={readOnly} style={{ width: 110 }} options={operatorsByType.NUMBER.map(value => ({ value, label: operatorLabel(value) }))}
-          onChange={operator => set({ passRule: { ...rule, operator } })} />
-        <Input value={rule.value} disabled={readOnly} style={{ width: 120 }} onChange={event => set({ passRule: { ...rule, value: event.target.value } })} /></div></Field>
-      <Field label={t('dataQuery.evidence')} hint={t('dataQuery.evidenceHint')}><Select mode="tags" value={config.evidenceColumns ?? []} disabled={readOnly} style={{ width: '100%' }}
-        onChange={evidenceColumns => set({ evidenceColumns })} /></Field>
+      <div className="wf-card-title">{t('dataQuery.template')}</div>
+      <div className="wf-field-hint">{t('dataQuery.templateHint')}</div>
+      <Select showSearch={{ filterOption: false, onSearch: setKeyword }} value={config.queryCode || undefined} disabled={readOnly} style={{ width: '100%' }}
+        status={groups.template.length ? 'error' : undefined}
+        placeholder={t('dataQuery.templatePlaceholder')} loading={search.loading} options={options}
+        notFoundContent={search.loading ? <Spin size="small" /> : <span className="muted">{t('dataQuery.templateEmpty')}</span>}
+        onChange={(code: string) => { const template = [...search.items, ...(selected ? [selected] : [])].find(item => item.templateCode === code);
+          if (template) onChange(selectQueryTemplate(config, template)); }} />
+      {selected && <div className="wf-dq-meta muted">{t('dataQuery.dataSource', { name: selected.dataSourceName ?? '—' })}
+        {timeout && <span>{timeout.capped ? t('dataQuery.timeoutCapped', { seconds: timeout.seconds, template: selected.timeoutSeconds ?? 0 })
+          : t('dataQuery.timeout', { seconds: timeout.seconds })}</span>}
+        {selected.description ? <span>{selected.description}</span> : null}</div>}
+      {groups.template.map((problem, index) => <div key={index} className="wf-danger-text">{problem.message}</div>)}
+      {config.queryCode && selected === null && <div className="wf-danger-text">{t('dataQuery.templateUnavailable', { code: config.queryCode })}</div>}
     </section>
-  </>;
+    <section className="wf-card">
+      <div className="wf-card-title">{t('dataQuery.parameters')}</div>
+      <div className="wf-field-hint">{t('dataQuery.parametersHint')}</div>
+      {!config.queryCode ? <div className="muted">{t('dataQuery.pickTemplateFirst')}</div> : !declared.length ? <div className="muted">{t('dataQuery.noParameters')}</div>
+        : <div className="wf-dq-scroll"><table className="wf-table wf-dq-table"><thead><tr><th>{t('dataQuery.parameter')}</th><th>{t('dataQuery.parameterRequired')}</th><th>{t('dataQuery.parameterValue')}</th></tr></thead>
+          <tbody>{declared.map(item => { const rowProblems = groups.parameters.get(item.name) ?? [];
+            return <tr key={item.name} className={rowProblems.length ? 'is-error' : undefined}><td><strong>{item.name}</strong>{item.type && <span className="muted"> · {item.type}</span>}</td>
+              <td>{item.required === null ? '—' : item.required ? <Tag color="red">{t('dataQuery.required')}</Tag> : <span className="muted">{t('dataQuery.optional')}</span>}</td>
+              <td className={rowProblems.length ? 'wf-danger-text' : 'muted'}>{rowProblems.length ? rowProblems.map(problemLine).join(t('list.semicolon')) : t('dataQuery.mappedOnNode')}</td></tr>; })}</tbody></table></div>}
+      {[...groups.parameters].filter(([key]) => !parameterRows.has(key)).flatMap(([, list]) => list)
+        .map((problem, index) => <div key={index} className="wf-danger-text">{problemLine(problem)}</div>)}
+      {selected && parametersOutdated(config, selected) && <Alert type="warning" showIcon title={t('dataQuery.parametersOutdated')}
+        action={!readOnly && <Button size="small" onClick={() => onChange(selectQueryTemplate(config, selected))}>{t('dataQuery.syncParameters')}</Button>} />}
+    </section>
+    <section className="wf-card">
+      <div className="wf-card-title">{t('dataQuery.outputs')}</div>
+      <div className="wf-field-hint">{t('dataQuery.outputsHint', { name: t('dataQuery.outputNameArg'), actionKey: t('config.actionKey') })}</div>
+      {outputs.length > 0 && <div className="wf-dq-scroll"><table className="wf-table wf-dq-table wf-dq-outputs-table"><colgroup><col className="is-name" /><col className="is-column" /><col className="is-type" />
+        <col /><col className="is-variable" /><col className="is-remove" /></colgroup><thead><tr><th>{t('dataQuery.outputName')}</th><th>{t('dataQuery.outputColumn')}</th>
+        <th>{t('dataQuery.outputType')}</th><th>{t('dataQuery.outputEnumValues')}</th><th>{t('dataQuery.outputVariable')}</th><th /></tr></thead>
+        <tbody>{outputs.map((output, index) => {
+          const rowProblems = groups.outputs.get(output.name) ?? [];
+          const problem = rowProblems.length > 0;
+          return <tr key={index} className={problem ? 'is-error' : undefined}>
+            <td><Input size="small" value={output.name} disabled={readOnly} maxLength={64} status={problem ? 'error' : undefined}
+              onChange={event => setOutput(index, { name: event.target.value.trim() })} /></td>
+            <td><code className={problem ? 'wf-danger-text' : 'muted'}>out_{output.name || '…'}</code>
+              {rowProblems.map((item, current) => <div key={current} className="wf-danger-text wf-small">{problemLine(item)}</div>)}</td>
+            <td><Select size="small" value={output.type} disabled={readOnly} style={{ width: 110 }}
+              options={dataQueryOutputTypes.map(value => ({ value, label: enumLabel(t, 'dataQuery.outputTypeName', value) }))}
+              onChange={type => setOutput(index, type === 'ENUM' ? { type } : { type, enumValues: undefined })} /></td>
+            <td>{output.type === 'ENUM' ? <Select size="small" mode="tags" value={output.enumValues ?? []} disabled={readOnly} style={{ width: '100%', minWidth: 160 }}
+              placeholder={t('dataQuery.enumValuesPlaceholder')} tokenSeparators={[',', ' ']} open={false}
+              onChange={(values: string[]) => setOutput(index, { enumValues: values.map(value => value.trim()).filter(Boolean) })} />
+              : <span className="muted">—</span>}</td>
+            <td><code className="wf-info-text">{`${t('config.actionKey')}.${output.name || '…'}`}</code></td>
+            <td className="wf-right">{!readOnly && <Button type="text" size="small" aria-label={t('dataQuery.removeOutput')} icon={<CloseOutlined />}
+              onClick={() => set({ outputs: outputs.filter((_, current) => current !== index) })} />}</td>
+          </tr>;
+        })}</tbody></table></div>}
+      {outputs.some(output => output.type === 'TEXT') && <div className="wf-field-hint">{t('dataQuery.textContainsHint')}</div>}
+      {!readOnly && outputs.length < dataQueryLimits.outputs && <Button type="link" icon={<PlusOutlined />}
+        onClick={() => set({ outputs: [...outputs, { name: '', type: 'TEXT' }] })}>{t('dataQuery.addOutput')}</Button>}
+    </section>
+    <section className="wf-card">
+      <div className="wf-card-title">{t('dataQuery.criteria')}</div>
+      <div className="wf-field-hint">{t('dataQuery.criteriaHint')}</div>
+      <div className="wf-three-columns">
+        <Field label={t('dataQuery.descriptionKey')}><Input value={config.descriptionKey ?? ''} disabled={readOnly} maxLength={128}
+          placeholder={config.queryCode ? `workflow.dataQuery.criteria.${config.queryCode}` : 'workflow.dataQuery.criteria.…'}
+          onChange={event => set({ descriptionKey: event.target.value.trim() })} /></Field>
+        <Field label={t('dataQuery.currentLanguage')}><Input value={keyText ?? (descriptionKey ? t('dataQuery.keyUntranslated') : '')} disabled /></Field>
+        <Field label={t('dataQuery.instruction')}><Input value={config.instruction ?? ''} disabled={readOnly} maxLength={instructionLimit}
+          onChange={event => set({ instruction: event.target.value })} /></Field>
+      </div>
+    </section>
+  </div>;
+}
+
+/** 数据查询编辑页右栏（原型 17）：查询返回约定与执行方式。 */
+export function DataQueryContract() {
+  const t = useT('workflow');
+  return <aside className="wf-dq-contract">
+    <div className="wf-card-title">{t('dataQuery.contract.title')}</div>
+    <p className="muted">{t('dataQuery.contract.firstRow')}</p>
+    <dl className="wf-dq-columns">
+      <dt><code>satisfied</code></dt><dd>{t('dataQuery.contract.satisfied')}</dd>
+      <dt><code>{`out_${t('dataQuery.outputNameArg')}`}</code></dt><dd>{t('dataQuery.contract.out')}</dd>
+      <dt><code>missing</code></dt><dd>{t('dataQuery.contract.missing')}</dd>
+    </dl>
+    <div className="wf-card-title">{t('dataQuery.contract.execution')}</div>
+    <ul className="wf-dq-steps">
+      <li><ThunderboltOutlined /> {t('dataQuery.contract.onActivate')}</li>
+      <li><FieldTimeOutlined /> {t('dataQuery.contract.recheck')}</li>
+      <li><SyncOutlined /> {t('dataQuery.contract.checkNow')}</li>
+      <li><UserOutlined /> {t('dataQuery.contract.follower')}</li>
+    </ul>
+    <div className="wf-hint-box">{t('dataQuery.contract.oneWay')}</div>
+  </aside>;
 }
 
 /** 执行人看到的样子（各类型，只读）：与我的待办展开的动作行同一套组件与样式，按钮不可用。 */
@@ -142,7 +279,7 @@ export function ExecutorPreview({ template }: { template: Pick<ActionTemplate, '
         <Button disabled>{t('preview.openPage')}</Button></div>}
       {(template.actionType === 'PAGE_TASK' || template.actionType === 'MANUAL_CONFIRM') && <div className="wf-field"><div className="wf-field-label">{t('preview.noteOptional')}</div>
         <Input.TextArea rows={2} disabled /></div>}
-      {template.actionType === 'DATA_QUERY' && <Alert type="info" showIcon title={t('preview.dataQuerySoon')} />}
+      {template.actionType === 'DATA_QUERY' && <p className="muted">{t('dataQuery.check.autoComplete')}</p>}
       {template.actionType !== 'DATA_QUERY' && <div className="wf-action-foot"><Button type="primary" disabled>{t('preview.complete')}</Button><span className="muted">{t('preview.notSubmittable')}</span></div>}
     </div>
   </div>;
@@ -242,7 +379,7 @@ export function DeactivateModal({ template, references, saving, error, onCancel,
   </Modal>;
 }
 
-/** 新建动作 · 选择类型（原型 07）：四类可选，数据查询标「即将支持」不可选；「下一步」把类型交给调用方（进入编辑页或抽屉）。 */
+/** 新建动作 · 选择类型（原型 07）：五类可选（不在 creatableTypes 中的类型标「即将支持」不可选）；「下一步」把类型交给调用方（进入编辑页或抽屉）。 */
 export function ActionTypePicker({ onCancel, onNext }: { onCancel: () => void; onNext: (type: ActionType) => void }) {
   const t = useT('workflow');
   const [type, setType] = useState<ActionType>('FORM');

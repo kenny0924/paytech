@@ -96,7 +96,7 @@ public class WorkflowConverter {
             body.getExpectedVersion());
     }
 
-    /** 发起实例：人员修改转为节点 / 动作 key 到账号 ID。 */
+    /** 发起实例：definitionCode 与 definitionId + versionNo 二选一；人员修改转为节点 / 动作 key 到账号 ID。 */
     StartInstanceRequest start(String actor, String session, StartWorkflowInstanceRequestBody body) {
         Map<String, List<Long>> approvers = new LinkedHashMap<>();
         if (body.getApprovers() != null) {
@@ -108,8 +108,15 @@ public class WorkflowConverter {
             body.getExecutors().forEach(item -> executors.put(item.getActionKey(), id(item.getExecutorId(), "executorId")));
         }
         object(body.getStartValues(), "startValues");
-        return new StartInstanceRequest(actor, session, id(body.getDefinitionId(), "definitionId"), body.getVersionNo(),
-            body.getTitle().strip(), blankToNull(body.getBusinessKey()), body.getStartValues(), approvers, executors);
+        boolean byCode = body.getDefinitionCode() != null;
+        boolean byCodeInvalid = byCode && (body.getDefinitionId() != null || body.getVersionNo() != null);
+        boolean byIdInvalid = !byCode && (body.getDefinitionId() == null || body.getVersionNo() == null);
+        if (byCodeInvalid || byIdInvalid) {
+            throw new InvalidParameterException("definitionCode 与 definitionId + versionNo 必须二选一");
+        }
+        return new StartInstanceRequest(actor, session, body.getDefinitionCode(),
+            byCode ? null : id(body.getDefinitionId(), "definitionId"), body.getVersionNo(), body.getTitle().strip(),
+            blankToNull(body.getBusinessKey()), body.getStartValues(), approvers, executors);
     }
 
     /** 转交。 */
@@ -128,7 +135,7 @@ public class WorkflowConverter {
     /** 写入口最小结果。 */
     WorkflowMutationResponseBody mutation(WorkflowMutation result) {
         return new WorkflowMutationResponseBody(result.getObjectType(), Long.toString(result.getObjectId()),
-            result.getStatus(), result.getVersion());
+            result.getStatus(), result.getVersion(), result.getCreated());
     }
 
     /** 保存草稿结果。 */

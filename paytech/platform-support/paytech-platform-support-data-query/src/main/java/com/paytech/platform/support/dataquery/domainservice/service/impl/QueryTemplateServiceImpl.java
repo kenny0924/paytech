@@ -21,15 +21,20 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.dataquery.core.dal.dataobject.DataSource;
 import com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplate;
 import com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplateVersion;
+import com.paytech.platform.support.dataquery.core.enums.ColumnMaskType;
 import com.paytech.platform.support.dataquery.core.enums.DataSourceStatus;
 import com.paytech.platform.support.dataquery.core.enums.QueryTemplateStatus;
 import com.paytech.platform.support.dataquery.domain.ChangeQueryTemplateStatusCommand;
 import com.paytech.platform.support.dataquery.domain.CreateQueryTemplateCommand;
 import com.paytech.platform.support.dataquery.domain.ExecutableQueryTemplate;
+import com.paytech.platform.support.dataquery.domain.QueryConstraints;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateChange;
+import com.paytech.platform.support.dataquery.domain.QueryTemplateColumn;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateDetail;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateDraft;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateJson;
+import com.paytech.platform.support.dataquery.domain.QueryTemplateParameter;
+import com.paytech.platform.support.dataquery.domain.QueryTemplateSignature;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateSummary;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateVersionDetail;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateVersionSummary;
@@ -120,6 +125,28 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
         DataSource source = dataSources.findById(detail.getCurrentVersion().getDataSourceId());
         return new ExecutableQueryTemplate(detail, source == null ? null
             : DataQueryDetailConverter.dataSource(source, 0, 0));
+    }
+
+    /** 模板不存在返回 null；当前版本缺失视为数据不一致。 */
+    @Override
+    public QueryTemplateSignature findTemplateSignature(String templateCode) {
+        QueryTemplate row = templates.findByCode(templateCode);
+        if (row == null) {
+            return null;
+        }
+        QueryTemplateVersion version = versions.find(row.getTemplateId(), row.getCurrentVersionNo());
+        if (version == null) {
+            throw new ErrorException("模板当前版本缺失: " + row.getTemplateCode() + " v" + row.getCurrentVersionNo());
+        }
+        DataSource source = dataSources.findById(version.getDataSourceId());
+        List<QueryTemplateParameter> parameters = new ParameterDeclarationReader()
+            .read(QueryTemplateJson.readParameters(version.getParametersJson())).stream()
+            .map(declaration -> new QueryTemplateParameter(declaration.getName(), declaration.getType(),
+                declaration.isRequired() && declaration.getDefaultValue() == null)).toList();
+        List<QueryTemplateColumn> columns = QueryTemplateJson.readColumns(version.getColumnsJson()).stream()
+            .map(rule -> new QueryTemplateColumn(rule.getName(), rule.getMask() != ColumnMaskType.NONE)).toList();
+        return new QueryTemplateSignature(row.getTemplateCode(), row.getTemplateName(), row.getStatus(),
+            source != null && source.getStatus() == DataSourceStatus.ACTIVE, parameters, columns);
     }
 
     /** 共享锁确认数据源 ACTIVE 后插入模板头与版本 1。 */
@@ -249,11 +276,14 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
     QueryTemplateSummary summary(QueryTemplate row, QueryTemplateVersion version, DataSource source) {
         QueryTemplateDetail header = DataQueryDetailConverter.template(row, null);
         if (version == null) {
-            return new QueryTemplateSummary(header, code(source), name(source), row.getDataSourceId(), null, List.of());
+            return new QueryTemplateSummary(header, code(source), name(source), row.getDataSourceId(), null, List.of(),
+                null);
         }
+        QueryConstraints constraints = QueryTemplateJson.readConstraints(version.getConstraintsJson());
         return new QueryTemplateSummary(header, code(source), name(source), row.getDataSourceId(),
-            QueryTemplateJson.readConstraints(version.getConstraintsJson()).getPagingMode(),
-            new ParameterDeclarationReader().read(QueryTemplateJson.readParameters(version.getParametersJson())));
+            constraints.getPagingMode(),
+            new ParameterDeclarationReader().read(QueryTemplateJson.readParameters(version.getParametersJson())),
+            constraints.getTimeoutSeconds());
     }
 
     /** 按 ID 批量读取数据源。 */

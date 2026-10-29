@@ -320,6 +320,12 @@ workflow:
   notification-template-code: WORKFLOW_NOTIFICATION
   event-source-service: platform-support
   event-instance-id: main
+  data-query: # DATA_QUERY 系统检查（REQ-05）。
+    timeout: 5s # 单次查询超时上限（与正式默认相同）；超时用例由被查模板的 timeoutSeconds 收紧到 1 秒。
+    check-lock-lease: 30s # 检查锁租约。
+    recheck-batch-size: 100 # 每分片每轮最多检查数。
+    recheck-min-age: 0s # Mock 取 0：测试时钟固定，截止时间即当前时钟；用例把最近检查时间移到过去来构造到期。
+    recheck-round-budget: 240s # 每轮耗时上限。
 
 # 通知模块仅在本测试配置启用；Provider 只在 src/test 中按场景配置。
 notification:

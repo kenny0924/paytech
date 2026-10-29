@@ -1,0 +1,30 @@
+{
+  "target": "test",
+  "checks": [
+    {
+      "name": "XXL 重查（stuckAtCollection）：最近检查时间前进，仍 UNSATISFIED",
+      "pass": true,
+      "evidence": {
+        "before": "2026-10-29T09:47:06.542070Z",
+        "after": "2026-10-29T09:55:00.577801Z"
+      }
+    },
+    {
+      "name": "XXL 重查（stuckAtActive）：最近检查时间前进，仍 UNSATISFIED",
+      "pass": true,
+      "evidence": {
+        "before": "2026-10-29T09:47:06.022728Z",
+        "after": "2026-10-29T09:55:00.520640Z"
+      }
+    },
+    {
+      "name": "XXL 重查（notDrafted）：最近检查时间前进，仍 UNSATISFIED",
+      "pass": true,
+      "evidence": {
+        "before": "2026-10-29T09:47:06.022350Z",
+        "after": "2026-10-29T09:55:00.649862Z"
+      }
+    }
+  ],
+  "verdict": true
+}

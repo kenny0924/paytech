@@ -9205,3 +9205,86 @@ INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,cap
   (900000000000140706, 900000000000140401, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
 
 COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- Workflow button start and data validation (2026-10-29, requirements/20261028/platform-support-workflow按钮发起与数据验证,
+-- technique.md 8.8). Self-contained block: on an environment already initialized by platform-support-initial-data.sql,
+-- apply ONLY this block (requirements/.../db/registration-142.sql is the same text).
+-- Dormant like blocks 132/140: routes DISABLED; activate with requirements/.../db/registration-142-activate.sql after
+-- Platform and operations-console-bff are deployed. Both routes forward to operations-console-bff, which forwards to
+-- Platform on the same path; operator identity comes from the Gateway actor headers.
+--   142401 POST /workflow/v1/action-runs/{actionRunId}/data-query-check ("check now"): WORKFLOW_TASK_HANDLE
+--          (900000000000127105, block 127); Platform additionally requires instance participant or WORKFLOW_INSTANCE_READ.
+--          Shape copies 127420 (operations-workflow-action-submit) except body limit 1024 (the page sends {}).
+--   142402 GET /workflow-admin/v1/data-query-templates (DATA_QUERY action template picker): WORKFLOW_ACTION_TEMPLATE_MANAGE
+--          (900000000000127103); shape copies 127416 with query whitelist keyword, page, size.
+--   142403 POST /workflow-admin/v1/action-templates/validation (dry-run action template config check returning the
+--          problem list; nothing saved): WORKFLOW_ACTION_TEMPLATE_MANAGE; shape copies 127403 (template create) except
+--          principal rate 30/min (the page validates on edit).
+-- Starting by definitionCode reuses route 127415 unchanged. No new permission, role grant, menu or button.
+-- Rows: gateway_route 3, route_header 14, query_param 3, guard_rule 18 (38). ID block 142: 1424xx route, 1425xx route_header,
+-- 1420xx query_param, 1426xx guard_rule.
+-- Before applying, re-check on the live mor_platform that no row in 900000000000142001-900000000000142999 exists, that
+-- permissions 900000000000127103 / 900000000000127105 exist, and that the three route codes and (method, path) pairs are
+-- unused. Repository check on 2026-10-29: block 142 and the route codes appear in no other requirement, paytech or
+-- local-environment file. Compile the Gateway Snapshot offline before applying (DISABLED routes are compiled too).
+-- Rollback (children first): requirements/.../db/registration-142-rollback.sql
+--   DELETE FROM t_gateway_guard_rule WHERE guard_rule_id BETWEEN 900000000000142601 AND 900000000000142618;
+--   DELETE FROM t_gateway_route_query_param WHERE route_query_param_id BETWEEN 900000000000142001 AND 900000000000142003;
+--   DELETE FROM t_gateway_route_header WHERE route_header_id BETWEEN 900000000000142501 AND 900000000000142514;
+--   DELETE FROM t_gateway_route WHERE route_id IN (900000000000142401, 900000000000142402, 900000000000142403);
+--   (if the routes were already ACTIVE, republish the Gateway Snapshot after the deletion.)
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @workflow_data_query_time = UTC_TIMESTAMP(6);
+SET @workflow_data_query_actor_id = 1;
+SET @workflow_data_query_target_id = 900000000000000001;
+
+INSERT INTO t_gateway_route (route_id, route_code, channel, http_method, external_path_template, downstream_path_template, target_id, security_profile_code, authorization_mode, permission_id, required_scope_code, request_cookie_mode, response_cookie_mode, idempotency_mode, body_limit_bytes, body_receive_timeout_millis, response_timeout_millis, status, version, created_by, updated_by, create_time, update_time) VALUES
+  (900000000000142401, 'operations-workflow-data-query-check', 'OPERATIONS', 'POST', '/api/operations/workflow/v1/action-runs/{actionRunId}/data-query-check', '/workflow/v1/action-runs/{actionRunId}/data-query-check', @workflow_data_query_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127105, NULL, 'DROP', 'NONE', 'NONE', 1024, 5000, 10000, 'DISABLED', 1, @workflow_data_query_actor_id, @workflow_data_query_actor_id, @workflow_data_query_time, @workflow_data_query_time),
+  (900000000000142402, 'operations-workflow-data-query-template-list', 'OPERATIONS', 'GET', '/api/operations/workflow-admin/v1/data-query-templates', '/workflow-admin/v1/data-query-templates', @workflow_data_query_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127103, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @workflow_data_query_actor_id, @workflow_data_query_actor_id, @workflow_data_query_time, @workflow_data_query_time),
+  (900000000000142403, 'operations-workflow-template-validation', 'OPERATIONS', 'POST', '/api/operations/workflow-admin/v1/action-templates/validation', '/workflow-admin/v1/action-templates/validation', @workflow_data_query_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000127103, NULL, 'DROP', 'NONE', 'NONE', 65536, 5000, 10000, 'DISABLED', 1, @workflow_data_query_actor_id, @workflow_data_query_actor_id, @workflow_data_query_time, @workflow_data_query_time);
+
+INSERT INTO t_gateway_route_header (route_header_id,route_id,header_name,header_use) VALUES
+  (900000000000142501, 900000000000142401, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000142502, 900000000000142401, 'origin', 'FORWARD_REQUEST'),
+  (900000000000142503, 900000000000142401, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000142504, 900000000000142401, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000142505, 900000000000142401, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000142506, 900000000000142401, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000142507, 900000000000142402, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000142508, 900000000000142402, 'origin', 'FORWARD_REQUEST'),
+  (900000000000142509, 900000000000142403, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000142510, 900000000000142403, 'origin', 'FORWARD_REQUEST'),
+  (900000000000142511, 900000000000142403, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000142512, 900000000000142403, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000142513, 900000000000142403, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000142514, 900000000000142403, 'idempotency-key', 'FORWARD_REQUEST');
+
+INSERT INTO t_gateway_route_query_param (route_query_param_id,route_id,parameter_name) VALUES
+  (900000000000142001, 900000000000142402, 'keyword'),
+  (900000000000142002, 900000000000142402, 'page'),
+  (900000000000142003, 900000000000142402, 'size');
+
+INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,capacity,refill_tokens,refill_period_millis,concurrency_limit) VALUES
+  (900000000000142601, 900000000000142401, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000142602, 900000000000142401, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000142603, 900000000000142401, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000142604, 900000000000142401, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000142605, 900000000000142401, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000142606, 900000000000142401, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000142607, 900000000000142402, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000142608, 900000000000142402, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000142609, 900000000000142402, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000142610, 900000000000142402, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000142611, 900000000000142402, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000142612, 900000000000142402, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000142613, 900000000000142403, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000142614, 900000000000142403, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000142615, 900000000000142403, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000142616, 900000000000142403, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000142617, 900000000000142403, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000142618, 900000000000142403, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2);
+
+COMMIT;

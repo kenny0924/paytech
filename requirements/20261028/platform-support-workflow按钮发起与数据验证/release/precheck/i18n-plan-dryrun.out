@@ -1,0 +1,19 @@
+[通过] operations-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] operations-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[失败] operations-console 线上 10309 个 ACTIVE key 都在仓库中（否则 KEY_IMPORT 会废弃它们；确认废弃用 --accept-deprecations） | ["workflow.actions.dataQueryUnavailable", "workflow.dataQuery.column", "workflow.dataQuery.evidence", "workflow.dataQuery.evidenceHint", "workflow.dataQuery.firstRow", "workflow.dataQuery.passRule", "workflow.dataQuery.passRuleHint", "workflow.dataQuery.queryCodeHint", "workflow.dataQuery.reserved", "workflow.dataQuery.reservedHint"]
+[通过] operations-console 新增 123 < 3000
+[通过] operations-console 导入集合 127+ 个 key 都有仓库 zh-CN（缺 0）
+[通过] operations-console added 只在 ['workflow']（{'workflow': 123}）
+[通过] operations-console sourceChanged 只在 ['workflow']（{'workflow': 4}）
+[通过] operations-console deprecated 只在 ['workflow']（{'workflow': 13}）
+[通过] operations-console restored 只在 ['workflow']（{}）
+[通过] operations-console zhImport 只在 ['workflow']（{'workflow': 127}）
+[通过] operations-console 仓库 zh-CN 与线上不同但不会导入的 key 为 0（0）
+[通过] operations-console 不新建命名空间（[]）
+{"byNamespace": {"added": {"workflow": 123}, "sourceChanged": {"workflow": 4}, "deprecated": {"workflow": 13}, "restored": {}, "zhImport": {"workflow": 127}}, "zhChangedNotImported": []}
+{"currentRelease": 20, "liveNamespaces": 26, "repoNamespaces": 26, "newNamespaces": [], "repoKeys": 10419, "liveActiveKeys": 10309, "added": 123, "restored": 0, "sourceChanged": 4, "missingInRepo": 13, "zhMissingForImport": 0, "keepLiveZh": 10305, "refdataZhReplaced": 0, "liveOutdatedZh": 0, "rebaseExpected": 0, "outdatedUntouched": 0}
+导入文件与计划：/Users/kenny/Desktop/Workspace/Code-MoR-wfdq/requirements/20261028/platform-support-workflow按钮发起与数据验证/release/i18n-bundles
+计划完成（只读，未登录、未写入）：有问题，不能执行
+
+== 参考数据语言包计划：通过 11，失败 1，未能验证 0
+   失败：operations-console 线上 10309 个 ACTIVE key 都在仓库中（否则 KEY_IMPORT 会废弃它们；确认废弃用 --accept-deprecations）

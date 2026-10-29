@@ -1,5 +1,5 @@
 import type {
-  ActionTemplate, ConditionClause, DefinitionDetail, EdgeCondition, FieldType, FormDefinition, GraphEdge, GraphNode, NodeType, Problem, WorkflowGraph,
+  ActionTemplate, ConditionClause, DataQueryConfig, DefinitionDetail, EdgeCondition, FieldType, FormDefinition, GraphEdge, GraphNode, NodeType, Problem, WorkflowGraph,
 } from './workflowTypes.ts';
 import { enumLabel, translator } from '../i18n/index.ts';
 import { operatorLabel } from './workflowLabels.ts';
@@ -252,6 +252,11 @@ export function actionOutputs(actionKey: string, template: Pick<ActionTemplate, 
       name: `${actionKey}.${field.key}`, label: field.label, type: field.type, options: field.rules?.options, source }));
     case 'FILE_UPLOAD': return [{ name: `${actionKey}.files`, label: t('graph.output.files'), type: 'FILE', source }];
     case 'PAGE_TASK': case 'MANUAL_CONFIRM': return [{ name: `${actionKey}.note`, label: t('graph.output.note'), type: 'TEXT', source }];
+    // 数据查询：每个声明的输出写入 <actionKey>.<name>（technique 8.4），枚举可选值即条件取值。
+    case 'DATA_QUERY': return (Array.isArray((template.config as DataQueryConfig | null)?.outputs) ? (template.config as DataQueryConfig).outputs! : [])
+      .filter(output => typeof output?.name === 'string' && typeof output.type === 'string').map(output => ({
+        name: `${actionKey}.${output.name}`, label: output.name, type: output.type,
+        ...(output.type === 'ENUM' ? { options: (output.enumValues ?? []).map(value => ({ value, label: value })) } : {}), source }));
     default: return [];
   }
 }
@@ -449,7 +454,6 @@ function checkTask(node: GraphNode, templates: Map<string, ActionTemplate>, add:
   for (const action of actions) {
     const template = templates.get(action.templateId);
     if (!action.templateId) add('TEMPLATE_NOT_FOUND', t('graph.problem.TEMPLATE_NOT_FOUND'), node.key, null, action.key);
-    else if (template?.actionType === 'DATA_QUERY') add('TEMPLATE_RESERVED_TYPE', t('graph.problem.TEMPLATE_RESERVED_TYPE'), node.key, null, action.key);
     else if (template && template.status !== 'ACTIVE') add('TEMPLATE_INACTIVE', t('graph.problem.TEMPLATE_INACTIVE', { name: template.templateName }), node.key, null, action.key);
     if (!action.executorId) add('EXECUTOR_MISSING', t('graph.problem.EXECUTOR_MISSING'), node.key, null, action.key);
   }
@@ -531,7 +535,7 @@ function exploreBranch(graph: WorkflowGraph, entry: string): { joins: Set<string
 function checkVariables(graph: WorkflowGraph, startForm: FormDefinition, templates: Map<string, ActionTemplate>, add: AddProblem) {
   const unresolved = new Set(graph.nodes.flatMap(node => node.actions ?? []).filter(action => {
     const template = templates.get(action.templateId);
-    return !template || (template.actionType === 'FORM' && !template.config);
+    return !template || ((template.actionType === 'FORM' || template.actionType === 'DATA_QUERY') && !template.config);
   }).map(action => action.key));
   const skip = (name: string) => name.includes('.') && unresolved.has(name.slice(0, name.indexOf('.')));
   const message = (name: string, nodeKey: string) =>

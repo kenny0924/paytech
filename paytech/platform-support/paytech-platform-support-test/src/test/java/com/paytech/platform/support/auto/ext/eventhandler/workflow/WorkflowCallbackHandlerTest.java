@@ -88,7 +88,7 @@ class WorkflowCallbackHandlerTest extends WorkflowApiTestBase {
             () -> assertEquals("review", passed.path("payload").path("nodeKey").asString()),
             () -> assertEquals("PASSED", passed.path("payload").path("toStatus").asString()),
             () -> assertEquals(approver.actor(), passed.path("payload").path("actorId").asString()),
-            () -> assertEquals("BK-" + definitionId, passed.path("payload").path("businessKey").asString()),
+            () -> assertTrue(passed.path("payload").path("businessKey").asString().startsWith("BK-" + definitionId + "-")),
             () -> assertEquals("workflow-callback:" + passed.path("payload").path("callbackId").asString(),
                 passed.path("eventId").asString()),
             () -> assertEquals("COMPLETED", payloads.get("ONBOARDING_DONE").path("payload").path("trigger").asString()),

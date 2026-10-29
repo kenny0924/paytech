@@ -1,0 +1,9 @@
+CLIENT:237573040244891649 | N3 drafted sat=1 missing=NULL mode=MOR agreement=238411684283224064 → N4 active sat=0 missing=TERM_VERSION_NOT_ACTIVE
+CLIENT:237573267559391233 | N3 drafted sat=1 missing=NULL mode=MOR agreement=238411681049415680 → N4 active sat=1 missing=NULL → N8 collection sat=0 missing=CAPABILITY_NOT_ENABLED pending=GOOGLE_PAY,STC_PAY
+CLIENT:237573382420406273 | N3 drafted sat=1 missing=NULL mode=MOR agreement=238411678889349120 → N4 active sat=0 missing=TERM_VERSION_NOT_ACTIVE
+CLIENT:237573476041465857 | N3 drafted sat=1 missing=NULL mode=MOR agreement=238411008014618624 → N4 active sat=1 missing=NULL → N8 collection sat=1 missing=NULL pending=NULL
+CLIENT:237573699337822209 | N3 drafted sat=0 missing=AGREEMENT_NOT_DRAFTED mode=NULL agreement=NULL
+CLIENT:237574561367957505 | N3 drafted sat=0 missing=TERM_VERSION_NOT_APPROVED mode=MOR agreement=238331041348128768
+CLIENT:237574764993028097 | N3 drafted sat=0 missing=TERM_VERSION_NOT_APPROVED mode=MOR agreement=238331040203083776
+CLIENT:237575207592763393 | N3 drafted sat=1 missing=NULL mode=MOR agreement=238331035912310784 → N4 active sat=1 missing=NULL → N8 collection sat=1 missing=NULL pending=NULL
+CLIENT:237610139979456513 | N3 drafted sat=0 missing=TERM_VERSION_NOT_APPROVED mode=MOR agreement=238132079668301824

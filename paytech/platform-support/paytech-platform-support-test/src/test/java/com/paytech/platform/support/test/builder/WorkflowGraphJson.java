@@ -65,12 +65,27 @@ public final class WorkflowGraphJson {
      */
     public WorkflowGraphJson exclusive(String key, String edgeKey, String variable, String value,
         String defaultEdgeKey) {
+        return exclusive(key, edgeKey, variable, "EQ", value, defaultEdgeKey);
+    }
+
+    /**
+     * 追加排他网关：第一条连线满足 variable operator value，否则走默认连线。
+     *
+     * @param key 节点 key
+     * @param edgeKey 条件连线
+     * @param variable 变量名
+     * @param operator 比较符，如 EQ、CONTAINS
+     * @param value 比较值
+     * @param defaultEdgeKey 默认连线
+     */
+    public WorkflowGraphJson exclusive(String key, String edgeKey, String variable, String operator, String value,
+        String defaultEdgeKey) {
         node(key, "EXCLUSIVE", "条件判断");
         ObjectNode condition = current.putArray("conditions").addObject();
         condition.put("edgeKey", edgeKey);
         ObjectNode clause = condition.putArray("all").addObject();
         clause.put("variable", variable);
-        clause.put("operator", "EQ");
+        clause.put("operator", operator);
         clause.put("value", value);
         current.put("defaultEdgeKey", defaultEdgeKey);
         return this;
@@ -94,6 +109,15 @@ public final class WorkflowGraphJson {
         action.put("templateId", Long.toString(templateId));
         action.put("required", required);
         action.put("executorId", Long.toString(executorId));
+        return this;
+    }
+
+    /** 当前 TASK 最近追加的动作增加一个输入映射（VARIABLE 或 CONSTANT）。 */
+    public WorkflowGraphJson input(String key, String source, String value) {
+        ArrayNode actions = (ArrayNode) current.get("actions");
+        ObjectNode action = (ObjectNode) actions.get(actions.size() - 1);
+        ObjectNode inputs = action.has("inputs") ? (ObjectNode) action.get("inputs") : action.putObject("inputs");
+        inputs.putObject(key).put("source", source).put("value", value);
         return this;
     }
 
@@ -153,6 +177,17 @@ public final class WorkflowGraphJson {
     public static JsonNode emptyForm() {
         ObjectNode form = NODES.objectNode();
         form.putArray("fields");
+        return form;
+    }
+
+    /** 只含一个必填 TEXT 字段的表单。 */
+    public static JsonNode textForm(String key) {
+        ObjectNode form = NODES.objectNode();
+        ObjectNode field = form.putArray("fields").addObject();
+        field.put("key", key);
+        field.put("label", key);
+        field.put("type", "TEXT");
+        field.put("required", true);
         return form;
     }
 

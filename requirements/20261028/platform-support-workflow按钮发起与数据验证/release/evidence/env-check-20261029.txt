@@ -1,0 +1,6 @@
+candidate platform-support-service   image=7671724696de keys live=59 rendered=59 missing=[] extra=[] valuediff=[]
+candidate operations-console-bff     image=6833f484994b keys live=20 rendered=20 missing=[] extra=[] valuediff=[]
+candidate operations-console-web     image=96992aba5774 keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+rollback  platform-support-service   image=1e54f3498fee keys live=59 rendered=59 missing=[] extra=[] valuediff=[]
+rollback  operations-console-bff     image=eca2df8231f9 keys live=20 rendered=20 missing=[] extra=[] valuediff=[]
+rollback  operations-console-web     image=8aec3df8901f keys live=7 rendered=7 missing=[] extra=[] valuediff=[]

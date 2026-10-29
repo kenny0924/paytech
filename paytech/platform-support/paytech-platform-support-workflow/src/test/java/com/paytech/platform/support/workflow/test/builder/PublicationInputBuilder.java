@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.paytech.platform.support.workflow.domain.action.ActionTemplateReference;
+import com.paytech.platform.support.workflow.domain.validation.DataQueryTemplateFact;
 import com.paytech.platform.support.workflow.domain.form.FormDefinition;
 import com.paytech.platform.support.workflow.domain.graph.WorkflowGraph;
 import com.paytech.platform.support.workflow.domain.validation.WorkflowPublicationInput;
@@ -26,6 +27,9 @@ public final class PublicationInputBuilder {
     private final Map<Long, ActionTemplateReference> templates = new HashMap<>(WorkflowFixtures.templates());
 
     private final Set<Long> activeAccounts = new HashSet<>(WorkflowFixtures.activeAccounts());
+
+    private final Map<String, DataQueryTemplateFact> dataQueryTemplates = new HashMap<>(
+        WorkflowFixtures.dataQueryTemplates());
 
     /**
      * 以流程图开始构造。
@@ -91,12 +95,28 @@ public final class PublicationInputBuilder {
     }
 
     /**
+     * 替换一个 data-query 模板事实；为 null 时模拟模板不存在。
+     *
+     * @param code 模板编码
+     * @param fact 事实
+     * @return 构造器
+     */
+    public PublicationInputBuilder dataQueryTemplate(String code, DataQueryTemplateFact fact) {
+        if (fact == null) {
+            dataQueryTemplates.remove(code);
+        } else {
+            dataQueryTemplates.put(code, fact);
+        }
+        return this;
+    }
+
+    /**
      * 构造输入。
      *
      * @return 发布校验输入
      */
     public WorkflowPublicationInput build() {
         return new WorkflowPublicationInput(graph, graphJsonBytes, startForm, templates, activeAccounts,
-            startFormJsonBytes);
+            startFormJsonBytes, dataQueryTemplates);
     }
 }

@@ -3,16 +3,20 @@ package com.paytech.platform.support.ext.rest.workflow;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.paytech.foundation.common.utils.EnumUtils;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.api.workflow.WorkflowActionTemplateManagementApi;
 import com.paytech.platform.support.api.workflow.request.ChangeWorkflowStatusRequestBody;
 import com.paytech.platform.support.api.workflow.request.CreateWorkflowActionTemplateRequestBody;
 import com.paytech.platform.support.api.workflow.request.UpdateWorkflowActionTemplateRequestBody;
+import com.paytech.platform.support.api.workflow.request.ValidateWorkflowActionTemplateRequestBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateValidationResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowMutationResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowTemplateReferenceListResponseBody;
 import com.paytech.platform.support.ext.rest.audit.Audit;
+import com.paytech.platform.support.workflow.core.enums.WorkflowActionType;
 import com.paytech.platform.support.workflow.service.processor.ChangeWorkflowActionTemplateStatusProcessor;
 import com.paytech.platform.support.workflow.service.processor.CreateWorkflowActionTemplateProcessor;
 import com.paytech.platform.support.workflow.service.processor.UpdateWorkflowActionTemplateProcessor;
@@ -50,6 +54,14 @@ public class WorkflowActionTemplateController implements WorkflowActionTemplateM
     public WorkflowTemplateReferenceListResponseBody listTemplateReferences(String actor, String session,
         String templateId) {
         return queries.listTemplateReferences(actor, session, converter.id(templateId, "templateId"));
+    }
+
+    /** 校验配置，不保存。 */
+    @Override
+    public WorkflowActionTemplateValidationResponseBody validateActionTemplate(String actor, String session,
+        ValidateWorkflowActionTemplateRequestBody request) {
+        return queries.validateTemplate(actor, session, EnumUtils.getEnumByCode(WorkflowActionType.class,
+            request.getActionType()), converter.object(request.getConfig(), "config"));
     }
 
     /** 新建。 */

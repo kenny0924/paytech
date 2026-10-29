@@ -59,6 +59,15 @@ final class ProblemCollector {
     }
 
     /**
+     * 追加已构造的问题。
+     *
+     * @param found 问题
+     */
+    void addAll(List<WorkflowGraphProblem> found) {
+        problems.addAll(found);
+    }
+
+    /**
      * 是否已记录某类问题。
      *
      * @param code 问题码

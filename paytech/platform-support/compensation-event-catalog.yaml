@@ -1,8 +1,12 @@
 # Platform Support 本地补偿事件类型目录（design/02 R12）：每个 CompensationEventHandler 的 eventType() 必须在此登记。
 # 新增 Handler 时同步追加；与 MQ 领域事件目录 foundation/paytech-messaging/catalog/events.yaml 不是同一集合。
+# 工作流三类 Handler 位于 paytech-platform-support-workflow 模块（R12 当前只扫描 -core，2026-10-29 补登存量两类）。
 eventTypes:
   - FILE_SCAN
   - FILE_PUBLIC_SYNC
   - NOTIFICATION_DELIVERY
   - WEBHOOK_DELIVERY
   - I18N_RELEASE_ACTIVATE
+  - WORKFLOW_NOTIFICATION
+  - WORKFLOW_CALLBACK_EVENT
+  - WORKFLOW_DATA_QUERY_CHECK

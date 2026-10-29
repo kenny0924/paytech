@@ -8,7 +8,8 @@ import {
   applyNodeChanges, getSmoothStepPath, useReactFlow,
 } from '@xyflow/react';
 import type { Edge, EdgeProps, Node, NodeChange, NodeProps } from '@xyflow/react';
-import { insertableTypes, toCanvas } from './graphModel';
+import { autoLayout, insertableTypes, toCanvas } from './graphModel';
+import { needsLayout } from './fileModel';
 import { nodeTypeLabel } from './workflowLabels';
 import { useT } from '../i18n/react';
 import type { VariableInfo } from './graphModel';
@@ -105,9 +106,11 @@ export function WorkflowCanvas(props: CanvasProps) {
   return <ReactFlowProvider><CanvasInner {...props} /></ReactFlowProvider>;
 }
 
-function CanvasInner({ graph, editable, selection, onSelect, decorate, edgeState, variables, focusKey, onConnect, onMove, onDelete, onDropNode,
+function CanvasInner({ graph: source, editable, selection, onSelect, decorate, edgeState, variables, focusKey, onConnect, onMove, onDelete, onDropNode,
   onInsertOnEdge, toolbar, footer, height = 560 }: CanvasProps) {
   const view = useReactFlow();
+  // 只读画布（实例、待办、我发起的）：节点没有位置（经接口创建、未在编辑器保存过的定义）时与编辑器一样自动排列，避免全部叠在一处。
+  const graph = useMemo(() => !editable && needsLayout(source) ? autoLayout(source) : source, [editable, source]);
   const graphRef = useRef(graph); graphRef.current = graph;
   // 「+」的显示：悬停连线或按钮时显示，离开后稍等再隐藏（便于从连线移到按钮上）；菜单打开时保持显示。
   const [hoverEdge, setHoverEdge] = useState<string | null>(null); const [menuEdge, setMenuEdge] = useState<string | null>(null);

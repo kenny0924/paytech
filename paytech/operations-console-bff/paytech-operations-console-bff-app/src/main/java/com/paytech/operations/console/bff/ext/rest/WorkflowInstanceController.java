@@ -19,6 +19,7 @@ import com.paytech.operations.console.bff.service.model.WorkflowModels.Terminate
 import com.paytech.operations.console.bff.service.model.WorkflowModels.TransferWorkflowTaskRequestBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActivityListResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowAssigneeCandidateListResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowDataQueryCheckResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDefinitionSummaryBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowHandledTaskBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowInstanceDetailResponseBody;
@@ -109,6 +110,13 @@ public class WorkflowInstanceController {
         @PathVariable("actionRunId") @Pattern(regexp = WorkflowModels.ID) String actionRunId,
         @Valid @RequestBody SubmitWorkflowActionRequestBody request) {
         return client.submitAction(context, actionRunId, request);
+    }
+
+    /** 立即检查 DATA_QUERY 动作：请求体可空或 {}，内容不读取；转发 Platform 时固定发 {}。 */
+    @PostMapping("/action-runs/{actionRunId}/data-query-check")
+    public WorkflowDataQueryCheckResponseBody checkDataQuery(OperatorContext context,
+        @PathVariable("actionRunId") @Pattern(regexp = WorkflowModels.ID) String actionRunId) {
+        return client.checkDataQuery(context, actionRunId);
     }
 
     /** 转交动作。 */

@@ -93,7 +93,8 @@ public class DataQueryRunner {
         } finally {
             log.info("数据查询执行 template={} version={} dataSource={} caller={} operator={} result={} rows={} elapsedMs={}",
                 run.getTemplateLabel(), run.getVersionNo(), run.getDataSource().getDataSourceCode(),
-                run.getCallerService(), run.getOperatorAccountId(), outcome, rowCount,
+                run.getCallerService(), run.getOperatorAccountId() == null ? "-" : run.getOperatorAccountId(), outcome,
+                rowCount,
                 (System.nanoTime() - startedAt) / 1_000_000L);
             meters.counter("data.query.execution", "template", run.getTemplateLabel(), "result", outcome).increment();
         }
@@ -112,13 +113,24 @@ public class DataQueryRunner {
         QueryTemplate template = templateEngine.parse(run.getContent().getBody());
         RenderedQuery rendered = templateEngine.render(template, bound.getValues(), engine.valueBinder());
         PreparedQuery prepared = engine.prepare(rendered, run.getDataSource().getConnection().querySource(), paging);
-        QueryBudget budget = new QueryBudget(Math.min(constraints.getTimeoutSeconds(), limits.maxTimeoutSeconds()),
-            limits.getMaxResponseBytes().toBytes());
+        QueryBudget budget = new QueryBudget(timeoutSeconds(constraints, run), limits.getMaxResponseBytes().toBytes());
         QueryResult raw;
         try (DataSourceHandle handle = pools.lease(run.getDataSource())) {
             raw = engine.execute(handle, prepared, budget);
         }
         return shape(run, constraints, prepared, raw);
+    }
+
+    /**
+     * 本次超时秒数：min(模板 timeoutSeconds, 系统上限, 调用方上限)；调用方上限为 null 时不参与。
+     *
+     * @param constraints 模板约束
+     * @param run 输入
+     * @return 超时秒数
+     */
+    int timeoutSeconds(QueryConstraints constraints, DataQueryRun run) {
+        int seconds = Math.min(constraints.getTimeoutSeconds(), limits.maxTimeoutSeconds());
+        return run.getTimeoutCapSeconds() == null ? seconds : Math.min(seconds, run.getTimeoutCapSeconds());
     }
 
     /**

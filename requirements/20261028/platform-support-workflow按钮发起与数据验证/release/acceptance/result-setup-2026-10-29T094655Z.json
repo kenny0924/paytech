@@ -1,0 +1,179 @@
+{
+  "dataSourceId": "239060838932103168",
+  "definitionId": "241498022494683136",
+  "actionTemplates": {
+    "drafted": "241498019856465920",
+    "active": "241498020477222912",
+    "collection": "241498021144117248",
+    "pspConfirm": "241498021509021696"
+  },
+  "target": "test",
+  "checks": [
+    {
+      "name": "数据源 MOR_COMMERCIAL_REPLICA 存在且 ACTIVE（不新建、不改）",
+      "pass": true,
+      "evidence": {
+        "activeTemplateCount": 1,
+        "connectionParams": {
+          "connectTimeout": "3000",
+          "connectionTimeZone": "UTC"
+        },
+        "createTime": "2026-10-22T16:22:25.552991Z",
+        "createdBy": "221546852372267008",
+        "dataSourceCode": "MOR_COMMERCIAL_REPLICA",
+        "dataSourceId": "239060838932103168",
+        "dataSourceName": "商务（Commercial）从库",
+        "databaseName": "mor_commercial",
+        "description": "mor-test 演示：协议与产品查询",
+        "engineType": "MYSQL",
+        "host": "mysql",
+        "lastCheckMessage": "连接与只读权限检查通过",
+        "lastCheckResult": "PASSED",
+        "lastCheckTime": "2026-10-22T16:22:25.620492Z",
+        "maxPoolSize": 3,
+        "port": 3306,
+        "status": "ACTIVE",
+        "templateCount": 1,
+        "updateTime": "2026-10-22T16:22:25.620492Z",
+        "updatedBy": "221546852372267008",
+        "username": "data_query_demo_reader",
+        "version": 2
+      }
+    },
+    {
+      "name": "查询模板 GOLIVE_AGREEMENT_DRAFTED ACTIVE",
+      "pass": true,
+      "evidence": {
+        "created": true,
+        "row": {
+          "currentVersionNo": 1,
+          "dataSourceCode": "MOR_COMMERCIAL_REPLICA",
+          "dataSourceId": "239060838932103168",
+          "dataSourceName": "商务（Commercial）从库",
+          "description": "客户上线编排 REQ-05：DATA_QUERY 系统检查（单行，satisfied / out_* / missing）",
+          "pagingMode": "NONE",
+          "parameters": [
+            {
+              "elementType": null,
+              "name": "clientId",
+              "required": true,
+              "type": "INTEGER"
+            }
+          ],
+          "status": "ACTIVE",
+          "templateCode": "GOLIVE_AGREEMENT_DRAFTED",
+          "templateId": "241498016245170176",
+          "templateName": "合同已起草且价格版本已批准",
+          "updateTime": "2026-10-29T09:46:53.889884Z",
+          "updatedBy": "221546852372267008",
+          "version": 1
+        }
+      }
+    },
+    {
+      "name": "查询模板 GOLIVE_AGREEMENT_ACTIVE ACTIVE",
+      "pass": true,
+      "evidence": {
+        "created": true,
+        "row": {
+          "currentVersionNo": 1,
+          "dataSourceCode": "MOR_COMMERCIAL_REPLICA",
+          "dataSourceId": "239060838932103168",
+          "dataSourceName": "商务（Commercial）从库",
+          "description": "客户上线编排 REQ-05：DATA_QUERY 系统检查（单行，satisfied / out_* / missing）",
+          "pagingMode": "NONE",
+          "parameters": [
+            {
+              "elementType": null,
+              "name": "agreementId",
+              "required": true,
+              "type": "INTEGER"
+            }
+          ],
+          "status": "ACTIVE",
+          "templateCode": "GOLIVE_AGREEMENT_ACTIVE",
+          "templateId": "241498017105002496",
+          "templateName": "合同已生效且价格版本生效",
+          "updateTime": "2026-10-29T09:46:54.094362Z",
+          "updatedBy": "221546852372267008",
+          "version": 1
+        }
+      }
+    },
+    {
+      "name": "查询模板 GOLIVE_COLLECTION_CAPABILITIES_ENABLED ACTIVE",
+      "pass": true,
+      "evidence": {
+        "created": true,
+        "row": {
+          "currentVersionNo": 1,
+          "dataSourceCode": "MOR_COMMERCIAL_REPLICA",
+          "dataSourceId": "239060838932103168",
+          "dataSourceName": "商务（Commercial）从库",
+          "description": "客户上线编排 REQ-05：DATA_QUERY 系统检查（单行，satisfied / out_* / missing）",
+          "pagingMode": "NONE",
+          "parameters": [
+            {
+              "elementType": null,
+              "name": "agreementId",
+              "required": true,
+              "type": "INTEGER"
+            }
+          ],
+          "status": "ACTIVE",
+          "templateCode": "GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+          "templateId": "241498018057109504",
+          "templateName": "收款开通项全部已开通",
+          "updateTime": "2026-10-29T09:46:54.321778Z",
+          "updatedBy": "221546852372267008",
+          "version": 1
+        }
+      }
+    },
+    {
+      "name": "动作模板 REQ05_GOLIVE_DRAFTED",
+      "pass": true,
+      "evidence": {
+        "templateId": "241498019856465920",
+        "created": true
+      }
+    },
+    {
+      "name": "动作模板 REQ05_GOLIVE_ACTIVE",
+      "pass": true,
+      "evidence": {
+        "templateId": "241498020477222912",
+        "created": true
+      }
+    },
+    {
+      "name": "动作模板 REQ05_GOLIVE_COLLECTION",
+      "pass": true,
+      "evidence": {
+        "templateId": "241498021144117248",
+        "created": true
+      }
+    },
+    {
+      "name": "动作模板 REQ05_PSP_CONFIRM",
+      "pass": true,
+      "evidence": {
+        "templateId": "241498021509021696",
+        "created": true
+      }
+    },
+    {
+      "name": "草稿 ACC_REQ05_GOLIVE_COMMERCIAL 无问题",
+      "pass": true,
+      "evidence": []
+    },
+    {
+      "name": "发布 ACC_REQ05_GOLIVE_COMMERCIAL",
+      "pass": true,
+      "evidence": {
+        "definitionId": "241498022494683136"
+      }
+    }
+  ],
+  "verdict": true
+}

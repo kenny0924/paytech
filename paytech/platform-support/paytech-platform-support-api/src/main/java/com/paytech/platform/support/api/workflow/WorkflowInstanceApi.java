@@ -17,6 +17,7 @@ import com.paytech.platform.support.api.workflow.request.TerminateWorkflowInstan
 import com.paytech.platform.support.api.workflow.request.TransferWorkflowTaskRequestBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActivityListResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowAssigneeCandidateListResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowDataQueryCheckResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDefinitionSummaryBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowHandledTaskBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowInstanceDetailResponseBody;
@@ -28,10 +29,13 @@ import com.paytech.platform.support.api.workflow.response.WorkflowTaskBody;
 
 import jakarta.validation.Valid;
 
+import tools.jackson.databind.JsonNode;
+
 /**
  * 工作流运行（技术方案第 7 节 13–24 与 4.2 的活动记录、手动重试）。
  * <li>发起需 WORKFLOW_INSTANCE_START；其余需 WORKFLOW_TASK_HANDLE，且须是被指派的人或参与人，
  * WORKFLOW_INSTANCE_READ 可查看全部实例，WORKFLOW_INSTANCE_MANAGE 可终止或转交任意实例并手动重试回调。</li>
+ * <li>发起可按 definitionCode 或 definitionId + versionNo；给出 businessKey 时重复发起返回已有实例（REQ-05）。</li>
  * <li>附件上传与下载授权见 {@link WorkflowAttachmentApi}。</li>
  */
 @HttpExchange(url = "/workflow/v1", accept = MediaType.APPLICATION_JSON_VALUE)
@@ -162,6 +166,23 @@ public interface WorkflowInstanceApi {
     WorkflowSubmissionResponseBody submitAction(@RequestHeader("X-Gateway-Actor-Subject") String actor,
         @RequestHeader("X-Gateway-Session-Id") String session, @PathVariable("actionRunId") String actionRunId,
         @Valid @RequestBody SubmitWorkflowActionRequestBody request);
+
+    /**
+     * 立即检查 DATA_QUERY 动作（REQ-05）：实例参与人或有 WORKFLOW_INSTANCE_READ 的人；同一动作同一时刻只执行一次查询
+     *
+     * @param actor 可信操作人账号
+     * @param session 可信会话
+     * @param actionRunId 动作运行 ID
+     * @param ignored 请求体，可为空或 {}，内容不读取
+     * @return 200，检查后的动作与实例状态及最新检查块
+     *         <li>已有检查在进行时不执行查询，inProgress 为 true；动作已完成、已取消或实例已结束时不执行查询，返回现状；
+     *         查询失败、超时或形状不符时 check.result 为 FAILED。</li>
+     *         <li>动作不存在或无权查看返回 404；不是 DATA_QUERY 返回 400；落库时实例正被其他操作处理返回 409。</li>
+     */
+    @PostExchange("/action-runs/{actionRunId}/data-query-check")
+    WorkflowDataQueryCheckResponseBody checkDataQuery(@RequestHeader("X-Gateway-Actor-Subject") String actor,
+        @RequestHeader("X-Gateway-Session-Id") String session, @PathVariable("actionRunId") String actionRunId,
+        @RequestBody(required = false) JsonNode ignored);
 
     /**
      * 转交动作；当前执行人或有 WORKFLOW_INSTANCE_MANAGE 的人

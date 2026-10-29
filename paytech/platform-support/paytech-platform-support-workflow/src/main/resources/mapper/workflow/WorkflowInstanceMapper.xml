@@ -11,6 +11,7 @@
         title,
         business_key AS businessKey,
         status,
+        active_slot AS activeSlot,
         start_values_json AS startValuesJson,
         assignment_json AS assignmentJson,
         started_by AS startedBy,
@@ -30,6 +31,7 @@
         i.title,
         i.business_key AS businessKey,
         i.status,
+        i.active_slot AS activeSlot,
         i.start_values_json AS startValuesJson,
         i.assignment_json AS assignmentJson,
         i.started_by AS startedBy,
@@ -43,17 +45,25 @@
     </sql>
 
     <insert id="insert">
-        INSERT INTO t_workflow_instance (instance_id, definition_id, definition_version_id, title, business_key, status, start_values_json, assignment_json, started_by, start_time, end_time, terminated_by, termination_reason, version, create_time, update_time)
-        VALUES (#{row.instanceId}, #{row.definitionId}, #{row.definitionVersionId}, #{row.title}, #{row.businessKey}, #{row.status}, #{row.startValuesJson}, #{row.assignmentJson}, #{row.startedBy}, #{row.startTime}, #{row.endTime}, #{row.terminatedBy}, #{row.terminationReason}, #{row.version}, #{row.createTime}, #{row.updateTime})
+        INSERT INTO t_workflow_instance (instance_id, definition_id, definition_version_id, title, business_key, status, active_slot, start_values_json, assignment_json, started_by, start_time, end_time, terminated_by, termination_reason, version, create_time, update_time)
+        VALUES (#{row.instanceId}, #{row.definitionId}, #{row.definitionVersionId}, #{row.title}, #{row.businessKey}, #{row.status}, #{row.activeSlot}, #{row.startValuesJson}, #{row.assignmentJson}, #{row.startedBy}, #{row.startTime}, #{row.endTime}, #{row.terminatedBy}, #{row.terminationReason}, #{row.version}, #{row.createTime}, #{row.updateTime})
     </insert>
 
     <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowInstance">
         SELECT <include refid="columns"/> FROM t_workflow_instance WHERE instance_id = #{id}
     </select>
 
-    <update id="update">UPDATE t_workflow_instance SET status = #{row.status}, end_time = #{row.endTime}, terminated_by = #{row.terminatedBy},
+    <!-- 完成与终止也走此句：离开 RUNNING 时同时清空防重槽位，释放 uk_workflow_inst_active。 -->
+    <update id="update">UPDATE t_workflow_instance SET status = #{row.status}, active_slot = IF(#{row.status} = 'RUNNING', active_slot, NULL),
+        end_time = #{row.endTime}, terminated_by = #{row.terminatedBy},
         termination_reason = #{row.terminationReason}, version = version + 1, update_time = #{row.updateTime}
         WHERE instance_id = #{row.instanceId} AND version = #{row.version} AND status = 'RUNNING'</update>
+
+    <!-- 同一定义下按原文（utf8mb4_bin）匹配业务关联键的 RUNNING 实例；走 uk_workflow_inst_active。 -->
+    <select id="selectRunningByBusinessKey" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowInstance">
+        SELECT <include refid="columns"/> FROM t_workflow_instance
+        WHERE definition_id = #{definitionId} AND business_key = #{businessKey} AND active_slot = 1
+    </select>
 
     <sql id="filter"><where>
             <if test="filter.definitionId != null">AND i.definition_id = #{filter.definitionId}</if>

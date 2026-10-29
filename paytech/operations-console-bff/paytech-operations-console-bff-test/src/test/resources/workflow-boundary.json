@@ -1064,5 +1064,129 @@
       "expiresAt": "2026-10-22T00:02:00Z",
       "disposition": "ATTACHMENT"
     }
+  },
+  {
+    "id": "WF33",
+    "method": "POST",
+    "path": "/workflow/v1/action-runs/7300000000000000501/data-query-check",
+    "ownerPath": "/workflow/v1/action-runs/7300000000000000501/data-query-check",
+    "query": "",
+    "routeCode": "operations-workflow-data-query-check",
+    "request": {},
+    "status": 200,
+    "response": {
+      "actionRunId": "7300000000000000501",
+      "actionStatus": "PENDING",
+      "instanceStatus": "RUNNING",
+      "inProgress": false,
+      "check": {
+        "queryCode": "GOLIVE_AGREEMENT_ACTIVE",
+        "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_AGREEMENT_ACTIVE",
+        "instruction": null,
+        "result": "UNSATISFIED",
+        "missing": [
+          "TERM_VERSION_NOT_ACTIVE"
+        ],
+        "failureCode": null,
+        "lastCheckedAt": "2026-10-29T08:10:03.123456Z",
+        "lastSucceededAt": "2026-10-29T08:10:03.123456Z",
+        "consecutiveFailures": 0,
+        "checking": false
+      }
+    }
+  },
+  {
+    "id": "WF34",
+    "method": "GET",
+    "path": "/workflow-admin/v1/data-query-templates",
+    "ownerPath": "/workflow-admin/v1/data-query-templates",
+    "query": "?keyword=GOLIVE&page=1&size=20",
+    "routeCode": "operations-workflow-data-query-template-list",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "templateCode": "GOLIVE_AGREEMENT_DRAFTED",
+          "templateName": "合同已起草",
+          "description": null,
+          "dataSourceName": "Commercial 只读副本",
+          "parameters": [
+            {
+              "name": "clientId",
+              "type": "INTEGER",
+              "required": true
+            }
+          ],
+          "versionNo": 3,
+          "timeoutSeconds": 5
+        }
+      ],
+      "page": 1,
+      "size": 20,
+      "total": 1
+    }
+  },
+  {
+    "id": "WF35",
+    "method": "POST",
+    "path": "/workflow/v1/instances",
+    "ownerPath": "/workflow/v1/instances",
+    "query": "",
+    "routeCode": "operations-workflow-instance-start",
+    "request": {
+      "definitionCode": "CLIENT_GO_LIVE",
+      "title": "上线 · DEMO-CL-001",
+      "businessKey": "CLIENT:880000000101",
+      "startValues": {
+        "clientId": "880000000101"
+      },
+      "approvers": [],
+      "executors": []
+    },
+    "status": 200,
+    "response": {
+      "objectType": "WORKFLOW_INSTANCE",
+      "objectId": "7300000000000000401",
+      "status": "RUNNING",
+      "version": 4,
+      "created": false
+    }
+  },
+  {
+    "id": "WF36",
+    "method": "POST",
+    "path": "/workflow-admin/v1/action-templates/validation",
+    "ownerPath": "/workflow-admin/v1/action-templates/validation",
+    "query": "",
+    "routeCode": "operations-workflow-template-validation",
+    "request": {
+      "actionType": "DATA_QUERY",
+      "config": {
+        "queryCode": "GOLIVE_CLIENT",
+        "parameters": [
+          "clientId"
+        ],
+        "outputs": [
+          {
+            "name": "client_name",
+            "type": "TEXT"
+          }
+        ],
+        "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_CLIENT"
+      }
+    },
+    "status": 200,
+    "response": {
+      "problems": [
+        {
+          "code": "DATA_QUERY_OUTPUT_UNDECLARED",
+          "nodeKey": null,
+          "edgeKey": null,
+          "itemKey": "client_name",
+          "message": "查询模板 GOLIVE_CLIENT 没有返回列 out_client_name"
+        }
+      ]
+    }
   }
 ]

@@ -26,4 +26,10 @@ public class WorkflowMutationResponseBody {
 
     /** 保存后的并发版本；没有版本概念时为空。 */
     private Integer version;
+
+    /**
+     * 是否新建
+     * <li>发起实例时：新建 true，返回同一业务关联键的已有实例 false；其他接口为空。</li>
+     */
+    private Boolean created;
 }

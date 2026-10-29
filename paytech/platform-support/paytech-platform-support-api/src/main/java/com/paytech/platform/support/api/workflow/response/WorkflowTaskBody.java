@@ -43,4 +43,7 @@ public class WorkflowTaskBody {
 
     /** 节点名称（实例绑定版本中的名称）。 */
     private String nodeName;
+
+    /** 动作类型（如 DATA_QUERY）；审批待办为空。 */
+    private String actionType;
 }

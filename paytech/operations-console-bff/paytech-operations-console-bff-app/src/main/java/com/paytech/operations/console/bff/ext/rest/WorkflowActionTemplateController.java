@@ -16,7 +16,9 @@ import com.paytech.operations.console.bff.service.model.WorkflowModels;
 import com.paytech.operations.console.bff.service.model.WorkflowModels.ChangeWorkflowStatusRequestBody;
 import com.paytech.operations.console.bff.service.model.WorkflowModels.CreateWorkflowActionTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.WorkflowModels.UpdateWorkflowActionTemplateRequestBody;
+import com.paytech.operations.console.bff.service.model.WorkflowModels.ValidateWorkflowActionTemplateRequestBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateValidationResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowMutationResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowTemplateReferenceListResponseBody;
 
@@ -66,6 +68,13 @@ public class WorkflowActionTemplateController {
     public WorkflowMutationResponseBody createActionTemplate(OperatorContext context,
         @Valid @RequestBody CreateWorkflowActionTemplateRequestBody request) {
         return client.createActionTemplate(context, request);
+    }
+
+    /** 校验动作模板配置，不保存（REQ-05）：逐项问题供页面定位。 */
+    @PostMapping("/validation")
+    public WorkflowActionTemplateValidationResponseBody validateActionTemplate(OperatorContext context,
+        @Valid @RequestBody ValidateWorkflowActionTemplateRequestBody request) {
+        return client.validateActionTemplate(context, request);
     }
 
     /** 修改动作模板；不影响已发布版本。 */

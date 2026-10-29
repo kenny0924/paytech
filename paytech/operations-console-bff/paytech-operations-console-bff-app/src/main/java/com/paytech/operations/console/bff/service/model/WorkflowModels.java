@@ -54,6 +54,14 @@ public final class WorkflowModels {
         @Size(max = 512) String description,
         @NotNull JsonNode config) {}
 
+    /** 校验动作模板配置，不保存（REQ-05）。
+     * @param actionType 动作类型。
+     * @param config 按类型的配置对象。
+     */
+    public record ValidateWorkflowActionTemplateRequestBody(
+        @NotBlank @Pattern(regexp = "FORM|FILE_UPLOAD|PAGE_TASK|MANUAL_CONFIRM|DATA_QUERY") String actionType,
+        @NotNull JsonNode config) {}
+
     /** 修改动作模板。
      * @param templateName 模板名称。
      * @param description 说明，可空。
@@ -95,23 +103,25 @@ public final class WorkflowModels {
      */
     public record PublishWorkflowDefinitionRequestBody(@NotNull @Positive Integer expectedVersion) {}
 
-    /** 发起实例。
-     * @param definitionId 流程定义 ID。
-     * @param versionNo 页面读取时的当前发布版本号。
+    /** 发起实例；definitionCode 与 definitionId + versionNo 二选一，由 Platform 判定（REQ-05）。
+     * @param definitionId 流程定义 ID；按编码发起时为空。
+     * @param versionNo 页面读取时的当前发布版本号；按编码发起时为空。
      * @param title 实例标题。
-     * @param businessKey 业务关联键，可空。
+     * @param businessKey 业务关联键，可空；同一流程下重复发起返回已有实例。
      * @param startValues 启动表单提交值。
      * @param approvers 对默认审批人的修改，可空。
      * @param executors 对默认执行人的修改，可空。
+     * @param definitionCode 流程定义编码；按编码发起取当前发布版本。
      */
     public record StartWorkflowInstanceRequestBody(
-        @NotBlank @Pattern(regexp = ID) String definitionId,
-        @NotNull @Positive Integer versionNo,
+        @Pattern(regexp = ID) String definitionId,
+        @Positive Integer versionNo,
         @NotBlank @Size(max = 128) String title,
         @Size(max = 128) String businessKey,
         @NotNull JsonNode startValues,
         @Size(max = 100) List<@Valid NodeApprovers> approvers,
-        @Size(max = 2000) List<@Valid ActionExecutor> executors) {}
+        @Size(max = 2000) List<@Valid ActionExecutor> executors,
+        @Pattern(regexp = "[A-Z][A-Z0-9_]{0,63}") String definitionCode) {}
 
     /** 某节点审批人的修改。
      * @param nodeKey 节点 key。

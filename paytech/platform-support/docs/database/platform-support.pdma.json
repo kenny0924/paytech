@@ -32233,7 +32233,7 @@
         {
           "defKey": "action_type",
           "defName": "动作类型",
-          "comment": "动作的提交与验证方式；DATA_QUERY 本期只预留，不能被发布的流程引用。允许值：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM、DATA_QUERY。",
+          "comment": "动作的提交与验证方式；DATA_QUERY 由 data-query 查询结果自动完成。允许值：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM、DATA_QUERY。",
           "type": "VARCHAR",
           "len": 32,
           "scale": "",
@@ -32684,7 +32684,7 @@
         {
           "defKey": "business_key",
           "defName": "业务关联键",
-          "comment": "可选的业务关联键（如 CHANNEL:GEIDEA-SA），只用于检索和展示，工作流不解释其含义；未填写时为空。",
+          "comment": "可选的业务关联键（如 CLIENT:880000000101），按原文精确匹配；给出时同一流程定义下只允许一个 RUNNING 实例（见 active_slot），重复发起返回已有实例；未填写时为空。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -32695,7 +32695,10 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
+          "extProps": {
+            "characterSet": "utf8mb4",
+            "collation": "utf8mb4_bin"
+          },
           "domain": "",
           "id": "BC503F4A-91B0-5856-8098-33BEF865BC9C"
         },
@@ -32716,6 +32719,24 @@
           "extProps": {},
           "domain": "",
           "id": "2003412D-F81C-53BE-8A9D-2DF161E34AE0"
+        },
+        {
+          "defKey": "active_slot",
+          "defName": "防重槽位",
+          "comment": "业务关联键防重槽位：实例 RUNNING 且 business_key 非空时为 1，完成或终止时置空；与 definition_id、business_key 组成唯一索引。",
+          "type": "TINYINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "3A1AABAC-CCB1-4DD8-A82F-7AB6DCEEFE43"
         },
         {
           "defKey": "start_values_json",
@@ -32910,6 +32931,30 @@
         }
       ],
       "indexes": [
+        {
+          "defKey": "uk_workflow_inst_active",
+          "defName": "唯一索引 definition_id、business_key、active_slot",
+          "unique": true,
+          "comment": "保证同一流程定义下同一业务关联键只有一个 RUNNING 实例",
+          "fields": [
+            {
+              "fieldDefKey": "961D84F1-A278-5594-9A45-E6AF4637BE9E",
+              "ascOrDesc": "A",
+              "id": "24CFCC6A-E40D-465E-B400-982C567E1E3F"
+            },
+            {
+              "fieldDefKey": "BC503F4A-91B0-5856-8098-33BEF865BC9C",
+              "ascOrDesc": "A",
+              "id": "706AE283-5442-49CF-A734-031C37729EAD"
+            },
+            {
+              "fieldDefKey": "3A1AABAC-CCB1-4DD8-A82F-7AB6DCEEFE43",
+              "ascOrDesc": "A",
+              "id": "315438DF-1EB1-4455-9582-81B4C4AE245A"
+            }
+          ],
+          "id": "375FD817-A419-4CF3-A4B1-931B86BAA976"
+        },
         {
           "defKey": "idx_workflow_inst_status",
           "defName": "访问索引 status、start_time",
@@ -33756,7 +33801,7 @@
         {
           "defKey": "action_type",
           "defName": "动作类型",
-          "comment": "动作的提交与验证方式，取自版本快照。允许值：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM。",
+          "comment": "动作的提交与验证方式，取自版本快照。允许值：FORM、FILE_UPLOAD、PAGE_TASK、MANUAL_CONFIRM、DATA_QUERY。",
           "type": "VARCHAR",
           "len": 32,
           "scale": "",
@@ -33878,6 +33923,96 @@
           "extProps": {},
           "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
           "id": "0FDBF7A1-2203-534C-8A1B-095A2F8F7125"
+        },
+        {
+          "defKey": "last_check_time",
+          "defName": "最近检查时间",
+          "comment": "DATA_QUERY 最近一次检查结果落库的 UTC 微秒时间；其他类型与尚未检查时为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "D5C29409-1024-4711-BAB5-3A8F5D4D1BCA"
+        },
+        {
+          "defKey": "check_result",
+          "defName": "检查结果",
+          "comment": "DATA_QUERY 最近一次检查结果：SATISFIED 已满足（动作随之完成）；UNSATISFIED 查询成功但未满足；FAILED 查询失败、超时或返回形状不符。允许值：SATISFIED、UNSATISFIED、FAILED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "0952D7E8-A864-43D6-A05C-24C13CB18071"
+        },
+        {
+          "defKey": "check_detail",
+          "defName": "检查明细",
+          "comment": "UNSATISFIED 时为查询返回的原因码（逗号分隔，可空）；FAILED 时为失败码；SATISFIED 时为空。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "42F17DF8-DE4A-48DE-8B20-6F3B6F9DD7CB"
+        },
+        {
+          "defKey": "check_failure_count",
+          "defName": "连续失败次数",
+          "comment": "DATA_QUERY 连续检查失败次数；查询成功执行（满足或未满足）时清零。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "5B519895-EE56-4148-AAB4-D68787A74373"
+        },
+        {
+          "defKey": "last_check_success_time",
+          "defName": "最近成功检查时间",
+          "comment": "DATA_QUERY 最近一次查询成功执行的 UTC 微秒时间（满足或未满足）；从未成功为空。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "1BB3EDF7-EAE3-4C56-A0B3-9DA9D1B562DD"
         },
         {
           "defKey": "version",
@@ -34006,6 +34141,30 @@
             }
           ],
           "id": "40F44EE2-C724-58F3-B211-0EF8FBE28F5F"
+        },
+        {
+          "defKey": "idx_workflow_action_check",
+          "defName": "访问索引 action_type、status、last_check_time",
+          "unique": false,
+          "comment": "支持访问路径：定时重查扫描待检查的 DATA_QUERY 动作",
+          "fields": [
+            {
+              "fieldDefKey": "8CC5299B-F95F-562A-9C1B-F91699C6FE12",
+              "ascOrDesc": "A",
+              "id": "8C78FE43-E14F-48B5-91D0-61B168A8F106"
+            },
+            {
+              "fieldDefKey": "51AE1849-5B84-5FF2-B3F9-BD29A04B9DFD",
+              "ascOrDesc": "A",
+              "id": "682564F6-5FEF-4397-BF87-81F670E4A994"
+            },
+            {
+              "fieldDefKey": "D5C29409-1024-4711-BAB5-3A8F5D4D1BCA",
+              "ascOrDesc": "A",
+              "id": "F579D52F-2D4F-4AF0-A002-6973035F3C60"
+            }
+          ],
+          "id": "7F094FF6-393C-484A-A00B-2958E7128629"
         }
       ],
       "type": "P"

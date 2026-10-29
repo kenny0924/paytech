@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
+import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionRun;
 import com.paytech.platform.support.workflow.domain.WorkflowRuntimeChange;
 import com.paytech.platform.support.workflow.domainservice.service.WorkflowRuntimeService;
 import com.paytech.platform.support.workflow.domainservice.repository.WorkflowActionRunRepository;
@@ -50,6 +51,12 @@ public class WorkflowRuntimeServiceImpl implements WorkflowRuntimeService {
         change.getNewTransfers().forEach(transfers::insert);
         change.getNewCallbacks().forEach(callbacks::insert);
         change.getCompensationEvents().forEach(event -> registrar().register(event));
+    }
+
+    /** 只按动作版本保存检查列。 */
+    @Override
+    public void recordDataQueryCheck(WorkflowActionRun row) {
+        actionRuns.update(row);
     }
 
     /**

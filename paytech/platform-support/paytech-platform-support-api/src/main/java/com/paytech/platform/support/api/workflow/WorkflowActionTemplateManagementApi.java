@@ -14,7 +14,9 @@ import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.api.workflow.request.ChangeWorkflowStatusRequestBody;
 import com.paytech.platform.support.api.workflow.request.CreateWorkflowActionTemplateRequestBody;
 import com.paytech.platform.support.api.workflow.request.UpdateWorkflowActionTemplateRequestBody;
+import com.paytech.platform.support.api.workflow.request.ValidateWorkflowActionTemplateRequestBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateValidationResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowMutationResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowTemplateReferenceListResponseBody;
 
@@ -74,13 +76,27 @@ public interface WorkflowActionTemplateManagementApi {
         @PathVariable("templateId") String templateId);
 
     /**
+     * 校验动作模板配置，不保存（REQ-05）：返回与新建、修改相同口径的语义问题，供页面逐项定位
+     *
+     * @param actor 可信操作人账号
+     * @param session 可信会话
+     * @param request 动作类型与配置
+     * @return 200，问题列表（可为空）；配置结构错误返回 422 VALIDATION_ERROR
+     */
+    @PostExchange("/validation")
+    WorkflowActionTemplateValidationResponseBody validateActionTemplate(
+        @RequestHeader("X-Gateway-Actor-Subject") String actor, @RequestHeader("X-Gateway-Session-Id") String session,
+        @Valid @RequestBody ValidateWorkflowActionTemplateRequestBody request);
+
+    /**
      * 新建动作模板（ACTIVE）
      *
      * @param actor 可信操作人账号
      * @param session 可信会话
      * @param request 编码、名称、类型与配置
      * @return 保存结果
-     *         <li>编码已存在或配置不符合类型要求返回 400 BUSINESS_CHECK_FAILED。</li>
+     *         <li>编码已存在或配置不符合类型要求返回 400 BUSINESS_CHECK_FAILED，detail 为合并的中文原因；
+     *         逐项问题由 {@link #validateActionTemplate} 返回。</li>
      */
     @PostExchange
     WorkflowMutationResponseBody createActionTemplate(@RequestHeader("X-Gateway-Actor-Subject") String actor,

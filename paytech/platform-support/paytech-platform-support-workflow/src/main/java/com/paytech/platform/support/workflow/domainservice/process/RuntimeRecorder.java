@@ -204,6 +204,7 @@ final class RuntimeRecorder {
         row.setRequired(action.required());
         row.setAssigneeId(context.executorFor(action.key()));
         row.setStatus(ActionRunStatus.PENDING);
+        row.setCheckFailureCount(0);
         row.setVersion(1);
         row.setCreateTime(context.getNow());
         row.setUpdateTime(context.getNow());

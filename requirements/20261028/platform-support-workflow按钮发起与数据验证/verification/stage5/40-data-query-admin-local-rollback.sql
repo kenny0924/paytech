@@ -1,0 +1,8 @@
+-- 回滚 40-data-query-admin-local.sql：授权恢复 REVOKED，7 条路由恢复 DISABLED（之后 Gateway 快照自动刷新）。
+START TRANSACTION;
+UPDATE t_role_permission SET status = 'REVOKED', version = version + 1, update_time = UTC_TIMESTAMP(6)
+WHERE role_permission_id IN (900000000000131201, 900000000000131202, 900000000000131203) AND status = 'ACTIVE';
+UPDATE t_gateway_route SET status = 'DISABLED', version = version + 1, update_time = UTC_TIMESTAMP(6)
+WHERE route_id IN (900000000000131401, 900000000000131403, 900000000000131405, 900000000000131406,
+  900000000000131408, 900000000000131410, 900000000000131412) AND status = 'ACTIVE';
+COMMIT;

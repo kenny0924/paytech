@@ -6,17 +6,16 @@ const t = translator('workflow');
 
 // ---------- 动作目录列表（原型 06） ----------
 
-/** 列表页签：全部 + 四个可新建的类型；数据查询只在已有动作时出现（需求 C1、C3）。 */
+/** 列表页签：全部 + 五个可新建的类型（REQ-05 起数据查询可新建）。 */
 export type CatalogTab = ActionType | 'ALL';
-export const creatableTypes: ActionType[] = ['FORM', 'FILE_UPLOAD', 'PAGE_TASK', 'MANUAL_CONFIRM'];
+export const creatableTypes: ActionType[] = ['FORM', 'FILE_UPLOAD', 'PAGE_TASK', 'MANUAL_CONFIRM', 'DATA_QUERY'];
 
 export interface CatalogTabCount { key: CatalogTab; count: number }
 
-/** 页签与数量：按类型分组计数；数据查询没有动作时不出现。 */
+/** 页签与数量：按类型分组计数。 */
 export function catalogTabs(items: readonly Pick<ActionTemplate, 'actionType'>[]): CatalogTabCount[] {
   const count = (type: ActionType) => items.filter(item => item.actionType === type).length;
-  const tabs: CatalogTabCount[] = [{ key: 'ALL', count: items.length }, ...creatableTypes.map(type => ({ key: type, count: count(type) }))];
-  return count('DATA_QUERY') > 0 ? [...tabs, { key: 'DATA_QUERY', count: count('DATA_QUERY') }] : tabs;
+  return [{ key: 'ALL', count: items.length }, ...creatableTypes.map(type => ({ key: type, count: count(type) }))];
 }
 
 /** 按页签与关键字（名称、编码、描述，不区分大小写）过滤，保持原顺序。 */
@@ -74,14 +73,14 @@ export function suggestTemplateCode(name: string, type: ActionType, existing: Re
 export type EditorStep = 'basic' | 'config' | 'references';
 export interface EditorStepItem { key: EditorStep; label: string; count?: number }
 
-/** 左侧步骤：基本信息 / 字段设计（表单）或说明（其他类型）/ 引用 N（仅已保存的动作）。 */
+/** 左侧步骤：基本信息 / 字段设计（表单）、查询与输出（数据查询）或说明（其他类型）/ 引用 N（仅已保存的动作）。 */
 export function editorSteps(type: ActionType, isNew: boolean, referenceCount?: number): EditorStepItem[] {
   const steps: EditorStepItem[] = [{ key: 'basic', label: t('templateEditor.step.basic') },
     { key: 'config', label: type === 'FORM' ? t('templateEditor.step.fields') : type === 'DATA_QUERY' ? t('templateEditor.step.query') : t('templateEditor.step.instruction') }];
   return isNew ? steps : [...steps, { key: 'references', label: t('templateEditor.step.references'), ...(referenceCount === undefined ? {} : { count: referenceCount }) }];
 }
 
-/** 路由 /workflow/action-templates/new?type= 的类型：只接受可新建的四类，其余为 null（回列表重新选择）。 */
+/** 路由 /workflow/action-templates/new?type= 的类型：只接受可新建的五类，其余为 null（回列表重新选择）。 */
 export function newTemplateType(value: string | null): ActionType | null {
   return creatableTypes.includes(value as ActionType) ? value as ActionType : null;
 }

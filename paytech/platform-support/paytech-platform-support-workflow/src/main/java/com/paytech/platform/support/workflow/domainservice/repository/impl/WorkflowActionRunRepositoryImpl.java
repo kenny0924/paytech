@@ -1,5 +1,6 @@
 package com.paytech.platform.support.workflow.domainservice.repository.impl;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
@@ -44,6 +45,13 @@ public class WorkflowActionRunRepositoryImpl implements WorkflowActionRunReposit
             throw new ConcurrentRequestException("动作已被其他操作修改，请刷新后重试");
         }
         row.setVersion(row.getVersion() + 1);
+    }
+
+    /** 本分片到期待检查的 DATA_QUERY 动作运行。 */
+    @Override
+    public List<WorkflowActionRun> findDueDataQueryChecks(int shardIndex, int shardTotal, Instant checkedBefore,
+        int limit) {
+        return mapper.selectDueDataQueryChecks(shardIndex, shardTotal, checkedBefore, limit);
     }
 
     /** 按第二层数组元素精确匹配文件地址（转义 LIKE 通配符）。 */

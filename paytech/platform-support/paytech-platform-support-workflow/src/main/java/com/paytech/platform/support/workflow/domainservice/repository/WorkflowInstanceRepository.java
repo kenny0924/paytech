@@ -14,7 +14,16 @@ public interface WorkflowInstanceRepository {
     /** 按主键读取；不存在为 null。 */
     WorkflowInstance find(long instanceId);
 
-    /** 按原版本保存状态字段并递增版本；实例已结束或版本不符为并发冲突。 */
+    /**
+     * 同一定义下业务关联键的 RUNNING 实例（按原文精确匹配）。
+     *
+     * @param definitionId 定义 ID
+     * @param businessKey 业务关联键
+     * @return 实例；没有时为 null
+     */
+    WorkflowInstance findRunningByBusinessKey(long definitionId, String businessKey);
+
+    /** 按原版本保存状态字段并递增版本；离开 RUNNING 时清空防重槽位；实例已结束或版本不符为并发冲突。 */
     void update(WorkflowInstance row);
 
     /** 分页查询。 */

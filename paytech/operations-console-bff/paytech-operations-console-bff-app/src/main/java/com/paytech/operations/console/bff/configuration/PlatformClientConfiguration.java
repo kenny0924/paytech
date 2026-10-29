@@ -67,6 +67,8 @@ public class PlatformClientConfiguration {
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
     /** 存储管理会在 Platform 事务外访问 Vault 与存储（桶检查依次多次调用），取 Gateway 10 秒响应上限内的 9 秒。 */
     private static final Duration FILE_STORAGE_READ_TIMEOUT = Duration.ofSeconds(9);
+    /** 工作流运行含立即检查（Platform 事务外数据查询上限 5 秒），取 Gateway 10 秒响应上限内的 9 秒。 */
+    private static final Duration WORKFLOW_RUNTIME_READ_TIMEOUT = Duration.ofSeconds(9);
     /** 操作人显示名只是页面补充信息，读取超时缩短到 2 秒，避免拖慢所在列表。 */
     private static final Duration ACCOUNT_LABEL_READ_TIMEOUT = Duration.ofSeconds(2);
     private static final JsonMapper PROBLEM_JSON = JsonMapper.builder().build();
@@ -184,13 +186,25 @@ public class PlatformClientConfiguration {
             .createClient(com.paytech.platform.support.api.workflow.WorkflowDefinitionManagementApi.class);
     }
 
-    /** 工作流运行：同上，审批、提交与转交的业务拒绝原因外显。 */
+    /**
+     * 工作流运行：同上，审批、提交与转交的业务拒绝原因外显
+     * <li>立即检查在 Platform 事务外执行一次数据查询（上限 5 秒）再落库，读取超时取 Gateway 10 秒响应上限内的 9 秒（REQ-05）。</li>
+     */
     @Bean
     com.paytech.platform.support.api.workflow.WorkflowInstanceApi workflowInstanceApi(Environment environment,
         PlatformDiscoveryInterceptor discovery, @Value("${operations.platform-test-base-url:}") String testBaseUrl,
         ObjectProvider<InternalTokenSupplier> tokens) {
-        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, READ_TIMEOUT)
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, WORKFLOW_RUNTIME_READ_TIMEOUT)
             .createClient(com.paytech.platform.support.api.workflow.WorkflowInstanceApi.class);
+    }
+
+    /** 工作流动作目录选择 data-query 模板：同上，只读。 */
+    @Bean
+    com.paytech.platform.support.api.workflow.WorkflowDataQueryTemplateApi workflowDataQueryTemplateApi(
+        Environment environment, PlatformDiscoveryInterceptor discovery,
+        @Value("${operations.platform-test-base-url:}") String testBaseUrl, ObjectProvider<InternalTokenSupplier> tokens) {
+        return platformProxy(environment, discovery, testBaseUrl, tokens, true, true, READ_TIMEOUT)
+            .createClient(com.paytech.platform.support.api.workflow.WorkflowDataQueryTemplateApi.class);
     }
 
     /**

@@ -1,0 +1,217 @@
+{
+  "instances": {
+    "complete": "241498065234640896",
+    "stuckAtCollection": "241498066107056128",
+    "stuckAtActive": "241498066375491584",
+    "notDrafted": "241498066799116288"
+  },
+  "created": {
+    "complete": true,
+    "stuckAtCollection": true,
+    "stuckAtActive": true,
+    "notDrafted": true
+  },
+  "pending": {
+    "stuckAtCollection": {
+      "actionRunId": "241498067373735937",
+      "lastCheckTime": "2026-10-29T09:47:06.542070Z"
+    },
+    "stuckAtActive": {
+      "actionRunId": "241498066815893504",
+      "lastCheckTime": "2026-10-29T09:47:06.022728Z"
+    },
+    "notDrafted": {
+      "actionRunId": "241498066799116291",
+      "lastCheckTime": "2026-10-29T09:47:06.022350Z"
+    }
+  },
+  "scenarioTime": "2026-10-29T09:47:06Z",
+  "target": "test",
+  "checks": [
+    {
+      "name": "按编码发起 complete（CLIENT:237575207592763393）",
+      "pass": true,
+      "evidence": {
+        "objectType": "WORKFLOW_INSTANCE",
+        "objectId": "241498065234640896",
+        "status": "RUNNING",
+        "version": 1,
+        "created": true
+      }
+    },
+    {
+      "name": "按编码发起 stuckAtCollection（CLIENT:237573267559391233）",
+      "pass": true,
+      "evidence": {
+        "objectType": "WORKFLOW_INSTANCE",
+        "objectId": "241498066107056128",
+        "status": "RUNNING",
+        "version": 1,
+        "created": true
+      }
+    },
+    {
+      "name": "按编码发起 stuckAtActive（CLIENT:237573382420406273）",
+      "pass": true,
+      "evidence": {
+        "objectType": "WORKFLOW_INSTANCE",
+        "objectId": "241498066375491584",
+        "status": "RUNNING",
+        "version": 1,
+        "created": true
+      }
+    },
+    {
+      "name": "按编码发起 notDrafted（CLIENT:237573699337822209）",
+      "pass": true,
+      "evidence": {
+        "objectType": "WORKFLOW_INSTANCE",
+        "objectId": "241498066799116288",
+        "status": "RUNNING",
+        "version": 1,
+        "created": true
+      }
+    },
+    {
+      "name": "同键重复发起返回已有实例 created=false",
+      "pass": true,
+      "evidence": {
+        "objectType": "WORKFLOW_INSTANCE",
+        "objectId": "241498066107056128",
+        "status": "RUNNING",
+        "version": 2,
+        "created": false
+      }
+    },
+    {
+      "name": "按编码发起：编码不存在 404",
+      "pass": true,
+      "evidence": {
+        "status": 404,
+        "code": "NOT_FOUND"
+      }
+    },
+    {
+      "name": "definitionCode 与 definitionId + versionNo 二选一违反 400",
+      "pass": true,
+      "evidence": {
+        "status": 400,
+        "code": "INVALID_REQUEST"
+      }
+    },
+    {
+      "name": "满足：N3 → MOR → N4 → N8 系统级联完成，实例 COMPLETED，提交人为空",
+      "pass": true,
+      "evidence": {
+        "drafted": "COMPLETED",
+        "active": "COMPLETED",
+        "collection": "COMPLETED"
+      }
+    },
+    {
+      "name": "stuckAtCollection：停在 collection，UNSATISFIED，missing=CAPABILITY_NOT_ENABLED",
+      "pass": true,
+      "evidence": {
+        "actionRunId": "241498067373735937",
+        "check": {
+          "queryCode": "GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+          "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+          "instruction": null,
+          "result": "UNSATISFIED",
+          "missing": [
+            "CAPABILITY_NOT_ENABLED"
+          ],
+          "failureCode": null,
+          "lastCheckedAt": "2026-10-29T09:47:06.109257Z",
+          "lastSucceededAt": "2026-10-29T09:47:06.109257Z",
+          "consecutiveFailures": 0,
+          "checking": false
+        }
+      }
+    },
+    {
+      "name": "stuckAtActive：停在 active，UNSATISFIED，missing=TERM_VERSION_NOT_ACTIVE",
+      "pass": true,
+      "evidence": {
+        "actionRunId": "241498066815893504",
+        "check": {
+          "queryCode": "GOLIVE_AGREEMENT_ACTIVE",
+          "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_AGREEMENT_ACTIVE",
+          "instruction": null,
+          "result": "UNSATISFIED",
+          "missing": [
+            "TERM_VERSION_NOT_ACTIVE"
+          ],
+          "failureCode": null,
+          "lastCheckedAt": "2026-10-29T09:47:06.022728Z",
+          "lastSucceededAt": "2026-10-29T09:47:06.022728Z",
+          "consecutiveFailures": 0,
+          "checking": false
+        }
+      }
+    },
+    {
+      "name": "notDrafted：停在 drafted，UNSATISFIED，missing=AGREEMENT_NOT_DRAFTED",
+      "pass": true,
+      "evidence": {
+        "actionRunId": "241498066799116291",
+        "check": {
+          "queryCode": "GOLIVE_AGREEMENT_DRAFTED",
+          "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_AGREEMENT_DRAFTED",
+          "instruction": null,
+          "result": "UNSATISFIED",
+          "missing": [
+            "AGREEMENT_NOT_DRAFTED"
+          ],
+          "failureCode": null,
+          "lastCheckedAt": "2026-10-29T09:47:06.022350Z",
+          "lastSucceededAt": "2026-10-29T09:47:06.022350Z",
+          "consecutiveFailures": 0,
+          "checking": false
+        }
+      }
+    },
+    {
+      "name": "我的待办：未满足的检查动作 actionType=DATA_QUERY",
+      "pass": true,
+      "evidence": {
+        "stuckAtCollection": "DATA_QUERY",
+        "stuckAtActive": "DATA_QUERY",
+        "notDrafted": "DATA_QUERY"
+      }
+    },
+    {
+      "name": "立即检查（stuckAtCollection）：仍未满足，返回检查块",
+      "pass": true,
+      "evidence": {
+        "actionRunId": "241498067373735937",
+        "actionStatus": "PENDING",
+        "instanceStatus": "RUNNING",
+        "inProgress": false,
+        "check": {
+          "queryCode": "GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+          "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+          "instruction": null,
+          "result": "UNSATISFIED",
+          "missing": [
+            "CAPABILITY_NOT_ENABLED"
+          ],
+          "failureCode": null,
+          "lastCheckedAt": "2026-10-29T09:47:06.542070Z",
+          "lastSucceededAt": "2026-10-29T09:47:06.542070Z",
+          "consecutiveFailures": 0,
+          "checking": false
+        }
+      }
+    },
+    {
+      "name": "DATA_QUERY 不能人工完成 400",
+      "pass": true,
+      "evidence": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED"
+      }
+    }
+  ],
+  "verdict": true
+}

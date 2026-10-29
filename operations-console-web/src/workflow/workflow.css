@@ -382,7 +382,7 @@ kbd { display: inline-block; min-width: 18px; padding: 0 4px; margin: 0 2px; bor
 .wf-type-tag.is-file_upload { background: #eaf6ee; color: #1f8a4c; }
 .wf-type-tag.is-page_task { background: #f3effd; color: #6d3fd1; }
 .wf-type-tag.is-manual_confirm { background: #fff3e6; color: #c26a00; }
-.wf-type-tag.is-data_query { background: #f0f2f5; color: #69717d; }
+.wf-type-tag.is-data_query { background: #e8f6f3; color: #12806e; }
 .wf-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #b8c0cc; display: inline-block; }
 .wf-status-dot.is-active { background: var(--wf-ok, #1f8a4c); }
 .wf-preview-drawer .ant-drawer-body { display: flex; flex-direction: column; gap: 12px; }
@@ -408,7 +408,7 @@ kbd { display: inline-block; min-width: 18px; padding: 0 4px; margin: 0 2px; bor
 .wf-type-card.is-file_upload .wf-type-card-icon { background: #eaf6ee; color: #1f8a4c; }
 .wf-type-card.is-page_task .wf-type-card-icon { background: #f3effd; color: #6d3fd1; }
 .wf-type-card.is-manual_confirm .wf-type-card-icon { background: #fff3e6; color: #c26a00; }
-.wf-type-card.is-data_query .wf-type-card-icon { background: #f0f2f5; color: #a0a7b2; }
+.wf-type-card.is-data_query .wf-type-card-icon { background: #e8f6f3; color: #12806e; }
 .wf-type-card-soon { position: absolute; top: 12px; right: 12px; font-size: 11px; color: #8a93a3; background: #f0f2f5; border-radius: 4px; padding: 0 6px; }
 .wf-type-card-check { position: absolute; top: 12px; right: 12px; width: 20px; height: 20px; border-radius: 50%; background: var(--wf-primary, #315dca); color: #fff;
   display: grid; place-items: center; font-size: 11px; }
@@ -522,6 +522,7 @@ kbd { display: inline-block; min-width: 18px; padding: 0 4px; margin: 0 2px; bor
 .wf-action-type-icon.is-file_upload { background: #eaf6ee; color: var(--wf-ok, #1f8a4c); }
 .wf-action-type-icon.is-manual_confirm { background: #f3eefc; color: #6d3fd1; }
 .wf-action-type-icon.is-page_task { background: #fff4e0; color: var(--wf-warn, #b76e00); }
+.wf-action-type-icon.is-data_query { background: #e8f6f3; color: #12806e; }
 .wf-link-small { font-size: 11px; white-space: nowrap; }
 .wf-node-action-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .wf-collapse-toggle { border: 0; background: transparent; padding: 0; font: inherit; font-size: 12px; text-align: left; cursor: pointer; color: #263247; }
@@ -575,3 +576,74 @@ kbd { display: inline-block; min-width: 18px; padding: 0 4px; margin: 0 2px; bor
 .wf-file-card-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .wf-file-card-state { flex: none; font-size: 12px; white-space: nowrap; }
 .wf-scan-ok { color: #2f9e5b; }
+
+/* ---------- 数据查询（REQ-05 原型 17—20） ---------- */
+.wf-dq-editor { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.wf-dq-editor > .wf-card { display: flex; flex-direction: column; gap: 8px; }
+.wf-dq-meta { font-size: 12px; }
+.wf-dq-table { border: 1px solid var(--wf-border, #e3e8ef); border-radius: 6px; border-collapse: separate; border-spacing: 0; overflow: hidden; }
+.wf-dq-table td { vertical-align: middle; }
+.wf-dq-table tr.is-error > td { background: #fff5f4; }
+.wf-dq-contract { display: flex; flex-direction: column; gap: 10px; background: #fff; border: 1px solid var(--wf-border, #e3e8ef); border-radius: 8px; padding: 14px 16px; }
+.wf-dq-contract p { margin: 0; font-size: 12px; }
+.wf-dq-columns { margin: 0; padding: 10px 12px; border: 1px solid var(--wf-border, #e3e8ef); border-radius: 6px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.wf-dq-columns dt code { color: var(--wf-primary, #315dca); }
+.wf-dq-columns dd { margin: 0 0 6px; }
+.wf-dq-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 12px; }
+.wf-dq-steps .anticon { color: var(--wf-primary, #315dca); margin-right: 6px; }
+.wf-dq-row.is-failed { border-color: #f1b7b0; }
+.wf-dq-outputs { max-width: 260px; font-size: 12px; }
+.wf-dq-panel { border-radius: 6px; padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; background: #f6f8fb; font-size: 13px; }
+.wf-dq-panel.is-unsatisfied { background: #fffaf0; }
+.wf-dq-panel.is-failed { background: #fff5f4; }
+.wf-dq-panel.is-checking { background: #f3f6fd; }
+.wf-dq-panel.is-satisfied { background: #f2faf5; }
+.wf-dq-state { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 12px; }
+.wf-dq-state-label { font-weight: 600; font-size: 13px; }
+.is-unsatisfied .wf-dq-state-label { color: var(--wf-warn, #b76e00); }
+.is-failed .wf-dq-state-label { color: var(--wf-danger, #c43c3c); }
+.is-checking .wf-dq-state-label { color: var(--wf-primary, #315dca); }
+.is-satisfied .wf-dq-state-label { color: var(--wf-ok, #1f8a4c); }
+.wf-dq-missing ul { margin: 2px 0 0; padding-left: 18px; }
+.wf-dq-missing code { font-size: 11px; }
+.wf-variable-chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #d6e0f5; border-radius: 4px; padding: 0 6px; font-size: 11px; color: var(--wf-primary, #315dca); background: #fff; }
+@media (max-width: 1100px) {
+  .wf-dq-editor .wf-three-columns { grid-template-columns: minmax(0, 1fr); }
+  .wf-dq-outputs-table { min-width: 680px; }
+  .wf-dq-outputs { display: none; }
+}
+.wf-dq-row .wf-action-icon { background: #e8f6f3; color: #12806e; }
+.wf-dq-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.wf-dq-version { margin-inline-end: 0; font-size: 11px; line-height: 18px; }
+.wf-dq-scroll { overflow-x: auto; max-width: 100%; }
+.wf-dq-outputs-table { table-layout: fixed; width: 100%; }
+.wf-dq-outputs-table col.is-name { width: 18%; }
+.wf-dq-outputs-table col.is-column { width: 18%; }
+.wf-dq-outputs-table col.is-type { width: 100px; }
+.wf-dq-outputs-table col.is-variable { width: 20%; }
+.wf-dq-outputs-table col.is-remove { width: 36px; }
+.wf-dq-outputs-table th, .wf-dq-outputs-table td { overflow-wrap: anywhere; }
+.wf-dq-outputs-table .ant-select { max-width: 100%; }
+/* 数据查询编辑页：右栏收窄，给输出表让位；长编码与列名可断行。 */
+.wf-tpl-instruction.is-data-query { grid-template-columns: minmax(0, 1fr) minmax(260px, 300px); }
+.wf-dq-meta, .wf-dq-contract, .wf-dq-panel { overflow-wrap: anywhere; }
+/* 抽屉与窄屏里的检查行：标题优先，输出摘要只在展开后显示。 */
+.wf-dq-row .wf-action-row-head { flex-wrap: wrap; }
+.wf-dq-row .wf-action-row-head > .wf-grow { min-width: 160px; }
+.ant-drawer .wf-dq-outputs { display: none; }
+.ant-drawer .wf-dq-row .wf-action-row-body { padding-left: 0; }
+@media (max-width: 640px) {
+  .wf-tpl-editor { grid-template-columns: minmax(0, 1fr); }
+  .wf-tpl-steps { flex-direction: row; flex-wrap: wrap; }
+  .wf-tpl-foot { display: none; }
+  .wf-dq-row .wf-action-row-body { padding-left: 0; }
+  .wf-dq-outputs { display: none; }
+}
+/* 窄屏（390）：属性面板排到画布下方，图例不超出画布。 */
+@media (max-width: 640px) {
+  .wf-editor-stage.has-panel { grid-template-columns: minmax(0, 1fr); }
+  .wf-editor-stage.has-panel .wf-editor-panel { border-left: 1px solid var(--wf-border, #e3e8ef); border-radius: 8px; height: auto; }
+  .wf-editor-crumbs { flex-wrap: wrap; max-width: 100%; }
+  .wf-canvas-footer { max-width: calc(100% - 70px); }
+  .wf-canvas-footer .wf-legend { flex-wrap: wrap; white-space: normal; }
+}

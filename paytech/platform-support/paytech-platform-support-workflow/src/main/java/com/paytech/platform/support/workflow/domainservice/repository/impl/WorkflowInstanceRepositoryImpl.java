@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import com.paytech.foundation.common.error.ConcurrentRequestException;
 import com.paytech.platform.support.workflow.core.common.WorkflowValueFormats;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowInstance;
+import com.paytech.platform.support.workflow.core.enums.WorkflowInstanceStatus;
 import com.paytech.platform.support.workflow.core.dal.mapper.WorkflowInstanceMapper;
 import com.paytech.platform.support.workflow.domain.query.WorkflowInstanceFilter;
 import com.paytech.platform.support.workflow.domainservice.repository.WorkflowInstanceRepository;
@@ -32,13 +33,22 @@ public class WorkflowInstanceRepositoryImpl implements WorkflowInstanceRepositor
         return mapper.selectById(instanceId);
     }
 
-    /** 按原版本保存状态字段并递增版本；实例已结束或版本不符为并发冲突。 */
+    /** 同一定义下业务关联键的 RUNNING 实例。 */
+    @Override
+    public WorkflowInstance findRunningByBusinessKey(long definitionId, String businessKey) {
+        return mapper.selectRunningByBusinessKey(definitionId, businessKey);
+    }
+
+    /** 按原版本保存状态字段并递增版本；离开 RUNNING 时清空防重槽位；实例已结束或版本不符为并发冲突。 */
     @Override
     public void update(WorkflowInstance row) {
         if (mapper.update(row) != 1) {
             throw new ConcurrentRequestException("流程实例已被其他操作修改，请刷新后重试");
         }
         row.setVersion(row.getVersion() + 1);
+        if (row.getStatus() != WorkflowInstanceStatus.RUNNING) {
+            row.setActiveSlot(null);
+        }
     }
 
     /** 分页查询。 */

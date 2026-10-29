@@ -1,0 +1,56 @@
+{
+ "app": "operations-console",
+ "currentRelease": 20,
+ "liveNamespaces": 26,
+ "repoNamespaces": 26,
+ "newNamespaces": [],
+ "repoKeys": 10419,
+ "liveActiveKeys": 10309,
+ "added": 123,
+ "restored": 0,
+ "sourceChanged": 4,
+ "missingInRepo": 13,
+ "zhImportKeys": 127,
+ "zhMissingForImport": 0,
+ "keepLiveZh": 10305,
+ "refdataZhReplaced": 0,
+ "liveOutdatedZh": 0,
+ "rebaseExpected": 0,
+ "rebaseScope": 433,
+ "outdatedUntouched": 0,
+ "zhChangedNotImported": 0,
+ "byNamespace": {
+  "added": {
+   "workflow": 123
+  },
+  "sourceChanged": {
+   "workflow": 4
+  },
+  "deprecated": {
+   "workflow": 13
+  },
+  "restored": {},
+  "zhImport": {
+   "workflow": 127
+  }
+ },
+ "deprecations": [
+  "workflow.actions.dataQueryUnavailable",
+  "workflow.dataQuery.column",
+  "workflow.dataQuery.evidence",
+  "workflow.dataQuery.evidenceHint",
+  "workflow.dataQuery.firstRow",
+  "workflow.dataQuery.passRule",
+  "workflow.dataQuery.passRuleHint",
+  "workflow.dataQuery.queryCodeHint",
+  "workflow.dataQuery.reserved",
+  "workflow.dataQuery.reservedHint",
+  "workflow.graph.problem.TEMPLATE_RESERVED_TYPE",
+  "workflow.preview.dataQuerySoon",
+  "workflow.templateEditor.dataQueryUnavailable"
+ ],
+ "sha256": {
+  "operations-console.release.en.json": "56a41fe7bde090da35ab42656dd09e8520fcba0368370739425b9c2c90a1da29",
+  "operations-console.release.zh-CN.delta.json": "2a6ca81027abf2a5e89f195348b7ddb26e7937c1eaa5657b6353cd77ee53824e"
+ }
+}

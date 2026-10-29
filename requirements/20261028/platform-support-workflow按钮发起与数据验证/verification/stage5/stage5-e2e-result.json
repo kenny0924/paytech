@@ -1,0 +1,638 @@
+{
+  "results": [
+    {
+      "step": "数据源 GOLIVE_COMMERCIAL_LOCAL ACTIVE",
+      "ok": true,
+      "detail": {
+        "dataSourceId": "241464383090200576"
+      }
+    },
+    {
+      "step": "数据源 FIXTURE_REQ05 ACTIVE",
+      "ok": true,
+      "detail": {
+        "dataSourceId": "241464534647181312"
+      }
+    },
+    {
+      "step": "查询模板 GOLIVE_AGREEMENT_DRAFTED",
+      "ok": true,
+      "detail": {
+        "created": true
+      }
+    },
+    {
+      "step": "查询模板 GOLIVE_AGREEMENT_ACTIVE",
+      "ok": true,
+      "detail": {
+        "created": true
+      }
+    },
+    {
+      "step": "查询模板 GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+      "ok": true,
+      "detail": {
+        "created": true
+      }
+    },
+    {
+      "step": "查询模板 E2E_REQ05_SLOW",
+      "ok": true,
+      "detail": {
+        "created": true
+      }
+    },
+    {
+      "step": "模板选择：GOLIVE_* 带 versionNo / timeoutSeconds / 参数",
+      "ok": true,
+      "detail": {
+        "total": 3,
+        "item": {
+          "templateCode": "GOLIVE_AGREEMENT_DRAFTED",
+          "templateName": "合同已起草且价格版本已批准",
+          "description": "REQ-05 阶段 5 本机联调",
+          "dataSourceName": "本机 Commercial 只读（相当于 MOR_COMMERCIAL_REPLICA）",
+          "parameters": [
+            {
+              "name": "clientId",
+              "type": "INTEGER",
+              "required": true
+            }
+          ],
+          "versionNo": 1,
+          "timeoutSeconds": 5
+        }
+      }
+    },
+    {
+      "step": "配置校验：合法配置无问题",
+      "ok": true,
+      "detail": {
+        "problems": []
+      }
+    },
+    {
+      "step": "配置校验：参数未声明 / 必填缺失 / 输出列未声明，itemKey 定位",
+      "ok": true,
+      "detail": {
+        "problems": [
+          {
+            "code": "DATA_QUERY_PARAMETER_UNDECLARED",
+            "nodeKey": null,
+            "edgeKey": null,
+            "itemKey": "agreementId",
+            "message": "查询模板 GOLIVE_AGREEMENT_DRAFTED 未声明参数 agreementId"
+          },
+          {
+            "code": "DATA_QUERY_PARAMETER_MISSING",
+            "nodeKey": null,
+            "edgeKey": null,
+            "itemKey": "clientId",
+            "message": "未列出查询模板 GOLIVE_AGREEMENT_DRAFTED 的必填参数 clientId"
+          },
+          {
+            "code": "DATA_QUERY_OUTPUT_UNDECLARED",
+            "nodeKey": null,
+            "edgeKey": null,
+            "itemKey": "client_name",
+            "message": "查询模板 GOLIVE_AGREEMENT_DRAFTED 没有返回列 out_client_name"
+          }
+        ]
+      }
+    },
+    {
+      "step": "配置校验：模板不存在 itemKey 为空",
+      "ok": true,
+      "detail": {
+        "problems": [
+          {
+            "code": "DATA_QUERY_TEMPLATE_NOT_FOUND",
+            "nodeKey": null,
+            "edgeKey": null,
+            "itemKey": null,
+            "message": "查询模板不存在：GOLIVE_NOPE"
+          }
+        ]
+      }
+    },
+    {
+      "step": "新建 DATA_QUERY 模板：引用不存在的查询模板 400",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED"
+      }
+    },
+    {
+      "step": "草稿 ACC_REQ05_GOLIVE_COMMERCIAL 无问题",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "step": "发布 ACC_REQ05_GOLIVE_COMMERCIAL",
+      "ok": true,
+      "detail": {
+        "definitionId": "241464540657618944"
+      }
+    },
+    {
+      "step": "草稿 ACC_REQ05_CHECK_FAILURE 无问题",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "step": "发布 ACC_REQ05_CHECK_FAILURE",
+      "ok": true,
+      "detail": {
+        "definitionId": "241464541530034176"
+      }
+    },
+    {
+      "step": "按编码发起 complete",
+      "ok": true,
+      "detail": {
+        "objectType": "WORKFLOW_INSTANCE",
+        "objectId": "241464542310174720",
+        "status": "RUNNING",
+        "version": 1,
+        "created": true
+      }
+    },
+    {
+      "step": "按编码发起 stuckAtCollection",
+      "ok": true,
+      "detail": {
+        "objectType": "WORKFLOW_INSTANCE",
+        "objectId": "241464542679273472",
+        "status": "RUNNING",
+        "version": 1,
+        "created": true
+      }
+    },
+    {
+      "step": "按编码发起 notDrafted",
+      "ok": true,
+      "detail": {
+        "objectType": "WORKFLOW_INSTANCE",
+        "objectId": "241464542872211456",
+        "status": "RUNNING",
+        "version": 1,
+        "created": true
+      }
+    },
+    {
+      "step": "按编码发起 psp",
+      "ok": true,
+      "detail": {
+        "objectType": "WORKFLOW_INSTANCE",
+        "objectId": "241464543132258304",
+        "status": "RUNNING",
+        "version": 1,
+        "created": true
+      }
+    },
+    {
+      "step": "同键重复发起返回已有实例 created=false",
+      "ok": true,
+      "detail": {
+        "objectType": "WORKFLOW_INSTANCE",
+        "objectId": "241464542679273472",
+        "status": "RUNNING",
+        "version": 3,
+        "created": false
+      }
+    },
+    {
+      "step": "按编码发起：编码不存在 404",
+      "ok": true,
+      "detail": {
+        "status": 404,
+        "code": "NOT_FOUND"
+      }
+    },
+    {
+      "step": "二选一违反 400",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "INVALID_REQUEST"
+      }
+    },
+    {
+      "step": "满足：起草 → MOR 网关 → 生效 → 收款开通，系统级联完成，实例 COMPLETED",
+      "ok": true,
+      "detail": {
+        "status": "COMPLETED",
+        "drafted": {
+          "actionRunId": "241464542331146240",
+          "status": "COMPLETED",
+          "check": {
+            "queryCode": "GOLIVE_AGREEMENT_DRAFTED",
+            "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_AGREEMENT_DRAFTED",
+            "instruction": null,
+            "result": "SATISFIED",
+            "missing": [],
+            "failureCode": null,
+            "lastCheckedAt": "2026-10-29T07:33:53.207153Z",
+            "lastSucceededAt": "2026-10-29T07:33:53.207153Z",
+            "consecutiveFailures": 0,
+            "checking": false
+          },
+          "output": {
+            "agreement_id": "900000000001372001",
+            "business_mode": "MOR",
+            "capability_codes": "CARD"
+          },
+          "submittedBy": null
+        },
+        "active": {
+          "actionRunId": "241464542876405762",
+          "status": "COMPLETED",
+          "check": {
+            "queryCode": "GOLIVE_AGREEMENT_ACTIVE",
+            "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_AGREEMENT_ACTIVE",
+            "instruction": null,
+            "result": "SATISFIED",
+            "missing": [],
+            "failureCode": null,
+            "lastCheckedAt": "2026-10-29T07:33:53.265907Z",
+            "lastSucceededAt": "2026-10-29T07:33:53.265907Z",
+            "consecutiveFailures": 0,
+            "checking": false
+          },
+          "output": {},
+          "submittedBy": null
+        },
+        "collection": {
+          "actionRunId": "241464543123869697",
+          "status": "COMPLETED",
+          "check": {
+            "queryCode": "GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+            "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+            "instruction": null,
+            "result": "SATISFIED",
+            "missing": [],
+            "failureCode": null,
+            "lastCheckedAt": "2026-10-29T07:33:53.338762Z",
+            "lastSucceededAt": "2026-10-29T07:33:53.338762Z",
+            "consecutiveFailures": 0,
+            "checking": false
+          },
+          "output": {
+            "pending_capabilities": null
+          },
+          "submittedBy": null
+        }
+      }
+    },
+    {
+      "step": "N8 未满足：停在收款开通检查，missing=CAPABILITY_NOT_ENABLED",
+      "ok": true,
+      "detail": {
+        "status": "RUNNING",
+        "drafted": {
+          "actionRunId": "241464542679273475",
+          "status": "COMPLETED",
+          "check": {
+            "queryCode": "GOLIVE_AGREEMENT_DRAFTED",
+            "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_AGREEMENT_DRAFTED",
+            "instruction": null,
+            "result": "SATISFIED",
+            "missing": [],
+            "failureCode": null,
+            "lastCheckedAt": "2026-10-29T07:33:53.210858Z",
+            "lastSucceededAt": "2026-10-29T07:33:53.210858Z",
+            "consecutiveFailures": 0,
+            "checking": false
+          },
+          "output": {
+            "agreement_id": "900000000001390001",
+            "business_mode": "MOR",
+            "capability_codes": "APPLE_PAY,CARD,GOOGLE_PAY,TOKEN_STORAGE"
+          },
+          "submittedBy": null
+        },
+        "active": {
+          "actionRunId": "241464542901571586",
+          "status": "COMPLETED",
+          "check": {
+            "queryCode": "GOLIVE_AGREEMENT_ACTIVE",
+            "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_AGREEMENT_ACTIVE",
+            "instruction": null,
+            "result": "SATISFIED",
+            "missing": [],
+            "failureCode": null,
+            "lastCheckedAt": "2026-10-29T07:33:53.273984Z",
+            "lastSucceededAt": "2026-10-29T07:33:53.273984Z",
+            "consecutiveFailures": 0,
+            "checking": false
+          },
+          "output": {},
+          "submittedBy": null
+        },
+        "collection": {
+          "actionRunId": "241464543144841217",
+          "status": "PENDING",
+          "check": {
+            "queryCode": "GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+            "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+            "instruction": null,
+            "result": "UNSATISFIED",
+            "missing": [
+              "CAPABILITY_NOT_ENABLED"
+            ],
+            "failureCode": null,
+            "lastCheckedAt": "2026-10-29T07:33:53.343406Z",
+            "lastSucceededAt": "2026-10-29T07:33:53.343406Z",
+            "consecutiveFailures": 0,
+            "checking": false
+          },
+          "output": null,
+          "submittedBy": null
+        }
+      }
+    },
+    {
+      "step": "N3 未满足：AGREEMENT_NOT_DRAFTED",
+      "ok": true,
+      "detail": {
+        "status": "RUNNING",
+        "drafted": {
+          "actionRunId": "241464542872211459",
+          "status": "PENDING",
+          "check": {
+            "queryCode": "GOLIVE_AGREEMENT_DRAFTED",
+            "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_AGREEMENT_DRAFTED",
+            "instruction": null,
+            "result": "UNSATISFIED",
+            "missing": [
+              "AGREEMENT_NOT_DRAFTED"
+            ],
+            "failureCode": null,
+            "lastCheckedAt": "2026-10-29T07:33:53.263091Z",
+            "lastSucceededAt": "2026-10-29T07:33:53.263091Z",
+            "consecutiveFailures": 0,
+            "checking": false
+          },
+          "output": null,
+          "submittedBy": null
+        }
+      }
+    },
+    {
+      "step": "PSP：网关走默认边到人工复核",
+      "ok": true,
+      "detail": {
+        "status": "RUNNING",
+        "drafted": {
+          "actionRunId": "241464543132258307",
+          "status": "COMPLETED",
+          "check": {
+            "queryCode": "GOLIVE_AGREEMENT_DRAFTED",
+            "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_AGREEMENT_DRAFTED",
+            "instruction": null,
+            "result": "SATISFIED",
+            "missing": [],
+            "failureCode": null,
+            "lastCheckedAt": "2026-10-29T07:33:53.340278Z",
+            "lastSucceededAt": "2026-10-29T07:33:53.340278Z",
+            "consecutiveFailures": 0,
+            "checking": false
+          },
+          "output": {
+            "agreement_id": "900000000001372101",
+            "business_mode": "PSP",
+            "capability_codes": "CARD"
+          },
+          "submittedBy": null
+        },
+        "pspConfirm": {
+          "actionRunId": "241464543425859587",
+          "status": "PENDING",
+          "check": null,
+          "output": null,
+          "submittedBy": null
+        }
+      }
+    },
+    {
+      "step": "我的待办带 actionType",
+      "ok": true,
+      "detail": {
+        "complete": null,
+        "stuckAtCollection": "DATA_QUERY",
+        "notDrafted": "DATA_QUERY",
+        "psp": "MANUAL_CONFIRM"
+      }
+    },
+    {
+      "step": "立即检查：仍未满足，返回检查块",
+      "ok": true,
+      "detail": {
+        "actionRunId": "241464543144841217",
+        "actionStatus": "PENDING",
+        "instanceStatus": "RUNNING",
+        "inProgress": false,
+        "check": {
+          "queryCode": "GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+          "descriptionKey": "workflow.dataQuery.criteria.GOLIVE_COLLECTION_CAPABILITIES_ENABLED",
+          "instruction": null,
+          "result": "UNSATISFIED",
+          "missing": [
+            "CAPABILITY_NOT_ENABLED"
+          ],
+          "failureCode": null,
+          "lastCheckedAt": "2026-10-29T07:33:53.660747Z",
+          "lastSucceededAt": "2026-10-29T07:33:53.660747Z",
+          "consecutiveFailures": 0,
+          "checking": false
+        }
+      }
+    },
+    {
+      "step": "DATA_QUERY 不能人工完成 400",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED"
+      }
+    },
+    {
+      "step": "立即检查：非 DATA_QUERY 动作 400",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED"
+      }
+    },
+    {
+      "step": "检查失败：QUERY_TIMEOUT，立即检查后连续失败 2",
+      "ok": true,
+      "detail": {
+        "first": {
+          "queryCode": "E2E_REQ05_SLOW",
+          "descriptionKey": "workflow.dataQuery.criteria.E2E_REQ05_SLOW",
+          "instruction": null,
+          "result": "FAILED",
+          "missing": [],
+          "failureCode": "QUERY_TIMEOUT",
+          "lastCheckedAt": "2026-10-29T07:33:54.928633Z",
+          "lastSucceededAt": null,
+          "consecutiveFailures": 1,
+          "checking": false
+        },
+        "after": {
+          "queryCode": "E2E_REQ05_SLOW",
+          "descriptionKey": "workflow.dataQuery.criteria.E2E_REQ05_SLOW",
+          "instruction": null,
+          "result": "FAILED",
+          "missing": [],
+          "failureCode": "QUERY_TIMEOUT",
+          "lastCheckedAt": "2026-10-29T07:33:56.197675Z",
+          "lastSucceededAt": null,
+          "consecutiveFailures": 2,
+          "checking": false
+        }
+      }
+    },
+    {
+      "step": "慢查询中终止：终止不被阻塞，检查结果丢弃，动作 CANCELLED",
+      "ok": true,
+      "detail": {
+        "terminate": {
+          "objectType": "WORKFLOW_INSTANCE",
+          "objectId": "241464555799056384",
+          "status": "TERMINATED",
+          "version": 2,
+          "created": null
+        },
+        "check": {
+          "actionRunId": "241464555799056387",
+          "actionStatus": "CANCELLED",
+          "instanceStatus": "TERMINATED",
+          "inProgress": false,
+          "check": {
+            "queryCode": "E2E_REQ05_SLOW",
+            "descriptionKey": "workflow.dataQuery.criteria.E2E_REQ05_SLOW",
+            "instruction": null,
+            "result": "FAILED",
+            "missing": [],
+            "failureCode": "QUERY_TIMEOUT",
+            "lastCheckedAt": "2026-10-29T07:33:57.364599Z",
+            "lastSucceededAt": null,
+            "consecutiveFailures": 1,
+            "checking": false
+          }
+        }
+      }
+    },
+    {
+      "step": "无 TASK_HANDLE：立即检查 403",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "code": "OPERATIONS_PERMISSION_DENIED"
+      }
+    },
+    {
+      "step": "只有 TASK_HANDLE 且非参与人：立即检查 404",
+      "ok": true,
+      "detail": {
+        "status": 404,
+        "code": "NOT_FOUND"
+      }
+    },
+    {
+      "step": "无动作模板管理：模板选择 403",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "code": "OPERATIONS_PERMISSION_DENIED"
+      }
+    },
+    {
+      "step": "无动作模板管理：配置校验 403",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "code": "OPERATIONS_PERMISSION_DENIED"
+      }
+    },
+    {
+      "step": "无 INSTANCE_START：按编码发起 403",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "code": "OPERATIONS_PERMISSION_DENIED"
+      }
+    },
+    {
+      "step": "实例槽位：RUNNING 为 1，结束为空",
+      "ok": true,
+      "detail": [
+        {
+          "instance_id": "241464542310174720",
+          "business_key": "CLIENT:237161687952666625",
+          "status": "COMPLETED",
+          "active_slot": "NULL"
+        },
+        {
+          "instance_id": "241464542679273472",
+          "business_key": "CLIENT:240674482170114049",
+          "status": "RUNNING",
+          "active_slot": "1"
+        },
+        {
+          "instance_id": "241464542872211456",
+          "business_key": "CLIENT:240674874987655169",
+          "status": "RUNNING",
+          "active_slot": "1"
+        },
+        {
+          "instance_id": "241464543132258304",
+          "business_key": "CLIENT:900000000001380201",
+          "status": "RUNNING",
+          "active_slot": "1"
+        },
+        {
+          "instance_id": "241464545422348288",
+          "business_key": "E2E:REQ05:FAILED",
+          "status": "RUNNING",
+          "active_slot": "1"
+        },
+        {
+          "instance_id": "241464555799056384",
+          "business_key": "E2E:REQ05:TERMINATE",
+          "status": "TERMINATED",
+          "active_slot": "NULL"
+        }
+      ]
+    }
+  ],
+  "instances": {
+    "complete": "241464542310174720",
+    "stuckAtCollection": "241464542679273472",
+    "notDrafted": "241464542872211456",
+    "psp": "241464543132258304"
+  },
+  "failing": "241464545422348288",
+  "terminated": "241464555799056384",
+  "definitions": {
+    "ACC_REQ05_GOLIVE_COMMERCIAL": "241464540657618944",
+    "ACC_REQ05_CHECK_FAILURE": "241464541530034176"
+  },
+  "dataSources": {
+    "GOLIVE_COMMERCIAL_LOCAL": "241464383090200576",
+    "FIXTURE_REQ05": "241464534647181312"
+  },
+  "operators": {
+    "handler": {
+      "accountId": "241464568394551296",
+      "email": "req05***@example.test"
+    },
+    "reader": {
+      "accountId": "241464573306081280",
+      "email": "req05***@example.test"
+    }
+  }
+}

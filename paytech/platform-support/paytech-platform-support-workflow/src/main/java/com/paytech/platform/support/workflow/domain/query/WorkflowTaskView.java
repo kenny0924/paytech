@@ -40,6 +40,9 @@ public class WorkflowTaskView {
     /** 动作 key；审批为空。 */
     private String actionKey;
 
+    /** 动作类型 Code（如 DATA_QUERY）；审批为空。 */
+    private String actionType;
+
     /** 待办开始时间：动作为节点激活时间，审批为审批行创建时间。 */
     private Instant waitingSince;
 }

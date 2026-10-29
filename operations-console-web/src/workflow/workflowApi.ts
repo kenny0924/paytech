@@ -1,8 +1,8 @@
 import { ApiError } from '../api/session.ts';
 import type { PagingResponseBody } from '../api/types.ts';
 import type {
-  ActionConfig, ActionSnapshot, ActionTemplate, Activity, AssigneeCandidate, DefinitionDetail, DefinitionSummary, DraftResponse,
-  FormDefinition, HandledTask, InstanceDetail, InstanceSummary, LaunchDefinition, Mutation, Problem, SubmissionResult, Task, TemplateReferences, VersionBody,
+  ActionConfig, ActionSnapshot, ActionTemplate, Activity, AssigneeCandidate, DataQueryCheck, DataQueryCheckResponse, DataQueryTemplateOption,
+  DefinitionDetail, DefinitionSummary, DraftResponse, FormDefinition, HandledTask, InstanceDetail, InstanceSummary, LaunchDefinition, Mutation, Problem, SubmissionResult, Task, TemplateReferences, VersionBody,
   WorkflowGraph,
 } from './workflowTypes.ts';
 import { decodeFiles } from './fileModel.ts';
@@ -16,12 +16,16 @@ export const workflowPaths = {
   templates: `${adminBase}/action-templates`,
   template: (id: string) => `${adminBase}/action-templates/${encodeURIComponent(id)}`,
   templateReferences: (id: string) => `${adminBase}/action-templates/${encodeURIComponent(id)}/references`,
+  /** 动作模板配置校验（只校验不保存），返回问题列表。 */
+  templateValidation: `${adminBase}/action-templates/validation`,
   templateStatus: (id: string) => `${adminBase}/action-templates/${encodeURIComponent(id)}/status`,
   definitions: `${adminBase}/definitions`,
   definition: (id: string) => `${adminBase}/definitions/${encodeURIComponent(id)}`,
   draft: (id: string) => `${adminBase}/definitions/${encodeURIComponent(id)}/draft`,
   publication: (id: string) => `${adminBase}/definitions/${encodeURIComponent(id)}/publication`,
   definitionStatus: (id: string) => `${adminBase}/definitions/${encodeURIComponent(id)}/status`,
+  /** data-query 启用模板选择（接口 8.5）。 */
+  dataQueryTemplates: `${adminBase}/data-query-templates`,
   version: (id: string, versionNo: number) => `${adminBase}/definitions/${encodeURIComponent(id)}/versions/${versionNo}`,
   launchable: `${runtimeBase}/launchable-definitions`,
   launchableOne: (id: string) => `${runtimeBase}/launchable-definitions/${encodeURIComponent(id)}`,
@@ -31,6 +35,8 @@ export const workflowPaths = {
   termination: (id: string) => `${runtimeBase}/instances/${encodeURIComponent(id)}/termination`,
   /** 完成动作（接口 #19，原提交接口，路径与请求体不变）。 */
   submission: (id: string) => `${runtimeBase}/action-runs/${encodeURIComponent(id)}/submission`,
+  /** 立即检查数据查询动作（接口 8.2），请求体固定 {}。 */
+  dataQueryCheck: (id: string) => `${runtimeBase}/action-runs/${encodeURIComponent(id)}/data-query-check`,
   actionTransfer: (id: string) => `${runtimeBase}/action-runs/${encodeURIComponent(id)}/transfer`,
   decision: (id: string) => `${runtimeBase}/approvals/${encodeURIComponent(id)}/decision`,
   approvalTransfer: (id: string) => `${runtimeBase}/approvals/${encodeURIComponent(id)}/transfer`,
@@ -156,7 +162,7 @@ export function decodeInstanceDetail(value: unknown): InstanceDetail {
   return { ...(item as unknown as InstanceDetail), instance: decodeInstanceSummary(item.instance), graph: parseGraph(item.graph),
     startForm: parseForm(item.startForm), startValues: object(item.startValues), actionSnapshot: parseSnapshot(item.actionSnapshot),
     nodeRuns: list(item.nodeRuns) as never, actionRuns: list(item.actionRuns).map(object).map(run => ({ ...run,
-      output: run.output === null || run.output === undefined ? null : object(run.output) })) as never,
+      output: run.output === null || run.output === undefined ? null : object(run.output), dataQueryCheck: decodeDataQueryCheck(run.dataQueryCheck) })) as never,
     verifications: list(item.verifications) as never, approvals: list(item.approvals) as never, transfers: list(item.transfers) as never,
     nodeApprovers: Object.fromEntries(Object.entries(object(item.nodeApprovers)).map(([key, ids]) => [key, list(ids).filter((id): id is string => typeof id === 'string')])),
     people: object(item.people) as Record<string, string>, files: decodeFiles(item.files) };
@@ -200,4 +206,41 @@ export function decodeReferences(value: unknown): TemplateReferences {
     items: (item.items as unknown[]).map(object).map(row => ({ definitionId: String(row.definitionId), definitionCode: text(row.definitionCode) ?? '',
       definitionName: text(row.definitionName) ?? '', versionNo: Number(row.versionNo), currentVersion: row.currentVersion === true,
       frozenTemplateVersion: Number(row.frozenTemplateVersion), sameAsCurrent: row.sameAsCurrent === true, runningInstanceCount: Number(row.runningInstanceCount) || 0 })) };
+}
+
+const checkResults = new Set(['SATISFIED', 'UNSATISFIED', 'FAILED']);
+
+/** 系统检查块（接口 8.3）；缺失或不是对象时为 null，未知结果按从未检查。 */
+export function decodeDataQueryCheck(value: unknown): DataQueryCheck | null {
+  if (value === null || value === undefined || typeof value !== 'object') return null;
+  const item = object(value);
+  return { queryCode: text(item.queryCode) ?? '', descriptionKey: text(item.descriptionKey), instruction: text(item.instruction),
+    result: checkResults.has(item.result as string) ? item.result as DataQueryCheck['result'] : null,
+    missing: list(item.missing).filter((code): code is string => typeof code === 'string'), failureCode: text(item.failureCode),
+    lastCheckedAt: text(item.lastCheckedAt), lastSucceededAt: text(item.lastSucceededAt),
+    consecutiveFailures: Number.isInteger(item.consecutiveFailures) ? item.consecutiveFailures as number : 0, checking: item.checking === true };
+}
+
+export function decodeDataQueryCheckResponse(value: unknown): DataQueryCheckResponse {
+  const item = object(value);
+  check(typeof item.actionRunId === 'string' && typeof item.actionStatus === 'string');
+  return { actionRunId: item.actionRunId, actionStatus: item.actionStatus as DataQueryCheckResponse['actionStatus'],
+    instanceStatus: (text(item.instanceStatus) ?? 'RUNNING') as DataQueryCheckResponse['instanceStatus'], inProgress: item.inProgress === true,
+    check: decodeDataQueryCheck(item.check) };
+}
+
+export function decodeDataQueryTemplate(value: unknown): DataQueryTemplateOption {
+  const item = object(value);
+  check(typeof item.templateCode === 'string');
+  return { templateCode: item.templateCode, templateName: text(item.templateName) ?? item.templateCode, description: text(item.description),
+    dataSourceName: text(item.dataSourceName), versionNo: Number.isInteger(item.versionNo) ? item.versionNo as number : null,
+    timeoutSeconds: Number.isInteger(item.timeoutSeconds) ? item.timeoutSeconds as number : null, parameters: list(item.parameters).map(object).filter(parameter => typeof parameter.name === 'string')
+      .map(parameter => ({ name: parameter.name as string, type: text(parameter.type) ?? '', required: parameter.required === true })) };
+}
+
+/** 动作模板配置校验的响应：problems 为空即通过。 */
+export function decodeTemplateValidation(value: unknown): Problem[] {
+  const item = object(value);
+  check(Array.isArray(item.problems));
+  return decodeProblems(item.problems);
 }

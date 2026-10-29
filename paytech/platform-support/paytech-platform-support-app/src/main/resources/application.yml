@@ -319,6 +319,12 @@ workflow:
   notification-template-code: WORKFLOW_NOTIFICATION # Delivery 普通模板，由注册 DML 登记。
   event-source-service: platform-support
   event-instance-id: "${PAYTECH_INSTANCE_ID:main}"
+  data-query: # DATA_QUERY 系统检查（REQ-05）；重查间隔由 XXL 任务 workflowDataQueryRecheck 的 CRON 决定。
+    timeout: 5s # 单次查询超时上限，1–8 秒整秒；实际取 min(模板 timeoutSeconds, 本值, data-query.limits.max-timeout)。
+    check-lock-lease: 30s # 检查锁 workflow-action-check:{actionRunId} 租约，不小于 timeout + 10s。
+    recheck-batch-size: 100 # 每分片每轮最多检查数，1–1000。
+    recheck-min-age: 4m # 最近检查早于此值的动作才进入本轮。
+    recheck-round-budget: 240s # 每轮耗时上限，超过即停。
 
 # 多语言（paytech-platform-support-localization）：Operations 维护 /internal/localization/v1，manifest 匿名读取。
 # 需先手工执行 docs/database/sql/changes/2026-10-23-localization.sql 与注册块 135；语言包经 Platform 文件入口以 platform-support × PUBLIC

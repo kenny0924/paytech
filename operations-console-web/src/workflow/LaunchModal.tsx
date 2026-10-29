@@ -73,7 +73,9 @@ export function LaunchModal({ initialDefinitionId, onClose, onAuthorizationChang
     submittedValues.current = body.startValues;
     const result = await command.run(workflowPaths.instances, 'POST', body, decodeMutation, t('launch.failed'));
     if (!result) return;
-    void message.success(t('launch.started')); onClose();
+    // 同一业务关联已有运行中实例时返回该实例（created=false），打开它而不是新建。
+    if (result.created === false) void message.info(t('launch.reused')); else void message.success(t('launch.started'));
+    onClose();
     if (onStarted) onStarted(result.objectId); else void navigate(`${workflowRoutes.instances}/${result.objectId}`);
   }
   const visible = (definitions ?? []).filter(item => !keyword.trim() || `${item.definitionCode} ${item.definitionName}`.toLowerCase().includes(keyword.trim().toLowerCase()));

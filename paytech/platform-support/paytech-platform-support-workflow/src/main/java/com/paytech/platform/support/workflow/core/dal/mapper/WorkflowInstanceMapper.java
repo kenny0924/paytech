@@ -16,6 +16,16 @@ public interface WorkflowInstanceMapper {
     /** 按主键读取。 */
     WorkflowInstance selectById(@Param("id") long id);
 
+    /**
+     * 同一定义下业务关联键的 RUNNING 实例。
+     *
+     * @param definitionId 定义 ID
+     * @param businessKey 业务关联键
+     * @return 实例；没有时为 null
+     */
+    WorkflowInstance selectRunningByBusinessKey(@Param("definitionId") long definitionId,
+        @Param("businessKey") String businessKey);
+
     /** 见 XML 同名语句。 */
     int update(@Param("row") WorkflowInstance row);
 

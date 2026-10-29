@@ -37,7 +37,9 @@ import com.paytech.platform.support.workflow.core.configuration.WorkflowProperti
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowCallback;
 import com.paytech.platform.support.workflow.domain.WorkflowRuntimeChange;
 import com.paytech.platform.support.workflow.core.enums.NotificationRuleType;
+import com.paytech.platform.support.workflow.core.enums.WorkflowActionType;
 import com.paytech.platform.support.workflow.service.handler.WorkflowCallbackEventHandler;
+import com.paytech.platform.support.workflow.service.handler.WorkflowDataQueryCheckHandler;
 import com.paytech.platform.support.workflow.service.handler.WorkflowNotificationHandler;
 
 /**
@@ -207,7 +209,8 @@ public class WorkflowProcessorSupport {
     }
 
     /**
-     * 为本次新登记的通知回调构造补偿任务，与运行变化同事务登记。
+     * 为本次新登记的通知回调与新建的 DATA_QUERY 动作运行（首查）构造补偿任务，与运行变化同事务登记；
+     * 所有写入口共用，级联激活的 DATA_QUERY 也由此登记。
      *
      * @param change 运行变化
      */
@@ -215,6 +218,9 @@ public class WorkflowProcessorSupport {
         for (WorkflowCallback callback : change.getNewCallbacks()) {
             change.getCompensationEvents().add(callbackEvent(callback));
         }
+        change.getNewActionRuns().stream().filter(run -> run.getActionType() == WorkflowActionType.DATA_QUERY)
+            .forEach(run -> change.getCompensationEvents().add(WorkflowDataQueryCheckHandler.buildEvent(
+                run.getActionRunId())));
     }
 
     /**

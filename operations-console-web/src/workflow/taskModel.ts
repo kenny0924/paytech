@@ -5,6 +5,7 @@ import { valueProblems } from './formModel.ts';
 import { fileAddressesOf, outputFileAddresses, scanFailed, scanPending, uploadRequired } from './fileModel.ts';
 import { nodeOf, outgoing } from './graphModel.ts';
 import { actionState, isCompleted, latestRuns } from './runtimeModel.ts';
+import { outputsInline } from './dataQueryModel.ts';
 import type { BatchStatus } from './runtimeModel.ts';
 import { translator } from '../i18n/index.ts';
 
@@ -181,7 +182,8 @@ export const orderNodeActions = <T extends Pick<ActionRun, 'required'>>(runs: T[
   [...runs.filter(run => run.required), ...runs.filter(run => !run.required)];
 
 /** 打开时默认展开：我的第一个待完成必选动作，没有则我的第一个可完成动作，都没有则不展开。 */
-export function defaultExpandedAction(runs: Pick<ActionRun, 'actionRunId' | 'status' | 'required' | 'assigneeId'>[], nodeRun: Pick<NodeRun, 'status'> | undefined,
+export function defaultExpandedAction(runs: (Pick<ActionRun, 'actionRunId' | 'status' | 'required' | 'assigneeId'> & Partial<Pick<ActionRun, 'actionType'>>)[],
+  nodeRun: Pick<NodeRun, 'status'> | undefined,
   instanceRunning: boolean, actorId: string): string | null {
   const open = orderNodeActions(runs).filter(run => completionMode(run, nodeRun, instanceRunning, actorId) === 'COMPLETE');
   return (open.find(run => run.required) ?? open[0])?.actionRunId ?? null;
@@ -193,11 +195,12 @@ export type CompletionMode = 'COMPLETE' | 'EDIT' | 'LOCKED';
 /**
  * 「完成」按钮（需求 E2）：只有被指派人在实例运行中可操作；已取消的不可操作。
  * 节点 ACTIVE：未完成显示「完成」，已完成可「修改」后再次完成；节点进入审批（APPROVING）后必选动作锁定，
- * 可选动作在节点放行前仍可完成或修改；其余节点状态锁定。
+ * 可选动作在节点放行前仍可完成或修改；其余节点状态锁定。数据查询由系统检查自动完成，没有「完成」（B3）。
  */
-export function completionMode(run: Pick<ActionRun, 'status' | 'required' | 'assigneeId'>, nodeRun: Pick<NodeRun, 'status'> | undefined,
-  instanceRunning: boolean, actorId: string): CompletionMode {
+export function completionMode(run: Pick<ActionRun, 'status' | 'required' | 'assigneeId'> & Partial<Pick<ActionRun, 'actionType'>>,
+  nodeRun: Pick<NodeRun, 'status'> | undefined, instanceRunning: boolean, actorId: string): CompletionMode {
   const state = actionState(run.status);
+  if (run.actionType === 'DATA_QUERY') return 'LOCKED';
   if (!instanceRunning || !nodeRun || run.assigneeId !== actorId || state === 'CANCELLED') return 'LOCKED';
   const open = nodeRun.status === 'ACTIVE' || (nodeRun.status === 'APPROVING' && !run.required);
   if (!open) return 'LOCKED';
@@ -271,6 +274,7 @@ export function submissionSummary(run: Pick<ActionRun, 'actionType' | 'output' |
     return [t('submission.files', { count: addresses.length }), failed ? t('submission.scanFailed', { count: failed }) : '',
       pending ? t('submission.scanPending', { count: pending }) : ''].filter(Boolean).join(' · ');
   }
+  if (run.actionType === 'DATA_QUERY') return outputsInline(run.output) || t('dataQuery.check.SATISFIED');
   const note = typeof run.output.note === 'string' ? run.output.note.trim() : '';
   return note ? t('submission.note', { note }) : t('submission.noNote');
 }

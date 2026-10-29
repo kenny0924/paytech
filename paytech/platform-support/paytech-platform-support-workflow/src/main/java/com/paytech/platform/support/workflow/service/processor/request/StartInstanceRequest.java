@@ -24,19 +24,20 @@ public class StartInstanceRequest {
     @NotBlank
     private final String session;
 
-    /** 定义 ID。 */
-    @NotNull
+    /** 定义编码；与 definitionId + versionNo 二选一，按编码发起时取当前发布版本。 */
+    private final String definitionCode;
+
+    /** 定义 ID；按编码发起时为 null。 */
     private final Long definitionId;
 
-    /** 页面读取时的当前发布版本号。 */
-    @NotNull
+    /** 页面读取时的当前发布版本号；按编码发起时为 null。 */
     private final Integer versionNo;
 
     /** 标题。 */
     @NotBlank
     private final String title;
 
-    /** 业务关联键；可空。 */
+    /** 业务关联键；可空。给出时同一定义下只允许一个 RUNNING 实例，重复发起返回已有实例。 */
     private final String businessKey;
 
     /** 启动值。 */

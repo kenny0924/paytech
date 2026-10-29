@@ -155,9 +155,6 @@ public enum WorkflowProblemCode implements CodeEnum {
     /** 动作引用的模板已停用。 */
     TEMPLATE_INACTIVE("TEMPLATE_INACTIVE"),
 
-    /** 动作引用了只预留未开放的 DATA_QUERY 模板。 */
-    TEMPLATE_RESERVED_TYPE("TEMPLATE_RESERVED_TYPE"),
-
     /** 动作没有默认执行人。 */
     EXECUTOR_MISSING("EXECUTOR_MISSING"),
 
@@ -219,7 +216,28 @@ public enum WorkflowProblemCode implements CodeEnum {
     FIELD_RULE_INVALID("FIELD_RULE_INVALID"),
 
     /** 动作模板配置与其类型的要求不符。 */
-    ACTION_CONFIG_INVALID("ACTION_CONFIG_INVALID");
+    ACTION_CONFIG_INVALID("ACTION_CONFIG_INVALID"),
+
+    /** DATA_QUERY 引用的 data-query 模板不存在。 */
+    DATA_QUERY_TEMPLATE_NOT_FOUND("DATA_QUERY_TEMPLATE_NOT_FOUND"),
+
+    /** DATA_QUERY 引用的 data-query 模板或其数据源不是 ACTIVE。 */
+    DATA_QUERY_TEMPLATE_INACTIVE("DATA_QUERY_TEMPLATE_INACTIVE"),
+
+    /** DATA_QUERY 列出的参数不在 data-query 模板的参数声明中。 */
+    DATA_QUERY_PARAMETER_UNDECLARED("DATA_QUERY_PARAMETER_UNDECLARED"),
+
+    /** data-query 模板的必填参数（无默认值）没有列入 DATA_QUERY 的参数。 */
+    DATA_QUERY_PARAMETER_MISSING("DATA_QUERY_PARAMETER_MISSING"),
+
+    /** data-query 模板声明了出参列，但 satisfied、missing 或某个 out_ 列不在声明中。 */
+    DATA_QUERY_OUTPUT_UNDECLARED("DATA_QUERY_OUTPUT_UNDECLARED"),
+
+    /** satisfied、missing 或某个 out_ 列在 data-query 模板中配置了屏蔽规则。 */
+    DATA_QUERY_OUTPUT_MASKED("DATA_QUERY_OUTPUT_MASKED"),
+
+    /** DATA_QUERY 的必填查询参数在节点动作 inputs 中没有映射取值。 */
+    DATA_QUERY_INPUT_MISSING("DATA_QUERY_INPUT_MISSING");
 
     private final String code;
 }

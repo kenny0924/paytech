@@ -3,6 +3,7 @@ package com.paytech.platform.support.workflow.auto.domain;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import com.paytech.platform.support.workflow.core.enums.InputMappingSource;
 import com.paytech.platform.support.workflow.core.enums.WorkflowProblemCode;
 import com.paytech.platform.support.workflow.domain.graph.InputMapping;
 import com.paytech.platform.support.workflow.domain.graph.WorkflowGraph;
+import com.paytech.platform.support.workflow.domain.validation.DataQueryTemplateFact;
 import com.paytech.platform.support.workflow.domain.validation.WorkflowGraphProblem;
 import com.paytech.platform.support.workflow.domainservice.validator.WorkflowGraphValidator;
 import com.paytech.platform.support.workflow.test.builder.PublicationInputBuilder;
@@ -27,6 +29,12 @@ import com.paytech.platform.support.workflow.test.checker.ProblemChecker;
 class WorkflowTaskValidationTest {
 
     private final WorkflowGraphValidator validator = new WorkflowGraphValidator();
+
+    /** 以给定的 CHANNEL_READY 事实校验；fact 为 null 表示 data-query 模板不存在。 */
+    private List<WorkflowGraphProblem> dataQuery(WorkflowGraph graph, DataQueryTemplateFact fact) {
+        return validator.validate(PublicationInputBuilder.of(graph).dataQueryTemplate(WorkflowFixtures.QUERY_CODE, fact)
+            .build());
+    }
 
     @Test
     void test_normalFlow() {
@@ -81,13 +89,31 @@ class WorkflowTaskValidationTest {
     void test_templateRules() {
         ProblemChecker.of(validate(single(task -> task.action("x", WorkflowFixtures.TPL_INACTIVE,
             WorkflowFixtures.EXECUTOR_A)))).exactly(WorkflowProblemCode.TEMPLATE_INACTIVE);
-        ProblemChecker.of(validate(single(task -> task.action("x", WorkflowFixtures.TPL_DATA_QUERY,
-            WorkflowFixtures.EXECUTOR_A)))).exactly(WorkflowProblemCode.TEMPLATE_RESERVED_TYPE);
         ProblemChecker.of(validate(single(task -> task.action("x", null, WorkflowFixtures.EXECUTOR_A))))
             .exactly(WorkflowProblemCode.TEMPLATE_NOT_FOUND);
         WorkflowGraph graph = single(task -> task.action("x", WorkflowFixtures.TPL_CONFIRM, WorkflowFixtures.EXECUTOR_A));
         ProblemChecker.of(validator.validate(PublicationInputBuilder.of(graph)
             .withoutTemplate(WorkflowFixtures.TPL_CONFIRM).build())).exactly(WorkflowProblemCode.TEMPLATE_NOT_FOUND);
+    }
+
+    /** DATA_QUERY 可发布；必填查询参数须映射，模板配置须与发布时读取的 data-query 模板事实一致（REQ-05 B7）。 */
+    @Test
+    void test_dataQueryRules() {
+        Map<String, InputMapping> mapped = Map.of("channelCode", new InputMapping(InputMappingSource.CONSTANT, "GEIDEA"));
+        WorkflowGraph graph = single(task -> task.actionWithInputs("q", WorkflowFixtures.TPL_DATA_QUERY, mapped));
+        ProblemChecker.of(validate(graph)).none();
+        ProblemChecker.of(validate(single(task -> task.action("q", WorkflowFixtures.TPL_DATA_QUERY,
+            WorkflowFixtures.EXECUTOR_A)))).item(WorkflowProblemCode.DATA_QUERY_INPUT_MISSING, "q")
+            .exactly(WorkflowProblemCode.DATA_QUERY_INPUT_MISSING);
+        ProblemChecker.of(dataQuery(graph, null)).exactly(WorkflowProblemCode.DATA_QUERY_TEMPLATE_NOT_FOUND);
+        ProblemChecker.of(dataQuery(graph, WorkflowFixtures.dataQueryTemplate(false, Map.of("channelCode", true),
+            Set.of(), Set.of()))).exactly(WorkflowProblemCode.DATA_QUERY_TEMPLATE_INACTIVE);
+        ProblemChecker.of(dataQuery(graph, WorkflowFixtures.dataQueryTemplate(true, Map.of("clientId", true),
+            Set.of(), Set.of()))).exactly(WorkflowProblemCode.DATA_QUERY_PARAMETER_UNDECLARED,
+                WorkflowProblemCode.DATA_QUERY_PARAMETER_MISSING);
+        ProblemChecker.of(dataQuery(graph, WorkflowFixtures.dataQueryTemplate(true, Map.of("channelCode", true),
+            Set.of("satisfied", "missing"), Set.of("missing"))))
+            .exactly(WorkflowProblemCode.DATA_QUERY_OUTPUT_UNDECLARED, WorkflowProblemCode.DATA_QUERY_OUTPUT_MASKED);
     }
 
     @Test

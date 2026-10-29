@@ -20,13 +20,13 @@ const items = [
   row('4', 'PAGE_TASK', 'MID 配置任务'), row('5', 'MANUAL_CONFIRM', '线下签约确认'), row('6', 'MANUAL_CONFIRM', '保证金到账确认', { status: 'INACTIVE' }),
 ];
 
-test('列表页签：全部 + 四类带数量；没有数据查询动作时不出现该页签', () => {
+test('列表页签：全部 + 五类带数量；数据查询没有动作时也出现（REQ-05 起可新建）', () => {
   assert.deepEqual(catalogTabs(items), [{ key: 'ALL', count: 6 }, { key: 'FORM', count: 2 }, { key: 'FILE_UPLOAD', count: 1 },
-    { key: 'PAGE_TASK', count: 1 }, { key: 'MANUAL_CONFIRM', count: 2 }]);
-  assert.deepEqual(catalogTabs([]).map(tab => tab.count), [0, 0, 0, 0, 0]);
+    { key: 'PAGE_TASK', count: 1 }, { key: 'MANUAL_CONFIRM', count: 2 }, { key: 'DATA_QUERY', count: 0 }]);
+  assert.deepEqual(catalogTabs([]).map(tab => tab.count), [0, 0, 0, 0, 0, 0]);
 });
 
-test('列表页签：已有数据查询动作时追加「数据查询」并计数', () => {
+test('列表页签：数据查询动作计入「数据查询」', () => {
   const tabs = catalogTabs([...items, row('7', 'DATA_QUERY', '历史查询')]);
   assert.deepEqual(tabs.at(-1), { key: 'DATA_QUERY', count: 1 });
   assert.equal(tabs[0].count, 7);
@@ -127,21 +127,21 @@ test('步骤：表单为字段设计、其他类型为说明；引用只在已�
   assert.deepEqual(editorSteps('MANUAL_CONFIRM', false).at(-1), { key: 'references', label: 'References' });
 });
 
-test('新建路由的类型：只接受四类可新建类型，数据查询与非法值回列表', () => {
+test('新建路由的类型：五类可新建（含数据查询），非法值回列表', () => {
   assert.deepEqual(creatableTypes.map(newTemplateType), creatableTypes);
-  assert.equal(newTemplateType('DATA_QUERY'), null);
+  assert.equal(newTemplateType('DATA_QUERY'), 'DATA_QUERY');
   assert.equal(newTemplateType('form'), null);
   assert.equal(newTemplateType(null), null);
 });
 
 // 后端 ActionConfigJsonReader / FormDefinitionJsonReader 的允许键（StrictJson.allowOnly）。
-const allowedKeys: Record<Exclude<ActionType, 'DATA_QUERY'>, string[]> = {
+const allowedKeys: Record<ActionType, string[]> = {
   FORM: ['fields'], FILE_UPLOAD: ['minFiles', 'maxFiles', 'mimeTypes', 'instruction', 'required'], PAGE_TASK: ['pageRoute', 'parameters', 'instruction'],
-  MANUAL_CONFIRM: ['instruction', 'noteRequired'],
+  MANUAL_CONFIRM: ['instruction', 'noteRequired'], DATA_QUERY: ['queryCode', 'parameters', 'outputs', 'descriptionKey', 'instruction'],
 };
 const fieldKeys = ['key', 'label', 'type', 'required', 'rules'];
 
-function assertAccepted(type: Exclude<ActionType, 'DATA_QUERY'>, config: ActionConfig) {
+function assertAccepted(type: ActionType, config: ActionConfig) {
   const root = config as unknown as Record<string, unknown>;
   for (const key of Object.keys(root)) assert.ok(allowedKeys[type].includes(key), `${type} 不允许 ${key}`);
   if (type === 'FORM') for (const field of (config as FormDefinition).fields) {
@@ -149,10 +149,17 @@ function assertAccepted(type: Exclude<ActionType, 'DATA_QUERY'>, config: ActionC
     if (field.rules) assert.deepEqual(Object.keys(field.rules), ['options']);
   }
   if (type === 'PAGE_TASK') for (const parameter of (root.parameters as Record<string, unknown>[])) assert.deepEqual(Object.keys(parameter).sort(), ['key', 'label']);
+  if (type === 'DATA_QUERY') {
+    assert.ok((root.parameters as unknown[]).every(item => typeof item === 'string'));
+    for (const output of root.outputs as Record<string, unknown>[]) {
+      for (const key of Object.keys(output)) assert.ok(['name', 'type', 'enumValues'].includes(key), `输出不允许 ${key}`);
+      if (output.type !== 'ENUM') assert.equal(output.enumValues, undefined);
+    }
+  }
 }
 
 test('各类型保存的配置只含后端读取器接受的键：表单只有键 / 名称 / 类型 / 必填 / 枚举选项，上传只有说明与至少一个', () => {
-  for (const type of creatableTypes) assertAccepted(type as Exclude<ActionType, 'DATA_QUERY'>, normalizeConfig(type, defaultConfig(type)));
+  for (const type of creatableTypes) assertAccepted(type, normalizeConfig(type, defaultConfig(type)));
   const form = normalizeConfig('FORM', { fields: [
     { key: 'name', label: '名称', type: 'TEXT', required: true, rules: { maxLength: 20 } },
     { key: 'level', label: '等级', type: 'ENUM', required: false, rules: { options: [{ value: 'A', label: 'A 级' }], maxLength: 3 } },

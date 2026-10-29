@@ -13,6 +13,7 @@ import com.paytech.platform.support.api.workflow.request.TerminateWorkflowInstan
 import com.paytech.platform.support.api.workflow.request.TransferWorkflowTaskRequestBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActivityListResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowAssigneeCandidateListResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowDataQueryCheckResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDefinitionSummaryBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowHandledTaskBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowInstanceDetailResponseBody;
@@ -22,6 +23,8 @@ import com.paytech.platform.support.api.workflow.response.WorkflowMutationRespon
 import com.paytech.platform.support.api.workflow.response.WorkflowSubmissionResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowTaskBody;
 import com.paytech.platform.support.ext.rest.audit.Audit;
+import com.paytech.platform.support.workflow.core.enums.DataQueryCheckTrigger;
+import com.paytech.platform.support.workflow.service.processor.CheckWorkflowDataQueryNowProcessor;
 import com.paytech.platform.support.workflow.service.processor.DecideWorkflowApprovalProcessor;
 import com.paytech.platform.support.workflow.service.processor.RetryWorkflowCallbackProcessor;
 import com.paytech.platform.support.workflow.service.processor.SearchWorkflowAssigneesProcessor;
@@ -31,11 +34,14 @@ import com.paytech.platform.support.workflow.service.processor.TerminateWorkflow
 import com.paytech.platform.support.workflow.service.processor.TransferWorkflowActionProcessor;
 import com.paytech.platform.support.workflow.service.processor.TransferWorkflowApprovalProcessor;
 import com.paytech.platform.support.workflow.service.processor.WorkflowQueryProcessor;
+import com.paytech.platform.support.workflow.service.processor.request.CheckDataQueryRequest;
 import com.paytech.platform.support.workflow.service.processor.request.RetryCallbackRequest;
 import com.paytech.platform.support.workflow.service.processor.request.SubmitActionRequest;
 import com.paytech.platform.support.workflow.service.processor.request.TerminateInstanceRequest;
 
 import lombok.AllArgsConstructor;
+
+import tools.jackson.databind.JsonNode;
 
 /** 工作流运行的协议适配器；规则、授权与事务委托 workflow 模块的 Processor。 */
 @RestController
@@ -53,6 +59,7 @@ public class WorkflowInstanceController implements WorkflowInstanceApi {
     private final TerminateWorkflowInstanceProcessor terminateProcessor;
     private final TransferWorkflowApprovalProcessor transferApprovalProcessor;
     private final SearchWorkflowAssigneesProcessor assigneeSearch;
+    private final CheckWorkflowDataQueryNowProcessor checkNowProcessor;
 
     /** 可发起流程。 */
     @Override
@@ -116,6 +123,16 @@ public class WorkflowInstanceController implements WorkflowInstanceApi {
         converter.object(request.getOutput(), "output");
         return converter.submission(submitProcessor.process(new SubmitActionRequest(actor, session,
             converter.id(actionRunId, "actionRunId"), request.getOutput())));
+    }
+
+    /** 立即检查 DATA_QUERY 动作。 */
+    @Audit(action = "OPERATIONS_WORKFLOW_ACTION_CHECK", resourceType = "WORKFLOW_ACTION_RUN",
+        resourceIdParameter = "actionRunId", fallbackResourceId = "WORKFLOW_ACTION_RUN")
+    @Override
+    public WorkflowDataQueryCheckResponseBody checkDataQuery(String actor, String session, String actionRunId,
+        JsonNode ignored) {
+        return checkNowProcessor.process(new CheckDataQueryRequest(converter.id(actionRunId, "actionRunId"),
+            DataQueryCheckTrigger.MANUAL, actor, session));
     }
 
     /** 转交动作。 */

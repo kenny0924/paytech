@@ -113,8 +113,11 @@ public abstract class WorkflowApiTestBase extends OperationsApiTestBase {
         List<StartWorkflowInstanceRequestBody.NodeApprovers> approvers,
         List<StartWorkflowInstanceRequestBody.ActionExecutor> executors) {
         int versionNo = ((Number) workflowData.definition(definitionId).get("current_version_no")).intValue();
+        int sequence = TITLES.incrementAndGet();
+        // 业务关联键逐次不同：同键 RUNNING 实例会被防重返回（REQ-05），防重场景由专门用例构造。
         return post(RUNTIME + "/instances", starter, new StartWorkflowInstanceRequestBody(Long.toString(definitionId),
-            versionNo, "实例 " + definitionId + "-" + TITLES.incrementAndGet(), "BK-" + definitionId, startValues, approvers, executors));
+            versionNo, "实例 " + definitionId + "-" + sequence, "BK-" + definitionId + "-" + sequence, startValues,
+            approvers, executors, null));
     }
 
     /** 以默认人员发起实例并返回 ID。 */

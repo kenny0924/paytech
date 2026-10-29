@@ -145,6 +145,7 @@ public class PersistenceConfiguration {
             com.paytech.platform.support.workflow.core.enums.WorkflowNodeType.class,
             com.paytech.platform.support.workflow.core.enums.NodeRunStatus.class,
             com.paytech.platform.support.workflow.core.enums.ActionRunStatus.class,
+            com.paytech.platform.support.workflow.core.enums.DataQueryCheckResult.class,
             com.paytech.platform.support.workflow.core.enums.VerificationResult.class,
             com.paytech.platform.support.workflow.core.enums.ApprovalStatus.class,
             com.paytech.platform.support.workflow.core.enums.TransferTargetType.class,

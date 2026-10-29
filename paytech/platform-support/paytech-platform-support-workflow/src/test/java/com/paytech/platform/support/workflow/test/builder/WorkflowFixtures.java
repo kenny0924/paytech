@@ -12,6 +12,8 @@ import com.paytech.platform.support.workflow.core.enums.WorkflowActionType;
 import com.paytech.platform.support.workflow.domain.action.ActionConfig;
 import com.paytech.platform.support.workflow.domain.action.ActionTemplateReference;
 import com.paytech.platform.support.workflow.domain.action.DataQueryActionConfig;
+import com.paytech.platform.support.workflow.domain.action.DataQueryOutput;
+import com.paytech.platform.support.workflow.domain.validation.DataQueryTemplateFact;
 import com.paytech.platform.support.workflow.domain.action.FileUploadActionConfig;
 import com.paytech.platform.support.workflow.domain.action.FormActionConfig;
 import com.paytech.platform.support.workflow.domain.action.ManualConfirmActionConfig;
@@ -60,8 +62,11 @@ public final class WorkflowFixtures {
     /** 已停用的人工确认模板。 */
     public static final long TPL_INACTIVE = 880000000000000205L;
 
-    /** 预留的数据查询模板。 */
+    /** 数据查询模板：引用 data-query 模板 CHANNEL_READY，参数 channelCode，输出 level（ENUM LOW / HIGH）。 */
     public static final long TPL_DATA_QUERY = 880000000000000206L;
+
+    /** 数据查询模板引用的 data-query 模板编码。 */
+    public static final String QUERY_CODE = "CHANNEL_READY";
 
     private WorkflowFixtures() {
     }
@@ -87,7 +92,32 @@ public final class WorkflowFixtures {
             TPL_INACTIVE, template(TPL_INACTIVE, WorkflowActionType.MANUAL_CONFIRM, ActionTemplateStatus.INACTIVE,
                 new ManualConfirmActionConfig(null, false)),
             TPL_DATA_QUERY, template(TPL_DATA_QUERY, WorkflowActionType.DATA_QUERY, ActionTemplateStatus.ACTIVE,
-                new DataQueryActionConfig("CHANNEL_READY", "{\"queryCode\":\"CHANNEL_READY\"}")));
+                new DataQueryActionConfig(QUERY_CODE, List.of("channelCode"),
+                    List.of(new DataQueryOutput("level", FormFieldType.ENUM, List.of("LOW", "HIGH"))), null, null)));
+    }
+
+    /**
+     * 数据查询模板所指 data-query 模板的事实：ACTIVE，必填参数 channelCode，声明 satisfied、missing、out_level，无屏蔽。
+     *
+     * @return 编码到事实
+     */
+    public static Map<String, DataQueryTemplateFact> dataQueryTemplates() {
+        return Map.of(QUERY_CODE, dataQueryTemplate(true, Map.of("channelCode", true),
+            Set.of("satisfied", "missing", "out_level"), Set.of()));
+    }
+
+    /**
+     * 构造 CHANNEL_READY 的事实。
+     *
+     * @param active 模板与数据源是否 ACTIVE
+     * @param parameters 参数名到是否必填
+     * @param declared 声明的列（小写）
+     * @param masked 屏蔽的列（小写）
+     * @return 事实
+     */
+    public static DataQueryTemplateFact dataQueryTemplate(boolean active, Map<String, Boolean> parameters,
+        Set<String> declared, Set<String> masked) {
+        return new DataQueryTemplateFact(QUERY_CODE, active, parameters, declared, masked);
     }
 
     /**

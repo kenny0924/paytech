@@ -1,5 +1,6 @@
 package com.paytech.platform.support.workflow.domainservice.process;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.LongSupplier;
@@ -16,13 +17,16 @@ import com.paytech.platform.support.workflow.core.enums.ActionRunStatus;
 import com.paytech.platform.support.workflow.core.enums.ApprovalDecision;
 import com.paytech.platform.support.workflow.core.enums.ApprovalMode;
 import com.paytech.platform.support.workflow.core.enums.ApprovalStatus;
+import com.paytech.platform.support.workflow.core.enums.DataQueryCheckResult;
 import com.paytech.platform.support.workflow.core.enums.NodeRunStatus;
 import com.paytech.platform.support.workflow.core.enums.NotificationTrigger;
 import com.paytech.platform.support.workflow.core.enums.TransferTargetType;
+import com.paytech.platform.support.workflow.core.enums.WorkflowActionType;
 import com.paytech.platform.support.workflow.core.enums.WorkflowInstanceStatus;
 import com.paytech.platform.support.workflow.domain.WorkflowInstanceContext;
 import com.paytech.platform.support.workflow.domain.attachment.AttachmentFact;
 import com.paytech.platform.support.workflow.domain.graph.WorkflowNode;
+import com.paytech.platform.support.workflow.domain.runtime.DataQueryCheckOutcome;
 import com.paytech.platform.support.workflow.domain.runtime.NavigationPlan;
 import com.paytech.platform.support.workflow.domain.runtime.NodeRunState;
 import com.paytech.platform.support.workflow.domain.variable.VariableDeclaration;
@@ -30,9 +34,10 @@ import com.paytech.platform.support.workflow.domain.variable.WorkflowVariables;
 import com.paytech.platform.support.workflow.domainservice.convert.WorkflowRuntimeJson;
 
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
- * 运行引擎（技术方案第 4 节）：在已加载的实例上下文上执行发起、完成动作、审批决定、转交与终止，
+ * 运行引擎（技术方案第 4 节）：在已加载的实例上下文上执行发起、完成动作、系统完成 DATA_QUERY、审批决定、转交与终止，
  * 结合 {@link WorkflowNavigator} 推进，并按规则登记通知回调。纯内存计算，不访问数据库或外部服务。
  *
  * <p>人员与状态前提不满足抛 {@link BizCheckFailException}；节点已进入审批后改必选动作、同意时必选动作未全部完成抛
@@ -100,6 +105,72 @@ public final class WorkflowRuntimeEngine {
         }
         finish(context, recorder);
         return errors;
+    }
+
+    /**
+     * 系统完成 DATA_QUERY 动作（REQ-05 R4）：查询已满足，写入规整后的输出（只含声明的输出），submitted_by 为空；
+     * 节点仍在执行中且必选动作全部完成时开放审批，没有审批人则直接放行，推进触发人为空。
+     * <li>调用方须在实例锁内、以本次加载的上下文确认动作版本未变；这里再要求动作仍待处理、节点未放行、实例运行中。</li>
+     *
+     * @param context 实例上下文
+     * @param actionRunId 动作运行
+     * @param outputs 规整后的输出
+     * @param ids ID 生成器
+     */
+    public void completeDataQuery(WorkflowInstanceContext context, long actionRunId, ObjectNode outputs,
+        LongSupplier ids) {
+        requireRunning(context);
+        WorkflowActionRun row = actionRun(context, actionRunId);
+        WorkflowNodeRun nodeRun = nodeRun(context, row.getNodeRunId());
+        if (!dataQueryCheckable(row, nodeRun)) {
+            throw new BizCheckFailException("动作已完成、已取消或节点已结束，不能完成系统检查：" + row.getActionKey());
+        }
+        row.setOutputJson(json.write(outputs));
+        row.setSubmittedBy(null);
+        row.setSubmittedTime(context.getNow());
+        row.setStatus(ActionRunStatus.COMPLETED);
+        recordDataQueryCheck(row, DataQueryCheckOutcome.satisfied(outputs), context.getNow());
+        context.getChange().updated(row);
+        RuntimeRecorder recorder = new RuntimeRecorder(context, ids);
+        if (nodeRun.getStatus() == NodeRunStatus.ACTIVE && missingRequired(context, nodeRun).isEmpty()) {
+            advanceAfterActions(context, nodeRun, recorder, null);
+        }
+        finish(context, recorder);
+    }
+
+    /**
+     * 在动作运行上记录一次 DATA_QUERY 检查：最近检查时间、结果与明细；查询成功执行（满足或未满足）时清零连续失败并刷新
+     * 最近成功时间，失败时连续失败加一。只改内存对象，保存由调用方按动作版本条件更新。
+     *
+     * @param row 动作运行
+     * @param outcome 检查结果
+     * @param now 本次时间
+     */
+    public void recordDataQueryCheck(WorkflowActionRun row, DataQueryCheckOutcome outcome, Instant now) {
+        row.setLastCheckTime(now);
+        row.setCheckResult(outcome.result());
+        row.setUpdateTime(now);
+        if (outcome.result() == DataQueryCheckResult.FAILED) {
+            row.setCheckDetail(outcome.failure().getCode());
+            row.setCheckFailureCount((row.getCheckFailureCount() == null ? 0 : row.getCheckFailureCount()) + 1);
+            return;
+        }
+        row.setCheckDetail(outcome.missing().isEmpty() ? null : String.join(",", outcome.missing()));
+        row.setCheckFailureCount(0);
+        row.setLastCheckSuccessTime(now);
+    }
+
+    /**
+     * DATA_QUERY 动作是否仍可检查：类型为 DATA_QUERY、待处理，且所属节点执行中或待审批。
+     *
+     * @param row 动作运行
+     * @param nodeRun 节点运行
+     * @return 可检查返回 true
+     */
+    public boolean dataQueryCheckable(WorkflowActionRun row, WorkflowNodeRun nodeRun) {
+        boolean open = nodeRun.getStatus() == NodeRunStatus.ACTIVE || nodeRun.getStatus() == NodeRunStatus.APPROVING;
+        return row.getActionType() == WorkflowActionType.DATA_QUERY && row.getStatus() == ActionRunStatus.PENDING
+            && open;
     }
 
     /**
@@ -317,10 +388,10 @@ public final class WorkflowRuntimeEngine {
      * @param context 实例上下文
      * @param nodeRun 节点运行
      * @param recorder 记录器
-     * @param actorId 提交人
+     * @param actorId 提交人；系统完成 DATA_QUERY 时为 null
      */
     void advanceAfterActions(WorkflowInstanceContext context, WorkflowNodeRun nodeRun, RuntimeRecorder recorder,
-        long actorId) {
+        Long actorId) {
         if (context.node(nodeRun.getNodeKey()).hasApprovers()) {
             recorder.setStatus(nodeRun, NodeRunStatus.APPROVING);
             recorder.createApprovals(nodeRun, actorId, NodeRunStatus.ACTIVE);

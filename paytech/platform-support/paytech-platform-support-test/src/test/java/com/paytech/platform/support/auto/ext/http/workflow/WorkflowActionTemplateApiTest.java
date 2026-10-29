@@ -130,7 +130,7 @@ class WorkflowActionTemplateApiTest extends WorkflowApiTestBase {
         publish(definitionId).assertOk();
         post(RUNTIME + "/instances", admin, new com.paytech.platform.support.api.workflow.request
             .StartWorkflowInstanceRequestBody(Long.toString(definitionId), 1, "实例", null, WorkflowGraphJson.empty(), null,
-                null)).assertOk();
+                null, null)).assertOk();
         put(TEMPLATES + "/" + id, admin, new UpdateWorkflowActionTemplateRequestBody("新名称", null,
             WorkflowGraphJson.confirmConfig(true), 1)).assertOk();
 

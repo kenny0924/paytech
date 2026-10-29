@@ -8,6 +8,8 @@ import com.paytech.platform.support.api.files.FileAddress;
 import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActivityBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowAttachmentBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowDataQueryCheckBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowDataQueryCheckResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDefinitionSummaryBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowInstanceDetailResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowInstanceSummaryBody;
@@ -24,6 +26,11 @@ import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowInstanc
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowNodeRun;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowTransfer;
 import com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowVerification;
+import com.paytech.platform.support.workflow.core.enums.ActionRunStatus;
+import com.paytech.platform.support.workflow.core.enums.DataQueryCheckResult;
+import com.paytech.platform.support.workflow.domain.WorkflowInstanceContext;
+import com.paytech.platform.support.workflow.domain.action.ActionTemplateReference;
+import com.paytech.platform.support.workflow.domain.action.DataQueryActionConfig;
 import com.paytech.platform.support.workflow.domain.attachment.AttachmentFact;
 import com.paytech.platform.support.workflow.domain.query.WorkflowTaskView;
 import com.paytech.platform.support.workflow.domain.runtime.CallbackTarget;
@@ -87,7 +94,7 @@ final class WorkflowResponseAssembler {
     WorkflowTaskBody task(WorkflowTaskView row) {
         return new WorkflowTaskBody(row.getTaskType(), id(row.getTaskId()), id(row.getInstanceId()),
             row.getInstanceTitle(), row.getNodeKey(), row.getRoundNo(), row.getActionKey(), row.getWaitingSince(), null,
-            null);
+            null, row.getActionType());
     }
 
     /** 节点运行；rejectOption 仅待审批 TASK 给出。 */
@@ -98,12 +105,50 @@ final class WorkflowResponseAssembler {
             option == null ? null : option.kind().getCode(), option == null ? List.of() : option.targetNodeKeys());
     }
 
-    /** 动作运行；templateName 取版本快照中冻结的名称。 */
-    WorkflowInstanceDetailResponseBody.ActionRunBody actionRun(WorkflowActionRun row, String templateName) {
+    /** 动作运行；templateName 取版本快照中冻结的名称，DATA_QUERY 另附检查块（template 为版本快照中的模板）。 */
+    WorkflowInstanceDetailResponseBody.ActionRunBody actionRun(WorkflowActionRun row, String templateName,
+        ActionTemplateReference template) {
         return new WorkflowInstanceDetailResponseBody.ActionRunBody(id(row.getActionRunId()), id(row.getNodeRunId()),
             row.getActionKey(), row.getActionType().getCode(), row.getRequired(), id(row.getAssigneeId()),
             row.getStatus().getCode(), tree(row.getOutputJson()), id(row.getSubmittedBy()), row.getSubmittedTime(),
-            templateName);
+            templateName, template != null && template.config() instanceof DataQueryActionConfig config
+                ? dataQueryCheck(row, config) : null);
+    }
+
+    /**
+     * DATA_QUERY 检查块：完成标准取版本快照配置，最近一次检查取动作运行的检查列。
+     *
+     * @param row 动作运行
+     * @param config 版本快照中的数据查询配置
+     * @return 检查块
+     */
+    WorkflowDataQueryCheckBody dataQueryCheck(WorkflowActionRun row, DataQueryActionConfig config) {
+        DataQueryCheckResult result = row.getCheckResult();
+        String detail = row.getCheckDetail();
+        List<String> missing = result == DataQueryCheckResult.UNSATISFIED && detail != null
+            ? List.of(detail.split(",")) : List.of();
+        return new WorkflowDataQueryCheckBody(config.queryCode(), config.descriptionKey(), config.instruction(),
+            result == null ? null : result.getCode(), missing, result == DataQueryCheckResult.FAILED ? detail : null,
+            row.getLastCheckTime(), row.getLastCheckSuccessTime(),
+            row.getCheckFailureCount() == null ? 0 : row.getCheckFailureCount(),
+            row.getStatus() == ActionRunStatus.PENDING && row.getLastCheckTime() == null);
+    }
+
+    /**
+     * 立即检查的响应：动作与实例的当前状态及检查块。
+     *
+     * @param context 检查后重新加载的上下文
+     * @param row 动作运行
+     * @param inProgress 是否因已有检查在进行而未执行查询
+     * @return 响应体
+     */
+    WorkflowDataQueryCheckResponseBody dataQueryCheckResponse(WorkflowInstanceContext context, WorkflowActionRun row,
+        boolean inProgress) {
+        ActionTemplateReference template = context.getTemplates().get(row.getActionTemplateId());
+        WorkflowDataQueryCheckBody check = template != null && template.config() instanceof DataQueryActionConfig config
+            ? dataQueryCheck(row, config) : null;
+        return new WorkflowDataQueryCheckResponseBody(id(row.getActionRunId()), row.getStatus().getCode(),
+            context.getInstance().getStatus().getCode(), inProgress, check);
     }
 
     /** 附件元数据。 */

@@ -352,14 +352,14 @@ class WorkflowInstanceApiTest extends WorkflowApiTestBase {
         long definitionId = published("ANY_FLOW", review("ANY"), WorkflowGraphJson.emptyForm());
 
         post(RUNTIME + "/instances", admin, new StartWorkflowInstanceRequestBody(Long.toString(definitionId), 2, "实例",
-            null, WorkflowGraphJson.empty(), null, null)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
+            null, WorkflowGraphJson.empty(), null, null, null)).assertProblem(400, CommonErrorCode.BUSINESS_CHECK_FAILED);
         assertStartFieldError(start(definitionId, admin, WorkflowGraphJson.values("unknown", "x"), null, null),
             "startValues.unknown", "未定义的字段");
         start(definitionId, admin, WorkflowGraphJson.empty(), null,
             List.of(new StartWorkflowInstanceRequestBody.ActionExecutor("missing", executor.actor()))).assertProblem(400,
                 CommonErrorCode.BUSINESS_CHECK_FAILED);
         post(RUNTIME + "/instances", admin, new StartWorkflowInstanceRequestBody("abc", 1, "实例", null,
-            WorkflowGraphJson.empty(), null, null)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
+            WorkflowGraphJson.empty(), null, null, null)).assertProblem(422, CommonErrorCode.VALIDATION_ERROR)
             .assertFieldError("definitionId");
 
         assertEquals(0, get(RUNTIME + "/instances?scope=ALL", admin).assertOk().json().path("total").asInt());

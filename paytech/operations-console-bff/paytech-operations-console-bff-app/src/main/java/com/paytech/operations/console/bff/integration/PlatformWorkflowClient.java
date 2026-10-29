@@ -14,12 +14,16 @@ import com.paytech.operations.console.bff.service.model.WorkflowModels.SubmitWor
 import com.paytech.operations.console.bff.service.model.WorkflowModels.TerminateWorkflowInstanceRequestBody;
 import com.paytech.operations.console.bff.service.model.WorkflowModels.TransferWorkflowTaskRequestBody;
 import com.paytech.operations.console.bff.service.model.WorkflowModels.UpdateWorkflowActionTemplateRequestBody;
+import com.paytech.operations.console.bff.service.model.WorkflowModels.ValidateWorkflowActionTemplateRequestBody;
 import com.paytech.platform.support.api.files.response.FileDownloadResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadCompletionResponseBody;
 import com.paytech.platform.support.api.files.response.FileUploadResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowActionTemplateValidationResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowActivityListResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowAssigneeCandidateListResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowDataQueryCheckResponseBody;
+import com.paytech.platform.support.api.workflow.response.WorkflowDataQueryTemplateBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDefinitionDetailResponseBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDefinitionSummaryBody;
 import com.paytech.platform.support.api.workflow.response.WorkflowDraftResponseBody;
@@ -53,6 +57,10 @@ public interface PlatformWorkflowClient {
     /** 新建动作模板。 */
     WorkflowMutationResponseBody createActionTemplate(OperatorContext context,
         CreateWorkflowActionTemplateRequestBody request);
+
+    /** 校验动作模板配置，不保存；返回逐项问题。 */
+    WorkflowActionTemplateValidationResponseBody validateActionTemplate(OperatorContext context,
+        ValidateWorkflowActionTemplateRequestBody request);
 
     /** 修改动作模板。 */
     WorkflowMutationResponseBody updateActionTemplate(OperatorContext context, String templateId,
@@ -126,6 +134,13 @@ public interface PlatformWorkflowClient {
     /** 签发实例附件的下载授权；disposition 可空，由 Platform 按 ATTACHMENT。 */
     FileDownloadResponseBody authorizeAttachmentDownload(OperatorContext context, String instanceId, String fileId,
         String disposition);
+
+    /** 立即检查 DATA_QUERY 动作；Platform 返回的 actionRunId 须与路径一致。 */
+    WorkflowDataQueryCheckResponseBody checkDataQuery(OperatorContext context, String actionRunId);
+
+    /** 动作目录选择启用中的 data-query 模板。 */
+    PagingResponseBody<WorkflowDataQueryTemplateBody> listDataQueryTemplates(OperatorContext context, String keyword,
+        Integer page, Integer size);
 
     /** 转交动作。 */
     WorkflowMutationResponseBody transferAction(OperatorContext context, String actionRunId,

@@ -31,10 +31,11 @@ import com.paytech.platform.support.workflow.domain.graph.WorkflowEdge;
 import com.paytech.platform.support.workflow.domain.graph.WorkflowGraph;
 import com.paytech.platform.support.workflow.domain.graph.WorkflowNode;
 import com.paytech.platform.support.workflow.domain.validation.WorkflowPublicationInput;
+import com.paytech.platform.support.workflow.domain.variable.VariableDeclaration;
 import com.paytech.platform.support.workflow.domainservice.convert.ActionConfigJsonReader;
 import com.paytech.platform.support.workflow.domainservice.convert.FormDefinitionJsonReader;
-import com.paytech.platform.support.workflow.domainservice.convert.WorkflowJsonFieldException;
 import com.paytech.platform.support.workflow.domainservice.convert.WorkflowGraphJsonReader;
+import com.paytech.platform.support.workflow.domainservice.convert.WorkflowJsonFieldException;
 import com.paytech.platform.support.workflow.domainservice.validator.WorkflowGraphValidator;
 import com.paytech.platform.support.workflow.test.builder.WorkflowFixtures;
 import com.paytech.platform.support.workflow.test.checker.ProblemChecker;
@@ -189,9 +190,16 @@ class WorkflowJsonReaderTest {
             WorkflowActionType.MANUAL_CONFIRM, "{\"instruction\": \"\", \"noteRequired\": true}");
         Assertions.assertTrue(confirm.noteRequired());
         DataQueryActionConfig query = (DataQueryActionConfig) configReader.read(WorkflowActionType.DATA_QUERY,
-            "{\"queryCode\": \"CHANNEL_READY\", \"parameters\": [], \"passRule\": {}, \"evidenceColumns\": []}");
+            "{\"queryCode\": \"CHANNEL_READY\", \"parameters\": [\"channelCode\"], \"outputs\": [{\"name\": \"level\","
+                + " \"type\": \"ENUM\", \"enumValues\": [\"LOW\", \"HIGH\"]}], \"descriptionKey\": \"workflow.x\"}");
         Assertions.assertEquals("CHANNEL_READY", query.queryCode());
-        Assertions.assertTrue(query.outputs("q").isEmpty());
+        Assertions.assertEquals(Set.of("channelCode"), query.inputKeys());
+        Assertions.assertEquals(List.of(new VariableDeclaration("q.level", FormFieldType.ENUM, List.of("LOW", "HIGH"))),
+            query.outputs("q"));
+        // 旧形状 passRule / evidenceColumns 不再接受（REQ-05 S-04）。
+        Assertions.assertEquals("config_json.passRule", Assertions.assertThrows(WorkflowJsonFieldException.class,
+            () -> configReader.read(WorkflowActionType.DATA_QUERY, "{\"queryCode\": \"A1\", \"passRule\": {}}"))
+            .getPath());
         Assertions.assertThrows(InvalidParameterException.class,
             () -> configReader.read(WorkflowActionType.MANUAL_CONFIRM, "{\"pageRoute\": \"/x\"}"));
         Assertions.assertThrows(InvalidParameterException.class,

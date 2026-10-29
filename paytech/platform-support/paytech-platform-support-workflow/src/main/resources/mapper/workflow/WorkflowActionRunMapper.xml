@@ -17,14 +17,19 @@
         output_json AS outputJson,
         submitted_by AS submittedBy,
         submitted_time AS submittedTime,
+        last_check_time AS lastCheckTime,
+        check_result AS checkResult,
+        check_detail AS checkDetail,
+        check_failure_count AS checkFailureCount,
+        last_check_success_time AS lastCheckSuccessTime,
         version,
         create_time AS createTime,
         update_time AS updateTime
     </sql>
 
     <insert id="insert">
-        INSERT INTO t_workflow_action_run (action_run_id, instance_id, node_run_id, action_key, action_template_id, action_type, required, assignee_id, status, output_json, submitted_by, submitted_time, version, create_time, update_time)
-        VALUES (#{row.actionRunId}, #{row.instanceId}, #{row.nodeRunId}, #{row.actionKey}, #{row.actionTemplateId}, #{row.actionType}, #{row.required}, #{row.assigneeId}, #{row.status}, #{row.outputJson}, #{row.submittedBy}, #{row.submittedTime}, #{row.version}, #{row.createTime}, #{row.updateTime})
+        INSERT INTO t_workflow_action_run (action_run_id, instance_id, node_run_id, action_key, action_template_id, action_type, required, assignee_id, status, output_json, submitted_by, submitted_time, last_check_time, check_result, check_detail, check_failure_count, last_check_success_time, version, create_time, update_time)
+        VALUES (#{row.actionRunId}, #{row.instanceId}, #{row.nodeRunId}, #{row.actionKey}, #{row.actionTemplateId}, #{row.actionType}, #{row.required}, #{row.assigneeId}, #{row.status}, #{row.outputJson}, #{row.submittedBy}, #{row.submittedTime}, #{row.lastCheckTime}, #{row.checkResult}, #{row.checkDetail}, IFNULL(#{row.checkFailureCount}, 0), #{row.lastCheckSuccessTime}, #{row.version}, #{row.createTime}, #{row.updateTime})
     </insert>
 
     <select id="selectById" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionRun">
@@ -35,9 +40,19 @@
         WHERE instance_id = #{instanceId} ORDER BY create_time, action_run_id</select>
 
     <update id="update">UPDATE t_workflow_action_run SET assignee_id = #{row.assigneeId}, status = #{row.status}, output_json = #{row.outputJson},
-        submitted_by = #{row.submittedBy}, submitted_time = #{row.submittedTime}, version = version + 1,
+        submitted_by = #{row.submittedBy}, submitted_time = #{row.submittedTime}, last_check_time = #{row.lastCheckTime},
+        check_result = #{row.checkResult}, check_detail = #{row.checkDetail}, check_failure_count = IFNULL(#{row.checkFailureCount}, 0),
+        last_check_success_time = #{row.lastCheckSuccessTime}, version = version + 1,
         update_time = #{row.updateTime}
         WHERE action_run_id = #{row.actionRunId} AND version = #{row.version}</update>
+
+    <!-- 定时重查：按实例分片取 PENDING 的 DATA_QUERY 动作，从未检查的优先，其余按最近检查时间先后；走 idx_workflow_action_check。 -->
+    <select id="selectDueDataQueryChecks" resultType="com.paytech.platform.support.workflow.core.dal.dataobject.WorkflowActionRun">
+        SELECT <include refid="columns"/> FROM t_workflow_action_run
+        WHERE action_type = 'DATA_QUERY' AND status = 'PENDING' AND MOD(instance_id, #{shardTotal}) = #{shardIndex}
+        AND (last_check_time IS NULL OR last_check_time &lt; #{checkedBefore})
+        ORDER BY last_check_time IS NOT NULL, last_check_time, action_run_id LIMIT #{limit}
+    </select>
 
     <!-- 输出为 {"files": [...]} 或 {"FILE 字段": [...]}，按文件地址只在第二层数组元素中精确匹配（地址只含 / 与数字，调用方仍按转义符 ! 转义 LIKE 通配符）；无索引，按动作运行量评估。 -->
     <select id="selectInstanceIdsReferencingFile" resultType="long">

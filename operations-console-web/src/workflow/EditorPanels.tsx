@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { Alert, Button, Dropdown, Empty, Input, Modal, Radio, Segmented, Select, Space, Switch, Tabs, Tag } from 'antd';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightOutlined, CloseOutlined, DownOutlined, EllipsisOutlined, FileTextOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons';
+import {
+  ArrowRightOutlined, CloseOutlined, DownOutlined, EllipsisOutlined, FileTextOutlined, PlusOutlined, RightOutlined, SafetyCertificateOutlined,
+} from '@ant-design/icons';
+import { criteriaText } from './dataQueryModel';
+import { dataQueryParameters } from './templateModel';
+import { enumLabel } from '../i18n/index';
 import { instructionLine } from './definitionModel';
 import {
   actionOutputs, changeOperator, changeVariable, clausesText, gatewayExits, keyPattern, nextKey, nodeOf, operatorsByType, renameNode, setDefaultExit,
@@ -13,7 +18,7 @@ import { actionTypeIcons, nodeTypeIcons } from './workflowIcons';
 import { actionTypeLabel, channelLabel, nodeTypeLabel, operatorLabel, operators as allOperators, recipientLabel, triggerLabel } from './workflowLabels';
 import { useT } from '../i18n/react';
 import type {
-  ActionTemplate, ActionType, ConditionClause, FormDefinition, GraphNode, NodeAction, NotificationChannel, NotificationRecipient, NotificationRule,
+  ActionTemplate, ActionType, ConditionClause, DataQueryConfig, FormDefinition, GraphNode, NodeAction, NotificationChannel, NotificationRecipient, NotificationRule,
   NotificationTrigger, PageTaskConfig, Problem, WorkflowGraph,
 } from './workflowTypes';
 import { Field, PersonSelect, workflowRoutes } from './WorkflowParts';
@@ -123,7 +128,7 @@ function ActionsEditor({ node, context }: { node: GraphNode; context: PanelConte
   const outputs = actions.flatMap(action => actionOutputs(action.key, context.templates.get(action.templateId)));
   const used = new Set(actions.map(action => action.templateId));
   const options = [
-    ...context.templateList.filter(item => item.status === 'ACTIVE' && item.actionType !== 'DATA_QUERY').map(item => ({
+    ...context.templateList.filter(item => item.status === 'ACTIVE').map(item => ({
       value: item.templateId, disabled: used.has(item.templateId), search: `${item.templateName} ${item.templateCode}`,
       label: <span className="wf-option-line"><span>{item.templateName}</span><span className="muted">{used.has(item.templateId) ? t('actions.added') : actionTypeLabel(item.actionType)}</span></span> })),
     ...(context.onRequestNewAction ? [{ value: NEW_ACTION, disabled: false, search: '',
@@ -151,6 +156,8 @@ function ActionsEditor({ node, context }: { node: GraphNode; context: PanelConte
     <div className="wf-hint-box">
       <div>{t('actions.requiredHint')}</div>
       <div>{t('actions.sameUser')}</div>
+      {actions.some(action => context.templates.get(action.templateId)?.actionType === 'DATA_QUERY') && <>
+        <div>{t('actions.dataQueryHint')}</div><div>{t('actions.dataQueryOutputsHint', { actionKey: t('config.actionKey'), outputName: t('dataQuery.outputNameArg') })}</div></>}
     </div>
     {outputs.length > 0 && <section className="wf-subtle"><div className="wf-field-label">{t('actions.outputs')}</div>
       {outputs.map(item => <div key={item.name}><code>{item.name}</code> · {item.label}</div>)}</section>}
@@ -164,10 +171,16 @@ function ActionCard({ node, action, context, dragging, onDragStart, onDragEnd, o
   onPatch: (value: Partial<NodeAction>) => void; onRemove: () => void; onRename: () => void;
 }) {
   const t = useT('workflow');
-  const [inputsOpen, setInputsOpen] = useState(false);
   const template = context.templates.get(action.templateId);
+  const dataQuery = template?.actionType === 'DATA_QUERY';
+  // 数据查询的参数与输出默认展开（原型 18）。
+  const [inputsToggle, setInputsOpen] = useState<boolean | null>(null);
+  const inputsOpen = inputsToggle ?? dataQuery;
   const problems = context.problems.filter(problem => problem.nodeKey === node.key && problem.itemKey === action.key);
-  const parameters = template?.actionType === 'PAGE_TASK' ? (template.config as PageTaskConfig | null)?.parameters ?? [] : [];
+  const parameters = template?.actionType === 'PAGE_TASK' ? (template.config as PageTaskConfig | null)?.parameters ?? []
+    : dataQuery ? dataQueryParameters(template.config as DataQueryConfig | null).map(key => ({ key, label: key })) : [];
+  const outputs = dataQuery ? actionOutputs(action.key, template) : [];
+  const criteria = dataQuery ? criteriaText(template.config as DataQueryConfig | null) : '';
   const mapped = parameters.filter(parameter => action.inputs?.[parameter.key]?.value).length;
   const variables = variableCatalog(context.graph, context.startForm, context.templates, node.key);
   const instruction = template ? instructionLine(template) : '';
@@ -186,11 +199,11 @@ function ActionCard({ node, action, context, dragging, onDragStart, onDragEnd, o
     <div className="wf-node-action-row">
       <Segmented size="small" value={action.required ? 'required' : 'optional'} disabled={context.readOnly}
         options={[{ value: 'required', label: t('actions.required') }, { value: 'optional', label: t('actions.optional') }]} onChange={value => onPatch({ required: value === 'required' })} />
-      <span className="muted">{t('actions.executor')}</span>
-      <PersonSelect value={action.executorId} people={context.people} disabled={context.readOnly} placeholder={t('actions.executorPlaceholder')}
+      <span className="muted">{dataQuery ? t('actions.follower') : t('actions.executor')}</span>
+      <PersonSelect value={action.executorId} people={context.people} disabled={context.readOnly} placeholder={dataQuery ? t('actions.followerPlaceholder') : t('actions.executorPlaceholder')}
         style={{ flex: 1, minWidth: 0 }} onChange={value => onPatch({ executorId: (value as string | undefined) || undefined })} />
     </div>
-    <button type="button" className="wf-collapse-toggle" onClick={() => setInputsOpen(value => !value)} disabled={!parameters.length}>
+    <button type="button" className="wf-collapse-toggle" onClick={() => setInputsOpen(!inputsOpen)} disabled={!parameters.length}>
       <span aria-hidden>{inputsOpen && parameters.length ? <DownOutlined /> : <RightOutlined />}</span> {t('actions.inputs')} <span className="muted">{parameters.length ? (mapped ? t('actions.inputCountMapped', { count: parameters.length, mapped }) : t('actions.inputCount', { count: parameters.length })) : t('actions.noInputs')}</span></button>
     {inputsOpen && parameters.length > 0 && <div className="wf-subtle wf-node-action-inputs">{parameters.map(parameter => {
       const mapping = action.inputs?.[parameter.key];
@@ -206,8 +219,12 @@ function ActionCard({ node, action, context, dragging, onDragStart, onDragEnd, o
             onChange={event => setInput(parameter.key, { source: 'CONSTANT', value: event.target.value })} />}
       </div>;
     })}</div>}
-    {instruction && <div className="wf-node-action-instruction muted" title={instruction}><FileTextOutlined /> {instruction}</div>}
-    {template?.actionType === 'DATA_QUERY' && <div className="wf-danger-text">{t('actions.dataQueryUnavailable')}</div>}
+    {dataQuery && <div className="wf-subtle wf-node-action-inputs">
+      <div className="wf-field-label">{t('actions.outputVariables')} <span className="muted">{outputs.length ? t('actions.outputVariableCount', { count: outputs.length }) : t('actions.noOutputVariables')}</span></div>
+      {outputs.map(item => <div key={item.name} className="wf-mapping-row"><code className="wf-mapping-label">{item.name}</code>←
+        <span className="wf-variable-chip"><code>out_{item.label}</code> · {enumLabel(t, 'dataQuery.outputTypeName', item.type)}</span></div>)}</div>}
+    {dataQuery ? <div className="wf-node-action-instruction muted" title={criteria}><SafetyCertificateOutlined /> {t('actions.systemCheckLine', { criteria })}</div>
+      : instruction && <div className="wf-node-action-instruction muted" title={instruction}><FileTextOutlined /> {instruction}</div>}
     {template && template.status !== 'ACTIVE' && <div className="wf-danger-text">{t('actions.inactive')}</div>}
     {problems.map((problem, current) => <div key={current} className="wf-warn-text">{problem.message}</div>)}
   </div>;

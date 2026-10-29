@@ -30,4 +30,7 @@ public final class QueryTemplateSummary {
 
     /** 当前版本的参数声明，按声明顺序；声明无法读取时为空列表。 */
     private final List<QueryParameterDeclaration> parameters;
+
+    /** 当前版本约束中的超时秒数；当前版本缺失时为 null。 */
+    private final Integer timeoutSeconds;
 }
