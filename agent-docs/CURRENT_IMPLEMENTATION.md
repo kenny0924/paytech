@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## risk-decision 承保记录（REQ-03，2026-10-29，已部署 mor-test，已本地提交）
+## risk-decision 承保记录（REQ-03，2026-10-29，已部署 mor-test，已本地提交 `9d272ae6`）
 
 - **范围：** [需求](<../requirements/20261029/risk-decision-承保记录/requirement.md>)、[技术方案](<../requirements/20261029/risk-decision-承保记录/technique.md>)、[交付记录](<../requirements/20261029/risk-decision-承保记录/delivery.md>)、[运行卡](<../requirements/20261029/risk-decision-承保记录/release/runbook.md>)；依据 [2026-10-28 客户上线决定](./decisions/2026-10-28-client-go-live-orchestration.md)（Proposed）。归属 risk-decision（非 compliance）。
 - **Implemented：** `mor_risk_decision` 新增 `t_client_underwriting`（每版本一行、进行中 / 生效两槽、冻结输入快照与来源坐标）、`t_underwriting_rule_version`、`t_underwriting_rule_threshold`（规则 v1、USD 50,000，排除清单空）；状态 DRAFT → SUBMITTED → APPROVED / DECLINED，修订使旧 APPROVED SUPERSEDED；自动承保（CRR LOW、流水 ≤ 币种阈值、MCC 非卡组织高风险且不在排除清单，8 项固定检查）为页面一键、按固定标准模板、来源 `AUTO_RULE`；HIGH 四眼（复核独立路由 + 复核人 ≠ 提交人）；估算敞口 = 月流水 × 风险天数 / 30（参考值）；保证金只记要求（执行归 REQ-18）；接口 `/risk-underwriting/v1` U1—U12（U1"全部"每 Client 最新版本、状态页签含旧版本），日志只记元数据；REQ-04 进程内读取 `ClientUnderwritingQueryService.findEffective`。ops-bff 承保工作台聚合（每次命令重取 compliance / client-master / Platform 输入）与转发；ops-web 风控 → 承保列表与承保页、客户详情 / 入驻审核入口；Platform 注册块 143（3 权限、菜单 + 2 按钮、12 路由）与 `console-resource-capabilities.json`；data-query 表级授权 + `MOR_RISK_DECISION_REPLICA` + `GOLIVE_UNDERWRITING_APPROVED`。角色组合：风控承保员 = `RISK_DECISION_CONFIG_READ` + `RISK_UNDERWRITING_READ` + `RISK_UNDERWRITING_MANAGE`，风控负责人再加 `RISK_UNDERWRITING_APPROVE`（"风控管理"目录由 `RISK_DECISION_CONFIG_READ` 控制）。

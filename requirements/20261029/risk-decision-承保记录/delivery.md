@@ -20,7 +20,7 @@
 | 2026-10-29 | 7 mor-test 发布 | 主会话按 release/runbook.md 执行（18:45—18:53Z）：备份 `~/Code-MoR-backups/rq03-20261029/mortest-20261029T184520Z`；预检同基线；mor_risk_decision 3 表 + 规则 v1 / USD 50,000；risk-decision `8934f65a`、ops-bff `4f08f1e6`、Platform `49f71011`、ops-web `2f7722da`（259 文件）均 healthy、无 ERROR（ops-bff 在 Platform 重启窗口内有预期的 DEPENDENCY_UNAVAILABLE）；块 143 休眠 619 → 激活 631；语言包 #23（发布请求 504，Platform 已完成，READY 且为当前）；表级 GRANT `mor_risk_decision.t_client_underwriting`；数据源 `MOR_RISK_DECISION_REPLICA` 与模板 `GOLIVE_UNDERWRITING_APPROVED` ACTIVE；不建常设角色。验收：accounts 12/12、prepare 20/20（批准 L 240686862329565184、H 241049829650845696）、api + check 全 PASS（自动承保 → 修订 → 作废、HIGH 四眼与本人复核 409、CRR 为空 MEDIUM、统计与列表口径与库一致、模板、日志不含 Client 名称）；浏览器走查 zh-CN / en × 1440 / 390 每组 33 步通过（132 张，[release/stage7-report-browser.md](./release/stage7-report-browser.md)，无写入）；菜单资源页识别承保菜单与两个按钮；已通知 design-discuss-24、design-discuss-19 | 已完成 |
 | 2026-10-29 | 后续待办 | 用户"可以"：登记承保建议策略为后续小需求（REQ-03b，未立项）：风控给出政策数值后，按 CRR × 交付方式配置建议观察期、T+N、保证金比例，承保页预填并提示偏离，自动承保套用建议值；登记于客户上线决定第 5 节 | 已登记 |
 | 2026-10-29 | 7 确认 / 8 授权 | 用户"提交"：授权提交（私有索引）；推送由用户执行 | 已确认 |
-| 2026-10-29 | 8 提交 | 工作树改动合入主树并提交（代码、SQL、PDManer、文档、验证与发布材料、本记录、CURRENT_IMPLEMENTATION、requirements/README、客户上线决定；不含本机库备份 `verification/stage5/backup/`、`.vite-cache` 与 node_modules 链接；`operations-console.pen` 混有其他会话改动未纳入，原型以 `prototypes/` PNG 为准） | 已完成 |
+| 2026-10-29 | 8 提交 | 提交 `9d272ae6`（父 `e3e0c12f`，544 个文件，私有索引）：工作树改动合入主树并提交（代码、SQL、PDManer、文档、验证与发布材料、本记录、CURRENT_IMPLEMENTATION、requirements/README、客户上线决定；不含本机库备份 `verification/stage5/backup/`、`.vite-cache` 与 node_modules 链接；`operations-console.pen` 混有其他会话改动未纳入，原型以 `prototypes/` PNG 为准） | 已完成 |
 
 ## 适用阶段
 
@@ -28,7 +28,7 @@
 
 ## 当前阶段与下一确认点
 
-阶段 1—8 已完成（2026-10-29）。mor-test 自 2026-10-29 18:46Z 运行 rq03-20261029a（risk-decision `8934f65a`、ops-bff `4f08f1e6`、Platform `49f71011`、ops-web `2f7722da`），mor_risk_decision 3 表 + 规则 v1 / USD 50,000，块 143 激活（631 路由），语言包 operations-console #23，data-query `MOR_RISK_DECISION_REPLICA` + `GOLIVE_UNDERWRITING_APPROVED`。推送由用户执行。验收数据：L、H 两个测试 Client 已 ACTIVE 并有承保记录、M 有拒绝记录、3 个 `RQ03_ACCEPTANCE_*` 账号。本机 e2e：risk-decision 为本需求构建（`*.pre-rq03`）；ops-bff 已由 tax 会话换为 REQ-03 + tax 合并构建（`*.pre-tax` = 本需求构建）；运营 Vite 18314；本机语言包 #15 / #16；3 个测试角色加了 `RISK_DECISION_CONFIG_READ`。遗留：O-1 规则数值待风控确认；REQ-03b 承保建议策略（待办）；platform-support-initial-data.sql 全新库第 7987 行中断（另行处理）；清单另缺 OPERATIONS_EXTERNAL_INTEGRATIONS 与风控测试候选两个按钮（与本需求无关）。
+阶段 1—8 已完成（2026-10-29），提交 `9d272ae6`。mor-test 自 2026-10-29 18:46Z 运行 rq03-20261029a（risk-decision `8934f65a`、ops-bff `4f08f1e6`、Platform `49f71011`、ops-web `2f7722da`），mor_risk_decision 3 表 + 规则 v1 / USD 50,000，块 143 激活（631 路由），语言包 operations-console #23，data-query `MOR_RISK_DECISION_REPLICA` + `GOLIVE_UNDERWRITING_APPROVED`。推送由用户执行。验收数据：L、H 两个测试 Client 已 ACTIVE 并有承保记录、M 有拒绝记录、3 个 `RQ03_ACCEPTANCE_*` 账号。本机 e2e：risk-decision 为本需求构建（`*.pre-rq03`）；ops-bff 已由 tax 会话换为 REQ-03 + tax 合并构建（`*.pre-tax` = 本需求构建）；运营 Vite 18314；本机语言包 #15 / #16；3 个测试角色加了 `RISK_DECISION_CONFIG_READ`。遗留：O-1 规则数值待风控确认；REQ-03b 承保建议策略（待办）；platform-support-initial-data.sql 全新库第 7987 行中断（另行处理）；清单另缺 OPERATIONS_EXTERNAL_INTEGRATIONS 与风控测试候选两个按钮（与本需求无关）。
 
 ## 阶段 4 实施记录（前端）
 
