@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## platform-support workflow 按钮发起与数据验证（REQ-05，2026-10-28—29，已部署 mor-test，已本地提交，未推送）
+## platform-support workflow 按钮发起与数据验证（REQ-05，2026-10-28—29，已部署 mor-test，已本地提交 `af972805`，未推送）
 
 - **范围：** [需求](<../requirements/20261028/platform-support-workflow按钮发起与数据验证/requirement.md>)、[技术方案](<../requirements/20261028/platform-support-workflow按钮发起与数据验证/technique.md>)、[交付记录](<../requirements/20261028/platform-support-workflow按钮发起与数据验证/delivery.md>)、[运行卡](<../requirements/20261028/platform-support-workflow按钮发起与数据验证/release/runbook.md>)；依据 [2026-10-28 客户上线决定](./decisions/2026-10-28-client-go-live-orchestration.md)（Proposed）。
 - **Implemented：** 按流程编码发起（`definitionCode` 与 `definitionId + versionNo` 二选一，同定义同 `business_key` 已有 RUNNING 实例时返回该实例 `created=false`；`t_workflow_instance.active_slot` + `uk_workflow_inst_active`、`business_key` 改 `utf8mb4_bin`）；`DATA_QUERY` 动作（引用 data-query 模板，参数映射、输出按声明类型写入 `<actionKey>.*` 变量；系统检查满足即系统完成并级联推进，提交人为空；不能人工完成）；检查状态存 `t_workflow_action_run` 5 列 + `idx_workflow_action_check`；首查经补偿事件 `WORKFLOW_DATA_QUERY_CHECK`，XXL `workflowDataQueryRecheck` 每 5 分钟重查（最小间隔 4 分钟），"立即检查" `POST /workflow/v1/action-runs/{id}/data-query-check`；模板选择 `GET /workflow-admin/v1/data-query-templates`（带 `versionNo` / `timeoutSeconds`）；配置校验 `POST /workflow-admin/v1/action-templates/validation`（只校验不保存，问题按 code + itemKey 定位；保存仍为 400 合并文案）；data-query 新增公开执行入口 `RunDataQueryTemplateProcessor`（core `ExecuteDataQueryProcessor` 委托之）；ops-bff 三条转发，工作流运行时读超时 9 秒；ops-web 动作目录、流程编辑器、我的待办、实例详情（原型 17—20）；注册块 142（3 路由，`platform-support-initial-data.sql` 末尾为 DISABLED，另有激活 / 回滚脚本）。增量 DDL `paytech/platform-support/docs/database/sql/changes/2026-10-29-workflow-data-query{,-rollback}.sql`。

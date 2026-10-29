@@ -19,7 +19,7 @@
 | 2026-10-29 | 6 确认 / 7 启动 | 用户"继续"：接受阶段 6；D-1 接受废弃 13 个旧 workflow key、D-2 验收编码沿用 REQ05_* / ACC_REQ05_*、D-3 保留 3 个 RUNNING 验收实例作演示；进入阶段 7（mor-test 按 release/runbook.md 执行，主会话执行） | 已确认 |
 | 2026-10-29 | 7 mor-test 发布 | 主会话按 release/runbook.md 执行（09:37—09:55Z）：备份 `Code-MoR-backups/wfdq-20261029/mortest-20261029T0937*`；预检同基线；前滚 DDL（3 槽位）；Platform `76717246`、ops-bff `6833f484`、ops-web `96992aba`（wfdq-20261029a）均 healthy 无 ERROR；注册块 142 休眠 616 → 激活 619；XXL 任务 27（每 5 分钟，09:50 / 09:55 自动执行 200）；ops 语言包 #21（发布请求 504，Platform 已完成，READY 且为当前）；GOLIVE_* 3 模板、4 动作模板、`ACC_REQ05_GOLIVE_COMMERCIAL` 发布。验收 setup 10/10、check 4/4、scenario 14/14、recheck 3/3（XXL 09:50 / 09:55 两轮 200）；浏览器走查 zh-CN / en × 1440 / 390 共 62 张通过（[release/stage7-report-browser.md](./release/stage7-report-browser.md)），mor-test 写入仅 1 次立即检查；接口 ≥400 与控制台错误 0；已通知 code-mor-2d、design-discuss-24 | 已完成 |
 | 2026-10-29 | 7 确认 / 8 授权 | 用户"按建议，进入阶段 8，提交"：授权提交（私有索引，不推送）；保留 3 个 RUNNING 验收实例（D-3） | 已确认 |
-| 2026-10-29 | 8 提交 | 工作树改动合入主树并提交（代码、SQL、注册块 142、验证与发布材料、本记录、CURRENT_IMPLEMENTATION）；未推送 | 已完成 |
+| 2026-10-29 | 8 提交 | 提交 `af972805`（父 `8d24df8a`，385 个文件，私有索引；`operations-console.pen` 混有其他会话改动未纳入，原型以 `prototypes/` PNG 为准）：工作树改动合入主树（代码、SQL、注册块 142、验证与发布材料、本记录、CURRENT_IMPLEMENTATION、requirements/README、客户上线决定补注）；未推送 | 已完成 |
 
 ## 适用阶段
 
@@ -27,7 +27,7 @@
 
 ## 当前阶段与下一确认点
 
-阶段 1—8 已完成（2026-10-29）。mor-test 自 2026-10-29 09:42Z 运行 `wfdq-20261029a`（Platform `76717246`、ops-bff `6833f484`、ops-web `96992aba`），注册块 142、XXL 任务 27、ops 语言包 #21；保留 3 个 RUNNING 验收实例作演示。推送另行授权。本机 e2e 保留新 Platform / ops-bff / card JAR（`*.pre-wfdq` 可回滚，card 与 Platform 须一起回滚）与 18311 wfdq Vite。范围外发现：活动记录"已完成 drafted / active / collection"显示动作结果原值未翻译（小问题，后续顺手改）；对账渠道明细页 en 390 横向滚动 27px（既有）。
+阶段 1—8 已完成（2026-10-29），提交 `af972805`（未推送）。mor-test 自 2026-10-29 09:42Z 运行 `wfdq-20261029a`（Platform `76717246`、ops-bff `6833f484`、ops-web `96992aba`），注册块 142、XXL 任务 27、ops 语言包 #21；保留 3 个 RUNNING 验收实例作演示。推送另行授权。本机 e2e 保留新 Platform / ops-bff / card JAR（`*.pre-wfdq` 可回滚，card 与 Platform 须一起回滚）与 18311 wfdq Vite。范围外发现：活动记录"已完成 drafted / active / collection"显示动作结果原值未翻译（小问题，后续顺手改）；对账渠道明细页 en 390 横向滚动 27px（既有）。
 
 ## 阶段 4 实施记录（前端，T10 operations-console-web，2026-10-29）
 
