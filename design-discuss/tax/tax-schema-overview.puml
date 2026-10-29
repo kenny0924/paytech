@@ -1,0 +1,101 @@
+@startuml tax-schema-overview
+!pragma layout smetana
+hide methods
+hide circle
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam nodesep 42
+skinparam ranksep 80
+skinparam ArrowColor #64748B
+skinparam ArrowFontColor #475569
+skinparam ArrowFontSize 10
+skinparam classBorderColor #64748B
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam classFontColor #0F172A
+skinparam legendBackgroundColor #F8FAFC
+skinparam legendBorderColor #CBD5E1
+
+top to bottom direction
+hide empty members
+title Tax 表结构 UML · 19表关系总览（主关联）
+class "t_tax_category\n税务产品分类" as category <<table>> #E6F4F1 {
+}
+class "t_tax_market\n主体市场准入" as market <<table>> #E6F4F1 {
+}
+class "t_tax_registration\n法定税务注册" as registration <<table>> #E6F4F1 {
+}
+class "t_tax_policy\n地区规则包" as policy <<table>> #E6F4F1 {
+}
+class "t_tax_calculation\n不可变税务计算" as calculation <<table>> #E8F0FE {
+}
+class "t_tax_calculation_line\n计算商品行" as calculation_line <<table>> #E8F0FE {
+}
+class "t_tax_calculation_component\n计算税组件" as calculation_component <<table>> #E8F0FE {
+}
+class "t_tax_evidence\n税务证据" as evidence <<table>> #E8F0FE {
+}
+class "t_tax_transaction\n正式税务交易" as transaction <<table>> #FFF3E0 {
+}
+class "t_tax_reporting_entry\n申报底稿" as reporting_entry <<table>> #FFF3E0 {
+}
+class "t_tax_document\n法定单据" as document <<table>> #FFF3E0 {
+}
+class "t_tax_document_sequence\n单据号码序列" as document_sequence <<table>> #FFF3E0 {
+}
+class "t_tax_period\n稳定申报期间" as period <<table>> #F0EAFE {
+}
+class "t_tax_return\n申报版本" as return <<table>> #F0EAFE {
+}
+class "t_tax_return_item\n申报栏目明细" as return_item <<table>> #F0EAFE {
+}
+class "t_tax_payment\n缴款与税局退税" as payment <<table>> #E8F5E9 {
+}
+class "t_tax_payment_allocation\n付款期间分配" as payment_allocation <<table>> #E8F5E9 {
+}
+class "t_tax_payment_event\n付款证据事件" as payment_event <<table>> #E8F5E9 {
+}
+class "t_tax_credit_application\n抵税额跨期转用" as credit_application <<table>> #E8F5E9 {
+}
+registration "0..1" -- "0..*" market : registration_id
+policy "0..1" -- "0..*" market : policy_id
+calculation "1" -- "0..*" calculation_line : calculation_id
+category "1" -- "0..*" calculation_line : category_code
+calculation_line "1" -- "0..*" calculation_component : line_id
+market "1" -- "0..*" calculation_component : market_id
+policy "1" -- "0..*" calculation_component : policy_id
+calculation "1" -- "0..*" evidence : calculation_id
+calculation "1" -- "0..1" transaction : calculation_id
+transaction "1" -- "0..*" reporting_entry : transaction_id
+period "1" -- "0..*" reporting_entry : period_id
+transaction "1" -- "0..*" document : transaction_id
+document_sequence "1" -- "0..*" document : issuer_party_id + series_code
+registration "1" -- "0..*" period : registration_id
+period "1" -- "0..*" return : period_id
+return "1" -- "0..*" return_item : return_id
+reporting_entry "1" -- "0..*" return_item : reporting_entry_id
+registration "1" -- "0..*" payment : registration_id
+payment "1" -- "0..*" payment_allocation : payment_id
+period "1" -- "0..*" payment_allocation : period_id
+payment "1" -- "0..*" payment_event : payment_id
+period "1" -- "0..*" credit_application : source_period_id
+period "1" -- "0..*" credit_application : target_period_id
+legend left
+  2026-10-29 · 讨论稿 · 来源 database.md；是逻辑模型投影，不是已实施 DDL。
+  实线 = 本库逻辑关联；1 / 0..1 / 0..* 为基数，不创建 FOREIGN KEY 或 CHECK。
+  Money / Quantity = DECIMAL(24,8)；Rate = DECIMAL(18,10)；FxRate = DECIMAL(24,12)。
+  Currency = CHAR(3)；Instant = UTC DATETIME(6)；Date = DATE。
+  Code / String / BusinessRef / PartyId / ClientId / Integer 是逻辑类型，未补造物理长度。
+  所有表有 id、created_at；可变工作状态表另有 updated_at（共同约定，图中不逐表推定）。
+  UQ 为唯一键；未标可空条件不等于 NOT NULL。完整条件与枚举仍见 database.md。
+  calculation 的行/组件按持久化草稿允许0条；READY 时必须满足完整性校验。
+  市场的规则/注册、单据的注册按状态适用；需要收税时注册不得缺失。
+  税务组件关联的是实际命中的规则；地区/币种引用 Platform 开放目录。
+  所有外部 Owner 的身份/快照/文件/银行引用只作为属性，不建立跨库关联。
+  审计列沿用讨论稿 created_at/updated_at；正式落模须对齐项目 create_time/update_time。
+endlegend
+
+@enduml

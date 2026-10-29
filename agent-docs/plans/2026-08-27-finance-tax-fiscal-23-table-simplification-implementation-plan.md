@@ -1,5 +1,7 @@
 # Finance Tax And Fiscal 23-Table Simplification Implementation Plan
 
+> **2026-10-29 历史记录：** 本计划的 Tax/Fiscal 23 表模型已由 [2026-10-29 tax 决定](../decisions/2026-10-29-tax-domain-fact-service.md)取代，不再作为 tax 模型依据。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 将 Finance Tax/Fiscal 主表从 27 张精简到 23 张，用版本行自身表达税务规则和税务申报的身份、版本与固定 Maker-Checker 结果，同时保留完整算税、财政凭证、申报、更正和缴税证据链。

@@ -51,6 +51,8 @@
 | [billing 决定](./2026-10-19-billing-fact-engine.md)第 4 条事实类型清单、DISPUTE 事实含渠道应付的口径 | 增加 `CHANNEL_BATCH_RECONCILED`（含组件 `CHANNEL_BATCH_ADJUSTMENT`）、`RECON_ADJUSTMENT`、`BANK_SUSPENSE`、`CHARGEBACK_DEBIT`、`CHARGEBACK_REVERSAL`；DISPUTE 只做 Client 侧结转（第 3、6–8 条）；引用类型增加 `CHANNEL_TRANSACTION_REF`、`RECON_RESOLUTION` |
 | `PaymentSucceeded` Payload v2 的渠道引用字段 | 补 `channelTransactionRefId`、`referenceType`（第 5 条），Schema 版本随实现递增。**修订（2026-10-23，需求 B Q16）：** 已实现为 v2 末尾追加两个可空字段 `channelTransactionRefId`、`channelReferenceType`，`schemaVersion` 保持 2（与 card BIN 追加字段做法一致，消费方按字段名读取）；"随实现递增"只适用于非兼容变更 |
 
+**2026-10-29 补充（[tax 决定](./2026-10-29-tax-domain-fact-service.md)第 11 条）：** tax 新增 `TaxPaymentFailed`，与 payout 的 `PayoutExecutionFailed` 对称，用于取消缴税的预期银行流水（切片 3）。
+
 ## 4. 已知代价
 
 - billing 新增 5 种事实类型、2 种引用类型、引用行 2 列，ledger 规则包相应增加映射（含归类码与若干新科目）。

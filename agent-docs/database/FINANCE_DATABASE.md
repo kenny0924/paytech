@@ -197,6 +197,8 @@ Assets + Expenses = Liabilities + Equity + Revenue
 
 ### 4.2 税务、交易经济与 Channel Cost
 
+> **2026-10-29 tax 取代：** 本节的税务内容（Tax/Fiscal 23 表、Tax Snapshot、Liability Summary、税务期间 / 申报 / 缴款状态机）由 [2026-10-29 tax 决定](../decisions/2026-10-29-tax-domain-fact-service.md)与 [design-discuss/tax](../../design-discuss/tax/database.md) 的 19 张表取代；§6.3 共享 `BANK_CASH` 现金门禁的原则保留，执行方为 account。
+>
 > **2026-10-19 取代：** 本节的 V5 Scope 口径与 `t_transaction_economics*` 命名，由 [billing 计费事实决定](../decisions/2026-10-19-billing-fact-engine.md) 与其详细设计取代：计费事实为 billing 的 `t_billing_fact*` 五表，渠道成本方案 / 版本 / 范围 / 组件四表归 channel-connector。本节的费用公式继续成立：百分比加固定费、退款按比例冲回、固定费不退、服务费不按残差、预估成本不默认为 0。
 >
 > **2026-10-20 计费事实作废（[需求](../../requirements/20261020/finance-人工调整与计费事实/requirement.md) Q3）：** `t_billing_fact.status` 取值为 `DRAFT`、`APPROVED`、`SUPERSEDED`、`VOIDED`。`VOIDED` 只由 `DRAFT` 条件更新得到（人工登记填错的草稿），不发布 `BillingFactRecorded`、不入账、不能再批准；已作废再作废直接返回。表结构不变，只更新列注释。登记、批准与作废的操作人取自 Gateway 的 `X-Gateway-Actor-Subject`，复核人不能是制单人。
@@ -265,6 +267,8 @@ Finance 的收入、Client Fee、Channel Cost、Partner Share 和逐笔利润分
 税务匹配固定按“有效 Registration → Place of Supply → Category Mapping → Treatment → Rule Version → Rate → Evidence → Exchange Rate”执行。多个规则同时命中时使用版本内唯一 `priority`；没有完整证据或唯一规则时拒绝生成 Tax Snapshot，禁止默认为零税率。`source_order_item_id` 使用 Commerce 在请求前生成的稳定 Snowflake Item ID，Order 级税项为空；`source_line_ref` 始终非空。`line_key` 由来源行、税种、辖区、Registration、Rule/Rate/Treatment 与责任模式规范化计算，防止同一语义税行通过不同 `line_no` 重复生成。FIN-I17 向 Commerce 只返回 `tax_snapshot_id + calculation_hash`、实收/反向税汇总、币种和按 `source_order_item_id` 汇总的实收 `line_tax_amount`；完整 Tax Line 留在 Finance，后续 Payment、Refund 和 Fiscal Record 必须引用同一事实链。
 
 ### 3.5 FIN-I17 与 FIN-I22 不可变 Tax Snapshot 查询
+
+> **2026-10-29 tax 取代：** 本节的税务内容（Tax/Fiscal 23 表、Tax Snapshot、Liability Summary、税务期间 / 申报 / 缴款状态机）由 [2026-10-29 tax 决定](../decisions/2026-10-29-tax-domain-fact-service.md)与 [design-discuss/tax](../../design-discuss/tax/database.md) 的 19 张表取代；§6.3 共享 `BANK_CASH` 现金门禁的原则保留，执行方为 account。
 
 FIN-I17 按预分配 `order_id/order_item_id` 与冻结交易输入幂等生成 Tax Snapshot。响应固定为 `tax_snapshot_id`、`calculation_hash`、`total_collected_tax`、`total_reverse_charge_tax`、`currency` 及每个 `source_order_item_id` 的实收 `line_tax_amount`；同一请求 Hash 必须返回同一 Snapshot，Hash 不同冲突。Commerce 只持久化该最小结果，普通 Checkout 不读取 Finance 明细。
 
@@ -750,6 +754,8 @@ CREATED、RUNNING、PENDING_CHECK、APPROVED 时 `active_slot=1`；FAILED、COMP
 
 ### 6.7 税务期间与申报
 
+> **2026-10-29 tax 取代：** 本节的税务内容（Tax/Fiscal 23 表、Tax Snapshot、Liability Summary、税务期间 / 申报 / 缴款状态机）由 [2026-10-29 tax 决定](../decisions/2026-10-29-tax-domain-fact-service.md)与 [design-discuss/tax](../../design-discuss/tax/database.md) 的 19 张表取代；§6.3 共享 `BANK_CASH` 现金门禁的原则保留，执行方为 account。
+
 ```mermaid
 stateDiagram-v2
     [*] --> OPEN
@@ -763,6 +769,8 @@ stateDiagram-v2
 `tax_period` 只有在覆盖范围内 Fiscal Record 完整、Liability Summary Hash 固定且对应精确 Tax Return 版本通过双人审批后才可 FILED。申报的 DRAFT/PENDING_APPROVAL/APPROVED/FILED/ACCEPTED/REJECTED/AMENDMENT_REQUIRED/CLOSED 生命周期由 `tax_return` 承担，付款的执行状态由 `tax_payment` 承担，不塞进 Tax Period。DRAFT 的 `content_hash` 和 Checker Tuple 为空；离开 DRAFT 后申报金额等被审批业务内容及其 Line 冻结，文件、提交时间、回执和状态只可按 Sidecar 矩阵和应用状态机继续补齐。首版 `return_ver=1` 且 `amends_return_id` 为空；更正追加同 `return_no` 的更高版本并引用此前已提交版本，应用事务校验同业务编号、合法前驱和无长环。不存在 Return Root、Current Pointer 或独立 Approval 行。
 
 ### 6.8 Tax Payment
+
+> **2026-10-29 tax 取代：** 本节的税务内容（Tax/Fiscal 23 表、Tax Snapshot、Liability Summary、税务期间 / 申报 / 缴款状态机）由 [2026-10-29 tax 决定](../decisions/2026-10-29-tax-domain-fact-service.md)与 [design-discuss/tax](../../design-discuss/tax/database.md) 的 19 张表取代；§6.3 共享 `BANK_CASH` 现金门禁的原则保留，执行方为 account。
 
 ```mermaid
 stateDiagram-v2

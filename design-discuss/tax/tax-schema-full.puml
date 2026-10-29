@@ -1,0 +1,527 @@
+@startuml tax-schema-full
+!pragma layout smetana
+hide methods
+hide circle
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam nodesep 42
+skinparam ranksep 80
+skinparam ArrowColor #64748B
+skinparam ArrowFontColor #475569
+skinparam ArrowFontSize 10
+skinparam classBorderColor #64748B
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam classFontColor #0F172A
+skinparam legendBackgroundColor #F8FAFC
+skinparam legendBorderColor #CBD5E1
+
+left to right direction
+caption Tax 表结构 UML · 完整字段与逻辑关联
+class "t_tax_category\n税务产品分类" as category <<table>> #E6F4F1 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} category_code : VARCHAR(64)
+  {field} name : String
+  {field} description : String
+  {field} status : Code
+  -- 唯一键 --
+  {field} UQ1: category_code
+}
+class "t_tax_market\n主体市场准入" as market <<table>> #E6F4F1 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} subject_party_id : PartyId
+  {field} jurisdiction_code : Code
+  {field} tax_type : Code
+  {field} scheme_code : Code
+  {field} assessment_no : String
+  {field} revision : Integer
+  {field} valid_from : Date
+  {field} valid_to : Date
+  {field} obligation : Code
+  {field} collection_status : Code
+  {field} managed_by : Code
+  {field} registration_id : BIGINT
+  {field} policy_id : BIGINT
+  {field} assessment_file_address : FileAddress
+  {field} evidence_digest : SHA256
+  {field} assessed_at : Instant
+  {field} approved_by : BusinessRef
+  {field} approved_at : Instant
+  {field} threshold_currency : Currency
+  {field} threshold_amount : Money
+  {field} observed_turnover : Money
+  {field} turnover_as_of : AsOf [TBD]
+  {field} review_due_at : Instant
+  -- 唯一键 --
+  {field} UQ1: assessment_no, revision
+}
+class "t_tax_registration\n法定税务注册" as registration <<table>> #E6F4F1 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} subject_party_id : PartyId
+  {field} jurisdiction_code : Code
+  {field} authority_code : Code
+  {field} tax_type : Code
+  {field} scheme_code : Code
+  {field} registration_no_ref : BusinessRef
+  {field} registration_file_address : FileAddress
+  {field} effective_from : Date
+  {field} effective_to : Date
+  {field} status : Code
+  {field} reporting_currency : Currency
+  {field} legal_timezone : String
+  {field} filing_frequency : Code
+  {field} filing_calendar_code : Code
+  {field} payment_instruction_ref : BusinessRef
+  -- 唯一键 --
+  {field} UQ1: subject_party_id, authority_code, registration_no_ref, tax_type,
+  {field}      scheme_code
+}
+class "t_tax_policy\n地区规则包" as policy <<table>> #E6F4F1 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} package_code : Code
+  {field} revision : Integer
+  {field} jurisdiction_code : Code
+  {field} tax_type : Code
+  {field} scheme_code : Code
+  {field} effective_from : Date
+  {field} effective_to : Date
+  {field} schema_version : Integer
+  {field} status : Code
+  {field} policy_json : JSON
+  {field} source_refs_json : JSON
+  {field} approved_by : BusinessRef
+  {field} approved_at : Instant
+  -- 唯一键 --
+  {field} UQ1: package_code, revision
+}
+class "t_tax_calculation\n不可变税务计算" as calculation <<table>> #E8F0FE {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} source_system : Code
+  {field} source_object_type : Code
+  {field} source_object_id : BusinessRef
+  {field} source_revision : String
+  {field} tax_scope_key : String
+  {field} supply_kind : Code
+  {field} business_mode : Code
+  {field} seller_party_id : PartyId
+  {field} buyer_party_id : PartyId
+  {field} buyer_client_id : ClientId
+  {field} customer_no : BusinessRef
+  {field} buyer_snapshot_ref : BusinessRef
+  {field} tax_subject_party_id : PartyId
+  {field} acquiring_entity_no : CHAR(5)
+  {field} book_subject_ref : BusinessRef
+  {field} agreement_ref : BusinessRef
+  {field} seller_establishment_country : String
+  {field} establishment_context_ref : BusinessRef
+  {field} currency : Currency
+  {field} tax_point_date : Date
+  {field} tax_point_basis : Code
+  {field} calculated_at : Instant
+  {field} expires_at : Instant
+  {field} status : Code
+  {field} tax_amount_source : Code
+  {field} block_reasons_json : JSON
+  {field} net_amount : Money
+  {field} charged_tax_amount : Money
+  {field} gross_amount : Money
+  {field} self_assessed_tax_amount : Money
+  {field} original_transaction_id : BIGINT
+}
+class "t_tax_calculation_line\n计算商品行" as calculation_line <<table>> #E8F0FE {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} calculation_id : BIGINT
+  {field} source_line_ref : BusinessRef
+  {field} line_no : Integer
+  {field} category_code : Code
+  {field} description : String
+  {field} quantity : Quantity
+  {field} unit_price : Money
+  {field} refund_basis_amount : Money
+  {field} service_period_from : Date
+  {field} service_period_to : Date
+  {field} supply_date : Date
+  {field} price_mode : Code
+  {field} discount_amount : Money
+  {field} net_amount : Money
+  {field} charged_tax_amount : Money
+  {field} gross_amount : Money
+  {field} self_assessed_tax_amount : Money
+  {field} rounding_delta : Money
+  {field} original_line_id : BIGINT
+  -- 唯一键 --
+  {field} UQ1: calculation_id, line_no
+}
+class "t_tax_calculation_component\n计算税组件" as calculation_component <<table>> #E8F0FE {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} line_id : BIGINT
+  {field} component_code : Code
+  {field} jurisdiction_code : Code
+  {field} reporting_jurisdiction_code : Code
+  {field} tax_type : Code
+  {field} treatment : Code
+  {field} reason_code : Code
+  {field} liable_role : Code
+  {field} market_id : BIGINT
+  {field} registration_id : BIGINT
+  {field} policy_id : BIGINT
+  {field} rule_code : Code
+  {field} tax_base : Money
+  {field} rate : Rate
+  {field} charged_tax_amount : Money
+  {field} self_assessed_tax_amount : Money
+  {field} calculation_method : Code
+  {field} rounding_method : Code
+  {field} rounding_scale : Integer
+  {field} original_component_id : BIGINT
+  -- 唯一键 --
+  {field} UQ1: line_id, jurisdiction_code, component_code
+}
+class "t_tax_evidence\n税务证据" as evidence <<table>> #E8F0FE {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} calculation_id : BIGINT
+  {field} evidence_type : Code
+  {field} source_code : Code
+  {field} source_ref : BusinessRef
+  {field} country_code : Code
+  {field} subdivision_code : Code
+  {field} identifier_type : Code
+  {field} validation_status : Code
+  {field} result_code : Code
+  {field} checked_at : Instant
+  {field} valid_until : Instant
+  {field} provider_reference : BusinessRef
+  {field} evidence_ref : BusinessRef
+  {field} evidence_file_address : FileAddress
+  {field} evidence_digest : SHA256
+}
+class "t_tax_transaction\n正式税务交易" as transaction <<table>> #FFF3E0 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} calculation_id : BIGINT
+  {field} source_system : Code
+  {field} source_fact_type : String
+  {field} source_fact_id : BusinessRef
+  {field} tax_scope_key : String
+  {field} origin : Code
+  {field} transaction_kind : Code
+  {field} original_transaction_id : BIGINT
+  {field} tax_subject_party_id : PartyId
+  {field} currency : Currency
+  {field} occurred_at : Instant
+  {field} tax_point_date : Date
+  {field} tax_point_basis : Code
+  {field} registered_at : Instant
+  {field} reporting_status : Code
+  {field} reporting_block_reason : String
+  {field} adjustment_reason : String
+  {field} approval_ref : BusinessRef
+  -- 唯一键 --
+  {field} UQ1: calculation_id
+  {field} UQ2: source_system, source_fact_type, source_fact_id, tax_scope_key
+}
+class "t_tax_reporting_entry\n申报底稿" as reporting_entry <<table>> #FFF3E0 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} transaction_id : BIGINT
+  {field} component_id : BIGINT
+  {field} registration_id : BIGINT
+  {field} period_id : BIGINT
+  {field} entry_role : Code
+  {field} reporting_rule_code : Code
+  {field} reporting_policy_id : BIGINT
+  {field} source_currency : Currency
+  {field} source_tax_base : Money
+  {field} source_tax_amount : Money
+  {field} reporting_currency : Currency
+  {field} fx_rate : FxRate
+  {field} fx_rate_date : Date
+  {field} fx_source_ref : BusinessRef
+  {field} reporting_tax_base : Money
+  {field} reporting_tax_amount : Money
+  {field} deductible_tax_amount : Money
+  {field} deductibility_status : Code
+  {field} deductibility_confirmed_by : BusinessRef
+  {field} deductibility_confirmed_at : Instant
+  {field} tax_point_date : Date
+  {field} attribution_reason : String
+  {field} original_entry_id : BIGINT
+  {field} eligibility_evidence_ref : BusinessRef
+  -- 唯一键 --
+  {field} UQ1: transaction_id, component_id, registration_id, entry_role,
+  {field}      reporting_rule_code
+}
+class "t_tax_document\n法定单据" as document <<table>> #FFF3E0 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} transaction_id : BIGINT
+  {field} document_kind : Code
+  {field} document_scope_key : String
+  {field} issuer_party_id : PartyId
+  {field} registration_id : BIGINT
+  {field} series_code : Code
+  {field} document_number : String
+  {field} original_document_id : BIGINT
+  {field} issued_at : Instant
+  {field} supply_date : Date
+  {field} currency : Currency
+  {field} policy_id : BIGINT
+  {field} template_code : Code
+  {field} template_revision : Integer
+  {field} recipient_snapshot_ref : BusinessRef
+  {field} issuer_snapshot_ref : BusinessRef
+  {field} content_schema_version : Integer
+  {field} document_content_json : JSON
+  {field} issuance_mode : Code
+  {field} issue_status : Code
+  {field} submission_status : Code
+  {field} submission_source : Code
+  {field} external_document_ref : BusinessRef
+  {field} external_status_at : Instant
+  {field} document_file_address : FileAddress
+  {field} document_digest : SHA256
+  {field} receipt_file_address : FileAddress
+  {field} void_reason : String
+  -- 唯一键 --
+  {field} UQ1: transaction_id, document_kind, document_scope_key
+  {field} UQ2: issuer_party_id, series_code, document_number
+}
+class "t_tax_document_sequence\n单据号码序列" as document_sequence <<table>> #FFF3E0 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} issuer_party_id : PartyId
+  {field} series_code : Code
+  {field} registration_id : BIGINT
+  {field} document_kind : Code
+  {field} fiscal_year : Integer
+  {field} next_number : Integer
+  {field} number_format : String
+  -- 唯一键 --
+  {field} UQ1: issuer_party_id, registration_id, series_code
+}
+class "t_tax_period\n稳定申报期间" as period <<table>> #F0EAFE {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} registration_id : BIGINT
+  {field} period_start : Date
+  {field} period_end : Date
+  {field} filing_due_date : Date
+  {field} payment_due_date : Date
+  {field} reporting_currency : Currency
+  {field} status : Code
+  -- 唯一键 --
+  {field} UQ1: registration_id, period_start, period_end
+}
+class "t_tax_return\n申报版本" as return <<table>> #F0EAFE {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} period_id : BIGINT
+  {field} revision : Integer
+  {field} replaces_return_id : BIGINT
+  {field} amendment_mode : Code
+  {field} policy_id : BIGINT
+  {field} status : Code
+  {field} output_tax_amount : Money
+  {field} deductible_tax_amount : Money
+  {field} adjustments_amount : Money
+  {field} net_due_amount : Money
+  {field} prepared_at : Instant
+  {field} approved_by : BusinessRef
+  {field} approved_at : Instant
+  {field} filed_at : Instant
+  {field} effective_at : Instant
+  {field} external_return_ref : BusinessRef
+  {field} return_file_address : FileAddress
+  {field} return_digest : SHA256
+  {field} receipt_file_address : FileAddress
+  -- 唯一键 --
+  {field} UQ1: period_id, revision
+}
+class "t_tax_return_item\n申报栏目明细" as return_item <<table>> #F0EAFE {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} return_id : BIGINT
+  {field} reporting_entry_id : BIGINT
+  {field} box_code : Code
+  {field} amount_kind : Code
+  {field} signed_amount : Money
+  -- 唯一键 --
+  {field} UQ1: return_id, reporting_entry_id, box_code, amount_kind
+}
+class "t_tax_payment\n缴款与税局退税" as payment <<table>> #E8F5E9 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} registration_id : BIGINT
+  {field} payer_party_id : PartyId
+  {field} book_subject_ref : BusinessRef
+  {field} direction : Code
+  {field} origin : Code
+  {field} cash_account_id : BusinessRef
+  {field} currency : Currency
+  {field} amount : Money
+  {field} authority_code : Code
+  {field} payment_reference : String
+  {field} instruction_file_address : FileAddress
+  {field} instruction_digest : SHA256
+  {field} execution_status : Code
+  {field} authority_status : Code
+  {field} cash_reservation_ref : BusinessRef
+  {field} external_payment_ref : BusinessRef
+  {field} bank_match_ref : BusinessRef
+  {field} suspense_resolution_ref : BusinessRef
+  {field} submitted_at : Instant
+  {field} bank_confirmed_at : Instant
+  {field} approved_by : BusinessRef
+  {field} approved_at : Instant
+  -- 唯一键 --
+  {field} UQ1: bank_match_ref [non-null]
+  {field} UQ2: suspense_resolution_ref [non-null]
+}
+class "t_tax_payment_allocation\n付款期间分配" as payment_allocation <<table>> #E8F5E9 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} payment_id : BIGINT
+  {field} period_id : BIGINT
+  {field} based_on_return_id : BIGINT
+  {field} allocation_purpose : Code
+  {field} payment_currency_amount : Money
+  {field} reporting_currency_amount : Money
+  {field} fx_rate : FxRate
+  {field} fx_rate_date : Date
+  {field} fx_source_ref : BusinessRef
+  {field} authority_status : Code
+  {field} authority_reference : String
+  {field} confirmed_at : Instant
+  -- 唯一键 --
+  {field} UQ1: payment_id, period_id, allocation_purpose
+}
+class "t_tax_payment_event\n付款证据事件" as payment_event <<table>> #E8F5E9 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} payment_id : BIGINT
+  {field} event_type : Code
+  {field} source_system : Code
+  {field} source_event_id : BusinessRef
+  {field} occurred_at : Instant
+  {field} recorded_at : Instant
+  {field} amount : Money
+  {field} currency : Currency
+  {field} evidence_file_address : FileAddress
+  {field} evidence_digest : SHA256
+  {field} external_reference : String
+  {field} reason_code : Code
+  -- 唯一键 --
+  {field} UQ1: source_system, source_event_id, event_type
+}
+class "t_tax_credit_application\n抵税额跨期转用" as credit_application <<table>> #E8F5E9 {
+  {field} id : BIGINT <<PK>>
+  {field} created_at : Instant
+  -- 业务字段 --
+  {field} application_no : String
+  {field} registration_id : BIGINT
+  {field} source_period_id : BIGINT
+  {field} target_period_id : BIGINT
+  {field} source_return_id : BIGINT
+  {field} target_return_id : BIGINT
+  {field} reporting_currency : Currency
+  {field} amount : Money
+  {field} status : Code
+  {field} authority_reference : String
+  {field} evidence_file_address : FileAddress
+  {field} evidence_digest : SHA256
+  {field} approved_by : BusinessRef
+  {field} approved_at : Instant
+  {field} applied_at : Instant
+  {field} reverses_application_id : BIGINT
+  -- 唯一键 --
+  {field} UQ1: application_no
+  {field} UQ2: registration_id, authority_reference [non-null]
+}
+registration "0..1" -- "0..*" market : registration_id
+policy "0..1" -- "0..*" market : policy_id
+calculation "1" -- "0..*" calculation_line : calculation_id
+category "1" -- "0..*" calculation_line : category_code
+calculation_line "1" -- "0..*" calculation_component : line_id
+market "1" -- "0..*" calculation_component : market_id
+registration "0..1" -- "0..*" calculation_component : registration_id
+policy "1" -- "0..*" calculation_component : policy_id
+calculation "1" -- "0..*" evidence : calculation_id
+calculation "1" -- "0..1" transaction : calculation_id
+transaction "0..1" -- "0..*" calculation : original_transaction_id
+transaction "0..1" -- "0..*" transaction : original_transaction_id
+calculation_line "0..1" -- "0..*" calculation_line : original_line_id
+calculation_component "0..1" -- "0..*" calculation_component : original_component_id
+transaction "1" -- "0..*" reporting_entry : transaction_id
+calculation_component "1" -- "0..*" reporting_entry : component_id
+registration "1" -- "0..*" reporting_entry : registration_id
+period "1" -- "0..*" reporting_entry : period_id
+policy "1" -- "0..*" reporting_entry : reporting_policy_id
+reporting_entry "0..1" -- "0..*" reporting_entry : original_entry_id
+transaction "1" -- "0..*" document : transaction_id
+registration "0..1" -- "0..*" document : registration_id
+policy "1" -- "0..*" document : policy_id
+document "0..1" -- "0..*" document : original_document_id
+document_sequence "1" -- "0..*" document : issuer_party_id + registration_id + series_code
+registration "0..1" -- "0..*" document_sequence : registration_id
+registration "1" -- "0..*" period : registration_id
+period "1" -- "0..*" return : period_id
+policy "1" -- "0..*" return : policy_id
+return "0..1" -- "0..*" return : replaces_return_id
+return "1" -- "0..*" return_item : return_id
+reporting_entry "1" -- "0..*" return_item : reporting_entry_id
+registration "1" -- "0..*" payment : registration_id
+payment "1" -- "0..*" payment_allocation : payment_id
+period "1" -- "0..*" payment_allocation : period_id
+return "1" -- "0..*" payment_allocation : based_on_return_id
+payment "1" -- "0..*" payment_event : payment_id
+registration "1" -- "0..*" credit_application : registration_id
+period "1" -- "0..*" credit_application : source_period_id
+period "1" -- "0..*" credit_application : target_period_id
+return "1" -- "0..*" credit_application : source_return_id
+return "1" -- "0..*" credit_application : target_return_id
+credit_application "0..1" -- "0..*" credit_application : reverses_application_id
+legend left
+  2026-10-29 · 讨论稿 · 来源 database.md；是逻辑模型投影，不是已实施 DDL。
+  实线 = 本库逻辑关联；1 / 0..1 / 0..* 为基数，不创建 FOREIGN KEY 或 CHECK。
+  Money / Quantity = DECIMAL(24,8)；Rate = DECIMAL(18,10)；FxRate = DECIMAL(24,12)。
+  Currency = CHAR(3)；Instant = UTC DATETIME(6)；Date = DATE。
+  Code / String / BusinessRef / PartyId / ClientId / Integer 是逻辑类型，未补造物理长度。
+  所有表有 id、created_at；可变工作状态表另有 updated_at（共同约定，图中不逐表推定）。
+  UQ 为唯一键；未标可空条件不等于 NOT NULL。完整条件与枚举仍见 database.md。
+  calculation 的行/组件按持久化草稿允许0条；READY 时必须满足完整性校验。
+  市场的规则/注册、单据的注册按状态适用；需要收税时注册不得缺失。
+  税务组件关联的是实际命中的规则；地区/币种引用 Platform 开放目录。
+  所有外部 Owner 的身份/快照/文件/银行引用只作为属性，不建立跨库关联。
+  审计列沿用讨论稿 created_at/updated_at；正式落模须对齐项目 create_time/update_time。
+endlegend
+
+@enduml

@@ -23,7 +23,7 @@ V2 把计费定位为"唯一经济事实来源"（[目标架构 V2 决定](./202
 7. **渠道成本配置归 channel-connector。** 渠道成本方案 / 版本 / 范围 / 组件四表、Maker-Checker 接口、到期切换 Job 从 billing 迁到 channel-connector（它已拥有渠道、技术账号、MID 表）；channel-connector 新增命中接口 `POST /channel-connector/v1/channel-costs/resolutions`（返回命中组件，不算金额）；billing 事务外命中、算金额、冻结证据在 `CHANNEL_COST` 行；对账确认实际成本后 billing 发 `COST_ADJUSTMENT`。与 CCT 价格同一模式："规则归 Owner，billing 只冻结证据"。
 8. **价格命中在 CCT / 商务。** billing 以冻结的合同版本 + 支付事实换回命中 Price（含 T+N 结算输入），不自行读价格表。
 9. **到期转可用时间由 billing 算**，写在支付事实头：费用与成熟来自同一条命中价格；工作日日历作为平台参考数据，billing 持只读副本（同币种，D41）。
-10. **税。** 税额来自税务服务的快照，作为 `SELLER_TAX` 行引用；首个支付切片允许"订单无税务快照 → 无税行"，有快照 ID 读不到则失败等待。
+10. **税。**（**2026-10-29 取代**：按 [2026-10-29 tax 决定](./2026-10-29-tax-domain-fact-service.md)第 8、11 条，`SELLER_TAX` 改为直接使用 acquiring 事件携带的冻结计算结果、引用 calculation_id、按税组件逐行并带纳税主体 / 辖区 / 注册三列；`TAX_SNAPSHOT` 引用与「有快照读不到则失败等待」作废；新增事实类型 `TAX_REFUND_RECEIVED` 与组件 `TAX_FX_DIFFERENCE`。下文为原文。）税额来自税务服务的快照，作为 `SELLER_TAX` 行引用；首个支付切片允许"订单无税务快照 → 无税行"，有快照 ID 读不到则失败等待。
 11. **模型精简。** `mor_billing` 9 → 11 张表：事实头 25 列（原 49）、业务引用表 `t_billing_fact_ref`（替代 17 个可空 ID 列，按 `ref_type` 扩展）、PAYMENT 定价侧表 `t_billing_fact_pricing`（1:1）、明细行 19 列（原 35；付方 / 收方对所有行必填；证据保留 4 个可索引列 + `source_evidence` JSON）、行链接表不变；`business_time` 取代 `payment_succeeded_time`，ledger 过账日期统一取它；删 `context_format`、`payment_fact_id`、`party_type / party_id`；新增消息消费两张标准表与工作日日历两张副本表；渠道成本四表迁出。`AutoInstructionType` 迁到 ledger-api。
 12. **事件名统一 `BillingFactRecorded`**（时序图与 requirements-site 中的 `FeesCalculated` / `EconomicsCalculated` 改名）；billing 不出交易利润，只出单笔费用拆解，利润与汇总由数据服务按事实表 CDC 计算。
 13. **退款 / 争议 / 重复扣款原则。** 退款按比例冲回百分比手续费、固定费不退，分润与服务费随手续费按比例冲回；争议与重复扣款受原事实封顶；每行链接到原行（`t_billing_fact_line_link`），累计不超过原行金额。扣减顺序与保证金使用细则随退款与争议切片。

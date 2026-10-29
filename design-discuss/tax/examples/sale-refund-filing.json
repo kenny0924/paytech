@@ -1,0 +1,578 @@
+{
+  "_meta": {
+    "status": "DISCUSSION_ONLY",
+    "synthetic": true,
+    "projection_only": true,
+    "description": "单笔销售、部分退款、一期申报与缴款后的教学快照；非完整数据库导入数据。",
+    "scope": "AE seller, SA consumer, SaaS; effective obligation and registration are assumed.",
+    "assumptions": [
+      "税点、申报周期、期间归属、发行/报送要求均为已批准条件下的演练；不是实际主体合规结论。",
+      "90001 是 PayFac Partner 持有的 OE 的 Party（C1 合同）；准入、申报、缴款由该 Partner 操作（managed_by=SUBJECT_HOLDER），transaction 由 Tax 消费 acquiring 事件建立。",
+      "10月月度申报和之后完成缴款是假设时间线，不表示2026-10-27已经发生。",
+      "身份/文件/批准/回执引用均为虚构；证据的NOT_CHECKED不冒充官方税号核验。",
+      "policy_json、批准与时间字段等有意省略；本文件不是可上线的规则包或seed。",
+      "数字ID用字符串；金额、数量、汇率、税率用十进制字符串。"
+    ]
+  },
+  "tables": {
+    "t_tax_category": [
+      {
+        "id": "101",
+        "category_code": "SAAS_AUTOMATED",
+        "name": "自动化 SaaS",
+        "status": "ACTIVE"
+      }
+    ],
+    "t_tax_registration": [
+      {
+        "id": "201",
+        "subject_party_id": "90001",
+        "jurisdiction_code": "SA",
+        "authority_code": "ZATCA",
+        "tax_type": "VAT",
+        "scheme_code": "DEMO_NON_RESIDENT_VAT",
+        "registration_no_ref": "DEMO-REGISTRATION-REF",
+        "effective_from": "2026-10-01",
+        "status": "ACTIVE",
+        "reporting_currency": "SAR",
+        "legal_timezone": "Asia/Riyadh",
+        "filing_frequency": "MONTHLY",
+        "filing_calendar_code": "DEMO_CALENDAR"
+      }
+    ],
+    "t_tax_policy": [
+      {
+        "id": "301",
+        "package_code": "DEMO_SA_SAAS",
+        "revision": 1,
+        "jurisdiction_code": "SA",
+        "tax_type": "VAT",
+        "scheme_code": "DEMO_NON_RESIDENT_VAT",
+        "effective_from": "2026-10-01",
+        "schema_version": 1,
+        "status": "APPROVED"
+      }
+    ],
+    "t_tax_market": [
+      {
+        "id": "401",
+        "subject_party_id": "90001",
+        "jurisdiction_code": "SA",
+        "tax_type": "VAT",
+        "scheme_code": "DEMO_NON_RESIDENT_VAT",
+        "assessment_no": "DEMO-ASSESSMENT-SA",
+        "revision": 1,
+        "valid_from": "2026-10-01",
+        "obligation": "REGISTRATION_REQUIRED",
+        "collection_status": "ENABLED",
+        "managed_by": "SUBJECT_HOLDER",
+        "registration_id": "201",
+        "policy_id": "301"
+      }
+    ],
+    "t_tax_calculation": [
+      {
+        "id": "1001",
+        "source_system": "acquiring",
+        "source_object_type": "ORDER",
+        "source_object_id": "DEMO-O1",
+        "source_revision": "3",
+        "tax_scope_key": "SALE-1",
+        "supply_kind": "SALE",
+        "business_mode": "MOR",
+        "tax_amount_source": "COMPUTED",
+        "seller_party_id": "90001",
+        "buyer_party_id": null,
+        "buyer_client_id": "80001",
+        "customer_no": null,
+        "buyer_snapshot_ref": "DEMO-BUYER-SNAPSHOT-1",
+        "tax_subject_party_id": "90001",
+        "acquiring_entity_no": "AE901",
+        "book_subject_ref": "DEMO-BOOK-1",
+        "agreement_ref": "DEMO-AGREEMENT-1",
+        "seller_establishment_country": "AE",
+        "establishment_context_ref": "DEMO-ESTABLISHMENT-1",
+        "currency": "SAR",
+        "tax_point_date": "2026-10-05",
+        "tax_point_basis": "DEMO_PREPAYMENT",
+        "status": "READY",
+        "net_amount": "100.00",
+        "charged_tax_amount": "15.00",
+        "gross_amount": "115.00",
+        "self_assessed_tax_amount": "0.00",
+        "original_transaction_id": null
+      },
+      {
+        "id": "1002",
+        "source_system": "acquiring",
+        "source_object_type": "REFUND",
+        "source_object_id": "DEMO-R1",
+        "source_revision": "1",
+        "tax_scope_key": "SALE-1",
+        "supply_kind": "SALE",
+        "business_mode": "MOR",
+        "tax_amount_source": "COMPUTED",
+        "seller_party_id": "90001",
+        "buyer_party_id": null,
+        "buyer_client_id": "80001",
+        "customer_no": null,
+        "buyer_snapshot_ref": "DEMO-BUYER-SNAPSHOT-1",
+        "tax_subject_party_id": "90001",
+        "acquiring_entity_no": "AE901",
+        "book_subject_ref": "DEMO-BOOK-1",
+        "agreement_ref": "DEMO-AGREEMENT-1",
+        "seller_establishment_country": "AE",
+        "establishment_context_ref": "DEMO-ESTABLISHMENT-1",
+        "currency": "SAR",
+        "tax_point_date": "2026-10-12",
+        "tax_point_basis": "DEMO_REFUND_CONFIRMED",
+        "status": "READY",
+        "net_amount": "-40.00",
+        "charged_tax_amount": "-6.00",
+        "gross_amount": "-46.00",
+        "self_assessed_tax_amount": "0.00",
+        "original_transaction_id": "4001"
+      }
+    ],
+    "t_tax_calculation_line": [
+      {
+        "id": "2001",
+        "calculation_id": "1001",
+        "source_line_ref": "DEMO-O1-L1",
+        "line_no": 1,
+        "category_code": "SAAS_AUTOMATED",
+        "description": "SaaS 订阅",
+        "quantity": "1.00",
+        "unit_price": "100.00",
+        "refund_basis_amount": null,
+        "price_mode": "EXCLUSIVE",
+        "discount_amount": "0.00",
+        "net_amount": "100.00",
+        "charged_tax_amount": "15.00",
+        "gross_amount": "115.00",
+        "self_assessed_tax_amount": "0.00",
+        "rounding_delta": "0.00",
+        "original_line_id": null
+      },
+      {
+        "id": "2002",
+        "calculation_id": "1002",
+        "source_line_ref": "DEMO-R1-L1",
+        "line_no": 1,
+        "category_code": "SAAS_AUTOMATED",
+        "description": "SaaS 部分退款（原价 40%）",
+        "quantity": "1.00",
+        "unit_price": "100.00",
+        "refund_basis_amount": "40.00",
+        "price_mode": "EXCLUSIVE",
+        "discount_amount": "0.00",
+        "net_amount": "-40.00",
+        "charged_tax_amount": "-6.00",
+        "gross_amount": "-46.00",
+        "self_assessed_tax_amount": "0.00",
+        "rounding_delta": "0.00",
+        "original_line_id": "2001"
+      }
+    ],
+    "t_tax_calculation_component": [
+      {
+        "id": "3001",
+        "line_id": "2001",
+        "component_code": "VAT",
+        "jurisdiction_code": "SA",
+        "reporting_jurisdiction_code": "SA",
+        "tax_type": "VAT",
+        "treatment": "TAXABLE",
+        "reason_code": "DEMO_SA_B2C_STANDARD",
+        "liable_role": "SELLER",
+        "market_id": "401",
+        "registration_id": "201",
+        "policy_id": "301",
+        "rule_code": "DEMO_SA_B2C_STANDARD",
+        "tax_base": "100.00",
+        "rate": "0.15",
+        "charged_tax_amount": "15.00",
+        "self_assessed_tax_amount": "0.00",
+        "calculation_method": "PROPORTIONAL_EXCLUSIVE",
+        "rounding_method": "HALF_UP",
+        "rounding_scale": 2,
+        "original_component_id": null
+      },
+      {
+        "id": "3002",
+        "line_id": "2002",
+        "component_code": "VAT",
+        "jurisdiction_code": "SA",
+        "reporting_jurisdiction_code": "SA",
+        "tax_type": "VAT",
+        "treatment": "TAXABLE",
+        "reason_code": "DEMO_ORIGINAL_TREATMENT_REFUND",
+        "liable_role": "SELLER",
+        "market_id": "401",
+        "registration_id": "201",
+        "policy_id": "301",
+        "rule_code": "DEMO_SA_B2C_STANDARD",
+        "tax_base": "-40.00",
+        "rate": "0.15",
+        "charged_tax_amount": "-6.00",
+        "self_assessed_tax_amount": "0.00",
+        "calculation_method": "ORIGINAL_COMPONENT_REFUND",
+        "rounding_method": "HALF_UP",
+        "rounding_scale": 2,
+        "original_component_id": "3001"
+      }
+    ],
+    "t_tax_evidence": [
+      {
+        "id": "8001",
+        "calculation_id": "1001",
+        "evidence_type": "BILLING_COUNTRY",
+        "source_code": "counterparty",
+        "source_ref": "DEMO-BUYER-SNAPSHOT-1",
+        "country_code": "SA",
+        "validation_status": "NOT_CHECKED",
+        "result_code": "DECLARED_COUNTRY",
+        "evidence_ref": "DEMO-EVIDENCE-1"
+      },
+      {
+        "id": "8002",
+        "calculation_id": "1001",
+        "evidence_type": "USAGE_COUNTRY",
+        "source_code": "counterparty",
+        "source_ref": "DEMO-BUYER-SNAPSHOT-1",
+        "country_code": "SA",
+        "validation_status": "NOT_CHECKED",
+        "result_code": "DECLARED_USAGE_COUNTRY",
+        "evidence_ref": "DEMO-EVIDENCE-2"
+      },
+      {
+        "id": "8003",
+        "calculation_id": "1001",
+        "evidence_type": "TAXPAYER_VALIDATION",
+        "source_code": "counterparty",
+        "source_ref": "DEMO-BUYER-SNAPSHOT-1",
+        "country_code": "SA",
+        "validation_status": "NOT_CHECKED",
+        "result_code": "DECLARED_NON_REGISTERED",
+        "evidence_ref": "DEMO-EVIDENCE-3"
+      },
+      {
+        "id": "8004",
+        "calculation_id": "1002",
+        "evidence_type": "BILLING_COUNTRY",
+        "source_code": "counterparty",
+        "source_ref": "DEMO-BUYER-SNAPSHOT-1",
+        "country_code": "SA",
+        "validation_status": "NOT_CHECKED",
+        "result_code": "DECLARED_COUNTRY",
+        "evidence_ref": "DEMO-EVIDENCE-1"
+      },
+      {
+        "id": "8005",
+        "calculation_id": "1002",
+        "evidence_type": "USAGE_COUNTRY",
+        "source_code": "counterparty",
+        "source_ref": "DEMO-BUYER-SNAPSHOT-1",
+        "country_code": "SA",
+        "validation_status": "NOT_CHECKED",
+        "result_code": "DECLARED_USAGE_COUNTRY",
+        "evidence_ref": "DEMO-EVIDENCE-2"
+      },
+      {
+        "id": "8006",
+        "calculation_id": "1002",
+        "evidence_type": "TAXPAYER_VALIDATION",
+        "source_code": "counterparty",
+        "source_ref": "DEMO-BUYER-SNAPSHOT-1",
+        "country_code": "SA",
+        "validation_status": "NOT_CHECKED",
+        "result_code": "DECLARED_NON_REGISTERED",
+        "evidence_ref": "DEMO-EVIDENCE-3"
+      }
+    ],
+    "t_tax_transaction": [
+      {
+        "id": "4001",
+        "calculation_id": "1001",
+        "source_system": "acquiring",
+        "source_fact_type": "PAYMENT_SUCCEEDED",
+        "source_fact_id": "EV-P1",
+        "tax_scope_key": "SALE-1",
+        "transaction_kind": "ORIGINAL",
+        "original_transaction_id": null,
+        "tax_subject_party_id": "90001",
+        "currency": "SAR",
+        "tax_point_date": "2026-10-05",
+        "tax_point_basis": "DEMO_PREPAYMENT",
+        "reporting_status": "READY"
+      },
+      {
+        "id": "4002",
+        "calculation_id": "1002",
+        "source_system": "acquiring",
+        "source_fact_type": "REFUND_SUCCEEDED",
+        "source_fact_id": "EV-R1",
+        "tax_scope_key": "SALE-1",
+        "transaction_kind": "REFUND",
+        "original_transaction_id": "4001",
+        "tax_subject_party_id": "90001",
+        "currency": "SAR",
+        "tax_point_date": "2026-10-12",
+        "tax_point_basis": "DEMO_REFUND_CONFIRMED",
+        "reporting_status": "READY",
+        "adjustment_reason": "DEMO_PARTIAL_REFUND"
+      }
+    ],
+    "t_tax_reporting_entry": [
+      {
+        "id": "5001",
+        "transaction_id": "4001",
+        "component_id": "3001",
+        "registration_id": "201",
+        "period_id": "7001",
+        "entry_role": "OUTPUT",
+        "reporting_rule_code": "DEMO_OUTPUT",
+        "reporting_policy_id": "301",
+        "source_currency": "SAR",
+        "source_tax_base": "100.00",
+        "source_tax_amount": "15.00",
+        "reporting_currency": "SAR",
+        "fx_rate": "1.000000000000",
+        "fx_rate_date": "2026-10-05",
+        "fx_source_ref": "SAME_CURRENCY",
+        "reporting_tax_base": "100.00",
+        "reporting_tax_amount": "15.00",
+        "deductible_tax_amount": "0.00",
+        "tax_point_date": "2026-10-05",
+        "attribution_reason": "DEMO_CURRENT_PERIOD",
+        "original_entry_id": null
+      },
+      {
+        "id": "5002",
+        "transaction_id": "4002",
+        "component_id": "3002",
+        "registration_id": "201",
+        "period_id": "7001",
+        "entry_role": "OUTPUT",
+        "reporting_rule_code": "DEMO_OUTPUT",
+        "reporting_policy_id": "301",
+        "source_currency": "SAR",
+        "source_tax_base": "-40.00",
+        "source_tax_amount": "-6.00",
+        "reporting_currency": "SAR",
+        "fx_rate": "1.000000000000",
+        "fx_rate_date": "2026-10-12",
+        "fx_source_ref": "SAME_CURRENCY",
+        "reporting_tax_base": "-40.00",
+        "reporting_tax_amount": "-6.00",
+        "deductible_tax_amount": "0.00",
+        "tax_point_date": "2026-10-12",
+        "attribution_reason": "DEMO_CURRENT_PERIOD_REFUND",
+        "original_entry_id": "5001"
+      }
+    ],
+    "t_tax_document": [
+      {
+        "id": "6001",
+        "transaction_id": "4001",
+        "document_kind": "TAX_INVOICE",
+        "document_scope_key": "PRIMARY",
+        "issuer_party_id": "90001",
+        "registration_id": "201",
+        "series_code": "DEMO-INV-2026",
+        "document_number": "DEMO-INV-2026-0001",
+        "original_document_id": null,
+        "currency": "SAR",
+        "policy_id": "301",
+        "template_code": "DEMO_NON_RESIDENT_INVOICE",
+        "template_revision": 1,
+        "recipient_snapshot_ref": "DEMO-BUYER-SNAPSHOT-1",
+        "issuer_snapshot_ref": "DEMO-ISSUER-SNAPSHOT-1",
+        "issue_status": "ISSUED",
+        "submission_status": "NOT_REQUIRED",
+        "document_file_address": "/files/v1/DEMO-FILE-6001"
+      },
+      {
+        "id": "6002",
+        "transaction_id": "4002",
+        "document_kind": "CREDIT_NOTE",
+        "document_scope_key": "PRIMARY",
+        "issuer_party_id": "90001",
+        "registration_id": "201",
+        "series_code": "DEMO-CN-2026",
+        "document_number": "DEMO-CN-2026-0001",
+        "original_document_id": "6001",
+        "currency": "SAR",
+        "policy_id": "301",
+        "template_code": "DEMO_NON_RESIDENT_CREDIT_NOTE",
+        "template_revision": 1,
+        "recipient_snapshot_ref": "DEMO-BUYER-SNAPSHOT-1",
+        "issuer_snapshot_ref": "DEMO-ISSUER-SNAPSHOT-1",
+        "issue_status": "ISSUED",
+        "submission_status": "NOT_REQUIRED",
+        "document_file_address": "/files/v1/DEMO-FILE-6002"
+      }
+    ],
+    "t_tax_document_sequence": [
+      {
+        "id": "901",
+        "issuer_party_id": "90001",
+        "series_code": "DEMO-INV-2026",
+        "registration_id": "201",
+        "document_kind": "TAX_INVOICE",
+        "fiscal_year": 2026,
+        "next_number": "2",
+        "number_format": "DEMO-INV-2026-{0000}"
+      },
+      {
+        "id": "902",
+        "issuer_party_id": "90001",
+        "series_code": "DEMO-CN-2026",
+        "registration_id": "201",
+        "document_kind": "CREDIT_NOTE",
+        "fiscal_year": 2026,
+        "next_number": "2",
+        "number_format": "DEMO-CN-2026-{0000}"
+      }
+    ],
+    "t_tax_period": [
+      {
+        "id": "7001",
+        "registration_id": "201",
+        "period_start": "2026-10-01",
+        "period_end": "2026-10-31",
+        "reporting_currency": "SAR",
+        "status": "FILED"
+      }
+    ],
+    "t_tax_return": [
+      {
+        "id": "9001",
+        "period_id": "7001",
+        "revision": 1,
+        "replaces_return_id": null,
+        "amendment_mode": "FULL_REPLACEMENT",
+        "policy_id": "301",
+        "status": "EFFECTIVE",
+        "output_tax_amount": "9.00",
+        "deductible_tax_amount": "0.00",
+        "adjustments_amount": "0.00",
+        "net_due_amount": "9.00",
+        "external_return_ref": "DEMO-RETURN-RECEIPT-1"
+      }
+    ],
+    "t_tax_return_item": [
+      {
+        "id": "9101",
+        "return_id": "9001",
+        "reporting_entry_id": "5001",
+        "box_code": "DEMO_OUTPUT_BASE",
+        "amount_kind": "BASE",
+        "signed_amount": "100.00"
+      },
+      {
+        "id": "9102",
+        "return_id": "9001",
+        "reporting_entry_id": "5001",
+        "box_code": "DEMO_OUTPUT_TAX",
+        "amount_kind": "TAX",
+        "signed_amount": "15.00"
+      },
+      {
+        "id": "9103",
+        "return_id": "9001",
+        "reporting_entry_id": "5002",
+        "box_code": "DEMO_OUTPUT_BASE",
+        "amount_kind": "BASE",
+        "signed_amount": "-40.00"
+      },
+      {
+        "id": "9104",
+        "return_id": "9001",
+        "reporting_entry_id": "5002",
+        "box_code": "DEMO_OUTPUT_TAX",
+        "amount_kind": "TAX",
+        "signed_amount": "-6.00"
+      }
+    ],
+    "t_tax_payment": [
+      {
+        "id": "10001",
+        "registration_id": "201",
+        "payer_party_id": "90001",
+        "book_subject_ref": "DEMO-BOOK-1",
+        "direction": "OUTBOUND_PAYMENT",
+        "origin": "PLANNED",
+        "cash_account_id": "DEMO-CASH-1",
+        "currency": "SAR",
+        "amount": "9.00",
+        "authority_code": "ZATCA",
+        "payment_reference": "DEMO-TAXPAY-1",
+        "execution_status": "BANK_CONFIRMED",
+        "authority_status": "CONFIRMED",
+        "cash_reservation_ref": "DEMO-RESERVATION-1",
+        "external_payment_ref": "DEMO-BANKPAY-1",
+        "bank_match_ref": "DEMO-MATCH-1",
+        "suspense_resolution_ref": null
+      }
+    ],
+    "t_tax_payment_allocation": [
+      {
+        "id": "11001",
+        "payment_id": "10001",
+        "period_id": "7001",
+        "based_on_return_id": "9001",
+        "allocation_purpose": "LIABILITY_PAYMENT",
+        "payment_currency_amount": "9.00",
+        "reporting_currency_amount": "9.00",
+        "fx_rate": "1.000000000000",
+        "fx_source_ref": "SAME_CURRENCY",
+        "authority_status": "CONFIRMED",
+        "authority_reference": "DEMO-ALLOCATION-1"
+      }
+    ],
+    "t_tax_payment_event": [
+      {
+        "id": "12001",
+        "payment_id": "10001",
+        "event_type": "SUBMITTED",
+        "source_system": "tax",
+        "source_event_id": "DEMO-SUBMIT-1",
+        "amount": "9.00",
+        "currency": "SAR",
+        "external_reference": "DEMO-BANKPAY-1"
+      },
+      {
+        "id": "12002",
+        "payment_id": "10001",
+        "event_type": "RESULT_UNKNOWN",
+        "source_system": "tax",
+        "source_event_id": "DEMO-UNKNOWN-1",
+        "amount": "9.00",
+        "currency": "SAR",
+        "external_reference": "DEMO-BANKPAY-1"
+      },
+      {
+        "id": "12003",
+        "payment_id": "10001",
+        "event_type": "BANK_MATCHED",
+        "source_system": "reconciliation",
+        "source_event_id": "DEMO-MATCH-EVENT-1",
+        "amount": "9.00",
+        "currency": "SAR",
+        "external_reference": "DEMO-MATCH-1"
+      },
+      {
+        "id": "12004",
+        "payment_id": "10001",
+        "event_type": "AUTHORITY_ALLOCATED",
+        "source_system": "tax",
+        "source_event_id": "DEMO-AUTHORITY-EVENT-1",
+        "amount": "9.00",
+        "currency": "SAR",
+        "external_reference": "DEMO-ALLOCATION-1"
+      }
+    ],
+    "t_tax_credit_application": []
+  }
+}
