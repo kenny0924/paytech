@@ -24,7 +24,7 @@
 | 2026-10-30 | 6 完成 | W8（[报告](./release/W8-report.md)）：候选树 `Code-MoR-po-rel` = `9eab368c` + 247 个文件 NO DRIFT，补正两处测试代码缺陷；测试全部通过；6 个镜像 `payout-s1-20261030a` 钉 sha256；12 个 compose；payout 落位 IP .44 / Worker 16（technique 已改）。W9（[报告](./release/W9-report.md)）：预检全空闲，SQL 包 17 个文件，现网 / 候选 Platform JAR 离线演练 45 步符合预期（652 → 671 路由），语言包 223 键干跑，验收脚本干跑。主会话核对制品并汇总 [stage6-report](./release/stage6-report.md) 与 [runbook](./release/runbook.md)；待用户裁决 U-1—U-6 并授权阶段 7 | 已交付 |
 | 2026-10-30 | 6 确认 / 7 发布 | 用户“U-1—U-6 按建议，进入阶段 7”。14:01—14:08Z 按 [runbook](./release/runbook.md) 执行：复核 NO DRIFT、env 检查通过、现网镜像未变，peer 会话（REQ-06、明细账运维）确认无并行发布；备份 `~/Code-MoR-backups/payout-s1-stage7/mortest-20261030T140111Z/`（mor_platform、mor_vault、`.env.test`）；预检与阶段 6 读数一致；`.env.test` 追加 `MOR_PAYOUT_DB_PASSWORD`（未用 prepare.py）；建库 / 账号（sql/10）、DDL 3 表、Vault 规则 3（策略版本 22）、块 147 休眠后激活（路由 652 → 671，未授权探测 401 / 未知路径 404）；容器 account `8dfd1060` → Platform `0ea9cc2d`（callers 含 payout 四模板）→ 新 payout `75a6337c`（172.30.73.44，XXL 分组 19 / 任务 29，触发 200）→ ops-bff `626a74a7`、client-bff `24d3aa05` → ops-web `acb33e94`，全部 healthy；运营语言包 #29（新增 223 键、命名空间 payout）。验收 `plan` 8 / 9，唯一失败为 Client 所有者凭据未提供（U-3），`api` / `prepare` / `notify` 需要它 | 已完成 |
 | 2026-10-30 | 7 验收 | 用户“先只验运营侧，Client 部分留作遗留”。验收脚本加 `--ops-only`（运营代 Owner 提交，B1）并修正 BIC 误计原值；accounts 5 / 0、api 64 / 0、notify 9 / 0（AC-09 运营侧）、check 6 / 0、浏览器 zh-CN / en × 1440 / 390 全部通过（en-390 登录等待偶发，单独重跑通过）。[阶段 7 报告](./release/stage7-report.md)；遗留 L-C1 Client 侧验收、L-C2 AC-09 收件；清理草稿未执行 | 已交付 |
-| 2026-10-30 | 8 提交 | 用户“进入阶段 8，提交”。提交前补正：`payout-schema.sql` 与 PDManer 的 `t_compensation_event` 改为现行形状（与 tax / `sql/12` 相同，其余 8 表不变）、`initialize.py` 注释改为“9 表目标模型、S1 只建 3 表”；合入 base compose 补丁（U-5，`compose.sh config` 含 payout-service）；`CURRENT_IMPLEMENTATION` 条目改为已部署状态。复跑 arch-rules 70 / 0、test-environment Python 27 例（2 例 client-master 错误与 `9eab368c` 相同）。提交以候选树 `Code-MoR-po-rel` 为准（249 个文件）+ 需求目录、2026-10-30 payout 决定、`design-discuss/payout/` 与五处路由文档；`requirements/README.md` 只取本需求一行；`operations-console.pen` / `client-console.pen` 为加密文件且含他人画板，未纳入。未推送 | 进行中 |
+| 2026-10-30 | 8 提交 | 用户“进入阶段 8，提交”。提交前补正：`payout-schema.sql` 与 PDManer 的 `t_compensation_event` 改为现行形状（与 tax / `sql/12` 相同，其余 8 表不变）、`initialize.py` 注释改为“9 表目标模型、S1 只建 3 表”；合入 base compose 补丁（U-5，`compose.sh config` 含 payout-service）；`CURRENT_IMPLEMENTATION` 条目改为已部署状态。复跑 arch-rules 70 / 0、test-environment Python 27 例（2 例 client-master 错误与 `9eab368c` 相同）。提交以候选树 `Code-MoR-po-rel` 为准（249 个文件）+ 需求目录、2026-10-30 payout 决定、`design-discuss/payout/` 与五处路由文档；`requirements/README.md` 只取本需求一行；`operations-console.pen` / `client-console.pen` 为加密文件且含他人画板，未纳入。已本地提交 `b92c0fde`（603 个文件），主工作区与共享索引已按提交同步（他人改动保留）；未推送 | 已完成 |
 
 ## 适用阶段
 
@@ -32,7 +32,7 @@
 
 ## 当前阶段与下一确认点
 
-阶段 8 进行中：本地提交（不推送）。
+阶段 8 已完成：本地提交 `b92c0fde`，未推送。遗留：Client 侧验收（L-C1）与 AC-09 实际送达（L-C2）待 Client 所有者凭据；Client 门户页面待原型评审后另行立项。
 
 ## 实现 / 验证 / 部署状态
 

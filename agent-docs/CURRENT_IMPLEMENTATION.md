@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## payout 收款账户与余额解释（S1，2026-10-30，已部署 mor-test，已本地提交，未推送）
+## payout 收款账户与余额解释（S1，2026-10-30，已部署 mor-test，已本地提交 `b92c0fde`，未推送）
 
 - **范围：** [需求](<../requirements/20261030/payout-收款账户与余额解释/requirement.md>)、[技术方案](<../requirements/20261030/payout-收款账户与余额解释/technique.md>)、[交付记录](<../requirements/20261030/payout-收款账户与余额解释/delivery.md>)、[运行卡](<../requirements/20261030/payout-收款账户与余额解释/release/runbook.md>)、[阶段 6 报告](<../requirements/20261030/payout-收款账户与余额解释/release/stage6-report.md>)、[阶段 7 报告](<../requirements/20261030/payout-收款账户与余额解释/release/stage7-report.md>)；依据 [2026-10-30 出款模型决定](./decisions/2026-10-30-payout-settlement-payout-model.md)。
 - **Implemented：** 新服务 `paytech/payout`（api / core / app / test，`payout-service` 18117 / 19117）；`mor_payout` 三表 `t_beneficiary_account`（31 列含生成列 `active_key`）、`t_beneficiary_account_event`、`t_compensation_event`（PDManer 为 9 表目标模型，S1 只建 3 表；`initialize.py` 不对 payout 自动执行 Schema）；接口 P1—P12（提交、Maker / Checker 四眼核验、24 h 冷却、设默认、停用 / 恢复 / 关闭、Reveal、核验队列、字段要求、余额解释）；Vault REFERENCE + STABLE Token、跨 Owner 共用提示；核验结果经补偿事件调用 Platform 通知。account 新增 Owner 余额 positions 接口；Platform 通知新增租户权限收件人（`tenantRecipients`）、Client 角色加 3 项 payout 权限、运营能力清单 6 项；Operations BFF `/payout-admin/v1` 12 个接口、Client BFF `/client-payout/v1` 7 个接口；运营 Web 两页（财务 → 出款：收款账户核验、Owner 账户与余额）与 `payout` 命名空间；注册块 147；test-environment 新服务落位（IP `172.30.73.44`、Worker 16、探针、build / prepare / initialize、base compose）。
