@@ -1,0 +1,57 @@
+{
+ "commercialClientIds": [
+  "237573040244891649",
+  "237573267559391233",
+  "237573476041465857",
+  "237575207592763393"
+ ],
+ "clients": [
+  {
+   "clientId": "237573040244891649",
+   "clientDisplayName": "CL-237573040244891649",
+   "clientNo": "CL-237573040244891649",
+   "clientType": "INDIVIDUAL",
+   "jurisdictionCode": "AE",
+   "clientStatus": "ACTIVE"
+  },
+  {
+   "clientId": "237573267559391233",
+   "clientDisplayName": "CL-237573267559391233",
+   "clientNo": "CL-237573267559391233",
+   "clientType": "INDIVIDUAL",
+   "jurisdictionCode": "AE",
+   "clientStatus": "ACTIVE"
+  },
+  {
+   "clientId": "237573476041465857",
+   "clientDisplayName": "CL-237573476041465857",
+   "clientNo": "CL-237573476041465857",
+   "clientType": "INDIVIDUAL",
+   "jurisdictionCode": "AE",
+   "clientStatus": "ACTIVE"
+  },
+  {
+   "clientId": "237575207592763393",
+   "clientDisplayName": "CL-237575207592763393",
+   "clientNo": "CL-237575207592763393",
+   "clientType": "INDIVIDUAL",
+   "jurisdictionCode": "AE",
+   "clientStatus": "ACTIVE"
+  }
+ ],
+ "missingInClientMaster": [],
+ "approvedUnderwritingWithoutCapability": [
+  {
+   "client_id": "240686705999454209",
+   "version_no": "2",
+   "crr": "LOW",
+   "client_display_name": "Acceptance Trading 1027040243 LLC"
+  },
+  {
+   "client_id": "241049681294106625",
+   "version_no": "2",
+   "crr": "HIGH",
+   "client_display_name": "Refdata AE 1028040509 LLC"
+  }
+ ]
+}

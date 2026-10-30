@@ -138,6 +138,7 @@ final class RiskOwnerResponseShapeValidator {
         addFlowRoots(roots);
         addControlRoots(roots);
         addUnderwritingRoots(roots);
+        addLimitTierRoots(roots);
         addEvaluationRoots(roots);
         return Map.copyOf(roots);
     }
@@ -251,6 +252,47 @@ final class RiskOwnerResponseShapeValidator {
             object(fields(nullable(INTEGER), "ruleVersionNo"), fields(BOOLEAN, "autoEligible"), fields(array(check), "checks"),
                 fields(nullable(exposure), "estimatedExposure"), fields(NULLABLE_TEXT, "exposureUnavailableReason thresholdAmount thresholdCurrency"),
                 fields(TEXT, "reviewLevel")));
+    }
+
+    /**
+     * Client 限额档位（REQ-04）的精确响应字段集；档位、状态、级别与来源编码只校验为字符串，由页面容错未知值
+     * <li>无档位时详情只有 clientId，其余为 null；额度集合在无档位时可为 null 或空。</li>
+     */
+    private static void addLimitTierRoots(Map<Type, Shape> roots) {
+        Shape pending = object(fields(TEXT, "changeId toTier approvalLevel requestedTime"),
+            fields(NULLABLE_TEXT, "fromTier requestedBy"));
+        Map<String, Shape> summaryFields = combine(fields(TEXT, "clientId"),
+            fields(NULLABLE_TEXT, "clientDisplayName clientNo jurisdictionCode clientType crr tier effectiveTime sourceType "
+                + "sourceReason observationStartedTime updatedAt"),
+            fields(nullable(INTEGER), "observationDaysElapsed observationTargetDays observationTargetTransactions"),
+            fields(nullable(TOTAL), "observationAllowedTransactions"), fields(nullable(BOOLEAN), "observationDue"),
+            fields(nullable(pending), "pendingChange"));
+        Shape observation = object(fields(TEXT, "startedTime"), fields(INTEGER, "daysElapsed targetDays targetTransactions"),
+            fields(TOTAL, "allowedTransactions"), fields(BOOLEAN, "due"));
+        Shape quota = object(fields(TEXT, "currency usedToday usedLast30Days"), fields(NULLABLE_TEXT, "single day last30Days"));
+        Shape detail = object(summaryFields, fields(nullable(INTEGER), "version"),
+            fields(NULLABLE_TEXT, "previousTier unconfiguredCurrencyPolicy"), fields(nullable(observation), "observation"),
+            fields(nullable(array(quota)), "quotas"), fields(nullable(array(TEXT)), "unconfiguredCurrencies"));
+        Shape checklist = object(fields(NULLABLE_TEXT, "qualificationStatus qualificationValidTo agreementId agreementStatus "
+                + "enabledPaymentCapabilities pendingPaymentCapabilities"), fields(nullable(INTEGER), "underwritingVersionNo"),
+            fields(nullable(BOOLEAN), "channelRegistrationConfirmed integrationConfirmed productionVerified openIssuesCleared"));
+        Shape change = object(fields(TEXT, "changeId clientId changeType toTier status reason requestedTime"),
+            fields(NULLABLE_TEXT, "fromTier approvalLevel crrSnapshot underwritingId goLiveNote requestedBy decidedBy "
+                + "decidedTime decisionComment"), fields(nullable(checklist), "checklist"),
+            fields(nullable(INTEGER), "observationTargetDays observationTargetTransactions observationDaysAtRequest"),
+            fields(nullable(TOTAL), "observationAllowedAtRequest"), fields(INTEGER, "version"));
+        Shape tierQuota = object(fields(TEXT, "currency"), fields(NULLABLE_TEXT, "single day last30Days"));
+        Shape tier = object(fields(TEXT, "tier unconfiguredCurrencyPolicy"), fields(array(tierQuota), "currencies"));
+        roots.put(new ParameterizedTypeReference<PagingResponseBody<com.paytech.risk.decision.api.control.response.ClientTierSummaryBody>>() {}.getType(),
+            page(object(summaryFields)));
+        roots.put(com.paytech.risk.decision.api.control.response.ClientTierDetailResponseBody.class, detail);
+        roots.put(com.paytech.risk.decision.api.control.response.ClientTierChangeResponseBody.class, change);
+        roots.put(com.paytech.risk.decision.api.control.response.ClientTierChangeListResponseBody.class,
+            object(fields(array(change), "items")));
+        roots.put(com.paytech.risk.decision.api.control.response.TierQuotaListResponseBody.class,
+            object(fields(array(tier), "tiers"), fields(array(TEXT), "configurationIssues")));
+        roots.put(com.paytech.risk.decision.api.control.response.TierStatisticsResponseBody.class,
+            object(fields(TOTAL, "verification observation standard restricted pendingApproval observationDue")));
     }
 
     /**

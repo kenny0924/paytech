@@ -1,0 +1,681 @@
+{
+  "locale": "en",
+  "width": 390,
+  "steps": [
+    {
+      "step": "req:L1-list",
+      "check": {
+        "menu": [],
+        "stats": [
+          "Verification 2",
+          "Observation 0",
+          "Observation due 0",
+          "Standard 4",
+          "Restricted 0",
+          "Awaiting approval 0"
+        ],
+        "tabs": [
+          "All",
+          "Verification",
+          "Observation",
+          "Standard",
+          "Restricted"
+        ],
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · Organization LOW Verification 10-30 14:17 REQ-04 验收：解除受限 — (no observation in Verification) — Request 10-30 14:17 Request go-live",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH Verification 10-30 14:15 承保批准 — (no observation in Verification) — Underwriting 10-30 14:15 Request go-live",
+          "CL-237575207592763393 CL-237575207592763393 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573476041465857 CL-237573476041465857 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573267559391233 CL-237573267559391233 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573040244891649 CL-237573040244891649 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View"
+        ],
+        "actions": [
+          "Request go-live",
+          "Request go-live",
+          "View",
+          "View",
+          "View",
+          "View"
+        ],
+        "total": "6 clients"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "req:L2-tab-standard",
+      "check": {
+        "rows": [
+          "CL-237575207592763393 CL-237575207592763393 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573476041465857 CL-237573476041465857 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573267559391233 CL-237573267559391233 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573040244891649 CL-237573040244891649 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "req:L3-tab-verification",
+      "check": {
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · Organization LOW Verification 10-30 14:17 REQ-04 验收：解除受限 — (no observation in Verification) — Request 10-30 14:17 Request go-live",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH Verification 10-30 14:15 承保批准 — (no observation in Verification) — Underwriting 10-30 14:15 Request go-live"
+        ],
+        "actions": [
+          "Request go-live",
+          "Request go-live"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "req:L4-observation-due",
+      "check": {
+        "rows": 0,
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "req:L5-pending",
+      "check": {
+        "rows": 0,
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "req:L6-search-id",
+      "check": {
+        "rows": [
+          "CL-237573040244891649 CL-237573040244891649 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "req:P06-migrated",
+      "check": {
+        "title": "CL-237573040244891649 Standard",
+        "meta": "CL-237573040244891649 · AE · Individual · Migration (REQ-04 上线前存量迁移（mor-test）) · 10-30 14:12",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Next step",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 36,700 0 / 367,000 0 / 3,670,000",
+          "EGP 500,000 0 / 5,000,000 0 / 50,000,000",
+          "SAR 37,500 0 / 375,000 0 / 3,750,000",
+          "USD 10,000 10 / 100,000 10 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [
+          "Request Restricted"
+        ],
+        "alerts": [],
+        "history": [
+          "Migration → Standard Effective 10-30 14:12 · Migrated · REQ-04 上线前存量迁移（mor-test）"
+        ],
+        "buttons": [
+          {
+            "text": "Restrict",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "req:P02-L-verification",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC Verification",
+        "meta": "CL-240686705999454209 · AE · Organization · Request (Restricted → Verification) · 10-30 14:17",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Next step",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 1,800 100 / 7,300 100 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 100 / 2,000 100 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v3 approved · CRR LOW)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [
+          "Request Restricted"
+        ],
+        "alerts": [],
+        "history": [
+          "Restricted → Verification Approved 10-30 14:17 · Requested by r***@example.test · Approved by r***@example.test · Reason: REQ-04 验收：解除受限 · Comment: rq04 acceptance",
+          "Verification → Restricted Approved 10-30 14:16 · Requested by o***@example.test · Approved by r***@example.test · Reason: REQ-04 验收：受限往返 · Comment: rq04 acceptance",
+          "Underwriting → Verification Effective 10-30 14:15 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": [
+          {
+            "text": "Submit request",
+            "disabled": true
+          },
+          {
+            "text": "Restrict",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "req:P04-H",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC Verification",
+        "meta": "CL-241049681294106625 · AE · Organization · Underwriting (承保批准) · 10-30 14:15",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Next step",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 1,800 0 / 7,300 0 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 0 / 2,000 0 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v3 approved · CRR HIGH)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [
+          "Request Restricted"
+        ],
+        "alerts": [],
+        "history": [
+          "Verification → Restricted Withdrawn 10-30 14:17 · Requested by r***@example.test · Withdrawn by r***@example.test · Reason: REQ-04 验收：HIGH 高级审批",
+          "Verification → Restricted Rejected 10-30 14:17 · Requested by r***@example.test · Rejected by r***@example.test · Reason: REQ-04 验收：HIGH 高级审批 · Comment: REQ-04 验收：驳回",
+          "Underwriting → Verification Effective 10-30 14:15 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": [
+          {
+            "text": "Submit request",
+            "disabled": true
+          },
+          {
+            "text": "Restrict",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "appr:L1-list",
+      "check": {
+        "menu": [],
+        "stats": [
+          "Verification 2",
+          "Observation 0",
+          "Observation due 0",
+          "Standard 4",
+          "Restricted 0",
+          "Awaiting approval 0"
+        ],
+        "tabs": [
+          "All",
+          "Verification",
+          "Observation",
+          "Standard",
+          "Restricted"
+        ],
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · Organization LOW Verification 10-30 14:17 REQ-04 验收：解除受限 — (no observation in Verification) — Request 10-30 14:17 View",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH Verification 10-30 14:15 承保批准 — (no observation in Verification) — Underwriting 10-30 14:15 View",
+          "CL-237575207592763393 CL-237575207592763393 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573476041465857 CL-237573476041465857 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573267559391233 CL-237573267559391233 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573040244891649 CL-237573040244891649 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View"
+        ],
+        "actions": [
+          "View",
+          "View",
+          "View",
+          "View",
+          "View",
+          "View"
+        ],
+        "total": "6 clients"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "appr:P02-L-verification",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC Verification",
+        "meta": "CL-240686705999454209 · AE · Organization · Request (Restricted → Verification) · 10-30 14:17",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 1,800 100 / 7,300 100 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 100 / 2,000 100 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v3 approved · CRR LOW)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "Restricted → Verification Approved 10-30 14:17 · Requested by r***@example.test · Approved by r***@example.test · Reason: REQ-04 验收：解除受限 · Comment: rq04 acceptance",
+          "Verification → Restricted Approved 10-30 14:16 · Requested by o***@example.test · Approved by r***@example.test · Reason: REQ-04 验收：受限往返 · Comment: rq04 acceptance",
+          "Underwriting → Verification Effective 10-30 14:15 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "appr:P04-H",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC Verification",
+        "meta": "CL-241049681294106625 · AE · Organization · Underwriting (承保批准) · 10-30 14:15",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 1,800 0 / 7,300 0 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 0 / 2,000 0 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v3 approved · CRR HIGH)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "Verification → Restricted Withdrawn 10-30 14:17 · Requested by r***@example.test · Withdrawn by r***@example.test · Reason: REQ-04 验收：HIGH 高级审批",
+          "Verification → Restricted Rejected 10-30 14:17 · Requested by r***@example.test · Rejected by r***@example.test · Reason: REQ-04 验收：HIGH 高级审批 · Comment: REQ-04 验收：驳回",
+          "Underwriting → Verification Effective 10-30 14:15 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "elev:L1-list",
+      "check": {
+        "menu": [],
+        "stats": [
+          "Verification 2",
+          "Observation 0",
+          "Observation due 0",
+          "Standard 4",
+          "Restricted 0",
+          "Awaiting approval 0"
+        ],
+        "tabs": [
+          "All",
+          "Verification",
+          "Observation",
+          "Standard",
+          "Restricted"
+        ],
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · Organization LOW Verification 10-30 14:17 REQ-04 验收：解除受限 — (no observation in Verification) — Request 10-30 14:17 View",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH Verification 10-30 14:15 承保批准 — (no observation in Verification) — Underwriting 10-30 14:15 View",
+          "CL-237575207592763393 CL-237575207592763393 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573476041465857 CL-237573476041465857 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573267559391233 CL-237573267559391233 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573040244891649 CL-237573040244891649 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View"
+        ],
+        "actions": [
+          "View",
+          "View",
+          "View",
+          "View",
+          "View",
+          "View"
+        ],
+        "total": "6 clients"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "elev:P02-L-verification",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC Verification",
+        "meta": "CL-240686705999454209 · AE · Organization · Request (Restricted → Verification) · 10-30 14:17",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 1,800 100 / 7,300 100 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 100 / 2,000 100 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v3 approved · CRR LOW)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "Restricted → Verification Approved 10-30 14:17 · Requested by r***@example.test · Approved by r***@example.test · Reason: REQ-04 验收：解除受限 · Comment: rq04 acceptance",
+          "Verification → Restricted Approved 10-30 14:16 · Requested by o***@example.test · Approved by r***@example.test · Reason: REQ-04 验收：受限往返 · Comment: rq04 acceptance",
+          "Underwriting → Verification Effective 10-30 14:15 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "elev:P04-H",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC Verification",
+        "meta": "CL-241049681294106625 · AE · Organization · Underwriting (承保批准) · 10-30 14:15",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 1,800 0 / 7,300 0 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 0 / 2,000 0 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v3 approved · CRR HIGH)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "Verification → Restricted Withdrawn 10-30 14:17 · Requested by r***@example.test · Withdrawn by r***@example.test · Reason: REQ-04 验收：HIGH 高级审批",
+          "Verification → Restricted Rejected 10-30 14:17 · Requested by r***@example.test · Rejected by r***@example.test · Reason: REQ-04 验收：HIGH 高级审批 · Comment: REQ-04 验收：驳回",
+          "Underwriting → Verification Effective 10-30 14:15 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "ro:L1-list",
+      "check": {
+        "menu": [],
+        "stats": [
+          "Verification 2",
+          "Observation 0",
+          "Observation due 0",
+          "Standard 4",
+          "Restricted 0",
+          "Awaiting approval 0"
+        ],
+        "tabs": [
+          "All",
+          "Verification",
+          "Observation",
+          "Standard",
+          "Restricted"
+        ],
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · Organization LOW Verification 10-30 14:17 REQ-04 验收：解除受限 — (no observation in Verification) — Request 10-30 14:17 View",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · Organization HIGH Verification 10-30 14:15 承保批准 — (no observation in Verification) — Underwriting 10-30 14:15 View",
+          "CL-237575207592763393 CL-237575207592763393 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573476041465857 CL-237573476041465857 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573267559391233 CL-237573267559391233 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View",
+          "CL-237573040244891649 CL-237573040244891649 · AE · Individual CRR not rated Standard 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — Migration 10-30 14:12 View"
+        ],
+        "actions": [
+          "View",
+          "View",
+          "View",
+          "View",
+          "View",
+          "View"
+        ],
+        "total": "6 clients"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "ro:P02-L-verification",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC Verification",
+        "meta": "CL-240686705999454209 · AE · Organization · Request (Restricted → Verification) · 10-30 14:17",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 1,800 100 / 7,300 100 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 100 / 2,000 100 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v3 approved · CRR LOW)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "Restricted → Verification Approved 10-30 14:17 · Requested by r***@example.test · Approved by r***@example.test · Reason: REQ-04 验收：解除受限 · Comment: rq04 acceptance",
+          "Verification → Restricted Approved 10-30 14:16 · Requested by o***@example.test · Approved by r***@example.test · Reason: REQ-04 验收：受限往返 · Comment: rq04 acceptance",
+          "Underwriting → Verification Effective 10-30 14:15 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "ro:P04-H",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC Verification",
+        "meta": "CL-241049681294106625 · AE · Organization · Underwriting (承保批准) · 10-30 14:15",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 1,800 0 / 7,300 0 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 0 / 2,000 0 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v3 approved · CRR HIGH)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "Verification → Restricted Withdrawn 10-30 14:17 · Requested by r***@example.test · Withdrawn by r***@example.test · Reason: REQ-04 验收：HIGH 高级审批",
+          "Verification → Restricted Rejected 10-30 14:17 · Requested by r***@example.test · Rejected by r***@example.test · Reason: REQ-04 验收：HIGH 高级审批 · Comment: REQ-04 验收：驳回",
+          "Underwriting → Verification Effective 10-30 14:15 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    }
+  ],
+  "console": [
+    {
+      "step": "req:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "appr:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "elev:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "ro:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    }
+  ],
+  "httpErrors": [],
+  "writes": [],
+  "loginRetries": 0
+}

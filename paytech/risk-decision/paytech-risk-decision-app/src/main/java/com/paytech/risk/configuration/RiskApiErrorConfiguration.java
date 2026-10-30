@@ -3,6 +3,7 @@ package com.paytech.risk.configuration;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.web.api.ApiErrorStatusResolver;
 import com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode;
+import com.paytech.risk.decision.api.enums.RiskLimitTierErrorCode;
 import com.paytech.risk.decision.api.enums.RiskUnderwritingErrorCode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +30,13 @@ public class RiskApiErrorConfiguration {
             if (errorCode instanceof RiskUnderwritingErrorCode underwriting) {
                 return underwriting == RiskUnderwritingErrorCode.RISK_UNDERWRITING_NOT_FOUND ? HttpStatus.NOT_FOUND
                     : HttpStatus.CONFLICT;
+            }
+            if (errorCode instanceof RiskLimitTierErrorCode tier) {
+                return switch (tier) {
+                    case RISK_LIMIT_TIER_NOT_FOUND, RISK_LIMIT_TIER_CHANGE_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                    case RISK_LIMIT_TIER_MIGRATION_FORBIDDEN -> HttpStatus.FORBIDDEN;
+                    default -> HttpStatus.CONFLICT;
+                };
             }
             if (!(errorCode instanceof RiskDecisionConfigurationErrorCode riskCode)) return defaultStatus;
             return switch (riskCode) {

@@ -20,7 +20,10 @@ import com.paytech.operations.console.bff.service.model.riskunderwriting.ReviseU
 import com.paytech.operations.console.bff.service.model.riskunderwriting.SaveUnderwritingDraftPageRequestBody;
 import com.paytech.operations.console.bff.service.model.riskunderwriting.SubmitUnderwritingPageRequestBody;
 import com.paytech.operations.console.bff.service.model.riskunderwriting.UnderwritingPreviewPageRequestBody;
+import com.paytech.operations.console.bff.service.model.risklimittier.RequestTierChangePageRequestBody;
+import com.paytech.risk.decision.api.control.request.DecideClientTierChangeRequestBody;
 import com.paytech.risk.decision.api.control.request.ReviewUnderwritingRequestBody;
+import com.paytech.risk.decision.api.control.request.WithdrawClientTierChangeRequestBody;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.StreamReadFeature;
@@ -32,16 +35,18 @@ import tools.jackson.databind.json.JsonMapper;
 import tools.jackson.databind.type.LogicalType;
 
 /**
- * /risk-underwriting 页面请求体的严格边界（REQ-03）
- * <li>只读取承保的六个页面写请求体：拒绝重复键、未知属性（如页面伪造 input 或操作人）、尾随内容与标量强转。</li>
- * <li>Body 上限 16384 字节（与块 143 写路由的 Gateway 上限一致，超限 413）。</li>
+ * /risk-underwriting（REQ-03）与 /risk-limit-tiers（REQ-04）页面请求体的严格边界
+ * <li>只读取承保的六个与限额档位的三个页面写请求体：拒绝重复键、未知属性（如页面伪造 input、复核清单系统项或操作人）、
+ * 尾随内容与标量强转。</li>
+ * <li>Body 上限 16384 字节（不低于块 143 / 144 写路由的 Gateway 上限，超限 413）。</li>
  */
 @Configuration(proxyBeanMethods = false)
 public class RiskUnderwritingRequestConfiguration implements WebMvcConfigurer {
     private static final int BODY_LIMIT = 16384;
     private static final Set<Class<?>> REQUEST_TYPES = Set.of(CreateUnderwritingDraftPageRequestBody.class,
         SaveUnderwritingDraftPageRequestBody.class, SubmitUnderwritingPageRequestBody.class,
-        ReviseUnderwritingPageRequestBody.class, UnderwritingPreviewPageRequestBody.class, ReviewUnderwritingRequestBody.class);
+        ReviseUnderwritingPageRequestBody.class, UnderwritingPreviewPageRequestBody.class, ReviewUnderwritingRequestBody.class,
+        RequestTierChangePageRequestBody.class, WithdrawClientTierChangeRequestBody.class, DecideClientTierChangeRequestBody.class);
 
     private final JsonMapper mapper;
 

@@ -1,0 +1,40 @@
+{
+ "commercialClientIds": [
+  "237161687952666625",
+  "240674482170114049",
+  "900000000001380201"
+ ],
+ "clients": [
+  {
+   "clientId": "237161687952666625",
+   "clientDisplayName": "RELSNAP-CLIENT-MOR",
+   "clientNo": "RELSNAP-CLIENT-MOR",
+   "clientType": "ORGANIZATION",
+   "jurisdictionCode": "UNSPECIFIED"
+  },
+  {
+   "clientId": "240674482170114049",
+   "clientDisplayName": "CL-240674482170114049",
+   "clientNo": "CL-240674482170114049",
+   "clientType": "ORGANIZATION",
+   "jurisdictionCode": "AE"
+  },
+  {
+   "clientId": "900000000001380201",
+   "clientDisplayName": "RELSNAP-CLIENT-PSP",
+   "clientNo": "RELSNAP-CLIENT-PSP",
+   "clientType": "ORGANIZATION",
+   "jurisdictionCode": "UNSPECIFIED"
+  }
+ ],
+ "missingInClientMaster": [],
+ "extra": [
+  {
+   "clientId": "880000000901",
+   "clientDisplayName": "E2E Payment fixture 880000000901",
+   "clientNo": "E2E-880000000901",
+   "clientType": "ORGANIZATION",
+   "jurisdictionCode": "AE"
+  }
+ ]
+}

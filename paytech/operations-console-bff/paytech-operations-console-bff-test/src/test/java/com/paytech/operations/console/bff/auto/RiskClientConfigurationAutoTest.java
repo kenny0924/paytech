@@ -448,7 +448,8 @@ class RiskClientConfigurationAutoTest {
             "service/processor/request/RecordManualQualificationRequest", "service/processor/ClientReviewDetailsProcessor",
             "service/processor/ClientReviewFileDownloadProcessor", "configuration/OperationsErrorStatusResolver",
             "service/processor/ClientDetailsProcessor", "service/model/clientadmin/response/ClientPageResponseBody",
-            "ext/rest/OnboardingConfigAdminController", "service/processor/UnderwritingInputAssembler").stream()
+            "ext/rest/OnboardingConfigAdminController", "service/processor/UnderwritingInputAssembler",
+            "service/processor/LimitTierChecklistAssembler", "service/processor/LimitTierChecklistReading").stream()
             .map(name -> BFF_PACKAGE + name).collect(java.util.stream.Collectors.toSet());
         String configuration = BFF_PACKAGE + "configuration/RiskClientConfiguration";
         String resolver = BFF_PACKAGE + "configuration/OperationsErrorStatusResolver";
@@ -465,6 +466,19 @@ class RiskClientConfigurationAutoTest {
                 .stream().map(file -> BFF_PACKAGE + file).anyMatch(name::equals);
         java.util.function.Predicate<String> underwritingOwner = owner -> owner.equals(OWNER_PACKAGE + "enums/RiskUnderwritingErrorCode")
             || owner.startsWith(OWNER_PACKAGE + "control/") && owner.contains("Underwriting");
+        // REQ-04 限额档位（2026-10-30）：工作台聚合、申请转发与命令回执按 Owner 档位合同组装请求体、读取响应，
+        // 复核清单另读取 REQ-03 当前承保；只允许 control 包内的档位 / 承保 DTO 与 API 及 RiskLimitTierErrorCode。
+        java.util.function.Predicate<String> limitTierConsumer = name -> name.startsWith(BFF_PACKAGE + "service/model/risklimittier/")
+            || Set.of("configuration/RiskUnderwritingRequestConfiguration", "configuration/OperationsErrorStatusResolver",
+                "configuration/RiskClientConfiguration", "integration/RiskLimitTierClient", "integration/impl/RiskLimitTierClientImpl",
+                "ext/rest/RiskLimitTierController", "service/processor/LimitTierLabeler", "service/processor/LimitTierListProcessor",
+                "service/processor/LimitTierHistoryProcessor", "service/processor/LimitTierWorkspaceProcessor",
+                "service/processor/LimitTierRequestProcessor", "service/processor/LimitTierChangeCommandProcessor",
+                "service/processor/LimitTierChecklistAssembler", "service/processor/LimitTierChecklistReading",
+                "service/processor/request/LimitTierChangeCommandRequest")
+                .stream().map(file -> BFF_PACKAGE + file).anyMatch(name::equals);
+        java.util.function.Predicate<String> limitTierOwner = owner -> owner.equals(OWNER_PACKAGE + "enums/RiskLimitTierErrorCode")
+            || owner.startsWith(OWNER_PACKAGE + "control/") && (owner.contains("Tier") || owner.contains("Underwriting"));
         Map<String, Set<String>> restricted = Map.of(
             resolver, Set.of("com.paytech.risk.decision.api.enums.RiskDecisionConfigurationErrorCode", "com.paytech.risk.decision.api.enums.RiskVariableErrorCode"));
         Set<String> transport = Set.of(configuration, BFF_PACKAGE + "configuration/RiskOwnerResponseHttpMessageConverter",
@@ -477,6 +491,7 @@ class RiskClientConfigurationAutoTest {
                 while (matcher.find()) {
                     assertTrue(transport.contains(name) || adapters.contains(name)
                         || underwritingConsumer.test(name) && underwritingOwner.test(matcher.group(1).replace('.', '/'))
+                        || limitTierConsumer.test(name) && limitTierOwner.test(matcher.group(1).replace('.', '/'))
                         || restricted.getOrDefault(name, Set.of()).contains(matcher.group(1))
                         || reviewPassThrough.contains(name) && matcher.group(1).startsWith("com.paytech.compliance.api.response.")
                         || complianceConsumers.contains(name) && matcher.group(1).startsWith("com.paytech.compliance.api.")
@@ -503,6 +518,7 @@ class RiskClientConfigurationAutoTest {
                                 boolean reviewEnum = owner.equals(COMPLIANCE_OWNER_PACKAGE + "enums/ClientReviewErrorCode");
                                 assertTrue(adapters.contains(caller)
                                     || (underwritingConsumer.test(caller) && underwritingOwner.test(owner))
+                                    || (limitTierConsumer.test(caller) && limitTierOwner.test(owner))
                                     || (complianceConsumers.contains(caller) && owner.startsWith(COMPLIANCE_OWNER_PACKAGE))
                                     || (caller.equals(configuration) && errorEnum && method.equals("values"))
                                     || (caller.equals(reviewConfiguration) && reviewEnum && method.equals("values"))
@@ -515,6 +531,7 @@ class RiskClientConfigurationAutoTest {
                                 if (!owner.startsWith(OWNER_PACKAGE) && !owner.startsWith(COMPLIANCE_OWNER_PACKAGE)) return;
                                 assertTrue(adapters.contains(caller) || (complianceConsumers.contains(caller) && owner.startsWith(COMPLIANCE_OWNER_PACKAGE))
                                     || (underwritingConsumer.test(caller) && underwritingOwner.test(owner))
+                                    || (limitTierConsumer.test(caller) && limitTierOwner.test(owner))
                                     || (caller.equals(resolver)
                                     && (owner.equals(OWNER_PACKAGE + "enums/RiskDecisionConfigurationErrorCode") || owner.equals(OWNER_PACKAGE + "enums/RiskVariableErrorCode")
                                     || owner.equals(COMPLIANCE_OWNER_PACKAGE + "enums/ClientReviewErrorCode"))),

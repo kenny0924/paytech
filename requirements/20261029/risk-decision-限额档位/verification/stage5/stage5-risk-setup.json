@@ -1,0 +1,122 @@
+{
+ "baseline": {
+  "PAYMENT_ATTEMPT_RISK": {
+   "releaseId": "239045324600000512",
+   "flowVersionId": "239045324239290369",
+   "flowCode": "S5_CARD3DS_1022192045"
+  },
+  "CHECKOUT_PREPARE": {
+   "releaseId": "239113350301106176",
+   "flowVersionId": "239113349432885249",
+   "flowCode": "E2E_V2_ALLOW_CHECKOUT_PREPARE_20261022235104"
+  }
+ },
+ "candidate": {
+  "PAYMENT_ATTEMPT_RISK": {
+   "flowVersionId": "241826264384552961",
+   "releaseId": "241826265252773888",
+   "gateRuleSet": "241826259288473600",
+   "limitRuleSets": {
+    "VERIFICATION": "241826260517404672",
+    "OBSERVATION": "241826261222047744",
+    "STANDARD": "241826261729558528"
+   },
+   "shadowRun": {
+    "actionChangeCount": 36,
+    "allowToDenyCount": 36,
+    "allowToReviewCount": 0,
+    "baselineReleaseId": "239045324600000512",
+    "checkStatus": "PASSED",
+    "denyToAllowCount": 0,
+    "failedCount": 0,
+    "featureMissingCount": 0,
+    "p95Millis": 38,
+    "p99Millis": 47,
+    "sampleCount": 37,
+    "sampleTarget": 200,
+    "shadowRunId": "241826503816396800",
+    "status": "COMPLETED",
+    "timedOutCount": 0
+   },
+   "status": "ACTIVE",
+   "activatedAt": "2026-10-30T07:32:13Z"
+  },
+  "CHECKOUT_PREPARE": {
+   "flowVersionId": "241826264946589697",
+   "releaseId": "241826266834026496",
+   "gateRuleSet": "241826259976339456",
+   "currencyRuleSets": {
+    "VERIFICATION": "241826262283206656",
+    "OBSERVATION": "241826262736191488"
+   },
+   "shadowRun": {
+    "actionChangeCount": 0,
+    "allowToDenyCount": 23,
+    "allowToReviewCount": 0,
+    "baselineReleaseId": "239113350301106176",
+    "checkStatus": "PASSED",
+    "denyToAllowCount": 0,
+    "failedCount": 0,
+    "featureMissingCount": 0,
+    "p95Millis": 12,
+    "p99Millis": 12,
+    "sampleCount": 23,
+    "sampleTarget": 200,
+    "shadowRunId": "241826513840783360",
+    "status": "COMPLETED",
+    "timedOutCount": 0
+   },
+   "status": "ACTIVE",
+   "activatedAt": "2026-10-30T07:32:16Z"
+  }
+ },
+ "quotas": {
+  "VERIFICATION": {
+   "USD": [
+    "50",
+    "250",
+    "400"
+   ],
+   "AED": [
+    "200",
+    "1000",
+    "3000"
+   ]
+  },
+  "OBSERVATION": {
+   "USD": [
+    "2000",
+    "10000",
+    "40000"
+   ],
+   "AED": [
+    "7000",
+    "35000",
+    "140000"
+   ]
+  },
+  "STANDARD": {
+   "USD": [
+    "10000",
+    "100000",
+    "1000000"
+   ],
+   "AED": [
+    "36000",
+    "360000",
+    "3600000"
+   ]
+  }
+ },
+ "currencySets": {
+  "VERIFICATION": [
+   "USD",
+   "AED"
+  ],
+  "OBSERVATION": [
+   "USD",
+   "AED"
+  ]
+ },
+ "builtAt": "2026-10-30T07:31:15Z"
+}

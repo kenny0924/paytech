@@ -20,3 +20,5 @@
 .master-data-page .client-person { border-top: 1px dashed #e5e7eb; padding-top: 12px; margin-top: 12px; }
 .master-data-page .client-person:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
 .master-data-page .client-person-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* Client 详情页头按钮（返回、承保、限额档位、刷新）在窄屏换行，不撑出横向滚动。 */
+.master-data-page .page-heading { flex-wrap: wrap; }

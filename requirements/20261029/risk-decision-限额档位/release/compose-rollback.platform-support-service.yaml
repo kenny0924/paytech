@@ -1,0 +1,6 @@
+# REQ-04 platform-support-service：mor-test 回滚覆盖（= 现网 a3003ef6）。
+services:
+  platform-support-service:
+    image: sha256:a3003ef6499dcf5680154589f501d48db43e9c8041c02dcd5330e5eeade6a11c  # 现网（design-discuss-1b 多语言发布变更记录，源码 c633fd0e，JAR 29d7e8043e244336）
+    environment:
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff

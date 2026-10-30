@@ -1,0 +1,30 @@
+{
+ "rows": [
+  {
+   "client_id": "237573040244891649",
+   "tier": "STANDARD",
+   "source_type": "MIGRATION",
+   "list_code": "TIER_STANDARD"
+  },
+  {
+   "client_id": "237573267559391233",
+   "tier": "STANDARD",
+   "source_type": "MIGRATION",
+   "list_code": "TIER_STANDARD"
+  },
+  {
+   "client_id": "237573476041465857",
+   "tier": "STANDARD",
+   "source_type": "MIGRATION",
+   "list_code": "TIER_STANDARD"
+  },
+  {
+   "client_id": "237575207592763393",
+   "tier": "STANDARD",
+   "source_type": "MIGRATION",
+   "list_code": "TIER_STANDARD"
+  }
+ ],
+ "gaps": [],
+ "gapCount": 0
+}

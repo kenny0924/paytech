@@ -284,3 +284,17 @@ Risk 物理 DDL 目标明确为零 CHECK、零 FOREIGN KEY。PDManer Correlation
 3. 执行应用内规范检查；
 4. 按八个子域 Review 表、字段、枚举、索引、关系和中文说明；
 5. 对照已落盘的完整 Schema SQL、Java 切片和仓库自有 `local-environment` 验证证据检查是否漂移；PDManer 4.9.3 人工 Review 仍是任何共享或生产使用前的独立门禁。继续禁止 Flyway、Liquibase、Testcontainers 或应用启动时 Schema/初始化数据迁移。
+
+### 10.5 Client 限额档位（2026-10-30 REQ-04）
+
+> 依据：[requirements/20261029/risk-decision-限额档位](../../../../requirements/20261029/risk-decision-限额档位/technique.md) 第 7—9 节（S-01—S-04、S-06、S-08、S-10）与末节"日 / 月额度汇总表"。新增 3 张表；`t_velocity_feature_definition.metric / window_seconds` 加注释；`t_risk_list.list_purpose`、`t_risk_list_entry.source_type`、`t_velocity_feature_definition.event_code` 只改列注释，结构不变；四张 TIER 名单为初始化 DML。
+
+- `t_client_limit_tier` 每个 Client 至多一行（19 列，`client_id` 唯一）：当前档位（VERIFICATION / OBSERVATION / STANDARD / RESTRICTED）、进入 RESTRICTED 前的档位（限制恢复目标）、来源（UNDERWRITING_INIT / MIGRATION / REQUEST）与来源变更记录、观察期开始时间与从有效承保冻结的目标天数 / 笔数（无承保默认 30 / 100）、`version` CAS。无行即"无档位 = 额度为零"。
+- `t_client_limit_tier_change` 每次建档、迁移或运营申请一行（35 列）：PENDING / APPROVED / REJECTED / WITHDRAWN，`pending_slot`（PENDING 为 1，其他 NULL）与 `client_id` 组合唯一，保证每个 Client 至多一个待审批申请；复核清单用结构化 `chk_*` 列冻结（资格、承保版本号、合同与开通项、四个人工确认），不用无 Schema JSON；审批级别按申请时有效承保 CRR 冻结（LOW → STANDARD，其余 → ELEVATED）。建档与迁移直接 APPROVED；只有 PENDING 行可变（条件更新携带期望 `status` 与 `version`）。
+- 名单投影：档位表为权威，四张系统名单 `TIER_VERIFICATION / TIER_OBSERVATION / TIER_STANDARD / TIER_RESTRICTED`（300001—300004，CLIENT 主体、EXACT、`list_purpose=TIER`）由初始化 DML 建；建档与批准时同一本地事务关闭旧成员（SUPERSEDED）并插入新成员（`source_type=TIER`、`reason=change:{changeId}`、`supersedes_entry_id` 指向旧成员）；延长观察（档位不变）不动成员。名单命中直接查库无缓存，批准后下一次评估即生效。TIER 名单拒绝人工增删成员；TIER 用途不能经名单接口创建。
+- 承保挂点：REQ-03 提交即决定 / HIGH 复核 / 自动承保三条批准路径，在批准（首次或修订）时 Client 无档位时，由 Processor 在同一本地事务组合承保 Service 与档位 Service 建 VERIFICATION；不取档位锁，依靠 `client_id` 唯一索引（冲突即跳过，不让承保失败）。
+- 并发：档位命令按 Client 获取 Redis 锁（`risk-limit-tier:client:{clientId}`，TRY_LOCK 500ms / 30s），不与承保锁嵌套；档位行与申请的版本 CAS、待审批槽位与名单生效槽位唯一索引为最终防线。
+- 累计事件：新增事件码 `PAYMENT_ATTEMPT_ALLOWED`、`CHECKOUT_ALLOWED`，结论为放行时与 `*_ASSESSED` 同一事务写入（同主体、同时间）；`t_velocity_event` 唯一键含 `event_code`，无需改结构。档位详情的"已用"与观察期放行笔数按 `idx_velocity_subject` 读取 CLIENT 主体的放行事件，按币种分组，不换汇。
+- 日 / 月额度（阶段 4 修订，方案 B）：`t_client_allowed_daily_total` 每个 Client、放行事件、币种、UTC 日一行（`(client_id, event_code, currency, event_date)` 唯一，也是读取路径），放行评估的本地事务中在写放行事件之后 `INSERT … ON DUPLICATE KEY UPDATE` 累加金额与笔数；拒绝、重放、影子不写，只增不减。新统计方式 `DAILY_SUM_AMOUNT` 只允许 CLIENT 主体、`*_ALLOWED` 事件、窗口 86400（UTC 当日）/ 2592000（近 30 个 UTC 自然日含当日），评估时读至多 30 行；明细扫描的宽窗口限制不变。同 Client 同币种同日的并发放行在汇总行上按行锁串行（毫秒级本地事务）；额度判定在事务前读取，并发时最多超出一笔，属软控制。日期列不用 `utc_date`（与 MySQL `UTC_DATE` 冲突）。
+- data-query 模板 `GOLIVE_LIMIT_TIER` 只读 `t_client_limit_tier`（表级授权）。
+

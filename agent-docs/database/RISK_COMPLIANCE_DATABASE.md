@@ -476,6 +476,16 @@ Risk 补偿事件重建清单冻结在 `scripts/pdmaner/risk/model-policy.mjs`�
 
 承保记录是 Risk 最低保证金要求的决策事实，不替代 compliance Settlement Control，也不触发 Finance 余额变化；下发与执行归 REQ-18。物理决策见 [RISK_DECISION_PHYSICAL_DECISIONS.md](../../paytech/risk-decision/docs/database/RISK_DECISION_PHYSICAL_DECISIONS.md) 第 10.4 节。
 
+### 4.10 Client 限额档位（3 张；2026-10-30 REQ-04，risk-decision）
+
+| 表 | 职责 | 关键结构 |
+|---|---|---|
+| client_limit_tier | Client 当前限额档位（交易放量开关的权威事实）：档位、受限前档位、来源、观察期开始与目标 | `client_id` 唯一；VERIFICATION / OBSERVATION / STANDARD / RESTRICTED；`version` CAS |
+| client_limit_tier_change | 档位变更记录：承保建档、存量迁移与运营申请（复核清单快照、CRR 冻结的审批级别、四眼审批） | `(client_id, pending_slot)` 唯一（每 Client 至多一个待审批）；PENDING / APPROVED / REJECTED / WITHDRAWN |
+| client_allowed_daily_total | Client 按 UTC 日的放行金额汇总（日 / 月额度 Feature `DAILY_SUM_AMOUNT` 与档位页"已用"） | `(client_id, event_code, currency, event_date)` 唯一；放行时同事务累加，只增不减 |
+
+档位以四张系统维护的 TIER 名单（`t_risk_list.list_purpose=TIER`）投影给决策流分支，成员与档位同一事务维护，运营不能增删；额度为按命名约定的风控常量与币种集合，见 [限额档位配置说明](../../paytech/risk-decision/docs/limit-tier-configuration.md)。物理决策见 [RISK_DECISION_PHYSICAL_DECISIONS.md](../../paytech/risk-decision/docs/database/RISK_DECISION_PHYSICAL_DECISIONS.md) 第 10.5 节。
+
 ## 5. 核心关系图
 
 ### 5.1 Due Diligence 与资格

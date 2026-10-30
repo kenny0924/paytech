@@ -20,6 +20,7 @@ public interface VelocityEventSubjectRepository {
     /** 合计锚定主体在窗口内与指定币种相同的事件金额，没有事件时为零。 */
     BigDecimal sumAmount(RiskSubjectType subjectType, String subjectKey, VelocityEventCode eventCode, Instant from, Instant to, String currency);
 
+
     /** 统计锚定主体在窗口内关联过的不同去重主体数。 */
     long countDistinct(RiskSubjectType subjectType, String subjectKey, VelocityEventCode eventCode, Instant from, Instant to, RiskSubjectType distinctType);
 

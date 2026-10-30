@@ -1,0 +1,10 @@
+# REQ-04 api-gateway：mor-test 候选覆盖（D-9：Gateway Snapshot 响应体上限 1 MiB → 4 MiB；阶段 7 第 ⑦a 步，块 145 激活前执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 api-gateway
+# 只认 sha256（tag rq04-20261030b-gw 仅供辨认）。不加 --remove-orphans。env 全部来自主 compose（现网覆盖只设 image），渲染结果与现网逐键逐值相同。
+# 构建源：Code-MoR-rq04-rel = main 022da95a + REQ-04（Gateway 只改 PlatformSnapshotProperties.MAX_RESPONSE_BYTES 与 application.yml max-response-bytes）。
+# 相对现网 card3ds-20261022b：Gateway 自身类只有这 3 个条目不同；另外内嵌的 paytech-platform-support-api 随 main 前进（+127 / -6 / ~31，均非 Gateway 引用的类，
+# -6 为参考数据迁移 e2185c1b 删除的 CountryRegion / CurrencySpec 查询接口），见 evidence/jar-candidate-gateway-vs-live.txt。
+services:
+  api-gateway:
+    image: sha256:d51daee3c4caecd720a8d512c6c4d7c43821cb2694cf1fa24d598449eac032cf  # mor-test/api-gateway:rq04-20261030b-gw（JAR d3dd5aa279ea6672）

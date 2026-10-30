@@ -24,6 +24,9 @@ public interface ClientUnderwritingMapper {
     /** 读取 Client 占用有效槽位的版本。 */
     ClientUnderwriting selectEffective(@Param("clientId") long clientId);
 
+    /** 批量读取多个 Client 的有效 APPROVED 版本。 */
+    List<ClientUnderwriting> selectEffectiveByClientIds(@Param("clientIds") List<Long> clientIds);
+
     /** 读取 Client 版本号最大的版本。 */
     ClientUnderwriting selectLatest(@Param("clientId") long clientId);
 

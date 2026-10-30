@@ -3,6 +3,8 @@ package com.paytech.risk.decision.domain.runtime;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -10,6 +12,7 @@ import java.util.Map;
 import java.util.function.LongSupplier;
 
 import com.paytech.risk.control.domain.list.RiskSubjectType;
+import com.paytech.risk.decision.core.dal.dataobject.ClientAllowedDailyTotal;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionEvaluation;
 import com.paytech.risk.decision.core.dal.dataobject.EvaluationFeatureResult;
 import com.paytech.risk.decision.core.dal.dataobject.EvaluationFlowTrace;
@@ -183,30 +186,72 @@ public final class RuntimeEvaluationFacts {
     }
 
     /**
-     * 成功评估的累计事件与主体：每次写评估事件，结论为审核或拒绝时再写拦截事件；失败与超时不写
+     * 成功评估的累计事件与主体：每次写评估事件，结论为放行时再写放行事件，结论为审核或拒绝时再写拦截事件；失败与超时不写
+     * <li>放行且本次有 CLIENT 主体时，另产生一条 Client 当日放行汇总增量（REQ-04 日 / 月额度）。</li>
      *
      * @param sourceType 来源类型，与来源表同名
      * @param sourceId 来源行主键，即本点评估事实行
      * @param input 冻结输入，提供金额、币种与主体键
      * @param run 执行结果、时间与技术状态
-     * @param assessed 评估事件
-     * @param rejected 拦截事件
+     * @param codes 本风控点的评估、放行与拦截事件
      * @param subjects 写入的主体类型，本次没有值的主体跳过
      * @param ids 标识生成
-     * @return 事件与主体行
+     * @return 事件与主体行（评估事件在前）及日汇总增量
      */
     public static VelocityFacts velocityFacts(String sourceType, long sourceId, RuntimeRiskInput input, Run run,
-        VelocityEventCode assessed, VelocityEventCode rejected, List<RiskSubjectType> subjects, LongSupplier ids) {
+        VelocityEventCodes codes, List<RiskSubjectType> subjects, LongSupplier ids) {
         List<VelocityEvent> events = new ArrayList<>();
         List<VelocityEventSubject> rows = new ArrayList<>();
         if (run.status() != TechnicalStatus.SUCCEEDED) {
-            return new VelocityFacts(events, rows);
+            return new VelocityFacts(events, rows, List.of());
         }
-        addEvent(assessed, sourceType, sourceId, input, run.evaluationTime(), subjects, ids, events, rows);
-        if (run.outcome().decision() != DecisionValue.ALLOW) {
-            addEvent(rejected, sourceType, sourceId, input, run.evaluationTime(), subjects, ids, events, rows);
+        addEvent(codes.assessed(), sourceType, sourceId, input, run.evaluationTime(), subjects, ids, events, rows);
+        boolean allowed = run.outcome().decision() == DecisionValue.ALLOW;
+        addEvent(allowed ? codes.allowed() : codes.rejected(), sourceType, sourceId, input, run.evaluationTime(), subjects,
+            ids, events, rows);
+        return new VelocityFacts(events, rows, allowed ? dailyTotal(codes.allowed(), input, run.evaluationTime(), ids)
+            : List.of());
+    }
+
+    /** 放行的 Client 当日汇总增量；本次没有 CLIENT 主体或金额时为空。 */
+    static List<ClientAllowedDailyTotal> dailyTotal(VelocityEventCode code, RuntimeRiskInput input, Instant time,
+        LongSupplier ids) {
+        String client = input.subjectKey(RiskSubjectType.CLIENT);
+        if (client == null || input.amount() == null || input.currency() == null) {
+            return List.of();
         }
-        return new VelocityFacts(events, rows);
+        ClientAllowedDailyTotal total = new ClientAllowedDailyTotal();
+        total.setDailyTotalId(ids.getAsLong());
+        total.setClientId(Long.parseLong(client));
+        total.setEventCode(code);
+        total.setCurrency(input.currency());
+        total.setEventDate(LocalDate.ofInstant(time, ZoneOffset.UTC));
+        total.setAmount(input.amount());
+        total.setEventCount(1);
+        total.setCreateTime(time);
+        total.setUpdateTime(time);
+        return List.of(total);
+    }
+
+    /**
+     * 一个风控点的累计事件编码
+     *
+     * @param assessed 每次成功评估写入的评估事件
+     * @param allowed 结论为放行时写入的放行事件
+     * @param rejected 结论为审核或拒绝时写入的拦截事件
+     */
+    public record VelocityEventCodes(VelocityEventCode assessed, VelocityEventCode allowed, VelocityEventCode rejected) {
+        /** 支付尝试点。 */
+        public static VelocityEventCodes paymentAttempt() {
+            return new VelocityEventCodes(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED,
+                VelocityEventCode.PAYMENT_ATTEMPT_ALLOWED, VelocityEventCode.PAYMENT_ATTEMPT_REJECTED);
+        }
+
+        /** 结账点。 */
+        public static VelocityEventCodes checkout() {
+            return new VelocityEventCodes(VelocityEventCode.CHECKOUT_ASSESSED, VelocityEventCode.CHECKOUT_ALLOWED,
+                VelocityEventCode.CHECKOUT_REJECTED);
+        }
     }
 
     /** 写入一条累计事件及本次存在的主体。 */
@@ -252,8 +297,10 @@ public final class RuntimeEvaluationFacts {
      *
      * @param events 事件，评估事件在前
      * @param subjects 事件主体，按事件与主体登记顺序
+     * @param dailyTotals Client 当日放行汇总增量；非放行或无 CLIENT 主体时为空
      */
-    public record VelocityFacts(List<VelocityEvent> events, List<VelocityEventSubject> subjects) { }
+    public record VelocityFacts(List<VelocityEvent> events, List<VelocityEventSubject> subjects,
+        List<ClientAllowedDailyTotal> dailyTotals) { }
 
     /**
      * 一次执行的结果与时间

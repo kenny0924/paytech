@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../api/session';
 import type { ConsoleResource } from '../api/types';
 import { hasMenu, underwritingMenu } from '../underwriting/underwriting';
+import { limitTierMenu } from '../limitTier/limitTier';
 import { usePaging } from '../hooks/usePaging';
 import { QueryFailure, date, useDetail } from '../tenantAccess/TenantAccessView';
 import { ClientDetailView } from '../masterData/ClientDetail';
@@ -23,7 +24,8 @@ export function Clients({ resources }: { resources: ConsoleResource[] }) {
   const location = useLocation();
   const parts = location.pathname.replace(/\/$/, '').split('/').slice(3);
   if (parts.length > 1 || (parts.length === 1 && !isId(parts[0]))) return <QueryFailure failure={new ApiError(404, 'NOT_FOUND')} />;
-  return parts.length === 1 ? <ClientDetailView key={parts[0]} clientId={parts[0]} canUnderwrite={hasMenu(resources, underwritingMenu)} /> : <ClientList key={location.search} />;
+  return parts.length === 1 ? <ClientDetailView key={parts[0]} clientId={parts[0]} canUnderwrite={hasMenu(resources, underwritingMenu)}
+    canViewLimitTier={hasMenu(resources, limitTierMenu)} /> : <ClientList key={location.search} />;
 }
 
 /** 列表：状态、辖区、责任 PayFac 筛选写入 URL；PayFac 名称来自一次选项读取。 */

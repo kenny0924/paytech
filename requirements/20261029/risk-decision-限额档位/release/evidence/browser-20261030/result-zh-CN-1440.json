@@ -1,0 +1,795 @@
+{
+  "locale": "zh-CN",
+  "width": 1440,
+  "steps": [
+    {
+      "step": "req:L1-list",
+      "check": {
+        "menu": [
+          {
+            "item": "限额档位",
+            "parent": "风控管理"
+          }
+        ],
+        "stats": [
+          "验证档 2",
+          "观察档 0",
+          "观察期到期待确认 0",
+          "标准档 4",
+          "受限档 0",
+          "待审批申请 0"
+        ],
+        "tabs": [
+          "全部",
+          "验证档",
+          "观察档",
+          "标准档",
+          "受限档"
+        ],
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · 机构 LOW 验证档 10-30 14:17 REQ-04 验收：解除受限 —（验证档无观察期） — 变更申请 10-30 14:17 申请上线",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 验证档 10-30 14:15 承保批准 —（验证档无观察期） — 承保初始化 10-30 14:15 申请上线",
+          "CL-237575207592763393 CL-237575207592763393 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573476041465857 CL-237573476041465857 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573267559391233 CL-237573267559391233 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573040244891649 CL-237573040244891649 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看"
+        ],
+        "actions": [
+          "申请上线",
+          "申请上线",
+          "查看",
+          "查看",
+          "查看",
+          "查看"
+        ],
+        "total": "共 6 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "CL-",
+          "AE",
+          "REQ-",
+          "mor-test"
+        ]
+      }
+    },
+    {
+      "step": "req:L2-tab-standard",
+      "check": {
+        "rows": [
+          "CL-237575207592763393 CL-237575207592763393 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573476041465857 CL-237573476041465857 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573267559391233 CL-237573267559391233 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573040244891649 CL-237573040244891649 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "CL-",
+          "AE",
+          "REQ-",
+          "mor-test"
+        ]
+      }
+    },
+    {
+      "step": "req:L3-tab-verification",
+      "check": {
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · 机构 LOW 验证档 10-30 14:17 REQ-04 验收：解除受限 —（验证档无观察期） — 变更申请 10-30 14:17 申请上线",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 验证档 10-30 14:15 承保批准 —（验证档无观察期） — 承保初始化 10-30 14:15 申请上线"
+        ],
+        "actions": [
+          "申请上线",
+          "申请上线"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "CL-",
+          "AE",
+          "REQ-"
+        ]
+      }
+    },
+    {
+      "step": "req:L4-observation-due",
+      "check": {
+        "rows": 0,
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "req:L5-pending",
+      "check": {
+        "rows": 0,
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": []
+      }
+    },
+    {
+      "step": "req:L6-search-id",
+      "check": {
+        "rows": [
+          "CL-237573040244891649 CL-237573040244891649 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "CL-",
+          "AE",
+          "REQ-",
+          "mor-test"
+        ]
+      }
+    },
+    {
+      "step": "req:P06-migrated",
+      "check": {
+        "title": "CL-237573040244891649 标准档",
+        "meta": "CL-237573040244891649 · AE · 个人 · 存量迁移（REQ-04 上线前存量迁移（mor-test）） · 10-30 14:12",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "下一步",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 36,700 0 / 367,000 0 / 3,670,000",
+          "EGP 500,000 0 / 5,000,000 0 / 50,000,000",
+          "SAR 37,500 0 / 375,000 0 / 3,750,000",
+          "USD 10,000 10 / 100,000 10 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [
+          "申请降为受限档"
+        ],
+        "alerts": [],
+        "history": [
+          "存量迁移 → 标准档 已生效 10-30 14:12 · 存量迁移 · REQ-04 上线前存量迁移（mor-test）"
+        ],
+        "buttons": [
+          {
+            "text": "降为受限档",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "CL-",
+          "REQ-",
+          "mor-test"
+        ]
+      }
+    },
+    {
+      "step": "req:P02-L-verification",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC 验证档",
+        "meta": "CL-240686705999454209 · AE · 机构 · 变更申请（受限档 → 验证档） · 10-30 14:17",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "下一步",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 1,800 100 / 7,300 100 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 100 / 2,000 100 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v3 已批准 · CRR LOW）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [
+          "申请降为受限档"
+        ],
+        "alerts": [],
+        "history": [
+          "受限档 → 验证档 已批准 10-30 14:17 · 申请 r***@example.test · 审批 r***@example.test · 理由：REQ-04 验收：解除受限 · 意见：rq04 acceptance",
+          "验证档 → 受限档 已批准 10-30 14:16 · 申请 o***@example.test · 审批 r***@example.test · 理由：REQ-04 验收：受限往返 · 意见：rq04 acceptance",
+          "承保初始化 → 验证档 已生效 10-30 14:15 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": [
+          {
+            "text": "提交申请",
+            "disabled": true
+          },
+          {
+            "text": "降为受限档",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "Acceptance",
+          "Trading",
+          "example",
+          "test",
+          "REQ-",
+          "rq",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "step": "req:P04-H",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC 验证档",
+        "meta": "CL-241049681294106625 · AE · 机构 · 承保初始化（承保批准） · 10-30 14:15",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "下一步",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 1,800 0 / 7,300 0 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 0 / 2,000 0 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v3 已批准 · CRR HIGH）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [
+          "申请降为受限档"
+        ],
+        "alerts": [],
+        "history": [
+          "验证档 → 受限档 已撤回 10-30 14:17 · 申请 r***@example.test · 撤回 r***@example.test · 理由：REQ-04 验收：HIGH 高级审批",
+          "验证档 → 受限档 已驳回 10-30 14:17 · 申请 r***@example.test · 驳回 r***@example.test · 理由：REQ-04 验收：HIGH 高级审批 · 意见：REQ-04 验收：驳回",
+          "承保初始化 → 验证档 已生效 10-30 14:15 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": [
+          {
+            "text": "提交申请",
+            "disabled": true
+          },
+          {
+            "text": "降为受限档",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "Refdata",
+          "AE",
+          "example",
+          "test",
+          "REQ-"
+        ]
+      }
+    },
+    {
+      "step": "appr:L1-list",
+      "check": {
+        "menu": [
+          {
+            "item": "限额档位",
+            "parent": "风控管理"
+          }
+        ],
+        "stats": [
+          "验证档 2",
+          "观察档 0",
+          "观察期到期待确认 0",
+          "标准档 4",
+          "受限档 0",
+          "待审批申请 0"
+        ],
+        "tabs": [
+          "全部",
+          "验证档",
+          "观察档",
+          "标准档",
+          "受限档"
+        ],
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · 机构 LOW 验证档 10-30 14:17 REQ-04 验收：解除受限 —（验证档无观察期） — 变更申请 10-30 14:17 查看",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 验证档 10-30 14:15 承保批准 —（验证档无观察期） — 承保初始化 10-30 14:15 查看",
+          "CL-237575207592763393 CL-237575207592763393 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573476041465857 CL-237573476041465857 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573267559391233 CL-237573267559391233 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573040244891649 CL-237573040244891649 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看"
+        ],
+        "actions": [
+          "查看",
+          "查看",
+          "查看",
+          "查看",
+          "查看",
+          "查看"
+        ],
+        "total": "共 6 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "CL-",
+          "AE",
+          "REQ-",
+          "mor-test"
+        ]
+      }
+    },
+    {
+      "step": "appr:P02-L-verification",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC 验证档",
+        "meta": "CL-240686705999454209 · AE · 机构 · 变更申请（受限档 → 验证档） · 10-30 14:17",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 1,800 100 / 7,300 100 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 100 / 2,000 100 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v3 已批准 · CRR LOW）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "受限档 → 验证档 已批准 10-30 14:17 · 申请 r***@example.test · 审批 r***@example.test · 理由：REQ-04 验收：解除受限 · 意见：rq04 acceptance",
+          "验证档 → 受限档 已批准 10-30 14:16 · 申请 o***@example.test · 审批 r***@example.test · 理由：REQ-04 验收：受限往返 · 意见：rq04 acceptance",
+          "承保初始化 → 验证档 已生效 10-30 14:15 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "Acceptance",
+          "Trading",
+          "example",
+          "test",
+          "REQ-",
+          "rq",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "step": "appr:P04-H",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC 验证档",
+        "meta": "CL-241049681294106625 · AE · 机构 · 承保初始化（承保批准） · 10-30 14:15",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 1,800 0 / 7,300 0 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 0 / 2,000 0 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v3 已批准 · CRR HIGH）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "验证档 → 受限档 已撤回 10-30 14:17 · 申请 r***@example.test · 撤回 r***@example.test · 理由：REQ-04 验收：HIGH 高级审批",
+          "验证档 → 受限档 已驳回 10-30 14:17 · 申请 r***@example.test · 驳回 r***@example.test · 理由：REQ-04 验收：HIGH 高级审批 · 意见：REQ-04 验收：驳回",
+          "承保初始化 → 验证档 已生效 10-30 14:15 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "Refdata",
+          "AE",
+          "example",
+          "test",
+          "REQ-"
+        ]
+      }
+    },
+    {
+      "step": "elev:L1-list",
+      "check": {
+        "menu": [
+          {
+            "item": "限额档位",
+            "parent": "风控管理"
+          }
+        ],
+        "stats": [
+          "验证档 2",
+          "观察档 0",
+          "观察期到期待确认 0",
+          "标准档 4",
+          "受限档 0",
+          "待审批申请 0"
+        ],
+        "tabs": [
+          "全部",
+          "验证档",
+          "观察档",
+          "标准档",
+          "受限档"
+        ],
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · 机构 LOW 验证档 10-30 14:17 REQ-04 验收：解除受限 —（验证档无观察期） — 变更申请 10-30 14:17 查看",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 验证档 10-30 14:15 承保批准 —（验证档无观察期） — 承保初始化 10-30 14:15 查看",
+          "CL-237575207592763393 CL-237575207592763393 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573476041465857 CL-237573476041465857 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573267559391233 CL-237573267559391233 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573040244891649 CL-237573040244891649 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看"
+        ],
+        "actions": [
+          "查看",
+          "查看",
+          "查看",
+          "查看",
+          "查看",
+          "查看"
+        ],
+        "total": "共 6 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "CL-",
+          "AE",
+          "REQ-",
+          "mor-test"
+        ]
+      }
+    },
+    {
+      "step": "elev:P02-L-verification",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC 验证档",
+        "meta": "CL-240686705999454209 · AE · 机构 · 变更申请（受限档 → 验证档） · 10-30 14:17",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 1,800 100 / 7,300 100 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 100 / 2,000 100 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v3 已批准 · CRR LOW）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "受限档 → 验证档 已批准 10-30 14:17 · 申请 r***@example.test · 审批 r***@example.test · 理由：REQ-04 验收：解除受限 · 意见：rq04 acceptance",
+          "验证档 → 受限档 已批准 10-30 14:16 · 申请 o***@example.test · 审批 r***@example.test · 理由：REQ-04 验收：受限往返 · 意见：rq04 acceptance",
+          "承保初始化 → 验证档 已生效 10-30 14:15 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "Acceptance",
+          "Trading",
+          "example",
+          "test",
+          "REQ-",
+          "rq",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "step": "elev:P04-H",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC 验证档",
+        "meta": "CL-241049681294106625 · AE · 机构 · 承保初始化（承保批准） · 10-30 14:15",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 1,800 0 / 7,300 0 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 0 / 2,000 0 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v3 已批准 · CRR HIGH）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "验证档 → 受限档 已撤回 10-30 14:17 · 申请 r***@example.test · 撤回 r***@example.test · 理由：REQ-04 验收：HIGH 高级审批",
+          "验证档 → 受限档 已驳回 10-30 14:17 · 申请 r***@example.test · 驳回 r***@example.test · 理由：REQ-04 验收：HIGH 高级审批 · 意见：REQ-04 验收：驳回",
+          "承保初始化 → 验证档 已生效 10-30 14:15 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "Refdata",
+          "AE",
+          "example",
+          "test",
+          "REQ-"
+        ]
+      }
+    },
+    {
+      "step": "ro:L1-list",
+      "check": {
+        "menu": [
+          {
+            "item": "限额档位",
+            "parent": "风控管理"
+          }
+        ],
+        "stats": [
+          "验证档 2",
+          "观察档 0",
+          "观察期到期待确认 0",
+          "标准档 4",
+          "受限档 0",
+          "待审批申请 0"
+        ],
+        "tabs": [
+          "全部",
+          "验证档",
+          "观察档",
+          "标准档",
+          "受限档"
+        ],
+        "rows": [
+          "Acceptance Trading 1027040243 LLC CL-240686705999454209 · AE · 机构 LOW 验证档 10-30 14:17 REQ-04 验收：解除受限 —（验证档无观察期） — 变更申请 10-30 14:17 查看",
+          "Refdata AE 1028040509 LLC CL-241049681294106625 · AE · 机构 HIGH 验证档 10-30 14:15 承保批准 —（验证档无观察期） — 承保初始化 10-30 14:15 查看",
+          "CL-237575207592763393 CL-237575207592763393 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573476041465857 CL-237573476041465857 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573267559391233 CL-237573267559391233 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看",
+          "CL-237573040244891649 CL-237573040244891649 · AE · 个人 未评 CRR 标准档 10-30 14:12 REQ-04 上线前存量迁移（mor-test） — — 存量迁移 10-30 14:12 查看"
+        ],
+        "actions": [
+          "查看",
+          "查看",
+          "查看",
+          "查看",
+          "查看",
+          "查看"
+        ],
+        "total": "共 6 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "CL-",
+          "AE",
+          "REQ-",
+          "mor-test"
+        ]
+      }
+    },
+    {
+      "step": "ro:P02-L-verification",
+      "check": {
+        "title": "Acceptance Trading 1027040243 LLC 验证档",
+        "meta": "CL-240686705999454209 · AE · 机构 · 变更申请（受限档 → 验证档） · 10-30 14:17",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 1,800 100 / 7,300 100 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 100 / 2,000 100 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v3 已批准 · CRR LOW）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "受限档 → 验证档 已批准 10-30 14:17 · 申请 r***@example.test · 审批 r***@example.test · 理由：REQ-04 验收：解除受限 · 意见：rq04 acceptance",
+          "验证档 → 受限档 已批准 10-30 14:16 · 申请 o***@example.test · 审批 r***@example.test · 理由：REQ-04 验收：受限往返 · 意见：rq04 acceptance",
+          "承保初始化 → 验证档 已生效 10-30 14:15 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "Acceptance",
+          "Trading",
+          "example",
+          "test",
+          "REQ-",
+          "rq",
+          "acceptance"
+        ]
+      }
+    },
+    {
+      "step": "ro:P04-H",
+      "check": {
+        "title": "Refdata AE 1028040509 LLC 验证档",
+        "meta": "CL-241049681294106625 · AE · 机构 · 承保初始化（承保批准） · 10-30 14:15",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 1,800 0 / 7,300 0 / 36,700",
+          "EGP 25,000 0 / 100,000 0 / 500,000",
+          "SAR 1,875 0 / 7,500 0 / 37,500",
+          "USD 500 0 / 2,000 0 / 10,000"
+        ],
+        "fullBars": 0,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v3 已批准 · CRR HIGH）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "验证档 → 受限档 已撤回 10-30 14:17 · 申请 r***@example.test · 撤回 r***@example.test · 理由：REQ-04 验收：HIGH 高级审批",
+          "验证档 → 受限档 已驳回 10-30 14:17 · 申请 r***@example.test · 驳回 r***@example.test · 理由：REQ-04 验收：HIGH 高级审批 · 意见：REQ-04 验收：驳回",
+          "承保初始化 → 验证档 已生效 10-30 14:15 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0,
+        "englishInZh": [
+          "Refdata",
+          "AE",
+          "example",
+          "test",
+          "REQ-"
+        ]
+      }
+    }
+  ],
+  "console": [
+    {
+      "step": "req:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "appr:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "elev:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "ro:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    }
+  ],
+  "httpErrors": [],
+  "writes": [],
+  "loginRetries": 0
+}

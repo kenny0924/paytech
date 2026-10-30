@@ -1,0 +1,12 @@
+# REQ-04 platform-support-service：mor-test 候选覆盖（= 现网 a3003ef6 源码 c633fd0e〔联合查询 b + 69f87bbf〕+ 页面能力清单新增 OPERATIONS_RISK_LIMIT_TIERS 与三个按钮）。
+# 硬性要求：发布的 Platform 必须含 69f87bbf，否则语言包发布不再记录变更明细。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag rq04-20261030b 仅供辨认）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-rq04-rel = main 6eaf1bd3 + 联合查询（Code-MoR-jq-rel rev c，ops-bff / ops-web 构建产物与现网逐项相同）+ 69f87bbf（多语言发布变更记录）+ REQ-04 本需求文件。
+# env 同现网（jq b）覆盖：DATAQUERY_HTTP_CALLERS_0。
+services:
+  platform-support-service:
+    image: sha256:af13e77a05c3d30bf9652523d52ba302dc59d2ee2b2221500ece647215560012  # mor-test/platform-support-service:rq04-20261030b（JAR 9b2a86e18682be60；= 现网 a3003ef6（含 69f87bbf 多语言发布变更记录）+ 能力清单 1 项，3238 项中只有这 1 项不同）
+    environment:
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff

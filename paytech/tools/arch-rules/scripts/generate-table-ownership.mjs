@@ -171,6 +171,10 @@ const stepAddedTables = [
     database: 'mor_risk_decision',
     tables: ['t_client_underwriting', 't_underwriting_rule_version', 't_underwriting_rule_threshold'],
   },
+  // 2026-10-30 REQ-04 限额档位 (requirements/20261029/risk-decision-限额档位 technique §9): Client current limit tier and the
+  // tier change records (underwriting init / migration / four-eyes requests) and the per-UTC-day allowed amount totals
+  // behind the day / 30-day quota Feature in mor_risk_decision.
+  { service: 'risk-decision', database: 'mor_risk_decision', tables: ['t_client_limit_tier', 't_client_limit_tier_change', 't_client_allowed_daily_total'] },
 ];
 
 const lines = readFileSync(designDocument, 'utf8').split('\n');

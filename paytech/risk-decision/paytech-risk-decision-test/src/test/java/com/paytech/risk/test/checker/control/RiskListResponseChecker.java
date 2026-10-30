@@ -103,4 +103,23 @@ public final class RiskListResponseChecker extends AbstractHttpResponseChecker<R
             () -> assertEquals(values, actual, field));
         return this;
     }
+
+    /**
+     * 分页总数与本页某字段的值集合（不比较顺序）
+     *
+     * @param total 期望总数
+     * @param field 每行字段名
+     * @param values 期望值集合
+     * @return 当前 Checker
+     */
+    public RiskListResponseChecker assertPageValues(long total, String field, java.util.Set<String> values) {
+        assertStatus(200);
+        JsonNode body = body();
+        java.util.Set<String> actual = new java.util.HashSet<>();
+        body.path("items").forEach(item -> actual.add(item.path(field).asString()));
+        assertAll("分页",
+            () -> assertEquals(total, body.path("total").asLong(), "total"),
+            () -> assertEquals(values, actual, field));
+        return this;
+    }
 }

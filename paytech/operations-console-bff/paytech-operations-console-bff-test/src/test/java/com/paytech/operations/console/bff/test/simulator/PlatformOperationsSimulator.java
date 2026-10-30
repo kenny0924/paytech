@@ -66,6 +66,11 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
     public static final String UNDERWRITING_READ = "900000000000143101";
     public static final String UNDERWRITING_MANAGE = "900000000000143102";
     public static final String UNDERWRITING_APPROVE = "900000000000143103";
+    /** 注册块 145 的限额档位读、申请、审批与高级审批权限 ID。 */
+    public static final String LIMIT_TIER_READ = "900000000000145101";
+    public static final String LIMIT_TIER_REQUEST = "900000000000145102";
+    public static final String LIMIT_TIER_APPROVE = "900000000000145103";
+    public static final String LIMIT_TIER_APPROVE_ELEVATED = "900000000000145104";
     /** 风控评估查询读权限（RISK_EVALUATION_READ）的合成 ID，与注册 DML 号段一致。 */
     public static final String RISK_EVALUATION_READ_PERMISSION_ID = "900000000000111101";
     public static final String SESSION_ID = "session_10001";
@@ -153,6 +158,17 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-risk-underwriting-revision", UNDERWRITING_MANAGE),
         Map.entry("operations-risk-underwriting-preview", UNDERWRITING_MANAGE),
         Map.entry("operations-risk-underwriting-review", UNDERWRITING_APPROVE),
+        Map.entry("operations-risk-limit-tier-list", LIMIT_TIER_READ),
+        Map.entry("operations-risk-limit-tier-statistics", LIMIT_TIER_READ),
+        Map.entry("operations-risk-limit-tier-quotas", LIMIT_TIER_READ),
+        Map.entry("operations-risk-limit-tier-workspace", LIMIT_TIER_READ),
+        Map.entry("operations-risk-limit-tier-history", LIMIT_TIER_READ),
+        Map.entry("operations-risk-limit-tier-request", LIMIT_TIER_REQUEST),
+        Map.entry("operations-risk-limit-tier-withdraw", LIMIT_TIER_REQUEST),
+        Map.entry("operations-risk-limit-tier-approve", LIMIT_TIER_APPROVE),
+        Map.entry("operations-risk-limit-tier-reject", LIMIT_TIER_APPROVE),
+        Map.entry("operations-risk-limit-tier-approve-elevated", LIMIT_TIER_APPROVE_ELEVATED),
+        Map.entry("operations-risk-limit-tier-reject-elevated", LIMIT_TIER_APPROVE_ELEVATED),
         Map.entry("operations-risk-execution-list", "900000000000000536"),
         Map.entry("operations-risk-execution-detail", "900000000000000536"),
         Map.entry("operations-risk-execution-create", "900000000000101103"),

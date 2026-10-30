@@ -103,6 +103,8 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
       return [menu.frontendRoute, `${menu.frontendRoute}/:localPartnerId`];
     case 'OPERATIONS_RISK_UNDERWRITING':
       return [menu.frontendRoute, `${menu.frontendRoute}/new`, `${menu.frontendRoute}/:underwritingId`];
+    case 'OPERATIONS_RISK_LIMIT_TIERS':
+      return [menu.frontendRoute, `${menu.frontendRoute}/:clientId`];
     case 'OPERATIONS_CLIENTS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:clientId`];
     case 'OPERATIONS_COMMERCIAL_AGREEMENTS':

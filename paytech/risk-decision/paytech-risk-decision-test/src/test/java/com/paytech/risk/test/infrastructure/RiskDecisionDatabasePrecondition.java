@@ -18,8 +18,8 @@ import org.springframework.core.env.ConfigurableEnvironment;
 public final class RiskDecisionDatabasePrecondition
     implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    /** mor_risk_decision 的表数：risk-decision-schema.sql 的 57 张表加 t_consumed_event（= init/ddl.sql 的 CREATE TABLE 数）。 */
-    public static final int EXPECTED_TABLE_COUNT = 58;
+    /** mor_risk_decision 的表数：risk-decision-schema.sql 的 60 张表加 t_consumed_event（= init/ddl.sql 的 CREATE TABLE 数）。 */
+    public static final int EXPECTED_TABLE_COUNT = 61;
 
     /**
      * 不包含凭据的本地数据库准备说明。
@@ -27,7 +27,8 @@ public final class RiskDecisionDatabasePrecondition
     public static final String SETUP = "risk-decision auto 需要仓库 local-environment 的 127.0.0.1:13306/mor_risk_decision "
         + "（账号 risk_decision_app）。请先在 local-environment 执行 `docker compose --env-file .env.local --profile base up -d`，"
         + "再由开发者审核后用 MySQL root 人工执行一次 paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql"
-        + "（建库、建账号、最小权限授权、全部 CREATE TABLE 与 risk-decision-initial-data.sql 目录数据）；已有库勿重复执行。"
+        + "（建库、建账号、最小权限授权、全部 CREATE TABLE 与 risk-decision-initial-data.sql 目录数据）；已有库勿重复执行，"
+        + "改为按顺序执行 paytech/risk-decision/docs/database/sql/changes/ 下尚未应用的前滚文件（如 2026-10-30-client-limit-tier.sql）。"
         + "密码经 RISK_DECISION_TEST_DB_PASSWORD 或 MOR_RISK_DECISION_DB_PASSWORD 注入，缺省为 init/ddl.sql 中的仓库本地默认值。"
         + "本轮还需要本机 Redis 16379，通过 RISK_DECISION_TEST_REDIS_PASSWORD 或 MOR_REDIS_PASSWORD 注入凭据。"
         + "测试不会启动容器、建表或灌入数据。";
@@ -169,6 +170,20 @@ public final class RiskDecisionDatabasePrecondition
         verifyCheckoutRuntime(connection);
         verifyPaymentCardAttributes(connection);
         verifyClientUnderwriting(connection);
+        verifyClientLimitTier(connection);
+    }
+
+    /** REQ-04 限额档位：档位两表、日放行汇总表结构与四张系统维护的 TIER 名单。 */
+    private static void verifyClientLimitTier(Connection connection) throws SQLException {
+        require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+            + "AND table_name='t_client_limit_tier'") == 19L);
+        require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+            + "AND table_name='t_client_limit_tier_change'") == 35L);
+        require(count(connection, "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+            + "AND table_name='t_client_allowed_daily_total'") == 9L);
+        require(count(connection, "SELECT COUNT(*) FROM t_risk_list WHERE list_id BETWEEN 300001 AND 300004 "
+            + "AND list_purpose='TIER' AND supported_subject_type='CLIENT' AND status='ACTIVE' AND list_code IN "
+            + "('TIER_VERIFICATION','TIER_OBSERVATION','TIER_STANDARD','TIER_RESTRICTED')") == 4L);
     }
 
     /** REQ-03 承保记录：三张表结构与自动承保规则 v1（ACTIVE、USD 阈值）。 */

@@ -1,0 +1,89 @@
+[
+ {
+  "client": "237573040244891649",
+  "expect": "ALLOW via tier_standard",
+  "pass": true,
+  "http": 200,
+  "result": "ALLOW",
+  "evaluationId": "241867194407948288",
+  "path": [
+   "allow",
+   "auth",
+   "block",
+   "start",
+   "tier_gate",
+   "tier_standard"
+  ],
+  "technical_status": "SUCCEEDED",
+  "elapsed_millis": "160"
+ },
+ {
+  "client": "237573267559391233",
+  "expect": "ALLOW via tier_standard",
+  "pass": true,
+  "http": 200,
+  "result": "ALLOW",
+  "evaluationId": "241867207078940672",
+  "path": [
+   "allow",
+   "auth",
+   "block",
+   "start",
+   "tier_gate",
+   "tier_standard"
+  ],
+  "technical_status": "SUCCEEDED",
+  "elapsed_millis": "342"
+ },
+ {
+  "client": "237573476041465857",
+  "expect": "ALLOW via tier_standard",
+  "pass": true,
+  "http": 200,
+  "result": "ALLOW",
+  "evaluationId": "241867224103620608",
+  "path": [
+   "allow",
+   "auth",
+   "block",
+   "start",
+   "tier_gate",
+   "tier_standard"
+  ],
+  "technical_status": "SUCCEEDED",
+  "elapsed_millis": "300"
+ },
+ {
+  "client": "237575207592763393",
+  "expect": "ALLOW via tier_standard",
+  "pass": true,
+  "http": 200,
+  "result": "ALLOW",
+  "evaluationId": "241867236736864256",
+  "path": [
+   "allow",
+   "auth",
+   "block",
+   "start",
+   "tier_gate",
+   "tier_standard"
+  ],
+  "technical_status": "SUCCEEDED",
+  "elapsed_millis": "210"
+ },
+ {
+  "client": "1",
+  "expect": "DENY via deny_no_tier",
+  "pass": true,
+  "http": 200,
+  "result": "DENY",
+  "evaluationId": "241867244978671616",
+  "path": [
+   "deny_no_tier",
+   "start",
+   "tier_gate"
+  ],
+  "technical_status": "SUCCEEDED",
+  "elapsed_millis": "157"
+ }
+]

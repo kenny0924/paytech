@@ -104,6 +104,7 @@ web:
       - /risk-lists
       - /risk-decisions
       - /risk-underwriting
+      - /risk-limit-tiers
 
 # paytech-redis-starter
 redis:
@@ -166,6 +167,12 @@ decision:
   runtime:
     # 本实例的发布环境 TEST 或 PRODUCTION；支付评估读取该环境的生效发布，执行发布只允许在 TEST 激活。生产必填，测试固定 TEST。
     environment: TEST
+
+# 限额档位（REQ-04）：允许调用存量迁移内部接口的私网服务名；生产默认空即关闭，测试放行一个固定调用方以覆盖迁移入口。
+risk:
+  limit-tier:
+    migration-callers:
+      - release-operator
 
 # 实例 ID 与内部调用身份（D26）：测试保持 OFF。
 paytech:

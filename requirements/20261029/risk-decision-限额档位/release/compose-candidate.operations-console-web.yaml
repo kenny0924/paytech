@@ -1,0 +1,9 @@
+# REQ-04 operations-console-web：mor-test 候选覆盖（nginx 镜像，无应用 env）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag rq04-20261030b 仅供辨认）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-rq04-rel = main 6eaf1bd3 + 联合查询（Code-MoR-jq-rel rev c，ops-bff / ops-web 构建产物与现网逐项相同）+ 69f87bbf（多语言发布变更记录）+ REQ-04 本需求文件。
+services:
+  operations-console-web:
+    # 新：风控 · 限额档位列表与 Client 档位页（/risk/limit-tiers）；其余 = 现网 jq-20261030c（dist 273 → 277 个文件）。
+    image: sha256:2f7f8780d5abf1991f51eb2c4db242cde930a13c10bc579f908e5b6b74efac06  # mor-test/operations-console-web:rq04-20261030b（dist 277 个文件）

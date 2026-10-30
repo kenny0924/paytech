@@ -1,0 +1,98 @@
+[
+ {
+  "ac": "S",
+  "step": "IAM 建角色 req ('READ', 'REQUEST')",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "S",
+  "step": "IAM 建账号 req",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "S",
+  "step": "req 首登改密",
+  "verdict": "PASS",
+  "evidence": "HTTP 204"
+ },
+ {
+  "ac": "S",
+  "step": "req 建成",
+  "verdict": "PASS",
+  "evidence": "accountId=241867312997679104"
+ },
+ {
+  "ac": "S",
+  "step": "IAM 建角色 appr ('READ', 'APPROVE')",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "S",
+  "step": "IAM 建账号 appr",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "S",
+  "step": "appr 首登改密",
+  "verdict": "PASS",
+  "evidence": "HTTP 204"
+ },
+ {
+  "ac": "S",
+  "step": "appr 建成",
+  "verdict": "PASS",
+  "evidence": "accountId=241867323378581504"
+ },
+ {
+  "ac": "S",
+  "step": "IAM 建角色 elev ('READ', 'APPROVE_ELEVATED')",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "S",
+  "step": "IAM 建账号 elev",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "S",
+  "step": "elev 首登改密",
+  "verdict": "PASS",
+  "evidence": "HTTP 204"
+ },
+ {
+  "ac": "S",
+  "step": "elev 建成",
+  "verdict": "PASS",
+  "evidence": "accountId=241867326792744960"
+ },
+ {
+  "ac": "S",
+  "step": "IAM 建角色 ro ('READ',)",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "S",
+  "step": "IAM 建账号 ro",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "S",
+  "step": "ro 首登改密",
+  "verdict": "PASS",
+  "evidence": "HTTP 204"
+ },
+ {
+  "ac": "S",
+  "step": "ro 建成",
+  "verdict": "PASS",
+  "evidence": "accountId=241867330362097664"
+ }
+]

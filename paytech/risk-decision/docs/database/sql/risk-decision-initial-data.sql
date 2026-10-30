@@ -123,3 +123,11 @@ INSERT INTO `t_underwriting_rule_version` (`rule_version_id`, `version_no`, `sta
   (290001, 1, 'ACTIVE', 1, NULL, '2026-10-29 00:00:00.000000', '2026-10-29 00:00:00.000000', '2026-10-29 00:00:00.000000');
 INSERT INTO `t_underwriting_rule_threshold` (`threshold_id`, `rule_version_id`, `currency`, `monthly_volume_limit`, `create_time`, `update_time`) VALUES
   (290101, 290001, 'USD', 50000.00000000, '2026-10-29 00:00:00.000000', '2026-10-29 00:00:00.000000');
+
+-- 2026-10-30 REQ-04 限额档位：四张系统维护的 TIER 名单（CLIENT 主体、精确匹配、ACTIVE），成员由档位服务同事务维护，运营不能增删成员或停用。
+-- 已有库使用 changes/2026-10-30-client-limit-tier.sql（可重跑）。
+INSERT INTO `t_risk_list` (`list_id`, `list_code`, `list_name`, `supported_subject_type`, `matching_mode`, `list_purpose`, `status`, `version`, `create_time`, `update_time`) VALUES
+  (300001, 'TIER_VERIFICATION', '限额档位 · 验证', 'CLIENT', 'EXACT', 'TIER', 'ACTIVE', 1, '2026-10-30 00:00:00.000000', '2026-10-30 00:00:00.000000'),
+  (300002, 'TIER_OBSERVATION', '限额档位 · 观察', 'CLIENT', 'EXACT', 'TIER', 'ACTIVE', 1, '2026-10-30 00:00:00.000000', '2026-10-30 00:00:00.000000'),
+  (300003, 'TIER_STANDARD', '限额档位 · 标准', 'CLIENT', 'EXACT', 'TIER', 'ACTIVE', 1, '2026-10-30 00:00:00.000000', '2026-10-30 00:00:00.000000'),
+  (300004, 'TIER_RESTRICTED', '限额档位 · 受限', 'CLIENT', 'EXACT', 'TIER', 'ACTIVE', 1, '2026-10-30 00:00:00.000000', '2026-10-30 00:00:00.000000');

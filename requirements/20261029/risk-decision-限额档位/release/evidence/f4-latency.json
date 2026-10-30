@@ -1,0 +1,404 @@
+{
+ "replicaRuns": [
+  {
+   "label": "baseline-seq",
+   "n": 200,
+   "workers": 1,
+   "at": "2026-10-30T08:33:53Z",
+   "load": "{ 15.75 12.02 10.94 }",
+   "result": {
+    "PAYMENT_ATTEMPT_RISK": {
+     "n": 200,
+     "httpErrors": 0,
+     "timedOut": 0,
+     "failed": 0,
+     "decisions": {
+      "ALLOW": 200
+     },
+     "p50": 44,
+     "p95": 142,
+     "p99": 283,
+     "max": 296,
+     "avg": 62.5,
+     "featureSumAvg": 2.3,
+     "clientWallP50": 76.4,
+     "clientWallP95": 230.2,
+     "throughputPerSec": 9.8,
+     "sampleErrors": []
+    },
+    "CHECKOUT_PREPARE": {
+     "n": 200,
+     "httpErrors": 0,
+     "timedOut": 0,
+     "failed": 0,
+     "decisions": {
+      "ALLOW": 200
+     },
+     "p50": 10,
+     "p95": 34,
+     "p99": 58,
+     "max": 103,
+     "avg": 13.0,
+     "featureSumAvg": 0.0,
+     "clientWallP50": 49.5,
+     "clientWallP95": 139.2,
+     "throughputPerSec": 16.0,
+     "sampleErrors": []
+    }
+   }
+  },
+  {
+   "label": "baseline-c4",
+   "n": 200,
+   "workers": 4,
+   "at": "2026-10-30T08:34:14Z",
+   "load": "{ 17.73 12.72 11.22 }",
+   "result": {
+    "PAYMENT_ATTEMPT_RISK": {
+     "n": 200,
+     "httpErrors": 0,
+     "timedOut": 3,
+     "failed": 0,
+     "decisions": {
+      "ALLOW": 197,
+      "NULL": 3
+     },
+     "p50": 112,
+     "p95": 332,
+     "p99": 642,
+     "max": 834,
+     "avg": 150.9,
+     "featureSumAvg": 10.4,
+     "clientWallP50": 192.7,
+     "clientWallP95": 608.2,
+     "throughputPerSec": 15.7,
+     "sampleErrors": []
+    },
+    "CHECKOUT_PREPARE": {
+     "n": 200,
+     "httpErrors": 0,
+     "timedOut": 0,
+     "failed": 0,
+     "decisions": {
+      "ALLOW": 200
+     },
+     "p50": 16,
+     "p95": 32,
+     "p99": 53,
+     "max": 76,
+     "avg": 16.9,
+     "featureSumAvg": 0.0,
+     "clientWallP50": 80.4,
+     "clientWallP95": 154.2,
+     "throughputPerSec": 45.9,
+     "sampleErrors": []
+    }
+   }
+  },
+  {
+   "label": "tier-seq",
+   "n": 200,
+   "workers": 1,
+   "at": "2026-10-30T08:37:08Z",
+   "load": "{ 13.01 12.95 11.60 }",
+   "result": {
+    "PAYMENT_ATTEMPT_RISK": {
+     "n": 200,
+     "httpErrors": 0,
+     "timedOut": 0,
+     "failed": 0,
+     "decisions": {
+      "ALLOW": 200
+     },
+     "p50": 156,
+     "p95": 340,
+     "p99": 434,
+     "max": 470,
+     "avg": 182.2,
+     "featureSumAvg": 7.3,
+     "clientWallP50": 187.6,
+     "clientWallP95": 387.0,
+     "throughputPerSec": 4.7,
+     "sampleErrors": []
+    },
+    "CHECKOUT_PREPARE": {
+     "n": 200,
+     "httpErrors": 0,
+     "timedOut": 0,
+     "failed": 0,
+     "decisions": {
+      "ALLOW": 200
+     },
+     "p50": 52,
+     "p95": 141,
+     "p99": 194,
+     "max": 221,
+     "avg": 66.0,
+     "featureSumAvg": 4.9,
+     "clientWallP50": 74.9,
+     "clientWallP95": 204.9,
+     "throughputPerSec": 10.5,
+     "sampleErrors": []
+    }
+   }
+  },
+  {
+   "label": "tier-c4",
+   "n": 200,
+   "workers": 4,
+   "at": "2026-10-30T08:37:45Z",
+   "load": "{ 15.63 13.59 11.89 }",
+   "result": {
+    "PAYMENT_ATTEMPT_RISK": {
+     "n": 200,
+     "httpErrors": 0,
+     "timedOut": 51,
+     "failed": 0,
+     "decisions": {
+      "NULL": 51,
+      "ALLOW": 149
+     },
+     "p50": 313,
+     "p95": 1014,
+     "p99": 1209,
+     "max": 1365,
+     "avg": 411.2,
+     "featureSumAvg": 22.7,
+     "clientWallP50": 363.6,
+     "clientWallP95": 1223.7,
+     "throughputPerSec": 8.2,
+     "sampleErrors": []
+    },
+    "CHECKOUT_PREPARE": {
+     "n": 200,
+     "httpErrors": 0,
+     "timedOut": 0,
+     "failed": 0,
+     "decisions": {
+      "ALLOW": 200
+     },
+     "p50": 91,
+     "p95": 244,
+     "p99": 397,
+     "max": 436,
+     "avg": 118.3,
+     "featureSumAvg": 10.8,
+     "clientWallP50": 137.9,
+     "clientWallP95": 424.4,
+     "throughputPerSec": 22.5,
+     "sampleErrors": []
+    }
+   }
+  }
+ ],
+ "sqlPerEvaluation": {
+  "baselineFlows": {
+   "PAYMENT_ATTEMPT_RISK": {
+    "evaluations": 20,
+    "statementsPerEval": 69.0,
+    "selectsPerEval": 58.0,
+    "dbMsPerEval": 16.3,
+    "top": [
+     [
+      14,
+      "SELECT `variable_id` , `variable_code` , `variable_name` , DESCRIPTION , `source_type` , `"
+     ],
+     [
+      8,
+      "SELECT @@SESSION . `transaction_read_only`"
+     ],
+     [
+      3,
+      "SELECT `decision_point_id` , `point_code` , `point_name` , `business_domain` , STATUS , `c"
+     ],
+     [
+      2,
+      "SET `autocommit` = ?"
+     ],
+     [
+      2,
+      "SELECT `variable_code` , `parameter_id` , `rule_action_id` , `parameter_definition_id` , `"
+     ],
+     [
+      2,
+      "SELECT `parameter_definition_id` , `action_version_id` , `parameter_code` , `value_type` ,"
+     ],
+     [
+      2,
+      "SELECT `action_version_id` , `action_code` , `action_name` , `action_category` , `version_"
+     ],
+     [
+      2,
+      "SELECT `input_contract_code` , `input_contract_version` , `content_format` , `rule_set_ver"
+     ],
+     [
+      2,
+      "SELECT `binding_id` , `point_version_id` , `rule_set_version_id` , `sequence_no` , `create"
+     ],
+     [
+      2,
+      "SELECT `reason_message` , `rule_id` , `rule_set_version_id` , `rule_code` , `rule_name` , "
+     ],
+     [
+      2,
+      "SELECT `node_id` , `rule_id` , `parent_node_id` , `node_type` , `group_operator` , `compar"
+     ],
+     [
+      2,
+      "SELECT `variable_code` , `numeric_unit` , `currency_code` , `currency_variable_code` , `op"
+     ]
+    ]
+   },
+   "CHECKOUT_PREPARE": {
+    "evaluations": 20,
+    "statementsPerEval": 25.0,
+    "selectsPerEval": 16.0,
+    "dbMsPerEval": 6.3,
+    "top": [
+     [
+      6,
+      "SELECT @@SESSION . `transaction_read_only`"
+     ],
+     [
+      2,
+      "SET `autocommit` = ?"
+     ],
+     [
+      1,
+      "SELECT `output_id` AS `outputId` , `flow_version_id` AS `flowVersionId` , `node_id` AS `no"
+     ],
+     [
+      1,
+      "COMMIT"
+     ],
+     [
+      1,
+      "INSERT INTO `t_client_allowed_daily_total` ( `daily_total_id` , `client_id` , `event_code`"
+     ],
+     [
+      1,
+      "INSERT INTO `t_velocity_event_subject` ( `event_subject_id` , `velocity_event_id` , `subje"
+     ],
+     [
+      1,
+      "INSERT INTO `t_velocity_event` ( `velocity_event_id` , `event_code` , `source_type` , `sou"
+     ],
+     [
+      1,
+      "INSERT INTO `t_evaluation_flow_trace` ( `trace_id` , `evaluation_id` , `step_no` , `node_k"
+     ],
+     [
+      1,
+      "INSERT INTO `t_checkout_input_snapshot` ( `snapshot_id` , `evaluation_id` , `order_id` , `"
+     ],
+     [
+      1,
+      "INSERT INTO `t_decision_evaluation` ( `evaluation_id` , `evaluation_request_id` , `decisio"
+     ],
+     [
+      1,
+      "SELECT `snapshot_id` AS `snapshotId` , `evaluation_id` AS `evaluationId` , `order_id` AS `"
+     ],
+     [
+      1,
+      "SELECT `edge_id` , `flow_version_id` , `edge_key` , `source_node_id` , `target_node_id` , "
+     ]
+    ]
+   }
+  },
+  "tierFlows": {
+   "PAYMENT_ATTEMPT_RISK": {
+    "statementsPerEval": 205.1,
+    "selectsPerEval": 194.6,
+    "dbMsPerEval": 55.8,
+    "topStatement": "按变量逐个 SELECT t_risk_variable：102 次 / 评估"
+   },
+   "CHECKOUT_PREPARE": {
+    "statementsPerEval": 88.0,
+    "selectsPerEval": 77.0,
+    "dbMsPerEval": 10.1,
+    "topStatement": "按变量逐个 SELECT t_risk_variable：20 次 / 评估"
+   }
+  }
+ },
+ "tierSetup": {
+  "paymentBaseFlowVersion": "236518950786142209",
+  "paymentFlow": "241842420306792449",
+  "checkoutFlow": "241842420805914625",
+  "ruleSets": {
+   "payGate": "241842414598344704",
+   "coGate": "241842415302987776",
+   "limits": {
+    "VERIFICATION": "241842416095711232",
+    "OBSERVATION": "241842416770994176",
+    "STANDARD": "241842417593077760"
+   },
+   "co": {
+    "VERIFICATION": "241842418167697408",
+    "OBSERVATION": "241842418448715776"
+   }
+  },
+  "migration": {
+   "results": [
+    {
+     "clientId": "237575207592763393",
+     "outcome": "CREATED"
+    },
+    {
+     "clientId": "237573476041465857",
+     "outcome": "CREATED"
+    },
+    {
+     "clientId": "237573267559391233",
+     "outcome": "CREATED"
+    },
+    {
+     "clientId": "237573040244891649",
+     "outcome": "CREATED"
+    }
+   ]
+  },
+  "pay": {
+   "releaseId": "241842421573472256",
+   "shadowRun": {
+    "actionChangeCount": 200,
+    "allowToDenyCount": 200,
+    "allowToReviewCount": 0,
+    "baselineReleaseId": "236518950932942848",
+    "checkStatus": "PASSED",
+    "denyToAllowCount": 0,
+    "failedCount": 0,
+    "featureMissingCount": 0,
+    "p95Millis": 61,
+    "p99Millis": 97,
+    "sampleCount": 200,
+    "sampleTarget": 200,
+    "shadowRunId": "241842424362684416",
+    "status": "COMPLETED",
+    "timedOutCount": 0
+   },
+   "status": "ACTIVE"
+  },
+  "co": {
+   "releaseId": "241842485175898112",
+   "shadowRun": {
+    "actionChangeCount": 0,
+    "allowToDenyCount": 200,
+    "allowToReviewCount": 0,
+    "baselineReleaseId": "237117104682274816",
+    "checkStatus": "PASSED",
+    "denyToAllowCount": 0,
+    "failedCount": 0,
+    "featureMissingCount": 0,
+    "p95Millis": 53,
+    "p99Millis": 101,
+    "sampleCount": 200,
+    "sampleTarget": 200,
+    "shadowRunId": "241842486157365248",
+    "status": "COMPLETED",
+    "timedOutCount": 0
+   },
+   "status": "ACTIVE"
+  }
+ }
+}

@@ -210,7 +210,8 @@ class RiskDecisionArchitectureTest {
             metadataOnly.add(properties.getProperty("web.logging.metadata-only-path-prefixes[" + index + "]"));
         }
         Assertions.assertEquals(Set.of("/decision-dictionaries", "/decision-rule-sets", "/decision-releases", "/decision-flows",
-            "/decision-variables", "/risk-lists", "/risk-decisions", "/risk-underwriting"), metadataOnly);
+            "/decision-variables", "/risk-lists", "/risk-decisions", "/risk-underwriting",
+            "/risk-limit-tiers"), metadataOnly);
         Assertions.assertEquals("${RISK_DECISION_ENVIRONMENT}", properties.getProperty("decision.runtime.environment"));
         Assertions.assertEquals("${RISK_SNOWFLAKE_REGION_ID}",
             properties.getProperty("decision.identifier.region-id"));

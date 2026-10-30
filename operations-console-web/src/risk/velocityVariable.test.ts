@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { decodeContext, decodeFeatureCatalog, defaultVelocity, featureCatalog, listDerived, normalizeVelocity, velocityAllowsCurrent, velocityDerived, velocityMetricOptions, velocityPreview, velocityProblem, velocityWindowOptions } from './riskVariable.ts';
+import { decodeContext, decodeFeatureCatalog, defaultVelocity, featureCatalog, listDerived, normalizeVelocity, velocityAllowsCurrent, velocityDerived, velocityMetricOptions, velocityPreview, velocityProblem, velocityWindowLabel, velocityWindowOptions } from './riskVariable.ts';
 import type { FeatureCatalog, VelocityParameters } from './riskVariable.ts';
 
 const all = [600, 3600, 86400, 604800];
@@ -95,4 +95,18 @@ test('feature catalog rejects extra keys, unknown codes and unregistered windows
   assert.throws(() => decodeFeatureCatalog({ ...checkout, velocityAnchors: [{ subjectType: 'CLIENT', metrics: [{ metric: 'COUNT', windowSeconds: [1200], includeCurrentAllowed: true }] }] }), /doesn't match the protocol/);
   assert.throws(() => decodeFeatureCatalog({ ...checkout, velocityAnchors: [{ subjectType: 'CLIENT', metrics: [{ metric: 'COUNT', windowSeconds: [3600, 600], includeCurrentAllowed: true }] }] }), /doesn't match the protocol/);
   assert.throws(() => decodeFeatureCatalog({ ...checkout, currencyVariableCode: 'bad' }), /doesn't match the protocol/);
+});
+
+test('DAILY_SUM_AMOUNT (REQ-04): decoded from the catalog, money-valued, with UTC calendar-day window labels', () => {
+  const daily = { metric: 'DAILY_SUM_AMOUNT', windowSeconds: [86400, 2592000], includeCurrentAllowed: true };
+  const catalog = decodeFeatureCatalog({ ...payment, velocityEvents: [...payment.velocityEvents, { eventCode: 'PAYMENT_ATTEMPT_ALLOWED', eventName: 'Payment attempt allowed', includeCurrentAllowed: true }],
+    velocityAnchors: [{ subjectType: 'CLIENT', metrics: [...highVolume, daily] }] });
+  assert.deepEqual(velocityWindowOptions(catalog, { anchorSubjectType: 'CLIENT', metric: 'DAILY_SUM_AMOUNT' }), [86400, 2592000]);
+  const p: VelocityParameters = { eventCode: 'PAYMENT_ATTEMPT_ALLOWED', anchorSubjectType: 'CLIENT', metric: 'DAILY_SUM_AMOUNT', distinctSubjectType: null, windowSeconds: 86400, includeCurrent: true };
+  assert.equal(velocityDerived(catalog, p).numericUnit, 'MONEY');
+  assert.equal(velocityWindowLabel(86400, 'DAILY_SUM_AMOUNT'), 'Today (UTC)');
+  assert.equal(velocityWindowLabel(2592000, 'DAILY_SUM_AMOUNT'), 'Last 30 days (UTC, incl. today)');
+  assert.equal(velocityWindowLabel(86400, 'SUM_AMOUNT'), '1 day');
+  assert.match(velocityPreview(catalog, p), /Today \(UTC\)/);
+  assert.throws(() => decodeFeatureCatalog({ ...payment, velocityAnchors: [{ subjectType: 'CLIENT', metrics: [{ ...daily, windowSeconds: [172800] }] }] }), 'unregistered window');
 });

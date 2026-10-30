@@ -1,0 +1,2905 @@
+{
+ "runs": [
+  {
+   "startedAt": "2026-10-30T07:38:17Z",
+   "only": [
+    "S",
+    "P"
+   ],
+   "results": [
+    {
+     "ac": "S",
+     "step": "IAM 建角色 req ('READ', 'REQUEST')",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "S",
+     "step": "IAM 建账号 req",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "S",
+     "step": "req 首登改密",
+     "verdict": "PASS",
+     "evidence": "HTTP 204"
+    },
+    {
+     "ac": "S",
+     "step": "req 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828050176577536 permissions=['READ', 'REQUEST', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "IAM 建角色 appr ('READ', 'APPROVE')",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "S",
+     "step": "IAM 建账号 appr",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "S",
+     "step": "appr 首登改密",
+     "verdict": "PASS",
+     "evidence": "HTTP 204"
+    },
+    {
+     "ac": "S",
+     "step": "appr 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828061476032512 permissions=['READ', 'APPROVE', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "IAM 建角色 elev ('READ', 'APPROVE_ELEVATED')",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "S",
+     "step": "IAM 建账号 elev",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "S",
+     "step": "elev 首登改密",
+     "verdict": "PASS",
+     "evidence": "HTTP 204"
+    },
+    {
+     "ac": "S",
+     "step": "elev 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828068321136640 permissions=['READ', 'APPROVE_ELEVATED', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "IAM 建角色 ro ('READ',)",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "S",
+     "step": "IAM 建账号 ro",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "S",
+     "step": "ro 首登改密",
+     "verdict": "PASS",
+     "evidence": "HTTP 204"
+    },
+    {
+     "ac": "S",
+     "step": "ro 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828160700682240 permissions=['READ', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 uw 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601254088773632"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 lead 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601257913978880"
+    },
+    {
+     "ac": "AC-10",
+     "step": "只读：GET /client-tiers 200",
+     "verdict": "PASS",
+     "evidence": "HTTP 200"
+    },
+    {
+     "ac": "AC-10",
+     "step": "只读：GET /tier-statistics 200",
+     "verdict": "PASS",
+     "evidence": "HTTP 200"
+    },
+    {
+     "ac": "AC-10",
+     "step": "只读：GET /tier-quotas 200",
+     "verdict": "PASS",
+     "evidence": "HTTP 200"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-10",
+     "step": "只读：工作台 canRequest=false、requestableTargets 空",
+     "verdict": "PASS",
+     "evidence": "{\"canRequest\": false, \"requestableTargets\": []}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-10",
+     "step": "申请人：STANDARD 工作台 canRequest=true，可申请 RESTRICTED",
+     "verdict": "PASS",
+     "evidence": "{\"canRequest\": true, \"requestableTargets\": [\"RESTRICTED\"]}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "只读：申请 403",
+     "verdict": "PASS",
+     "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': '16e228db-9bc5-42f5-b682-88e4be4d32df'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "申请人（无 APPROVE）：审批 403",
+     "verdict": "PASS",
+     "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': '358a669b-088d-4f03-af24-cb89f5ade83d'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人（无 APPROVE_ELEVATED）：高级审批 403",
+     "verdict": "PASS",
+     "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': '665ec1c7-3227-4714-b88e-ed1e5e8647c9'}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "未声明查询参数被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 400 {'code': 'GATEWAY_INVALID_REQUEST', 'detail': '请求参数不符合网关路由契约', 'requestId': 'd95e39ab-8680-4e6d-8b32-5bf225bda9c4'}"
+    },
+    {
+     "ac": "AC-08",
+     "step": "名单页：TIER 名单手工加成员被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 400 {'code': 'INVALID_REQUEST', 'detail': '请求参数不正确', 'requestId': '5b817b3c-e6d8-4231-ae32-b8ee761257ce'}"
+    },
+    {
+     "ac": "AC-08",
+     "step": "名单页：TIER 名单手工停用成员被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 404 {'code': 'GATEWAY_ROUTE_NOT_FOUND', 'detail': '请求的网关路由不存在', 'requestId': 'e46b6fc4-955a-4317-aa79-60dd1782bc29'}"
+    },
+    {
+     "ac": "AC-08",
+     "step": "停用被拒后成员仍生效",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_STANDARD\"]"
+    },
+    {
+     "ac": "AC-07",
+     "step": "迁移接口不经 Gateway 暴露（外部入口 404）",
+     "verdict": "PASS",
+     "evidence": "HTTP 404 {'code': 'GATEWAY_ROUTE_NOT_FOUND', 'detail': '请求的网关路由不存在', 'requestId': '9ae15f8b-ff12-4243-b345-aada85e110df'}"
+    }
+   ]
+  },
+  {
+   "startedAt": "2026-10-30T07:39:54Z",
+   "only": [
+    "P"
+   ],
+   "results": [
+    {
+     "ac": "S",
+     "step": "req 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828050176577536 permissions=['READ', 'REQUEST', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "appr 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828061476032512 permissions=['READ', 'APPROVE', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "elev 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828068321136640 permissions=['READ', 'APPROVE_ELEVATED', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "ro 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828160700682240 permissions=['READ', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 uw 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601254088773632"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 lead 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601257913978880"
+    },
+    {
+     "ac": "AC-10",
+     "step": "只读：GET /client-tiers 200",
+     "verdict": "PASS",
+     "evidence": "HTTP 200"
+    },
+    {
+     "ac": "AC-10",
+     "step": "只读：GET /tier-statistics 200",
+     "verdict": "PASS",
+     "evidence": "HTTP 200"
+    },
+    {
+     "ac": "AC-10",
+     "step": "只读：GET /tier-quotas 200",
+     "verdict": "PASS",
+     "evidence": "HTTP 200"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-10",
+     "step": "只读：工作台 canRequest=false、requestableTargets 空",
+     "verdict": "PASS",
+     "evidence": "{\"canRequest\": false, \"requestableTargets\": []}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-10",
+     "step": "申请人：STANDARD 工作台 canRequest=true，可申请 RESTRICTED",
+     "verdict": "PASS",
+     "evidence": "{\"canRequest\": true, \"requestableTargets\": [\"RESTRICTED\"]}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "只读：申请 403",
+     "verdict": "PASS",
+     "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': '4be3751c-1d6f-410f-8021-b184908349de'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "申请人（无 APPROVE）：审批 403",
+     "verdict": "PASS",
+     "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': '277c07c6-20a7-4dc3-a807-cdf3514709a1'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人（无 APPROVE_ELEVATED）：高级审批 403",
+     "verdict": "PASS",
+     "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': '91e37534-49db-458f-b2e6-eee1d57d4c50'}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "未声明查询参数被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 400 {'code': 'GATEWAY_INVALID_REQUEST', 'detail': '请求参数不符合网关路由契约', 'requestId': 'b3ac800c-9ad7-4b6e-bb4b-56e9690bfdee'}"
+    },
+    {
+     "ac": "AC-08",
+     "step": "名单页：TIER 名单手工加成员被拒（业务校验）",
+     "verdict": "PASS",
+     "evidence": "HTTP 400 {'code': 'BUSINESS_CHECK_FAILED', 'detail': '业务校验未通过', 'requestId': 'e1aaa16a-f812-4ed3-8ee6-3e09cb075482'}"
+    },
+    {
+     "ac": "AC-08",
+     "step": "名单页：TIER 名单手工停用成员被拒（业务校验）",
+     "verdict": "PASS",
+     "evidence": "HTTP 400 {'code': 'BUSINESS_CHECK_FAILED', 'detail': '业务校验未通过', 'requestId': '885937c7-e33c-40e8-bc10-f8b2c521d778'}"
+    },
+    {
+     "ac": "AC-08",
+     "step": "停用被拒后成员仍生效",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_STANDARD\"]"
+    },
+    {
+     "ac": "AC-07",
+     "step": "迁移接口不经 Gateway 暴露（外部入口 404）",
+     "verdict": "PASS",
+     "evidence": "HTTP 404 {'code': 'GATEWAY_ROUTE_NOT_FOUND', 'detail': '请求的网关路由不存在', 'requestId': 'b48c02d7-6461-4b66-a243-f690e8b66d4b'}"
+    }
+   ]
+  },
+  {
+   "startedAt": "2026-10-30T07:41:10Z",
+   "only": [
+    "U",
+    "Q",
+    "M",
+    "N"
+   ],
+   "results": [
+    {
+     "ac": "S",
+     "step": "req 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828050176577536 permissions=['READ', 'REQUEST', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "appr 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828061476032512 permissions=['READ', 'APPROVE', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "elev 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828068321136640 permissions=['READ', 'APPROVE_ELEVATED', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "ro 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828160700682240 permissions=['READ', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 uw 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601254088773632"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 lead 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601257913978880"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 承保前无档位：工作台 tier=null、名单无成员",
+     "verdict": "PASS",
+     "evidence": "[]"
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 一键自动承保 201 APPROVED",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 241829057128316928"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 自动承保批准后立即 VERIFICATION、来源 UNDERWRITING_INIT",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": \"VERIFICATION\", \"sourceType\": \"UNDERWRITING_INIT\", \"version\": 1, \"crr\": \"LOW\"}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241533217348268033 档位 VERIFICATION 与名单一致（只在 TIER_VERIFICATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_VERIFICATION\"]"
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 变更历史 1 条：UNDERWRITING_INIT、APPROVED、记来源承保",
+     "verdict": "PASS",
+     "evidence": "[[\"UNDERWRITING_INIT\", \"APPROVED\", \"VERIFICATION\", \"241829057128316928\"]]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "FAIL",
+     "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': 'ad387612-efb7-4f6e-91cc-db31609f16c2'}"
+    },
+    {
+     "ac": "U",
+     "step": "场景中止",
+     "verdict": "FAIL",
+     "evidence": "WS 档位工作台 241533217348268033"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO USD 60 > 单笔 50 拒绝（额度规则集）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO USD 50 第 1 笔放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO USD 50 第 2 笔放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO USD 50 第 3 笔放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO USD 50 第 4 笔放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO USD 50 第 5 笔放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO USD 10 拒绝（当日 260 > 250）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "同一业务键重放返回同一评估（拒绝，不重复累计）",
+     "verdict": "PASS",
+     "evidence": "[\"241829067588911104\", \"241829067588911104\", \"DENY\"]"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO AED 250 > 单笔 200 拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO AED 200 第 1 笔放行（USD 已到日上限，AED 单独累计）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO AED 200 第 2 笔放行（USD 已到日上限，AED 单独累计）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO AED 200 第 3 笔放行（USD 已到日上限，AED 单独累计）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO AED 200 第 4 笔放行（USD 已到日上限，AED 单独累计）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO AED 200 第 5 笔放行（USD 已到日上限，AED 单独累计）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO AED 10 拒绝（当日 1010 > 1000）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO SAR 1 拒绝（VERIFICATION 未配置 SAR）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO 结账 USD 放行（结账点不做金额额度）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO 结账 SAR 拒绝（币种集合）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "日放行汇总：USD 250.00 / 5 笔、AED 1000.00 / 5 笔（被拒与重放不计）、结账 USD 999.00 / 1 笔",
+     "verdict": "PASS",
+     "evidence": "{\"CHECKOUT_ALLOWED|USD|2026-10-30\": [\"999.00\", \"1\"], \"PAYMENT_ATTEMPT_ALLOWED|AED|2026-10-30\": [\"1000.00\", \"5\"], \"PAYMENT_ATTEMPT_ALLOWED|USD|2026-10-30\": [\"250.00\", \"5\"]}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-11",
+     "step": "工作台额度：USD 50 / 250 / 400，已用 250.00 / 250.00；AED 已用 1000.00",
+     "verdict": "PASS",
+     "evidence": "{\"AED\": {\"currency\": \"AED\", \"day\": \"1000.00\", \"last30Days\": \"3000.00\", \"single\": \"200.00\", \"usedLast30Days\": \"1000.00\", \"usedToday\": \"1000.00\"}, \"USD\": {\"currency\": \"USD\", \"day\": \"250.00\", \"last30Days\": \"400.00\", \"single\": \"50.00\", \"usedLast30Days\": \"250.00\", \"usedToday\": \"250.00\"}}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241532599334350849",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-06",
+     "step": "近 30 日额度",
+     "verdict": "SKIP",
+     "evidence": "B 不是 VERIFICATION"
+    },
+    {
+     "ac": "AC-06",
+     "step": "D 无档位：支付尝试拒绝（无档位分支）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_no_tier\", \"start\", \"tier_gate\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "D 无档位：结账拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_no_tier\", \"start\", \"tier_gate\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-07",
+     "step": "迁移 STANDARD（FIX）：USD 9000 放行（激活后交易不受影响）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "STANDARD：USD 10001 > 单笔 10000 拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "STANDARD：AED 36001 > 单笔 36000 拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "STANDARD：SAR 未配置放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "STANDARD：结账 SAR 放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"start\", \"tier_gate\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-07",
+     "step": "迁移 STANDARD 237161687952666625：USD 10 放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-07",
+     "step": "迁移 STANDARD 900000000001380201：USD 10 放行",
+     "verdict": "FAIL",
+     "evidence": "{\"http\": 200, \"result\": \"TIMED_OUT\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    }
+   ]
+  },
+  {
+   "startedAt": "2026-10-30T07:42:58Z",
+   "only": [
+    "U",
+    "M"
+   ],
+   "results": [
+    {
+     "ac": "S",
+     "step": "req 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828050176577536 permissions=['READ', 'REQUEST', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "appr 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828061476032512 permissions=['READ', 'APPROVE', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "elev 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828068321136640 permissions=['READ', 'APPROVE_ELEVATED', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "ro 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828160700682240 permissions=['READ', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 uw 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601254088773632"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 lead 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601257913978880"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 自动承保批准后立即 VERIFICATION、来源 UNDERWRITING_INIT",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": \"VERIFICATION\", \"sourceType\": \"UNDERWRITING_INIT\", \"version\": 1, \"crr\": \"LOW\"}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241533217348268033 档位 VERIFICATION 与名单一致（只在 TIER_VERIFICATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_VERIFICATION\"]"
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 变更历史 1 条：UNDERWRITING_INIT、APPROVED、记来源承保",
+     "verdict": "PASS",
+     "evidence": "[[\"UNDERWRITING_INIT\", \"APPROVED\", \"VERIFICATION\", \"241829057128316928\"]]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 修订草稿 201",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {}"
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 修订版提交批准（LOW 直接 APPROVED）",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 APPROVED"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 修订批准后档位不变（VERIFICATION，档位版本不变，历史仍 1 条）",
+     "verdict": "PASS",
+     "evidence": "{\"version\": [1, 1], \"changes\": 1}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241532599334350849",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241532599334350849",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "B 修订草稿 201",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {}"
+    },
+    {
+     "ac": "AC-01",
+     "step": "B 提交（MEDIUM → SUBMITTED）",
+     "verdict": "FAIL",
+     "evidence": "HTTP 200 APPROVED"
+    },
+    {
+     "ac": "U",
+     "step": "场景中止",
+     "verdict": "FAIL",
+     "evidence": "AC-01 B 提交（MEDIUM → SUBMITTED）"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241532599334350849",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-06",
+     "step": "近 30 日额度",
+     "verdict": "SKIP",
+     "evidence": "B 不是 VERIFICATION"
+    }
+   ]
+  },
+  {
+   "startedAt": "2026-10-30T07:43:59Z",
+   "only": [
+    "U",
+    "M"
+   ],
+   "results": [
+    {
+     "ac": "S",
+     "step": "req 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828050176577536 permissions=['READ', 'REQUEST', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "appr 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828061476032512 permissions=['READ', 'APPROVE', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "elev 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828068321136640 permissions=['READ', 'APPROVE_ELEVATED', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "ro 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828160700682240 permissions=['READ', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 uw 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601254088773632"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 lead 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601257913978880"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 自动承保批准后立即 VERIFICATION、来源 UNDERWRITING_INIT",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": \"VERIFICATION\", \"sourceType\": \"UNDERWRITING_INIT\", \"version\": 1, \"crr\": \"LOW\"}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241533217348268033 档位 VERIFICATION 与名单一致（只在 TIER_VERIFICATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_VERIFICATION\"]"
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 变更历史 1 条：UNDERWRITING_INIT、APPROVED、记来源承保",
+     "verdict": "PASS",
+     "evidence": "[[\"UNDERWRITING_INIT\", \"APPROVED\", \"VERIFICATION\", \"241829057128316928\"]]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "AUTO 修订批准后档位不变（VERIFICATION，档位版本不变，历史仍 1 条）",
+     "verdict": "PASS",
+     "evidence": "{\"version\": [1, 1], \"changes\": 1}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241532599334350849",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241532599334350849",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "B 修订草稿 201",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {}"
+    },
+    {
+     "ac": "AC-01",
+     "step": "B 提交批准（MEDIUM 由承保员直接批准；HIGH 才需复核）",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 APPROVED"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241532599334350849",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "B 复核批准后 VERIFICATION（UNDERWRITING_INIT）",
+     "verdict": "FAIL",
+     "evidence": "{\"tier\": null, \"sourceType\": null, \"crr\": null}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241532599334350849 档位 VERIFICATION 与名单一致（只在 TIER_VERIFICATION）",
+     "verdict": "FAIL",
+     "evidence": "[]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "E 草稿提交批准（无 CRR 按 MEDIUM）",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 APPROVED"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-01",
+     "step": "E 已有档位：承保批准不改档位（仍 STANDARD / MIGRATION）",
+     "verdict": "PASS",
+     "evidence": "{\"before\": [\"STANDARD\", \"MIGRATION\", 1], \"after\": [\"STANDARD\", \"MIGRATION\", 1]}"
+    },
+    {
+     "ac": "AC-01",
+     "step": "D（REQ-04 之前已批准、无新批准）无档位：工作台 tier=null",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 tier=None"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241532599334350849",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-06",
+     "step": "近 30 日额度",
+     "verdict": "SKIP",
+     "evidence": "B 不是 VERIFICATION"
+    }
+   ]
+  },
+  {
+   "startedAt": "2026-10-30T07:46:07Z",
+   "only": [
+    "G",
+    "O"
+   ],
+   "results": [
+    {
+     "ac": "S",
+     "step": "req 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828050176577536 permissions=['READ', 'REQUEST', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "appr 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828061476032512 permissions=['READ', 'APPROVE', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "elev 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828068321136640 permissions=['READ', 'APPROVE_ELEVATED', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "ro 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828160700682240 permissions=['READ', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 uw 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601254088773632"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 lead 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601257913978880"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-04",
+     "step": "VERIFICATION → STANDARD 被拒 TRANSITION_INVALID",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_TRANSITION_INVALID', 'detail': '不允许从当前档位变更到目标档位', 'requestId': 'b9888eaf-9943-423d-95d3-828d284f72da'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "管理员申请 → RESTRICTED 201 PENDING、LOW 为普通审批",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {'changeId': '241830126176714752', 'approvalLevel': 'STANDARD', 'crrSnapshot': 'LOW'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-04",
+     "step": "已有待审批申请：再申请 409 PENDING_EXISTS",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHANGE_PENDING_EXISTS', 'detail': '该 Client 已有待审批的档位变更申请', 'requestId': '76ca8a46-a5e6-4524-a7af-4f3cb45d4d0c'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "申请人本人审批被拒 SELF_APPROVAL",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_SELF_APPROVAL', 'detail': '不能审批自己提交的档位变更申请', 'requestId': '7c6f187c-b283-4fed-b4b9-c2f26048e495'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "非申请人撤回被拒 NOT_REQUESTER",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_NOT_REQUESTER', 'detail': '只有申请人可以撤回档位变更申请', 'requestId': 'a1e5e8de-cf9a-4fa6-a99f-2e0f260add0a'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人批准（LOW）→ RESTRICTED 生效",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-03",
+     "step": "批准即生效：工作台 RESTRICTED、previousTier=VERIFICATION",
+     "verdict": "PASS",
+     "evidence": "RESTRICTED"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241533217348268033 档位 RESTRICTED 与名单一致（只在 TIER_RESTRICTED）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_RESTRICTED\"]"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO RESTRICTED：支付尝试受限拒绝（不进额度规则集）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_restricted\", \"start\", \"tier_gate\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO RESTRICTED：结账拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_restricted\", \"start\", \"tier_gate\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：RESTRICTED → satisfied=0、LIMIT_TIER_RESTRICTED",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"RESTRICTED\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_RESTRICTED\"}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-04",
+     "step": "RESTRICTED 可申请目标：先前档位或更低（VERIFICATION）",
+     "verdict": "PASS",
+     "evidence": "[\"VERIFICATION\"]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-04",
+     "step": "RESTRICTED → OBSERVATION（高于先前档位）被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_TRANSITION_INVALID', 'detail': '不允许从当前档位变更到目标档位', 'requestId': '65ac2798-c4fc-4afc-b2f8-dcf9dbe906ba'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "申请 RESTRICTED → VERIFICATION",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人驳回 → REJECTED，档位不变",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 REJECTED"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 241533217348268033",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "再申请并批准 → VERIFICATION",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241533217348268033 档位 VERIFICATION 与名单一致（只在 TIER_VERIFICATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_VERIFICATION\"]"
+    },
+    {
+     "ac": "AC-06",
+     "step": "AUTO 回到 VERIFICATION：当日 USD 仍已满（同日汇总延续）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：VERIFICATION 对 OBSERVATION → satisfied=0、LIMIT_TIER_BELOW_TARGET",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"VERIFICATION\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_BELOW_TARGET\"}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "E 申请 STANDARD → RESTRICTED（无 CRR → ELEVATED）",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 ELEVATED"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人批准 ELEVATED 申请被拒 ELEVATION_REQUIRED",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_ELEVATION_REQUIRED', 'detail': '该申请须由高级审批人处理', 'requestId': '7e5b3c6a-4be5-452e-9488-5c4be051d720'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人批准 → RESTRICTED",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "RESTRICTED → VERIFICATION（低于先前档位 STANDARD）批准",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 VERIFICATION 与名单一致（只在 TIER_VERIFICATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_VERIFICATION\"]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-06",
+     "step": "种昨日汇总 E USD 300（10-e-yesterday.sql）",
+     "verdict": "PASS",
+     "evidence": ""
+    },
+    {
+     "ac": "AC-06",
+     "step": "E USD 50 放行（当日 50 / 30 日 350）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "E USD 50 放行（30 日 400，等于上限）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "E USD 50 拒绝（30 日 450 > 400，当日 150 ≤ 250）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-11",
+     "step": "E 工作台：USD 已用当日 100.00、近 30 日 400.00",
+     "verdict": "PASS",
+     "evidence": "{\"currency\": \"USD\", \"day\": \"250.00\", \"last30Days\": \"400.00\", \"single\": \"50.00\", \"usedLast30Days\": \"400.00\", \"usedToday\": \"100.00\"}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "复核清单系统项：资格 APPROVED、有效承保、合同 ACTIVE、有 ENABLED 开通项（只读带出）",
+     "verdict": "PASS",
+     "evidence": "{\"items\": {\"QUALIFICATION\": \"OK\", \"UNDERWRITING\": \"OK\", \"AGREEMENT\": \"OK\", \"CAPABILITIES\": \"OK\"}, \"facts\": {\"qualificationStatus\": \"APPROVED\", \"qualificationValidTo\": null, \"underwritingId\": \"241601375522275328\", \"underwritingVersionNo\": 2, \"crr\": null, \"agreementId\": \"900000000001390001\", \"agreementStatus\": \"ACTIVE\", \"enabledPaymentCapabilities\": [\"TOKEN_STORAGE\"], \"pendingPaymentCapabilities\": [\"APPLE_PAY\", \"CARD\", \"GOOGLE_PAY\"]}}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "人工项未全部勾选 → CHECKLIST_NOT_SATISFIED",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHECKLIST_NOT_SATISFIED', 'detail': '上线复核清单未满足', 'requestId': 'a93b79d7-34d7-47f2-843f-9dedceeff52c'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "缺上线说明 → 被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHECKLIST_NOT_SATISFIED', 'detail': '上线复核清单未满足', 'requestId': '7700dbc8-04a2-4399-a3d5-5fb7337a65f7'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "上线复核申请 201：清单快照、ELEVATED",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {'agreementId': '900000000001390001', 'agreementStatus': 'ACTIVE', 'channelRegistrationConfirmed': True, 'enabledPaymentCapabilities': 'TOKEN_STORAGE', 'integrationConfirmed': True, 'openIssuesCleared': True, 'pendingPaymentCapabilities': 'APPLE_PAY,CARD,GOOGLE_PAY', 'productionVerified': True, 'qualificationStatus': 'APPROVED', 'qualificationValidTo': None, 'underwritingVersionNo': 2}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "申请人撤回 → WITHDRAWN",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表筛选待审批包含 E",
+     "verdict": "PASS",
+     "evidence": "[\"240674482170114049\"]"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人批准上线复核（ELEVATED）被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_ELEVATION_REQUIRED', 'detail': '该申请须由高级审批人处理', 'requestId': 'db2530a5-98cd-423f-9e3b-9923e1cf5e3c'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人批准 → OBSERVATION",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 OBSERVATION 与名单一致（只在 TIER_OBSERVATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_OBSERVATION\"]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "观察期：目标 30 天 / 2 笔，放行 0，未到期",
+     "verdict": "PASS",
+     "evidence": "{\"allowedTransactions\": 0, \"daysElapsed\": 0, \"due\": false, \"startedTime\": \"2026-10-30T07:46:43.145383Z\", \"targetDays\": 30, \"targetTransactions\": 2}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "E OBSERVATION：USD 2500 > 单笔 2000 拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "E OBSERVATION：SAR 未配置拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-05",
+     "step": "E OBSERVATION：USD 1500 放行 1",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-05",
+     "step": "E OBSERVATION：AED 100 放行 2",
+     "verdict": "FAIL",
+     "evidence": "{\"http\": 200, \"result\": \"TIMED_OUT\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "放行 2 笔 → 到期待确认（due=true），不自动升档",
+     "verdict": "FAIL",
+     "evidence": "{\"allowedTransactions\": 1, \"daysElapsed\": 0, \"due\": false, \"startedTime\": \"2026-10-30T07:46:43.145383Z\", \"targetDays\": 30, \"targetTransactions\": 2}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表筛选到期待确认包含 E",
+     "verdict": "FAIL",
+     "evidence": "[]"
+    },
+    {
+     "ac": "AC-10",
+     "step": "统计 observationDue ≥ 1",
+     "verdict": "FAIL",
+     "evidence": "{\"observation\": 1, \"observationDue\": 0, \"pendingApproval\": 0, \"restricted\": 0, \"standard\": 3, \"verification\": 1}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "延长观察申请（OBSERVATION → OBSERVATION）",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "延长批准：观察重新开始（放行 0、目标 5、未到期）",
+     "verdict": "PASS",
+     "evidence": "{\"allowedTransactions\": 0, \"daysElapsed\": 0, \"due\": false, \"startedTime\": \"2026-10-30T07:46:50.778798Z\", \"targetDays\": 30, \"targetTransactions\": 5}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人驳回升 STANDARD → 仍 OBSERVATION",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 REJECTED"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：OBSERVATION 对 STANDARD → satisfied=0、BELOW_TARGET；对 OBSERVATION → 1",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"OBSERVATION\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_BELOW_TARGET\"}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "OBSERVATION → STANDARD 批准（E 还原为 STANDARD）",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 STANDARD 与名单一致（只在 TIER_STANDARD）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_STANDARD\"]"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：STANDARD 对 STANDARD → satisfied=1、missing 空",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"1\", \"out_tier\": \"STANDARD\", \"out_observationDue\": \"0\", \"missing\": \"NULL\"}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "E 变更历史（时间倒序）含 MIGRATION 与各次申请",
+     "verdict": "PASS",
+     "evidence": "[[\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"APPROVED\"], [\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"REJECTED\"], [\"REQUEST\", \"OBSERVATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"WITHDRAWN\"], [\"REQUEST\", \"RESTRICTED\", \"VERIFICATION\", \"APPROVED\"], [\"REQUEST\", \"STANDARD\", \"RESTRICTED\", \"APPROVED\"], [\"MIGRATION\", null, \"STANDARD\", \"APPROVED\"]]"
+    }
+   ]
+  },
+  {
+   "startedAt": "2026-10-30T07:48:03Z",
+   "only": [
+    "O",
+    "N"
+   ],
+   "results": [
+    {
+     "ac": "S",
+     "step": "req 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828050176577536 permissions=['READ', 'REQUEST', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "appr 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828061476032512 permissions=['READ', 'APPROVE', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "elev 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828068321136640 permissions=['READ', 'APPROVE_ELEVATED', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "ro 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828160700682240 permissions=['READ', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 uw 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601254088773632"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 lead 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601257913978880"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "E 申请 STANDARD → RESTRICTED（无 CRR → ELEVATED）",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 ELEVATED"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人批准 ELEVATED 申请被拒 ELEVATION_REQUIRED",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_ELEVATION_REQUIRED', 'detail': '该申请须由高级审批人处理', 'requestId': '8f216f53-8651-45d1-9035-49305c1f4d33'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人批准 → RESTRICTED",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "RESTRICTED → VERIFICATION（低于先前档位 STANDARD）批准",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 VERIFICATION 与名单一致（只在 TIER_VERIFICATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_VERIFICATION\"]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-06",
+     "step": "近 30 日额度",
+     "verdict": "SKIP",
+     "evidence": "E 今日已有 USD 汇总 {('PAYMENT_ATTEMPT_ALLOWED', 'USD', '2026-10-29'): ('300.00', '6'), ('PAYMENT_ATTEMPT_ALLOWED', 'USD', '2026-10-30'): ('1600.00', '3')}，重跑跳过"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "复核清单系统项：资格 APPROVED、有效承保、合同 ACTIVE、有 ENABLED 开通项（只读带出）",
+     "verdict": "PASS",
+     "evidence": "{\"items\": {\"QUALIFICATION\": \"OK\", \"UNDERWRITING\": \"OK\", \"AGREEMENT\": \"OK\", \"CAPABILITIES\": \"OK\"}, \"facts\": {\"qualificationStatus\": \"APPROVED\", \"qualificationValidTo\": null, \"underwritingId\": \"241601375522275328\", \"underwritingVersionNo\": 2, \"crr\": null, \"agreementId\": \"900000000001390001\", \"agreementStatus\": \"ACTIVE\", \"enabledPaymentCapabilities\": [\"TOKEN_STORAGE\"], \"pendingPaymentCapabilities\": [\"APPLE_PAY\", \"CARD\", \"GOOGLE_PAY\"]}}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "人工项未全部勾选 → CHECKLIST_NOT_SATISFIED",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHECKLIST_NOT_SATISFIED', 'detail': '上线复核清单未满足', 'requestId': '9bca2e6b-b8e0-4164-872e-77e7a9a1e0e6'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "缺上线说明 → 被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHECKLIST_NOT_SATISFIED', 'detail': '上线复核清单未满足', 'requestId': '884a1e5b-fc20-4a8d-b9ab-6c90d9354124'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "上线复核申请 201：清单快照、ELEVATED",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {'agreementId': '900000000001390001', 'agreementStatus': 'ACTIVE', 'channelRegistrationConfirmed': True, 'enabledPaymentCapabilities': 'TOKEN_STORAGE', 'integrationConfirmed': True, 'openIssuesCleared': True, 'pendingPaymentCapabilities': 'APPLE_PAY,CARD,GOOGLE_PAY', 'productionVerified': True, 'qualificationStatus': 'APPROVED', 'qualificationValidTo': None, 'underwritingVersionNo': 2}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "申请人撤回 → WITHDRAWN",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表筛选待审批包含 E",
+     "verdict": "PASS",
+     "evidence": "[\"240674482170114049\"]"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人批准上线复核（ELEVATED）被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_ELEVATION_REQUIRED', 'detail': '该申请须由高级审批人处理', 'requestId': '8cca858d-ff7f-4c16-a57d-3ee8d6c045c8'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人批准 → OBSERVATION",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 OBSERVATION 与名单一致（只在 TIER_OBSERVATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_OBSERVATION\"]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "观察期：目标 30 天 / 2 笔，放行 0，未到期",
+     "verdict": "PASS",
+     "evidence": "{\"allowedTransactions\": 0, \"daysElapsed\": 0, \"due\": false, \"startedTime\": \"2026-10-30T07:48:33.924674Z\", \"targetDays\": 30, \"targetTransactions\": 2}"
+    },
+    {
+     "ac": "F-4",
+     "step": "评估超时后重试 240674482170114049 2500.00 USD",
+     "verdict": "INFO",
+     "evidence": "241830630667599872"
+    },
+    {
+     "ac": "AC-06",
+     "step": "E OBSERVATION：USD 2500 > 单笔 2000 拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "E OBSERVATION：SAR 未配置拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "F-4",
+     "step": "评估超时后重试 240674482170114049 1500.00 USD",
+     "verdict": "INFO",
+     "evidence": "241830638276067328"
+    },
+    {
+     "ac": "AC-05",
+     "step": "E OBSERVATION：USD 1500 放行 1",
+     "verdict": "FAIL",
+     "evidence": "{\"http\": 200, \"result\": \"TIMED_OUT\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "F-4",
+     "step": "评估超时后重试 240674482170114049 100.00 AED",
+     "verdict": "INFO",
+     "evidence": "241830645112782848"
+    },
+    {
+     "ac": "AC-05",
+     "step": "E OBSERVATION：AED 100 放行 2",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "放行 2 笔 → 到期待确认（due=true），不自动升档",
+     "verdict": "FAIL",
+     "evidence": "{\"allowedTransactions\": 1, \"daysElapsed\": 0, \"due\": false, \"startedTime\": \"2026-10-30T07:48:33.924674Z\", \"targetDays\": 30, \"targetTransactions\": 2}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表筛选到期待确认包含 E",
+     "verdict": "FAIL",
+     "evidence": "[]"
+    },
+    {
+     "ac": "AC-10",
+     "step": "统计 observationDue ≥ 1",
+     "verdict": "FAIL",
+     "evidence": "{\"observation\": 1, \"observationDue\": 0, \"pendingApproval\": 0, \"restricted\": 0, \"standard\": 3, \"verification\": 1}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "延长观察申请（OBSERVATION → OBSERVATION）",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "延长批准：观察重新开始（放行 0、目标 5、未到期）",
+     "verdict": "PASS",
+     "evidence": "{\"allowedTransactions\": 0, \"daysElapsed\": 0, \"due\": false, \"startedTime\": \"2026-10-30T07:48:39.793358Z\", \"targetDays\": 30, \"targetTransactions\": 5}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人驳回升 STANDARD → 仍 OBSERVATION",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 REJECTED"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：OBSERVATION 对 STANDARD → satisfied=0、BELOW_TARGET；对 OBSERVATION → 1",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"OBSERVATION\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_BELOW_TARGET\"}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "OBSERVATION → STANDARD 批准（E 还原为 STANDARD）",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 STANDARD 与名单一致（只在 TIER_STANDARD）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_STANDARD\"]"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：STANDARD 对 STANDARD → satisfied=1、missing 空",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"1\", \"out_tier\": \"STANDARD\", \"out_observationDue\": \"0\", \"missing\": \"NULL\"}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "E 变更历史（时间倒序）含 MIGRATION 与各次申请",
+     "verdict": "PASS",
+     "evidence": "[[\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"APPROVED\"], [\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"REJECTED\"], [\"REQUEST\", \"OBSERVATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"WITHDRAWN\"], [\"REQUEST\", \"RESTRICTED\", \"VERIFICATION\", \"APPROVED\"], [\"REQUEST\", \"STANDARD\", \"RESTRICTED\", \"APPROVED\"], [\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"APPROVED\"], [\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"REJECTED\"], [\"REQUEST\", \"OBSERVATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"WITHDRAWN\"], [\"REQUEST\", \"RESTRICTED\", \"VERIFICATION\", \"APPROV"
+    },
+    {
+     "ac": "AC-06",
+     "step": "D 无档位：支付尝试拒绝（无档位分支）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_no_tier\", \"start\", \"tier_gate\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "D 无档位：结账拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_no_tier\", \"start\", \"tier_gate\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-07",
+     "step": "迁移 STANDARD（FIX）：USD 9000 放行（激活后交易不受影响）",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "STANDARD：USD 10001 > 单笔 10000 拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "STANDARD：AED 36001 > 单笔 36000 拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "STANDARD：SAR 未配置放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "STANDARD：结账 SAR 放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"start\", \"tier_gate\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-07",
+     "step": "迁移 STANDARD 237161687952666625：USD 10 放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-07",
+     "step": "迁移 STANDARD 900000000001380201：USD 10 放行",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"problem\": null}"
+    }
+   ]
+  },
+  {
+   "startedAt": "2026-10-30T07:49:23Z",
+   "only": [
+    "O"
+   ],
+   "results": [
+    {
+     "ac": "S",
+     "step": "req 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828050176577536 permissions=['READ', 'REQUEST', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "appr 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828061476032512 permissions=['READ', 'APPROVE', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "elev 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828068321136640 permissions=['READ', 'APPROVE_ELEVATED', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "ro 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828160700682240 permissions=['READ', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 uw 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601254088773632"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 lead 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601257913978880"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "E 申请 STANDARD → RESTRICTED（无 CRR → ELEVATED）",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 ELEVATED"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人批准 ELEVATED 申请被拒 ELEVATION_REQUIRED",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_ELEVATION_REQUIRED', 'detail': '该申请须由高级审批人处理', 'requestId': 'a2ce3eea-ba66-4e47-bbb6-cdcb4b357782'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人批准 → RESTRICTED",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "RESTRICTED → VERIFICATION（低于先前档位 STANDARD）批准",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 VERIFICATION 与名单一致（只在 TIER_VERIFICATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_VERIFICATION\"]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-06",
+     "step": "近 30 日额度",
+     "verdict": "SKIP",
+     "evidence": "E 今日已有 USD 汇总 {('PAYMENT_ATTEMPT_ALLOWED', 'AED', '2026-10-30'): ('100.00', '1'), ('PAYMENT_ATTEMPT_ALLOWED', 'USD', '2026-10-29'): ('300.00', '6'), ('PAYMENT_ATTEMPT_ALLOWED', 'USD', '2026-10-30'): ('1600.00', '3')}，重跑跳过"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "复核清单系统项：资格 APPROVED、有效承保、合同 ACTIVE、有 ENABLED 开通项（只读带出）",
+     "verdict": "PASS",
+     "evidence": "{\"items\": {\"QUALIFICATION\": \"OK\", \"UNDERWRITING\": \"OK\", \"AGREEMENT\": \"OK\", \"CAPABILITIES\": \"OK\"}, \"facts\": {\"qualificationStatus\": \"APPROVED\", \"qualificationValidTo\": null, \"underwritingId\": \"241601375522275328\", \"underwritingVersionNo\": 2, \"crr\": null, \"agreementId\": \"900000000001390001\", \"agreementStatus\": \"ACTIVE\", \"enabledPaymentCapabilities\": [\"TOKEN_STORAGE\"], \"pendingPaymentCapabilities\": [\"APPLE_PAY\", \"CARD\", \"GOOGLE_PAY\"]}}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "人工项未全部勾选 → CHECKLIST_NOT_SATISFIED",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHECKLIST_NOT_SATISFIED', 'detail': '上线复核清单未满足', 'requestId': '11263683-34cc-4ef6-9ed0-54c12015ceaa'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "缺上线说明 → 被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHECKLIST_NOT_SATISFIED', 'detail': '上线复核清单未满足', 'requestId': 'ffb3fa95-8e59-4bea-9d4a-d6bc47e6957a'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "上线复核申请 201：清单快照、ELEVATED",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {'agreementId': '900000000001390001', 'agreementStatus': 'ACTIVE', 'channelRegistrationConfirmed': True, 'enabledPaymentCapabilities': 'TOKEN_STORAGE', 'integrationConfirmed': True, 'openIssuesCleared': True, 'pendingPaymentCapabilities': 'APPLE_PAY,CARD,GOOGLE_PAY', 'productionVerified': True, 'qualificationStatus': 'APPROVED', 'qualificationValidTo': None, 'underwritingVersionNo': 2}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "申请人撤回 → WITHDRAWN",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表筛选待审批包含 E",
+     "verdict": "PASS",
+     "evidence": "[\"240674482170114049\"]"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人批准上线复核（ELEVATED）被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_ELEVATION_REQUIRED', 'detail': '该申请须由高级审批人处理', 'requestId': '413648dc-7a16-4a7a-b108-593bc6512d2a'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人批准 → OBSERVATION",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 OBSERVATION 与名单一致（只在 TIER_OBSERVATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_OBSERVATION\"]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "观察期：目标 30 天 / 2 笔，放行 0，未到期",
+     "verdict": "PASS",
+     "evidence": "{\"allowedTransactions\": 0, \"daysElapsed\": 0, \"due\": false, \"startedTime\": \"2026-10-30T07:49:57.395059Z\", \"targetDays\": 30, \"targetTransactions\": 2}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "E OBSERVATION：USD 2500 > 单笔 2000 拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "E OBSERVATION：SAR 未配置拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-05",
+     "step": "E OBSERVATION：USD 1500 放行 1",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-05",
+     "step": "E OBSERVATION：AED 100 放行 2",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "放行 2 笔 → 到期待确认（due=true），不自动升档",
+     "verdict": "PASS",
+     "evidence": "{\"allowedTransactions\": 2, \"daysElapsed\": 0, \"due\": true, \"startedTime\": \"2026-10-30T07:49:57.395059Z\", \"targetDays\": 30, \"targetTransactions\": 2}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表筛选到期待确认包含 E",
+     "verdict": "FAIL",
+     "evidence": "[]"
+    },
+    {
+     "ac": "AC-10",
+     "step": "统计 observationDue ≥ 1",
+     "verdict": "FAIL",
+     "evidence": "{\"observation\": 1, \"observationDue\": 0, \"pendingApproval\": 0, \"restricted\": 0, \"standard\": 3, \"verification\": 1}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "延长观察申请（OBSERVATION → OBSERVATION）",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "延长批准：观察重新开始（放行 0、目标 5、未到期）",
+     "verdict": "PASS",
+     "evidence": "{\"allowedTransactions\": 0, \"daysElapsed\": 0, \"due\": false, \"startedTime\": \"2026-10-30T07:49:59.933756Z\", \"targetDays\": 30, \"targetTransactions\": 5}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人驳回升 STANDARD → 仍 OBSERVATION",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 REJECTED"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：OBSERVATION 对 STANDARD → satisfied=0、BELOW_TARGET；对 OBSERVATION → 1",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"OBSERVATION\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_BELOW_TARGET\"}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "OBSERVATION → STANDARD 批准（E 还原为 STANDARD）",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 STANDARD 与名单一致（只在 TIER_STANDARD）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_STANDARD\"]"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：STANDARD 对 STANDARD → satisfied=1、missing 空",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"1\", \"out_tier\": \"STANDARD\", \"out_observationDue\": \"0\", \"missing\": \"NULL\"}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "E 变更历史（时间倒序）含 MIGRATION 与各次申请",
+     "verdict": "PASS",
+     "evidence": "[[\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"APPROVED\"], [\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"REJECTED\"], [\"REQUEST\", \"OBSERVATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"WITHDRAWN\"], [\"REQUEST\", \"RESTRICTED\", \"VERIFICATION\", \"APPROVED\"], [\"REQUEST\", \"STANDARD\", \"RESTRICTED\", \"APPROVED\"], [\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"APPROVED\"], [\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"REJECTED\"], [\"REQUEST\", \"OBSERVATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"WITHDRAWN\"], [\"REQUEST\", \"RESTRICTED\", \"VERIFICATION\", \"APPROV"
+    }
+   ]
+  },
+  {
+   "startedAt": "2026-10-30T07:50:44Z",
+   "only": [
+    "O",
+    "F",
+    "T",
+    "L",
+    "X"
+   ],
+   "results": [
+    {
+     "ac": "S",
+     "step": "req 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828050176577536 permissions=['READ', 'REQUEST', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "appr 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828061476032512 permissions=['READ', 'APPROVE', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "elev 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828068321136640 permissions=['READ', 'APPROVE_ELEVATED', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "ro 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828160700682240 permissions=['READ', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 uw 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601254088773632"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 lead 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601257913978880"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "E 申请 STANDARD → RESTRICTED（无 CRR → ELEVATED）",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 ELEVATED"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人批准 ELEVATED 申请被拒 ELEVATION_REQUIRED",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_ELEVATION_REQUIRED', 'detail': '该申请须由高级审批人处理', 'requestId': 'd3efa89f-8ed0-46c6-8d11-def25af6e19a'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人批准 → RESTRICTED",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "RESTRICTED → VERIFICATION（低于先前档位 STANDARD）批准",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 VERIFICATION 与名单一致（只在 TIER_VERIFICATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_VERIFICATION\"]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-06",
+     "step": "近 30 日额度",
+     "verdict": "SKIP",
+     "evidence": "E 今日已有 USD 汇总 {('PAYMENT_ATTEMPT_ALLOWED', 'AED', '2026-10-30'): ('200.00', '2'), ('PAYMENT_ATTEMPT_ALLOWED', 'USD', '2026-10-29'): ('300.00', '6'), ('PAYMENT_ATTEMPT_ALLOWED', 'USD', '2026-10-30'): ('3100.00', '4')}，重跑跳过"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "复核清单系统项：资格 APPROVED、有效承保、合同 ACTIVE、有 ENABLED 开通项（只读带出）",
+     "verdict": "PASS",
+     "evidence": "{\"items\": {\"QUALIFICATION\": \"OK\", \"UNDERWRITING\": \"OK\", \"AGREEMENT\": \"OK\", \"CAPABILITIES\": \"OK\"}, \"facts\": {\"qualificationStatus\": \"APPROVED\", \"qualificationValidTo\": null, \"underwritingId\": \"241601375522275328\", \"underwritingVersionNo\": 2, \"crr\": null, \"agreementId\": \"900000000001390001\", \"agreementStatus\": \"ACTIVE\", \"enabledPaymentCapabilities\": [\"TOKEN_STORAGE\"], \"pendingPaymentCapabilities\": [\"APPLE_PAY\", \"CARD\", \"GOOGLE_PAY\"]}}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "人工项未全部勾选 → CHECKLIST_NOT_SATISFIED",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHECKLIST_NOT_SATISFIED', 'detail': '上线复核清单未满足', 'requestId': 'e1a6be1d-e8af-4c7d-9010-50111c9f0597'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "缺上线说明 → 被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHECKLIST_NOT_SATISFIED', 'detail': '上线复核清单未满足', 'requestId': '40c3204c-b419-4003-bd4b-dfd7d7992bbe'}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "上线复核申请 201：清单快照、ELEVATED",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {'agreementId': '900000000001390001', 'agreementStatus': 'ACTIVE', 'channelRegistrationConfirmed': True, 'enabledPaymentCapabilities': 'TOKEN_STORAGE', 'integrationConfirmed': True, 'openIssuesCleared': True, 'pendingPaymentCapabilities': 'APPLE_PAY,CARD,GOOGLE_PAY', 'productionVerified': True, 'qualificationStatus': 'APPROVED', 'qualificationValidTo': None, 'underwritingVersionNo': 2}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "申请人撤回 → WITHDRAWN",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表筛选待审批包含 E",
+     "verdict": "PASS",
+     "evidence": "[\"240674482170114049\"]"
+    },
+    {
+     "ac": "AC-02",
+     "step": "普通审批人批准上线复核（ELEVATED）被拒",
+     "verdict": "PASS",
+     "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_ELEVATION_REQUIRED', 'detail': '该申请须由高级审批人处理', 'requestId': '819907ae-20b3-4a21-a7e1-985efcf0cf10'}"
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人批准 → OBSERVATION",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 OBSERVATION 与名单一致（只在 TIER_OBSERVATION）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_OBSERVATION\"]"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "观察期：目标 30 天 / 2 笔，放行 0，未到期",
+     "verdict": "PASS",
+     "evidence": "{\"allowedTransactions\": 0, \"daysElapsed\": 0, \"due\": false, \"startedTime\": \"2026-10-30T07:51:22.067858Z\", \"targetDays\": 30, \"targetTransactions\": 2}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "E OBSERVATION：USD 2500 > 单笔 2000 拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "E OBSERVATION：SAR 未配置拒绝",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-05",
+     "step": "E OBSERVATION：USD 1500 放行 1",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "AC-05",
+     "step": "E OBSERVATION：AED 100 放行 2",
+     "verdict": "PASS",
+     "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_observation\"], \"problem\": null}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "放行 2 笔 → 到期待确认（due=true），不自动升档",
+     "verdict": "PASS",
+     "evidence": "{\"allowedTransactions\": 2, \"daysElapsed\": 0, \"due\": true, \"startedTime\": \"2026-10-30T07:51:22.067858Z\", \"targetDays\": 30, \"targetTransactions\": 2}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表“到期待确认”筛选只按天数（S-10，可索引）：E 按笔数到期、天数未到 → 不在筛选结果",
+     "verdict": "PASS",
+     "evidence": "[]"
+    },
+    {
+     "ac": "AC-10",
+     "step": "统计 observationDue 与按天数口径的库内计数一致",
+     "verdict": "PASS",
+     "evidence": "{\"api\": 0, \"sql\": 0}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "延长观察申请（OBSERVATION → OBSERVATION）",
+     "verdict": "PASS",
+     "evidence": "HTTP 201 {}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-05",
+     "step": "延长批准：观察重新开始（放行 0、目标 5、未到期）",
+     "verdict": "PASS",
+     "evidence": "{\"allowedTransactions\": 0, \"daysElapsed\": 0, \"due\": false, \"startedTime\": \"2026-10-30T07:51:24.961866Z\", \"targetDays\": 30, \"targetTransactions\": 5}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "高级审批人驳回升 STANDARD → 仍 OBSERVATION",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 REJECTED"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：OBSERVATION 对 STANDARD → satisfied=0、BELOW_TARGET；对 OBSERVATION → 1",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"OBSERVATION\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_BELOW_TARGET\"}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 240674482170114049",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-02",
+     "step": "OBSERVATION → STANDARD 批准（E 还原为 STANDARD）",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 档位 STANDARD 与名单一致（只在 TIER_STANDARD）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_STANDARD\"]"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：STANDARD 对 STANDARD → satisfied=1、missing 空",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"1\", \"out_tier\": \"STANDARD\", \"out_observationDue\": \"0\", \"missing\": \"NULL\"}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "E 变更历史（时间倒序）含 MIGRATION 与各次申请",
+     "verdict": "PASS",
+     "evidence": "[[\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"APPROVED\"], [\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"REJECTED\"], [\"REQUEST\", \"OBSERVATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"WITHDRAWN\"], [\"REQUEST\", \"RESTRICTED\", \"VERIFICATION\", \"APPROVED\"], [\"REQUEST\", \"STANDARD\", \"RESTRICTED\", \"APPROVED\"], [\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"APPROVED\"], [\"REQUEST\", \"OBSERVATION\", \"STANDARD\", \"REJECTED\"], [\"REQUEST\", \"OBSERVATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"APPROVED\"], [\"REQUEST\", \"VERIFICATION\", \"OBSERVATION\", \"WITHDRAWN\"], [\"REQUEST\", \"RESTRICTED\", \"VERIFICATION\", \"APPROV"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-07",
+     "step": "Payment 全链路：STANDARD（迁移）支付风控放行、尝试继续",
+     "verdict": "FAIL",
+     "evidence": "{\"payHttp\": 503, \"payStatus\": null, \"attemptId\": null, \"problem\": {\"code\": \"SERVICE_UNAVAILABLE\", \"detail\": \"服务暂时不可用，请稍后重试\", \"requestId\": \"c446ac55-4ac9-4d5d-99aa-457b941c9f12\"}, \"risk\": null, \"path\": [], \"attemptStatus\": null}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-06",
+     "step": "FIX → RESTRICTED（无 CRR → 高级审批）",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "Payment 全链路：RESTRICTED 支付风控拒绝、尝试不继续",
+     "verdict": "FAIL",
+     "evidence": "{\"payHttp\": 200, \"payStatus\": \"FAILED\", \"attemptId\": \"241831389467541504\", \"problem\": null, \"risk\": \"NULL\", \"path\": [\"deny_restricted\", \"start\", \"tier_gate\"], \"attemptStatus\": \"FAILED\"}"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：RESTRICTED → LIMIT_TIER_RESTRICTED",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"RESTRICTED\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_RESTRICTED\"}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-04",
+     "step": "RESTRICTED → 先前档位 STANDARD 还原",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "880000000901 档位 STANDARD 与名单一致（只在 TIER_STANDARD）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_STANDARD\"]"
+    },
+    {
+     "ac": "AC-07",
+     "step": "Payment 全链路：还原后再次放行",
+     "verdict": "PASS",
+     "evidence": "{\"payHttp\": 202, \"payStatus\": \"PROCESSING\", \"attemptId\": \"241831400959934464\", \"problem\": {}, \"risk\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"attemptStatus\": \"PROCESSING\"}"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：无档位 → satisfied=0、LIMIT_TIER_NOT_SET、out_tier 空",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"NULL\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_NOT_SET\"}"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：迁移 STANDARD → satisfied=1",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"1\", \"out_tier\": \"STANDARD\", \"out_observationDue\": \"0\", \"missing\": \"NULL\"}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "统计与库一致",
+     "verdict": "PASS",
+     "evidence": "{\"api\": {\"observation\": 0, \"observationDue\": 0, \"pendingApproval\": 0, \"restricted\": 0, \"standard\": 4, \"verification\": 1}, \"sql\": {\"STANDARD\": 4, \"VERIFICATION\": 1}}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表按档位筛选 VERIFICATION 含 AUTO、B",
+     "verdict": "FAIL",
+     "evidence": "[\"241533217348268033\"]"
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表关键字（编号）筛选",
+     "verdict": "PASS",
+     "evidence": "[\"RELSNAP-CLIENT-PSP\", \"RELSNAP-CLIENT-MOR\"]"
+    },
+    {
+     "ac": "AC-11",
+     "step": "额度页：四档位、无配置问题、VERIFICATION 未配置币种 DENY、STANDARD ALLOW",
+     "verdict": "PASS",
+     "evidence": "[]"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241533217348268033 终态：档位与名单一致",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": \"VERIFICATION\", \"lists\": [\"TIER_VERIFICATION\"]}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241532599334350849 终态：档位与名单一致",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": null, \"lists\": []}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 终态：档位与名单一致",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": \"STANDARD\", \"lists\": [\"TIER_STANDARD\"]}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241533481480368129 终态：档位与名单一致",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": null, \"lists\": []}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "880000000901 终态：档位与名单一致",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": \"STANDARD\", \"lists\": [\"TIER_STANDARD\"]}"
+    },
+    {
+     "ac": "G",
+     "step": "risk-decision 日志本次运行无 ERROR",
+     "verdict": "PASS",
+     "evidence": "[]"
+    },
+    {
+     "ac": "G",
+     "step": "ops-bff 日志本次运行无 ERROR",
+     "verdict": "PASS",
+     "evidence": "[]"
+    },
+    {
+     "ac": "G",
+     "step": "ops-bff 档位路由访问日志只记元数据（无 requestBody / responseBody）",
+     "verdict": "PASS",
+     "evidence": "50 行"
+    }
+   ]
+  },
+  {
+   "startedAt": "2026-10-30T07:52:17Z",
+   "only": [
+    "F",
+    "L"
+   ],
+   "results": [
+    {
+     "ac": "S",
+     "step": "req 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828050176577536 permissions=['READ', 'REQUEST', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "appr 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828061476032512 permissions=['READ', 'APPROVE', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "elev 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828068321136640 permissions=['READ', 'APPROVE_ELEVATED', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "ro 登录",
+     "verdict": "PASS",
+     "evidence": "accountId=241828160700682240 permissions=['READ', 'RISK_DECISION_CONFIG_READ']"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 uw 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601254088773632"
+    },
+    {
+     "ac": "S",
+     "step": "REQ-03 lead 登录（承保步骤）",
+     "verdict": "PASS",
+     "evidence": "accountId=241601257913978880"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "F-4",
+     "step": "Payment 全链路重试",
+     "verdict": "INFO",
+     "evidence": "{\"payHttp\": 200, \"problem\": null, \"riskTechnicalStatus\": \"TIMED_OUT\", \"attemptId\": \"241831677779804160\"}"
+    },
+    {
+     "ac": "AC-07",
+     "step": "Payment 全链路：STANDARD（迁移）支付风控放行、尝试继续",
+     "verdict": "PASS",
+     "evidence": "{\"payHttp\": 202, \"payStatus\": \"PROCESSING\", \"attemptId\": \"241831691792973824\", \"problem\": {}, \"risk\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"riskTechnicalStatus\": \"SUCCEEDED\", \"attemptStatus\": \"PROCESSING\"}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-06",
+     "step": "FIX → RESTRICTED（无 CRR → 高级审批）",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-06",
+     "step": "Payment 全链路：RESTRICTED 支付风控拒绝、尝试不继续",
+     "verdict": "PASS",
+     "evidence": "{\"payHttp\": 200, \"payStatus\": \"FAILED\", \"attemptId\": \"241831694414413824\", \"problem\": null, \"risk\": \"DENY\", \"path\": [\"deny_restricted\", \"start\", \"tier_gate\"], \"riskTechnicalStatus\": \"SUCCEEDED\", \"attemptStatus\": \"FAILED\"}"
+    },
+    {
+     "ac": "AC-09",
+     "step": "模板：RESTRICTED → LIMIT_TIER_RESTRICTED",
+     "verdict": "PASS",
+     "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"RESTRICTED\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_RESTRICTED\"}"
+    },
+    {
+     "ac": "WS",
+     "step": "档位工作台 880000000901",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 "
+    },
+    {
+     "ac": "AC-04",
+     "step": "RESTRICTED → 先前档位 STANDARD 还原",
+     "verdict": "PASS",
+     "evidence": "HTTP 200 {}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "880000000901 档位 STANDARD 与名单一致（只在 TIER_STANDARD）",
+     "verdict": "PASS",
+     "evidence": "[\"TIER_STANDARD\"]"
+    },
+    {
+     "ac": "AC-07",
+     "step": "Payment 全链路：还原后再次放行",
+     "verdict": "PASS",
+     "evidence": "{\"payHttp\": 200, \"payStatus\": \"SUCCEEDED\", \"attemptId\": \"241831696717086720\", \"problem\": null, \"risk\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_standard\"], \"riskTechnicalStatus\": \"SUCCEEDED\", \"attemptStatus\": \"SUCCEEDED\"}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "统计与库一致",
+     "verdict": "PASS",
+     "evidence": "{\"api\": {\"observation\": 0, \"observationDue\": 0, \"pendingApproval\": 0, \"restricted\": 0, \"standard\": 4, \"verification\": 1}, \"sql\": {\"STANDARD\": 4, \"VERIFICATION\": 1}}"
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表按档位筛选 VERIFICATION 含 AUTO（B 无档位，见 F-1）",
+     "verdict": "PASS",
+     "evidence": "[\"241533217348268033\"]"
+    },
+    {
+     "ac": "AC-10",
+     "step": "列表关键字（编号）筛选",
+     "verdict": "PASS",
+     "evidence": "[\"RELSNAP-CLIENT-PSP\", \"RELSNAP-CLIENT-MOR\"]"
+    },
+    {
+     "ac": "AC-11",
+     "step": "额度页：四档位、无配置问题、VERIFICATION 未配置币种 DENY、STANDARD ALLOW",
+     "verdict": "PASS",
+     "evidence": "[]"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241533217348268033 终态：档位与名单一致",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": \"VERIFICATION\", \"lists\": [\"TIER_VERIFICATION\"]}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241532599334350849 终态：档位与名单一致",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": null, \"lists\": []}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "240674482170114049 终态：档位与名单一致",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": \"STANDARD\", \"lists\": [\"TIER_STANDARD\"]}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "241533481480368129 终态：档位与名单一致",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": null, \"lists\": []}"
+    },
+    {
+     "ac": "AC-03",
+     "step": "880000000901 终态：档位与名单一致",
+     "verdict": "PASS",
+     "evidence": "{\"tier\": \"STANDARD\", \"lists\": [\"TIER_STANDARD\"]}"
+    }
+   ]
+  }
+ ]
+}

@@ -30,6 +30,7 @@ import lombok.AllArgsConstructor;
  * 人工添加名单成员
  * <li>名单资源锁串行同一名单的成员维护；同名单同主体至多一个生效成员，由生效槽位唯一索引兜底。</li>
  * <li>旧成员已到期但仍占用槽位时，在同一事务中先标记过期再插入新成员。</li>
+ * <li>限额档位名单（TIER）由系统维护，拒绝人工添加。</li>
  */
 @Component
 @AllArgsConstructor
@@ -52,6 +53,7 @@ public class AddRiskListEntryProcessor extends AbstractLockProcessor<AddRiskList
         // 业务验证
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         RiskList list = RiskListLocks.requireActiveList(lists, request.getListCode());
+        RiskListLocks.requireManualMaintenance(list);
         String subjectKey = RiskSubjectKeys.normalize(list.getSupportedSubjectType(), request.getSubjectValue());
         Instant effectiveFrom = request.getEffectiveFrom() == null ? now : request.getEffectiveFrom();
         if (request.getEffectiveTo() != null && !request.getEffectiveTo().isAfter(effectiveFrom)) {

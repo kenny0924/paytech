@@ -9,11 +9,11 @@ public class VelocityFeatureParameters {
 
     /**
      * 计入的事件
-     * <li>支付尝试：PAYMENT_ATTEMPT_ASSESSED（成功完成的正式评估）、PAYMENT_ATTEMPT_REJECTED（结论为审核或拒绝）；结账：CHECKOUT_ASSESSED、CHECKOUT_REJECTED，含义相同。</li>
+     * <li>支付尝试：PAYMENT_ATTEMPT_ASSESSED（成功完成的正式评估）、PAYMENT_ATTEMPT_ALLOWED（结论为放行）、PAYMENT_ATTEMPT_REJECTED（结论为审核或拒绝）；结账：CHECKOUT_ASSESSED、CHECKOUT_ALLOWED、CHECKOUT_REJECTED，含义相同。</li>
      * <li>事件须属于变量所属风控点，由服务端校验。</li>
      */
     @NotBlank
-    @Pattern(regexp = "^(PAYMENT_ATTEMPT_ASSESSED|PAYMENT_ATTEMPT_REJECTED|CHECKOUT_ASSESSED|CHECKOUT_REJECTED)$")
+    @Pattern(regexp = "^(PAYMENT_ATTEMPT_ASSESSED|PAYMENT_ATTEMPT_ALLOWED|PAYMENT_ATTEMPT_REJECTED|CHECKOUT_ASSESSED|CHECKOUT_ALLOWED|CHECKOUT_REJECTED)$")
     private String eventCode;
 
     /**
@@ -25,8 +25,9 @@ public class VelocityFeatureParameters {
 
     /**
      * 累计算法
-     * <li>COUNT、SUM_AMOUNT、DISTINCT_COUNT、LAST_AMOUNT 或 SECONDS_SINCE_LAST。</li>
+     * <li>COUNT、SUM_AMOUNT、DISTINCT_COUNT、LAST_AMOUNT、SECONDS_SINCE_LAST 或 DAILY_SUM_AMOUNT。</li>
      * <li>SUM_AMOUNT 只累加与本次同币种的事件，不做汇率换算。</li>
+     * <li>DAILY_SUM_AMOUNT 读取按 UTC 自然日汇总的同币种放行金额，只用于 CLIENT 主体与放行事件。</li>
      */
     @NotBlank
     private String metric;
@@ -40,6 +41,7 @@ public class VelocityFeatureParameters {
     /**
      * 窗口秒数
      * <li>600、3600、86400 或 604800；窗口为 [评估时间 − 窗口, 评估时间)。</li>
+     * <li>DAILY_SUM_AMOUNT 只能为 86400（UTC 当日）或 2592000（近 30 个 UTC 自然日，含当日）。</li>
      */
     @NotNull
     private Integer windowSeconds;

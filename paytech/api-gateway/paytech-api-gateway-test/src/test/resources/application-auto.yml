@@ -49,7 +49,7 @@ gateway:
     direct-uri-enabled: true
     connect-timeout: PT1S
     response-timeout: PT1S
-    max-response-bytes: 1048576
+    max-response-bytes: 4194304
     refresh-interval: PT5S
     # Cached contexts share protocol simulators; each test explicitly refreshes its snapshot.
     scheduling-enabled: false

@@ -29,6 +29,9 @@ public interface ClientUnderwritingRepository {
     /** 读取 Client 的有效 APPROVED 版本。 */
     Optional<ClientUnderwriting> findEffective(long clientId);
 
+    /** 批量读取多个 Client 的有效 APPROVED 版本（REQ-04 档位列表取 CRR）；空集合不访问数据库。 */
+    List<ClientUnderwriting> findEffectiveByClientIds(List<Long> clientIds);
+
     /** 读取 Client 版本号最大的版本。 */
     Optional<ClientUnderwriting> findLatest(long clientId);
 

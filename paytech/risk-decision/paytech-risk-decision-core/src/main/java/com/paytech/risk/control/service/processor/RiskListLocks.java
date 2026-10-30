@@ -4,6 +4,7 @@ import java.time.Duration;
 
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.risk.control.core.dal.dataobject.RiskList;
+import com.paytech.risk.control.core.enums.RiskListPurpose;
 import com.paytech.risk.control.core.enums.RiskListStatus;
 import com.paytech.risk.control.domainservice.repository.RiskListRepository;
 
@@ -21,6 +22,13 @@ final class RiskListLocks {
     /** 同一名单的成员维护共用一把锁；键只含名单编码，不含主体值。 */
     static String list(String listCode) {
         return "risk:list:" + listCode;
+    }
+
+    /** 限额档位名单（TIER）由档位服务同事务维护，运营不能人工增删成员（REQ-04）。 */
+    static void requireManualMaintenance(RiskList list) {
+        if (list.getListPurpose() == RiskListPurpose.TIER) {
+            throw new BizCheckFailException("限额档位名单由系统维护，不能人工增删成员: " + list.getListCode());
+        }
     }
 
     /** 名单存在且启用才允许添加成员。 */

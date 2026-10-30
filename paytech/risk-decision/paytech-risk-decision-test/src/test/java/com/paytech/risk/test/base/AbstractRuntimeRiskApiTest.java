@@ -79,7 +79,7 @@ public abstract class AbstractRuntimeRiskApiTest extends RiskDecisionMockTestBas
     /** 创建本风控点的实时累计变量；金额类算法以本点币种变量为币种来源。 */
     protected void createVelocityVariable(String code, String eventCode, String anchor, String metric, String distinct,
         int windowSeconds, boolean includeCurrent) {
-        boolean money = "SUM_AMOUNT".equals(metric) || "LAST_AMOUNT".equals(metric);
+        boolean money = "SUM_AMOUNT".equals(metric) || "LAST_AMOUNT".equals(metric) || "DAILY_SUM_AMOUNT".equals(metric);
         CreateVariableRequestBody body = featureVariable(code, "VELOCITY", "NUMBER", pointCode());
         body.setNumericUnit(money ? "MONEY" : "SCALAR");
         body.setCurrencyVariableCode(money ? currencyVariableCode() : null);

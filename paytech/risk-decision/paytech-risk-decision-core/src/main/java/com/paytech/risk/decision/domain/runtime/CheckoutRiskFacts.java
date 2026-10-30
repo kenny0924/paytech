@@ -8,7 +8,6 @@ import com.paytech.risk.decision.core.dal.dataobject.CheckoutInputSnapshot;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionEvaluation;
 import com.paytech.risk.decision.core.dal.dataobject.ExecutionRelease;
 import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
-import com.paytech.risk.decision.domain.enums.VelocityEventCode;
 
 /**
  * 由一次正式结账评估的输入、结果与时间构造需要保存的全部事实；纯内存构造
@@ -58,12 +57,13 @@ public final class CheckoutRiskFacts {
             requestId(input.orderId()), release, run, stableHash);
         long snapshotId = ids.getAsLong();
         RuntimeEvaluationFacts.VelocityFacts velocity = RuntimeEvaluationFacts.velocityFacts(SOURCE_TYPE, snapshotId,
-            input, run, VelocityEventCode.CHECKOUT_ASSESSED, VelocityEventCode.CHECKOUT_REJECTED,
+            input, run, RuntimeEvaluationFacts.VelocityEventCodes.checkout(),
             DecisionPointAuthoringDescriptor.checkoutPrepare().velocitySubjects(), ids);
         return new CheckoutRiskAssessmentContext(evaluation, snapshot(snapshotId, evaluationId, input, stableHash, run),
             RuntimeEvaluationFacts.featureResults(evaluationId, run, ids),
             RuntimeEvaluationFacts.ruleTraces(evaluationId, run, ids),
-            RuntimeEvaluationFacts.flowTraces(evaluationId, run, ids), velocity.events(), velocity.subjects());
+            RuntimeEvaluationFacts.flowTraces(evaluationId, run, ids), velocity.events(), velocity.subjects(),
+            velocity.dailyTotals());
     }
 
     /** 结账输入快照行。 */

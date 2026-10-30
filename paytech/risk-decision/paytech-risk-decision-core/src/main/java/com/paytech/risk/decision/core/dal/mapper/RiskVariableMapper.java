@@ -14,6 +14,8 @@ public interface RiskVariableMapper {
     /** 读取变量，写锁必须是删除事务的首次数据库操作。 */
     RiskVariableDefinition find(@Param("code") String code, @Param("lock") String lock);
     /** 根据相同筛选条件稳定分页或按编码批取。 */
+    /** 读取编码以给定前缀开头的 ACTIVE 常量与集合（REQ-04 档位额度），按编码排序。 */
+    List<RiskVariableDefinition> activeConstantsByCodePrefix(@Param("prefix") String prefix);
     List<RiskVariableDefinition> list(@Param("query") Query query, @Param("limit") int limit, @Param("offset") int offset);
     /** 统计普通查询的同范围总数。 */
     long count(@Param("query") Query query);

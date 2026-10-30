@@ -7,12 +7,15 @@ import java.util.List;
 import java.util.Objects;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting;
 import com.paytech.risk.control.core.enums.UnderwritingDecisionSource;
 import com.paytech.risk.control.core.enums.UnderwritingOutcome;
 import com.paytech.risk.control.core.enums.UnderwritingStatus;
+import com.paytech.risk.control.domain.limittier.LimitTierEstablishContext;
 import com.paytech.risk.control.domain.underwriting.UnderwritingDecisionContext;
 import com.paytech.risk.control.domain.underwriting.UnderwritingException;
 import com.paytech.risk.control.domain.underwriting.UnderwritingException.Reason;
@@ -20,7 +23,11 @@ import com.paytech.risk.control.domain.underwriting.UnderwritingValidationExcept
 import com.paytech.risk.control.domain.underwriting.UnderwritingValidationException.Issue;
 import com.paytech.risk.control.domain.underwriting.UnderwritingVerdict;
 import com.paytech.risk.control.domain.underwriting.UnderwritingView;
+import com.paytech.risk.control.domainservice.port.ControlIdentifierGenerator;
+import com.paytech.risk.control.domainservice.repository.ClientLimitTierRepository;
 import com.paytech.risk.control.domainservice.repository.ClientUnderwritingRepository;
+import com.paytech.risk.control.domainservice.repository.RiskListRepository;
+import com.paytech.risk.control.service.ClientLimitTierService;
 import com.paytech.risk.control.service.UnderwritingService;
 import com.paytech.risk.control.service.processor.request.ReviewUnderwritingRequest;
 
@@ -30,12 +37,18 @@ import lombok.AllArgsConstructor;
  * 复核 HIGH 风险承保（U8，四眼）
  * <li>复核权限由 Gateway 路由 RISK_UNDERWRITING_APPROVE 绑定；本服务校验只对 SUBMITTED 生效且复核人不是提交人。</li>
  * <li>批准时同一事务替代上一有效版本；拒绝的意见保存为拒绝原因，批准的意见保存为复核意见。输入快照保持提交时的值。</li>
+ * <li>批准时 Client 尚无档位（首次或修订批准），与结论同一事务建 VERIFICATION 限额档位（REQ-04）；已有档位不改。</li>
  */
 @Component
 @AllArgsConstructor
 public class ReviewUnderwritingProcessor extends AbstractLockProcessor<ReviewUnderwritingRequest, UnderwritingView> {
     private final Clock clock;
+    private final RiskListRepository lists;
     private final UnderwritingService service;
+    private final ClientLimitTierService tierService;
+    private final ClientLimitTierRepository tiers;
+    private final ControlIdentifierGenerator identifiers;
+    private final PlatformTransactionManager transactionManager;
     private final ClientUnderwritingRepository underwritings;
 
     /** 拒绝时须写复核意见；只依赖输入，锁前判断。 */
@@ -67,8 +80,17 @@ public class ReviewUnderwritingProcessor extends AbstractLockProcessor<ReviewUnd
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         boolean approve = request.getOutcome() == UnderwritingOutcome.APPROVE;
         ClientUnderwriting superseded = approve ? underwritings.findEffective(row.getClientId()).orElse(null) : null;
-        service.decide(new UnderwritingDecisionContext(row, null, verdict(request, superseded, now), superseded,
-            request.getActorAccountId(), now));
+        UnderwritingDecisionContext context = new UnderwritingDecisionContext(row, null, verdict(request, superseded, now),
+            superseded, request.getActorAccountId(), now);
+        LimitTierEstablishContext tier = approve ? LimitTierCommands.underwritingInitialization(tiers, lists, identifiers,
+            LimitTierCommands.profile(row), row.getUnderwritingId(), row.getCrr(), request.getActorAccountId(),
+            now) : null;
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            service.decide(context);
+            if (tier != null) {
+                tierService.establish(tier);
+            }
+        });
         return UnderwritingView.of(row, null);
     }
 

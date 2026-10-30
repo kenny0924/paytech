@@ -36,7 +36,8 @@ import com.paytech.risk.test.probe.HttpLogProbe;
 class WebLoggingBoundaryAutoTest extends RiskDecisionMockTestBase {
     /** 请求体含决策配置原文、名单主体值或受限评估输入的入口。 */
     private static final List<String> METADATA_ONLY_PREFIXES = List.of("/decision-dictionaries", "/decision-rule-sets",
-        "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/risk-decisions", "/risk-underwriting");
+        "/decision-releases", "/decision-flows", "/decision-variables", "/risk-lists", "/risk-decisions", "/risk-underwriting",
+        "/risk-limit-tiers");
 
     @Autowired
     private WebLoggingProperties loggingProperties;

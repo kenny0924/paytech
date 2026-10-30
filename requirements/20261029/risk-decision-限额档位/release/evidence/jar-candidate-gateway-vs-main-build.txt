@@ -1,0 +1,4 @@
+A=988 B=988 onlyA=0 onlyB=0 changed=3
+  ~ BOOT-INF/classes/application.yml
+  ~ BOOT-INF/classes/com/paytech/gateway/configuration/GatewaySnapshotConfiguration.class
+  ~ BOOT-INF/classes/com/paytech/gateway/configuration/PlatformSnapshotProperties.class

@@ -1,0 +1,11 @@
+{
+ "http": 403,
+ "reply": {
+  "type": "about:blank",
+  "title": "Forbidden",
+  "detail": "调用方无权执行限额档位迁移: rq04-release-migration",
+  "code": "RISK_LIMIT_TIER_MIGRATION_FORBIDDEN",
+  "requestId": "rq04-migrate-6a3cfe6c-e28c-4872-80d9-e519aed5a995",
+  "timestamp": "2026-10-30T10:13:14.304367Z"
+ }
+}

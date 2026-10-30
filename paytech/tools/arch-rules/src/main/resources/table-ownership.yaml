@@ -4,7 +4,7 @@
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 74 retained-service tables added on top of design 03 (not part of the §4.2 count).
 # 42 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model, 2026-10-29 tax rebuild removing 19 old Finance tax tables; applied after the §4.2 count).
-# 78 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket, 2026-10-29 tax 11 new tables and acquiring t_order_tax_calculation, 2026-10-29 REQ-03 risk-decision 3 underwriting tables; not part of the §4.2 count).
+# 81 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket, 2026-10-29 tax 11 new tables and acquiring t_order_tax_calculation, 2026-10-29 REQ-03 risk-decision 3 underwriting tables, 2026-10-30 REQ-04 risk-decision 3 limit tier tables; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
 # Renamed services: consumer -> counterparty; databases: mor_consumer -> mor_counterparty.
@@ -370,6 +370,9 @@ services:
       - t_action_parameter_definition
       - t_action_version
       - t_checkout_input_snapshot
+      - t_client_allowed_daily_total
+      - t_client_limit_tier
+      - t_client_limit_tier_change
       - t_client_underwriting
       - t_compensation_event
       - t_decision_evaluation

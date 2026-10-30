@@ -1,0 +1,4 @@
+mor-test/operations-console-web:rq04-20261030b 2f7f8780d5ab
+mor-test/platform-support-service:rq04-20261030b af13e77a05c3
+mor-test/operations-console-bff:rq04-20261030b 4bd4c3dfb16e
+mor-test/risk-decision-service:rq04-20261030b 1414384e28e6

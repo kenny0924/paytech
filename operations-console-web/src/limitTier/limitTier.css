@@ -1,0 +1,71 @@
+/* 风控 · 限额档位（原型 风控 · 限额档位 01—05）：沿用承保页卡片与徽标（underwriting.css），这里只补档位色、进度条、额度表、清单与历史。 */
+.uw-page { --lt-purple: #6a35c9; --lt-purple-bg: #f2ecfc; }
+.uw-badge.is-purple { color: var(--lt-purple); background: var(--lt-purple-bg); }
+
+.lt-stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.uw-stat-value.is-info { color: var(--uw-info); } .uw-stat-value.is-purple { color: var(--lt-purple); }
+.uw-stat.is-active { border-color: var(--uw-info); box-shadow: inset 0 0 0 1px var(--uw-info); }
+
+/* 进度条：天数橙、笔数紫、额度蓝；用满变红（额度）或橙（观察期到期） */
+.lt-bar { position: relative; height: 6px; border-radius: 3px; background: #edf0f4; overflow: hidden; width: 100%; max-width: 200px; }
+.lt-bar > span { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--uw-info); transition: width .3s ease; }
+.lt-bar.is-days > span { background: var(--uw-warn); }
+.lt-bar.is-count > span { background: var(--lt-purple); }
+.lt-bar.is-full > span { background: var(--uw-danger); }
+.lt-bar.is-wide { max-width: 360px; flex: 1 1 auto; }
+.lt-progress { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.lt-progress-text { font-size: 12px; color: var(--uw-muted); font-variant-numeric: tabular-nums; }
+.lt-progress-text.is-due { color: var(--uw-warn); }
+.lt-progress-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0; }
+.lt-progress-row .lt-progress-text { font-size: 13px; color: var(--uw-text); }
+
+/* 按币种额度表 */
+.lt-quota { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+.lt-quota col.lt-col-currency { width: 64px; }
+.lt-quota th { text-align: left; font-weight: 500; font-size: 12px; color: var(--uw-muted); background: #f7f9fb; padding: 8px 10px; }
+.lt-quota td { padding: 10px; border-bottom: 1px solid #f0f2f6; vertical-align: top; }
+.lt-quota td:first-child { font-weight: 600; }
+.lt-quota .lt-used { display: flex; flex-direction: column; gap: 6px; }
+.lt-quota-wrap { overflow-x: auto; }
+
+/* 复核清单 */
+.lt-checklist { list-style: none; margin: 4px 0 10px; padding: 0; }
+.lt-checklist li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f0f2f6; min-width: 0; }
+.lt-checklist li > .lt-check-text { flex: 1 1 auto; min-width: 0; overflow-wrap: break-word; }
+.lt-checklist .lt-check-icon { width: 18px; height: 18px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; flex: none; font-size: 11px; }
+.lt-check-icon.is-OK { background: var(--uw-ok); color: #fff; }
+.lt-check-icon.is-NOT_OK { background: var(--uw-danger-bg); color: var(--uw-danger); }
+.lt-check-icon.is-UNAVAILABLE { background: var(--uw-warn-bg); color: var(--uw-warn); }
+.lt-checklist .ant-checkbox-wrapper { flex: 1 1 auto; min-width: 0; }
+.lt-subtitle { font-size: 13px; font-weight: 600; margin: 8px 0 0; }
+
+/* 下一步操作（观察档 / 标准档 / 受限档） */
+.lt-actions { list-style: none; margin: 0; padding: 0; }
+.lt-actions li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f0f2f6; }
+.lt-actions li:last-child { border-bottom: none; }
+.lt-actions li > div { flex: 1 1 auto; min-width: 0; }
+.lt-actions strong { display: block; font-size: 13px; font-weight: 600; }
+.lt-actions .uw-hint { margin-top: 2px; }
+
+/* 变更历史 */
+.lt-history { list-style: none; margin: 0; padding: 0; }
+.lt-history li { padding: 10px 0; border-bottom: 1px solid #f0f2f6; min-width: 0; }
+.lt-history li:last-child { border-bottom: none; }
+.lt-history-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 600; font-size: 13px; }
+.lt-history .uw-hint { margin-top: 4px; overflow-wrap: anywhere; }
+
+.lt-restricted { color: var(--uw-text); line-height: 1.7; margin: 8px 0 0; }
+
+@media (max-width: 1280px) { .lt-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .lt-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lt-actions li { flex-wrap: wrap; }
+  .lt-actions li > .ant-btn { flex: 1 1 100%; }
+  .lt-quota th, .lt-quota td { padding: 8px 6px; }
+}
+@media (prefers-reduced-motion: reduce) { .lt-bar > span { transition: none; } }
+/* 弹窗渲染在 .uw-page 之外，颜色变量不可用，直接给值。 */
+.ant-modal .uw-field-error { color: #c43c3c; }
+.ant-modal .uw-hint { color: #69717d; }
+.lt-submit { margin-top: 26px; }
+.lt-source { white-space: nowrap; }

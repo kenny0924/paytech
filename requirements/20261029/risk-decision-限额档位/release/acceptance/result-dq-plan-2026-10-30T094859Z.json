@@ -1,0 +1,128 @@
+{
+ "checks": [
+  {
+   "check": "模板编码 GOLIVE_LIMIT_TIER 未占用（首次登记前 0）",
+   "ok": true,
+   "evidence": "0"
+  },
+  {
+   "check": "数据源 MOR_RISK_DECISION_REPLICA ACTIVE（REQ-03 已登记）",
+   "ok": true,
+   "evidence": [
+    {
+     "data_source_id": "241634939987116032",
+     "status": "ACTIVE"
+    }
+   ]
+  },
+  {
+   "check": "账号可读 t_client_limit_tier（表级 SELECT，runbook ⑨ GRANT 之后）",
+   "ok": true,
+   "evidence": [
+    "GRANT SELECT ON `mor_risk_decision`.`t_client_limit_tier` TO `data_query_demo_reader`@`%`",
+    "GRANT SELECT ON `mor_risk_decision`.`t_client_underwriting` TO `data_query_demo_reader`@`%`"
+   ]
+  },
+  {
+   "check": "t_client_limit_tier 存在（runbook ④ 之后）",
+   "ok": true,
+   "evidence": "1"
+  },
+  {
+   "check": "模板只读试跑 DEMO-CL-001 → OBSERVATION（单行 4 列）",
+   "ok": true,
+   "evidence": [
+    {
+     "satisfied": "0",
+     "out_tier": "NULL",
+     "out_observationDue": "0",
+     "missing": "LIMIT_TIER_NOT_SET"
+    }
+   ]
+  },
+  {
+   "check": "模板只读试跑 DEMO-CL-001 → STANDARD（单行 4 列）",
+   "ok": true,
+   "evidence": [
+    {
+     "satisfied": "0",
+     "out_tier": "NULL",
+     "out_observationDue": "0",
+     "missing": "LIMIT_TIER_NOT_SET"
+    }
+   ]
+  },
+  {
+   "check": "模板只读试跑 L → OBSERVATION（单行 4 列）",
+   "ok": true,
+   "evidence": [
+    {
+     "satisfied": "0",
+     "out_tier": "NULL",
+     "out_observationDue": "0",
+     "missing": "LIMIT_TIER_NOT_SET"
+    }
+   ]
+  },
+  {
+   "check": "模板只读试跑 L → STANDARD（单行 4 列）",
+   "ok": true,
+   "evidence": [
+    {
+     "satisfied": "0",
+     "out_tier": "NULL",
+     "out_observationDue": "0",
+     "missing": "LIMIT_TIER_NOT_SET"
+    }
+   ]
+  },
+  {
+   "check": "模板只读试跑 H → OBSERVATION（单行 4 列）",
+   "ok": true,
+   "evidence": [
+    {
+     "satisfied": "0",
+     "out_tier": "NULL",
+     "out_observationDue": "0",
+     "missing": "LIMIT_TIER_NOT_SET"
+    }
+   ]
+  },
+  {
+   "check": "模板只读试跑 H → STANDARD（单行 4 列）",
+   "ok": true,
+   "evidence": [
+    {
+     "satisfied": "0",
+     "out_tier": "NULL",
+     "out_observationDue": "0",
+     "missing": "LIMIT_TIER_NOT_SET"
+    }
+   ]
+  },
+  {
+   "check": "模板只读试跑 none → OBSERVATION（单行 4 列）",
+   "ok": true,
+   "evidence": [
+    {
+     "satisfied": "0",
+     "out_tier": "NULL",
+     "out_observationDue": "0",
+     "missing": "LIMIT_TIER_NOT_SET"
+    }
+   ]
+  },
+  {
+   "check": "模板只读试跑 none → STANDARD（单行 4 列）",
+   "ok": true,
+   "evidence": [
+    {
+     "satisfied": "0",
+     "out_tier": "NULL",
+     "out_observationDue": "0",
+     "missing": "LIMIT_TIER_NOT_SET"
+    }
+   ]
+  }
+ ]
+}

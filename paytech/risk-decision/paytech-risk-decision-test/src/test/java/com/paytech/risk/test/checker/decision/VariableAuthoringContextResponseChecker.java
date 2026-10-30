@@ -138,7 +138,8 @@ public final class VariableAuthoringContextResponseChecker
         if (pointCode == null || CHECKOUT.equals(pointCode)) {
             catalogs.add(catalog(CHECKOUT, "INPUT_CURRENCY",
                 List.of(event(VelocityEventCode.CHECKOUT_ASSESSED, "结账评估", true),
-                    event(VelocityEventCode.CHECKOUT_REJECTED, "结账被拦截（审核或拒绝）", false)),
+                    event(VelocityEventCode.CHECKOUT_REJECTED, "结账被拦截（审核或拒绝）", false),
+                    event(VelocityEventCode.CHECKOUT_ALLOWED, "结账放行", true)),
                 List.of(concentrated(RiskSubjectType.CLIENT), concentrated(RiskSubjectType.OPERATING_ENTITY)),
                 List.of(), List.of(RiskSubjectType.CLIENT, RiskSubjectType.OPERATING_ENTITY)));
         }
@@ -147,7 +148,8 @@ public final class VariableAuthoringContextResponseChecker
                 RiskSubjectType.CONSUMER, RiskSubjectType.IP_ADDRESS, RiskSubjectType.CARD_FINGERPRINT);
             catalogs.add(catalog(PAYMENT, "PAY_INPUT_CURRENCY",
                 List.of(event(VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, "支付尝试评估", true),
-                    event(VelocityEventCode.PAYMENT_ATTEMPT_REJECTED, "支付尝试被拦截（审核或拒绝）", false)),
+                    event(VelocityEventCode.PAYMENT_ATTEMPT_REJECTED, "支付尝试被拦截（审核或拒绝）", false),
+                    event(VelocityEventCode.PAYMENT_ATTEMPT_ALLOWED, "支付尝试放行", true)),
                 List.of(concentrated(RiskSubjectType.CLIENT), concentrated(RiskSubjectType.OPERATING_ENTITY),
                     open(RiskSubjectType.CONSUMER), open(RiskSubjectType.IP_ADDRESS), open(RiskSubjectType.CARD_FINGERPRINT)),
                 velocity, List.of(RiskSubjectType.CLIENT, RiskSubjectType.OPERATING_ENTITY, RiskSubjectType.CONSUMER,
@@ -179,12 +181,16 @@ public final class VariableAuthoringContextResponseChecker
         return event;
     }
 
-    /** Client、运营主体：次数与最近一次 ≤ 1 天，金额合计 ≤ 1 小时，无不同主体数。 */
+    /** Client、运营主体：次数与最近一次 ≤ 1 天，金额合计 ≤ 1 小时，无不同主体数；Client 另有按 UTC 日汇总金额（当日、近 30 日）。 */
     private static Map<String, Object> concentrated(RiskSubjectType subject) {
         List<Integer> day = List.of(600, 3600, 86_400);
-        return anchor(subject, List.of(metric(VelocityMetric.COUNT, day, true),
+        List<Map<String, Object>> metrics = new java.util.ArrayList<>(List.of(metric(VelocityMetric.COUNT, day, true),
             metric(VelocityMetric.SUM_AMOUNT, List.of(600, 3600), true), metric(VelocityMetric.LAST_AMOUNT, day, false),
             metric(VelocityMetric.SECONDS_SINCE_LAST, day, false)));
+        if (subject == RiskSubjectType.CLIENT) {
+            metrics.add(metric(VelocityMetric.DAILY_SUM_AMOUNT, List.of(86_400, 2_592_000), true));
+        }
+        return anchor(subject, metrics);
     }
 
     /** 其他主体：五种统计方式 × 四个窗口。 */

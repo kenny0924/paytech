@@ -100,6 +100,11 @@
     <select id="selectEffective" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting">
         SELECT <include refid="columns"/> FROM t_client_underwriting WHERE client_id = #{clientId} AND effective_slot = 1
     </select>
+    <select id="selectEffectiveByClientIds" useCache="false"
+        resultType="com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting">
+        SELECT <include refid="columns"/> FROM t_client_underwriting WHERE effective_slot = 1
+          AND client_id IN <foreach collection="clientIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
     <select id="selectLatest" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting">
         SELECT <include refid="columns"/> FROM t_client_underwriting WHERE client_id = #{clientId}
         ORDER BY version_no DESC LIMIT 1

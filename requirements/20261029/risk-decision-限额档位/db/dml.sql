@@ -1,0 +1,10 @@
+-- REQ-04 risk-decision 限额档位 · DML 索引（本文件不含可执行语句）
+-- 初始化 DML：paytech/risk-decision/docs/database/sql/risk-decision-initial-data.sql 末尾
+--   四张系统维护的 TIER 名单 300001 TIER_VERIFICATION、300002 TIER_OBSERVATION、300003 TIER_STANDARD、300004 TIER_RESTRICTED
+--   （CLIENT 主体、EXACT、list_purpose=TIER、ACTIVE）；已有库随前滚文件 changes/2026-10-30-client-limit-tier.sql 写入
+--   （INSERT ... ON DUPLICATE KEY UPDATE，不改已有行）。
+-- 档位与名单成员没有初始化数据：承保首次批准自动建 VERIFICATION；存量可交易 Client 由内部接口 L12 迁移为 STANDARD
+--   （paytech/risk-decision/docs/limit-tier-configuration.md 第 6 节）。
+-- Platform 注册块 145：db/platform/registration-145.sql（插入）、registration-145-activate.sql、registration-145-rollback.sql；
+--   同文追加在 paytech/platform-support/docs/database/sql/platform-support-initial-data.sql 末尾。
+-- data-query：db/data-query-grant.sql（表级只读授权）、db/data-query-templates.sql（GOLIVE_LIMIT_TIER 模板正文）。

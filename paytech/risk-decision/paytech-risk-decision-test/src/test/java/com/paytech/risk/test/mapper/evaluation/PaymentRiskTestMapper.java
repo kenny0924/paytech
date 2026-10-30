@@ -255,7 +255,8 @@ public class PaymentRiskTestMapper {
             + "WHERE " + TEST_VARIABLES + ")");
         jdbc.update("DELETE FROM t_risk_variable WHERE " + TEST_VARIABLES);
         jdbc.update("DELETE FROM t_risk_list_entry");
-        jdbc.update("DELETE FROM t_risk_list");
+        // 四张 TIER 名单是初始化目录行（REQ-04），只删除测试创建的名单。
+        jdbc.update("DELETE FROM t_risk_list WHERE list_id NOT IN (300001, 300002, 300003, 300004)");
     }
 
     /** 支付决策点的流程及其版本、节点、连线。 */

@@ -12,6 +12,8 @@ public interface RiskVariableRepository {
     List<RiskVariableDefinition> systemDefinitions(String pointCode);
     /** 读取当前根；WRITE/SHARE 只在调用者本地事务内使用。 */
     RiskVariableDefinition find(String code, String lock);
+    /** 读取编码以给定前缀开头的 ACTIVE 常量与集合根，按编码排序。 */
+    List<RiskVariableDefinition> activeConstantsByCodePrefix(String prefix);
     /** 稳定分页读取符合条件的根。 */
     List<RiskVariableDefinition> list(Query query, int limit, int offset);
     /** 返回相同筛选范围的总数。 */

@@ -1,0 +1,31 @@
++--------------------+--------+---------+
+| role_permission_id | status | version |
++--------------------+--------+---------+
+| 900000000000145201 | ACTIVE |       2 |
+| 900000000000145202 | ACTIVE |       2 |
+| 900000000000145203 | ACTIVE |       2 |
+| 900000000000145204 | ACTIVE |       2 |
++--------------------+--------+---------+
++--------------------+---------------------------------------------+--------+---------+
+| resource_id        | resource_code                               | status | version |
++--------------------+---------------------------------------------+--------+---------+
+| 900000000000145301 | OPERATIONS_RISK_LIMIT_TIERS                 | ACTIVE |       2 |
+| 900000000000145302 | OPERATIONS_RISK_LIMIT_TIER_REQUEST          | ACTIVE |       2 |
+| 900000000000145303 | OPERATIONS_RISK_LIMIT_TIER_APPROVE          | ACTIVE |       2 |
+| 900000000000145304 | OPERATIONS_RISK_LIMIT_TIER_APPROVE_ELEVATED | ACTIVE |       2 |
++--------------------+---------------------------------------------+--------+---------+
++--------------------+---------------------------------------------+--------+---------+
+| route_id           | route_code                                  | status | version |
++--------------------+---------------------------------------------+--------+---------+
+| 900000000000145401 | operations-risk-limit-tier-list             | ACTIVE |       2 |
+| 900000000000145402 | operations-risk-limit-tier-statistics       | ACTIVE |       2 |
+| 900000000000145403 | operations-risk-limit-tier-quotas           | ACTIVE |       2 |
+| 900000000000145404 | operations-risk-limit-tier-workspace        | ACTIVE |       2 |
+| 900000000000145405 | operations-risk-limit-tier-history          | ACTIVE |       2 |
+| 900000000000145406 | operations-risk-limit-tier-request          | ACTIVE |       2 |
+| 900000000000145407 | operations-risk-limit-tier-withdraw         | ACTIVE |       2 |
+| 900000000000145408 | operations-risk-limit-tier-approve          | ACTIVE |       2 |
+| 900000000000145409 | operations-risk-limit-tier-approve-elevated | ACTIVE |       2 |
+| 900000000000145410 | operations-risk-limit-tier-reject           | ACTIVE |       2 |
+| 900000000000145411 | operations-risk-limit-tier-reject-elevated  | ACTIVE |       2 |
++--------------------+---------------------------------------------+--------+---------+

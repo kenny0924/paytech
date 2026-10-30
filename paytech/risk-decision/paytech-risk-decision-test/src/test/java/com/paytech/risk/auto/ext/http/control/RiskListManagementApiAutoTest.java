@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 
 import com.paytech.foundation.common.http.ApiHeaderNames;
@@ -23,12 +24,15 @@ import com.paytech.risk.decision.api.control.RiskListManagementApi;
 import com.paytech.risk.decision.api.control.request.AddRiskListEntryRequestBody;
 import com.paytech.risk.decision.api.control.request.CreateRiskListRequestBody;
 import com.paytech.risk.decision.api.control.request.DeactivateRiskListEntryRequestBody;
+import com.paytech.risk.control.core.enums.LimitTier;
 import com.paytech.risk.control.core.enums.RiskListEntrySource;
 import com.paytech.risk.control.core.enums.RiskListEntryStatus;
 import com.paytech.risk.control.core.enums.RiskListPurpose;
 import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.test.base.AbstractPaymentRiskApiTest;
 import com.paytech.risk.test.checker.control.RiskListResponseChecker;
+import com.paytech.risk.test.mapper.control.LimitTierTestMapper;
+import com.paytech.risk.test.mocker.control.LimitTierMocker;
 
 /**
  * 运营名单维护
@@ -36,6 +40,7 @@ import com.paytech.risk.test.checker.control.RiskListResponseChecker;
  * <li>参数：主体取值不是合法 IP 字面量、成员 ID 非法返回 400；字段缺失、格式不符或主体类型不在一期范围返回 422。</li>
  * <li>业务规则：名单编码重复、生效区间倒置、成员重复失效返回 400；同主体（含 IPv6 同 /64）已有生效成员返回 409。</li>
  * <li>无数据：名单或成员不存在返回 400。</li>
+ * <li>限额档位名单（REQ-04）：四张 TIER 名单是初始化目录，人工增删成员返回 400，不能创建 TIER 用途名单。</li>
  *
  * @see RiskListManagementApi
  */
@@ -43,6 +48,12 @@ class RiskListManagementApiAutoTest extends AbstractPaymentRiskApiTest {
     private static final String LISTS = "/risk-lists/v1/lists";
 
     private String ipList;
+
+    @Autowired
+    private LimitTierMocker tierMocker;
+
+    @Autowired
+    private LimitTierTestMapper tierStore;
 
     /** 每例新建一个 IP 黑名单。 */
     @BeforeEach
@@ -59,7 +70,9 @@ class RiskListManagementApiAutoTest extends AbstractPaymentRiskApiTest {
         post(LISTS, createBody(code, RiskSubjectType.CARD_BIN, RiskListPurpose.ALLOW))
             .assertList(code, RiskSubjectType.CARD_BIN.getCode(), RiskListPurpose.ALLOW.getCode());
 
-        get(LISTS + "?size=10").assertPage(2, "listCode", Stream.of(code, ipList).sorted().toList());
+        get(LISTS + "?size=10").assertPageValues(6, "listCode", java.util.Set.of(code, ipList,
+            LimitTier.VERIFICATION.listCode(), LimitTier.OBSERVATION.listCode(), LimitTier.STANDARD.listCode(),
+            LimitTier.RESTRICTED.listCode()));
     }
 
     /** 添加 IPv4 与 IPv6 成员：主体键规范化并脱敏；按原值查询命中；失效后状态为 RELEASED 并记录审计。 */
@@ -134,6 +147,25 @@ class RiskListManagementApiAutoTest extends AbstractPaymentRiskApiTest {
             .assertEntry(RiskListEntryStatus.RELEASED.getCode(), "2001:db8:*", RiskListEntrySource.MANUAL.getCode());
         post(entries(ipList) + "/" + entry + "/deactivate", deactivateBody("再次解除"))
             .assertProblem(400, BUSINESS_CHECK_FAILED.getCode());
+    }
+
+    /** 限额档位名单由系统维护：人工添加、失效成员返回 400 且成员不变；创建 TIER 用途的名单被合同拒绝（422）。 */
+    @Test
+    void test_businessRuleViolation_tierListMaintenance() {
+        long clientId = 81_000_001L;
+        tierMocker.mockTier(clientId, LimitTier.STANDARD);
+        long entryId = ((Number)tierStore.tierEntries(clientId).getFirst().get("entry_id")).longValue();
+
+        post(entries(LimitTier.STANDARD.listCode()), entryBody("81000002"))
+            .assertProblem(400, BUSINESS_CHECK_FAILED.getCode());
+        post(entries(LimitTier.STANDARD.listCode()) + "/" + entryId + "/deactivate", deactivateBody("人工移出"))
+            .assertProblem(400, BUSINESS_CHECK_FAILED.getCode());
+        CreateRiskListRequestBody tierList = createBody("T_TIER_LIST", RiskSubjectType.CLIENT, RiskListPurpose.BLOCK);
+        tierList.setPurpose(RiskListPurpose.TIER.getCode());
+        post(LISTS, tierList).assertProblem(422, VALIDATION_ERROR.getCode());
+
+        assertEquals(List.of(LimitTier.STANDARD.listCode()), tierStore.activeTierLists(clientId));
+        assertEquals(1, tierStore.tierEntries(clientId).size(), "没有新增成员");
     }
 
     /** 名单或成员不存在。 */

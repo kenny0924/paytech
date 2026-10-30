@@ -45,16 +45,21 @@ export interface VelocityParameters { eventCode: string; anchorSubjectType: stri
 /** 名单命中参数，创建后不可修改；主体类型随名单。 */
 export interface ListParameters { listCode: string; subjectType: string }
 export const riskSubjects = ['CLIENT', 'OPERATING_ENTITY', 'CONSUMER', 'IP_ADDRESS', 'CARD_FINGERPRINT', 'CARD_BIN'] as const;
-export const velocityMetrics = ['COUNT', 'SUM_AMOUNT', 'DISTINCT_COUNT', 'LAST_AMOUNT', 'SECONDS_SINCE_LAST'] as const;
-export const velocityWindows = [600, 3600, 86400, 604800] as const;
+export const velocityMetrics = ['COUNT', 'SUM_AMOUNT', 'DAILY_SUM_AMOUNT', 'DISTINCT_COUNT', 'LAST_AMOUNT', 'SECONDS_SINCE_LAST'] as const;
+export const velocityWindows = [600, 3600, 86400, 604800, 2592000] as const;
 export function velocityMetricLabel(metric: string): string { return enumLabel(t, 'enum.velocityMetric', metric); }
-/** 已知窗口有固定写法（10 分钟、1 小时…），其他窗口按秒显示。 */
-export function velocityWindowLabel(seconds: number): string {
+/**
+ * 已知窗口有固定写法（10 分钟、1 小时…），其他窗口按秒显示
+ * <li>按 UTC 自然日金额合计（DAILY_SUM_AMOUNT）的窗口含义不同：86400 = UTC 当日，2592000 = 近 30 个 UTC 自然日（含当日）。</li>
+ */
+export function velocityWindowLabel(seconds: number, metric?: string): string {
+  const daily = 'enum.velocityWindowDaily.' + seconds;
+  if (metric === 'DAILY_SUM_AMOUNT' && t.has(daily)) return t(daily);
   const key = 'enum.velocityWindow.' + seconds;
   return t.has(key) ? t(key) : t('variable.windowSeconds', { seconds });
 }
-/** 金额合计、最近一次金额为金额量纲，其余为普通数值。 */
-export function velocityIsMoney(metric: string): boolean { return metric === 'SUM_AMOUNT' || metric === 'LAST_AMOUNT'; }
+/** 金额合计、按日金额合计、最近一次金额为金额量纲，其余为普通数值。 */
+export function velocityIsMoney(metric: string): boolean { return metric === 'SUM_AMOUNT' || metric === 'DAILY_SUM_AMOUNT' || metric === 'LAST_AMOUNT'; }
 /** 风控点目录；没有目录的风控点不能创建实时累计与名单命中变量。 */
 export function featureCatalog(context: Pick<VariableContext, 'featureCatalogs'>, pointCode: string | null | undefined): FeatureCatalog | null { return context.featureCatalogs.find(c => c.pointCode === pointCode) ?? null; }
 /** 锚定主体可选的统计方式。 */
@@ -95,7 +100,7 @@ export function velocityPreview(catalog: FeatureCatalog, p: VelocityParameters):
   const metric = p.metric === 'DISTINCT_COUNT' ? t('variable.velocity.distinctMetric', { subject: subjectLabel(p.distinctSubjectType ?? '') }) : velocityMetricLabel(p.metric);
   const current = velocityAllowsCurrent(catalog, p) ? (p.includeCurrent ? 'include' : 'exclude') : 'none';
   const event = catalog.velocityEvents.find(e => e.eventCode === p.eventCode)?.eventName ?? p.eventCode;
-  return t('variable.velocity.preview', { anchor: subjectLabel(p.anchorSubjectType), window: velocityWindowLabel(p.windowSeconds), event, metric, current });
+  return t('variable.velocity.preview', { anchor: subjectLabel(p.anchorSubjectType), window: velocityWindowLabel(p.windowSeconds, p.metric), event, metric, current });
 }
 /** 实时累计变量的派生结构字段：数值、格式 NONE、金额类绑定本点币种变量。 */
 export function velocityDerived(catalog: FeatureCatalog, p: VelocityParameters): Pick<CreateVariable, 'sourceType' | 'valueType' | 'pointCode' | 'formatCode' | 'numericUnit' | 'currencyCode' | 'currencyVariableCode' | 'allowedValuesVariableCode' | 'currentValue' | 'sourceContractCode' | 'sourceContractVersion' | 'sourceField'> {
@@ -149,12 +154,12 @@ export function decodeVariablePage(v: unknown): VariablePage {
 }
 export function decodeVariableIssue(v:unknown):VariableIssue {const r=record(v,'variableCode code message');return {variableCode:code(r.variableCode),code:code(r.code),message:text(r.message)};}
 export function decodeVariableQueryContext(v:unknown):VariableQueryContext {const r=record(v,'pointCode inputContractCode inputContractVersion usage');return {pointCode:code(r.pointCode),inputContractCode:code(r.inputContractCode),inputContractVersion:number(r.inputContractVersion),usage:one(r.usage,usages)};}
-const subjectCodes=['CLIENT','OPERATING_ENTITY','CONSUMER','IP_ADDRESS','CARD_FINGERPRINT','CARD_BIN','EMAIL_TOKEN','PHONE_TOKEN'] as const, metricCodes=['COUNT','SUM_AMOUNT','DISTINCT_COUNT','LAST_AMOUNT','SECONDS_SINCE_LAST'] as const;
+const subjectCodes=['CLIENT','OPERATING_ENTITY','CONSUMER','IP_ADDRESS','CARD_FINGERPRINT','CARD_BIN','EMAIL_TOKEN','PHONE_TOKEN'] as const, metricCodes=['COUNT','SUM_AMOUNT','DAILY_SUM_AMOUNT','DISTINCT_COUNT','LAST_AMOUNT','SECONDS_SINCE_LAST'] as const;
 function distinctList<T>(items:T[]):T[] {check(new Set(items).size===items.length);return items;}
 /** 风控点目录：事件、主体、统计方式不重复，窗口为已登记秒数且升序。 */
 export function decodeFeatureCatalog(v:unknown):FeatureCatalog {const r=record(v,'pointCode currencyVariableCode velocityEvents velocityAnchors distinctSubjects listSubjects');const result={pointCode:code(r.pointCode),currencyVariableCode:code(r.currencyVariableCode),
   velocityEvents:array(r.velocityEvents,v=>{const e=record(v,'eventCode eventName includeCurrentAllowed');return {eventCode:code(e.eventCode),eventName:text(e.eventName),includeCurrentAllowed:bool(e.includeCurrentAllowed)};},20),
-  velocityAnchors:array(r.velocityAnchors,v=>{const a=record(v,'subjectType metrics');const metrics=array(a.metrics,v=>{const m=record(v,'metric windowSeconds includeCurrentAllowed');const windows=array(m.windowSeconds,number,4);check(windows.length>0&&windows.every((w,i)=>(velocityWindows as readonly number[]).includes(w)&&(i===0||windows[i-1]<w)));return {metric:one(m.metric,metricCodes),windowSeconds:windows,includeCurrentAllowed:bool(m.includeCurrentAllowed)};},5);distinctList(metrics.map(m=>m.metric));return {subjectType:one(a.subjectType,subjectCodes),metrics};},8),
+  velocityAnchors:array(r.velocityAnchors,v=>{const a=record(v,'subjectType metrics');const metrics=array(a.metrics,v=>{const m=record(v,'metric windowSeconds includeCurrentAllowed');const windows=array(m.windowSeconds,number,velocityWindows.length);check(windows.length>0&&windows.every((w,i)=>(velocityWindows as readonly number[]).includes(w)&&(i===0||windows[i-1]<w)));return {metric:one(m.metric,metricCodes),windowSeconds:windows,includeCurrentAllowed:bool(m.includeCurrentAllowed)};},metricCodes.length);distinctList(metrics.map(m=>m.metric));return {subjectType:one(a.subjectType,subjectCodes),metrics};},8),
   distinctSubjects:distinctList(array(r.distinctSubjects,v=>one(v,subjectCodes),8)),listSubjects:distinctList(array(r.listSubjects,v=>one(v,subjectCodes),8))};
   distinctList(result.velocityEvents.map(e=>e.eventCode));distinctList(result.velocityAnchors.map(a=>a.subjectType));return result;}
 export function decodeContext(v:unknown):VariableContext {const r=record(v,'supportedPoints sources valueTypes formatProfiles numericUnits limits contracts featureCatalogs');return {

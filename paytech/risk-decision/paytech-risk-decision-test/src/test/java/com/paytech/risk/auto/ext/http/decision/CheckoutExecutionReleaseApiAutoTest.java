@@ -125,7 +125,7 @@ class CheckoutExecutionReleaseApiAutoTest extends AbstractCheckoutRiskApiTest {
         awaitShadowRun(candidate).assertDecisionChanges(1, 0, 0)
             .assertShadowRun(baseline, 3, StaticCheckStatus.PASSED.getCode());
 
-        assertEquals(3, store.countVelocityEvents(CheckoutRiskTestMapper.SOURCE_TYPE), "影子不写累计事件");
+        assertEquals(6, store.countVelocityEvents(CheckoutRiskTestMapper.SOURCE_TYPE), "三次放行各写评估与放行两条，影子不写累计事件");
     }
 
     /** 决策流版本使用旧输入合同：创建执行发布被拒绝，须重新保存后发布。 */

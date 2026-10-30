@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.control.core.dal.mapper.ClientLimitTierChangeMapper">
+    <sql id="columns">
+        change_id AS changeId, client_id AS clientId, change_type AS changeType, from_tier AS fromTier, to_tier AS toTier,
+        status, pending_slot AS pendingSlot, approval_level AS approvalLevel, crr_snapshot AS crrSnapshot,
+        underwriting_id AS underwritingId, reason, go_live_note AS goLiveNote,
+        chk_qualification_status AS chkQualificationStatus, chk_qualification_valid_to AS chkQualificationValidTo,
+        chk_underwriting_version_no AS chkUnderwritingVersionNo, chk_agreement_id AS chkAgreementId,
+        chk_agreement_status AS chkAgreementStatus, chk_enabled_capabilities AS chkEnabledCapabilities,
+        chk_pending_capabilities AS chkPendingCapabilities, chk_channel_registration AS chkChannelRegistration,
+        chk_integration AS chkIntegration, chk_production_verified AS chkProductionVerified,
+        chk_open_issues_cleared AS chkOpenIssuesCleared, observation_target_days AS observationTargetDays,
+        observation_target_transactions AS observationTargetTransactions,
+        observation_days_at_request AS observationDaysAtRequest,
+        observation_allowed_at_request AS observationAllowedAtRequest, requested_by AS requestedBy,
+        requested_time AS requestedTime, decided_by AS decidedBy, decided_time AS decidedTime,
+        decision_comment AS decisionComment, version, create_time AS createTime, update_time AS updateTime
+    </sql>
+    <insert id="insert">
+        INSERT INTO t_client_limit_tier_change(change_id, client_id, change_type, from_tier, to_tier, status, pending_slot,
+            approval_level, crr_snapshot, underwriting_id, reason, go_live_note, chk_qualification_status,
+            chk_qualification_valid_to, chk_underwriting_version_no, chk_agreement_id, chk_agreement_status,
+            chk_enabled_capabilities, chk_pending_capabilities, chk_channel_registration, chk_integration,
+            chk_production_verified, chk_open_issues_cleared, observation_target_days, observation_target_transactions,
+            observation_days_at_request, observation_allowed_at_request, requested_by, requested_time, decided_by,
+            decided_time, decision_comment, version, create_time, update_time)
+        VALUES(#{row.changeId}, #{row.clientId}, #{row.changeType}, #{row.fromTier}, #{row.toTier}, #{row.status},
+            #{row.pendingSlot}, #{row.approvalLevel}, #{row.crrSnapshot}, #{row.underwritingId}, #{row.reason},
+            #{row.goLiveNote}, #{row.chkQualificationStatus}, #{row.chkQualificationValidTo},
+            #{row.chkUnderwritingVersionNo}, #{row.chkAgreementId}, #{row.chkAgreementStatus},
+            #{row.chkEnabledCapabilities}, #{row.chkPendingCapabilities}, #{row.chkChannelRegistration},
+            #{row.chkIntegration}, #{row.chkProductionVerified}, #{row.chkOpenIssuesCleared},
+            #{row.observationTargetDays}, #{row.observationTargetTransactions}, #{row.observationDaysAtRequest},
+            #{row.observationAllowedAtRequest}, #{row.requestedBy}, #{row.requestedTime}, #{row.decidedBy},
+            #{row.decidedTime}, #{row.decisionComment}, #{row.version}, #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="selectById" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientLimitTierChange">
+        SELECT <include refid="columns"/> FROM t_client_limit_tier_change WHERE change_id = #{changeId}
+    </select>
+    <select id="selectByIds" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientLimitTierChange">
+        SELECT <include refid="columns"/> FROM t_client_limit_tier_change
+        WHERE change_id IN <foreach collection="changeIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+    <select id="selectPending" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientLimitTierChange">
+        SELECT <include refid="columns"/> FROM t_client_limit_tier_change WHERE client_id = #{clientId} AND pending_slot = 1
+    </select>
+    <select id="selectPendingByClientIds" useCache="false"
+        resultType="com.paytech.risk.control.core.dal.dataobject.ClientLimitTierChange">
+        SELECT <include refid="columns"/> FROM t_client_limit_tier_change
+        WHERE pending_slot = 1
+          AND client_id IN <foreach collection="clientIds" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </select>
+    <select id="selectHistory" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientLimitTierChange">
+        SELECT <include refid="columns"/> FROM t_client_limit_tier_change WHERE client_id = #{clientId}
+        ORDER BY requested_time DESC, change_id DESC LIMIT #{limit}
+    </select>
+    <update id="close">
+        UPDATE t_client_limit_tier_change
+        SET status = #{status}, pending_slot = NULL, decided_by = #{decidedBy}, decided_time = #{now},
+            decision_comment = #{comment}, version = version + 1, update_time = #{now}
+        WHERE change_id = #{row.changeId} AND version = #{row.version} AND status = 'PENDING' AND pending_slot = 1
+    </update>
+    <select id="countPending" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_client_limit_tier_change WHERE status = 'PENDING'
+    </select>
+</mapper>

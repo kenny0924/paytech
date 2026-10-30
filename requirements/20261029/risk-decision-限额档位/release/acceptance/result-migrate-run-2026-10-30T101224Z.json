@@ -1,0 +1,23 @@
+{
+ "http": 200,
+ "reply": {
+  "results": [
+   {
+    "clientId": "237573040244891649",
+    "outcome": "CREATED"
+   },
+   {
+    "clientId": "237573267559391233",
+    "outcome": "CREATED"
+   },
+   {
+    "clientId": "237573476041465857",
+    "outcome": "CREATED"
+   },
+   {
+    "clientId": "237575207592763393",
+    "outcome": "CREATED"
+   }
+  ]
+ }
+}

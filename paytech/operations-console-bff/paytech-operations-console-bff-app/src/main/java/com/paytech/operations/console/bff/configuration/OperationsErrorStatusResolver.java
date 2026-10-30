@@ -69,6 +69,13 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
             return underwriting == com.paytech.risk.decision.api.enums.RiskUnderwritingErrorCode.RISK_UNDERWRITING_NOT_FOUND
                 ? HttpStatus.NOT_FOUND : HttpStatus.CONFLICT;
         }
+        if (errorCode instanceof com.paytech.risk.decision.api.enums.RiskLimitTierErrorCode limitTier) {
+            return switch (limitTier) {
+                case RISK_LIMIT_TIER_NOT_FOUND, RISK_LIMIT_TIER_CHANGE_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case RISK_LIMIT_TIER_MIGRATION_FORBIDDEN -> HttpStatus.FORBIDDEN;
+                default -> HttpStatus.CONFLICT;
+            };
+        }
         if (errorCode instanceof RiskDecisionConfigurationErrorCode riskCode) {
             return switch (riskCode) {
                 case RISK_DICTIONARY_NOT_FOUND, RISK_DECISION_CONFIGURATION_NOT_FOUND -> HttpStatus.NOT_FOUND;

@@ -205,6 +205,25 @@
     ]
   },
   {
+    "componentKey": "OPERATIONS_RISK_LIMIT_TIERS",
+    "displayName": "限额档位",
+    "frontendRoute": "/risk/limit-tiers",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_RISK_LIMIT_TIER_REQUEST",
+        "displayName": "申请变更"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_LIMIT_TIER_APPROVE",
+        "displayName": "审批"
+      },
+      {
+        "resourceCode": "OPERATIONS_RISK_LIMIT_TIER_APPROVE_ELEVATED",
+        "displayName": "高级审批"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_QUALIFICATIONS",
     "displayName": "主体资格",
     "frontendRoute": "/compliance/qualifications",

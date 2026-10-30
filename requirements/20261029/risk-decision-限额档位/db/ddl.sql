@@ -1,0 +1,11 @@
+-- REQ-04 risk-decision 限额档位 · DDL 索引（本文件不含可执行语句，避免与执行文件形成两份定义）
+-- 前滚：paytech/risk-decision/docs/database/sql/changes/2026-10-30-client-limit-tier.sql
+--   三张表 CREATE TABLE IF NOT EXISTS（t_client_limit_tier、t_client_limit_tier_change、t_client_allowed_daily_total）；
+--   五处列注释 MODIFY COLUMN（t_risk_list.list_purpose、t_risk_list_entry.source_type、t_velocity_feature_definition.event_code / metric / window_seconds，结构不变）；
+--   四张 TIER 名单 DML（可重跑）。
+-- 回滚：paytech/risk-decision/docs/database/sql/changes/2026-10-30-client-limit-tier-rollback.sql（有档位数据或 TIER 名单有成员时拒绝）。
+-- 当前完整 Schema：paytech/risk-decision/docs/database/sql/risk-decision-schema.sql；测试初始化：
+--   paytech/risk-decision/paytech-risk-decision-test/src/test/resources/init/ddl.sql。
+-- 执行记录：2026-10-30 阶段 4 已在本机 auto 库 mor_risk_decision 执行前滚（执行前已备份结构；重复执行两次验证可重跑）；
+--   方案 B 汇总表追加后再次备份结构并执行（列名定为 event_date 后重建空表一次）；
+--   mor_risk_decision_v2e2e 与 mor-test 未执行。

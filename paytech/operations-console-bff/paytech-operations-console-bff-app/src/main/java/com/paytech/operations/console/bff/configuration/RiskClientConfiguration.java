@@ -90,6 +90,13 @@ public class RiskClientConfiguration {
         return factory.createClient(com.paytech.risk.decision.api.control.ClientUnderwritingApi.class);
     }
 
+    /** Client 限额档位（REQ-04）；写入字段错误按转发 Body 路径投影。 */
+    @Bean
+    com.paytech.risk.decision.api.control.ClientLimitTierApi clientLimitTierApi(
+        @org.springframework.beans.factory.annotation.Qualifier("operationsRiskFlowProxyFactory") HttpServiceProxyFactory factory) {
+        return factory.createClient(com.paytech.risk.decision.api.control.ClientLimitTierApi.class);
+    }
+
     /** 执行发布；写入字段错误沿用页面 Body 路径投影。 */
     @Bean
     com.paytech.risk.decision.api.ExecutionReleaseManagementApi executionReleaseManagementApi(
@@ -153,7 +160,8 @@ public class RiskClientConfiguration {
         return HttpServiceClientFactory.create(client, options, java.util.stream.Stream.of(
             Arrays.stream(RiskDecisionConfigurationErrorCode.values()),
             Arrays.stream(com.paytech.risk.decision.api.enums.RiskVariableErrorCode.values()),
-            Arrays.stream(com.paytech.risk.decision.api.enums.RiskUnderwritingErrorCode.values()))
+            Arrays.stream(com.paytech.risk.decision.api.enums.RiskUnderwritingErrorCode.values()),
+            Arrays.stream(com.paytech.risk.decision.api.enums.RiskLimitTierErrorCode.values()))
             .flatMap(codes -> codes).toArray(com.paytech.foundation.common.enums.CodeMessageEnum[]::new));
     }
 

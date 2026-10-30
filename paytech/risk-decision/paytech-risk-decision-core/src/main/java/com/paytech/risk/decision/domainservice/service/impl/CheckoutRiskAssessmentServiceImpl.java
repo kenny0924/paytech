@@ -6,6 +6,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.risk.decision.domain.runtime.CheckoutRiskAssessmentContext;
 import com.paytech.risk.decision.domainservice.repository.CheckoutInputSnapshotRepository;
+import com.paytech.risk.decision.domainservice.repository.ClientAllowedDailyTotalRepository;
 import com.paytech.risk.decision.domainservice.repository.DecisionEvaluationRepository;
 import com.paytech.risk.decision.domainservice.repository.EvaluationFeatureResultRepository;
 import com.paytech.risk.decision.domainservice.repository.EvaluationFlowTraceRepository;
@@ -28,6 +29,7 @@ public class CheckoutRiskAssessmentServiceImpl implements CheckoutRiskAssessment
     private final EvaluationFeatureResultRepository featureResults;
     private final VelocityEventRepository velocityEvents;
     private final VelocityEventSubjectRepository velocitySubjects;
+    private final ClientAllowedDailyTotalRepository dailyTotals;
 
     /** 评估先于依附它的快照、结果、轨迹与累计事件写入，全部在一个事务中提交。 */
     @Override
@@ -40,6 +42,7 @@ public class CheckoutRiskAssessmentServiceImpl implements CheckoutRiskAssessment
             flowTraces.insertAll(context.getFlowTraces());
             velocityEvents.insertAll(context.getVelocityEvents());
             velocitySubjects.insertAll(context.getVelocitySubjects());
+            dailyTotals.addAll(context.getDailyTotals());
         });
     }
 }

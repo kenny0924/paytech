@@ -8,6 +8,7 @@ import com.paytech.risk.control.domain.list.RiskSubjectType;
 import com.paytech.risk.decision.domain.authoring.DecisionPointAuthoringDescriptor;
 import com.paytech.risk.decision.domain.enums.DecisionValueType;
 import com.paytech.risk.decision.domain.enums.NumericUnit;
+import com.paytech.risk.decision.domain.enums.VelocityEventCode;
 import com.paytech.risk.decision.domain.enums.VelocityMetric;
 import com.paytech.risk.decision.domain.variable.RiskVariable.Definition;
 import com.paytech.risk.decision.domainservice.service.RiskVariableException;
@@ -16,6 +17,7 @@ import com.paytech.risk.decision.domainservice.service.RiskVariableException;
  * 工程注册的 Feature Handler 目录与参数校验
  * <li>实时累计与名单命中是唯一开放的两个 Handler；参数组合在此校验，不接受 SQL 或脚本。</li>
  * <li>事件、主体按变量所属风控点限定；Client、运营主体的统计方式与窗口受限（事件量集中，宽窗口查询超出单个 Feature 时限）。</li>
+ * <li>Client 的日 / 月放行金额改由按日汇总（DAILY_SUM_AMOUNT）读取，最多 30 行，不放开明细扫描的宽窗口。</li>
  * <li>只在创建变量时校验，不进入历史变量的完整性复核。</li>
  */
 public final class FeatureHandlers {
@@ -40,6 +42,13 @@ public final class FeatureHandlers {
     /** 一期开放的窗口秒数：10 分钟、1 小时、24 小时、7 天。 */
     public static final Set<Integer> WINDOWS = Set.of(600, 3600, 86_400, 604_800);
 
+    /** 按日汇总金额（DAILY_SUM_AMOUNT）的窗口：UTC 当日、近 30 个 UTC 自然日（含当日）。 */
+    public static final List<Integer> DAILY_WINDOWS = List.of(86_400, 2_592_000);
+
+    /** 按日汇总只为放行事件维护。 */
+    private static final Set<VelocityEventCode> DAILY_EVENTS =
+        Set.of(VelocityEventCode.PAYMENT_ATTEMPT_ALLOWED, VelocityEventCode.CHECKOUT_ALLOWED);
+
     /** 事件量集中的低基数主体：只开放 D1 允许的统计方式与窗口（两个风控点一致）。 */
     private static final Set<RiskSubjectType> CONCENTRATED_SUBJECTS =
         Set.of(RiskSubjectType.CLIENT, RiskSubjectType.OPERATING_ENTITY);
@@ -60,6 +69,9 @@ public final class FeatureHandlers {
      * @return 升序窗口秒数；该主体不开放该统计方式时为空
      */
     public static List<Integer> allowedWindows(RiskSubjectType anchor, VelocityMetric metric) {
+        if (metric == VelocityMetric.DAILY_SUM_AMOUNT) {
+            return anchor == RiskSubjectType.CLIENT ? DAILY_WINDOWS : List.of();
+        }
         if (!CONCENTRATED_SUBJECTS.contains(anchor)) {
             return WINDOWS.stream().sorted().toList();
         }
@@ -72,7 +84,8 @@ public final class FeatureHandlers {
 
     /** 统计方式是否可计入本次：只有次数与金额合计。 */
     public static boolean includeCurrentAllowed(VelocityMetric metric) {
-        return metric == VelocityMetric.COUNT || metric == VelocityMetric.SUM_AMOUNT;
+        return metric == VelocityMetric.COUNT || metric == VelocityMetric.SUM_AMOUNT
+            || metric == VelocityMetric.DAILY_SUM_AMOUNT;
     }
 
     /**
@@ -86,8 +99,11 @@ public final class FeatureHandlers {
     public static void validate(FeatureSpec.Velocity spec, Definition definition) {
         DecisionPointAuthoringDescriptor point = featurePoint(definition);
         if (spec.eventCode() == null || spec.metric() == null || spec.anchorSubjectType() == null
-            || !WINDOWS.contains(spec.windowSeconds())) {
+            || !(WINDOWS.contains(spec.windowSeconds()) || DAILY_WINDOWS.contains(spec.windowSeconds()))) {
             throw invalid("累计事件、算法、锚定主体或窗口无效");
+        }
+        if (spec.metric() == VelocityMetric.DAILY_SUM_AMOUNT && !DAILY_EVENTS.contains(spec.eventCode())) {
+            throw invalid("按日汇总金额只能统计放行事件");
         }
         if (!spec.eventCode().pointCode().equals(definition.pointCode())) {
             throw invalid("统计事件不属于该决策点");
@@ -102,7 +118,8 @@ public final class FeatureHandlers {
         if (spec.includeCurrent() && (!includeCurrentAllowed(spec.metric()) || !spec.eventCode().includeCurrentAllowed())) {
             throw invalid("只有评估事件的计数和金额合计可以计入本次；评估前尚不知道本次是否被拒绝");
         }
-        boolean money = spec.metric() == VelocityMetric.SUM_AMOUNT || spec.metric() == VelocityMetric.LAST_AMOUNT;
+        boolean money = spec.metric() == VelocityMetric.SUM_AMOUNT || spec.metric() == VelocityMetric.LAST_AMOUNT
+            || spec.metric() == VelocityMetric.DAILY_SUM_AMOUNT;
         if (definition.valueType() != DecisionValueType.NUMBER
             || definition.numericUnit() != (money ? NumericUnit.MONEY : NumericUnit.SCALAR)) {
             throw invalid("累计变量的值类型或量纲与算法不一致");

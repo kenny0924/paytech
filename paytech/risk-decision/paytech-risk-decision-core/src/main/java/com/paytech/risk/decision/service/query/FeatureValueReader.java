@@ -3,6 +3,8 @@ package com.paytech.risk.decision.service.query;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,7 @@ import com.paytech.risk.decision.domain.runtime.ExecutionSnapshot;
 import com.paytech.risk.decision.domain.runtime.FeatureComputationException;
 import com.paytech.risk.decision.domain.runtime.FeatureValue;
 import com.paytech.risk.decision.domain.runtime.RuntimeRiskInput;
+import com.paytech.risk.decision.domainservice.repository.ClientAllowedDailyTotalRepository;
 import com.paytech.risk.decision.domainservice.repository.VelocityEventSubjectRepository;
 
 import lombok.AllArgsConstructor;
@@ -32,8 +35,15 @@ import lombok.AllArgsConstructor;
 @Component
 @AllArgsConstructor
 public class FeatureValueReader {
+    /** 按日汇总的"当日"窗口秒数。 */
+    static final int DAILY_WINDOW_SECONDS = 86_400;
+
+    /** 按日汇总的"近 30 日"窗口包含的 UTC 自然日数（含当日）。 */
+    static final int MONTH_WINDOW_DAYS = 30;
+
     private final RiskListMembershipService lists;
     private final VelocityEventSubjectRepository subjects;
+    private final ClientAllowedDailyTotalRepository dailyTotals;
 
     /**
      * 计算 Feature
@@ -96,8 +106,21 @@ public class FeatureValueReader {
             case SECONDS_SINCE_LAST -> last(definition, key, from, at)
                 .map(event -> BigDecimal.valueOf(Duration.between(event.getOccurredTime(), at).toSeconds()))
                 .orElse(null);
+            case DAILY_SUM_AMOUNT -> dailySum(definition, key, input, at);
         };
         return value == null ? null : value.stripTrailingZeros().toPlainString();
+    }
+
+    /**
+     * 按 UTC 日汇总的同币种放行金额：窗口 86400 为 UTC 当日，2592000 为近 30 个 UTC 自然日（含当日）；计入本次时加本次金额
+     * <li>读取日汇总表唯一索引范围内至多 30 行，与 Client 交易量无关。</li>
+     */
+    BigDecimal dailySum(VelocityFeatureDefinition definition, String key, RuntimeRiskInput input, Instant at) {
+        LocalDate today = LocalDate.ofInstant(at, ZoneOffset.UTC);
+        LocalDate from = definition.getWindowSeconds() == DAILY_WINDOW_SECONDS ? today
+            : today.minusDays(MONTH_WINDOW_DAYS - 1L);
+        BigDecimal sum = dailyTotals.sumAmount(Long.parseLong(key), definition.getEventCode(), input.currency(), from, today);
+        return definition.isIncludeCurrent() ? sum.add(input.amount()) : sum;
     }
 
     /** 窗口内最近一次事件。 */

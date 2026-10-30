@@ -63,12 +63,13 @@ public final class PaymentRiskFacts {
             requestId(input.paymentAttemptId()), release, run, restrictedHash);
         TransactionRiskAssessment assessment = assessment(assessmentId, evaluationId, input, run, restrictedHash);
         RuntimeEvaluationFacts.VelocityFacts velocity = RuntimeEvaluationFacts.velocityFacts(SOURCE_TYPE, assessmentId,
-            input, run, VelocityEventCode.PAYMENT_ATTEMPT_ASSESSED, VelocityEventCode.PAYMENT_ATTEMPT_REJECTED,
+            input, run, RuntimeEvaluationFacts.VelocityEventCodes.paymentAttempt(),
             DecisionPointAuthoringDescriptor.paymentAttemptRisk().velocitySubjects(), ids);
         return new PaymentRiskAssessmentContext(evaluation, assessment,
             RuntimeEvaluationFacts.featureResults(evaluationId, run, ids),
             RuntimeEvaluationFacts.ruleTraces(evaluationId, run, ids),
-            RuntimeEvaluationFacts.flowTraces(evaluationId, run, ids), velocity.events(), velocity.subjects());
+            RuntimeEvaluationFacts.flowTraces(evaluationId, run, ids), velocity.events(), velocity.subjects(),
+            velocity.dailyTotals());
     }
 
     /**

@@ -1,0 +1,74 @@
++------------+
+| new_tables |
++------------+
+|          0 |
++------------+
++---------------+
+| tables_before |
++---------------+
+|            57 |
++---------------+
++----------------+
+| list_ids_taken |
++----------------+
+|              0 |
++----------------+
++------------------+
+| tier_codes_taken |
++------------------+
+|                0 |
++------------------+
++--------------------+
+| tier_purpose_lists |
++--------------------+
+|                  0 |
++--------------------+
++-------------------+
+| same_name_indexes |
++-------------------+
+|                 0 |
++-------------------+
++---------------+
+| rollback_proc |
++---------------+
+|             0 |
++---------------+
++-------------------------------+----------------+-------------+-------------+
+| TABLE_NAME                    | COLUMN_NAME    | COLUMN_TYPE | IS_NULLABLE |
++-------------------------------+----------------+-------------+-------------+
+| t_risk_list                   | list_purpose   | varchar(64) | NO          |
+| t_risk_list_entry             | source_type    | varchar(64) | NO          |
+| t_velocity_feature_definition | event_code     | varchar(64) | NO          |
+| t_velocity_feature_definition | metric         | varchar(64) | NO          |
+| t_velocity_feature_definition | window_seconds | int         | NO          |
++-------------------------------+----------------+-------------+-------------+
++----------------+
+| daily_sum_defs |
++----------------+
+|              0 |
++----------------+
++----------------+
+| allowed_events |
++----------------+
+|              0 |
++----------------+
++----------------------------+------------------------+
+| DEFAULT_CHARACTER_SET_NAME | DEFAULT_COLLATION_NAME |
++----------------------------+------------------------+
+| utf8mb4                    | utf8mb4_0900_ai_ci     |
++----------------------------+------------------------+
+Grants for risk_decision_app@%
+GRANT USAGE ON *.* TO `risk_decision_app`@`%`
+GRANT SELECT, INSERT, UPDATE, DELETE ON `mor_risk_decision`.* TO `risk_decision_app`@`%`
+Grants for data_query_demo_reader@%
+GRANT USAGE ON *.* TO `data_query_demo_reader`@`%`
+GRANT SELECT ON `mor_account`.* TO `data_query_demo_reader`@`%`
+GRANT SELECT ON `mor_acquiring`.* TO `data_query_demo_reader`@`%`
+GRANT SELECT ON `mor_billing`.* TO `data_query_demo_reader`@`%`
+GRANT SELECT ON `mor_channel_connector`.* TO `data_query_demo_reader`@`%`
+GRANT SELECT ON `mor_client_master`.* TO `data_query_demo_reader`@`%`
+GRANT SELECT ON `mor_commercial`.* TO `data_query_demo_reader`@`%`
+GRANT SELECT ON `mor_ledger`.* TO `data_query_demo_reader`@`%`
+GRANT SELECT ON `mor_payment`.* TO `data_query_demo_reader`@`%`
+GRANT SELECT ON `mor_reconciliation`.* TO `data_query_demo_reader`@`%`
+GRANT SELECT ON `mor_risk_decision`.`t_client_underwriting` TO `data_query_demo_reader`@`%`

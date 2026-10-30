@@ -1,7 +1,7 @@
 # 客户上线（Client Go-live）：开通项门禁、限额档位与上线流程编排决定
 
 - Decision status: Proposed（2026-10-28 用户在讨论中逐条确认 Q1–Q9、Q-1–Q-10 及同日复核调整；作为仓库决定仍待用户确认登记）
-- Implementation status: Partially implemented（REQ-01 已实现并部署 mor-test、已本地提交；REQ-05 已实现并部署 mor-test、已本地提交 `af972805`；REQ-12、REQ-03 已实现并部署 mor-test、已本地提交，见第 5 节）
+- Implementation status: Partially implemented（REQ-01 已实现并部署 mor-test、已本地提交；REQ-05 已实现并部署 mor-test、已本地提交 `af972805`；REQ-12、REQ-03、REQ-04 已实现并部署 mor-test、已本地提交，见第 5 节）
 - Deployment status: REQ-01 deployed to mor-test（2026-10-28 20:09—20:33Z，见 CURRENT_IMPLEMENTATION）
 - Decision date: 2026-10-28
 - 详细设计：[design-discuss/client-activation/design.md](../../design-discuss/client-activation/design.md)（全流程 P0–P7、门禁、缺口）、[requirement-plan.md](../../design-discuss/client-activation/requirement-plan.md)（逐步设计、系统结合、需求拆分 REQ-00–19、里程碑 M1–M4）、[ops-line.md](../../design-discuss/client-activation/ops-line.md)（内部运营作业线路 T01–T28）、`client-activation.pen`（七张画板）。
@@ -71,7 +71,7 @@
 | `GOLIVE_INTEGRATION_READY` | N7 | Platform（access-control + delivery） | — |
 | `GOLIVE_COLLECTION_CAPABILITIES_ENABLED` | N8 | commercial | `pendingCapabilities[]` |
 | `GOLIVE_PRODUCTION_VERIFIED` | N9 | acquiring + payment + Platform delivery | `failedChecks[]` |
-| `GOLIVE_LIMIT_TIER` | N10 / N11 | risk-decision | `tier` |
+| `GOLIVE_LIMIT_TIER` | N10 / N11 | risk-decision | `tier, observationDue`（参数 `clientId`、`targetTier` = OBSERVATION / STANDARD；`missing` 为 `LIMIT_TIER_NOT_SET` / `LIMIT_TIER_BELOW_TARGET` / `LIMIT_TIER_RESTRICTED`；REQ-04 技术方案 8.5） |
 
 > **补注（2026-10-29，REQ-05 阶段 2 S-05）**：流程变量没有列表类型。上表带 `[]` 的列表输出一律以 TEXT 返回、逗号分隔（如 REQ-01 `GOLIVE_AGREEMENT_DRAFTED` 的 `out_capability_codes`），排他网关用 `CONTAINS` 判断。`out_<name>` 的 `<name>` 由 DATA_QUERY 动作模板的输出声明给出，按不区分大小写匹配列名，流程变量名为 `<actionKey>.<name>`。
 
@@ -99,6 +99,8 @@
 | REQ-01 | [requirements/20261028/commercial-开通项前置门禁](../../requirements/20261028/commercial-开通项前置门禁/requirement.md) | 阶段 1—8 完成：已部署 mor-test，已本地提交 `ba0e15b5` |
 | REQ-03 | [requirements/20261029/risk-decision-承保记录](../../requirements/20261029/risk-decision-承保记录/requirement.md) | 已实现，2026-10-29 部署 mor-test（rq03-20261029a，块 143），已本地提交 |
 | REQ-03b | 承保建议策略（待办，未立项） | 待风控给出政策数值：按 CRR × 交付方式配置建议观察期、结算周期 T+N、保证金比例（× 估算敞口）；承保页预填建议值并提示偏离；自动承保改为套用建议值（替代固定标准模板，现模板 T+N 为空） |
+| REQ-04 | [requirements/20261029/risk-decision-限额档位](../../requirements/20261029/risk-decision-限额档位/requirement.md) | 已实现，2026-10-30 部署 mor-test（rq04-20261030b，块 145；Gateway Snapshot 上限 4 MiB），已本地提交 |
+| REQ-04c | 风控配置缓存（待办，未立项；REQ-04 档位门禁上生产的前提） | REQ-04 阶段 6 实测：档位流程每次支付评估 205 条 SQL（逐个读变量定义），4 并发时 25.5% 评估超时（FAIL_CLOSED 拒绝）。范围：批量读取变量定义 + 按激活发布缓存配置快照（常量、名单成员、累计实时读）；目标 p95 ≈ 61 ms。完成前生产环境不得激活档位分支发布 |
 | REQ-05 | [requirements/20261028/platform-support-workflow按钮发起与数据验证](../../requirements/20261028/platform-support-workflow按钮发起与数据验证/requirement.md) | 已实现，2026-10-29 部署 mor-test，提交 `af972805`（未推送） |
 | REQ-12 | [requirements/20261028/client-master-业务信息补采](../../requirements/20261028/client-master-业务信息补采/requirement.md) | 已实现，2026-10-29 部署 mor-test（rq12-20261029a、入驻 Schema v3），已本地提交 |
 

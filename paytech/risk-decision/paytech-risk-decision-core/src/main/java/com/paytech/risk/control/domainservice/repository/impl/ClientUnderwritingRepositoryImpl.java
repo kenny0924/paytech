@@ -61,6 +61,12 @@ public class ClientUnderwritingRepositoryImpl implements ClientUnderwritingRepos
         return Optional.ofNullable(mapper.selectEffective(clientId));
     }
 
+    /** 批量读取有效版本。 */
+    @Override
+    public List<ClientUnderwriting> findEffectiveByClientIds(List<Long> clientIds) {
+        return clientIds.isEmpty() ? List.of() : mapper.selectEffectiveByClientIds(clientIds);
+    }
+
     /** 读取最新版本。 */
     @Override
     public Optional<ClientUnderwriting> findLatest(long clientId) {

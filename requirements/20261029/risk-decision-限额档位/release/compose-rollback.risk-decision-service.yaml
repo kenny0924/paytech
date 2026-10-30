@@ -1,0 +1,5 @@
+# REQ-04 risk-decision 限额档位：mor-test 回滚覆盖（= 阶段 6 读到的现网镜像，REQ-03 rq03-20261029a）。用法同候选。
+# 回滚前先用旧流程版本新建并激活发布（scripts/rq04_risk_config.py rollback），否则旧镜像会因档位分支流程引用 DAILY_SUM_AMOUNT 变量而评估失败。
+services:
+  risk-decision-service:
+    image: sha256:8934f65a6cf85a9b7e42df8abb77208acbacee2b74e2a878b553686cfa114cd3  # mor-test/risk-decision-service:rq03-20261029a（JAR 73570443ba972ea1）

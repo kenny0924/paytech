@@ -7,13 +7,13 @@ import type { RiskList } from './riskControl';
 import { translator } from '../i18n/index';
 
 const t=translator('risk');
-const LONGEST_WINDOW=Math.max(...velocityWindows);
-/** 目录对该主体限制了统计方式或窗口时的提示（Risk 按主体事件量限制）；不受限时为空。 */
+/** 目录对该主体限制了统计方式或窗口时的提示（Risk 按主体事件量限制）：某统计方式的最长窗口短于目录中同统计方式的最长窗口即受限；不受限时为空。 */
 function anchorLimitHint(catalog:FeatureCatalog,anchor:string):string {
   const options=velocityMetricOptions(catalog,anchor);
-  const restricted=!options.some(m=>m.metric==='DISTINCT_COUNT')||options.some(m=>Math.max(...m.windowSeconds)<LONGEST_WINDOW);
+  const longest=(metric:string)=>Math.max(...catalog.velocityAnchors.flatMap(a=>a.metrics.filter(m=>m.metric===metric).flatMap(m=>m.windowSeconds)));
+  const restricted=!options.some(m=>m.metric==='DISTINCT_COUNT')||options.some(m=>Math.max(...m.windowSeconds)<longest(m.metric));
   if(!restricted){return '';}
-  const ranges=options.map(m=>t('feature.rangeItem',{metric:velocityMetricLabel(m.metric),window:velocityWindowLabel(Math.max(...m.windowSeconds))})).join(t('feature.rangeSeparator'));
+  const ranges=options.map(m=>t('feature.rangeItem',{metric:velocityMetricLabel(m.metric),window:velocityWindowLabel(Math.max(...m.windowSeconds),m.metric)})).join(t('feature.rangeSeparator'));
   const distinct=options.some(m=>m.metric==='DISTINCT_COUNT')?'supported':'unsupported';
   return t('feature.limitHint',{subject:subjectLabel(anchor),ranges,distinct});
 }
@@ -30,7 +30,7 @@ export function VelocityFields({catalog,value,disabled,onChange}:{catalog:Featur
       <Form.Item label={t('feature.anchor')} required><Select aria-label={t('feature.anchor')} disabled={disabled} value={value.anchorSubjectType} options={catalog.velocityAnchors.map(a=>({value:a.subjectType,label:subjectLabel(a.subjectType)}))} onChange={anchorSubjectType=>change({anchorSubjectType})}/></Form.Item>
       <Form.Item label={t('feature.metric')} required className="wide" extra={t('feature.metricHint',{currencyVariable:catalog.currencyVariableCode,limitHint})}><Radio.Group disabled={disabled} value={value.metric} optionType="button" options={velocityMetrics.filter(m=>metrics.includes(m)).map(m=>({value:m,label:velocityMetricLabel(m)}))} onChange={e=>change({metric:e.target.value})}/></Form.Item>
       {value.metric==='DISTINCT_COUNT'&&<Form.Item label={t('feature.distinctSubject')} required extra={t('feature.distinctSubjectHint')}><Select aria-label={t('feature.distinctSubject')} disabled={disabled} value={value.distinctSubjectType??undefined} placeholder={t('feature.select')} options={catalog.distinctSubjects.filter(s=>s!==value.anchorSubjectType).map(s=>({value:s,label:subjectLabel(s)}))} onChange={distinctSubjectType=>change({distinctSubjectType})}/></Form.Item>}
-      <Form.Item label={t('feature.window')} required className="wide"><Radio.Group disabled={disabled} value={value.windowSeconds} optionType="button" options={velocityWindows.filter(w=>windows.includes(w)).map(w=>({value:w,label:velocityWindowLabel(w)}))} onChange={e=>change({windowSeconds:e.target.value})}/></Form.Item>
+      <Form.Item label={t('feature.window')} required className="wide"><Radio.Group disabled={disabled} value={value.windowSeconds} optionType="button" options={velocityWindows.filter(w=>windows.includes(w)).map(w=>({value:w,label:velocityWindowLabel(w,value.metric)}))} onChange={e=>change({windowSeconds:e.target.value})}/></Form.Item>
       <Form.Item className="wide" extra={t('feature.includeCurrentHint')}><Checkbox disabled={disabled||!velocityAllowsCurrent(catalog,value)} checked={value.includeCurrent} onChange={e=>change({includeCurrent:e.target.checked})}>{t('feature.includeCurrent')}</Checkbox></Form.Item>
     </div>
     <Alert type="info" showIcon title={t('feature.velocityPreview',{preview:velocityPreview(catalog,value)})}/>

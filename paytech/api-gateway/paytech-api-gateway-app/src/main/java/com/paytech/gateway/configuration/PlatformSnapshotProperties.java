@@ -10,7 +10,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record PlatformSnapshotProperties(URI baseUri, String serviceId, boolean directUriEnabled,
     Duration connectTimeout, Duration responseTimeout, int maxResponseBytes, Duration refreshInterval) {
 
-    public static final int MAX_RESPONSE_BYTES = 1_048_576;
+    /** Snapshot 响应体绝对上限：4 MiB（2026-10-30 REQ-04：652 条路由的 Snapshot 已超过原 1 MiB，见 D-9）。 */
+    public static final int MAX_RESPONSE_BYTES = 4_194_304;
     public static final int MAX_JSON_NESTING_DEPTH = 32;
     private static final Duration MAX_CONTROL_TIMEOUT = Duration.ofSeconds(10);
     private static final String DEFAULT_SERVICE_ID = "platform-support-service";

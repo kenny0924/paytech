@@ -47,6 +47,7 @@
   "master-data.client.field.legalName": "法定名称",
   "master-data.client.field.responsible": "责任 PayFac",
   "master-data.client.jurisdictionInvalid": "请输入大写辖区代码，例如 AE。",
+  "master-data.client.limitTier": "限额档位",
   "master-data.client.list.empty": "暂无 Client",
   "master-data.client.maskedHint": "个人证件号受保护，只显示掩码。",
   "master-data.client.people.empty": "暂无关系人",

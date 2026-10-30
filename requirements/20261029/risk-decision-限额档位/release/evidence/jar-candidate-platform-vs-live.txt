@@ -1,0 +1,2 @@
+A=3238 B=3238 onlyA=0 onlyB=0 changed=1
+  ~ paytech-platform-support-access-control.jar!operations/console-resource-capabilities.json

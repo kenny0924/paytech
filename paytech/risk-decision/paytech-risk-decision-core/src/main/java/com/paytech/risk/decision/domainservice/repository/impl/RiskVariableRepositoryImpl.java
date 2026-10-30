@@ -25,6 +25,10 @@ public class RiskVariableRepositoryImpl implements RiskVariableRepository {
 
     /** 读取根及调用者选择的数据库锁模式。 */
     @Override public RiskVariableDefinition find(String code, String lock) { return mapper.find(code, lock); }
+    /** 前缀读取有界的档位额度常量与集合。 */
+    @Override public List<RiskVariableDefinition> activeConstantsByCodePrefix(String prefix) {
+        return mapper.activeConstantsByCodePrefix(prefix);
+    }
     /** 在数据库执行稳定排序与分页，不读取整库再截取。 */
     @Override public List<RiskVariableDefinition> list(Query query, int limit, int offset) { return mapper.list(query, limit, offset); }
     /** 统计与列表完全相同的筛选条件。 */

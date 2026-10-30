@@ -1,0 +1,80 @@
+[
+ {
+  "ac": "AC-03",
+  "step": "全部 6 个档位与名单一致",
+  "verdict": "PASS",
+  "evidence": "[]"
+ },
+ {
+  "ac": "AC-03",
+  "step": "没有无档位行的 TIER 名单成员",
+  "verdict": "PASS",
+  "evidence": "[]"
+ },
+ {
+  "ac": "AC-10",
+  "step": "统计与库一致",
+  "verdict": "PASS",
+  "evidence": "{\"api\": {\"observation\": 0, \"observationDue\": 0, \"pendingApproval\": 0, \"restricted\": 0, \"standard\": 4, \"verification\": 2}, \"sql\": {\"STANDARD\": 4, \"VERIFICATION\": 2}}"
+ },
+ {
+  "ac": "AC-06",
+  "step": "今日放行评估与日放行汇总一致（6 组；激活前的旧镜像放行不写汇总时会列为不一致，见报告）",
+  "verdict": "PASS",
+  "evidence": "[]"
+ },
+ {
+  "ac": "F-4",
+  "step": "激活后评估耗时（TIMED_OUT 0）",
+  "verdict": "PASS",
+  "evidence": "[{\"point_code\": \"PAYMENT_ATTEMPT_RISK\", \"technical_status\": \"SUCCEEDED\", \"n\": \"10\", \"avg_ms\": \"233\", \"max_ms\": \"410\"}]"
+ },
+ {
+  "ac": "AC-09",
+  "step": "模板只读试跑 L → OBSERVATION",
+  "verdict": "PASS",
+  "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"VERIFICATION\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_BELOW_TARGET\"}"
+ },
+ {
+  "ac": "AC-09",
+  "step": "模板只读试跑 L → STANDARD",
+  "verdict": "PASS",
+  "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"VERIFICATION\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_BELOW_TARGET\"}"
+ },
+ {
+  "ac": "AC-09",
+  "step": "模板只读试跑 H → OBSERVATION",
+  "verdict": "PASS",
+  "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"VERIFICATION\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_BELOW_TARGET\"}"
+ },
+ {
+  "ac": "AC-09",
+  "step": "模板只读试跑 H → STANDARD",
+  "verdict": "PASS",
+  "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"VERIFICATION\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_BELOW_TARGET\"}"
+ },
+ {
+  "ac": "G",
+  "step": "risk-decision-service 档位路由日志只记元数据（0 行）",
+  "verdict": "PASS",
+  "evidence": "0"
+ },
+ {
+  "ac": "G",
+  "step": "risk-decision-service 近 60 分钟无 ERROR",
+  "verdict": "PASS",
+  "evidence": "[]"
+ },
+ {
+  "ac": "G",
+  "step": "operations-console-bff 档位路由日志只记元数据（37 行）",
+  "verdict": "PASS",
+  "evidence": "37"
+ },
+ {
+  "ac": "G",
+  "step": "operations-console-bff 近 60 分钟无 ERROR",
+  "verdict": "FAIL",
+  "evidence": "[\"2026-10-30T09:41:14.685Z ERROR  1 --- [operations-console-bff] [22-18201-exec-8] c.p.f.w.error.MvcProblemExceptionMapper  : 服务暂时不可用, requestId=fb7b4ce1-91b4-441c-9b19-15097d67be5a, errorCode=DEPENDENC\", \"2026-10-30T09:41:17.222Z ERROR  1 --- [operations-console-bff] [22-18201-exec-9] c.p.f.w.error.MvcProblemExceptionMapper  : 服务暂时不可用, requestId=53afd0fe-e7b3-46e8-b292-10c738609895, errorCode=DEPENDENC\", \"2026-10-30T09:41:17.800Z ERROR  1 --- [operations-console-bff] [2-18201-exec-10] c.p.f.w.error.MvcProblemExceptionMapper  : 服务暂时不可用, requestId=76bf0720-9fdc-4572-af4c-bd2d236396ed, errorCode=DEPENDENC\"]"
+ }
+]

@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 /**
  * 人工失效名单成员
  * <li>只追加状态并结束生效区间，不删除记录；历史时刻的命中判断仍按原区间成立。</li>
+ * <li>限额档位名单（TIER）由系统维护，拒绝人工失效。</li>
  */
 @Component
 @AllArgsConstructor
@@ -46,6 +47,7 @@ public class DeactivateRiskListEntryProcessor
         // 业务验证
         RiskList list = lists.findByCode(request.getListCode())
             .orElseThrow(() -> new BizCheckFailException("名单不存在: " + request.getListCode()));
+        RiskListLocks.requireManualMaintenance(list);
         RiskListEntry entry = entries.findById(request.getEntryId())
             .filter(value -> value.getListId() == list.getListId())
             .orElseThrow(() -> new BizCheckFailException("名单成员不存在: " + request.getEntryId()));

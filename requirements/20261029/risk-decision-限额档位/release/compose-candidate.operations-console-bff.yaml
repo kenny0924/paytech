@@ -1,0 +1,12 @@
+# REQ-04 operations-console-bff 限额档位：mor-test 候选覆盖（阶段 6 准备 2026-10-30；阶段 7 须用户明确授权）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag rq04-20261030b 仅供辨认）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-rq04-rel = main 6eaf1bd3 + 联合查询（Code-MoR-jq-rel rev c，ops-bff / ops-web 构建产物与现网逐项相同）+ 69f87bbf（多语言发布变更记录）+ REQ-04 本需求文件。
+# env 继承现网（jq b）覆盖的 OPERATIONS_TAX_BASE_URL，其余在主 compose；/risk-limit-tiers 只记元数据的前缀在镜像内 application.yml。
+services:
+  operations-console-bff:
+    # 新：/risk-limit-tiers/v1 列表、统计、额度、工作台聚合（compliance / commercial / risk）、申请 / 撤回 / 审批 / 高级审批 / 驳回转发。其余 = 现网 jq-20261030b（JAR 3007 项 0 独有）。
+    image: sha256:4bd4c3dfb16e92f32900910b98dbcb7c73391b0bcb19927ee284e86585c90606  # mor-test/operations-console-bff:rq04-20261030b（JAR 9f660a77af785cbd）
+    environment:
+      OPERATIONS_TAX_BASE_URL: http://tax-service:18116

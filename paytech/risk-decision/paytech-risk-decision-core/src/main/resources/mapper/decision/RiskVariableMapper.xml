@@ -87,6 +87,13 @@
         SELECT <include refid="VariableColumns"/> FROM t_risk_variable WHERE variable_code=#{code}
         <choose><when test="lock == 'WRITE'">FOR UPDATE</when><when test="lock == 'SHARE'">FOR SHARE</when></choose>
     </select>
+    <!-- 前缀只含大写字母与下划线，下划线按字面匹配。 -->
+    <select id="activeConstantsByCodePrefix" resultMap="Variable">
+        SELECT <include refid="VariableColumns"/> FROM t_risk_variable
+        WHERE variable_code LIKE CONCAT(REPLACE(#{prefix}, '_', '!_'), '%') ESCAPE '!' AND status = 'ACTIVE'
+          AND source_type IN ('CONSTANT', 'COLLECTION')
+        ORDER BY variable_code
+    </select>
     <select id="list" resultMap="Variable">
         SELECT <include refid="VariableColumns"/> FROM t_risk_variable <include refid="VariableFilter"/>
         ORDER BY variable_code LIMIT #{limit} OFFSET #{offset}

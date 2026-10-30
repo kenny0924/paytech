@@ -1,0 +1,252 @@
+{
+ "checks": [
+  {
+   "check": "数据源 MOR_RISK_DECISION_REPLICA ACTIVE",
+   "ok": true,
+   "evidence": {
+    "activeTemplateCount": 1,
+    "connectionParams": {
+     "connectTimeout": "3000",
+     "connectionTimeZone": "UTC"
+    },
+    "createTime": "2026-10-29T18:50:59.151140Z",
+    "createdBy": "221546852372267008",
+    "dataSourceCode": "MOR_RISK_DECISION_REPLICA",
+    "dataSourceId": "241634939987116032",
+    "dataSourceName": "风控决策（Risk Decision）从库",
+    "databaseName": "mor_risk_decision",
+    "description": "REQ-03 客户上线：承保结论查询（只读 t_client_underwriting）",
+    "engineType": "MYSQL",
+    "host": "mysql",
+    "lastCheckMessage": "连接与只读权限检查通过",
+    "lastCheckResult": "PASSED",
+    "lastCheckTime": "2026-10-29T18:50:59.548248Z",
+    "maxPoolSize": 3,
+    "port": 3306,
+    "status": "ACTIVE",
+    "templateCount": 1,
+    "updateTime": "2026-10-29T18:50:59.548248Z",
+    "updatedBy": "221546852372267008",
+    "username": "data_query_demo_reader",
+    "version": 2
+   }
+  },
+  {
+   "check": "模板试跑 DEMO-CL-001（不落库，单行）",
+   "ok": true,
+   "evidence": {
+    "bindings": [
+     "OBSERVATION",
+     "OBSERVATION",
+     "OBSERVATION",
+     "OBSERVATION",
+     "237575207592763393"
+    ],
+    "columns": [
+     {
+      "label": "satisfied",
+      "name": "satisfied"
+     },
+     {
+      "label": "out_tier",
+      "name": "out_tier"
+     },
+     {
+      "label": "out_observationDue",
+      "name": "out_observationDue"
+     },
+     {
+      "label": "missing",
+      "name": "missing"
+     }
+    ],
+    "countSql": null,
+    "elapsedMillis": 146,
+    "hasMore": false,
+    "nextCursor": null,
+    "rows": [
+     [
+      "0",
+      null,
+      "0",
+      "LIMIT_TIER_NOT_SET"
+     ]
+    ],
+    "sql": "SELECT CASE WHEN t.tier IS NULL OR t.tier = 'RESTRICTED' THEN 0 WHEN ? = 'OBSERVATION' AND t.tier IN ('OBSERVATION', 'STANDARD') THEN 1 WHEN ? = 'STANDARD' AND t.tier = 'STANDARD' THEN 1 ELSE 0 END AS satisfied, t.tier AS out_tier, IF(t.tier = 'OBSERVATION' AND t.observation_started_time IS NOT NULL AND TIMESTAMPDIFF(DAY, t.observation_started_time, UTC_TIMESTAMP(6)) >= t.observation_target_days, 1, 0) AS out_observationDue, CASE WHEN t.tier IS NULL THEN 'LIMIT_TIER_NOT_SET' WHEN t.tier = 'RESTRICTED' THEN 'LIMIT_TIER_RESTRICTED' WHEN (? = 'OBSERVATION' AND t.tier IN ('OBSERVATION', 'STANDARD')) OR (? = 'STANDARD' AND t.tier = 'STANDARD') THEN NULL ELSE 'LIMIT_TIER_BELOW_TARGET' END AS missing FROM (SELECT 1 AS anchor) anchor LEFT JOIN t_client_limit_tier t ON t.client_id = ? LIMIT 2",
+    "total": null,
+    "versionNo": 0
+   }
+  },
+  {
+   "check": "模板试跑 L（不落库，单行）",
+   "ok": true,
+   "evidence": {
+    "bindings": [
+     "OBSERVATION",
+     "OBSERVATION",
+     "OBSERVATION",
+     "OBSERVATION",
+     "240686705999454209"
+    ],
+    "columns": [
+     {
+      "label": "satisfied",
+      "name": "satisfied"
+     },
+     {
+      "label": "out_tier",
+      "name": "out_tier"
+     },
+     {
+      "label": "out_observationDue",
+      "name": "out_observationDue"
+     },
+     {
+      "label": "missing",
+      "name": "missing"
+     }
+    ],
+    "countSql": null,
+    "elapsedMillis": 1,
+    "hasMore": false,
+    "nextCursor": null,
+    "rows": [
+     [
+      "0",
+      null,
+      "0",
+      "LIMIT_TIER_NOT_SET"
+     ]
+    ],
+    "sql": "SELECT CASE WHEN t.tier IS NULL OR t.tier = 'RESTRICTED' THEN 0 WHEN ? = 'OBSERVATION' AND t.tier IN ('OBSERVATION', 'STANDARD') THEN 1 WHEN ? = 'STANDARD' AND t.tier = 'STANDARD' THEN 1 ELSE 0 END AS satisfied, t.tier AS out_tier, IF(t.tier = 'OBSERVATION' AND t.observation_started_time IS NOT NULL AND TIMESTAMPDIFF(DAY, t.observation_started_time, UTC_TIMESTAMP(6)) >= t.observation_target_days, 1, 0) AS out_observationDue, CASE WHEN t.tier IS NULL THEN 'LIMIT_TIER_NOT_SET' WHEN t.tier = 'RESTRICTED' THEN 'LIMIT_TIER_RESTRICTED' WHEN (? = 'OBSERVATION' AND t.tier IN ('OBSERVATION', 'STANDARD')) OR (? = 'STANDARD' AND t.tier = 'STANDARD') THEN NULL ELSE 'LIMIT_TIER_BELOW_TARGET' END AS missing FROM (SELECT 1 AS anchor) anchor LEFT JOIN t_client_limit_tier t ON t.client_id = ? LIMIT 2",
+    "total": null,
+    "versionNo": 0
+   }
+  },
+  {
+   "check": "模板试跑 H（不落库，单行）",
+   "ok": true,
+   "evidence": {
+    "bindings": [
+     "OBSERVATION",
+     "OBSERVATION",
+     "OBSERVATION",
+     "OBSERVATION",
+     "241049681294106625"
+    ],
+    "columns": [
+     {
+      "label": "satisfied",
+      "name": "satisfied"
+     },
+     {
+      "label": "out_tier",
+      "name": "out_tier"
+     },
+     {
+      "label": "out_observationDue",
+      "name": "out_observationDue"
+     },
+     {
+      "label": "missing",
+      "name": "missing"
+     }
+    ],
+    "countSql": null,
+    "elapsedMillis": 1,
+    "hasMore": false,
+    "nextCursor": null,
+    "rows": [
+     [
+      "0",
+      null,
+      "0",
+      "LIMIT_TIER_NOT_SET"
+     ]
+    ],
+    "sql": "SELECT CASE WHEN t.tier IS NULL OR t.tier = 'RESTRICTED' THEN 0 WHEN ? = 'OBSERVATION' AND t.tier IN ('OBSERVATION', 'STANDARD') THEN 1 WHEN ? = 'STANDARD' AND t.tier = 'STANDARD' THEN 1 ELSE 0 END AS satisfied, t.tier AS out_tier, IF(t.tier = 'OBSERVATION' AND t.observation_started_time IS NOT NULL AND TIMESTAMPDIFF(DAY, t.observation_started_time, UTC_TIMESTAMP(6)) >= t.observation_target_days, 1, 0) AS out_observationDue, CASE WHEN t.tier IS NULL THEN 'LIMIT_TIER_NOT_SET' WHEN t.tier = 'RESTRICTED' THEN 'LIMIT_TIER_RESTRICTED' WHEN (? = 'OBSERVATION' AND t.tier IN ('OBSERVATION', 'STANDARD')) OR (? = 'STANDARD' AND t.tier = 'STANDARD') THEN NULL ELSE 'LIMIT_TIER_BELOW_TARGET' END AS missing FROM (SELECT 1 AS anchor) anchor LEFT JOIN t_client_limit_tier t ON t.client_id = ? LIMIT 2",
+    "total": null,
+    "versionNo": 0
+   }
+  },
+  {
+   "check": "模板试跑 none（不落库，单行）",
+   "ok": true,
+   "evidence": {
+    "bindings": [
+     "OBSERVATION",
+     "OBSERVATION",
+     "OBSERVATION",
+     "OBSERVATION",
+     "1"
+    ],
+    "columns": [
+     {
+      "label": "satisfied",
+      "name": "satisfied"
+     },
+     {
+      "label": "out_tier",
+      "name": "out_tier"
+     },
+     {
+      "label": "out_observationDue",
+      "name": "out_observationDue"
+     },
+     {
+      "label": "missing",
+      "name": "missing"
+     }
+    ],
+    "countSql": null,
+    "elapsedMillis": 0,
+    "hasMore": false,
+    "nextCursor": null,
+    "rows": [
+     [
+      "0",
+      null,
+      "0",
+      "LIMIT_TIER_NOT_SET"
+     ]
+    ],
+    "sql": "SELECT CASE WHEN t.tier IS NULL OR t.tier = 'RESTRICTED' THEN 0 WHEN ? = 'OBSERVATION' AND t.tier IN ('OBSERVATION', 'STANDARD') THEN 1 WHEN ? = 'STANDARD' AND t.tier = 'STANDARD' THEN 1 ELSE 0 END AS satisfied, t.tier AS out_tier, IF(t.tier = 'OBSERVATION' AND t.observation_started_time IS NOT NULL AND TIMESTAMPDIFF(DAY, t.observation_started_time, UTC_TIMESTAMP(6)) >= t.observation_target_days, 1, 0) AS out_observationDue, CASE WHEN t.tier IS NULL THEN 'LIMIT_TIER_NOT_SET' WHEN t.tier = 'RESTRICTED' THEN 'LIMIT_TIER_RESTRICTED' WHEN (? = 'OBSERVATION' AND t.tier IN ('OBSERVATION', 'STANDARD')) OR (? = 'STANDARD' AND t.tier = 'STANDARD') THEN NULL ELSE 'LIMIT_TIER_BELOW_TARGET' END AS missing FROM (SELECT 1 AS anchor) anchor LEFT JOIN t_client_limit_tier t ON t.client_id = ? LIMIT 2",
+    "total": null,
+    "versionNo": 0
+   }
+  },
+  {
+   "check": "模板 GOLIVE_LIMIT_TIER ACTIVE",
+   "ok": true,
+   "evidence": {
+    "currentVersionNo": 1,
+    "dataSourceCode": "MOR_RISK_DECISION_REPLICA",
+    "dataSourceId": "241634939987116032",
+    "dataSourceName": "风控决策（Risk Decision）从库",
+    "description": "客户上线编排 REQ-04：DATA_QUERY 系统检查（单行，satisfied / out_tier / out_observationDue / missing）",
+    "pagingMode": "NONE",
+    "parameters": [
+     {
+      "elementType": null,
+      "name": "clientId",
+      "required": true,
+      "type": "INTEGER"
+     },
+     {
+      "elementType": null,
+      "name": "targetTier",
+      "required": true,
+      "type": "ENUM"
+     }
+    ],
+    "status": "ACTIVE",
+    "templateCode": "GOLIVE_LIMIT_TIER",
+    "templateId": "241861005607518208",
+    "templateName": "限额档位达到目标",
+    "updateTime": "2026-10-30T09:49:17.296538Z",
+    "updatedBy": "221546852372267008",
+    "version": 1
+   }
+  }
+ ]
+}

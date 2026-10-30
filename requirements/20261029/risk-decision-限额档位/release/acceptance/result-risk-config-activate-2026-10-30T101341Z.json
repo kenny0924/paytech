@@ -1,0 +1,156 @@
+{
+ "baseline": {
+  "PAYMENT_ATTEMPT_RISK": {
+   "releaseId": "236518950932942848",
+   "flowVersionId": "236518950786142209",
+   "flowCode": "PAY_ATTEMPT_FLOW"
+  },
+  "CHECKOUT_PREPARE": {
+   "releaseId": "237117104682274816",
+   "flowVersionId": "236943227222069249",
+   "flowCode": "CHECKOUT_BASELINE_ALLOW"
+  }
+ },
+ "quotas": {
+  "VERIFICATION": {
+   "USD": [
+    "500",
+    "2000",
+    "10000"
+   ],
+   "AED": [
+    "1800",
+    "7300",
+    "36700"
+   ],
+   "SAR": [
+    "1875",
+    "7500",
+    "37500"
+   ],
+   "EGP": [
+    "25000",
+    "100000",
+    "500000"
+   ]
+  },
+  "OBSERVATION": {
+   "USD": [
+    "2000",
+    "10000",
+    "50000"
+   ],
+   "AED": [
+    "7300",
+    "36700",
+    "183500"
+   ],
+   "SAR": [
+    "7500",
+    "37500",
+    "187500"
+   ],
+   "EGP": [
+    "100000",
+    "500000",
+    "2500000"
+   ]
+  },
+  "STANDARD": {
+   "USD": [
+    "10000",
+    "100000",
+    "1000000"
+   ],
+   "AED": [
+    "36700",
+    "367000",
+    "3670000"
+   ],
+   "SAR": [
+    "37500",
+    "375000",
+    "3750000"
+   ],
+   "EGP": [
+    "500000",
+    "5000000",
+    "50000000"
+   ]
+  }
+ },
+ "currencySets": {
+  "VERIFICATION": [
+   "USD",
+   "AED",
+   "SAR",
+   "EGP"
+  ],
+  "OBSERVATION": [
+   "USD",
+   "AED",
+   "SAR",
+   "EGP"
+  ]
+ },
+ "builtAt": "2026-10-30T10:11:00.144986+00:00",
+ "candidate": {
+  "PAYMENT_ATTEMPT_RISK": {
+   "flowVersionId": "241866465639239681",
+   "releaseId": "241866473545502720",
+   "gateRuleSet": "241865212150517760",
+   "limitRuleSets": {
+    "VERIFICATION": "241865221080190976",
+    "OBSERVATION": "241865222959239168",
+    "STANDARD": "241865224645349376"
+   },
+   "shadowRun": {
+    "actionChangeCount": 8,
+    "allowToDenyCount": 8,
+    "allowToReviewCount": 0,
+    "baselineReleaseId": "236518950932942848",
+    "checkStatus": "PASSED",
+    "denyToAllowCount": 0,
+    "failedCount": 0,
+    "featureMissingCount": 0,
+    "p95Millis": 21,
+    "p99Millis": 21,
+    "sampleCount": 10,
+    "sampleTarget": 200,
+    "shadowRunId": "241867122341416960",
+    "status": "COMPLETED",
+    "timedOutCount": 0
+   },
+   "status": "ACTIVE",
+   "activatedAt": "2026-10-30T10:13:39.319554+00:00"
+  },
+  "CHECKOUT_PREPARE": {
+   "flowVersionId": "241866469086957569",
+   "releaseId": "241866478381535232",
+   "gateRuleSet": "241865217603112960",
+   "currencyRuleSets": {
+    "VERIFICATION": "241865226763472896",
+    "OBSERVATION": "241865228306976768"
+   },
+   "shadowRun": {
+    "actionChangeCount": 0,
+    "allowToDenyCount": 52,
+    "allowToReviewCount": 0,
+    "baselineReleaseId": "237117104682274816",
+    "checkStatus": "PASSED",
+    "denyToAllowCount": 0,
+    "failedCount": 0,
+    "featureMissingCount": 0,
+    "p95Millis": 6,
+    "p99Millis": 6,
+    "sampleCount": 52,
+    "sampleTarget": 200,
+    "shadowRunId": "241867137990365184",
+    "status": "COMPLETED",
+    "timedOutCount": 0
+   },
+   "status": "ACTIVE",
+   "activatedAt": "2026-10-30T10:13:41.855986+00:00"
+  }
+ }
+}

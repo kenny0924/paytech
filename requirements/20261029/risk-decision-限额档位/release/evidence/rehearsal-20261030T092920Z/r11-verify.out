@@ -1,0 +1,46 @@
++------------+
+| new_tables |
++------------+
+|          3 |
++------------+
++--------------+
+| tables_after |
++--------------+
+|           60 |
++--------------+
++------------------------------+-----------------------------------+------------+------------------------------------------+
+| TABLE_NAME                   | INDEX_NAME                        | NON_UNIQUE | cols                                     |
++------------------------------+-----------------------------------+------------+------------------------------------------+
+| t_client_allowed_daily_total | PRIMARY                           |          0 | daily_total_id                           |
+| t_client_allowed_daily_total | uk_client_allowed_daily_total     |          0 | client_id,event_code,currency,event_date |
+| t_client_limit_tier          | idx_client_limit_tier_list        |          1 | tier,update_time                         |
+| t_client_limit_tier          | idx_client_limit_tier_observation |          1 | tier,observation_started_time            |
+| t_client_limit_tier          | PRIMARY                           |          0 | client_limit_tier_id                     |
+| t_client_limit_tier          | uk_client_limit_tier_client       |          0 | client_id                                |
+| t_client_limit_tier_change   | idx_client_tier_change_client     |          1 | client_id,requested_time                 |
+| t_client_limit_tier_change   | idx_client_tier_change_status     |          1 | status,update_time                       |
+| t_client_limit_tier_change   | PRIMARY                           |          0 | change_id                                |
+| t_client_limit_tier_change   | uk_client_tier_change_pending     |          0 | client_id,pending_slot                   |
++------------------------------+-----------------------------------+------------+------------------------------------------+
++---------+-------------------+--------------+------------------------+---------------+--------+
+| list_id | list_code         | list_purpose | supported_subject_type | matching_mode | status |
++---------+-------------------+--------------+------------------------+---------------+--------+
+|  300001 | TIER_VERIFICATION | TIER         | CLIENT                 | EXACT         | ACTIVE |
+|  300002 | TIER_OBSERVATION  | TIER         | CLIENT                 | EXACT         | ACTIVE |
+|  300003 | TIER_STANDARD     | TIER         | CLIENT                 | EXACT         | ACTIVE |
+|  300004 | TIER_RESTRICTED   | TIER         | CLIENT                 | EXACT         | ACTIVE |
++---------+-------------------+--------------+------------------------+---------------+--------+
++-------+---------+--------------+
+| tiers | changes | daily_totals |
++-------+---------+--------------+
+|     0 |       0 |            0 |
++-------+---------+--------------+
++-------------------------------+----------------+-----------------+
+| TABLE_NAME                    | COLUMN_NAME    | comment_updated |
++-------------------------------+----------------+-----------------+
+| t_risk_list                   | list_purpose   |               1 |
+| t_risk_list_entry             | source_type    |               1 |
+| t_velocity_feature_definition | event_code     |               1 |
+| t_velocity_feature_definition | metric         |               1 |
+| t_velocity_feature_definition | window_seconds |               1 |
++-------------------------------+----------------+-----------------+

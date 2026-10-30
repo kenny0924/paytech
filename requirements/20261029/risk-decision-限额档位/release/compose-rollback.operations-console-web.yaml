@@ -1,0 +1,4 @@
+# REQ-04 operations-console-web：mor-test 回滚覆盖（= 现网 jq-20261030c）。
+services:
+  operations-console-web:
+    image: sha256:6f8161c279e71b24efc79280bdff5d0b3bbe4822e44e442cde409d88f4bd0173  # mor-test/operations-console-web:jq-20261030c（dist 273 个文件）

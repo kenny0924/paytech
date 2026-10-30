@@ -46,7 +46,7 @@ class PlatformSnapshotDiscoveryPropertiesAutoTest {
         assertEquals(Duration.ofSeconds(2), defaults.connectTimeout());
         assertEquals(Duration.ofSeconds(2), defaults.responseTimeout());
         assertEquals(Duration.ofSeconds(5), defaults.refreshInterval());
-        assertEquals(1_048_576, defaults.maxResponseBytes());
+        assertEquals(4_194_304, defaults.maxResponseBytes());
         assertTrue(defaults.discoveryEnabled());
         var direct = new PlatformSnapshotProperties(URI.create("HTTP://localhost:12345"), null, true,
             Duration.ofSeconds(10), Duration.ofSeconds(10), 1, Duration.ofMillis(1));
@@ -91,7 +91,7 @@ class PlatformSnapshotDiscoveryPropertiesAutoTest {
             assertThrows(IllegalArgumentException.class, () -> new PlatformSnapshotProperties(null, null, false,
                 null, null, 1, interval));
         }
-        for (int bytes : new int[] {-1, 1_048_577}) {
+        for (int bytes : new int[] {-1, 4_194_305}) {
             assertThrows(IllegalArgumentException.class, () -> new PlatformSnapshotProperties(null, null, false,
                 null, null, bytes, null));
         }

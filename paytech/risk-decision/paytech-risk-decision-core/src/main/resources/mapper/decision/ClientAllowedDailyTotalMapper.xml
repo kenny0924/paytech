@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.decision.core.dal.mapper.ClientAllowedDailyTotalMapper">
+    <!-- 同一 Client、事件、币种、UTC 日只有一行：并发放行在该行上按行锁串行累加，不丢失更新。 -->
+    <insert id="upsertAdd">
+        INSERT INTO t_client_allowed_daily_total(daily_total_id, client_id, event_code, currency, event_date, amount,
+            event_count, create_time, update_time)
+        VALUES(#{row.dailyTotalId}, #{row.clientId}, #{row.eventCode}, #{row.currency}, #{row.eventDate}, #{row.amount},
+            #{row.eventCount}, #{row.createTime}, #{row.updateTime})
+        ON DUPLICATE KEY UPDATE amount = amount + #{row.amount}, event_count = event_count + #{row.eventCount},
+            update_time = #{row.updateTime}
+    </insert>
+    <select id="sumAmount" useCache="false" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0) FROM t_client_allowed_daily_total
+        WHERE client_id = #{clientId} AND event_code = #{eventCode} AND currency = #{currency}
+          AND event_date &gt;= #{fromDate} AND event_date &lt;= #{toDate}
+    </select>
+    <select id="totalsByCurrency" useCache="false"
+        resultType="com.paytech.risk.decision.core.dal.dataobject.ClientAllowedCurrencyTotal">
+        SELECT currency, COALESCE(SUM(CASE WHEN event_date = #{today} THEN amount END), 0) AS amountToday,
+            COALESCE(SUM(amount), 0) AS amountLast30Days
+        FROM t_client_allowed_daily_total
+        WHERE client_id = #{clientId} AND event_code = #{eventCode} AND event_date &gt;= #{fromDate} AND event_date &lt;= #{today}
+        GROUP BY currency ORDER BY currency
+    </select>
+</mapper>

@@ -10,6 +10,7 @@ import { BusinessCard, Card, CommandAlert, DecisionRows, DueDiligenceCard, Expos
 import { DraftEditor, UnderwritingHeader } from './UnderwritingWorkspace';
 import { canRevise, decodeHistory, decodeUnderwriting, openVersion, permissionsOf, reviewAccess, reviewCommentIssue, underwritingPaths, underwritingRoutes } from './underwriting';
 import type { Underwriting } from './underwriting';
+import { hasMenu, limitTierMenu, limitTierRoutes } from '../limitTier/limitTier';
 import { useUnderwritingCommand } from './useUnderwritingCommand';
 
 interface Props { underwritingId: string; resources: ConsoleResource[]; actorId: string; onAuthorizationChanged: () => void }
@@ -18,7 +19,7 @@ interface Props { underwritingId: string; resources: ConsoleResource[]; actorId:
  * 版本详情（/risk/underwriting/:id）
  * <li>DRAFT 且有维护权限：按最新输入编辑（原型 03）；其他情况只读。</li>
  * <li>SUBMITTED：冻结输入 + 复核区（原型 04），提交人本人按钮禁用。</li>
- * <li>APPROVED / DECLINED / SUPERSEDED：只读详情、版本历史与修订（原型 05）。</li>
+ * <li>APPROVED / DECLINED / SUPERSEDED：只读详情、版本历史与修订（原型 05）；APPROVED 可见限额档位菜单时链接到该 Client 的档位页（REQ-04）。</li>
  */
 export function UnderwritingDetail({ underwritingId, resources, actorId, onAuthorizationChanged }: Props) {
   const t = useT('risk');
@@ -30,7 +31,7 @@ export function UnderwritingDetail({ underwritingId, resources, actorId, onAutho
   const permissions = permissionsOf(resources);
   const header = <DetailHeader record={record} />;
   if (record.status === 'DRAFT' && permissions.manage) return <DraftEditor key={record.version} record={record} header={header} onAuthorizationChanged={onAuthorizationChanged} onChanged={detail.refresh} />;
-  return <FrozenView record={record} header={header} canManage={permissions.manage} canApprove={permissions.approve} actorId={actorId}
+  return <FrozenView record={record} header={header} canManage={permissions.manage} canApprove={permissions.approve} canViewTier={hasMenu(resources, limitTierMenu)} actorId={actorId}
     onAuthorizationChanged={onAuthorizationChanged} onChanged={detail.refresh} notice={record.status === 'DRAFT' ? t('underwriting.draftReadonly') : null} />;
 }
 
@@ -48,8 +49,8 @@ function DetailHeader({ record }: { record: Underwriting }) {
     badges={<><StatusBadge status={record.status} effective={record.status === 'APPROVED'} /><span className="uw-badge is-muted">v{record.versionNo}</span></>} meta={meta} />;
 }
 
-function FrozenView({ record, header, canManage, canApprove, actorId, onAuthorizationChanged, onChanged, notice }: { record: Underwriting; header: ReactNode;
-  canManage: boolean; canApprove: boolean; actorId: string; onAuthorizationChanged: () => void; onChanged: () => void; notice: string | null }) {
+function FrozenView({ record, header, canManage, canApprove, canViewTier, actorId, onAuthorizationChanged, onChanged, notice }: { record: Underwriting; header: ReactNode;
+  canManage: boolean; canApprove: boolean; canViewTier: boolean; actorId: string; onAuthorizationChanged: () => void; onChanged: () => void; notice: string | null }) {
   const t = useT('risk');
   const decode = useMemo(() => (value: unknown) => decodeHistory(value, record.clientId), [record.clientId]);
   const history = useDetail(underwritingPaths.history(record.clientId), decode);
@@ -73,6 +74,8 @@ function FrozenView({ record, header, canManage, canApprove, actorId, onAuthoriz
           {record.reviewComment && <Row label={t('underwriting.review.comment')}><div className="uw-note">{record.reviewComment}</div></Row>}
           {record.revisionReason && <Row label={t('underwriting.revisionReason')}><div className="uw-note">{record.revisionReason}</div></Row>}
         </Card>
+        {record.status === 'APPROVED' && canViewTier && <Alert showIcon type="info" className="uw-alert" title={t('limitTier.fromUnderwriting.title')}
+          action={<Link to={limitTierRoutes.detail(record.clientId)}>{t('limitTier.fromUnderwriting.open')}</Link>} />}
         {access !== 'none' && <ReviewPanel record={record} self={access === 'self'} onAuthorizationChanged={onAuthorizationChanged} onDone={onChanged} />}
         {record.status === 'SUBMITTED' && access === 'none' && <Alert showIcon type="info" className="uw-alert" title={t('underwriting.review.waiting')} />}
         {history.failure ? <QueryFailure failure={history.failure} retry={history.refresh} /> : <HistoryCard history={items} currentId={record.underwritingId} />}

@@ -1,0 +1,4 @@
+# REQ-04 api-gateway：mor-test 回滚覆盖（= 现网 card3ds-20261022b）。回滚前先停用块 145（23-…-deactivate.sql），否则旧 Gateway 读到超过 1 MiB 的 Snapshot 会持续刷新失败。
+services:
+  api-gateway:
+    image: sha256:270c8ba294ddbb026a70b030e02eb1f998c8d95a49ba88cecaeab49b516efbf4  # mor-test/api-gateway:card3ds-20261022b（JAR fc425b2e5eea0856）

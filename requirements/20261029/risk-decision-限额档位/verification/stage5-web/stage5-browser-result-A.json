@@ -1,0 +1,1990 @@
+{
+  "runs": [
+    [
+      "zh-CN",
+      1440
+    ],
+    [
+      "zh-CN",
+      390
+    ],
+    [
+      "en",
+      1440
+    ],
+    [
+      "en",
+      390
+    ]
+  ],
+  "steps": [
+    {
+      "step": "zh-CN-1440:req:A01-list",
+      "check": {
+        "stats": [
+          "验证档 1",
+          "观察档 0",
+          "观察期到期待确认 0",
+          "标准档 4",
+          "受限档 0",
+          "待审批申请 0"
+        ],
+        "tabs": [
+          "全部",
+          "验证档",
+          "观察档",
+          "标准档",
+          "受限档"
+        ],
+        "rows": [
+          "CL-240674482170114049 CL-240674482170114049 · AE · 机构 未评 CRR 标准档 10-30 12:13 Stage 5 browser pass: back to Standard — — 变更申请 10-30 12:13 查看",
+          "E2E Payment fixture 880000000901 E2E-880000000901 · AE · 机构 未评 CRR 标准档 10-30 11:54 rq04 stage5：还原先前档位 — — 变更申请 10-30 11:54 查看",
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · 机构 LOW 验证档 10-30 11:54 rq04 stage5：解除受限 —（验证档无观察期） — 变更申请 10-30 11:54 申请上线",
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看"
+        ],
+        "total": "共 5 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:req:A01b-search-relsnap",
+      "check": {
+        "rows": [
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:req:A01c-tab-verification",
+      "check": {
+        "rows": [
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · 机构 LOW 验证档 10-30 11:54 rq04 stage5：解除受限 —（验证档无观察期） — 变更申请 10-30 11:54 申请上线"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:req:A01d-observation-due",
+      "check": {
+        "rows": 0,
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:req:A02-auto-verification",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC 验证档",
+        "meta": "CL-241533217348268033 · AE · 机构 · 变更申请（受限档 → 验证档） · 10-30 11:54",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "下一步",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 200 1,000 / 1,000 1,000 / 3,000",
+          "USD 50 250 / 250 250 / 400"
+        ],
+        "fullBars": 2,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v2 已批准 · CRR LOW）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [
+          "申请降为受限档"
+        ],
+        "alerts": [],
+        "history": [
+          "验证档 → 受限档 已撤回 10-30 12:09 · 申请 r***@example.test · 撤回 r***@example.test · 理由：Stage 5 browser pass: pending-approval views (will be withdrawn)",
+          "受限档 → 验证档 已批准 10-30 11:54 · 申请 r***@example.test · 审批 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：rq04 stage5",
+          "受限档 → 验证档 已驳回 10-30 11:54 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次",
+          "验证档 → 受限档 已批准 10-30 11:54 · 申请 o***@example.test · 审批 r***@example.test · 理由：rq04 stage5：受限演练 · 意见：rq04 stage5",
+          "受限档 → 验证档 已批准 10-30 11:46 · 申请 r***@example.test · 审批 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：rq04 stage5",
+          "受限档 → 验证档 已驳回 10-30 11:46 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次"
+        ],
+        "historyCount": 8,
+        "hints": [
+          "10-30 11:46 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次",
+          "10-30 11:46 · 申请 o***@example.test · 审批 r***@example.test · 理由：rq04 stage5：受限演练 · 意见：rq04 stage5",
+          "10-30 11:42 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": [
+          {
+            "text": "提交申请",
+            "disabled": true
+          },
+          {
+            "text": "降为受限档",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:req:A05-e-standard-history",
+      "check": {
+        "title": "CL-240674482170114049 标准档",
+        "meta": "CL-240674482170114049 · AE · 机构 · 变更申请（观察档 → 标准档） · 10-30 12:13",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "下一步",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 36,000 400 / 360,000 400 / 3,600,000",
+          "USD 10,000 6,100 / 100,000 6,400 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [
+          "申请降为受限档"
+        ],
+        "alerts": [],
+        "history": [
+          "观察档 → 标准档 已批准 10-30 12:13 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: back to Standard · 意见：Back to Standard (stage 5)",
+          "验证档 → 观察档 已批准 10-30 12:12 · 申请 r***@example.test · 高级审批 r***@example.test · 上线说明：Stage 5 browser pass: production payments verified locally · 意见：Go-live approved (stage 5)",
+          "受限档 → 验证档 已批准 10-30 12:12 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: restore to Verification",
+          "标准档 → 受限档 已批准 10-30 12:09 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: restrict to capture the Restricted page · 意见：Stage 5 browser pass",
+          "观察档 → 标准档 已批准 10-30 11:54 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：观察期满确认，还原 STANDARD · 意见：rq04 stage5",
+          "观察档 → 标准档 已驳回 10-30 11:54 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：观察期满确认 · 意见：先驳回"
+        ],
+        "historyCount": 40,
+        "hints": [
+          "10-30 11:46 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：降至验证档 · 意见：rq04 stage5",
+          "10-30 11:46 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：为上线复核演练降级 · 意见：rq04 stage5",
+          "10-30 11:24 · 存量迁移 · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": [
+          {
+            "text": "降为受限档",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:req:A06-migrated-standard",
+      "check": {
+        "title": "E2E Payment fixture 880000000901 标准档",
+        "meta": "E2E-880000000901 · AE · 机构 · 变更申请（受限档 → 标准档） · 10-30 11:54",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "下一步",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 36,000 0 / 360,000 0 / 3,600,000",
+          "USD 10,000 27,090 / 100,000 27,090 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [
+          "申请降为受限档"
+        ],
+        "alerts": [],
+        "history": [
+          "受限档 → 标准档 已批准 10-30 11:54 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：还原先前档位 · 意见：rq04 stage5",
+          "标准档 → 受限档 已批准 10-30 11:54 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：全链路受限 · 意见：rq04 stage5",
+          "受限档 → 标准档 已批准 10-30 11:52 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：还原先前档位 · 意见：rq04 stage5",
+          "标准档 → 受限档 已批准 10-30 11:52 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：全链路受限 · 意见：rq04 stage5",
+          "受限档 → 标准档 已批准 10-30 11:51 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：还原先前档位 · 意见：rq04 stage5",
+          "标准档 → 受限档 已批准 10-30 11:51 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：全链路受限 · 意见：rq04 stage5"
+        ],
+        "historyCount": 7,
+        "hints": [
+          "10-30 11:51 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：还原先前档位 · 意见：rq04 stage5",
+          "10-30 11:51 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：全链路受限 · 意见：rq04 stage5",
+          "10-30 11:24 · 存量迁移 · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": [
+          {
+            "text": "降为受限档",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:req:A07-b-no-tier",
+      "check": {
+        "title": "Layla Bizinfo0319 无档位",
+        "meta": "CL-241532599334350849 · AE · 个人",
+        "cards": [
+          "有效承保",
+          "档位变更历史"
+        ],
+        "quotas": [],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "无档位 承保批准前额度为零。客户首次承保批准时自动进入验证档。"
+        ],
+        "history": [],
+        "historyCount": 0,
+        "hints": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:req:A07b-d-no-tier",
+      "check": {
+        "title": "Layla Bizinfo0613 无档位",
+        "meta": "CL-241533481480368129 · AE · 个人",
+        "cards": [
+          "有效承保",
+          "档位变更历史"
+        ],
+        "quotas": [],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "无档位 承保批准前额度为零。客户首次承保批准时自动进入验证档。"
+        ],
+        "history": [],
+        "historyCount": 0,
+        "hints": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:req:A01-list",
+      "check": {
+        "stats": [
+          "验证档 1",
+          "观察档 0",
+          "观察期到期待确认 0",
+          "标准档 4",
+          "受限档 0",
+          "待审批申请 0"
+        ],
+        "tabs": [
+          "全部",
+          "验证档",
+          "观察档",
+          "标准档",
+          "受限档"
+        ],
+        "rows": [
+          "CL-240674482170114049 CL-240674482170114049 · AE · 机构 未评 CRR 标准档 10-30 12:13 Stage 5 browser pass: back to Standard — — 变更申请 10-30 12:13 查看",
+          "E2E Payment fixture 880000000901 E2E-880000000901 · AE · 机构 未评 CRR 标准档 10-30 11:54 rq04 stage5：还原先前档位 — — 变更申请 10-30 11:54 查看",
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · 机构 LOW 验证档 10-30 11:54 rq04 stage5：解除受限 —（验证档无观察期） — 变更申请 10-30 11:54 申请上线",
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看"
+        ],
+        "total": "共 5 条"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:req:A01b-search-relsnap",
+      "check": {
+        "rows": [
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:req:A01c-tab-verification",
+      "check": {
+        "rows": [
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · 机构 LOW 验证档 10-30 11:54 rq04 stage5：解除受限 —（验证档无观察期） — 变更申请 10-30 11:54 申请上线"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:req:A01d-observation-due",
+      "check": {
+        "rows": 0,
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:req:A02-auto-verification",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC 验证档",
+        "meta": "CL-241533217348268033 · AE · 机构 · 变更申请（受限档 → 验证档） · 10-30 11:54",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "下一步",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 200 1,000 / 1,000 1,000 / 3,000",
+          "USD 50 250 / 250 250 / 400"
+        ],
+        "fullBars": 2,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v2 已批准 · CRR LOW）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [
+          "申请降为受限档"
+        ],
+        "alerts": [],
+        "history": [
+          "验证档 → 受限档 已撤回 10-30 12:09 · 申请 r***@example.test · 撤回 r***@example.test · 理由：Stage 5 browser pass: pending-approval views (will be withdrawn)",
+          "受限档 → 验证档 已批准 10-30 11:54 · 申请 r***@example.test · 审批 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：rq04 stage5",
+          "受限档 → 验证档 已驳回 10-30 11:54 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次",
+          "验证档 → 受限档 已批准 10-30 11:54 · 申请 o***@example.test · 审批 r***@example.test · 理由：rq04 stage5：受限演练 · 意见：rq04 stage5",
+          "受限档 → 验证档 已批准 10-30 11:46 · 申请 r***@example.test · 审批 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：rq04 stage5",
+          "受限档 → 验证档 已驳回 10-30 11:46 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次"
+        ],
+        "historyCount": 8,
+        "hints": [
+          "10-30 11:46 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次",
+          "10-30 11:46 · 申请 o***@example.test · 审批 r***@example.test · 理由：rq04 stage5：受限演练 · 意见：rq04 stage5",
+          "10-30 11:42 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": [
+          {
+            "text": "提交申请",
+            "disabled": true
+          },
+          {
+            "text": "降为受限档",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:req:A05-e-standard-history",
+      "check": {
+        "title": "CL-240674482170114049 标准档",
+        "meta": "CL-240674482170114049 · AE · 机构 · 变更申请（观察档 → 标准档） · 10-30 12:13",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "下一步",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 36,000 400 / 360,000 400 / 3,600,000",
+          "USD 10,000 6,100 / 100,000 6,400 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [
+          "申请降为受限档"
+        ],
+        "alerts": [],
+        "history": [
+          "观察档 → 标准档 已批准 10-30 12:13 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: back to Standard · 意见：Back to Standard (stage 5)",
+          "验证档 → 观察档 已批准 10-30 12:12 · 申请 r***@example.test · 高级审批 r***@example.test · 上线说明：Stage 5 browser pass: production payments verified locally · 意见：Go-live approved (stage 5)",
+          "受限档 → 验证档 已批准 10-30 12:12 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: restore to Verification",
+          "标准档 → 受限档 已批准 10-30 12:09 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: restrict to capture the Restricted page · 意见：Stage 5 browser pass",
+          "观察档 → 标准档 已批准 10-30 11:54 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：观察期满确认，还原 STANDARD · 意见：rq04 stage5",
+          "观察档 → 标准档 已驳回 10-30 11:54 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：观察期满确认 · 意见：先驳回"
+        ],
+        "historyCount": 40,
+        "hints": [
+          "10-30 11:46 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：降至验证档 · 意见：rq04 stage5",
+          "10-30 11:46 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：为上线复核演练降级 · 意见：rq04 stage5",
+          "10-30 11:24 · 存量迁移 · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": [
+          {
+            "text": "降为受限档",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:req:A06-migrated-standard",
+      "check": {
+        "title": "E2E Payment fixture 880000000901 标准档",
+        "meta": "E2E-880000000901 · AE · 机构 · 变更申请（受限档 → 标准档） · 10-30 11:54",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "下一步",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 36,000 0 / 360,000 0 / 3,600,000",
+          "USD 10,000 27,090 / 100,000 27,090 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [
+          "申请降为受限档"
+        ],
+        "alerts": [],
+        "history": [
+          "受限档 → 标准档 已批准 10-30 11:54 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：还原先前档位 · 意见：rq04 stage5",
+          "标准档 → 受限档 已批准 10-30 11:54 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：全链路受限 · 意见：rq04 stage5",
+          "受限档 → 标准档 已批准 10-30 11:52 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：还原先前档位 · 意见：rq04 stage5",
+          "标准档 → 受限档 已批准 10-30 11:52 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：全链路受限 · 意见：rq04 stage5",
+          "受限档 → 标准档 已批准 10-30 11:51 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：还原先前档位 · 意见：rq04 stage5",
+          "标准档 → 受限档 已批准 10-30 11:51 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：全链路受限 · 意见：rq04 stage5"
+        ],
+        "historyCount": 7,
+        "hints": [
+          "10-30 11:51 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：还原先前档位 · 意见：rq04 stage5",
+          "10-30 11:51 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：全链路受限 · 意见：rq04 stage5",
+          "10-30 11:24 · 存量迁移 · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": [
+          {
+            "text": "降为受限档",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:req:A07-b-no-tier",
+      "check": {
+        "title": "Layla Bizinfo0319 无档位",
+        "meta": "CL-241532599334350849 · AE · 个人",
+        "cards": [
+          "有效承保",
+          "档位变更历史"
+        ],
+        "quotas": [],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "无档位 承保批准前额度为零。客户首次承保批准时自动进入验证档。"
+        ],
+        "history": [],
+        "historyCount": 0,
+        "hints": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:req:A07b-d-no-tier",
+      "check": {
+        "title": "Layla Bizinfo0613 无档位",
+        "meta": "CL-241533481480368129 · AE · 个人",
+        "cards": [
+          "有效承保",
+          "档位变更历史"
+        ],
+        "quotas": [],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "无档位 承保批准前额度为零。客户首次承保批准时自动进入验证档。"
+        ],
+        "history": [],
+        "historyCount": 0,
+        "hints": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:req:A01-list",
+      "check": {
+        "stats": [
+          "Verification 1",
+          "Observation 0",
+          "Observation due 0",
+          "Standard 4",
+          "Restricted 0",
+          "Awaiting approval 0"
+        ],
+        "tabs": [
+          "All",
+          "Verification",
+          "Observation",
+          "Standard",
+          "Restricted"
+        ],
+        "rows": [
+          "CL-240674482170114049 CL-240674482170114049 · AE · Organization CRR not rated Standard 10-30 12:13 Stage 5 browser pass: back to Standard — — Request 10-30 12:13 View",
+          "E2E Payment fixture 880000000901 E2E-880000000901 · AE · Organization CRR not rated Standard 10-30 11:54 rq04 stage5：还原先前档位 — — Request 10-30 11:54 View",
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · Organization LOW Verification 10-30 11:54 rq04 stage5：解除受限 — (no observation in Verification) — Request 10-30 11:54 Request go-live",
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View"
+        ],
+        "total": "5 clients"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:req:A01b-search-relsnap",
+      "check": {
+        "rows": [
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:req:A01c-tab-verification",
+      "check": {
+        "rows": [
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · Organization LOW Verification 10-30 11:54 rq04 stage5：解除受限 — (no observation in Verification) — Request 10-30 11:54 Request go-live"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:req:A01d-observation-due",
+      "check": {
+        "rows": 0,
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:req:A02-auto-verification",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC Verification",
+        "meta": "CL-241533217348268033 · AE · Organization · Request (Restricted → Verification) · 10-30 11:54",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Next step",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 200 1,000 / 1,000 1,000 / 3,000",
+          "USD 50 250 / 250 250 / 400"
+        ],
+        "fullBars": 2,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v2 approved · CRR LOW)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [
+          "Request Restricted"
+        ],
+        "alerts": [],
+        "history": [
+          "Verification → Restricted Withdrawn 10-30 12:09 · Requested by r***@example.test · Withdrawn by r***@example.test · Reason: Stage 5 browser pass: pending-approval views (will be withdrawn)",
+          "Restricted → Verification Approved 10-30 11:54 · Requested by r***@example.test · Approved by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: rq04 stage5",
+          "Restricted → Verification Rejected 10-30 11:54 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次",
+          "Verification → Restricted Approved 10-30 11:54 · Requested by o***@example.test · Approved by r***@example.test · Reason: rq04 stage5：受限演练 · Comment: rq04 stage5",
+          "Restricted → Verification Approved 10-30 11:46 · Requested by r***@example.test · Approved by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: rq04 stage5",
+          "Restricted → Verification Rejected 10-30 11:46 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次"
+        ],
+        "historyCount": 8,
+        "hints": [
+          "10-30 11:46 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次",
+          "10-30 11:46 · Requested by o***@example.test · Approved by r***@example.test · Reason: rq04 stage5：受限演练 · Comment: rq04 stage5",
+          "10-30 11:42 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": [
+          {
+            "text": "Submit request",
+            "disabled": true
+          },
+          {
+            "text": "Restrict",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:req:A05-e-standard-history",
+      "check": {
+        "title": "CL-240674482170114049 Standard",
+        "meta": "CL-240674482170114049 · AE · Organization · Request (Observation → Standard) · 10-30 12:13",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Next step",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 36,000 400 / 360,000 400 / 3,600,000",
+          "USD 10,000 6,100 / 100,000 6,400 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [
+          "Request Restricted"
+        ],
+        "alerts": [],
+        "history": [
+          "Observation → Standard Approved 10-30 12:13 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: back to Standard · Comment: Back to Standard (stage 5)",
+          "Verification → Observation Approved 10-30 12:12 · Requested by r***@example.test · Senior approval by r***@example.test · Go-live note: Stage 5 browser pass: production payments verified locally · Comment: Go-live approved (stage 5)",
+          "Restricted → Verification Approved 10-30 12:12 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: restore to Verification",
+          "Standard → Restricted Approved 10-30 12:09 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: restrict to capture the Restricted page · Comment: Stage 5 browser pass",
+          "Observation → Standard Approved 10-30 11:54 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：观察期满确认，还原 STANDARD · Comment: rq04 stage5",
+          "Observation → Standard Rejected 10-30 11:54 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：观察期满确认 · Comment: 先驳回"
+        ],
+        "historyCount": 40,
+        "hints": [
+          "10-30 11:46 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：降至验证档 · Comment: rq04 stage5",
+          "10-30 11:46 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：为上线复核演练降级 · Comment: rq04 stage5",
+          "10-30 11:24 · Migrated · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": [
+          {
+            "text": "Restrict",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:req:A06-migrated-standard",
+      "check": {
+        "title": "E2E Payment fixture 880000000901 Standard",
+        "meta": "E2E-880000000901 · AE · Organization · Request (Restricted → Standard) · 10-30 11:54",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Next step",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 36,000 0 / 360,000 0 / 3,600,000",
+          "USD 10,000 27,090 / 100,000 27,090 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [
+          "Request Restricted"
+        ],
+        "alerts": [],
+        "history": [
+          "Restricted → Standard Approved 10-30 11:54 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：还原先前档位 · Comment: rq04 stage5",
+          "Standard → Restricted Approved 10-30 11:54 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：全链路受限 · Comment: rq04 stage5",
+          "Restricted → Standard Approved 10-30 11:52 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：还原先前档位 · Comment: rq04 stage5",
+          "Standard → Restricted Approved 10-30 11:52 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：全链路受限 · Comment: rq04 stage5",
+          "Restricted → Standard Approved 10-30 11:51 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：还原先前档位 · Comment: rq04 stage5",
+          "Standard → Restricted Approved 10-30 11:51 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：全链路受限 · Comment: rq04 stage5"
+        ],
+        "historyCount": 7,
+        "hints": [
+          "10-30 11:51 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：还原先前档位 · Comment: rq04 stage5",
+          "10-30 11:51 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：全链路受限 · Comment: rq04 stage5",
+          "10-30 11:24 · Migrated · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": [
+          {
+            "text": "Restrict",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:req:A07-b-no-tier",
+      "check": {
+        "title": "Layla Bizinfo0319 No tier",
+        "meta": "CL-241532599334350849 · AE · Individual",
+        "cards": [
+          "Effective underwriting",
+          "Tier history"
+        ],
+        "quotas": [],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "No tier No limit until underwriting is approved. The client moves to Verification automatically when its first underwriting is approved."
+        ],
+        "history": [],
+        "historyCount": 0,
+        "hints": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:req:A07b-d-no-tier",
+      "check": {
+        "title": "Layla Bizinfo0613 No tier",
+        "meta": "CL-241533481480368129 · AE · Individual",
+        "cards": [
+          "Effective underwriting",
+          "Tier history"
+        ],
+        "quotas": [],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "No tier No limit until underwriting is approved. The client moves to Verification automatically when its first underwriting is approved."
+        ],
+        "history": [],
+        "historyCount": 0,
+        "hints": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:req:A01-list",
+      "check": {
+        "stats": [
+          "Verification 1",
+          "Observation 0",
+          "Observation due 0",
+          "Standard 4",
+          "Restricted 0",
+          "Awaiting approval 0"
+        ],
+        "tabs": [
+          "All",
+          "Verification",
+          "Observation",
+          "Standard",
+          "Restricted"
+        ],
+        "rows": [
+          "CL-240674482170114049 CL-240674482170114049 · AE · Organization CRR not rated Standard 10-30 12:13 Stage 5 browser pass: back to Standard — — Request 10-30 12:13 View",
+          "E2E Payment fixture 880000000901 E2E-880000000901 · AE · Organization CRR not rated Standard 10-30 11:54 rq04 stage5：还原先前档位 — — Request 10-30 11:54 View",
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · Organization LOW Verification 10-30 11:54 rq04 stage5：解除受限 — (no observation in Verification) — Request 10-30 11:54 Request go-live",
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View"
+        ],
+        "total": "5 clients"
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:req:A01b-search-relsnap",
+      "check": {
+        "rows": [
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:req:A01c-tab-verification",
+      "check": {
+        "rows": [
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · Organization LOW Verification 10-30 11:54 rq04 stage5：解除受限 — (no observation in Verification) — Request 10-30 11:54 Request go-live"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:req:A01d-observation-due",
+      "check": {
+        "rows": 0,
+        "empty": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:req:A02-auto-verification",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC Verification",
+        "meta": "CL-241533217348268033 · AE · Organization · Request (Restricted → Verification) · 10-30 11:54",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Next step",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 200 1,000 / 1,000 1,000 / 3,000",
+          "USD 50 250 / 250 250 / 400"
+        ],
+        "fullBars": 2,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v2 approved · CRR LOW)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [
+          "Request Restricted"
+        ],
+        "alerts": [],
+        "history": [
+          "Verification → Restricted Withdrawn 10-30 12:09 · Requested by r***@example.test · Withdrawn by r***@example.test · Reason: Stage 5 browser pass: pending-approval views (will be withdrawn)",
+          "Restricted → Verification Approved 10-30 11:54 · Requested by r***@example.test · Approved by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: rq04 stage5",
+          "Restricted → Verification Rejected 10-30 11:54 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次",
+          "Verification → Restricted Approved 10-30 11:54 · Requested by o***@example.test · Approved by r***@example.test · Reason: rq04 stage5：受限演练 · Comment: rq04 stage5",
+          "Restricted → Verification Approved 10-30 11:46 · Requested by r***@example.test · Approved by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: rq04 stage5",
+          "Restricted → Verification Rejected 10-30 11:46 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次"
+        ],
+        "historyCount": 8,
+        "hints": [
+          "10-30 11:46 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次",
+          "10-30 11:46 · Requested by o***@example.test · Approved by r***@example.test · Reason: rq04 stage5：受限演练 · Comment: rq04 stage5",
+          "10-30 11:42 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": [
+          {
+            "text": "Submit request",
+            "disabled": true
+          },
+          {
+            "text": "Restrict",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:req:A05-e-standard-history",
+      "check": {
+        "title": "CL-240674482170114049 Standard",
+        "meta": "CL-240674482170114049 · AE · Organization · Request (Observation → Standard) · 10-30 12:13",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Next step",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 36,000 400 / 360,000 400 / 3,600,000",
+          "USD 10,000 6,100 / 100,000 6,400 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [
+          "Request Restricted"
+        ],
+        "alerts": [],
+        "history": [
+          "Observation → Standard Approved 10-30 12:13 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: back to Standard · Comment: Back to Standard (stage 5)",
+          "Verification → Observation Approved 10-30 12:12 · Requested by r***@example.test · Senior approval by r***@example.test · Go-live note: Stage 5 browser pass: production payments verified locally · Comment: Go-live approved (stage 5)",
+          "Restricted → Verification Approved 10-30 12:12 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: restore to Verification",
+          "Standard → Restricted Approved 10-30 12:09 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: restrict to capture the Restricted page · Comment: Stage 5 browser pass",
+          "Observation → Standard Approved 10-30 11:54 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：观察期满确认，还原 STANDARD · Comment: rq04 stage5",
+          "Observation → Standard Rejected 10-30 11:54 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：观察期满确认 · Comment: 先驳回"
+        ],
+        "historyCount": 40,
+        "hints": [
+          "10-30 11:46 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：降至验证档 · Comment: rq04 stage5",
+          "10-30 11:46 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：为上线复核演练降级 · Comment: rq04 stage5",
+          "10-30 11:24 · Migrated · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": [
+          {
+            "text": "Restrict",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:req:A06-migrated-standard",
+      "check": {
+        "title": "E2E Payment fixture 880000000901 Standard",
+        "meta": "E2E-880000000901 · AE · Organization · Request (Restricted → Standard) · 10-30 11:54",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Next step",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 36,000 0 / 360,000 0 / 3,600,000",
+          "USD 10,000 27,090 / 100,000 27,090 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [
+          "Request Restricted"
+        ],
+        "alerts": [],
+        "history": [
+          "Restricted → Standard Approved 10-30 11:54 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：还原先前档位 · Comment: rq04 stage5",
+          "Standard → Restricted Approved 10-30 11:54 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：全链路受限 · Comment: rq04 stage5",
+          "Restricted → Standard Approved 10-30 11:52 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：还原先前档位 · Comment: rq04 stage5",
+          "Standard → Restricted Approved 10-30 11:52 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：全链路受限 · Comment: rq04 stage5",
+          "Restricted → Standard Approved 10-30 11:51 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：还原先前档位 · Comment: rq04 stage5",
+          "Standard → Restricted Approved 10-30 11:51 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：全链路受限 · Comment: rq04 stage5"
+        ],
+        "historyCount": 7,
+        "hints": [
+          "10-30 11:51 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：还原先前档位 · Comment: rq04 stage5",
+          "10-30 11:51 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：全链路受限 · Comment: rq04 stage5",
+          "10-30 11:24 · Migrated · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": [
+          {
+            "text": "Restrict",
+            "disabled": false
+          }
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:req:A07-b-no-tier",
+      "check": {
+        "title": "Layla Bizinfo0319 No tier",
+        "meta": "CL-241532599334350849 · AE · Individual",
+        "cards": [
+          "Effective underwriting",
+          "Tier history"
+        ],
+        "quotas": [],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "No tier No limit until underwriting is approved. The client moves to Verification automatically when its first underwriting is approved."
+        ],
+        "history": [],
+        "historyCount": 0,
+        "hints": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:req:A07b-d-no-tier",
+      "check": {
+        "title": "Layla Bizinfo0613 No tier",
+        "meta": "CL-241533481480368129 · AE · Individual",
+        "cards": [
+          "Effective underwriting",
+          "Tier history"
+        ],
+        "quotas": [],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "No tier No limit until underwriting is approved. The client moves to Verification automatically when its first underwriting is approved."
+        ],
+        "history": [],
+        "historyCount": 0,
+        "hints": [],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:ro:A01-list-readonly",
+      "check": {
+        "stats": [
+          "验证档 1",
+          "观察档 0",
+          "观察期到期待确认 0",
+          "标准档 4",
+          "受限档 0",
+          "待审批申请 0"
+        ],
+        "tabs": [
+          "全部",
+          "验证档",
+          "观察档",
+          "标准档",
+          "受限档"
+        ],
+        "rows": [
+          "CL-240674482170114049 CL-240674482170114049 · AE · 机构 未评 CRR 标准档 10-30 12:13 Stage 5 browser pass: back to Standard — — 变更申请 10-30 12:13 查看",
+          "E2E Payment fixture 880000000901 E2E-880000000901 · AE · 机构 未评 CRR 标准档 10-30 11:54 rq04 stage5：还原先前档位 — — 变更申请 10-30 11:54 查看",
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · 机构 LOW 验证档 10-30 11:54 rq04 stage5：解除受限 —（验证档无观察期） — 变更申请 10-30 11:54 查看",
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看"
+        ],
+        "total": "共 5 条",
+        "rowActions": [
+          "查看",
+          "查看",
+          "查看",
+          "查看",
+          "查看"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:ro:A02-auto-readonly",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC 验证档",
+        "meta": "CL-241533217348268033 · AE · 机构 · 变更申请（受限档 → 验证档） · 10-30 11:54",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 200 1,000 / 1,000 1,000 / 3,000",
+          "USD 50 250 / 250 250 / 400"
+        ],
+        "fullBars": 2,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v2 已批准 · CRR LOW）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "验证档 → 受限档 已撤回 10-30 12:09 · 申请 r***@example.test · 撤回 r***@example.test · 理由：Stage 5 browser pass: pending-approval views (will be withdrawn)",
+          "受限档 → 验证档 已批准 10-30 11:54 · 申请 r***@example.test · 审批 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：rq04 stage5",
+          "受限档 → 验证档 已驳回 10-30 11:54 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次",
+          "验证档 → 受限档 已批准 10-30 11:54 · 申请 o***@example.test · 审批 r***@example.test · 理由：rq04 stage5：受限演练 · 意见：rq04 stage5",
+          "受限档 → 验证档 已批准 10-30 11:46 · 申请 r***@example.test · 审批 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：rq04 stage5",
+          "受限档 → 验证档 已驳回 10-30 11:46 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次"
+        ],
+        "historyCount": 8,
+        "hints": [
+          "10-30 11:46 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次",
+          "10-30 11:46 · 申请 o***@example.test · 审批 r***@example.test · 理由：rq04 stage5：受限演练 · 意见：rq04 stage5",
+          "10-30 11:42 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:ro:A05-e-readonly",
+      "check": {
+        "title": "CL-240674482170114049 标准档",
+        "meta": "CL-240674482170114049 · AE · 机构 · 变更申请（观察档 → 标准档） · 10-30 12:13",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 36,000 400 / 360,000 400 / 3,600,000",
+          "USD 10,000 6,100 / 100,000 6,400 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "你可以查看档位，但没有申请变更的权限。"
+        ],
+        "history": [
+          "观察档 → 标准档 已批准 10-30 12:13 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: back to Standard · 意见：Back to Standard (stage 5)",
+          "验证档 → 观察档 已批准 10-30 12:12 · 申请 r***@example.test · 高级审批 r***@example.test · 上线说明：Stage 5 browser pass: production payments verified locally · 意见：Go-live approved (stage 5)",
+          "受限档 → 验证档 已批准 10-30 12:12 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: restore to Verification",
+          "标准档 → 受限档 已批准 10-30 12:09 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: restrict to capture the Restricted page · 意见：Stage 5 browser pass",
+          "观察档 → 标准档 已批准 10-30 11:54 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：观察期满确认，还原 STANDARD · 意见：rq04 stage5",
+          "观察档 → 标准档 已驳回 10-30 11:54 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：观察期满确认 · 意见：先驳回"
+        ],
+        "historyCount": 40,
+        "hints": [
+          "10-30 11:46 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：降至验证档 · 意见：rq04 stage5",
+          "10-30 11:46 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：为上线复核演练降级 · 意见：rq04 stage5",
+          "10-30 11:24 · 存量迁移 · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:ro:A01-list-readonly",
+      "check": {
+        "stats": [
+          "验证档 1",
+          "观察档 0",
+          "观察期到期待确认 0",
+          "标准档 4",
+          "受限档 0",
+          "待审批申请 0"
+        ],
+        "tabs": [
+          "全部",
+          "验证档",
+          "观察档",
+          "标准档",
+          "受限档"
+        ],
+        "rows": [
+          "CL-240674482170114049 CL-240674482170114049 · AE · 机构 未评 CRR 标准档 10-30 12:13 Stage 5 browser pass: back to Standard — — 变更申请 10-30 12:13 查看",
+          "E2E Payment fixture 880000000901 E2E-880000000901 · AE · 机构 未评 CRR 标准档 10-30 11:54 rq04 stage5：还原先前档位 — — 变更申请 10-30 11:54 查看",
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · 机构 LOW 验证档 10-30 11:54 rq04 stage5：解除受限 —（验证档无观察期） — 变更申请 10-30 11:54 查看",
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · 机构 未评 CRR 标准档 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — 存量迁移 10-30 11:24 查看"
+        ],
+        "total": "共 5 条",
+        "rowActions": [
+          "查看",
+          "查看",
+          "查看",
+          "查看",
+          "查看"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:ro:A02-auto-readonly",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC 验证档",
+        "meta": "CL-241533217348268033 · AE · 机构 · 变更申请（受限档 → 验证档） · 10-30 11:54",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "申请上线复核（验证档 → 观察档）",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 200 1,000 / 1,000 1,000 / 3,000",
+          "USD 50 250 / 250 250 / 400"
+        ],
+        "fullBars": 2,
+        "checklist": [
+          "合规资格已批准 （APPROVED）compliance 系统核对",
+          "有效承保已批准 （v2 已批准 · CRR LOW）risk 系统核对",
+          "合同已生效未满足commercial 系统核对",
+          "支付方式开通项已生效未满足commercial 系统核对",
+          "渠道报备已完成 人工确认",
+          "技术接入已完成（回调、Webhook） 人工确认",
+          "生产验证交易已成功 人工确认",
+          "无未结事项（筛查待复核、证件到期等） 人工确认"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "验证档 → 受限档 已撤回 10-30 12:09 · 申请 r***@example.test · 撤回 r***@example.test · 理由：Stage 5 browser pass: pending-approval views (will be withdrawn)",
+          "受限档 → 验证档 已批准 10-30 11:54 · 申请 r***@example.test · 审批 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：rq04 stage5",
+          "受限档 → 验证档 已驳回 10-30 11:54 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次",
+          "验证档 → 受限档 已批准 10-30 11:54 · 申请 o***@example.test · 审批 r***@example.test · 理由：rq04 stage5：受限演练 · 意见：rq04 stage5",
+          "受限档 → 验证档 已批准 10-30 11:46 · 申请 r***@example.test · 审批 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：rq04 stage5",
+          "受限档 → 验证档 已驳回 10-30 11:46 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次"
+        ],
+        "historyCount": 8,
+        "hints": [
+          "10-30 11:46 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：解除受限 · 意见：先驳回一次",
+          "10-30 11:46 · 申请 o***@example.test · 审批 r***@example.test · 理由：rq04 stage5：受限演练 · 意见：rq04 stage5",
+          "10-30 11:42 · 承保首次批准自动建档 · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:ro:A05-e-readonly",
+      "check": {
+        "title": "CL-240674482170114049 标准档",
+        "meta": "CL-240674482170114049 · AE · 机构 · 变更申请（观察档 → 标准档） · 10-30 12:13",
+        "cards": [
+          "当前档位",
+          "本档额度（按币种分别计算）",
+          "档位变更历史"
+        ],
+        "quotas": [
+          "AED 36,000 400 / 360,000 400 / 3,600,000",
+          "USD 10,000 6,100 / 100,000 6,400 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "你可以查看档位，但没有申请变更的权限。"
+        ],
+        "history": [
+          "观察档 → 标准档 已批准 10-30 12:13 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: back to Standard · 意见：Back to Standard (stage 5)",
+          "验证档 → 观察档 已批准 10-30 12:12 · 申请 r***@example.test · 高级审批 r***@example.test · 上线说明：Stage 5 browser pass: production payments verified locally · 意见：Go-live approved (stage 5)",
+          "受限档 → 验证档 已批准 10-30 12:12 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: restore to Verification",
+          "标准档 → 受限档 已批准 10-30 12:09 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：Stage 5 browser pass: restrict to capture the Restricted page · 意见：Stage 5 browser pass",
+          "观察档 → 标准档 已批准 10-30 11:54 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：观察期满确认，还原 STANDARD · 意见：rq04 stage5",
+          "观察档 → 标准档 已驳回 10-30 11:54 · 申请 r***@example.test · 驳回 r***@example.test · 理由：rq04 stage5：观察期满确认 · 意见：先驳回"
+        ],
+        "historyCount": 40,
+        "hints": [
+          "10-30 11:46 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：降至验证档 · 意见：rq04 stage5",
+          "10-30 11:46 · 申请 r***@example.test · 高级审批 r***@example.test · 理由：rq04 stage5：为上线复核演练降级 · 意见：rq04 stage5",
+          "10-30 11:24 · 存量迁移 · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:ro:A01-list-readonly",
+      "check": {
+        "stats": [
+          "Verification 1",
+          "Observation 0",
+          "Observation due 0",
+          "Standard 4",
+          "Restricted 0",
+          "Awaiting approval 0"
+        ],
+        "tabs": [
+          "All",
+          "Verification",
+          "Observation",
+          "Standard",
+          "Restricted"
+        ],
+        "rows": [
+          "CL-240674482170114049 CL-240674482170114049 · AE · Organization CRR not rated Standard 10-30 12:13 Stage 5 browser pass: back to Standard — — Request 10-30 12:13 View",
+          "E2E Payment fixture 880000000901 E2E-880000000901 · AE · Organization CRR not rated Standard 10-30 11:54 rq04 stage5：还原先前档位 — — Request 10-30 11:54 View",
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · Organization LOW Verification 10-30 11:54 rq04 stage5：解除受限 — (no observation in Verification) — Request 10-30 11:54 View",
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View"
+        ],
+        "total": "5 clients",
+        "rowActions": [
+          "View",
+          "View",
+          "View",
+          "View",
+          "View"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:ro:A02-auto-readonly",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC Verification",
+        "meta": "CL-241533217348268033 · AE · Organization · Request (Restricted → Verification) · 10-30 11:54",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 200 1,000 / 1,000 1,000 / 3,000",
+          "USD 50 250 / 250 250 / 400"
+        ],
+        "fullBars": 2,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v2 approved · CRR LOW)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "Verification → Restricted Withdrawn 10-30 12:09 · Requested by r***@example.test · Withdrawn by r***@example.test · Reason: Stage 5 browser pass: pending-approval views (will be withdrawn)",
+          "Restricted → Verification Approved 10-30 11:54 · Requested by r***@example.test · Approved by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: rq04 stage5",
+          "Restricted → Verification Rejected 10-30 11:54 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次",
+          "Verification → Restricted Approved 10-30 11:54 · Requested by o***@example.test · Approved by r***@example.test · Reason: rq04 stage5：受限演练 · Comment: rq04 stage5",
+          "Restricted → Verification Approved 10-30 11:46 · Requested by r***@example.test · Approved by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: rq04 stage5",
+          "Restricted → Verification Rejected 10-30 11:46 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次"
+        ],
+        "historyCount": 8,
+        "hints": [
+          "10-30 11:46 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次",
+          "10-30 11:46 · Requested by o***@example.test · Approved by r***@example.test · Reason: rq04 stage5：受限演练 · Comment: rq04 stage5",
+          "10-30 11:42 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:ro:A05-e-readonly",
+      "check": {
+        "title": "CL-240674482170114049 Standard",
+        "meta": "CL-240674482170114049 · AE · Organization · Request (Observation → Standard) · 10-30 12:13",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 36,000 400 / 360,000 400 / 3,600,000",
+          "USD 10,000 6,100 / 100,000 6,400 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "You can view this tier but can't request changes."
+        ],
+        "history": [
+          "Observation → Standard Approved 10-30 12:13 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: back to Standard · Comment: Back to Standard (stage 5)",
+          "Verification → Observation Approved 10-30 12:12 · Requested by r***@example.test · Senior approval by r***@example.test · Go-live note: Stage 5 browser pass: production payments verified locally · Comment: Go-live approved (stage 5)",
+          "Restricted → Verification Approved 10-30 12:12 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: restore to Verification",
+          "Standard → Restricted Approved 10-30 12:09 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: restrict to capture the Restricted page · Comment: Stage 5 browser pass",
+          "Observation → Standard Approved 10-30 11:54 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：观察期满确认，还原 STANDARD · Comment: rq04 stage5",
+          "Observation → Standard Rejected 10-30 11:54 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：观察期满确认 · Comment: 先驳回"
+        ],
+        "historyCount": 40,
+        "hints": [
+          "10-30 11:46 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：降至验证档 · Comment: rq04 stage5",
+          "10-30 11:46 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：为上线复核演练降级 · Comment: rq04 stage5",
+          "10-30 11:24 · Migrated · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:ro:A01-list-readonly",
+      "check": {
+        "stats": [
+          "Verification 1",
+          "Observation 0",
+          "Observation due 0",
+          "Standard 4",
+          "Restricted 0",
+          "Awaiting approval 0"
+        ],
+        "tabs": [
+          "All",
+          "Verification",
+          "Observation",
+          "Standard",
+          "Restricted"
+        ],
+        "rows": [
+          "CL-240674482170114049 CL-240674482170114049 · AE · Organization CRR not rated Standard 10-30 12:13 Stage 5 browser pass: back to Standard — — Request 10-30 12:13 View",
+          "E2E Payment fixture 880000000901 E2E-880000000901 · AE · Organization CRR not rated Standard 10-30 11:54 rq04 stage5：还原先前档位 — — Request 10-30 11:54 View",
+          "Bizinfo Trading 1029120613 LLC CL-241533217348268033 · AE · Organization LOW Verification 10-30 11:54 rq04 stage5：解除受限 — (no observation in Verification) — Request 10-30 11:54 View",
+          "RELSNAP-CLIENT-PSP RELSNAP-CLIENT-PSP · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View",
+          "RELSNAP-CLIENT-MOR RELSNAP-CLIENT-MOR · UNSPECIFIED · Organization CRR not rated Standard 10-30 11:24 REQ-04 上线前存量迁移（本机阶段 5） — — Migration 10-30 11:24 View"
+        ],
+        "total": "5 clients",
+        "rowActions": [
+          "View",
+          "View",
+          "View",
+          "View",
+          "View"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:ro:A02-auto-readonly",
+      "check": {
+        "title": "Bizinfo Trading 1029120613 LLC Verification",
+        "meta": "CL-241533217348268033 · AE · Organization · Request (Restricted → Verification) · 10-30 11:54",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Request go-live review (Verification → Observation)",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 200 1,000 / 1,000 1,000 / 3,000",
+          "USD 50 250 / 250 250 / 400"
+        ],
+        "fullBars": 2,
+        "checklist": [
+          "Qualification approved (APPROVED)compliance System check",
+          "Underwriting approved (v2 approved · CRR LOW)risk System check",
+          "Agreement activeNot donecommercial System check",
+          "Payment methods enabledNot donecommercial System check",
+          "Channel registration confirmed Manual",
+          "Integration confirmed (callbacks, webhooks) Manual",
+          "Production transaction verified Manual",
+          "Open issues cleared (screening reviews, expiring documents) Manual"
+        ],
+        "actions": [],
+        "alerts": [],
+        "history": [
+          "Verification → Restricted Withdrawn 10-30 12:09 · Requested by r***@example.test · Withdrawn by r***@example.test · Reason: Stage 5 browser pass: pending-approval views (will be withdrawn)",
+          "Restricted → Verification Approved 10-30 11:54 · Requested by r***@example.test · Approved by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: rq04 stage5",
+          "Restricted → Verification Rejected 10-30 11:54 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次",
+          "Verification → Restricted Approved 10-30 11:54 · Requested by o***@example.test · Approved by r***@example.test · Reason: rq04 stage5：受限演练 · Comment: rq04 stage5",
+          "Restricted → Verification Approved 10-30 11:46 · Requested by r***@example.test · Approved by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: rq04 stage5",
+          "Restricted → Verification Rejected 10-30 11:46 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次"
+        ],
+        "historyCount": 8,
+        "hints": [
+          "10-30 11:46 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：解除受限 · Comment: 先驳回一次",
+          "10-30 11:46 · Requested by o***@example.test · Approved by r***@example.test · Reason: rq04 stage5：受限演练 · Comment: rq04 stage5",
+          "10-30 11:42 · Set by underwriting approval · 承保批准"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:ro:A05-e-readonly",
+      "check": {
+        "title": "CL-240674482170114049 Standard",
+        "meta": "CL-240674482170114049 · AE · Organization · Request (Observation → Standard) · 10-30 12:13",
+        "cards": [
+          "Current tier",
+          "Limits by currency",
+          "Tier history"
+        ],
+        "quotas": [
+          "AED 36,000 400 / 360,000 400 / 3,600,000",
+          "USD 10,000 6,100 / 100,000 6,400 / 1,000,000"
+        ],
+        "fullBars": 0,
+        "checklist": [],
+        "actions": [],
+        "alerts": [
+          "You can view this tier but can't request changes."
+        ],
+        "history": [
+          "Observation → Standard Approved 10-30 12:13 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: back to Standard · Comment: Back to Standard (stage 5)",
+          "Verification → Observation Approved 10-30 12:12 · Requested by r***@example.test · Senior approval by r***@example.test · Go-live note: Stage 5 browser pass: production payments verified locally · Comment: Go-live approved (stage 5)",
+          "Restricted → Verification Approved 10-30 12:12 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: restore to Verification",
+          "Standard → Restricted Approved 10-30 12:09 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: Stage 5 browser pass: restrict to capture the Restricted page · Comment: Stage 5 browser pass",
+          "Observation → Standard Approved 10-30 11:54 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：观察期满确认，还原 STANDARD · Comment: rq04 stage5",
+          "Observation → Standard Rejected 10-30 11:54 · Requested by r***@example.test · Rejected by r***@example.test · Reason: rq04 stage5：观察期满确认 · Comment: 先驳回"
+        ],
+        "historyCount": 40,
+        "hints": [
+          "10-30 11:46 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：降至验证档 · Comment: rq04 stage5",
+          "10-30 11:46 · Requested by r***@example.test · Senior approval by r***@example.test · Reason: rq04 stage5：为上线复核演练降级 · Comment: rq04 stage5",
+          "10-30 11:24 · Migrated · REQ-04 上线前存量迁移（本机阶段 5）"
+        ],
+        "buttons": []
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:admin:E1-client-detail",
+      "check": {
+        "buttons": [
+          "返回列表",
+          "承 保",
+          "限额档位",
+          "刷 新"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:admin:E2-underwriting-detail",
+      "check": {
+        "alerts": [
+          "承保批准后客户进入验证档，后续档位变更在\"限额档位\"页申请。 查看限额档位"
+        ],
+        "link": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-1440:admin:V1-variable-daily-windows",
+      "check": {
+        "windows": [
+          "当日（UTC）",
+          "近 30 天（UTC 自然日，含今日）"
+        ],
+        "metrics": [
+          "次数",
+          "金额合计",
+          "按日金额合计（UTC 自然日）",
+          "最近一次金额",
+          "距上次秒数",
+          "当日（UTC）",
+          "近 30 天（UTC 自然日，含今日）"
+        ],
+        "checked": [
+          "按日金额合计（UTC 自然日）",
+          "近 30 天（UTC 自然日，含今日）"
+        ],
+        "preview": [
+          "口径预览：同一Client 近 30 天（UTC 自然日，含今日）内的支付尝试放行按日金额合计（UTC 自然日）（不含本次） · 值类型：数值"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:admin:E1-client-detail",
+      "check": {
+        "buttons": [
+          "返回列表",
+          "承 保",
+          "限额档位",
+          "刷 新"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:admin:E2-underwriting-detail",
+      "check": {
+        "alerts": [
+          "承保批准后客户进入验证档，后续档位变更在\"限额档位\"页申请。 查看限额档位"
+        ],
+        "link": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "zh-CN-390:admin:V1-variable-daily-windows",
+      "check": {
+        "windows": [
+          "当日（UTC）",
+          "近 30 天（UTC 自然日，含今日）"
+        ],
+        "metrics": [
+          "次数",
+          "金额合计",
+          "按日金额合计（UTC 自然日）",
+          "最近一次金额",
+          "距上次秒数",
+          "当日（UTC）",
+          "近 30 天（UTC 自然日，含今日）"
+        ],
+        "checked": [
+          "按日金额合计（UTC 自然日）",
+          "近 30 天（UTC 自然日，含今日）"
+        ],
+        "preview": [
+          "口径预览：同一Client 近 30 天（UTC 自然日，含今日）内的支付尝试放行按日金额合计（UTC 自然日）（不含本次） · 值类型：数值"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:admin:E1-client-detail",
+      "check": {
+        "buttons": [
+          "Back to List",
+          "Underwriting",
+          "Limit tier",
+          "Refresh"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:admin:E2-underwriting-detail",
+      "check": {
+        "alerts": [
+          "Approved underwriting moves the client into Verification; later tier changes are made on the Limit tiers page. Open limit tier"
+        ],
+        "link": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-1440:admin:V1-variable-daily-windows",
+      "check": {
+        "windows": [
+          "Today (UTC)",
+          "Last 30 days (UTC, incl. today)"
+        ],
+        "metrics": [
+          "Count",
+          "Total Amount",
+          "Daily Total Amount (UTC days)",
+          "Last Amount",
+          "Seconds Since Last",
+          "Today (UTC)",
+          "Last 30 days (UTC, incl. today)"
+        ],
+        "checked": [
+          "Daily Total Amount (UTC days)",
+          "Last 30 days (UTC, incl. today)"
+        ],
+        "preview": [
+          "Definition preview: Daily Total Amount (UTC days) of 支付尝试放行 for the same Client within Last 30 days (UTC, incl. today) (excluding this one) · Value type: Number"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:admin:E1-client-detail",
+      "check": {
+        "buttons": [
+          "Back to List",
+          "Underwriting",
+          "Limit tier",
+          "Refresh"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:admin:E2-underwriting-detail",
+      "check": {
+        "alerts": [
+          "Approved underwriting moves the client into Verification; later tier changes are made on the Limit tiers page. Open limit tier"
+        ],
+        "link": 1
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    },
+    {
+      "step": "en-390:admin:V1-variable-daily-windows",
+      "check": {
+        "windows": [
+          "Today (UTC)",
+          "Last 30 days (UTC, incl. today)"
+        ],
+        "metrics": [
+          "Count",
+          "Total Amount",
+          "Daily Total Amount (UTC days)",
+          "Last Amount",
+          "Seconds Since Last",
+          "Today (UTC)",
+          "Last 30 days (UTC, incl. today)"
+        ],
+        "checked": [
+          "Daily Total Amount (UTC days)",
+          "Last 30 days (UTC, incl. today)"
+        ],
+        "preview": [
+          "Definition preview: Daily Total Amount (UTC days) of 支付尝试放行 for the same Client within Last 30 days (UTC, incl. today) (excluding this one) · Value type: Number"
+        ]
+      },
+      "page": {
+        "rawKeys": [],
+        "horizontalScroll": 0
+      }
+    }
+  ],
+  "console": [
+    {
+      "step": "login zh-CN-1440-req",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "zh-CN-1440:req:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login zh-CN-390-req",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "zh-CN-390:req:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login en-1440-req",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "en-1440:req:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login en-390-req",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "en-390:req:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login zh-CN-1440-ro",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "zh-CN-1440:ro:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login zh-CN-390-ro",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "zh-CN-390:ro:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login en-1440-ro",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "en-1440:ro:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login en-390-ro",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "en-390:ro:goto /risk/limit-tiers",
+      "type": "warning",
+      "text": "You are trying to use a blocker on a POP navigation to a location that was not created by @remix-run/router. This will fail silently in production. This can happen if you are navigating outside the router via `window.history.pushState`/`window.location.hash` instead of using router navigation APIs. "
+    },
+    {
+      "step": "login zh-CN-1440-admin",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "login zh-CN-1440-admin",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "step": "login zh-CN-390-admin",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "login zh-CN-390-admin",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "step": "login en-1440-admin",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "login en-1440-admin",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "step": "login en-390-admin",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "step": "login en-390-admin",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    }
+  ],
+  "httpErrors": [],
+  "writes": []
+}

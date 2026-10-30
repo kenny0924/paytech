@@ -6,11 +6,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.risk.control.core.dal.dataobject.ClientUnderwriting;
 import com.paytech.risk.control.core.enums.UnderwritingDecisionSource;
 import com.paytech.risk.control.core.enums.UnderwritingStatus;
+import com.paytech.risk.control.domain.limittier.LimitTierEstablishContext;
 import com.paytech.risk.control.domain.underwriting.UnderwritingAutoRule;
 import com.paytech.risk.control.domain.underwriting.UnderwritingContent;
 import com.paytech.risk.control.domain.underwriting.UnderwritingDecisionContext;
@@ -20,7 +23,10 @@ import com.paytech.risk.control.domain.underwriting.UnderwritingRule;
 import com.paytech.risk.control.domain.underwriting.UnderwritingTerms;
 import com.paytech.risk.control.domain.underwriting.UnderwritingView;
 import com.paytech.risk.control.domainservice.port.ControlIdentifierGenerator;
+import com.paytech.risk.control.domainservice.repository.ClientLimitTierRepository;
 import com.paytech.risk.control.domainservice.repository.ClientUnderwritingRepository;
+import com.paytech.risk.control.domainservice.repository.RiskListRepository;
+import com.paytech.risk.control.service.ClientLimitTierService;
 import com.paytech.risk.control.domainservice.validator.underwriting.UnderwritingContentValidator;
 import com.paytech.risk.control.service.UnderwritingService;
 import com.paytech.risk.control.service.processor.request.AutoUnderwritingRequest;
@@ -32,13 +38,18 @@ import lombok.AllArgsConstructor;
  * <li>服务端按 ACTIVE 规则重判输入，全部检查通过才生成；结论取标准模板，审批来源 AUTO_RULE 并记规则版本。</li>
  * <li>审计身份：created_by 为触发人，submitted_by / decided_by 为空，提交与决定时间为生成时间；不需四眼。</li>
  * <li>同一 Client 已有进行中承保时拒绝；有有效 APPROVED 时同一事务替代。</li>
+ * <li>批准时 Client 尚无档位（首次或修订批准），与结论同一事务建 VERIFICATION 限额档位（REQ-04）；已有档位不改。</li>
  */
 @Component
 @AllArgsConstructor
 public class AutoUnderwritingProcessor extends AbstractLockProcessor<AutoUnderwritingRequest, UnderwritingView> {
     private final Clock clock;
+    private final RiskListRepository lists;
     private final UnderwritingService service;
+    private final ClientLimitTierService tierService;
+    private final ClientLimitTierRepository tiers;
     private final ControlIdentifierGenerator identifiers;
+    private final PlatformTransactionManager transactionManager;
     private final ClientUnderwritingRepository underwritings;
 
     /** 在等待时间内尝试获取 Client 承保锁。 */
@@ -60,7 +71,16 @@ public class AutoUnderwritingProcessor extends AbstractLockProcessor<AutoUnderwr
         // 保存
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         ClientUnderwriting row = approvedRow(request, new UnderwritingContent(request.getInput(), terms), rule, superseded, now);
-        service.autoApprove(new UnderwritingDecisionContext(row, null, null, superseded, request.getActorAccountId(), now));
+        UnderwritingDecisionContext context = new UnderwritingDecisionContext(row, null, null, superseded,
+            request.getActorAccountId(), now);
+        LimitTierEstablishContext tier = LimitTierCommands.underwritingInitialization(tiers, lists, identifiers,
+            LimitTierCommands.profile(row), row.getUnderwritingId(), row.getCrr(), request.getActorAccountId(), now);
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            service.autoApprove(context);
+            if (tier != null) {
+                tierService.establish(tier);
+            }
+        });
         return UnderwritingView.of(row, rule.getVersionNo());
     }
 

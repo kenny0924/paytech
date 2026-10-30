@@ -1,0 +1,6 @@
+# REQ-04 operations-console-bff：mor-test 回滚覆盖（= 现网 jq-20261030b）。
+services:
+  operations-console-bff:
+    image: sha256:2452aaa79b35a73d707d11934eb42b308d94758b5d4d3269c5178ed6b39ef6d3  # mor-test/operations-console-bff:jq-20261030b（JAR a8447c752285a07c）
+    environment:
+      OPERATIONS_TAX_BASE_URL: http://tax-service:18116

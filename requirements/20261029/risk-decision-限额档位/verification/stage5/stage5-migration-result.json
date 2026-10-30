@@ -1,0 +1,40 @@
+{
+ "results": [
+  {
+   "clientId": "237161687952666625",
+   "outcome": "CREATED"
+  },
+  {
+   "clientId": "240674482170114049",
+   "outcome": "CREATED"
+  },
+  {
+   "clientId": "900000000001380201",
+   "outcome": "CREATED"
+  },
+  {
+   "clientId": "880000000901",
+   "outcome": "CREATED"
+  }
+ ],
+ "rerun": {
+  "results": [
+   {
+    "clientId": "237161687952666625",
+    "outcome": "SKIPPED_EXISTING"
+   },
+   {
+    "clientId": "240674482170114049",
+    "outcome": "SKIPPED_EXISTING"
+   },
+   {
+    "clientId": "900000000001380201",
+    "outcome": "SKIPPED_EXISTING"
+   },
+   {
+    "clientId": "880000000901",
+    "outcome": "SKIPPED_EXISTING"
+   }
+  ]
+ }
+}

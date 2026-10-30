@@ -4,6 +4,10 @@ import com.paytech.foundation.common.enums.CodeEnum;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
 import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
 import com.paytech.risk.control.core.enums.FulfillmentType;
+import com.paytech.risk.control.core.enums.LimitTier;
+import com.paytech.risk.control.core.enums.LimitTierApprovalLevel;
+import com.paytech.risk.control.core.enums.LimitTierChangeStatus;
+import com.paytech.risk.control.core.enums.LimitTierSource;
 import com.paytech.risk.control.core.enums.RiskListEntrySource;
 import com.paytech.risk.control.core.enums.RiskListEntryStatus;
 import com.paytech.risk.control.core.enums.RiskListPurpose;
@@ -130,6 +134,10 @@ public class PersistenceConfiguration {
             registerCodeEnumHandler(registry, UnderwritingClientType.class);
             registerCodeEnumHandler(registry, FulfillmentType.class);
             registerCodeEnumHandler(registry, UnderwritingRuleStatus.class);
+            registerCodeEnumHandler(registry, LimitTier.class);
+            registerCodeEnumHandler(registry, LimitTierSource.class);
+            registerCodeEnumHandler(registry, LimitTierChangeStatus.class);
+            registerCodeEnumHandler(registry, LimitTierApprovalLevel.class);
         };
     }
 

@@ -105,6 +105,8 @@ web:
       - /risk-decisions
       # 承保工作台与版本含 Client 法定名称（个人 Client 为姓名）、网站与承保说明，只记元数据（REQ-03）。
       - /risk-underwriting
+      # 档位工作台与变更记录含 Client 法定名称（个人 Client 为姓名）与上线说明，只记元数据（REQ-04）。
+      - /risk-limit-tiers
       - /external-api-admin
       # 审核详情含申请人个人资料，命令含内部理由与客户可见说明，只记元数据。
       - /client-onboarding-admin

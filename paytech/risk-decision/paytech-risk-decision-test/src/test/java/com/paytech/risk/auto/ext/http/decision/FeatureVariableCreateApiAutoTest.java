@@ -87,6 +87,23 @@ class FeatureVariableCreateApiAutoTest extends AbstractPaymentRiskApiTest {
         assertEquals(2, store.countFeatureVersions());
     }
 
+    /** 同 Client 近 30 个 UTC 日放行金额（按日汇总，计入本次）与 UTC 当日放行金额。 */
+    @Test
+    void test_normalFlow_dailySum() {
+        String month = newCode("T_CLIENT_ALLOWED_30D");
+        String day = newCode("T_CLIENT_ALLOWED_DAY");
+
+        createVelocityVariable(month, VelocityEventCode.PAYMENT_ATTEMPT_ALLOWED.getCode(), RiskSubjectType.CLIENT.getCode(),
+            VelocityMetric.DAILY_SUM_AMOUNT.getCode(), null, 2_592_000, true);
+        createVelocityVariable(day, VelocityEventCode.PAYMENT_ATTEMPT_ALLOWED.getCode(), RiskSubjectType.CLIENT.getCode(),
+            VelocityMetric.DAILY_SUM_AMOUNT.getCode(), null, 86_400, false);
+
+        assertVelocity(month, VelocityEventCode.PAYMENT_ATTEMPT_ALLOWED, RiskSubjectType.CLIENT,
+            VelocityMetric.DAILY_SUM_AMOUNT, null, 2_592_000, true);
+        assertVelocity(day, VelocityEventCode.PAYMENT_ATTEMPT_ALLOWED, RiskSubjectType.CLIENT,
+            VelocityMetric.DAILY_SUM_AMOUNT, null, 86_400, false);
+    }
+
     /** 结账点：同 Client 1 小时评估次数（计入本次）、同运营主体 1 小时净额合计、Client 名单命中。 */
     @Test
     void test_normalFlow_checkout() {
@@ -246,6 +263,29 @@ class FeatureVariableCreateApiAutoTest extends AbstractPaymentRiskApiTest {
             Arguments.of("结账拦截事件计入本次", change(body -> {
                 checkout(body, VelocityEventCode.CHECKOUT_REJECTED, RiskSubjectType.CLIENT);
                 body.getVelocity().setIncludeCurrent(true);
+            })),
+            Arguments.of("按日汇总统计评估事件", change(body -> {
+                money(body, VelocityMetric.DAILY_SUM_AMOUNT, DecisionPointAuthoringDescriptor.paymentAttemptRisk().currencyVariableCode());
+                body.getVelocity().setAnchorSubjectType(RiskSubjectType.CLIENT.getCode());
+                body.getVelocity().setWindowSeconds(86_400);
+            })),
+            Arguments.of("按日汇总锚定运营主体", change(body -> {
+                money(body, VelocityMetric.DAILY_SUM_AMOUNT, DecisionPointAuthoringDescriptor.paymentAttemptRisk().currencyVariableCode());
+                body.getVelocity().setEventCode(VelocityEventCode.PAYMENT_ATTEMPT_ALLOWED.getCode());
+                body.getVelocity().setAnchorSubjectType(RiskSubjectType.OPERATING_ENTITY.getCode());
+                body.getVelocity().setWindowSeconds(86_400);
+            })),
+            Arguments.of("按日汇总 1 小时窗口", change(body -> {
+                money(body, VelocityMetric.DAILY_SUM_AMOUNT, DecisionPointAuthoringDescriptor.paymentAttemptRisk().currencyVariableCode());
+                body.getVelocity().setEventCode(VelocityEventCode.PAYMENT_ATTEMPT_ALLOWED.getCode());
+                body.getVelocity().setAnchorSubjectType(RiskSubjectType.CLIENT.getCode());
+                body.getVelocity().setWindowSeconds(3600);
+            })),
+            Arguments.of("支付 Client 30 天金额合计（明细）", change(body -> {
+                money(body, VelocityMetric.SUM_AMOUNT, DecisionPointAuthoringDescriptor.paymentAttemptRisk().currencyVariableCode());
+                body.getVelocity().setEventCode(VelocityEventCode.PAYMENT_ATTEMPT_ALLOWED.getCode());
+                body.getVelocity().setAnchorSubjectType(RiskSubjectType.CLIENT.getCode());
+                body.getVelocity().setWindowSeconds(2_592_000);
             })),
             Arguments.of("结账金额变量绑定支付币种", change(body -> {
                 checkout(body, VelocityEventCode.CHECKOUT_ASSESSED, RiskSubjectType.CLIENT);

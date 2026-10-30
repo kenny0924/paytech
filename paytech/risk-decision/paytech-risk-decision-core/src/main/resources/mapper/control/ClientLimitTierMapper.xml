@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.risk.control.core.dal.mapper.ClientLimitTierMapper">
+    <sql id="columns">
+        t.client_limit_tier_id AS clientLimitTierId, t.client_id AS clientId, t.tier, t.previous_tier AS previousTier,
+        t.client_display_name AS clientDisplayName, t.client_no AS clientNo, t.client_type AS clientType,
+        t.jurisdiction_code AS jurisdictionCode, t.source_type AS sourceType, t.source_change_id AS sourceChangeId,
+        t.effective_time AS effectiveTime, t.observation_started_time AS observationStartedTime,
+        t.observation_target_days AS observationTargetDays,
+        t.observation_target_transactions AS observationTargetTransactions,
+        t.observation_started_by_change_id AS observationStartedByChangeId, t.created_by AS createdBy, t.version,
+        t.create_time AS createTime, t.update_time AS updateTime
+    </sql>
+    <!-- 观察期到期只按天数判定（可走 tier、observation_started_time 索引）；笔数在详情中另算。 -->
+    <sql id="observationDue">
+        t.tier = 'OBSERVATION' AND t.observation_started_time IS NOT NULL
+        AND DATE_ADD(t.observation_started_time, INTERVAL t.observation_target_days DAY) &lt;= #{now}
+    </sql>
+    <sql id="filter">
+        <where>
+            <if test="filter.tier != null">AND t.tier = #{filter.tier}</if>
+            <if test="filter.pendingApproval">
+                AND EXISTS (SELECT 1 FROM t_client_limit_tier_change c WHERE c.client_id = t.client_id AND c.pending_slot = 1)
+            </if>
+            <if test="filter.observationDue">
+                AND t.tier = 'OBSERVATION' AND t.observation_started_time IS NOT NULL
+                AND DATE_ADD(t.observation_started_time, INTERVAL t.observation_target_days DAY) &lt;= #{filter.now}
+            </if>
+            <if test="filter.keyword != null">
+                AND (t.client_display_name LIKE CONCAT('%', #{filter.keyword}, '%') OR t.client_no = #{filter.keyword}
+                <if test="filter.keywordClientId != null">OR t.client_id = #{filter.keywordClientId}</if>)
+            </if>
+        </where>
+    </sql>
+    <insert id="insert">
+        INSERT INTO t_client_limit_tier(client_limit_tier_id, client_id, tier, previous_tier, client_display_name, client_no,
+            client_type, jurisdiction_code, source_type, source_change_id, effective_time, observation_started_time,
+            observation_target_days, observation_target_transactions, observation_started_by_change_id, created_by, version,
+            create_time, update_time)
+        VALUES(#{row.clientLimitTierId}, #{row.clientId}, #{row.tier}, #{row.previousTier}, #{row.clientDisplayName},
+            #{row.clientNo}, #{row.clientType}, #{row.jurisdictionCode}, #{row.sourceType}, #{row.sourceChangeId},
+            #{row.effectiveTime}, #{row.observationStartedTime}, #{row.observationTargetDays},
+            #{row.observationTargetTransactions}, #{row.observationStartedByChangeId}, #{row.createdBy}, #{row.version},
+            #{row.createTime}, #{row.updateTime})
+    </insert>
+    <select id="selectByClientId" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientLimitTier">
+        SELECT <include refid="columns"/> FROM t_client_limit_tier t WHERE t.client_id = #{clientId}
+    </select>
+    <update id="updateTier">
+        UPDATE t_client_limit_tier
+        SET tier = #{next.tier}, previous_tier = #{next.previousTier}, source_type = #{next.sourceType},
+            source_change_id = #{next.sourceChangeId}, effective_time = #{next.effectiveTime},
+            observation_started_time = #{next.observationStartedTime}, observation_target_days = #{next.observationTargetDays},
+            observation_target_transactions = #{next.observationTargetTransactions},
+            observation_started_by_change_id = #{next.observationStartedByChangeId}, version = version + 1,
+            update_time = #{next.effectiveTime}
+        WHERE client_limit_tier_id = #{row.clientLimitTierId} AND version = #{row.version} AND tier = #{row.tier}
+    </update>
+    <select id="selectPage" useCache="false" resultType="com.paytech.risk.control.core.dal.dataobject.ClientLimitTier">
+        SELECT <include refid="columns"/> FROM t_client_limit_tier t <include refid="filter"/>
+        ORDER BY t.update_time DESC, t.client_limit_tier_id DESC LIMIT #{limit} OFFSET #{offset}
+    </select>
+    <select id="count" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_client_limit_tier t <include refid="filter"/>
+    </select>
+    <select id="countByTier" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_client_limit_tier t WHERE t.tier = #{tier}
+    </select>
+    <select id="countObservationDue" useCache="false" resultType="long">
+        SELECT COUNT(*) FROM t_client_limit_tier t WHERE <include refid="observationDue"/>
+    </select>
+</mapper>

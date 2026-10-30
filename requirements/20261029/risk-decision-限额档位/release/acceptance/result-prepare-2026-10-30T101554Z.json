@@ -1,0 +1,116 @@
+[
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-01",
+  "step": "L（LOW） 修订前无档位、无 TIER 名单成员",
+  "verdict": "PASS",
+  "evidence": "[]"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-01",
+  "step": "L（LOW） 有有效承保",
+  "verdict": "PASS",
+  "evidence": "{\"underwritingId\": \"241635435409936384\", \"versionNo\": 2, \"crr\": \"LOW\", \"observationDays\": 30, \"observationTransactions\": 100, \"suggestedSettlementDays\": 7, \"decisionSource\": \"MANUAL\"}"
+ },
+ {
+  "ac": "AC-01",
+  "step": "L（LOW） 修订草稿 201",
+  "verdict": "PASS",
+  "evidence": "HTTP 201 {}"
+ },
+ {
+  "ac": "AC-01",
+  "step": "L（LOW） 提交",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-01",
+  "step": "L（LOW） 修订批准后 VERIFICATION（UNDERWRITING_INIT，记本次修订版本）",
+  "verdict": "PASS",
+  "evidence": "{\"tier\": \"VERIFICATION\", \"source\": \"UNDERWRITING_INIT\", \"changes\": [[\"UNDERWRITING_INIT\", \"241867680129323008\"]]}"
+ },
+ {
+  "ac": "AC-03",
+  "step": "240686705999454209 档位 VERIFICATION 与名单一致",
+  "verdict": "PASS",
+  "evidence": "[\"TIER_VERIFICATION\"]"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 241049681294106625",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-01",
+  "step": "H（HIGH） 修订前无档位、无 TIER 名单成员",
+  "verdict": "PASS",
+  "evidence": "[]"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 241049681294106625",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-01",
+  "step": "H（HIGH） 有有效承保",
+  "verdict": "PASS",
+  "evidence": "{\"underwritingId\": \"241635444230557696\", \"versionNo\": 2, \"crr\": \"HIGH\", \"observationDays\": 30, \"observationTransactions\": 100, \"suggestedSettlementDays\": 14, \"decisionSource\": \"MANUAL\"}"
+ },
+ {
+  "ac": "AC-01",
+  "step": "H（HIGH） 修订草稿 201",
+  "verdict": "PASS",
+  "evidence": "HTTP 201 {}"
+ },
+ {
+  "ac": "AC-01",
+  "step": "H（HIGH） 提交",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "AC-01",
+  "step": "H（HIGH） 负责人复核批准",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 241049681294106625",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-01",
+  "step": "H（HIGH） 修订批准后 VERIFICATION（UNDERWRITING_INIT，记本次修订版本）",
+  "verdict": "PASS",
+  "evidence": "{\"tier\": \"VERIFICATION\", \"source\": \"UNDERWRITING_INIT\", \"changes\": [[\"UNDERWRITING_INIT\", \"241867697560850432\"]]}"
+ },
+ {
+  "ac": "AC-03",
+  "step": "241049681294106625 档位 VERIFICATION 与名单一致",
+  "verdict": "PASS",
+  "evidence": "[\"TIER_VERIFICATION\"]"
+ }
+]

@@ -1,0 +1,236 @@
+[
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-10",
+  "step": "只读：工作台 canRequest=false",
+  "verdict": "PASS",
+  "evidence": "false"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-02",
+  "step": "只读：申请 403",
+  "verdict": "PASS",
+  "evidence": "HTTP 403 {'code': 'OPERATIONS_PERMISSION_DENIED', 'detail': '没有执行此操作的权限', 'requestId': '6c5bcf72-6576-4334-9105-454aefdeb126'}"
+ },
+ {
+  "ac": "AC-11",
+  "step": "额度页：无配置问题、VERIFICATION 有 USD / AED / SAR / EGP",
+  "verdict": "PASS",
+  "evidence": "[]"
+ },
+ {
+  "ac": "AC-08",
+  "step": "名单页：TIER 名单手工加成员被拒（业务校验）",
+  "verdict": "PASS",
+  "evidence": "HTTP 400 {'code': 'BUSINESS_CHECK_FAILED', 'detail': '业务校验未通过', 'requestId': '0e23cfc1-55dc-4aee-9b63-cbf4d15f9bde'}"
+ },
+ {
+  "ac": "AC-07",
+  "step": "迁移接口不经 Gateway 暴露（外部入口 404）",
+  "verdict": "PASS",
+  "evidence": "HTTP 404 {'code': 'GATEWAY_ROUTE_NOT_FOUND', 'detail': '请求的网关路由不存在', 'requestId': '497cf4f4-fb48-4a88-a526-f72cfa788736'}"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-06",
+  "step": "L VERIFICATION：USD 600 > 单笔拒绝",
+  "verdict": "PASS",
+  "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+ },
+ {
+  "ac": "AC-06",
+  "step": "L VERIFICATION：USD 100 放行",
+  "verdict": "PASS",
+  "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+ },
+ {
+  "ac": "AC-06",
+  "step": "L VERIFICATION：AED 100 放行（AED 单独累计）",
+  "verdict": "PASS",
+  "evidence": "{\"http\": 200, \"result\": \"ALLOW\", \"path\": [\"allow\", \"auth\", \"block\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+ },
+ {
+  "ac": "AC-06",
+  "step": "L VERIFICATION：GBP 未配置拒绝",
+  "verdict": "PASS",
+  "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_limit\", \"start\", \"tier_gate\", \"tier_verification\"], \"problem\": null}"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-04",
+  "step": "VERIFICATION → STANDARD 被拒",
+  "verdict": "PASS",
+  "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_TRANSITION_INVALID', 'detail': '不允许从当前档位变更到目标档位', 'requestId': '5c3c8bf8-a2c2-4ccf-a8d9-dbbb8b0fcff8'}"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-02",
+  "step": "L 上线复核：无 ENABLED 开通项 → CHECKLIST_NOT_SATISFIED（系统项由 BFF 带出）",
+  "verdict": "PASS",
+  "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHECKLIST_NOT_SATISFIED', 'detail': '上线复核清单未满足', 'requestId': '6f60237b-b874-479a-bcdd-18cd2addf4f1'}"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-02",
+  "step": "管理员申请 → RESTRICTED（LOW 普通审批）",
+  "verdict": "PASS",
+  "evidence": "HTTP 201 STANDARD"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-04",
+  "step": "再申请 409 PENDING_EXISTS",
+  "verdict": "PASS",
+  "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_CHANGE_PENDING_EXISTS', 'detail': '该 Client 已有待审批的档位变更申请', 'requestId': '07337667-0183-480c-96a1-5ee4b9b50aac'}"
+ },
+ {
+  "ac": "AC-02",
+  "step": "本人审批被拒 SELF_APPROVAL",
+  "verdict": "PASS",
+  "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_SELF_APPROVAL', 'detail': '不能审批自己提交的档位变更申请', 'requestId': '7038311a-3884-42e5-9150-e45434885bfc'}"
+ },
+ {
+  "ac": "AC-02",
+  "step": "非申请人撤回被拒 NOT_REQUESTER",
+  "verdict": "PASS",
+  "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_NOT_REQUESTER', 'detail': '只有申请人可以撤回档位变更申请', 'requestId': '0aa6d0e4-d450-449b-8a4f-942bcfc83b3c'}"
+ },
+ {
+  "ac": "AC-02",
+  "step": "普通审批人批准 → RESTRICTED",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "AC-03",
+  "step": "240686705999454209 档位 RESTRICTED 与名单一致",
+  "verdict": "PASS",
+  "evidence": "[\"TIER_RESTRICTED\"]"
+ },
+ {
+  "ac": "AC-06",
+  "step": "L RESTRICTED：受限拒绝",
+  "verdict": "PASS",
+  "evidence": "{\"http\": 200, \"result\": \"DENY\", \"path\": [\"deny_restricted\", \"start\", \"tier_gate\"], \"problem\": null}"
+ },
+ {
+  "ac": "AC-09",
+  "step": "模板：RESTRICTED → LIMIT_TIER_RESTRICTED",
+  "verdict": "PASS",
+  "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"RESTRICTED\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_RESTRICTED\"}"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 240686705999454209",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-02",
+  "step": "RESTRICTED → VERIFICATION 批准",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "AC-03",
+  "step": "240686705999454209 档位 VERIFICATION 与名单一致",
+  "verdict": "PASS",
+  "evidence": "[\"TIER_VERIFICATION\"]"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 241049681294106625",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 241049681294106625",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-02",
+  "step": "H 申请 → RESTRICTED（HIGH → ELEVATED）",
+  "verdict": "PASS",
+  "evidence": "HTTP 201 ELEVATED"
+ },
+ {
+  "ac": "AC-02",
+  "step": "普通审批人批准 ELEVATED 被拒",
+  "verdict": "PASS",
+  "evidence": "HTTP 409 {'code': 'RISK_LIMIT_TIER_ELEVATION_REQUIRED', 'detail': '该申请须由高级审批人处理', 'requestId': 'ae7dd128-18da-49b8-beef-b6cb5cba7f91'}"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 241049681294106625",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-02",
+  "step": "高级审批人驳回 → REJECTED，档位不变",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 REJECTED"
+ },
+ {
+  "ac": "WS",
+  "step": "档位工作台 241049681294106625",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 "
+ },
+ {
+  "ac": "AC-02",
+  "step": "申请人撤回 → WITHDRAWN",
+  "verdict": "PASS",
+  "evidence": "HTTP 200 {}"
+ },
+ {
+  "ac": "AC-03",
+  "step": "241049681294106625 档位 VERIFICATION 与名单一致",
+  "verdict": "PASS",
+  "evidence": "[\"TIER_VERIFICATION\"]"
+ },
+ {
+  "ac": "AC-09",
+  "step": "模板：VERIFICATION 对 OBSERVATION → BELOW_TARGET",
+  "verdict": "PASS",
+  "evidence": "{\"satisfied\": \"0\", \"out_tier\": \"VERIFICATION\", \"out_observationDue\": \"0\", \"missing\": \"LIMIT_TIER_BELOW_TARGET\"}"
+ }
+]

@@ -27,7 +27,10 @@ import com.paytech.risk.test.checker.evaluation.SettlementRiskAssessmentChecker;
 import com.paytech.risk.test.clear.RiskDecisionDataCleaner;
 import com.paytech.risk.test.clear.RiskRedisCleaner;
 import com.paytech.risk.test.infrastructure.RiskDecisionDatabasePrecondition;
+import com.paytech.risk.test.checker.control.LimitTierDataChecker;
+import com.paytech.risk.test.mapper.control.LimitTierTestMapper;
 import com.paytech.risk.test.mapper.control.UnderwritingTestMapper;
+import com.paytech.risk.test.mocker.control.LimitTierMocker;
 import com.paytech.risk.test.mapper.decision.DictionaryReferenceTestMapper;
 import com.paytech.risk.test.mapper.decision.DictionaryTestMapper;
 import com.paytech.risk.test.mapper.decision.FlowTestMapper;
@@ -67,7 +70,8 @@ import tools.jackson.databind.ObjectMapper;
     DictionaryReferenceMocker.class, DictionaryRecordChecker.class,
     VariableTestMapper.class, VariableMocker.class, VariableDataChecker.class,
     PaymentRiskTestMapper.class, PaymentRiskMocker.class, CheckoutRiskTestMapper.class, CheckoutRiskMocker.class,
-    UnderwritingTestMapper.class, UnderwritingRuleMocker.class})
+    UnderwritingTestMapper.class, UnderwritingRuleMocker.class, LimitTierTestMapper.class, LimitTierMocker.class,
+    LimitTierDataChecker.class})
 public abstract class RiskDecisionMockTestBase extends TestBase {
     /** 补偿处理停止的最长等待。 */
     private static final long ASYNC_STOP_MILLIS = 10_000;

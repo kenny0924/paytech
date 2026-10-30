@@ -66,6 +66,8 @@ web:
       - /risk-decisions
       # 承保请求与响应含 Client 法定名称（个人 Client 为姓名）、网站与承保说明，只记元数据（REQ-03）。
       - /risk-underwriting
+      # 档位申请含上线说明、复核清单与 Client 名称，迁移请求含 Client 法定名称或个人姓名，只记元数据（REQ-04）。
+      - /risk-limit-tiers
 
 management:
   server:
@@ -108,6 +110,12 @@ redis:
     resource-lock:
       wait-time: 500ms
       lease-time: 30s
+
+# 限额档位（REQ-04）。
+risk:
+  limit-tier:
+    # 允许调用存量迁移内部接口（L12）的私网服务名（X-Caller-Service）；默认空即迁移入口关闭，只在发布迁移步骤期间临时配置。
+    migration-callers: ${RISK_LIMIT_TIER_MIGRATION_CALLERS:}
 
 # 实例 ID（实例清单 instance.id，01 §5）：内部调用 Token 的 inst。
 paytech:

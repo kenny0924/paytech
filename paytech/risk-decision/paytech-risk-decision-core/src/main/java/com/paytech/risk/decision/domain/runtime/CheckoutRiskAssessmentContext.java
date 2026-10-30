@@ -2,6 +2,7 @@ package com.paytech.risk.decision.domain.runtime;
 
 import java.util.List;
 
+import com.paytech.risk.decision.core.dal.dataobject.ClientAllowedDailyTotal;
 import com.paytech.risk.decision.core.dal.dataobject.CheckoutInputSnapshot;
 import com.paytech.risk.decision.core.dal.dataobject.DecisionEvaluation;
 import com.paytech.risk.decision.core.dal.dataobject.EvaluationFeatureResult;
@@ -37,4 +38,7 @@ public class CheckoutRiskAssessmentContext {
 
     /** 累计事件主体。 */
     private final List<VelocityEventSubject> velocitySubjects;
+
+    /** Client 当日放行汇总增量；只在放行时有一条。 */
+    private final List<ClientAllowedDailyTotal> dailyTotals;
 }

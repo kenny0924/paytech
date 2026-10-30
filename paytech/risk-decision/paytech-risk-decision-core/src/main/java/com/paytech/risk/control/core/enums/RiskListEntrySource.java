@@ -8,7 +8,10 @@ public enum RiskListEntrySource implements CodeEnum {
     ACTION("ACTION"),
 
     /** 运营人工维护，必须记录操作人与原因。 */
-    MANUAL("MANUAL");
+    MANUAL("MANUAL"),
+
+    /** 限额档位投影，随档位变更同事务写入，原因记变更记录 ID。 */
+    TIER("TIER");
 
     private final String code;
 

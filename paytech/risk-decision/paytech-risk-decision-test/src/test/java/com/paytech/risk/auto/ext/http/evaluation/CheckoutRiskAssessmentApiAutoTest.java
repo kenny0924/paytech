@@ -31,13 +31,16 @@ import com.paytech.risk.test.mapper.evaluation.CheckoutRiskTestMapper;
 /**
  * 结账风控评估：真实配置入口准备结账拦截流程并激活，再经统一评估入口执行
  * <li>拦截规则集：消费者国家为受限国家拒绝；Local Partner 被拦截拒绝；行业为 GAMING 且净额超过 1000 审核；明细超过 50 行审核。</li>
- * <li>正常流程：放行；落库评估、结账输入快照（订单与商业事实、稳定输入摘要）、规则与流程轨迹，没有 Feature 结果；写一条结账评估累计事件，主体为 Client 与运营主体，金额为净额。</li>
+ * <li>正常流程：放行；落库评估、结账输入快照（订单与商业事实、稳定输入摘要）、规则与流程轨迹，没有 Feature 结果；写结账评估与结账放行累计事件，主体为 Client 与运营主体，金额为净额；放行另记 Client 日汇总（CHECKOUT_ALLOWED）。</li>
  * <li>业务规则：国家拒绝、行业与净额组合审核、明细行数审核、Local Partner 拒绝，审核与拒绝另写一条结账被拦截事件；可选 Local Partner 缺省时比较不成立。</li>
  * <li>重放：同一订单同内容返回原结果且不重复写入（含累计事件），金额尾零不影响比较；输入变化返回 409。</li>
  *
  * @see RiskDecisionApi#evaluate(EvaluateDecisionRequestBody)
  */
 class CheckoutRiskAssessmentApiAutoTest extends AbstractCheckoutRiskApiTest {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.paytech.risk.test.mapper.control.LimitTierTestMapper tierStore;
+
     /** 被拦截的 Local Partner。 */
     private static final String BLOCKED_PARTNER = "399999";
 
@@ -96,7 +99,13 @@ class CheckoutRiskAssessmentApiAutoTest extends AbstractCheckoutRiskApiTest {
             () -> assertEquals(5, store.traces(assessed.evaluationId(), RuleTraceType.PREDICATE.getCode()).size(),
                 "谓词轨迹"),
             () -> assertEquals(List.of("start", "block", "allow"), store.flowNodeKeys(assessed.evaluationId()), "流程轨迹"));
-        assertEvents(request, new BigDecimal("100"), VelocityEventCode.CHECKOUT_ASSESSED);
+        assertEvents(request, new BigDecimal("100"), VelocityEventCode.CHECKOUT_ALLOWED, VelocityEventCode.CHECKOUT_ASSESSED);
+        List<Map<String, Object>> daily = tierStore.dailyTotals(Long.parseLong(request.getInputs().get("clientId")));
+        assertAll("结账放行只记日汇总",
+            () -> assertEquals(1, daily.size()),
+            () -> assertEquals(VelocityEventCode.CHECKOUT_ALLOWED.getCode(), daily.getFirst().get("event_code")),
+            () -> assertEquals(0, new BigDecimal("100").compareTo((BigDecimal)daily.getFirst().get("amount"))),
+            () -> assertEquals(1, ((Number)daily.getFirst().get("event_count")).intValue()));
     }
 
     /** 消费者国家为受限国家：拒绝，首个终态命中即结束本规则集。 */
@@ -160,7 +169,7 @@ class CheckoutRiskAssessmentApiAutoTest extends AbstractCheckoutRiskApiTest {
 
         assertAll(() -> assertEquals(first, replayed), () -> assertEquals(1, store.countPrimaryEvaluations()),
             () -> assertEquals(1, store.countSnapshots()),
-            () -> assertEquals(1, store.countVelocityEvents(CheckoutRiskTestMapper.SOURCE_TYPE), "重放不写累计事件"));
+            () -> assertEquals(2, store.countVelocityEvents(CheckoutRiskTestMapper.SOURCE_TYPE), "重放不写累计事件"));
     }
 
     /** 同一订单改输入：409，原评估不变。 */
@@ -175,7 +184,7 @@ class CheckoutRiskAssessmentApiAutoTest extends AbstractCheckoutRiskApiTest {
             .assertProblem(409, CommonErrorCode.CONCURRENT_REQUEST.getCode());
 
         assertEquals(1, store.countPrimaryEvaluations());
-        assertEquals(1, store.countVelocityEvents(CheckoutRiskTestMapper.SOURCE_TYPE), "冲突不写累计事件");
+        assertEquals(2, store.countVelocityEvents(CheckoutRiskTestMapper.SOURCE_TYPE), "冲突不写累计事件");
         assertEquals(0, new BigDecimal("100").compareTo(
             (BigDecimal)store.snapshot(Long.parseLong(request.getBusinessKey())).get("net_amount")), "首次冻结的净额不变");
     }

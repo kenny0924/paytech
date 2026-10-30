@@ -47,6 +47,7 @@
   "master-data.client.field.legalName": "Legal Name",
   "master-data.client.field.responsible": "Responsible PayFac",
   "master-data.client.jurisdictionInvalid": "Enter an uppercase jurisdiction code, e.g. AE.",
+  "master-data.client.limitTier": "Limit tier",
   "master-data.client.list.empty": "No Clients",
   "master-data.client.maskedHint": "Personal ID numbers are protected; only masked values are shown.",
   "master-data.client.people.empty": "No related people",

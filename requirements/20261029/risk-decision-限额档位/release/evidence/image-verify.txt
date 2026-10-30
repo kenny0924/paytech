@@ -1,0 +1,5 @@
+risk-decision-service id=sha256:1414384e28e6964c3e47add9d648fe483fb685624874f867ceaeed9a1f929462 jar_in_image=34456b37a65a7436 built=34456b37a65a7436 jar=same probe=same meta_vs_live=same
+operations-console-bff id=sha256:4bd4c3dfb16e92f32900910b98dbcb7c73391b0bcb19927ee284e86585c90606 jar_in_image=9f660a77af785cbd built=9f660a77af785cbd jar=same probe=same meta_vs_live=same
+platform-support-service id=sha256:af13e77a05c3d30bf9652523d52ba302dc59d2ee2b2221500ece647215560012 jar_in_image=9b2a86e18682be60 built=9b2a86e18682be60 jar=same probe=same meta_vs_live=same
+api-gateway id=sha256:d51daee3c4caecd720a8d512c6c4d7c43821cb2694cf1fa24d598449eac032cf jar_in_image=d3dd5aa279ea6672 built=d3dd5aa279ea6672 jar=same probe=same meta_vs_live=same
+operations-console-web id=sha256:2f7f8780d5abf1991f51eb2c4db242cde930a13c10bc579f908e5b6b74efac06 dist=same files=277 nginx_conf=same meta_vs_live=same

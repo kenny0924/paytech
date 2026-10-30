@@ -1,0 +1,11 @@
+# REQ-04 risk-decision 限额档位：存量迁移窗口专用覆盖（runbook ⑪ 迁移；迁移核对 0 缺口后立即改用 compose-candidate.risk-decision-service.yaml 重启清空白名单）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag rq04-20261030b 仅供辨认）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-rq04-rel = main 6eaf1bd3 + 联合查询（Code-MoR-jq-rel rev c，ops-bff / ops-web 构建产物与现网逐项相同）+ 69f87bbf（多语言发布变更记录）+ REQ-04 本需求文件。
+# 与候选相同镜像，只多一个 env：L12 迁移白名单只允许 X-Caller-Service = rq04-release-migration（脚本 scripts/rq04_migrate.py 经私网探针调用）。
+services:
+  risk-decision-service:
+    image: sha256:1414384e28e6964c3e47add9d648fe483fb685624874f867ceaeed9a1f929462  # mor-test/risk-decision-service:rq04-20261030b（JAR 34456b37a65a7436）
+    environment:
+      RISK_LIMIT_TIER_MIGRATION_CALLERS: rq04-release-migration
