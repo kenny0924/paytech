@@ -1,0 +1,23 @@
+{"run":"en-1440","role":"admin","step":"P7-idle","check":{"empty":"Select a ledger book to see posting progress Compares billing facts, account posting batches and ledger consumption in turn to find which segment is stuck.","menuHasPage":true,"rebuildDisabled":true,"options":["ZQ344 · USD\nOperating entity book","PLOPS_ZQ344 · USD\nFinance entity book (PLOPS_ZQ344)"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"en-1440","role":"admin","step":"P2-oe-behind","check":{"segments":["is-ok | 1 Billing Fact Intake Consistent billing published 606 · max …663680 account applied 606 · max …663680 billing unpublished 0","is-ok | 2 account Posting Streams 1 stream account max sequence 606 Last posted 10/30/2026, 19:35:24 Streams 1","is-ok | 3 ledger Consumption Consistent ledger consumed 606 Batches behind 0"],"stuck":"","buttons":["Rebuild Balances","Refresh","Browse Batches"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"en-1440","role":"admin","step":"P6-browse","check":{"url":"/finance/posting-ops/streams/OE.ZQ344.USD.0?ledgerBookId=241946219587354624&fromSequence=557","summary":"account max sequence 606 ledger consumed 606 From sequence 557 Per page 50 batches Go","rows":51},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"en-1440","role":"admin","step":"P6b-drawer","check":{"drawer":"Batch ID 241946514027499520 Entity OPERATING_ENTITY · ZQ344 / USD · Shard 0 Batch Seq. 557 Posted At 2026-10-30 19:29 Source Type ECONOMIC_FACT (Fact) Published At 2026-10-30 19:29 Source Fact Fact ID 241946510051291136 Fact Type MANUAL_ADJUSTMENT Fact Version v1 Supersedes Fact — Apply Status APPLIED Service Charge Finance Entity — Line Account No. / GL Account Owner Balance Bucket Side Amount Line Account No. / GL Account Owner Balance Bucket Side Amount 1 ZQ344-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 888315298797128548 PENDING Credit 1.00 Account Entries Total Debit 0.00 Total Credit 1.00 1 entry"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"en-1440","role":"admin","step":"P6c-back","check":{"url":"/finance/posting-ops?ledgerBookId=241946219587354624","keptBook":true},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"en-1440","role":"admin","step":"P9-fe-book","check":{"segments":["is-ok | 1 Billing Fact Intake Consistent billing published 1 · max …326080 account applied 1 · max …326080 billing unpublished 0","is-ok | 2 account Posting Streams 1 stream account max sequence 606 Last posted 10/30/2026, 19:35:24 Streams 1","is-ok | 3 ledger Consumption Consistent ledger consumed 606 Batches behind 0"],"stuck":"","buttons":["Rebuild Balances","Refresh","Browse Batches"],"table":"Stream account Max Seq. Last Posted ledger Consumed Behind Status Actions Stream account Max Seq. Last Posted ledger Consumed Behind Status Actions OE.ZQ344.USD.0 Service charge OE 606 10/30/2026, 19:35:24 606 0 Consistent Browse Batches"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"en-1440","role":"readonly","step":"P10-readonly","check":{"segments":["is-ok | 1 Billing Fact Intake Consistent billing published 606 · max …663680 account applied 606 · max …663680 billing unpublished 0","is-ok | 2 account Posting Streams 1 stream account max sequence 606 Last posted 10/30/2026, 19:35:24 Streams 1","is-ok | 3 ledger Consumption Consistent ledger consumed 606 Batches behind 0"],"stuck":"","buttons":["Refresh","Browse Batches"],"locked":"","hasCatchUp":false,"hasRebuild":false},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"en-1440","role":"noperm","step":"R-noperm","check":{"menuHasPage":false,"body":"No access To use this feature, ask a platform administrator to grant you access."},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"en-390","role":"admin","step":"P7-idle","check":{"empty":"","menuHasPage":false,"rebuildDisabled":null,"options":[]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"en-390","role":"admin","step":"P2-oe-behind","check":{"segments":[],"stuck":"","buttons":[]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('button:visible, a:visible, [role=button]:visible').filter({ hasText: 'Browse Batches' }).first()[22m
+
+    at /Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261030/operations-明细账运维/verification/stage5/t6_browser.mjs:126:49 {
+  name: 'TimeoutError'
+}
+
+Node.js v24.6.0

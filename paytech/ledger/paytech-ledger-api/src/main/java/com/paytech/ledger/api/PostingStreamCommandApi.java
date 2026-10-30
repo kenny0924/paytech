@@ -14,7 +14,8 @@ import jakarta.validation.Valid;
  * account 过账流的追平命令（内部能力 Ledger & Account Balance）
  * <li>AccountPosted 因首条序号未到、缺口或投递上限进入死信时的恢复路径：按流经 account-api {@code GET /account-postings/v1} 从已消费序号 + 1
  * 分页读取，逐批次按与消费相同的逻辑过账，每批次一个本库事务并推进消费进度；之后重放的死信消息按 STALE 跳过。</li>
- * <li>Finance 内部接口：命令操作人身份来自 X-Gateway-Actor-Subject / X-Gateway-Session-Id Header；本期不接控制台，不得直接对外发布。</li>
+ * <li>Finance 内部接口：命令操作人身份来自 X-Gateway-Actor-Subject / X-Gateway-Session-Id Header；经 Operations 控制台（明细账运维）由有执行权限的运营账号触发，
+ * 运营 BFF 转发时带上操作人，不直接对外发布。</li>
  */
 @HttpExchange(url = "/posting-streams/v1", accept = "application/json")
 public interface PostingStreamCommandApi {

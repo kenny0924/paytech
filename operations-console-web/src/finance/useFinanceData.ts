@@ -16,9 +16,10 @@ export interface ListState<T> { items: T[]; loading: boolean; error: string; rel
 /**
  * 只读下拉 / 字典数据：path 为空时不请求；403 触发授权刷新；失败时通知并保留内联错误供重试。
  * 上层每次渲染会传入新的回调，放进 ref 避免触发重新加载。
+ * <li>notifyFailure 为 false 时不弹通知，只保留 error，由页面统一展示（如明细账运维的整页报错）。</li>
  */
 export function useFinanceList<T>(path: string | null, load: (path: string, signal: AbortSignal) => Promise<T[]>,
-  onAuthorizationChanged?: () => void, failureTitle = t('data.loadFailed')): ListState<T> {
+  onAuthorizationChanged?: () => void, failureTitle = t('data.loadFailed'), notifyFailure = true): ListState<T> {
   const notify = useErrorNotification();
   const [state, setState] = useState<{ path: string | null; items: T[]; loading: boolean; error: string }>({ path: null, items: [], loading: false, error: '' });
   const [reload, setReload] = useState(0);
@@ -34,10 +35,10 @@ export function useFinanceList<T>(path: string | null, load: (path: string, sign
         if (abort.signal.aborted) return;
         if (failure instanceof ApiError && failure.status === 403) authorizationChanged.current?.();
         setState({ path, items: [], loading: false, error: failure instanceof Error ? failure.message : t('common.loadFailed') });
-        notify(failure, failureTitle);
+        if (notifyFailure) notify(failure, failureTitle);
       });
     return () => abort.abort();
-  }, [path, reload, notify, failureTitle]);
+  }, [path, reload, notify, failureTitle, notifyFailure]);
   const items = state.path === path ? state.items : [];
   return { items, loading: state.loading, error: state.error, reload: () => setReload(value => value + 1) };
 }
@@ -87,9 +88,9 @@ export function useChartAdoption(chartCode: string | null, onAuthorizationChange
 }
 
 /** 全部账簿（每页 200 分批读完），供试算平衡的账簿选择。 */
-export function useLedgerBooks(onAuthorizationChanged?: () => void) {
+export function useLedgerBooks(onAuthorizationChanged?: () => void, notifyFailure = true) {
   return useFinanceList<LedgerBook>(financePaths.ledgerBooks, (path, signal) => requestAllPages(path, signal, session, {}, bookPage),
-    onAuthorizationChanged, t('data.booksLoadFailed'));
+    onAuthorizationChanged, t('data.booksLoadFailed'), notifyFailure);
 }
 
 /** 账簿主体的会计期间：先按主体找唯一日历，再读完该日历全部期间（按财年、期号升序）；账簿未知时不请求。 */
@@ -107,9 +108,10 @@ export function useBookPeriods(book: LedgerBook | undefined, onAuthorizationChan
 }
 
 /** 全部财务主体（每页 200 分批读完），供主体下拉与主体代码展示。 */
-export function useFinanceEntities(enabled = true, onAuthorizationChanged?: () => void) {
+export function useFinanceEntities(enabled = true, onAuthorizationChanged?: () => void, notifyFailure = true) {
   const state = useFinanceList<FinanceEntity>(enabled ? financePaths.financeEntities : null,
-    (path, signal) => requestAllPages(path, signal, session, {}, entityPage), onAuthorizationChanged, t('data.entitiesLoadFailed'));
+    (path, signal) => requestAllPages(path, signal, session, {}, entityPage), onAuthorizationChanged, t('data.entitiesLoadFailed'),
+    notifyFailure);
   const byId = useMemo(() => new Map(state.items.map(item => [item.financeEntityId, item])), [state.items]);
   return { ...state, byId };
 }

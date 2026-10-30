@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import com.paytech.account.api.constant.StandardAccountCodes;
@@ -24,6 +26,7 @@ import com.paytech.ledger.api.request.CatchUpPostingStreamRequestBody;
 import com.paytech.ledger.api.response.CatchUpPostingStreamResponseBody;
 import com.paytech.ledger.test.base.AbstractTransactionPostingTest;
 import com.paytech.ledger.test.builder.AccountPostingBuilder;
+import com.paytech.ledger.test.builder.BillingFactLineBuilder;
 import com.paytech.ledger.test.checker.LedgerResponseChecker;
 import com.paytech.ledger.test.mocker.external.AccountPostingMocker;
 import com.paytech.ledger.test.mocker.external.BillingFactMocker;
@@ -31,8 +34,8 @@ import com.paytech.ledger.test.probe.AccountPostedPublisher;
 
 /**
  * 过账流追平命令：从已消费序号 + 1 经 account-api 分页读取批次，逐批次按消费逻辑过账并推进进度
- * <li>覆盖：首条不是序号 1 的批次进入死信后追平补齐；maxBatches 分段续跑；已追平时零处理；account / billing 不可用 503 且已处理批次保留；
- * 请求字段错误。</li>
+ * <li>覆盖：首条不是序号 1 的批次进入死信后追平补齐；maxBatches 分段续跑；一次读满多批次的整页与多行大事实（响应体上限）；已追平时零处理；
+ * account / billing 不可用 503 且已处理批次保留；请求字段错误。</li>
  *
  * @see com.paytech.ledger.api.PostingStreamCommandApi#catchUpPostingStream(String, String, CatchUpPostingStreamRequestBody)
  */
@@ -93,6 +96,54 @@ class CatchUpPostingStreamTest extends AbstractTransactionPostingTest {
             () -> assertTrue(accountPostings.calls().contains("postings:" + AccountPostedPublisher.aggregateId(thirdPosting)
                 + "@3/2"), "第二次从序号 3 读取: " + accountPostings.calls()));
         ledgerChecker.assertBalancedJournals(oeLedger.getLedgerBookId(), 3);
+    }
+
+    /** 落后 20 个批次：缺省 maxBatches 一次读取一页（limit 200）全部过账；整页响应超过旧的 8 KiB 上限。 */
+    @Test
+    void test_catchUpManyBatchesInOnePage() {
+        int batches = 20;
+        AccountPostedPayload[] postings = new AccountPostedPayload[batches];
+        for (int i = 0; i < batches; i++) {
+            BillingFactPayload fact = clientCharge(Integer.toString(i + 1));
+            billingFacts.mockFact(fact);
+            postings[i] = clientCredit(fact, i + 1, Integer.toString(i + 1));
+        }
+        accountPostings.mockPostings(postings);
+
+        CatchUpPostingStreamResponseBody response = catchUp(null).assertSuccess(200)
+            .as(CatchUpPostingStreamResponseBody.class);
+
+        assertAll(() -> assertEquals(Integer.toString(batches), response.getProcessedCount()),
+            () -> assertEquals(Integer.toString(batches), response.getLastSequence()),
+            () -> assertTrue(response.isCaughtUp()),
+            () -> assertEquals(batches, consumedSequence(postings[batches - 1])),
+            () -> assertEquals(List.of("postings:" + streamId() + "@1/200"), accountPostings.calls()));
+        ledgerChecker.assertBalancedJournals(oeLedger.getLedgerBookId(), batches);
+    }
+
+    /** 40 行的事实及其 40 条流水的批次：account 批次与 billing 事实响应均超过旧的 8 KiB 上限，仍一次过账。 */
+    @Test
+    void test_catchUpLargeFact() {
+        int lineCount = 40;
+        BillingFactLineBuilder[] lines = new BillingFactLineBuilder[lineCount];
+        for (int i = 0; i < lineCount; i++) {
+            lines[i] = adjustment(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.OPERATING_ENTITY, ENTITY_NO,
+                FactPartyRole.CLIENT, CLIENT, FactLineDirection.CHARGE, "1");
+        }
+        BillingFactPayload fact = fact(payment("0").factType(BillingFactType.MANUAL_ADJUSTMENT), lines);
+        AccountPostingBuilder posting = AccountPostingBuilder.fact(fact, 1);
+        for (int i = 1; i <= lineCount; i++) {
+            posting.entry(StandardAccountCodes.CLIENT_PAYABLE, OwnerType.CLIENT, CLIENT, BalanceBucket.PENDING,
+                EntrySide.CREDIT, "1", i);
+        }
+        AccountPostedPayload payload = posting.build();
+        billingFacts.mockFact(fact);
+        accountPostings.mockPostings(payload);
+
+        catchUp(null).assertSuccess(200).assertText("processedCount", "1").assertText("lastSequence", "1");
+
+        assertAll(() -> assertEquals(1, consumedSequence(payload)), () -> assertEquals(1, testMapper.countAllInstructions()));
+        ledgerChecker.assertBalancedJournals(oeLedger.getLedgerBookId(), 1);
     }
 
     /** 已追平：从已消费序号 + 1 读取到空页，零处理。 */

@@ -1,0 +1,25 @@
+# 明细账运维阶段 6 验证（发布树 Code-MoR-plops-rel = main 331d8e0e + 67 文件 + 1 测试修正；JDK 25，-o 本地仓库 ~/.m3；env 取自 local-environment/.env.local 不打印；本机库只用 mor-local-mysql-1）
+候选应用 JAR（-o -DskipTests clean package，4 个 app -am）: SUCCESS 47 s；对照树 331d8e0e 同命令 SUCCESS
+模块测试（package，-am，-Dtest=<模块包>/** 或指定类，顺序执行 2026-10-30 17:02—17:15Z）:
+== ledger start 17:02:37
+ledger rc=0 run=341 fail=0 err=0 skip=0 classes=60 end 17:04:23
+== account start 17:04:23
+account rc=0 run=73 fail=0 err=0 skip=0 classes=13 end 17:05:22
+== platform start 17:05:22
+platform rc=0 run=55 fail=0 err=0 skip=0 classes=6 end 17:06:30
+== opsbff start 17:06:30
+opsbff rc=1 run=2573 fail=1 err=0 skip=0 classes=70 end 17:09:47
+== arch start 17:09:47
+arch rc=0 run=70 fail=0 err=0 skip=0 classes=21 end 17:09:52
+DONE
+opsbff run=2573 fail=1 err=0 skip=0
+opsbff-r2 run=2573 fail=0 err=0 skip=0
+ledger Oct 30 21:02:41 A=1455 B=1455 onlyA=0 onlyB=0 changed=0
+account Oct 30 21:04:27 A=556 B=556 onlyA=0 onlyB=0 changed=0
+platform-support Oct 30 21:05:26 A=3249 B=3249 onlyA=0 onlyB=0 changed=0
+operations-console-bff Oct 30 21:14:41 A=3138 B=3138 onlyA=0 onlyB=0 changed=0
+  platform 指定 6 类：OperationsRoleManagementTest、OperationsAuthorizationTest、OperationsAccountManagementTest（加载能力清单 / OperationsCatalog）、GatewayChannelCallbackRouteTest、GatewayConfigurationLockTest、GatewayRouteIdempotencyModeTest
+  opsbff 首轮 1 失败：OperationsConsoleBffApplicationAutoTest.test_applicationReusesFoundationAndExposesExactOperationsRoutes——精确路由清单缺本需求 4 个 BFF 接口（阶段 4/5 只跑了 Finance* 与 PostingOpsRegistrationAutoTest）；发布树补 4 行（测试代码，不进 JAR）后第二轮 2573/0
+  测试后重建 JAR 与镜像内 JAR 逐条目相同（上 4 行 changed=0）
+operations-console-web: tsc --noEmit 0 错误；npm test 1702/1702；npm run build 通过（dist 291）
+未跑全 reactor 测试（共享本机库）。

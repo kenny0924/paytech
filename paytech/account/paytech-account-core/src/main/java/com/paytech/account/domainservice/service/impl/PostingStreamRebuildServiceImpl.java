@@ -42,18 +42,20 @@ public class PostingStreamRebuildServiceImpl implements PostingStreamRebuildServ
     @Override
     public StreamRebuildResult rebuild(List<AccountPostingStream> streams) {
         int accounts = 0;
+        int changedAccounts = 0;
         long entries = 0;
         long maxSequence = 0;
         for (AccountPostingStream stream : streams) {
             StreamRebuildResult result = transactionTemplate.execute(status -> rebuildStream(stream));
             accounts += result.getAccountCount();
+            changedAccounts += result.getChangedAccountCount();
             entries += result.getEntryCount();
             maxSequence = Math.max(maxSequence, result.getMaxPostingSequence());
         }
-        return new StreamRebuildResult(accounts, entries, maxSequence);
+        return new StreamRebuildResult(accounts, changedAccounts, entries, maxSequence);
     }
 
-    /** 锁流行与账户后按流水重算，版本加一。 */
+    /** 锁流行与账户后按流水重算，版本加一；同一事务内比较新旧余额，统计被纠正的账户数。 */
     StreamRebuildResult rebuildStream(AccountPostingStream stream) {
         AccountPostingStream locked = accountPostingStreamRepository.lock(stream.getEntityType(), stream.getEntityId(),
             stream.getCurrency(), stream.getShardNo());
@@ -66,13 +68,24 @@ public class PostingStreamRebuildServiceImpl implements PostingStreamRebuildServ
             .toList());
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         long entries = 0;
+        int changed = 0;
         for (OwnerAccount account : accounts) {
             Totals total = totals.getOrDefault(account.getId(), NO_ENTRIES);
             BigDecimal net = account.getNormalSide() == EntrySide.DEBIT ? total.debitTotal().subtract(total.creditTotal())
                 : total.creditTotal().subtract(total.debitTotal());
+            if (isBalanceChanged(account, total, net)) {
+                changed++;
+            }
             ownerAccountRepository.applyChange(account, total.debitTotal(), total.creditTotal(), net, now);
             entries += total.entryCount();
         }
-        return new StreamRebuildResult(accounts.size(), entries, locked.getLastSequence());
+        return new StreamRebuildResult(accounts.size(), changed, entries, locked.getLastSequence());
+    }
+
+    /** 重算值与账户当前借方合计、贷方合计、净额按数值比较，任一不同即视为余额被纠正。 */
+    static boolean isBalanceChanged(OwnerAccount account, Totals total, BigDecimal net) {
+        return account.getDebitTotal().compareTo(total.debitTotal()) != 0
+            || account.getCreditTotal().compareTo(total.creditTotal()) != 0
+            || account.getNetBalance().compareTo(net) != 0;
     }
 }

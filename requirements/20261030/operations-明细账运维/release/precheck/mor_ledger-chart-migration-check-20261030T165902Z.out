@@ -1,0 +1,25 @@
+# 20261030T165902Z mor-test mor_ledger READ ONLY: 2026-10-19 ledger-会计科目分级维护 migration columns/tables
++------------------+----------------+
+| TABLE_NAME       | COLUMN_NAME    |
++------------------+----------------+
+| t_chart_account  | account_no     |
+| t_chart_account  | account_status |
+| t_ledger_account | account_no     |
++------------------+----------------+
++------------------------------+
+| TABLE_NAME                   |
++------------------------------+
+| t_account_no_sequence        |
+| t_chart_account_change       |
+| t_consumed_aggregate_version |
++------------------------------+
++--------------+
+| ledger_books |
++--------------+
+|            2 |
++--------------+
++------------------+----------------+
+| consumed_streams | total_consumed |
++------------------+----------------+
+|                1 |             12 |
++------------------+----------------+

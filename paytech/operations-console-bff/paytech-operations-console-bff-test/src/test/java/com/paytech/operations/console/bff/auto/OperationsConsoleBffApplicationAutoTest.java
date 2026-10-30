@@ -493,6 +493,8 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "GET /finance/currencies/v1", "GET /finance/balances/v1/clients/{clientId}",
             "GET /finance/balances/v1/partners/{partnerId}", "GET /finance/owner-accounts/v1",
             "GET /finance/owner-accounts/v1/{accountId}/entries", "GET /finance/account-postings/v1/{postingId}",
+            "GET /finance/posting-progress/v1/ledger-books/{ledgerBookId}", "GET /finance/posting-streams/v1/{streamId}/postings",
+            "POST /finance/posting-streams/v1/{streamId}/catch-up", "POST /finance/posting-rebuilds/v1",
             "POST /finance/ledger-books/v1/{ledgerBookId}/periods/{periodId}/trial-balances",
             "GET /finance/manual-adjustments/v1", "POST /finance/manual-adjustments/v1",
             "GET /finance/manual-adjustments/v1/{manualAdjustmentId}",

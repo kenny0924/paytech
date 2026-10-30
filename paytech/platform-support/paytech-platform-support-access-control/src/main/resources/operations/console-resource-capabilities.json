@@ -561,6 +561,21 @@
     "actions": []
   },
   {
+    "componentKey": "OPERATIONS_FINANCE_POSTING_OPS",
+    "displayName": "明细账运维",
+    "frontendRoute": "/finance/posting-ops",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FINANCE_POSTING_OPS_CATCH_UP",
+        "displayName": "追平"
+      },
+      {
+        "resourceCode": "OPERATIONS_FINANCE_POSTING_OPS_REBUILD",
+        "displayName": "重建余额"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_FINANCE_ADJUSTMENTS",
     "displayName": "调整",
     "frontendRoute": "/finance/adjustments",

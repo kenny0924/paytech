@@ -1,0 +1,234 @@
+{
+  "startedAt": "2026-10-30T17:35:04.315Z",
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "P7-idle",
+          "check": {
+            "releaseNo": 30,
+            "menuHasPage": true,
+            "rebuildLabelFromBundle": "重建余额",
+            "rebuildDisabled": true,
+            "options": [
+              "AE001 · USD\n经营主体账簿",
+              "PLATFORM_HQ · USD\n财务主体账簿（PLATFORM_HQ）"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P1-oe-consistent",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 11 条 · 最大 …309824 account 已应用 11 条 · 最大 …309824 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 12 最后入账 2026/10/30 09:53:00 过账流 1",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 12 落后批次 0"
+            ],
+            "table": "过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 OE.AE001.USD.0 12 2026/10/30 09:53:00 12 0 已一致 浏览批次",
+            "stuck": "",
+            "buttons": [
+              "重建余额",
+              "刷新",
+              "浏览批次"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6-browse",
+          "check": {
+            "url": "/finance/posting-ops/streams/OE.AE001.USD.0?ledgerBookId=238137396670066688&fromSequence=1",
+            "summary": "account 最大序号 12 ledger 已消费 12 从序号 1 起 每页 50 批 跳 转",
+            "rows": 13
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6b-drawer",
+          "check": {
+            "drawer": "批次主键 238137412625231872 主体 OPERATING_ENTITY · AE001 / USD · 分片 0 批次序号 1 入账时间 2026-10-20 07:13 来源类型 ECONOMIC_FACT（事实） 发布时间 2026-10-20 07:13 来源事实 事实 ID 238137406589624320 事实类型 MANUAL_ADJUSTMENT 事实版本 v1 替代事实 — 应用状态 APPLIED 服务费财务主体 — 行号 账户号 / 科目 Owner 余额桶 方向 金额 行号 账户号 / 科目 Owner 余额桶 方向 金额 1 AE001-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 237092466744991745 PENDING 贷 42.90 账户流水 2 AE001-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 237092466744991745 PENDING 借 1.80 账户流水 借方合计 1.80 贷方合计 42.90 2 行流水"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6c-back",
+          "check": {
+            "url": "/finance/posting-ops?ledgerBookId=238137396670066688",
+            "keptBook": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P9-fe-book",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 0 条 · 最大 — account 已应用 0 条 · 最大 — billing 未发布 0",
+              "is-ok | 2 account 过账流 0 条流 account 最大序号 — 最后入账 — 过账流 0",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 — 落后批次 0"
+            ],
+            "table": "过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 这本账簿还没有过账流",
+            "stuck": "",
+            "buttons": [
+              "重建余额",
+              "刷新"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-subledger",
+          "check": {
+            "heading": "明细账查询",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-balances",
+          "check": {
+            "heading": "余额查询",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-period-close",
+          "check": {
+            "heading": "期间关账",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-payout-beneficiary-reviews",
+          "check": {
+            "heading": "Client",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-payout-owners",
+          "check": {
+            "heading": "Client",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "readonly",
+          "step": "P10-readonly",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 11 条 · 最大 …309824 account 已应用 11 条 · 最大 …309824 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 12 最后入账 2026/10/30 09:53:00 过账流 1",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 12 落后批次 0"
+            ],
+            "table": "过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 OE.AE001.USD.0 12 2026/10/30 09:53:00 12 0 已一致 浏览批次",
+            "stuck": "",
+            "buttons": [
+              "刷新",
+              "浏览批次"
+            ],
+            "menuHasPage": true,
+            "hasCatchUp": false,
+            "hasRebuild": false
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "readonly",
+          "step": "P10b-readonly-browse",
+          "check": {
+            "rows": 13
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        }
+      ]
+    }
+  ],
+  "console": [],
+  "httpErrors": [],
+  "deliberate": [],
+  "posts": [],
+  "relogins": 0
+}

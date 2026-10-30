@@ -1,0 +1,41 @@
+{
+  "results": [
+    {
+      "v": "V-6",
+      "step": "建合成只读角色",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "roleId": "241978194859737088",
+        "permissionIds": [
+          "900000000000097101"
+        ]
+      }
+    },
+    {
+      "v": "V-6",
+      "step": "建合成只读账号",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "accountId": "241978195895730176",
+        "emailMasked": "p***@example.test"
+      }
+    },
+    {
+      "v": "V-6",
+      "step": "首登改密",
+      "ok": true,
+      "detail": {
+        "status": 204
+      }
+    }
+  ],
+  "account": {
+    "email": "plops-mt-readonly-1030213457@example.test",
+    "accountId": "241978195895730176",
+    "roleId": "241978194859737088",
+    "roleCode": "PLOPS_MT_READONLY_1030213457",
+    "created": "20261030T173457Z"
+  }
+}

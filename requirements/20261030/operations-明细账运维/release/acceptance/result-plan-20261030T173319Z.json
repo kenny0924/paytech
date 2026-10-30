@@ -1,0 +1,222 @@
+{
+  "results": [
+    {
+      "v": "V-0",
+      "step": "mor-test-ledger-service-1 healthy",
+      "ok": true,
+      "detail": {
+        "inspect": "healthy sha256:b65223c1675ac1e"
+      }
+    },
+    {
+      "v": "V-0",
+      "step": "mor-test-account-service-1 healthy",
+      "ok": true,
+      "detail": {
+        "inspect": "healthy sha256:6ad6a22b92cfbbf"
+      }
+    },
+    {
+      "v": "V-0",
+      "step": "mor-test-platform-support-service-1 healthy",
+      "ok": true,
+      "detail": {
+        "inspect": "healthy sha256:1bfed8839d4c38a"
+      }
+    },
+    {
+      "v": "V-0",
+      "step": "mor-test-operations-console-bff-1 healthy",
+      "ok": true,
+      "detail": {
+        "inspect": "healthy sha256:4bdfce6ee9df4bf"
+      }
+    },
+    {
+      "v": "V-0",
+      "step": "mor-test-operations-console-web-1 healthy",
+      "ok": true,
+      "detail": {
+        "inspect": "healthy sha256:5784fa817c471eb"
+      }
+    },
+    {
+      "v": "V-0",
+      "step": "ACTIVE 路由 675，块 148 四条路由 ACTIVE（Gateway 日志 routeCount 可见时一并记录）",
+      "ok": true,
+      "detail": {
+        "activeRoutes": "675",
+        "block148": [
+          [
+            "900000000000148401",
+            "ACTIVE"
+          ],
+          [
+            "900000000000148402",
+            "ACTIVE"
+          ],
+          [
+            "900000000000148403",
+            "ACTIVE"
+          ],
+          [
+            "900000000000148404",
+            "ACTIVE"
+          ]
+        ],
+        "gatewayLogRouteCount": "无日志输出"
+      }
+    },
+    {
+      "v": "V-0",
+      "step": "Web 入口为新 dist",
+      "ok": true,
+      "detail": {
+        "entry": [
+          "assets/index-CqHRNw-B.js"
+        ]
+      }
+    },
+    {
+      "v": "V-6",
+      "step": "管理员导航含页面与两个按钮",
+      "ok": true,
+      "detail": {
+        "codes": [
+          "OPERATIONS_FINANCE_POSTING_OPS",
+          "OPERATIONS_FINANCE_POSTING_OPS_CATCH_UP",
+          "OPERATIONS_FINANCE_POSTING_OPS_REBUILD"
+        ]
+      }
+    },
+    {
+      "v": "V-1",
+      "step": "B1 OE 账簿 200，三段 CONSISTENT，流 account 最大 = ledger 已消费 = SQL，stuckPosting null",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "seconds": 0.148,
+        "fact": {
+          "accountAppliedCount": "11",
+          "accountMaxAppliedFactId": "241801538719309824",
+          "billingMaxPendingFactId": null,
+          "billingMaxPublishedFactId": "241801538719309824",
+          "billingPendingCount": "0",
+          "billingPublishedCount": "11",
+          "status": "CONSISTENT"
+        },
+        "streams": [
+          {
+            "accountLastPostedTime": "2026-10-30T05:53:00.378028Z",
+            "accountMaxSequence": "12",
+            "currency": "USD",
+            "entityId": "AE001",
+            "entityType": "OPERATING_ENTITY",
+            "lag": "0",
+            "ledgerConsumedSequence": "12",
+            "shardNo": "0",
+            "status": "CONSISTENT",
+            "streamId": "OE.AE001.USD.0",
+            "stuckPosting": null
+          }
+        ],
+        "sql": {
+          "accountStreams": [
+            [
+              "0",
+              "12"
+            ]
+          ],
+          "ledgerConsumed": "12"
+        }
+      }
+    },
+    {
+      "v": "V-2",
+      "step": "B1 FE 账簿 200，流清单 = 服务费所在 OE 流（account 同口径），全部 CONSISTENT",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "seconds": 0.039,
+        "fact": {
+          "accountAppliedCount": "0",
+          "accountMaxAppliedFactId": null,
+          "billingMaxPendingFactId": null,
+          "billingMaxPublishedFactId": null,
+          "billingPendingCount": "0",
+          "billingPublishedCount": "0",
+          "status": "CONSISTENT"
+        },
+        "streams": [],
+        "sqlServiceChargeEntityNos": []
+      }
+    },
+    {
+      "v": "V-3",
+      "step": "B2 limit=20：条数与 mor_account 一致、逐行相同、nextFromSequence null",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "seconds": 0.058,
+        "count": 12,
+        "sqlCount": 12,
+        "next": null
+      }
+    },
+    {
+      "v": "V-3",
+      "step": "批次详情（已有路由）200，流水行存在",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "entries": 2
+      }
+    },
+    {
+      "v": "V-7",
+      "step": "语言包 #30：en / zh-CN finance 含明细账运维文案",
+      "ok": true,
+      "detail": {
+        "en": {
+          "releaseNo": 30,
+          "postingOpsKeys": 144,
+          "rebuildButton": "Rebuild Balances",
+          "byAt": "{time} · by {operator}"
+        },
+        "zh-CN": {
+          "releaseNo": 30,
+          "postingOpsKeys": 144,
+          "rebuildButton": "重建余额",
+          "byAt": "{time} · 操作人 {operator}"
+        }
+      }
+    },
+    {
+      "v": "V-6",
+      "step": "权限 FINANCE_ACCOUNTING_READ / FINANCE_SUBLEDGER_MANAGE 存在且 ACTIVE",
+      "ok": true,
+      "detail": {
+        "rows": [
+          [
+            "900000000000097101",
+            "FINANCE_ACCOUNTING_READ",
+            "ACTIVE"
+          ],
+          [
+            "900000000000148101",
+            "FINANCE_SUBLEDGER_MANAGE",
+            "ACTIVE"
+          ]
+        ]
+      }
+    },
+    {
+      "v": "V-6",
+      "step": "合成只读账号状态文件",
+      "ok": true,
+      "detail": {
+        "exists": false
+      }
+    }
+  ]
+}

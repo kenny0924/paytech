@@ -1,0 +1,54 @@
+{
+  "results": [
+    {
+      "v": "V-6",
+      "step": "只读账号导航只有页面、无执行按钮",
+      "ok": true,
+      "detail": {
+        "codes": [
+          "OPERATIONS_FINANCE_POSTING_OPS"
+        ]
+      }
+    },
+    {
+      "v": "V-6",
+      "step": "只读账号 B1 / B2 200",
+      "ok": true,
+      "detail": {
+        "B1": 200,
+        "B2": 200
+      }
+    },
+    {
+      "v": "V-6",
+      "step": "只读账号 B3 / B4 403",
+      "ok": true,
+      "detail": {
+        "B3": [
+          403,
+          "OPERATIONS_PERMISSION_DENIED"
+        ],
+        "B4": [
+          403,
+          "OPERATIONS_PERMISSION_DENIED"
+        ]
+      }
+    },
+    {
+      "v": "V-6",
+      "step": "403 未产生写入（ledger 已消费与 account 流不变）",
+      "ok": true,
+      "detail": {
+        "sql": {
+          "accountStreams": [
+            [
+              "0",
+              "12"
+            ]
+          ],
+          "ledgerConsumed": "12"
+        }
+      }
+    }
+  ]
+}

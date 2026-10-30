@@ -19,10 +19,16 @@ public class AccountClientConfiguration {
     /** account 服务组名。 */
     public static final String SERVICE_ID = "account-service";
 
+    /**
+     * 响应体上限 4 MiB：追平每页最多 200 个批次（account 批次列表 limit 上限），单流水批次约 830 字节、每多一条流水约 350 字节；
+     * 按平均每批约 50 条流水留余量（事实最多 100 行，版本替代再加冲回行）。进度响应远小于此。
+     */
+    static final int MAX_RESPONSE_BYTES = 4194304;
+
     /** 禁止自动重试和重定向；关账步骤按不可用失败关闭，追平命令返回 503。 */
     @Bean
     RestClientHttpServiceGroupConfigurer accountClient() {
         return HttpServiceClientFactory.configureGroup(SERVICE_ID,
-            HttpServiceClientOptions.strict().withStrictJsonResponses(8192));
+            HttpServiceClientOptions.strict().withStrictJsonResponses(MAX_RESPONSE_BYTES));
     }
 }

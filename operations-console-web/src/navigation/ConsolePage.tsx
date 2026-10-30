@@ -3,7 +3,8 @@ import type { ComponentType } from 'react';
 import { Navigate } from 'react-router-dom';
 import type { ConsoleResource } from '../api/types';
 import type { PageComponentKey } from './pageCapabilities';
-interface PageProps { resources: ConsoleResource[]; actorId: string; onAuthorizationChanged: () => void; locationKey: string }
+/** actorLabel：当前登录人员的显示名（页头同款：脱敏邮箱，缺失时为 Account ID），供结果条写执行人。 */
+interface PageProps { resources: ConsoleResource[]; actorId: string; actorLabel: string; onAuthorizationChanged: () => void; locationKey: string }
 const AuditPage = lazy(() => import('../pages/Audit').then(m => ({ default: m.Audit })));
 const Accounts = lazy(() => import('../pages/Accounts').then(m => ({ default: m.Accounts })));
 const Roles = lazy(() => import('../pages/Roles').then(m => ({ default: m.Roles })));
@@ -55,6 +56,7 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_FINANCE_LEDGER: lazy(() => import('../pages/FinanceLedger').then(m => ({ default: m.FinanceLedger }))),
   OPERATIONS_FINANCE_BALANCES: lazy(() => import('../pages/FinanceBalances').then(m => ({ default: m.FinanceBalances }))),
   OPERATIONS_FINANCE_SUBLEDGER: lazy(() => import('../pages/FinanceSubledger').then(m => ({ default: m.FinanceSubledger }))),
+  OPERATIONS_FINANCE_POSTING_OPS: lazy(() => import('../pages/FinancePostingOps').then(m => ({ default: m.FinancePostingOps }))),
   OPERATIONS_FINANCE_ADJUSTMENTS: lazy(() => import('../pages/FinanceAdjustments').then(m => ({ default: m.FinanceAdjustments }))),
   OPERATIONS_FINANCE_PERIOD_CLOSE: lazy(() => import('../pages/FinancePeriodClose').then(m => ({ default: m.FinancePeriodClose }))),
   OPERATIONS_FINANCE_ACCOUNTING_RULES: lazy(() => import('../pages/FinanceAccountingRules').then(m => ({ default: m.FinanceAccountingRules }))),

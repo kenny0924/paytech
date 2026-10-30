@@ -1,0 +1,97 @@
+{
+  "startedAt": "2026-10-30T16:41:28.267Z",
+  "groups": [
+    "catchup"
+  ],
+  "runs": [
+    {
+      "locale": "en",
+      "width": 390,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "C1-behind",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 2,924 · max …640896 account applied 2,924 · max …640896 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 2,924 Last posted 10/30/2026, 20:41:20 Streams 1",
+              "is-warn | 3 ledger Consumption Behind 200 ledger consumed 2,724 Batches behind 200 Stuck batch posted 10/30/2026, 20:41:14"
+            ],
+            "stuck": "Stuck batch · OE.ZQ344.USD.0 seq. 2,725 View Entries Source Fact Fact ID 241964677968474112 Fact Type MANUAL_ADJUSTMENT · Applied Posted At 10/30/2026, 20:41:14 AccountPosted Published 10/30/2026, 20:41:14 Entries 1 entry ledger stopped after batch 2,724; later batches wait on this one. Catch-up replays from this batch in order; if it is rejected by a rule, catch-up returns the reason and the cause must be fixed before replaying.",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Catch Up",
+              "Browse Batches",
+              "View Entries"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "C2-after-catchup-1",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 2,924 · max …640896 account applied 2,924 · max …640896 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 2,924 Last posted 10/30/2026, 20:41:20 Streams 1",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed 2,924 Batches behind 0"
+            ],
+            "stuck": "",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Browse Batches"
+            ],
+            "result": "Caught up Processed 200 batches in this run; ledger has consumed up to batch 2,924, matching account. 10/30/2026, 20:41:39 · by o***@example.test",
+            "rejected": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/posting-ops?ledgerBookId=241946219587354624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    }
+  ],
+  "httpErrors": [],
+  "deliberate": [],
+  "posts": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C1-behind",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 200,
+      "ms": 7516
+    }
+  ]
+}

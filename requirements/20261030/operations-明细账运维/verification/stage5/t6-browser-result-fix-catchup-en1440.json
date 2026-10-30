@@ -1,0 +1,98 @@
+{
+  "startedAt": "2026-10-30T15:59:50.999Z",
+  "groups": [
+    "catchup"
+  ],
+  "runs": [
+    {
+      "locale": "en",
+      "width": 1440,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "C1-behind",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 2,021 · max …185216 account applied 2,021 · max …185216 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 2,021 Last posted 10/30/2026, 19:54:27 Streams 1",
+              "is-warn | 3 ledger Consumption Behind 200 ledger consumed 1,821 Batches behind 200 Stuck batch posted 10/30/2026, 19:54:23"
+            ],
+            "stuck": "Stuck batch · OE.ZQ344.USD.0 seq. 1,822 View Entries Source Fact Fact ID 241952882671267840 Fact Type MANUAL_ADJUSTMENT · Applied Posted At 10/30/2026, 19:54:23 AccountPosted Published 10/30/2026, 19:54:23 Entries 1 entry ledger stopped after batch 1,821; later batches wait on this one. Catch-up replays from this batch in order; if it is rejected by a rule, catch-up returns the reason and the cause must be fixed before replaying.",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Catch Up",
+              "Browse Batches",
+              "View Entries"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        },
+        {
+          "role": "admin",
+          "step": "C2-after-catchup-1",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 2,021 · max …185216 account applied 2,021 · max …185216 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 2,021 Last posted 10/30/2026, 19:54:27 Streams 1",
+              "is-warn | 3 ledger Consumption Behind 200 ledger consumed 1,821 Batches behind 200 Stuck batch posted 10/30/2026, 19:54:23"
+            ],
+            "stuck": "Stuck batch · OE.ZQ344.USD.0 seq. 1,822 View Entries Source Fact Fact ID 241952882671267840 Fact Type MANUAL_ADJUSTMENT · Applied Posted At 10/30/2026, 19:54:23 AccountPosted Published 10/30/2026, 19:54:23 Entries 1 entry ledger stopped after batch 1,821; later batches wait on this one. Catch-up replays from this batch in order; if it is rejected by a rule, catch-up returns the reason and the cause must be fixed before replaying.",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Catch Up",
+              "Browse Batches",
+              "View Entries"
+            ],
+            "result": "Processed 200 batches, not caught up yetledger is now at batch 2,021, account max 2,021, 0 left. Processed batches are kept.",
+            "rejected": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "en-1440",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-1440",
+      "role": "admin",
+      "step": "/finance/posting-ops?ledgerBookId=241946219587354624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    }
+  ],
+  "httpErrors": [],
+  "deliberate": [],
+  "posts": [
+    {
+      "run": "en-1440",
+      "role": "admin",
+      "step": "C2-after-catchup-1",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 200
+    }
+  ]
+}

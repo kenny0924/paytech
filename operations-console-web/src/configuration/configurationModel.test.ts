@@ -45,10 +45,11 @@ test('Guard 默认项只来自服务端必需维度，数值形状保持 Rate/Co
   assert.equal(values.length, 4); assert.equal(values[0].concurrencyLimit, null); assert.equal(values[1].capacity, null); assert.equal(values[1].ruleType, 'CONCURRENCY');
 });
 test('已部署页面注册覆盖新菜单，组件及动作没有重复身份', () => {
-  assert.equal(pageCapabilities.length, 85);
-  assert.equal(new Set(pageCapabilities.map(p => p.componentKey)).size, 85);
+  assert.equal(pageCapabilities.length, 86);
+  assert.equal(new Set(pageCapabilities.map(p => p.componentKey)).size, 86);
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_RISK_UNDERWRITING')?.frontendRoute, '/risk/underwriting');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_RISK_LIMIT_TIERS')?.frontendRoute, '/risk/limit-tiers');
+  assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_FINANCE_POSTING_OPS')?.frontendRoute, '/finance/posting-ops');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_REFERENCE_DATA')?.frontendRoute, '/reference-data');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_ONBOARDING_CONFIG')?.frontendRoute, '/client-onboarding/config');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_ONBOARDING_CODES')?.frontendRoute, '/client-onboarding/codes');

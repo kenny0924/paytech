@@ -1,0 +1,10 @@
+snapshot-active-cand.json 1086771 6c689b80393619eb
+snapshot-active-live.json 1086771 6c689b80393619eb
+snapshot-baseline-cand.json 1080333 e3e64cebd08a3bbb
+snapshot-baseline-live.json 1080333 e3e64cebd08a3bbb
+snapshot-deactivated-cand.json 1080333 e3e64cebd08a3bbb
+snapshot-deactivated-live.json 1080333 e3e64cebd08a3bbb
+snapshot-dormant-cand.json 1080333 e3e64cebd08a3bbb
+snapshot-dormant-live.json 1080333 e3e64cebd08a3bbb
+snapshot-rolled-back-cand.json 1080333 e3e64cebd08a3bbb
+snapshot-rolled-back-live.json 1080333 e3e64cebd08a3bbb

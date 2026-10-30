@@ -1,5 +1,6 @@
 package com.paytech.ledger.domain;
 
+import java.time.Instant;
 import java.util.List;
 
 import com.paytech.foundation.messaging.api.AggregateKey;
@@ -35,5 +36,11 @@ public class AccountPostingProgress {
 
         /** account 已生成的最大批次序号。 */
         private final long maxPostingSequence;
+
+        /**
+         * 最后一个批次的生成时间（UTC）
+         * <li>account 未给出时为空；只用于运维展示，不参与判定。</li>
+         */
+        private final Instant lastPostedTime;
     }
 }

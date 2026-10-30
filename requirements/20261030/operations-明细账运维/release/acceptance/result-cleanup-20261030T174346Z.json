@@ -1,0 +1,50 @@
+{
+  "results": [
+    {
+      "v": "清理",
+      "step": "停用合成只读账号",
+      "ok": true,
+      "detail": {
+        "status": 204,
+        "body": null
+      }
+    },
+    {
+      "v": "清理",
+      "step": "删除合成角色被拒，改为清空权限",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED"
+      }
+    },
+    {
+      "v": "清理",
+      "step": "合成角色权限清空",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "body": null
+      }
+    },
+    {
+      "v": "清理",
+      "step": "SQL 核对账号状态",
+      "ok": true,
+      "detail": {
+        "rows": [
+          [
+            "DISABLED"
+          ]
+        ]
+      }
+    }
+  ],
+  "account": {
+    "email": "plops-mt-readonly-1030213457@example.test",
+    "accountId": "241978195895730176",
+    "roleId": "241978194859737088",
+    "roleCode": "PLOPS_MT_READONLY_1030213457",
+    "created": "20261030T173457Z"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "results": [
+    {
+      "v": "V-4",
+      "step": "B3 已一致的流：200、processedCount 0、caughtUp true",
+      "ok": true,
+      "detail": {
+        "status": 200,
+        "body": {
+          "caughtUp": true,
+          "lastSequence": "12",
+          "processedCount": "0"
+        },
+        "seconds": 0.21
+      }
+    },
+    {
+      "v": "V-4",
+      "step": "ledger 已消费序号与 account 流最大序号不变",
+      "ok": true,
+      "detail": {
+        "before": {
+          "accountStreams": [
+            [
+              "0",
+              "12"
+            ]
+          ],
+          "ledgerConsumed": "12"
+        },
+        "after": {
+          "accountStreams": [
+            [
+              "0",
+              "12"
+            ]
+          ],
+          "ledgerConsumed": "12"
+        }
+      }
+    },
+    {
+      "v": "V-4",
+      "step": "近 2 分钟 mor_ledger 无新分录",
+      "ok": true,
+      "detail": {
+        "journals": "0"
+      }
+    }
+  ]
+}

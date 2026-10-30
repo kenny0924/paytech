@@ -1,0 +1,114 @@
+{
+  "startedAt": "2026-10-30T15:55:18.275Z",
+  "groups": [
+    "catchup"
+  ],
+  "runs": [
+    {
+      "locale": "en",
+      "width": 390,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "C1-behind",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 2,021 · max …185216 account applied 2,021 · max …185216 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 2,021 Last posted 10/30/2026, 19:54:27 Streams 1",
+              "is-warn | 3 ledger Consumption Behind 400 ledger consumed 1,621 Batches behind 400 Stuck batch posted 10/30/2026, 19:54:19"
+            ],
+            "stuck": "Stuck batch · OE.ZQ344.USD.0 seq. 1,622 View Entries Source Fact Fact ID 241952866212818944 Fact Type MANUAL_ADJUSTMENT · Applied Posted At 10/30/2026, 19:54:19 AccountPosted Published 10/30/2026, 19:54:19 Entries 1 entry ledger stopped after batch 1,621; later batches wait on this one. Catch-up replays from this batch in order; if it is rejected by a rule, catch-up returns the reason and the cause must be fixed before replaying.",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Catch Up",
+              "Browse Batches",
+              "View Entries"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "C2-after-catchup-1",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 2,021 · max …185216 account applied 2,021 · max …185216 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 2,021 Last posted 10/30/2026, 19:54:27 Streams 1",
+              "is-warn | 3 ledger Consumption Behind 331 ledger consumed 1,690 Batches behind 331 Stuck batch posted 10/30/2026, 19:54:20"
+            ],
+            "stuck": "Stuck batch · OE.ZQ344.USD.0 seq. 1,691 View Entries Source Fact Fact ID 241952875482230784 Fact Type MANUAL_ADJUSTMENT · Applied Posted At 10/30/2026, 19:54:20 AccountPosted Published 10/30/2026, 19:54:20 Entries 1 entry ledger stopped after batch 1,690; later batches wait on this one. Catch-up replays from this batch in order; if it is rejected by a rule, catch-up returns the reason and the cause must be fixed before replaying.",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Catch Up",
+              "Browse Batches",
+              "View Entries"
+            ],
+            "result": "Can't catch up right now (409) Running alongside automatic consumption, or there is no open accounting period. Processed batches are kept; catch up again later.",
+            "rejected": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/posting-ops?ledgerBookId=241946219587354624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C1-behind",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 409 (Conflict)"
+    }
+  ],
+  "httpErrors": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C1-behind",
+      "method": "POST",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 409
+    }
+  ],
+  "deliberate": [],
+  "posts": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C1-behind",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 409
+    }
+  ]
+}

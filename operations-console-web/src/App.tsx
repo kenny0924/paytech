@@ -124,7 +124,7 @@ function Console({ context }: { context: SessionContextResponseBody }) {
             <Routes>
               <Route path="/" element={menus[0] ? <Navigate to={menus[0].frontendRoute!} replace /> : <NoAccess />} />
               {menus.flatMap(menu => pageRoutePaths(menu).map(path => <Route key={`${menu.resourceId}:${path}`} path={path} element={<ConsolePage componentKey={menu.componentKey!}
-                resources={resources} actorId={context.accountId} locationKey={location.key} onAuthorizationChanged={() => setReload(value => value + 1)} />} />))}
+                resources={resources} actorId={context.accountId} actorLabel={context.emailMasked || context.accountId} locationKey={location.key} onAuthorizationChanged={() => setReload(value => value + 1)} />} />))}
               {legacyRedirects(menus).map(redirect => <Route key={redirect.path} path={redirect.path} element={<Navigate to={redirect.to} replace />} />)}
               <Route path="/external-api/integrations/*" element={menus.some(menu => menu.componentKey === 'OPERATIONS_CHANNEL_CHANNELS')
                 ? <LegacyIntegrationRedirect /> : <NoAccess />} />

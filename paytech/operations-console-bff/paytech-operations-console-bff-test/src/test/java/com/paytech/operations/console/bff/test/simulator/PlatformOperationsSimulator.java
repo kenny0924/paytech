@@ -208,6 +208,8 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
     public static final String FINANCE_READ_PERMISSION_ID = "900000000000097101";
     public static final String FINANCE_MANAGE_PERMISSION_ID = "900000000000097102";
     public static final String FINANCE_APPROVE_PERMISSION_ID = "900000000000100101";
+    /** 明细账运维执行权限 FINANCE_SUBLEDGER_MANAGE（块 148）：追平与重建。 */
+    public static final String FINANCE_SUBLEDGER_MANAGE_PERMISSION_ID = "900000000000148101";
     /** 对账读、操作、审批权限（块 123）；对账路由同样以 operations-finance- 开头，按财务路由表判定。 */
     public static final String RECON_READ_PERMISSION_ID = "900000000000123101";
     public static final String RECON_OPERATE_PERMISSION_ID = "900000000000123102";
@@ -247,6 +249,10 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-finance-owner-accounts", FINANCE_READ_PERMISSION_ID),
         Map.entry("operations-finance-owner-account-entries", FINANCE_READ_PERMISSION_ID),
         Map.entry("operations-finance-account-posting", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-posting-progress", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-posting-stream-postings", FINANCE_READ_PERMISSION_ID),
+        Map.entry("operations-finance-posting-stream-catch-up", FINANCE_SUBLEDGER_MANAGE_PERMISSION_ID),
+        Map.entry("operations-finance-posting-rebuild", FINANCE_SUBLEDGER_MANAGE_PERMISSION_ID),
         Map.entry("operations-finance-manual-adjustment-list", FINANCE_READ_PERMISSION_ID),
         Map.entry("operations-finance-manual-adjustment-submit", FINANCE_MANAGE_PERMISSION_ID),
         Map.entry("operations-finance-manual-adjustment-detail", FINANCE_READ_PERMISSION_ID),

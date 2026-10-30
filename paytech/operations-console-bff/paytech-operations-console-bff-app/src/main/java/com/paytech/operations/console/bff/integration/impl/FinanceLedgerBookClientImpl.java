@@ -2,15 +2,20 @@ package com.paytech.operations.console.bff.integration.impl;
 
 import static com.paytech.operations.console.bff.integration.impl.FinanceContractConverter.convert;
 import static com.paytech.operations.console.bff.integration.impl.FinanceContractConverter.page;
+import static com.paytech.operations.console.bff.integration.impl.FinanceContractConverter.require;
 import static com.paytech.operations.console.bff.integration.impl.FinanceContractConverter.requireIdentity;
 import static com.paytech.operations.console.bff.integration.impl.FinanceContractConverter.requireSame;
 import static com.paytech.operations.console.bff.integration.impl.FinanceContractConverter.write;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.account.api.event.AccountPostedPayload;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.ledger.api.LedgerBookCommandApi;
 import com.paytech.ledger.api.LedgerBookQueryApi;
+import com.paytech.ledger.api.PostingProgressQueryApi;
+import com.paytech.ledger.api.PostingStreamCommandApi;
+import com.paytech.ledger.api.request.CatchUpPostingStreamRequestBody;
 import com.paytech.ledger.api.TrialBalanceApi;
 import com.paytech.operations.console.bff.integration.FinanceLedgerBookClient;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.AccountBalanceListResponseBody;
@@ -24,6 +29,8 @@ import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LedgerBookResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.TrialBalanceDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.TrialBalanceRunResponseBody;
+import com.paytech.operations.console.bff.service.model.FinancePostingOpsModels.CatchUpPostingStreamResponseBody;
+import com.paytech.operations.console.bff.service.model.FinancePostingOpsModels.PostingProgressResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
 import lombok.AllArgsConstructor;
@@ -31,6 +38,8 @@ import lombok.AllArgsConstructor;
 /**
  * ledger 账簿、账户与流水的 HTTP 转发：每个入口只调用一次 ledger，不重试
  * <li>命令把会话 Account ID 与 Session ID 填入操作人 Header；查询只读，不携带操作人。</li>
+ * <li>明细账运维：账簿入账进度回执的账簿主键须与请求一致、两段与流清单不可缺失；追平以长耗时、外显 Owner detail 的代理调用，
+ * 处理批次数与序号须为非负十进制。</li>
  * <li>分录详情、科目余额、发起试算与试算详情的账簿、期间等主键必须与请求一致；发起试算无请求体，操作人只供 ledger 记日志。</li>
  *
  * @author Claude
@@ -41,6 +50,8 @@ public class FinanceLedgerBookClientImpl implements FinanceLedgerBookClient {
     private final LedgerBookQueryApi queryApi;
     private final LedgerBookCommandApi commandApi;
     private final TrialBalanceApi trialBalanceApi;
+    private final PostingStreamCommandApi postingStreamApi;
+    private final PostingProgressQueryApi postingProgressApi;
 
     /** 账簿分页，核对分页回执。 */
     @Override
@@ -138,5 +149,36 @@ public class FinanceLedgerBookClientImpl implements FinanceLedgerBookClient {
         FinanceContractConverter.require(detail.getLines() != null && detail.getSummaryLines() != null
             && detail.getExceptions() != null);
         return detail;
+    }
+
+    /** 账簿入账进度；账簿主键须一致，两段与流清单不可缺失。 */
+    @Override
+    public PostingProgressResponseBody getPostingProgress(String ledgerBookId) {
+        var progress = convert(postingProgressApi.getPostingProgress(ledgerBookId), PostingProgressResponseBody.class);
+        requireSame(ledgerBookId, progress.getLedgerBookId());
+        require(progress.getFactSegment() != null && progress.getStreamSegment() != null
+            && progress.getStreamSegment().getStreams() != null);
+        return progress;
+    }
+
+    /** 追平一条过账流；操作人进入 ledger 的 Header，回执计数与序号须为非负十进制。 */
+    @Override
+    public CatchUpPostingStreamResponseBody catchUpPostingStream(OperatorContext context,
+        AccountPostedPayload.StreamKey stream, int maxBatches) {
+        var request = new CatchUpPostingStreamRequestBody();
+        request.setEntityType(stream.getEntityType().getCode());
+        request.setEntityId(stream.getEntityId());
+        request.setCurrency(stream.getCurrency());
+        request.setShardNo(stream.getShardNo());
+        request.setMaxBatches(maxBatches);
+        var result = convert(postingStreamApi.catchUpPostingStream(context.accountId(), context.sessionId(), request),
+            CatchUpPostingStreamResponseBody.class);
+        require(isCount(result.getProcessedCount()) && isCount(result.getLastSequence()));
+        return result;
+    }
+
+    /** 非负十进制计数。 */
+    static boolean isCount(String value) {
+        return value != null && value.matches("0|[1-9][0-9]{0,18}");
     }
 }

@@ -40,7 +40,7 @@ public class BillingFactClientImpl implements BillingFactClient {
         if (body == null || body.getPendingCount() == null || body.getPublishedFactCount() == null) {
             throw new ErrorException("billing progress 响应无效: 账簿 " + book.getId());
         }
-        return new BillingFactProgress(Long.parseLong(body.getPendingCount()),
+        return new BillingFactProgress(Long.parseLong(body.getPendingCount()), toLong(body.getMaxPendingFactId()),
             Long.parseLong(body.getPublishedFactCount()), toLong(body.getMaxPublishedFactId()));
     }
 

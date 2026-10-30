@@ -92,6 +92,7 @@ public class AccountPostingConverter {
     public PostingStreamsRebuildResponseBody toResponseBody(StreamRebuildResult result) {
         PostingStreamsRebuildResponseBody body = new PostingStreamsRebuildResponseBody();
         body.setAccountCount(Integer.toString(result.getAccountCount()));
+        body.setChangedAccountCount(Integer.toString(result.getChangedAccountCount()));
         body.setEntryCount(Long.toString(result.getEntryCount()));
         body.setMaxPostingSequence(Long.toString(result.getMaxPostingSequence()));
         return body;

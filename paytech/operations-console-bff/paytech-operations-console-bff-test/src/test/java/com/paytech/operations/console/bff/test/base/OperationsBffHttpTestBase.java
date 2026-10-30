@@ -25,6 +25,7 @@ public abstract class OperationsBffHttpTestBase {
         registry.add("operations.account-base-url", OperationsBffTestConfiguration.ACCOUNT::baseUrl);
         registry.add("operations.billing-base-url", OperationsBffTestConfiguration.BILLING::baseUrl);
         registry.add("operations.ledger-long-running-read-timeout", () -> LONG_RUNNING_READ_TIMEOUT);
+        registry.add("operations.account-long-running-read-timeout", () -> LONG_RUNNING_READ_TIMEOUT);
         registry.add("operations.commercial-test-base-url", OperationsBffTestConfiguration.COMMERCIAL::baseUrl);
         registry.add("operations.channel-connector-test-base-url", OperationsBffTestConfiguration.CHANNEL_CONNECTOR::baseUrl);
         registry.add("operations.reconciliation-base-url", OperationsBffTestConfiguration.RECONCILIATION::baseUrl);

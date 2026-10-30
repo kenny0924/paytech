@@ -1,0 +1,6 @@
+ledger-service sha256:51a57a3b721840b079798159f8d149a4362bbb76e763111a7183ab1bb08864e9 started=2026-10-30T13:10:21.009858335Z restarts=16 health=healthy
+account-service sha256:8dfd1060d13607f68668b376541c9cf80fb6e9056f891a8b73cb74ac40db0fb5 started=2026-10-30T14:03:26.786478212Z restarts=0 health=healthy
+platform-support-service sha256:0ea9cc2d6e897783080a009da6abaf5754a9599757e7f2cc90f0ae90e54514bb started=2026-10-30T14:03:57.430284921Z restarts=0 health=healthy
+operations-console-bff sha256:626a74a740cecb8ca643160b4f8423a1c071744b87f3cb1bf3a07c68ec779a3c started=2026-10-30T14:05:47.759223583Z restarts=0 health=healthy
+operations-console-web sha256:acb33e948c659b2d2acbdb0404914e88626b4c71802785de002dbd3b0c88d0d8 started=2026-10-30T14:06:18.994064459Z restarts=0 health=healthy
+api-gateway sha256:d51daee3c4caecd720a8d512c6c4d7c43821cb2694cf1fa24d598449eac032cf started=2026-10-30T13:10:57.362480755Z restarts=19 health=healthy

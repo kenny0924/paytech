@@ -1,0 +1,978 @@
+{
+  "startedAt": "2026-10-30T17:36:44.021Z",
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "P7-idle",
+          "check": {
+            "releaseNo": 30,
+            "menuHasPage": true,
+            "rebuildLabelFromBundle": "重建余额",
+            "rebuildDisabled": true,
+            "options": [
+              "AE001 · USD\n经营主体账簿",
+              "PLATFORM_HQ · USD\n财务主体账簿（PLATFORM_HQ）"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P1-oe-consistent",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 11 条 · 最大 …309824 account 已应用 11 条 · 最大 …309824 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 12 最后入账 2026/10/30 09:53:00 过账流 1",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 12 落后批次 0"
+            ],
+            "table": "过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 OE.AE001.USD.0 12 2026/10/30 09:53:00 12 0 已一致 浏览批次",
+            "stuck": "",
+            "buttons": [
+              "重建余额",
+              "刷新",
+              "浏览批次"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6-browse",
+          "check": {
+            "url": "/finance/posting-ops/streams/OE.AE001.USD.0?ledgerBookId=238137396670066688&fromSequence=1",
+            "summary": "account 最大序号 12 ledger 已消费 12 从序号 1 起 每页 50 批 跳 转",
+            "rows": 13
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6b-drawer",
+          "check": {
+            "drawer": "批次主键 238137412625231872 主体 OPERATING_ENTITY · AE001 / USD · 分片 0 批次序号 1 入账时间 2026-10-20 07:13 来源类型 ECONOMIC_FACT（事实） 发布时间 2026-10-20 07:13 来源事实 事实 ID 238137406589624320 事实类型 MANUAL_ADJUSTMENT 事实版本 v1 替代事实 — 应用状态 APPLIED 服务费财务主体 — 行号 账户号 / 科目 Owner 余额桶 方向 金额 行号 账户号 / 科目 Owner 余额桶 方向 金额 1 AE001-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 237092466744991745 PENDING 贷 42.90 账户流水 2 AE001-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 237092466744991745 PENDING 借 1.80 账户流水 借方合计 1.80 贷方合计 42.90 2 行流水"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6c-back",
+          "check": {
+            "url": "/finance/posting-ops?ledgerBookId=238137396670066688",
+            "keptBook": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P9-fe-book",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 0 条 · 最大 — account 已应用 0 条 · 最大 — billing 未发布 0",
+              "is-ok | 2 account 过账流 0 条流 account 最大序号 — 最后入账 — 过账流 0",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 — 落后批次 0"
+            ],
+            "table": "过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 这本账簿还没有过账流",
+            "stuck": "",
+            "buttons": [
+              "重建余额",
+              "刷新"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V4-consistent-no-catchup-button",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 11 条 · 最大 …309824 account 已应用 11 条 · 最大 …309824 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 12 最后入账 2026/10/30 09:53:00 过账流 1",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 12 落后批次 0"
+            ],
+            "table": "过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 OE.AE001.USD.0 12 2026/10/30 09:53:00 12 0 已一致 浏览批次",
+            "stuck": "",
+            "buttons": [
+              "重建余额",
+              "刷新",
+              "浏览批次"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-subledger",
+          "check": {
+            "heading": "明细账查询",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-balances",
+          "check": {
+            "heading": "余额查询",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-period-close",
+          "check": {
+            "heading": "期间关账",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-payout-beneficiary-reviews",
+          "check": {
+            "heading": "Client",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-payout-owners",
+          "check": {
+            "heading": "Client",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "readonly",
+          "step": "P10-readonly",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 11 条 · 最大 …309824 account 已应用 11 条 · 最大 …309824 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 12 最后入账 2026/10/30 09:53:00 过账流 1",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 12 落后批次 0"
+            ],
+            "table": "过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 OE.AE001.USD.0 12 2026/10/30 09:53:00 12 0 已一致 浏览批次",
+            "stuck": "",
+            "buttons": [
+              "刷新",
+              "浏览批次"
+            ],
+            "menuHasPage": true,
+            "hasCatchUp": false,
+            "hasRebuild": false
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "readonly",
+          "step": "P10b-readonly-browse",
+          "check": {
+            "rows": 13
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        }
+      ],
+      "catchUpButtonWhenConsistent": false
+    },
+    {
+      "locale": "zh-CN",
+      "width": 390,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "P7-idle",
+          "check": {
+            "releaseNo": 30,
+            "menuHasPage": false,
+            "rebuildLabelFromBundle": "重建余额",
+            "rebuildDisabled": true,
+            "options": [
+              "AE001 · USD\n经营主体账簿",
+              "PLATFORM_HQ · USD\n财务主体账簿（PLATFORM_HQ）"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P1-oe-consistent",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 11 条 · 最大 …309824 account 已应用 11 条 · 最大 …309824 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 12 最后入账 2026/10/30 09:53:00 过账流 1",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 12 落后批次 0"
+            ],
+            "table": "过账流account 最大序号最后入账ledger 已消费落后状态操作过账流account 最大序号最后入账ledger 已消费落后状态操作OE.AE001.USD.0122026/10/30 09:53:00120已一致浏览批次",
+            "stuck": "",
+            "buttons": [
+              "重建余额",
+              "刷新",
+              "浏览批次"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6-browse",
+          "check": {
+            "url": "/finance/posting-ops/streams/OE.AE001.USD.0?ledgerBookId=238137396670066688&fromSequence=1",
+            "summary": "account 最大序号 12 ledger 已消费 12 从序号 1 起 每页 50 批 跳 转",
+            "rows": 13
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6b-drawer",
+          "check": {
+            "drawer": "批次主键 238137412625231872 主体 OPERATING_ENTITY · AE001 / USD · 分片 0 批次序号 1 入账时间 2026-10-20 07:13 来源类型 ECONOMIC_FACT（事实） 发布时间 2026-10-20 07:13 来源事实 事实 ID 238137406589624320 事实类型 MANUAL_ADJUSTMENT 事实版本 v1 替代事实 — 应用状态 APPLIED 服务费财务主体 — 行号 账户号 / 科目 Owner 余额桶 方向 金额 行号 账户号 / 科目 Owner 余额桶 方向 金额 1 AE001-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 237092466744991745 PENDING 贷 42.90 账户流水 2 AE001-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 237092466744991745 PENDING 借 1.80 账户流水 借方合计 1.80 贷方合计 42.90 2 行流水"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6c-back",
+          "check": {
+            "url": "/finance/posting-ops?ledgerBookId=238137396670066688",
+            "keptBook": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P9-fe-book",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 0 条 · 最大 — account 已应用 0 条 · 最大 — billing 未发布 0",
+              "is-ok | 2 account 过账流 0 条流 account 最大序号 — 最后入账 — 过账流 0",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 — 落后批次 0"
+            ],
+            "table": "过账流account 最大序号最后入账ledger 已消费落后状态操作过账流account 最大序号最后入账ledger 已消费落后状态操作这本账簿还没有过账流",
+            "stuck": "",
+            "buttons": [
+              "重建余额",
+              "刷新"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-subledger",
+          "check": {
+            "heading": "明细账查询",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-balances",
+          "check": {
+            "heading": "余额查询",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-period-close",
+          "check": {
+            "heading": "期间关账",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-payout-beneficiary-reviews",
+          "check": {
+            "heading": "Client",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-payout-owners",
+          "check": {
+            "heading": "Client",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "readonly",
+          "step": "P10-readonly",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 11 条 · 最大 …309824 account 已应用 11 条 · 最大 …309824 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 12 最后入账 2026/10/30 09:53:00 过账流 1",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 12 落后批次 0"
+            ],
+            "table": "过账流account 最大序号最后入账ledger 已消费落后状态操作过账流account 最大序号最后入账ledger 已消费落后状态操作OE.AE001.USD.0122026/10/30 09:53:00120已一致浏览批次",
+            "stuck": "",
+            "buttons": [
+              "刷新",
+              "浏览批次"
+            ],
+            "menuHasPage": false,
+            "hasCatchUp": false,
+            "hasRebuild": false
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "readonly",
+          "step": "P10b-readonly-browse",
+          "check": {
+            "rows": 13
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 1440,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "P7-idle",
+          "check": {
+            "releaseNo": 30,
+            "menuHasPage": true,
+            "rebuildLabelFromBundle": "Rebuild Balances",
+            "rebuildDisabled": true,
+            "options": [
+              "AE001 · USD\nOperating entity book",
+              "PLATFORM_HQ · USD\nFinance entity book (PLATFORM_HQ)"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P1-oe-consistent",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 11 · max …309824 account applied 11 · max …309824 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 12 Last posted 10/30/2026, 09:53:00 Streams 1",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed 12 Batches behind 0"
+            ],
+            "table": "Stream account Max Seq. Last Posted ledger Consumed Behind Status Actions Stream account Max Seq. Last Posted ledger Consumed Behind Status Actions OE.AE001.USD.0 12 10/30/2026, 09:53:00 12 0 Consistent Browse Batches",
+            "stuck": "",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Browse Batches"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6-browse",
+          "check": {
+            "url": "/finance/posting-ops/streams/OE.AE001.USD.0?ledgerBookId=238137396670066688&fromSequence=1",
+            "summary": "account max sequence 12 ledger consumed 12 From sequence 1 Per page 50 batches Go",
+            "rows": 13
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6b-drawer",
+          "check": {
+            "drawer": "Batch ID 238137412625231872 Entity OPERATING_ENTITY · AE001 / USD · Shard 0 Batch Seq. 1 Posted At 2026-10-20 07:13 Source Type ECONOMIC_FACT (Fact) Published At 2026-10-20 07:13 Source Fact Fact ID 238137406589624320 Fact Type MANUAL_ADJUSTMENT Fact Version v1 Supersedes Fact — Apply Status APPLIED Service Charge Finance Entity — Line Account No. / GL Account Owner Balance Bucket Side Amount Line Account No. / GL Account Owner Balance Bucket Side Amount 1 AE001-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 237092466744991745 PENDING Credit 42.90 Account Entries 2 AE001-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 237092466744991745 PENDING Debit 1.80 Account Entries Total Debit 1.80 Total Credit"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6c-back",
+          "check": {
+            "url": "/finance/posting-ops?ledgerBookId=238137396670066688",
+            "keptBook": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P9-fe-book",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 0 · max — account applied 0 · max — billing unpublished 0",
+              "is-ok | 2 account Posting Streams 0 streams account max sequence — Last posted — Streams 0",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed — Batches behind 0"
+            ],
+            "table": "Stream account Max Seq. Last Posted ledger Consumed Behind Status Actions Stream account Max Seq. Last Posted ledger Consumed Behind Status Actions No posting streams for this book yet",
+            "stuck": "",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-subledger",
+          "check": {
+            "heading": "Subledger",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-balances",
+          "check": {
+            "heading": "Balances",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-period-close",
+          "check": {
+            "heading": "Period Close",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-payout-beneficiary-reviews",
+          "check": {
+            "heading": "Client",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-payout-owners",
+          "check": {
+            "heading": "Client",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "readonly",
+          "step": "P10-readonly",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 11 · max …309824 account applied 11 · max …309824 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 12 Last posted 10/30/2026, 09:53:00 Streams 1",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed 12 Batches behind 0"
+            ],
+            "table": "Stream account Max Seq. Last Posted ledger Consumed Behind Status Actions Stream account Max Seq. Last Posted ledger Consumed Behind Status Actions OE.AE001.USD.0 12 10/30/2026, 09:53:00 12 0 Consistent Browse Batches",
+            "stuck": "",
+            "buttons": [
+              "Refresh",
+              "Browse Batches"
+            ],
+            "menuHasPage": true,
+            "hasCatchUp": false,
+            "hasRebuild": false
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "readonly",
+          "step": "P10b-readonly-browse",
+          "check": {
+            "rows": 13
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440,
+            "errorAlerts": 0
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "P7-idle",
+          "check": {
+            "releaseNo": 30,
+            "menuHasPage": false,
+            "rebuildLabelFromBundle": "Rebuild Balances",
+            "rebuildDisabled": true,
+            "options": [
+              "AE001 · USD\nOperating entity book",
+              "PLATFORM_HQ · USD\nFinance entity book (PLATFORM_HQ)"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P1-oe-consistent",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 11 · max …309824 account applied 11 · max …309824 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 12 Last posted 10/30/2026, 09:53:00 Streams 1",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed 12 Batches behind 0"
+            ],
+            "table": "Streamaccount Max Seq.Last Postedledger ConsumedBehindStatusActionsStreamaccount Max Seq.Last Postedledger ConsumedBehindStatusActionsOE.AE001.USD.01210/30/2026, 09:53:00120ConsistentBrowse Batches",
+            "stuck": "",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Browse Batches"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6-browse",
+          "check": {
+            "url": "/finance/posting-ops/streams/OE.AE001.USD.0?ledgerBookId=238137396670066688&fromSequence=1",
+            "summary": "account max sequence 12 ledger consumed 12 From sequence 1 Per page 50 batches Go",
+            "rows": 13
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6b-drawer",
+          "check": {
+            "drawer": "Batch ID 238137412625231872 Entity OPERATING_ENTITY · AE001 / USD · Shard 0 Batch Seq. 1 Posted At 2026-10-20 07:13 Source Type ECONOMIC_FACT (Fact) Published At 2026-10-20 07:13 Source Fact Fact ID 238137406589624320 Fact Type MANUAL_ADJUSTMENT Fact Version v1 Supersedes Fact — Apply Status APPLIED Service Charge Finance Entity — Line Account No. / GL Account Owner Balance Bucket Side Amount Line Account No. / GL Account Owner Balance Bucket Side Amount 1 AE001-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 237092466744991745 PENDING Credit 42.90 Account Entries 2 AE001-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 237092466744991745 PENDING Debit 1.80 Account Entries Total Debit 1.80 Total Credit"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P6c-back",
+          "check": {
+            "url": "/finance/posting-ops?ledgerBookId=238137396670066688",
+            "keptBook": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P9-fe-book",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 0 · max — account applied 0 · max — billing unpublished 0",
+              "is-ok | 2 account Posting Streams 0 streams account max sequence — Last posted — Streams 0",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed — Batches behind 0"
+            ],
+            "table": "Streamaccount Max Seq.Last Postedledger ConsumedBehindStatusActionsStreamaccount Max Seq.Last Postedledger ConsumedBehindStatusActionsNo posting streams for this book yet",
+            "stuck": "",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P4-rebuild-confirm",
+          "check": {
+            "modal": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P5-rebuild-result",
+          "check": {
+            "bar": "Balances match entries; nothing corrected Recalculated 9 accounts; no balance changed. 10/30/2026, 21:42:31 · by o***@example.test",
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 11 · max …309824 account applied 11 · max …309824 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 12 Last posted 10/30/2026, 09:53:00 Streams 1",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed 12 Batches behind 0"
+            ],
+            "table": "Streamaccount Max Seq.Last Postedledger ConsumedBehindStatusActionsStreamaccount Max Seq.Last Postedledger ConsumedBehindStatusActionsOE.AE001.USD.01210/30/2026, 09:53:00120ConsistentBrowse Batches",
+            "stuck": "",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Browse Batches"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-subledger",
+          "check": {
+            "heading": "Subledger",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-balances",
+          "check": {
+            "heading": "Balances",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-period-close",
+          "check": {
+            "heading": "Period Close",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-payout-beneficiary-reviews",
+          "check": {
+            "heading": "Client",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "admin",
+          "step": "V8-finance-payout-owners",
+          "check": {
+            "heading": "Client",
+            "menuOk": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "readonly",
+          "step": "P10-readonly",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 11 · max …309824 account applied 11 · max …309824 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 12 Last posted 10/30/2026, 09:53:00 Streams 1",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed 12 Batches behind 0"
+            ],
+            "table": "Streamaccount Max Seq.Last Postedledger ConsumedBehindStatusActionsStreamaccount Max Seq.Last Postedledger ConsumedBehindStatusActionsOE.AE001.USD.01210/30/2026, 09:53:00120ConsistentBrowse Batches",
+            "stuck": "",
+            "buttons": [
+              "Refresh",
+              "Browse Batches"
+            ],
+            "menuHasPage": false,
+            "hasCatchUp": false,
+            "hasRebuild": false
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        },
+        {
+          "role": "readonly",
+          "step": "P10b-readonly-browse",
+          "check": {
+            "rows": 13
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390,
+            "errorAlerts": 0
+          }
+        }
+      ]
+    }
+  ],
+  "console": [],
+  "httpErrors": [],
+  "deliberate": [],
+  "posts": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "P4-rebuild-confirm",
+      "path": "/api/operations/finance/posting-rebuilds/v1",
+      "status": 200,
+      "ms": 312
+    }
+  ],
+  "relogins": 0
+}

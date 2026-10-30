@@ -1,0 +1,64 @@
+##### migration/00-delete-t6-books.sql
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+| accounts |
+|        0 |
+| journals |
+|        0 |
+Query OK, 2 rows affected
+Query OK, 2 rows affected
+Query OK, 0 rows affected
+##### migration/ddl-part1.sql
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+##### /Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261019/ledger-会计科目分级维护/db/ledger/dml.sql
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+| books_adopting_standard |
+|                       0 |
+Query OK, 0 rows affected
+Query OK, 45 rows affected
+Query OK, 0 rows affected
+Query OK, 29 rows affected
+Query OK, 0 rows affected
+| total | numbered | level3_leaves |
+|    74 |       74 |            29 |
+| bad_parent |
+|          0 |
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+##### migration/ddl-part2.sql
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+| chart_account_without_no |
+|                        0 |
+| ledger_account_without_no |
+|                         0 |
+Query OK, 0 rows affected
+Query OK, 0 rows affected
+Query OK, 0 rows affected

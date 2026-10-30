@@ -1,0 +1,108 @@
+/* 明细账运维（画板 22—32）：三段卡片、过账流表 / 窄屏卡片、卡住的批次与结果条。 */
+.posting-ops-page .posting-ops-intro { color: rgba(0, 0, 0, 0.55); font-size: 13px; margin: -8px 0 16px; }
+.posting-ops-page .posting-ops-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 16px; margin-bottom: 16px; }
+.posting-ops-page .posting-ops-book { display: flex; flex-direction: column; gap: 6px; width: 380px; max-width: 100%; }
+.posting-ops-page .posting-ops-label { font-size: 12px; color: rgba(0, 0, 0, 0.55); }
+.posting-ops-page .posting-ops-label::after { content: ' *'; color: #b42318; }
+.posting-ops-book-option { display: inline-flex; gap: 8px; align-items: baseline; min-width: 0; }
+.posting-ops-page .posting-ops-checked { display: inline-flex; align-items: center; gap: 4px; padding-bottom: 4px; }
+.posting-ops-page .posting-ops-loading { padding: 48px; text-align: center; }
+.posting-ops-page .posting-ops-empty h3, .posting-ops-page .posting-ops-failure h3 { font-size: 15px; margin: 12px 0 6px; }
+.posting-ops-page .posting-ops-empty-icon, .posting-ops-page .posting-ops-failure-icon {
+  display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; font-size: 20px;
+}
+.posting-ops-page .posting-ops-empty-icon { background: #edf2ff; color: #3056d3; }
+.posting-ops-page .posting-ops-failure-icon { background: #fef3f2; color: #b42318; }
+/* 空状态与整页报错的说明占满卡片宽度并居中（覆盖 .cell-meta 的 260px 列宽），与按钮同一中线。 */
+.posting-ops-page .posting-ops-empty .cell-meta, .posting-ops-page .posting-ops-failure .cell-meta { max-width: 560px; margin: 0 auto; font-size: 12px; }
+.posting-ops-page .posting-ops-failure .cell-meta { margin-bottom: 16px; }
+
+.posting-ops-segments { display: grid; grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr) 24px minmax(0, 1fr); align-items: stretch; gap: 8px; }
+.posting-ops-segment { border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 18px; background: #fff; min-width: 0; }
+.posting-ops-segment.is-warn { border-color: #f5c46b; background: #fffbeb; }
+.posting-ops-segment.is-muted { background: #f8fafc; }
+.posting-ops-segment header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.posting-ops-segment h3 { flex: 1; font-size: 14px; margin: 0; min-width: 0; }
+.posting-ops-index { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%;
+  background: #edf2ff; color: #3056d3; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.posting-ops-segment.is-warn .posting-ops-index { background: #fde68a; color: #92400e; }
+.posting-ops-badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.posting-ops-badge.is-ok { background: #e7f6ec; color: #18794e; }
+.posting-ops-badge.is-warn { background: #fde68a; color: #92400e; }
+.posting-ops-badge.is-muted { background: #eef0f3; color: #4b5563; }
+.posting-ops-metric { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 13px; }
+.posting-ops-metric > span:first-child { color: #69717d; }
+.posting-ops-metric > span:last-child { font-variant-numeric: tabular-nums; text-align: right; overflow-wrap: anywhere; }
+.posting-ops-metric .is-strong { color: #b45309; font-weight: 600; }
+.posting-ops-unavailable p { color: #69717d; font-size: 13px; margin: 0 0 6px; }
+.posting-ops-unavailable .ant-btn { padding-left: 0; }
+.posting-ops-arrow { display: flex; align-items: center; justify-content: center; color: #9ca3af; }
+.posting-ops-arrow .is-narrow { display: none; }
+
+.posting-ops-page .posting-ops-section-head { margin-top: 24px; justify-content: space-between; }
+.posting-ops-page .posting-ops-row-behind > td { background: #fffbeb !important; }
+.posting-ops-lag { color: #b45309; font-weight: 600; }
+.posting-ops-row-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.posting-ops-locked { color: #69717d; font-size: 12px; }
+.posting-ops-cards { display: none; }
+.posting-ops-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; background: #fff; }
+.posting-ops-card + .posting-ops-card { margin-top: 12px; }
+.posting-ops-card.is-behind { border-color: #f5c46b; background: #fffbeb; }
+.posting-ops-card.is-empty { color: #69717d; text-align: center; }
+.posting-ops-card header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.posting-ops-card dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0 8px; }
+.posting-ops-card dt { color: #69717d; font-size: 12px; }
+.posting-ops-card dd { margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.posting-ops-card p { margin: 0 0 12px; overflow-wrap: anywhere; }
+.posting-ops-card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.posting-ops-card-actions > .posting-ops-locked { display: flex; align-items: center; justify-content: center; }
+
+.posting-ops-panel { margin-top: 12px; }
+.posting-ops-stuck { border: 1px solid #f5c46b; border-left-width: 3px; border-radius: 8px; padding: 14px 18px; background: #fff; }
+.posting-ops-stuck.is-rejected { border-color: #f3b4ae; }
+.posting-ops-stuck header { display: flex; align-items: center; gap: 8px; color: #b45309; }
+.posting-ops-stuck header h3 { flex: 1; font-size: 14px; margin: 0; color: rgba(0, 0, 0, 0.88); min-width: 0; overflow-wrap: anywhere; }
+.posting-ops-stuck-fields { display: flex; flex-wrap: wrap; gap: 8px 40px; margin: 12px 0 8px; }
+.posting-ops-stuck-fields dt { color: #69717d; font-size: 12px; }
+.posting-ops-stuck-fields dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+.posting-ops-stuck-note { color: #69717d; font-size: 12px; margin: 4px 0 0; }
+.posting-ops-warn-text { color: #b45309; font-weight: 600; }
+.posting-ops-rejected { background: #fef3f2; border-radius: 6px; padding: 12px 14px; margin-top: 8px; }
+.posting-ops-rejected-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #b42318; }
+.posting-ops-rejected p { margin: 6px 0; overflow-wrap: anywhere; }
+.posting-ops-rejected-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.posting-ops-result { margin-top: 12px; }
+.posting-ops-page > .posting-ops-result { margin: 0 0 16px; }
+.posting-ops-result-text { margin-left: 12px; font-weight: normal; }
+.posting-ops-result-meta { margin-left: 12px; font-weight: normal; font-size: 12px; color: #69717d; white-space: nowrap; }
+.posting-ops-result.is-neutral { background: #f3f4f6; border-color: #e5e7eb; }
+.posting-ops-result.is-neutral .ant-alert-icon { color: #4b5563; }
+
+.posting-ops-modal-title { display: flex; gap: 12px; align-items: flex-start; }
+.posting-ops-modal-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: #edf2ff; color: #3056d3; flex-shrink: 0; }
+.posting-ops-modal .cell-meta { font-weight: normal; }
+.posting-ops-impacts { list-style: none; background: #f8fafc; border-radius: 6px; padding: 10px 14px; margin: 12px 0 0; }
+.posting-ops-impacts li { display: flex; gap: 8px; align-items: center; padding: 3px 0; font-size: 13px; }
+.posting-ops-impacts .is-ok { color: #18794e; }
+.posting-ops-impacts .is-warn { color: #b45309; }
+
+.posting-ops-page .posting-ops-back { display: inline-flex; gap: 6px; align-items: center; margin-bottom: 12px; }
+.posting-ops-browse-summary { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 32px; margin: 0 0 16px; font-size: 13px; }
+.posting-ops-browse-summary dt { color: #69717d; font-size: 12px; }
+.posting-ops-browse-summary dd { margin: 2px 0 0; font-weight: 600; }
+.posting-ops-jump { display: flex; gap: 8px; margin-left: auto; }
+.posting-ops-jump .ant-input-number { width: 160px; }
+.posting-ops-sequence { font-weight: 600; white-space: nowrap; }
+.posting-ops-browse-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; }
+
+@media (max-width: 900px) {
+  .posting-ops-segments { grid-template-columns: minmax(0, 1fr); }
+  .posting-ops-arrow .is-wide { display: none; }
+  .posting-ops-arrow .is-narrow { display: inline; }
+  .posting-ops-table { display: none; }
+  .posting-ops-cards { display: block; }
+  .posting-ops-page .posting-ops-book { width: 100%; }
+  .posting-ops-stuck-fields { gap: 8px 24px; }
+  .posting-ops-result-text, .posting-ops-result-meta { display: block; margin-left: 0; }
+  .posting-ops-jump { margin-left: 0; }
+}

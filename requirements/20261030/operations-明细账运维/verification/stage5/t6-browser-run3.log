@@ -1,0 +1,27 @@
+{"run":"zh-CN-1440","role":"admin","step":"P7-idle","check":{"empty":"选择一本账簿查看入账进度 依次核对 billing 发布的计费事实、account 的入账批次、ledger 的总账消费，找出卡在哪一段。","menuHasPage":true,"rebuildDisabled":true,"options":["ZQ344 · USD\n经营主体账簿","PLOPS_ZQ344 · USD\n财务主体账簿（PLOPS_ZQ344）"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","role":"admin","step":"P2-oe-behind","check":{"segments":["is-ok | 1 计费事实入账 已一致 billing 已发布 606 条 · 最大 …663680 account 已应用 606 条 · 最大 …663680 billing 未发布 0","is-ok | 2 account 过账流 1 条流 account 最大序号 606 最后入账 2026/10/30 19:35:24 过账流 1","is-ok | 3 ledger 总账消费 已一致 ledger 已消费 606 落后批次 0"],"stuck":"","buttons":["重建余额","刷新","浏览批次"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","role":"admin","step":"P6-browse","check":{"url":"/finance/posting-ops/streams/OE.ZQ344.USD.0?ledgerBookId=241946219587354624&fromSequence=557","summary":"account 最大序号 606 ledger 已消费 606 从序号 557 起 每页 50 批 跳 转","rows":51},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","role":"admin","step":"P6b-drawer","check":{"drawer":"批次主键 241946514027499520 主体 OPERATING_ENTITY · ZQ344 / USD · 分片 0 批次序号 557 入账时间 2026-10-30 19:29 来源类型 ECONOMIC_FACT（事实） 发布时间 2026-10-30 19:29 来源事实 事实 ID 241946510051291136 事实类型 MANUAL_ADJUSTMENT 事实版本 v1 替代事实 — 应用状态 APPLIED 服务费财务主体 — 行号 账户号 / 科目 Owner 余额桶 方向 金额 行号 账户号 / 科目 Owner 余额桶 方向 金额 1 ZQ344-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 888315298797128548 PENDING 贷 1.00 账户流水 借方合计 0.00 贷方合计 1.00 1 行流水"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","role":"admin","step":"P6c-back","check":{"url":"/finance/posting-ops?ledgerBookId=241946219587354624","keptBook":true},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","role":"admin","step":"P9-fe-book","check":{"segments":["is-ok | 1 计费事实入账 已一致 billing 已发布 1 条 · 最大 …326080 account 已应用 1 条 · 最大 …326080 billing 未发布 0","is-ok | 2 account 过账流 1 条流 account 最大序号 606 最后入账 2026/10/30 19:35:24 过账流 1","is-ok | 3 ledger 总账消费 已一致 ledger 已消费 606 落后批次 0"],"stuck":"","buttons":["重建余额","刷新","浏览批次"],"table":"过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 过账流 account 最大序号 最后入账 ledger 已消费 落后 状态 操作 OE.ZQ344.USD.0 服务费所在 OE 606 2026/10/30 19:35:24 606 0 已一致 浏览批次"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-390","role":"admin","step":"P7-idle","check":{"empty":"选择一本账簿查看入账进度 依次核对 billing 发布的计费事实、account 的入账批次、ledger 的总账消费，找出卡在哪一段。","menuHasPage":false,"rebuildDisabled":true,"options":["ZQ344 · USD\n经营主体账簿","PLOPS_ZQ344 · USD\n财务主体账簿（PLOPS_ZQ344）"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","role":"admin","step":"P2-oe-behind","check":{"segments":["is-ok | 1 计费事实入账 已一致 billing 已发布 606 条 · 最大 …663680 account 已应用 606 条 · 最大 …663680 billing 未发布 0","is-ok | 2 account 过账流 1 条流 account 最大序号 606 最后入账 2026/10/30 19:35:24 过账流 1","is-ok | 3 ledger 总账消费 已一致 ledger 已消费 606 落后批次 0"],"stuck":"","buttons":["重建余额","刷新","浏览批次"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","role":"admin","step":"P6-browse","check":{"url":"/finance/posting-ops/streams/OE.ZQ344.USD.0?ledgerBookId=241946219587354624&fromSequence=557","summary":"account 最大序号 606 ledger 已消费 606 从序号 557 起 每页 50 批 跳 转","rows":51},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","role":"admin","step":"P6b-drawer","check":{"drawer":"批次主键 241946514027499520 主体 OPERATING_ENTITY · ZQ344 / USD · 分片 0 批次序号 557 入账时间 2026-10-30 19:29 来源类型 ECONOMIC_FACT（事实） 发布时间 2026-10-30 19:29 来源事实 事实 ID 241946510051291136 事实类型 MANUAL_ADJUSTMENT 事实版本 v1 替代事实 — 应用状态 APPLIED 服务费财务主体 — 行号 账户号 / 科目 Owner 余额桶 方向 金额 行号 账户号 / 科目 Owner 余额桶 方向 金额 1 ZQ344-USD-22010101-S000001 CLIENT_PAYABLE CLIENT 888315298797128548 PENDING 贷 1.00 账户流水 借方合计 0.00 贷方合计 1.00 1 行流水"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","role":"admin","step":"P6c-back","check":{"url":"/finance/posting-ops?ledgerBookId=241946219587354624","keptBook":true},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","role":"admin","step":"P9-fe-book","check":{"segments":["is-ok | 1 计费事实入账 已一致 billing 已发布 1 条 · 最大 …326080 account 已应用 1 条 · 最大 …326080 billing 未发布 0","is-ok | 2 account 过账流 1 条流 account 最大序号 606 最后入账 2026/10/30 19:35:24 过账流 1","is-ok | 3 ledger 总账消费 已一致 ledger 已消费 606 落后批次 0"],"stuck":"","buttons":["重建余额","刷新","浏览批次"],"table":"过账流account 最大序号最后入账ledger 已消费落后状态操作过账流account 最大序号最后入账ledger 已消费落后状态操作OE.ZQ344.USD.0服务费所在 OE6062026/10/30 19:35:246060已一致浏览批次"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"en-1440","role":"admin","step":"P7-idle","check":{"empty":"","menuHasPage":false,"rebuildDisabled":null,"options":[]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"en-1440","role":"admin","step":"P2-oe-behind","check":{"segments":[],"stuck":"","buttons":[]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('button:visible, a:visible, [role=button]:visible').filter({ hasText: 'Browse Batches' }).first()[22m
+
+    at /Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261030/operations-明细账运维/verification/stage5/t6_browser.mjs:126:49 {
+  name: 'TimeoutError'
+}
+
+Node.js v24.6.0

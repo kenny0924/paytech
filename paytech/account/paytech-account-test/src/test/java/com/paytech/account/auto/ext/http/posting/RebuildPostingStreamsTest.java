@@ -20,6 +20,7 @@ import com.paytech.account.test.base.AbstractBalanceTest;
 /**
  * 按入账流重建余额：经真实 HTTP 入口锁流行、按 t_account_entry 重算全部账户并以旧版本 CAS 加一（设计 4.5）
  * <li>被篡改的余额恢复为流水合计，余额版本加一，不删不改流水；主体与币种下没有流时为 STREAM_NOT_FOUND。</li>
+ * <li>changedAccountCount 只统计余额实际被纠正的账户：数据一致时为 0，篡改一个账户后为 1。</li>
  *
  * @see AccountPostingApi#rebuildPostingStreams(RebuildPostingStreamsRequestBody)
  */
@@ -39,7 +40,8 @@ class RebuildPostingStreamsTest extends AbstractBalanceTest {
         PostingStreamsRebuildResponseBody body = post(PATH, request(ENTITY_NO)).assertSuccess(200)
             .as(PostingStreamsRebuildResponseBody.class);
 
-        assertAll(() -> assertEquals("1", body.getAccountCount()), () -> assertEquals("2", body.getEntryCount()),
+        assertAll(() -> assertEquals("1", body.getAccountCount()), () -> assertEquals("1", body.getChangedAccountCount()),
+            () -> assertEquals("2", body.getEntryCount()),
             () -> assertEquals("2", body.getMaxPostingSequence()),
             () -> assertEquals(version + 1, ((Number)account(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING)
                 .get("balance_version")).longValue()),
@@ -47,6 +49,24 @@ class RebuildPostingStreamsTest extends AbstractBalanceTest {
                 CURRENCY).size()));
         assertBalance(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING, "0", "12.5", "12.5");
         posted.await(2);
+    }
+
+    /** 余额与流水一致时重建：账户照常重算、版本加一，但没有账户被纠正，余额不变。 */
+    @Test
+    void test_rebuildConsistentBalancesChangesNothing() {
+        consumed(clientCredit("10").build());
+        long version = ((Number)account(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING)
+            .get("balance_version")).longValue();
+
+        PostingStreamsRebuildResponseBody body = post(PATH, request(ENTITY_NO)).assertSuccess(200)
+            .as(PostingStreamsRebuildResponseBody.class);
+
+        assertAll(() -> assertEquals("1", body.getAccountCount()), () -> assertEquals("0", body.getChangedAccountCount()),
+            () -> assertEquals("1", body.getEntryCount()), () -> assertEquals("1", body.getMaxPostingSequence()),
+            () -> assertEquals(version + 1, ((Number)account(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING)
+                .get("balance_version")).longValue()));
+        assertBalance(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING, "0", "10", "10");
+        posted.await(1);
     }
 
     /** 主体与币种下没有入账流：400 STREAM_NOT_FOUND；缺少操作人为请求体字段校验失败 422。 */

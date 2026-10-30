@@ -50,8 +50,14 @@ public class BillingFactMocker implements Clear {
     /** 配置账簿主体的未发布数、已发布数与已发布最大 factId。 */
     public synchronized void mockProgress(String bookEntityType, String bookEntityId, String currency, long pendingCount,
         long publishedFactCount, Long maxPublishedFactId) {
+        mockProgress(bookEntityType, bookEntityId, currency, pendingCount, null, publishedFactCount, maxPublishedFactId);
+    }
+
+    /** 配置账簿主体的未发布数与未发布最大 factId、已发布数与已发布最大 factId。 */
+    public synchronized void mockProgress(String bookEntityType, String bookEntityId, String currency, long pendingCount,
+        Long maxPendingFactId, long publishedFactCount, Long maxPublishedFactId) {
         progress.put(key(bookEntityType, bookEntityId, currency),
-            progressBody(pendingCount, publishedFactCount, maxPublishedFactId));
+            progressBody(pendingCount, maxPendingFactId, publishedFactCount, maxPublishedFactId));
     }
 
     /** 配置账簿主体的读取故障。 */
@@ -83,7 +89,7 @@ public class BillingFactMocker implements Clear {
         calls.add("progress:" + key);
         Object configured = progress.get(key);
         if (configured == null && nothingPublishedByDefault) {
-            return progressBody(0, 0, null);
+            return progressBody(0, null, 0, null);
         }
         return (BillingFactProgressResponseBody)answer(configured, "progress " + key);
     }
@@ -148,11 +154,11 @@ public class BillingFactMocker implements Clear {
     }
 
     /** 构造进度响应 DTO。 */
-    static BillingFactProgressResponseBody progressBody(long pendingCount, long publishedFactCount,
-        Long maxPublishedFactId) {
+    static BillingFactProgressResponseBody progressBody(long pendingCount, Long maxPendingFactId,
+        long publishedFactCount, Long maxPublishedFactId) {
         BillingFactProgressResponseBody body = new BillingFactProgressResponseBody();
         body.setPendingCount(Long.toString(pendingCount));
-        body.setMaxPendingFactId(null);
+        body.setMaxPendingFactId(maxPendingFactId == null ? null : maxPendingFactId.toString());
         body.setPublishedFactCount(Long.toString(publishedFactCount));
         body.setMaxPublishedFactId(maxPublishedFactId == null ? null : maxPublishedFactId.toString());
         return body;

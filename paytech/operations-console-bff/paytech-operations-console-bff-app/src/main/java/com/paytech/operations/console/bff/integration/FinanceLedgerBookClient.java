@@ -1,5 +1,6 @@
 package com.paytech.operations.console.bff.integration;
 
+import com.paytech.account.api.event.AccountPostedPayload;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.AccountBalanceListResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.AccountJournalLineResponseBody;
@@ -12,6 +13,8 @@ import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.LedgerBookResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.TrialBalanceDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.FinanceLedgerBookModels.TrialBalanceRunResponseBody;
+import com.paytech.operations.console.bff.service.model.FinancePostingOpsModels.CatchUpPostingStreamResponseBody;
+import com.paytech.operations.console.bff.service.model.FinancePostingOpsModels.PostingProgressResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 
 /**
@@ -134,4 +137,23 @@ public interface FinanceLedgerBookClient {
      * @return 摘要、末级试算行、级次汇总行与异常
      */
     TrialBalanceDetailResponseBody getTrialBalance(String ledgerBookId, String periodId, String runNo);
+
+    /**
+     * 账簿入账进度（明细账运维）
+     *
+     * @param ledgerBookId 账簿主键
+     * @return ledger 给出的两段进度；各流的 stuckPosting 为空，由调用方补充
+     */
+    PostingProgressResponseBody getPostingProgress(String ledgerBookId);
+
+    /**
+     * 追平一条过账流（明细账运维）
+     *
+     * @param context 操作人
+     * @param stream 已校验的过账流身份
+     * @param maxBatches 本次最多处理的批次数
+     * @return 处理批次数、处理后序号与是否已追平
+     */
+    CatchUpPostingStreamResponseBody catchUpPostingStream(OperatorContext context,
+        AccountPostedPayload.StreamKey stream, int maxBatches);
 }

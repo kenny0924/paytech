@@ -42,16 +42,17 @@ const entry = { journalEntryId: line.journalEntryId, ledgerBookId: book.ledgerBo
   lines: [entryLine(1, 'DEBIT', '125.00'), entryLine(2, 'CREDIT', '120.00', '7400000000003001'), entryLine(3, 'CREDIT', '5.00')] };
 const usd = (amount: string) => ({ currency: 'USD', amount });
 
-test('页面注册：财务七页按序登记，动作与 Platform 能力清单一致（账本查询增加发起试算，三个新页各有制单 / 复核）', () => {
+test('页面注册：财务八页按序登记，动作与 Platform 能力清单一致（账本查询增加发起试算，三个新页各有制单 / 复核，明细账运维有追平 / 重建）', () => {
   // 对账七页（OPERATIONS_FINANCE_RECON_*）在 reconciliation/reconModel.test.ts 校验；出款两页（OPERATIONS_FINANCE_PAYOUT_*）在 payout/payout.test.ts 校验。
   const finance = pageCapabilities.filter(page => page.componentKey.startsWith('OPERATIONS_FINANCE_') && !page.componentKey.startsWith('OPERATIONS_FINANCE_RECON_')
     && !page.componentKey.startsWith('OPERATIONS_FINANCE_PAYOUT_'));
   assert.deepEqual(finance.map(page => [page.componentKey, page.frontendRoute]), [
     ['OPERATIONS_FINANCE_SETUP', '/finance/setup'], ['OPERATIONS_FINANCE_LEDGER', '/finance/ledger'], ['OPERATIONS_FINANCE_BALANCES', '/finance/balances'],
-    ['OPERATIONS_FINANCE_SUBLEDGER', '/finance/subledger'], ['OPERATIONS_FINANCE_ADJUSTMENTS', '/finance/adjustments'],
+    ['OPERATIONS_FINANCE_SUBLEDGER', '/finance/subledger'], ['OPERATIONS_FINANCE_POSTING_OPS', '/finance/posting-ops'], ['OPERATIONS_FINANCE_ADJUSTMENTS', '/finance/adjustments'],
     ['OPERATIONS_FINANCE_PERIOD_CLOSE', '/finance/period-close'], ['OPERATIONS_FINANCE_ACCOUNTING_RULES', '/finance/accounting-rules'],
     ['OPERATIONS_FINANCE_TAX', '/finance/tax']]);
   assert.deepEqual(finance.map(page => page.actions.map(action => action.resourceCode)), [[manageFinanceSetup], ['OPERATIONS_FINANCE_LEDGER_MANAGE'], [], [],
+    ['OPERATIONS_FINANCE_POSTING_OPS_CATCH_UP', 'OPERATIONS_FINANCE_POSTING_OPS_REBUILD'],
     ['OPERATIONS_FINANCE_ADJUSTMENTS_MANAGE', 'OPERATIONS_FINANCE_ADJUSTMENTS_APPROVE'],
     ['OPERATIONS_FINANCE_PERIOD_CLOSE_MANAGE', 'OPERATIONS_FINANCE_PERIOD_CLOSE_APPROVE'],
     ['OPERATIONS_FINANCE_ACCOUNTING_RULES_MANAGE', 'OPERATIONS_FINANCE_ACCOUNTING_RULES_APPROVE'], []]);

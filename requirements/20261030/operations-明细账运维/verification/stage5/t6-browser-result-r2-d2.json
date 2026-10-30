@@ -1,0 +1,242 @@
+{
+  "startedAt": "2026-10-30T16:50:14.129Z",
+  "groups": [
+    "d2"
+  ],
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "D2a-before",
+          "check": {
+            "book": "账簿 ZQ344 · USD 经营主体账簿"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        },
+        {
+          "role": "admin",
+          "step": "D2b-same-tab-ledger-down",
+          "check": {
+            "book": "账簿 ZQ344 · USD 经营主体账簿",
+            "failure": "暂时无法获取入账进度 ledger 服务不可用（503 DEPENDENCY_UNAVAILABLE）。账簿选择已保留，稍后重试即可。 重试",
+            "toasts": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        },
+        {
+          "role": "admin",
+          "step": "D2c-new-tab-ledger-down",
+          "check": {
+            "book": "账簿 241946219587354624",
+            "failure": "暂时无法获取入账进度 ledger 服务不可用（503 DEPENDENCY_UNAVAILABLE）。账簿选择已保留，稍后重试即可。 重试",
+            "toasts": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        },
+        {
+          "role": "admin",
+          "step": "D2d-retry",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 3,555 条 · 最大 …268288 account 已应用 3,555 条 · 最大 …268288 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 3,555 最后入账 2026/10/30 20:48:22 过账流 1",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 3,555 落后批次 0"
+            ],
+            "stuck": "",
+            "buttons": [
+              "重建余额",
+              "刷新",
+              "浏览批次"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "D2a-before",
+          "check": {
+            "book": "Ledger Book ZQ344 · USD Operating entity book"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "D2b-same-tab-ledger-down",
+          "check": {
+            "book": "Ledger Book ZQ344 · USD Operating entity book",
+            "failure": "Couldn't get posting progress The ledger service is unavailable (503 DEPENDENCY_UNAVAILABLE). Your book selection is kept; try again later. Retry",
+            "toasts": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "D2c-new-tab-ledger-down",
+          "check": {
+            "book": "Ledger Book 241946219587354624",
+            "failure": "Couldn't get posting progress The ledger service is unavailable (503 DEPENDENCY_UNAVAILABLE). Your book selection is kept; try again later. Retry",
+            "toasts": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "D2d-retry",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 3,555 · max …268288 account applied 3,555 · max …268288 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 3,555 Last posted 10/30/2026, 20:48:22 Streams 1",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed 3,555 Batches behind 0"
+            ],
+            "stuck": "",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Browse Batches"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "/finance/posting-ops?ledgerBookId=241946219587354624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "D2a-before",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/posting-ops?ledgerBookId=241946219587354624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "D2a-before",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    }
+  ],
+  "httpErrors": [],
+  "deliberate": [
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "D2a-before",
+      "why": "ledger 停止",
+      "method": "GET",
+      "path": "/api/operations/finance/posting-progress/v1/ledger-books/241946219587354624",
+      "status": 503
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "D2a-before",
+      "why": "ledger 停止",
+      "method": "GET",
+      "path": "/api/operations/finance/posting-progress/v1/ledger-books/241946219587354624",
+      "status": 503
+    }
+  ],
+  "posts": [
+    {
+      "run": "zh-CN-1440",
+      "note": "stop ledger: ledger 已停止"
+    },
+    {
+      "run": "zh-CN-1440",
+      "note": "start ledger: ledger 就绪（5s）"
+    },
+    {
+      "run": "en-390",
+      "note": "stop ledger: ledger 已停止"
+    },
+    {
+      "run": "en-390",
+      "note": "start ledger: ledger 就绪（4s）"
+    }
+  ],
+  "relogins": 3
+}

@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## operations 明细账运维（2026-10-30，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [需求](<../requirements/20261030/operations-明细账运维/requirement.md>)、[技术方案](<../requirements/20261030/operations-明细账运维/technique.md>)、[交付记录](<../requirements/20261030/operations-明细账运维/delivery.md>)、[运行卡](<../requirements/20261030/operations-明细账运维/release/runbook.md>)、[阶段 5 报告](<../requirements/20261030/operations-明细账运维/verification/stage5/stage5-report.md>)、[阶段 6 报告](<../requirements/20261030/operations-明细账运维/release/stage6-report.md>)、[阶段 7 验收](<../requirements/20261030/operations-明细账运维/release/stage7-acceptance.md>)。
+- **Implemented：** ledger 新增账簿入账进度查询 `PostingProgressQueryApi`（关账第 3 步改用同一判定服务，行为不变）；ledger 读 account / billing 的响应上限由 8192 B 改为 4 MiB / 8 MiB（追平每页 200 批与大事实读取，影响 ledger 全部经 HTTP 的读取）；account 重建响应新增 `changedAccountCount`；Operations BFF 4 个接口（进度含卡住批次、批次浏览、追平、重建）；运营 Web"财务 → 明细账运维"页与批次浏览子页（结果条含时间与操作人）；Platform 能力清单与注册块 148（查看沿用 `FINANCE_ACCOUNTING_READ`，执行新增 `FINANCE_SUBLEDGER_MANAGE`）。无新表、无 DDL。
+- **Verified（2026-10-30）：** 本机综合验证（合成 OE ZQ344：改余额 → 重建、ledger 落后 600 批 → 追平、规则拒绝 → 补回重放、并发 409、分段不可用、zh-CN / en × 1440 / 390，截图 199 张），200 批追平 8 个样本中位数约 5.2 s（保留 200）；发布树 ledger 341 / 0、account 73 / 0、Platform 受影响 6 类 55 / 0、Operations BFF 2573 / 0、arch-rules 70 / 0、ops-web `tsc` / 1702 单测 / build；mor-test 验收 V-0—V-8 全部通过。本机 `mor_ledger_v2e2e` 补执行 2026-10-19 科目分级迁移（经授权）。
+- **Deployed：** mor-test 2026-10-30 17:22—17:28Z（tag `plops-20261030a`）：ledger `b65223c1…`、account `6ad6a22b…`、Platform `1bfed883…`、Operations BFF `4bdfce6e…`、运营 Web `5784fa81…`；块 148 激活（ACTIVE 路由 671 → 675）；运营语言包 #30。验收合成只读账号已停用、角色权限已撤销。
+- **Pending：** 未推送；200 批追平耗时未在 mor-test 复测（需制造落后，按 S-03 未做）；新标签页在 ledger 从未可用时账簿下拉仍显示主键（已知限制）。
+
 ## payout 收款账户与余额解释（S1，2026-10-30，已部署 mor-test，已本地提交 `b92c0fde`，未推送）
 
 - **范围：** [需求](<../requirements/20261030/payout-收款账户与余额解释/requirement.md>)、[技术方案](<../requirements/20261030/payout-收款账户与余额解释/technique.md>)、[交付记录](<../requirements/20261030/payout-收款账户与余额解释/delivery.md>)、[运行卡](<../requirements/20261030/payout-收款账户与余额解释/release/runbook.md>)、[阶段 6 报告](<../requirements/20261030/payout-收款账户与余额解释/release/stage6-report.md>)、[阶段 7 报告](<../requirements/20261030/payout-收款账户与余额解释/release/stage7-report.md>)；依据 [2026-10-30 出款模型决定](./decisions/2026-10-30-payout-settlement-payout-model.md)。

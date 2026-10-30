@@ -1,0 +1,76 @@
+### candidate ledger vs base 331d8e0e
+A=1441 B=1455 onlyA=0 onlyB=14 changed=10
+  + BOOT-INF/classes/com/paytech/ledger/app/ext/rest/PostingProgressQueryController.class
+  + BOOT-INF/classes/com/paytech/ledger/app/ext/rest/converter/PostingProgressConverter.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/PostingProgressQueryApi.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/enums/PostingProgressStatus.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/response/PostingProgressResponseBody$FactSegment.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/response/PostingProgressResponseBody$Stream.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/response/PostingProgressResponseBody$StreamSegment.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/response/PostingProgressResponseBody.class
+  + paytech-ledger-core.jar!com/paytech/ledger/domain/BookPostingProgress$StreamProgress.class
+  + paytech-ledger-core.jar!com/paytech/ledger/domain/BookPostingProgress.class
+  + paytech-ledger-core.jar!com/paytech/ledger/domainservice/service/PostingProgressService.class
+  + paytech-ledger-core.jar!com/paytech/ledger/domainservice/service/impl/PostingProgressServiceImpl.class
+  + paytech-ledger-core.jar!com/paytech/ledger/service/processor/GetPostingProgressProcessor.class
+  + paytech-ledger-core.jar!com/paytech/ledger/service/processor/request/GetPostingProgressRequest.class
+  ~ BOOT-INF/classes/com/paytech/ledger/app/configuration/AccountClientConfiguration.class
+  ~ BOOT-INF/classes/com/paytech/ledger/app/configuration/BillingClientConfiguration.class
+  ~ paytech-account-api.jar!com/paytech/account/api/response/PostingStreamsRebuildResponseBody.class
+  ~ paytech-ledger-core.jar!com/paytech/ledger/domain/AccountPostingProgress$Stream.class
+  ~ paytech-ledger-core.jar!com/paytech/ledger/domain/AccountPostingProgress.class
+  ~ paytech-ledger-core.jar!com/paytech/ledger/domain/BillingFactProgress.class
+  ~ paytech-ledger-core.jar!com/paytech/ledger/integration/account/impl/AccountPostingClientImpl.class
+  ~ paytech-ledger-core.jar!com/paytech/ledger/integration/billing/impl/BillingFactClientImpl.class
+  ~ paytech-ledger-core.jar!com/paytech/ledger/service/processor/StartPeriodCloseProcessor$StepOutcome.class
+  ~ paytech-ledger-core.jar!com/paytech/ledger/service/processor/StartPeriodCloseProcessor.class
+### candidate ledger vs live
+A=1401 B=1455 onlyA=0 onlyB=54 changed=32
+### candidate account vs base 331d8e0e
+A=556 B=556 onlyA=0 onlyB=0 changed=5
+  ~ BOOT-INF/classes/com/paytech/account/app/ext/rest/converter/AccountPostingConverter.class
+  ~ paytech-account-api.jar!com/paytech/account/api/response/PostingStreamsRebuildResponseBody.class
+  ~ paytech-account-core.jar!com/paytech/account/domain/model/StreamRebuildResult.class
+  ~ paytech-account-core.jar!com/paytech/account/domainservice/service/impl/PostingStreamRebuildServiceImpl.class
+  ~ paytech-account-core.jar!com/paytech/account/service/processor/RebuildPostingStreamsProcessor.class
+### candidate account vs live
+A=556 B=556 onlyA=0 onlyB=0 changed=5
+### candidate platform-support vs base 331d8e0e
+A=3249 B=3249 onlyA=0 onlyB=0 changed=1
+  ~ paytech-platform-support-access-control.jar!operations/console-resource-capabilities.json
+### candidate platform-support vs live
+A=3249 B=3249 onlyA=0 onlyB=0 changed=1
+### candidate operations-console-bff vs base 331d8e0e
+A=3119 B=3138 onlyA=0 onlyB=19 changed=11
+  + BOOT-INF/classes/com/paytech/operations/console/bff/ext/rest/FinancePostingOpsController.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/model/FinancePostingOpsModels$CatchUpPostingStreamResponseBody.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/model/FinancePostingOpsModels$FactSegment.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/model/FinancePostingOpsModels$PostingListResponseBody.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/model/FinancePostingOpsModels$PostingProgressResponseBody.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/model/FinancePostingOpsModels$PostingSummary.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/model/FinancePostingOpsModels$RebuildPostingStreamsRequestBody.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/model/FinancePostingOpsModels$RebuildPostingStreamsResponseBody.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/model/FinancePostingOpsModels$Stream.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/model/FinancePostingOpsModels$StreamSegment.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/model/FinancePostingOpsModels.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/PostingProgressProcessor.class
+  + BOOT-INF/classes/com/paytech/operations/console/bff/service/processor/request/PostingProgressRequest.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/PostingProgressQueryApi.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/enums/PostingProgressStatus.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/response/PostingProgressResponseBody$FactSegment.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/response/PostingProgressResponseBody$Stream.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/response/PostingProgressResponseBody$StreamSegment.class
+  + paytech-ledger-api.jar!com/paytech/ledger/api/response/PostingProgressResponseBody.class
+  ~ BOOT-INF/classes/application.yml
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/configuration/FinanceClientConfiguration$1.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/configuration/FinanceClientConfiguration.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/configuration/FinanceRequestConfiguration$1.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/configuration/FinanceRequestConfiguration$FinanceRequestConverter.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/configuration/FinanceRequestConfiguration.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/FinanceLedgerBookClient.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/FinanceSubledgerClient.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/impl/FinanceLedgerBookClientImpl.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/integration/impl/FinanceSubledgerClientImpl.class
+  ~ paytech-account-api.jar!com/paytech/account/api/response/PostingStreamsRebuildResponseBody.class
+### candidate operations-console-bff vs live
+A=3119 B=3138 onlyA=0 onlyB=19 changed=11

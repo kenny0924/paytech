@@ -1,0 +1,42 @@
++---------------+--------------------+-------------+----------+------------+----------------+-----------+
+| permissions_1 | role_permissions_1 | resources_3 | routes_4 | headers_16 | query_params_2 | guards_24 |
++---------------+--------------------+-------------+----------+------------+----------------+-----------+
+|             1 |                  1 |           3 |        4 |         16 |              2 |        24 |
++---------------+--------------------+-------------+----------+------------+----------------+-----------+
++-----------------+----------+---+
+| kind            | status   | n |
++-----------------+----------+---+
+| role_permission | REVOKED  | 1 |
+| resource        | DISABLED | 3 |
+| route           | DISABLED | 4 |
+| permission      | ACTIVE   | 1 |
++-----------------+----------+---+
++--------------------+--------------------------------------------+-------------+--------------------+------------------+------------------+-------------------------+
+| route_id           | route_code                                 | http_method | permission_id      | body_limit_bytes | idempotency_mode | response_timeout_millis |
++--------------------+--------------------------------------------+-------------+--------------------+------------------+------------------+-------------------------+
+| 900000000000148401 | operations-finance-posting-progress        | GET         | 900000000000097101 |                0 | NONE             |                   10000 |
+| 900000000000148402 | operations-finance-posting-stream-postings | GET         | 900000000000097101 |                0 | NONE             |                   10000 |
+| 900000000000148403 | operations-finance-posting-stream-catch-up | POST        | 900000000000148101 |                0 | NONE             |                   10000 |
+| 900000000000148404 | operations-finance-posting-rebuild         | POST        | 900000000000148101 |             1024 | NONE             |                   10000 |
++--------------------+--------------------------------------------+-------------+--------------------+------------------+------------------+-------------------------+
++--------------------------------------------+--------------+----------------+
+| route_code                                 | route_same_1 | headers_same_1 |
++--------------------------------------------+--------------+----------------+
+| operations-finance-posting-progress        |            1 |              1 |
+| operations-finance-posting-stream-postings |            1 |              1 |
+| operations-finance-posting-stream-catch-up |            1 |              1 |
+| operations-finance-posting-rebuild         |            0 |              1 |
++--------------------------------------------+--------------+----------------+
++--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| route_id           | guards                                                                                                                                                                                    |
++--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| 900000000000148401 | CONCURRENCY/AUTHENTICATED_PRINCIPAL//2,RATE_LIMIT/AUTHENTICATED_PRINCIPAL/30/,CONCURRENCY/CLIENT_IP//3,RATE_LIMIT/CLIENT_IP/30/,CONCURRENCY/SHARED_ROUTE//50,RATE_LIMIT/SHARED_ROUTE/300/ |
+| 900000000000148402 | CONCURRENCY/AUTHENTICATED_PRINCIPAL//2,RATE_LIMIT/AUTHENTICATED_PRINCIPAL/30/,CONCURRENCY/CLIENT_IP//3,RATE_LIMIT/CLIENT_IP/30/,CONCURRENCY/SHARED_ROUTE//50,RATE_LIMIT/SHARED_ROUTE/300/ |
+| 900000000000148403 | CONCURRENCY/AUTHENTICATED_PRINCIPAL//1,RATE_LIMIT/AUTHENTICATED_PRINCIPAL/10/,CONCURRENCY/CLIENT_IP//3,RATE_LIMIT/CLIENT_IP/30/,CONCURRENCY/SHARED_ROUTE//50,RATE_LIMIT/SHARED_ROUTE/300/ |
+| 900000000000148404 | CONCURRENCY/AUTHENTICATED_PRINCIPAL//1,RATE_LIMIT/AUTHENTICATED_PRINCIPAL/10/,CONCURRENCY/CLIENT_IP//3,RATE_LIMIT/CLIENT_IP/30/,CONCURRENCY/SHARED_ROUTE//50,RATE_LIMIT/SHARED_ROUTE/300/ |
++--------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
++---------------+-----------------+
+| active_routes | disabled_routes |
++---------------+-----------------+
+|           671 |              10 |
++---------------+-----------------+

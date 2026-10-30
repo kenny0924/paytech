@@ -46,7 +46,7 @@ public class AccountPostingClientImpl implements AccountPostingClient {
             String aggregateId = AccountPostedPayload.aggregateId(entityType, stream.getEntityId(), stream.getCurrency(),
                 Integer.parseInt(stream.getShardNo()));
             streams.add(new AccountPostingProgress.Stream(AggregateKey.of(AccountPostedPayload.AGGREGATE_TYPE, aggregateId),
-                Long.parseLong(stream.getMaxPostingSequence())));
+                Long.parseLong(stream.getMaxPostingSequence()), stream.getLastPostedTime()));
         }
         Long maxApplied = body.getMaxAppliedFactId() == null ? null : Long.valueOf(body.getMaxAppliedFactId());
         return new AccountPostingProgress(Long.parseLong(body.getAppliedFactCount()), maxApplied, streams);

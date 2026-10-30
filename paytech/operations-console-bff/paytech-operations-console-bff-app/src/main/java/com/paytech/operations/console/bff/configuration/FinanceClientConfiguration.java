@@ -41,6 +41,8 @@ import com.paytech.ledger.api.LedgerBookQueryApi;
 import com.paytech.ledger.api.LedgerSetupQueryApi;
 import com.paytech.ledger.api.ManualAdjustmentApi;
 import com.paytech.ledger.api.PeriodCloseApi;
+import com.paytech.ledger.api.PostingProgressQueryApi;
+import com.paytech.ledger.api.PostingStreamCommandApi;
 import com.paytech.ledger.api.TrialBalanceApi;
 import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.api.enums.LedgerSetupErrorCode;
@@ -51,6 +53,9 @@ import com.paytech.operations.console.bff.domain.enums.OperationsBffErrorCode;
  * <li>不加 LoadBalancer、不加 Discovery 拦截器、不重试；连接 2 秒、读取 4 秒，禁止跟随重定向，传递 X-Request-Id。</li>
  * <li>关账发起、重开发起与关账/重开审批在 ledger 同步执行（含损益结转与冲回），单独使用一个读取超时更长的 ledger 工厂
  * （operations.ledger-long-running-read-timeout，默认 9 秒，须小于 Gateway 路由响应超时上限 10 秒）；其他调用不受影响。</li>
+ * <li>明细账运维（2026-10-30）：账簿入账进度查询走上述长耗时 ledger 工厂（ledger 内部还要读 billing 与 account）；ledger 追平与 account
+ * 余额重建各用一个专用工厂：读取超时分别为 operations.ledger-long-running-read-timeout 与 operations.account-long-running-read-timeout
+ * （默认 9 秒），并显式外显 Owner Problem detail，使规则拒绝、无 OPEN 期间、并发冲突等原因原样到达页面；其他 ledger / account 调用不受影响。</li>
  * <li>严格 Problem 解码并保留 Owner 422 字段路径；超时映射 504 DEPENDENCY_TIMEOUT，不可达映射 503 DEPENDENCY_UNAVAILABLE。</li>
  * <li>每个 Owner 各用独立工厂、只登记本 Owner 的合同错误码：ledger 为 LedgerSetupErrorCode 与 LedgerErrorCode；account 为
  * BalanceQueryErrorCode、AccountPostingErrorCode 与明细流水查询使用的 BalanceMovementErrorCode.ACCOUNT_NOT_FOUND；billing 为
@@ -70,7 +75,9 @@ public class FinanceClientConfiguration {
 
     private final HttpServiceProxyFactory ledger;
     private final HttpServiceProxyFactory longRunningLedger;
+    private final HttpServiceProxyFactory postingOpsLedger;
     private final HttpServiceProxyFactory account;
+    private final HttpServiceProxyFactory postingOpsAccount;
     private final HttpServiceProxyFactory billing;
 
     /** 启动时校验三个固定地址与长耗时读取超时，并创建各自的代理工厂。 */
@@ -78,15 +85,22 @@ public class FinanceClientConfiguration {
         @Value("${operations.account-base-url}") String accountBaseUrl,
         @Value("${operations.billing-base-url}") String billingBaseUrl,
         @Value("${operations.ledger-long-running-read-timeout}") Duration longRunningReadTimeout,
+        @Value("${operations.account-long-running-read-timeout}") Duration accountLongRunningReadTimeout,
         ObjectProvider<InternalTokenSupplier> tokens) {
         String ledgerUrl = validated("operations.ledger-base-url", ledgerBaseUrl);
-        this.ledger = factory(ledgerUrl, LEDGER_SERVICE, tokens, READ_TIMEOUT, ledgerErrorCodes());
-        this.longRunningLedger = factory(ledgerUrl, LEDGER_SERVICE, tokens,
-            validatedLongRunning(longRunningReadTimeout), ledgerErrorCodes());
-        this.account = factory(validated("operations.account-base-url", accountBaseUrl), ACCOUNT_SERVICE, tokens,
-            READ_TIMEOUT, accountErrorCodes());
+        Duration ledgerLongRunning = validatedLongRunning("operations.ledger-long-running-read-timeout",
+            longRunningReadTimeout);
+        this.ledger = factory(ledgerUrl, LEDGER_SERVICE, tokens, READ_TIMEOUT, false, ledgerErrorCodes());
+        this.longRunningLedger = factory(ledgerUrl, LEDGER_SERVICE, tokens, ledgerLongRunning, false,
+            ledgerErrorCodes());
+        this.postingOpsLedger = factory(ledgerUrl, LEDGER_SERVICE, tokens, ledgerLongRunning, true, ledgerErrorCodes());
+        String accountUrl = validated("operations.account-base-url", accountBaseUrl);
+        this.account = factory(accountUrl, ACCOUNT_SERVICE, tokens, READ_TIMEOUT, false, accountErrorCodes());
+        this.postingOpsAccount = factory(accountUrl, ACCOUNT_SERVICE, tokens,
+            validatedLongRunning("operations.account-long-running-read-timeout", accountLongRunningReadTimeout), true,
+            accountErrorCodes());
         this.billing = factory(validated("operations.billing-base-url", billingBaseUrl), BILLING_SERVICE, tokens,
-            READ_TIMEOUT, BillingFactErrorCode.values());
+            READ_TIMEOUT, false, BillingFactErrorCode.values());
     }
 
     /** ledger 账务基础资料只读查询。 */
@@ -156,6 +170,18 @@ public class FinanceClientConfiguration {
         return longRunningLedger.createClient(PeriodCloseApi.class);
     }
 
+    /** ledger 账簿入账进度（明细账运维）：ledger 内部还要读 billing 与 account，使用长耗时读取超时。 */
+    @Bean
+    PostingProgressQueryApi postingProgressQueryApi() {
+        return longRunningLedger.createClient(PostingProgressQueryApi.class);
+    }
+
+    /** ledger 过账流追平（明细账运维）：长耗时读取超时，外显 Owner detail。 */
+    @Bean
+    PostingStreamCommandApi postingStreamCommandApi() {
+        return postingOpsLedger.createClient(PostingStreamCommandApi.class);
+    }
+
     /** ledger 记账规则包与规则版本。 */
     @Bean
     AccountingRuleBundleApi accountingRuleBundleApi() {
@@ -186,10 +212,17 @@ public class FinanceClientConfiguration {
         return account.createClient(OwnerAccountQueryApi.class);
     }
 
-    /** account 过账批次详情；BFF 只使用批次详情，不暴露进度、追平读取与按流重建。 */
+    /** account 过账批次详情与按流批次列表（普通读取超时）；BFF 不使用 account 进度。 */
     @Bean
+    @Primary
     AccountPostingApi accountPostingApi() {
         return account.createClient(AccountPostingApi.class);
+    }
+
+    /** account 按流重建余额（明细账运维）：逐流锁行重算，使用长耗时读取超时，外显 Owner detail。 */
+    @Bean
+    AccountPostingApi longRunningAccountPostingApi() {
+        return postingOpsAccount.createClient(AccountPostingApi.class);
     }
 
     /** ledger 页面可能收到的合同错误码：基础资料与账本的 LedgerSetupErrorCode；人工调整、关账与规则包的 LedgerErrorCode。 */
@@ -198,10 +231,10 @@ public class FinanceClientConfiguration {
             .toArray(CodeMessageEnum[]::new);
     }
 
-    /** 长耗时读取超时必须为正，且小于 Gateway 路由响应超时上限 10 秒，使 BFF 先于 Gateway 返回 504。 */
-    static Duration validatedLongRunning(Duration value) {
+    /** 长耗时读取超时不得小于普通读取超时，且小于 Gateway 路由响应超时上限 10 秒，使 BFF 先于 Gateway 返回 504。 */
+    static Duration validatedLongRunning(String property, Duration value) {
         if (value == null || value.compareTo(READ_TIMEOUT) < 0 || value.compareTo(GATEWAY_RESPONSE_CEILING) >= 0) {
-            throw new IllegalArgumentException("operations.ledger-long-running-read-timeout 必须不小于 4 秒且小于 10 秒");
+            throw new IllegalArgumentException(property + " 必须不小于 4 秒且小于 10 秒");
         }
         return value;
     }
@@ -213,9 +246,10 @@ public class FinanceClientConfiguration {
             Stream.of(BalanceMovementErrorCode.ACCOUNT_NOT_FOUND)).toArray(CodeMessageEnum[]::new);
     }
 
-    /** 固定地址、严格协议并映射依赖故障；只登记本 Owner 的合同错误码。 */
+    /** 固定地址、严格协议并映射依赖故障；只登记本 Owner 的合同错误码，按需外显 Owner Problem detail。 */
     private static HttpServiceProxyFactory factory(String baseUrl, String serviceId,
-        ObjectProvider<InternalTokenSupplier> tokens, Duration readTimeout, CodeMessageEnum... codes) {
+        ObjectProvider<InternalTokenSupplier> tokens, Duration readTimeout, boolean ownerProblemDetail,
+        CodeMessageEnum... codes) {
         RestClient client = RestClient.builder().baseUrl(baseUrl).requestFactory(requestFactory(readTimeout))
             .requestInterceptor((request, body, execution) -> {
                 String requestId = MDC.get(RequestIdFilter.MDC_KEY);
@@ -230,7 +264,8 @@ public class FinanceClientConfiguration {
                 case TIMEOUT -> new ErrorException(OperationsBffErrorCode.DEPENDENCY_TIMEOUT, null, cause);
                 case UNAVAILABLE -> new ServiceUnavailableException(OperationsBffErrorCode.DEPENDENCY_UNAVAILABLE, cause);
             });
-        return HttpServiceClientFactory.create(client, options, codes);
+        return HttpServiceClientFactory.create(client, ownerProblemDetail ? options.withOwnerProblemDetail() : options,
+            codes);
     }
 
     /** JDK HttpClient：连接与读取超时，禁止跟随重定向。 */

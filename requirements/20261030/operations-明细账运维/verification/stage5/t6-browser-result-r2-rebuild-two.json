@@ -1,0 +1,184 @@
+{
+  "startedAt": "2026-10-30T16:49:03.591Z",
+  "groups": [
+    "rebuild"
+  ],
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "P4-rebuild-confirm",
+          "check": {
+            "modal": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P5-rebuild-corrected",
+          "check": {
+            "bar": "已重算 2 个账户，其中 1 个余额已纠正共参与 3,555 条流水，最大批次序号 3,555。纠正后的余额可在「余额查询」、「明细账查询」中核对。2026/10/30 20:49:17 · 操作人 o***@example.test",
+            "balanceBefore": "3554.00000000",
+            "balanceAfter": "3554.00000000"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P5b-rebuild-unchanged",
+          "check": {
+            "bar": "余额与流水一致，无需纠正已重算 2 个账户，余额均未变化。2026/10/30 20:49:29 · 操作人 o***@example.test"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 1440,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "P4-rebuild-confirm",
+          "check": {
+            "modal": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P5-rebuild-corrected",
+          "check": {
+            "bar": "Recalculated 2 accounts, 1 corrected3,555 entries, max batch sequence 3,555. Check corrected balances in Balances and Subledger.10/30/2026, 20:49:49 · by o***@example.test",
+            "balanceBefore": "3554.00000000",
+            "balanceAfter": "3554.00000000"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        },
+        {
+          "role": "admin",
+          "step": "P5b-rebuild-unchanged",
+          "check": {
+            "bar": "Balances match entries; nothing correctedRecalculated 2 accounts; no balance changed.10/30/2026, 20:50:01 · by o***@example.test"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "/finance/posting-ops?ledgerBookId=241946219587354624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-1440",
+      "role": "admin",
+      "step": "/finance/posting-ops?ledgerBookId=241946219587354624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    }
+  ],
+  "httpErrors": [],
+  "deliberate": [],
+  "posts": [
+    {
+      "run": "zh-CN-1440",
+      "note": "SQL 篡改 ZQ344 CLIENT_PAYABLE +5（之前 3554.00000000）"
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "P4-rebuild-confirm",
+      "path": "/api/operations/finance/posting-rebuilds/v1",
+      "status": 200,
+      "ms": 204
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "P5-rebuild-corrected",
+      "path": "/api/operations/finance/posting-rebuilds/v1",
+      "status": 200,
+      "ms": 137
+    },
+    {
+      "run": "en-1440",
+      "note": "SQL 篡改 ZQ344 CLIENT_PAYABLE +5（之前 3554.00000000）"
+    },
+    {
+      "run": "en-1440",
+      "role": "admin",
+      "step": "P4-rebuild-confirm",
+      "path": "/api/operations/finance/posting-rebuilds/v1",
+      "status": 200,
+      "ms": 102
+    },
+    {
+      "run": "en-1440",
+      "role": "admin",
+      "step": "P5-rebuild-corrected",
+      "path": "/api/operations/finance/posting-rebuilds/v1",
+      "status": 200,
+      "ms": 113
+    }
+  ]
+}

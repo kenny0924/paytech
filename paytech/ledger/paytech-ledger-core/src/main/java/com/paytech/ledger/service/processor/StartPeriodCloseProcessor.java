@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -20,7 +19,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.paytech.foundation.common.error.BizCheckFailException;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.id.IdGenerator;
-import com.paytech.foundation.messaging.api.ConsumedEventRepository;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.ledger.api.enums.LedgerErrorCode;
 import com.paytech.ledger.core.constant.AccountingCodes;
@@ -51,6 +49,7 @@ import com.paytech.ledger.core.enums.PeriodStatus;
 import com.paytech.ledger.core.enums.TrialBalanceStatus;
 import com.paytech.ledger.domain.AccountPostingProgress;
 import com.paytech.ledger.domain.BillingFactProgress;
+import com.paytech.ledger.domain.BookPostingProgress;
 import com.paytech.ledger.domain.JournalPostingContext;
 import com.paytech.ledger.domain.PeriodCloseContentHash;
 import com.paytech.ledger.domain.PeriodCloseContext;
@@ -67,6 +66,7 @@ import com.paytech.ledger.domainservice.repository.TrialBalanceExceptionReposito
 import com.paytech.ledger.domainservice.service.CurrencyRuleService;
 import com.paytech.ledger.domainservice.service.JournalPostingService;
 import com.paytech.ledger.domainservice.service.PeriodCloseService;
+import com.paytech.ledger.domainservice.service.PostingProgressService;
 import com.paytech.ledger.domainservice.service.TrialBalanceService;
 import com.paytech.ledger.integration.account.AccountPostingClient;
 import com.paytech.ledger.integration.billing.BillingFactClient;
@@ -96,7 +96,7 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
     private final TrialBalanceService trialBalanceService;
     private final BillingFactClient billingFactClient;
     private final AccountPostingClient accountPostingClient;
-    private final ConsumedEventRepository consumedEventRepository;
+    private final PostingProgressService postingProgressService;
     private final CurrencyRuleService currencyRuleService;
     private final LedgerBookRepository ledgerBookRepository;
     private final JournalLineRepository journalLineRepository;
@@ -268,6 +268,7 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
     /**
      * 一本账簿的两段进度检查
      * <li>远程调用在事务外；任一方不可用或响应不合法时记为 UNAVAILABLE 并失败关闭。</li>
+     * <li>判定由 {@link PostingProgressService} 给出，与账簿入账进度查询同口径；摘要格式保持不变。</li>
      *
      * @return 两段是否都已追平
      */
@@ -282,30 +283,27 @@ public class StartPeriodCloseProcessor extends AbstractLockProcessor<StartPeriod
             summary.append("UNAVAILABLE=").append(unavailable.getClass().getSimpleName());
             return false;
         }
-        boolean passed = checkFactsApplied(billing, account, summary);
-        for (AccountPostingProgress.Stream stream : account.getStreams()) {
-            passed = checkStreamConsumed(stream, summary) && passed;
+        BookPostingProgress progress = postingProgressService.evaluate(book, billing, account);
+        appendFactSummary(billing, account, summary);
+        for (BookPostingProgress.StreamProgress stream : progress.getStreams()) {
+            appendStreamSummary(stream, summary);
         }
-        return passed;
+        return progress.isCaughtUp();
     }
 
-    /** 段 ①：billing 无未发布事实，account 已应用事实数与最大 factId 等于 billing 已发布事实数与最大 factId。 */
-    boolean checkFactsApplied(BillingFactProgress billing, AccountPostingProgress account, StringBuilder summary) {
+    /** 段 ① 摘要：billing 未发布 / 已发布计数与最大 factId，account 已应用计数与最大 factId。 */
+    static void appendFactSummary(BillingFactProgress billing, AccountPostingProgress account, StringBuilder summary) {
         summary.append("billingPending=").append(billing.getPendingCount()).append(",billingPublished=")
             .append(billing.getPublishedFactCount()).append(",billingMaxPublished=").append(billing.getMaxPublishedFactId())
             .append(",accountApplied=").append(account.getAppliedFactCount()).append(",accountMaxApplied=")
             .append(account.getMaxAppliedFactId());
-        return billing.getPendingCount() == 0 && account.getAppliedFactCount() == billing.getPublishedFactCount()
-            && Objects.equals(account.getMaxAppliedFactId(), billing.getMaxPublishedFactId());
     }
 
-    /** 段 ②：ledger 对该过账流的已消费序号（本库短事务内读取）等于 account 最大序号。 */
-    boolean checkStreamConsumed(AccountPostingProgress.Stream stream, StringBuilder summary) {
-        long consumed = transactionTemplate.execute(
-            status -> consumedEventRepository.lastVersion(stream.getAggregateKey())).orElse(0L);
-        summary.append(",stream=").append(stream.getAggregateKey().aggregateId()).append(":account=")
-            .append(stream.getMaxPostingSequence()).append("/ledger=").append(consumed);
-        return consumed == stream.getMaxPostingSequence();
+    /** 段 ② 摘要：一条过账流的 account 最大序号与 ledger 已消费序号。 */
+    static void appendStreamSummary(BookPostingProgress.StreamProgress stream, StringBuilder summary) {
+        summary.append(",stream=").append(stream.getAccountStream().getAggregateKey().aggregateId()).append(":account=")
+            .append(stream.getAccountStream().getMaxPostingSequence()).append("/ledger=")
+            .append(stream.getConsumedSequence());
     }
 
     /** 步骤 4：每个账簿按冻结水位试算。 */

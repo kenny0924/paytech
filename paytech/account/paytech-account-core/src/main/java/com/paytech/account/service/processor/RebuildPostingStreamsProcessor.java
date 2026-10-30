@@ -44,9 +44,9 @@ public class RebuildPostingStreamsProcessor extends AbstractProcessor<RebuildPos
             throw new FailException(AccountPostingErrorCode.STREAM_NOT_FOUND);
         }
         StreamRebuildResult result = postingStreamRebuildService.rebuild(streams);
-        LOG.info("入账流余额已重建: {}/{}/{}, 操作人 {}, 账户 {}, 流水 {}", request.getEntityType().getCode(),
-            request.getEntityId(), request.getCurrency(), request.getOperatorId(), result.getAccountCount(),
-            result.getEntryCount());
+        LOG.info("入账流余额已重建: {}/{}/{}, 操作人 {}, 账户 {}, 余额有变化的账户 {}, 流水 {}",
+            request.getEntityType().getCode(), request.getEntityId(), request.getCurrency(), request.getOperatorId(),
+            result.getAccountCount(), result.getChangedAccountCount(), result.getEntryCount());
         return result;
     }
 }

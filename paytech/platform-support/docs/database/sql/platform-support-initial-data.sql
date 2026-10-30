@@ -10227,3 +10227,103 @@ INSERT INTO t_notification_route (route_id, notification_template_id, primary_pr
   ROW(900000000000147824, 900000000000147804, @b147_ses_primary, NULL, 'ACTIVE', 1, @b147_time, @b147_time)) AS b147_routes WHERE @b147_ses_primary IS NOT NULL;
 
 COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- Operations finance posting operations console (2026-10-30, requirements/20261030/operations-明细账运维).
+-- Self-contained block: on an environment already initialized by the statements above, apply ONLY this block.
+-- Dormant like earlier Operations features: permission ACTIVE, administrator grant REVOKED, menu/buttons/routes DISABLED;
+-- activate them in a separate reviewed change (requirements/.../db/platform-support/mor_platform-block-148-activate.sql).
+--   Viewing reuses FINANCE_ACCOUNTING_READ 900000000000097101; executing uses the new FINANCE_SUBLEDGER_MANAGE 148101.
+--   Menu 148301 OPERATIONS_FINANCE_POSTING_OPS (/finance/posting-ops, sort 45 under 财务 900000000000097301, after
+--   明细账查询 40); buttons 148302 OPERATIONS_FINANCE_POSTING_OPS_CATCH_UP, 148303 OPERATIONS_FINANCE_POSTING_OPS_REBUILD.
+--   Routes forward /api/operations/finance/** to operations-console-bff on /finance/**: 148401 GET posting progress
+--   (B1), 148402 GET stream postings (B2, query fromSequence / limit), 148403 POST stream catch-up (B3, no body),
+--   148404 POST balance rebuild (B4, body 1024). Shapes copy the subledger block (GET: authorization + origin) and the
+--   period-close write template (writes: + content-type, idempotency-key; idempotency NONE).
+--   Guards per route: GET SHARED_ROUTE 300/min + 50, CLIENT_IP 30/min + 3, principal 30/min + 2; writes keep the
+--   shared / client IP values but tighten the principal to 10/min + concurrency 1.
+-- Rows: permission 1, role_permission 1, console_resource 3, gateway_route 4, route_header 16, query_param 2,
+-- guard_rule 24 (51). ID block 148: 1481xx permission, 1482xx role grant, 1483xx resource, 1484xx route,
+-- 1485xx header, 1486xx query_param, 1487xx guard_rule.
+-- Before applying, re-check on the live mor_platform that no row in 900000000000148001-900000000000148999 exists in these
+-- seven tables, that the permission / resource / route codes and (method, path) pairs are unused, and that role
+-- 900000000000000510, menu 900000000000097301, permission 900000000000097101 and target 900000000000000001 exist
+-- (mor_platform-block-148-precheck.sql). Check on 2026-10-30: block 148 appears in no other requirement or paytech file;
+-- the highest block in this file is 145. Compile the Gateway Snapshot offline before applying (DISABLED routes are
+-- compiled too).
+-- Rollback (children first): requirements/20261030/operations-明细账运维/db/platform-support/mor_platform-block-148-rollback.sql.
+-- ---------------------------------------------------------------------------
+START TRANSACTION;
+
+SET @b148_time = UTC_TIMESTAMP(6);
+SET @b148_actor_id = 1;
+SET @b148_role_id = 900000000000000510;
+SET @b148_target_id = 900000000000000001;
+SET @b148_finance_menu_id = 900000000000097301;
+
+INSERT INTO t_permission (permission_id,permission_code,resource_type,action_code,risk_level,status,version,create_time,update_time) VALUES
+  (900000000000148101, 'FINANCE_SUBLEDGER_MANAGE', 'FINANCE_SUBLEDGER', 'MANAGE', 'HIGH', 'ACTIVE', 1, @b148_time, @b148_time);
+
+INSERT INTO t_role_permission (role_permission_id,role_id,permission_id,status,version,create_time,update_time) VALUES
+  (900000000000148201, @b148_role_id, 900000000000148101, 'REVOKED', 1, @b148_time, @b148_time);
+
+INSERT INTO t_console_resource (resource_id,resource_code,channel,resource_type,parent_resource_id,display_name,frontend_route,component_key,permission_id,sort_order,status,version,create_time,update_time) VALUES
+  (900000000000148301, 'OPERATIONS_FINANCE_POSTING_OPS', 'OPERATIONS', 'MENU', @b148_finance_menu_id, '明细账运维', '/finance/posting-ops', 'OPERATIONS_FINANCE_POSTING_OPS', 900000000000097101, 45, 'DISABLED', 1, @b148_time, @b148_time),
+  (900000000000148302, 'OPERATIONS_FINANCE_POSTING_OPS_CATCH_UP', 'OPERATIONS', 'BUTTON', 900000000000148301, '追平', NULL, NULL, 900000000000148101, 10, 'DISABLED', 1, @b148_time, @b148_time),
+  (900000000000148303, 'OPERATIONS_FINANCE_POSTING_OPS_REBUILD', 'OPERATIONS', 'BUTTON', 900000000000148301, '重建余额', NULL, NULL, 900000000000148101, 20, 'DISABLED', 1, @b148_time, @b148_time);
+
+INSERT INTO t_gateway_route (route_id, route_code, channel, http_method, external_path_template, downstream_path_template, target_id, security_profile_code, authorization_mode, permission_id, required_scope_code, request_cookie_mode, response_cookie_mode, idempotency_mode, body_limit_bytes, body_receive_timeout_millis, response_timeout_millis, status, version, created_by, updated_by, create_time, update_time) VALUES
+  (900000000000148401, 'operations-finance-posting-progress', 'OPERATIONS', 'GET', '/api/operations/finance/posting-progress/v1/ledger-books/{ledgerBookId}', '/finance/posting-progress/v1/ledger-books/{ledgerBookId}', @b148_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @b148_actor_id, @b148_actor_id, @b148_time, @b148_time),
+  (900000000000148402, 'operations-finance-posting-stream-postings', 'OPERATIONS', 'GET', '/api/operations/finance/posting-streams/v1/{streamId}/postings', '/finance/posting-streams/v1/{streamId}/postings', @b148_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000097101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @b148_actor_id, @b148_actor_id, @b148_time, @b148_time),
+  (900000000000148403, 'operations-finance-posting-stream-catch-up', 'OPERATIONS', 'POST', '/api/operations/finance/posting-streams/v1/{streamId}/catch-up', '/finance/posting-streams/v1/{streamId}/catch-up', @b148_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000148101, NULL, 'DROP', 'NONE', 'NONE', 0, 5000, 10000, 'DISABLED', 1, @b148_actor_id, @b148_actor_id, @b148_time, @b148_time),
+  (900000000000148404, 'operations-finance-posting-rebuild', 'OPERATIONS', 'POST', '/api/operations/finance/posting-rebuilds/v1', '/finance/posting-rebuilds/v1', @b148_target_id, 'OPERATIONS_JWT', 'HUMAN_PERMISSION', 900000000000148101, NULL, 'DROP', 'NONE', 'NONE', 1024, 5000, 10000, 'DISABLED', 1, @b148_actor_id, @b148_actor_id, @b148_time, @b148_time);
+
+INSERT INTO t_gateway_route_header (route_header_id,route_id,header_name,header_use) VALUES
+  (900000000000148501, 900000000000148401, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000148502, 900000000000148401, 'origin', 'FORWARD_REQUEST'),
+  (900000000000148503, 900000000000148402, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000148504, 900000000000148402, 'origin', 'FORWARD_REQUEST'),
+  (900000000000148505, 900000000000148403, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000148506, 900000000000148403, 'origin', 'FORWARD_REQUEST'),
+  (900000000000148507, 900000000000148403, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000148508, 900000000000148403, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000148509, 900000000000148403, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000148510, 900000000000148403, 'idempotency-key', 'FORWARD_REQUEST'),
+  (900000000000148511, 900000000000148404, 'authorization', 'CORS_REQUEST_ALLOWED'),
+  (900000000000148512, 900000000000148404, 'origin', 'FORWARD_REQUEST'),
+  (900000000000148513, 900000000000148404, 'content-type', 'CORS_REQUEST_ALLOWED'),
+  (900000000000148514, 900000000000148404, 'content-type', 'FORWARD_REQUEST'),
+  (900000000000148515, 900000000000148404, 'idempotency-key', 'CORS_REQUEST_ALLOWED'),
+  (900000000000148516, 900000000000148404, 'idempotency-key', 'FORWARD_REQUEST');
+
+INSERT INTO t_gateway_route_query_param (route_query_param_id,route_id,parameter_name) VALUES
+  (900000000000148601, 900000000000148402, 'fromSequence'),
+  (900000000000148602, 900000000000148402, 'limit');
+
+INSERT INTO t_gateway_guard_rule (guard_rule_id,route_id,rule_type,dimension,capacity,refill_tokens,refill_period_millis,concurrency_limit) VALUES
+  (900000000000148701, 900000000000148401, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000148702, 900000000000148401, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000148703, 900000000000148401, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000148704, 900000000000148401, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000148705, 900000000000148401, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000148706, 900000000000148401, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000148707, 900000000000148402, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000148708, 900000000000148402, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000148709, 900000000000148402, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000148710, 900000000000148402, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000148711, 900000000000148402, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 30, 30, 60000, NULL),
+  (900000000000148712, 900000000000148402, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 2),
+  (900000000000148713, 900000000000148403, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000148714, 900000000000148403, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000148715, 900000000000148403, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000148716, 900000000000148403, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000148717, 900000000000148403, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000148718, 900000000000148403, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 1),
+  (900000000000148719, 900000000000148404, 'RATE_LIMIT', 'SHARED_ROUTE', 300, 300, 60000, NULL),
+  (900000000000148720, 900000000000148404, 'CONCURRENCY', 'SHARED_ROUTE', NULL, NULL, NULL, 50),
+  (900000000000148721, 900000000000148404, 'RATE_LIMIT', 'CLIENT_IP', 30, 30, 60000, NULL),
+  (900000000000148722, 900000000000148404, 'CONCURRENCY', 'CLIENT_IP', NULL, NULL, NULL, 3),
+  (900000000000148723, 900000000000148404, 'RATE_LIMIT', 'AUTHENTICATED_PRINCIPAL', 10, 10, 60000, NULL),
+  (900000000000148724, 900000000000148404, 'CONCURRENCY', 'AUTHENTICATED_PRINCIPAL', NULL, NULL, NULL, 1);
+
+COMMIT;

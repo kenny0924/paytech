@@ -1,0 +1,153 @@
+{
+  "startedAt": "2026-10-30T16:46:34.572Z",
+  "groups": [
+    "catchup"
+  ],
+  "runs": [
+    {
+      "locale": "en",
+      "width": 390,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "C1-behind",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 3,554 · max …093760 account applied 3,554 · max …093760 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 3,554 Last posted 10/30/2026, 20:46:28 Streams 1",
+              "is-warn | 3 ledger Consumption Behind 4 ledger consumed 3,550 Batches behind 4 Stuck batch posted 10/30/2026, 20:46:27"
+            ],
+            "stuck": "Stuck batch · OE.ZQ344.USD.0 seq. 3,551 View Entries Source Fact Fact ID 241965988642336768 Fact Type MANUAL_ADJUSTMENT · Applied Posted At 10/30/2026, 20:46:27 AccountPosted Published 10/30/2026, 20:46:27 Entries 1 entry ledger stopped after batch 3,550; later batches wait on this one. Catch-up replays from this batch in order; if it is rejected by a rule, catch-up returns the reason and the cause must be fixed before replaying.",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Catch Up",
+              "Browse Batches",
+              "View Entries"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "C2-after-catchup-1",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 3,554 · max …093760 account applied 3,554 · max …093760 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 3,554 Last posted 10/30/2026, 20:46:28 Streams 1",
+              "is-warn | 3 ledger Consumption Behind 2 ledger consumed 3,552 Batches behind 2 Stuck batch posted 10/30/2026, 20:46:27"
+            ],
+            "stuck": "Stuck batch · OE.ZQ344.USD.0 seq. 3,553 View Entries Source Fact Fact ID 241965989263093760 Fact Type MANUAL_ADJUSTMENT · Applied Posted At 10/30/2026, 20:46:27 AccountPosted Published 10/30/2026, 20:46:27 Entries 1 entry Catch-up failed · rejected (400) 10/30/2026, 20:46:45 · by o***@example.test BUSINESS_CHECK_FAILED: 控制科目过账拒绝: 计费事实 241965989263093760, 入账批次 241965989477011456, 指令类型 ECONOMIC_ADJUSTMENT, 费用类型 PLATFORM_SERVICE_CHARGE × 角色 OPERATING_ENTITY × DEBIT 匹配 0 条规则行: 行 2 2 batches were processed before it stopped; they are kept. Fix the cause first, then replay: Go to Accounting Rules Catch Up Again",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Catch Up",
+              "Browse Batches",
+              "View Entries",
+              "Go to Accounting Rules",
+              "Catch Up Again"
+            ],
+            "result": "",
+            "rejected": "Catch-up failed · rejected (400) 10/30/2026, 20:46:45 · by o***@example.test BUSINESS_CHECK_FAILED: 控制科目过账拒绝: 计费事实 241965989263093760, 入账批次 241965989477011456, 指令类型 ECONOMIC_ADJUSTMENT, 费用类型 PLATFORM_SERVICE_CHARGE × 角色 OPERATING_ENTITY × DEBIT 匹配 0 条规则行: 行 2 2 batches were processed before it stopped; they are kept. Fix the cause first, then replay: Go to Accounting Rules Catch Up Again"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "C2-after-catchup-2",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 3,554 · max …093760 account applied 3,554 · max …093760 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 3,554 Last posted 10/30/2026, 20:46:28 Streams 1",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed 3,554 Batches behind 0"
+            ],
+            "stuck": "",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Browse Batches"
+            ],
+            "result": "Caught up Processed 2 batches in this run; ledger has consumed up to batch 3,554, matching account. 10/30/2026, 20:47:01 · by o***@example.test",
+            "rejected": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/posting-ops?ledgerBookId=241946219587354624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C1-behind",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    }
+  ],
+  "httpErrors": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C1-behind",
+      "method": "POST",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 400
+    }
+  ],
+  "deliberate": [],
+  "posts": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C1-behind",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 400,
+      "ms": 1128
+    },
+    {
+      "run": "en-390",
+      "note": "AFTER_FIRST: restore sc: rule lines 36, (5313,5314) present 2"
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C2-after-catchup-1",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 200,
+      "ms": 283
+    }
+  ]
+}

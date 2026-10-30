@@ -36,7 +36,8 @@
 - **账户号**：`OwnerAccountType` 目录带科目分级编号（静态属性，ledger 测试核对与 STANDARD 一致）；开户的同一事务按「主体 + 币种 + 科目代码」
   序列生成 `t_owner_account.account_no`（如 `AE001-USD-22010101-S000001`，Finance Entity 主体段为 `FE{entityId}`），创建后不变，只用于显示与搜索，
   不进入 `AccountPosted` 载荷（[2026-10-19 决定](../../agent-docs/decisions/2026-10-19-ledger-chart-hierarchy-and-account-numbers.md)第 2 节第 7、8 条）。
-- **重建**：`POST /account-postings/v1/streams/rebuild` 每条流锁流行后按 `t_account_entry` 重算账户余额，以旧版本 CAS 加一；不删不改流水。
+- **重建**：`POST /account-postings/v1/streams/rebuild` 每条流锁流行后按 `t_account_entry` 重算账户余额，以旧版本 CAS 加一；不删不改流水。响应的 `changedAccountCount`
+  为同一事务内比较新旧借贷合计与净额后被纠正的账户数（数据一致时为 0）。运营经控制台"明细账运维"触发。
 
 ## 接口
 
@@ -47,7 +48,7 @@
 | `GET /account-postings/v1/progress` | 事实应用进度与各流最大序号（ledger 关账） |
 | `GET /account-postings/v1` | 按流与起始序号读取批次（ledger 追平，limit ≤ 200） |
 | `GET /account-postings/v1/{postingId}` | 批次详情；不存在 400 `POSTING_NOT_FOUND` |
-| `POST /account-postings/v1/streams/rebuild` | 按流重建；无流 400 `STREAM_NOT_FOUND` |
+| `POST /account-postings/v1/streams/rebuild` | 按流重建，返回重算账户数、被纠正账户数、流水数与最大序号；无流 400 `STREAM_NOT_FOUND` |
 | `GET /owner-accounts/v1`、`GET /owner-accounts/v1/{accountId}/entries` | Owner 账户与流水分页；账户不存在 400 `ACCOUNT_NOT_FOUND` |
 
 全部为内部接口，未接 Gateway 与 Owner / OE 资源授权前不得对外发布。

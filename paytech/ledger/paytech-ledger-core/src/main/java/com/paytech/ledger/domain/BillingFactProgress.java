@@ -10,6 +10,12 @@ public class BillingFactProgress {
     /** 已批准但计费事实事件尚未确认发布的事实数。 */
     private final long pendingCount;
 
+    /**
+     * 未发布事实中最大的 factId
+     * <li>没有未发布事实时为空；只用于运维展示，不参与判定。</li>
+     */
+    private final Long maxPendingFactId;
+
     /** 已批准（含已被替代）且已确认发布的事实数。 */
     private final long publishedFactCount;
 

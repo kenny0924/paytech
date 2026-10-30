@@ -19,7 +19,7 @@ account 明细账，总账每账簿每 Owner 科目一个以账簿主体为 Owne
 
 | 模块 | 职责 |
 |---|---|
-| paytech-ledger-api | 内部 HTTP 契约：Finance Entity、财务日历与期间、账簿与科目账户、规则集、人工调整、试算与关账、过账流追平 `PostingStreamCommandApi`；`LedgerReadApi`（`/ledger/v1`：账簿、批量科目）；`LedgerOwnerType`、`RuleOwnerRole`、`LedgerErrorCode`、`AmountSource`、`AutoInstructionType` |
+| paytech-ledger-api | 内部 HTTP 契约：Finance Entity、财务日历与期间、账簿与科目账户、规则集、人工调整、试算与关账、过账流追平 `PostingStreamCommandApi`、账簿入账进度 `PostingProgressQueryApi`；`LedgerReadApi`（`/ledger/v1`：账簿、批量科目）；`LedgerOwnerType`、`RuleOwnerRole`、`LedgerErrorCode`、`AmountSource`、`AutoInstructionType` |
 | paytech-ledger-core | 过账内核、`AccountPosted` 消费 Handler 与控制科目过账、追平、规则、人工调整、试算、关账、account / billing 出站客户端、`CurrencyRuleService`（读参考数据客户端的币种快照）；包根 `com.paytech.ledger` |
 | paytech-ledger-app | 唯一 Spring Boot 启动模块：Controller、DataSource / MyBatis / TypeHandler、Snowflake、Redis 锁、paytech-messaging 消费端、account / billing HTTP 客户端 |
 | paytech-ledger-test | auto 测试、Mocker / Checker / 清理器、扮演 account 的 `AccountPosted` 发布 Probe、account / billing DTO Mock、参考数据测试支持模块（`MockReferenceDataApi` / `ReferenceDataMocker`）、`init/ddl.sql` |
@@ -42,6 +42,9 @@ account 明细账，总账每账簿每 Owner 科目一个以账簿主体为 Owne
   `ledger.account.dlq`，恢复走 `POST /posting-streams/v1/catch-up`（经 account `GET /account-postings/v1` 按序号补齐，每批次一个本库事务）。
 - 过账期间按事实载荷的 businessTime（PAYMENT 为支付成功时间，人工 / 成本调整为批准时间，由 billing 决定）确定；该期间已关闭时顺延到其后最早的
   OPEN 期间，没有可用期间时等待。渠道清算账户 Owner 取事实外部引用 `CLEARING_ACCOUNT`，税务机关取 `SELLER_TAX` 行的收方。
+- 账簿入账进度：`GET /posting-progress/v1/ledger-books/{ledgerBookId}`（`GetPostingProgressProcessor`，只读、不加锁）给出 billing → account
+  计费事实段与 account → ledger 过账流段；判定由 `PostingProgressService` 给出，与关账步骤 CHECK_ACCOUNT_POSTING_PROGRESS 共用。billing / account
+  不可用时对应段为 `UNAVAILABLE`（不报错），账簿不存在 400 `LEDGER_BOOK_NOT_FOUND`。运营经控制台"明细账运维"查看进度并触发追平。
 - 过账内核不锁账户、不写余额：锁顺序为期间共享锁 → 账簿序号行排他锁；账户列表、试算与关账检查的余额一律由本库分录聚合。人工调整复核、期间创建、
   试算、关账与过账流追平另用 Foundation `AbstractLockProcessor` 的 Redis 资源锁（`AccountingLocks`）。
 - 账户身份矩阵（`AccountIdentityRule`）：桶一律 NONE；Owner 控制科目（`CLIENT_PAYABLE`、`CLIENT_SECURITY_DEPOSIT`、`CLIENT_RECOVERY_RECEIVABLE`、
@@ -89,5 +92,5 @@ health / info / prometheus，不披露组件详情。
 ## 当前不包含
 
 无 Nacos 与服务发现、无补偿 Handler（XXL-Job 只承载规则版本到时生效任务）；不发布任何领域事件。规则包只覆盖 PAYMENT、MANUAL_ADJUSTMENT 与
-COST_ADJUSTMENT 事实，其他事实类型的批次被拒绝进入 DLQ；规则包本身仍只由初始化数据创建。追平命令与试算异常处理本期不接控制台。
+COST_ADJUSTMENT 事实，其他事实类型的批次被拒绝进入 DLQ；规则包本身仍只由初始化数据创建。试算异常处理本期不接控制台；过账流追平经控制台"明细账运维"由有执行权限的运营账号触发。
 接口不直接发布给 Client 或 Partner；Operations 只经 BFF 与 Gateway 登记的路由访问上述控制台能力。

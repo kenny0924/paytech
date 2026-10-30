@@ -2,6 +2,7 @@ package com.paytech.ledger.test.mocker.external;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -216,7 +217,12 @@ public class AccountPostingMocker implements Clear {
 
     /** 进度中的一条过账流。 */
     public record StreamProgress(String entityType, String entityId, String currency, int shardNo,
-        long maxPostingSequence) {
+        long maxPostingSequence, Instant lastPostedTime) {
+
+        /** 不带最后入账时间的流进度。 */
+        public StreamProgress(String entityType, String entityId, String currency, int shardNo, long maxPostingSequence) {
+            this(entityType, entityId, currency, shardNo, maxPostingSequence, null);
+        }
 
         /** 转换为响应项。 */
         AccountPostingProgressResponseBody.Stream toBody() {
@@ -226,6 +232,7 @@ public class AccountPostingMocker implements Clear {
             body.setCurrency(currency);
             body.setShardNo(Integer.toString(shardNo));
             body.setMaxPostingSequence(Long.toString(maxPostingSequence));
+            body.setLastPostedTime(lastPostedTime);
             return body;
         }
     }

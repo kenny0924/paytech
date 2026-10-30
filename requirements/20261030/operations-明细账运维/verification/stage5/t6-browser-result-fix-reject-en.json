@@ -1,0 +1,151 @@
+{
+  "startedAt": "2026-10-30T15:52:53.469Z",
+  "groups": [
+    "catchup"
+  ],
+  "runs": [
+    {
+      "locale": "en",
+      "width": 390,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "C1-behind",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 1,221 · max …520384 account applied 1,221 · max …520384 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 1,221 Last posted 10/30/2026, 19:51:37 Streams 1",
+              "is-warn | 3 ledger Consumption Behind 5 ledger consumed 1,216 Batches behind 5 Stuck batch posted 10/30/2026, 19:51:36"
+            ],
+            "stuck": "Stuck batch · OE.ZQ344.USD.0 seq. 1,217 View Entries Source Fact Fact ID 241952187582820352 Fact Type MANUAL_ADJUSTMENT · Applied Posted At 10/30/2026, 19:51:36 AccountPosted Published 10/30/2026, 19:51:36 Entries 1 entry ledger stopped after batch 1,216; later batches wait on this one. Catch-up replays from this batch in order; if it is rejected by a rule, catch-up returns the reason and the cause must be fixed before replaying.",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Catch Up",
+              "Browse Batches",
+              "View Entries"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "C2-after-catchup-1",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 1,221 · max …520384 account applied 1,221 · max …520384 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 1,221 Last posted 10/30/2026, 19:51:37 Streams 1",
+              "is-warn | 3 ledger Consumption Behind 5 ledger consumed 1,216 Batches behind 5 Stuck batch posted 10/30/2026, 19:51:36"
+            ],
+            "stuck": "Stuck batch · OE.ZQ344.USD.0 seq. 1,217 View Entries Source Fact Fact ID 241952187582820352 Fact Type MANUAL_ADJUSTMENT · Applied Posted At 10/30/2026, 19:51:36 AccountPosted Published 10/30/2026, 19:51:36 Entries 1 entry Catch-up failed · rejected (400) 10/30/2026, 19:53:03 BUSINESS_CHECK_FAILED: 控制科目过账拒绝: 计费事实 241952187582820352, 入账批次 241952187943538688, 指令类型 ECONOMIC_ADJUSTMENT, 费用类型 CLIENT_PRINCIPAL × 角色 OPERATING_ENTITY × DEBIT 匹配 0 条规则行: 行 1 Fix the cause first, then replay: Go to Accounting Rules Catch Up Again",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Catch Up",
+              "Browse Batches",
+              "View Entries",
+              "Go to Accounting Rules",
+              "Catch Up Again"
+            ],
+            "result": "",
+            "rejected": "Catch-up failed · rejected (400) 10/30/2026, 19:53:03 BUSINESS_CHECK_FAILED: 控制科目过账拒绝: 计费事实 241952187582820352, 入账批次 241952187943538688, 指令类型 ECONOMIC_ADJUSTMENT, 费用类型 CLIENT_PRINCIPAL × 角色 OPERATING_ENTITY × DEBIT 匹配 0 条规则行: 行 1 Fix the cause first, then replay: Go to Accounting Rules Catch Up Again"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "C2-after-catchup-2",
+          "check": {
+            "segments": [
+              "is-ok | 1 Billing Fact Intake Consistent billing published 1,221 · max …520384 account applied 1,221 · max …520384 billing unpublished 0",
+              "is-ok | 2 account Posting Streams 1 stream account max sequence 1,221 Last posted 10/30/2026, 19:51:37 Streams 1",
+              "is-ok | 3 ledger Consumption Consistent ledger consumed 1,221 Batches behind 0"
+            ],
+            "stuck": "",
+            "buttons": [
+              "Rebuild Balances",
+              "Refresh",
+              "Browse Batches"
+            ],
+            "result": "Caught up Processed 5 batches in this run; ledger has consumed up to batch 1,221, matching account.",
+            "rejected": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/posting-ops?ledgerBookId=241946219587354624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C1-behind",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    }
+  ],
+  "httpErrors": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C1-behind",
+      "method": "POST",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 400
+    }
+  ],
+  "deliberate": [],
+  "posts": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C1-behind",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 400
+    },
+    {
+      "run": "en-390",
+      "note": "AFTER_FIRST: restore: rule lines 36, 5301/5302 present 2"
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "C2-after-catchup-1",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 200
+    }
+  ]
+}

@@ -1,0 +1,449 @@
+[
+  {
+    "id": "PO1",
+    "method": "GET",
+    "path": "/finance/posting-progress/v1/ledger-books/900000000000100001",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "ledgerBookId": "900000000000100001",
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "currency": "USD",
+      "factSegment": {
+        "status": "BEHIND",
+        "billingPendingCount": "2",
+        "billingMaxPendingFactId": "880000000000123460",
+        "billingPublishedCount": "1520",
+        "billingMaxPublishedFactId": "880000000000123458",
+        "accountAppliedCount": "1518",
+        "accountMaxAppliedFactId": "880000000000123401"
+      },
+      "streamSegment": {
+        "status": "BEHIND",
+        "streams": [
+          {
+            "streamId": "OE.AE001.USD.0",
+            "entityType": "OPERATING_ENTITY",
+            "entityId": "AE001",
+            "currency": "USD",
+            "shardNo": "0",
+            "accountMaxSequence": "1530",
+            "accountLastPostedTime": "2026-10-30T09:12:03.123456Z",
+            "ledgerConsumedSequence": "1510",
+            "lag": "20",
+            "status": "BEHIND",
+            "stuckPosting": {
+              "postingId": "900000000012345678",
+              "postingSequence": "1511",
+              "sourceType": "ECONOMIC_FACT",
+              "factId": "880000000000123390",
+              "factType": "PAYMENT",
+              "factApplyStatus": "APPLIED",
+              "postedTime": "2026-10-30T08:40:12.551234Z",
+              "publishedTime": "2026-10-30T08:40:12.902345Z",
+              "entryCount": "4"
+            }
+          },
+          {
+            "streamId": "OE.AE001.USD.1",
+            "entityType": "OPERATING_ENTITY",
+            "entityId": "AE001",
+            "currency": "USD",
+            "shardNo": "1",
+            "accountMaxSequence": "42",
+            "accountLastPostedTime": "2026-10-30T08:01:00.512345Z",
+            "ledgerConsumedSequence": "42",
+            "lag": "0",
+            "status": "CONSISTENT",
+            "stuckPosting": null
+          }
+        ]
+      }
+    },
+    "routeCode": "operations-finance-posting-progress",
+    "owner": "ledger",
+    "ownerPath": "/posting-progress/v1/ledger-books/900000000000100001",
+    "ownerQuery": "",
+    "ownerRequest": null,
+    "ownerResponse": {
+      "ledgerBookId": "900000000000100001",
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "currency": "USD",
+      "factSegment": {
+        "status": "BEHIND",
+        "billingPendingCount": "2",
+        "billingMaxPendingFactId": "880000000000123460",
+        "billingPublishedCount": "1520",
+        "billingMaxPublishedFactId": "880000000000123458",
+        "accountAppliedCount": "1518",
+        "accountMaxAppliedFactId": "880000000000123401"
+      },
+      "streamSegment": {
+        "status": "BEHIND",
+        "streams": [
+          {
+            "streamId": "OE.AE001.USD.0",
+            "entityType": "OPERATING_ENTITY",
+            "entityId": "AE001",
+            "currency": "USD",
+            "shardNo": "0",
+            "accountMaxSequence": "1530",
+            "accountLastPostedTime": "2026-10-30T09:12:03.123456Z",
+            "ledgerConsumedSequence": "1510",
+            "lag": "20",
+            "status": "BEHIND"
+          },
+          {
+            "streamId": "OE.AE001.USD.1",
+            "entityType": "OPERATING_ENTITY",
+            "entityId": "AE001",
+            "currency": "USD",
+            "shardNo": "1",
+            "accountMaxSequence": "42",
+            "accountLastPostedTime": "2026-10-30T08:01:00.512345Z",
+            "ledgerConsumedSequence": "42",
+            "lag": "0",
+            "status": "CONSISTENT"
+          }
+        ]
+      }
+    },
+    "stuckOwnerPath": "/account-postings/v1",
+    "stuckOwnerQuery": "?entityType=OPERATING_ENTITY&entityId=AE001&currency=USD&shardNo=0&fromSequence=1511&limit=1",
+    "stuckOwnerResponse": {
+      "items": [
+        {
+          "postingId": "900000000012345678",
+          "entityType": "OPERATING_ENTITY",
+          "entityId": "AE001",
+          "currency": "USD",
+          "shardNo": "0",
+          "postingSequence": "1511",
+          "sourceType": "ECONOMIC_FACT",
+          "postedTime": "2026-10-30T08:40:12.551234Z",
+          "publishedTime": "2026-10-30T08:40:12.902345Z",
+          "factId": "880000000000123390",
+          "factVersion": "1",
+          "factType": "PAYMENT",
+          "supersedesFactId": null,
+          "factApplyStatus": "APPLIED",
+          "financeEntityId": "8001",
+          "movementId": null,
+          "movementSourceType": null,
+          "movementSourceRef": null,
+          "entries": [
+            {
+              "entryId": "7400000000015210",
+              "lineNo": "1",
+              "accountId": "7200000000000001",
+              "accountNo": "AE001-USD-22010101-S000001",
+              "accountCode": "CLIENT_PAYABLE",
+              "ownerType": "CLIENT",
+              "ownerId": "1001",
+              "balanceBucket": "PENDING",
+              "entrySide": "CREDIT",
+              "amount": {
+                "currency": "USD",
+                "amount": "10.00"
+              },
+              "factLineNo": "1",
+              "reversesEntryId": null
+            },
+            {
+              "entryId": "7400000000015211",
+              "lineNo": "2",
+              "accountId": "7200000000000001",
+              "accountNo": "AE001-USD-22010101-S000001",
+              "accountCode": "CLIENT_PAYABLE",
+              "ownerType": "CLIENT",
+              "ownerId": "1001",
+              "balanceBucket": "PENDING",
+              "entrySide": "CREDIT",
+              "amount": {
+                "currency": "USD",
+                "amount": "10.00"
+              },
+              "factLineNo": "2",
+              "reversesEntryId": null
+            },
+            {
+              "entryId": "7400000000015212",
+              "lineNo": "3",
+              "accountId": "7200000000000001",
+              "accountNo": "AE001-USD-22010101-S000001",
+              "accountCode": "CLIENT_PAYABLE",
+              "ownerType": "CLIENT",
+              "ownerId": "1001",
+              "balanceBucket": "PENDING",
+              "entrySide": "CREDIT",
+              "amount": {
+                "currency": "USD",
+                "amount": "10.00"
+              },
+              "factLineNo": "3",
+              "reversesEntryId": null
+            },
+            {
+              "entryId": "7400000000015213",
+              "lineNo": "4",
+              "accountId": "7200000000000001",
+              "accountNo": "AE001-USD-22010101-S000001",
+              "accountCode": "CLIENT_PAYABLE",
+              "ownerType": "CLIENT",
+              "ownerId": "1001",
+              "balanceBucket": "PENDING",
+              "entrySide": "CREDIT",
+              "amount": {
+                "currency": "USD",
+                "amount": "10.00"
+              },
+              "factLineNo": "4",
+              "reversesEntryId": null
+            }
+          ]
+        }
+      ],
+      "nextFromSequence": "1512"
+    }
+  },
+  {
+    "id": "PO2",
+    "method": "GET",
+    "path": "/finance/posting-streams/v1/OE.AE001.USD.0/postings",
+    "query": "?fromSequence=1511&limit=20",
+    "request": null,
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "postingId": "900000000012345678",
+          "postingSequence": "1511",
+          "sourceType": "ECONOMIC_FACT",
+          "factId": "880000000000123390",
+          "factType": "PAYMENT",
+          "factApplyStatus": "APPLIED",
+          "postedTime": "2026-10-30T08:40:12.551234Z",
+          "publishedTime": "2026-10-30T08:40:12.902345Z",
+          "entryCount": "4"
+        },
+        {
+          "postingId": "900000000012345679",
+          "postingSequence": "1512",
+          "sourceType": "BALANCE_MOVEMENT",
+          "factId": null,
+          "factType": null,
+          "factApplyStatus": null,
+          "postedTime": "2026-10-30T08:40:12.551234Z",
+          "publishedTime": null,
+          "entryCount": "1"
+        }
+      ],
+      "nextFromSequence": null
+    },
+    "routeCode": "operations-finance-posting-stream-postings",
+    "owner": "account",
+    "ownerPath": "/account-postings/v1",
+    "ownerQuery": "?entityType=OPERATING_ENTITY&entityId=AE001&currency=USD&shardNo=0&fromSequence=1511&limit=20",
+    "ownerRequest": null,
+    "ownerResponse": {
+      "items": [
+        {
+          "postingId": "900000000012345678",
+          "entityType": "OPERATING_ENTITY",
+          "entityId": "AE001",
+          "currency": "USD",
+          "shardNo": "0",
+          "postingSequence": "1511",
+          "sourceType": "ECONOMIC_FACT",
+          "postedTime": "2026-10-30T08:40:12.551234Z",
+          "publishedTime": "2026-10-30T08:40:12.902345Z",
+          "factId": "880000000000123390",
+          "factVersion": "1",
+          "factType": "PAYMENT",
+          "supersedesFactId": null,
+          "factApplyStatus": "APPLIED",
+          "financeEntityId": "8001",
+          "movementId": null,
+          "movementSourceType": null,
+          "movementSourceRef": null,
+          "entries": [
+            {
+              "entryId": "7400000000015210",
+              "lineNo": "1",
+              "accountId": "7200000000000001",
+              "accountNo": "AE001-USD-22010101-S000001",
+              "accountCode": "CLIENT_PAYABLE",
+              "ownerType": "CLIENT",
+              "ownerId": "1001",
+              "balanceBucket": "PENDING",
+              "entrySide": "CREDIT",
+              "amount": {
+                "currency": "USD",
+                "amount": "10.00"
+              },
+              "factLineNo": "1",
+              "reversesEntryId": null
+            },
+            {
+              "entryId": "7400000000015211",
+              "lineNo": "2",
+              "accountId": "7200000000000001",
+              "accountNo": "AE001-USD-22010101-S000001",
+              "accountCode": "CLIENT_PAYABLE",
+              "ownerType": "CLIENT",
+              "ownerId": "1001",
+              "balanceBucket": "PENDING",
+              "entrySide": "CREDIT",
+              "amount": {
+                "currency": "USD",
+                "amount": "10.00"
+              },
+              "factLineNo": "2",
+              "reversesEntryId": null
+            },
+            {
+              "entryId": "7400000000015212",
+              "lineNo": "3",
+              "accountId": "7200000000000001",
+              "accountNo": "AE001-USD-22010101-S000001",
+              "accountCode": "CLIENT_PAYABLE",
+              "ownerType": "CLIENT",
+              "ownerId": "1001",
+              "balanceBucket": "PENDING",
+              "entrySide": "CREDIT",
+              "amount": {
+                "currency": "USD",
+                "amount": "10.00"
+              },
+              "factLineNo": "3",
+              "reversesEntryId": null
+            },
+            {
+              "entryId": "7400000000015213",
+              "lineNo": "4",
+              "accountId": "7200000000000001",
+              "accountNo": "AE001-USD-22010101-S000001",
+              "accountCode": "CLIENT_PAYABLE",
+              "ownerType": "CLIENT",
+              "ownerId": "1001",
+              "balanceBucket": "PENDING",
+              "entrySide": "CREDIT",
+              "amount": {
+                "currency": "USD",
+                "amount": "10.00"
+              },
+              "factLineNo": "4",
+              "reversesEntryId": null
+            }
+          ]
+        },
+        {
+          "postingId": "900000000012345679",
+          "entityType": "OPERATING_ENTITY",
+          "entityId": "AE001",
+          "currency": "USD",
+          "shardNo": "0",
+          "postingSequence": "1512",
+          "sourceType": "BALANCE_MOVEMENT",
+          "postedTime": "2026-10-30T08:40:12.551234Z",
+          "publishedTime": null,
+          "factId": null,
+          "factVersion": null,
+          "factType": null,
+          "supersedesFactId": null,
+          "factApplyStatus": null,
+          "financeEntityId": null,
+          "movementId": "7500000000000001",
+          "movementSourceType": "PAYOUT",
+          "movementSourceRef": "PO-1",
+          "entries": [
+            {
+              "entryId": "7400000000015220",
+              "lineNo": "1",
+              "accountId": "7200000000000001",
+              "accountNo": "AE001-USD-22010101-S000001",
+              "accountCode": "CLIENT_PAYABLE",
+              "ownerType": "CLIENT",
+              "ownerId": "1001",
+              "balanceBucket": "PENDING",
+              "entrySide": "CREDIT",
+              "amount": {
+                "currency": "USD",
+                "amount": "10.00"
+              },
+              "factLineNo": "1",
+              "reversesEntryId": null
+            }
+          ]
+        }
+      ],
+      "nextFromSequence": null
+    }
+  },
+  {
+    "id": "PO3",
+    "method": "POST",
+    "path": "/finance/posting-streams/v1/OE.AE001.USD.0/catch-up",
+    "query": "",
+    "request": null,
+    "status": 200,
+    "response": {
+      "processedCount": "200",
+      "lastSequence": "1710",
+      "caughtUp": false
+    },
+    "routeCode": "operations-finance-posting-stream-catch-up",
+    "owner": "ledger",
+    "ownerPath": "/posting-streams/v1/catch-up",
+    "ownerQuery": "",
+    "ownerRequest": {
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "currency": "USD",
+      "shardNo": 0,
+      "maxBatches": 200
+    },
+    "ownerResponse": {
+      "processedCount": "200",
+      "lastSequence": "1710",
+      "caughtUp": false
+    }
+  },
+  {
+    "id": "PO4",
+    "method": "POST",
+    "path": "/finance/posting-rebuilds/v1",
+    "query": "",
+    "request": {
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "currency": "USD"
+    },
+    "status": 200,
+    "response": {
+      "accountCount": "6",
+      "changedAccountCount": "1",
+      "entryCount": "3120",
+      "maxPostingSequence": "1530"
+    },
+    "routeCode": "operations-finance-posting-rebuild",
+    "owner": "account",
+    "ownerPath": "/account-postings/v1/streams/rebuild",
+    "ownerQuery": "",
+    "ownerRequest": {
+      "entityType": "OPERATING_ENTITY",
+      "entityId": "AE001",
+      "currency": "USD",
+      "operatorId": "<ACCOUNT_ID>"
+    },
+    "ownerResponse": {
+      "accountCount": "6",
+      "changedAccountCount": "1",
+      "entryCount": "3120",
+      "maxPostingSequence": "1530"
+    }
+  }
+]

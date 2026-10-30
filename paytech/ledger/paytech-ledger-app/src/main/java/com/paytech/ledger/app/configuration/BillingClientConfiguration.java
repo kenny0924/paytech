@@ -21,10 +21,16 @@ public class BillingClientConfiguration {
     /** billing 服务组名。 */
     public static final String SERVICE_ID = "billing-service";
 
+    /**
+     * 响应体上限 8 MiB：单个事实最多 100 行，每行计算证据最大 64 KiB（billing 合同），按合同上限 6.25 MiB 加事实头与行字段留余量；
+     * 进度响应只有四个数字。
+     */
+    static final int MAX_RESPONSE_BYTES = 8388608;
+
     /** 禁止自动重试和重定向；读事实失败由消费重投或追平返回 503，关账步骤按不可用失败关闭。 */
     @Bean
     RestClientHttpServiceGroupConfigurer billingClient() {
         return HttpServiceClientFactory.configureGroup(SERVICE_ID,
-            HttpServiceClientOptions.strict().withStrictJsonResponses(8192));
+            HttpServiceClientOptions.strict().withStrictJsonResponses(MAX_RESPONSE_BYTES));
     }
 }

@@ -73,8 +73,11 @@ operations:
   account-base-url: ${OPERATIONS_ACCOUNT_BASE_URL:http://127.0.0.1:18114}
   # billing 同样不注册 Nacos，规则同上。
   billing-base-url: ${OPERATIONS_BILLING_BASE_URL:http://127.0.0.1:18113}
-  # 关账发起、重开发起与关账/重开审批在 ledger 同步执行；只对这三个调用放宽读取超时，须小于 Gateway 路由响应超时上限 10 秒。
+  # 关账发起、重开发起、关账/重开审批，以及明细账运维的账簿入账进度与过账流追平在 ledger 同步执行；只对这些调用放宽读取超时，
+  # 须不小于 4 秒且小于 Gateway 路由响应超时上限 10 秒。
   ledger-long-running-read-timeout: ${OPERATIONS_LEDGER_LONG_RUNNING_READ_TIMEOUT:9s}
+  # 明细账运维的 account 按流重建余额（逐流锁行重算）的读取超时，范围同上；其他 account 调用仍为 4 秒。
+  account-long-running-read-timeout: ${OPERATIONS_ACCOUNT_LONG_RUNNING_READ_TIMEOUT:9s}
   # reconciliation 运营接口固定私网地址（与 ledger / account / billing 同一接入方式），规则同上；auto 测试指向本地 Simulator。
   reconciliation-base-url: ${OPERATIONS_RECONCILIATION_BASE_URL:http://127.0.0.1:18115}
   # tax 订单税务查询固定私网地址（tax 不注册 Nacos），规则同上；auto 测试指向本地 Simulator。

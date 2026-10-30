@@ -1,0 +1,151 @@
+{
+  "startedAt": "2026-10-30T15:34:28.635Z",
+  "groups": [
+    "catchup"
+  ],
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "C1-behind",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 602 条 · 最大 …742080 account 已应用 602 条 · 最大 …742080 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 602 最后入账 2026/10/30 19:29:05 过账流 1",
+              "is-warn | 3 ledger 总账消费 落后 5 批 ledger 已消费 597 落后批次 5 卡住批次生成于 2026/10/30 19:29:05"
+            ],
+            "stuck": "卡住的批次 · OE.ZQ344.USD.0 第 598 批 查看流水 来源 事实 事实号 241946513922633728 事实类型 MANUAL_ADJUSTMENT · 已应用 生成时间 2026/10/30 19:29:05 AccountPosted 已发出 2026/10/30 19:29:05 流水 1 条 ledger 停在第 597 批之后，后续批次都在等这一批。追平会从这一批开始按序补记；若它被规则拒绝，追平会返回原因，需要先排除原因再重放。",
+            "buttons": [
+              "重建余额",
+              "刷新",
+              "追平",
+              "浏览批次",
+              "查看流水"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        },
+        {
+          "role": "admin",
+          "step": "C2-after-catchup-1",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 602 条 · 最大 …742080 account 已应用 602 条 · 最大 …742080 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 602 最后入账 2026/10/30 19:29:05 过账流 1",
+              "is-warn | 3 ledger 总账消费 落后 5 批 ledger 已消费 597 落后批次 5 卡住批次生成于 2026/10/30 19:29:05"
+            ],
+            "stuck": "卡住的批次 · OE.ZQ344.USD.0 第 598 批 查看流水 来源 事实 事实号 241946513922633728 事实类型 MANUAL_ADJUSTMENT · 已应用 生成时间 2026/10/30 19:29:05 AccountPosted 已发出 2026/10/30 19:29:05 流水 1 条 追平失败 · 规则拒绝（400） 2026/10/30 19:34:39 BUSINESS_CHECK_FAILED: 控制科目过账拒绝: 计费事实 241946513922633728, 入账批次 241946518850949120, 指令类型 ECONOMIC_ADJUSTMENT, 费用类型 CLIENT_PRINCIPAL × 角色 OPERATING_ENTITY × DEBIT 匹配 0 条规则行: 行 1 先排除原因，再重放： 前往「记账规则」补齐规则 重新追平",
+            "buttons": [
+              "重建余额",
+              "刷新",
+              "追平",
+              "浏览批次",
+              "查看流水",
+              "前往「记账规则」补齐规则",
+              "重新追平"
+            ],
+            "result": "",
+            "rejected": "追平失败 · 规则拒绝（400） 2026/10/30 19:34:39 BUSINESS_CHECK_FAILED: 控制科目过账拒绝: 计费事实 241946513922633728, 入账批次 241946518850949120, 指令类型 ECONOMIC_ADJUSTMENT, 费用类型 CLIENT_PRINCIPAL × 角色 OPERATING_ENTITY × DEBIT 匹配 0 条规则行: 行 1 先排除原因，再重放： 前往「记账规则」补齐规则 重新追平"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        },
+        {
+          "role": "admin",
+          "step": "C2-after-catchup-2",
+          "check": {
+            "segments": [
+              "is-ok | 1 计费事实入账 已一致 billing 已发布 602 条 · 最大 …742080 account 已应用 602 条 · 最大 …742080 billing 未发布 0",
+              "is-ok | 2 account 过账流 1 条流 account 最大序号 602 最后入账 2026/10/30 19:29:05 过账流 1",
+              "is-ok | 3 ledger 总账消费 已一致 ledger 已消费 602 落后批次 0"
+            ],
+            "stuck": "",
+            "buttons": [
+              "重建余额",
+              "刷新",
+              "浏览批次"
+            ],
+            "result": "已追平本次处理 5 批，ledger 已消费到第 602 批，与 account 一致。",
+            "rejected": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 1440
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "/finance/posting-ops?ledgerBookId=241946219587354624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "C1-behind",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    }
+  ],
+  "httpErrors": [
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "C1-behind",
+      "method": "POST",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 400
+    }
+  ],
+  "deliberate": [],
+  "posts": [
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "C1-behind",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 400
+    },
+    {
+      "run": "zh-CN-1440",
+      "note": "AFTER_FIRST: restore: rule lines 36, 5301/5302 present 2"
+    },
+    {
+      "run": "zh-CN-1440",
+      "role": "admin",
+      "step": "C2-after-catchup-1",
+      "path": "/api/operations/finance/posting-streams/v1/OE.ZQ344.USD.0/catch-up",
+      "status": 200
+    }
+  ]
+}

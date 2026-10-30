@@ -118,6 +118,8 @@ export function pageRoutePaths(menu: ConsoleResource): string[] {
       return [menu.frontendRoute, `${menu.frontendRoute}/:midId`];
     case 'OPERATIONS_CHANNEL_COST_PLANS':
       return [menu.frontendRoute, `${menu.frontendRoute}/:planCode`, `${menu.frontendRoute}/:planCode/versions/:costVer`];
+    case 'OPERATIONS_FINANCE_POSTING_OPS':
+      return [menu.frontendRoute, `${menu.frontendRoute}/streams/:streamId`];
     case 'OPERATIONS_FINANCE_RECON_CLEARING':
       return [menu.frontendRoute, `${menu.frontendRoute}/:clearingAccountId`];
     case 'OPERATIONS_FINANCE_RECON_CASH':
