@@ -37,6 +37,6 @@ public class ExecuteDataQueryProcessor extends AbstractProcessor<ExecuteDataQuer
         // 模板、参数、执行与结果
         return runProcessor.process(new RunDataQueryTemplateRequest(request.getTemplateCode(), request.getParams(),
             request.getPage(), request.getSize(), request.isWithTotal(), request.getCursor(), session.account().id(),
-            null, request.getCallerService()));
+            null, request.getCallerService(), null));
     }
 }

@@ -7,16 +7,17 @@
     <sql id="columns">
         template_version_id AS templateVersionId, template_id AS templateId, version_no AS versionNo,
         data_source_id AS dataSourceId, body, parameters_json AS parametersJson, columns_json AS columnsJson,
-        constraints_json AS constraintsJson, restored_from_version_no AS restoredFromVersionNo,
+        constraints_json AS constraintsJson, joint_json AS jointJson, restored_from_version_no AS restoredFromVersionNo,
         change_note AS changeNote, created_by AS createdBy, create_time AS createTime
     </sql>
 
     <insert id="insert">
         INSERT INTO t_query_template_version (template_version_id, template_id, version_no, data_source_id, body,
-            parameters_json, columns_json, constraints_json, restored_from_version_no, change_note, created_by,
-            create_time)
+            parameters_json, columns_json, constraints_json, joint_json, restored_from_version_no, change_note,
+            created_by, create_time)
         VALUES (#{row.templateVersionId}, #{row.templateId}, #{row.versionNo}, #{row.dataSourceId}, #{row.body},
-            #{row.parametersJson}, #{row.columnsJson}, #{row.constraintsJson}, #{row.restoredFromVersionNo},
+            #{row.parametersJson}, #{row.columnsJson}, #{row.constraintsJson}, #{row.jointJson},
+            #{row.restoredFromVersionNo},
             #{row.changeNote}, #{row.createdBy}, #{row.createTime})
     </insert>
 
@@ -35,6 +36,17 @@
         <foreach collection="templates" item="template" open="(" separator="," close=")">
             (#{template.templateId}, #{template.currentVersionNo})
         </foreach>
+    </select>
+
+    <select id="selectCurrentVersionsForShare" timeout="5" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplateVersion">
+        SELECT <include refid="columns"/>
+        FROM t_query_template_version
+        WHERE (template_id, version_no) IN
+        <foreach collection="templates" item="template" open="(" separator="," close=")">
+            (#{template.templateId}, #{template.currentVersionNo})
+        </foreach>
+        FOR SHARE
     </select>
 
     <select id="selectPage" timeout="5"

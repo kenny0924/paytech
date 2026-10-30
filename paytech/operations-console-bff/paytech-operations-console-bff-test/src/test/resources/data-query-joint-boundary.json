@@ -1,0 +1,423 @@
+[
+  {
+    "id": "K1",
+    "method": "GET",
+    "path": "/data-query-admin/v1/key-types",
+    "query": "?status=ACTIVE&keyword=%E6%94%B6%E5%8D%95&page=1&size=20",
+    "routeCode": "operations-query-key-type-list",
+    "request": null,
+    "response": {
+      "items": [
+        {
+          "keyTypeId": "7312345678901240001",
+          "keyTypeCode": "ORDER_ID",
+          "keyTypeName": "订单号",
+          "groupName": "收单",
+          "valueType": "STRING",
+          "defaultRole": "LINK",
+          "entryAllowed": true,
+          "valuePattern": "ORD[0-9]{10}",
+          "inputHint": "如 ORD0000000001",
+          "sortNo": 10,
+          "description": null,
+          "status": "ACTIVE",
+          "version": 2,
+          "referencedTemplateCount": 2,
+          "updatedBy": "10002",
+          "updateTime": "2026-10-29T01:02:03.123456Z"
+        },
+        {
+          "keyTypeId": "7312345678901240002",
+          "keyTypeCode": "PAYMENT_ID",
+          "keyTypeName": "支付单号",
+          "groupName": "收单",
+          "valueType": "INTEGER",
+          "defaultRole": "LINK",
+          "entryAllowed": false,
+          "valuePattern": null,
+          "inputHint": null,
+          "sortNo": 20,
+          "description": null,
+          "status": "ACTIVE",
+          "version": 2,
+          "referencedTemplateCount": 0,
+          "updatedBy": "10002",
+          "updateTime": "2026-10-29T01:02:03.123456Z"
+        }
+      ],
+      "page": 1,
+      "size": 20,
+      "total": 2
+    },
+    "ownerPath": "/data-query-admin/v1/key-types",
+    "status": 200
+  },
+  {
+    "id": "K2",
+    "method": "POST",
+    "path": "/data-query-admin/v1/key-types",
+    "query": "",
+    "routeCode": "operations-query-key-type-create",
+    "request": {
+      "keyTypeCode": "ORDER_ID",
+      "keyTypeName": "订单号",
+      "groupName": "收单",
+      "valueType": "STRING",
+      "defaultRole": "LINK",
+      "entryAllowed": true,
+      "valuePattern": "ORD[0-9]{10}",
+      "inputHint": "如 ORD0000000001",
+      "sortNo": 10,
+      "description": "收单订单号"
+    },
+    "response": {
+      "objectType": "QUERY_KEY_TYPE",
+      "objectId": "7312345678901240001",
+      "objectCode": "ORDER_ID",
+      "status": "ACTIVE",
+      "version": 1
+    },
+    "ownerPath": "/data-query-admin/v1/key-types",
+    "status": 200
+  },
+  {
+    "id": "K3",
+    "method": "PUT",
+    "path": "/data-query-admin/v1/key-types/7312345678901240001",
+    "query": "",
+    "routeCode": "operations-query-key-type-update",
+    "request": {
+      "keyTypeName": "收单订单号",
+      "groupName": "收单",
+      "valueType": "STRING",
+      "defaultRole": "LINK",
+      "entryAllowed": true,
+      "valuePattern": "ORD[0-9]{10}",
+      "inputHint": "如 ORD0000000001",
+      "sortNo": 10,
+      "description": "收单订单号",
+      "expectedVersion": 2
+    },
+    "response": {
+      "objectType": "QUERY_KEY_TYPE",
+      "objectId": "7312345678901240001",
+      "objectCode": "ORDER_ID",
+      "status": "ACTIVE",
+      "version": 3
+    },
+    "ownerPath": "/data-query-admin/v1/key-types/7312345678901240001",
+    "status": 200
+  },
+  {
+    "id": "K4",
+    "method": "POST",
+    "path": "/data-query-admin/v1/key-types/7312345678901240001/status",
+    "query": "",
+    "routeCode": "operations-query-key-type-status",
+    "request": {
+      "status": "INACTIVE",
+      "expectedVersion": 3
+    },
+    "response": {
+      "objectType": "QUERY_KEY_TYPE",
+      "objectId": "7312345678901240001",
+      "objectCode": "ORDER_ID",
+      "status": "INACTIVE",
+      "version": 4
+    },
+    "ownerPath": "/data-query-admin/v1/key-types/7312345678901240001/status",
+    "status": 200
+  },
+  {
+    "id": "K5",
+    "method": "PUT",
+    "path": "/data-query-admin/v1/key-type-order",
+    "query": "",
+    "routeCode": "operations-query-key-type-order",
+    "request": {
+      "items": [
+        {
+          "keyTypeId": "7312345678901240002",
+          "expectedVersion": 2
+        },
+        {
+          "keyTypeId": "7312345678901240001",
+          "expectedVersion": 4
+        }
+      ]
+    },
+    "response": {
+      "items": [
+        {
+          "keyTypeId": "7312345678901240002",
+          "sortNo": 10,
+          "version": 3
+        },
+        {
+          "keyTypeId": "7312345678901240001",
+          "sortNo": 20,
+          "version": 5
+        }
+      ]
+    },
+    "ownerPath": "/data-query-admin/v1/key-type-order",
+    "status": 200
+  },
+  {
+    "id": "J1",
+    "method": "GET",
+    "path": "/data-query/v1/joint-query/settings",
+    "query": "",
+    "routeCode": "operations-joint-query-settings",
+    "request": null,
+    "response": {
+      "entryKeyTypes": [
+        {
+          "keyTypeCode": "ORDER_ID",
+          "keyTypeName": "订单号",
+          "groupName": "收单",
+          "valueType": "STRING",
+          "valuePattern": "ORD[0-9]{10}",
+          "inputHint": "如 ORD0000000001",
+          "sortNo": 10
+        }
+      ],
+      "groups": [
+        {
+          "groupName": "收单",
+          "rank": 10
+        },
+        {
+          "groupName": "支付",
+          "rank": 40
+        }
+      ],
+      "limits": {
+        "maxEntryValues": 20,
+        "maxValuesPerKey": 50,
+        "maxRowsPerTemplate": 200,
+        "maxExecutionsPerStep": 40,
+        "maxDepth": 6,
+        "maxTemplateExecutions": 120,
+        "maxTotalSeconds": 60
+      }
+    },
+    "ownerPath": "/data-query/v1/joint-query/settings",
+    "status": 200
+  },
+  {
+    "id": "J2",
+    "method": "GET",
+    "path": "/data-query/v1/joint-query/graph",
+    "query": "?entryKeyType=ORDER_ID",
+    "routeCode": "operations-joint-query-graph",
+    "request": null,
+    "response": {
+      "groups": [
+        {
+          "groupName": "收单",
+          "rank": 10,
+          "templates": [
+            {
+              "templateCode": "ORDER_LOOKUP",
+              "templateName": "订单查询",
+              "dataSourceCode": "RECON_REPLICA",
+              "subjectKeyType": "ORDER_ID",
+              "triggerKeyType": "ORDER_ID",
+              "minSteps": 0,
+              "linkKeyTypes": [
+                "PAYMENT_ID"
+              ]
+            }
+          ]
+        },
+        {
+          "groupName": "支付",
+          "rank": 40,
+          "templates": [
+            {
+              "templateCode": "PAYMENT_LOOKUP",
+              "templateName": "支付查询",
+              "dataSourceCode": "PAYMENT_REPLICA",
+              "subjectKeyType": "PAYMENT_ID",
+              "triggerKeyType": "PAYMENT_ID",
+              "minSteps": 1,
+              "linkKeyTypes": []
+            }
+          ]
+        }
+      ],
+      "breaks": [
+        {
+          "keyType": "CARD_FINGERPRINT",
+          "reason": "没有以 CARD_FINGERPRINT 为触发键的参与模板"
+        }
+      ],
+      "excluded": [
+        {
+          "templateCode": "PAYOUT_LOOKUP",
+          "reasonCode": "TEMPLATE_INACTIVE",
+          "reason": "模板未启用"
+        }
+      ]
+    },
+    "ownerPath": "/data-query/v1/joint-query/graph",
+    "status": 200
+  },
+  {
+    "id": "J3",
+    "method": "POST",
+    "path": "/data-query/v1/joint-query/steps",
+    "query": "",
+    "routeCode": "operations-joint-query-step",
+    "request": {
+      "depth": 1,
+      "keys": [
+        {
+          "keyType": "PAYMENT_ID",
+          "values": [
+            "7312345678901250001"
+          ]
+        }
+      ],
+      "templateCodes": null,
+      "loadedSubjects": [
+        {
+          "keyType": "ORDER_ID",
+          "values": [
+            "ORD0000000001"
+          ]
+        },
+        {
+          "keyType": "PAYMENT_ID",
+          "values": [
+            "7312345678901250009"
+          ]
+        }
+      ]
+    },
+    "response": {
+      "depth": 1,
+      "nodes": [
+        {
+          "nodeId": "1:ORDER_LOOKUP:ORDER_ID",
+          "templateCode": "ORDER_LOOKUP",
+          "templateName": "订单查询",
+          "versionNo": 3,
+          "dataSourceCode": "RECON_REPLICA",
+          "subjectKeyType": "ORDER_ID",
+          "groupName": "收单",
+          "laneRank": 10,
+          "subjectSortNo": 10,
+          "triggerKeyType": "ORDER_ID",
+          "keyParameter": "orderNos",
+          "keyParameterList": true,
+          "triggerValues": [
+            "ORD0000000001"
+          ],
+          "status": "SUCCEEDED",
+          "errorCode": null,
+          "errorMessage": null,
+          "pagingMode": "CURSOR",
+          "truncated": true,
+          "nextCursor": "cursor-0001",
+          "elapsedMillis": 120,
+          "warnings": [
+            "LINK_COLUMN_MISSING:refund_no"
+          ],
+          "columns": [
+            {
+              "name": "order_no",
+              "label": "订单号",
+              "keyType": "ORDER_ID",
+              "keyRole": "LINK"
+            },
+            {
+              "name": "payment_id",
+              "label": "支付单号",
+              "keyType": "PAYMENT_ID",
+              "keyRole": "LINK"
+            },
+            {
+              "name": "amount",
+              "label": "金额",
+              "keyType": null,
+              "keyRole": null
+            }
+          ],
+          "rows": [
+            [
+              "ORD0000000001",
+              "7312345678901250001",
+              "100.00"
+            ]
+          ]
+        },
+        {
+          "nodeId": "1:REFUND_LOOKUP:ORDER_ID",
+          "templateCode": "REFUND_LOOKUP",
+          "templateName": "退款查询",
+          "versionNo": 1,
+          "dataSourceCode": "RECON_REPLICA",
+          "subjectKeyType": "REFUND_ID",
+          "groupName": "收单",
+          "laneRank": 10,
+          "subjectSortNo": 30,
+          "triggerKeyType": "ORDER_ID",
+          "keyParameter": "orderNo",
+          "keyParameterList": false,
+          "triggerValues": [
+            "ORD0000000001"
+          ],
+          "status": "SKIPPED",
+          "errorCode": "STEP_EXECUTION_LIMIT",
+          "errorMessage": "本层执行数已达上限，未执行",
+          "pagingMode": "NONE",
+          "truncated": false,
+          "nextCursor": null,
+          "elapsedMillis": 0,
+          "warnings": [],
+          "columns": [],
+          "rows": []
+        }
+      ],
+      "links": [
+        {
+          "nodeId": "1:ORDER_LOOKUP:ORDER_ID",
+          "rowIndex": 0,
+          "column": "payment_id",
+          "keyType": "PAYMENT_ID",
+          "value": "7312345678901250001"
+        }
+      ],
+      "discoveredKeys": [
+        {
+          "keyType": "PAYMENT_ID",
+          "values": [
+            "7312345678901250001"
+          ]
+        }
+      ],
+      "truncations": [
+        {
+          "rule": "STEP_EXECUTION_LIMIT",
+          "keyType": null,
+          "dropped": 1
+        }
+      ],
+      "alreadyLoaded": [
+        {
+          "templateCode": "PAYMENT_LOOKUP",
+          "templateName": "支付查询",
+          "keyType": "PAYMENT_ID",
+          "values": [
+            "7312345678901250009"
+          ]
+        }
+      ],
+      "elapsedMillis": 180
+    },
+    "ownerPath": "/data-query/v1/joint-query/steps",
+    "status": 200
+  }
+]

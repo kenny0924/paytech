@@ -1,0 +1,10 @@
+{
+  "format": "code-mor-i18n-translation/1",
+  "application": "operations-console",
+  "locale": "zh-CN",
+  "namespaces": {
+    "data-query": {
+      "data-query.joint.detail.alsoVia": "也可经 {path} 到达"
+    }
+  }
+}

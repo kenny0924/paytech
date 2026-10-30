@@ -1,0 +1,11 @@
+# platform-support 联合查询 · mor-test 候选覆盖（阶段 6 准备 2026-10-30；阶段 7 须用户授权，由主会话执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag 仅供辨认）。不加 --remove-orphans。
+# 构建源：同 Platform（Code-MoR-jq-rel）。env 继承税务覆盖的 OPERATIONS_TAX_BASE_URL（其余在主 compose），渲染结果与现网逐键逐值相同。
+services:
+  operations-console-bff:
+    # 新：/data-query-admin/v1/key-types、/key-type-order 与 /data-query/v1/joint-* 同路径转发；模板 joint 字段。其余与现网 tax-20261029a 逐项相同。
+    image: sha256:34ce01c1d775276287cf3c12c6133d4f08b6a5fa4737d0f00c76ddfbe74983a8  # mor-test/operations-console-bff:jq-20261030a（JAR ac050134d024c47f）
+    environment:
+      OPERATIONS_TAX_BASE_URL: http://tax-service:18116

@@ -3,6 +3,8 @@ import {
 } from './dataQueryCommon.ts';
 import type { ActiveStatus } from './dataQueryCommon.ts';
 import { enumLabel, translator } from '../i18n/index.ts';
+import { decodeJointConfig, decodeJointParticipation, emptyJointDraft, jointBody, jointDraft } from './jointModel.ts';
+import type { JointConfig, JointDraft, JointParticipation } from './jointModel.ts';
 
 const t = translator('data-query');
 
@@ -23,7 +25,8 @@ export const pagingModeLabel = (value: string) => enumLabel(t, 'enum.pagingMode'
 export const maskModes = ['NONE', 'HIDE', 'FULL', 'KEEP_EDGES'] as const;
 export type MaskMode = typeof maskModes[number];
 export const maskLabel = (value: string) => enumLabel(t, 'enum.mask', value);
-export const problemLevels = ['ERROR', 'WARNING'] as const;
+/** INFO 只出现在保存响应（例如“参与联合查询”），technique 8.3。 */
+export const problemLevels = ['ERROR', 'WARNING', 'INFO'] as const;
 export type ProblemLevel = typeof problemLevels[number];
 
 /** 硬上限（data-query.limits 默认值）：表单提示用，最终以服务端校验为准。 */
@@ -53,10 +56,15 @@ export interface TemplateVersion {
   templateId: string; versionNo: number; dataSourceId: string; dataSourceCode: string; dataSourceName: string; dataSourceStatus: string;
   body: string; parameters: ParameterDeclaration[]; columns: QueryColumn[]; constraints: QueryConstraints; restoredFromVersionNo: number | null;
   changeNote: string | null; createdBy: string; createTime: string;
+  /** 联合查询配置（joint_json）；null 表示该版本不参与。 */
+  joint: JointConfig | null;
+  /** 参与情况（服务端评估）；旧服务端不返回时为 null。 */
+  jointQuery: JointParticipation | null;
 }
 export interface TemplateDetail {
   templateId: string; templateCode: string; templateName: string; description: string | null; status: ActiveStatus; currentVersionNo: number;
   version: number; createdBy: string; updatedBy: string; createTime: string; updateTime: string; currentVersion: TemplateVersion;
+  jointQuery: JointParticipation | null;
 }
 export interface VersionSummary {
   versionNo: number; dataSourceId: string; dataSourceCode: string; restoredFromVersionNo: number | null; changeNote: string | null; createdBy: string; createTime: string;
@@ -119,6 +127,7 @@ export function decodeTemplateVersion(value: unknown): TemplateVersion {
     ...(value as unknown as TemplateVersion), parameters: ((value.parameters ?? []) as unknown[]).map(decodeDeclaration),
     columns: ((value.columns ?? []) as unknown[]).map(decodeColumn), constraints: decodeConstraints(value.constraints),
     restoredFromVersionNo: orNull(value.restoredFromVersionNo as number | null), changeNote: orNull(value.changeNote as string | null),
+    joint: decodeJointConfig(value.joint), jointQuery: decodeJointParticipation(value.jointQuery),
   };
 }
 
@@ -128,7 +137,8 @@ export function decodeTemplateDetail(value: unknown, templateId?: string): Templ
     && isInteger(value.version, 1) && isText(value.createdBy) && isText(value.updatedBy) && isInstant(value.createTime) && isInstant(value.updateTime));
   const currentVersion = decodeTemplateVersion(value.currentVersion);
   require(currentVersion.versionNo === value.currentVersionNo);
-  return { ...(value as unknown as TemplateDetail), description: orNull(value.description as string | null), currentVersion };
+  const jointQuery = decodeJointParticipation(value.jointQuery) ?? currentVersion.jointQuery;
+  return { ...(value as unknown as TemplateDetail), description: orNull(value.description as string | null), currentVersion, jointQuery };
 }
 
 export function decodeVersionSummary(value: unknown): VersionSummary {
@@ -352,16 +362,20 @@ export function columnsBody(rows: readonly ColumnRow[]): QueryColumn[] {
 export interface TemplateDraft {
   templateCode: string; templateName: string; description: string; dataSourceId: string | null; body: string;
   parameters: ParameterRow[]; columns: ColumnRow[]; constraints: QueryConstraints;
+  /** 联合查询页签；与参数、列分开保存为 joint。 */
+  joint: JointDraft;
 }
 
 export function emptyDraft(): TemplateDraft {
-  return { templateCode: '', templateName: '', description: '', dataSourceId: null, body: 'SELECT\n  \nFROM\n  ', parameters: [], columns: [], constraints: defaultConstraints() };
+  return { templateCode: '', templateName: '', description: '', dataSourceId: null, body: 'SELECT\n  \nFROM\n  ', parameters: [], columns: [], constraints: defaultConstraints(),
+    joint: emptyJointDraft() };
 }
 
 export function draftFromDetail(detail: TemplateDetail, version: TemplateVersion = detail.currentVersion): TemplateDraft {
   return {
     templateCode: detail.templateCode, templateName: detail.templateName, description: detail.description ?? '', dataSourceId: version.dataSourceId,
     body: version.body, parameters: parameterRows(version.parameters), columns: columnRows(version.columns), constraints: { ...version.constraints },
+    joint: jointDraft(version.joint),
   };
 }
 
@@ -373,11 +387,11 @@ export function contentBody(draft: TemplateDraft) {
 const changeNoteOf = (note: string) => note.trim() ? note.trim() : null;
 export function createTemplateBody(draft: TemplateDraft, changeNote: string) {
   return { templateCode: draft.templateCode.trim(), templateName: draft.templateName.trim(), description: draft.description.trim() || null,
-    ...contentBody(draft), changeNote: changeNoteOf(changeNote) };
+    ...contentBody(draft), joint: jointBody(draft.joint), changeNote: changeNoteOf(changeNote) };
 }
 export function updateTemplateBody(draft: TemplateDraft, expectedVersion: number, changeNote: string) {
   return { templateName: draft.templateName.trim(), description: draft.description.trim() || null, ...contentBody(draft),
-    expectedVersion, changeNote: changeNoteOf(changeNote) };
+    joint: jointBody(draft.joint), expectedVersion, changeNote: changeNoteOf(changeNote) };
 }
 /** 未保存判断：与基线草稿的请求内容比较，行键不参与。 */
 export const draftFingerprint = (draft: TemplateDraft) => JSON.stringify({ ...createTemplateBody(draft, ''), templateCode: draft.templateCode.trim() });
@@ -433,6 +447,7 @@ export type ProblemTarget =
   | { kind: 'parameter'; index: number }
   | { kind: 'constraints'; field: string }
   | { kind: 'columns'; index: number }
+  | { kind: 'joint'; field: string }
   | { kind: 'dataSource' }
   | { kind: 'none' };
 
@@ -444,6 +459,7 @@ export function problemTarget(problem: TemplateProblem): ProblemTarget {
   if (indexed) return indexed[1] === 'parameters' ? { kind: 'parameter', index: Number(indexed[2]) } : { kind: 'columns', index: Number(indexed[2]) };
   if (field === 'parameters') return { kind: 'parameter', index: 0 };
   if (field === 'columns') return { kind: 'columns', index: 0 };
+  if (field === 'joint' || field.startsWith('joint.')) return { kind: 'joint', field };
   if (field.startsWith('constraints')) return { kind: 'constraints', field: field.replace(/^constraints\.?/, '') };
   if (field === 'dataSourceId') return { kind: 'dataSource' };
   return { kind: 'none' };

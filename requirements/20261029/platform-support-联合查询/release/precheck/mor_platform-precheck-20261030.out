@@ -1,0 +1,114 @@
++-----------+----------------------------+
+| read_only | checked_at                 |
++-----------+----------------------------+
+|         1 | 2026-10-30 06:26:29.452970 |
++-----------+----------------------------+
++----------------+-------------------+-------------------------+
+| key_type_table | joint_json_column | constraints_json_column |
++----------------+-------------------+-------------------------+
+|              0 |                 0 |                       1 |
++----------------+-------------------+-------------------------+
++-------------+-------------+-----------+--------+---------+---------+--------+
+| permissions | role_grants | resources | routes | headers | queries | guards |
++-------------+-------------+-----------+--------+---------+---------+--------+
+|           0 |           0 |         0 |      0 |       0 |       0 |      0 |
++-------------+-------------+-----------+--------+---------+---------+--------+
++--------------------+----------------------------+--------+
+| permission_id      | permission_code            | status |
++--------------------+----------------------------+--------+
+| 900000000000131101 | DATA_QUERY_READ            | ACTIVE |
+| 900000000000131102 | DATA_SOURCE_MANAGE         | ACTIVE |
+| 900000000000131103 | DATA_QUERY_TEMPLATE_MANAGE | ACTIVE |
+| 900000000000131104 | DATA_QUERY_EXECUTE         | ACTIVE |
++--------------------+----------------------------+--------+
++--------------------+---------------------------------------+---------------+--------------------------+--------+
+| resource_id        | resource_code                         | resource_type | frontend_route           | status |
++--------------------+---------------------------------------+---------------+--------------------------+--------+
+| 900000000000131301 | OPERATIONS_DATA_QUERY                 | MENU          | NULL                     | ACTIVE |
+| 900000000000131302 | OPERATIONS_DATA_SOURCES               | MENU          | /data-query/data-sources | ACTIVE |
+| 900000000000131303 | OPERATIONS_QUERY_TEMPLATES            | MENU          | /data-query/templates    | ACTIVE |
+| 900000000000131304 | OPERATIONS_DATA_SOURCE_MANAGE         | BUTTON        | NULL                     | ACTIVE |
+| 900000000000131305 | OPERATIONS_DATA_QUERY_TEMPLATE_MANAGE | BUTTON        | NULL                     | ACTIVE |
++--------------------+---------------------------------------+---------------+--------------------------+--------+
++--------------------+--------------------+--------------------+--------+
+| role_permission_id | role_id            | permission_id      | status |
++--------------------+--------------------+--------------------+--------+
+| 900000000000131201 | 900000000000000510 | 900000000000131101 | ACTIVE |
+| 900000000000131202 | 900000000000000510 | 900000000000131102 | ACTIVE |
+| 900000000000131203 | 900000000000000510 | 900000000000131103 | ACTIVE |
+| 900000000000131204 | 900000000000000510 | 900000000000131104 | ACTIVE |
++--------------------+--------------------+--------------------+--------+
++--------------------+------------------------+--------+
+| target_id          | target_service_code    | status |
++--------------------+------------------------+--------+
+| 900000000000000001 | operations-console-bff | ACTIVE |
++--------------------+------------------------+--------+
++--------------------+------------------------------------------+--------+
+| route_id           | route_code                               | status |
++--------------------+------------------------------------------+--------+
+| 900000000000131401 | operations-data-source-list              | ACTIVE |
+| 900000000000131402 | operations-data-source-detail            | ACTIVE |
+| 900000000000131403 | operations-data-source-create            | ACTIVE |
+| 900000000000131404 | operations-data-source-update            | ACTIVE |
+| 900000000000131405 | operations-data-source-connection-test   | ACTIVE |
+| 900000000000131406 | operations-data-source-status            | ACTIVE |
+| 900000000000131407 | operations-data-source-delete            | ACTIVE |
+| 900000000000131408 | operations-query-template-list           | ACTIVE |
+| 900000000000131409 | operations-query-template-detail         | ACTIVE |
+| 900000000000131410 | operations-query-template-create         | ACTIVE |
+| 900000000000131411 | operations-query-template-update         | ACTIVE |
+| 900000000000131412 | operations-query-template-status         | ACTIVE |
+| 900000000000131413 | operations-query-template-version-list   | ACTIVE |
+| 900000000000131414 | operations-query-template-version-detail | ACTIVE |
+| 900000000000131415 | operations-query-template-restore        | ACTIVE |
+| 900000000000131416 | operations-query-template-validate       | ACTIVE |
+| 900000000000131417 | operations-query-template-trial          | ACTIVE |
+| 900000000000131418 | operations-data-query-execute            | ACTIVE |
++--------------------+------------------------------------------+--------+
++----------+--------+
+| status   | routes |
++----------+--------+
+| ACTIVE   |    633 |
+| DISABLED |      6 |
++----------+--------+
++--------------------+--------------------+
+| max_route_id       | max_resource_id    |
++--------------------+--------------------+
+| 900000000000146402 | 900000000000146301 |
++--------------------+--------------------+
++-------+--------+--------+
+| block | routes | active |
++-------+--------+--------+
+|   140 |      1 |      1 |
+|   141 |      3 |      3 |
+|   142 |      3 |      3 |
+|   143 |     12 |     12 |
+|   146 |      2 |      2 |
++-------+--------+--------+
++--------------------+-------------------------------+---------------------------------------+----------+-------+------+-----------------------+------------------------+-------------------+----------------------------+
+| data_source_id     | data_source_code              | data_source_name                      | status   | host  | port | database_name         | username               | last_check_result | last_check_time            |
++--------------------+-------------------------------+---------------------------------------+----------+-------+------+-----------------------+------------------------+-------------------+----------------------------+
+| 239060837141135360 | MOR_ACQUIRING_REPLICA         | 收单（Commerce）从库                  | ACTIVE   | mysql | 3306 | mor_acquiring         | data_query_demo_reader | PASSED            | 2026-10-22 16:22:25.235883 |
+| 239060842660839424 | MOR_CHANNEL_CONNECTOR_REPLICA | 渠道连接器从库                        | INACTIVE | mysql | 3306 | mor_channel_connector | data_query_demo_reader | NULL              | NULL                       |
+| 239060838164545536 | MOR_CLIENT_MASTER_REPLICA     | 客户主数据从库                        | ACTIVE   | mysql | 3306 | mor_client_master     | data_query_demo_reader | PASSED            | 2026-10-22 16:22:25.420117 |
+| 239060838932103168 | MOR_COMMERCIAL_REPLICA        | 商务（Commercial）从库                | ACTIVE   | mysql | 3306 | mor_commercial        | data_query_demo_reader | PASSED            | 2026-10-22 16:22:25.620492 |
+| 239060840412692480 | MOR_LEDGER_REPLICA            | 总账从库                              | ACTIVE   | mysql | 3306 | mor_ledger            | data_query_demo_reader | PASSED            | 2026-10-22 16:22:26.036294 |
+| 239060841868115968 | MOR_RECONCILIATION_REPLICA    | 对账从库                              | ACTIVE   | mysql | 3306 | mor_reconciliation    | data_query_demo_reader | PASSED            | 2026-10-22 16:26:21.744011 |
+| 241634939987116032 | MOR_RISK_DECISION_REPLICA     | 风控决策（Risk Decision）从库         | ACTIVE   | mysql | 3306 | mor_risk_decision     | data_query_demo_reader | PASSED            | 2026-10-29 18:50:59.548248 |
+| 239060843189321728 | MOR_TEST_MYSQL_INSTANCE       | mor-test MySQL 整实例                 | ACTIVE   | mysql | 3306 | NULL                  | data_query_demo_reader | PASSED            | 2026-10-22 16:45:36.289938 |
++--------------------+-------------------------------+---------------------------------------+----------+-------+------+-----------------------+------------------------+-------------------+----------------------------+
++----------------------------------------+-----------------------------------------+----------+--------------------+----------------------------+
+| template_code                          | template_name                           | status   | current_version_no | data_source_code           |
++----------------------------------------+-----------------------------------------+----------+--------------------+----------------------------+
+| DEMO_AGREEMENT_LIST                    | 协议列表                                | ACTIVE   |                  1 | MOR_COMMERCIAL_REPLICA     |
+| DEMO_CLIENT_LIST                       | Client 列表                             | ACTIVE   |                  1 | MOR_CLIENT_MASTER_REPLICA  |
+| DEMO_CLIENT_ORDER_SUMMARY              | Client 订单汇总（跨库）                 | ACTIVE   |                  1 | MOR_TEST_MYSQL_INSTANCE    |
+| DEMO_JOURNAL_LINES                     | 凭证分录                                | ACTIVE   |                  1 | MOR_LEDGER_REPLICA         |
+| DEMO_ORDER_SEARCH                      | 订单查询                                | ACTIVE   |                  1 | MOR_ACQUIRING_REPLICA      |
+| DEMO_RECON_EXCEPTIONS                  | 对账异常                                | ACTIVE   |                  1 | MOR_RECONCILIATION_REPLICA |
+| DEMO_REFUND_REQUESTS                   | 退款申请查询                            | INACTIVE |                  1 | MOR_ACQUIRING_REPLICA      |
+| GOLIVE_AGREEMENT_ACTIVE                | 合同已生效且价格版本生效                | ACTIVE   |                  1 | MOR_COMMERCIAL_REPLICA     |
+| GOLIVE_AGREEMENT_DRAFTED               | 合同已起草且价格版本已批准              | ACTIVE   |                  1 | MOR_COMMERCIAL_REPLICA     |
+| GOLIVE_COLLECTION_CAPABILITIES_ENABLED | 收款开通项全部已开通                    | ACTIVE   |                  1 | MOR_COMMERCIAL_REPLICA     |
+| GOLIVE_UNDERWRITING_APPROVED           | 承保已批准（有效结论）                  | ACTIVE   |                  1 | MOR_RISK_DECISION_REPLICA  |
++----------------------------------------+-----------------------------------------+----------+--------------------+----------------------------+

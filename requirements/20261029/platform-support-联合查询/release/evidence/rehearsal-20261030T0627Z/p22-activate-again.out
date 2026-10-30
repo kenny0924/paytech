@@ -1,0 +1,18 @@
++--------------------+----------------------------------+--------+---------+
+| route_id           | route_code                       | status | version |
++--------------------+----------------------------------+--------+---------+
+| 900000000000144401 | operations-query-key-type-list   | ACTIVE |       2 |
+| 900000000000144402 | operations-query-key-type-create | ACTIVE |       2 |
+| 900000000000144403 | operations-query-key-type-update | ACTIVE |       2 |
+| 900000000000144404 | operations-query-key-type-status | ACTIVE |       2 |
+| 900000000000144405 | operations-query-key-type-order  | ACTIVE |       2 |
+| 900000000000144406 | operations-joint-query-settings  | ACTIVE |       2 |
+| 900000000000144407 | operations-joint-query-graph     | ACTIVE |       2 |
+| 900000000000144408 | operations-joint-query-step      | ACTIVE |       2 |
++--------------------+----------------------------------+--------+---------+
++--------------------+----------------------------+--------+---------+
+| resource_id        | resource_code              | status | version |
++--------------------+----------------------------+--------+---------+
+| 900000000000144301 | OPERATIONS_JOINT_QUERY     | ACTIVE |       2 |
+| 900000000000144302 | OPERATIONS_QUERY_KEY_TYPES | ACTIVE |       2 |
++--------------------+----------------------------+--------+---------+

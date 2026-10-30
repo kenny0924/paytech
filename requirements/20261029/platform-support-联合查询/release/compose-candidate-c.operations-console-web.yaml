@@ -1,0 +1,8 @@
+# 联合查询修订 c（页面按对象合并显示 · technique 8.7 补充 / B5c；loadedSubjects 被拒时含 400 回退）· mor-test ops-web 候选覆盖
+# （2026-10-30；执行须用户授权，由主会话执行）。只换 ops-web；Platform / ops-bff 不变。
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+# 只认 sha256（tag jq-20261030c 仅供辨认）。nginx 镜像，无应用 env。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-jq-rel = main 6eaf1bd3 + 联合查询 ops-web 34 个文件（修订 c）。
+services:
+  operations-console-web:
+    image: sha256:6f8161c279e71b24efc79280bdff5d0b3bbe4822e44e442cde409d88f4bd0173  # mor-test/operations-console-web:jq-20261030c（dist 273 个文件）

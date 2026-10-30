@@ -1,0 +1,149 @@
+
+  VITE v8.2.2  ready in 261 ms
+
+  ➜  Local:   http://127.0.0.1:18316/
+7:38:51 AM [vite] (client) [optimizer] bundling dependencies...
+7:40:47 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:40:48 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+7:40:50 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:41:00 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:41:15 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:41:19 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:41:31 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:42:33 AM [vite] (client) hmr update /src/pages/JointQuery.tsx
+7:42:58 AM [vite] (client) hmr update /src/dataQuery/JointSearch.tsx
+7:43:19 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:43:22 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:43:33 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:43:45 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:43:49 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:43:58 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:44:10 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:44:20 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:44:27 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:44:29 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+7:44:31 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:44:49 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:44:55 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:45:00 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:45:10 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:45:11 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+7:45:13 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:45:24 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:45:37 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:45:40 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:45:48 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:45:54 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:46:02 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:46:07 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:46:08 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+7:46:10 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:46:26 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:46:31 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:46:36 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:47:30 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:47:31 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+7:47:33 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:47:43 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:47:56 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:48:01 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:48:09 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:48:19 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:48:29 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:48:35 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:48:37 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:48:53 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:48:57 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:49:02 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:49:12 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:49:18 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+7:49:20 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:49:36 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:50:03 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:50:09 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:50:19 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:50:24 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:50:30 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:50:35 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:50:36 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+7:50:37 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:50:53 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:50:57 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:51:05 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:52:43 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:52:47 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:53:25 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:53:33 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:54:14 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:54:21 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+7:54:23 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:54:47 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+7:54:57 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:55:14 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:55:59 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:56:01 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+7:56:04 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:56:47 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+7:56:48 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+7:56:52 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:40:41 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:40:42 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+9:40:45 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:41:02 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:41:04 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+9:41:07 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:41:29 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:41:30 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+9:41:34 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:41:57 AM [vite] (client) hmr update /src/dataQuery/dataQuery.css
+9:41:59 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:42:00 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+9:42:01 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:42:11 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+9:42:23 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:42:27 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+9:42:35 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:42:46 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:42:53 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:42:58 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:42:59 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+9:43:01 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:43:16 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+9:43:21 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:43:26 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:43:32 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:43:33 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+9:43:35 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:43:45 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+9:43:57 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:44:01 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+9:44:10 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:44:17 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:44:24 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:44:29 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:44:31 AM [vite] (client) [console.error] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead.
+9:44:31 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:44:47 AM [vite] (client) [console.warn] React Flow: It seems like you are hiding the attribution. Please only do this when you are subscribed to React Flow Pro: https://reactflow.dev/remove-attr
+You can ignore this warning if you are subscribed.
+9:44:52 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.
+9:44:57 AM [vite] (client) [console.error] Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead.

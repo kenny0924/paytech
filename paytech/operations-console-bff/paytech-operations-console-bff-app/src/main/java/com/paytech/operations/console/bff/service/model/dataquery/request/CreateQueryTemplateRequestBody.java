@@ -66,6 +66,14 @@ public class CreateQueryTemplateRequestBody {
     @Valid
     private QueryTemplateConstraints constraints;
 
+    /**
+     * 联合查询配置（joint_json）
+     * <li>可选；为 null 表示该版本不参与联合查询。旧客户端不传即清空，调用方须原样回传已有配置。</li>
+     * <li>校验不通过返回 422，field 形如 joint.columns[1].keyType；参与情况通过 warnings 提示。</li>
+     */
+    @Valid
+    private QueryTemplateJointConfig joint;
+
     /** 变更说明，可选，最多 512 字符；记录在新版本上。 */
     @Size(max = 512)
     private String changeNote;

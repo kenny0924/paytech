@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
  * <p>人工认证、IAM、配置目录、网关、文件与审计表中的内部租户、平台角色和权限编码全局唯一，无法按用例分区；
  * 因此每例开始前要求这些表为空，确认后才在 AfterEach 整表回收。非空时拒绝运行，避免误删本地开发数据。
  * 外部 API 配置六表的编码同样全局唯一，且多数行由被测接口创建、无法预先登记，一并整表回收。
- * Webhook 五表与工作流十表的行同样多由被测接口创建，测试独占并整表回收；数据查询三表与多语言八表同理。
+     * Webhook 五表与工作流十表的行同样多由被测接口创建，测试独占并整表回收；数据查询四表（含联合查询键类型）与多语言八表同理。
  * 文件存储实例、存储桶与写入路由的编码全局唯一（含默认路由 *），且多由被测管理接口创建，测试独占并整表回收。
  * 租户、凭证与通知表仍由各自 Mocker 按本例标识回收。
  * 文件扫描策略与要求可能存在已授权的本机开发配置（如 CLIENT_ONBOARDING_FORMAT），不纳入整表回收，
@@ -52,7 +52,7 @@ public class PlatformDataCleaner implements Clear {
         "t_file_storage_route", "t_file_storage_bucket", "t_file_storage_instance", "t_security_event",
         "t_audit_event_attr", "t_audit_event", "t_audit_chain",
         "t_webhook_attempt", "t_webhook_delivery", "t_webhook_event", "t_webhook_signing_secret", "t_webhook_endpoint",
-        "t_query_template_version", "t_query_template", "t_data_source",
+        "t_query_template_version", "t_query_template", "t_data_source", "t_query_key_type",
         "t_i18n_release_change", "t_i18n_release_bundle", "t_i18n_release", "t_i18n_translation", "t_i18n_key", "t_i18n_namespace",
         "t_i18n_application", "t_i18n_locale");
 

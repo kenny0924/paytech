@@ -1,0 +1,541 @@
+{
+  "passed": 41,
+  "total": 41,
+  "demo": {
+    "templates": {
+      "JQ_REFUND_BY_NO": "241672337223585792",
+      "JQ_REFUND_BY_ORDER": "241672337726902272",
+      "JQ_ORDER_BY_ID": "241672338179887104",
+      "JQ_SESSION_BY_ID": "241672338779672576",
+      "JQ_INTENT_BY_ORDER": "241672339320737792",
+      "JQ_INTENT_BY_ID": "241672339886968832",
+      "JQ_ATTEMPT_BY_INTENT": "241672464109670400",
+      "JQ_ATTEMPT_BY_ID": "241672465397321728",
+      "JQ_ACTION_BY_ATTEMPT": "241672466550755328",
+      "JQ_BILLING_BY_ORDER": "241672467838406656",
+      "JQ_ORDER_BY_CLIENT_ORDER_ID": "241672469000228864",
+      "JQ_ORDER_BY_CLIENT": "241672470581481472",
+      "JQ_SLOW_ORDER": "241672471458091008",
+      "JQ_E2E_ROUNDTRIP": "241766749358264320"
+    },
+    "keyTypes": {
+      "JQ_E2E_SEQ": "241672332832149504"
+    },
+    "dataSource": {
+      "code": "FIXTURE_JQ",
+      "id": "241672330982461440"
+    },
+    "readerAccountId": "241766823245123584"
+  },
+  "results": [
+    {
+      "step": "数据源 FIXTURE_JQ ACTIVE",
+      "ok": true,
+      "detail": {
+        "dataSourceId": "241672330982461440"
+      }
+    },
+    {
+      "step": "K1 列表含首批 26 个键类型且按 sortNo 升序",
+      "ok": true,
+      "detail": {
+        "total": 27
+      }
+    },
+    {
+      "step": "K1 按状态 / 关键字筛选",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "step": "K2 编码重复 400",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED",
+        "fields": [],
+        "detail": "键类型编码已存在: JQ_E2E_SEQ"
+      }
+    },
+    {
+      "step": "K2 正则含前瞻断言 422 valuePattern",
+      "ok": true,
+      "detail": {
+        "status": 422,
+        "code": "VALIDATION_ERROR",
+        "fields": [
+          "valuePattern"
+        ],
+        "detail": "请求字段校验未通过"
+      }
+    },
+    {
+      "step": "K3 修改加版本",
+      "ok": true,
+      "detail": {
+        "objectType": "QUERY_KEY_TYPE",
+        "objectId": "241672332832149504",
+        "objectCode": "JQ_E2E_SEQ",
+        "status": "ACTIVE",
+        "version": 18
+      }
+    },
+    {
+      "step": "K3 版本过期 409",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "code": "CONCURRENT_REQUEST",
+        "fields": [],
+        "detail": "键类型已被其他操作修改，请刷新后重试: JQ_E2E_SEQ，当前版本 18，请求版本 17"
+      }
+    },
+    {
+      "step": "K3 不存在 404",
+      "ok": true,
+      "detail": {
+        "status": 404,
+        "code": "NOT_FOUND",
+        "fields": [],
+        "detail": "资源不存在"
+      }
+    },
+    {
+      "step": "K4 停用 / 同状态不加版本 / 启用",
+      "ok": true,
+      "detail": {
+        "off": {
+          "objectType": "QUERY_KEY_TYPE",
+          "objectId": "241672332832149504",
+          "objectCode": "JQ_E2E_SEQ",
+          "status": "INACTIVE",
+          "version": 19
+        },
+        "same": {
+          "objectType": "QUERY_KEY_TYPE",
+          "objectId": "241672332832149504",
+          "objectCode": "JQ_E2E_SEQ",
+          "status": "INACTIVE",
+          "version": 19
+        },
+        "on": {
+          "objectType": "QUERY_KEY_TYPE",
+          "objectId": "241672332832149504",
+          "objectCode": "JQ_E2E_SEQ",
+          "status": "ACTIVE",
+          "version": 20
+        }
+      }
+    },
+    {
+      "step": "K5 未覆盖全部键类型 400",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED",
+        "fields": [],
+        "detail": "排序必须恰好包含全部 27 个键类型且不能重复，本次提交 26 项"
+      }
+    },
+    {
+      "step": "K5 任一版本不符 409",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "code": "CONCURRENT_REQUEST",
+        "fields": [],
+        "detail": "键类型已被其他操作修改，请刷新后重试: CHECKOUT_SESSION_ID，当前版本 5，请求版本 14"
+      }
+    },
+    {
+      "step": "K5 按原顺序整体重写 sortNo = 序号 × 10",
+      "ok": true,
+      "detail": {
+        "count": 27
+      }
+    },
+    {
+      "step": "演示模板 13 个就绪",
+      "ok": true,
+      "detail": {
+        "JQ_REFUND_BY_NO": "241672337223585792",
+        "JQ_REFUND_BY_ORDER": "241672337726902272",
+        "JQ_ORDER_BY_ID": "241672338179887104",
+        "JQ_SESSION_BY_ID": "241672338779672576",
+        "JQ_INTENT_BY_ORDER": "241672339320737792",
+        "JQ_INTENT_BY_ID": "241672339886968832",
+        "JQ_ATTEMPT_BY_INTENT": "241672464109670400",
+        "JQ_ATTEMPT_BY_ID": "241672465397321728",
+        "JQ_ACTION_BY_ATTEMPT": "241672466550755328",
+        "JQ_BILLING_BY_ORDER": "241672467838406656",
+        "JQ_ORDER_BY_CLIENT_ORDER_ID": "241672469000228864",
+        "JQ_ORDER_BY_CLIENT": "241672470581481472",
+        "JQ_SLOW_ORDER": "241672471458091008",
+        "JQ_E2E_ROUNDTRIP": "241766749358264320"
+      }
+    },
+    {
+      "step": "往返结果（已存在，读回核对）：v1 有配置、v2 不参与、v3 由 v1 恢复且配置相同、模板已停用",
+      "ok": true,
+      "detail": {
+        "v3": {
+          "participating": false,
+          "reason": "不参与联合查询：模板未启用",
+          "reasonCode": "TEMPLATE_INACTIVE"
+        }
+      }
+    },
+    {
+      "step": "保存：键参数未声明 422 joint.keyParameter.name",
+      "ok": true,
+      "detail": {
+        "status": 422,
+        "code": "VALIDATION_ERROR",
+        "fields": [
+          "joint.keyParameter.name"
+        ],
+        "detail": "请求字段校验未通过"
+      }
+    },
+    {
+      "step": "编辑器校验返回 joint.subjectKeyType 错误",
+      "ok": true,
+      "detail": [
+        {
+          "column": null,
+          "field": "joint.subjectKeyType",
+          "level": "ERROR",
+          "line": null,
+          "message": "键类型不存在或未启用: NO_SUCH_KEY"
+        }
+      ]
+    },
+    {
+      "step": "K4 被 ACTIVE 模板引用时停用 400（列模板编码）",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED",
+        "fields": [],
+        "detail": "键类型被启用的模板引用，不能停用: ORDER_ID，模板 JQ_BILLING_BY_ORDER, JQ_INTENT_BY_ID, JQ_INTENT_BY_ORDER, JQ_ORDER_BY_CLIENT, JQ_ORDER_BY_CLIENT_ORDER_ID 等 9 个"
+      }
+    },
+    {
+      "step": "K1 引用数",
+      "ok": true,
+      "detail": {
+        "ORDER_ID": 9
+      }
+    },
+    {
+      "step": "J1 入口键类型、只含泳道的分组与护栏",
+      "ok": true,
+      "detail": {
+        "groups": [
+          {
+            "groupName": "收单",
+            "rank": 10
+          },
+          {
+            "groupName": "支付",
+            "rank": 70
+          },
+          {
+            "groupName": "计费",
+            "rank": 150
+          }
+        ],
+        "limits": {
+          "maxDepth": 6,
+          "maxEntryValues": 20,
+          "maxExecutionsPerStep": 20,
+          "maxRowsPerTemplate": 100,
+          "maxTemplateExecutions": 60,
+          "maxTotalSeconds": 60,
+          "maxValuesPerKey": 50
+        }
+      }
+    },
+    {
+      "step": "J2 可达预览：最少步数与断点",
+      "ok": true,
+      "detail": {
+        "minSteps": {
+          "JQ_SESSION_BY_ID": 2,
+          "JQ_ORDER_BY_ID": 1,
+          "JQ_REFUND_BY_NO": 0,
+          "JQ_REFUND_BY_ORDER": 1,
+          "JQ_INTENT_BY_ORDER": 1,
+          "JQ_INTENT_BY_ID": 2,
+          "JQ_ATTEMPT_BY_INTENT": 2,
+          "JQ_ATTEMPT_BY_ID": 3,
+          "JQ_ACTION_BY_ATTEMPT": 3,
+          "JQ_BILLING_BY_ORDER": 1
+        },
+        "breaks": [
+          "REFUND_REQUEST_ID",
+          "BILLING_FACT_ID",
+          "PAYMENT_ACTION_ID",
+          "EXTERNAL_TRANSACTION_ID"
+        ]
+      }
+    },
+    {
+      "step": "J2 不可作入口 400",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED",
+        "fields": [],
+        "detail": "入口键类型不存在、未启用或不允许作为入口: CHANNEL_INTERACTION_ID"
+      }
+    },
+    {
+      "step": "J2 缺少 entryKeyType 400（BFF 参数校验）",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "INVALID_REQUEST",
+        "fields": [],
+        "detail": "请求参数不正确"
+      }
+    },
+    {
+      "step": "J2 未知键类型 400",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED",
+        "fields": [],
+        "detail": "入口键类型不存在、未启用或不允许作为入口: NO_SUCH_KEY"
+      }
+    },
+    {
+      "step": "J3 退款单号入口逐层展开 10 个链路模板、各执行一次、全部成功",
+      "ok": true,
+      "detail": {
+        "layers": [
+          [
+            "JQ_REFUND_BY_NO"
+          ],
+          [
+            "JQ_ORDER_BY_ID",
+            "JQ_REFUND_BY_ORDER",
+            "JQ_INTENT_BY_ORDER",
+            "JQ_BILLING_BY_ORDER"
+          ],
+          [
+            "JQ_SESSION_BY_ID",
+            "JQ_INTENT_BY_ID",
+            "JQ_ATTEMPT_BY_INTENT"
+          ],
+          [
+            "JQ_ATTEMPT_BY_ID",
+            "JQ_ACTION_BY_ATTEMPT"
+          ],
+          []
+        ]
+      }
+    },
+    {
+      "step": "J3 屏蔽列沿用模板屏蔽、维度列不进入发现键",
+      "ok": true,
+      "detail": {
+        "buyer_email": "bu***************.test"
+      }
+    },
+    {
+      "step": "J3 边可追溯到来源节点、行与列",
+      "ok": true,
+      "detail": {
+        "column": "refund_request_id",
+        "keyType": "REFUND_REQUEST_ID",
+        "nodeId": "0:JQ_REFUND_BY_NO:REFUND_REQUEST_NO",
+        "rowIndex": 0,
+        "value": "7001"
+      }
+    },
+    {
+      "step": "J3 支付尝试入口查回订单与收银台，泳道位置相同",
+      "ok": true,
+      "detail": {
+        "JQ_ORDER_BY_ID": [
+          "收单",
+          10,
+          20
+        ],
+        "JQ_SESSION_BY_ID": [
+          "收单",
+          10,
+          10
+        ]
+      }
+    },
+    {
+      "step": "J3 CLIENT_ORDER_ID 命中两个 Client 全部展开",
+      "ok": true,
+      "detail": [
+        {
+          "keyType": "ORDER_ID",
+          "values": [
+            "5001",
+            "5002"
+          ]
+        }
+      ]
+    },
+    {
+      "step": "J3 LIST 合并一次执行、标量逐值、templateCodes 只执行指定模板（重试）",
+      "ok": true,
+      "detail": [
+        "1:JQ_ORDER_BY_ID:ORDER_ID",
+        "1:JQ_SESSION_BY_ID:CHECKOUT_SESSION_ID:1",
+        "1:JQ_SESSION_BY_ID:CHECKOUT_SESSION_ID:2"
+      ]
+    },
+    {
+      "step": "J3 正则不符 422 keys[0].values[0]",
+      "ok": true,
+      "detail": {
+        "status": 422,
+        "code": "VALIDATION_ERROR",
+        "fields": [
+          "keys[0].values[0]"
+        ],
+        "detail": "请求字段校验未通过"
+      }
+    },
+    {
+      "step": "J3 超过 20 个入口值 422 keys[0].values",
+      "ok": true,
+      "detail": {
+        "status": 422,
+        "code": "VALIDATION_ERROR",
+        "fields": [
+          "keys[0].values"
+        ],
+        "detail": "请求字段校验未通过"
+      }
+    },
+    {
+      "step": "J3 不可作入口键类型 422 keys[0].keyType",
+      "ok": true,
+      "detail": {
+        "status": 422,
+        "code": "VALIDATION_ERROR",
+        "fields": [
+          "keys[0].keyType"
+        ],
+        "detail": "请求字段校验未通过"
+      }
+    },
+    {
+      "step": "J3 层号越界 422 depth",
+      "ok": true,
+      "detail": {
+        "status": 422,
+        "code": "VALIDATION_ERROR",
+        "fields": [
+          "depth"
+        ],
+        "detail": "请求字段校验未通过"
+      }
+    },
+    {
+      "step": "游标节点截断并给出 nextCursor，经单模板执行取下一页",
+      "ok": true,
+      "detail": {
+        "first": [
+          [
+            "9001",
+            "8001",
+            "FAILED"
+          ]
+        ],
+        "next": [
+          [
+            "9002",
+            "8001",
+            "SUCCEEDED"
+          ]
+        ]
+      }
+    },
+    {
+      "step": "偏移节点截断（无 nextCursor），经单模板执行取第 2 页",
+      "ok": true,
+      "detail": {
+        "first": [
+          [
+            "9101",
+            "9001",
+            "SALE",
+            "EXT-AAA"
+          ]
+        ],
+        "page2": [
+          [
+            "9102",
+            "9002",
+            "SALE",
+            "EXT-BBB"
+          ]
+        ]
+      }
+    },
+    {
+      "step": "只有 DATA_QUERY_READ：J1 403",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "code": "OPERATIONS_PERMISSION_DENIED",
+        "fields": [],
+        "detail": "没有执行此操作的权限"
+      }
+    },
+    {
+      "step": "只有 DATA_QUERY_READ：J3 403",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "code": "OPERATIONS_PERMISSION_DENIED",
+        "fields": [],
+        "detail": "没有执行此操作的权限"
+      }
+    },
+    {
+      "step": "只有 DATA_QUERY_READ：K2 403",
+      "ok": true,
+      "detail": {
+        "status": 403,
+        "code": "OPERATIONS_PERMISSION_DENIED",
+        "fields": [],
+        "detail": "没有执行此操作的权限"
+      }
+    },
+    {
+      "step": "只有 DATA_QUERY_READ：K1 可读",
+      "ok": true,
+      "detail": {
+        "total": 27
+      }
+    },
+    {
+      "step": "合并 ops-bff：税务查询路由未出现 5xx（只作观察：状态与错误码见明细）",
+      "ok": true,
+      "detail": {
+        "status": 404,
+        "code": "TAX_ORDER_NOT_FOUND"
+      }
+    },
+    {
+      "step": "失败隔离：慢查询 FAILED DATA_QUERY_TIMEOUT，其他节点成功",
+      "ok": true,
+      "detail": {
+        "JQ_ORDER_BY_ID": "SUCCEEDED",
+        "JQ_SLOW_ORDER": "FAILED",
+        "JQ_REFUND_BY_ORDER": "SUCCEEDED"
+      }
+    }
+  ]
+}

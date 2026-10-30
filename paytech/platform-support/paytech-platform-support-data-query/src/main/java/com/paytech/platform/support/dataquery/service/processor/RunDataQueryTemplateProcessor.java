@@ -42,7 +42,7 @@ public class RunDataQueryTemplateProcessor extends AbstractProcessor<RunDataQuer
             .dataSource(executable.getDataSource()).params(request.getParams()).page(request.getPage())
             .size(request.getSize()).withTotal(request.isWithTotal()).cursor(request.getCursor())
             .operatorAccountId(request.getOperatorAccountId()).timeoutCapSeconds(request.getTimeoutCapSeconds())
-            .callerService(request.getCallerLabel()).build());
+            .callerService(request.getCallerLabel()).rowCap(request.getRowCap()).build());
     }
 
     /** 模板不存在返回 404；模板或数据源不是 ACTIVE 返回 400。 */

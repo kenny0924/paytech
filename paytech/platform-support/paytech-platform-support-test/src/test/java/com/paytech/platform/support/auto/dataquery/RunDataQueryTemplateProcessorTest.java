@@ -97,7 +97,7 @@ class RunDataQueryTemplateProcessorTest extends DataQueryApiTestBase {
         if (clientId != null) {
             params.put("clientId", clientId);
         }
-        return new RunDataQueryTemplateRequest(code, params, null, null, false, null, null, cap, "workflow");
+        return new RunDataQueryTemplateRequest(code, params, null, null, false, null, null, cap, "workflow", null);
     }
 
     /** 插入不分页模板。 */

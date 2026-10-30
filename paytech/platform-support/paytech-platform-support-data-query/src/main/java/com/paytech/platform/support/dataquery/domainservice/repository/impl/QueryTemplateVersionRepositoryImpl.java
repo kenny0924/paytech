@@ -57,6 +57,16 @@ public class QueryTemplateVersionRepositoryImpl implements QueryTemplateVersionR
             .collect(Collectors.toMap(QueryTemplateVersion::getTemplateId, Function.identity()));
     }
 
+    /** 空集合不发出 IN () 语句。 */
+    @Override
+    public Map<Long, QueryTemplateVersion> findCurrentForShare(Collection<QueryTemplate> templates) {
+        if (templates.isEmpty()) {
+            return Map.of();
+        }
+        return mapper.selectCurrentVersionsForShare(templates).stream()
+            .collect(Collectors.toMap(QueryTemplateVersion::getTemplateId, Function.identity()));
+    }
+
     /** 分页查询某模板的版本。 */
     @Override
     public List<QueryTemplateVersion> findPage(long templateId, PagingRequestBody paging) {

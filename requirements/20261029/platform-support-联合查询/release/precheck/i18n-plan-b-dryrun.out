@@ -1,0 +1,18 @@
+[通过] operations-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] operations-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[通过] operations-console 线上 11117 个 ACTIVE key 都在仓库中（否则 KEY_IMPORT 会废弃它们；确认废弃用 --accept-deprecations）
+[通过] operations-console 新增 7 < 3000
+[通过] operations-console 导入集合 7+ 个 key 都有仓库 zh-CN（缺 0）
+[通过] operations-console added 只在 ['data-query', 'nav']（{'data-query': 7}）
+[通过] operations-console sourceChanged 只在 ['data-query', 'nav']（{}）
+[通过] operations-console deprecated 只在 ['data-query', 'nav']（{}）
+[通过] operations-console restored 只在 ['data-query', 'nav']（{}）
+[通过] operations-console zhImport 只在 ['data-query', 'nav']（{'data-query': 7}）
+[通过] operations-console 仓库 zh-CN 与线上不同但不会导入的 key 为 0（0）
+[通过] operations-console 新建命名空间恰好为 []（[]）
+{"byNamespace": {"added": {"data-query": 7}, "sourceChanged": {}, "deprecated": {}, "restored": {}, "zhImport": {"data-query": 7}}, "zhChangedNotImported": []}
+{"currentRelease": 25, "liveNamespaces": 27, "repoNamespaces": 27, "newNamespaces": [], "repoKeys": 11124, "liveActiveKeys": 11117, "added": 7, "restored": 0, "sourceChanged": 0, "missingInRepo": 0, "zhMissingForImport": 0, "keepLiveZh": 11117, "refdataZhReplaced": 0, "liveOutdatedZh": 0, "rebaseExpected": 0, "outdatedUntouched": 0}
+导入文件与计划：/Users/kenny/Desktop/Workspace/Code-MoR-jq-rel/.jq-notes/release/i18n-bundles-b
+计划完成（只读，未登录、未写入）：可执行
+
+== 参考数据语言包计划：通过 12，失败 0，未能验证 0

@@ -12,7 +12,7 @@ import tools.jackson.databind.JsonNode;
 
 /**
  * 模块内调用方按模板编码执行当前 ACTIVE 版本的请求；不含会话与 HTTP 调用方，访问控制由调用方负责。
- * <li>分页字段供 HTTP 执行入口委托时原样传入；工作流只取单行，传 null / false。</li>
+ * <li>分页字段供 HTTP 执行入口委托时原样传入；工作流只取单行，传 null / false；联合查询只取第一页并传 rowCap。</li>
  */
 @Getter
 @AllArgsConstructor
@@ -57,4 +57,12 @@ public class RunDataQueryTemplateRequest {
     @NotBlank
     @Size(max = 64)
     private final String callerLabel;
+
+    /**
+     * 调用方的单次行数上限
+     * <li>为 null 时不额外限制。NONE 分页取 min(模板 maxRows, 系统上限, 本值)；OFFSET / CURSOR 未传 size 时，
+     * 页大小取 min(模板 maxPageSize, 系统上限, 本值)。联合查询用它把每个模板限制在单模板行数上限内。</li>
+     */
+    @Min(1)
+    private final Integer rowCap;
 }

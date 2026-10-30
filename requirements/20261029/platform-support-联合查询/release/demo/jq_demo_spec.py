@@ -1,0 +1,370 @@
+"""联合查询 · mor-test 演示数据定义（阶段 6 编写，阶段 7 由 register_jq_demo.py 经运营 API 登记）。
+
+只读对象：数据源指向 mor-test 各系统库（账号 data_query_demo_reader，只有 SELECT），模板正文只读真实表。
+- 数据源：沿用 MOR_ACQUIRING_REPLICA / MOR_LEDGER_REPLICA / MOR_RECONCILIATION_REPLICA（ACTIVE，不改）；启用已有的
+  MOR_CHANNEL_CONNECTOR_REPLICA（INACTIVE → ACTIVE）；新建 MOR_PAYMENT_REPLICA / MOR_BILLING_REPLICA / MOR_ACCOUNT_REPLICA
+  （先由 root 执行 sql/root-demo-reader-grants.sql）。
+- 模板：编码 JQ_*，名称用业务名（同一对象多种入口时括注“按 xx”）；每个模板只有一个必填 LIST 键参数（J4），IN 列表一律包在
+  {{#if}} 里；不读口令、令牌、原始报文、哈希等字段（如 public_token、channel_idempotency_key、raw_attributes、*_hash）。
+- 联合配置：subjectKeyType = 行主体；LINK 列参与展开，DIMENSION 列只展示（客户、运营主体、渠道、MID、清算账户等）。
+  多态引用（ref_type + ref_id、source_ref_type + source_ref_id、target_type + target_id）在 SQL 里按类型拆列（Q4）。
+- 修订 c（technique 8.7 补充，2026-10-30）：子行模板（账户分录、凭证分录、渠道对账单明细）的行主体改为自身键类型
+  ACCOUNT_ENTRY_ID / JOURNAL_LINE_ID / STATEMENT_LINE_ID（KEY_TYPES，缺失时由登记脚本经 K2 新建），并输出自身行 ID 列；
+  触发键仍为父键类型，因而不再被“按自身 ID 查”跳过。修订 b 时的定义备份在 jq_demo_spec.b.py.bak。
+本文件只是数据，不连任何环境。
+"""
+
+ACQUIRING, PAYMENT, CHANNEL, BILLING, ACCOUNT, LEDGER, RECON = (
+    "MOR_ACQUIRING_REPLICA", "MOR_PAYMENT_REPLICA", "MOR_CHANNEL_CONNECTOR_REPLICA", "MOR_BILLING_REPLICA",
+    "MOR_ACCOUNT_REPLICA", "MOR_LEDGER_REPLICA", "MOR_RECONCILIATION_REPLICA")
+
+# 数据源：existing = 已存在（阶段 6 只读核对），create = 新建，activate = 已存在但需启用。
+DATA_SOURCES = [
+    {"code": ACQUIRING, "database": "mor_acquiring", "action": "existing"},
+    {"code": LEDGER, "database": "mor_ledger", "action": "existing"},
+    {"code": RECON, "database": "mor_reconciliation", "action": "existing"},
+    {"code": CHANNEL, "database": "mor_channel_connector", "action": "activate"},
+    {"code": PAYMENT, "database": "mor_payment", "action": "create", "name": "支付（Payment）从库"},
+    {"code": BILLING, "database": "mor_billing", "action": "create", "name": "计费（Billing）从库"},
+    {"code": ACCOUNT, "database": "mor_account", "action": "create", "name": "账户（Account）从库"},
+]
+
+# 修订 c 新增的子行键类型（与注册块 144 的 900000000000144127—144129 相同定义；mor-test 已执行块 144，经 K2 补建）
+KEY_TYPES = [
+    {"keyTypeCode": "ACCOUNT_ENTRY_ID", "keyTypeName": "账户分录 ID", "groupName": "账户", "valueType": "INTEGER",
+     "defaultRole": "LINK", "entryAllowed": False, "sortNo": 111},
+    {"keyTypeCode": "JOURNAL_LINE_ID", "keyTypeName": "凭证分录 ID", "groupName": "总账", "valueType": "INTEGER",
+     "defaultRole": "LINK", "entryAllowed": False, "sortNo": 121},
+    {"keyTypeCode": "STATEMENT_LINE_ID", "keyTypeName": "对账单明细 ID", "groupName": "对账", "valueType": "INTEGER",
+     "defaultRole": "LINK", "entryAllowed": False, "sortNo": 141},
+]
+# 修订 c 改了定义的模板（登记脚本据此保存新版本；回滚恢复上一版本）
+REVISION_C_TEMPLATES = ["JQ_ACCOUNT_ENTRY_BY_POSTING", "JQ_JOURNAL_LINE_BY_ENTRY", "JQ_STATEMENT_LINE_BY_PLATFORM_TXN"]
+
+NONE = {"maxRows": 100, "timeoutSeconds": 5, "pagingMode": "NONE", "countAllowed": False}
+OFFSET = {"maxRows": 100, "timeoutSeconds": 5, "pagingMode": "OFFSET", "maxPageSize": 50, "countAllowed": True}
+
+
+def key_list(name, element):
+    return [{"name": name, "type": "LIST", "elementType": element, "required": True}]
+
+
+def where_in(column, param, prefix="WHERE"):
+    return f"{{{{#if {param}}}}}{prefix} {column} IN (#{{{param}}}){{{{/if}}}}"
+
+
+def joint(subject, param, key_type, *columns):
+    return {"subjectKeyType": subject, "keyParameter": {"name": param, "keyType": key_type},
+            "columns": [{"name": n, "keyType": k, "keyRole": r} for n, k, r in (c.split(":") for c in columns)]}
+
+
+def labels(**names):
+    return [{"name": n, "label": label} for n, label in names.items()]
+
+
+TEMPLATES = []
+
+
+def template(code, name, source, body, param, element, key_type, subject, link_columns, column_labels,
+             constraints=NONE, description=None):
+    TEMPLATES.append({"templateCode": code, "templateName": name, "dataSourceCode": source, "body": body,
+                      "parameters": key_list(param, element), "constraints": constraints,
+                      "columns": labels(**column_labels),
+                      "joint": joint(subject, param, key_type, *link_columns),
+                      "description": description or f"联合查询演示：{name}（只读 {source}）"})
+
+
+# ---------------------------------------------------------------- 收单 acquiring
+ORDER_SELECT = ("SELECT order_id, order_no, client_order_id, client_id, entity_no, local_partner_id, order_status, currency,"
+                " total_amount, paid_at, expires_at, create_time FROM t_commerce_order ")
+ORDER_COLUMNS = ("order_id:ORDER_ID:LINK", "client_id:CLIENT_ID:DIMENSION", "client_order_id:CLIENT_ORDER_ID:DIMENSION",
+                 "entity_no:ENTITY_NO:DIMENSION", "local_partner_id:LOCAL_PARTNER_ID:DIMENSION")
+ORDER_LABELS = dict(order_id="订单 ID", order_no="订单号", client_order_id="客户订单号", client_id="客户 ID",
+                    entity_no="运营主体", local_partner_id="本地合作方 ID", order_status="订单状态", currency="币种",
+                    total_amount="订单金额", paid_at="支付时间", expires_at="到期时间", create_time="创建时间")
+template("JQ_ORDER_BY_ID", "订单", ACQUIRING, ORDER_SELECT + where_in("order_id", "orderIds") + " ORDER BY order_id",
+         "orderIds", "INTEGER", "ORDER_ID", "ORDER_ID", ORDER_COLUMNS, ORDER_LABELS)
+template("JQ_ORDER_BY_NO", "订单（按订单号）", ACQUIRING, ORDER_SELECT + where_in("order_no", "orderNos") + " ORDER BY order_id",
+         "orderNos", "STRING", "ORDER_NO", "ORDER_ID", ORDER_COLUMNS, ORDER_LABELS)
+template("JQ_ORDER_BY_CLIENT_ORDER_ID", "订单（按客户订单号）", ACQUIRING,
+         ORDER_SELECT + where_in("client_order_id", "clientOrderIds") + " ORDER BY order_id",
+         "clientOrderIds", "STRING", "CLIENT_ORDER_ID", "ORDER_ID", ORDER_COLUMNS, ORDER_LABELS)
+
+SESSION_SELECT = ("SELECT checkout_session_id, order_id, session_status, public_origin, opened_at, completed_at, cancelled_at,"
+                  " create_time FROM t_checkout_session ")
+SESSION_COLUMNS = ("checkout_session_id:CHECKOUT_SESSION_ID:LINK", "order_id:ORDER_ID:LINK")
+SESSION_LABELS = dict(checkout_session_id="收银台会话 ID", order_id="订单 ID", session_status="会话状态", public_origin="来源站点",
+                      opened_at="打开时间", completed_at="完成时间", cancelled_at="取消时间", create_time="创建时间")
+template("JQ_CHECKOUT_SESSION_BY_ORDER", "收银台会话", ACQUIRING,
+         SESSION_SELECT + where_in("order_id", "orderIds") + " ORDER BY checkout_session_id",
+         "orderIds", "INTEGER", "ORDER_ID", "CHECKOUT_SESSION_ID", SESSION_COLUMNS, SESSION_LABELS)
+template("JQ_CHECKOUT_SESSION_BY_ID", "收银台会话（按会话 ID）", ACQUIRING,
+         SESSION_SELECT + where_in("checkout_session_id", "sessionIds") + " ORDER BY checkout_session_id",
+         "sessionIds", "INTEGER", "CHECKOUT_SESSION_ID", "CHECKOUT_SESSION_ID", SESSION_COLUMNS, SESSION_LABELS)
+
+REFUND_SELECT = ("SELECT refund_request_id, refund_request_no, order_id, client_id, request_origin, refund_amount, currency,"
+                 " refund_status, status_reason_code, channel_refund_id, completed_at, create_time FROM t_refund_request ")
+REFUND_COLUMNS = ("refund_request_id:REFUND_REQUEST_ID:LINK", "order_id:ORDER_ID:LINK", "channel_refund_id:CHANNEL_REFUND_ID:LINK",
+                  "client_id:CLIENT_ID:DIMENSION")
+REFUND_LABELS = dict(refund_request_id="退款申请 ID", refund_request_no="退款单号", order_id="订单 ID", client_id="客户 ID",
+                     request_origin="发起方", refund_amount="退款金额", currency="币种", refund_status="退款状态",
+                     status_reason_code="状态原因", channel_refund_id="渠道退款 ID", completed_at="完成时间", create_time="创建时间")
+template("JQ_REFUND_BY_ORDER", "退款申请", ACQUIRING, REFUND_SELECT + where_in("order_id", "orderIds") + " ORDER BY refund_request_id",
+         "orderIds", "INTEGER", "ORDER_ID", "REFUND_REQUEST_ID", REFUND_COLUMNS, REFUND_LABELS)
+template("JQ_REFUND_BY_NO", "退款申请（按退款单号）", ACQUIRING,
+         REFUND_SELECT + where_in("refund_request_no", "refundNos") + " ORDER BY refund_request_id",
+         "refundNos", "STRING", "REFUND_REQUEST_NO", "REFUND_REQUEST_ID", REFUND_COLUMNS, REFUND_LABELS)
+template("JQ_REFUND_BY_ID", "退款申请（按申请 ID）", ACQUIRING,
+         REFUND_SELECT + where_in("refund_request_id", "refundRequestIds") + " ORDER BY refund_request_id",
+         "refundRequestIds", "INTEGER", "REFUND_REQUEST_ID", "REFUND_REQUEST_ID", REFUND_COLUMNS, REFUND_LABELS)
+
+# ---------------------------------------------------------------- 支付 payment
+INTENT_SELECT = ("SELECT payment_intent_id, source_type, source_id, client_id, entity_no, amount, currency, intent_status,"
+                 " active_attempt_id, successful_attempt_id, expires_at, create_time FROM t_payment_intent ")
+INTENT_COLUMNS = ("payment_intent_id:PAYMENT_INTENT_ID:LINK", "source_id:ORDER_ID:LINK", "client_id:CLIENT_ID:DIMENSION",
+                  "entity_no:ENTITY_NO:DIMENSION")
+INTENT_LABELS = dict(payment_intent_id="支付意图 ID", source_type="来源类型", source_id="订单 ID", client_id="客户 ID",
+                     entity_no="运营主体", amount="金额", currency="币种", intent_status="意图状态", active_attempt_id="进行中的尝试",
+                     successful_attempt_id="成功的尝试", expires_at="到期时间", create_time="创建时间")
+template("JQ_PAYMENT_INTENT_BY_ORDER", "支付意图", PAYMENT,
+         INTENT_SELECT + "WHERE source_type = 'COMMERCE_ORDER' " + where_in("source_id", "orderIds", "AND")
+         + " ORDER BY payment_intent_id", "orderIds", "INTEGER", "ORDER_ID", "PAYMENT_INTENT_ID", INTENT_COLUMNS, INTENT_LABELS)
+template("JQ_PAYMENT_INTENT_BY_ID", "支付意图（按意图 ID）", PAYMENT,
+         INTENT_SELECT + where_in("payment_intent_id", "intentIds") + " ORDER BY payment_intent_id",
+         "intentIds", "INTEGER", "PAYMENT_INTENT_ID", "PAYMENT_INTENT_ID", INTENT_COLUMNS, INTENT_LABELS)
+
+ATTEMPT_SELECT = ("SELECT payment_attempt_id, payment_intent_id, attempt_no, payment_method_code, capture_mode, attempt_status,"
+                  " channel_id, channel_account_id, mid_id, authorized_amount, captured_amount, create_time FROM t_payment_attempt ")
+ATTEMPT_COLUMNS = ("payment_attempt_id:PAYMENT_ATTEMPT_ID:LINK", "payment_intent_id:PAYMENT_INTENT_ID:LINK",
+                   "channel_id:CHANNEL_ID:DIMENSION", "channel_account_id:CHANNEL_ACCOUNT_ID:DIMENSION", "mid_id:MID_ID:DIMENSION")
+ATTEMPT_LABELS = dict(payment_attempt_id="支付尝试 ID", payment_intent_id="支付意图 ID", attempt_no="第几次尝试",
+                      payment_method_code="支付方式", capture_mode="请款方式", attempt_status="尝试状态", channel_id="渠道 ID",
+                      channel_account_id="渠道账号 ID", mid_id="MID ID", authorized_amount="授权金额", captured_amount="请款金额",
+                      create_time="创建时间")
+template("JQ_PAYMENT_ATTEMPT_BY_INTENT", "支付尝试", PAYMENT,
+         ATTEMPT_SELECT + where_in("payment_intent_id", "intentIds") + " ORDER BY payment_attempt_id",
+         "intentIds", "INTEGER", "PAYMENT_INTENT_ID", "PAYMENT_ATTEMPT_ID", ATTEMPT_COLUMNS, ATTEMPT_LABELS)
+template("JQ_PAYMENT_ATTEMPT_BY_ID", "支付尝试（按尝试 ID）", PAYMENT,
+         ATTEMPT_SELECT + where_in("payment_attempt_id", "attemptIds") + " ORDER BY payment_attempt_id",
+         "attemptIds", "INTEGER", "PAYMENT_ATTEMPT_ID", "PAYMENT_ATTEMPT_ID", ATTEMPT_COLUMNS, ATTEMPT_LABELS)
+
+ACTION_SELECT = ("SELECT payment_action_id, payment_attempt_id, action_no, action_type, action_status, amount, currency,"
+                 " channel_refund_id, target_channel_txn_ref_id, risk_result, channel_response_code, channel_result_time,"
+                 " create_time FROM t_payment_action ")
+ACTION_COLUMNS = ("payment_action_id:PAYMENT_ACTION_ID:LINK", "payment_attempt_id:PAYMENT_ATTEMPT_ID:LINK",
+                  "channel_refund_id:CHANNEL_REFUND_ID:LINK", "target_channel_txn_ref_id:CHANNEL_TRANSACTION_REF_ID:LINK")
+ACTION_LABELS = dict(payment_action_id="支付动作 ID", payment_attempt_id="支付尝试 ID", action_no="动作序号", action_type="动作类型",
+                     action_status="动作状态", amount="金额", currency="币种", channel_refund_id="渠道退款 ID",
+                     target_channel_txn_ref_id="目标渠道交易引用", risk_result="风控结果", channel_response_code="渠道返回码",
+                     channel_result_time="渠道结果时间", create_time="创建时间")
+template("JQ_PAYMENT_ACTION_BY_ATTEMPT", "支付动作", PAYMENT,
+         ACTION_SELECT + where_in("payment_attempt_id", "attemptIds") + " ORDER BY payment_action_id",
+         "attemptIds", "INTEGER", "PAYMENT_ATTEMPT_ID", "PAYMENT_ACTION_ID", ACTION_COLUMNS, ACTION_LABELS, OFFSET)
+template("JQ_PAYMENT_ACTION_BY_ID", "支付动作（按动作 ID）", PAYMENT,
+         ACTION_SELECT + where_in("payment_action_id", "actionIds") + " ORDER BY payment_action_id",
+         "actionIds", "INTEGER", "PAYMENT_ACTION_ID", "PAYMENT_ACTION_ID", ACTION_COLUMNS, ACTION_LABELS)
+template("JQ_PAYMENT_ACTION_BY_CHANNEL_REFUND", "支付动作（按渠道退款）", PAYMENT,
+         ACTION_SELECT + where_in("channel_refund_id", "channelRefundIds") + " ORDER BY payment_action_id",
+         "channelRefundIds", "INTEGER", "CHANNEL_REFUND_ID", "PAYMENT_ACTION_ID", ACTION_COLUMNS, ACTION_LABELS)
+
+CTR_SELECT = ("SELECT channel_transaction_ref_id, payment_action_id, reference_type, external_transaction_id,"
+              " original_channel_txn_ref_id, channel_id, mid_id, amount, currency, channel_event_time, create_time"
+              " FROM t_channel_transaction_ref ")
+CTR_COLUMNS = ("channel_transaction_ref_id:CHANNEL_TRANSACTION_REF_ID:LINK", "payment_action_id:PAYMENT_ACTION_ID:LINK",
+               "external_transaction_id:EXTERNAL_TRANSACTION_ID:LINK",
+               "original_channel_txn_ref_id:CHANNEL_TRANSACTION_REF_ID:LINK",
+               "channel_id:CHANNEL_ID:DIMENSION", "mid_id:MID_ID:DIMENSION")
+CTR_LABELS = dict(channel_transaction_ref_id="渠道交易引用 ID", payment_action_id="支付动作 ID", reference_type="引用类型",
+                  external_transaction_id="渠道交易号", original_channel_txn_ref_id="原渠道交易引用", channel_id="渠道 ID",
+                  mid_id="MID ID", amount="金额", currency="币种", channel_event_time="渠道事件时间", create_time="创建时间")
+template("JQ_CHANNEL_TXN_REF_BY_ACTION", "渠道交易引用", PAYMENT,
+         CTR_SELECT + where_in("payment_action_id", "actionIds") + " ORDER BY channel_transaction_ref_id",
+         "actionIds", "INTEGER", "PAYMENT_ACTION_ID", "CHANNEL_TRANSACTION_REF_ID", CTR_COLUMNS, CTR_LABELS)
+template("JQ_CHANNEL_TXN_REF_BY_ID", "渠道交易引用（按引用 ID）", PAYMENT,
+         CTR_SELECT + where_in("channel_transaction_ref_id", "refIds") + " ORDER BY channel_transaction_ref_id",
+         "refIds", "INTEGER", "CHANNEL_TRANSACTION_REF_ID", "CHANNEL_TRANSACTION_REF_ID", CTR_COLUMNS, CTR_LABELS)
+template("JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID", "渠道交易引用（按渠道交易号）", PAYMENT,
+         CTR_SELECT + where_in("external_transaction_id", "externalIds") + " ORDER BY channel_transaction_ref_id",
+         "externalIds", "STRING", "EXTERNAL_TRANSACTION_ID", "CHANNEL_TRANSACTION_REF_ID", CTR_COLUMNS, CTR_LABELS)
+
+CHANNEL_REFUND_SELECT = ("SELECT channel_refund_id, commerce_refund_request_id, refund_amount, currency, refund_status,"
+                         " create_time, update_time FROM t_channel_refund ")
+CHANNEL_REFUND_COLUMNS = ("channel_refund_id:CHANNEL_REFUND_ID:LINK", "commerce_refund_request_id:REFUND_REQUEST_ID:LINK")
+CHANNEL_REFUND_LABELS = dict(channel_refund_id="渠道退款 ID", commerce_refund_request_id="退款申请 ID", refund_amount="退款金额",
+                             currency="币种", refund_status="渠道退款状态", create_time="创建时间", update_time="更新时间")
+template("JQ_CHANNEL_REFUND_BY_REFUND_REQUEST", "渠道退款", PAYMENT,
+         CHANNEL_REFUND_SELECT + where_in("commerce_refund_request_id", "refundRequestIds") + " ORDER BY channel_refund_id",
+         "refundRequestIds", "INTEGER", "REFUND_REQUEST_ID", "CHANNEL_REFUND_ID", CHANNEL_REFUND_COLUMNS, CHANNEL_REFUND_LABELS)
+template("JQ_CHANNEL_REFUND_BY_ID", "渠道退款（按渠道退款 ID）", PAYMENT,
+         CHANNEL_REFUND_SELECT + where_in("channel_refund_id", "channelRefundIds") + " ORDER BY channel_refund_id",
+         "channelRefundIds", "INTEGER", "CHANNEL_REFUND_ID", "CHANNEL_REFUND_ID", CHANNEL_REFUND_COLUMNS, CHANNEL_REFUND_LABELS)
+
+# ---------------------------------------------------------------- 渠道 channel-connector
+template("JQ_CHANNEL_INTERACTION_BY_ACTION", "渠道交互", CHANNEL,
+         "SELECT channel_interaction_id, payment_action_id, interaction_no, interaction_status, http_status, channel_result_code,"
+         " latency_ms, started_at, finished_at FROM t_channel_interaction " + where_in("payment_action_id", "actionIds")
+         + " ORDER BY channel_interaction_id", "actionIds", "INTEGER", "PAYMENT_ACTION_ID", "CHANNEL_INTERACTION_ID",
+         ("channel_interaction_id:CHANNEL_INTERACTION_ID:LINK", "payment_action_id:PAYMENT_ACTION_ID:LINK"),
+         dict(channel_interaction_id="渠道交互 ID", payment_action_id="支付动作 ID", interaction_no="交互序号",
+              interaction_status="交互状态", http_status="HTTP 状态", channel_result_code="渠道结果码", latency_ms="耗时（毫秒）",
+              started_at="开始时间", finished_at="结束时间"), OFFSET)
+template("JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID", "渠道回调", CHANNEL,
+         "SELECT i.channel_callback_item_id, i.channel_callback_id, i.item_no, i.event_type, i.external_transaction_id,"
+         " i.target_type, CASE WHEN i.target_type = 'PAYMENT_ATTEMPT' THEN i.target_id END AS payment_attempt_id,"
+         " CASE WHEN i.target_type = 'PAYMENT_ACTION' THEN i.target_id END AS payment_action_id,"
+         " CASE WHEN i.target_type = 'CHANNEL_REFUND' THEN i.target_id END AS channel_refund_id,"
+         " i.normalized_status, i.mapping_status, i.channel_event_time, c.channel_id, c.callback_status, c.received_at"
+         " FROM t_channel_callback_item i JOIN t_channel_callback c ON c.channel_callback_id = i.channel_callback_id "
+         + where_in("i.external_transaction_id", "externalIds") + " ORDER BY i.channel_callback_item_id",
+         "externalIds", "STRING", "EXTERNAL_TRANSACTION_ID", "EXTERNAL_TRANSACTION_ID",
+         ("external_transaction_id:EXTERNAL_TRANSACTION_ID:LINK", "payment_attempt_id:PAYMENT_ATTEMPT_ID:LINK",
+          "payment_action_id:PAYMENT_ACTION_ID:LINK", "channel_refund_id:CHANNEL_REFUND_ID:LINK", "channel_id:CHANNEL_ID:DIMENSION"),
+         dict(channel_callback_item_id="回调明细 ID", channel_callback_id="回调 ID", item_no="明细序号", event_type="事件类型",
+              external_transaction_id="渠道交易号", target_type="映射对象", payment_attempt_id="支付尝试 ID",
+              payment_action_id="支付动作 ID", channel_refund_id="渠道退款 ID", normalized_status="归一状态",
+              mapping_status="映射状态", channel_event_time="渠道事件时间", channel_id="渠道 ID", callback_status="回调状态",
+              received_at="接收时间"), OFFSET)
+
+# ---------------------------------------------------------------- 计费 billing（多态引用按 ref_type 拆列）
+def fact_ref(ref_type, alias):
+    return (f"(SELECT MAX(r.ref_id) FROM t_billing_fact_ref r WHERE r.fact_id = f.id AND r.ref_type = '{ref_type}') AS {alias}")
+
+
+FACT_SELECT = ("SELECT f.id AS billing_fact_id, f.fact_type, f.origin_type, f.source_system, f.status, f.client_id, f.entity_no,"
+               " f.local_partner_id, f.currency, f.gross_amount, f.business_time, f.fact_version, "
+               + ", ".join([fact_ref("ORDER", "order_id"), fact_ref("PAYMENT_INTENT", "payment_intent_id"),
+                            fact_ref("PAYMENT_ATTEMPT", "payment_attempt_id"),
+                            fact_ref("CHANNEL_TRANSACTION_REF", "channel_transaction_ref_id"),
+                            fact_ref("REFUND_REQUEST", "refund_request_id"), fact_ref("CHANNEL_REFUND", "channel_refund_id")])
+               + " FROM t_billing_fact f ")
+FACT_COLUMNS = ("billing_fact_id:BILLING_FACT_ID:LINK", "order_id:ORDER_ID:LINK", "payment_intent_id:PAYMENT_INTENT_ID:LINK",
+                "payment_attempt_id:PAYMENT_ATTEMPT_ID:LINK", "channel_transaction_ref_id:CHANNEL_TRANSACTION_REF_ID:LINK",
+                "refund_request_id:REFUND_REQUEST_ID:LINK", "channel_refund_id:CHANNEL_REFUND_ID:LINK",
+                "client_id:CLIENT_ID:DIMENSION", "entity_no:ENTITY_NO:DIMENSION", "local_partner_id:LOCAL_PARTNER_ID:DIMENSION")
+FACT_LABELS = dict(billing_fact_id="计费事实 ID", fact_type="事实类型", origin_type="来源方式", source_system="来源系统",
+                   status="状态", client_id="客户 ID", entity_no="运营主体", local_partner_id="本地合作方 ID", currency="币种",
+                   gross_amount="总额", business_time="业务时间", fact_version="事实版本", order_id="订单 ID",
+                   payment_intent_id="支付意图 ID", payment_attempt_id="支付尝试 ID", channel_transaction_ref_id="渠道交易引用 ID",
+                   refund_request_id="退款申请 ID", channel_refund_id="渠道退款 ID")
+
+
+def facts_by_ref(ref_type, param):
+    return (FACT_SELECT + "WHERE f.id IN (SELECT fr.fact_id FROM t_billing_fact_ref fr WHERE fr.ref_type = '" + ref_type + "' "
+            + where_in("fr.ref_id", param, "AND") + ") ORDER BY f.id")
+
+
+template("JQ_BILLING_FACT_BY_ID", "计费事实", BILLING, FACT_SELECT + where_in("f.id", "factIds") + " ORDER BY f.id",
+         "factIds", "INTEGER", "BILLING_FACT_ID", "BILLING_FACT_ID", FACT_COLUMNS, FACT_LABELS)
+template("JQ_BILLING_FACT_BY_ORDER", "计费事实（按订单）", BILLING, facts_by_ref("ORDER", "orderRefs"),
+         "orderRefs", "STRING", "ORDER_ID", "BILLING_FACT_ID", FACT_COLUMNS, FACT_LABELS)
+template("JQ_BILLING_FACT_BY_ATTEMPT", "计费事实（按支付尝试）", BILLING, facts_by_ref("PAYMENT_ATTEMPT", "attemptRefs"),
+         "attemptRefs", "STRING", "PAYMENT_ATTEMPT_ID", "BILLING_FACT_ID", FACT_COLUMNS, FACT_LABELS)
+template("JQ_BILLING_FACT_BY_CHANNEL_REFUND", "计费事实（按渠道退款）", BILLING, facts_by_ref("CHANNEL_REFUND", "channelRefundRefs"),
+         "channelRefundRefs", "STRING", "CHANNEL_REFUND_ID", "BILLING_FACT_ID", FACT_COLUMNS, FACT_LABELS)
+
+# ---------------------------------------------------------------- 账户 account
+POSTING_SELECT = ("SELECT id AS account_posting_id, entity_type, CASE WHEN entity_type = 'OPERATING_ENTITY' THEN entity_id END AS entity_no,"
+                  " currency, posting_sequence, source_type, fact_id AS billing_fact_id, fact_version, movement_id, entry_count,"
+                  " posted_time FROM t_account_posting ")
+POSTING_COLUMNS = ("account_posting_id:ACCOUNT_POSTING_ID:LINK", "billing_fact_id:BILLING_FACT_ID:LINK", "entity_no:ENTITY_NO:DIMENSION")
+POSTING_LABELS = dict(account_posting_id="记账批次 ID", entity_type="主体类型", entity_no="运营主体", currency="币种",
+                      posting_sequence="批次序号", source_type="来源类型", billing_fact_id="计费事实 ID", fact_version="事实版本",
+                      movement_id="余额变动 ID", entry_count="分录数", posted_time="入账时间")
+template("JQ_ACCOUNT_POSTING_BY_FACT", "记账批次", ACCOUNT,
+         POSTING_SELECT + "WHERE source_type = 'ECONOMIC_FACT' " + where_in("fact_id", "factIds", "AND") + " ORDER BY id",
+         "factIds", "INTEGER", "BILLING_FACT_ID", "ACCOUNT_POSTING_ID", POSTING_COLUMNS, POSTING_LABELS)
+template("JQ_ACCOUNT_POSTING_BY_ID", "记账批次（按批次 ID）", ACCOUNT, POSTING_SELECT + where_in("id", "postingIds") + " ORDER BY id",
+         "postingIds", "INTEGER", "ACCOUNT_POSTING_ID", "ACCOUNT_POSTING_ID", POSTING_COLUMNS, POSTING_LABELS)
+template("JQ_ACCOUNT_ENTRY_BY_POSTING", "账户分录", ACCOUNT,
+         "SELECT e.id AS account_entry_id, e.posting_id AS account_posting_id, e.line_no, e.entry_side, e.amount, a.account_no,"
+         " a.account_code,"
+         " a.owner_type, a.owner_id, a.balance_bucket, a.currency, e.reverses_entry_id, e.create_time"
+         " FROM t_account_entry e JOIN t_owner_account a ON a.id = e.account_id "
+         + where_in("e.posting_id", "postingIds") + " ORDER BY e.posting_id, e.line_no",
+         "postingIds", "INTEGER", "ACCOUNT_POSTING_ID", "ACCOUNT_ENTRY_ID",
+         ("account_entry_id:ACCOUNT_ENTRY_ID:LINK", "account_posting_id:ACCOUNT_POSTING_ID:LINK"),
+         dict(account_entry_id="账户分录 ID", account_posting_id="记账批次 ID", line_no="行号", entry_side="借贷", amount="金额", account_no="账户号",
+              account_code="账户代码", owner_type="所有者类型", owner_id="所有者 ID", balance_bucket="余额桶", currency="币种",
+              reverses_entry_id="冲销的分录", create_time="创建时间"), OFFSET)
+
+# ---------------------------------------------------------------- 总账 ledger（指令 + 凭证一行）
+JOURNAL_SELECT = ("SELECT je.id AS journal_entry_id, je.journal_sequence, je.posting_date, je.entry_type, je.reversal_of_entry_id,"
+                  " i.id AS instruction_id, i.instruction_type, i.origin_type, i.status AS instruction_status,"
+                  " CASE WHEN i.origin_type = 'ACCOUNT_POSTING' THEN i.source_event_key END AS account_posting_id,"
+                  " i.economic_fact_id AS billing_fact_id, b.entity_type, b.entity_id, b.currency, i.create_time"
+                  " FROM t_accounting_instruction i LEFT JOIN t_journal_entry je ON je.instruction_id = i.id"
+                  " JOIN t_ledger_book b ON b.id = i.ledger_book_id ")
+JOURNAL_COLUMNS = ("journal_entry_id:JOURNAL_ENTRY_ID:LINK", "reversal_of_entry_id:JOURNAL_ENTRY_ID:LINK",
+                   "account_posting_id:ACCOUNT_POSTING_ID:LINK", "billing_fact_id:BILLING_FACT_ID:LINK")
+JOURNAL_LABELS = dict(journal_entry_id="会计凭证 ID", journal_sequence="凭证号", posting_date="记账日期", entry_type="凭证类型",
+                      reversal_of_entry_id="被冲销的凭证", instruction_id="记账指令 ID", instruction_type="指令类型",
+                      origin_type="指令来源", instruction_status="指令状态", account_posting_id="记账批次 ID",
+                      billing_fact_id="计费事实 ID", entity_type="账簿主体类型", entity_id="账簿主体", currency="账簿币种",
+                      create_time="指令创建时间")
+template("JQ_JOURNAL_ENTRY_BY_POSTING", "会计凭证", LEDGER,
+         JOURNAL_SELECT + "WHERE i.origin_type = 'ACCOUNT_POSTING' " + where_in("i.source_event_key", "postingRefs", "AND")
+         + " ORDER BY i.id", "postingRefs", "STRING", "ACCOUNT_POSTING_ID", "JOURNAL_ENTRY_ID", JOURNAL_COLUMNS, JOURNAL_LABELS)
+template("JQ_JOURNAL_ENTRY_BY_ID", "会计凭证（按凭证 ID）", LEDGER, JOURNAL_SELECT + where_in("je.id", "entryIds") + " ORDER BY i.id",
+         "entryIds", "INTEGER", "JOURNAL_ENTRY_ID", "JOURNAL_ENTRY_ID", JOURNAL_COLUMNS, JOURNAL_LABELS)
+template("JQ_JOURNAL_LINE_BY_ENTRY", "凭证分录", LEDGER,
+         "SELECT jl.id AS journal_line_id, jl.journal_entry_id, jl.line_no, jl.entry_side, jl.amount, la.account_no, ca.account_code, ca.account_name,"
+         " la.owner_type, la.owner_id, la.balance_bucket FROM t_journal_line jl JOIN t_ledger_account la ON la.id = jl.account_id"
+         " JOIN t_chart_account ca ON ca.id = la.chart_account_id " + where_in("jl.journal_entry_id", "entryIds")
+         + " ORDER BY jl.journal_entry_id, jl.line_no", "entryIds", "INTEGER", "JOURNAL_ENTRY_ID", "JOURNAL_LINE_ID",
+         ("journal_line_id:JOURNAL_LINE_ID:LINK", "journal_entry_id:JOURNAL_ENTRY_ID:LINK"),
+         dict(journal_line_id="凭证分录 ID", journal_entry_id="会计凭证 ID", line_no="行号", entry_side="借贷", amount="金额", account_no="总账账户号",
+              account_code="科目代码", account_name="科目名称", owner_type="所有者类型", owner_id="所有者 ID",
+              balance_bucket="余额桶"), OFFSET)
+
+# ---------------------------------------------------------------- 对账 reconciliation
+PLATFORM_TXN_SELECT = ("SELECT id AS platform_txn_id, clearing_account_id, direction, txn_source, billing_fact_id, entity_no,"
+                       " source_ref_type, CASE WHEN source_ref_type = 'PAYMENT_ATTEMPT' THEN source_ref_id END AS payment_attempt_id,"
+                       " CASE WHEN source_ref_type = 'CHANNEL_REFUND' THEN source_ref_id END AS channel_refund_id,"
+                       " channel_transaction_ref_id, reference_type, external_transaction_id, currency, expected_amount, expected_fee,"
+                       " matched_amount, actual_fee, settled_amount, status, business_time FROM t_platform_txn ")
+PLATFORM_TXN_COLUMNS = ("platform_txn_id:PLATFORM_TXN_ID:LINK", "billing_fact_id:BILLING_FACT_ID:LINK",
+                        "payment_attempt_id:PAYMENT_ATTEMPT_ID:LINK", "channel_refund_id:CHANNEL_REFUND_ID:LINK",
+                        "channel_transaction_ref_id:CHANNEL_TRANSACTION_REF_ID:LINK",
+                        "external_transaction_id:EXTERNAL_TRANSACTION_ID:LINK",
+                        "clearing_account_id:CLEARING_ACCOUNT_ID:DIMENSION", "entity_no:ENTITY_NO:DIMENSION")
+PLATFORM_TXN_LABELS = dict(platform_txn_id="平台流水 ID", clearing_account_id="清算账户 ID", direction="方向", txn_source="流水来源",
+                           billing_fact_id="计费事实 ID", entity_no="运营主体", source_ref_type="来源对象类型",
+                           payment_attempt_id="支付尝试 ID", channel_refund_id="渠道退款 ID",
+                           channel_transaction_ref_id="渠道交易引用 ID", reference_type="渠道引用类型",
+                           external_transaction_id="渠道交易号", currency="币种", expected_amount="应收金额", expected_fee="预计手续费",
+                           matched_amount="已匹配金额", actual_fee="实际手续费", settled_amount="已结算金额", status="对账状态",
+                           business_time="业务时间")
+template("JQ_PLATFORM_TXN_BY_FACT", "平台流水", RECON,
+         PLATFORM_TXN_SELECT + where_in("billing_fact_id", "factIds") + " ORDER BY id",
+         "factIds", "INTEGER", "BILLING_FACT_ID", "PLATFORM_TXN_ID", PLATFORM_TXN_COLUMNS, PLATFORM_TXN_LABELS)
+template("JQ_STATEMENT_LINE_BY_PLATFORM_TXN", "渠道对账单明细", RECON,
+         "SELECT l.id AS statement_line_id, l.platform_txn_id, l.statement_id, s.channel_batch_ref, s.settlement_date, l.line_no,"
+         " l.line_type, l.direction, l.amount, l.fee_amount, l.reference_type, l.external_transaction_id, l.transaction_date,"
+         " l.match_method, l.match_status, l.matched_time, l.clearing_account_id"
+         " FROM t_channel_statement_line l JOIN t_channel_statement s ON s.id = l.statement_id "
+         + where_in("l.platform_txn_id", "platformTxnIds") + " ORDER BY l.id",
+         "platformTxnIds", "INTEGER", "PLATFORM_TXN_ID", "STATEMENT_LINE_ID",
+         ("statement_line_id:STATEMENT_LINE_ID:LINK", "platform_txn_id:PLATFORM_TXN_ID:LINK",
+          "external_transaction_id:EXTERNAL_TRANSACTION_ID:LINK",
+          "clearing_account_id:CLEARING_ACCOUNT_ID:DIMENSION"),
+         dict(statement_line_id="对账单明细 ID", platform_txn_id="平台流水 ID", statement_id="对账单 ID", channel_batch_ref="渠道批次号",
+              settlement_date="结算日", line_no="行号", line_type="明细类型", direction="方向", amount="金额", fee_amount="手续费",
+              reference_type="渠道引用类型", external_transaction_id="渠道交易号", transaction_date="交易日", match_method="匹配方式",
+              match_status="匹配状态", matched_time="匹配时间", clearing_account_id="清算账户 ID"), OFFSET)
+
+# 验收入口（阶段 6 只读推演，mor-test 2026-10-30；见 precheck/demo-chains-mortest-20261030.out）
+ACCEPTANCE_ENTRIES = [
+    {"label": "收单 → 计费 → 账户 → 总账 → 对账（税务阶段 7 验收订单）", "keyType": "ORDER_NO",
+     "values": ["ord_3LOyZii4ct3BgT48vPZhmHbyC302a8"]},
+    {"label": "支付意图 → 尝试 → 动作 → 渠道交易引用（PAYERMAX 3DS 成功支付）", "keyType": "PAYMENT_INTENT_ID",
+     "values": ["239094951181373440"]},
+    {"label": "退款单 → 订单 → 收银台会话（退款 PROCESSING，渠道退款未建）", "keyType": "REFUND_REQUEST_NO",
+     "values": ["rfd_3L5B25y5BGmxTcJDRyZcBx8OCN9BJK"]},
+    {"label": "渠道交易号（PAYERMAX）", "keyType": "EXTERNAL_TRANSACTION_ID", "values": ["T2026102218153708006502"]},
+    {"label": "会计凭证 → 记账批次 → 计费事实（上游方向）", "keyType": "JOURNAL_ENTRY_ID", "values": ["241801561934753792"]},
+]
+
+if __name__ == "__main__":
+    import json
+    print(json.dumps({"dataSources": DATA_SOURCES, "templates": TEMPLATES, "acceptanceEntries": ACCEPTANCE_ENTRIES},
+                     ensure_ascii=False, indent=2))

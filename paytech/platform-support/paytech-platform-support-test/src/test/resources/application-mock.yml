@@ -406,6 +406,18 @@ data-query:
     lock-lease-time: 60s
   http:
     callers: [operations-console-bff] # DataQueryApiTestBase.CALLER；其他调用方用于拒绝用例。
+  joint: # 联合查询护栏；单步预算与并发比正式默认值（8s / 8 / 16）小，预算用例只需 2 个慢查询、约 3 秒，不压满本地 MySQL。
+    max-entry-values: 20
+    max-values-per-key: 50
+    max-rows-per-template: 100
+    max-executions-per-step: 20
+    max-depth: 6
+    max-template-executions: 60
+    max-total-seconds: 60
+    step-budget: 3s # 正式默认 8s；每个执行的超时上限为 max(1, min(8, 剩余整秒))
+    step-concurrency: 2 # 正式默认 8
+    executor-threads: 4 # 正式默认 16
+    executor-queue: 64
 
 # 多语言：与正式默认值相同。发布与 manifest 依赖的语言包存储 / 读取端口在本卡没有实现，相关用例留给集成卡。
 localization:

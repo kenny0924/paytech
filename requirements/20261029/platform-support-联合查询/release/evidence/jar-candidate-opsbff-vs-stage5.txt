@@ -1,0 +1,2 @@
+A=3003 B=3003 onlyA=0 onlyB=0 changed=1
+  ~ paytech-billing-api.jar!com/paytech/billing/api/enums/FactRefType.class

@@ -4,6 +4,7 @@ import com.paytech.foundation.common.error.ErrorException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -19,15 +20,18 @@ import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.foundation.web.paging.PagingResponseBody;
 import com.paytech.platform.support.dataquery.core.dal.dataobject.DataSource;
+import com.paytech.platform.support.dataquery.core.dal.dataobject.QueryKeyType;
 import com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplate;
 import com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplateVersion;
 import com.paytech.platform.support.dataquery.core.enums.ColumnMaskType;
 import com.paytech.platform.support.dataquery.core.enums.DataSourceStatus;
+import com.paytech.platform.support.dataquery.core.enums.QueryKeyTypeStatus;
 import com.paytech.platform.support.dataquery.core.enums.QueryTemplateStatus;
 import com.paytech.platform.support.dataquery.domain.ChangeQueryTemplateStatusCommand;
 import com.paytech.platform.support.dataquery.domain.CreateQueryTemplateCommand;
 import com.paytech.platform.support.dataquery.domain.ExecutableQueryTemplate;
 import com.paytech.platform.support.dataquery.domain.QueryConstraints;
+import com.paytech.platform.support.dataquery.domain.QueryJointConfig;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateChange;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateColumn;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateDetail;
@@ -41,16 +45,18 @@ import com.paytech.platform.support.dataquery.domain.QueryTemplateVersionSummary
 import com.paytech.platform.support.dataquery.domain.SaveQueryTemplateCommand;
 import com.paytech.platform.support.dataquery.domainservice.convert.DataQueryDetailConverter;
 import com.paytech.platform.support.dataquery.domainservice.repository.DataSourceRepository;
+import com.paytech.platform.support.dataquery.domainservice.repository.QueryKeyTypeRepository;
 import com.paytech.platform.support.dataquery.domainservice.repository.QueryTemplateRepository;
 import com.paytech.platform.support.dataquery.domainservice.repository.QueryTemplateVersionRepository;
 import com.paytech.platform.support.dataquery.domainservice.service.QueryTemplateService;
 import com.paytech.platform.support.dataquery.template.ParameterDeclarationReader;
 
-/** 查询模板的本地规则与保存：版本核对、版本行与当前版本同事务切换、数据源共享锁。 */
+/** 查询模板的本地规则与保存：版本核对、版本行与当前版本同事务切换、数据源与引用键类型共享锁。 */
 @Service
 public class QueryTemplateServiceImpl implements QueryTemplateService {
 
     private final DataSourceRepository dataSources;
+    private final QueryKeyTypeRepository keyTypes;
     private final QueryTemplateRepository templates;
     private final QueryTemplateVersionRepository versions;
     private final TransactionTemplate transaction;
@@ -59,14 +65,16 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
      * 写入使用默认传播：加入调用方事务，单独调用时自建事务，保证版本行与模板头一起提交。
      *
      * @param dataSources 数据源仓储
+     * @param keyTypes 键类型仓储
      * @param templates 模板仓储
      * @param versions 版本仓储
      * @param transactionManager 本库事务管理器
      */
-    public QueryTemplateServiceImpl(DataSourceRepository dataSources, QueryTemplateRepository templates,
-        QueryTemplateVersionRepository versions,
+    public QueryTemplateServiceImpl(DataSourceRepository dataSources, QueryKeyTypeRepository keyTypes,
+        QueryTemplateRepository templates, QueryTemplateVersionRepository versions,
         @Qualifier("transactionManager") PlatformTransactionManager transactionManager) {
         this.dataSources = dataSources;
+        this.keyTypes = keyTypes;
         this.templates = templates;
         this.versions = versions;
         this.transaction = new TransactionTemplate(transactionManager);
@@ -93,12 +101,13 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
         return row == null ? null : detail(row);
     }
 
-    /** 某版本；不存在返回 null。 */
+    /** 某版本，联合查询参与情况按模板与数据源当前状态推算；不存在返回 null。 */
     @Override
     public QueryTemplateVersionDetail findQueryTemplateVersion(long templateId, int versionNo) {
         QueryTemplateVersion version = versions.find(templateId, versionNo);
-        return version == null ? null
-            : DataQueryDetailConverter.version(version, dataSources.findById(version.getDataSourceId()));
+        QueryTemplate template = version == null ? null : templates.findById(templateId);
+        return template == null ? null : DataQueryDetailConverter.version(version,
+            dataSources.findById(version.getDataSourceId()), template.getStatus());
     }
 
     /** 版本列表附各版本的数据源编码。 */
@@ -149,12 +158,13 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
             source != null && source.getStatus() == DataSourceStatus.ACTIVE, parameters, columns);
     }
 
-    /** 共享锁确认数据源 ACTIVE 后插入模板头与版本 1。 */
+    /** 共享锁确认数据源与引用的键类型 ACTIVE 后插入模板头与版本 1。 */
     @Override
     public QueryTemplateChange createQueryTemplate(CreateQueryTemplateCommand command) {
         return transaction.execute(status -> {
             QueryTemplateDraft content = command.getContent();
             DataSource source = requireActiveSource(content.getDataSourceId());
+            requireActiveKeyTypes(content.getJoint());
             QueryTemplate row = new QueryTemplate();
             row.setTemplateId(command.getTemplateId());
             row.setTemplateCode(command.getTemplateCode());
@@ -173,11 +183,11 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
                 null, command.getChangeNote(), command.getActorAccountId(), command.getNow());
             versions.insert(version);
             return new QueryTemplateChange(null, DataQueryDetailConverter.template(row,
-                DataQueryDetailConverter.version(version, source)));
+                DataQueryDetailConverter.version(version, source, row.getStatus())));
         });
     }
 
-    /** 核对版本、共享锁确认数据源 ACTIVE，再插入新版本行并切换当前版本。 */
+    /** 核对版本、共享锁确认数据源与引用的键类型 ACTIVE，再插入新版本行并切换当前版本。 */
     @Override
     public QueryTemplateChange saveQueryTemplate(SaveQueryTemplateCommand command) {
         return transaction.execute(status -> {
@@ -185,6 +195,7 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
             QueryTemplateDetail before = detail(row);
             QueryTemplateDraft content = command.getContent();
             DataSource source = requireActiveSource(content.getDataSourceId());
+            requireActiveKeyTypes(content.getJoint());
             int versionNo = Math.addExact(row.getCurrentVersionNo(), 1);
             QueryTemplateVersion version = version(command.getTemplateVersionId(), row.getTemplateId(), versionNo,
                 content, command.getRestoredFromVersionNo(), command.getChangeNote(), command.getActorAccountId(),
@@ -199,11 +210,11 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
             next.setUpdateTime(command.getNow());
             templates.switchCurrentVersion(row, next);
             return new QueryTemplateChange(before, DataQueryDetailConverter.template(row,
-                DataQueryDetailConverter.version(version, source)));
+                DataQueryDetailConverter.version(version, source, row.getStatus())));
         });
     }
 
-    /** 启用时共享锁确认当前版本数据源 ACTIVE；停用不检查数据源。 */
+    /** 启用时共享锁确认当前版本数据源与引用的键类型 ACTIVE；停用不检查。 */
     @Override
     public QueryTemplateChange changeQueryTemplateStatus(ChangeQueryTemplateStatusCommand command) {
         return transaction.execute(status -> {
@@ -214,9 +225,10 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
             }
             if (command.getTargetStatus() == QueryTemplateStatus.ACTIVE) {
                 requireActiveSource(row.getDataSourceId());
+                requireActiveKeyTypes(before.getCurrentVersion().getContent().getJoint());
             }
             templates.changeStatus(row, command.getTargetStatus(), command.getActorAccountId(), command.getNow());
-            return new QueryTemplateChange(before, DataQueryDetailConverter.template(row, before.getCurrentVersion()));
+            return new QueryTemplateChange(before, detail(row));
         });
     }
 
@@ -227,8 +239,8 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
             throw new ErrorException("模板当前版本缺失: " + row.getTemplateCode()
                 + " v" + row.getCurrentVersionNo());
         }
-        return DataQueryDetailConverter.template(row,
-            DataQueryDetailConverter.version(version, dataSources.findById(version.getDataSourceId())));
+        return DataQueryDetailConverter.template(row, DataQueryDetailConverter.version(version,
+            dataSources.findById(version.getDataSourceId()), row.getStatus()));
     }
 
     /** 不存在返回 404；版本不符返回 409。 */
@@ -253,6 +265,25 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
         return source;
     }
 
+    /**
+     * 共享锁读取联合查询配置引用的键类型并要求全部 ACTIVE；锁持有到事务结束，阻止并发停用与修改值类型。
+     *
+     * @param joint 配置；为 null 时不检查
+     */
+    void requireActiveKeyTypes(QueryJointConfig joint) {
+        if (joint == null) {
+            return;
+        }
+        Set<String> codes = joint.referencedKeyTypes();
+        Set<String> active = keyTypes.findByCodesForShare(codes).stream()
+            .filter(keyType -> keyType.getStatus() == QueryKeyTypeStatus.ACTIVE).map(QueryKeyType::getKeyTypeCode)
+            .collect(Collectors.toSet());
+        List<String> missing = codes.stream().filter(code -> !active.contains(code)).toList();
+        if (!missing.isEmpty()) {
+            throw new BizCheckFailException("联合查询引用的键类型不存在或未启用: " + String.join(", ", missing));
+        }
+    }
+
     /** 新版本行。 */
     static QueryTemplateVersion version(long id, long templateId, int versionNo, QueryTemplateDraft content,
         Integer restoredFrom, String changeNote, long actor, Instant now) {
@@ -265,6 +296,7 @@ public class QueryTemplateServiceImpl implements QueryTemplateService {
         version.setParametersJson(QueryTemplateJson.writeParameters(content.getParameters()));
         version.setColumnsJson(QueryTemplateJson.writeColumns(content.getColumns()));
         version.setConstraintsJson(QueryTemplateJson.writeConstraints(content.getConstraints()));
+        version.setJointJson(QueryTemplateJson.writeJoint(content.getJoint()));
         version.setRestoredFromVersionNo(restoredFrom);
         version.setChangeNote(changeNote);
         version.setCreatedBy(actor);

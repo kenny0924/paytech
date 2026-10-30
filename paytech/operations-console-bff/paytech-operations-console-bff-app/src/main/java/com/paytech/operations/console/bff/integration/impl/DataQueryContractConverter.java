@@ -27,6 +27,9 @@ final class DataQueryContractConverter {
     /** Platform 写回执中查询模板的对象类型。 */
     static final String QUERY_TEMPLATE = "QUERY_TEMPLATE";
 
+    /** Platform 写回执中联合查询键类型的对象类型。 */
+    static final String QUERY_KEY_TYPE = "QUERY_KEY_TYPE";
+
     private static final String ID = "[1-9][0-9]{0,18}";
     private static final Set<Integer> PAGE_SIZES = Set.of(10, 20, 50, 100, 200);
     private static final int DEFAULT_PAGE = 1;

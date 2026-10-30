@@ -16,7 +16,7 @@ import com.paytech.platform.support.dataquery.domain.SaveQueryTemplateCommand;
 
 /**
  * 查询模板与版本的本地查询与保存；内容合法性由调用方在事务前用保存校验确认。
- * <li>写方法加入调用方已有的本地事务；写入时对引用的数据源加共享锁并要求其为 ACTIVE，防止与停用、删除交错。</li>
+ * <li>写方法加入调用方已有的本地事务；写入与启用时对引用的数据源及联合查询键类型加共享锁并要求其为 ACTIVE，防止与停用、删除、修改值类型交错。</li>
  */
 public interface QueryTemplateService {
 

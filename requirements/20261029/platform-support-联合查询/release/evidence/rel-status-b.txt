@@ -1,0 +1,241 @@
+ M operations-console-web/i18n/zh-CN/data-query.json
+ M operations-console-web/i18n/zh-CN/nav.json
+ M operations-console-web/src/configuration/configurationModel.test.ts
+ M operations-console-web/src/dataQuery/DataQueryParts.tsx
+ M operations-console-web/src/dataQuery/TemplateEditor.tsx
+ M operations-console-web/src/dataQuery/VersionDrawer.tsx
+ M operations-console-web/src/dataQuery/dataQuery.css
+ M operations-console-web/src/dataQuery/dataQueryCommon.ts
+ M operations-console-web/src/dataQuery/templateModel.ts
+ M operations-console-web/src/dataQuery/versionDiff.test.ts
+ M operations-console-web/src/dataQuery/versionDiff.ts
+ M operations-console-web/src/i18n/en/data-query.json
+ M operations-console-web/src/i18n/en/nav.json
+ M operations-console-web/src/navigation/ConsolePage.tsx
+ M operations-console-web/src/navigation/pageCapabilities.ts
+ M paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/configuration/PlatformClientConfiguration.java
+ M paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/integration/PlatformDataQueryClient.java
+ M paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/integration/impl/DataQueryContractConverter.java
+ M paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/integration/impl/PlatformDataQueryClientImpl.java
+ M paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/CreateQueryTemplateRequestBody.java
+ M paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/UpdateQueryTemplateRequestBody.java
+ M paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/ValidateQueryTemplateRequestBody.java
+ M paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/QueryTemplateDetailResponseBody.java
+ M paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/QueryTemplateVersionResponseBody.java
+ M paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/resources/application.yml
+ M paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/OperationsConsoleBffApplicationAutoTest.java
+ M paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/resources/data-query-boundary.json
+ M paytech/platform-support/docs/database/platform-support.pdma.json
+ M paytech/platform-support/docs/database/sql/platform-support-initial-data.sql
+ M paytech/platform-support/docs/database/sql/platform-support-schema.sql
+ M paytech/platform-support/paytech-platform-support-access-control/src/main/resources/operations/console-resource-capabilities.json
+ M paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/CreateQueryTemplateRequestBody.java
+ M paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/UpdateQueryTemplateRequestBody.java
+ M paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/ValidateQueryTemplateRequestBody.java
+ M paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/QueryTemplateDetailResponseBody.java
+ M paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/QueryTemplateVersionResponseBody.java
+ M paytech/platform-support/paytech-platform-support-app/src/main/java/com/paytech/platform/support/configuration/PersistenceConfiguration.java
+ M paytech/platform-support/paytech-platform-support-app/src/main/java/com/paytech/platform/support/ext/rest/dataquery/DataQueryConverter.java
+ M paytech/platform-support/paytech-platform-support-app/src/main/java/com/paytech/platform/support/ext/rest/dataquery/QueryTemplateManagementController.java
+ M paytech/platform-support/paytech-platform-support-app/src/main/resources/application.yml
+ M paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/CreateQueryTemplateProcessor.java
+ M paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/DataQueryAuditFacts.java
+ M paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/DataQueryManagementSupport.java
+ M paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/ExecuteDataQueryProcessor.java
+ M paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/RestoreQueryTemplateProcessor.java
+ M paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/TrialQueryTemplateProcessor.java
+ M paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/UpdateQueryTemplateProcessor.java
+ M paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/ValidateQueryTemplateProcessor.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/dal/dataobject/QueryTemplateVersion.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/dal/mapper/QueryTemplateMapper.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/dal/mapper/QueryTemplateVersionMapper.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/DataQueryRun.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryTemplateDraft.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryTemplateJson.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryTemplateVersionDetail.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/convert/DataQueryDetailConverter.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/repository/QueryTemplateRepository.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/repository/QueryTemplateVersionRepository.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/repository/impl/QueryTemplateRepositoryImpl.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/repository/impl/QueryTemplateVersionRepositoryImpl.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/service/QueryTemplateService.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/service/impl/QueryTemplateServiceImpl.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/validator/QueryTemplateDraftValidator.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/engine/DataQueryRunner.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/service/processor/RunDataQueryTemplateProcessor.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/service/processor/request/RunDataQueryTemplateRequest.java
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/resources/mapper/dataquery/QueryTemplateMapper.xml
+ M paytech/platform-support/paytech-platform-support-data-query/src/main/resources/mapper/dataquery/QueryTemplateVersionMapper.xml
+ M paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/auto/dataquery/RunDataQueryTemplateProcessorTest.java
+ M paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test/base/DataQueryApiTestBase.java
+ M paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test/dal/DataQueryTestMapper.java
+ M paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test/dataquery/DataQueryFixture.java
+ M paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test/mocker/local/PlatformDataCleaner.java
+ M paytech/platform-support/paytech-platform-support-test/src/test/resources/application-mock.yml
+ M paytech/platform-support/paytech-platform-support-test/src/test/resources/init/ddl.sql
+ M paytech/platform-support/paytech-platform-support-workflow/src/main/java/com/paytech/platform/support/workflow/service/processor/CheckWorkflowDataQueryProcessor.java
+ M paytech/tools/arch-rules/src/main/resources/table-ownership.yaml
+ M paytech/tools/arch-rules/src/test/java/com/paytech/arch/auto/TableOwnershipAutoTest.java
+ M scripts/pdmaner/platform-support-schema.test.mjs
+?? local-environment/mysql/manual/2026-10-29-joint-query-fixture.sql
+?? operations-console-web/src/dataQuery/JointCoverage.tsx
+?? operations-console-web/src/dataQuery/JointDetail.tsx
+?? operations-console-web/src/dataQuery/JointGraph.tsx
+?? operations-console-web/src/dataQuery/JointPanel.tsx
+?? operations-console-web/src/dataQuery/JointSearch.tsx
+?? operations-console-web/src/dataQuery/KeyTypeEditor.tsx
+?? operations-console-web/src/dataQuery/jointLayout.test.ts
+?? operations-console-web/src/dataQuery/jointLayout.ts
+?? operations-console-web/src/dataQuery/jointModel.test.ts
+?? operations-console-web/src/dataQuery/jointModel.ts
+?? operations-console-web/src/dataQuery/jointQuery.css
+?? operations-console-web/src/dataQuery/jointRun.test.ts
+?? operations-console-web/src/dataQuery/jointRun.ts
+?? operations-console-web/src/dataQuery/keyTypeModel.test.ts
+?? operations-console-web/src/dataQuery/keyTypeModel.ts
+?? operations-console-web/src/dataQuery/useKeyTypes.ts
+?? operations-console-web/src/dataQuery/useMediaQuery.ts
+?? operations-console-web/src/pages/JointQuery.tsx
+?? operations-console-web/src/pages/QueryKeyTypes.tsx
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/ext/rest/DataQueryJointController.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/ext/rest/DataQueryKeyTypeController.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/ChangeQueryKeyTypeStatusRequestBody.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/CreateQueryKeyTypeRequestBody.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/JointQueryKeyValues.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/JointQueryLoadedSubject.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/JointQueryStepRequestBody.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/QueryKeyTypeOrderItem.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/QueryTemplateJointColumn.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/QueryTemplateJointConfig.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/QueryTemplateJointKeyParameter.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/ReorderQueryKeyTypesRequestBody.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/request/UpdateQueryKeyTypeRequestBody.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryAlreadyLoaded.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryEntryKeyType.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryExcludedTemplate.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryGraphBreak.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryGraphGroup.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryGraphResponseBody.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryGraphTemplate.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryGroup.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryLimits.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryLink.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryNode.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryNodeColumn.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQuerySettingsResponseBody.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryStepResponseBody.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryTruncation.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/QueryKeyTypeOrderResult.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/QueryKeyTypeResponseBody.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/QueryTemplateJointParticipation.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-app/src/main/java/com/paytech/operations/console/bff/service/model/dataquery/response/ReorderQueryKeyTypesResponseBody.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/DataQueryJointBrowserAutoTest.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/java/com/paytech/operations/console/bff/auto/DataQueryJointRegistrationAutoTest.java
+?? paytech/operations-console-bff/paytech-operations-console-bff-test/src/test/resources/data-query-joint-boundary.json
+?? paytech/platform-support/docs/database/sql/changes/2026-10-29-joint-query-registration-144-activate.sql
+?? paytech/platform-support/docs/database/sql/changes/2026-10-29-joint-query-registration-144-rollback.sql
+?? paytech/platform-support/docs/database/sql/changes/2026-10-29-joint-query-registration-144.sql
+?? paytech/platform-support/docs/database/sql/changes/2026-10-29-joint-query-rollback.sql
+?? paytech/platform-support/docs/database/sql/changes/2026-10-29-joint-query.sql
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/JointQueryApi.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/QueryKeyTypeManagementApi.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/ChangeQueryKeyTypeStatusRequestBody.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/CreateQueryKeyTypeRequestBody.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/JointQueryKeyValues.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/JointQueryLoadedSubject.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/JointQueryStepRequestBody.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/QueryKeyTypeOrderItem.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/QueryTemplateJointColumn.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/QueryTemplateJointConfig.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/QueryTemplateJointKeyParameter.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/ReorderQueryKeyTypesRequestBody.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/request/UpdateQueryKeyTypeRequestBody.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryAlreadyLoaded.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryEntryKeyType.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryExcludedTemplate.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryGraphBreak.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryGraphGroup.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryGraphResponseBody.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryGraphTemplate.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryGroup.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryLimits.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryLink.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryNode.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryNodeColumn.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQuerySettingsResponseBody.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryStepResponseBody.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/JointQueryTruncation.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/QueryKeyTypeOrderResult.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/QueryKeyTypeResponseBody.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/QueryTemplateJointParticipation.java
+?? paytech/platform-support/paytech-platform-support-api/src/main/java/com/paytech/platform/support/api/dataquery/response/ReorderQueryKeyTypesResponseBody.java
+?? paytech/platform-support/paytech-platform-support-app/src/main/java/com/paytech/platform/support/ext/rest/dataquery/JointQueryController.java
+?? paytech/platform-support/paytech-platform-support-app/src/main/java/com/paytech/platform/support/ext/rest/dataquery/JointQueryConverter.java
+?? paytech/platform-support/paytech-platform-support-app/src/main/java/com/paytech/platform/support/ext/rest/dataquery/QueryKeyTypeManagementController.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/ChangeQueryKeyTypeStatusProcessor.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/CreateQueryKeyTypeProcessor.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/ExecuteJointQueryStepProcessor.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/GetJointQuerySettingsProcessor.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/ListQueryKeyTypesProcessor.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/PreviewJointQueryGraphProcessor.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/ReorderQueryKeyTypesProcessor.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/UpdateQueryKeyTypeProcessor.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/request/ChangeQueryKeyTypeStatusRequest.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/request/CreateQueryKeyTypeRequest.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/request/ExecuteJointQueryStepRequest.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/request/GetJointQuerySettingsRequest.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/request/ListQueryKeyTypesRequest.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/request/PreviewJointQueryGraphRequest.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/request/ReorderQueryKeyTypesRequest.java
+?? paytech/platform-support/paytech-platform-support-core/src/main/java/com/paytech/platform/support/dataquery/service/processor/request/UpdateQueryKeyTypeRequest.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/configuration/DataQueryJointProperties.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/dal/dataobject/QueryKeyType.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/dal/mapper/QueryKeyTypeMapper.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/enums/JointQueryExclusionReason.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/enums/JointQueryNodeStatus.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/enums/JointQueryTruncationRule.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/enums/QueryKeyRole.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/enums/QueryKeyTypeStatus.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/core/enums/QueryKeyValueType.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/ChangeQueryKeyTypeStatusCommand.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/CreateQueryKeyTypeCommand.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/JointQueryExcludedTemplate.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/JointQueryGraph.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/JointQueryGroup.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/JointQueryKey.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/JointQueryParticipation.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/JointQueryPreview.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/JointQuerySettings.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/JointQueryStep.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/JointQueryStepResult.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/JointQueryTemplate.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryJointColumn.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryJointConfig.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryJointKeyParameter.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryKeyTypeChange.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryKeyTypeDefinition.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryKeyTypeDetail.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryKeyTypePatternRules.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryKeyTypeReorder.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/QueryKeyValues.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/ReorderQueryKeyTypesCommand.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domain/UpdateQueryKeyTypeCommand.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/repository/QueryKeyTypeRepository.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/repository/impl/QueryKeyTypeRepositoryImpl.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/service/JointQueryGraphLoader.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/service/QueryKeyTypeService.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/service/impl/JointQueryGraphLoaderImpl.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/service/impl/QueryKeyTypeServiceImpl.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/domainservice/validator/JointQueryStepValidator.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/engine/JointQueryExecutor.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/engine/JointQueryStepRunner.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/service/processor/RunJointQueryStepProcessor.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/java/com/paytech/platform/support/dataquery/service/processor/request/RunJointQueryStepRequest.java
+?? paytech/platform-support/paytech-platform-support-data-query/src/main/resources/mapper/dataquery/QueryKeyTypeMapper.xml
+?? paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/auto/ext/http/dataquery/JointQueryApiTest.java
+?? paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/auto/ext/http/dataquery/JointQueryLoadedSubjectApiTest.java
+?? paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/auto/ext/http/dataquery/JointQueryStepGuardrailApiTest.java
+?? paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/auto/ext/http/dataquery/QueryKeyTypeManagementApiTest.java
+?? paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/auto/ext/http/dataquery/QueryTemplateJointConfigApiTest.java
+?? paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test/base/JointQueryApiTestBase.java
+?? paytech/platform-support/paytech-platform-support-test/src/test/java/com/paytech/platform/support/test/dataquery/JointQueryMocker.java

@@ -3,6 +3,7 @@ package com.paytech.operations.console.bff.service.model.dataquery.response;
 import java.util.List;
 import com.paytech.operations.console.bff.service.model.dataquery.request.QueryTemplateColumn;
 import com.paytech.operations.console.bff.service.model.dataquery.request.QueryTemplateConstraints;
+import com.paytech.operations.console.bff.service.model.dataquery.request.QueryTemplateJointConfig;
 import tools.jackson.databind.JsonNode;
 
 import lombok.Getter;
@@ -42,6 +43,12 @@ public class QueryTemplateVersionResponseBody {
 
     /** 约束。 */
     private QueryTemplateConstraints constraints;
+
+    /** 联合查询配置；该版本不参与时为 null。 */
+    private QueryTemplateJointConfig joint;
+
+    /** 该版本的联合查询参与情况；joint 为 null 时为 null。 */
+    private QueryTemplateJointParticipation jointQuery;
 
     /** 恢复来源版本号；不是恢复生成的版本为 null。 */
     private Integer restoredFromVersionNo;

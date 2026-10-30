@@ -1,0 +1,16 @@
+{
+  "format": "code-mor-i18n-translation/1",
+  "application": "operations-console",
+  "locale": "zh-CN",
+  "namespaces": {
+    "data-query": {
+      "data-query.joint.node.entryEmpty": "起点 · 未查到",
+      "data-query.joint.views.empty": "这些视图没有查到数据。",
+      "data-query.joint.views.failed": "视图加载失败",
+      "data-query.joint.views.hint": "这些记录已在链路中查到，这些视图因此跳过；结果只显示在这里，不加入链路图、不继续展开。",
+      "data-query.joint.views.more": "另有 {count} 个视图未执行",
+      "data-query.joint.views.open": "查看完整信息",
+      "data-query.joint.views.title": "另外 {count} 个视图"
+    }
+  }
+}

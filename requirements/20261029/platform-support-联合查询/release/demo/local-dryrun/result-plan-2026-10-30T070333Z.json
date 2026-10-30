@@ -1,0 +1,154 @@
+{
+  "target": "test",
+  "actions": [
+    "activate data source MOR_CHANNEL_CONNECTOR_REPLICA",
+    "create data source MOR_PAYMENT_REPLICA (mor_payment)",
+    "create data source MOR_BILLING_REPLICA (mor_billing)",
+    "create data source MOR_ACCOUNT_REPLICA (mor_account)",
+    "create template JQ_ORDER_BY_ID",
+    "create template JQ_ORDER_BY_NO",
+    "create template JQ_ORDER_BY_CLIENT_ORDER_ID",
+    "create template JQ_CHECKOUT_SESSION_BY_ORDER",
+    "create template JQ_CHECKOUT_SESSION_BY_ID",
+    "create template JQ_REFUND_BY_ORDER",
+    "create template JQ_REFUND_BY_NO",
+    "create template JQ_REFUND_BY_ID",
+    "create template JQ_CHANNEL_INTERACTION_BY_ACTION",
+    "create template JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID",
+    "create template JQ_JOURNAL_ENTRY_BY_POSTING",
+    "create template JQ_JOURNAL_ENTRY_BY_ID",
+    "create template JQ_JOURNAL_LINE_BY_ENTRY",
+    "create template JQ_PLATFORM_TXN_BY_FACT",
+    "create template JQ_STATEMENT_LINE_BY_PLATFORM_TXN"
+  ],
+  "checks": [
+    {
+      "name": "数据源 MOR_ACQUIRING_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060837141135360",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_LEDGER_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060840412692480",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_RECONCILIATION_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060841868115968",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_CHANNEL_CONNECTOR_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060842660839424",
+        "status": "INACTIVE"
+      }
+    },
+    {
+      "name": "模板 JQ_PAYMENT_INTENT_BY_ORDER 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_PAYMENT_INTENT_BY_ID 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_PAYMENT_ATTEMPT_BY_INTENT 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_PAYMENT_ATTEMPT_BY_ID 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_PAYMENT_ACTION_BY_ATTEMPT 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_PAYMENT_ACTION_BY_ID 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_PAYMENT_ACTION_BY_CHANNEL_REFUND 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_CHANNEL_TXN_REF_BY_ACTION 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_CHANNEL_TXN_REF_BY_ID 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_CHANNEL_REFUND_BY_REFUND_REQUEST 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_CHANNEL_REFUND_BY_ID 的数据源 MOR_PAYMENT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_BILLING_FACT_BY_ID 的数据源 MOR_BILLING_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_BILLING_FACT_BY_ORDER 的数据源 MOR_BILLING_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_BILLING_FACT_BY_ATTEMPT 的数据源 MOR_BILLING_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_BILLING_FACT_BY_CHANNEL_REFUND 的数据源 MOR_BILLING_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_ACCOUNT_POSTING_BY_FACT 的数据源 MOR_ACCOUNT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_ACCOUNT_POSTING_BY_ID 的数据源 MOR_ACCOUNT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "模板 JQ_ACCOUNT_ENTRY_BY_POSTING 的数据源 MOR_ACCOUNT_REPLICA 已就绪",
+      "pass": true,
+      "evidence": null
+    }
+  ],
+  "verdict": true
+}

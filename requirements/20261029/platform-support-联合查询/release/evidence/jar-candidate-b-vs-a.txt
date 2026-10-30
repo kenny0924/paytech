@@ -1,0 +1,34 @@
+--- platform-support-service b vs a(live)
+A=3232 B=3228 onlyA=4 onlyB=0 changed=18
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/JointQueryLoadedSubject.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryAlreadyLoaded.class
+  - paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/domain/JointQueryStepResult$AlreadyLoaded.class
+  - paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/engine/JointQueryStepRunner$Plan.class
+  ~ BOOT-INF/classes/com/paytech/platform/support/ext/rest/dataquery/JointQueryController.class
+  ~ BOOT-INF/classes/com/paytech/platform/support/ext/rest/dataquery/JointQueryConverter.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/JointQueryStepRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryStepResponseBody.class
+  ~ paytech-platform-support-core.jar!com/paytech/platform/support/dataquery/service/processor/ExecuteJointQueryStepProcessor.class
+  ~ paytech-platform-support-core.jar!com/paytech/platform/support/dataquery/service/processor/request/ExecuteJointQueryStepRequest.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/domain/JointQueryStep.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/domain/JointQueryStepResult$Column.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/domain/JointQueryStepResult$Link.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/domain/JointQueryStepResult$Node$NodeBuilder.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/domain/JointQueryStepResult$Node.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/domain/JointQueryStepResult$Truncation.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/domain/JointQueryStepResult.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/domainservice/validator/JointQueryStepValidator.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/engine/JointQueryStepRunner$Task.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/engine/JointQueryStepRunner.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/service/processor/RunJointQueryStepProcessor.class
+  ~ paytech-platform-support-data-query.jar!com/paytech/platform/support/dataquery/service/processor/request/RunJointQueryStepRequest.class
+--- operations-console-bff b vs a(live)
+A=3007 B=3003 onlyA=4 onlyB=0 changed=4
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/model/dataquery/request/JointQueryLoadedSubject.class
+  - BOOT-INF/classes/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryAlreadyLoaded.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/JointQueryLoadedSubject.class
+  - paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryAlreadyLoaded.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/dataquery/request/JointQueryStepRequestBody.class
+  ~ BOOT-INF/classes/com/paytech/operations/console/bff/service/model/dataquery/response/JointQueryStepResponseBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/JointQueryStepRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryStepResponseBody.class

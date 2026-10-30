@@ -1,0 +1,10 @@
+# platform-support 联合查询 · 发布 b（§8.7 已加载对象跳过）· mor-test 候选（2026-10-30；执行由主会话）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag 仅供辨认）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-jq-rel = main 6eaf1bd3 + 联合查询文件（含 §8.7 修订，清单 evidence/jq-source-files-b.sha256）。
+services:
+  operations-console-bff:
+    image: sha256:2452aaa79b35a73d707d11934eb42b308d94758b5d4d3269c5178ed6b39ef6d3  # mor-test/operations-console-bff:jq-20261030b（JAR a8447c752285a07c；相对 a 只改 J3 loadedSubjects / alreadyLoaded 透传）
+    environment:
+      OPERATIONS_TAX_BASE_URL: http://tax-service:18116

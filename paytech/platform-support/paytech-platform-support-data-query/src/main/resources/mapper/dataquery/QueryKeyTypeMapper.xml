@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.platform.support.dataquery.core.dal.mapper.QueryKeyTypeMapper">
+
+    <sql id="columns">
+        key_type_id AS keyTypeId, key_type_code AS keyTypeCode, key_type_name AS keyTypeName, group_name AS groupName,
+        value_type AS valueType, default_role AS defaultRole, entry_allowed AS entryAllowed,
+        value_pattern AS valuePattern, input_hint AS inputHint, sort_no AS sortNo, description, status, version,
+        created_by AS createdBy, updated_by AS updatedBy, create_time AS createTime, update_time AS updateTime
+    </sql>
+
+    <sql id="pageConditions">
+        <where>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="keyword != null">
+                AND (key_type_code LIKE CONCAT('%', #{keyword}, '%') OR key_type_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR group_name LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO t_query_key_type (key_type_id, key_type_code, key_type_name, group_name, value_type, default_role,
+            entry_allowed, value_pattern, input_hint, sort_no, description, status, version, created_by, updated_by,
+            create_time, update_time)
+        VALUES (#{row.keyTypeId}, #{row.keyTypeCode}, #{row.keyTypeName}, #{row.groupName}, #{row.valueType},
+            #{row.defaultRole}, #{row.entryAllowed}, #{row.valuePattern}, #{row.inputHint}, #{row.sortNo},
+            #{row.description}, #{row.status}, #{row.version}, #{row.createdBy}, #{row.updatedBy}, #{row.createTime},
+            #{row.updateTime})
+    </insert>
+
+    <select id="selectById" timeout="2"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryKeyType">
+        SELECT <include refid="columns"/>
+        FROM t_query_key_type
+        WHERE key_type_id = #{keyTypeId}
+    </select>
+
+    <select id="selectByIdForUpdate" timeout="5" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryKeyType">
+        SELECT <include refid="columns"/>
+        FROM t_query_key_type
+        WHERE key_type_id = #{keyTypeId}
+        FOR UPDATE
+    </select>
+
+    <select id="selectByCodes" timeout="2"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryKeyType">
+        SELECT <include refid="columns"/>
+        FROM t_query_key_type
+        WHERE key_type_code IN
+        <foreach collection="codes" item="code" open="(" separator="," close=")">#{code}</foreach>
+    </select>
+
+    <select id="selectByCodesForShare" timeout="5" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryKeyType">
+        SELECT <include refid="columns"/>
+        FROM t_query_key_type
+        WHERE key_type_code IN
+        <foreach collection="codes" item="code" open="(" separator="," close=")">#{code}</foreach>
+        ORDER BY key_type_id
+        FOR SHARE
+    </select>
+
+    <select id="selectAll" timeout="5"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryKeyType">
+        SELECT <include refid="columns"/>
+        FROM t_query_key_type
+        ORDER BY sort_no, key_type_code
+    </select>
+
+    <select id="selectAllForUpdate" timeout="5" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryKeyType">
+        SELECT <include refid="columns"/>
+        FROM t_query_key_type
+        ORDER BY key_type_id
+        FOR UPDATE
+    </select>
+
+    <select id="selectPage" timeout="5"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryKeyType">
+        SELECT <include refid="columns"/>
+        FROM t_query_key_type
+        <include refid="pageConditions"/>
+        ORDER BY sort_no, key_type_code
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" timeout="5" resultType="long">
+        SELECT COUNT(*)
+        FROM t_query_key_type
+        <include refid="pageConditions"/>
+    </select>
+
+    <update id="updateDefinition">
+        UPDATE t_query_key_type
+        SET key_type_name = #{next.keyTypeName}, group_name = #{next.groupName}, value_type = #{next.valueType},
+            default_role = #{next.defaultRole}, entry_allowed = #{next.entryAllowed},
+            value_pattern = #{next.valuePattern}, input_hint = #{next.inputHint}, sort_no = #{next.sortNo},
+            description = #{next.description}, version = version + 1, updated_by = #{next.updatedBy},
+            update_time = #{next.updateTime}
+        WHERE key_type_id = #{row.keyTypeId} AND version = #{row.version}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE t_query_key_type
+        SET status = #{status}, version = version + 1, updated_by = #{updatedBy}, update_time = #{updateTime}
+        WHERE key_type_id = #{row.keyTypeId} AND version = #{row.version} AND status = #{row.status}
+    </update>
+
+    <update id="updateSortNo">
+        UPDATE t_query_key_type
+        SET sort_no = #{sortNo}, version = version + 1, updated_by = #{updatedBy}, update_time = #{updateTime}
+        WHERE key_type_id = #{row.keyTypeId} AND version = #{row.version}
+    </update>
+</mapper>

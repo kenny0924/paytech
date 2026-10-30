@@ -51,6 +51,25 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
+    <select id="selectAll" timeout="5"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplate">
+        SELECT <include refid="columns"/>
+        FROM t_query_template
+        <if test="status != null">WHERE status = #{status}</if>
+        ORDER BY template_code
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectAllForShare" timeout="5" flushCache="true" useCache="false"
+            resultType="com.paytech.platform.support.dataquery.core.dal.dataobject.QueryTemplate">
+        SELECT <include refid="columns"/>
+        FROM t_query_template
+        <if test="status != null">WHERE status = #{status}</if>
+        ORDER BY template_code
+        LIMIT #{limit}
+        FOR SHARE
+    </select>
+
     <select id="count" timeout="5" resultType="long">
         SELECT COUNT(*)
         FROM t_query_template

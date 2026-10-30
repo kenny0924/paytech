@@ -1,0 +1,12 @@
++--------------------+----------------------------------+----------+---------+
+| route_id           | route_code                       | status   | version |
++--------------------+----------------------------------+----------+---------+
+| 900000000000144401 | operations-query-key-type-list   | DISABLED |       3 |
+| 900000000000144402 | operations-query-key-type-create | DISABLED |       3 |
+| 900000000000144403 | operations-query-key-type-update | DISABLED |       3 |
+| 900000000000144404 | operations-query-key-type-status | DISABLED |       3 |
+| 900000000000144405 | operations-query-key-type-order  | DISABLED |       3 |
+| 900000000000144406 | operations-joint-query-settings  | DISABLED |       3 |
+| 900000000000144407 | operations-joint-query-graph     | DISABLED |       3 |
+| 900000000000144408 | operations-joint-query-step      | DISABLED |       3 |
++--------------------+----------------------------------+----------+---------+

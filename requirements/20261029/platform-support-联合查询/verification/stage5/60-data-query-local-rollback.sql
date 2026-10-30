@@ -1,0 +1,10 @@
+-- 回滚 60-data-query-local.sql：授权恢复 REVOKED，10 条路由与 5 个菜单 / 按钮恢复 DISABLED（之后 Gateway 快照自动刷新）。
+START TRANSACTION;
+UPDATE t_role_permission SET status = 'REVOKED', version = version + 1, update_time = UTC_TIMESTAMP(6)
+WHERE role_permission_id = 900000000000131204 AND status = 'ACTIVE';
+UPDATE t_gateway_route SET status = 'DISABLED', version = version + 1, update_time = UTC_TIMESTAMP(6)
+WHERE route_id IN (900000000000131402, 900000000000131404, 900000000000131409, 900000000000131411, 900000000000131413,
+  900000000000131414, 900000000000131415, 900000000000131416, 900000000000131417, 900000000000131418) AND status = 'ACTIVE';
+UPDATE t_console_resource SET status = 'DISABLED', version = version + 1, update_time = UTC_TIMESTAMP(6)
+WHERE resource_id BETWEEN 900000000000131301 AND 900000000000131305 AND status = 'ACTIVE';
+COMMIT;

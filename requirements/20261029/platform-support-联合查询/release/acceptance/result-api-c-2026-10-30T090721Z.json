@@ -1,0 +1,127 @@
+{
+  "target": "test",
+  "checks": [
+    {
+      "name": "C1 键类型 ACCOUNT_ENTRY_ID ACTIVE、账户、不作入口",
+      "pass": true,
+      "evidence": {
+        "sortNo": 111
+      }
+    },
+    {
+      "name": "C1 键类型 JOURNAL_LINE_ID ACTIVE、总账、不作入口",
+      "pass": true,
+      "evidence": {
+        "sortNo": 121
+      }
+    },
+    {
+      "name": "C1 键类型 STATEMENT_LINE_ID ACTIVE、对账、不作入口",
+      "pass": true,
+      "evidence": {
+        "sortNo": 141
+      }
+    },
+    {
+      "name": "C2 模板 JQ_ACCOUNT_ENTRY_BY_POSTING 当前版本为修订 c、行主体 ACCOUNT_ENTRY_ID、参与联合查询",
+      "pass": true,
+      "evidence": {
+        "versionNo": 2
+      }
+    },
+    {
+      "name": "C2 模板 JQ_JOURNAL_LINE_BY_ENTRY 当前版本为修订 c、行主体 JOURNAL_LINE_ID、参与联合查询",
+      "pass": true,
+      "evidence": {
+        "versionNo": 2
+      }
+    },
+    {
+      "name": "C2 模板 JQ_STATEMENT_LINE_BY_PLATFORM_TXN 当前版本为修订 c、行主体 STATEMENT_LINE_ID、参与联合查询",
+      "pass": true,
+      "evidence": {
+        "versionNo": 2
+      }
+    },
+    {
+      "name": "C3 订单号入口：3 个子行模板作为节点执行（账户分录 1 行、凭证分录 6 行），不在 alreadyLoaded",
+      "pass": true,
+      "evidence": {
+        "JQ_ACCOUNT_ENTRY_BY_POSTING": [
+          1
+        ],
+        "JQ_JOURNAL_LINE_BY_ENTRY": [
+          6
+        ],
+        "JQ_STATEMENT_LINE_BY_PLATFORM_TXN": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "C3 已加载对象跳过仍生效（订单 / 会话 / 计费事实 / 记账批次 / 会计凭证按自身 ID 查记入 alreadyLoaded）",
+      "pass": true,
+      "evidence": {
+        "missing": []
+      }
+    },
+    {
+      "name": "C3 执行数 19 < 24（模拟 19）",
+      "pass": true,
+      "evidence": null
+    },
+    {
+      "name": "C4 会计凭证入口：凭证分录在入口跳执行 6 行；上游记账批次 / 计费事实 / 订单按自身 ID 查照常执行",
+      "pass": true,
+      "evidence": {
+        "lines": [
+          [
+            0,
+            6
+          ]
+        ]
+      }
+    },
+    {
+      "name": "C5 ORDER_NO 与修订 c 模拟一致（有数据节点 9、alreadyLoaded 5）",
+      "pass": true,
+      "evidence": {
+        "missingRows": [],
+        "skipDiff": []
+      }
+    },
+    {
+      "name": "C5 PAYMENT_INTENT_ID 与修订 c 模拟一致（有数据节点 6、alreadyLoaded 3）",
+      "pass": true,
+      "evidence": {
+        "missingRows": [],
+        "skipDiff": []
+      }
+    },
+    {
+      "name": "C5 REFUND_REQUEST_NO 与修订 c 模拟一致（有数据节点 4、alreadyLoaded 2）",
+      "pass": true,
+      "evidence": {
+        "missingRows": [],
+        "skipDiff": []
+      }
+    },
+    {
+      "name": "C5 EXTERNAL_TRANSACTION_ID 与修订 c 模拟一致（有数据节点 8、alreadyLoaded 2）",
+      "pass": true,
+      "evidence": {
+        "missingRows": [],
+        "skipDiff": []
+      }
+    },
+    {
+      "name": "C5 JOURNAL_ENTRY_ID 与修订 c 模拟一致（有数据节点 12、alreadyLoaded 1）",
+      "pass": true,
+      "evidence": {
+        "missingRows": [],
+        "skipDiff": []
+      }
+    }
+  ],
+  "verdict": true
+}

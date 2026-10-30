@@ -57,6 +57,18 @@ public class QueryTemplateRepositoryImpl implements QueryTemplateRepository {
         return mapper.selectPage(dataSourceId, status, LikePatterns.escape(keyword), paging.offset(), paging.size());
     }
 
+    /** 全部模板，按编码升序。 */
+    @Override
+    public List<QueryTemplate> findAll(QueryTemplateStatus status) {
+        return mapper.selectAll(status, MAX_ALL_TEMPLATES);
+    }
+
+    /** 加共享锁读取全部模板。 */
+    @Override
+    public List<QueryTemplate> findAllForShare(QueryTemplateStatus status) {
+        return mapper.selectAllForShare(status, MAX_ALL_TEMPLATES);
+    }
+
     /** 与分页相同条件的总数。 */
     @Override
     public long count(Long dataSourceId, QueryTemplateStatus status, String keyword) {

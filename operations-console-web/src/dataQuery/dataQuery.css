@@ -177,6 +177,8 @@
 
 @media (max-width: 760px) {
   .dq-editor-grid, .dq-version-layout, .dq-form-row { grid-template-columns: minmax(0, 1fr); }
+  /* 窄屏标签更紧凑，减少收进“…”的标签；仍放不下的从“…”菜单进入 */
+  .dq-editor-tabs > .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab { margin-inline-start: 16px; }
   .dq-diff { grid-template-columns: minmax(0, 1fr); }
 }
 /* 标签页内的声明表格限制宽度，避免宽屏下输入框过度拉伸 */

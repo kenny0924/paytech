@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
@@ -13,11 +14,18 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.platform.support.dataquery.core.configuration.DataQueryLimitsProperties;
 import com.paytech.platform.support.dataquery.core.enums.ColumnMaskType;
 import com.paytech.platform.support.dataquery.core.enums.DataSourceStatus;
+import com.paytech.platform.support.dataquery.core.enums.QueryKeyRole;
+import com.paytech.platform.support.dataquery.core.enums.QueryKeyValueType;
 import com.paytech.platform.support.dataquery.core.enums.QueryPagingMode;
+import com.paytech.platform.support.dataquery.core.enums.QueryParameterType;
 import com.paytech.platform.support.dataquery.core.enums.TemplateProblemLevel;
 import com.paytech.platform.support.dataquery.domain.DataSourceDetail;
 import com.paytech.platform.support.dataquery.domain.QueryColumnRule;
 import com.paytech.platform.support.dataquery.domain.QueryConstraints;
+import com.paytech.platform.support.dataquery.domain.QueryJointColumn;
+import com.paytech.platform.support.dataquery.domain.QueryJointConfig;
+import com.paytech.platform.support.dataquery.domain.QueryJointKeyParameter;
+import com.paytech.platform.support.dataquery.domain.QueryKeyTypeDetail;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateDraft;
 import com.paytech.platform.support.dataquery.engine.QueryEngine;
 import com.paytech.platform.support.dataquery.engine.QueryEngines;
@@ -28,8 +36,9 @@ import com.paytech.platform.support.dataquery.template.TemplateProblem;
 import com.paytech.platform.support.dataquery.template.TemplateValidationResult;
 
 /**
- * 模板保存校验（B2）：数据源 ACTIVE、约束不超过硬上限、列声明、参数声明结构，再交给模板引擎做语法、引用与展开校验。
- * <li>纯内存校验，不访问数据库或被查库；保存、校验接口与试运行共用。写入时数据源状态仍由事务内的共享锁重证。</li>
+ * 模板保存校验（B2）：数据源 ACTIVE、约束不超过硬上限、列声明、参数声明结构，再交给模板引擎做语法、引用与展开校验；
+ * 有联合查询配置时再校验键类型、键参数与列标注（联合查询 B3）。
+ * <li>纯内存校验，不访问数据库或被查库；保存、校验接口与试运行共用。写入时数据源与键类型状态仍由事务内的共享锁重证。</li>
  */
 @Component
 public class QueryTemplateDraftValidator {
@@ -37,6 +46,8 @@ public class QueryTemplateDraftValidator {
     private static final int MAX_KEEP = 64;
 
     private static final int MAX_CURSOR_COLUMNS = 8;
+
+    private static final String JOINT = "joint";
 
     private final QueryEngines engines;
 
@@ -61,9 +72,11 @@ public class QueryTemplateDraftValidator {
      *
      * @param draft 草稿
      * @param dataSource 草稿引用的数据源；不存在时为 null
+     * @param keyTypes 联合查询配置引用的键类型，按编码；草稿没有联合查询配置时可为空
      * @return 问题列表；只有 ERROR 阻止保存
      */
-    public TemplateValidationResult validate(QueryTemplateDraft draft, DataSourceDetail dataSource) {
+    public TemplateValidationResult validate(QueryTemplateDraft draft, DataSourceDetail dataSource,
+        Map<String, QueryKeyTypeDetail> keyTypes) {
         List<TemplateProblem> problems = new ArrayList<>();
         checkDataSource(dataSource, problems);
         checkConstraints(draft.getConstraints(), problems);
@@ -72,7 +85,82 @@ public class QueryTemplateDraftValidator {
         if (declarations != null) {
             problems.addAll(validateBody(draft, declarations, dataSource).getProblems());
         }
+        if (declarations != null && draft.getJoint() != null) {
+            checkJoint(draft.getJoint(), declarations, draft.getColumns(), keyTypes, problems);
+        }
         return new TemplateValidationResult(List.copyOf(problems));
+    }
+
+    /** 联合查询配置：行主体、键参数与列标注。 */
+    static void checkJoint(QueryJointConfig joint, List<QueryParameterDeclaration> declarations,
+        List<QueryColumnRule> columns, Map<String, QueryKeyTypeDetail> keyTypes, List<TemplateProblem> problems) {
+        requireActiveKeyType(joint.getSubjectKeyType(), JOINT + ".subjectKeyType", keyTypes, problems);
+        checkKeyParameter(joint.getKeyParameter(), declarations, keyTypes, problems);
+        Set<String> names = new HashSet<>();
+        for (int index = 0; index < joint.getColumns().size(); index++) {
+            QueryJointColumn column = joint.getColumns().get(index);
+            String field = JOINT + ".columns[" + index + "]";
+            if (!names.add(column.getName().toLowerCase(Locale.ROOT))) {
+                problems.add(error(field + ".name", "联合查询列重复: " + column.getName()));
+            }
+            QueryKeyTypeDetail keyType = requireActiveKeyType(column.getKeyType(), field + ".keyType", keyTypes,
+                problems);
+            checkColumnRole(column, keyType, columns, field, problems);
+        }
+    }
+
+    /** 键参数必须已声明，类型与键类型的值类型匹配（INTEGER 键可绑 INTEGER 或 STRING，STRING 键只绑 STRING，均含 LIST）。 */
+    static void checkKeyParameter(QueryJointKeyParameter keyParameter, List<QueryParameterDeclaration> declarations,
+        Map<String, QueryKeyTypeDetail> keyTypes, List<TemplateProblem> problems) {
+        QueryKeyTypeDetail keyType = requireActiveKeyType(keyParameter.getKeyType(), JOINT + ".keyParameter.keyType",
+            keyTypes, problems);
+        QueryParameterDeclaration declaration = declarations.stream()
+            .filter(item -> item.getName().equals(keyParameter.getName())).findFirst().orElse(null);
+        if (declaration == null) {
+            problems.add(error(JOINT + ".keyParameter.name", "键参数未声明: " + keyParameter.getName()));
+            return;
+        }
+        QueryParameterType type = declaration.getType() == QueryParameterType.LIST ? declaration.getElementType()
+            : declaration.getType();
+        boolean matched = type == QueryParameterType.STRING
+            || type == QueryParameterType.INTEGER && keyType != null && keyType.getValueType() == QueryKeyValueType.INTEGER;
+        if (keyType != null && !matched) {
+            problems.add(error(JOINT + ".keyParameter.keyType", "参数 " + keyParameter.getName() + " 的类型不能绑定 "
+                + keyType.getValueType().getCode() + " 键类型 " + keyType.getKeyTypeCode()
+                + "：INTEGER 键可绑 INTEGER 或 STRING 参数，STRING 键只绑 STRING 参数（均含 LIST）"));
+        }
+    }
+
+    /** 链路列不能屏蔽；默认为维度的键类型标为链路时提醒。 */
+    static void checkColumnRole(QueryJointColumn column, QueryKeyTypeDetail keyType, List<QueryColumnRule> columns,
+        String field, List<TemplateProblem> problems) {
+        if (column.getKeyRole() != QueryKeyRole.LINK) {
+            return;
+        }
+        String name = column.getName().toLowerCase(Locale.ROOT);
+        boolean masked = columns.stream().anyMatch(rule -> rule.getName().toLowerCase(Locale.ROOT).equals(name)
+            && rule.getMask() != ColumnMaskType.NONE);
+        if (masked) {
+            problems.add(error(field + ".keyRole", "链路列不能配置屏蔽: " + column.getName()));
+        }
+        if (keyType != null && keyType.getDefaultRole() == QueryKeyRole.DIMENSION) {
+            problems.add(TemplateProblem.field(TemplateProblemLevel.WARNING, field + ".keyRole", "列 " + column.getName()
+                + " 会按维度键 " + keyType.getKeyTypeCode() + " 继续展开，可能查出大量数据"));
+        }
+    }
+
+    /**
+     * 引用的键类型必须存在且 ACTIVE。
+     *
+     * @return 键类型；不存在时为 null
+     */
+    static QueryKeyTypeDetail requireActiveKeyType(String code, String field, Map<String, QueryKeyTypeDetail> keyTypes,
+        List<TemplateProblem> problems) {
+        QueryKeyTypeDetail keyType = keyTypes.get(code);
+        if (keyType == null || !keyType.active()) {
+            problems.add(error(field, "键类型不存在或未启用: " + code));
+        }
+        return keyType;
     }
 
     /**

@@ -1,0 +1,2496 @@
+{
+  "origin": "http://localhost:28080",
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "B1-01a-empty",
+          "check": {
+            "menu": [],
+            "chips": "收单 — 支付 — 渠道 — 计费 — 账户 — 总账 — 对账",
+            "empty": "收单 — 支付 — 渠道 — 计费 — 账户 — 总账 — 对账 输入一个单号，查出它在这些系统中的关联数据 从任何一环进入都可以：收银台会话 ID、交易订单 ID、交易订单号、客户订单号……上下游会自动带出 能查到哪些数据？"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-01b-type-menu",
+          "check": {
+            "menu": "常用 收银台会话 ID 1—19 位数字 ✓ 交易订单 ID 1—19 位数字 交易订单号 ord_ 开头的交易订单号 客户订单号 客户系统的订单号，1—128 个可见 ASCII 字符 退款申请 ID 1—19 位数字 更多 退款单号 rfd_ 开头的 34 位退款单号 支付意图 ID 1—19 位数字 支付尝试 ID 1—19 位数字 支付动作 ID 1—19 位数字 渠道退款 ID 1—19 位数字 渠道交易引用 ID 1—19 位数字 渠道交易号 渠道返回的交易号 争议案件 ID 1—19 位数字 计费事实 ID 1—19 位数字 记账批次 ID 1—19 位数字 会计凭证 ID 1—19 位数字 出款 ID 1—19 位数字 客户 ID 1—19 位数字 运营主体编号 5 位运营主体编号，如 AE001",
+            "items": 19
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-08a-format-error",
+          "check": {
+            "message": "退款单号：rfd_ 开头的 34 位退款单号。第 1 行不符合，改正或删除后再查询。",
+            "invalidLines": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-08b-coverage",
+          "check": "按当前启用的查询模板推算，实际以查到的数据为准 收单 收银台会话、收银台会话（按会话 ID）、订单、退款申请（按退款单号）、退款申请（按申请 ID）、退款申请 支付 支付意图、支付意图（按意图 ID）、支付尝试（按尝试 ID）、支付尝试、支付动作（按渠道退款）、支付动作、支付动作（按动作 ID）、渠道退款（按渠道退款 ID）、渠道退款、渠道交易引用、渠道交易引用（按引用 ID）、渠道交易引用（按渠道交易号） 渠道 渠道交互、渠道回调 计费 计费事实（按渠道退款）、计费事实（按订单）、计费事实（按支付尝试）、计费事实 账户 记账批次、记账批次（按批次 ID）、账户分录 总账 会计凭证、会计凭证（按凭证 ID）、凭证分录 对账 平台流水、渠道对账单明细 暂时查不到 没有参与模板以 CHANNEL_INTERACTION_ID 为触发键，链路在此断开 没有参与模板以 ACCOUNT_ENTRY_ID 为触发键，链路在此断开 没有参与模板以 STATEMENT_LINE_ID 为触发键，链路在此断开 没有参与模板以 JOURNAL_LINE_ID 为触发键，链路在此断开 由各系统在“查询模板”里补充后即可查到。",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B3-02a-order",
+          "check": {
+            "type": "交易订单号 ▾",
+            "summary": "找到 18 项关联数据，涉及 7 个系统 0.4 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "渠道",
+              "计费",
+              "账户",
+              "总账",
+              "对账"
+            ],
+            "nodes": [
+              "收银台会话 1",
+              "订单（按订单号） 起点",
+              "退款申请 0",
+              "支付意图 0",
+              "支付意图（按意图 ID） 0",
+              "支付尝试 0",
+              "支付尝试（按尝试 ID） 0",
+              "支付动作 0",
+              "渠道交易引用（按引用 ID） 0",
+              "渠道交易引用（按渠道交易号） 0",
+              "渠道回调 0",
+              "计费事实（按订单） 1",
+              "记账批次 1",
+              "账户分录 1",
+              "会计凭证 1",
+              "凭证分录 6",
+              "平台流水 1",
+              "渠道对账单明细 0"
+            ],
+            "detail": "订单（按订单号） 1 条 当前节点 全部 18 项 技术详情 订单 ID 订单号 客户订单号 客户 ID 运营主体 本地合作方 ID 订单状态 币种 订单金额 支付时间 到期时间 创建时间 241801063336886272 定位 ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 tax-s7-sa-c9640ca7 237575207592763393 AE001 107 EXPIRED USD 115.00000000 — 2026-10-30T06:21:05.945468 2026-10-30T05:51:05.945468 另有 1 个视图未执行 查看完整信息",
+            "formMessage": "",
+            "lanesFit": {
+              "lanes": 7,
+              "lastRight": 1405,
+              "graphRight": 1415,
+              "fit": true
+            }
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-order-merge",
+          "check": {
+            "expectedNodes": 18,
+            "mergedNodes": 1,
+            "objectsInSeveralNodesRaw": 1,
+            "cardsInDom": 18,
+            "nodesMatch": true,
+            "alsoNotes": 1,
+            "journalLineNode": 1
+          }
+        },
+        {
+          "step": "B11-order-steps",
+          "check": {
+            "objectCounts": {
+              "ORDER_ID": 1,
+              "CHECKOUT_SESSION_ID": 1,
+              "BILLING_FACT_ID": 2,
+              "ACCOUNT_POSTING_ID": 1,
+              "PLATFORM_TXN_ID": 1,
+              "ACCOUNT_ENTRY_ID": 1,
+              "JOURNAL_ENTRY_ID": 1,
+              "JOURNAL_LINE_ID": 1
+            },
+            "requests": [
+              {
+                "depth": 0,
+                "templateCodes": null,
+                "loadedSubjects": null,
+                "status": 200,
+                "alreadyLoaded": [],
+                "nodes": 1
+              },
+              {
+                "depth": 1,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_ORDER_BY_ID:ORDER_ID:1"
+                ],
+                "nodes": 4
+              },
+              {
+                "depth": 2,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "BILLING_FACT_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1",
+                  "JQ_BILLING_FACT_BY_ID:BILLING_FACT_ID:1"
+                ],
+                "nodes": 8
+              },
+              {
+                "depth": 3,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_ACCOUNT_POSTING_BY_ID:ACCOUNT_POSTING_ID:1"
+                ],
+                "nodes": 5
+              },
+              {
+                "depth": 4,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1",
+                  "ACCOUNT_ENTRY_ID:1",
+                  "JOURNAL_ENTRY_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_JOURNAL_ENTRY_BY_ID:JOURNAL_ENTRY_ID:1"
+                ],
+                "nodes": 1
+              },
+              {
+                "depth": 5,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1",
+                  "ACCOUNT_ENTRY_ID:1",
+                  "JOURNAL_ENTRY_ID:1",
+                  "JOURNAL_LINE_ID:6"
+                ],
+                "status": 200,
+                "alreadyLoaded": [],
+                "nodes": 0
+              }
+            ]
+          }
+        },
+        {
+          "step": "B11-views-open",
+          "check": {
+            "node": "收银台会话 1 条",
+            "line": "另有 1 个视图未执行 查看完整信息",
+            "sections": 1,
+            "head": "另外 1 个视图 这些记录已在链路中查到，这些视图因此跳过；结果只显示在这里，不加入链路图、不继续展开。",
+            "onDemand": [
+              {
+                "depth": 2,
+                "templateCodes": [
+                  "JQ_CHECKOUT_SESSION_BY_ID"
+                ],
+                "loadedSubjects": null,
+                "status": 200,
+                "nodes": 1
+              }
+            ],
+            "graphCardsUnchanged": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B3-02b-journal-detail",
+          "check": {
+            "detail": "会计凭证 1 条 路径：订单（按订单号） → 计费事实（按订单） → 记账批次 → 会计凭证 当前节点 全部 18 项 技术详情 会计凭证 ID 凭证号 记账日期 凭证类型 被冲销的凭证 记账指令 ID 指令类型 指令来源 指令状态 记账批次 ID 计费事实 ID 账簿主体类型 账簿主体 账簿币种 指令创建时间 241801561934753792 定位 13 2026-10-30 STANDARD — 241801560974258176 PAYMENT_SUCCEEDED ACCOUNT_POSTING POSTED 241801543844753408 定位 241801538719309824 定位 OPERATING_ENTITY AE001 USD 2026-10-30T05:53:04.592738 另有 1 个视图未执行 查看完整信息",
+            "rows": 1,
+            "activeEdges": 3
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B3-02d-locate",
+          "check": {
+            "selected": "凭证分录 6",
+            "title": "凭证分录 6 条 路径：订单（按订单号） → 计费事实（按订单） → 记账批次 → 会计凭证 → 凭证分录"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B3-02e-all-items",
+          "check": {
+            "sections": 19
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B7-07a-dimension-hover",
+          "check": {
+            "values": [
+              "tax-s7-sa-c9640ca7",
+              "237575207592763393",
+              "AE001"
+            ],
+            "popover": "以此查询"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B7-07b-query-this",
+          "check": {
+            "type": "客户订单号 ▾",
+            "summary": "找到 18 项关联数据，涉及 7 个系统 0.5 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "渠道",
+              "计费",
+              "账户",
+              "总账",
+              "对账"
+            ],
+            "nodes": [
+              "收银台会话 1",
+              "订单（按客户订单号） 起点",
+              "退款申请 0",
+              "支付意图 0",
+              "支付意图（按意图 ID） 0",
+              "支付尝试 0",
+              "支付尝试（按尝试 ID） 0",
+              "支付动作 0",
+              "渠道交易引用（按引用 ID） 0",
+              "渠道交易引用（按渠道交易号） 0",
+              "渠道回调 0",
+              "计费事实（按订单） 1",
+              "记账批次 1",
+              "账户分录 1",
+              "会计凭证 1",
+              "凭证分录 6",
+              "平台流水 1",
+              "渠道对账单明细 0"
+            ],
+            "detail": "订单（按客户订单号） 1 条 当前节点 全部 18 项 技术详情 订单 ID 订单号 客户订单号 客户 ID 运营主体 本地合作方 ID 订单状态 币种 订单金额 支付时间 到期时间 创建时间 241801063336886272 定位 ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 tax-s7-sa-c9640ca7 237575207592763393 AE001 107 EXPIRED USD 115.00000000 — 2026-10-30T06:21:05.945468 2026-10-30T05:51:05.945468 另有 1 个视图未执行 查看完整信息",
+            "formMessage": "",
+            "input": "tax-s7-sa-c9640ca7"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B4-intent",
+          "check": {
+            "type": "支付意图 ID ▾",
+            "summary": "找到 11 项关联数据，涉及 4 个系统 0.3 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "渠道",
+              "计费"
+            ],
+            "nodes": [
+              "收银台会话 0",
+              "订单 0",
+              "退款申请 0",
+              "支付意图（按意图 ID） 起点",
+              "支付尝试 起点",
+              "支付动作 2",
+              "渠道交易引用 1",
+              "渠道交互 0",
+              "渠道回调 0",
+              "计费事实（按订单） 0",
+              "计费事实（按支付尝试） 0"
+            ],
+            "detail": "支付意图（按意图 ID） 1 条 也可经 支付意图（按意图 ID） → 支付意图 到达 当前节点 全部 11 项 技术详情 支付意图 ID 来源类型 订单 ID 客户 ID 运营主体 金额 币种 意图状态 进行中的尝试 成功的尝试 到期时间 创建时间 239094951181373440 定位 COMMERCE_ORDER 156965757796837 定位 236087245667409921 AE001 600.00000000 USD SUCCEEDED — 239094961201565696 2026-10-22T20:37:57 2026-10-22T18:37:58.529839",
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "PAYMENT_INTENT_ID": 2,
+              "PAYMENT_ATTEMPT_ID": 1,
+              "PAYMENT_ACTION_ID": 1,
+              "CHANNEL_TRANSACTION_REF_ID": 2
+            },
+            "alreadyLoaded": [
+              "JQ_PAYMENT_ATTEMPT_BY_ID:PAYMENT_ATTEMPT_ID:1",
+              "JQ_PAYMENT_ACTION_BY_ID:PAYMENT_ACTION_ID:2",
+              "JQ_CHANNEL_TXN_REF_BY_ID:CHANNEL_TRANSACTION_REF_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B4-intent-merge",
+          "check": {
+            "expectedNodes": 11,
+            "mergedNodes": 2,
+            "objectsInSeveralNodesRaw": 2,
+            "cardsInDom": 11,
+            "nodesMatch": true,
+            "alsoNotes": 2,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B4-external",
+          "check": {
+            "type": "渠道交易号 ▾",
+            "summary": "找到 14 项关联数据，涉及 4 个系统 0.5 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "渠道",
+              "计费"
+            ],
+            "nodes": [
+              "收银台会话 0",
+              "订单 0",
+              "退款申请 0",
+              "支付意图（按意图 ID） 1",
+              "支付尝试（按尝试 ID） 1",
+              "支付动作（按动作 ID） 1",
+              "支付动作 1",
+              "渠道交易引用（按渠道交易号） 起点",
+              "渠道交易引用 0",
+              "渠道交互 0",
+              "渠道交互 0",
+              "渠道回调 起点 · 未查到",
+              "计费事实（按支付尝试） 0",
+              "计费事实（按订单） 0"
+            ],
+            "detail": "渠道交易引用（按渠道交易号） 1 条 也可经 渠道交易引用（按渠道交易号） → 渠道交易引用 到达 当前节点 全部 14 项 技术详情 渠道交易引用 ID 支付动作 ID 引用类型 渠道交易号 原渠道交易引用 渠道 ID MID ID 金额 币种 渠道事件时间 创建时间 239094969753751552 239094961910403072 定位 PAY T2026102218153708006502 定位 — 236063197520543744 239093386823442432 600.00000000 USD 2026-10-22T18:38:02.943532 2026-10-22T18:38:02.95887 另有 1 个视图未执行 查看完整信息",
+            "formMessage": "",
+            "entryEmpty": 1,
+            "objectCounts": {
+              "CHANNEL_TRANSACTION_REF_ID": 2,
+              "PAYMENT_ACTION_ID": 2,
+              "PAYMENT_ATTEMPT_ID": 2,
+              "PAYMENT_INTENT_ID": 2
+            },
+            "alreadyLoaded": [
+              "JQ_CHANNEL_TXN_REF_BY_ID:CHANNEL_TRANSACTION_REF_ID:1",
+              "JQ_PAYMENT_ACTION_BY_ID:PAYMENT_ACTION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B4-external-merge",
+          "check": {
+            "expectedNodes": 14,
+            "mergedNodes": 3,
+            "objectsInSeveralNodesRaw": 4,
+            "cardsInDom": 14,
+            "nodesMatch": true,
+            "alsoNotes": 4,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B5-refund",
+          "check": {
+            "type": "退款单号 ▾",
+            "summary": "找到 6 项关联数据，涉及 3 个系统 0.4 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "计费"
+            ],
+            "nodes": [
+              "收银台会话 1",
+              "订单 1",
+              "退款申请（按退款单号） 起点",
+              "支付意图 0",
+              "渠道退款 0",
+              "计费事实（按订单） 0"
+            ],
+            "detail": "退款申请（按退款单号） 1 条 也可经 退款申请（按退款单号） → 退款申请 到达 当前节点 全部 6 项 技术详情 退款申请 ID 退款单号 订单 ID 客户 ID 发起方 退款金额 币种 退款状态 状态原因 渠道退款 ID 完成时间 创建时间 239260873988882432 定位 rfd_3L5B25y5BGmxTcJDRyZcBx8OCN9BJK 239260842481270784 定位 239260386824658945 CLIENT 10.00000000 USD PROCESSING — — — 2026-10-23T05:37:17.61121 另有 1 个视图未执行 查看完整信息",
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "REFUND_REQUEST_ID": 2,
+              "CHECKOUT_SESSION_ID": 1,
+              "ORDER_ID": 1
+            },
+            "alreadyLoaded": [
+              "JQ_REFUND_BY_ID:REFUND_REQUEST_ID:1",
+              "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B5-refund-merge",
+          "check": {
+            "expectedNodes": 6,
+            "mergedNodes": 1,
+            "objectsInSeveralNodesRaw": 1,
+            "cardsInDom": 6,
+            "nodesMatch": true,
+            "alsoNotes": 1,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B5-journal",
+          "check": {
+            "type": "会计凭证 ID ▾",
+            "summary": "找到 18 项关联数据，涉及 7 个系统 0.4 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "渠道",
+              "计费",
+              "账户",
+              "总账",
+              "对账"
+            ],
+            "nodes": [
+              "收银台会话 1",
+              "订单 1",
+              "退款申请 0",
+              "支付意图 0",
+              "支付意图（按意图 ID） 0",
+              "支付尝试 0",
+              "支付尝试（按尝试 ID） 0",
+              "支付动作 0",
+              "渠道交易引用（按渠道交易号） 0",
+              "渠道交易引用（按引用 ID） 0",
+              "渠道回调 0",
+              "计费事实 1",
+              "记账批次（按批次 ID） 1",
+              "账户分录 1",
+              "会计凭证（按凭证 ID） 起点",
+              "凭证分录 起点 · 6",
+              "平台流水 1",
+              "渠道对账单明细 0"
+            ],
+            "detail": "会计凭证（按凭证 ID） 1 条 也可经 会计凭证（按凭证 ID） → 会计凭证 到达 当前节点 全部 18 项 技术详情 会计凭证 ID 凭证号 记账日期 凭证类型 被冲销的凭证 记账指令 ID 指令类型 指令来源 指令状态 记账批次 ID 计费事实 ID 账簿主体类型 账簿主体 账簿币种 指令创建时间 241801561934753792 定位 13 2026-10-30 STANDARD — 241801560974258176 PAYMENT_SUCCEEDED ACCOUNT_POSTING POSTED 241801543844753408 定位 241801538719309824 定位 OPERATING_ENTITY AE001 USD 2026-10-30T05:53:04.592738",
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "JOURNAL_ENTRY_ID": 2,
+              "JOURNAL_LINE_ID": 1,
+              "ACCOUNT_POSTING_ID": 2,
+              "ACCOUNT_ENTRY_ID": 1,
+              "BILLING_FACT_ID": 3,
+              "PLATFORM_TXN_ID": 1,
+              "CHECKOUT_SESSION_ID": 1,
+              "ORDER_ID": 1
+            },
+            "alreadyLoaded": [
+              "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B5-journal-merge",
+          "check": {
+            "expectedNodes": 18,
+            "mergedNodes": 4,
+            "objectsInSeveralNodesRaw": 3,
+            "cardsInDom": 18,
+            "nodesMatch": true,
+            "alsoNotes": 4,
+            "journalLineNode": 1
+          }
+        },
+        {
+          "step": "B2-04a-key-types",
+          "check": {
+            "groups": [
+              "收单",
+              "支付",
+              "渠道",
+              "争议",
+              "计费",
+              "账户",
+              "总账",
+              "出款",
+              "对账",
+              "归属维度"
+            ],
+            "rows": 29
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B2-04b-search",
+          "check": {
+            "rows": [
+              "⋮⋮ 交易订单 ID ORDER_ID 链路 1—19 位数字 14 个模板",
+              "⋮⋮ 交易订单号 ORDER_NO 链路 ord_ 开头的交易订单号 1 个模板",
+              "⋮⋮ 客户订单号 CLIENT_ORDER_ID 链路 客户系统的订单号，1—128 个可见 ASCII 字符 3 个模板"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B2-04c-editor",
+          "check": {
+            "head": "交易订单 ID ORDER_ID · 被 14 个模板使用 ✕",
+            "valueTypeDisabled": 1,
+            "test": "✓ 通过"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B8-05a-joint-tab",
+          "check": {
+            "tabViaMenu": false,
+            "panel": "参与联合查询 关闭后模板照常单独使用 当前版本参与中 查出来的每一行是 交易订单 ID 决定它在链路图中的位置：收单 按什么查 参数 orderNos 是 交易订单号 结果里带出的单号 + 添加 链路：继续往下查 维度：只显示，可点击另起查询 order_id → 交易订单 ID 链路 维度 ✕ client_id → 客户 ID 链路 维度 ✕ client_order_id → 客户订单号 链路 维度 ✕ entity_no → 运营主体编号 链路 维度 ✕ local_partner_id → 本地合作方 ID 链路 维度 ✕ 这个模板会按“交易订单号”查，带出交易订单 ID。"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B8-05b-save-intercepted",
+          "check": {
+            "putCaptured": true,
+            "jointEqual": true,
+            "versionBefore": 1,
+            "versionAfter": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-tax",
+          "check": {
+            "has105": false,
+            "has115": true,
+            "hasReceipt": true,
+            "excerpt": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 已登记 · 已开票 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001） 平台运营代操作 建单报价 暂估 5.00 USD · AE 2026/10/30 GMT+4 09:51 资料提交重算 最终 15.00 USD · SA 2026/10/30 GMT+4 09:51 支付成功 收款 115.00 USD 2026/10/30 GMT+4 09:52 登记与开票 税票 SA-RCPT-2026-000001 2026/10/30 GMT+4 09:52 申报底稿 待补 SAR 法定汇率 申报底稿暂缺法定汇率 该注册按 SAR 申报，法定汇率源尚未接入。只影响后续申报，不影响收款和入账（计费已按 USD 记税额 15.00）。 税额构成 当前报价 r2 · 最终 商品净额 100.00USD 税额 15.00USD 消费者应付 115.00USD 按沙特阿拉伯VAT 15% 计税：消费者账单地址在沙特阿拉伯，纳税主体在当地持有非居民注册，命中规则包 DEMO_SA_SAAS r1。 商品 税率 税基 税额 Automated SaaS subscription (tax stage 7) × 1 SAAS_AUTOMATED · 应税 · SA_REMOTE_B2C_STANDARD 15% 100.00 15.00 合计 100.00 15.00 报价记录 每次报价不可变，只"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-underwriting",
+          "check": {
+            "rows": 3,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-query-templates",
+          "check": {
+            "rows": 10,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-workflow",
+          "check": {
+            "rows": 6,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-recon",
+          "check": {
+            "rows": 0,
+            "empty": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        }
+      ]
+    },
+    {
+      "locale": "zh-CN",
+      "width": 390,
+      "steps": [
+        {
+          "step": "B1-01a-empty",
+          "check": {
+            "chips": "收单 — 支付 — 渠道 — 计费 — 账户 — 总账 — 对账",
+            "empty": "收单 — 支付 — 渠道 — 计费 — 账户 — 总账 — 对账 输入一个单号，查出它在这些系统中的关联数据 从任何一环进入都可以：收银台会话 ID、交易订单 ID、交易订单号、客户订单号……上下游会自动带出 能查到哪些数据？"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-01b-type-menu",
+          "check": {
+            "menu": "常用 收银台会话 ID 1—19 位数字 ✓ 交易订单 ID 1—19 位数字 交易订单号 ord_ 开头的交易订单号 客户订单号 客户系统的订单号，1—128 个可见 ASCII 字符 退款申请 ID 1—19 位数字 更多 退款单号 rfd_ 开头的 34 位退款单号 支付意图 ID 1—19 位数字 支付尝试 ID 1—19 位数字 支付动作 ID 1—19 位数字 渠道退款 ID 1—19 位数字 渠道交易引用 ID 1—19 位数字 渠道交易号 渠道返回的交易号 争议案件 ID 1—19 位数字 计费事实 ID 1—19 位数字 记账批次 ID 1—19 位数字 会计凭证 ID 1—19 位数字 出款 ID 1—19 位数字 客户 ID 1—19 位数字 运营主体编号 5 位运营主体编号，如 AE001",
+            "items": 19
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-08a-format-error",
+          "check": {
+            "message": "退款单号：rfd_ 开头的 34 位退款单号。第 1 行不符合，改正或删除后再查询。",
+            "invalidLines": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-08b-coverage",
+          "check": "按当前启用的查询模板推算，实际以查到的数据为准 收单 收银台会话、收银台会话（按会话 ID）、订单、退款申请（按退款单号）、退款申请（按申请 ID）、退款申请 支付 支付意图、支付意图（按意图 ID）、支付尝试（按尝试 ID）、支付尝试、支付动作（按渠道退款）、支付动作、支付动作（按动作 ID）、渠道退款（按渠道退款 ID）、渠道退款、渠道交易引用、渠道交易引用（按引用 ID）、渠道交易引用（按渠道交易号） 渠道 渠道交互、渠道回调 计费 计费事实（按渠道退款）、计费事实（按订单）、计费事实（按支付尝试）、计费事实 账户 记账批次、记账批次（按批次 ID）、账户分录 总账 会计凭证、会计凭证（按凭证 ID）、凭证分录 对账 平台流水、渠道对账单明细 暂时查不到 没有参与模板以 CHANNEL_INTERACTION_ID 为触发键，链路在此断开 没有参与模板以 ACCOUNT_ENTRY_ID 为触发键，链路在此断开 没有参与模板以 STATEMENT_LINE_ID 为触发键，链路在此断开 没有参与模板以 JOURNAL_LINE_ID 为触发键，链路在此断开 由各系统在“查询模板”里补充后即可查到。",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B3-02a-order",
+          "check": {
+            "type": "交易订单号 ▾",
+            "summary": "找到 18 项关联数据，涉及 7 个系统 0.7 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单\n3 项 ▴",
+              "支付\n7 项 ▾",
+              "渠道\n1 项 ▾",
+              "计费\n1 项 ▾",
+              "账户\n2 项 ▾",
+              "总账\n2 项 ▾",
+              "对账\n2 项 ▾"
+            ],
+            "formMessage": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-order-merge",
+          "check": {
+            "expectedNodes": 18,
+            "mergedNodes": 1,
+            "objectsInSeveralNodesRaw": 1,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B11-order-steps",
+          "check": {
+            "objectCounts": {
+              "ORDER_ID": 1,
+              "CHECKOUT_SESSION_ID": 1,
+              "BILLING_FACT_ID": 2,
+              "ACCOUNT_POSTING_ID": 1,
+              "PLATFORM_TXN_ID": 1,
+              "ACCOUNT_ENTRY_ID": 1,
+              "JOURNAL_ENTRY_ID": 1,
+              "JOURNAL_LINE_ID": 1
+            },
+            "requests": [
+              {
+                "depth": 0,
+                "templateCodes": null,
+                "loadedSubjects": null,
+                "status": 200,
+                "alreadyLoaded": [],
+                "nodes": 1
+              },
+              {
+                "depth": 1,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_ORDER_BY_ID:ORDER_ID:1"
+                ],
+                "nodes": 4
+              },
+              {
+                "depth": 2,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "BILLING_FACT_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1",
+                  "JQ_BILLING_FACT_BY_ID:BILLING_FACT_ID:1"
+                ],
+                "nodes": 8
+              },
+              {
+                "depth": 3,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_ACCOUNT_POSTING_BY_ID:ACCOUNT_POSTING_ID:1"
+                ],
+                "nodes": 5
+              },
+              {
+                "depth": 4,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1",
+                  "ACCOUNT_ENTRY_ID:1",
+                  "JOURNAL_ENTRY_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_JOURNAL_ENTRY_BY_ID:JOURNAL_ENTRY_ID:1"
+                ],
+                "nodes": 1
+              },
+              {
+                "depth": 5,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1",
+                  "ACCOUNT_ENTRY_ID:1",
+                  "JOURNAL_ENTRY_ID:1",
+                  "JOURNAL_LINE_ID:6"
+                ],
+                "status": 200,
+                "alreadyLoaded": [],
+                "nodes": 0
+              }
+            ]
+          }
+        },
+        {
+          "step": "B10-06a-mobile-detail",
+          "check": "收银台会话 1 条 路径：订单（按订单号） → 收银台会话 技术详情 收银台会话 ID 订单 ID 会话状态 来源站点 打开时间 完成时间 取消时间 创建时间 241801063345274880 241801063336886272 定位 EXPIRED https://localhost:28443 2026-10-30T05:51:05.945468 — — 2026-10-30T05:51:05.945468 另有 1 个视图未执行 查看完整信息",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B10-06b-mobile-graph",
+          "check": {
+            "cards": 18,
+            "graphWidth": 308
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B4-intent",
+          "check": {
+            "type": "支付意图 ID ▾",
+            "summary": "找到 11 项关联数据，涉及 4 个系统 0.6 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单\n3 项 ▾",
+              "支付\n4 项 ▴",
+              "渠道\n2 项 ▾",
+              "计费\n2 项 ▾"
+            ],
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "PAYMENT_INTENT_ID": 2,
+              "PAYMENT_ATTEMPT_ID": 1,
+              "PAYMENT_ACTION_ID": 1,
+              "CHANNEL_TRANSACTION_REF_ID": 2
+            },
+            "alreadyLoaded": [
+              "JQ_PAYMENT_ATTEMPT_BY_ID:PAYMENT_ATTEMPT_ID:1",
+              "JQ_PAYMENT_ACTION_BY_ID:PAYMENT_ACTION_ID:2",
+              "JQ_CHANNEL_TXN_REF_BY_ID:CHANNEL_TRANSACTION_REF_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B4-intent-merge",
+          "check": {
+            "expectedNodes": 11,
+            "mergedNodes": 2,
+            "objectsInSeveralNodesRaw": 2,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B4-external",
+          "check": {
+            "type": "渠道交易号 ▾",
+            "summary": "找到 14 项关联数据，涉及 4 个系统 0.5 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单\n3 项 ▾",
+              "支付\n6 项 ▴",
+              "渠道\n3 项 ▴",
+              "计费\n2 项 ▾"
+            ],
+            "formMessage": "",
+            "entryEmpty": 1,
+            "objectCounts": {
+              "CHANNEL_TRANSACTION_REF_ID": 2,
+              "PAYMENT_ACTION_ID": 2,
+              "PAYMENT_ATTEMPT_ID": 2,
+              "PAYMENT_INTENT_ID": 2
+            },
+            "alreadyLoaded": [
+              "JQ_CHANNEL_TXN_REF_BY_ID:CHANNEL_TRANSACTION_REF_ID:1",
+              "JQ_PAYMENT_ACTION_BY_ID:PAYMENT_ACTION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B4-external-merge",
+          "check": {
+            "expectedNodes": 14,
+            "mergedNodes": 3,
+            "objectsInSeveralNodesRaw": 4,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B5-refund",
+          "check": {
+            "type": "退款单号 ▾",
+            "summary": "找到 6 项关联数据，涉及 3 个系统 0.5 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单\n3 项 ▴",
+              "支付\n2 项 ▾",
+              "计费\n1 项 ▾"
+            ],
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "REFUND_REQUEST_ID": 2,
+              "CHECKOUT_SESSION_ID": 1,
+              "ORDER_ID": 1
+            },
+            "alreadyLoaded": [
+              "JQ_REFUND_BY_ID:REFUND_REQUEST_ID:1",
+              "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B5-refund-merge",
+          "check": {
+            "expectedNodes": 6,
+            "mergedNodes": 1,
+            "objectsInSeveralNodesRaw": 1,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B5-journal",
+          "check": {
+            "type": "会计凭证 ID ▾",
+            "summary": "找到 18 项关联数据，涉及 7 个系统 0.5 秒 · 来自只读库，可能有几秒延迟",
+            "issues": "",
+            "lanes": [
+              "收单\n3 项 ▾",
+              "支付\n7 项 ▾",
+              "渠道\n1 项 ▾",
+              "计费\n1 项 ▾",
+              "账户\n2 项 ▾",
+              "总账\n2 项 ▴",
+              "对账\n2 项 ▾"
+            ],
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "JOURNAL_ENTRY_ID": 2,
+              "JOURNAL_LINE_ID": 1,
+              "ACCOUNT_POSTING_ID": 2,
+              "ACCOUNT_ENTRY_ID": 1,
+              "BILLING_FACT_ID": 3,
+              "PLATFORM_TXN_ID": 1,
+              "CHECKOUT_SESSION_ID": 1,
+              "ORDER_ID": 1
+            },
+            "alreadyLoaded": [
+              "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B5-journal-merge",
+          "check": {
+            "expectedNodes": 18,
+            "mergedNodes": 4,
+            "objectsInSeveralNodesRaw": 3,
+            "journalLineNode": 1
+          }
+        },
+        {
+          "step": "B2-04a-key-types",
+          "check": {
+            "groups": [
+              "收单",
+              "支付",
+              "渠道",
+              "争议",
+              "计费",
+              "账户",
+              "总账",
+              "出款",
+              "对账",
+              "归属维度"
+            ],
+            "rows": 29
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B2-04b-search",
+          "check": {
+            "rows": [
+              "⋮⋮ 交易订单 ID ORDER_ID 链路",
+              "⋮⋮ 交易订单号 ORDER_NO 链路",
+              "⋮⋮ 客户订单号 CLIENT_ORDER_ID 链路"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B2-04c-editor",
+          "check": {
+            "head": "交易订单 ID ORDER_ID · 被 14 个模板使用 ✕",
+            "valueTypeDisabled": 1,
+            "test": "✓ 通过"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B8-05a-joint-tab",
+          "check": {
+            "tabViaMenu": false,
+            "panel": "参与联合查询 关闭后模板照常单独使用 当前版本参与中 查出来的每一行是 交易订单 ID 决定它在链路图中的位置：收单 按什么查 参数 orderNos 是 交易订单号 结果里带出的单号 + 添加 链路：继续往下查 维度：只显示，可点击另起查询 order_id 交易订单 ID 链路 维度 ✕ client_id 客户 ID 链路 维度 ✕ client_order_id 客户订单号 链路 维度 ✕ entity_no 运营主体编号 链路 维度 ✕ local_partner_id 本地合作方 ID 链路 维度 ✕ 这个模板会按“交易订单号”查，带出交易订单 ID。"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-tax",
+          "check": {
+            "has105": false,
+            "has115": true,
+            "hasReceipt": true,
+            "excerpt": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 已登记 · 已开票 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001） 平台运营代操作 建单报价 暂估 5.00 USD · AE 2026/10/30 GMT+4 09:51 资料提交重算 最终 15.00 USD · SA 2026/10/30 GMT+4 09:51 支付成功 收款 115.00 USD 2026/10/30 GMT+4 09:52 登记与开票 税票 SA-RCPT-2026-000001 2026/10/30 GMT+4 09:52 申报底稿 待补 SAR 法定汇率 申报底稿暂缺法定汇率 该注册按 SAR 申报，法定汇率源尚未接入。只影响后续申报，不影响收款和入账（计费已按 USD 记税额 15.00）。 税额构成 当前报价 r2 · 最终 商品净额 100.00USD 税额 15.00USD 消费者应付 115.00USD 按沙特阿拉伯VAT 15% 计税：消费者账单地址在沙特阿拉伯，纳税主体在当地持有非居民注册，命中规则包 DEMO_SA_SAAS r1。 商品 税率 税基 税额 Automated SaaS subscription (tax stage 7) × 1 SAAS_AUTOMATED · 应税 · SA_REMOTE_B2C_STANDARD 15% 100.00 15.00 合计 100.00 15.00 报价记录 每次报价不可变，只"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-underwriting",
+          "check": {
+            "rows": 3,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-query-templates",
+          "check": {
+            "rows": 10,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-workflow",
+          "check": {
+            "rows": 6,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": true
+          }
+        },
+        {
+          "step": "B9-recon",
+          "check": {
+            "rows": 0,
+            "empty": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "B1-01a-empty",
+          "check": {
+            "menu": [],
+            "chips": "收单 — 支付 — 渠道 — 计费 — 账户 — 总账 — 对账",
+            "empty": "收单 — 支付 — 渠道 — 计费 — 账户 — 总账 — 对账 Enter an ID to find its related data across these systems Start from any step: 收银台会话 ID, 交易订单 ID, 交易订单号, 客户订单号… upstream and downstream data are brought in automatically. What data can I find?"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-01b-type-menu",
+          "check": {
+            "menu": "Common 收银台会话 ID 1—19 位数字 ✓ 交易订单 ID 1—19 位数字 交易订单号 ord_ 开头的交易订单号 客户订单号 客户系统的订单号，1—128 个可见 ASCII 字符 退款申请 ID 1—19 位数字 More 退款单号 rfd_ 开头的 34 位退款单号 支付意图 ID 1—19 位数字 支付尝试 ID 1—19 位数字 支付动作 ID 1—19 位数字 渠道退款 ID 1—19 位数字 渠道交易引用 ID 1—19 位数字 渠道交易号 渠道返回的交易号 争议案件 ID 1—19 位数字 计费事实 ID 1—19 位数字 记账批次 ID 1—19 位数字 会计凭证 ID 1—19 位数字 出款 ID 1—19 位数字 客户 ID 1—19 位数字 运营主体编号 5 位运营主体编号，如 AE001",
+            "items": 19
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-08a-format-error",
+          "check": {
+            "message": "退款单号: rfd_ 开头的 34 位退款单号. Line 1 doesn't match; fix or remove it and query again.",
+            "invalidLines": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-08b-coverage",
+          "check": "Estimated from the currently enabled query templates; actual results may differ. 收单 收银台会话, 收银台会话（按会话 ID）, 订单, 退款申请（按退款单号）, 退款申请（按申请 ID）, 退款申请 支付 支付意图, 支付意图（按意图 ID）, 支付尝试（按尝试 ID）, 支付尝试, 支付动作（按渠道退款）, 支付动作, 支付动作（按动作 ID）, 渠道退款（按渠道退款 ID）, 渠道退款, 渠道交易引用, 渠道交易引用（按引用 ID）, 渠道交易引用（按渠道交易号） 渠道 渠道交互, 渠道回调 计费 计费事实（按渠道退款）, 计费事实（按订单）, 计费事实（按支付尝试）, 计费事实 账户 记账批次, 记账批次（按批次 ID）, 账户分录 总账 会计凭证, 会计凭证（按凭证 ID）, 凭证分录 对账 平台流水, 渠道对账单明细 Not Reachable Yet 没有参与模板以 CHANNEL_INTERACTION_ID 为触发键，链路在此断开 没有参与模板以 ACCOUNT_ENTRY_ID 为触发键，链路在此断开 没有参与模板以 STATEMENT_LINE_ID 为触发键，链路在此断开 没有参与模板以 JOURNAL_LINE_ID 为触发键，链路在此断开 Each system can add one under Query Templates to make it reachable.",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B3-02a-order",
+          "check": {
+            "type": "交易订单号 ▾",
+            "summary": "Found 18 related items across 7 systems 0.6 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "渠道",
+              "计费",
+              "账户",
+              "总账",
+              "对账"
+            ],
+            "nodes": [
+              "收银台会话 1",
+              "订单（按订单号） Start",
+              "退款申请 0",
+              "支付意图 0",
+              "支付意图（按意图 ID） 0",
+              "支付尝试 0",
+              "支付尝试（按尝试 ID） 0",
+              "支付动作 0",
+              "渠道交易引用（按引用 ID） 0",
+              "渠道交易引用（按渠道交易号） 0",
+              "渠道回调 0",
+              "计费事实（按订单） 1",
+              "记账批次 1",
+              "账户分录 1",
+              "会计凭证 1",
+              "凭证分录 6",
+              "平台流水 1",
+              "渠道对账单明细 0"
+            ],
+            "detail": "订单（按订单号） 1 row Selected All 18 Technical Details 订单 ID 订单号 客户订单号 客户 ID 运营主体 本地合作方 ID 订单状态 币种 订单金额 支付时间 到期时间 创建时间 241801063336886272 Locate ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 tax-s7-sa-c9640ca7 237575207592763393 AE001 107 EXPIRED USD 115.00000000 — 2026-10-30T06:21:05.945468 2026-10-30T05:51:05.945468 1 more view not run View full details",
+            "formMessage": "",
+            "lanesFit": {
+              "lanes": 7,
+              "lastRight": 1405,
+              "graphRight": 1415,
+              "fit": true
+            }
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-order-merge",
+          "check": {
+            "expectedNodes": 18,
+            "mergedNodes": 1,
+            "objectsInSeveralNodesRaw": 1,
+            "cardsInDom": 18,
+            "nodesMatch": true,
+            "alsoNotes": 1,
+            "journalLineNode": 1
+          }
+        },
+        {
+          "step": "B11-order-steps",
+          "check": {
+            "objectCounts": {
+              "ORDER_ID": 1,
+              "CHECKOUT_SESSION_ID": 1,
+              "BILLING_FACT_ID": 2,
+              "ACCOUNT_POSTING_ID": 1,
+              "PLATFORM_TXN_ID": 1,
+              "ACCOUNT_ENTRY_ID": 1,
+              "JOURNAL_ENTRY_ID": 1,
+              "JOURNAL_LINE_ID": 1
+            },
+            "requests": [
+              {
+                "depth": 0,
+                "templateCodes": null,
+                "loadedSubjects": null,
+                "status": 200,
+                "alreadyLoaded": [],
+                "nodes": 1
+              },
+              {
+                "depth": 1,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_ORDER_BY_ID:ORDER_ID:1"
+                ],
+                "nodes": 4
+              },
+              {
+                "depth": 2,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "BILLING_FACT_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1",
+                  "JQ_BILLING_FACT_BY_ID:BILLING_FACT_ID:1"
+                ],
+                "nodes": 8
+              },
+              {
+                "depth": 3,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_ACCOUNT_POSTING_BY_ID:ACCOUNT_POSTING_ID:1"
+                ],
+                "nodes": 5
+              },
+              {
+                "depth": 4,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1",
+                  "ACCOUNT_ENTRY_ID:1",
+                  "JOURNAL_ENTRY_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_JOURNAL_ENTRY_BY_ID:JOURNAL_ENTRY_ID:1"
+                ],
+                "nodes": 1
+              },
+              {
+                "depth": 5,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1",
+                  "ACCOUNT_ENTRY_ID:1",
+                  "JOURNAL_ENTRY_ID:1",
+                  "JOURNAL_LINE_ID:6"
+                ],
+                "status": 200,
+                "alreadyLoaded": [],
+                "nodes": 0
+              }
+            ]
+          }
+        },
+        {
+          "step": "B11-views-open",
+          "check": {
+            "node": "收银台会话 1 row",
+            "line": "1 more view not run View full details",
+            "sections": 1,
+            "head": "1 more view These records were already loaded elsewhere in the chain, so these views were skipped; shown here only, not added to the link graph.",
+            "onDemand": [
+              {
+                "depth": 2,
+                "templateCodes": [
+                  "JQ_CHECKOUT_SESSION_BY_ID"
+                ],
+                "loadedSubjects": null,
+                "status": 200,
+                "nodes": 1
+              }
+            ],
+            "graphCardsUnchanged": true
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B3-02b-journal-detail",
+          "check": {
+            "detail": "会计凭证 1 row Path: 订单（按订单号） → 计费事实（按订单） → 记账批次 → 会计凭证 Selected All 18 Technical Details 会计凭证 ID 凭证号 记账日期 凭证类型 被冲销的凭证 记账指令 ID 指令类型 指令来源 指令状态 记账批次 ID 计费事实 ID 账簿主体类型 账簿主体 账簿币种 指令创建时间 241801561934753792 Locate 13 2026-10-30 STANDARD — 241801560974258176 PAYMENT_SUCCEEDED ACCOUNT_POSTING POSTED 241801543844753408 Locate 241801538719309824 Locate OPERATING_ENTITY AE001 USD 2026-10-30T05:53:04.592738 1 more view not run View full details",
+            "rows": 1,
+            "activeEdges": 3
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B3-02d-locate",
+          "check": {
+            "selected": "凭证分录 6",
+            "title": "凭证分录 6 rows Path: 订单（按订单号） → 计费事实（按订单） → 记账批次 → 会计凭证 → 凭证分录"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B3-02e-all-items",
+          "check": {
+            "sections": 19
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B7-07a-dimension-hover",
+          "check": {
+            "values": [
+              "tax-s7-sa-c9640ca7",
+              "237575207592763393",
+              "AE001"
+            ],
+            "popover": "Query by this"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B7-07b-query-this",
+          "check": {
+            "type": "客户订单号 ▾",
+            "summary": "Found 18 related items across 7 systems 0.5 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "渠道",
+              "计费",
+              "账户",
+              "总账",
+              "对账"
+            ],
+            "nodes": [
+              "收银台会话 1",
+              "订单（按客户订单号） Start",
+              "退款申请 0",
+              "支付意图 0",
+              "支付意图（按意图 ID） 0",
+              "支付尝试 0",
+              "支付尝试（按尝试 ID） 0",
+              "支付动作 0",
+              "渠道交易引用（按引用 ID） 0",
+              "渠道交易引用（按渠道交易号） 0",
+              "渠道回调 0",
+              "计费事实（按订单） 1",
+              "记账批次 1",
+              "账户分录 1",
+              "会计凭证 1",
+              "凭证分录 6",
+              "平台流水 1",
+              "渠道对账单明细 0"
+            ],
+            "detail": "订单（按客户订单号） 1 row Selected All 18 Technical Details 订单 ID 订单号 客户订单号 客户 ID 运营主体 本地合作方 ID 订单状态 币种 订单金额 支付时间 到期时间 创建时间 241801063336886272 Locate ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 tax-s7-sa-c9640ca7 237575207592763393 AE001 107 EXPIRED USD 115.00000000 — 2026-10-30T06:21:05.945468 2026-10-30T05:51:05.945468 1 more view not run View full details",
+            "formMessage": "",
+            "input": "tax-s7-sa-c9640ca7"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B4-intent",
+          "check": {
+            "type": "支付意图 ID ▾",
+            "summary": "Found 11 related items across 4 systems 0.4 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "渠道",
+              "计费"
+            ],
+            "nodes": [
+              "收银台会话 0",
+              "订单 0",
+              "退款申请 0",
+              "支付意图（按意图 ID） Start",
+              "支付尝试 Start",
+              "支付动作 2",
+              "渠道交易引用 1",
+              "渠道交互 0",
+              "渠道回调 0",
+              "计费事实（按支付尝试） 0",
+              "计费事实（按订单） 0"
+            ],
+            "detail": "支付意图（按意图 ID） 1 row Also reached via 支付意图（按意图 ID） → 支付意图 Selected All 11 Technical Details 支付意图 ID 来源类型 订单 ID 客户 ID 运营主体 金额 币种 意图状态 进行中的尝试 成功的尝试 到期时间 创建时间 239094951181373440 Locate COMMERCE_ORDER 156965757796837 Locate 236087245667409921 AE001 600.00000000 USD SUCCEEDED — 239094961201565696 2026-10-22T20:37:57 2026-10-22T18:37:58.529839",
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "PAYMENT_INTENT_ID": 2,
+              "PAYMENT_ATTEMPT_ID": 1,
+              "PAYMENT_ACTION_ID": 1,
+              "CHANNEL_TRANSACTION_REF_ID": 2
+            },
+            "alreadyLoaded": [
+              "JQ_PAYMENT_ATTEMPT_BY_ID:PAYMENT_ATTEMPT_ID:1",
+              "JQ_PAYMENT_ACTION_BY_ID:PAYMENT_ACTION_ID:2",
+              "JQ_CHANNEL_TXN_REF_BY_ID:CHANNEL_TRANSACTION_REF_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B4-intent-merge",
+          "check": {
+            "expectedNodes": 11,
+            "mergedNodes": 2,
+            "objectsInSeveralNodesRaw": 2,
+            "cardsInDom": 11,
+            "nodesMatch": true,
+            "alsoNotes": 2,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B4-external",
+          "check": {
+            "type": "渠道交易号 ▾",
+            "summary": "Found 14 related items across 4 systems 0.6 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "渠道",
+              "计费"
+            ],
+            "nodes": [
+              "收银台会话 0",
+              "订单 0",
+              "退款申请 0",
+              "支付意图（按意图 ID） 1",
+              "支付尝试（按尝试 ID） 1",
+              "支付动作（按动作 ID） 1",
+              "支付动作 1",
+              "渠道交易引用（按渠道交易号） Start",
+              "渠道交易引用 0",
+              "渠道交互 0",
+              "渠道交互 0",
+              "渠道回调 Start · none found",
+              "计费事实（按支付尝试） 0",
+              "计费事实（按订单） 0"
+            ],
+            "detail": "渠道交易引用（按渠道交易号） 1 row Also reached via 渠道交易引用（按渠道交易号） → 渠道交易引用 Selected All 14 Technical Details 渠道交易引用 ID 支付动作 ID 引用类型 渠道交易号 原渠道交易引用 渠道 ID MID ID 金额 币种 渠道事件时间 创建时间 239094969753751552 239094961910403072 Locate PAY T2026102218153708006502 Locate — 236063197520543744 239093386823442432 600.00000000 USD 2026-10-22T18:38:02.943532 2026-10-22T18:38:02.95887 1 more view not run View full details",
+            "formMessage": "",
+            "entryEmpty": 1,
+            "objectCounts": {
+              "CHANNEL_TRANSACTION_REF_ID": 2,
+              "PAYMENT_ACTION_ID": 2,
+              "PAYMENT_ATTEMPT_ID": 2,
+              "PAYMENT_INTENT_ID": 2
+            },
+            "alreadyLoaded": [
+              "JQ_CHANNEL_TXN_REF_BY_ID:CHANNEL_TRANSACTION_REF_ID:1",
+              "JQ_PAYMENT_ACTION_BY_ID:PAYMENT_ACTION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B4-external-merge",
+          "check": {
+            "expectedNodes": 14,
+            "mergedNodes": 3,
+            "objectsInSeveralNodesRaw": 4,
+            "cardsInDom": 14,
+            "nodesMatch": true,
+            "alsoNotes": 4,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B5-refund",
+          "check": {
+            "type": "退款单号 ▾",
+            "summary": "Found 6 related items across 3 systems 0.3 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "计费"
+            ],
+            "nodes": [
+              "收银台会话 1",
+              "订单 1",
+              "退款申请（按退款单号） Start",
+              "支付意图 0",
+              "渠道退款 0",
+              "计费事实（按订单） 0"
+            ],
+            "detail": "退款申请（按退款单号） 1 row Also reached via 退款申请（按退款单号） → 退款申请 Selected All 6 Technical Details 退款申请 ID 退款单号 订单 ID 客户 ID 发起方 退款金额 币种 退款状态 状态原因 渠道退款 ID 完成时间 创建时间 239260873988882432 Locate rfd_3L5B25y5BGmxTcJDRyZcBx8OCN9BJK 239260842481270784 Locate 239260386824658945 CLIENT 10.00000000 USD PROCESSING — — — 2026-10-23T05:37:17.61121 1 more view not run View full details",
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "REFUND_REQUEST_ID": 2,
+              "CHECKOUT_SESSION_ID": 1,
+              "ORDER_ID": 1
+            },
+            "alreadyLoaded": [
+              "JQ_REFUND_BY_ID:REFUND_REQUEST_ID:1",
+              "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B5-refund-merge",
+          "check": {
+            "expectedNodes": 6,
+            "mergedNodes": 1,
+            "objectsInSeveralNodesRaw": 1,
+            "cardsInDom": 6,
+            "nodesMatch": true,
+            "alsoNotes": 1,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B5-journal",
+          "check": {
+            "type": "会计凭证 ID ▾",
+            "summary": "Found 18 related items across 7 systems 0.6 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单",
+              "支付",
+              "渠道",
+              "计费",
+              "账户",
+              "总账",
+              "对账"
+            ],
+            "nodes": [
+              "收银台会话 1",
+              "订单 1",
+              "退款申请 0",
+              "支付意图 0",
+              "支付意图（按意图 ID） 0",
+              "支付尝试 0",
+              "支付尝试（按尝试 ID） 0",
+              "支付动作 0",
+              "渠道交易引用（按引用 ID） 0",
+              "渠道交易引用（按渠道交易号） 0",
+              "渠道回调 0",
+              "计费事实 1",
+              "记账批次（按批次 ID） 1",
+              "账户分录 1",
+              "会计凭证（按凭证 ID） Start",
+              "凭证分录 Start · 6",
+              "平台流水 1",
+              "渠道对账单明细 0"
+            ],
+            "detail": "会计凭证（按凭证 ID） 1 row Also reached via 会计凭证（按凭证 ID） → 会计凭证 Selected All 18 Technical Details 会计凭证 ID 凭证号 记账日期 凭证类型 被冲销的凭证 记账指令 ID 指令类型 指令来源 指令状态 记账批次 ID 计费事实 ID 账簿主体类型 账簿主体 账簿币种 指令创建时间 241801561934753792 Locate 13 2026-10-30 STANDARD — 241801560974258176 PAYMENT_SUCCEEDED ACCOUNT_POSTING POSTED 241801543844753408 Locate 241801538719309824 Locate OPERATING_ENTITY AE001 USD 2026-10-30T05:53:04.592738",
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "JOURNAL_ENTRY_ID": 2,
+              "JOURNAL_LINE_ID": 1,
+              "ACCOUNT_POSTING_ID": 2,
+              "ACCOUNT_ENTRY_ID": 1,
+              "BILLING_FACT_ID": 3,
+              "PLATFORM_TXN_ID": 1,
+              "CHECKOUT_SESSION_ID": 1,
+              "ORDER_ID": 1
+            },
+            "alreadyLoaded": [
+              "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B5-journal-merge",
+          "check": {
+            "expectedNodes": 18,
+            "mergedNodes": 4,
+            "objectsInSeveralNodesRaw": 3,
+            "cardsInDom": 18,
+            "nodesMatch": true,
+            "alsoNotes": 4,
+            "journalLineNode": 1
+          }
+        },
+        {
+          "step": "B2-04a-key-types",
+          "check": {
+            "groups": [
+              "收单",
+              "支付",
+              "渠道",
+              "争议",
+              "计费",
+              "账户",
+              "总账",
+              "出款",
+              "对账",
+              "归属维度"
+            ],
+            "rows": 29
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B2-04b-search",
+          "check": {
+            "rows": [
+              "⋮⋮ 交易订单 ID ORDER_ID Link 1—19 位数字 14 templates",
+              "⋮⋮ 交易订单号 ORDER_NO Link ord_ 开头的交易订单号 1 template",
+              "⋮⋮ 客户订单号 CLIENT_ORDER_ID Link 客户系统的订单号，1—128 个可见 ASCII 字符 3 templates"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B2-04c-editor",
+          "check": {
+            "head": "交易订单 ID ORDER_ID · Used by 14 templates ✕",
+            "valueTypeDisabled": 1,
+            "test": "✓ Match"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B8-05a-joint-tab",
+          "check": {
+            "tabViaMenu": false,
+            "panel": "Take Part in Joint Query When off, the template works on its own as usual Current version taking part Each Row Is 交易订单 ID Sets its place in the link graph: 收单 Queried By Parameter orderNos is 交易订单号 IDs Carried in the Results + Add Link: keep querying with it. Dimension: shown only; click to start a new query. order_id → 交易订单 ID Link Dimension ✕ client_id → 客户 ID Link Dimension ✕ client_order_id → 客户订单号 Link Dimension ✕ entity_no → 运营主体编号 Link Dimension ✕ local_partner_id → 本地合作方 ID Link Dimension ✕ this template will be queried by \"交易订单号\" and carry 交易订单 ID further."
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B8-05b-save-intercepted",
+          "check": {
+            "putCaptured": true,
+            "jointEqual": true,
+            "versionBefore": 1,
+            "versionAfter": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-tax",
+          "check": {
+            "has105": false,
+            "has115": true,
+            "hasReceipt": true,
+            "excerpt": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 Registered · Receipt Issued Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001) Operated by platform operations Order Quote Estimated 5.00 USD · AE 10/30/2026, 09:51 GMT+4 Recalculated on Details Final 15.00 USD · SA 10/30/2026, 09:51 GMT+4 Payment Succeeded Collected 115.00 USD 10/30/2026, 09:52 GMT+4 Registration & Receipt Receipt SA-RCPT-2026-000001 10/30/2026, 09:52 GMT+4 Reporting Entries Waiting for the SAR statutory rate Reporting entries are missing the statutory rate This registration reports in SAR and the statutory rate source isn't connected yet. Only later filing is affected; collection and posti"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-underwriting",
+          "check": {
+            "rows": 3,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-query-templates",
+          "check": {
+            "rows": 10,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-workflow",
+          "check": {
+            "rows": 6,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-recon",
+          "check": {
+            "rows": 0,
+            "empty": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "steps": [
+        {
+          "step": "B1-01a-empty",
+          "check": {
+            "chips": "收单 — 支付 — 渠道 — 计费 — 账户 — 总账 — 对账",
+            "empty": "收单 — 支付 — 渠道 — 计费 — 账户 — 总账 — 对账 Enter an ID to find its related data across these systems Start from any step: 收银台会话 ID, 交易订单 ID, 交易订单号, 客户订单号… upstream and downstream data are brought in automatically. What data can I find?"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-01b-type-menu",
+          "check": {
+            "menu": "Common 收银台会话 ID 1—19 位数字 ✓ 交易订单 ID 1—19 位数字 交易订单号 ord_ 开头的交易订单号 客户订单号 客户系统的订单号，1—128 个可见 ASCII 字符 退款申请 ID 1—19 位数字 More 退款单号 rfd_ 开头的 34 位退款单号 支付意图 ID 1—19 位数字 支付尝试 ID 1—19 位数字 支付动作 ID 1—19 位数字 渠道退款 ID 1—19 位数字 渠道交易引用 ID 1—19 位数字 渠道交易号 渠道返回的交易号 争议案件 ID 1—19 位数字 计费事实 ID 1—19 位数字 记账批次 ID 1—19 位数字 会计凭证 ID 1—19 位数字 出款 ID 1—19 位数字 客户 ID 1—19 位数字 运营主体编号 5 位运营主体编号，如 AE001",
+            "items": 19
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-08a-format-error",
+          "check": {
+            "message": "退款单号: rfd_ 开头的 34 位退款单号. Line 1 doesn't match; fix or remove it and query again.",
+            "invalidLines": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B6-08b-coverage",
+          "check": "Estimated from the currently enabled query templates; actual results may differ. 收单 收银台会话, 收银台会话（按会话 ID）, 订单, 退款申请（按退款单号）, 退款申请（按申请 ID）, 退款申请 支付 支付意图, 支付意图（按意图 ID）, 支付尝试（按尝试 ID）, 支付尝试, 支付动作（按渠道退款）, 支付动作, 支付动作（按动作 ID）, 渠道退款（按渠道退款 ID）, 渠道退款, 渠道交易引用, 渠道交易引用（按引用 ID）, 渠道交易引用（按渠道交易号） 渠道 渠道交互, 渠道回调 计费 计费事实（按渠道退款）, 计费事实（按订单）, 计费事实（按支付尝试）, 计费事实 账户 记账批次, 记账批次（按批次 ID）, 账户分录 总账 会计凭证, 会计凭证（按凭证 ID）, 凭证分录 对账 平台流水, 渠道对账单明细 Not Reachable Yet 没有参与模板以 CHANNEL_INTERACTION_ID 为触发键，链路在此断开 没有参与模板以 ACCOUNT_ENTRY_ID 为触发键，链路在此断开 没有参与模板以 STATEMENT_LINE_ID 为触发键，链路在此断开 没有参与模板以 JOURNAL_LINE_ID 为触发键，链路在此断开 Each system can add one under Query Templates to make it reachable.",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B3-02a-order",
+          "check": {
+            "type": "交易订单号 ▾",
+            "summary": "Found 18 related items across 7 systems 0.3 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单\n3 items ▴",
+              "支付\n7 items ▾",
+              "渠道\n1 item ▾",
+              "计费\n1 item ▾",
+              "账户\n2 items ▾",
+              "总账\n2 items ▾",
+              "对账\n2 items ▾"
+            ],
+            "formMessage": ""
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-order-merge",
+          "check": {
+            "expectedNodes": 18,
+            "mergedNodes": 1,
+            "objectsInSeveralNodesRaw": 1,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B11-order-steps",
+          "check": {
+            "objectCounts": {
+              "ORDER_ID": 1,
+              "CHECKOUT_SESSION_ID": 1,
+              "BILLING_FACT_ID": 2,
+              "ACCOUNT_POSTING_ID": 1,
+              "PLATFORM_TXN_ID": 1,
+              "ACCOUNT_ENTRY_ID": 1,
+              "JOURNAL_ENTRY_ID": 1,
+              "JOURNAL_LINE_ID": 1
+            },
+            "requests": [
+              {
+                "depth": 0,
+                "templateCodes": null,
+                "loadedSubjects": null,
+                "status": 200,
+                "alreadyLoaded": [],
+                "nodes": 1
+              },
+              {
+                "depth": 1,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_ORDER_BY_ID:ORDER_ID:1"
+                ],
+                "nodes": 4
+              },
+              {
+                "depth": 2,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "BILLING_FACT_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1",
+                  "JQ_BILLING_FACT_BY_ID:BILLING_FACT_ID:1"
+                ],
+                "nodes": 8
+              },
+              {
+                "depth": 3,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_ACCOUNT_POSTING_BY_ID:ACCOUNT_POSTING_ID:1"
+                ],
+                "nodes": 5
+              },
+              {
+                "depth": 4,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1",
+                  "ACCOUNT_ENTRY_ID:1",
+                  "JOURNAL_ENTRY_ID:1"
+                ],
+                "status": 200,
+                "alreadyLoaded": [
+                  "JQ_JOURNAL_ENTRY_BY_ID:JOURNAL_ENTRY_ID:1"
+                ],
+                "nodes": 1
+              },
+              {
+                "depth": 5,
+                "templateCodes": null,
+                "loadedSubjects": [
+                  "ORDER_ID:1",
+                  "CHECKOUT_SESSION_ID:1",
+                  "ACCOUNT_POSTING_ID:1",
+                  "PLATFORM_TXN_ID:1",
+                  "BILLING_FACT_ID:1",
+                  "ACCOUNT_ENTRY_ID:1",
+                  "JOURNAL_ENTRY_ID:1",
+                  "JOURNAL_LINE_ID:6"
+                ],
+                "status": 200,
+                "alreadyLoaded": [],
+                "nodes": 0
+              }
+            ]
+          }
+        },
+        {
+          "step": "B10-06a-mobile-detail",
+          "check": "收银台会话 1 row Path: 订单（按订单号） → 收银台会话 Technical Details 收银台会话 ID 订单 ID 会话状态 来源站点 打开时间 完成时间 取消时间 创建时间 241801063345274880 241801063336886272 Locate EXPIRED https://localhost:28443 2026-10-30T05:51:05.945468 — — 2026-10-30T05:51:05.945468 1 more view not run View full details",
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B10-06b-mobile-graph",
+          "check": {
+            "cards": 18,
+            "graphWidth": 308
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B4-intent",
+          "check": {
+            "type": "支付意图 ID ▾",
+            "summary": "Found 11 related items across 4 systems 0.3 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单\n3 items ▾",
+              "支付\n4 items ▴",
+              "渠道\n2 items ▾",
+              "计费\n2 items ▾"
+            ],
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "PAYMENT_INTENT_ID": 2,
+              "PAYMENT_ATTEMPT_ID": 1,
+              "PAYMENT_ACTION_ID": 1,
+              "CHANNEL_TRANSACTION_REF_ID": 2
+            },
+            "alreadyLoaded": [
+              "JQ_PAYMENT_ATTEMPT_BY_ID:PAYMENT_ATTEMPT_ID:1",
+              "JQ_PAYMENT_ACTION_BY_ID:PAYMENT_ACTION_ID:2",
+              "JQ_CHANNEL_TXN_REF_BY_ID:CHANNEL_TRANSACTION_REF_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B4-intent-merge",
+          "check": {
+            "expectedNodes": 11,
+            "mergedNodes": 2,
+            "objectsInSeveralNodesRaw": 2,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B4-external",
+          "check": {
+            "type": "渠道交易号 ▾",
+            "summary": "Found 14 related items across 4 systems 0.7 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单\n3 items ▾",
+              "支付\n6 items ▴",
+              "渠道\n3 items ▴",
+              "计费\n2 items ▾"
+            ],
+            "formMessage": "",
+            "entryEmpty": 1,
+            "objectCounts": {
+              "CHANNEL_TRANSACTION_REF_ID": 2,
+              "PAYMENT_ACTION_ID": 2,
+              "PAYMENT_ATTEMPT_ID": 2,
+              "PAYMENT_INTENT_ID": 2
+            },
+            "alreadyLoaded": [
+              "JQ_CHANNEL_TXN_REF_BY_ID:CHANNEL_TRANSACTION_REF_ID:1",
+              "JQ_PAYMENT_ACTION_BY_ID:PAYMENT_ACTION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B4-external-merge",
+          "check": {
+            "expectedNodes": 14,
+            "mergedNodes": 3,
+            "objectsInSeveralNodesRaw": 4,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B5-refund",
+          "check": {
+            "type": "退款单号 ▾",
+            "summary": "Found 6 related items across 3 systems 0.3 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单\n3 items ▴",
+              "支付\n2 items ▾",
+              "计费\n1 item ▾"
+            ],
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "REFUND_REQUEST_ID": 2,
+              "CHECKOUT_SESSION_ID": 1,
+              "ORDER_ID": 1
+            },
+            "alreadyLoaded": [
+              "JQ_REFUND_BY_ID:REFUND_REQUEST_ID:1",
+              "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B5-refund-merge",
+          "check": {
+            "expectedNodes": 6,
+            "mergedNodes": 1,
+            "objectsInSeveralNodesRaw": 1,
+            "journalLineNode": 0
+          }
+        },
+        {
+          "step": "B5-journal",
+          "check": {
+            "type": "会计凭证 ID ▾",
+            "summary": "Found 18 related items across 7 systems 0.7 s · From read replicas; may lag a few seconds",
+            "issues": "",
+            "lanes": [
+              "收单\n3 items ▾",
+              "支付\n7 items ▾",
+              "渠道\n1 item ▾",
+              "计费\n1 item ▾",
+              "账户\n2 items ▾",
+              "总账\n2 items ▴",
+              "对账\n2 items ▾"
+            ],
+            "formMessage": "",
+            "entryEmpty": 0,
+            "objectCounts": {
+              "JOURNAL_ENTRY_ID": 2,
+              "JOURNAL_LINE_ID": 1,
+              "ACCOUNT_POSTING_ID": 2,
+              "ACCOUNT_ENTRY_ID": 1,
+              "BILLING_FACT_ID": 3,
+              "PLATFORM_TXN_ID": 1,
+              "CHECKOUT_SESSION_ID": 1,
+              "ORDER_ID": 1
+            },
+            "alreadyLoaded": [
+              "JQ_CHECKOUT_SESSION_BY_ID:CHECKOUT_SESSION_ID:1"
+            ],
+            "loadedSubjectsSent": [
+              1,
+              2,
+              3
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B12-B5-journal-merge",
+          "check": {
+            "expectedNodes": 18,
+            "mergedNodes": 4,
+            "objectsInSeveralNodesRaw": 3,
+            "journalLineNode": 1
+          }
+        },
+        {
+          "step": "B2-04a-key-types",
+          "check": {
+            "groups": [
+              "收单",
+              "支付",
+              "渠道",
+              "争议",
+              "计费",
+              "账户",
+              "总账",
+              "出款",
+              "对账",
+              "归属维度"
+            ],
+            "rows": 29
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B2-04b-search",
+          "check": {
+            "rows": [
+              "⋮⋮ 交易订单 ID ORDER_ID Link",
+              "⋮⋮ 交易订单号 ORDER_NO Link",
+              "⋮⋮ 客户订单号 CLIENT_ORDER_ID Link"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B2-04c-editor",
+          "check": {
+            "head": "交易订单 ID ORDER_ID · Used by 14 templates ✕",
+            "valueTypeDisabled": 1,
+            "test": "✓ Match"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B8-05a-joint-tab",
+          "check": {
+            "tabViaMenu": true,
+            "panel": "Take Part in Joint Query When off, the template works on its own as usual Current version taking part Each Row Is 交易订单 ID Sets its place in the link graph: 收单 Queried By Parameter orderNos is 交易订单号 IDs Carried in the Results + Add Link: keep querying with it. Dimension: shown only; click to start a new query. order_id 交易订单 ID Link Dimension ✕ client_id 客户 ID Link Dimension ✕ client_order_id 客户订单号 Link Dimension ✕ entity_no 运营主体编号 Link Dimension ✕ local_partner_id 本地合作方 ID Link Dimension ✕ this template will be queried by \"交易订单号\" and carry 交易订单 ID further."
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-tax",
+          "check": {
+            "has105": false,
+            "has115": true,
+            "hasReceipt": true,
+            "excerpt": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 Registered · Receipt Issued Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001) Operated by platform operations Order Quote Estimated 5.00 USD · AE 10/30/2026, 09:51 GMT+4 Recalculated on Details Final 15.00 USD · SA 10/30/2026, 09:51 GMT+4 Payment Succeeded Collected 115.00 USD 10/30/2026, 09:52 GMT+4 Registration & Receipt Receipt SA-RCPT-2026-000001 10/30/2026, 09:52 GMT+4 Reporting Entries Waiting for the SAR statutory rate Reporting entries are missing the statutory rate This registration reports in SAR and the statutory rate source isn't connected yet. Only later filing is affected; collection and posti"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-underwriting",
+          "check": {
+            "rows": 3,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-query-templates",
+          "check": {
+            "rows": 10,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        },
+        {
+          "step": "B9-workflow",
+          "check": {
+            "rows": 6,
+            "empty": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": true
+          }
+        },
+        {
+          "step": "B9-recon",
+          "check": {
+            "rows": 0,
+            "empty": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "zh-CN-1440",
+      "step": "B8-05a-joint-tab",
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "B9-tax",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+    },
+    {
+      "run": "en-1440",
+      "step": "B8-05a-joint-tab",
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    }
+  ],
+  "httpErrors": [],
+  "deliberate": [
+    {
+      "run": "zh-CN-1440",
+      "step": "B8-05a-joint-tab",
+      "why": "aborted PUT (save round-trip check, no write)",
+      "method": "PUT",
+      "path": "/api/operations/data-query-admin/v1/templates/241819405841940480",
+      "status": "failed:net::ERR_FAILED"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "B9-tax",
+      "why": "unauthenticated tax call (expect 401)",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8",
+      "status": 401
+    },
+    {
+      "run": "en-1440",
+      "step": "B8-05a-joint-tab",
+      "why": "aborted PUT (save round-trip check, no write)",
+      "method": "PUT",
+      "path": "/api/operations/data-query-admin/v1/templates/241819405841940480",
+      "status": "failed:net::ERR_FAILED"
+    }
+  ],
+  "logins": [
+    {
+      "run": "zh-CN-1440",
+      "status": 200
+    }
+  ],
+  "tax": {
+    "order": {
+      "status": 200,
+      "pageStatus": "ISSUED",
+      "receipt": {
+        "documentNumber": "SA-RCPT-2026-000001",
+        "downloadable": true
+      }
+    },
+    "grant": {
+      "status": 200,
+      "hasUrl": true
+    },
+    "fetch": {
+      "status": 200,
+      "contentType": "application/pdf",
+      "bytes": 1140
+    },
+    "unauthenticated": 401
+  }
+}

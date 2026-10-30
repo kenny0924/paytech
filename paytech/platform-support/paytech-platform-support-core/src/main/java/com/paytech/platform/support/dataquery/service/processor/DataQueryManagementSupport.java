@@ -3,7 +3,9 @@ package com.paytech.platform.support.dataquery.service.processor;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,9 +22,16 @@ import com.paytech.platform.support.accesscontrol.domainservice.service.Operatio
 import com.paytech.platform.support.accesscontrol.domainservice.service.OperationsSessionService.SessionContext;
 import com.paytech.platform.support.dataquery.core.configuration.DataQueryLimitsProperties;
 import com.paytech.platform.support.dataquery.core.configuration.DataQueryManagementProperties;
+import com.paytech.platform.support.dataquery.core.enums.DataSourceStatus;
 import com.paytech.platform.support.dataquery.core.enums.TemplateProblemLevel;
 import com.paytech.platform.support.dataquery.domain.DataSourceDetail;
+import com.paytech.platform.support.dataquery.domain.JointQueryParticipation;
+import com.paytech.platform.support.dataquery.domain.QueryKeyTypeDetail;
+import com.paytech.platform.support.dataquery.domain.QueryKeyTypePatternRules;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateDetail;
+import com.paytech.platform.support.dataquery.domain.QueryTemplateDraft;
+import com.paytech.platform.support.dataquery.domainservice.service.QueryKeyTypeService;
+import com.paytech.platform.support.dataquery.template.ParameterDeclarationReader;
 import com.paytech.platform.support.dataquery.template.TemplateProblem;
 import com.paytech.platform.support.dataquery.template.TemplateValidationResult;
 import com.paytech.platform.support.service.processor.OperationsTransactionExecutor;
@@ -52,6 +61,7 @@ public class DataQueryManagementSupport {
 
     private final Clock clock;
     private final IdGenerator ids;
+    private final QueryKeyTypeService keyTypes;
     private final DataQueryLimitsProperties limits;
     private final OperationsTransactionExecutor transactions;
     private final DataQueryManagementProperties properties;
@@ -75,6 +85,21 @@ public class DataQueryManagementSupport {
     /** 新建模板按编码串行；编码唯一索引仍为最终保护。 */
     static String templateCodeLockKey(String templateCode) {
         return "lock:data-query:template-code:" + templateCode;
+    }
+
+    /** 同一键类型的修改与启停共用的锁；排他行锁与版本条件更新仍为最终保护。 */
+    static String keyTypeLockKey(long keyTypeId) {
+        return "lock:data-query:key-type:" + keyTypeId;
+    }
+
+    /** 新建键类型按编码串行；编码唯一索引仍为最终保护。 */
+    static String keyTypeCodeLockKey(String keyTypeCode) {
+        return "lock:data-query:key-type-code:" + keyTypeCode;
+    }
+
+    /** 键类型整体重排的锁。 */
+    static String keyTypeOrderLockKey() {
+        return "lock:data-query:key-type-order";
     }
 
     /** TRY_LOCK 等待毫秒数。 */
@@ -115,6 +140,55 @@ public class DataQueryManagementSupport {
     <T> T write(String actor, String session, String permission, Function<ManagementContext, T> work) {
         return transactions.write(() -> work.apply(policy.authorizeManagement(actor, session, null, List.of(), null,
             null, false, permission)));
+    }
+
+    /**
+     * 草稿联合查询配置引用的键类型，供保存校验；没有配置时为空。不加锁，写入时由保存事务内的共享锁重证。
+     *
+     * @param draft 草稿
+     * @return 编码到键类型
+     */
+    Map<String, QueryKeyTypeDetail> referencedKeyTypes(QueryTemplateDraft draft) {
+        return draft.getJoint() == null ? Map.of() : keyTypes.findQueryKeyTypes(draft.getJoint().referencedKeyTypes());
+    }
+
+    /**
+     * 保存与校验结果附加的联合查询参与提示（INFO 参与 / WARNING 不参与）；草稿没有联合查询配置或校验有错误时不附加。
+     *
+     * @param problems 已返回的问题
+     * @param result 保存校验结果
+     * @param draft 草稿
+     * @param dataSource 草稿引用的数据源
+     * @param templateActive 模板当前是否 ACTIVE；新建与编辑器校验按 ACTIVE
+     * @return 校验问题加参与提示
+     */
+    static List<TemplateProblem> withParticipation(List<TemplateProblem> problems, TemplateValidationResult result,
+        QueryTemplateDraft draft, DataSourceDetail dataSource, boolean templateActive) {
+        if (draft.getJoint() == null || result.hasErrors()) {
+            return problems;
+        }
+        JointQueryParticipation participation = JointQueryParticipation.evaluate(draft.getJoint(),
+            new ParameterDeclarationReader().read(draft.getParameters()), templateActive,
+            dataSource != null && dataSource.statusIs(DataSourceStatus.ACTIVE));
+        List<TemplateProblem> combined = new ArrayList<>(problems);
+        combined.add(participation.problem());
+        return List.copyOf(combined);
+    }
+
+    /** 键类型入口正则不符合 Java / JavaScript 共同子集时返回 422，field 为 valuePattern。 */
+    static void requireValidPattern(String valuePattern) {
+        String violation = valuePattern == null ? null : QueryKeyTypePatternRules.violation(valuePattern);
+        if (violation != null) {
+            throw new RequestBodyValidationException(List.of(new ProblemFieldError("valuePattern", violation)), null);
+        }
+    }
+
+    /** 键类型不存在返回 404。 */
+    static QueryKeyTypeDetail requireFound(QueryKeyTypeDetail keyType) {
+        if (keyType == null) {
+            throw new FailException(CommonErrorCode.NOT_FOUND);
+        }
+        return keyType;
     }
 
     /** 连接池大小不超过系统上限。 */

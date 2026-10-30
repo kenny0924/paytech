@@ -1,5 +1,7 @@
 package com.paytech.platform.support.api.dataquery.response;
 
+import com.paytech.platform.support.api.dataquery.request.QueryTemplateJointConfig;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -40,6 +42,12 @@ public class QueryTemplateDetailResponseBody {
 
     /** 最后修改时间，UTC ISO-8601 微秒精度。 */
     private String updateTime;
+
+    /** 当前版本的联合查询配置，与 currentVersion.joint 相同；不参与时为 null。 */
+    private QueryTemplateJointConfig joint;
+
+    /** 当前版本的联合查询参与情况，与 currentVersion.jointQuery 相同；joint 为 null 时为 null。 */
+    private QueryTemplateJointParticipation jointQuery;
 
     /** 当前版本内容。 */
     private QueryTemplateVersionResponseBody currentVersion;

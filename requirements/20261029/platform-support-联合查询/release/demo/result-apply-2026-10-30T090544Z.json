@@ -1,0 +1,768 @@
+{
+  "target": "test",
+  "actions": [
+    "create key type ACCOUNT_ENTRY_ID",
+    "create key type JOURNAL_LINE_ID",
+    "create key type STATEMENT_LINE_ID",
+    "update template JQ_ACCOUNT_ENTRY_BY_POSTING (v1 → new version)",
+    "update template JQ_JOURNAL_LINE_BY_ENTRY (v1 → new version)",
+    "update template JQ_STATEMENT_LINE_BY_PLATFORM_TXN (v1 → new version)"
+  ],
+  "checks": [
+    {
+      "name": "键类型 ACCOUNT_ENTRY_ID 存在、ACTIVE、定义一致",
+      "pass": true,
+      "evidence": {
+        "keyTypeId": "241849536786546688",
+        "status": "ACTIVE",
+        "sortNo": 111
+      }
+    },
+    {
+      "name": "键类型 JOURNAL_LINE_ID 存在、ACTIVE、定义一致",
+      "pass": true,
+      "evidence": {
+        "keyTypeId": "241849537466023936",
+        "status": "ACTIVE",
+        "sortNo": 121
+      }
+    },
+    {
+      "name": "键类型 STATEMENT_LINE_ID 存在、ACTIVE、定义一致",
+      "pass": true,
+      "evidence": {
+        "keyTypeId": "241849537814151168",
+        "status": "ACTIVE",
+        "sortNo": 141
+      }
+    },
+    {
+      "name": "数据源 MOR_ACQUIRING_REPLICA ACTIVE",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060837141135360",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_LEDGER_REPLICA ACTIVE",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060840412692480",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_RECONCILIATION_REPLICA ACTIVE",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060841868115968",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_CHANNEL_CONNECTOR_REPLICA ACTIVE",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060842660839424",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_PAYMENT_REPLICA ACTIVE",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "241819401710551040",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_BILLING_REPLICA ACTIVE",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "241819402499080192",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_ACCOUNT_REPLICA ACTIVE",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "241819403446992896",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "模板 JQ_ORDER_BY_ID「订单」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 ORDER_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_ORDER_BY_NO「订单（按订单号）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 ORDER_NO",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_ORDER_BY_CLIENT_ORDER_ID「订单（按客户订单号）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 CLIENT_ORDER_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_CHECKOUT_SESSION_BY_ORDER「收银台会话」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 ORDER_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_CHECKOUT_SESSION_BY_ID「收银台会话（按会话 ID）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 CHECKOUT_SESSION_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_REFUND_BY_ORDER「退款申请」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 ORDER_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_REFUND_BY_NO「退款申请（按退款单号）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 REFUND_REQUEST_NO",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_REFUND_BY_ID「退款申请（按申请 ID）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 REFUND_REQUEST_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_PAYMENT_INTENT_BY_ORDER「支付意图」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 ORDER_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_PAYMENT_INTENT_BY_ID「支付意图（按意图 ID）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 PAYMENT_INTENT_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_PAYMENT_ATTEMPT_BY_INTENT「支付尝试」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 PAYMENT_INTENT_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_PAYMENT_ATTEMPT_BY_ID「支付尝试（按尝试 ID）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 PAYMENT_ATTEMPT_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_PAYMENT_ACTION_BY_ATTEMPT「支付动作」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 PAYMENT_ATTEMPT_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_PAYMENT_ACTION_BY_ID「支付动作（按动作 ID）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 PAYMENT_ACTION_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_PAYMENT_ACTION_BY_CHANNEL_REFUND「支付动作（按渠道退款）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 CHANNEL_REFUND_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_CHANNEL_TXN_REF_BY_ACTION「渠道交易引用」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 PAYMENT_ACTION_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_CHANNEL_TXN_REF_BY_ID「渠道交易引用（按引用 ID）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 CHANNEL_TRANSACTION_REF_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID「渠道交易引用（按渠道交易号）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 EXTERNAL_TRANSACTION_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_CHANNEL_REFUND_BY_REFUND_REQUEST「渠道退款」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 REFUND_REQUEST_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_CHANNEL_REFUND_BY_ID「渠道退款（按渠道退款 ID）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 CHANNEL_REFUND_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_CHANNEL_INTERACTION_BY_ACTION「渠道交互」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 PAYMENT_ACTION_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID「渠道回调」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 EXTERNAL_TRANSACTION_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_BILLING_FACT_BY_ID「计费事实」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 BILLING_FACT_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_BILLING_FACT_BY_ORDER「计费事实（按订单）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 ORDER_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_BILLING_FACT_BY_ATTEMPT「计费事实（按支付尝试）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 PAYMENT_ATTEMPT_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_BILLING_FACT_BY_CHANNEL_REFUND「计费事实（按渠道退款）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 CHANNEL_REFUND_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_ACCOUNT_POSTING_BY_FACT「记账批次」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 BILLING_FACT_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_ACCOUNT_POSTING_BY_ID「记账批次（按批次 ID）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 ACCOUNT_POSTING_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_ACCOUNT_ENTRY_BY_POSTING「账户分录」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 2,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 ACCOUNT_POSTING_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_JOURNAL_ENTRY_BY_POSTING「会计凭证」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 ACCOUNT_POSTING_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_JOURNAL_ENTRY_BY_ID「会计凭证（按凭证 ID）」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 JOURNAL_ENTRY_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_JOURNAL_LINE_BY_ENTRY「凭证分录」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 2,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 JOURNAL_ENTRY_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_PLATFORM_TXN_BY_FACT「平台流水」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 1,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 BILLING_FACT_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "模板 JQ_STATEMENT_LINE_BY_PLATFORM_TXN「渠道对账单明细」ACTIVE 且参与联合查询",
+      "pass": true,
+      "evidence": {
+        "version": 2,
+        "jointQuery": {
+          "participating": true,
+          "reason": "参与联合查询，触发键 PLATFORM_TXN_ID",
+          "reasonCode": null
+        }
+      }
+    },
+    {
+      "name": "J1 联合查询设置可读",
+      "pass": true,
+      "evidence": {
+        "entryKeyTypes": [
+          {
+            "groupName": "收单",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "CHECKOUT_SESSION_ID",
+            "keyTypeName": "收银台会话 ID",
+            "sortNo": 10,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "收单",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "ORDER_ID",
+            "keyTypeName": "交易订单 ID",
+            "sortNo": 20,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "收单",
+            "inputHint": "ord_ 开头的交易订单号",
+            "keyTypeCode": "ORDER_NO",
+            "keyTypeName": "交易订单号",
+            "sortNo": 21,
+            "valuePattern": "ord_([0-9A-Za-z]{30}|[A-Za-z0-9_-]{22})",
+            "valueType": "STRING"
+          },
+          {
+            "groupName": "收单",
+            "inputHint": "客户系统的订单号，1—128 个可见 ASCII 字符",
+            "keyTypeCode": "CLIENT_ORDER_ID",
+            "keyTypeName": "客户订单号",
+            "sortNo": 22,
+            "valuePattern": "[!-~]{1,128}",
+            "valueType": "STRING"
+          },
+          {
+            "groupName": "收单",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "REFUND_REQUEST_ID",
+            "keyTypeName": "退款申请 ID",
+            "sortNo": 30,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "收单",
+            "inputHint": "rfd_ 开头的 34 位退款单号",
+            "keyTypeCode": "REFUND_REQUEST_NO",
+            "keyTypeName": "退款单号",
+            "sortNo": 31,
+            "valuePattern": "rfd_[0-9A-Za-z]{30}",
+            "valueType": "STRING"
+          },
+          {
+            "groupName": "支付",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "PAYMENT_INTENT_ID",
+            "keyTypeName": "支付意图 ID",
+            "sortNo": 40,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "支付",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "PAYMENT_ATTEMPT_ID",
+            "keyTypeName": "支付尝试 ID",
+            "sortNo": 50,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "支付",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "PAYMENT_ACTION_ID",
+            "keyTypeName": "支付动作 ID",
+            "sortNo": 60,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "支付",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "CHANNEL_REFUND_ID",
+            "keyTypeName": "渠道退款 ID",
+            "sortNo": 65,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "支付",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "CHANNEL_TRANSACTION_REF_ID",
+            "keyTypeName": "渠道交易引用 ID",
+            "sortNo": 70,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "渠道",
+            "inputHint": "渠道返回的交易号",
+            "keyTypeCode": "EXTERNAL_TRANSACTION_ID",
+            "keyTypeName": "渠道交易号",
+            "sortNo": 80,
+            "valuePattern": null,
+            "valueType": "STRING"
+          },
+          {
+            "groupName": "争议",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "DISPUTE_CASE_ID",
+            "keyTypeName": "争议案件 ID",
+            "sortNo": 90,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "计费",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "BILLING_FACT_ID",
+            "keyTypeName": "计费事实 ID",
+            "sortNo": 100,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "账户",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "ACCOUNT_POSTING_ID",
+            "keyTypeName": "记账批次 ID",
+            "sortNo": 110,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "总账",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "JOURNAL_ENTRY_ID",
+            "keyTypeName": "会计凭证 ID",
+            "sortNo": 120,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "出款",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "PAYOUT_ID",
+            "keyTypeName": "出款 ID",
+            "sortNo": 130,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "归属维度",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "CLIENT_ID",
+            "keyTypeName": "客户 ID",
+            "sortNo": 900,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "归属维度",
+            "inputHint": "5 位运营主体编号，如 AE001",
+            "keyTypeCode": "ENTITY_NO",
+            "keyTypeName": "运营主体编号",
+            "sortNo": 910,
+            "valuePattern": "[A-Z0-9]{5}",
+            "valueType": "STRING"
+          }
+        ],
+        "groups": [
+          {
+            "groupName": "收单",
+            "rank": 10
+          },
+          {
+            "groupName": "支付",
+            "rank": 40
+          },
+          {
+            "groupName": "渠道",
+            "rank": 75
+          },
+          {
+            "groupName": "计费",
+            "rank": 100
+          },
+          {
+            "groupName": "账户",
+            "rank": 110
+          },
+          {
+            "groupName": "总账",
+            "rank": 120
+          },
+          {
+            "groupName": "对账",
+            "rank": 140
+          }
+        ],
+        "limits": {
+          "maxDepth": 6,
+          "maxEntryValues": 20,
+          "maxExecutionsPerStep": 20,
+          "maxRowsPerTemplate": 100,
+          "maxTemplateExecutions": 60,
+          "maxTotalSeconds": 60,
+          "maxValuesPerKey": 50
+        }
+      }
+    },
+    {
+      "name": "J2 可达预览 ORDER_NO：JQ_* 无 excluded，阶段 6 模拟到的 24 个模板都可达",
+      "pass": true,
+      "evidence": {
+        "reachableJq": 32,
+        "missing": [],
+        "excluded": []
+      }
+    },
+    {
+      "name": "J2 可达预览 PAYMENT_INTENT_ID：JQ_* 无 excluded，阶段 6 模拟到的 16 个模板都可达",
+      "pass": true,
+      "evidence": {
+        "reachableJq": 31,
+        "missing": [],
+        "excluded": []
+      }
+    },
+    {
+      "name": "J2 可达预览 REFUND_REQUEST_NO：JQ_* 无 excluded，阶段 6 模拟到的 9 个模板都可达",
+      "pass": true,
+      "evidence": {
+        "reachableJq": 32,
+        "missing": [],
+        "excluded": []
+      }
+    },
+    {
+      "name": "J2 可达预览 EXTERNAL_TRANSACTION_ID：JQ_* 无 excluded，阶段 6 模拟到的 16 个模板都可达",
+      "pass": true,
+      "evidence": {
+        "reachableJq": 31,
+        "missing": [],
+        "excluded": []
+      }
+    },
+    {
+      "name": "J2 可达预览 JOURNAL_ENTRY_ID：JQ_* 无 excluded，阶段 6 模拟到的 23 个模板都可达",
+      "pass": true,
+      "evidence": {
+        "reachableJq": 31,
+        "missing": [],
+        "excluded": []
+      }
+    }
+  ],
+  "verdict": true
+}

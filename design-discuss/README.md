@@ -23,6 +23,8 @@
 
 新增讨论（2026-10-26，2026-10-27补充，2026-10-29 三轮修订）：[`tax/`](tax/design.md)——数字产品 / SaaS 的 MoR 税务模型，首批 PayFac Partner 的 AE / SA / EG 主体；领域层事实服务、事件登记、持有方操作、`NOT_MANAGED` 出口、人工处理边界；公共模型与动态地区包、19 张业务表、四组14个流程与人工处理清单、48个验收案例及36条合成数据；三国注册与申报通用调研。状态：**已确认**（2026-10-29）：决定 [`2026-10-29-tax-domain-fact-service.md`](../agent-docs/decisions/2026-10-29-tax-domain-fact-service.md)；首个需求 [`requirements/20261029/tax-结账算税与事件登记/`](../requirements/20261029/tax-结账算税与事件登记/requirement.md)（阶段 1 评审稿）。字段见 [`database.md`](tax/database.md)，地区规则与来源见 [`regional-policies.md`](tax/regional-policies.md)，案例见 [`cases.md`](tax/cases.md)，流程见 [`flows.md`](tax/flows.md)，逐表走数见 [`example-data.md`](tax/example-data.md)；配套 [`tax.pen`](tax/tax.pen) 十张画板及 [PDF](tax/assets/tax-design.pdf)（仍是 2026-10-27 版本，未同步三轮修订）。
 
+新增讨论（2026-10-29）：[`joint-query/`](joint-query/design.md)——联合查询：在 Platform data-query 模板上标注业务键类型（参数 = 可按什么查，列 = 结果含什么键，分链路键 / 维度键），用户选键类型输入单号后按键类型图逐层展开，查出整条链路并给出来源；已定 J1–J8、首批键类型清单、执行算法与护栏、退款单号走数例子、`t_query_key_type` 与接口增量、待定 Q1–Q7。`joint-query.pen` 四张画板（定位与概念；键类型图与走数例子；执行与护栏；数据、接口与待定）。状态：**已确认**（2026-10-29）：决定 [`2026-10-29-data-query-joint-query.md`](../agent-docs/decisions/2026-10-29-data-query-joint-query.md)，需求 `requirements/20261029/platform-support-联合查询/`（阶段 1—8 完成，2026-10-30 已部署 mor-test）。
+
 - 新讨论：新建 `<主题>/design.md`，开头写一行状态（讨论中 / 已确认（链接决定）/ 已实施（链接需求目录））和日期；需要图再加 `<主题>/<主题>.pen`，附件放 `<主题>/assets/`。
 - 讨论定稿：登记决定记录，并在决定记录里链接本目录的文件；`AGENTS.md` 只在需要路由时加一条。
 - 已实施后：实现偏离设计的地方回写到 `design.md`（标注日期与原因），不改历史结论的措辞。

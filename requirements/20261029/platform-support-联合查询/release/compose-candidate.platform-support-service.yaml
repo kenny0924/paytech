@@ -1,0 +1,14 @@
+# platform-support 联合查询 · mor-test 候选覆盖（阶段 6 准备 2026-10-30；阶段 7 须用户授权，由主会话执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag 仅供辨认）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-jq-rel = main 6eaf1bd3（含税务提交 fa21d5ce）+ 联合查询 236 个文件（Code-MoR-jq-m，未提交）。
+# env：现网 REQ-03 覆盖只设 image，其余全部来自主 compose 与 env_file；DATAQUERY_HTTP_CALLERS_0 已在 compose.applications.yaml，
+# 这里显式重复同值（联合查询 J1—J3 与单模板执行只允许 operations-console-bff 调用），渲染结果与现网逐键逐值相同（scripts/env_check.sh）。
+services:
+  platform-support-service:
+    # 新：键类型维护（K1—K5）、联合查询（J1—J3）、模板 joint 字段与 rowCap；须先执行 sql/mor_platform-forward.sql（t_query_key_type、joint_json 列）。
+    # 相对现网另带税务提交的两个共享条目（events.yaml 的 tax 消费方、console-resource-capabilities 的 OPERATIONS_FINANCE_TAX）。
+    image: sha256:9444b483a6353960ad8d6f5e3f69c14667b5b1570616ea015ea356c4a4111298  # mor-test/platform-support-service:jq-20261030a（JAR 96d24bed8dd469fd）
+    environment:
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff

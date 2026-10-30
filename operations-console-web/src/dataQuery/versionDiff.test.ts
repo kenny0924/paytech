@@ -35,7 +35,7 @@ const base: TemplateVersion = {
     { name: 'currency', type: 'STRING', maxLength: 3 },
   ],
   columns: [{ name: 'email', mask: 'FULL' }], constraints: { maxRows: 1000, timeoutSeconds: 5, pagingMode: 'OFFSET', maxPageSize: 100, countAllowed: true },
-  restoredFromVersionNo: null, changeNote: null, createdBy: '1', createTime: '2026-10-20T00:00:00Z',
+  restoredFromVersionNo: null, changeNote: null, createdBy: '1', createTime: '2026-10-20T00:00:00Z', joint: null, jointQuery: null,
 };
 
 test('参数 / 约束 / 列 / 数据源变化', () => {

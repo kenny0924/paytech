@@ -300,6 +300,30 @@
       "updatedBy": "10002",
       "createTime": "2026-10-22T01:02:03.123456Z",
       "updateTime": "2026-10-22T02:03:04.654321Z",
+      "joint": {
+        "subjectKeyType": "ORDER_ID",
+        "keyParameter": {
+          "name": "merchantId",
+          "keyType": "MERCHANT_ID"
+        },
+        "columns": [
+          {
+            "name": "order_no",
+            "keyType": "ORDER_ID",
+            "keyRole": "LINK"
+          },
+          {
+            "name": "card_no",
+            "keyType": "CARD_FINGERPRINT",
+            "keyRole": "DIMENSION"
+          }
+        ]
+      },
+      "jointQuery": {
+        "participating": true,
+        "reasonCode": null,
+        "reason": "参与联合查询，触发键 MERCHANT_ID"
+      },
       "currentVersion": {
         "templateId": "7312345678901230001",
         "versionNo": 3,
@@ -349,6 +373,30 @@
           "maxPageSize": 100,
           "countAllowed": true,
           "cursorColumns": null
+        },
+        "joint": {
+          "subjectKeyType": "ORDER_ID",
+          "keyParameter": {
+            "name": "merchantId",
+            "keyType": "MERCHANT_ID"
+          },
+          "columns": [
+            {
+              "name": "order_no",
+              "keyType": "ORDER_ID",
+              "keyRole": "LINK"
+            },
+            {
+              "name": "card_no",
+              "keyType": "CARD_FINGERPRINT",
+              "keyRole": "DIMENSION"
+            }
+          ]
+        },
+        "jointQuery": {
+          "participating": true,
+          "reasonCode": null,
+          "reason": "参与联合查询，触发键 MERCHANT_ID"
         },
         "restoredFromVersionNo": 1,
         "changeNote": "恢复自版本 1",
@@ -412,6 +460,25 @@
         "maxPageSize": 100,
         "countAllowed": true,
         "cursorColumns": null
+      },
+      "joint": {
+        "subjectKeyType": "ORDER_ID",
+        "keyParameter": {
+          "name": "merchantId",
+          "keyType": "MERCHANT_ID"
+        },
+        "columns": [
+          {
+            "name": "order_no",
+            "keyType": "ORDER_ID",
+            "keyRole": "LINK"
+          },
+          {
+            "name": "card_no",
+            "keyType": "CARD_FINGERPRINT",
+            "keyRole": "DIMENSION"
+          }
+        ]
       },
       "changeNote": null
     },
@@ -487,6 +554,7 @@
         "countAllowed": true,
         "cursorColumns": null
       },
+      "joint": null,
       "changeNote": "增加状态筛选",
       "expectedVersion": 4
     },
@@ -621,6 +689,8 @@
         "countAllowed": true,
         "cursorColumns": null
       },
+      "joint": null,
+      "jointQuery": null,
       "restoredFromVersionNo": 1,
       "changeNote": "恢复自版本 1",
       "createdBy": "10002",
@@ -709,6 +779,25 @@
         "maxPageSize": 100,
         "countAllowed": true,
         "cursorColumns": null
+      },
+      "joint": {
+        "subjectKeyType": "ORDER_ID",
+        "keyParameter": {
+          "name": "merchantId",
+          "keyType": "MERCHANT_ID"
+        },
+        "columns": [
+          {
+            "name": "order_no",
+            "keyType": "ORDER_ID",
+            "keyRole": "LINK"
+          },
+          {
+            "name": "card_no",
+            "keyType": "CARD_FINGERPRINT",
+            "keyRole": "DIMENSION"
+          }
+        ]
       }
     },
     "response": {

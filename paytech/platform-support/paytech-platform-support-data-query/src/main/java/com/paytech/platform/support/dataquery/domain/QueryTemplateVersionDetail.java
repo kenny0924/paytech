@@ -33,6 +33,12 @@ public final class QueryTemplateVersionDetail {
     /** 版本内容。 */
     private final QueryTemplateDraft content;
 
+    /**
+     * 是否参与联合查询
+     * <li>按该版本内容与模板、数据源当前状态推算；版本没有联合查询配置时为 null。</li>
+     */
+    private final JointQueryParticipation jointParticipation;
+
     /** 恢复来源版本号；不是恢复生成时为 null。 */
     private final Integer restoredFromVersionNo;
 

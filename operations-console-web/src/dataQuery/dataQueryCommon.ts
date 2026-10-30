@@ -23,6 +23,14 @@ export const dataQueryPaths = {
   restoration: (templateId: string) => `${admin}/templates/${templateId}/restoration`,
   validations: `${admin}/template-validations`,
   trials: `${admin}/template-trials`,
+  keyTypes: `${admin}/key-types`,
+  keyType: (keyTypeId: string) => `${admin}/key-types/${keyTypeId}`,
+  keyTypeStatus: (keyTypeId: string) => `${admin}/key-types/${keyTypeId}/status`,
+  keyTypeOrder: `${admin}/key-type-order`,
+  jointSettings: '/data-query/v1/joint-query/settings',
+  jointGraph: (entryKeyType: string) => `/data-query/v1/joint-query/graph?entryKeyType=${encodeURIComponent(entryKeyType)}`,
+  jointSteps: '/data-query/v1/joint-query/steps',
+  execution: (templateCode: string) => `/data-query/v1/templates/${encodeURIComponent(templateCode)}/executions`,
 } as const;
 
 /** 页面路由（与 Console Resource frontend_route 及 pageRoutePaths 一致）。 */
@@ -31,6 +39,8 @@ export const dataQueryRoutes = {
   templates: '/data-query/templates',
   newTemplate: '/data-query/templates/new',
   template: (templateId: string) => `/data-query/templates/${templateId}`,
+  jointQuery: '/data-query/joint-query',
+  keyTypes: '/data-query/key-types',
 } as const;
 
 /** 按钮资源（块 131）：数据源维护、模板维护与试运行。没有按钮时页面只读。 */
@@ -69,7 +79,7 @@ export function pageDecoder<T>(decodeItem: (value: unknown) => T) {
   };
 }
 
-export interface DataQueryMutation { objectType: 'DATA_SOURCE' | 'QUERY_TEMPLATE'; objectId: string; objectCode: string; status: string; version: number }
+export interface DataQueryMutation { objectType: 'DATA_SOURCE' | 'QUERY_TEMPLATE' | 'QUERY_KEY_TYPE'; objectId: string; objectCode: string; status: string; version: number }
 
 /** 写回执：对象类型、编号与版本必须合法；传入 objectId 时必须是本次对象。 */
 export function decodeMutation(value: unknown, objectType: DataQueryMutation['objectType'], objectId?: string): DataQueryMutation {

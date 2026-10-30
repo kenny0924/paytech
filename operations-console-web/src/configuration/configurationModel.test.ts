@@ -45,8 +45,8 @@ test('Guard 默认项只来自服务端必需维度，数值形状保持 Rate/Co
   assert.equal(values.length, 4); assert.equal(values[0].concurrencyLimit, null); assert.equal(values[1].capacity, null); assert.equal(values[1].ruleType, 'CONCURRENCY');
 });
 test('已部署页面注册覆盖新菜单，组件及动作没有重复身份', () => {
-  assert.equal(pageCapabilities.length, 80);
-  assert.equal(new Set(pageCapabilities.map(p => p.componentKey)).size, 80);
+  assert.equal(pageCapabilities.length, 82);
+  assert.equal(new Set(pageCapabilities.map(p => p.componentKey)).size, 82);
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_RISK_UNDERWRITING')?.frontendRoute, '/risk/underwriting');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_REFERENCE_DATA')?.frontendRoute, '/reference-data');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_ONBOARDING_CONFIG')?.frontendRoute, '/client-onboarding/config');
@@ -55,6 +55,8 @@ test('已部署页面注册覆盖新菜单，组件及动作没有重复身份',
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_WORKFLOW_STARTED')?.frontendRoute, '/workflow/started');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_DATA_SOURCES')?.frontendRoute, '/data-query/data-sources');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_QUERY_TEMPLATES')?.frontendRoute, '/data-query/templates');
+  assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_JOINT_QUERY')?.frontendRoute, '/data-query/joint-query');
+  assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_QUERY_KEY_TYPES')?.frontendRoute, '/data-query/key-types');
   assert.equal(pageCapabilities.find(p => p.componentKey === 'OPERATIONS_EXTERNAL_STANDARD_APIS')?.frontendRoute, '/external-api/standard-apis');
   // 接入方页面已并入渠道详情（channel-connector 第二段），只保留旧地址跳转
   assert.equal(pageCapabilities.find(p => (p.componentKey as string) === 'OPERATIONS_EXTERNAL_INTEGRATIONS'), undefined);

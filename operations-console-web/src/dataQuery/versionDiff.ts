@@ -1,5 +1,6 @@
 import { maskLabel, pagingModeLabel, typeLabel } from './templateModel.ts';
 import type { ParameterDeclaration, QueryColumn, QueryConstraints, TemplateVersion } from './templateModel.ts';
+import { keyRoleLabel } from './keyTypeModel.ts';
 import { translator } from '../i18n/index.ts';
 
 const t = translator('data-query');
@@ -134,5 +135,31 @@ export function declarationChanges(before: TemplateVersion, after: TemplateVersi
   }
   for (const name of beforeColumns.keys()) if (!afterColumns.has(name)) result.push({ subject: t('diff.column', { name }), change: t('diff.removed') });
   if (before.dataSourceId !== after.dataSourceId) result.push({ subject: t('diff.dataSource'), change: `${before.dataSourceCode} → ${after.dataSourceCode}` });
+  return result;
+}
+
+/**
+ * 联合查询配置的差异（独立区块，technique 8.3）：参与与否、行主体、按什么查、带出的单号；键类型以编码显示（名称由页面另行提供时替换）。
+ */
+export function jointChanges(before: TemplateVersion, after: TemplateVersion, keyTypeName: (code: string) => string = code => code): DeclarationChange[] {
+  const result: DeclarationChange[] = [];
+  const x = before.joint; const y = after.joint;
+  if (!x && !y) return result;
+  if (!x || !y) {
+    result.push({ subject: t('diff.joint.participation'), change: y ? t('diff.joint.enabled') : t('diff.joint.disabled') });
+    if (!y) return result;
+  }
+  const name = (code: string | null | undefined) => code ? keyTypeName(code) : t('diff.none');
+  if (x?.subjectKeyType !== y.subjectKeyType) result.push({ subject: t('diff.joint.subject'), change: `${name(x?.subjectKeyType)} → ${name(y.subjectKeyType)}` });
+  const parameter = (joint: TemplateVersion['joint']) => joint?.keyParameter?.name ? `${joint.keyParameter.name} · ${name(joint.keyParameter.keyType)}` : t('diff.none');
+  if (parameter(x) !== parameter(y)) result.push({ subject: t('diff.joint.keyParameter'), change: `${parameter(x)} → ${parameter(y)}` });
+  const columnText = (column: { keyType: string; keyRole: string }) => `${name(column.keyType)} · ${keyRoleLabel(column.keyRole)}`;
+  const beforeColumns = new Map((x?.columns ?? []).map(column => [column.name, column])); const afterColumns = new Map(y.columns.map(column => [column.name, column]));
+  for (const [columnName, column] of afterColumns) {
+    const previous = beforeColumns.get(columnName); const subject = t('diff.joint.column', { name: columnName });
+    if (!previous) result.push({ subject, change: t('diff.added', { item: columnText(column) }) });
+    else if (columnText(previous) !== columnText(column)) result.push({ subject, change: `${columnText(previous)} → ${columnText(column)}` });
+  }
+  for (const columnName of beforeColumns.keys()) if (!afterColumns.has(columnName)) result.push({ subject: t('diff.joint.column', { name: columnName }), change: t('diff.removed') });
   return result;
 }

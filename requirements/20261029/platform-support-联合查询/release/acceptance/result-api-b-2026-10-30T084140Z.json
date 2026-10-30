@@ -1,0 +1,139 @@
+{
+  "target": "test",
+  "checks": [
+    {
+      "name": "发布 a 的 jq_api.py（不带 loadedSubjects）全部通过",
+      "pass": true,
+      "evidence": {
+        "exit": 0
+      }
+    },
+    {
+      "name": "B1 AC-13 订单号入口：每个对象只出现一次",
+      "pass": false,
+      "evidence": {
+        "duplicated": {
+          "BILLING_FACT_ID=241801538719309824": 2
+        }
+      }
+    },
+    {
+      "name": "B1 AC-13 执行数 16 < 24（模拟 16）",
+      "pass": true,
+      "evidence": {
+        "layers": [
+          [
+            "JQ_ORDER_BY_NO"
+          ],
+          [
+            "JQ_CHECKOUT_SESSION_BY_ORDER",
+            "JQ_REFUND_BY_ORDER",
+            "JQ_PAYMENT_INTENT_BY_ORDER",
+            "JQ_BILLING_FACT_BY_ORDER"
+          ],
+          [
+            "JQ_ACCOUNT_POSTING_BY_FACT",
+            "JQ_PLATFORM_TXN_BY_FACT",
+            "JQ_PAYMENT_INTENT_BY_ID",
+            "JQ_PAYMENT_ATTEMPT_BY_INTENT",
+            "JQ_PAYMENT_ATTEMPT_BY_ID",
+            "JQ_PAYMENT_ACTION_BY_ATTEMPT",
+            "JQ_BILLING_FACT_BY_ATTEMPT",
+            "JQ_CHANNEL_TXN_REF_BY_ID"
+          ],
+          [
+            "JQ_JOURNAL_ENTRY_BY_POSTING",
+            "JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID",
+            "JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID"
+          ],
+          []
+        ]
+      }
+    },
+    {
+      "name": "B1 AC-13 按自身 ID 查的订单 / 会话 / 计费事实 / 记账批次 / 会计凭证记入 alreadyLoaded",
+      "pass": true,
+      "evidence": {
+        "missing": [],
+        "alreadyLoaded": [
+          "JQ_ACCOUNT_ENTRY_BY_POSTING",
+          "JQ_ACCOUNT_POSTING_BY_ID",
+          "JQ_BILLING_FACT_BY_ID",
+          "JQ_CHECKOUT_SESSION_BY_ID",
+          "JQ_JOURNAL_ENTRY_BY_ID",
+          "JQ_JOURNAL_LINE_BY_ENTRY",
+          "JQ_ORDER_BY_ID",
+          "JQ_STATEMENT_LINE_BY_PLATFORM_TXN"
+        ]
+      }
+    },
+    {
+      "name": "B2 会计凭证入口：按自身 ID 查的记账批次、计费事实、订单照常执行且有数据，全部 SUCCEEDED",
+      "pass": true,
+      "evidence": {
+        "withRows": [
+          "JQ_ACCOUNT_ENTRY_BY_POSTING",
+          "JQ_ACCOUNT_POSTING_BY_FACT",
+          "JQ_ACCOUNT_POSTING_BY_ID",
+          "JQ_BILLING_FACT_BY_ATTEMPT",
+          "JQ_BILLING_FACT_BY_ID",
+          "JQ_BILLING_FACT_BY_ORDER",
+          "JQ_CHECKOUT_SESSION_BY_ORDER",
+          "JQ_JOURNAL_ENTRY_BY_ID",
+          "JQ_JOURNAL_ENTRY_BY_POSTING",
+          "JQ_JOURNAL_LINE_BY_ENTRY",
+          "JQ_ORDER_BY_ID",
+          "JQ_PLATFORM_TXN_BY_FACT"
+        ]
+      }
+    },
+    {
+      "name": "B3 ORDER_NO 与模拟一致（有数据节点 7、alreadyLoaded 8）",
+      "pass": true,
+      "evidence": {
+        "missingRows": [],
+        "missingSkip": []
+      }
+    },
+    {
+      "name": "B3 PAYMENT_INTENT_ID 与模拟一致（有数据节点 6、alreadyLoaded 3）",
+      "pass": true,
+      "evidence": {
+        "missingRows": [],
+        "missingSkip": []
+      }
+    },
+    {
+      "name": "B3 REFUND_REQUEST_NO 与模拟一致（有数据节点 4、alreadyLoaded 2）",
+      "pass": true,
+      "evidence": {
+        "missingRows": [],
+        "missingSkip": []
+      }
+    },
+    {
+      "name": "B3 EXTERNAL_TRANSACTION_ID 与模拟一致（有数据节点 8、alreadyLoaded 2）",
+      "pass": true,
+      "evidence": {
+        "missingRows": [],
+        "missingSkip": []
+      }
+    },
+    {
+      "name": "B3 JOURNAL_ENTRY_ID 与模拟一致（有数据节点 12、alreadyLoaded 2）",
+      "pass": true,
+      "evidence": {
+        "missingRows": [],
+        "missingSkip": []
+      }
+    },
+    {
+      "name": "B4 按需查看凭证分录（templateCodes、不带 loadedSubjects）6 行",
+      "pass": true,
+      "evidence": {
+        "nodes": 1
+      }
+    }
+  ],
+  "verdict": false
+}

@@ -1,0 +1,238 @@
+{
+  "passed": 20,
+  "total": 20,
+  "demo": {
+    "templates": {
+      "JQ_REFUND_BY_NO": "241672337223585792",
+      "JQ_REFUND_BY_ORDER": "241672337726902272",
+      "JQ_ORDER_BY_ID": "241672338179887104",
+      "JQ_SESSION_BY_ID": "241672338779672576",
+      "JQ_INTENT_BY_ORDER": "241672339320737792",
+      "JQ_INTENT_BY_ID": "241672339886968832",
+      "JQ_ATTEMPT_BY_INTENT": "241672464109670400",
+      "JQ_ATTEMPT_BY_ID": "241672465397321728",
+      "JQ_ACTION_BY_ATTEMPT": "241672466550755328",
+      "JQ_BILLING_BY_ORDER": "241672467838406656",
+      "JQ_ORDER_BY_CLIENT_ORDER_ID": "241672469000228864",
+      "JQ_ORDER_BY_CLIENT": "241672470581481472",
+      "JQ_SLOW_ORDER": "241672471458091008"
+    },
+    "keyTypes": {
+      "JQ_E2E_SEQ": "241672332832149504"
+    },
+    "dataSource": {
+      "code": "FIXTURE_JQ",
+      "id": "241672330982461440"
+    }
+  },
+  "results": [
+    {
+      "step": "数据源 FIXTURE_JQ ACTIVE",
+      "ok": true,
+      "detail": {
+        "dataSourceId": "241672330982461440"
+      }
+    },
+    {
+      "step": "K1 列表含首批 26 个键类型且按 sortNo 升序",
+      "ok": true,
+      "detail": {
+        "total": 27
+      }
+    },
+    {
+      "step": "K1 按状态 / 关键字筛选",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "step": "K2 编码重复 400",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED",
+        "fields": [],
+        "detail": "键类型编码已存在: JQ_E2E_SEQ"
+      }
+    },
+    {
+      "step": "K2 正则含前瞻断言 422 valuePattern",
+      "ok": true,
+      "detail": {
+        "status": 422,
+        "code": "VALIDATION_ERROR",
+        "fields": [
+          "valuePattern"
+        ],
+        "detail": "请求字段校验未通过"
+      }
+    },
+    {
+      "step": "K3 修改加版本",
+      "ok": true,
+      "detail": {
+        "objectType": "QUERY_KEY_TYPE",
+        "objectId": "241672332832149504",
+        "objectCode": "JQ_E2E_SEQ",
+        "status": "ACTIVE",
+        "version": 6
+      }
+    },
+    {
+      "step": "K3 版本过期 409",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "code": "CONCURRENT_REQUEST",
+        "fields": [],
+        "detail": "键类型已被其他操作修改，请刷新后重试: JQ_E2E_SEQ，当前版本 6，请求版本 5"
+      }
+    },
+    {
+      "step": "K3 不存在 404",
+      "ok": true,
+      "detail": {
+        "status": 404,
+        "code": "NOT_FOUND",
+        "fields": [],
+        "detail": "资源不存在"
+      }
+    },
+    {
+      "step": "K4 停用 / 同状态不加版本 / 启用",
+      "ok": true,
+      "detail": {
+        "off": {
+          "objectType": "QUERY_KEY_TYPE",
+          "objectId": "241672332832149504",
+          "objectCode": "JQ_E2E_SEQ",
+          "status": "INACTIVE",
+          "version": 7
+        },
+        "same": {
+          "objectType": "QUERY_KEY_TYPE",
+          "objectId": "241672332832149504",
+          "objectCode": "JQ_E2E_SEQ",
+          "status": "INACTIVE",
+          "version": 7
+        },
+        "on": {
+          "objectType": "QUERY_KEY_TYPE",
+          "objectId": "241672332832149504",
+          "objectCode": "JQ_E2E_SEQ",
+          "status": "ACTIVE",
+          "version": 8
+        }
+      }
+    },
+    {
+      "step": "K5 未覆盖全部键类型 400",
+      "ok": true,
+      "detail": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED",
+        "fields": [],
+        "detail": "排序必须恰好包含全部 27 个键类型且不能重复，本次提交 26 项"
+      }
+    },
+    {
+      "step": "K5 任一版本不符 409",
+      "ok": true,
+      "detail": {
+        "status": 409,
+        "code": "CONCURRENT_REQUEST",
+        "fields": [],
+        "detail": "键类型已被其他操作修改，请刷新后重试: CHECKOUT_SESSION_ID，当前版本 2，请求版本 11"
+      }
+    },
+    {
+      "step": "K5 按原顺序整体重写 sortNo = 序号 × 10",
+      "ok": true,
+      "detail": {
+        "count": 27
+      }
+    },
+    {
+      "step": "模板 JQ_ATTEMPT_BY_INTENT 保存",
+      "ok": true,
+      "detail": {
+        "warnings": [
+          "INFO:参与联合查询，触发键 PAYMENT_INTENT_ID"
+        ]
+      }
+    },
+    {
+      "step": "模板 JQ_ATTEMPT_BY_ID 保存",
+      "ok": true,
+      "detail": {
+        "warnings": [
+          "INFO:参与联合查询，触发键 PAYMENT_ATTEMPT_ID"
+        ]
+      }
+    },
+    {
+      "step": "模板 JQ_ACTION_BY_ATTEMPT 保存",
+      "ok": true,
+      "detail": {
+        "warnings": [
+          "INFO:参与联合查询，触发键 PAYMENT_ATTEMPT_ID"
+        ]
+      }
+    },
+    {
+      "step": "模板 JQ_BILLING_BY_ORDER 保存",
+      "ok": true,
+      "detail": {
+        "warnings": [
+          "INFO:参与联合查询，触发键 ORDER_ID"
+        ]
+      }
+    },
+    {
+      "step": "模板 JQ_ORDER_BY_CLIENT_ORDER_ID 保存",
+      "ok": true,
+      "detail": {
+        "warnings": [
+          "INFO:参与联合查询，触发键 CLIENT_ORDER_ID"
+        ]
+      }
+    },
+    {
+      "step": "模板 JQ_ORDER_BY_CLIENT 保存",
+      "ok": true,
+      "detail": {
+        "warnings": [
+          "INFO:参与联合查询，触发键 CLIENT_ID"
+        ]
+      }
+    },
+    {
+      "step": "模板 JQ_SLOW_ORDER 保存",
+      "ok": true,
+      "detail": {
+        "warnings": [
+          "INFO:参与联合查询，触发键 ORDER_ID"
+        ]
+      }
+    },
+    {
+      "step": "演示模板 13 个就绪",
+      "ok": true,
+      "detail": {
+        "JQ_REFUND_BY_NO": "241672337223585792",
+        "JQ_REFUND_BY_ORDER": "241672337726902272",
+        "JQ_ORDER_BY_ID": "241672338179887104",
+        "JQ_SESSION_BY_ID": "241672338779672576",
+        "JQ_INTENT_BY_ORDER": "241672339320737792",
+        "JQ_INTENT_BY_ID": "241672339886968832",
+        "JQ_ATTEMPT_BY_INTENT": "241672464109670400",
+        "JQ_ATTEMPT_BY_ID": "241672465397321728",
+        "JQ_ACTION_BY_ATTEMPT": "241672466550755328",
+        "JQ_BILLING_BY_ORDER": "241672467838406656",
+        "JQ_ORDER_BY_CLIENT_ORDER_ID": "241672469000228864",
+        "JQ_ORDER_BY_CLIENT": "241672470581481472",
+        "JQ_SLOW_ORDER": "241672471458091008"
+      }
+    }
+  ]
+}

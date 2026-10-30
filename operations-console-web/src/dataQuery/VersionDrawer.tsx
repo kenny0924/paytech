@@ -6,7 +6,8 @@ import { QueryFailure } from '../tenantAccess/TenantAccessView';
 import { dataQueryPaths, localTime } from './dataQueryCommon';
 import { decodeSaveResult, decodeTemplateVersion, decodeVersionPage } from './templateModel';
 import type { SaveResult, TemplateVersion, VersionSummary } from './templateModel';
-import { declarationChanges, lineDiff, sideBySide } from './versionDiff';
+import { declarationChanges, jointChanges, lineDiff, sideBySide } from './versionDiff';
+import { useKeyTypes } from './useKeyTypes';
 import { ConflictBanner, Note, useResource } from './DataQueryParts';
 import { useDataQueryCommand } from './useDataQueryCommand';
 
@@ -81,6 +82,8 @@ export function VersionDrawer({ templateId, templateCode, currentVersionNo, expe
 function VersionCompare({ before, after }: { before: TemplateVersion; after: TemplateVersion }) {
   const rows = useMemo(() => sideBySide(lineDiff(before.body, after.body)), [before.body, after.body]);
   const changes = useMemo(() => declarationChanges(before, after), [before, after]);
+  const keyTypes = useKeyTypes();
+  const joint = useMemo(() => jointChanges(before, after, code => keyTypes.byCode.get(code)?.keyTypeName ?? code), [before, after, keyTypes.byCode]);
   const removed = rows.filter(row => row.left?.kind === 'removed').length; const added = rows.filter(row => row.right?.kind === 'added').length;
   const t = useT('data-query');
   return <>
@@ -95,6 +98,9 @@ function VersionCompare({ before, after }: { before: TemplateVersion; after: Tem
     <div className="dq-sub-title">{t('versions.declarationChanges')}</div>
     {changes.length === 0 ? <p className="muted">{t('versions.noChanges')}</p>
       : <dl className="dq-changes">{changes.map((change, index) => <div key={index}><dt>{change.subject}</dt><dd>{change.change}</dd></div>)}</dl>}
+    <div className="dq-sub-title">{t('versions.jointChanges')}</div>
+    {joint.length === 0 ? <p className="muted">{after.joint ? t('versions.noJointChanges') : t('versions.jointNotConfigured')}</p>
+      : <dl className="dq-changes">{joint.map((change, index) => <div key={index}><dt>{change.subject}</dt><dd>{change.change}</dd></div>)}</dl>}
     {before.dataSourceId === after.dataSourceId && <p className="muted">{t('versions.dataSourceUnchanged', { code: after.dataSourceCode })}</p>}
   </>;
 }

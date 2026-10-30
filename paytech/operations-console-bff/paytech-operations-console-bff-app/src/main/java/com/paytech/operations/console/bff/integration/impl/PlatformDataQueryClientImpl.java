@@ -1,6 +1,7 @@
 package com.paytech.operations.console.bff.integration.impl;
 
 import static com.paytech.operations.console.bff.integration.impl.DataQueryContractConverter.DATA_SOURCE;
+import static com.paytech.operations.console.bff.integration.impl.DataQueryContractConverter.QUERY_KEY_TYPE;
 import static com.paytech.operations.console.bff.integration.impl.DataQueryContractConverter.QUERY_TEMPLATE;
 import static com.paytech.operations.console.bff.integration.impl.DataQueryContractConverter.convert;
 import static com.paytech.operations.console.bff.integration.impl.DataQueryContractConverter.mutation;
@@ -18,28 +19,42 @@ import com.paytech.operations.console.bff.integration.PlatformDataQueryClient;
 import com.paytech.operations.console.bff.service.model.ConfigurationManagementModels.ConfigurationMutationResponseBody;
 import com.paytech.operations.console.bff.service.model.OperatorContext;
 import com.paytech.operations.console.bff.service.model.dataquery.request.ChangeDataSourceStatusRequestBody;
+import com.paytech.operations.console.bff.service.model.dataquery.request.ChangeQueryKeyTypeStatusRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.request.ChangeQueryTemplateStatusRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.request.CreateDataSourceRequestBody;
+import com.paytech.operations.console.bff.service.model.dataquery.request.CreateQueryKeyTypeRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.request.CreateQueryTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.request.ExecuteDataQueryRequestBody;
+import com.paytech.operations.console.bff.service.model.dataquery.request.JointQueryStepRequestBody;
+import com.paytech.operations.console.bff.service.model.dataquery.request.QueryKeyTypeOrderItem;
+import com.paytech.operations.console.bff.service.model.dataquery.request.ReorderQueryKeyTypesRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.request.RestoreQueryTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.request.TestDataSourceConnectionRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.request.TrialQueryTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.request.UpdateDataSourceRequestBody;
+import com.paytech.operations.console.bff.service.model.dataquery.request.UpdateQueryKeyTypeRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.request.UpdateQueryTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.request.ValidateQueryTemplateRequestBody;
 import com.paytech.operations.console.bff.service.model.dataquery.response.DataQueryResultResponseBody;
 import com.paytech.operations.console.bff.service.model.dataquery.response.DataSourceConnectionTestResponseBody;
 import com.paytech.operations.console.bff.service.model.dataquery.response.DataSourceResponseBody;
+import com.paytech.operations.console.bff.service.model.dataquery.response.JointQueryGraphResponseBody;
+import com.paytech.operations.console.bff.service.model.dataquery.response.JointQuerySettingsResponseBody;
+import com.paytech.operations.console.bff.service.model.dataquery.response.JointQueryStepResponseBody;
+import com.paytech.operations.console.bff.service.model.dataquery.response.QueryKeyTypeOrderResult;
+import com.paytech.operations.console.bff.service.model.dataquery.response.QueryKeyTypeResponseBody;
 import com.paytech.operations.console.bff.service.model.dataquery.response.QueryTemplateDetailResponseBody;
 import com.paytech.operations.console.bff.service.model.dataquery.response.QueryTemplateSummaryResponseBody;
 import com.paytech.operations.console.bff.service.model.dataquery.response.QueryTemplateValidationResponseBody;
 import com.paytech.operations.console.bff.service.model.dataquery.response.QueryTemplateVersionResponseBody;
 import com.paytech.operations.console.bff.service.model.dataquery.response.QueryTemplateVersionSummaryResponseBody;
+import com.paytech.operations.console.bff.service.model.dataquery.response.ReorderQueryKeyTypesResponseBody;
 import com.paytech.operations.console.bff.service.model.dataquery.response.SaveQueryTemplateResponseBody;
 import com.paytech.operations.console.bff.service.model.dataquery.response.TrialQueryTemplateResponseBody;
 import com.paytech.platform.support.api.dataquery.DataQueryExecutionApi;
 import com.paytech.platform.support.api.dataquery.DataSourceManagementApi;
+import com.paytech.platform.support.api.dataquery.JointQueryApi;
+import com.paytech.platform.support.api.dataquery.QueryKeyTypeManagementApi;
 import com.paytech.platform.support.api.dataquery.QueryTemplateManagementApi;
 
 import lombok.AllArgsConstructor;
@@ -47,7 +62,8 @@ import lombok.AllArgsConstructor;
 /**
  * Platform 数据查询的 HTTP 转发：每个入口只调用一次 Platform，不重试，没有聚合
  * <li>查询与写操作都把会话 Account ID 与 Session ID 填入 X-Gateway-Actor-Subject / X-Gateway-Session-Id；
- * 执行另带 X-Caller-Service=operations-console-bff。请求幂等由 Gateway 负责。</li>
+ * 执行与联合查询另带 X-Caller-Service=operations-console-bff。请求幂等由 Gateway 负责。</li>
+ * <li>联合查询的循环状态由页面保存，BFF 每次只转发一层，不聚合、不重试。</li>
  * <li>带 Body 的请求遇 Platform 422 时，字段错误按本次页面 Body 投影并保留 Platform 文案（见 {@link DataQueryValidationConverter}）。</li>
  *
  * @author Claude
@@ -61,6 +77,8 @@ public class PlatformDataQueryClientImpl implements PlatformDataQueryClient {
     private final DataSourceManagementApi dataSourceApi;
     private final QueryTemplateManagementApi templateApi;
     private final DataQueryExecutionApi executionApi;
+    private final QueryKeyTypeManagementApi keyTypeApi;
+    private final JointQueryApi jointApi;
 
     /** 数据源分页；元素身份为数据源 ID。 */
     @Override
@@ -234,6 +252,79 @@ public class PlatformDataQueryClientImpl implements PlatformDataQueryClient {
             context.sessionId(), templateCode,
             convert(request, com.paytech.platform.support.api.dataquery.request.ExecuteDataQueryRequestBody.class)),
             DataQueryResultResponseBody.class);
+    }
+
+    /** 键类型分页；元素身份为键类型 ID。 */
+    @Override
+    public PagingResponseBody<QueryKeyTypeResponseBody> listQueryKeyTypes(OperatorContext context, String status,
+        String keyword, Integer page, Integer size) {
+        var result = keyTypeApi.listQueryKeyTypes(context.accountId(), context.sessionId(), status, keyword, page, size);
+        return page(result, page, size, QueryKeyTypeResponseBody.class, QueryKeyTypeResponseBody::getKeyTypeId);
+    }
+
+    /** 新建键类型；回执须为本次编码且状态为 ACTIVE。 */
+    @Override
+    public ConfigurationMutationResponseBody createQueryKeyType(OperatorContext context,
+        CreateQueryKeyTypeRequestBody request) {
+        return mutate(request, () -> keyTypeApi.createQueryKeyType(context.accountId(), context.sessionId(),
+            convert(request, com.paytech.platform.support.api.dataquery.request.CreateQueryKeyTypeRequestBody.class)),
+            QUERY_KEY_TYPE, null, request.getKeyTypeCode(), "ACTIVE");
+    }
+
+    /** 修改键类型；回执须为本次键类型。 */
+    @Override
+    public ConfigurationMutationResponseBody updateQueryKeyType(OperatorContext context, String keyTypeId,
+        UpdateQueryKeyTypeRequestBody request) {
+        return mutate(request, () -> keyTypeApi.updateQueryKeyType(context.accountId(), context.sessionId(),
+            keyTypeId, convert(request, com.paytech.platform.support.api.dataquery.request.UpdateQueryKeyTypeRequestBody.class)),
+            QUERY_KEY_TYPE, keyTypeId, null, null);
+    }
+
+    /** 启停键类型；回执须为本次键类型且状态等于目标状态。 */
+    @Override
+    public ConfigurationMutationResponseBody changeQueryKeyTypeStatus(OperatorContext context, String keyTypeId,
+        ChangeQueryKeyTypeStatusRequestBody request) {
+        return mutate(request, () -> keyTypeApi.changeQueryKeyTypeStatus(context.accountId(), context.sessionId(),
+            keyTypeId, convert(request, com.paytech.platform.support.api.dataquery.request.ChangeQueryKeyTypeStatusRequestBody.class)),
+            QUERY_KEY_TYPE, keyTypeId, null, request.getStatus());
+    }
+
+    /** 整体排序；结果须按本次顺序逐项对应同一键类型，新顺序号与新版本为正。 */
+    @Override
+    public ReorderQueryKeyTypesResponseBody reorderQueryKeyTypes(OperatorContext context,
+        ReorderQueryKeyTypesRequestBody request) {
+        var mapped = send(request, () -> keyTypeApi.reorderQueryKeyTypes(context.accountId(), context.sessionId(),
+            convert(request, com.paytech.platform.support.api.dataquery.request.ReorderQueryKeyTypesRequestBody.class)), ReorderQueryKeyTypesResponseBody.class);
+        require(mapped.getItems() != null && mapped.getItems().stream().allMatch(item -> item.getSortNo() > 0
+            && item.getVersion() > 0));
+        require(request.getItems().stream().map(QueryKeyTypeOrderItem::getKeyTypeId).toList()
+            .equals(mapped.getItems().stream().map(QueryKeyTypeOrderResult::getKeyTypeId).toList()));
+        return mapped;
+    }
+
+    /** 联合查询页初始化数据，以本服务名作为调用方。 */
+    @Override
+    public JointQuerySettingsResponseBody getJointQuerySettings(OperatorContext context) {
+        return convert(jointApi.getJointQuerySettings(CALLER_SERVICE, context.accountId(), context.sessionId()),
+            JointQuerySettingsResponseBody.class);
+    }
+
+    /** 可达预览；无 Body 请求的 Platform 422 不投影字段（Foundation 按协议错误 502），入口无效应由 Platform 以 400 原因返回。 */
+    @Override
+    public JointQueryGraphResponseBody getJointQueryGraph(OperatorContext context, String entryKeyType) {
+        return convert(jointApi.getJointQueryGraph(CALLER_SERVICE, context.accountId(), context.sessionId(),
+            entryKeyType), JointQueryGraphResponseBody.class);
+    }
+
+    /** 执行一层；返回的层号须与请求一致，键值的 422 按本次 Body 投影（如 keys[0].values[3]）。 */
+    @Override
+    public JointQueryStepResponseBody executeJointQueryStep(OperatorContext context,
+        JointQueryStepRequestBody request) {
+        var mapped = send(request, () -> jointApi.executeJointQueryStep(CALLER_SERVICE, context.accountId(),
+            context.sessionId(), convert(request, com.paytech.platform.support.api.dataquery.request.JointQueryStepRequestBody.class)),
+            JointQueryStepResponseBody.class);
+        require(mapped.getDepth() == request.getDepth());
+        return mapped;
     }
 
     /** 带 Body 的转发：结果严格投影，422 字段错误按本次 Body 投影。 */

@@ -25,4 +25,7 @@ public final class QueryTemplateDraft {
 
     /** 约束。 */
     private final QueryConstraints constraints;
+
+    /** 联合查询配置；为 null 表示不参与。试运行忽略。 */
+    private final QueryJointConfig joint;
 }

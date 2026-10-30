@@ -31,6 +31,8 @@ import com.paytech.platform.support.api.authentication.OperationsAuthenticationA
 import com.paytech.platform.support.api.authorization.OperationsAuthorizationApi;
 import com.paytech.platform.support.api.dataquery.DataQueryExecutionApi;
 import com.paytech.platform.support.api.dataquery.DataSourceManagementApi;
+import com.paytech.platform.support.api.dataquery.JointQueryApi;
+import com.paytech.platform.support.api.dataquery.QueryKeyTypeManagementApi;
 import com.paytech.platform.support.api.dataquery.QueryTemplateManagementApi;
 import com.paytech.platform.support.api.enums.DataQueryErrorCode;
 import com.paytech.platform.support.api.enums.GatewayConfigurationErrorCode;
@@ -276,8 +278,20 @@ public class PlatformClientConfiguration {
         return operationsDataQueryPlatformProxyFactory.createClient(DataQueryExecutionApi.class);
     }
 
+    /** 联合查询键类型维护复用数据查询专用代理。 */
+    @Bean
+    QueryKeyTypeManagementApi queryKeyTypeManagementApi(HttpServiceProxyFactory operationsDataQueryPlatformProxyFactory) {
+        return operationsDataQueryPlatformProxyFactory.createClient(QueryKeyTypeManagementApi.class);
+    }
+
+    /** 联合查询复用数据查询专用代理：单层执行预算 8 秒，在 9 秒读超时内。 */
+    @Bean
+    JointQueryApi jointQueryApi(HttpServiceProxyFactory operationsDataQueryPlatformProxyFactory) {
+        return operationsDataQueryPlatformProxyFactory.createClient(JointQueryApi.class);
+    }
+
     /**
-     * 数据查询三个合同的共用代理
+     * 数据查询各合同（数据源、模板、执行、键类型、联合查询）的共用代理
      * <li>登记 DataQueryErrorCode；开启字段错误与 Owner detail 外显，Platform 的业务拒绝原因（如启用检查未通过、有模板引用）原样到达页面。</li>
      * <li>读取超时取 operations.data-query-read-timeout（默认 9 秒，小于 Gateway 路由响应超时上限 10 秒），容纳连接检查与查询执行。</li>
      * <li>Platform 503 DATA_SOURCE_UNAVAILABLE 保留该 Code，页面据此提示稍后重试；其他 5xx 仍为 DEPENDENCY_UNAVAILABLE。</li>

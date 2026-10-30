@@ -1,0 +1,21 @@
+{"run":"zh-CN-390","step":"01a-empty","check":{"chips":"收单 — 支付 — 计费","empty":"收单 — 支付 — 计费 输入一个单号，查出它在这些系统中的关联数据 从任何一环进入都可以：收银台会话 ID、交易订单 ID、交易订单号、客户订单号……上下游会自动带出 能查到哪些数据？"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"01b-type-menu","check":"常用 收银台会话 ID 1—19 位数字 ✓ 交易订单 ID 1—19 位数字 交易订单号 ord_ 开头的交易订单号 客户订单号 客户系统的订单号，1—128 个可见 ASCII 字符 退款申请 ID 1—19 位数字 更多 退款单号 rfd_ 开头的 34 位退款单号 支付意图 ID 1—19 位数字 支付尝试 ID 1—19 位数字 支付动作 ID 1—19 位数字 渠道退款 ID 1—19 位数字 渠道交易引用 ID 1—19 位数字 渠道交易号 渠道返回的交易号 争议案件 ID 1—19 位数字 计费事实 ID 1—19 位数字 记账批次 ID 1—19 位数字 会计凭证 ID 1—19 位数字 出款 ID 1—19 位数字 客户 ID 1—19 位数字 运营主体编号 5 位运营主体编号，如 AE001","page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"08a-format-error","check":{"message":"退款单号：rfd_ 开头的 34 位退款单号。第 2 行不符合，改正或删除后再查询。","invalidLines":1},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"08b-coverage","check":"","page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"02a-refund-overview","check":{"summary":"找到 10 项关联数据，涉及 3 个系统 3.7 秒 · 来自只读库，可能有几秒延迟","nodes":"收单 4 项 ▴ 收银台会话 · 按会话 ID 1 › 交易订单 · 按订单 ID 1 › 退款申请 · 按退款单号 起点 › 退款申请 · 按订单 2 › 支付 5 项 ▾ 计费 1 项 ▾ 查看链路图","detail":""},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"06b-mobile-detail","check":"收银台会话 · 按会话 ID 1 条 路径：退款申请 · 按退款单号 → 交易订单 · 按订单 ID → 收银台会话 · 按会话 ID 技术详情 checkout_session_id order_id session_status 6001 5001 定位 COMPLETED","page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"06c-mobile-graph","check":{"cards":10},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"07a-attempt-overview","check":{"summary":"找到 9 项关联数据，涉及 3 个系统 3.7 秒 · 来自只读库，可能有几秒延迟","lanes":["收单\n3 项 ▾","支付\n5 项 ▴","计费\n1 项 ▾"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"03a-multi-client","check":{"summary":"找到 11 项关联数据，涉及 3 个系统 1.5 秒 · 来自只读库，可能有几秒延迟 命中 2 个客户 全部 3101 3102","clients":["全部","3101","3102"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"03b-client-filtered","check":{"summary":"找到 10 项关联数据，涉及 3 个系统 1.5 秒 · 来自只读库，可能有几秒延迟 命中 2 个客户 全部 3101 3102","nodes":"收单 收银台会话 · 按会话 ID 1 交易订单 · 按客户订单号 起点 交易订单 · 按订单 ID 1 退款申请 · 按订单 2 支付 支付意图 · 按订单（source_id VARCHAR） 2 支付意图 · 按意图 ID 2 支付尝试 · 按意图（游标分页，每页 1 行） 1+ 支付尝试 · 按尝试 ID 1 支付动作 · 按尝试（偏移分页，每页 1 行） 1 计费 计费事实 · 按订单（order_ref VARCHAR） 2 收单 4 项 ▴ 收银台会话 · 按会话 ID 1 › 交易订单 · 按客户订单号 起点 › 交易订单 · 按订单 ID 1 › 退款申请 · 按订单 2 › 支付 5 项 ▾ 计费 1 项 ▾ 收起链路图"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"04a-key-types","check":{"groups":["收单","支付","渠道","争议","计费","账户","总账","出款","对账","归属维度"],"rows":27},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"04b-editor-regex","check":{"head":"交易订单 ID ORDER_ID · 被 9 个模板使用 ✕","valueTypeDisabled":1,"test":"✓ 通过","help":"名称 分组 收单 可选已有分组或输入新名称，例如“入驻”“出款”。同一分组在链路图里画在同一列。 值类型 整数 默认角色 链路 已被模板使用，值类型不能修改。默认角色只影响新标注时的默认值。 可以作为查询入口 输入提示 显示在单号类型菜单里；格式不对时也用它提示用户 格式校验（可选） 收起 ▴ ✓ 通过 整串匹配，留空不校验；只校验入口输入的值。"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"04c-regex-fail","check":"✕ 不通过","page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{"run":"zh-CN-390","step":"05a-joint-tab","check":"","page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":390}}
+{
+ "console": 6,
+ "httpErrors": [],
+ "deliberate": 0,
+ "writes": [],
+ "bundles": 52
+}

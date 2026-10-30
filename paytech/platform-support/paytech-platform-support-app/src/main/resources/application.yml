@@ -278,6 +278,20 @@ data-query:
   # 各环境配置：[operations-console-bff]
   http:
     callers: []
+  # 联合查询护栏与执行器（修改需重启）：单步上限由服务端执行；max-depth、max-template-executions、max-total-seconds
+  # 经 /data-query/v1/joint-query/settings 下发由页面累计执行。step-budget 不得大于 limits.max-timeout（启动校验）。
+  joint:
+    max-entry-values: 20 # 入口值个数上限，1..50
+    max-values-per-key: 50 # 单键类型的值个数上限，1..50；发现的键超过时截取并记 MAX_VALUES_PER_KEY
+    max-rows-per-template: 100 # 每个模板执行只取第一页，行数 min(本值, 模板上限)
+    max-executions-per-step: 20 # 单步模板执行数上限，超出标 SKIPPED（STEP_EXECUTION_LIMIT）
+    max-depth: 6 # 页面累计：最大层数；请求 depth 不超过本值 - 1
+    max-template-executions: 60 # 页面累计：一次联合查询的模板执行总数
+    max-total-seconds: 60 # 页面累计：一次联合查询的总时长秒数
+    step-budget: 8s # 单步预算，低于 BFF 9s 与 Gateway 10s；剩余不足 1 秒不再启动新执行（SKIPPED）
+    step-concurrency: 8 # 单步并发
+    executor-threads: 16 # 共享执行器线程数，不小于 step-concurrency
+    executor-queue: 64 # 共享执行器队列容量，满时该执行标 SKIPPED（EXECUTOR_BUSY）
 
 # 内部调用身份（D26，Foundation paytech-internal-auth）：默认 OFF，不校验入站、不附加出站 Token；DUAL 接受 Token 并回退 X-Caller-Service。
 internal-auth:

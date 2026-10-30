@@ -126,6 +126,9 @@ web:
       - /data-query-admin/v1/data-source-connection-tests
       - /data-query-admin/v1/template-trials
       - /data-query/v1
+      # 键类型维护与排序随数据查询配置只记元数据（技术方案 8.6）；联合查询各层结果已由 /data-query/v1 覆盖。
+      - /data-query-admin/v1/key-types
+      - /data-query-admin/v1/key-type-order
       # 渠道技术账号配置请求含渠道参数与凭据明文，账号接口只记元数据。
       - /channel-admin/v1/channel-accounts
       # 银行账户新建请求含银行账号明文（I-05），银行账户接口只记元数据。

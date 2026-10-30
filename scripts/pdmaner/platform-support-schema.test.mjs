@@ -193,3 +193,38 @@ test('Workflow console block 127 registers the agreed rows inside its ID block a
   assert.match(block, /'DISABLED', 1, @workflow_console_actor_id/);
   assert.doesNotMatch(block.replace(/^--.*$/gm, ''), /'ACTIVE', 1, @workflow_console_actor_id/);
 });
+
+test('Joint query block 144 registers key types, menus and routes inside its ID block', () => {
+  const initial = readFileSync(new URL('docs/database/sql/platform-support-initial-data.sql', service), 'utf8');
+  const start = initial.indexOf('-- Joint query (2026-10-29');
+  assert.ok(start > 0);
+  const block = initial.slice(initial.lastIndexOf('-- ----', start), initial.indexOf('COMMIT;', start) + 'COMMIT;'.length);
+  const change = readFileSync(new URL('docs/database/sql/changes/2026-10-29-joint-query-registration-144.sql', service),
+    'utf8');
+  assert.ok(change.endsWith(block + '\n'), 'registration-144 change file must repeat the initial-data block verbatim');
+  const rows = table => {
+    const statement = block.match(new RegExp(`INSERT INTO ${table} \\([^)]*\\)\\s*VALUES([\\s\\S]*?);`));
+    return statement ? [...statement[1].matchAll(/^\s+\((9000000000001\d{5})/gm)].map(m => m[1]) : [];
+  };
+  const counts = Object.fromEntries(['t_query_key_type', 't_console_resource', 't_gateway_route', 't_gateway_route_header',
+    't_gateway_route_query_param', 't_gateway_guard_rule'].map(table => [table, rows(table)]));
+  assert.deepEqual(Object.fromEntries(Object.entries(counts).map(([table, ids]) => [table, ids.length])), {
+    t_query_key_type: 29, t_console_resource: 2, t_gateway_route: 8, t_gateway_route_header: 36,
+    t_gateway_route_query_param: 5, t_gateway_guard_rule: 48 });
+  const ids = Object.values(counts).flat();
+  assert.equal(new Set(ids).size, ids.length);
+  for (const id of ids) assert.match(id, /^900000000000144\d{3}$/);
+  assert.deepEqual([...block.matchAll(/'(operations-(?:query-key-type|joint-query)-[a-z-]+)'/g)].map(m => m[1]), [
+    'operations-query-key-type-list', 'operations-query-key-type-create', 'operations-query-key-type-update',
+    'operations-query-key-type-status', 'operations-query-key-type-order', 'operations-joint-query-settings',
+    'operations-joint-query-graph', 'operations-joint-query-step']);
+  for (const permission of block.matchAll(/'HUMAN_PERMISSION', (\d+),/g)) {
+    assert.ok(['900000000000131101', '900000000000131103', '900000000000131104'].includes(permission[1]));
+  }
+  assert.match(block, /'OPERATIONS_JOINT_QUERY', 'OPERATIONS', 'MENU', 900000000000131301, '联合查询', '\/data-query\/joint-query', 'OPERATIONS_JOINT_QUERY', 900000000000131104, 5, 'DISABLED'/);
+  assert.match(block, /'OPERATIONS_QUERY_KEY_TYPES', 'OPERATIONS', 'MENU', 900000000000131301, '键类型', '\/data-query\/key-types', 'OPERATIONS_QUERY_KEY_TYPES', 900000000000131101, 30, 'DISABLED'/);
+  const routes = block.match(/INSERT INTO t_gateway_route \([^)]*\) VALUES([\s\S]*?);/)[1];
+  assert.equal([...routes.matchAll(/'DISABLED', 1, @joint_query_actor_id/g)].length, 8);
+  assert.equal([...block.matchAll(/'ACTIVE', 1, @joint_query_actor_id/g)].length, 29, 'only key types are ACTIVE');
+  assert.doesNotMatch(block, /INSERT INTO t_permission|INSERT INTO t_role_permission/);
+});

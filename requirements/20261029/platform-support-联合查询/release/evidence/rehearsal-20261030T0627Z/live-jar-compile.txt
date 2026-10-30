@@ -1,0 +1,2 @@
+live-jar dormant  COMPILE OK: routes loaded=647, effective=633, block loaded=8, block ACTIVE=0, block effective=0
+live-jar active   COMPILE OK: routes loaded=647, effective=641, block loaded=8, block ACTIVE=8, block effective=8

@@ -1,0 +1,6 @@
+# 联合查询修订 c · mor-test ops-web 回滚覆盖（2026-10-30；执行须用户授权，由主会话执行）。
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+services:
+  operations-console-web:
+    # 现网镜像（联合查询修订 b jq-20261030b；dist 273 个文件）。
+    image: sha256:d236f1d53e219418515926dbe872d92e3f33278b187ae356c4a62b4d72de2dd4

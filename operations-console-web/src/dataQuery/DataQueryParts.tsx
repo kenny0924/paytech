@@ -10,8 +10,11 @@ import { decodeDataSourcePage } from './dataSourceModel';
 import type { DataSource } from './dataSourceModel';
 import type { DataQueryCommand } from './useDataQueryCommand';
 
-/** 读取单个资源；path 为 null 时不请求（例如新建模板）。切换或卸载时取消旧请求。未给失败标题时用通用的"详情加载失败"。 */
-export function useResource<T>(path: string | null, decode: (value: unknown) => T, notifyTitle?: string) {
+/**
+ * 读取单个资源；path 为 null 时不请求（例如新建模板）。切换或卸载时取消旧请求。未给失败标题时用通用的"详情加载失败"。
+ * silent 为 true 时失败不弹通知，由调用方就地显示（避免同一错误出现两次）。
+ */
+export function useResource<T>(path: string | null, decode: (value: unknown) => T, notifyTitle?: string, silent = false) {
   const notify = useErrorNotification(); const t = useT('data-query');
   const [data, setData] = useState<T>(); const [loading, setLoading] = useState(path !== null);
   const [failure, setFailure] = useState<unknown>(); const [revision, setRevision] = useState(0);
@@ -20,11 +23,11 @@ export function useResource<T>(path: string | null, decode: (value: unknown) => 
     const controller = new AbortController(); setLoading(true); setFailure(undefined);
     session.request<T>(path, { signal: controller.signal }, decode)
       .then(value => { if (!controller.signal.aborted) setData(value); })
-      .catch(error => { if (!controller.signal.aborted) { setFailure(error); notify(error, notifyTitle ?? t('parts.detailLoadFailed')); } })
+      .catch(error => { if (!controller.signal.aborted) { setFailure(error); if (!silent) notify(error, notifyTitle ?? t('parts.detailLoadFailed')); } })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   // t 随语言包刷新换新，只用于失败通知标题，不应触发重新查询
-  }, [path, decode, notify, notifyTitle, revision]);
+  }, [path, decode, notify, notifyTitle, silent, revision]);
   return { data, loading, failure, refresh: () => setRevision(v => v + 1) };
 }
 

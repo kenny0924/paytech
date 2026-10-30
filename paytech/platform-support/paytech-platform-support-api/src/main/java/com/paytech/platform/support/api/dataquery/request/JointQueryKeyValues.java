@@ -1,0 +1,30 @@
+package com.paytech.platform.support.api.dataquery.request;
+
+import java.util.List;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+
+/** 一个键类型及其键值；联合查询请求的本层键与响应的 discoveredKeys 共用。 */
+@Getter
+@Setter
+public class JointQueryKeyValues {
+
+    /** 键类型编码。 */
+    @NotBlank
+    @Pattern(regexp = "[A-Z][A-Z0-9_]{1,63}", message = "keyType 只能为大写字母开头的大写字母、数字与下划线，2..64 位")
+    private String keyType;
+
+    /**
+     * 键值
+     * <li>字符串，1..50 项，每项 1..128 字符；depth=0 时服务端另限 1..maxEntryValues（20）项。</li>
+     * <li>INTEGER 键去前导零后须在 0..9223372036854775807；STRING 键原样。规范化后在本次请求内去重。</li>
+     */
+    @NotEmpty
+    @Size(max = 50)
+    private List<@NotBlank @Size(max = 128) String> values;
+}

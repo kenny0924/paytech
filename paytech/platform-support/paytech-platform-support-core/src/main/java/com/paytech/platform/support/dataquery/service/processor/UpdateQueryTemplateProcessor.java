@@ -7,7 +7,10 @@ import org.springframework.stereotype.Component;
 
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.platform.support.auditsecurity.domainservice.service.OperationsAuditService;
+import com.paytech.platform.support.dataquery.core.enums.QueryTemplateStatus;
+import com.paytech.platform.support.dataquery.domain.DataSourceDetail;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateChange;
+import com.paytech.platform.support.dataquery.domain.QueryTemplateDetail;
 import com.paytech.platform.support.dataquery.domain.SaveQueryTemplateCommand;
 import com.paytech.platform.support.dataquery.domainservice.service.DataSourceService;
 import com.paytech.platform.support.dataquery.domainservice.service.QueryTemplateService;
@@ -15,13 +18,15 @@ import com.paytech.platform.support.dataquery.domainservice.validator.QueryTempl
 import com.paytech.platform.support.dataquery.service.processor.request.UpdateQueryTemplateRequest;
 import com.paytech.platform.support.dataquery.service.processor.response.QueryTemplateSaveResult;
 import com.paytech.platform.support.dataquery.template.TemplateProblem;
+import com.paytech.platform.support.dataquery.template.TemplateValidationResult;
 
 import lombok.AllArgsConstructor;
 
 /**
  * 修改模板：保存为新版本并立即生效（不复核）
  * <li>按模板持资源锁；事务前确认权限、模板存在并做保存校验，有错误返回 422 且不写库。</li>
- * <li>本地事务内复核权限、核对原版本、对数据源加共享锁确认 ACTIVE、插入新版本行并切换当前版本与冗余数据源、版本加一、登记审计。</li>
+ * <li>本地事务内复核权限、核对原版本、对数据源与引用的键类型加共享锁确认 ACTIVE、插入新版本行并切换当前版本与冗余数据源、
+ * 版本加一、登记审计。联合查询参与提示按模板当前状态推算。</li>
  * <li>内容未变也生成新版本，保存记录即版本历史。</li>
  */
 @Component
@@ -47,9 +52,14 @@ public class UpdateQueryTemplateProcessor
         // 保存校验
         support.requirePermission(request.getActor(), request.getSession(),
             DataQueryManagementSupport.TEMPLATE_MANAGE_PERMISSION);
-        DataQueryManagementSupport.requireFound(templates.findQueryTemplate(request.getTemplateId()));
-        List<TemplateProblem> warnings = DataQueryManagementSupport.requireValid(validator.validate(request.getDraft(),
-            dataSources.findDataSource(request.getDraft().getDataSourceId())));
+        QueryTemplateDetail current = DataQueryManagementSupport.requireFound(
+            templates.findQueryTemplate(request.getTemplateId()));
+        DataSourceDetail dataSource = dataSources.findDataSource(request.getDraft().getDataSourceId());
+        TemplateValidationResult result = validator.validate(request.getDraft(), dataSource,
+            support.referencedKeyTypes(request.getDraft()));
+        List<TemplateProblem> warnings = DataQueryManagementSupport.withParticipation(
+            DataQueryManagementSupport.requireValid(result), result, request.getDraft(), dataSource,
+            current.getStatus() == QueryTemplateStatus.ACTIVE);
 
         // 本地保存与审计
         QueryTemplateChange change = support.write(request.getActor(), request.getSession(),

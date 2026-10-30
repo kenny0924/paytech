@@ -10,6 +10,9 @@ import com.paytech.platform.support.dataquery.core.enums.QueryTemplateStatus;
 /** t_query_template 仓储。 */
 public interface QueryTemplateRepository {
 
+    /** findAll 的读取上限；模板总量为两位数，上限只防止异常数据拖垮单次请求。 */
+    int MAX_ALL_TEMPLATES = 5000;
+
     /**
      * 插入新模板。
      *
@@ -27,6 +30,17 @@ public interface QueryTemplateRepository {
     /** 分页查询；筛选为 null 表示不限。 */
     List<QueryTemplate> findPage(Long dataSourceId, QueryTemplateStatus status, String keyword,
         PagingRequestBody paging);
+
+    /**
+     * 全部模板，按编码升序；联合查询每次请求现读构图与引用检查使用。
+     *
+     * @param status 状态筛选；null 表示不限
+     * @return 模板，最多 {@value #MAX_ALL_TEMPLATES} 个
+     */
+    List<QueryTemplate> findAll(QueryTemplateStatus status);
+
+    /** 同 {@link #findAll}，在调用方事务内加共享锁读取最新提交，与并发的模板保存、启停互斥。 */
+    List<QueryTemplate> findAllForShare(QueryTemplateStatus status);
 
     /** 与分页相同条件的总数。 */
     long count(Long dataSourceId, QueryTemplateStatus status, String keyword);

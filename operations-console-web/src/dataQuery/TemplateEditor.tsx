@@ -23,6 +23,10 @@ import { mergeResultColumns, syncColumns, syncParameters, unreferencedParameters
 import { VersionDrawer } from './VersionDrawer';
 import { ConflictBanner, Note, StatusTag, useDataSourceOptions, useResource } from './DataQueryParts';
 import { useDataQueryCommand } from './useDataQueryCommand';
+import { JointPanel } from './JointPanel';
+import { jointBody, jointProblems } from './jointModel';
+import type { KeyTypeInfo } from './jointModel';
+import { useKeyTypes } from './useKeyTypes';
 
 interface Props { resources: ConsoleResource[]; onAuthorizationChanged: () => void; templateId: string | null }
 
@@ -41,7 +45,7 @@ export function TemplateEditor({ resources, onAuthorizationChanged, templateId }
     onReload={detail.refresh} onAuthorizationChanged={onAuthorizationChanged} />;
 }
 
-type EditorTab = 'body' | DeclarationTab | 'problems';
+type EditorTab = 'body' | DeclarationTab | 'joint' | 'problems';
 type Focus = { tab: DeclarationTab; index?: number; field?: string; at: number } | null;
 /** 校验结果连同被校验的正文：编辑器标记按该正文换算，之后的编辑由 CodeMirror 映射位置。 */
 type ValidationState = { problems: TemplateProblem[]; fingerprint: string; body: string } | null;
@@ -59,6 +63,9 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
   const [tab, setTab] = useState<EditorTab>('body');
   const [trialOpen, setTrialOpen] = useState(false);
   const [focus, setFocus] = useState<Focus>(null);
+  const [jointFocus, setJointFocus] = useState<{ field: string; at: number } | null>(null);
+  const keyTypes = useKeyTypes();
+  const keyTypeInfos = useMemo(() => new Map<string, KeyTypeInfo>(keyTypes.items.map(item => [item.keyTypeCode, item])), [keyTypes.items]);
   const [highlightSource, setHighlightSource] = useState(false);
   const [saving, setSaving] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -68,7 +75,8 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
   const fingerprint = draftFingerprint(draft);
   const dirty = fingerprint !== baseline;
   const readOnly = !canManage;
-  const contentKey = useMemo(() => JSON.stringify(contentBody(draft)), [draft]);
+  // 校验请求带上联合查询配置，服务端按 8.4 口径返回 joint.* 问题与参与情况。
+  const contentKey = useMemo(() => JSON.stringify({ ...contentBody(draft), joint: jointBody(draft.joint) }), [draft]);
   const latest = useRef({ contentKey, body: draft.body }); latest.current = { contentKey, body: draft.body };
 
   // 正文停顿 400 ms 后按引用同步参数与列；只响应载入后的正文修改，打开已有模板不会产生未保存修改。
@@ -108,7 +116,14 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [contentKey, canManage, draft.dataSourceId, draft.body, onAuthorizationChanged]);
 
-  const problems = validation?.problems ?? [];
+  // 联合查询配置不进入校验接口（technique 8.3）：就地检查的问题与服务端问题合并显示，保存时服务端仍完整校验。
+  const jointLocal = useMemo(() => jointProblems(draft.joint, draft.parameters, draft.columns, keyTypeInfos), [draft.joint, draft.parameters, draft.columns, keyTypeInfos]);
+  const serverProblems = validation?.problems ?? [];
+  // 服务端已返回 joint.* 问题时以服务端为准；否则（未选数据源、校验进行中）显示就地检查结果。
+  const serverJoint = serverProblems.some(problem => problem.field === 'joint' || problem.field?.startsWith('joint.'));
+  const problems = useMemo(() => [...serverProblems, ...(serverJoint ? [] : jointLocal)
+    .map(local => ({ level: local.level, line: null, column: null, field: local.field, message: local.message }))], [serverProblems, serverJoint, jointLocal]);
+  const jointErrors = jointLocal.filter(problem => problem.level === 'ERROR').length;
   const diagnostics = useMemo(() => validation ? problemDiagnostics(validation.body, validation.problems) : [], [validation]);
   const errors = problems.filter(problem => problem.level === 'ERROR');
   const warnings = problems.filter(problem => problem.level === 'WARNING');
@@ -125,6 +140,7 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
     else if (target.kind === 'parameter') { setTab('parameters'); setFocus({ tab: 'parameters', index: target.index, at: Date.now() }); }
     else if (target.kind === 'columns') { setTab('columns'); setFocus({ tab: 'columns', index: target.index, at: Date.now() }); }
     else if (target.kind === 'constraints') { setTab('constraints'); setFocus({ tab: 'constraints', field: target.field, at: Date.now() }); }
+    else if (target.kind === 'joint') { setTab('joint'); setJointFocus({ field: target.field, at: Date.now() }); }
     else if (target.kind === 'dataSource') { setHighlightSource(true); window.setTimeout(() => setHighlightSource(false), 2000); }
   }
 
@@ -143,9 +159,11 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
     const params = { code: result.templateCode, versionNo: result.currentVersionNo };
     const text = outcome === 'saved' ? t('template.announce.saved', params) : outcome === 'created' ? t('template.announce.created', params)
       : t('template.announce.restored', params);
-    if (result.warnings.length) notification.warning({ title: text, description: <ul className="dq-warning-list">{result.warnings.map((warning, index) =>
-      <li key={index}>{warning.line ? t('template.warningAtLine', { line: warning.line, message: warning.message }) : warning.message}</li>)}</ul>, duration: 8 });
-    else notification.success({ title: text, duration: 4 });
+    const list = result.warnings.length ? <ul className="dq-warning-list">{result.warnings.map((warning, index) =>
+      <li key={index}>{warning.line ? t('template.warningAtLine', { line: warning.line, message: warning.message }) : warning.message}</li>)}</ul> : undefined;
+    // INFO（例如“参与联合查询”）随成功提示显示；有 WARNING 时整体按警告提示。
+    if (result.warnings.some(warning => warning.level !== 'INFO')) notification.warning({ title: text, description: list, duration: 8 });
+    else notification.success({ title: text, description: list, duration: list ? 6 : 4 });
   }
   // 保存失败的 422 字段错误进入问题面板（只在新的字段错误到达时同步）。
   const saveErrors = command.fieldErrors;
@@ -209,6 +227,11 @@ function Workspace({ detail, canManage, onReload, onAuthorizationChanged }: {
         { key: 'columns', label: <span>{t('template.tab.columns')} <Tag className="dq-tab-count">{draft.columns.length}</Tag></span>,
           children: <ColumnList rows={draft.columns} onChange={columns => change({ columns })} readOnly={readOnly}
             focusIndex={focus?.tab === 'columns' ? focus.index : undefined} /> },
+        { key: 'joint', label: <span>{t('template.tab.joint')} {jointErrors ? <Tag color="red">{t('problems.errorCount', { count: jointErrors })}</Tag>
+          : draft.joint.enabled ? <Tag color="blue" className="dq-tab-count">{t('joint.on')}</Tag> : null}</span>,
+          children: <JointPanel value={draft.joint} onChange={joint => change({ joint })} parameters={draft.parameters} columns={draft.columns}
+            keyTypes={keyTypeInfos} keyTypesFailed={!!keyTypes.failure} problems={jointLocal} participation={detail?.jointQuery ?? null} readOnly={readOnly}
+            focusField={jointFocus?.field} /> },
         { key: 'problems', label: <span>{t('template.tab.problems')} {errors.length ? <Tag color="red">{t('problems.errorCount', { count: errors.length })}</Tag> : null}{warnings.length ? <Tag color="gold">{t('problems.warningCount', { count: warnings.length })}</Tag> : null}</span>,
           children: <ProblemPanel problems={problems} validating={validating} stale={stale} enabled={canManage && !!draft.dataSourceId} onLocate={locate} /> },
       ]} />

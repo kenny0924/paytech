@@ -162,7 +162,7 @@ public class CheckWorkflowDataQueryProcessor extends AbstractLockProcessor<Check
             engine.variables(context));
         try {
             DataQueryResult result = dataQuery.process(new RunDataQueryTemplateRequest(config.queryCode(), params, null,
-                null, false, null, null, properties.getDataQuery().timeoutSeconds(), CALLER));
+                null, false, null, null, properties.getDataQuery().timeoutSeconds(), CALLER, null));
             return reader.read(result.getColumns().stream().map(DataQueryResult.Column::getName).toList(),
                 result.getRows(), result.isHasMore(), config.outputs());
         } catch (RuntimeException failure) {

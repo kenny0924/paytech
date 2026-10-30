@@ -25,6 +25,9 @@ public interface QueryTemplateVersionRepository {
     /** 一批模板各自的当前版本，键为模板 ID。 */
     Map<Long, QueryTemplateVersion> findCurrent(Collection<QueryTemplate> templates);
 
+    /** 同 {@link #findCurrent}，在调用方事务内加共享锁读取最新提交的版本行。 */
+    Map<Long, QueryTemplateVersion> findCurrentForShare(Collection<QueryTemplate> templates);
+
     /** 分页查询某模板的版本，按版本号倒序。 */
     List<QueryTemplateVersion> findPage(long templateId, PagingRequestBody paging);
 

@@ -47,4 +47,11 @@ public class ValidateQueryTemplateRequestBody {
     @NotNull
     @Valid
     private QueryTemplateConstraints constraints;
+
+    /**
+     * 联合查询配置（joint_json）草稿
+     * <li>可选；为 null 时不做联合查询校验。问题的 field 形如 joint.columns[2].keyRole，参与情况以 WARNING 提示。</li>
+     */
+    @Valid
+    private QueryTemplateJointConfig joint;
 }

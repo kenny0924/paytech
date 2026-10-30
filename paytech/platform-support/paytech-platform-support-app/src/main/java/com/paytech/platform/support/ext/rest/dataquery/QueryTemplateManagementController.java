@@ -88,7 +88,8 @@ public class QueryTemplateManagementController implements QueryTemplateManagemen
         return converter.save(createProcessor.process(new CreateQueryTemplateRequest(actor, session,
             request.getTemplateCode(), DataQueryConverter.text(request.getTemplateName()),
             DataQueryConverter.text(request.getDescription()), converter.draft(request.getDataSourceId(),
-                request.getBody(), request.getParameters(), request.getColumns(), request.getConstraints()),
+                request.getBody(), request.getParameters(), request.getColumns(), request.getConstraints(),
+                request.getJoint()),
             DataQueryConverter.text(request.getChangeNote()))));
     }
 
@@ -102,7 +103,7 @@ public class QueryTemplateManagementController implements QueryTemplateManagemen
             converter.id(templateId, "templateId"), request.getExpectedVersion(),
             DataQueryConverter.text(request.getTemplateName()), DataQueryConverter.text(request.getDescription()),
             converter.draft(request.getDataSourceId(), request.getBody(), request.getParameters(), request.getColumns(),
-                request.getConstraints()),
+                request.getConstraints(), request.getJoint()),
             DataQueryConverter.text(request.getChangeNote()))));
     }
 
@@ -150,7 +151,7 @@ public class QueryTemplateManagementController implements QueryTemplateManagemen
         ValidateQueryTemplateRequestBody request) {
         return converter.validation(validateProcessor.process(new ValidateQueryTemplateRequest(actor, session,
             converter.draft(request.getDataSourceId(), request.getBody(), request.getParameters(), request.getColumns(),
-                request.getConstraints()))));
+                request.getConstraints(), request.getJoint()))));
     }
 
     /** 转换草稿与分页后委托试运行。 */
@@ -159,7 +160,7 @@ public class QueryTemplateManagementController implements QueryTemplateManagemen
         TrialQueryTemplateRequestBody request) {
         return converter.trial(trialProcessor.process(new TrialQueryTemplateRequest(actor, session,
             converter.draft(request.getDataSourceId(), request.getBody(), request.getParameters(), request.getColumns(),
-                request.getConstraints()),
+                request.getConstraints(), null),
             request.getParams(), request.getPage(), request.getSize(), request.isWithTotal(), request.getCursor())));
     }
 }

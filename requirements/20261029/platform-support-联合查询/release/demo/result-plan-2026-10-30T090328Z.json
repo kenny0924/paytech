@@ -1,0 +1,70 @@
+{
+  "target": "test",
+  "actions": [
+    "create key type ACCOUNT_ENTRY_ID",
+    "create key type JOURNAL_LINE_ID",
+    "create key type STATEMENT_LINE_ID",
+    "update template JQ_ACCOUNT_ENTRY_BY_POSTING (v1 → new version)",
+    "update template JQ_JOURNAL_LINE_BY_ENTRY (v1 → new version)",
+    "update template JQ_STATEMENT_LINE_BY_PLATFORM_TXN (v1 → new version)"
+  ],
+  "checks": [
+    {
+      "name": "数据源 MOR_ACQUIRING_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060837141135360",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_LEDGER_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060840412692480",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_RECONCILIATION_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060841868115968",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_CHANNEL_CONNECTOR_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "239060842660839424",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_PAYMENT_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "241819401710551040",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_BILLING_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "241819402499080192",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "name": "数据源 MOR_ACCOUNT_REPLICA 现状",
+      "pass": true,
+      "evidence": {
+        "dataSourceId": "241819403446992896",
+        "status": "ACTIVE"
+      }
+    }
+  ],
+  "verdict": true
+}

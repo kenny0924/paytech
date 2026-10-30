@@ -149,9 +149,9 @@ public class DataQueryRunner {
             throw new InvalidParameterException("该模板不是游标分页，不能传 cursor");
         }
         if (mode == QueryPagingMode.NONE) {
-            return QueryPaging.none(Math.min(constraints.getMaxRows(), limits.getMaxRows()));
+            return QueryPaging.none(capped(Math.min(constraints.getMaxRows(), limits.getMaxRows()), run.getRowCap()));
         }
-        int size = pageSize(constraints, run.getSize());
+        int size = pageSize(constraints, run.getSize(), run.getRowCap());
         if (mode == QueryPagingMode.CURSOR) {
             return QueryPaging.cursor(size);
         }
@@ -163,14 +163,19 @@ public class DataQueryRunner {
         return QueryPaging.offset(size, offset, run.isWithTotal());
     }
 
-    /** 页大小：缺省为模板上限，且不超过模板上限与系统行数上限。 */
-    int pageSize(QueryConstraints constraints, Integer requested) {
+    /** 页大小：缺省为模板上限（调用方给出行数上限时再取较小值），且不超过模板上限与系统行数上限。 */
+    int pageSize(QueryConstraints constraints, Integer requested, Integer rowCap) {
         int maximum = Math.min(constraints.getMaxPageSize(), limits.getMaxRows());
-        int size = requested == null ? maximum : requested;
+        int size = requested == null ? capped(maximum, rowCap) : requested;
         if (size < 1 || size > maximum) {
             throw new InvalidParameterException("size 必须在 1 到 " + maximum + " 之间");
         }
         return size;
+    }
+
+    /** 调用方行数上限为 null 时不参与。 */
+    static int capped(int rows, Integer rowCap) {
+        return rowCap == null ? rows : Math.min(rows, rowCap);
     }
 
     /** 游标分页解码 cursor 注入 __cursor；首页为 null。 */

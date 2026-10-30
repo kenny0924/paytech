@@ -34,6 +34,9 @@ public class QueryTemplateVersion {
     /** 约束 JSON 对象原文。 */
     private String constraintsJson;
 
+    /** 联合查询配置 JSON 对象原文；为 null 表示该版本不参与联合查询。 */
+    private String jointJson;
+
     /** 恢复来源版本号；不是恢复生成时为 null。 */
     private Integer restoredFromVersionNo;
 

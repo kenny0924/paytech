@@ -1,0 +1,2 @@
+platform-support-service id=sha256:9444b483a6353960ad8d6f5e3f69c14667b5b1570616ea015ea356c4a4111298 jar_in_image=96d24bed8dd469fd built=96d24bed8dd469fd jar=same probe=same meta_vs_live=same
+operations-console-bff id=sha256:34ce01c1d775276287cf3c12c6133d4f08b6a5fa4737d0f00c76ddfbe74983a8 jar_in_image=ac050134d024c47f built=ac050134d024c47f jar=same probe=same meta_vs_live=same

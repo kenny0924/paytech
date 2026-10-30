@@ -11,6 +11,7 @@ import com.paytech.platform.support.test.checker.PlatformResponseChecker;
 import com.paytech.platform.support.test.dal.DataQueryTestMapper;
 import com.paytech.platform.support.test.dataquery.DataQueryFixture;
 import com.paytech.platform.support.test.dataquery.DataQueryMocker;
+import com.paytech.platform.support.test.dataquery.JointQueryMocker;
 
 /**
  * 数据查询入口测试的公共调用与准备：被查库就绪检查、Vault DTO 空基线，以及管理与执行两类路径。
@@ -35,6 +36,9 @@ public abstract class DataQueryApiTestBase extends OperationsApiTestBase {
 
     @Autowired
     protected DataQueryTestMapper dataQueryRows;
+
+    @Autowired
+    protected JointQueryMocker jointQuery;
 
     @Autowired
     protected DataSourcePoolRegistry pools;

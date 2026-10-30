@@ -118,6 +118,9 @@ public class PersistenceConfiguration {
         registry.register(com.paytech.platform.support.dataquery.core.enums.DataSourceStatus.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.dataquery.core.enums.DataSourceCheckResult.class, CodeEnumTypeHandler.class);
         registry.register(com.paytech.platform.support.dataquery.core.enums.QueryTemplateStatus.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.dataquery.core.enums.QueryKeyValueType.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.dataquery.core.enums.QueryKeyRole.class, CodeEnumTypeHandler.class);
+        registry.register(com.paytech.platform.support.dataquery.core.enums.QueryKeyTypeStatus.class, CodeEnumTypeHandler.class);
         registerWorkflowHandlers(registry);
         registerLocalizationHandlers(registry);
     }

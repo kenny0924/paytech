@@ -37217,6 +37217,24 @@
           "id": "090F5046-7585-5FFB-A2D3-505C11428C0D"
         },
         {
+          "defKey": "joint_json",
+          "defName": "联合查询配置",
+          "comment": "联合查询配置：行主体键类型 subjectKeyType、键参数 keyParameter{name,keyType}、列标注 columns[{name,keyType,keyRole}]；为空表示该版本不参与联合查询。与正文、参数、列声明同版本保存，不可变。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "5A6FE678-1F2C-5B73-BD5A-3452A790AC8E"
+        },
+        {
           "defKey": "restored_from_version_no",
           "defName": "恢复来源版本",
           "comment": "由历史版本恢复生成时的来源版本号；NULL 表示不是恢复生成。",
@@ -37328,6 +37346,529 @@
             }
           ],
           "id": "8D9D1B61-B15B-522E-8B37-A7F9DDBD18B2"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "199896BE-3F3D-589B-B17E-09094198F3B0",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_query_key_type",
+      "defName": "查询键类型",
+      "comment": "联合查询的业务键类型注册表；模板版本的 joint_json 按编码引用，用于推导跨模板的展开路径与链路图位置。",
+      "properties": {
+        "logicalTableKey": "query_key_type",
+        "compositeForeignKeys": []
+      },
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "key_type_id",
+          "defName": "键类型ID",
+          "comment": "服务侧生成的查询键类型 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "2D3612EA-1F84-5B9B-9BDE-DA9C2C7E33D0"
+        },
+        {
+          "defKey": "key_type_code",
+          "defName": "键类型编码",
+          "comment": "全局唯一的键类型编码，创建后不可修改；模板参数与列声明的 keyType 引用它。格式为大写字母开头的大写字母、数字与下划线。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "5E9365AA-DF02-5D88-AB65-466F22BA8B54"
+        },
+        {
+          "defKey": "key_type_name",
+          "defName": "键类型名称",
+          "comment": "在 Operations 页面显示的键类型名称。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "2270A6F2-F180-5F2E-98D6-FF4A178E6318"
+        },
+        {
+          "defKey": "group_name",
+          "defName": "分组",
+          "comment": "业务分组显示名，如 收单、支付、入驻、出款；以该键类型为行主体的节点画在同名分组的泳道，分组顺序取组内最小 sort_no，颜色按分组顺序取色板。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "7CA82902-8B95-557C-8D93-FBF8A2AAAD27"
+        },
+        {
+          "defKey": "value_type",
+          "defName": "值类型",
+          "comment": "键值类型，决定入口值规范化与可绑定的参数类型。允许值：INTEGER、STRING。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "29D9DC00-5091-516E-A649-2B35F7757727"
+        },
+        {
+          "defKey": "default_role",
+          "defName": "默认角色",
+          "comment": "在模板列上标注该键类型时的默认角色；列上的 keyRole 才是实际角色，可与默认值不同。允许值：LINK、DIMENSION。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "0176F2E9-3C75-54B4-9FF4-0A5D2E201ABE"
+        },
+        {
+          "defKey": "entry_allowed",
+          "defName": "可作入口",
+          "comment": "是否出现在联合查询入口下拉：1 是，0 否。",
+          "type": "TINYINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "207555C1-8254-52B2-AD9B-8B735AB09C9E"
+        },
+        {
+          "defKey": "value_pattern",
+          "defName": "入口正则",
+          "comment": "入口值的校验正则，整串匹配；为空不校验格式。只校验用户在入口输入的值，不校验展开得到的值；只允许 Java 与 JavaScript 行为一致的语法。",
+          "type": "VARCHAR",
+          "len": 256,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "C2A40147-D58F-54BE-B4B9-F7B248D8E649"
+        },
+        {
+          "defKey": "input_hint",
+          "defName": "输入提示",
+          "comment": "入口输入框占位文字与格式不匹配时的提示。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "444509DE-1B2F-5885-81D7-D98F46B109B9"
+        },
+        {
+          "defKey": "sort_no",
+          "defName": "顺序号",
+          "comment": "业务流程顺序号，升序；决定入口下拉与列表顺序，以及链路图泳道（分组取组内最小值）与泳道内节点顺序；页面拖动排序整体重写。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "130DB187-2CF5-59C5-B67B-D9CFE24998F4"
+        },
+        {
+          "defKey": "description",
+          "defName": "说明",
+          "comment": "键类型含义等补充说明。",
+          "type": "VARCHAR",
+          "len": 512,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "BDABB82E-4B22-52D5-A3D9-C60E8495655E"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "comment": "键类型状态；被 ACTIVE 模板当前版本引用时不能停用。允许值：ACTIVE、INACTIVE。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "CBA1D52A-87F8-5FAE-97E5-1164681B2BB4"
+        },
+        {
+          "defKey": "version",
+          "defName": "并发版本",
+          "comment": "键类型乐观并发版本，从 1 开始，每次修改或启停加一。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "1",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "953BF91E-BE7F-50C8-B4A4-AFC5F99E15F1"
+        },
+        {
+          "defKey": "created_by",
+          "defName": "创建人",
+          "comment": "创建该键类型的操作人，取值为 t_user_account.account_id；初始化数据为系统账号。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "180210F1-5BDA-5DC0-ACD6-BE6B1392A502"
+        },
+        {
+          "defKey": "updated_by",
+          "defName": "修改人",
+          "comment": "最后修改该键类型的操作人，取值为 t_user_account.account_id。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "7CF27F86-FF5A-5363-A08C-5009D8DF55DC"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "该记录在 Platform Support 数据库中的 UTC 微秒创建时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "6EF5902F-C66E-5163-B6A1-2B2ABF84317C"
+        },
+        {
+          "defKey": "update_time",
+          "defName": "更新时间",
+          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "E58B9264-580B-5C49-B4BD-5491A222E436"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_query_key_type_code",
+          "defName": "唯一索引 key_type_code",
+          "unique": true,
+          "comment": "保证业务唯一性：key_type_code",
+          "fields": [
+            {
+              "fieldDefKey": "5E9365AA-DF02-5D88-AB65-466F22BA8B54",
+              "ascOrDesc": "A",
+              "id": "24CFF516-2B2E-5B5A-94B3-205EF857670F"
+            }
+          ],
+          "id": "4F1D777C-A482-5C42-BFA7-F6AF3247D6A4"
+        },
+        {
+          "defKey": "idx_query_key_type_status",
+          "defName": "访问索引 status、sort_no",
+          "unique": false,
+          "comment": "支持访问路径：status、sort_no",
+          "fields": [
+            {
+              "fieldDefKey": "CBA1D52A-87F8-5FAE-97E5-1164681B2BB4",
+              "ascOrDesc": "A",
+              "id": "E39B02A8-F39E-5C9F-AC12-D4CE71D58182"
+            },
+            {
+              "fieldDefKey": "130DB187-2CF5-59C5-B67B-D9CFE24998F4",
+              "ascOrDesc": "A",
+              "id": "C1DEC3FB-53EF-5255-A77C-5E5C059527B2"
+            }
+          ],
+          "id": "4B35DAE0-9112-5AC8-8302-41C70DB49455"
         }
       ],
       "type": "P"
@@ -46522,7 +47063,22 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 350
+              "height": 372
+            }
+          },
+          {
+            "id": "C2BBC55B-2692-56A4-BAF1-18B273919A11",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "199896BE-3F3D-589B-B17E-09094198F3B0",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 440
             }
           },
           {
@@ -46597,7 +47153,8 @@
         "primaryTables": [
           "t_data_source",
           "t_query_template",
-          "t_query_template_version"
+          "t_query_template_version",
+          "t_query_key_type"
         ],
         "referenceTables": []
       },

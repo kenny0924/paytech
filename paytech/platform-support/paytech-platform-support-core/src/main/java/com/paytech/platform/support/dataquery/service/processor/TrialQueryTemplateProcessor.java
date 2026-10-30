@@ -1,5 +1,7 @@
 package com.paytech.platform.support.dataquery.service.processor;
 
+import java.util.Map;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +40,7 @@ public class TrialQueryTemplateProcessor extends AbstractProcessor<TrialQueryTem
         SessionContext session = support.requirePermission(request.getActor(), request.getSession(),
             DataQueryManagementSupport.TEMPLATE_MANAGE_PERMISSION);
         DataSourceDetail dataSource = dataSources.findDataSource(request.getDraft().getDataSourceId());
-        DataQueryManagementSupport.requireValid(validator.validate(request.getDraft(), dataSource));
+        DataQueryManagementSupport.requireValid(validator.validate(request.getDraft(), dataSource, Map.of()));
         return runner.run(DataQueryRun.builder().templateLabel(TRIAL_LABEL).versionNo(0).content(request.getDraft())
             .dataSource(dataSource).params(request.getParams()).page(request.getPage()).size(request.getSize())
             .withTotal(request.isWithTotal()).cursor(request.getCursor()).operatorAccountId(session.account().id())

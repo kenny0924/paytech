@@ -88,6 +88,29 @@ public class DataQueryFixture {
         assertEquals(EXPECTED_ROWS, rows, PREPARE + "；固定数据行数不符");
     }
 
+    /** 联合查询链路表与固定行数（2026-10-29-joint-query-fixture.sql）。 */
+    private static final Map<String, Long> JOINT_ROWS = Map.of(DATABASE + ".t_jq_order", 3L,
+        DATABASE + ".t_jq_checkout_session", 3L, DATABASE + ".t_jq_refund", 2L, DATABASE + ".t_jq_payment_intent", 2L,
+        DATABASE + ".t_jq_payment_attempt", 3L, DATABASE + ".t_jq_payment_action", 3L,
+        DATABASE + ".t_jq_billing_fact", 2L);
+
+    private static final String PREPARE_JOINT = "联合查询链路表未就绪：请按 "
+        + "local-environment/mysql/manual/2026-10-29-joint-query-fixture.sql 文件头的方式以 root 人工执行一次";
+
+    /** 确认联合查询链路表存在且固定数据完整；否则失败并给出准备说明。 */
+    public void assertJointReady() {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        try (Connection connection = connect(); Statement statement = connection.createStatement()) {
+            for (String table : JOINT_ROWS.keySet()) {
+                counts.put(table, Long.valueOf(scalar(statement, "SELECT COUNT(*) FROM " + table)));
+            }
+        } catch (SQLException failure) {
+            fail(PREPARE_JOINT + "；读取失败: " + failure.getMessage());
+            return;
+        }
+        assertEquals(JOINT_ROWS, counts, PREPARE_JOINT + "；固定数据行数不符");
+    }
+
     /**
      * 三张表的行数与 CHECKSUM，测试前后比较证明数据不变。
      *

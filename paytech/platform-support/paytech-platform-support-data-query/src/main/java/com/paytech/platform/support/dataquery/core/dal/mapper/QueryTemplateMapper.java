@@ -25,6 +25,12 @@ public interface QueryTemplateMapper {
         @Param("status") QueryTemplateStatus status, @Param("keyword") String keyword, @Param("offset") int offset,
         @Param("size") int size);
 
+    /** 全部模板，按编码升序，最多 limit 个；status 为 null 时不限状态。 */
+    List<QueryTemplate> selectAll(@Param("status") QueryTemplateStatus status, @Param("limit") int limit);
+
+    /** 同 selectAll，加共享锁读取。 */
+    List<QueryTemplate> selectAllForShare(@Param("status") QueryTemplateStatus status, @Param("limit") int limit);
+
     /** 与分页相同条件的总数。 */
     long count(@Param("dataSourceId") Long dataSourceId, @Param("status") QueryTemplateStatus status,
         @Param("keyword") String keyword);

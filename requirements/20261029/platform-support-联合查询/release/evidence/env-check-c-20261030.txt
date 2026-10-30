@@ -1,0 +1,2 @@
+candidate operations-console-web     image=6f8161c279e7 keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+rollback  operations-console-web     image=d236f1d53e21 keys live=7 rendered=7 missing=[] extra=[] valuediff=[]

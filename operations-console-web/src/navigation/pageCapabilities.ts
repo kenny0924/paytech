@@ -862,6 +862,12 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_JOINT_QUERY",
+    "displayName": "联合查询",
+    "frontendRoute": "/data-query/joint-query",
+    "actions": []
+  },
+  {
     "componentKey": "OPERATIONS_DATA_SOURCES",
     "displayName": "数据源",
     "frontendRoute": "/data-query/data-sources",
@@ -882,6 +888,12 @@ export const pageCapabilities = [
         "displayName": "维护"
       }
     ]
+  },
+  {
+    "componentKey": "OPERATIONS_QUERY_KEY_TYPES",
+    "displayName": "键类型",
+    "frontendRoute": "/data-query/key-types",
+    "actions": []
   },
   {
     "componentKey": "OPERATIONS_I18N_TRANSLATIONS",

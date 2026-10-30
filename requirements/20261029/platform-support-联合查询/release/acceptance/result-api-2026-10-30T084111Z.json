@@ -1,0 +1,342 @@
+{
+  "target": "test",
+  "checks": [
+    {
+      "name": "A K1 首批 26 个键类型 ACTIVE、按 sortNo 升序",
+      "pass": true,
+      "evidence": {
+        "total": 26
+      }
+    },
+    {
+      "name": "B J1 入口含验收入口键类型、护栏默认值",
+      "pass": true,
+      "evidence": {
+        "maxDepth": 6,
+        "maxEntryValues": 20,
+        "maxExecutionsPerStep": 20,
+        "maxRowsPerTemplate": 100,
+        "maxTemplateExecutions": 60,
+        "maxTotalSeconds": 60,
+        "maxValuesPerKey": 50
+      }
+    },
+    {
+      "name": "C J2 ORDER_NO 可达 24 个模板、无 excluded",
+      "pass": true,
+      "evidence": {
+        "missing": [],
+        "excluded": []
+      }
+    },
+    {
+      "name": "D J3 ORDER_NO=ord_3LOyZii4ct3BgT48vPZhmHbyC302a8：5 层 24 次执行全部成功，模拟中有数据的节点都有数据",
+      "pass": true,
+      "evidence": {
+        "layers": [
+          [
+            "JQ_ORDER_BY_NO:1"
+          ],
+          [
+            "JQ_CHECKOUT_SESSION_BY_ORDER:1",
+            "JQ_ORDER_BY_ID:1",
+            "JQ_REFUND_BY_ORDER:0",
+            "JQ_PAYMENT_INTENT_BY_ORDER:0",
+            "JQ_BILLING_FACT_BY_ORDER:1"
+          ],
+          [
+            "JQ_CHECKOUT_SESSION_BY_ID:1",
+            "JQ_BILLING_FACT_BY_ID:1",
+            "JQ_ACCOUNT_POSTING_BY_FACT:1",
+            "JQ_PLATFORM_TXN_BY_FACT:1",
+            "JQ_PAYMENT_INTENT_BY_ID:0",
+            "JQ_PAYMENT_ATTEMPT_BY_INTENT:0",
+            "JQ_PAYMENT_ATTEMPT_BY_ID:0",
+            "JQ_PAYMENT_ACTION_BY_ATTEMPT:0",
+            "JQ_BILLING_FACT_BY_ATTEMPT:1",
+            "JQ_CHANNEL_TXN_REF_BY_ID:0"
+          ],
+          [
+            "JQ_ACCOUNT_ENTRY_BY_POSTING:1",
+            "JQ_ACCOUNT_POSTING_BY_ID:1",
+            "JQ_JOURNAL_ENTRY_BY_POSTING:1",
+            "JQ_STATEMENT_LINE_BY_PLATFORM_TXN:0",
+            "JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID:0",
+            "JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID:0"
+          ],
+          [
+            "JQ_JOURNAL_ENTRY_BY_ID:1",
+            "JQ_JOURNAL_LINE_BY_ENTRY:6"
+          ]
+        ],
+        "missingVsSimulation": [],
+        "failed": []
+      }
+    },
+    {
+      "name": "C J2 PAYMENT_INTENT_ID 可达 16 个模板、无 excluded",
+      "pass": true,
+      "evidence": {
+        "missing": [],
+        "excluded": []
+      }
+    },
+    {
+      "name": "D J3 PAYMENT_INTENT_ID=239094951181373440：4 层 16 次执行全部成功，模拟中有数据的节点都有数据",
+      "pass": true,
+      "evidence": {
+        "layers": [
+          [
+            "JQ_PAYMENT_INTENT_BY_ID:1",
+            "JQ_PAYMENT_ATTEMPT_BY_INTENT:1"
+          ],
+          [
+            "JQ_CHECKOUT_SESSION_BY_ORDER:0",
+            "JQ_ORDER_BY_ID:0",
+            "JQ_REFUND_BY_ORDER:0",
+            "JQ_PAYMENT_INTENT_BY_ORDER:1",
+            "JQ_BILLING_FACT_BY_ORDER:0",
+            "JQ_PAYMENT_ATTEMPT_BY_ID:1",
+            "JQ_PAYMENT_ACTION_BY_ATTEMPT:2",
+            "JQ_BILLING_FACT_BY_ATTEMPT:0"
+          ],
+          [
+            "JQ_PAYMENT_ACTION_BY_ID:2",
+            "JQ_CHANNEL_TXN_REF_BY_ACTION:1",
+            "JQ_CHANNEL_INTERACTION_BY_ACTION:0"
+          ],
+          [
+            "JQ_CHANNEL_TXN_REF_BY_ID:1",
+            "JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID:1",
+            "JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID:0"
+          ]
+        ],
+        "missingVsSimulation": [],
+        "failed": []
+      }
+    },
+    {
+      "name": "C J2 REFUND_REQUEST_NO 可达 9 个模板、无 excluded",
+      "pass": true,
+      "evidence": {
+        "missing": [],
+        "excluded": []
+      }
+    },
+    {
+      "name": "D J3 REFUND_REQUEST_NO=rfd_3L5B25y5BGmxTcJDRyZcBx8OCN9BJK：3 层 9 次执行全部成功，模拟中有数据的节点都有数据",
+      "pass": true,
+      "evidence": {
+        "layers": [
+          [
+            "JQ_REFUND_BY_NO:1"
+          ],
+          [
+            "JQ_REFUND_BY_ID:1",
+            "JQ_CHANNEL_REFUND_BY_REFUND_REQUEST:0",
+            "JQ_CHECKOUT_SESSION_BY_ORDER:1",
+            "JQ_ORDER_BY_ID:1",
+            "JQ_REFUND_BY_ORDER:1",
+            "JQ_PAYMENT_INTENT_BY_ORDER:0",
+            "JQ_BILLING_FACT_BY_ORDER:0"
+          ],
+          [
+            "JQ_CHECKOUT_SESSION_BY_ID:1"
+          ]
+        ],
+        "missingVsSimulation": [],
+        "failed": []
+      }
+    },
+    {
+      "name": "C J2 EXTERNAL_TRANSACTION_ID 可达 16 个模板、无 excluded",
+      "pass": true,
+      "evidence": {
+        "missing": [],
+        "excluded": []
+      }
+    },
+    {
+      "name": "D J3 EXTERNAL_TRANSACTION_ID=T2026102218153708006502：5 层 19 次执行全部成功，模拟中有数据的节点都有数据",
+      "pass": true,
+      "evidence": {
+        "layers": [
+          [
+            "JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID:1",
+            "JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID:0"
+          ],
+          [
+            "JQ_CHANNEL_TXN_REF_BY_ID:1",
+            "JQ_PAYMENT_ACTION_BY_ID:1",
+            "JQ_CHANNEL_TXN_REF_BY_ACTION:1",
+            "JQ_CHANNEL_INTERACTION_BY_ACTION:0"
+          ],
+          [
+            "JQ_PAYMENT_ATTEMPT_BY_ID:1",
+            "JQ_PAYMENT_ACTION_BY_ATTEMPT:2",
+            "JQ_BILLING_FACT_BY_ATTEMPT:0"
+          ],
+          [
+            "JQ_PAYMENT_INTENT_BY_ID:1",
+            "JQ_PAYMENT_ATTEMPT_BY_INTENT:1",
+            "JQ_PAYMENT_ACTION_BY_ID:1",
+            "JQ_CHANNEL_TXN_REF_BY_ACTION:0",
+            "JQ_CHANNEL_INTERACTION_BY_ACTION:0"
+          ],
+          [
+            "JQ_CHECKOUT_SESSION_BY_ORDER:0",
+            "JQ_ORDER_BY_ID:0",
+            "JQ_REFUND_BY_ORDER:0",
+            "JQ_PAYMENT_INTENT_BY_ORDER:1",
+            "JQ_BILLING_FACT_BY_ORDER:0"
+          ]
+        ],
+        "missingVsSimulation": [],
+        "failed": []
+      }
+    },
+    {
+      "name": "C J2 JOURNAL_ENTRY_ID 可达 23 个模板、无 excluded",
+      "pass": true,
+      "evidence": {
+        "missing": [],
+        "excluded": []
+      }
+    },
+    {
+      "name": "D J3 JOURNAL_ENTRY_ID=241801561934753792：4 层 23 次执行全部成功，模拟中有数据的节点都有数据",
+      "pass": true,
+      "evidence": {
+        "layers": [
+          [
+            "JQ_JOURNAL_ENTRY_BY_ID:1",
+            "JQ_JOURNAL_LINE_BY_ENTRY:6"
+          ],
+          [
+            "JQ_ACCOUNT_ENTRY_BY_POSTING:1",
+            "JQ_ACCOUNT_POSTING_BY_ID:1",
+            "JQ_JOURNAL_ENTRY_BY_POSTING:1",
+            "JQ_BILLING_FACT_BY_ID:1",
+            "JQ_ACCOUNT_POSTING_BY_FACT:1",
+            "JQ_PLATFORM_TXN_BY_FACT:1"
+          ],
+          [
+            "JQ_CHECKOUT_SESSION_BY_ORDER:1",
+            "JQ_ORDER_BY_ID:1",
+            "JQ_REFUND_BY_ORDER:0",
+            "JQ_PAYMENT_INTENT_BY_ORDER:0",
+            "JQ_BILLING_FACT_BY_ORDER:1",
+            "JQ_PAYMENT_INTENT_BY_ID:0",
+            "JQ_PAYMENT_ATTEMPT_BY_INTENT:0",
+            "JQ_PAYMENT_ATTEMPT_BY_ID:0",
+            "JQ_PAYMENT_ACTION_BY_ATTEMPT:0",
+            "JQ_BILLING_FACT_BY_ATTEMPT:1",
+            "JQ_CHANNEL_TXN_REF_BY_ID:0",
+            "JQ_STATEMENT_LINE_BY_PLATFORM_TXN:0",
+            "JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID:0",
+            "JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID:0"
+          ],
+          [
+            "JQ_CHECKOUT_SESSION_BY_ID:1"
+          ]
+        ],
+        "missingVsSimulation": [],
+        "failed": []
+      }
+    },
+    {
+      "name": "D 链路覆盖 收单 / 支付 / 计费 / 账户 / 总账 / 对账 泳道",
+      "pass": true,
+      "evidence": [
+        "对账",
+        "总账",
+        "支付",
+        "收单",
+        "计费",
+        "账户"
+      ]
+    },
+    {
+      "name": "E 凭证分录经单模板执行取第 2 页（size 2）",
+      "pass": true,
+      "evidence": {
+        "rows": 2,
+        "total": 6
+      }
+    },
+    {
+      "name": "F J2 缺 entryKeyType 400（BFF 参数校验）",
+      "pass": true,
+      "evidence": {
+        "status": 400,
+        "code": "INVALID_REQUEST"
+      }
+    },
+    {
+      "name": "F J2 未知键类型 400",
+      "pass": true,
+      "evidence": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED"
+      }
+    },
+    {
+      "name": "F J2 不可作入口 400",
+      "pass": true,
+      "evidence": {
+        "status": 400,
+        "code": "BUSINESS_CHECK_FAILED"
+      }
+    },
+    {
+      "name": "F J3 入口值格式不符 422",
+      "pass": true,
+      "evidence": {
+        "status": 422,
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "F K2 正则含前瞻 422（校验阶段拒绝，不落库）",
+      "pass": true,
+      "evidence": {
+        "status": 422,
+        "code": "VALIDATION_ERROR"
+      }
+    },
+    {
+      "name": "G 税务订单查询 200",
+      "pass": true,
+      "evidence": {
+        "keys": [
+          "amounts",
+          "basis",
+          "blockReasons",
+          "businessMode",
+          "buyerClientId",
+          "buyerClientName"
+        ]
+      }
+    },
+    {
+      "name": "G 承保记录列表 200",
+      "pass": true,
+      "evidence": {
+        "keys": [
+          "items",
+          "page",
+          "size",
+          "total"
+        ]
+      }
+    },
+    {
+      "name": "G 数据查询模板列表含 GOLIVE_* 与 JQ_*",
+      "pass": true,
+      "evidence": {
+        "total": 45
+      }
+    }
+  ],
+  "verdict": true
+}

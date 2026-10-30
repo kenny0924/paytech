@@ -9,6 +9,8 @@ import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.FailException;
 import com.paytech.foundation.redis.core.processor.AbstractLockProcessor;
 import com.paytech.platform.support.auditsecurity.domainservice.service.OperationsAuditService;
+import com.paytech.platform.support.dataquery.core.enums.QueryTemplateStatus;
+import com.paytech.platform.support.dataquery.domain.DataSourceDetail;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateChange;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateDetail;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateVersionDetail;
@@ -19,12 +21,14 @@ import com.paytech.platform.support.dataquery.domainservice.validator.QueryTempl
 import com.paytech.platform.support.dataquery.service.processor.request.RestoreQueryTemplateRequest;
 import com.paytech.platform.support.dataquery.service.processor.response.QueryTemplateSaveResult;
 import com.paytech.platform.support.dataquery.template.TemplateProblem;
+import com.paytech.platform.support.dataquery.template.TemplateValidationResult;
 
 import lombok.AllArgsConstructor;
 
 /**
  * 以历史版本的内容生成新版本，记录 restored_from_version_no
- * <li>按模板持资源锁；按当前规则与数据源当前状态重新校验，有错误返回 422（例如原数据源已停用）。</li>
+ * <li>按模板持资源锁；按当前规则与数据源、键类型当前状态重新校验（联合查询配置随版本一起恢复），有错误返回 422
+ * （例如原数据源或键类型已停用）。</li>
  * <li>名称与说明沿用当前值；变更说明缺省为“恢复自版本 N”。事务与审计同修改模板。</li>
  */
 @Component
@@ -57,8 +61,7 @@ public class RestoreQueryTemplateProcessor
         if (source == null) {
             throw new FailException(CommonErrorCode.NOT_FOUND);
         }
-        List<TemplateProblem> warnings = DataQueryManagementSupport.requireValid(validator.validate(
-            source.getContent(), dataSources.findDataSource(source.getDataSourceId())));
+        List<TemplateProblem> warnings = validateRestored(source, current);
         String changeNote = CreateQueryTemplateProcessor.note(request.getChangeNote(),
             "恢复自版本 " + request.getVersionNo());
 
@@ -76,5 +79,14 @@ public class RestoreQueryTemplateProcessor
                 return saved;
             });
         return new QueryTemplateSaveResult(change, warnings);
+    }
+
+    /** 按当前规则与数据源、键类型当前状态校验历史版本内容，返回警告与联合查询参与提示。 */
+    List<TemplateProblem> validateRestored(QueryTemplateVersionDetail source, QueryTemplateDetail current) {
+        DataSourceDetail dataSource = dataSources.findDataSource(source.getDataSourceId());
+        TemplateValidationResult result = validator.validate(source.getContent(), dataSource,
+            support.referencedKeyTypes(source.getContent()));
+        return DataQueryManagementSupport.withParticipation(DataQueryManagementSupport.requireValid(result), result,
+            source.getContent(), dataSource, current.getStatus() == QueryTemplateStatus.ACTIVE);
     }
 }

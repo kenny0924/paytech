@@ -14,12 +14,16 @@ import com.paytech.foundation.web.paging.PagingRequestBody;
 import com.paytech.platform.support.api.configurationmanagement.response.ConfigurationMutationResponseBody;
 import com.paytech.platform.support.api.dataquery.request.QueryTemplateColumn;
 import com.paytech.platform.support.api.dataquery.request.QueryTemplateConstraints;
+import com.paytech.platform.support.api.dataquery.request.QueryTemplateJointColumn;
+import com.paytech.platform.support.api.dataquery.request.QueryTemplateJointConfig;
+import com.paytech.platform.support.api.dataquery.request.QueryTemplateJointKeyParameter;
 import com.paytech.platform.support.api.dataquery.response.DataQueryColumn;
 import com.paytech.platform.support.api.dataquery.response.DataQueryResultResponseBody;
 import com.paytech.platform.support.api.dataquery.response.DataSourceConnectionTestResponseBody;
 import com.paytech.platform.support.api.dataquery.response.DataSourceResponseBody;
 import com.paytech.platform.support.api.dataquery.response.QueryParameterSummary;
 import com.paytech.platform.support.api.dataquery.response.QueryTemplateDetailResponseBody;
+import com.paytech.platform.support.api.dataquery.response.QueryTemplateJointParticipation;
 import com.paytech.platform.support.api.dataquery.response.QueryTemplateProblem;
 import com.paytech.platform.support.api.dataquery.response.QueryTemplateSummaryResponseBody;
 import com.paytech.platform.support.api.dataquery.response.QueryTemplateValidationResponseBody;
@@ -29,14 +33,19 @@ import com.paytech.platform.support.api.dataquery.response.SaveQueryTemplateResp
 import com.paytech.platform.support.api.dataquery.response.TrialQueryTemplateResponseBody;
 import com.paytech.platform.support.dataquery.core.enums.ColumnMaskType;
 import com.paytech.platform.support.dataquery.core.enums.DataSourceEngineType;
+import com.paytech.platform.support.dataquery.core.enums.QueryKeyRole;
 import com.paytech.platform.support.dataquery.core.enums.QueryPagingMode;
 import com.paytech.platform.support.dataquery.domain.ConnectionCheckResult;
 import com.paytech.platform.support.dataquery.domain.DataQueryResult;
 import com.paytech.platform.support.dataquery.domain.DataSourceChange;
 import com.paytech.platform.support.dataquery.domain.DataSourceConnectionConfig;
 import com.paytech.platform.support.dataquery.domain.DataSourceDetail;
+import com.paytech.platform.support.dataquery.domain.JointQueryParticipation;
 import com.paytech.platform.support.dataquery.domain.QueryColumnRule;
 import com.paytech.platform.support.dataquery.domain.QueryConstraints;
+import com.paytech.platform.support.dataquery.domain.QueryJointColumn;
+import com.paytech.platform.support.dataquery.domain.QueryJointConfig;
+import com.paytech.platform.support.dataquery.domain.QueryJointKeyParameter;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateChange;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateDetail;
 import com.paytech.platform.support.dataquery.domain.QueryTemplateDraft;
@@ -116,11 +125,24 @@ public class DataQueryConverter {
             text(databaseName), username, params);
     }
 
-    /** 草稿内容。 */
+    /** 草稿内容；试运行不带联合查询配置时 joint 传 null。 */
     QueryTemplateDraft draft(String dataSourceId, String body, JsonNode parameters, List<QueryTemplateColumn> columns,
-        QueryTemplateConstraints constraints) {
+        QueryTemplateConstraints constraints, QueryTemplateJointConfig joint) {
         return new QueryTemplateDraft(id(dataSourceId, "dataSourceId"), body, parameters,
-            columns == null ? List.of() : columns.stream().map(this::column).toList(), constraints(constraints));
+            columns == null ? List.of() : columns.stream().map(this::column).toList(), constraints(constraints),
+            joint(joint));
+    }
+
+    /** 联合查询配置；keyRole 已由 Body 注解限定为 LINK / DIMENSION。 */
+    QueryJointConfig joint(QueryTemplateJointConfig joint) {
+        if (joint == null) {
+            return null;
+        }
+        List<QueryJointColumn> columns = joint.getColumns() == null ? List.of() : joint.getColumns().stream()
+            .map(column -> new QueryJointColumn(column.getName(), column.getKeyType(),
+                code(QueryKeyRole.class, column.getKeyRole(), "keyRole"))).toList();
+        return new QueryJointConfig(joint.getSubjectKeyType(), new QueryJointKeyParameter(
+            joint.getKeyParameter().getName(), joint.getKeyParameter().getKeyType()), columns);
     }
 
     /** 列声明；mask 缺省 NONE，保留位数缺省 0。 */
@@ -236,6 +258,8 @@ public class DataQueryConverter {
         body.setCreateTime(time(template.getCreateTime()));
         body.setUpdateTime(time(template.getUpdateTime()));
         body.setCurrentVersion(version(template.getCurrentVersion()));
+        body.setJoint(body.getCurrentVersion().getJoint());
+        body.setJointQuery(body.getCurrentVersion().getJointQuery());
         return body;
     }
 
@@ -252,6 +276,8 @@ public class DataQueryConverter {
         body.setParameters(version.getContent().getParameters());
         body.setColumns(version.getContent().getColumns().stream().map(DataQueryConverter::columnBody).toList());
         body.setConstraints(constraintsBody(version.getContent().getConstraints()));
+        body.setJoint(jointBody(version.getContent().getJoint()));
+        body.setJointQuery(participationBody(version.getJointParticipation()));
         body.setRestoredFromVersionNo(version.getRestoredFromVersionNo());
         body.setChangeNote(version.getChangeNote());
         body.setCreatedBy(Long.toString(version.getCreatedBy()));
@@ -351,6 +377,39 @@ public class DataQueryConverter {
         body.setMask(rule.getMask().getCode());
         body.setKeepStart(rule.getKeepStart());
         body.setKeepEnd(rule.getKeepEnd());
+        return body;
+    }
+
+    /** 联合查询配置 DTO；不参与时为 null。 */
+    static QueryTemplateJointConfig jointBody(QueryJointConfig joint) {
+        if (joint == null) {
+            return null;
+        }
+        QueryTemplateJointConfig body = new QueryTemplateJointConfig();
+        body.setSubjectKeyType(joint.getSubjectKeyType());
+        QueryTemplateJointKeyParameter key = new QueryTemplateJointKeyParameter();
+        key.setName(joint.getKeyParameter().getName());
+        key.setKeyType(joint.getKeyParameter().getKeyType());
+        body.setKeyParameter(key);
+        body.setColumns(joint.getColumns().stream().map(column -> {
+            QueryTemplateJointColumn item = new QueryTemplateJointColumn();
+            item.setName(column.getName());
+            item.setKeyType(column.getKeyType());
+            item.setKeyRole(column.getKeyRole().getCode());
+            return item;
+        }).toList());
+        return body;
+    }
+
+    /** 联合查询参与情况 DTO；没有联合查询配置时为 null。 */
+    static QueryTemplateJointParticipation participationBody(JointQueryParticipation participation) {
+        if (participation == null) {
+            return null;
+        }
+        QueryTemplateJointParticipation body = new QueryTemplateJointParticipation();
+        body.setParticipating(participation.isParticipating());
+        body.setReasonCode(participation.getReason() == null ? null : participation.getReason().getCode());
+        body.setReason(participation.getMessage());
         return body;
     }
 

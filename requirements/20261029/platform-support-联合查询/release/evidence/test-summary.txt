@@ -1,0 +1,10 @@
+# 联合查询 jq-20261030a 发布 worktree（Code-MoR-jq-rel = main 6eaf1bd3 + 236 个文件）构建与测试，2026-10-30 +04
+构建：./mvnw -B -o -DskipTests -pl platform-support-app,operations-console-bff-app,platform-support-test,operations-console-bff-test,tools/arch-rules -am clean package → BUILD SUCCESS（39.9 s）
+Platform（-Dtest 'dataquery.** / *DataQuery* / *Joint* / *QueryKeyType* / *QueryTemplate* / *ConsoleResource* / *Workflow* / arch.**'）：
+  paytech-platform-support-data-query 48 / 0；paytech-platform-support-workflow 71 / 0；tools/arch-rules 70 / 0；
+  paytech-platform-support-test 133 中 132 通过、1 失败：WorkflowAttachmentApiTest 缺本机 MinIO 证书（worktree 无 gitignored 的
+  local-environment/minio/certs/public.crt，环境前提，非代码问题）；复制该公钥（仍被 .gitignore 忽略）后单独重跑 WorkflowAttachmentApiTest 4 / 0。
+  含 QueryKeyTypeManagementApiTest、QueryTemplateJointConfigApiTest、JointQueryApiTest、JointQueryStepGuardrailApiTest、DataQueryExecutionApiTest、
+  QueryTemplateManagementApiTest、WorkflowDataQueryRecheckJobHandlerTest 等。
+ops-bff：paytech-operations-console-bff-test 全模块 2519 / 0（与阶段 5 联合构建相同数量）。
+未跑全 reactor 测试（共享本机库）。ops-web 测试与构建由 jq-web 在同一 worktree 执行。

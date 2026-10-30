@@ -50,4 +50,10 @@ public final class DataQueryRun {
 
     /** 调用方服务名，只用于日志；试运行为 null。 */
     private final String callerService;
+
+    /**
+     * 调用方的单次行数上限
+     * <li>为 null 时不额外限制；NONE 分页参与 min 计算，OFFSET / CURSOR 只在未传 size 时决定默认页大小。</li>
+     */
+    private final Integer rowCap;
 }

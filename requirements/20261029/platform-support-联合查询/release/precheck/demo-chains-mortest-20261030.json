@@ -1,0 +1,1356 @@
+{
+  "mode": "mortest",
+  "keyTypes": 26,
+  "templates": {
+    "JQ_ORDER_BY_ID": {
+      "name": "订单",
+      "dataSource": "MOR_ACQUIRING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_ORDER_BY_NO": {
+      "name": "订单（按订单号）",
+      "dataSource": "MOR_ACQUIRING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_ORDER_BY_CLIENT_ORDER_ID": {
+      "name": "订单（按客户订单号）",
+      "dataSource": "MOR_ACQUIRING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_CHECKOUT_SESSION_BY_ORDER": {
+      "name": "收银台会话",
+      "dataSource": "MOR_ACQUIRING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_CHECKOUT_SESSION_BY_ID": {
+      "name": "收银台会话（按会话 ID）",
+      "dataSource": "MOR_ACQUIRING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_REFUND_BY_ORDER": {
+      "name": "退款申请",
+      "dataSource": "MOR_ACQUIRING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_REFUND_BY_NO": {
+      "name": "退款申请（按退款单号）",
+      "dataSource": "MOR_ACQUIRING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_REFUND_BY_ID": {
+      "name": "退款申请（按申请 ID）",
+      "dataSource": "MOR_ACQUIRING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_PAYMENT_INTENT_BY_ORDER": {
+      "name": "支付意图",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_PAYMENT_INTENT_BY_ID": {
+      "name": "支付意图（按意图 ID）",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_PAYMENT_ATTEMPT_BY_INTENT": {
+      "name": "支付尝试",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_PAYMENT_ATTEMPT_BY_ID": {
+      "name": "支付尝试（按尝试 ID）",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_PAYMENT_ACTION_BY_ATTEMPT": {
+      "name": "支付动作",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_PAYMENT_ACTION_BY_ID": {
+      "name": "支付动作（按动作 ID）",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_PAYMENT_ACTION_BY_CHANNEL_REFUND": {
+      "name": "支付动作（按渠道退款）",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_CHANNEL_TXN_REF_BY_ACTION": {
+      "name": "渠道交易引用",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_CHANNEL_TXN_REF_BY_ID": {
+      "name": "渠道交易引用（按引用 ID）",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID": {
+      "name": "渠道交易引用（按渠道交易号）",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_CHANNEL_REFUND_BY_REFUND_REQUEST": {
+      "name": "渠道退款",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_CHANNEL_REFUND_BY_ID": {
+      "name": "渠道退款（按渠道退款 ID）",
+      "dataSource": "MOR_PAYMENT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_CHANNEL_INTERACTION_BY_ACTION": {
+      "name": "渠道交互",
+      "dataSource": "MOR_CHANNEL_CONNECTOR_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID": {
+      "name": "渠道回调",
+      "dataSource": "MOR_CHANNEL_CONNECTOR_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_BILLING_FACT_BY_ID": {
+      "name": "计费事实",
+      "dataSource": "MOR_BILLING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_BILLING_FACT_BY_ORDER": {
+      "name": "计费事实（按订单）",
+      "dataSource": "MOR_BILLING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_BILLING_FACT_BY_ATTEMPT": {
+      "name": "计费事实（按支付尝试）",
+      "dataSource": "MOR_BILLING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_BILLING_FACT_BY_CHANNEL_REFUND": {
+      "name": "计费事实（按渠道退款）",
+      "dataSource": "MOR_BILLING_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_ACCOUNT_POSTING_BY_FACT": {
+      "name": "记账批次",
+      "dataSource": "MOR_ACCOUNT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_ACCOUNT_POSTING_BY_ID": {
+      "name": "记账批次（按批次 ID）",
+      "dataSource": "MOR_ACCOUNT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_ACCOUNT_ENTRY_BY_POSTING": {
+      "name": "账户分录",
+      "dataSource": "MOR_ACCOUNT_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_JOURNAL_ENTRY_BY_POSTING": {
+      "name": "会计凭证",
+      "dataSource": "MOR_LEDGER_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_JOURNAL_ENTRY_BY_ID": {
+      "name": "会计凭证（按凭证 ID）",
+      "dataSource": "MOR_LEDGER_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_JOURNAL_LINE_BY_ENTRY": {
+      "name": "凭证分录",
+      "dataSource": "MOR_LEDGER_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_PLATFORM_TXN_BY_FACT": {
+      "name": "平台流水",
+      "dataSource": "MOR_RECONCILIATION_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    },
+    "JQ_STATEMENT_LINE_BY_PLATFORM_TXN": {
+      "name": "渠道对账单明细",
+      "dataSource": "MOR_RECONCILIATION_REPLICA",
+      "engineProblems": [],
+      "engineErrors": false
+    }
+  },
+  "problems": [],
+  "chains": [
+    {
+      "label": "收单 → 计费 → 账户 → 总账 → 对账（税务阶段 7 验收订单）",
+      "entry": {
+        "label": "收单 → 计费 → 账户 → 总账 → 对账（税务阶段 7 验收订单）",
+        "keyType": "ORDER_NO",
+        "values": [
+          "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8"
+        ]
+      },
+      "patternOk": true,
+      "layers": [
+        {
+          "depth": 0,
+          "nodes": [
+            {
+              "templateCode": "JQ_ORDER_BY_NO",
+              "templateName": "订单（按订单号）",
+              "trigger": "ORDER_NO=ord_3LOyZii4ct3BgT48vPZhmHbyC302a8",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801063336886272"
+              ]
+            }
+          ],
+          "newKeys": {
+            "ORDER_ID": [
+              "241801063336886272"
+            ]
+          }
+        },
+        {
+          "depth": 1,
+          "nodes": [
+            {
+              "templateCode": "JQ_ORDER_BY_ID",
+              "templateName": "订单",
+              "trigger": "ORDER_ID=241801063336886272",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801063336886272"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHECKOUT_SESSION_BY_ORDER",
+              "templateName": "收银台会话",
+              "trigger": "ORDER_ID=241801063336886272",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801063345274880"
+              ]
+            },
+            {
+              "templateCode": "JQ_REFUND_BY_ORDER",
+              "templateName": "退款申请",
+              "trigger": "ORDER_ID=241801063336886272",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_INTENT_BY_ORDER",
+              "templateName": "支付意图",
+              "trigger": "ORDER_ID=241801063336886272",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ORDER",
+              "templateName": "计费事实（按订单）",
+              "trigger": "ORDER_ID=241801063336886272",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801538719309824"
+              ]
+            }
+          ],
+          "newKeys": {
+            "CHECKOUT_SESSION_ID": [
+              "241801063345274880"
+            ],
+            "BILLING_FACT_ID": [
+              "241801538719309824"
+            ],
+            "PAYMENT_INTENT_ID": [
+              "999900000000000301"
+            ],
+            "PAYMENT_ATTEMPT_ID": [
+              "999900000000000302"
+            ],
+            "CHANNEL_TRANSACTION_REF_ID": [
+              "999900000000000303"
+            ]
+          }
+        },
+        {
+          "depth": 2,
+          "nodes": [
+            {
+              "templateCode": "JQ_CHECKOUT_SESSION_BY_ID",
+              "templateName": "收银台会话（按会话 ID）",
+              "trigger": "CHECKOUT_SESSION_ID=241801063345274880",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801063345274880"
+              ]
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ID",
+              "templateName": "计费事实",
+              "trigger": "BILLING_FACT_ID=241801538719309824",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801538719309824"
+              ]
+            },
+            {
+              "templateCode": "JQ_ACCOUNT_POSTING_BY_FACT",
+              "templateName": "记账批次",
+              "trigger": "BILLING_FACT_ID=241801538719309824",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801543844753408"
+              ]
+            },
+            {
+              "templateCode": "JQ_PLATFORM_TXN_BY_FACT",
+              "templateName": "平台流水",
+              "trigger": "BILLING_FACT_ID=241801538719309824",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801543626600448"
+              ]
+            },
+            {
+              "templateCode": "JQ_PAYMENT_INTENT_BY_ID",
+              "templateName": "支付意图（按意图 ID）",
+              "trigger": "PAYMENT_INTENT_ID=999900000000000301",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ATTEMPT_BY_INTENT",
+              "templateName": "支付尝试",
+              "trigger": "PAYMENT_INTENT_ID=999900000000000301",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ATTEMPT_BY_ID",
+              "templateName": "支付尝试（按尝试 ID）",
+              "trigger": "PAYMENT_ATTEMPT_ID=999900000000000302",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ACTION_BY_ATTEMPT",
+              "templateName": "支付动作",
+              "trigger": "PAYMENT_ATTEMPT_ID=999900000000000302",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ATTEMPT",
+              "templateName": "计费事实（按支付尝试）",
+              "trigger": "PAYMENT_ATTEMPT_ID=999900000000000302",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801538719309824"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_ID",
+              "templateName": "渠道交易引用（按引用 ID）",
+              "trigger": "CHANNEL_TRANSACTION_REF_ID=999900000000000303",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {
+            "ACCOUNT_POSTING_ID": [
+              "241801543844753408"
+            ],
+            "PLATFORM_TXN_ID": [
+              "241801543626600448"
+            ],
+            "EXTERNAL_TRANSACTION_ID": [
+              "SYN-TAX-P-0001"
+            ]
+          }
+        },
+        {
+          "depth": 3,
+          "nodes": [
+            {
+              "templateCode": "JQ_ACCOUNT_POSTING_BY_ID",
+              "templateName": "记账批次（按批次 ID）",
+              "trigger": "ACCOUNT_POSTING_ID=241801543844753408",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801543844753408"
+              ]
+            },
+            {
+              "templateCode": "JQ_ACCOUNT_ENTRY_BY_POSTING",
+              "templateName": "账户分录",
+              "trigger": "ACCOUNT_POSTING_ID=241801543844753408",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801543844753408"
+              ]
+            },
+            {
+              "templateCode": "JQ_JOURNAL_ENTRY_BY_POSTING",
+              "templateName": "会计凭证",
+              "trigger": "ACCOUNT_POSTING_ID=241801543844753408",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801561934753792"
+              ]
+            },
+            {
+              "templateCode": "JQ_STATEMENT_LINE_BY_PLATFORM_TXN",
+              "templateName": "渠道对账单明细",
+              "trigger": "PLATFORM_TXN_ID=241801543626600448",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID",
+              "templateName": "渠道交易引用（按渠道交易号）",
+              "trigger": "EXTERNAL_TRANSACTION_ID=SYN-TAX-P-0001",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID",
+              "templateName": "渠道回调",
+              "trigger": "EXTERNAL_TRANSACTION_ID=SYN-TAX-P-0001",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {
+            "JOURNAL_ENTRY_ID": [
+              "241801561934753792"
+            ]
+          }
+        },
+        {
+          "depth": 4,
+          "nodes": [
+            {
+              "templateCode": "JQ_JOURNAL_ENTRY_BY_ID",
+              "templateName": "会计凭证（按凭证 ID）",
+              "trigger": "JOURNAL_ENTRY_ID=241801561934753792",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801561934753792"
+              ]
+            },
+            {
+              "templateCode": "JQ_JOURNAL_LINE_BY_ENTRY",
+              "templateName": "凭证分录",
+              "trigger": "JOURNAL_ENTRY_ID=241801561934753792",
+              "rows": 6,
+              "error": null,
+              "subjects": [
+                "241801561934753792"
+              ]
+            }
+          ],
+          "newKeys": {}
+        }
+      ]
+    },
+    {
+      "label": "支付意图 → 尝试 → 动作 → 渠道交易引用（PAYERMAX 3DS 成功支付）",
+      "entry": {
+        "label": "支付意图 → 尝试 → 动作 → 渠道交易引用（PAYERMAX 3DS 成功支付）",
+        "keyType": "PAYMENT_INTENT_ID",
+        "values": [
+          "239094951181373440"
+        ]
+      },
+      "patternOk": true,
+      "layers": [
+        {
+          "depth": 0,
+          "nodes": [
+            {
+              "templateCode": "JQ_PAYMENT_INTENT_BY_ID",
+              "templateName": "支付意图（按意图 ID）",
+              "trigger": "PAYMENT_INTENT_ID=239094951181373440",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094951181373440"
+              ]
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ATTEMPT_BY_INTENT",
+              "templateName": "支付尝试",
+              "trigger": "PAYMENT_INTENT_ID=239094951181373440",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094961201565696"
+              ]
+            }
+          ],
+          "newKeys": {
+            "ORDER_ID": [
+              "156965757796837"
+            ],
+            "PAYMENT_ATTEMPT_ID": [
+              "239094961201565696"
+            ]
+          }
+        },
+        {
+          "depth": 1,
+          "nodes": [
+            {
+              "templateCode": "JQ_ORDER_BY_ID",
+              "templateName": "订单",
+              "trigger": "ORDER_ID=156965757796837",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_CHECKOUT_SESSION_BY_ORDER",
+              "templateName": "收银台会话",
+              "trigger": "ORDER_ID=156965757796837",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_REFUND_BY_ORDER",
+              "templateName": "退款申请",
+              "trigger": "ORDER_ID=156965757796837",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_INTENT_BY_ORDER",
+              "templateName": "支付意图",
+              "trigger": "ORDER_ID=156965757796837",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094951181373440"
+              ]
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ORDER",
+              "templateName": "计费事实（按订单）",
+              "trigger": "ORDER_ID=156965757796837",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ATTEMPT_BY_ID",
+              "templateName": "支付尝试（按尝试 ID）",
+              "trigger": "PAYMENT_ATTEMPT_ID=239094961201565696",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094961201565696"
+              ]
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ACTION_BY_ATTEMPT",
+              "templateName": "支付动作",
+              "trigger": "PAYMENT_ATTEMPT_ID=239094961201565696",
+              "rows": 2,
+              "error": null,
+              "subjects": [
+                "239094961218342912",
+                "239094961910403072"
+              ]
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ATTEMPT",
+              "templateName": "计费事实（按支付尝试）",
+              "trigger": "PAYMENT_ATTEMPT_ID=239094961201565696",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {
+            "PAYMENT_ACTION_ID": [
+              "239094961218342912",
+              "239094961910403072"
+            ]
+          }
+        },
+        {
+          "depth": 2,
+          "nodes": [
+            {
+              "templateCode": "JQ_PAYMENT_ACTION_BY_ID",
+              "templateName": "支付动作（按动作 ID）",
+              "trigger": "PAYMENT_ACTION_ID=239094961218342912,239094961910403072",
+              "rows": 2,
+              "error": null,
+              "subjects": [
+                "239094961218342912",
+                "239094961910403072"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_ACTION",
+              "templateName": "渠道交易引用",
+              "trigger": "PAYMENT_ACTION_ID=239094961218342912,239094961910403072",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094969753751552"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_INTERACTION_BY_ACTION",
+              "templateName": "渠道交互",
+              "trigger": "PAYMENT_ACTION_ID=239094961218342912,239094961910403072",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {
+            "CHANNEL_TRANSACTION_REF_ID": [
+              "239094969753751552"
+            ],
+            "EXTERNAL_TRANSACTION_ID": [
+              "T2026102218153708006502"
+            ]
+          }
+        },
+        {
+          "depth": 3,
+          "nodes": [
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_ID",
+              "templateName": "渠道交易引用（按引用 ID）",
+              "trigger": "CHANNEL_TRANSACTION_REF_ID=239094969753751552",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094969753751552"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID",
+              "templateName": "渠道交易引用（按渠道交易号）",
+              "trigger": "EXTERNAL_TRANSACTION_ID=T2026102218153708006502",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094969753751552"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID",
+              "templateName": "渠道回调",
+              "trigger": "EXTERNAL_TRANSACTION_ID=T2026102218153708006502",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {}
+        }
+      ]
+    },
+    {
+      "label": "退款单 → 订单 → 收银台会话（退款 PROCESSING，渠道退款未建）",
+      "entry": {
+        "label": "退款单 → 订单 → 收银台会话（退款 PROCESSING，渠道退款未建）",
+        "keyType": "REFUND_REQUEST_NO",
+        "values": [
+          "rfd_3L5B25y5BGmxTcJDRyZcBx8OCN9BJK"
+        ]
+      },
+      "patternOk": true,
+      "layers": [
+        {
+          "depth": 0,
+          "nodes": [
+            {
+              "templateCode": "JQ_REFUND_BY_NO",
+              "templateName": "退款申请（按退款单号）",
+              "trigger": "REFUND_REQUEST_NO=rfd_3L5B25y5BGmxTcJDRyZcBx8OCN9BJK",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239260873988882432"
+              ]
+            }
+          ],
+          "newKeys": {
+            "REFUND_REQUEST_ID": [
+              "239260873988882432"
+            ],
+            "ORDER_ID": [
+              "239260842481270784"
+            ]
+          }
+        },
+        {
+          "depth": 1,
+          "nodes": [
+            {
+              "templateCode": "JQ_REFUND_BY_ID",
+              "templateName": "退款申请（按申请 ID）",
+              "trigger": "REFUND_REQUEST_ID=239260873988882432",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239260873988882432"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_REFUND_BY_REFUND_REQUEST",
+              "templateName": "渠道退款",
+              "trigger": "REFUND_REQUEST_ID=239260873988882432",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_ORDER_BY_ID",
+              "templateName": "订单",
+              "trigger": "ORDER_ID=239260842481270784",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239260842481270784"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHECKOUT_SESSION_BY_ORDER",
+              "templateName": "收银台会话",
+              "trigger": "ORDER_ID=239260842481270784",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239260842493853697"
+              ]
+            },
+            {
+              "templateCode": "JQ_REFUND_BY_ORDER",
+              "templateName": "退款申请",
+              "trigger": "ORDER_ID=239260842481270784",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239260873988882432"
+              ]
+            },
+            {
+              "templateCode": "JQ_PAYMENT_INTENT_BY_ORDER",
+              "templateName": "支付意图",
+              "trigger": "ORDER_ID=239260842481270784",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ORDER",
+              "templateName": "计费事实（按订单）",
+              "trigger": "ORDER_ID=239260842481270784",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {
+            "CHECKOUT_SESSION_ID": [
+              "239260842493853697"
+            ]
+          }
+        },
+        {
+          "depth": 2,
+          "nodes": [
+            {
+              "templateCode": "JQ_CHECKOUT_SESSION_BY_ID",
+              "templateName": "收银台会话（按会话 ID）",
+              "trigger": "CHECKOUT_SESSION_ID=239260842493853697",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239260842493853697"
+              ]
+            }
+          ],
+          "newKeys": {}
+        }
+      ]
+    },
+    {
+      "label": "渠道交易号（PAYERMAX）",
+      "entry": {
+        "label": "渠道交易号（PAYERMAX）",
+        "keyType": "EXTERNAL_TRANSACTION_ID",
+        "values": [
+          "T2026102218153708006502"
+        ]
+      },
+      "patternOk": true,
+      "layers": [
+        {
+          "depth": 0,
+          "nodes": [
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID",
+              "templateName": "渠道交易引用（按渠道交易号）",
+              "trigger": "EXTERNAL_TRANSACTION_ID=T2026102218153708006502",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094969753751552"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID",
+              "templateName": "渠道回调",
+              "trigger": "EXTERNAL_TRANSACTION_ID=T2026102218153708006502",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {
+            "CHANNEL_TRANSACTION_REF_ID": [
+              "239094969753751552"
+            ],
+            "PAYMENT_ACTION_ID": [
+              "239094961910403072"
+            ]
+          }
+        },
+        {
+          "depth": 1,
+          "nodes": [
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_ID",
+              "templateName": "渠道交易引用（按引用 ID）",
+              "trigger": "CHANNEL_TRANSACTION_REF_ID=239094969753751552",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094969753751552"
+              ]
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ACTION_BY_ID",
+              "templateName": "支付动作（按动作 ID）",
+              "trigger": "PAYMENT_ACTION_ID=239094961910403072",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094961910403072"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_ACTION",
+              "templateName": "渠道交易引用",
+              "trigger": "PAYMENT_ACTION_ID=239094961910403072",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094969753751552"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_INTERACTION_BY_ACTION",
+              "templateName": "渠道交互",
+              "trigger": "PAYMENT_ACTION_ID=239094961910403072",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {
+            "PAYMENT_ATTEMPT_ID": [
+              "239094961201565696"
+            ]
+          }
+        },
+        {
+          "depth": 2,
+          "nodes": [
+            {
+              "templateCode": "JQ_PAYMENT_ATTEMPT_BY_ID",
+              "templateName": "支付尝试（按尝试 ID）",
+              "trigger": "PAYMENT_ATTEMPT_ID=239094961201565696",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094961201565696"
+              ]
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ACTION_BY_ATTEMPT",
+              "templateName": "支付动作",
+              "trigger": "PAYMENT_ATTEMPT_ID=239094961201565696",
+              "rows": 2,
+              "error": null,
+              "subjects": [
+                "239094961218342912",
+                "239094961910403072"
+              ]
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ATTEMPT",
+              "templateName": "计费事实（按支付尝试）",
+              "trigger": "PAYMENT_ATTEMPT_ID=239094961201565696",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {
+            "PAYMENT_INTENT_ID": [
+              "239094951181373440"
+            ],
+            "PAYMENT_ACTION_ID": [
+              "239094961218342912"
+            ]
+          }
+        },
+        {
+          "depth": 3,
+          "nodes": [
+            {
+              "templateCode": "JQ_PAYMENT_INTENT_BY_ID",
+              "templateName": "支付意图（按意图 ID）",
+              "trigger": "PAYMENT_INTENT_ID=239094951181373440",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094951181373440"
+              ]
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ATTEMPT_BY_INTENT",
+              "templateName": "支付尝试",
+              "trigger": "PAYMENT_INTENT_ID=239094951181373440",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094961201565696"
+              ]
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ACTION_BY_ID",
+              "templateName": "支付动作（按动作 ID）",
+              "trigger": "PAYMENT_ACTION_ID=239094961218342912",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094961218342912"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_ACTION",
+              "templateName": "渠道交易引用",
+              "trigger": "PAYMENT_ACTION_ID=239094961218342912",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_CHANNEL_INTERACTION_BY_ACTION",
+              "templateName": "渠道交互",
+              "trigger": "PAYMENT_ACTION_ID=239094961218342912",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {
+            "ORDER_ID": [
+              "156965757796837"
+            ]
+          }
+        },
+        {
+          "depth": 4,
+          "nodes": [
+            {
+              "templateCode": "JQ_ORDER_BY_ID",
+              "templateName": "订单",
+              "trigger": "ORDER_ID=156965757796837",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_CHECKOUT_SESSION_BY_ORDER",
+              "templateName": "收银台会话",
+              "trigger": "ORDER_ID=156965757796837",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_REFUND_BY_ORDER",
+              "templateName": "退款申请",
+              "trigger": "ORDER_ID=156965757796837",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_INTENT_BY_ORDER",
+              "templateName": "支付意图",
+              "trigger": "ORDER_ID=156965757796837",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "239094951181373440"
+              ]
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ORDER",
+              "templateName": "计费事实（按订单）",
+              "trigger": "ORDER_ID=156965757796837",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {}
+        }
+      ]
+    },
+    {
+      "label": "会计凭证 → 记账批次 → 计费事实（上游方向）",
+      "entry": {
+        "label": "会计凭证 → 记账批次 → 计费事实（上游方向）",
+        "keyType": "JOURNAL_ENTRY_ID",
+        "values": [
+          "241801561934753792"
+        ]
+      },
+      "patternOk": true,
+      "layers": [
+        {
+          "depth": 0,
+          "nodes": [
+            {
+              "templateCode": "JQ_JOURNAL_ENTRY_BY_ID",
+              "templateName": "会计凭证（按凭证 ID）",
+              "trigger": "JOURNAL_ENTRY_ID=241801561934753792",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801561934753792"
+              ]
+            },
+            {
+              "templateCode": "JQ_JOURNAL_LINE_BY_ENTRY",
+              "templateName": "凭证分录",
+              "trigger": "JOURNAL_ENTRY_ID=241801561934753792",
+              "rows": 6,
+              "error": null,
+              "subjects": [
+                "241801561934753792"
+              ]
+            }
+          ],
+          "newKeys": {
+            "ACCOUNT_POSTING_ID": [
+              "241801543844753408"
+            ],
+            "BILLING_FACT_ID": [
+              "241801538719309824"
+            ]
+          }
+        },
+        {
+          "depth": 1,
+          "nodes": [
+            {
+              "templateCode": "JQ_ACCOUNT_POSTING_BY_ID",
+              "templateName": "记账批次（按批次 ID）",
+              "trigger": "ACCOUNT_POSTING_ID=241801543844753408",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801543844753408"
+              ]
+            },
+            {
+              "templateCode": "JQ_ACCOUNT_ENTRY_BY_POSTING",
+              "templateName": "账户分录",
+              "trigger": "ACCOUNT_POSTING_ID=241801543844753408",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801543844753408"
+              ]
+            },
+            {
+              "templateCode": "JQ_JOURNAL_ENTRY_BY_POSTING",
+              "templateName": "会计凭证",
+              "trigger": "ACCOUNT_POSTING_ID=241801543844753408",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801561934753792"
+              ]
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ID",
+              "templateName": "计费事实",
+              "trigger": "BILLING_FACT_ID=241801538719309824",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801538719309824"
+              ]
+            },
+            {
+              "templateCode": "JQ_ACCOUNT_POSTING_BY_FACT",
+              "templateName": "记账批次",
+              "trigger": "BILLING_FACT_ID=241801538719309824",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801543844753408"
+              ]
+            },
+            {
+              "templateCode": "JQ_PLATFORM_TXN_BY_FACT",
+              "templateName": "平台流水",
+              "trigger": "BILLING_FACT_ID=241801538719309824",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801543626600448"
+              ]
+            }
+          ],
+          "newKeys": {
+            "ORDER_ID": [
+              "241801063336886272"
+            ],
+            "PAYMENT_INTENT_ID": [
+              "999900000000000301"
+            ],
+            "PAYMENT_ATTEMPT_ID": [
+              "999900000000000302"
+            ],
+            "CHANNEL_TRANSACTION_REF_ID": [
+              "999900000000000303"
+            ],
+            "PLATFORM_TXN_ID": [
+              "241801543626600448"
+            ],
+            "EXTERNAL_TRANSACTION_ID": [
+              "SYN-TAX-P-0001"
+            ]
+          }
+        },
+        {
+          "depth": 2,
+          "nodes": [
+            {
+              "templateCode": "JQ_ORDER_BY_ID",
+              "templateName": "订单",
+              "trigger": "ORDER_ID=241801063336886272",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801063336886272"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHECKOUT_SESSION_BY_ORDER",
+              "templateName": "收银台会话",
+              "trigger": "ORDER_ID=241801063336886272",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801063345274880"
+              ]
+            },
+            {
+              "templateCode": "JQ_REFUND_BY_ORDER",
+              "templateName": "退款申请",
+              "trigger": "ORDER_ID=241801063336886272",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_INTENT_BY_ORDER",
+              "templateName": "支付意图",
+              "trigger": "ORDER_ID=241801063336886272",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ORDER",
+              "templateName": "计费事实（按订单）",
+              "trigger": "ORDER_ID=241801063336886272",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801538719309824"
+              ]
+            },
+            {
+              "templateCode": "JQ_PAYMENT_INTENT_BY_ID",
+              "templateName": "支付意图（按意图 ID）",
+              "trigger": "PAYMENT_INTENT_ID=999900000000000301",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ATTEMPT_BY_INTENT",
+              "templateName": "支付尝试",
+              "trigger": "PAYMENT_INTENT_ID=999900000000000301",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ATTEMPT_BY_ID",
+              "templateName": "支付尝试（按尝试 ID）",
+              "trigger": "PAYMENT_ATTEMPT_ID=999900000000000302",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_PAYMENT_ACTION_BY_ATTEMPT",
+              "templateName": "支付动作",
+              "trigger": "PAYMENT_ATTEMPT_ID=999900000000000302",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_BILLING_FACT_BY_ATTEMPT",
+              "templateName": "计费事实（按支付尝试）",
+              "trigger": "PAYMENT_ATTEMPT_ID=999900000000000302",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801538719309824"
+              ]
+            },
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_ID",
+              "templateName": "渠道交易引用（按引用 ID）",
+              "trigger": "CHANNEL_TRANSACTION_REF_ID=999900000000000303",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_STATEMENT_LINE_BY_PLATFORM_TXN",
+              "templateName": "渠道对账单明细",
+              "trigger": "PLATFORM_TXN_ID=241801543626600448",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_CHANNEL_TXN_REF_BY_EXTERNAL_ID",
+              "templateName": "渠道交易引用（按渠道交易号）",
+              "trigger": "EXTERNAL_TRANSACTION_ID=SYN-TAX-P-0001",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            },
+            {
+              "templateCode": "JQ_CHANNEL_CALLBACK_ITEM_BY_EXTERNAL_ID",
+              "templateName": "渠道回调",
+              "trigger": "EXTERNAL_TRANSACTION_ID=SYN-TAX-P-0001",
+              "rows": 0,
+              "error": null,
+              "subjects": []
+            }
+          ],
+          "newKeys": {
+            "CHECKOUT_SESSION_ID": [
+              "241801063345274880"
+            ]
+          }
+        },
+        {
+          "depth": 3,
+          "nodes": [
+            {
+              "templateCode": "JQ_CHECKOUT_SESSION_BY_ID",
+              "templateName": "收银台会话（按会话 ID）",
+              "trigger": "CHECKOUT_SESSION_ID=241801063345274880",
+              "rows": 1,
+              "error": null,
+              "subjects": [
+                "241801063345274880"
+              ]
+            }
+          ],
+          "newKeys": {}
+        }
+      ]
+    }
+  ],
+  "verdict": true
+}

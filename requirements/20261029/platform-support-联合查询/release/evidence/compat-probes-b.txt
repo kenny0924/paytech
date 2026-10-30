@@ -1,0 +1,10 @@
+# 发布 b 新旧兼容探针（2026-10-30，本机，不连 mor-test）
+1 旧 ops-bff（现网 a，JAR ac050134d024c47f，docker cp 取出）读取新 Platform 响应：harness/ProbeOldBffResponse.java，classpath = 该 JAR 解压目录；
+  默认 JacksonJsonHttpMessageConverter（数据查询代理 strictJsonResponseBytes=0，RestClient.builder() 默认转换器）把含 "alreadyLoaded":[{...}] 的
+  JSON 读成旧 api JointQueryStepResponseBody → "OLD BFF api DTO accepts unknown alreadyLoaded: OK depth=1"。
+2 旧 Platform 读取新 BFF 请求：platform-test 临时用例（运行后已删除）经真实 MVC 向 J3 POST 带未知属性 noSuchField 的请求体 → 200
+  （Platform 数据查询请求体不走严格解析器；该行为由 Boot JsonMapper 配置决定，a / b 相同）。Tests run: 1, Failures: 0。
+3 新 ops-web + 旧 ops-bff：BFF DataQueryRequestConfiguration 对 service.model.dataquery.request 包启用 FAIL_ON_UNKNOWN_PROPERTIES，
+  旧 BFF 的 JointQueryStepRequestBody 没有 loadedSubjects → 400（HttpMessageNotReadable，无字段错误）。既有 BFF 用例
+  DataQueryBrowserAutoTest.test_invalidParameter 断言请求体未知字段 400、不到 Platform。新页面只在 422 + loadedSubjects 字段错误时
+  不带它重发（jointRun.ts），对这个 400 不重试 → 仍须 ops-web 最后上线、最先回滚。

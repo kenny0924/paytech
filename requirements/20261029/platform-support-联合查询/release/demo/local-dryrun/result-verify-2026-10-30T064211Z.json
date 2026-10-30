@@ -1,0 +1,303 @@
+{
+  "target": "local",
+  "actions": [],
+  "checks": [
+    {
+      "name": "J1 联合查询设置可读",
+      "pass": true,
+      "evidence": {
+        "entryKeyTypes": [
+          {
+            "groupName": "收单",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "CHECKOUT_SESSION_ID",
+            "keyTypeName": "收银台会话 ID",
+            "sortNo": 10,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "收单",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "ORDER_ID",
+            "keyTypeName": "交易订单 ID",
+            "sortNo": 20,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "收单",
+            "inputHint": "ord_ 开头的交易订单号",
+            "keyTypeCode": "ORDER_NO",
+            "keyTypeName": "交易订单号",
+            "sortNo": 30,
+            "valuePattern": "ord_([0-9A-Za-z]{30}|[A-Za-z0-9_-]{22})",
+            "valueType": "STRING"
+          },
+          {
+            "groupName": "收单",
+            "inputHint": "客户系统的订单号，1—128 个可见 ASCII 字符",
+            "keyTypeCode": "CLIENT_ORDER_ID",
+            "keyTypeName": "客户订单号",
+            "sortNo": 40,
+            "valuePattern": "[!-~]{1,128}",
+            "valueType": "STRING"
+          },
+          {
+            "groupName": "收单",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "REFUND_REQUEST_ID",
+            "keyTypeName": "退款申请 ID",
+            "sortNo": 50,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "收单",
+            "inputHint": "rfd_ 开头的 34 位退款单号",
+            "keyTypeCode": "REFUND_REQUEST_NO",
+            "keyTypeName": "退款单号",
+            "sortNo": 60,
+            "valuePattern": "rfd_[0-9A-Za-z]{30}",
+            "valueType": "STRING"
+          },
+          {
+            "groupName": "支付",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "PAYMENT_INTENT_ID",
+            "keyTypeName": "支付意图 ID",
+            "sortNo": 70,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "支付",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "PAYMENT_ATTEMPT_ID",
+            "keyTypeName": "支付尝试 ID",
+            "sortNo": 80,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "支付",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "PAYMENT_ACTION_ID",
+            "keyTypeName": "支付动作 ID",
+            "sortNo": 90,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "支付",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "CHANNEL_REFUND_ID",
+            "keyTypeName": "渠道退款 ID",
+            "sortNo": 100,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "支付",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "CHANNEL_TRANSACTION_REF_ID",
+            "keyTypeName": "渠道交易引用 ID",
+            "sortNo": 110,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "渠道",
+            "inputHint": "渠道返回的交易号",
+            "keyTypeCode": "EXTERNAL_TRANSACTION_ID",
+            "keyTypeName": "渠道交易号",
+            "sortNo": 130,
+            "valuePattern": null,
+            "valueType": "STRING"
+          },
+          {
+            "groupName": "争议",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "DISPUTE_CASE_ID",
+            "keyTypeName": "争议案件 ID",
+            "sortNo": 140,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "计费",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "BILLING_FACT_ID",
+            "keyTypeName": "计费事实 ID",
+            "sortNo": 150,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "账户",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "ACCOUNT_POSTING_ID",
+            "keyTypeName": "记账批次 ID",
+            "sortNo": 170,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "总账",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "JOURNAL_ENTRY_ID",
+            "keyTypeName": "会计凭证 ID",
+            "sortNo": 180,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "出款",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "PAYOUT_ID",
+            "keyTypeName": "出款 ID",
+            "sortNo": 190,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "归属维度",
+            "inputHint": "1—19 位数字",
+            "keyTypeCode": "CLIENT_ID",
+            "keyTypeName": "客户 ID",
+            "sortNo": 210,
+            "valuePattern": "[0-9]{1,19}",
+            "valueType": "INTEGER"
+          },
+          {
+            "groupName": "归属维度",
+            "inputHint": "5 位运营主体编号，如 AE001",
+            "keyTypeCode": "ENTITY_NO",
+            "keyTypeName": "运营主体编号",
+            "sortNo": 220,
+            "valuePattern": "[A-Z0-9]{5}",
+            "valueType": "STRING"
+          }
+        ],
+        "groups": [
+          {
+            "groupName": "收单",
+            "rank": 10
+          },
+          {
+            "groupName": "支付",
+            "rank": 70
+          },
+          {
+            "groupName": "计费",
+            "rank": 150
+          }
+        ],
+        "limits": {
+          "maxDepth": 6,
+          "maxEntryValues": 20,
+          "maxExecutionsPerStep": 20,
+          "maxRowsPerTemplate": 100,
+          "maxTemplateExecutions": 60,
+          "maxTotalSeconds": 60,
+          "maxValuesPerKey": 50
+        }
+      }
+    },
+    {
+      "name": "J2 可达预览 ORDER_NO：JQ_* 无 excluded",
+      "pass": true,
+      "evidence": {
+        "reachableJq": 0,
+        "excluded": [],
+        "breaks": [
+          {
+            "keyType": "ORDER_NO",
+            "reason": "没有参与模板以 ORDER_NO 为触发键，链路在此断开"
+          }
+        ]
+      }
+    },
+    {
+      "name": "J2 可达预览 PAYMENT_INTENT_ID：JQ_* 无 excluded",
+      "pass": true,
+      "evidence": {
+        "reachableJq": 2,
+        "excluded": [],
+        "breaks": [
+          {
+            "keyType": "REFUND_REQUEST_ID",
+            "reason": "没有参与模板以 REFUND_REQUEST_ID 为触发键，链路在此断开"
+          },
+          {
+            "keyType": "BILLING_FACT_ID",
+            "reason": "没有参与模板以 BILLING_FACT_ID 为触发键，链路在此断开"
+          },
+          {
+            "keyType": "PAYMENT_ACTION_ID",
+            "reason": "没有参与模板以 PAYMENT_ACTION_ID 为触发键，链路在此断开"
+          },
+          {
+            "keyType": "EXTERNAL_TRANSACTION_ID",
+            "reason": "没有参与模板以 EXTERNAL_TRANSACTION_ID 为触发键，链路在此断开"
+          }
+        ]
+      }
+    },
+    {
+      "name": "J2 可达预览 REFUND_REQUEST_NO：JQ_* 无 excluded",
+      "pass": true,
+      "evidence": {
+        "reachableJq": 3,
+        "excluded": [],
+        "breaks": [
+          {
+            "keyType": "REFUND_REQUEST_ID",
+            "reason": "没有参与模板以 REFUND_REQUEST_ID 为触发键，链路在此断开"
+          },
+          {
+            "keyType": "BILLING_FACT_ID",
+            "reason": "没有参与模板以 BILLING_FACT_ID 为触发键，链路在此断开"
+          },
+          {
+            "keyType": "PAYMENT_ACTION_ID",
+            "reason": "没有参与模板以 PAYMENT_ACTION_ID 为触发键，链路在此断开"
+          },
+          {
+            "keyType": "EXTERNAL_TRANSACTION_ID",
+            "reason": "没有参与模板以 EXTERNAL_TRANSACTION_ID 为触发键，链路在此断开"
+          }
+        ]
+      }
+    },
+    {
+      "name": "J2 可达预览 EXTERNAL_TRANSACTION_ID：JQ_* 无 excluded",
+      "pass": true,
+      "evidence": {
+        "reachableJq": 0,
+        "excluded": [],
+        "breaks": [
+          {
+            "keyType": "EXTERNAL_TRANSACTION_ID",
+            "reason": "没有参与模板以 EXTERNAL_TRANSACTION_ID 为触发键，链路在此断开"
+          }
+        ]
+      }
+    },
+    {
+      "name": "J2 可达预览 JOURNAL_ENTRY_ID：JQ_* 无 excluded",
+      "pass": true,
+      "evidence": {
+        "reachableJq": 0,
+        "excluded": [],
+        "breaks": [
+          {
+            "keyType": "JOURNAL_ENTRY_ID",
+            "reason": "没有参与模板以 JOURNAL_ENTRY_ID 为触发键，链路在此断开"
+          }
+        ]
+      }
+    }
+  ],
+  "verdict": true
+}

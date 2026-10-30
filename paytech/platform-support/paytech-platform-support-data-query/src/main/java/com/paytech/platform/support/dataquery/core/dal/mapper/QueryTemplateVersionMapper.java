@@ -21,6 +21,9 @@ public interface QueryTemplateVersionMapper {
     /** 一批模板各自的当前版本。 */
     List<QueryTemplateVersion> selectCurrentVersions(@Param("templates") Collection<QueryTemplate> templates);
 
+    /** 同 selectCurrentVersions，加共享锁读取。 */
+    List<QueryTemplateVersion> selectCurrentVersionsForShare(@Param("templates") Collection<QueryTemplate> templates);
+
     /** 分页查询某模板的版本，按版本号倒序。 */
     List<QueryTemplateVersion> selectPage(@Param("templateId") long templateId, @Param("offset") int offset,
         @Param("size") int size);

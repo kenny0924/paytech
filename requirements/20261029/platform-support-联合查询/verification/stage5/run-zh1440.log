@@ -1,0 +1,33 @@
+{"run":"zh-CN-1440","step":"01a-empty","check":{"chips":"收单 — 支付 — 计费","empty":"收单 — 支付 — 计费 输入一个单号，查出它在这些系统中的关联数据 从任何一环进入都可以：收银台会话 ID、交易订单 ID、交易订单号、客户订单号……上下游会自动带出 能查到哪些数据？"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"01b-type-menu","check":"常用 收银台会话 ID 1—19 位数字 ✓ 交易订单 ID 1—19 位数字 交易订单号 ord_ 开头的交易订单号 客户订单号 客户系统的订单号，1—128 个可见 ASCII 字符 退款申请 ID 1—19 位数字 更多 退款单号 rfd_ 开头的 34 位退款单号 支付意图 ID 1—19 位数字 支付尝试 ID 1—19 位数字 支付动作 ID 1—19 位数字 渠道退款 ID 1—19 位数字 渠道交易引用 ID 1—19 位数字 渠道交易号 渠道返回的交易号 争议案件 ID 1—19 位数字 计费事实 ID 1—19 位数字 记账批次 ID 1—19 位数字 会计凭证 ID 1—19 位数字 出款 ID 1—19 位数字 客户 ID 1—19 位数字 运营主体编号 5 位运营主体编号，如 AE001","page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"08a-format-error","check":{"message":"退款单号：rfd_ 开头的 34 位退款单号。第 2 行不符合，改正或删除后再查询。","invalidLines":1},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"08b-coverage","check":"","page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"02a-refund-overview","check":{"summary":"找到 10 项关联数据，涉及 3 个系统 0.8 秒 · 来自只读库，可能有几秒延迟","nodes":["收银台会话 · 按会话 ID 1","交易订单 · 按订单 ID 1","退款申请 · 按退款单号 起点","退款申请 · 按订单 2","支付意图 · 按订单（source_id VARCHAR） 1","支付意图 · 按意图 ID 1","支付尝试 · 按意图（游标分页，每页 1 行） 1+","支付尝试 · 按尝试 ID 1","支付动作 · 按尝试（偏移分页，每页 1 行） 1","计费事实 · 按订单（order_ref VARCHAR） 1"],"detail":"退款申请 · 按退款单号 1 条 当前节点 全部 10 项 技术详情 refund_request_id refund_request_no order_id refund_amount 7001 定位 rfd_A00000000000000000000000007001 5001 定位 10.00"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"02b-path-truncated","check":{"detail":"支付尝试 · 按意图（游标分页，每页 1 行） 1 条+ 路径：退款申请 · 按退款单号 → 支付意图 · 按订单（source_id VARCHAR） → 支付尝试 · 按意图（游标分页，每页 1 行） 当前节点 全部 10 项 技术详情 payment_attempt_id payment_intent_id attempt_status 9001 定位 8001 定位 FAILED 加载更多","activeEdges":2},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"02c-load-more","check":{"rows":2,"foot":""},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"02d-locate","check":{"selected":"支付尝试 · 按尝试 ID 1","detailTitle":"支付尝试 · 按尝试 ID 1 条 路径：退款申请 · 按退款单号 → 支付意图 · 按订单（source_id VARCHAR） → 支付尝试 · 按意图（游标分页，每页 1 行） → 支付尝试 · 按尝试 ID"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"02e-all-items","check":{"sections":10},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"07a-attempt-overview","check":{"summary":"找到 9 项关联数据，涉及 3 个系统 1.1 秒 · 来自只读库，可能有几秒延迟","lanes":["收单","支付","计费"],"nodes":["收银台会话 · 按会话 ID 1","交易订单 · 按订单 ID 1","退款申请 · 按订单 2","支付意图 · 按意图 ID 1","支付意图 · 按订单（source_id VARCHAR） 1","支付尝试 · 按尝试 ID 起点","支付尝试 · 按意图（游标分页，每页 1 行） 1+","支付动作 · 按尝试（偏移分页，每页 1 行） 起点","计费事实 · 按订单（order_ref VARCHAR） 1"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"07b-dimension-cell","check":{"detail":"交易订单 · 按订单 ID 1 条 路径：支付尝试 · 按尝试 ID → 支付意图 · 按意图 ID → 交易订单 · 按订单 ID 当前节点 全部 9 项 技术详情 order_id order_no client_order_id client_id checkout_session_id 买家邮箱 5001 定位 ord_000000000000000000000000005001 CO-1 3101 6001 定位 bu***************.test","dimensions":["CO-1","3101"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"07c-query-this-hover","check":"以此查询","page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"07d-query-this-result","check":{"type":"客户订单号 ▾","input":"CO-1","summary":"找到 11 项关联数据，涉及 3 个系统 1.2 秒 · 来自只读库，可能有几秒延迟 命中 2 个客户 全部 3101 3102"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"03a-multi-client","check":{"summary":"找到 11 项关联数据，涉及 3 个系统 1.6 秒 · 来自只读库，可能有几秒延迟 命中 2 个客户 全部 3101 3102","clients":["全部","3101","3102"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"03b-client-filtered","check":{"summary":"找到 10 项关联数据，涉及 3 个系统 1.6 秒 · 来自只读库，可能有几秒延迟 命中 2 个客户 全部 3101 3102","nodes":["收银台会话 · 按会话 ID 1","交易订单 · 按客户订单号 起点","交易订单 · 按订单 ID 1","退款申请 · 按订单 2","支付意图 · 按订单（source_id VARCHAR） 2","支付意图 · 按意图 ID 2","支付尝试 · 按意图（游标分页，每页 1 行） 1+","支付尝试 · 按尝试 ID 1","支付动作 · 按尝试（偏移分页，每页 1 行） 1","计费事实 · 按订单（order_ref VARCHAR） 2"],"detail":"交易订单 · 按客户订单号 1 条 当前节点 全部 10 项 技术详情 order_id client_order_id client_id 5002 定位 CO-1 3102"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"03c-gaps","check":{"summary":"找到 11 项关联数据，涉及 3 个系统 1 处未查全 ▴ 4.1 秒 · 来自只读库，可能有几秒延迟","issues":"失败 慢查询演示（默认停用，2 秒超时）：查询超时被中止，其他结果不受影响。","nodes":["收银台会话 · 按会话 ID 1","交易订单 · 按订单 ID 1","慢查询演示（默认停用，2 秒超时） 失败","退款申请 · 按退款单号 起点","退款申请 · 按订单 2","支付意图 · 按订单（source_id VARCHAR） 1","支付意图 · 按意图 ID 1","支付尝试 · 按意图（游标分页，每页 1 行） 1+","支付尝试 · 按尝试 ID 1","支付动作 · 按尝试（偏移分页，每页 1 行） 1","计费事实 · 按订单（order_ref VARCHAR） 1"]},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"03d-failed-detail","check":"慢查询演示（默认停用，2 秒超时） 路径：退款申请 · 按退款单号 → 慢查询演示（默认停用，2 秒超时） 当前节点 全部 11 项 这一项没有查到 查询超时被中止，其他结果不受影响。 重试这一项 技术详情","page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"03e-technical","check":"模板 JQ_SLOW_ORDER · v1 数据源 FIXTURE_JQ 触发键 ORDER_ID · orderIds · 1 个值 跳数 第 1 跳 耗时 2201 ms 错误码 DATA_QUERY_TIMEOUT 错误信息 查询超时，请缩小查询范围（上限 2 秒）","page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"03f-after-retry","check":{"summary":"找到 11 项关联数据，涉及 3 个系统 1 处未查全 ▴ 2.7 秒 · 来自只读库，可能有几秒延迟","detail":"慢查询演示（默认停用，2 秒超时） 路径：退款申请 · 按退款单号 → 慢查询演示（默认停用，2 秒超时） 当前节点 全部 11 项 模板 JQ_SLOW_ORDER · v1 数据源 FIXTURE_JQ 触发键 ORDER_ID · orderIds · 1 个值 跳数 第 1 跳 耗时 2242 ms 错误码 DATA_QUERY_TIMEOUT 错误信息 查询超时，请缩小查询范围（上限 2 秒） 这一项没有查到 查询超时被中止，其他结果不受影响。 重试这一项 技术详情"},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+{"run":"zh-CN-1440","step":"04a-key-types","check":{"groups":["收单","支付","渠道","争议","计费","账户","总账","出款","对账","归属维度"],"rows":27},"page":{"rawKeys":[],"horizontalScroll":false,"scrollWidth":1440}}
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('.kt-pattern-test input')[22m
+
+    at /Users/kenny/Desktop/Workspace/Code-MoR-jq-m/.jq-notes/stage5/stage5_browser.mjs:223:48 {
+  name: 'TimeoutError'
+}
+
+Node.js v24.6.0

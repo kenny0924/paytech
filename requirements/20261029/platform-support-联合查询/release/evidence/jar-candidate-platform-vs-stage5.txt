@@ -1,0 +1,3 @@
+A=3228 B=3228 onlyA=0 onlyB=0 changed=2
+  ~ paytech-messaging.jar!catalog/events.yaml
+  ~ paytech-platform-support-access-control.jar!operations/console-resource-capabilities.json
