@@ -11,6 +11,15 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## platform-support 多语言发布变更记录（2026-10-30，已部署 mor-test，已本地提交 `1c8341a2`，未推送）
+
+- **范围：** [需求](<../requirements/20261030/platform-support-多语言发布变更记录/requirement.md>)、[技术方案](<../requirements/20261030/platform-support-多语言发布变更记录/technique.md>)、[交付记录](<../requirements/20261030/platform-support-多语言发布变更记录/delivery.md>)、[发布手册](<../requirements/20261030/platform-support-多语言发布变更记录/release/runbook.md>)。来源：发布预检逐个读取线上语言包（每包一次 Vault REVEAL + 新建存储客户端），mor-test 5—10 s、偶发 504。
+- **Implemented：** 新表 `t_i18n_release_change`（每次发布相对上一发布号的 ADDED / CHANGED / REMOVED 文案，发布 1 为全量基线）与 `t_i18n_release.change_count`（NULL = 未生成明细）；发布在登记事务内写变化行（每批 ≤ 1000 行分配 Snowflake 主键）；预检、发布摘要、版本差异按明细还原发布内容（一条 SQL 取每个 key 不大于目标发布号的最后一行）后按 ReleaseDiff 比较，不读语言包、不调 Vault，接口合同不变；任一不大于目标号的发布未补录时报「发布变更明细缺失」；删除读包端口 `ReleaseBundleReader`。一次性补录脚本 `release/scripts/backfill_release_changes.py`（`plan` 生成可审阅 SQL、按发布单事务且以 `change_count IS NULL` 抢占、幂等；`verify` 逐发布与语言包核对）。
+- **Verified：** 多语言 HTTP 与模块测试 69（含 `ReleaseChangeApiTest` T1—T9、4205 行大基线），与联合查询合并后多语言 + 数据查询 143；本机 e2e API 12/12、浏览器 zh-CN / en × 1440 / 390；mor-test 修复前后同一脚本：ops 预检 504 / 4.5—7.0 s → 0.5—1.05 s，常规差异 2.4—8.9 s → 0.09—0.58 s，存储凭据解密 958 → 0，摘要与独立基准一致，写入验收（改译文并还原、client-console #9 相同内容发布 `change_count=0`）通过；联合查询 c 版发布 ops #27 记录 2 行，`verify` 36/36。
+- **本机：** auto 库 `mor_platform` 与 e2e `mor_platform_v2e2e` 已执行 DDL，v2e2e 已补录；e2e Platform 为联合查询 + 本需求合并构建（pid 14518，旧 JAR `*.pre-i18nchg`）。
+- **mor-test（2026-10-30 08:55—09:05Z）：** `mor_platform` DDL 与补录（26,620 行，34 个发布）；platform-support-service `a3003ef6…`（`i18nchg-20261030b` = 联合查询 `c82b6f34` 只替换应用 JAR），回滚 `c82b6f34`（旧代码不读新表，DDL 可保留），备份 `Code-MoR-backups/i18nchg-20261030/mortest-20261030T085512Z`；client-console 语言包 #9 为验收发布。
+- **Known gaps：** 之后的 Platform 构建必须包含 `1c8341a2`（`69f87bbf`）；不含它的 Platform 发布的版本没有明细，换回后预检报「发布变更明细缺失」，重跑补录脚本即可。AC-06 最大差异（#19 对 #1，19,618 条、2.65 MB 响应）13 次中 2 次 1.1—1.2 s（中位数 0.53 s），已接受为遗留。
+
 ## tax 结账算税与事件登记（2026-10-29—30，已部署 mor-test，已本地提交 `fa21d5ce`，未推送）
 
 - **范围：** [需求](<../requirements/20261029/tax-结账算税与事件登记/requirement.md>)、[技术方案](<../requirements/20261029/tax-结账算税与事件登记/technique.md>)、[交付记录](<../requirements/20261029/tax-结账算税与事件登记/delivery.md>)、[运行卡](<../requirements/20261029/tax-结账算税与事件登记/release/runbook.md>)、[阶段 7 报告](<../requirements/20261029/tax-结账算税与事件登记/release/stage7-report.md>)；依据 [2026-10-29 tax 决定](./decisions/2026-10-29-tax-domain-fact-service.md)（Confirmed，含第 17 条首期由平台运营代操作）。

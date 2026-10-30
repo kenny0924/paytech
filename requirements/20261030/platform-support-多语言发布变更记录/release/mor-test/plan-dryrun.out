@@ -1,0 +1,35 @@
+提示：t_i18n_release.change_count 不存在（DDL 未执行），按全部未补录试算
+client-console       发布   1  变化   1216  待写入
+client-console       发布   2  变化   1426  待写入
+client-console       发布   3  变化     26  待写入
+client-console       发布   4  变化      4  待写入
+client-console       发布   5  变化      2  待写入
+client-console       发布   6  变化    968  待写入
+client-console       发布   7  变化     62  待写入
+client-console       发布   8  变化     46  待写入
+operations-console   发布   1  变化    818  待写入
+operations-console   发布   2  变化      0  待写入
+operations-console   发布   3  变化  16228  待写入
+operations-console   发布   4  变化      1  待写入
+operations-console   发布   5  变化      5  待写入
+operations-console   发布   6  变化    138  待写入
+operations-console   发布   7  变化      3  待写入
+operations-console   发布   8  变化    440  待写入
+operations-console   发布   9  变化   1224  待写入
+operations-console   发布  10  变化      4  待写入
+operations-console   发布  11  变化     46  待写入
+operations-console   发布  12  变化    108  待写入
+operations-console   发布  13  变化   1410  待写入
+operations-console   发布  14  变化     10  待写入
+operations-console   发布  15  变化      4  待写入
+operations-console   发布  16  变化     22  待写入
+operations-console   发布  17  变化      4  待写入
+operations-console   发布  18  变化    391  待写入
+operations-console   发布  19  变化    122  待写入
+operations-console   发布  20  变化    202  待写入
+operations-console   发布  21  变化    280  待写入
+operations-console   发布  22  变化     44  待写入
+operations-console   发布  23  变化    494  待写入
+operations-console   发布  24  变化    428  待写入
+operations-console   发布  25  变化    430  待写入
+读取语言包 168 个（去重后），SQL 已写入 requirements/20261030/platform-support-多语言发布变更记录/release/mor-test/backfill-plan.sql

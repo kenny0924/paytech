@@ -1,0 +1,118 @@
+[
+ {
+  "tag": "1440-zh-CN",
+  "horizontalOverflowPx": 0,
+  "appErrors": [
+   "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+  ],
+  "otherErrors": 627,
+  "requests": [
+   {
+    "url": "operations-console/releases/18/diff?baseReleaseNo=19",
+    "ms": 641
+   },
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 647
+   },
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 757
+   }
+  ],
+  "detail": "Releases Operations Console Live #19 · since 10-30 00:42 Release Status Changes Published by Time #19 Live 430 changes · 本机 e2e：联合查询阶段 5（data-query 命名空间与两个菜单 key） #881920 10-30 00:42 #18 Offline 4 changes · 本机 e2e：tax 结账算税与事件登记阶段 5（tax 命名空间） #881920 10-29 23:20 #17 Offline 424 changes · 本机 e2e：tax 结账算税与事件登记阶段 5（tax 命名空间） #881920 10-29 22:24 #16 Offline 2 changes · 本机 e2e：REQ-03 承保记录阶段 5（risk、nav、master-data、client-review 命名空间） #881920 10-29 21:06 #15 Offline 494 changes · 本机 e2e：REQ-03 承保记录阶段 5（risk、nav、master-data、client-review 命名空间） #881920 10-29 20:44 #14 Offline 170 changes · 本机 e2e：REQ-12",
+  "switchModal": {
+   "openMs": 880,
+   "text": "Switch live back to #18? Operations Console · Live is #19 After switching 215 new keys are not in #18 Those places will show English #19 stays in the records You can switch back any time Reason Required · written to the audit log Takes effect immediately; users see #18 after refreshing the page. Cancel Switch back to #18"
+  },
+  "modal": {
+   "openMs": 895,
+   "text": "Publish #20 Operations Console · Live is #19 Changes Compared with #19 · 0 changes Same content as the previous release Check result 0 issues 简体中文 100%; syntax and parameters all pass, ready to publish Release note Optional · kept in the release record Bundles are checked first and usually go live within seconds; until then live stays #19. Cancel Confirm publish"
+  }
+ },
+ {
+  "tag": "1440-en",
+  "horizontalOverflowPx": 0,
+  "appErrors": [
+   "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+  ],
+  "otherErrors": 315,
+  "requests": [
+   {
+    "url": "operations-console/releases/18/diff?baseReleaseNo=19",
+    "ms": 439
+   },
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 625
+   },
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 760
+   }
+  ],
+  "detail": "Releases Operations Console Live #19 · since 10-30 00:42 Release Status Changes Published by Time #19 Live 430 changes · 本机 e2e：联合查询阶段 5（data-query 命名空间与两个菜单 key） #881920 10-30 00:42 #18 Offline 4 changes · 本机 e2e：tax 结账算税与事件登记阶段 5（tax 命名空间） #881920 10-29 23:20 #17 Offline 424 changes · 本机 e2e：tax 结账算税与事件登记阶段 5（tax 命名空间） #881920 10-29 22:24 #16 Offline 2 changes · 本机 e2e：REQ-03 承保记录阶段 5（risk、nav、master-data、client-review 命名空间） #881920 10-29 21:06 #15 Offline 494 changes · 本机 e2e：REQ-03 承保记录阶段 5（risk、nav、master-data、client-review 命名空间） #881920 10-29 20:44 #14 Offline 170 changes · 本机 e2e：REQ-12",
+  "switchModal": {
+   "openMs": 866,
+   "text": "Switch live back to #18? Operations Console · Live is #19 After switching 215 new keys are not in #18 Those places will show English #19 stays in the records You can switch back any time Reason Required · written to the audit log Takes effect immediately; users see #18 after refreshing the page. Cancel Switch back to #18"
+  },
+  "modal": {
+   "openMs": 883,
+   "text": "Publish #20 Operations Console · Live is #19 Changes Compared with #19 · 0 changes Same content as the previous release Check result 0 issues 简体中文 100%; syntax and parameters all pass, ready to publish Release note Optional · kept in the release record Bundles are checked first and usually go live within seconds; until then live stays #19. Cancel Confirm publish"
+  }
+ },
+ {
+  "tag": "390-zh-CN",
+  "horizontalOverflowPx": 0,
+  "appErrors": [
+   "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+  ],
+  "otherErrors": 627,
+  "requests": [
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 740
+   },
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 526
+   }
+  ],
+  "detail": "Releases Operations Console Live #19 · since 10-30 00:42 Release Status Changes Published by Time #19 Live 430 changes · 本机 e2e：联合查询阶段 5（data-query 命名空间与两个菜单 key） #881920 10-30 00:42 #18 Offline 4 changes · 本机 e2e：tax 结账算税与事件登记阶段 5（tax 命名空间） #881920 10-29 23:20 #17 Offline 424 changes · 本机 e2e：tax 结账算税与事件登记阶段 5（tax 命名空间） #881920 10-29 22:24 #16 Offline 2 changes · 本机 e2e：REQ-03 承保记录阶段 5（risk、nav、master-data、client-review 命名空间） #881920 10-29 21:06 #15 Offline 494 changes · 本机 e2e：REQ-03 承保记录阶段 5（risk、nav、master-data、client-review 命名空间） #881920 10-29 20:44 #14 Offline 170 changes · 本机 e2e：REQ-12",
+  "switchModal": {
+   "openMs": 868,
+   "text": "Switch live back to #18? Operations Console · Live is #19 After switching Comparing releases… #19 stays in the records You can switch back any time Reason Required · written to the audit log Takes effect immediately; users see #18 after refreshing the page. Cancel Switch back to #18"
+  },
+  "modal": {
+   "openMs": 861,
+   "text": "Publish #20 Operations Console · Live is #19 Changes Compared with #19 · 0 changes Same content as the previous release Check result 0 issues 简体中文 100%; syntax and parameters all pass, ready to publish Release note Optional · kept in the release record Bundles are checked first and usually go live within seconds; until then live stays #19. Cancel Confirm publish"
+  }
+ },
+ {
+  "tag": "390-en",
+  "horizontalOverflowPx": 0,
+  "appErrors": [
+   "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+  ],
+  "otherErrors": 315,
+  "requests": [
+   {
+    "url": "operations-console/releases/18/diff?baseReleaseNo=19",
+    "ms": 724
+   },
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 623
+   }
+  ],
+  "detail": "Releases Operations Console Live #19 · since 10-30 00:42 Release Status Changes Published by Time #19 Live 430 changes · 本机 e2e：联合查询阶段 5（data-query 命名空间与两个菜单 key） #881920 10-30 00:42 #18 Offline 4 changes · 本机 e2e：tax 结账算税与事件登记阶段 5（tax 命名空间） #881920 10-29 23:20 #17 Offline 424 changes · 本机 e2e：tax 结账算税与事件登记阶段 5（tax 命名空间） #881920 10-29 22:24 #16 Offline 2 changes · 本机 e2e：REQ-03 承保记录阶段 5（risk、nav、master-data、client-review 命名空间） #881920 10-29 21:06 #15 Offline 494 changes · 本机 e2e：REQ-03 承保记录阶段 5（risk、nav、master-data、client-review 命名空间） #881920 10-29 20:44 #14 Offline 170 changes · 本机 e2e：REQ-12",
+  "switchModal": {
+   "openMs": 870,
+   "text": "Switch live back to #18? Operations Console · Live is #19 After switching 215 new keys are not in #18 Those places will show English #19 stays in the records You can switch back any time Reason Required · written to the audit log Takes effect immediately; users see #18 after refreshing the page. Cancel Switch back to #18"
+  },
+  "modal": {
+   "openMs": 882,
+   "text": "Publish Operations Console · Live is #19 Checking… Cancel Confirm publish"
+  }
+ }
+]

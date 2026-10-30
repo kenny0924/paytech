@@ -1,0 +1,134 @@
+{
+ "checks": [
+  {
+   "name": "operations-console 预检耗时中位数 ≤ 2000 ms (AC-02)",
+   "ok": true,
+   "evidence": [
+    1946,
+    1066,
+    794,
+    1053,
+    776
+   ]
+  },
+  {
+   "name": "operations-console 预检摘要与独立基准一致 (AC-03)",
+   "ok": true,
+   "evidence": {
+    "baseReleaseNo": 26,
+    "addedKeyCount": 0,
+    "addedKeys": [],
+    "deprecatedKeyCount": 0,
+    "deprecatedKeys": [],
+    "sourceChangedKeyCount": 0,
+    "sourceChangedKeys": [],
+    "translationChanges": []
+   }
+  },
+  {
+   "name": "client-console 预检耗时中位数 ≤ 2000 ms (AC-02)",
+   "ok": true,
+   "evidence": [
+    145,
+    176,
+    204,
+    125,
+    136
+   ]
+  },
+  {
+   "name": "client-console 预检摘要与独立基准一致 (AC-03)",
+   "ok": true,
+   "evidence": {
+    "baseReleaseNo": 8,
+    "addedKeyCount": 0,
+    "addedKeys": [],
+    "deprecatedKeyCount": 0,
+    "deprecatedKeys": [],
+    "sourceChangedKeyCount": 0,
+    "sourceChangedKeys": [],
+    "translationChanges": []
+   }
+  },
+  {
+   "name": "差异 operations-console/releases/19/diff ≤ 1000 ms (AC-06)",
+   "ok": true,
+   "evidence": {
+    "ms": [
+     576,
+     481,
+     325
+    ],
+    "added": 122,
+    "changed": 0,
+    "removed": 0,
+    "base": 18
+   }
+  },
+  {
+   "name": "差异 operations-console/releases/19/diff?baseReleaseNo=1 ≤ 1000 ms (AC-06)",
+   "ok": true,
+   "evidence": {
+    "ms": [
+     913,
+     834,
+     894
+    ],
+    "added": 19618,
+    "changed": 0,
+    "removed": 0,
+    "base": 1
+   }
+  },
+  {
+   "name": "差异 client-console/releases/5/diff ≤ 1000 ms (AC-06)",
+   "ok": true,
+   "evidence": {
+    "ms": [
+     306,
+     128,
+     213
+    ],
+    "added": 2,
+    "changed": 0,
+    "removed": 0,
+    "base": 4
+   }
+  },
+  {
+   "name": "预检 / 差异期间存储凭据解密 0 次 (AC-01, AC-06)",
+   "ok": true,
+   "evidence": 0
+  }
+ ],
+ "operations-console.precheck.ms": [
+  1946,
+  1066,
+  794,
+  1053,
+  776
+ ],
+ "client-console.precheck.ms": [
+  145,
+  176,
+  204,
+  125,
+  136
+ ],
+ "operations-console/releases/19/diff.ms": [
+  576,
+  481,
+  325
+ ],
+ "operations-console/releases/19/diff?baseReleaseNo=1.ms": [
+  913,
+  834,
+  894
+ ],
+ "client-console/releases/5/diff.ms": [
+  306,
+  128,
+  213
+ ],
+ "file_storage_reveals_before_publish": 0
+}

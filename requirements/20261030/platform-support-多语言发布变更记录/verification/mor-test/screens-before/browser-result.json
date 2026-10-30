@@ -1,0 +1,90 @@
+[
+ {
+  "tag": "1440-zh-CN",
+  "horizontalOverflowPx": 0,
+  "appErrors": [],
+  "otherErrors": 0,
+  "requests": [
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 6574
+   }
+  ],
+  "detail": "发布记录 Operations Console 线上 #25 · 10-30 11:02 起 发布 状态 改动 发布人 时间 #25 线上 430 处 · platform-support：联合查询——数据查询 · 联合查询与键类型页面、模板联合查询配置（2026-10-30） #267008 10-30 11:02 #24 已下线 428 处 · tax：结账算税与事件登记——财务 · 税务查询（订单税务计算、正式登记、申报底稿与简化税票下载，2026-10-29） #267008 10-30 09:49 #23 已下线 494 处 · risk-decision：承保记录——风控 · 承保列表、新建 / 自动承保、复核、版本历史与修订（REQ-03，2026-10-29） #267008 10-29 22:50 #22 已下线 44 处 · client-master：业务信息补采——期望支付方式、退款政策链接、交付方式与预计交付天数（REQ-12，2026-10-29） #267008 10-29 17:03 #21 已下线 280 处 · workflow：按钮发起与数据验证——按编码发起、DATA_QUERY 系统检查、检查状态与立即检查（2026-10-29） #267008 10-29 13:46 #20 已下线 202 处 · commercial：开通项前置门禁—",
+  "switchModal": {
+   "openMs": 969,
+   "text": "把线上切回 #18？ Operations Console · 当前线上 #25 切换后 正在对比两个版本… #25 保留在记录中 随时可以再切回 切换原因 必填 · 写入审计 立即生效，用户刷新页面后看到 #18 的文案 取消 确认切回 #18"
+  },
+  "modal": {
+   "openMs": 864,
+   "text": "发布 Operations Console · 线上当前 #25 正在检查… 取消 确认发布"
+  }
+ },
+ {
+  "tag": "1440-en",
+  "horizontalOverflowPx": 0,
+  "appErrors": [],
+  "otherErrors": 0,
+  "requests": [
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 5614
+   }
+  ],
+  "detail": "Releases Operations Console Live #25 · since 10-30 11:02 Release Status Changes Published by Time #25 Live 430 changes · platform-support：联合查询——数据查询 · 联合查询与键类型页面、模板联合查询配置（2026-10-30） #267008 10-30 11:02 #24 Offline 428 changes · tax：结账算税与事件登记——财务 · 税务查询（订单税务计算、正式登记、申报底稿与简化税票下载，2026-10-29） #267008 10-30 09:49 #23 Offline 494 changes · risk-decision：承保记录——风控 · 承保列表、新建 / 自动承保、复核、版本历史与修订（REQ-03，2026-10-29） #267008 10-29 22:50 #22 Offline 44 changes · client-master：业务信息补采——期望支付方式、退款政策链接、交付方式与预计交付天数（REQ-12，2026-10-29） #267008 10-29 17:03 #21 Offline 280 changes · workflow：按钮发起与数据验证——按编码发起、DATA_QUERY",
+  "switchModal": {
+   "openMs": 860,
+   "text": "Switch live back to #18? Operations Console · Live is #25 After switching Comparing releases… #25 stays in the records You can switch back any time Reason Required · written to the audit log Takes effect immediately; users see #18 after refreshing the page. Cancel Switch back to #18"
+  },
+  "modal": {
+   "openMs": 871,
+   "text": "Publish Operations Console · Live is #25 Checking… Cancel Confirm publish"
+  }
+ },
+ {
+  "tag": "390-zh-CN",
+  "horizontalOverflowPx": 0,
+  "appErrors": [
+   "Failed to load resource: the server responded with a status of 504 (Gateway Timeout)"
+  ],
+  "otherErrors": 0,
+  "requests": [
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 9269
+   }
+  ],
+  "detail": "发布记录 Operations Console 线上 #25 · 10-30 11:02 起 发布 状态 改动 发布人 时间 #25 线上 430 处 · platform-support：联合查询——数据查询 · 联合查询与键类型页面、模板联合查询配置（2026-10-30） #267008 10-30 11:02 #24 已下线 428 处 · tax：结账算税与事件登记——财务 · 税务查询（订单税务计算、正式登记、申报底稿与简化税票下载，2026-10-29） #267008 10-30 09:49 #23 已下线 494 处 · risk-decision：承保记录——风控 · 承保列表、新建 / 自动承保、复核、版本历史与修订（REQ-03，2026-10-29） #267008 10-29 22:50 #22 已下线 44 处 · client-master：业务信息补采——期望支付方式、退款政策链接、交付方式与预计交付天数（REQ-12，2026-10-29） #267008 10-29 17:03 #21 已下线 280 处 · workflow：按钮发起与数据验证——按编码发起、DATA_QUERY 系统检查、检查状态与立即检查（2026-10-29） #267008 10-29 13:46 #20 已下线 202 处 · commercial：开通项前置门禁—",
+  "switchModal": {
+   "openMs": 858,
+   "text": "把线上切回 #18？ Operations Console · 当前线上 #25 切换后 正在对比两个版本… #25 保留在记录中 随时可以再切回 切换原因 必填 · 写入审计 立即生效，用户刷新页面后看到 #18 的文案 取消 确认切回 #18"
+  },
+  "modal": {
+   "openMs": 868,
+   "text": "发布 Operations Console · 线上当前 #25 正在检查… 取消 确认发布"
+  }
+ },
+ {
+  "tag": "390-en",
+  "horizontalOverflowPx": 0,
+  "appErrors": [
+   "Failed to load resource: the server responded with a status of 504 (Gateway Timeout)"
+  ],
+  "otherErrors": 0,
+  "requests": [
+   {
+    "url": "operations-console/release-precheck",
+    "ms": 9800
+   }
+  ],
+  "detail": "Releases Operations Console Live #25 · since 10-30 11:02 Release Status Changes Published by Time #25 Live 430 changes · platform-support：联合查询——数据查询 · 联合查询与键类型页面、模板联合查询配置（2026-10-30） #267008 10-30 11:02 #24 Offline 428 changes · tax：结账算税与事件登记——财务 · 税务查询（订单税务计算、正式登记、申报底稿与简化税票下载，2026-10-29） #267008 10-30 09:49 #23 Offline 494 changes · risk-decision：承保记录——风控 · 承保列表、新建 / 自动承保、复核、版本历史与修订（REQ-03，2026-10-29） #267008 10-29 22:50 #22 Offline 44 changes · client-master：业务信息补采——期望支付方式、退款政策链接、交付方式与预计交付天数（REQ-12，2026-10-29） #267008 10-29 17:03 #21 Offline 280 changes · workflow：按钮发起与数据验证——按编码发起、DATA_QUERY",
+  "switchModal": {
+   "openMs": 897,
+   "text": "Switch live back to #18? Operations Console · Live is #25 After switching Comparing releases… #25 stays in the records You can switch back any time Reason Required · written to the audit log Takes effect immediately; users see #18 after refreshing the page. Cancel Switch back to #18"
+  },
+  "modal": {
+   "openMs": 915,
+   "text": "Publish Operations Console · Live is #25 Checking… Cancel Confirm publish"
+  }
+ }
+]

@@ -1,0 +1,207 @@
+{
+ "checks": [
+  {
+   "name": "operations-console 预检耗时中位数 ≤ 2000 ms (AC-02)",
+   "ok": true,
+   "evidence": [
+    1544,
+    1086,
+    479,
+    417,
+    470
+   ]
+  },
+  {
+   "name": "operations-console 预检摘要与独立基准一致 (AC-03)",
+   "ok": true,
+   "evidence": {
+    "baseReleaseNo": 19,
+    "addedKeyCount": 0,
+    "addedKeys": [],
+    "deprecatedKeyCount": 0,
+    "deprecatedKeys": [],
+    "sourceChangedKeyCount": 0,
+    "sourceChangedKeys": [],
+    "translationChanges": []
+   }
+  },
+  {
+   "name": "client-console 预检耗时中位数 ≤ 2000 ms (AC-02)",
+   "ok": true,
+   "evidence": [
+    119,
+    113,
+    126,
+    148,
+    206
+   ]
+  },
+  {
+   "name": "client-console 预检摘要与独立基准一致 (AC-03)",
+   "ok": true,
+   "evidence": {
+    "baseReleaseNo": 5,
+    "addedKeyCount": 0,
+    "addedKeys": [],
+    "deprecatedKeyCount": 0,
+    "deprecatedKeys": [],
+    "sourceChangedKeyCount": 0,
+    "sourceChangedKeys": [],
+    "translationChanges": []
+   }
+  },
+  {
+   "name": "差异 operations-console/releases/19/diff ≤ 1000 ms (AC-06)",
+   "ok": true,
+   "evidence": {
+    "ms": [
+     839,
+     666,
+     604
+    ],
+    "added": 430,
+    "changed": 0,
+    "removed": 0,
+    "base": 18
+   }
+  },
+  {
+   "name": "差异 operations-console/releases/19/diff?baseReleaseNo=1 ≤ 1000 ms (AC-06)",
+   "ok": true,
+   "evidence": {
+    "ms": [
+     667,
+     539,
+     361
+    ],
+    "added": 4528,
+    "changed": 18,
+    "removed": 22,
+    "base": 1
+   }
+  },
+  {
+   "name": "差异 client-console/releases/5/diff ≤ 1000 ms (AC-06)",
+   "ok": true,
+   "evidence": {
+    "ms": [
+     122,
+     107,
+     137
+    ],
+    "added": 108,
+    "changed": 0,
+    "removed": 0,
+    "base": 4
+   }
+  },
+  {
+   "name": "改译文后预检与独立基准一致；改了又改回不计 (AC-03)",
+   "ok": true,
+   "evidence": {
+    "api": [
+     {
+      "locale": "zh-CN",
+      "changedCount": 1,
+      "sampleKeys": [
+       "access.accounts.action.assignRoles"
+      ]
+     }
+    ],
+    "expected": [
+     {
+      "locale": "zh-CN",
+      "changedCount": 1,
+      "sampleKeys": [
+       "access.accounts.action.assignRoles"
+      ]
+     }
+    ],
+    "changed": "access.accounts.action.assignRoles",
+    "reverted": "access.accounts.action.delete"
+   }
+  },
+  {
+   "name": "只有改动的一条计为变化",
+   "ok": true,
+   "evidence": [
+    {
+     "locale": "zh-CN",
+     "changedCount": 1,
+     "sampleKeys": [
+      "access.accounts.action.assignRoles"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "还原后预检回到无变化",
+   "ok": true,
+   "evidence": []
+  },
+  {
+   "name": "预检 / 差异期间存储凭据解密 0 次 (AC-01, AC-06)",
+   "ok": true,
+   "evidence": 0
+  },
+  {
+   "name": "相同内容发布：差异为空 (AC-05)",
+   "ok": true,
+   "evidence": {
+    "releaseNo": 6,
+    "base": 5
+   }
+  }
+ ],
+ "operations-console.precheck.ms": [
+  1544,
+  1086,
+  479,
+  417,
+  470
+ ],
+ "client-console.precheck.ms": [
+  119,
+  113,
+  126,
+  148,
+  206
+ ],
+ "operations-console/releases/19/diff.ms": [
+  839,
+  666,
+  604
+ ],
+ "operations-console/releases/19/diff?baseReleaseNo=1.ms": [
+  667,
+  539,
+  361
+ ],
+ "client-console/releases/5/diff.ms": [
+  122,
+  107,
+  137
+ ],
+ "file_storage_reveals_before_publish": 0,
+ "published": {
+  "changeSummary": {
+   "addedKeyCount": 0,
+   "addedKeys": [],
+   "baseReleaseNo": 5,
+   "deprecatedKeyCount": 0,
+   "deprecatedKeys": [],
+   "sourceChangedKeyCount": 0,
+   "sourceChangedKeys": [],
+   "translationChanges": []
+  },
+  "createTime": "2026-10-30T05:53:02.742178Z",
+  "createdBy": "236033080844881920",
+  "current": false,
+  "failureReason": null,
+  "keyCount": 1477,
+  "readyTime": null,
+  "releaseNo": 6,
+  "releaseNote": "i18nchg stage5 e2e: identical content",
+  "status": "PENDING_CHECK"
+ }
+}

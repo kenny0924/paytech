@@ -1,0 +1,9 @@
+# platform-support 多语言发布变更记录 · mor-test 回滚覆盖（= 阶段 6 读到的现网镜像 jq-20261030b，联合查询修复发布）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 platform-support-service
+# 旧代码不读写新表与 change_count 列，可在前滚 DDL 之上运行；DDL 回滚在旧镜像起来后才执行（runbook.md 回滚节）。
+services:
+  platform-support-service:
+    image: sha256:c82b6f3404b5e1d920d7f4fc0d776e0f705079732443856a37dbf32a9b794a23  # mor-test/platform-support-service:jq-20261030b
+    environment:
+      DATAQUERY_HTTP_CALLERS_0: operations-console-bff
