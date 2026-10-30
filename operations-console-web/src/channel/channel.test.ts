@@ -7,7 +7,7 @@ import {
   canCreateVersion, capabilityConditionIssues, capabilityDetailIssues, capabilityDetailsBody, channelButtons, channelErrorMessage,
   channelPaths, channelRoutes, componentSummary, configEntryIssues, configurationBody, costVersionActions, costVersionBody, costVersionIssues,
   decodeAccount, decodeChannelPage, decodeCostVersion, decodeMid, decodePlan, decodeVersionDiff, defaultCompareBase, diffRows, diffSummary, editable,
-  fieldPath, lifecycleActions, percent, primaryLifecycleAction, scopeDrafts, tokenSuffixLabel,
+  channelMenus, fieldPath, hasMenu, lifecycleActions, midListInitialFilters, percent, primaryLifecycleAction, scopeDrafts, tokenSuffixLabel,
 } from './channel.ts';
 import type { CapabilityDefinition, CostPlan, ScopeDraft } from './channel.ts';
 import { testT } from '../i18n/testing.ts';
@@ -56,6 +56,19 @@ test('页面注册：三页、按钮码与详情路由和块 92 一致', () => {
   assert.deepEqual(pageRoutePaths(menu('OPERATIONS_CHANNEL_COST_PLANS', '/channel/cost-plans')),
     ['/channel/cost-plans', '/channel/cost-plans/:planCode', '/channel/cost-plans/:planCode/versions/:costVer']);
   assert.equal(channelRoutes.costCompare('P', '3', '4'), '/channel/cost-plans/P/versions/4?compareWith=3');
+});
+
+test('REQ-02 去配置 MID：按 OE 预筛选的列表路由；URL entityNo 合法时作为初始筛选，缺失或非法时忽略；菜单可见性按 MID 页面菜单', () => {
+  assert.equal(channelRoutes.midsOfEntity('AE001'), '/channel/mids?entityNo=AE001');
+  assert.equal(pageCapabilities.find(page => page.componentKey === channelMenus.mids)?.frontendRoute, channelRoutes.mids);
+  assert.deepEqual(midListInitialFilters('?entityNo=AE001'), { entityNo: 'AE001' });
+  assert.deepEqual(midListInitialFilters(''), {}, '无参数时行为不变');
+  assert.deepEqual(midListInitialFilters('?entityNo=ae001'), {}, '不符合 OE 编号格式时忽略');
+  assert.deepEqual(midListInitialFilters('?entityNo=AE0011'), {});
+  assert.deepEqual(midListInitialFilters('?status=ACTIVE'), {});
+  const resource = (resourceType: string, componentKey: string | null) => ({ resourceType, componentKey });
+  assert.equal(hasMenu([resource('MENU', 'OPERATIONS_CHANNEL_MIDS')], channelMenus.mids), true);
+  assert.equal(hasMenu([resource('MENU', 'OPERATIONS_CHANNEL_CHANNELS'), resource('BUTTON', 'OPERATIONS_CHANNEL_MIDS')], channelMenus.mids), false);
 });
 
 test('BFF 路径与 30 条路由及对比路由对应', () => {

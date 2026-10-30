@@ -1,0 +1,168 @@
+{
+ "command": "check",
+ "at": "2026-10-30T18:59:33Z",
+ "results": [
+  {
+   "ac": "check",
+   "step": "预测暂停集合 = 预期 [('DEMO-CL-001', 'APPLE_PAY'), ('DEMO2-CL-101', 'CARD')]",
+   "ok": true,
+   "detail": [
+    [
+     "DEMO-CL-001",
+     "APPLE_PAY"
+    ],
+    [
+     "DEMO2-CL-101",
+     "CARD"
+    ]
+   ]
+  },
+  {
+   "ac": "check",
+   "step": "DEMO-CL-001 CARD 仍 ENABLED 且预测满足（CHANNEL_IDENTITY_PARTIAL）",
+   "ok": true,
+   "detail": {
+    "agreementNo": "DEMO-CL-001",
+    "id": "238331389471166464",
+    "clientId": "237575207592763393",
+    "entityNo": "AE001",
+    "capabilityCode": "CARD",
+    "paymentMethodCode": "CARD",
+    "executionStatus": "ENABLED",
+    "mccCode": "5999",
+    "coveredCurrencies": "AED,USD",
+    "predictedResult": "SATISFIED",
+    "predictedReason": "CHANNEL_IDENTITY_PARTIAL",
+    "notReadyCurrencies": "AED",
+    "impact": "STAYS_ENABLED_WITH_REMINDER"
+   }
+  },
+  {
+   "ac": "check",
+   "step": "DEMO2-CL-103 CARD 仍 ENABLED 且预测满足（CHANNEL_IDENTITY_PARTIAL）",
+   "ok": true,
+   "detail": {
+    "agreementNo": "DEMO2-CL-103",
+    "id": "238411681724698624",
+    "clientId": "237573267559391233",
+    "entityNo": "AE001",
+    "capabilityCode": "CARD",
+    "paymentMethodCode": "CARD",
+    "executionStatus": "ENABLED",
+    "mccCode": "5999",
+    "coveredCurrencies": "AED,USD",
+    "predictedResult": "SATISFIED",
+    "predictedReason": "CHANNEL_IDENTITY_PARTIAL",
+    "notReadyCurrencies": "AED",
+    "impact": "STAYS_ENABLED_WITH_REMINDER"
+   }
+  },
+  {
+   "ac": "check",
+   "step": "CL-F1105E CARD SUSPENDED_BY_PREREQUISITE（④ 预测 SKIPPED/AWAITING_PRICE）",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "ac": "check",
+   "step": "DEMO-CL-001 APPLE_PAY 预期暂停（PAYMENT_METHOD_NOT_SUPPORTED，候选已上线 → SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "agreementNo": "DEMO-CL-001",
+    "id": "238331390133866496",
+    "clientId": "237575207592763393",
+    "entityNo": "AE001",
+    "capabilityCode": "APPLE_PAY",
+    "paymentMethodCode": "APPLE_PAY",
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+    "mccCode": "5999",
+    "coveredCurrencies": "AED,USD",
+    "predictedResult": "UNSATISFIED",
+    "predictedReason": "PAYMENT_METHOD_NOT_SUPPORTED",
+    "notReadyCurrencies": "AED,USD",
+    "impact": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   }
+  },
+  {
+   "ac": "check",
+   "step": "DEMO-CL-002 CARD SUSPENDED_BY_PREREQUISITE（④ 预测 SKIPPED/AWAITING_PRICE）",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "ac": "check",
+   "step": "DEMO-CL-002 GOOGLE_PAY SUSPENDED_BY_PREREQUISITE（④ 预测 SKIPPED/AWAITING_PRICE）",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "ac": "check",
+   "step": "DEMO2-CL-101 CARD 预期暂停（CURRENCY_NOT_SUPPORTED，候选已上线 → SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "agreementNo": "DEMO2-CL-101",
+    "id": "238411009797197824",
+    "clientId": "237573476041465857",
+    "entityNo": "AE001",
+    "capabilityCode": "CARD",
+    "paymentMethodCode": "CARD",
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+    "mccCode": "5999",
+    "coveredCurrencies": "AED",
+    "predictedResult": "UNSATISFIED",
+    "predictedReason": "CURRENCY_NOT_SUPPORTED",
+    "notReadyCurrencies": "AED",
+    "impact": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   }
+  },
+  {
+   "ac": "check",
+   "step": "DEMO2-CL-102 APPLE_PAY SUSPENDED_BY_PREREQUISITE（④ 预测 SKIPPED/AWAITING_PRICE）",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "ac": "check",
+   "step": "DEMO2-CL-102 CARD SUSPENDED_BY_PREREQUISITE（④ 预测 SKIPPED/AWAITING_PRICE）",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "ac": "check",
+   "step": "DEMO2-CL-103 GOOGLE_PAY SUSPENDED_BY_PREREQUISITE（④ 预测 SKIPPED/AWAITING_PRICE）",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "ac": "check",
+   "step": "DEMO2-CL-103 STC_PAY SUSPENDED_BY_PREREQUISITE（④ 预测 SKIPPED/AWAITING_PRICE）",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "ac": "check",
+   "step": "DEMO2-CL-901 CARD SUSPENDED_BY_PREREQUISITE（④ 预测 SKIPPED/AWAITING_PRICE）",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "ac": "check",
+   "step": "commercial 自 2026-10-30T18:59:08Z 起无 ERROR / 发现失败",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "ac": "check",
+   "step": "commercial 补偿事件 FAILED = 0",
+   "ok": true,
+   "detail": [
+    [
+     "0"
+    ]
+   ]
+  }
+ ],
+ "data": {},
+ "pass": 15,
+ "fail": 0
+}

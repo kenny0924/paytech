@@ -1,0 +1,15 @@
+{
+ "command": "cleanup",
+ "at": "2026-10-30T19:00:44Z",
+ "results": [
+  {
+   "ac": "cleanup",
+   "step": "运营账号停用草稿已生成（未执行）",
+   "ok": true,
+   "detail": "cleanup-2026-10-30T190044Z.sql"
+  }
+ ],
+ "data": {},
+ "pass": 1,
+ "fail": 0
+}

@@ -1,5 +1,5 @@
-# commercial Mock 测试的可运行配置：真实 commercial 生产链 + 本机 MySQL（mor_commercial）/ Redis / RabbitMQ + client-master / compliance 的测试
-# HTTP 接口。
+# commercial Mock 测试的可运行配置：真实 commercial 生产链 + 本机 MySQL（mor_commercial）/ Redis / RabbitMQ + client-master / compliance /
+# channel-connector 的测试 HTTP 接口。
 # 数据库与 Redis 使用仓库隔离的本地默认凭据（与 init/ddl.sql、local-environment/.env.example 一致），可用环境变量覆盖；
 # RabbitMQ 凭据只来自 local-environment/.env.local 或同名环境变量。XXL-Job 执行器在测试中关闭，补偿任务由提交后唤醒执行。
 
@@ -33,6 +33,8 @@ spring:
             client-master-service:
               - uri: "${commercial.test.external.base-url}"
             compliance-service:
+              - uri: "${commercial.test.external.base-url}"
+            channel-connector-service:
               - uri: "${commercial.test.external.base-url}"
     loadbalancer:
       retry:
@@ -125,6 +127,7 @@ commercial:
     enabled: false
   test:
     external:
-      # EnableMockHttpServer 在应用创建客户端前注入随机 Loopback 地址；client-master-service 与 compliance-service 经 SimpleDiscovery
+      # EnableMockHttpServer 在应用创建客户端前注入随机 Loopback 地址；client-master-service、compliance-service 与
+      # channel-connector-service 经 SimpleDiscovery
       # 指向它。
       base-url: ""

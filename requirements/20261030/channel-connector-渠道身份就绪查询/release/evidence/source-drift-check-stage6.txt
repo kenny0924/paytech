@@ -1,0 +1,10 @@
+# source_drift_check.sh 2026-10-30T18:21:40Z
+main=331d8e0e candidate_head=331d8e0e expected=331d8e0e
+candidate files=87 status_extra=0 status_missing=0 tracked_diff_outside_list=0 hash_mismatch=0
+dev tree Code-MoR-req02: changed_files=69 (expected 69) hash_mismatch=0
+plops release tree ops-web 18 files: hash_mismatch=0
+live channel-connector-service ok
+live client-master-service ok
+live commercial-service ok
+live operations-console-web ok
+NO DRIFT

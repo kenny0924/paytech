@@ -57,6 +57,7 @@ class TermActivationPrerequisiteHttpTest extends AbstractCommercialTermApiTest {
         compliance.mockStatus(QualificationRoleType.CLIENT, Long.toString(AgreementBuilder.CLIENT_ID),
             QualificationEvaluationStatus.ELIGIBLE);
         compliance.mockStatus(QualificationRoleType.OPERATING_ENTITY, ENTITY_NO, QualificationEvaluationStatus.ELIGIBLE);
+        mockChannelIdentityReady("USD");
 
         JsonNode active = activeVersion(price("USD", CARD, 1, percentage("MDR", "0.025")));
 
@@ -69,7 +70,8 @@ class TermActivationPrerequisiteHttpTest extends AbstractCommercialTermApiTest {
             () -> assertEquals(AgreementCapabilityExecutionStatus.ENABLED.getCode(), change.path("toExecutionStatus").asString()),
             () -> assertEquals("PREREQUISITE", change.path("trigger").asString()),
             () -> assertEquals(AgreementCapabilityExecutionStatus.ENABLED.getCode(),
-                testMapper.agreementCapability(CARD_ID).get("execution_status")));
+                testMapper.agreementCapability(CARD_ID).get("execution_status")),
+            () -> assertEquals(1, channelIdentity.count()));
     }
 
     /** 手动暂停的 APPLE_PAY 仍是合同成员，版本只有 CARD 价格时排期被激活校验 3 拒绝；不触发门禁、不查资格。 */
@@ -82,6 +84,6 @@ class TermActivationPrerequisiteHttpTest extends AbstractCommercialTermApiTest {
         assertProblem(scheduleResult(approvedAndSigned(version), NOW), 400, "BUSINESS_CHECK_FAILED",
             "激活校验 3（覆盖完整）：开通项没有命中的价格: " + ENTITY_NO + "/" + CommercialCodes.Capability.APPLE_PAY);
 
-        assertEquals(0, compliance.count());
+        assertEquals(0, compliance.count() + classification.count() + channelIdentity.count());
     }
 }

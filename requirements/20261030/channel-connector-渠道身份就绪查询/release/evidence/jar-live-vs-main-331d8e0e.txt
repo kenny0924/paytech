@@ -1,0 +1,67 @@
+== channel-connector live vs main-331d8e0e
+A=1320 B=1321 onlyA=0 onlyB=1 changed=4
+  + paytech-card-api.jar!com/paytech/card/api/binlibrary/response/BinRangeResponseBody.class
+  ~ paytech-card-api.jar!com/paytech/card/api/binlibrary/CardBinLibraryApi.class
+  ~ paytech-http-client-support.jar!com/paytech/foundation/httpclient/api/HttpRequestValidationException.class
+  ~ paytech-http-client-support.jar!com/paytech/foundation/httpclient/core/error/HttpServiceClientInterceptor.class
+  ~ paytech-messaging.jar!catalog/events.yaml
+== client-master live vs main-331d8e0e
+A=1902 B=1935 onlyA=0 onlyB=33 changed=9
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/JointQueryApi.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/QueryKeyTypeManagementApi.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/ChangeQueryKeyTypeStatusRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/CreateQueryKeyTypeRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/JointQueryKeyValues.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/JointQueryLoadedSubject.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/JointQueryStepRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/QueryKeyTypeOrderItem.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/QueryTemplateJointColumn.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/QueryTemplateJointConfig.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/QueryTemplateJointKeyParameter.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/ReorderQueryKeyTypesRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/UpdateQueryKeyTypeRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryAlreadyLoaded.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryEntryKeyType.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryExcludedTemplate.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryGraphBreak.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryGraphGroup.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryGraphResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryGraphTemplate.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryGroup.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryLimits.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryLink.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryNode.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryNodeColumn.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQuerySettingsResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryStepResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryTruncation.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/QueryKeyTypeOrderResult.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/QueryKeyTypeResponseBody.class
+  ~ paytech-messaging.jar!catalog/events.yaml
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/CreateQueryTemplateRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/UpdateQueryTemplateRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/ValidateQueryTemplateRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/QueryTemplateDetailResponseBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/QueryTemplateVersionResponseBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/notification/request/SubmitNotificationRequestBody$Recipient.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/notification/request/SubmitNotificationRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/notification/response/SubmitNotificationResponseBody.class
+== commercial live vs main-331d8e0e
+A=1304 B=1304 onlyA=0 onlyB=0 changed=17
+  ~ paytech-client-master-api.jar!com/paytech/client/contract/api/onboarding/ClientDraftModels$ClientDraftResponseBody.class
+  ~ paytech-client-master-api.jar!com/paytech/client/contract/api/onboarding/ClientDraftModels$CommandReceiptResponseBody.class
+  ~ paytech-client-master-api.jar!com/paytech/client/contract/api/onboarding/ClientDraftModels$DraftPatchRequestBody.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$AddressComponent.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$AddressFormat.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$CatalogOption.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Declaration.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Field.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Group.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$IdentifierTypeOption.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Material.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$RelationRules.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$RelationTypeOption.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Section.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Validation.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody.class
+  ~ paytech-messaging.jar!catalog/events.yaml

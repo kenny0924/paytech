@@ -14,6 +14,7 @@ import com.paytech.channel.connector.core.enums.*;
 import com.paytech.channel.connector.api.enums.ChannelType;
 import com.paytech.channel.connector.protocol.core.dal.dataobject.Channel;
 import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
+import com.paytech.channel.connector.test.builder.MidCapabilityBuilder;
 import com.paytech.channel.connector.test.dal.ChannelTestMapper;
 
 import lombok.AllArgsConstructor;
@@ -122,6 +123,31 @@ public class ChannelDataMocker implements Clear {
         scope.setCreateTime(fixture.getMid().getCreateTime());
         scope.setUpdateTime(scope.getCreateTime());
         mapper.insertMidCapability(scope);
+        var detail = new MidCapabilityDetail();
+        detail.setMidCapabilityDetailId(ids.nextId());
+        detail.setMidCapabilityId(scope.getMidCapabilityId());
+        detail.setCapabilityCode(code);
+        detail.setValueType(CapabilityValueType.BOOLEAN);
+        detail.setBooleanValue(enabled ? 1 : 0);
+        detail.setCreateTime(scope.getCreateTime());
+        detail.setUpdateTime(scope.getCreateTime());
+        mapper.insertMidCapabilityDetail(detail);
+    }
+
+    /** 在指定 MID 上插入一个任意交易维度与状态的条件组及一个布尔能力明细，返回该条件组。 */
+    public MidCapability capability(ChannelMid mid, MidCapabilityBuilder builder, String code, boolean enabled) {
+        var scope = builder.build();
+        scope.setMidCapabilityId(ids.nextId());
+        scope.setMidId(mid.getMidId());
+        scope.setCreateTime(mid.getCreateTime());
+        scope.setUpdateTime(scope.getCreateTime());
+        mapper.insertMidCapability(scope);
+        capabilityDetail(scope, code, enabled);
+        return scope;
+    }
+
+    /** 在指定条件组上增加一个布尔能力明细。 */
+    public void capabilityDetail(MidCapability scope, String code, boolean enabled) {
         var detail = new MidCapabilityDetail();
         detail.setMidCapabilityDetailId(ids.nextId());
         detail.setMidCapabilityId(scope.getMidCapabilityId());

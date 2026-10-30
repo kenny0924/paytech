@@ -3,6 +3,8 @@ package com.paytech.commercial.service.processor;
 import java.time.Clock;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,6 +24,9 @@ import com.paytech.commercial.core.dal.dataobject.CommercialTermVersion;
 import com.paytech.commercial.core.dal.dataobject.ProductFeeEvent;
 import com.paytech.commercial.domain.CapabilityAcceptance;
 import com.paytech.commercial.domain.CapabilityPrerequisiteContext;
+import com.paytech.commercial.domain.ChannelIdentityFacts;
+import com.paytech.commercial.domain.ChannelIdentityItem;
+import com.paytech.commercial.domain.ChannelIdentityReadiness;
 import com.paytech.commercial.domain.CommercialPriceCandidate;
 import com.paytech.commercial.domain.enums.AgreementAgreementType;
 import com.paytech.commercial.domain.enums.CommercialTermVersionStatus;
@@ -35,7 +40,9 @@ import com.paytech.commercial.domainservice.repository.CommercialTermVersionRepo
 import com.paytech.commercial.domainservice.repository.ProductCapabilityRepository;
 import com.paytech.commercial.domainservice.service.AgreementService;
 import com.paytech.commercial.domainservice.validator.term.TermVersionActivationValidator;
+import com.paytech.commercial.integration.ChannelIdentityReadinessClient;
 import com.paytech.commercial.integration.CheckoutQualificationClient;
+import com.paytech.commercial.integration.ClientClassificationClient;
 import com.paytech.commercial.service.handler.AgreementCapabilityStatusChangedHandler;
 import com.paytech.commercial.service.processor.request.CheckCapabilityPrerequisitesRequest;
 import com.paytech.commercial.service.processor.response.CapabilityPrerequisiteCheckResponse;
@@ -46,10 +53,12 @@ import com.paytech.foundation.common.error.ErrorException;
  * 开通项前置门禁的唯一入口（开通项前置门禁 technique.md §7）：锁 {@code agreement:{id}}（LOCK，与合同其他写入同一资源锁）
  * <li>1 锁内读取合同、BCR Root、开通项与条件、合同各商业条款方案的 ACTIVE 版本价格（本库，无事务）；PARTNER 合同不进门禁（400）。</li>
  * <li>2 事务外调用 compliance 批量判定 Client 与各成员开通项 OE 的资格；不可用时①为 UNKNOWN，不报错。</li>
- * <li>3 构造上下文逐开通项判定 ①②④ 与目标执行状态。</li>
- * <li>4 有迁移时由 AgreementService 在一个短事务内 Root CAS、条件迁移执行状态、写开通项快照（系统身份 0）并登记
+ * <li>3 事务外查 ④ 渠道身份（REQ-02 technique.md §10.2）：只对价格已覆盖币种的成员支付方式开通项，先取 client-master 主 MCC（未确认则不再查），
+ * 再按 OE 一次调用 channel-connector 就绪查询；任一失败只使对应开通项 ④ 为 UNKNOWN。</li>
+ * <li>4 构造上下文逐开通项判定 ①②④ 与目标执行状态。</li>
+ * <li>5 有迁移时由 AgreementService 在一个短事务内 Root CAS、条件迁移执行状态、写开通项快照（系统身份 0）并登记
  * AgreementCapabilityStatusChanged 发布任务；无迁移不写库。</li>
- * <li>5 返回逐项结论。运营检查、补偿任务、资格事件与重查 Job 都调用本入口，判定只写一次。</li>
+ * <li>6 返回逐项结论。运营检查、补偿任务、资格事件与重查 Job 都调用本入口，判定只写一次。</li>
  */
 public class CheckCapabilityPrerequisitesProcessor
     extends AbstractAgreementWriteProcessor<CheckCapabilityPrerequisitesRequest, CapabilityPrerequisiteCheckResponse> {
@@ -58,6 +67,8 @@ public class CheckCapabilityPrerequisitesProcessor
     private final CommercialTermLoader termLoader;
     private final AgreementService agreementService;
     private final CheckoutQualificationClient qualificationClient;
+    private final ClientClassificationClient classificationClient;
+    private final ChannelIdentityReadinessClient readinessClient;
     private final ProductCapabilityRepository productCapabilityRepository;
     private final CommercialTermPlanRepository commercialTermPlanRepository;
     private final AgreementCapabilityRepository agreementCapabilityRepository;
@@ -72,6 +83,8 @@ public class CheckCapabilityPrerequisitesProcessor
      * @param agreementService 合同写入服务
      * @param agreementRepository 合同仓储
      * @param qualificationClient compliance 资格判定端口
+     * @param classificationClient client-master 经营分类端口
+     * @param readinessClient channel-connector 渠道身份就绪端口
      * @param productCapabilityRepository 可开通项目录仓储
      * @param commercialTermPlanRepository 条款方案仓储
      * @param agreementCapabilityRepository 开通项仓储
@@ -81,7 +94,8 @@ public class CheckCapabilityPrerequisitesProcessor
      */
     public CheckCapabilityPrerequisitesProcessor(Clock clock, CommercialTermLoader termLoader,
         AgreementService agreementService, AgreementRepository agreementRepository,
-        CheckoutQualificationClient qualificationClient, ProductCapabilityRepository productCapabilityRepository,
+        CheckoutQualificationClient qualificationClient, ClientClassificationClient classificationClient,
+        ChannelIdentityReadinessClient readinessClient, ProductCapabilityRepository productCapabilityRepository,
         CommercialTermPlanRepository commercialTermPlanRepository,
         AgreementCapabilityRepository agreementCapabilityRepository,
         BusinessChangeRecordRepository businessChangeRecordRepository,
@@ -91,6 +105,8 @@ public class CheckCapabilityPrerequisitesProcessor
         this.termLoader = termLoader;
         this.agreementService = agreementService;
         this.qualificationClient = qualificationClient;
+        this.classificationClient = classificationClient;
+        this.readinessClient = readinessClient;
         this.productCapabilityRepository = productCapabilityRepository;
         this.commercialTermPlanRepository = commercialTermPlanRepository;
         this.agreementCapabilityRepository = agreementCapabilityRepository;
@@ -116,10 +132,12 @@ public class CheckCapabilityPrerequisitesProcessor
             productCapabilityRepository.findByCodes(
                 capabilities.stream().map(AgreementCapability::getCapabilityCode).collect(Collectors.toSet())));
 
-        // 事务外资格判定，构建上下文并判定
+        // 事务外资格与渠道身份查询，构建上下文并判定
         Map<QualificationSubject, Boolean> qualifications = qualify(agreement, capabilities);
+        List<CapabilityPrerequisiteContext.TermCoverage> coverages = termCoverages(agreement, acceptances);
+        ChannelIdentityFacts channelIdentity = channelIdentity(agreement, acceptances, coverages);
         CapabilityPrerequisiteContext context = new CapabilityPrerequisiteContext(agreement, root, now(), acceptances, limits,
-            termCoverages(agreement, acceptances), qualifications);
+            coverages, qualifications, channelIdentity);
 
         // 有迁移时短事务保存并登记发布任务
         if (!context.changes().isEmpty()) {
@@ -163,6 +181,63 @@ public class CheckCapabilityPrerequisitesProcessor
         }
     }
 
+    /**
+     * 事务外查询 ④ 渠道身份；没有需核对的开通项时不调用任何服务
+     *
+     * @param agreement 合同
+     * @param acceptances 合同全部开通项（含目录与接受条件）
+     * @param coverages 合同各商业条款方案的覆盖
+     * @return 渠道身份事实；client-master 失败时整体不可用，MCC 未确认时不查 channel-connector
+     */
+    ChannelIdentityFacts channelIdentity(Agreement agreement, List<CapabilityAcceptance> acceptances,
+        List<CapabilityPrerequisiteContext.TermCoverage> coverages) {
+        List<CapabilityAcceptance> subjects = CapabilityPrerequisiteContext.channelIdentitySubjects(acceptances, coverages);
+        if (subjects.isEmpty()) {
+            return ChannelIdentityFacts.NOT_QUERIED;
+        }
+        String mccCode;
+        try {
+            mccCode = classificationClient.confirmedPrimaryMcc(agreement.getClientId());
+        } catch (ErrorException unavailable) {
+            // 查询失败只影响本次结论（UNKNOWN），由重查与补偿重试兜底，不中断核对。
+            LOG.warn("开通项前置核对经营分类查询不可用 agreementId={} code={}", agreement.getAgreementId(),
+                unavailable.getCode());
+            return ChannelIdentityFacts.classificationUnavailable();
+        }
+        if (mccCode == null) {
+            return ChannelIdentityFacts.mccMissing();
+        }
+        return ChannelIdentityFacts.of(mccCode, readiness(agreement, readinessItems(subjects, coverages, mccCode)));
+    }
+
+    /** 按开通项所在 OE 组装去重的（支付方式、已覆盖币种、主 MCC），保持开通项与币种顺序。 */
+    static Map<String, Set<ChannelIdentityItem>> readinessItems(List<CapabilityAcceptance> subjects,
+        List<CapabilityPrerequisiteContext.TermCoverage> coverages, String mccCode) {
+        Map<String, Set<ChannelIdentityItem>> items = new LinkedHashMap<>();
+        for (CapabilityAcceptance subject : subjects) {
+            Set<ChannelIdentityItem> entityItems = items.computeIfAbsent(subject.capability().getEntityNo(),
+                entityNo -> new LinkedHashSet<>());
+            for (String currency : CapabilityPrerequisiteContext.coveredCurrencies(subject, coverages)) {
+                entityItems.add(new ChannelIdentityItem(subject.catalog().getPaymentMethodCode(), currency, mccCode));
+            }
+        }
+        return items;
+    }
+
+    /** 每个 OE 一次就绪查询；某 OE 失败时不放入结果，只使该 OE 的开通项 ④ 为 UNKNOWN。 */
+    Map<String, List<ChannelIdentityReadiness>> readiness(Agreement agreement, Map<String, Set<ChannelIdentityItem>> items) {
+        Map<String, List<ChannelIdentityReadiness>> results = new HashMap<>();
+        items.forEach((entityNo, entityItems) -> {
+            try {
+                results.put(entityNo, readinessClient.checkReadiness(entityNo, entityItems));
+            } catch (ErrorException unavailable) {
+                LOG.warn("开通项前置核对渠道身份查询不可用 agreementId={} entityNo={} code={}", agreement.getAgreementId(),
+                    entityNo, unavailable.getCode());
+            }
+        });
+        return results;
+    }
+
     /** 合同各商业条款方案：条款类型计费事件挂接的种类、ACTIVE 版本及其价格完整覆盖的成员开通项。 */
     List<CapabilityPrerequisiteContext.TermCoverage> termCoverages(Agreement agreement,
         List<CapabilityAcceptance> acceptances) {
@@ -170,7 +245,7 @@ public class CheckCapabilityPrerequisitesProcessor
             .map(plan -> termCoverage(plan, acceptances)).toList();
     }
 
-    /** 一个方案的覆盖事实；没有 ACTIVE 版本时覆盖集合为空；未完整覆盖的开通项同时算出未覆盖的币种（原因参数）。 */
+    /** 一个方案的覆盖事实；没有 ACTIVE 版本时覆盖集合为空；未完整覆盖的开通项算出未覆盖的币种（原因参数），每个成员相关开通项算出已覆盖币种（④）。 */
     CapabilityPrerequisiteContext.TermCoverage termCoverage(CommercialTermPlan plan, List<CapabilityAcceptance> acceptances) {
         Set<CapabilityKind> kinds = termLoader.feeEvents(plan.getTermType()).stream().map(ProductFeeEvent::getCapabilityKind)
             .filter(Objects::nonNull).collect(Collectors.toSet());
@@ -178,6 +253,7 @@ public class CheckCapabilityPrerequisitesProcessor
             .filter(version -> version.getStatus() == CommercialTermVersionStatus.ACTIVE).findFirst().orElse(null);
         Set<Long> covered = new HashSet<>();
         Map<Long, List<String>> uncovered = new HashMap<>();
+        Map<Long, List<String>> coveredCurrencies = new HashMap<>();
         if (active != null) {
             List<CommercialPriceCandidate> candidates = termLoader.candidates(termLoader.prices(active.getTermVersionId()));
             for (CapabilityAcceptance acceptance : acceptances) {
@@ -185,6 +261,7 @@ public class CheckCapabilityPrerequisitesProcessor
                     continue;
                 }
                 long capabilityId = acceptance.capability().getAgreementCapabilityId();
+                coveredCurrencies.put(capabilityId, TermVersionActivationValidator.coveredCurrencies(candidates, acceptance));
                 if (TermVersionActivationValidator.coversCapability(candidates, acceptance)) {
                     covered.add(capabilityId);
                 } else {
@@ -192,7 +269,8 @@ public class CheckCapabilityPrerequisitesProcessor
                 }
             }
         }
-        return new CapabilityPrerequisiteContext.TermCoverage(plan.getTermType(), kinds, active, covered, uncovered);
+        return new CapabilityPrerequisiteContext.TermCoverage(plan.getTermType(), kinds, active, covered, uncovered,
+            coveredCurrencies);
     }
 
     /** 从上下文构造结果；保存成功时 Root 与开通项已同步为新值。 */

@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## channel-connector 渠道身份就绪查询（REQ-02，2026-10-30，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [需求](<../requirements/20261030/channel-connector-渠道身份就绪查询/requirement.md>)、[技术方案](<../requirements/20261030/channel-connector-渠道身份就绪查询/technique.md>)、[交付记录](<../requirements/20261030/channel-connector-渠道身份就绪查询/delivery.md>)、[发布手册](<../requirements/20261030/channel-connector-渠道身份就绪查询/release/runbook.md>)、[阶段 7 报告](<../requirements/20261030/channel-connector-渠道身份就绪查询/release/stage7-report.md>)。依据 [2026-10-28 客户上线决定](decisions/2026-10-28-client-go-live-orchestration.md) 3.2 ④（本需求修订：判定与运行期选 MID 同口径，不含路由策略）。
+- **Implemented：** channel-connector 批量渠道身份就绪查询（MID / 渠道账号 / 渠道 ACTIVE，ENABLED 能力覆盖支付方式 × 币种 × Client 已确认主 MCC，并声明 `ACTION.PAY` 或 `ACTION.AUTHORIZE`），与 `QueryMidCandidatesProcessor` 共用筛选；client-master 服务间经营分类查询 `GET /client-master/v1/clients/{clientId}/business-classification`；commercial 开通项前置 ④ 由固定 `SKIPPED` 改为真实判定（任一币种就绪即 SATISFIED，缺币种 `CHANNEL_IDENTITY_PARTIAL` 提醒，全部不就绪 UNSATISFIED，3 秒超时）；运营 Web 合同详情"还差什么"渠道身份项与"去配置 MID"（MID 列表按 OE 预填，无 MID 页权限不显示链接）；data-query 模板 `GOLIVE_MID_READY`。无表、无 DDL、无注册块。
+- **Verified（2026-10-30）：** channel-connector 404 / 0、client-master 181 / 0、commercial 253 / 0、arch-rules 70 + 5、ops-web 1704 / 1705（唯一失败为读明细账运维能力清单的对照测试，放入后全过）；mor-test 验收 api 57 / 0、check 15 / 0、浏览器 44 / 0（zh-CN / en × 1440 / 390）。
+- **Deployed：** mor-test 2026-10-30 18:45—19:01Z：client-master `df13cc47…`、channel-connector `f330c4ae…`（`req02-20261030a`）、commercial `2be844e7…`、ops-web `bbc03d33…`（`req02-20261030b`，含明细账运维页面）；运营语言包 #31；全量重查后 DEMO-CL-001 APPLE_PAY、DEMO2-CL-101 CARD 按预期暂停；`GOLIVE_MID_READY` v1 ACTIVE。
+- **Pending：** 未推送。L-1：数据查询试运行时可选参数留空报"服务暂时不可用"（前端不接受 `bindings` 中的 `null`，编辑页丢弃空串默认值；数据查询模块原有缺陷，随下个需求修）。AC-07 / AC-09 / AC-10 只由 auto 测试覆盖。Client 与 OE 关联写入入口缺失（REQ-20）。ops-web 回滚须先和 REQ-06 / 明细账运维核对。
+
 ## operations 明细账运维（2026-10-30，已部署 mor-test，已本地提交 `a1f3d627`，未推送）
 
 - **范围：** [需求](<../requirements/20261030/operations-明细账运维/requirement.md>)、[技术方案](<../requirements/20261030/operations-明细账运维/technique.md>)、[交付记录](<../requirements/20261030/operations-明细账运维/delivery.md>)、[运行卡](<../requirements/20261030/operations-明细账运维/release/runbook.md>)、[阶段 5 报告](<../requirements/20261030/operations-明细账运维/verification/stage5/stage5-report.md>)、[阶段 6 报告](<../requirements/20261030/operations-明细账运维/release/stage6-report.md>)、[阶段 7 验收](<../requirements/20261030/operations-明细账运维/release/stage7-acceptance.md>)。

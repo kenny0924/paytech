@@ -1,0 +1,19 @@
+[通过] operations-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] operations-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[通过] operations-console 线上 2 个 ACTIVE key 不在仓库中，按 --accept-deprecations 计划废弃（见 plan.json deprecations）
+[通过] operations-console 新增 17 < 3000
+[通过] operations-console 导入集合 20+ 个 key 都有仓库 zh-CN（缺 0）
+[通过] operations-console added 只在 ['commercial']（{'commercial': 17}）
+[通过] operations-console sourceChanged 只在 ['commercial']（{'commercial': 3}）
+[通过] operations-console deprecated 只在 ['commercial']（{'commercial': 2}）
+[通过] operations-console restored 只在 ['commercial']（{}）
+[通过] operations-console zhImport 只在 ['commercial']（{'commercial': 20}）
+[通过] operations-console 废弃恰好为预期 2 个 key（['commercial.enum.CapabilityPrerequisiteReason.CHANNEL_IDENTITY_NOT_CONNECTED', 'commercial.prerequisite.shortReason.CHANNEL_IDENTITY_NOT_CONNECTED']）
+[通过] operations-console 仓库 zh-CN 与线上不同但不会导入的 key 为 0（0）
+[通过] operations-console 新建命名空间恰好为 []（[]）
+{"byNamespace": {"added": {"commercial": 17}, "sourceChanged": {"commercial": 3}, "deprecated": {"commercial": 2}, "restored": {}, "zhImport": {"commercial": 20}}, "zhChangedNotImported": [], "added": ["commercial.enum.CapabilityPrerequisiteReason.AWAITING_PRICE", "commercial.enum.CapabilityPrerequisiteReason.CHANNEL_IDENTITY_PARTIAL", "commercial.enum.CapabilityPrerequisiteReason.CLIENT_MCC_MISSING", "commercial.enum.CapabilityPrerequisiteReason.CURRENCY_NOT_SUPPORTED", "commercial.enum.CapabilityPrerequisiteReason.MCC_NOT_COVERED", "commercial.enum.CapabilityPrerequisiteReason.MID_NOT_FOUND", "commercial.enum.CapabilityPrerequisiteReason.PAYMENT_ACTION_NOT_SUPPORTED", "commercial.enum.CapabilityPrerequisiteReason.PAYMENT_METHOD_NOT_SUPPORTED", "commercial.prerequisite.link.mids", "commercial.prerequisite.shortReason.AWAITING_PRICE", "commercial.prerequisite.shortReason.CHANNEL_IDENTITY_PARTIAL", "commercial.prerequisite.shortReason.CLIENT_MCC_MISSING", "commercial.prerequisite.shortReason.CURRENCY_NOT_SUPPORTED", "commercial.prerequisite.shortReason.MCC_NOT_COVERED", "commercial.prerequisite.shortReason.MID_NOT_FOUND", "commercial.prerequisite.shortReason.PAYMENT_ACTION_NOT_SUPPORTED", "commercial.prerequisite.shortReason.PAYMENT_METHOD_NOT_SUPPORTED"], "sourceChanged": ["commercial.enum.CapabilityPrerequisiteReason.CHECK_UNAVAILABLE", "commercial.enum.CapabilityPrerequisiteResult.SKIPPED", "commercial.prerequisite.shortReason.CHECK_UNAVAILABLE"], "deprecated": ["commercial.enum.CapabilityPrerequisiteReason.CHANNEL_IDENTITY_NOT_CONNECTED", "commercial.prerequisite.shortReason.CHANNEL_IDENTITY_NOT_CONNECTED"]}
+{"currentRelease": 30, "liveNamespaces": 28, "repoNamespaces": 28, "newNamespaces": [], "repoKeys": 11720, "liveActiveKeys": 11705, "added": 17, "restored": 0, "sourceChanged": 3, "missingInRepo": 2, "zhMissingForImport": 0, "keepLiveZh": 11702, "refdataZhReplaced": 0, "liveOutdatedZh": 0, "rebaseExpected": 0, "outdatedUntouched": 0}
+导入文件与计划：/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261030/channel-connector-渠道身份就绪查询/release/i18n-bundles
+计划完成（只读，未登录、未写入）：可执行
+
+== 参考数据语言包计划：通过 13，失败 0，未能验证 0

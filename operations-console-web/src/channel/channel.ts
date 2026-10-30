@@ -46,6 +46,8 @@ export const channelRoutes = {
   channel: (channelId: string) => `/channel/channels/${channelId}`,
   mids: '/channel/mids',
   mid: (midId: string) => `/channel/mids/${midId}`,
+  /** MID 列表按 OE 预筛选（商务「还差什么 · 渠道身份」的「去配置 MID」）。 */
+  midsOfEntity: (entityNo: string) => `/channel/mids?${new URLSearchParams({ entityNo })}`,
   costPlans: '/channel/cost-plans',
   costPlan: (planCode: string) => `/channel/cost-plans/${planCode}`,
   costVersion: (planCode: string, costVer: string) => `/channel/cost-plans/${planCode}/versions/${costVer}`,
@@ -63,6 +65,22 @@ export const channelButtons = {
   costManage: 'OPERATIONS_CHANNEL_COST_MANAGE',
   costApprove: 'OPERATIONS_CHANNEL_COST_APPROVE',
 } as const;
+
+/** 页面菜单（Console Resource componentKey）：其他模块按它判断能否跳到渠道页面。 */
+export const channelMenus = {
+  mids: 'OPERATIONS_CHANNEL_MIDS',
+} as const;
+
+/** 当前会话是否拥有某个页面菜单。 */
+export function hasMenu(resources: readonly { resourceType: string; componentKey: string | null }[], componentKey: string): boolean {
+  return resources.some(resource => resource.resourceType === 'MENU' && resource.componentKey === componentKey);
+}
+
+/** MID 列表的初始筛选：URL 中合法的 entityNo（不符合 OE 编号格式时忽略）。 */
+export function midListInitialFilters(search: string): { entityNo?: string } {
+  const entityNo = new URLSearchParams(search).get('entityNo');
+  return entityNo && entityNoPattern.test(entityNo) ? { entityNo } : {};
+}
 
 /** 当前会话是否拥有某个按钮资源。 */
 export function hasButton(resources: readonly { resourceType: string; resourceCode: string }[], code: string): boolean {

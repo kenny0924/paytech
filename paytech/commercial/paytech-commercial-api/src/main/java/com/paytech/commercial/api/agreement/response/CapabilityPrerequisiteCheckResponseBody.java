@@ -67,15 +67,19 @@ public class CapabilityPrerequisiteCheckResponseBody {
 
         /**
          * 原因码
-         * <li>SATISFIED 时为空；取值如 CLIENT_NOT_QUALIFIED、OPERATING_ENTITY_NOT_QUALIFIED、AGREEMENT_NOT_ACTIVE、
-         * CAPABILITY_NOT_EFFECTIVE、TERM_VERSION_NOT_ACTIVE、PRICE_NOT_COVERED、CHECK_UNAVAILABLE、CHANNEL_IDENTITY_NOT_CONNECTED、
-         * NOT_APPLICABLE。</li>
+         * <li>SATISFIED 时一般为空（CHANNEL_IDENTITY 部分币种不就绪时为 CHANNEL_IDENTITY_PARTIAL）；取值如 CLIENT_NOT_QUALIFIED、
+         * OPERATING_ENTITY_NOT_QUALIFIED、AGREEMENT_NOT_ACTIVE、
+         * CAPABILITY_NOT_EFFECTIVE、TERM_VERSION_NOT_ACTIVE、PRICE_NOT_COVERED、CHECK_UNAVAILABLE、NOT_APPLICABLE。</li>
+         * <li>CHANNEL_IDENTITY 另有 AWAITING_PRICE（SKIPPED）、CLIENT_MCC_MISSING、CHANNEL_IDENTITY_PARTIAL（SATISFIED，部分币种不就绪），
+         * 以及全部币种不就绪时的原因 MID_NOT_FOUND、PAYMENT_METHOD_NOT_SUPPORTED、MCC_NOT_COVERED、CURRENCY_NOT_SUPPORTED、
+         * PAYMENT_ACTION_NOT_SUPPORTED。</li>
          */
         private String reasonCode;
 
         /**
          * 文案参数
-         * <li>键如 subjectType、subjectId、entityNo、termType、agreementStatus；没有参数时为空对象。</li>
+         * <li>键如 subjectType、subjectId、entityNo、termType、agreementStatus、currencies、clientId、paymentMethodCode、mccCode；
+         * 没有参数时为空对象。</li>
          */
         private Map<String, String> params;
     }

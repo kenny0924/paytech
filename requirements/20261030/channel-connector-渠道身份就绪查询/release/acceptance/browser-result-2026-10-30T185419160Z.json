@@ -1,0 +1,646 @@
+{
+  "agreement": "238331035912310784",
+  "runs": [
+    {
+      "tag": "admin-zh-CN-1440",
+      "steps": [
+        {
+          "step": "01-prerequisites",
+          "probe": [
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败 去配置 MID →",
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999） 去配置 MID →",
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 不适用于此类开通项。"
+          ],
+          "overflow": 0
+        },
+        {
+          "step": "02-mids-prefilled",
+          "probe": {
+            "url": "http://localhost:28080/channel/mids?entityNo=AE001",
+            "input": "AE001",
+            "oes": [
+              "PAYERMAX",
+              "DEMO_NI",
+              "DEMO_NI"
+            ]
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-finance-posting-ops",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/finance/posting-ops"
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-channel-mids",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/channel/mids"
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-commercial-agreements",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/commercial/agreements"
+          },
+          "overflow": 0
+        }
+      ]
+    },
+    {
+      "tag": "nomid-zh-CN-1440",
+      "steps": [
+        {
+          "step": "01-prerequisites",
+          "probe": [
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败",
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999）",
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 不适用于此类开通项。"
+          ],
+          "overflow": 0
+        }
+      ]
+    },
+    {
+      "tag": "admin-en-1440",
+      "steps": [
+        {
+          "step": "01-prerequisites",
+          "probe": [
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail. Configure MID →",
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999). Configure MID →",
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Not applicable to this kind of enablement."
+          ],
+          "overflow": 0
+        },
+        {
+          "step": "02-mids-prefilled",
+          "probe": {
+            "url": "http://localhost:28080/channel/mids?entityNo=AE001",
+            "input": "AE001",
+            "oes": [
+              "PAYERMAX",
+              "DEMO_NI",
+              "DEMO_NI"
+            ]
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-finance-posting-ops",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/finance/posting-ops"
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-channel-mids",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/channel/mids"
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-commercial-agreements",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/commercial/agreements"
+          },
+          "overflow": 0
+        }
+      ]
+    },
+    {
+      "tag": "nomid-en-1440",
+      "steps": [
+        {
+          "step": "01-prerequisites",
+          "probe": [
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail.",
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999).",
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Not applicable to this kind of enablement."
+          ],
+          "overflow": 0
+        }
+      ]
+    },
+    {
+      "tag": "admin-zh-CN-390",
+      "steps": [
+        {
+          "step": "01-prerequisites",
+          "probe": [
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败 去配置 MID →",
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999） 去配置 MID →",
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 不适用于此类开通项。"
+          ],
+          "overflow": 0
+        },
+        {
+          "step": "02-mids-prefilled",
+          "probe": {
+            "url": "http://localhost:28080/channel/mids?entityNo=AE001",
+            "input": "AE001",
+            "oes": [
+              "PAYERMAX",
+              "DEMO_NI",
+              "DEMO_NI"
+            ]
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-finance-posting-ops",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/finance/posting-ops"
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-channel-mids",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/channel/mids"
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-commercial-agreements",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/commercial/agreements"
+          },
+          "overflow": 0
+        }
+      ]
+    },
+    {
+      "tag": "nomid-zh-CN-390",
+      "steps": [
+        {
+          "step": "01-prerequisites",
+          "probe": [
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败",
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999）",
+            "资格 Client 237575207592763393 与经营主体 AE001 资格有效",
+            "合同与价格 合同生效，生效中的价格版本已覆盖本开通项",
+            "渠道身份 不适用于此类开通项。"
+          ],
+          "overflow": 0
+        }
+      ]
+    },
+    {
+      "tag": "admin-en-390",
+      "steps": [
+        {
+          "step": "01-prerequisites",
+          "probe": [
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail. Configure MID →",
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999). Configure MID →",
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Not applicable to this kind of enablement."
+          ],
+          "overflow": 0
+        },
+        {
+          "step": "02-mids-prefilled",
+          "probe": {
+            "url": "http://localhost:28080/channel/mids?entityNo=AE001",
+            "input": "AE001",
+            "oes": [
+              "PAYERMAX",
+              "DEMO_NI",
+              "DEMO_NI"
+            ]
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-finance-posting-ops",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/finance/posting-ops"
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-channel-mids",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/channel/mids"
+          },
+          "overflow": 0
+        },
+        {
+          "step": "90-regression-commercial-agreements",
+          "probe": {
+            "title": "Operations · Paytech",
+            "url": "http://localhost:28080/commercial/agreements"
+          },
+          "overflow": 0
+        }
+      ]
+    },
+    {
+      "tag": "nomid-en-390",
+      "steps": [
+        {
+          "step": "01-prerequisites",
+          "probe": [
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail.",
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999).",
+            "Qualification Client 237575207592763393 and Operating Entity AE001 are qualified.",
+            "Agreement & Pricing The agreement is in effect and the active price version covers this enablement.",
+            "Channel Identity Not applicable to this kind of enablement."
+          ],
+          "overflow": 0
+        }
+      ]
+    }
+  ],
+  "console": [],
+  "httpErrors": [],
+  "rawKeys": [],
+  "checks": [
+    {
+      "run": "admin-zh-CN-1440",
+      "name": "01-prerequisites 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-zh-CN-1440",
+      "name": "渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒）",
+      "pass": false,
+      "evidence": [
+        "渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败 去配置 MID →",
+        "渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999） 去配置 MID →",
+        "渠道身份 不适用于此类开通项。"
+      ]
+    },
+    {
+      "run": "admin-zh-CN-1440",
+      "name": "管理员显示「去配置 MID」（AC-V2）",
+      "pass": true,
+      "evidence": 2
+    },
+    {
+      "run": "admin-zh-CN-1440",
+      "name": "02-mids-prefilled 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-zh-CN-1440",
+      "name": "跳转 /channel/mids?entityNo=AE001，筛选预填（AC-V2）",
+      "pass": true,
+      "evidence": {
+        "url": "http://localhost:28080/channel/mids?entityNo=AE001",
+        "input": "AE001",
+        "oes": [
+          "PAYERMAX",
+          "DEMO_NI",
+          "DEMO_NI"
+        ]
+      }
+    },
+    {
+      "run": "admin-zh-CN-1440",
+      "name": "90-regression-finance-posting-ops 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-zh-CN-1440",
+      "name": "90-regression-channel-mids 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-zh-CN-1440",
+      "name": "90-regression-commercial-agreements 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "nomid-zh-CN-1440",
+      "name": "01-prerequisites 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "nomid-zh-CN-1440",
+      "name": "渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒）",
+      "pass": false,
+      "evidence": [
+        "渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败",
+        "渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999）",
+        "渠道身份 不适用于此类开通项。"
+      ]
+    },
+    {
+      "run": "nomid-zh-CN-1440",
+      "name": "无 MID 菜单账号不显示「去配置 MID」（AC-V2）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-en-1440",
+      "name": "01-prerequisites 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-en-1440",
+      "name": "渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒）",
+      "pass": false,
+      "evidence": [
+        "Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail. Configure MID →",
+        "Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999). Configure MID →",
+        "Channel Identity Not applicable to this kind of enablement."
+      ]
+    },
+    {
+      "run": "admin-en-1440",
+      "name": "管理员显示「去配置 MID」（AC-V2）",
+      "pass": true,
+      "evidence": 2
+    },
+    {
+      "run": "admin-en-1440",
+      "name": "02-mids-prefilled 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-en-1440",
+      "name": "跳转 /channel/mids?entityNo=AE001，筛选预填（AC-V2）",
+      "pass": true,
+      "evidence": {
+        "url": "http://localhost:28080/channel/mids?entityNo=AE001",
+        "input": "AE001",
+        "oes": [
+          "PAYERMAX",
+          "DEMO_NI",
+          "DEMO_NI"
+        ]
+      }
+    },
+    {
+      "run": "admin-en-1440",
+      "name": "90-regression-finance-posting-ops 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-en-1440",
+      "name": "90-regression-channel-mids 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-en-1440",
+      "name": "90-regression-commercial-agreements 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "nomid-en-1440",
+      "name": "01-prerequisites 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "nomid-en-1440",
+      "name": "渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒）",
+      "pass": false,
+      "evidence": [
+        "Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail.",
+        "Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999).",
+        "Channel Identity Not applicable to this kind of enablement."
+      ]
+    },
+    {
+      "run": "nomid-en-1440",
+      "name": "无 MID 菜单账号不显示「去配置 MID」（AC-V2）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-zh-CN-390",
+      "name": "01-prerequisites 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-zh-CN-390",
+      "name": "渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒）",
+      "pass": false,
+      "evidence": [
+        "渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败 去配置 MID →",
+        "渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999） 去配置 MID →",
+        "渠道身份 不适用于此类开通项。"
+      ]
+    },
+    {
+      "run": "admin-zh-CN-390",
+      "name": "管理员显示「去配置 MID」（AC-V2）",
+      "pass": true,
+      "evidence": 2
+    },
+    {
+      "run": "admin-zh-CN-390",
+      "name": "02-mids-prefilled 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-zh-CN-390",
+      "name": "跳转 /channel/mids?entityNo=AE001，筛选预填（AC-V2）",
+      "pass": true,
+      "evidence": {
+        "url": "http://localhost:28080/channel/mids?entityNo=AE001",
+        "input": "AE001",
+        "oes": [
+          "PAYERMAX",
+          "DEMO_NI",
+          "DEMO_NI"
+        ]
+      }
+    },
+    {
+      "run": "admin-zh-CN-390",
+      "name": "90-regression-finance-posting-ops 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-zh-CN-390",
+      "name": "90-regression-channel-mids 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-zh-CN-390",
+      "name": "90-regression-commercial-agreements 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "nomid-zh-CN-390",
+      "name": "01-prerequisites 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "nomid-zh-CN-390",
+      "name": "渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒）",
+      "pass": false,
+      "evidence": [
+        "渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败",
+        "渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999）",
+        "渠道身份 不适用于此类开通项。"
+      ]
+    },
+    {
+      "run": "nomid-zh-CN-390",
+      "name": "无 MID 菜单账号不显示「去配置 MID」（AC-V2）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-en-390",
+      "name": "01-prerequisites 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-en-390",
+      "name": "渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒）",
+      "pass": false,
+      "evidence": [
+        "Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail. Configure MID →",
+        "Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999). Configure MID →",
+        "Channel Identity Not applicable to this kind of enablement."
+      ]
+    },
+    {
+      "run": "admin-en-390",
+      "name": "管理员显示「去配置 MID」（AC-V2）",
+      "pass": true,
+      "evidence": 2
+    },
+    {
+      "run": "admin-en-390",
+      "name": "02-mids-prefilled 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-en-390",
+      "name": "跳转 /channel/mids?entityNo=AE001，筛选预填（AC-V2）",
+      "pass": true,
+      "evidence": {
+        "url": "http://localhost:28080/channel/mids?entityNo=AE001",
+        "input": "AE001",
+        "oes": [
+          "PAYERMAX",
+          "DEMO_NI",
+          "DEMO_NI"
+        ]
+      }
+    },
+    {
+      "run": "admin-en-390",
+      "name": "90-regression-finance-posting-ops 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-en-390",
+      "name": "90-regression-channel-mids 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "admin-en-390",
+      "name": "90-regression-commercial-agreements 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "nomid-en-390",
+      "name": "01-prerequisites 无横向溢出（AC-V4）",
+      "pass": true,
+      "evidence": 0
+    },
+    {
+      "run": "nomid-en-390",
+      "name": "渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒）",
+      "pass": false,
+      "evidence": [
+        "Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail.",
+        "Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999).",
+        "Channel Identity Not applicable to this kind of enablement."
+      ]
+    },
+    {
+      "run": "nomid-en-390",
+      "name": "无 MID 菜单账号不显示「去配置 MID」（AC-V2）",
+      "pass": true,
+      "evidence": 0
+    }
+  ]
+}

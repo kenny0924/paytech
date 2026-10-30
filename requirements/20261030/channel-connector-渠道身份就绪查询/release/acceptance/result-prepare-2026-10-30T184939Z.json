@@ -1,0 +1,17 @@
+{
+ "command": "prepare",
+ "at": "2026-10-30T18:49:39Z",
+ "results": [
+  {
+   "ac": "prepare",
+   "step": "无 MID 菜单运营账号就绪（只含 COMMERCIAL_CONTRACT_READ）",
+   "ok": true,
+   "detail": {
+    "accountId": "241996993830928384"
+   }
+  }
+ ],
+ "data": {},
+ "pass": 1,
+ "fail": 0
+}

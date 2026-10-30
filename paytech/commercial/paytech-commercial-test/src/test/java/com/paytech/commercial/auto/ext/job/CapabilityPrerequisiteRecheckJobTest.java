@@ -46,7 +46,7 @@ class CapabilityPrerequisiteRecheckJobTest extends CommercialMockTestBase {
     @Autowired
     private CapabilityPrerequisiteRecheckJobHandler job;
 
-    /** 每例：第一份合同已定价且 CARD 等前置；第二份合同无方案且 CARD 已开通；Client 与两个 OE 资格合格。 */
+    /** 每例：第一份合同已定价且 CARD 等前置；第二份合同无方案且 CARD 已开通；Client 与两个 OE 资格合格，第一份合同 OE 的 CARD/USD 渠道身份就绪。 */
     @BeforeEach
     void setUpClassMocks() {
         AgreementWriteMocker.Mocker first = gate.mockCoveredAgreement();
@@ -60,6 +60,7 @@ class CapabilityPrerequisiteRecheckJobTest extends CommercialMockTestBase {
             QualificationEvaluationStatus.ELIGIBLE);
         compliance.mockStatus(QualificationRoleType.OPERATING_ENTITY, CapabilityGateMocker.SECOND_ENTITY_NO,
             QualificationEvaluationStatus.ELIGIBLE);
+        mockChannelIdentityReady("USD");
     }
 
     /** 默认范围：只核对第一份合同，CARD 变为 ENABLED；已开通的第二份合同不扫描。 */

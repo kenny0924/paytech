@@ -17,7 +17,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
+import com.paytech.channel.connector.api.readiness.ChannelIdentityReadinessApi;
 import com.paytech.client.master.api.checkout.ClientMasterCheckoutApi;
+import com.paytech.client.master.api.classification.ClientBusinessClassificationApi;
 import com.paytech.client.master.api.enums.CheckoutCandidateErrorCode;
 import com.paytech.commercial.core.configuration.CommercialRelationshipSnapshotProperties;
 import com.paytech.commercial.domainservice.repository.*;
@@ -25,8 +27,12 @@ import com.paytech.commercial.domainservice.service.AgreementPartyQueryService;
 import com.paytech.commercial.domainservice.service.CheckoutQueryService;
 import com.paytech.commercial.domainservice.service.impl.AgreementPartyQueryServiceImpl;
 import com.paytech.commercial.domainservice.service.impl.CheckoutQueryServiceImpl;
+import com.paytech.commercial.integration.ChannelIdentityReadinessClient;
 import com.paytech.commercial.integration.CheckoutQualificationClient;
+import com.paytech.commercial.integration.ClientClassificationClient;
 import com.paytech.commercial.integration.ClientMasterCheckoutClient;
+import com.paytech.commercial.integration.impl.ChannelIdentityReadinessClientImpl;
+import com.paytech.commercial.integration.impl.ClientClassificationClientImpl;
 import com.paytech.commercial.integration.impl.ClientMasterCheckoutClientImpl;
 import com.paytech.commercial.integration.impl.ComplianceQualificationClientImpl;
 import com.paytech.commercial.service.processor.CheckoutResolutionProcessor;
@@ -36,7 +42,10 @@ import com.paytech.foundation.httpclient.api.HttpServiceClientFactory;
 import com.paytech.foundation.httpclient.api.HttpServiceClientOptions;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 
-/** 两段式 Checkout 解析与合同参与方查询的装配：本库只读 Service、client-master 客户端、compliance 资格客户端与 Processor。 */
+/**
+ * 两段式 Checkout 解析与合同参与方查询的装配：本库只读 Service、client-master 客户端、compliance 资格客户端与 Processor
+ * <li>开通项前置门禁 ④ 的 client-master 经营分类与 channel-connector 渠道身份就绪客户端同处同法装配。</li>
+ */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "spring.datasource", name = "url")
 @EnableConfigurationProperties(CommercialRelationshipSnapshotProperties.class)
@@ -46,6 +55,9 @@ public class CheckoutResolutionConfiguration {
 
     /** compliance 服务发现名。 */
     static final String COMPLIANCE = "compliance-service";
+
+    /** channel-connector 服务发现名。 */
+    static final String CHANNEL_CONNECTOR = "channel-connector-service";
 
     /** 多表加载共用同一个有界的只读事务（REPEATABLE READ，10 秒），仓储不自行创建事务。 */
     @Bean
@@ -107,6 +119,32 @@ public class CheckoutResolutionConfiguration {
                 COMPLIANCE),
             QualificationErrorCode.values()).createClient(QualificationEvaluationApi.class);
         return new ComplianceQualificationClientImpl(api);
+    }
+
+    /**
+     * client-master 经营分类客户端（开通项前置门禁 ④ 的主 MCC）：服务发现名 client-master-service，连接 2 秒、读取 3 秒，禁止重定向，不重试。
+     * <li>不登记合同错误码：任何失败（含 Client 不存在）由适配器失败关闭为 OWNER_UNAVAILABLE。</li>
+     */
+    @Bean
+    public ClientClassificationClient clientClassificationClient(ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        var api = HttpServiceClientFactory.create(discoveryTransport(discovery, CLIENT_MASTER),
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(65536), tokens,
+                CLIENT_MASTER)).createClient(ClientBusinessClassificationApi.class);
+        return new ClientClassificationClientImpl(api);
+    }
+
+    /**
+     * channel-connector 渠道身份就绪客户端（开通项前置门禁 ④）：服务发现名 channel-connector-service，连接 2 秒、读取 3 秒，禁止重定向，不重试。
+     * <li>不登记合同错误码：任何失败（含配置损坏 500）由适配器失败关闭为 OWNER_UNAVAILABLE。</li>
+     */
+    @Bean
+    public ChannelIdentityReadinessClient channelIdentityReadinessClient(ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        var api = HttpServiceClientFactory.create(discoveryTransport(discovery, CHANNEL_CONNECTOR),
+            InternalCallTokenOptions.apply(HttpServiceClientOptions.strict().withStrictJsonResponses(262144), tokens,
+                CHANNEL_CONNECTOR)).createClient(ChannelIdentityReadinessApi.class);
+        return new ChannelIdentityReadinessClientImpl(api);
     }
 
     /** 装配候选、本库快照、事务外资格检查与复核的入口；快照开关决定响应的生效模型版本。 */

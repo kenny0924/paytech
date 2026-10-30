@@ -226,6 +226,28 @@ public final class TermVersionActivationValidator {
             .toList();
     }
 
+    /**
+     * 开通项已被完整覆盖的币种（开通项前置门禁 ④ 的待核对币种，按币种字典序；与 {@link #uncoveredCurrencies} 同一口径）
+     * <li>有 CURRENCY 条件时取条件值中每个其余条件组合都命中价格的币种；没有 CURRENCY 条件时取价格中出现、且每个组合都命中的币种。</li>
+     * <li>条件组合超过上限时无法判定，返回空列表。</li>
+     *
+     * @param candidates 某 ACTIVE 版本的价格与画像
+     * @param capability 开通项、目录与接受条件
+     * @return 已覆盖的币种；没有时为空
+     */
+    public static List<String> coveredCurrencies(List<CommercialPriceCandidate> candidates, CapabilityAcceptance capability) {
+        if (!withinCombinationLimit(capability)) {
+            return List.of();
+        }
+        List<Map<PricingDimension, String>> combinations = capability.conditions().combinations(MAX_COMBINATIONS);
+        Set<String> accepted = capability.conditions().values(PricingDimension.CURRENCY);
+        Set<String> currencies = accepted.isEmpty()
+            ? candidates.stream().map(candidate -> candidate.price().getCurrency()).collect(Collectors.toSet()) : accepted;
+        return currencies.stream().sorted()
+            .filter(currency -> combinations.stream().allMatch(combination -> hits(candidates, capability, currency, combination)))
+            .toList();
+    }
+
     /** 币种数与其余条件组合数之积不超过上限。 */
     static boolean withinCombinationLimit(CapabilityAcceptance capability) {
         Set<String> currencies = capability.conditions().values(PricingDimension.CURRENCY);

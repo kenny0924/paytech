@@ -1,0 +1,14 @@
+# Q-4 修订后 commercial 候选 b（candidate-b）对照
+== commercial b vs live
+A=1304 B=1461 onlyA=0 onlyB=157 changed=27
+== commercial b vs main
+A=1304 B=1461 onlyA=0 onlyB=157 changed=10
+== commercial b vs a
+A=1461 B=1461 onlyA=0 onlyB=0 changed=4
+  ~ paytech-commercial-api.jar!com/paytech/commercial/api/agreement/response/CapabilityPrerequisiteCheckResponseBody$Check.class
+  ~ paytech-commercial-core.jar!com/paytech/commercial/core/constant/CapabilityPrerequisiteReasons.class
+  ~ paytech-commercial-core.jar!com/paytech/commercial/domain/CapabilityPrerequisiteContext$TermCoverage.class
+  ~ paytech-commercial-core.jar!com/paytech/commercial/domain/CapabilityPrerequisiteContext.class
+== client-master 用 b 树重建 vs 镜像 a 的 JAR（只差 commercial-api 一个类，javap -c -p -constants 相同，仅调试属性 / 行号因 Javadoc 变动不同；client-master 镜像沿用 a）
+A=1941 B=1941 onlyA=0 onlyB=0 changed=1
+  ~ paytech-commercial-api.jar!com/paytech/commercial/api/agreement/response/CapabilityPrerequisiteCheckResponseBody$Check.class

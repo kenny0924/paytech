@@ -1,0 +1,1 @@
+候选 b：live=291 candidate=291 identical=46 hash_renamed_or_changed=245 logical_live_only=0 logical_new=0

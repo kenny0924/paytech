@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.paytech.channel.connector.api.enums.ChannelIdentityReadinessReason;
 import com.paytech.commercial.api.agreement.AgreementApi;
 import com.paytech.commercial.api.constant.CommercialCodes;
 import com.paytech.commercial.api.enums.AgreementCapabilityExecutionStatus;
@@ -33,6 +35,7 @@ import com.paytech.commercial.test.builder.AgreementBuilder;
 import com.paytech.commercial.test.builder.CommercialTermComponentBuilder;
 import com.paytech.commercial.test.builder.CommercialTermPriceBuilder;
 import com.paytech.commercial.test.checker.write.CommercialWriteResponseChecker;
+import com.paytech.commercial.test.mocker.channelconnector.ChannelIdentityReadinessMocker;
 import com.paytech.commercial.test.mocker.local.agreement.AgreementWriteMocker;
 import com.paytech.commercial.test.mocker.local.agreement.CapabilityGateMocker;
 import com.paytech.commercial.test.mocker.local.term.TermPricingMocker;
@@ -42,9 +45,11 @@ import com.paytech.compliance.api.enums.QualificationRoleType;
 import tools.jackson.databind.JsonNode;
 
 /**
- * 开通项前置门禁核对接口（开通项前置门禁 technique.md §9、§10.2、§15.1）：①资格、②合同与价格、④渠道身份的逐项结论与状态迁移
+ * 开通项前置门禁核对接口（开通项前置门禁 technique.md §9、§10.2、§15.1；REQ-02 technique.md §10.2）：①资格、②合同与价格、④渠道身份的逐项结论与状态迁移
  * <li>全部满足 → ENABLED，Root 推进、系统身份快照与 AgreementCapabilityStatusChanged；任一明确不满足时等前置保持、已开通暂停；恢复满足后
  * 自动恢复；资格服务不可用 → UNKNOWN 不迁移；手动暂停不被触碰；PARTNER 合同 400。</li>
+ * <li>④：价格已覆盖的币种逐一经 channel-connector 就绪查询（Client 主 MCC 取自 client-master）；任一币种就绪即满足（部分不就绪带
+ * CHANNEL_IDENTITY_PARTIAL），全部不就绪不满足、查询失败 UNKNOWN、MCC 未确认 CLIENT_MCC_MISSING、价格未覆盖任何币种 AWAITING_PRICE。</li>
  *
  * @see AgreementApi#checkPrerequisites(String)
  */
@@ -78,6 +83,7 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
         gate.mockCapability(agreement, TOKEN_ID, CommercialCodes.Capability.TOKEN_STORAGE,
             AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES);
         mockAgreementQualified();
+        mockChannelIdentityReady("USD");
 
         CommercialWriteResponseChecker response = check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION + 1);
 
@@ -87,15 +93,17 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
             () -> assertEquals("PAYMENT_METHOD", card.path("capabilityKind").asString()),
             () -> assertCheck(card, CapabilityPrerequisiteCode.QUALIFICATION, CapabilityPrerequisiteResult.SATISFIED, null),
             () -> assertCheck(card, CapabilityPrerequisiteCode.AGREEMENT_TERM, CapabilityPrerequisiteResult.SATISFIED, null),
-            () -> assertCheck(card, CapabilityPrerequisiteCode.CHANNEL_IDENTITY, CapabilityPrerequisiteResult.SKIPPED,
-                CapabilityPrerequisiteReasons.CHANNEL_IDENTITY_NOT_CONNECTED),
+            () -> assertCheck(card, CapabilityPrerequisiteCode.CHANNEL_IDENTITY, CapabilityPrerequisiteResult.SATISFIED, null),
             () -> assertCheck(capability(response, TOKEN_ID), CapabilityPrerequisiteCode.CHANNEL_IDENTITY,
                 CapabilityPrerequisiteResult.SKIPPED, CapabilityPrerequisiteReasons.NOT_APPLICABLE),
             () -> assertEquals(executionStatus(CARD_ID), AgreementCapabilityExecutionStatus.ENABLED.getCode()),
             () -> assertEquals(executionStatus(TOKEN_ID), AgreementCapabilityExecutionStatus.ENABLED.getCode()),
             () -> assertEquals(List.of(QualificationRoleType.CLIENT.getCode() + ":" + AgreementBuilder.CLIENT_ID,
                 QualificationRoleType.OPERATING_ENTITY.getCode() + ":" + AgreementBuilder.ENTITY_NO),
-                compliance.onlyRequestSubjects()));
+                compliance.onlyRequestSubjects()),
+            () -> assertEquals(1, classification.count()),
+            () -> assertEquals(List.of(ChannelIdentityReadinessMocker.key(AgreementBuilder.ENTITY_NO,
+                CommercialCodes.PaymentMethod.CARD, "USD", CLIENT_MCC)), channelIdentity.onlyRequestItems()));
         history.record(BusinessChangeRecordRecordType.AGREEMENT_CAPABILITY.getCode(), CARD_ID).assertVersions("5:CREATE", "6:UPDATE")
             .assertLastReason(BusinessChangeReason.AGREEMENT_CAPABILITY_EXECUTION_CHANGED.getCode()).assertLastActor(0)
             .assertLastData("executionStatus", AgreementCapabilityExecutionStatus.ENABLED.getCode()).assertIntegrity();
@@ -122,6 +130,7 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
             QualificationEvaluationStatus.REVOKED);
         compliance.mockStatus(QualificationRoleType.OPERATING_ENTITY, AgreementBuilder.ENTITY_NO,
             QualificationEvaluationStatus.ELIGIBLE);
+        mockChannelIdentityReady("USD");
 
         JsonNode clientRejected = capability(check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION), CARD_ID);
 
@@ -154,6 +163,7 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
         gate.mockCapability(agreement, CARD_ID, CommercialCodes.Capability.CARD,
             AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES);
         mockAgreementQualified();
+        mockChannelIdentityReady("USD");
 
         JsonNode term = check(capability(check().assertOk(), CARD_ID), CapabilityPrerequisiteCode.AGREEMENT_TERM);
 
@@ -170,9 +180,13 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
             AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES);
         mockAgreementQualified();
 
-        JsonNode term = check(capability(check().assertOk(), CARD_ID), CapabilityPrerequisiteCode.AGREEMENT_TERM);
+        JsonNode card = capability(check().assertOk(), CARD_ID);
+        JsonNode term = check(card, CapabilityPrerequisiteCode.AGREEMENT_TERM);
 
         assertAll(() -> assertEquals(CapabilityPrerequisiteReasons.TERM_VERSION_NOT_ACTIVE, term.path("reasonCode").asString()),
+            () -> assertCheck(card, CapabilityPrerequisiteCode.CHANNEL_IDENTITY, CapabilityPrerequisiteResult.SKIPPED,
+                CapabilityPrerequisiteReasons.AWAITING_PRICE),
+            () -> assertEquals(0, classification.count() + channelIdentity.count()),
             () -> assertEquals(CommercialCodes.TermType.CLIENT_PRICING, term.path("params").path("termType").asString()),
             () -> assertEquals(AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES.getCode(), executionStatus(CARD_ID)));
     }
@@ -188,11 +202,17 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
             AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES);
         mockAgreementQualified();
 
-        JsonNode term = check(capability(check().assertOk(), CARD_ID), CapabilityPrerequisiteCode.AGREEMENT_TERM);
+        JsonNode card = capability(check().assertOk(), CARD_ID);
+        JsonNode term = check(card, CapabilityPrerequisiteCode.AGREEMENT_TERM);
+        JsonNode channel = check(card, CapabilityPrerequisiteCode.CHANNEL_IDENTITY);
 
         assertAll(() -> assertEquals(CapabilityPrerequisiteReasons.PRICE_NOT_COVERED, term.path("reasonCode").asString()),
             () -> assertEquals(AgreementBuilder.ENTITY_NO, term.path("params").path("entityNo").asString()),
             () -> assertEquals("USD", term.path("params").path("currencies").asString()),
+            () -> assertEquals(CapabilityPrerequisiteResult.SKIPPED.getCode(), channel.path("result").asString()),
+            () -> assertEquals(CapabilityPrerequisiteReasons.AWAITING_PRICE, channel.path("reasonCode").asString()),
+            () -> assertEquals(AgreementBuilder.ENTITY_NO, channel.path("params").path("entityNo").asString()),
+            () -> assertEquals(0, classification.count() + channelIdentity.count()),
             () -> assertEquals(AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES.getCode(), executionStatus(CARD_ID)));
     }
 
@@ -206,11 +226,16 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
         gate.mockCapability(agreement, CARD_ID, AgreementBuilder.ENTITY_NO, CommercialCodes.Capability.CARD,
             AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES, "USD", "SAR", "AED");
         mockAgreementQualified();
+        mockChannelIdentityReady("USD");
 
-        JsonNode term = check(capability(check().assertOk(), CARD_ID), CapabilityPrerequisiteCode.AGREEMENT_TERM);
+        JsonNode card = capability(check().assertOk(), CARD_ID);
+        JsonNode term = check(card, CapabilityPrerequisiteCode.AGREEMENT_TERM);
 
         assertAll(() -> assertEquals(CapabilityPrerequisiteReasons.PRICE_NOT_COVERED, term.path("reasonCode").asString()),
             () -> assertEquals("AED,SAR", term.path("params").path("currencies").asString()),
+            () -> assertCheck(card, CapabilityPrerequisiteCode.CHANNEL_IDENTITY, CapabilityPrerequisiteResult.SATISFIED, null),
+            () -> assertEquals(List.of(ChannelIdentityReadinessMocker.key(AgreementBuilder.ENTITY_NO,
+                CommercialCodes.PaymentMethod.CARD, "USD", CLIENT_MCC)), channelIdentity.onlyRequestItems()),
             () -> assertEquals(AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES.getCode(), executionStatus(CARD_ID)));
     }
 
@@ -223,6 +248,7 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
             QualificationEvaluationStatus.REVOKED);
         compliance.mockStatus(QualificationRoleType.OPERATING_ENTITY, AgreementBuilder.ENTITY_NO,
             QualificationEvaluationStatus.ELIGIBLE);
+        mockChannelIdentityReady("USD");
 
         check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION + 1);
         String suspended = executionStatus(CARD_ID);
@@ -245,6 +271,7 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
         gate.mockCapability(coveredAgreement(), CARD_ID, CommercialCodes.Capability.CARD,
             AgreementCapabilityExecutionStatus.ENABLED);
         compliance.mockProblem(503, "SERVICE_UNAVAILABLE");
+        mockChannelIdentityReady("USD");
 
         JsonNode card = capability(check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION), CARD_ID);
 
@@ -264,6 +291,7 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
         gate.mockCapability(agreement, TOKEN_ID, CommercialCodes.Capability.TOKEN_STORAGE, null);
         testMapper.overwriteCapabilityStatus(TOKEN_ID, AgreementCapabilityStatus.DISABLED);
         mockAgreementQualified();
+        mockChannelIdentityReady("USD");
 
         CommercialWriteResponseChecker response = check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION);
 
@@ -289,7 +317,178 @@ class CapabilityPrerequisiteCheckHttpTest extends AbstractCommercialWriteApiTest
             .assertBusinessCheckFailed("PARTNER 合同的开通项不进入前置门禁");
         post("/agreements/v1/" + (partnerId + 1) + "/prerequisite-checks", null).assertBusinessCheckFailed("合同不存在");
 
-        assertEquals(0, compliance.count());
+        assertEquals(0, compliance.count() + classification.count() + channelIdentity.count());
+    }
+
+    /**
+     * AC-06 ①② 满足、④ 不就绪（OE 下无可用 MID）：等前置保持，"还差什么"给出 ④ 原因与参数（OE、支付方式、MCC、币种），不写库、不发布
+     */
+    @Test
+    void test_channelIdentityNotReady_staysPending() {
+        gate.mockCapability(coveredAgreement(), CARD_ID, CommercialCodes.Capability.CARD,
+            AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES);
+        mockAgreementQualified();
+        classification.mockConfirmed(AgreementBuilder.CLIENT_ID, CLIENT_MCC);
+        channelIdentity.mockNotReady(AgreementBuilder.ENTITY_NO, CommercialCodes.PaymentMethod.CARD, CLIENT_MCC,
+            ChannelIdentityReadinessReason.MID_NOT_FOUND, "USD");
+
+        JsonNode card = capability(check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION), CARD_ID);
+
+        JsonNode channel = check(card, CapabilityPrerequisiteCode.CHANNEL_IDENTITY);
+        assertAll(() -> assertEquals(CapabilityPrerequisiteResult.UNSATISFIED.getCode(), channel.path("result").asString()),
+            () -> assertEquals(ChannelIdentityReadinessReason.MID_NOT_FOUND.getCode(), channel.path("reasonCode").asString()),
+            () -> assertEquals(Map.of("entityNo", AgreementBuilder.ENTITY_NO, "paymentMethodCode",
+                CommercialCodes.PaymentMethod.CARD, "mccCode", CLIENT_MCC, "currencies", "USD"), params(channel)),
+            () -> assertCheck(card, CapabilityPrerequisiteCode.QUALIFICATION, CapabilityPrerequisiteResult.SATISFIED, null),
+            () -> assertCheck(card, CapabilityPrerequisiteCode.AGREEMENT_TERM, CapabilityPrerequisiteResult.SATISFIED, null),
+            () -> assertEquals(AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES.getCode(), executionStatus(CARD_ID)));
+        events.assertNoEnvelope(statusChangedKey(CapabilityGateMocker.ROOT_VERSION + 1));
+    }
+
+    /**
+     * AC-08（Q-4 修订：任一币种就绪即满足）开通项被 SAR / USD 两个币种的价格覆盖，只有 SAR 就绪：④ 满足并带
+     * CHANNEL_IDENTITY_PARTIAL，参数列出不就绪币种 USD；等前置变为 ENABLED 并发布事件；两个币种在一次就绪查询中提交
+     */
+    @Test
+    void test_channelIdentityPartialCurrencies_enabled() {
+        mockTwoCurrencyCapability();
+        channelIdentity.mockReady(AgreementBuilder.ENTITY_NO, CommercialCodes.PaymentMethod.CARD, CLIENT_MCC, "SAR");
+        channelIdentity.mockNotReady(AgreementBuilder.ENTITY_NO, CommercialCodes.PaymentMethod.CARD, CLIENT_MCC,
+            ChannelIdentityReadinessReason.MID_NOT_FOUND, "USD");
+
+        JsonNode card = capability(check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION + 1), CARD_ID);
+
+        JsonNode channel = check(card, CapabilityPrerequisiteCode.CHANNEL_IDENTITY);
+        assertAll(() -> assertEquals(CapabilityPrerequisiteResult.SATISFIED.getCode(), channel.path("result").asString()),
+            () -> assertEquals(CapabilityPrerequisiteReasons.CHANNEL_IDENTITY_PARTIAL, channel.path("reasonCode").asString()),
+            () -> assertEquals(Map.of("entityNo", AgreementBuilder.ENTITY_NO, "paymentMethodCode",
+                CommercialCodes.PaymentMethod.CARD, "mccCode", CLIENT_MCC, "currencies", "USD"), params(channel)),
+            () -> assertEquals(2, channelIdentity.onlyRequestItems().size()),
+            () -> assertEquals(AgreementCapabilityExecutionStatus.ENABLED.getCode(), executionStatus(CARD_ID)),
+            () -> assertChange(statusChangedPayload(CapabilityGateMocker.ROOT_VERSION + 1).path("changes").get(0), CARD_ID,
+                AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES, AgreementCapabilityExecutionStatus.ENABLED,
+                "PREREQUISITE"));
+    }
+
+    /**
+     * AC-08 两个覆盖币种都不就绪：④ 不满足，原因取字典序第一个不就绪币种 SAR 的原因，currencies 列出全部不就绪币种 SAR,USD；等前置保持
+     */
+    @Test
+    void test_channelIdentityAllCurrenciesNotReady() {
+        mockTwoCurrencyCapability();
+        channelIdentity.mockNotReady(AgreementBuilder.ENTITY_NO, CommercialCodes.PaymentMethod.CARD, CLIENT_MCC,
+            ChannelIdentityReadinessReason.CURRENCY_NOT_SUPPORTED, "SAR");
+        channelIdentity.mockNotReady(AgreementBuilder.ENTITY_NO, CommercialCodes.PaymentMethod.CARD, CLIENT_MCC,
+            ChannelIdentityReadinessReason.MID_NOT_FOUND, "USD");
+
+        JsonNode card = capability(check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION), CARD_ID);
+
+        JsonNode channel = check(card, CapabilityPrerequisiteCode.CHANNEL_IDENTITY);
+        assertAll(() -> assertEquals(CapabilityPrerequisiteResult.UNSATISFIED.getCode(), channel.path("result").asString()),
+            () -> assertEquals(ChannelIdentityReadinessReason.CURRENCY_NOT_SUPPORTED.getCode(),
+                channel.path("reasonCode").asString()),
+            () -> assertEquals("SAR,USD", channel.path("params").path("currencies").asString()),
+            () -> assertEquals(AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES.getCode(), executionStatus(CARD_ID)));
+        events.assertNoEnvelope(statusChangedKey(CapabilityGateMocker.ROOT_VERSION + 1));
+    }
+
+    /** 等前置的 CARD 接受 SAR / USD，两个币种都有价格；资格合格、主 MCC 已确认。 */
+    void mockTwoCurrencyCapability() {
+        AgreementWriteMocker.Mocker agreement = gate.mockActiveAgreement();
+        mockCardPrices(gate.mockClientPricingVersion(CommercialTermVersionStatus.ACTIVE), "USD", "SAR");
+        gate.mockCapability(agreement, CARD_ID, AgreementBuilder.ENTITY_NO, CommercialCodes.Capability.CARD,
+            AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES, "USD", "SAR");
+        mockAgreementQualified();
+        classification.mockConfirmed(AgreementBuilder.CLIENT_ID, CLIENT_MCC);
+    }
+
+    /** AC-09 Client 主 MCC 未确认：④ 不满足 CLIENT_MCC_MISSING（参数 clientId），不再调用 channel-connector。 */
+    @Test
+    void test_clientMccMissing() {
+        gate.mockCapability(coveredAgreement(), CARD_ID, CommercialCodes.Capability.CARD,
+            AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES);
+        mockAgreementQualified();
+        classification.mockUnconfirmed(AgreementBuilder.CLIENT_ID);
+
+        JsonNode channel = check(capability(check().assertOk(), CARD_ID), CapabilityPrerequisiteCode.CHANNEL_IDENTITY);
+
+        assertAll(() -> assertEquals(CapabilityPrerequisiteResult.UNSATISFIED.getCode(), channel.path("result").asString()),
+            () -> assertEquals(CapabilityPrerequisiteReasons.CLIENT_MCC_MISSING, channel.path("reasonCode").asString()),
+            () -> assertEquals(Long.toString(AgreementBuilder.CLIENT_ID), channel.path("params").path("clientId").asString()),
+            () -> assertEquals(1, classification.count()), () -> assertEquals(0, channelIdentity.count()),
+            () -> assertEquals(AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES.getCode(), executionStatus(CARD_ID)));
+    }
+
+    /**
+     * AC-10 channel-connector 断连、返回配置损坏 500，或 client-master 不可用：④ UNKNOWN（CHECK_UNAVAILABLE），已开通项不被暂停、不写库
+     */
+    @Test
+    void test_channelIdentityUnavailable_unknown() {
+        gate.mockCapability(coveredAgreement(), CARD_ID, CommercialCodes.Capability.CARD,
+            AgreementCapabilityExecutionStatus.ENABLED);
+        mockAgreementQualified();
+        classification.mockConfirmed(AgreementBuilder.CLIENT_ID, CLIENT_MCC);
+        channelIdentity.mockUnavailable();
+        JsonNode disconnected = capability(check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION), CARD_ID);
+        channelIdentity.mockProblem(500, "INTERNAL_ERROR");
+        JsonNode broken = capability(check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION), CARD_ID);
+        classification.mockUnavailable();
+        JsonNode noClassification = capability(check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION), CARD_ID);
+
+        assertAll(() -> assertUnknownChannelIdentity(disconnected), () -> assertUnknownChannelIdentity(broken),
+            () -> assertUnknownChannelIdentity(noClassification), () -> assertEquals(2, channelIdentity.count()),
+            () -> assertEquals(AgreementCapabilityExecutionStatus.ENABLED.getCode(), executionStatus(CARD_ID)));
+        events.assertNoEnvelope(statusChangedKey(CapabilityGateMocker.ROOT_VERSION + 1));
+    }
+
+    /** AC-07 已开通后 OE 下 MID 关闭（④ MID_NOT_FOUND）→ SUSPENDED_BY_PREREQUISITE 并发布事件；MID 恢复后 → ENABLED 并发布事件。 */
+    @Test
+    void test_enabledMidClosedThenRestored() {
+        gate.mockCapability(coveredAgreement(), CARD_ID, CommercialCodes.Capability.CARD,
+            AgreementCapabilityExecutionStatus.ENABLED);
+        mockAgreementQualified();
+        classification.mockConfirmed(AgreementBuilder.CLIENT_ID, CLIENT_MCC);
+        channelIdentity.mockNotReady(AgreementBuilder.ENTITY_NO, CommercialCodes.PaymentMethod.CARD, CLIENT_MCC,
+            ChannelIdentityReadinessReason.MID_NOT_FOUND, "USD");
+
+        check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION + 1);
+        String suspended = executionStatus(CARD_ID);
+        JsonNode suspension = statusChangedPayload(CapabilityGateMocker.ROOT_VERSION + 1).path("changes").get(0);
+        channelIdentity.mockReady(AgreementBuilder.ENTITY_NO, CommercialCodes.PaymentMethod.CARD, CLIENT_MCC, "USD");
+        check().assertOk().assertVersion(CapabilityGateMocker.ROOT_VERSION + 2);
+
+        assertAll(() -> assertEquals(AgreementCapabilityExecutionStatus.SUSPENDED_BY_PREREQUISITE.getCode(), suspended),
+            () -> assertChange(suspension, CARD_ID, AgreementCapabilityExecutionStatus.ENABLED,
+                AgreementCapabilityExecutionStatus.SUSPENDED_BY_PREREQUISITE, "PREREQUISITE"),
+            () -> assertEquals(AgreementCapabilityExecutionStatus.ENABLED.getCode(), executionStatus(CARD_ID)),
+            () -> assertChange(statusChangedPayload(CapabilityGateMocker.ROOT_VERSION + 2).path("changes").get(0), CARD_ID,
+                AgreementCapabilityExecutionStatus.SUSPENDED_BY_PREREQUISITE, AgreementCapabilityExecutionStatus.ENABLED,
+                "PREREQUISITE"));
+    }
+
+    /** ④ 为 UNKNOWN（CHECK_UNAVAILABLE），执行状态不变。 */
+    static void assertUnknownChannelIdentity(JsonNode capability) {
+        assertCheck(capability, CapabilityPrerequisiteCode.CHANNEL_IDENTITY, CapabilityPrerequisiteResult.UNKNOWN,
+            CapabilityPrerequisiteReasons.CHECK_UNAVAILABLE);
+        assertEquals(AgreementCapabilityExecutionStatus.ENABLED.getCode(), capability.path("executionStatus").asString());
+    }
+
+    /** 版本下各币种一条默认 OE 的通用卡价格。 */
+    void mockCardPrices(CommercialTermVersion version, String... currencies) {
+        for (int index = 0; index < currencies.length; index++) {
+            pricing.mockPrice(CommercialTermPriceBuilder.template().termPriceId(CommercialTermPriceBuilder.TERM_PRICE_ID + index)
+                    .termVersionId(version.getTermVersionId()).currency(currencies[index]),
+                CommercialTermComponentBuilder.template()
+                    .termComponentId(CommercialTermComponentBuilder.TERM_COMPONENT_ID + index).currency(currencies[index])
+                    .rate(new BigDecimal("0.03")));
+        }
+    }
+
+    /** 一项结论的文案参数。 */
+    static Map<String, String> params(JsonNode check) {
+        Map<String, String> params = new LinkedHashMap<>();
+        check.path("params").properties().forEach(entry -> params.put(entry.getKey(), entry.getValue().asString()));
+        return params;
     }
 
     /** 默认合同：ACTIVE、ACTIVE 版本与覆盖 CARD/USD 的价格。 */

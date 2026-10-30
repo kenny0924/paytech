@@ -70,14 +70,18 @@ export function sectionCounts(capabilities: readonly AgreementCapability[], fres
   return counts;
 }
 
-/** 前置项一行的标记：✔ 满足、✘ 不满足、? 检查失败、– 未接入。 */
+/** 前置项一行的标记：✔ 满足、✘ 不满足、! 暂时无法核对、– 不适用或等待价格。 */
 export type PrerequisiteMark = 'satisfied' | 'unsatisfied' | 'unknown' | 'skipped';
 const marks: Readonly<Record<string, PrerequisiteMark>> = {
   SATISFIED: 'satisfied', UNSATISFIED: 'unsatisfied', UNKNOWN: 'unknown', SKIPPED: 'skipped',
 };
 
-/** 前置行的跳转：Client 详情（资格）、OE 详情（资格）、本合同定价、重新检查（检查失败）。 */
-export type PrerequisiteLink = { kind: 'client'; clientId: string } | { kind: 'entity'; entityNo: string } | { kind: 'pricing' } | { kind: 'recheck' };
+/** 前置行的跳转：Client 详情（资格、经营分类）、OE 详情（资格）、本合同定价、按 OE 筛选的 MID 列表（渠道身份）、重新检查（检查失败）。 */
+export type PrerequisiteLink = { kind: 'client'; clientId: string } | { kind: 'entity'; entityNo: string } | { kind: 'pricing' }
+  | { kind: 'mids'; entityNo: string } | { kind: 'recheck' };
+
+/** 渠道身份不满足、需要到 MID 页补配置的原因（REQ-02）。 */
+const midReasons: readonly string[] = ['MID_NOT_FOUND', 'PAYMENT_METHOD_NOT_SUPPORTED', 'MCC_NOT_COVERED', 'CURRENCY_NOT_SUPPORTED', 'PAYMENT_ACTION_NOT_SUPPORTED'];
 
 export interface PrerequisiteLine {
   code: string; mark: PrerequisiteMark;
@@ -93,38 +97,54 @@ export interface PrerequisiteLine {
 /** 文案参数的页面上下文：合同 Client、开通项 OE 与合同状态，用于补齐 commercial 没有给出的参数。 */
 export interface PrerequisiteContext { clientId: string | null; entityNo: string; agreementStatus: string }
 
-/** ICU 参数：先取 commercial 的 params（subjectType + subjectId 指明主体），缺失时用页面上下文补齐。 */
-function reasonValues(params: Readonly<Record<string, string>>, context: PrerequisiteContext) {
+/**
+ * ICU 参数：先取 commercial 的 params（subjectType + subjectId 指明主体），缺失时用页面上下文补齐；
+ * prerequisite 为前置项代码（同一原因码在不同前置项下文案不同时用 select 区分，如 CHECK_UNAVAILABLE），未给出时为 other。
+ */
+function reasonValues(params: Readonly<Record<string, string>>, context: PrerequisiteContext, prerequisiteCode?: string) {
   const subject = (type: string) => params.subjectType === type && params.subjectId ? params.subjectId : null;
   return {
-    clientId: subject('CLIENT') ?? context.clientId ?? '—',
+    clientId: params.clientId ?? subject('CLIENT') ?? context.clientId ?? '—',
     entityNo: params.entityNo ?? subject('OPERATING_ENTITY') ?? context.entityNo,
     termType: enumLabel(t, 'enum.termType', params.termType ?? 'CLIENT_PRICING'),
     agreementStatus: enumLabel(t, 'enum.agreementStatus', params.agreementStatus ?? context.agreementStatus),
-    // 价格未覆盖的币种（commercial 逗号分隔）；没有时为 none，文案走不带币种的分支
+    // 价格未覆盖 / 渠道不就绪的币种（commercial 逗号分隔）；没有时为 none，文案走不带币种的分支
     currencies: params.currencies ? joinList(params.currencies.split(',')) : 'none',
+    paymentMethodCode: params.paymentMethodCode ?? '—',
+    mccCode: params.mccCode ?? '—',
+    prerequisite: prerequisiteCode ?? 'other',
   };
 }
 
 /**
- * 原因说明：commercial.enum.CapabilityPrerequisiteReason.<CODE> 的 ICU 文案，参数固定为 clientId、entityNo、termType、agreementStatus、currencies；
- * 未知原因码显示原值。
+ * 原因说明：commercial.enum.CapabilityPrerequisiteReason.<CODE> 的 ICU 文案，参数固定为 clientId、entityNo、termType、agreementStatus、currencies、
+ * paymentMethodCode、mccCode、prerequisite；未知原因码显示原值。
  */
-export function prerequisiteReason(reasonCode: string, params: Readonly<Record<string, string>>, context: PrerequisiteContext): string {
-  return tOr(t, 'enum.CapabilityPrerequisiteReason.' + reasonCode, reasonCode, reasonValues(params, context));
+export function prerequisiteReason(reasonCode: string, params: Readonly<Record<string, string>>, context: PrerequisiteContext,
+  prerequisiteCode?: string): string {
+  return tOr(t, 'enum.CapabilityPrerequisiteReason.' + reasonCode, reasonCode, reasonValues(params, context, prerequisiteCode));
 }
 
 /** 短原因（执行状态徽标下方小字、卡住原因汇总）：prerequisite.shortReason.<CODE>，未知码显示原值。 */
-export function prerequisiteShortReason(reasonCode: string, params: Readonly<Record<string, string>>, context: PrerequisiteContext): string {
-  return tOr(t, 'prerequisite.shortReason.' + reasonCode, reasonCode, reasonValues(params, context));
+export function prerequisiteShortReason(reasonCode: string, params: Readonly<Record<string, string>>, context: PrerequisiteContext,
+  prerequisiteCode?: string): string {
+  return tOr(t, 'prerequisite.shortReason.' + reasonCode, reasonCode, reasonValues(params, context, prerequisiteCode));
 }
 
-/** 不满足时的跳转：资格去 Client / OE 详情，价格类去本合同定价；检查失败可重新检查。 */
+/**
+ * 不满足时的跳转：资格与 Client 经营分类去 Client / OE 详情，价格类去本合同定价，渠道身份去按 OE 筛选的 MID 列表；检查失败可重新检查。
+ * 满足时只有渠道身份部分币种缺 MID（CHANNEL_IDENTITY_PARTIAL）给 MID 列表；等待价格（SKIPPED）等其余结论没有跳转。
+ */
 function lineLink(check: PrerequisiteCheck, context: PrerequisiteContext): PrerequisiteLink | null {
   if (check.result === 'UNKNOWN') return { kind: 'recheck' };
-  if (check.result !== 'UNSATISFIED') return null;
   const values = reasonValues(check.params, context);
-  if (check.reasonCode === 'CLIENT_NOT_QUALIFIED' && values.clientId !== '—') return { kind: 'client', clientId: values.clientId };
+  // 部分币种缺 MID：仍为满足，但提醒去补 MID
+  if (check.result === 'SATISFIED' && check.reasonCode === 'CHANNEL_IDENTITY_PARTIAL') return { kind: 'mids', entityNo: values.entityNo };
+  if (check.result !== 'UNSATISFIED') return null;
+  if ((check.reasonCode === 'CLIENT_NOT_QUALIFIED' || check.reasonCode === 'CLIENT_MCC_MISSING') && values.clientId !== '—') {
+    return { kind: 'client', clientId: values.clientId };
+  }
+  if (check.reasonCode && midReasons.includes(check.reasonCode)) return { kind: 'mids', entityNo: values.entityNo };
   if (check.reasonCode === 'OPERATING_ENTITY_NOT_QUALIFIED') return { kind: 'entity', entityNo: values.entityNo };
   if (check.reasonCode === 'TERM_VERSION_NOT_ACTIVE' || check.reasonCode === 'PRICE_NOT_COVERED') return { kind: 'pricing' };
   return null;
@@ -137,13 +157,13 @@ export function prerequisiteLines(checks: readonly PrerequisiteCheck[], context:
     mark: marks[check.result] ?? 'unknown',
     title: enumLabel(t, 'enum.CapabilityPrerequisiteCode', check.code),
     result: enumLabel(t, 'enum.CapabilityPrerequisiteResult', check.result),
-    detail: check.reasonCode ? prerequisiteReason(check.reasonCode, check.params, context)
+    detail: check.reasonCode ? prerequisiteReason(check.reasonCode, check.params, context, check.code)
       : tOr(t, 'prerequisite.satisfied.' + check.code, enumLabel(t, 'enum.CapabilityPrerequisiteResult', check.result), reasonValues(check.params, context)),
     link: lineLink(check, context),
   }));
 }
 
-/** 展开区头部摘要的计数：满足（含按满足处理的未接入）、未满足、检查失败。 */
+/** 展开区头部摘要的计数：满足（含按满足处理的不适用 / 等待价格）、未满足、暂时无法核对。 */
 export function lineCounts(lines: readonly PrerequisiteLine[]) {
   return {
     satisfied: lines.filter(line => line.mark === 'satisfied' || line.mark === 'skipped').length,
@@ -170,7 +190,7 @@ export function blockedCapabilities(agreement: Pick<Agreement, 'agreementType' |
     const checks = fresh.get(capability.agreementCapabilityId)?.checks ?? [];
     const blocking = checks.find(check => check.result === 'UNSATISFIED') ?? checks.find(check => check.result === 'UNKNOWN');
     const context = { clientId: agreement.clientId, entityNo: capability.entityNo, agreementStatus: agreement.status };
-    const reason = blocking?.reasonCode ? prerequisiteShortReason(blocking.reasonCode, blocking.params, context) : null;
+    const reason = blocking?.reasonCode ? prerequisiteShortReason(blocking.reasonCode, blocking.params, context, blocking.code) : null;
     const code = capability.capabilityCode;
     const text = execution === 'SUSPENDED_MANUALLY' ? t('nextStep.blocked.manual', { code })
       : reason ? t(execution === 'PENDING_PREREQUISITES' ? 'nextStep.blocked.pendingReason' : 'nextStep.blocked.suspendedReason', { code, reason })

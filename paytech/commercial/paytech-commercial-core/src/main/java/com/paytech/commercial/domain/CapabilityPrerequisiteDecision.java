@@ -69,7 +69,7 @@ public class CapabilityPrerequisiteDecision {
         /** 结论 */
         private final CapabilityPrerequisiteResult result;
 
-        /** 原因码；SATISFIED 时为空，取值见 CapabilityPrerequisiteReasons */
+        /** 原因码；SATISFIED 时一般为空（④ 部分币种不就绪时为 CHANNEL_IDENTITY_PARTIAL），取值见 CapabilityPrerequisiteReasons */
         private final String reasonCode;
 
         /** 文案参数；没有时为空 Map */

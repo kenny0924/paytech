@@ -18,6 +18,7 @@ import {
 import { CommercialNote, StatusTag } from './CommercialParts';
 import { CreateVersionModal } from './TermModals';
 import { consoleRoutes } from './commercialConsole';
+import { channelMenus, hasMenu } from '../channel/channel';
 import { ProductCapabilitySections } from './ProductCapabilitySections';
 import { blockedCapabilities, blockedSummary } from './capabilityGate';
 import { useCapabilityPrerequisites } from './useCapabilityPrerequisites';
@@ -126,7 +127,8 @@ function AgreementDetailView({ data, detail, resources, onAuthorizationChanged, 
           onAdd={productCode => setDialog({ kind: 'capability', productCode })} onEdit={capability => setDialog({ kind: 'capability', capability })}
           onSubscribe={() => setDialog({ kind: 'products' })}
           gate={{ canView: true, prerequisites, onSuspend: capability => setDialog({ kind: 'suspend', capability }),
-            onResume: capability => setDialog({ kind: 'resume', capability }), onGoPricing: () => setTab('terms') }} />
+            onResume: capability => setDialog({ kind: 'resume', capability }), onGoPricing: () => setTab('terms'),
+            canViewMids: hasMenu(resources, channelMenus.mids) }} />
       </> },
       { key: 'terms', label: t('agreement.detail.tab.terms'), children: <>
         <div className="commercial-section-head"><span className="commercial-spacer" />

@@ -80,6 +80,7 @@ class CapabilityPrerequisiteHandlerTest extends CommercialMockTestBase {
         gate.mockCapability(agreement, CARD_ID, CommercialCodes.Capability.CARD,
             AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES);
         mockQualified();
+        mockChannelIdentityReady("USD");
 
         registerInTransaction(CapabilityPrerequisiteCheckHandler.buildEvent(AgreementBuilder.AGREEMENT_ID,
             CapabilityGateMocker.ROOT_VERSION));
@@ -123,7 +124,7 @@ class CapabilityPrerequisiteHandlerTest extends CommercialMockTestBase {
         CompensationHandlerResult rootMissing = checkHandler.handle(checkEvent(AgreementBuilder.AGREEMENT_ID));
 
         assertAll(() -> assertEquals(CompensationHandlerResult.retryableFailure("PREREQUISITE_CHECK_UNAVAILABLE",
-                "Qualification check unavailable, prerequisite check requires retry"), unavailable),
+                "Prerequisite check unavailable, retry required"), unavailable),
             () -> assertEquals(CompensationHandlerResult.retryableFailure("PREREQUISITE_CHECK_RETRY",
                 "Capability prerequisite check requires retry"), rootMissing),
             () -> assertEquals(AgreementCapabilityExecutionStatus.ENABLED.getCode(), executionStatus(CARD_ID)));

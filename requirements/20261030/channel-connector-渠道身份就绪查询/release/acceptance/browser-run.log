@@ -1,0 +1,50 @@
+PASS [admin-zh-CN-1440] 01-prerequisites 无横向溢出（AC-V4） 0
+FAIL [admin-zh-CN-1440] 渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒） ["渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败 去配置 MID →","渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999） 去配置 MID →","渠道身份 不适用于此类开通项。"]
+PASS [admin-zh-CN-1440] 管理员显示「去配置 MID」（AC-V2） 2
+PASS [admin-zh-CN-1440] 02-mids-prefilled 无横向溢出（AC-V4） 0
+PASS [admin-zh-CN-1440] 跳转 /channel/mids?entityNo=AE001，筛选预填（AC-V2） {"url":"http://localhost:28080/channel/mids?entityNo=AE001","input":"AE001","oes":["PAYERMAX","DEMO_NI","DEMO_NI"]}
+PASS [admin-zh-CN-1440] 90-regression-finance-posting-ops 无横向溢出（AC-V4） 0
+PASS [admin-zh-CN-1440] 90-regression-channel-mids 无横向溢出（AC-V4） 0
+PASS [admin-zh-CN-1440] 90-regression-commercial-agreements 无横向溢出（AC-V4） 0
+PASS [nomid-zh-CN-1440] 01-prerequisites 无横向溢出（AC-V4） 0
+FAIL [nomid-zh-CN-1440] 渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒） ["渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败","渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999）","渠道身份 不适用于此类开通项。"]
+PASS [nomid-zh-CN-1440] 无 MID 菜单账号不显示「去配置 MID」（AC-V2） 0
+PASS [admin-en-1440] 01-prerequisites 无横向溢出（AC-V4） 0
+FAIL [admin-en-1440] 渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒） ["Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail. Configure MID →","Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999). Configure MID →","Channel Ide
+PASS [admin-en-1440] 管理员显示「去配置 MID」（AC-V2） 2
+PASS [admin-en-1440] 02-mids-prefilled 无横向溢出（AC-V4） 0
+PASS [admin-en-1440] 跳转 /channel/mids?entityNo=AE001，筛选预填（AC-V2） {"url":"http://localhost:28080/channel/mids?entityNo=AE001","input":"AE001","oes":["PAYERMAX","DEMO_NI","DEMO_NI"]}
+PASS [admin-en-1440] 90-regression-finance-posting-ops 无横向溢出（AC-V4） 0
+PASS [admin-en-1440] 90-regression-channel-mids 无横向溢出（AC-V4） 0
+PASS [admin-en-1440] 90-regression-commercial-agreements 无横向溢出（AC-V4） 0
+PASS [nomid-en-1440] 01-prerequisites 无横向溢出（AC-V4） 0
+FAIL [nomid-en-1440] 渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒） ["Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail.","Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999).","Channel Identity Not applicable to this kin
+PASS [nomid-en-1440] 无 MID 菜单账号不显示「去配置 MID」（AC-V2） 0
+PASS [admin-zh-CN-390] 01-prerequisites 无横向溢出（AC-V4） 0
+FAIL [admin-zh-CN-390] 渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒） ["渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败 去配置 MID →","渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999） 去配置 MID →","渠道身份 不适用于此类开通项。"]
+PASS [admin-zh-CN-390] 管理员显示「去配置 MID」（AC-V2） 2
+PASS [admin-zh-CN-390] 02-mids-prefilled 无横向溢出（AC-V4） 0
+PASS [admin-zh-CN-390] 跳转 /channel/mids?entityNo=AE001，筛选预填（AC-V2） {"url":"http://localhost:28080/channel/mids?entityNo=AE001","input":"AE001","oes":["PAYERMAX","DEMO_NI","DEMO_NI"]}
+PASS [admin-zh-CN-390] 90-regression-finance-posting-ops 无横向溢出（AC-V4） 0
+PASS [admin-zh-CN-390] 90-regression-channel-mids 无横向溢出（AC-V4） 0
+PASS [admin-zh-CN-390] 90-regression-commercial-agreements 无横向溢出（AC-V4） 0
+PASS [nomid-zh-CN-390] 01-prerequisites 无横向溢出（AC-V4） 0
+FAIL [nomid-zh-CN-390] 渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒） ["渠道身份 已可收款；AED 在经营主体 AE001 下没有支持 CARD 的 MID（MCC 5999），用这些币种下单会失败","渠道身份 经营主体 AE001 下没有支持 APPLE_PAY 的 MID（AED、USD · MCC 5999）","渠道身份 不适用于此类开通项。"]
+PASS [nomid-zh-CN-390] 无 MID 菜单账号不显示「去配置 MID」（AC-V2） 0
+PASS [admin-en-390] 01-prerequisites 无横向溢出（AC-V4） 0
+FAIL [admin-en-390] 渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒） ["Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail. Configure MID →","Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999). Configure MID →","Channel Ide
+PASS [admin-en-390] 管理员显示「去配置 MID」（AC-V2） 2
+PASS [admin-en-390] 02-mids-prefilled 无横向溢出（AC-V4） 0
+PASS [admin-en-390] 跳转 /channel/mids?entityNo=AE001，筛选预填（AC-V2） {"url":"http://localhost:28080/channel/mids?entityNo=AE001","input":"AE001","oes":["PAYERMAX","DEMO_NI","DEMO_NI"]}
+PASS [admin-en-390] 90-regression-finance-posting-ops 无横向溢出（AC-V4） 0
+PASS [admin-en-390] 90-regression-channel-mids 无横向溢出（AC-V4） 0
+PASS [admin-en-390] 90-regression-commercial-agreements 无横向溢出（AC-V4） 0
+PASS [nomid-en-390] 01-prerequisites 无横向溢出（AC-V4） 0
+FAIL [nomid-en-390] 渠道身份一项可见，说明含 OE / MCC 或缺口币种（AC-V1，含 partial 提醒） ["Channel Identity Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in AED, so orders in these currencies will fail.","Channel Identity Operating Entity AE001 has no MID that supports APPLE_PAY (AED, USD · MCC 5999).","Channel Identity Not applicable to this kin
+PASS [nomid-en-390] 无 MID 菜单账号不显示「去配置 MID」（AC-V2） 0
+{
+ "console": 0,
+ "httpErrors": [],
+ "rawKeys": [],
+ "fail": 8
+}

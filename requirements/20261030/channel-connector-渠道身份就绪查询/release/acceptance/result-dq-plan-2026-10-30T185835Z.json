@@ -1,0 +1,137 @@
+{
+ "command": "plan",
+ "checks": [
+  {
+   "check": "登记材料与 db/data-query-templates.sql 逐字节相同",
+   "ok": true,
+   "evidence": "03-golive-mid-ready-template.sql"
+  },
+  {
+   "check": "模板正文每处 #{currencies} 均包在 COALESCE(#{currencies}, '') 内",
+   "ok": true,
+   "evidence": 1
+  },
+  {
+   "check": "模板编码 GOLIVE_MID_READY 未占用（首次登记前 0）",
+   "ok": true,
+   "evidence": "0"
+  },
+  {
+   "check": "数据源 MOR_CHANNEL_CONNECTOR_REPLICA ACTIVE",
+   "ok": true,
+   "evidence": [
+    [
+     "239060842660839424",
+     "ACTIVE",
+     "data_query_demo_reader"
+    ]
+   ]
+  },
+  {
+   "check": "账号可读 mor_channel_connector",
+   "ok": true,
+   "evidence": [
+    "GRANT SELECT ON `mor_channel_connector`.* TO `data_query_demo_reader`@`%`"
+   ]
+  },
+  {
+   "check": "模板只读试跑 {'entityNo': 'AE001', 'paymentMethods': 'CARD,APPLE_PAY', 'mccCode': '5999', 'currencies': 'USD'} → ('0', 'APPLE_PAY', 'PAYMENT_METHOD_NOT_READY')",
+   "ok": true,
+   "evidence": [
+    [
+     "0",
+     "APPLE_PAY",
+     "PAYMENT_METHOD_NOT_READY"
+    ]
+   ]
+  },
+  {
+   "check": "模板只读试跑 {'entityNo': 'AE001', 'paymentMethods': 'CARD', 'mccCode': '5999', 'currencies': ''} → ('1', '', None)",
+   "ok": true,
+   "evidence": [
+    [
+     "1",
+     "",
+     "NULL"
+    ]
+   ]
+  },
+  {
+   "check": "模板只读试跑 {'entityNo': 'AE001', 'paymentMethods': 'CARD', 'mccCode': '5999'} → ('1', '', None)",
+   "ok": true,
+   "evidence": [
+    [
+     "1",
+     "",
+     "NULL"
+    ]
+   ]
+  },
+  {
+   "check": "模板只读试跑 {'entityNo': 'AE001', 'paymentMethods': 'CARD,APPLE_PAY', 'mccCode': '5999'} → ('0', 'APPLE_PAY', 'PAYMENT_METHOD_NOT_READY')",
+   "ok": true,
+   "evidence": [
+    [
+     "0",
+     "APPLE_PAY",
+     "PAYMENT_METHOD_NOT_READY"
+    ]
+   ]
+  },
+  {
+   "check": "模板只读试跑 {'entityNo': 'AE001', 'paymentMethods': 'CARD', 'mccCode': '5999', 'currencies': 'USD,AED'} → ('1', '', None)",
+   "ok": true,
+   "evidence": [
+    [
+     "1",
+     "",
+     "NULL"
+    ]
+   ]
+  },
+  {
+   "check": "模板只读试跑 {'entityNo': 'AE001', 'paymentMethods': 'CARD', 'mccCode': '5999', 'currencies': 'AED'} → ('0', 'CARD', 'PAYMENT_METHOD_NOT_READY')",
+   "ok": true,
+   "evidence": [
+    [
+     "0",
+     "CARD",
+     "PAYMENT_METHOD_NOT_READY"
+    ]
+   ]
+  },
+  {
+   "check": "模板只读试跑 {'entityNo': 'AE001', 'paymentMethods': 'CARD', 'mccCode': '5816', 'currencies': ''} → ('0', 'CARD', 'PAYMENT_METHOD_NOT_READY')",
+   "ok": true,
+   "evidence": [
+    [
+     "0",
+     "CARD",
+     "PAYMENT_METHOD_NOT_READY"
+    ]
+   ]
+  },
+  {
+   "check": "模板只读试跑 {'entityNo': 'SA001', 'paymentMethods': 'CARD', 'mccCode': '5999', 'currencies': ''} → ('0', 'CARD', 'MID_NOT_FOUND')",
+   "ok": true,
+   "evidence": [
+    [
+     "0",
+     "CARD",
+     "MID_NOT_FOUND"
+    ]
+   ]
+  },
+  {
+   "check": "currencies 绑定为 NULL 时与空串同结论（0 / APPLE_PAY，防误判满足）",
+   "ok": true,
+   "evidence": [
+    [
+     "0",
+     "APPLE_PAY",
+     "PAYMENT_METHOD_NOT_READY"
+    ]
+   ]
+  }
+ ]
+}

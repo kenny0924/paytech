@@ -522,6 +522,7 @@ S0 运营点「发起上线流程」──────────────�
 | **REQ-17** | `compliance-结算控制` | 结算控制 Processor、事件；Manual Payout 检查点读取 | compliance · payout | S | — | 出款运行期检查 ⑥ |
 | **REQ-18** | `finance-入驻保证金` | Risk 最低保证金要求入口；到账确认、入账、余额查询；Manual Payout 检查点读取 | finance · risk-decision | M | REQ-03、REQ-16 | 出款运行期检查 ⑦ |
 | **REQ-19** | `compliance-真实筛查供应商` | 真实名单筛查替换 Mock | compliance · channel-connector | M | — | 生产前提 |
+| **REQ-20** | `client-master-Client与OE关联建立` | （2026-10-30 REQ-02 阶段 1 发现，用户决定登记）Client 与 OE 关联（`t_client_entity_affiliation`，结账第一步按它找 OE）**没有任何写入入口**，mor-test 现有关联均为 10-13 预置数据，新商户走完流程也无法下单。本需求：client-master 建立 / 停用关联的入口与 Owner 校验（OE 准入范围覆盖 Client MCC / 国家 / 币种、来源关系有效）；N3 合同页 OE 只能从该 Client 的有效关联中选（落实"建议 OE 候选"），建合同时校验；交付 `GOLIVE_AFFILIATION_READY` 查询（或并入 N3 完成条件）。待阶段 1 定：关联由运营在 client-master 建立后合同页选用（建议），还是合同生效自动派生；是否纳入门禁（会修订决定 ②"只查 ①②④"） | client-master · commercial 合同页 · ops-web | M | REQ-12 | 新商户走完 N3 即具备结账所需的 OE 关联 |
 | — | 另立项 | Manual Payout 全链路；持续监控；Client 沙箱；税务资料；**Partner 门户 PayFac 自审与上线进度**（Q-10） | — | L | — | — |
 
 ### 14.3 里程碑与并行车道
@@ -543,7 +544,7 @@ payout / compliance / finance（M4）：REQ-16 → REQ-18；REQ-17 独立；REQ-
 
 | 里程碑 | 需求 | 业务结果 | 验收场景 |
 |---|---|---|---|
-| **M1 可控上线** | REQ-00–07、REQ-12 | C1 / C3 新客户按流程上线；交易被开通项门禁与限额档位保护 | 新运营只看待办，把一个 C3 Client 从"待发起"推进到 OBSERVATION；中途撤销资格，开通项自动暂停 |
+| **M1 可控上线** | REQ-00–07、REQ-12、REQ-20 | C1 / C3 新客户按流程上线；交易被开通项门禁与限额档位保护 | 新运营只看待办，把一个 C3 Client 从"待发起"推进到 OBSERVATION；中途撤销资格，开通项自动暂停 |
 | **M2 双方同屏** | REQ-08–11 | 主管看板、超时升级、回退；Client 门户清单与自助签署 | Client 只看门户完成签署与接入；某节点超时升级到组长 |
 | **M3 C2 与本地方式** | REQ-13–15 | PayFac 子商户模式、mada、高风险行业可上线 | 一个 C2 Client 从子商户登记到收单行生效全程自动推进 |
 | **M4 出款就绪** | REQ-16–18（+ Manual Payout 另立） | 出口 B 走通 | 账户核验通过、保证金到账后出款开通项生效 |

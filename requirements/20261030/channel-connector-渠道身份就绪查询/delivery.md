@@ -1,0 +1,35 @@
+# channel-connector：渠道身份就绪查询 · 交付记录
+
+| 日期 | 阶段 | 内容 | 状态 |
+|---|---|---|---|
+| 2026-10-30 | 来源 | 客户上线规划 REQ-02（[2026-10-28 客户上线决定](../../../agent-docs/decisions/2026-10-28-client-go-live-orchestration.md) ② 与附件 3.2 / 3.3）；用户问"商户入驻流程下一个做什么"，建议 REQ-02，用户"开始做 REQ-02" | 已确认（来源） |
+| 2026-10-30 | 1 需求评审 | [需求](./requirement.md) 评审稿：范围 R1—R7、规则 B1—B8、逐系统变动点、功能验收 AC-01—AC-12 / 视觉 AC-V1—AC-V4、假设 A1—A2、待确认 Q-1—Q-4；只读核对运行期选 MID 规则（路由策略无代码读取）与 mor-test 影响（DEMO-CL-001 APPLE_PAY 将被暂停） | 已交付 |
+| 2026-10-30 | 1 澄清 | 用户问功能目的与"Client 和哪个 OE 签约在流程中何时体现"。核对发现：设计上 N3 建合同时选 OE，但合同 OE 不做校验；结账第一步依赖的 client-master Client 与 OE 关联（`t_client_entity_affiliation`）没有任何写入入口（mor-test 为预置数据），新商户走完流程仍无法下单 | 已答复 |
+| 2026-10-30 | 1 确认 | 用户"登记成新需求，REQ-02 按建议继续"：关联缺口登记为 REQ-20（[上线规划](../../../design-discuss/client-activation/requirement-plan.md) 14.2，纳入 M1），REQ-02 需求第 5 节记为已知相关缺口；Q-1 门禁不加路由策略条件并修订决定、Q-2 接受存量自动暂停（发布前只读巡检告知）、Q-3 本期不发事件、Q-4 所有价格币种都须就绪；默认八阶段。进入阶段 2 | 已确认 |
+| 2026-10-30 | 2 差异与影响 | [technique.md](./technique.md) 第 1—5 节评审稿（只读核对）：F-01—F-14、需求项差异、逐系统影响、待决 S-01—S-08。关键：现有候选接口对未知维度只匹配 `*`，不能直接复用（F-01）；收款动作为 `ACTION.PAY` / `ACTION.AUTHORIZE`（F-02，修正 B2）；client-master 无服务间 MCC 接口，新增 client-master 改动（F-07）；全量重查用现有作业参数即可（F-11）；规模 S → M | 已交付 |
+| 2026-10-30 | 2 确认 | 用户"按建议，进入阶段 3"：S-01—S-08 全部按建议（批量接口、抽共用筛选、client-master 新增经营分类查询、只用已确认主分类、无覆盖币种记等待价格、模板币种可选、无 MID 页权限不显示链接、3 秒超时） | 已确认 |
+| 2026-10-30 | 3 方案 | [technique.md](./technique.md) 第 6—16 节评审稿：4 个系统改代码、新增 2 个服务间接口、0 表 / 0 DDL / 0 DML / 0 路由；就绪判定五步（新增原因 `PAYMENT_ACTION_NOT_SUPPORTED`，需求 B3 / AC-03 同步）；commercial 门禁接入与原因码表；[GOLIVE_MID_READY 模板](./db/data-query-templates.sql)已在 mor-test 只读试跑 5 组符合预期；页面原型 `operations-console.pen` 新画板商务 · 18（[导出](./prototypes/ops/商务-18-还差什么-渠道身份.png)）；决定修订稿、研发计划 T1—T7、发布顺序与回滚 | 已交付 |
+| 2026-10-30 | 3 确认 / 4 开始 | 用户问"有什么需要确认"与"本次没有 UI 变更吗"：补充说明 UI 变更（合同详情"还差什么"渠道身份一项、MID 列表按 OE 预填、约 18 个文案键）；核对 mor-test 有开通项的 7 个 Client 分类均已确认（主 MCC 5999），"只认已确认 MCC"不额外暂停。用户"可以，进入阶段 4"：工作树 `/Users/kenny/Desktop/Workspace/Code-MoR-req02`（main `331d8e0e`）；派发 [W1 后端](./tasks/W1-backend.md)（T1—T4）与 [W2 前端](./tasks/W2-web.md)（T5）；主会话完成 T6 决定修订（工作树内 3.2 / 3.5 / 第 5 节）。无 SQL、不碰 mor-test、不提交 | 已完成 |
+| 2026-10-30 | 4 完成 | 工作树 `Code-MoR-req02`：33 个已跟踪文件改动 + 35 个新文件（未提交）。[W1 报告](./tasks/REPORT-W1.md)：channel-connector 就绪查询与共用筛选、client-master 经营分类查询、commercial ④ 接入；主会话退回偏离 1（Service 调 Service）后第二轮改为 Processor 读渠道 + 领域对象纯方法过滤，补偿消息改通用；测试 channel-connector 404 / 0、client-master 181 / 0、commercial 252 / 0、arch-rules 70 / 0 + 5 / 0、全 reactor test-compile 通过（主会话以 surefire 报告核对）。[W2 报告](./tasks/REPORT-W2.md)：ops-web 9 个文件，链接 / MID 页预填 / 15 新键、删 2 键、改值 3 键（主会话接受）；tsc、npm test 1688 / 1688、build、i18n 导出通过（主会话复跑 tsc 与单测）。T6 决定修订完成。接受偏离：入参非法 422、client-master ID 非法 400、client-master 404 → ④ UNKNOWN（technique 8.3 / 9 已更正）。未执行 SQL、未碰 mor-test | 已交付 |
+| 2026-10-30 | 4 确认 / 5 本机验证 | 用户"按建议"选方案 C：本机共享 e2e 栈未恢复，不另起私有栈；阶段 5 以阶段 4 已通过的 auto 测试为准，浏览器走查（zh-CN / en × 1440 / 390）与真实链路联调移到 mor-test 发布后（阶段 7）。本机补做：`GOLIVE_MID_READY` 在 `mor-local` 的 `mor_channel_connector_v2e2e`（AE001 CARD × USD × 5999 三个 MID）只读试跑，发现**空支付方式列表被判为满足**，模板改为未满足 `PAYMENT_METHODS_EMPTY`；复跑 6 组（含空串、仅空白）全部符合预期，与阶段 3 mor-test 试跑一致 | 已完成 |
+| 2026-10-30 | 6 开始 | 读现网发现明细账运维 17:26Z 已发 `plops-20261030a`（Platform / ops-bff / ops-web）；经协调：ops-web 候选以其发布树 `Code-MoR-plops-rel`（main `331d8e0e` + plops 68 文件，未提交）为基线，plops 不再发 ops-web；运营语言包现网 #30，#31 已由 REQ-06 预约，已向 REQ-06 发出发布顺序 / 包号协调。派发 [W3](./tasks/W3-stage6.md)：基线、候选树 `Code-MoR-req02-rel`、测试、镜像 `req02-20261030a`、compose、巡检 SQL、语言包计划、data-query 登记、验收脚本。只读，不改 mor-test | 已完成 |
+| 2026-10-30 | 6 协调 | REQ-06（design-discuss-5f）回复：其阶段 6 进行中、阶段 7 时间未定（需同窗口发 Platform / ops-bff / ops-web、块 150、workflow DDL）；双方约定**谁先进阶段 7 谁先发**，后发方把先发方 ops-web 源码并入候选、语言包号按实际先后取下一个（#31 不算预占）；REQ-06 ops-web 只改 workflow 范围，与本需求无冲突。已转告 W3：语言包号运行时取现网下一个 | 已确认 |
+| 2026-10-30 | 6 发现 / Q-4 修订 | W3 只读巡检：按"所有价格币种都须就绪"，mor-test 4 个 ENABLED 支付方式开通项发布后**全部暂停**（DEMO-CL-001 APPLE_PAY 缺方式；DEMO-CL-001 / DEMO2-CL-101 / DEMO2-CL-103 的 CARD 只缺 AED、USD 可收），阶段 3 主会话只估 1 个（漏看 AED 价格）。主会话复核属实并向用户说明，用户选"改为任一币种就绪即可"：④ 任一已覆盖币种就绪即 SATISFIED，缺 MID 币种以 `CHANNEL_IDENTITY_PARTIAL` 提醒（绿勾 + 去配置 MID）；全部不就绪才 UNSATISFIED。同步：需求 B4 / AC-08 / Q-4、technique 10.2、`GOLIVE_MID_READY`（列出币种任一就绪即可，本机复跑 6 组符合）、画板商务 · 18 新增"部分币种"行（[导出](./prototypes/ops/商务-18-还差什么-渠道身份.png)）；W1（commercial）/ W2（ops-web）在研发树修改，W3 待其完成后重建 commercial / ops-web 候选并重跑巡检。研发树结果（主会话核对）：commercial 253 / 0（AC-08 拆为部分就绪 → ENABLED + 提醒、全部不就绪 → 不满足两例）、arch-rules 70 / 0 + 5 / 0；ops-web 1689 / 1689、新增 2 键（英文改为不受单复数影响的句式）。已通知 W3 重建 | 已完成 |
+| 2026-10-30 | 6 修正 | W3 发现 `GOLIVE_MID_READY` 可选参数 `currencies` 不传时绑定 NULL 会把所有支付方式判为就绪（mor-test 只读复现）→ 主会话把三处 `#{currencies}` 改为 `COALESCE(#{currencies}, '')`，本机复跑 6 组含 NULL 符合预期。巡检新口径预测：暂停 2 条（DEMO2-CL-101 CARD 只有 AED、DEMO-CL-001 APPLE_PAY），需求第 9 节影响读数已更正。W3 建议的"给 AE001 MID 补 AED 能力行"主会话不采纳（会虚构渠道能力），交用户在发布包审批时决定 | 已完成 |
+| 2026-10-30 | 6 完成 | [W3 报告](./release/W3-report.md)、[runbook](./release/runbook.md)、[baseline](./release/baseline.md)。主会话核对：候选树 `Code-MoR-req02-rel` = main `331d8e0e` + plops ops-web 18 文件 + 本需求 69 文件，NO DRIFT；镜像 channel-connector `f330c4ae`、client-master `df13cc47`（`req02-20261030a`）、commercial `2be844e7`、ops-web `bbc03d33`（`req02-20261030b`），4 个候选 compose 钉对应 sha256；env 与现网逐键相同、无新键；现网三个后端"现网独有"0，ops-web 现网 = plops 源码重建逐字节相同；测试 channel-connector 404、client-master 181、commercial 253、arch-rules 70 + 5 全过，ops-web 1704 / 1705（唯一失败为读 plops Platform 能力清单的对照测试，放入后全过，不影响 dist）；内部调用经服务发现、认证 OFF，无需登记；巡检新口径 2 条将暂停（DEMO-CL-001 APPLE_PAY、DEMO2-CL-101 CARD）、2 条 PARTIAL 保持 ENABLED；语言包计划 commercial 新增 17 / 改值 3 / 废弃 2，号码运行时取下一个（预计 #31）；`GOLIVE_MID_READY` 只读试跑 12 / 12。等待用户审批阶段 7 | 已交付 |
+| 2026-10-30 | 6 确认 / 7 发布 | 用户"继续"：接受 2 条预期暂停、`GOLIVE_MID_READY` 同批登记、进入阶段 7。18:45—19:01Z 按 runbook 发布：client-master `df13cc47`、channel-connector `f330c4ae`、commercial `2be844e7`、ops-web `bbc03d33`，运营语言包 #31，全量重查后暂停集合与预测一致（DEMO-CL-001 APPLE_PAY、DEMO2-CL-101 CARD），`GOLIVE_MID_READY` v1 ACTIVE。验收 api 57 / 0、check 15 / 0、浏览器 44 / 0；合成账号已停用。发布中发现模板在 data-query 绑定执行时 500（`JSON_TABLE` 不接受绑定参数），改为 `WITH RECURSIVE` 后试跑 8 / 8 再登记；验收脚本 3 处缺陷已修。[阶段 7 报告](./release/stage7-report.md)。已告知 REQ-06（ops-web 基线、#32）与明细账运维（其已提交 `a1f3d627` / `f4474c7a`） | 已完成 |
+| 2026-10-30 | 7 用户验证 | 用户在 mor-test 自行验证。数据查询页试运行 `GOLIVE_MID_READY` 时，留空可选参数 `currencies` 会提示"服务暂时不可用"。主会话用真实浏览器复现：平台返回 200、结果正确，但返回的绑定参数含 `null`，运营 Web 解析失败（`INVALID_RESPONSE`）；另外模板编辑页会把空串默认值丢掉。这是数据查询模块原有的前端缺陷，不是本需求引入的，流程执行用登记版本，不受影响。用户决定"下个需求一起做"，登记为遗留 L-1 | 已确认 |
+
+## 适用阶段
+
+默认八阶段（2026-10-30 随阶段 1 确认）。SQL、mor-test 部署、提交、推送分别授权。
+
+## 当前阶段与下一确认点
+
+阶段 1—8 已完成（2026-10-30 本地提交，未推送）。推送须另行授权。
+
+## 遗留
+
+- **L-1 数据查询试运行：可选参数留空报错**（2026-10-30 用户验证发现，用户决定随下个需求一起修）。运营 Web 数据查询模块有两个原有缺陷：① 试运行响应解析要求绑定参数都是字符串，平台对未填、无默认值的可选参数按 NULL 执行并在 `bindings` 中返回 `null`，前端判为 `INVALID_RESPONSE`，显示"服务暂时不可用"；② 模板编辑页把空串默认值当作"无默认值"丢弃。影响所有含可选、无默认值参数的模板的试运行；流程执行不受影响。修法：解析允许 `null`；编辑页保留空串默认值。临时绕过：填上该参数（如 `currencies=USD`）。
+- AC-07 / AC-09 / AC-10 只由 auto 测试覆盖，未在 mor-test 演练；DEMO2-CL-101 CARD、DEMO-CL-001 APPLE_PAY 暂停属预期，见[阶段 7 报告](./release/stage7-report.md)第 5 节。
+- Client 与 OE 关联写入入口缺失，另立 REQ-20。

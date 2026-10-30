@@ -1,0 +1,5 @@
+# image_verify.sh 2026-10-30T18:21:17Z（Q-4 修订后：commercial / ops-web 为 b）
+channel-connector-service id=sha256:f330c4ae93bfee95438ed9df924bbf7a8905d57fa3139b8043454c02463d47e1 jar_in_image=f18d024129d7b2e5 built=f18d024129d7b2e5 jar=same probe_vs_live=same meta_vs_live=same
+client-master-service id=sha256:df13cc47d936b51abaa766bafa30df8ca8f1776677f46b831656b87a54d7ef1f jar_in_image=ca97482e644a5c6e built=ca97482e644a5c6e jar=same probe_vs_live=same meta_vs_live=same
+commercial-service id=sha256:2be844e7a163ed47dc5ecce840a9cee263958e1938c568878ea49da22342431f jar_in_image=faffac5b9f3275e6 built=faffac5b9f3275e6 jar=same probe_vs_live=same meta_vs_live=same
+operations-console-web id=sha256:bbc03d33854e65dadbea4e5754e4fb7ef4aea3e49d4297d23fa1493b7310d486 dist=same files=291 nginx_conf=same meta_vs_live=same

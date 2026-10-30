@@ -1,0 +1,355 @@
+{
+ "command": "plan",
+ "at": "2026-10-30T18:27:53Z",
+ "results": [
+  {
+   "ac": "plan",
+   "step": "channel-connector-service 现网镜像 = 回滚或候选 ID（发布前）",
+   "ok": true,
+   "detail": "23679d451fe4"
+  },
+  {
+   "ac": "plan",
+   "step": "client-master-service 现网镜像 = 回滚或候选 ID（发布前）",
+   "ok": true,
+   "detail": "2b12c2e2184b"
+  },
+  {
+   "ac": "plan",
+   "step": "commercial-service 现网镜像 = 回滚或候选 ID（发布前）",
+   "ok": true,
+   "detail": "806043a320cf"
+  },
+  {
+   "ac": "plan",
+   "step": "operations-console-web 现网镜像 = 回滚或候选 ID（发布前）",
+   "ok": true,
+   "detail": "5784fa817c47"
+  },
+  {
+   "ac": "plan",
+   "step": "巡检预测（同 sql/01）",
+   "ok": true,
+   "detail": {
+    "DEMO-CL-001/APPLE_PAY": "WILL_SUSPEND",
+    "DEMO2-CL-101/CARD": "WILL_SUSPEND",
+    "DEMO-CL-001/CARD": "STAYS_ENABLED_WITH_REMINDER",
+    "DEMO2-CL-103/CARD": "STAYS_ENABLED_WITH_REMINDER",
+    "CL-F1105E/CARD": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY",
+    "DEMO-CL-002/CARD": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY",
+    "DEMO-CL-002/GOOGLE_PAY": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY",
+    "DEMO2-CL-102/APPLE_PAY": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY",
+    "DEMO2-CL-102/CARD": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY",
+    "DEMO2-CL-103/GOOGLE_PAY": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY",
+    "DEMO2-CL-103/STC_PAY": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY",
+    "DEMO2-CL-901/CARD": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   }
+  },
+  {
+   "ac": "plan",
+   "step": "AE001 MID 能力行",
+   "ok": true,
+   "detail": [
+    [
+     "238508278684950528",
+     "ACTIVE",
+     "238508278856916992",
+     "CARD",
+     "USD",
+     "5999",
+     "ENABLED"
+    ],
+    [
+     "238508278957580288",
+     "ACTIVE",
+     "238508279112769536",
+     "CARD",
+     "USD",
+     "5999",
+     "ENABLED"
+    ],
+    [
+     "238508278957580288",
+     "ACTIVE",
+     "238765126252077056",
+     "CARD",
+     "*",
+     "5816",
+     "ENABLED"
+    ],
+    [
+     "239093386823442432",
+     "SUSPENDED",
+     "239093387985264640",
+     "CARD",
+     "USD",
+     "5999",
+     "DISABLED"
+    ]
+   ]
+  },
+  {
+   "ac": "plan",
+   "step": "GOLIVE_MID_READY 模板（阶段 7 登记后应 ACTIVE / 1）",
+   "ok": true,
+   "detail": "未登记"
+  },
+  {
+   "ac": "plan",
+   "step": "就绪查询接口（发布前 404 / 发布后 200）",
+   "ok": true,
+   "detail": {
+    "status": 404,
+    "body": {
+     "type": "about:blank",
+     "title": "Not Found",
+     "detail": "资源不存在",
+     "code": "NOT_FOUND",
+     "requestId": "441f01a1-cacb-425a-b8d2-7bc3caa80f24",
+     "timestamp": "2026-10-30T18:27:52.006824Z"
+    }
+   }
+  },
+  {
+   "ac": "plan",
+   "step": "经营分类接口（发布前 404 / 发布后 200）",
+   "ok": true,
+   "detail": {
+    "status": 404
+   }
+  },
+  {
+   "ac": "plan",
+   "step": "合成数据状态文件",
+   "ok": true,
+   "detail": {
+    "file": "/Users/kenny/Code-MoR-backups/req02-stage7/state.json",
+    "keys": []
+   }
+  }
+ ],
+ "data": {
+  "predictions": [
+   {
+    "agreementNo": "DEMO-CL-001",
+    "id": "238331390133866496",
+    "clientId": "237575207592763393",
+    "entityNo": "AE001",
+    "capabilityCode": "APPLE_PAY",
+    "paymentMethodCode": "APPLE_PAY",
+    "executionStatus": "ENABLED",
+    "mccCode": "5999",
+    "coveredCurrencies": "AED,USD",
+    "predictedResult": "UNSATISFIED",
+    "predictedReason": "PAYMENT_METHOD_NOT_SUPPORTED",
+    "notReadyCurrencies": "AED,USD",
+    "impact": "WILL_SUSPEND"
+   },
+   {
+    "agreementNo": "DEMO2-CL-101",
+    "id": "238411009797197824",
+    "clientId": "237573476041465857",
+    "entityNo": "AE001",
+    "capabilityCode": "CARD",
+    "paymentMethodCode": "CARD",
+    "executionStatus": "ENABLED",
+    "mccCode": "5999",
+    "coveredCurrencies": "AED",
+    "predictedResult": "UNSATISFIED",
+    "predictedReason": "CURRENCY_NOT_SUPPORTED",
+    "notReadyCurrencies": "AED",
+    "impact": "WILL_SUSPEND"
+   },
+   {
+    "agreementNo": "DEMO-CL-001",
+    "id": "238331389471166464",
+    "clientId": "237575207592763393",
+    "entityNo": "AE001",
+    "capabilityCode": "CARD",
+    "paymentMethodCode": "CARD",
+    "executionStatus": "ENABLED",
+    "mccCode": "5999",
+    "coveredCurrencies": "AED,USD",
+    "predictedResult": "SATISFIED",
+    "predictedReason": "CHANNEL_IDENTITY_PARTIAL",
+    "notReadyCurrencies": "AED",
+    "impact": "STAYS_ENABLED_WITH_REMINDER"
+   },
+   {
+    "agreementNo": "DEMO2-CL-103",
+    "id": "238411681724698624",
+    "clientId": "237573267559391233",
+    "entityNo": "AE001",
+    "capabilityCode": "CARD",
+    "paymentMethodCode": "CARD",
+    "executionStatus": "ENABLED",
+    "mccCode": "5999",
+    "coveredCurrencies": "AED,USD",
+    "predictedResult": "SATISFIED",
+    "predictedReason": "CHANNEL_IDENTITY_PARTIAL",
+    "notReadyCurrencies": "AED",
+    "impact": "STAYS_ENABLED_WITH_REMINDER"
+   },
+   {
+    "agreementNo": "CL-F1105E",
+    "id": "238132082633674752",
+    "clientId": "237610139979456513",
+    "entityNo": "AE001",
+    "capabilityCode": "CARD",
+    "paymentMethodCode": "CARD",
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+    "mccCode": "5999",
+    "coveredCurrencies": null,
+    "predictedResult": "SKIPPED",
+    "predictedReason": "AWAITING_PRICE",
+    "notReadyCurrencies": null,
+    "impact": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   },
+   {
+    "agreementNo": "DEMO-CL-002",
+    "id": "238331040773509120",
+    "clientId": "237574764993028097",
+    "entityNo": "AE001",
+    "capabilityCode": "CARD",
+    "paymentMethodCode": "CARD",
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+    "mccCode": "5999",
+    "coveredCurrencies": null,
+    "predictedResult": "SKIPPED",
+    "predictedReason": "AWAITING_PRICE",
+    "notReadyCurrencies": null,
+    "impact": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   },
+   {
+    "agreementNo": "DEMO-CL-002",
+    "id": "238331040869978112",
+    "clientId": "237574764993028097",
+    "entityNo": "AE001",
+    "capabilityCode": "GOOGLE_PAY",
+    "paymentMethodCode": "GOOGLE_PAY",
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+    "mccCode": "5999",
+    "coveredCurrencies": null,
+    "predictedResult": "SKIPPED",
+    "predictedReason": "AWAITING_PRICE",
+    "notReadyCurrencies": null,
+    "impact": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   },
+   {
+    "agreementNo": "DEMO2-CL-102",
+    "id": "238411679711432704",
+    "clientId": "237573382420406273",
+    "entityNo": "AE001",
+    "capabilityCode": "APPLE_PAY",
+    "paymentMethodCode": "APPLE_PAY",
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+    "mccCode": "5999",
+    "coveredCurrencies": null,
+    "predictedResult": "SKIPPED",
+    "predictedReason": "AWAITING_PRICE",
+    "notReadyCurrencies": null,
+    "impact": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   },
+   {
+    "agreementNo": "DEMO2-CL-102",
+    "id": "238411679887593472",
+    "clientId": "237573382420406273",
+    "entityNo": "AE001",
+    "capabilityCode": "CARD",
+    "paymentMethodCode": "CARD",
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+    "mccCode": "5999",
+    "coveredCurrencies": null,
+    "predictedResult": "SKIPPED",
+    "predictedReason": "AWAITING_PRICE",
+    "notReadyCurrencies": null,
+    "impact": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   },
+   {
+    "agreementNo": "DEMO2-CL-103",
+    "id": "238411884146003968",
+    "clientId": "237573267559391233",
+    "entityNo": "AE001",
+    "capabilityCode": "GOOGLE_PAY",
+    "paymentMethodCode": "GOOGLE_PAY",
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+    "mccCode": "5999",
+    "coveredCurrencies": null,
+    "predictedResult": "SKIPPED",
+    "predictedReason": "AWAITING_PRICE",
+    "notReadyCurrencies": null,
+    "impact": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   },
+   {
+    "agreementNo": "DEMO2-CL-103",
+    "id": "238411897563582464",
+    "clientId": "237573267559391233",
+    "entityNo": "AE001",
+    "capabilityCode": "STC_PAY",
+    "paymentMethodCode": "STC_PAY",
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+    "mccCode": "5999",
+    "coveredCurrencies": null,
+    "predictedResult": "SKIPPED",
+    "predictedReason": "AWAITING_PRICE",
+    "notReadyCurrencies": null,
+    "impact": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   },
+   {
+    "agreementNo": "DEMO2-CL-901",
+    "id": "238411685763813376",
+    "clientId": "237573040244891649",
+    "entityNo": "AE001",
+    "capabilityCode": "CARD",
+    "paymentMethodCode": "CARD",
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE",
+    "mccCode": "5999",
+    "coveredCurrencies": null,
+    "predictedResult": "SKIPPED",
+    "predictedReason": "AWAITING_PRICE",
+    "notReadyCurrencies": null,
+    "impact": "NO_STATE_CHANGE_FROM_CHANNEL_IDENTITY"
+   }
+  ],
+  "midCapabilities": [
+   [
+    "238508278684950528",
+    "ACTIVE",
+    "238508278856916992",
+    "CARD",
+    "USD",
+    "5999",
+    "ENABLED"
+   ],
+   [
+    "238508278957580288",
+    "ACTIVE",
+    "238508279112769536",
+    "CARD",
+    "USD",
+    "5999",
+    "ENABLED"
+   ],
+   [
+    "238508278957580288",
+    "ACTIVE",
+    "238765126252077056",
+    "CARD",
+    "*",
+    "5816",
+    "ENABLED"
+   ],
+   [
+    "239093386823442432",
+    "SUSPENDED",
+    "239093387985264640",
+    "CARD",
+    "USD",
+    "5999",
+    "DISABLED"
+   ]
+  ]
+ },
+ "pass": 10,
+ "fail": 0
+}

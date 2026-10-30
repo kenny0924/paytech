@@ -51,6 +51,19 @@ public class CheckoutCandidateTestMapper {
             910000000000004L);
     }
 
+    /** 设置或清除夹具 Client 经营资料的分类确认时间；null 表示未确认。 */
+    public void classificationConfirmedTime(Instant at) {
+        jdbc.update("UPDATE t_client_business_profile SET classification_confirmed_time=? WHERE client_id=?",
+            at == null ? null : Timestamp.from(at), CheckoutCandidateFixture.CLIENT_ID);
+    }
+
+    /** 删除夹具 Client 的经营资料及其分类，制造没有经营资料的 Client。 */
+    public void removeBusinessProfile() {
+        jdbc.update("DELETE FROM t_client_business_classification WHERE business_profile_id IN "
+            + "(SELECT business_profile_id FROM t_client_business_profile WHERE client_id=?)", CheckoutCandidateFixture.CLIENT_ID);
+        jdbc.update("DELETE FROM t_client_business_profile WHERE client_id=?", CheckoutCandidateFixture.CLIENT_ID);
+    }
+
     /** 制造 Scope 指向被拒绝申请的完整性冲突。 */
     public void rejectScopeApplication() {
         jdbc.update("UPDATE t_operating_entity_application SET status='REJECTED' WHERE application_id=?", 910000000000104L);

@@ -1,0 +1,9 @@
+# env_check.sh 2026-10-30T18:21:41Z
+candidate channel-connector-service  image=f330c4ae93bf keys live=40 rendered=40 missing=[] extra=[] valuediff=[]
+candidate client-master-service      image=df13cc47d936 keys live=40 rendered=40 missing=[] extra=[] valuediff=[]
+candidate commercial-service         image=2be844e7a163 keys live=37 rendered=37 missing=[] extra=[] valuediff=[]
+candidate operations-console-web     image=bbc03d33854e keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+rollback  channel-connector-service  image=23679d451fe4 keys live=40 rendered=40 missing=[] extra=[] valuediff=[]
+rollback  client-master-service      image=2b12c2e2184b keys live=40 rendered=40 missing=[] extra=[] valuediff=[]
+rollback  commercial-service         image=806043a320cf keys live=37 rendered=37 missing=[] extra=[] valuediff=[]
+rollback  operations-console-web     image=5784fa817c47 keys live=7 rendered=7 missing=[] extra=[] valuediff=[]

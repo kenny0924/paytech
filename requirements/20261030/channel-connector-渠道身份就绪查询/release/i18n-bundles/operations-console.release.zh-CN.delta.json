@@ -1,0 +1,29 @@
+{
+  "format": "code-mor-i18n-translation/1",
+  "application": "operations-console",
+  "locale": "zh-CN",
+  "namespaces": {
+    "commercial": {
+      "commercial.enum.CapabilityPrerequisiteReason.AWAITING_PRICE": "等价格确定后再核对渠道身份",
+      "commercial.enum.CapabilityPrerequisiteReason.CHANNEL_IDENTITY_PARTIAL": "已可收款；{currencies} 在经营主体 {entityNo} 下没有支持 {paymentMethodCode} 的 MID（MCC {mccCode}），用这些币种下单会失败",
+      "commercial.enum.CapabilityPrerequisiteReason.CHECK_UNAVAILABLE": "{prerequisite, select, CHANNEL_IDENTITY {暂时无法核对渠道身份，系统会自动重试} other {资格服务暂时无法查询，状态保持不变，请稍后重新检查。}}",
+      "commercial.enum.CapabilityPrerequisiteReason.CLIENT_MCC_MISSING": "Client {clientId} 的经营分类（MCC）尚未确认",
+      "commercial.enum.CapabilityPrerequisiteReason.CURRENCY_NOT_SUPPORTED": "价格含 {currencies}，但 {entityNo} 支持 {paymentMethodCode} · MCC {mccCode} 的 MID 不收 {currencies}",
+      "commercial.enum.CapabilityPrerequisiteReason.MCC_NOT_COVERED": "{entityNo} 支持 {paymentMethodCode} 的 MID 未覆盖 Client 的 MCC {mccCode}",
+      "commercial.enum.CapabilityPrerequisiteReason.MID_NOT_FOUND": "经营主体 {entityNo} 下没有可用的 MID",
+      "commercial.enum.CapabilityPrerequisiteReason.PAYMENT_ACTION_NOT_SUPPORTED": "{entityNo} 的 {paymentMethodCode} · MCC {mccCode} 能力未开启直接扣款或预授权",
+      "commercial.enum.CapabilityPrerequisiteReason.PAYMENT_METHOD_NOT_SUPPORTED": "{currencies, select, none {{entityNo} 的可用 MID 都不支持 {paymentMethodCode}} other {经营主体 {entityNo} 下没有支持 {paymentMethodCode} 的 MID（{currencies} · MCC {mccCode}）}}",
+      "commercial.enum.CapabilityPrerequisiteResult.SKIPPED": "暂不核对",
+      "commercial.prerequisite.link.mids": "去配置 MID →",
+      "commercial.prerequisite.shortReason.AWAITING_PRICE": "等待价格",
+      "commercial.prerequisite.shortReason.CHANNEL_IDENTITY_PARTIAL": "{currencies} 缺 MID",
+      "commercial.prerequisite.shortReason.CHECK_UNAVAILABLE": "{prerequisite, select, CHANNEL_IDENTITY {渠道身份暂时无法核对} other {资格暂时无法查询}}",
+      "commercial.prerequisite.shortReason.CLIENT_MCC_MISSING": "Client MCC 未确认",
+      "commercial.prerequisite.shortReason.CURRENCY_NOT_SUPPORTED": "MID 不收 {currencies}",
+      "commercial.prerequisite.shortReason.MCC_NOT_COVERED": "MID 未覆盖 MCC {mccCode}",
+      "commercial.prerequisite.shortReason.MID_NOT_FOUND": "{entityNo} 没有 MID",
+      "commercial.prerequisite.shortReason.PAYMENT_ACTION_NOT_SUPPORTED": "MID 未开启收款动作",
+      "commercial.prerequisite.shortReason.PAYMENT_METHOD_NOT_SUPPORTED": "没有支持 {paymentMethodCode} 的 MID"
+    }
+  }
+}

@@ -18,7 +18,7 @@ const response = {
       executionStatus: 'PENDING_PREREQUISITES', checks: [
         { code: 'QUALIFICATION', result: 'UNSATISFIED', reasonCode: 'OPERATING_ENTITY_NOT_QUALIFIED', params: { subjectType: 'OPERATING_ENTITY', subjectId: 'SA001' } },
         { code: 'AGREEMENT_TERM', result: 'SATISFIED', reasonCode: null, params: {} },
-        { code: 'CHANNEL_IDENTITY', result: 'SKIPPED', reasonCode: 'CHANNEL_IDENTITY_NOT_CONNECTED', params: {} }] },
+        { code: 'CHANNEL_IDENTITY', result: 'SKIPPED', reasonCode: 'AWAITING_PRICE', params: { entityNo: 'AE001' } }] },
     { agreementCapabilityId: '7319000000000000302', entityNo: 'AE001', capabilityCode: 'REFUND', capabilityKind: 'FEATURE', status: 'DISABLED',
       executionStatus: null, checks: [] }],
 };
@@ -62,8 +62,8 @@ test('AC-09 还差什么：逐项 ✔ / ✘ / ? / –，满足给满足说明、
   assert.deepEqual(lines.map(line => [line.mark, line.title, line.result, line.detail, line.link]), [
     ['unsatisfied', 'Qualification', 'Not Satisfied', "Operating Entity SA001 isn't qualified yet.", { kind: 'entity', entityNo: 'SA001' }],
     ['satisfied', 'Agreement & Pricing', 'Satisfied', 'The agreement is in effect and the active price version covers this enablement.', null],
-    ['skipped', 'Channel Identity', 'Not Connected', 'Not checked yet; channel identity will be included automatically once its lookup goes live.', null]]);
-  assert.deepEqual(lineCounts(lines), { satisfied: 2, unsatisfied: 1, unknown: 0 }, '未接入按满足计数');
+    ['skipped', 'Channel Identity', 'Not Checked', 'Channel identity will be checked once the price is set.', null]]);
+  assert.deepEqual(lineCounts(lines), { satisfied: 2, unsatisfied: 1, unknown: 0 }, '暂不核对按满足计数');
   assert.equal(prerequisiteReason('CLIENT_NOT_QUALIFIED', {}, context), "Client 7300000000000000011 isn't qualified yet. Complete the Client's due diligence first.");
   assert.equal(prerequisiteReason('CLIENT_NOT_QUALIFIED', { subjectType: 'CLIENT', subjectId: '7300000000000000099' }, context),
     "Client 7300000000000000099 isn't qualified yet. Complete the Client's due diligence first.");
@@ -85,6 +85,57 @@ test('AC-09 还差什么：逐项 ✔ / ✘ / ? / –，满足给满足说明、
     { code: 'QUALIFICATION', result: 'UNKNOWN', reasonCode: 'CHECK_UNAVAILABLE', params: {} }], context);
   assert.deepEqual(links.map(line => line.link), [{ kind: 'client', clientId: '7300000000000000099' }, { kind: 'pricing' }, null, { kind: 'recheck' }]);
   assert.deepEqual([links[3].mark, links[3].result], ['unknown', 'Check Failed']);
+});
+
+test('REQ-02 渠道身份：五个渠道原因带 OE / 支付方式 / 币种 / MCC 并去配置 MID；Client 无 MCC 去 Client；等待价格无跳转；暂时无法核对为重新检查', () => {
+  const channel = (result: 'UNSATISFIED' | 'SKIPPED' | 'UNKNOWN', reasonCode: string, params: Record<string, string>) =>
+    ({ code: 'CHANNEL_IDENTITY' as const, result, reasonCode, params });
+  const identity = { entityNo: 'AE001', paymentMethodCode: 'CARD', mccCode: '5999', currencies: 'USD' };
+  const lines = prerequisiteLines([
+    channel('UNSATISFIED', 'MID_NOT_FOUND', { ...identity, paymentMethodCode: 'APPLE_PAY' }),
+    channel('UNSATISFIED', 'PAYMENT_METHOD_NOT_SUPPORTED', { ...identity, paymentMethodCode: 'APPLE_PAY' }),
+    channel('UNSATISFIED', 'MCC_NOT_COVERED', { ...identity, mccCode: '5816' }),
+    channel('UNSATISFIED', 'CURRENCY_NOT_SUPPORTED', { ...identity, currencies: 'EUR,GBP' }),
+    channel('UNSATISFIED', 'PAYMENT_ACTION_NOT_SUPPORTED', { ...identity, mccCode: '5816' }),
+    channel('UNSATISFIED', 'CLIENT_MCC_MISSING', { clientId: '7300000000000000099' }),
+    channel('SKIPPED', 'AWAITING_PRICE', { entityNo: 'AE001' }),
+    channel('UNKNOWN', 'CHECK_UNAVAILABLE', {})], { ...context, entityNo: 'SA001' });
+  assert.deepEqual(lines.map(line => [line.mark, line.detail, line.link]), [
+    ['unsatisfied', 'Operating Entity AE001 has no available MID.', { kind: 'mids', entityNo: 'AE001' }],
+    ['unsatisfied', 'Operating Entity AE001 has no MID that supports APPLE_PAY (USD · MCC 5999).', { kind: 'mids', entityNo: 'AE001' }],
+    ['unsatisfied', "AE001's MIDs that support CARD don't cover the Client's MCC 5816.", { kind: 'mids', entityNo: 'AE001' }],
+    ['unsatisfied', "The price includes EUR, GBP, but AE001's MIDs for CARD · MCC 5999 don't accept EUR, GBP.", { kind: 'mids', entityNo: 'AE001' }],
+    ['unsatisfied', "AE001's CARD · MCC 5816 capability doesn't enable sale or authorization.", { kind: 'mids', entityNo: 'AE001' }],
+    ['unsatisfied', "Client 7300000000000000099's business classification (MCC) isn't confirmed yet.", { kind: 'client', clientId: '7300000000000000099' }],
+    ['skipped', 'Channel identity will be checked once the price is set.', null],
+    ['unknown', "Channel identity can't be checked right now; the system will retry automatically.", { kind: 'recheck' }]]);
+  assert.deepEqual(lineCounts(lines), { satisfied: 1, unsatisfied: 6, unknown: 1 }, '暂时无法核对不计为缺口');
+  assert.deepEqual(prerequisiteLines([channel('UNSATISFIED', 'MID_NOT_FOUND', {})], context)[0].link, { kind: 'mids', entityNo: 'AE001' },
+    '没有 entityNo 参数时取开通项 OE');
+  assert.equal(prerequisiteReason('PAYMENT_METHOD_NOT_SUPPORTED', { entityNo: 'AE001', paymentMethodCode: 'APPLE_PAY' }, context),
+    "None of AE001's available MIDs support APPLE_PAY.", '没有币种参数时走不带币种的分支');
+  assert.equal(prerequisiteReason('CHECK_UNAVAILABLE', {}, context, 'QUALIFICATION'),
+    "The qualification service couldn't be reached; the status stays unchanged. Check again later.", '资格的检查失败文案不变');
+  assert.deepEqual(['MID_NOT_FOUND', 'PAYMENT_METHOD_NOT_SUPPORTED', 'MCC_NOT_COVERED', 'CURRENCY_NOT_SUPPORTED', 'PAYMENT_ACTION_NOT_SUPPORTED',
+    'CLIENT_MCC_MISSING', 'AWAITING_PRICE'].map(code => prerequisiteShortReason(code, identity, context)), [
+    'AE001 has no MID', 'No MID supports CARD', "MID doesn't cover MCC 5999", "MID doesn't accept USD", 'MID payment action not enabled',
+    'Client MCC not confirmed', 'Awaiting price']);
+  assert.equal(prerequisiteShortReason('CHECK_UNAVAILABLE', {}, context, 'CHANNEL_IDENTITY'), 'Channel identity check unavailable');
+  assert.equal(prerequisiteShortReason('CHECK_UNAVAILABLE', {}, context), 'Qualification check unavailable');
+  assert.equal(prerequisiteReason('CHANNEL_IDENTITY_NOT_CONNECTED', {}, context), 'CHANNEL_IDENTITY_NOT_CONNECTED', '已删除的原因码不留文案键');
+});
+
+test('REQ-02 部分币种缺 MID：仍为满足（绿勾、计入满足），说明给提醒并可去配置 MID；其他满足项不带跳转', () => {
+  const lines = prerequisiteLines([
+    { code: 'QUALIFICATION', result: 'SATISFIED', reasonCode: null, params: {} },
+    { code: 'CHANNEL_IDENTITY', result: 'SATISFIED', reasonCode: 'CHANNEL_IDENTITY_PARTIAL',
+      params: { entityNo: 'AE001', paymentMethodCode: 'CARD', mccCode: '5999', currencies: 'EUR,GBP' } }], context);
+  assert.deepEqual(lines.map(line => [line.mark, line.result, line.detail, line.link]), [
+    ['satisfied', 'Satisfied', 'Client 7300000000000000011 and Operating Entity AE001 are qualified.', null],
+    ['satisfied', 'Satisfied', 'Ready to accept payments; no MID under Operating Entity AE001 supports CARD (MCC 5999) in EUR, GBP, so orders in these currencies will fail.',
+      { kind: 'mids', entityNo: 'AE001' }]]);
+  assert.deepEqual(lineCounts(lines), { satisfied: 2, unsatisfied: 0, unknown: 0 }, '部分币种缺 MID 不计入未满足');
+  assert.equal(prerequisiteShortReason('CHANNEL_IDENTITY_PARTIAL', { currencies: 'EUR,GBP' }, context), 'No MID for EUR, GBP');
 });
 
 const capability = (id: string, code: string, status: CapabilityStatus, executionStatus: CapabilityExecutionStatus | null) => ({

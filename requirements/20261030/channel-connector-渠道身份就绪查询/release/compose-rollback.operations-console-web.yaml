@@ -1,0 +1,8 @@
+# REQ-02 渠道身份就绪查询 · mor-test 回滚覆盖文件（阶段 6 准备，2026-10-30；阶段 7 须用户授权，由主会话执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 operations-console-web
+# 只认 sha256（tag 仅供辨认，未改动 :development 或其他 tag）。不加 --remove-orphans。env 与现网运行容器逐键逐值相同（scripts/env_check.sh）。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-req02-rel = main 331d8e0e + 明细账运维 ops-web 18 个文件（只影响 ops-web）+ 本需求 69 个文件（含 Q-4 修订，清单 evidence/source-files.sha256，未提交）。
+services:
+  operations-console-web:
+    image: sha256:5784fa817c471ebce707821dfd4db0727dd28cbe073776e620fb48a9f5d800b4  # 现网 mor-test/operations-console-web:plops-20261030a（dist 291 个文件，明细账运维会话 17:27Z 发布）

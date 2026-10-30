@@ -1,0 +1,45 @@
+{
+ "app": "operations-console",
+ "currentRelease": 30,
+ "liveNamespaces": 28,
+ "repoNamespaces": 28,
+ "newNamespaces": [],
+ "repoKeys": 11720,
+ "liveActiveKeys": 11705,
+ "added": 17,
+ "restored": 0,
+ "sourceChanged": 3,
+ "missingInRepo": 2,
+ "zhImportKeys": 20,
+ "zhMissingForImport": 0,
+ "keepLiveZh": 11702,
+ "refdataZhReplaced": 0,
+ "liveOutdatedZh": 0,
+ "rebaseExpected": 0,
+ "rebaseScope": 432,
+ "outdatedUntouched": 0,
+ "zhChangedNotImported": 0,
+ "byNamespace": {
+  "added": {
+   "commercial": 17
+  },
+  "sourceChanged": {
+   "commercial": 3
+  },
+  "deprecated": {
+   "commercial": 2
+  },
+  "restored": {},
+  "zhImport": {
+   "commercial": 20
+  }
+ },
+ "deprecations": [
+  "commercial.enum.CapabilityPrerequisiteReason.CHANNEL_IDENTITY_NOT_CONNECTED",
+  "commercial.prerequisite.shortReason.CHANNEL_IDENTITY_NOT_CONNECTED"
+ ],
+ "sha256": {
+  "operations-console.release.en.json": "faf2e7e87b32bf44d96a8ef17bc581d71fb8f75a40cc8f8cb91cfbe402cba728",
+  "operations-console.release.zh-CN.delta.json": "d18474734deacaec171a605e29ce6512627517586e5c62da63ed28fdd2f03037"
+ }
+}

@@ -107,6 +107,7 @@ class CapabilityExecutionControlHttpTest extends AbstractCommercialWriteApiTest 
         gate.mockCapability(agreement, CARD_ID, CommercialCodes.Capability.CARD,
             AgreementCapabilityExecutionStatus.SUSPENDED_MANUALLY);
         mockAgreementQualified();
+        mockChannelIdentityReady("USD");
 
         post(capabilityPath("resumption"), resumption(5)).assertOk().assertVersion(6)
             .assertText("executionStatus", AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES.getCode());
@@ -136,6 +137,7 @@ class CapabilityExecutionControlHttpTest extends AbstractCommercialWriteApiTest 
     @Test
     void test_add_clientPendingThenChecked() {
         mockAgreementQualified();
+        mockChannelIdentityReady("USD");
 
         long capabilityId = post(BASE + "/capabilities", AgreementCapabilityBodyBuilder.template()
             .conditions(AgreementCapabilityBodyBuilder.condition(PricingDimension.CURRENCY, "USD")).buildAdd(5)).assertOk()
@@ -175,6 +177,7 @@ class CapabilityExecutionControlHttpTest extends AbstractCommercialWriteApiTest 
     void test_membership_disableAndReinclude() {
         gate.mockCapability(agreement, CARD_ID, CommercialCodes.Capability.CARD, AgreementCapabilityExecutionStatus.ENABLED);
         mockAgreementQualified();
+        mockChannelIdentityReady("USD");
 
         put(capabilityPath(null), membership(5, AgreementCapabilityStatus.DISABLED.getCode())).assertOk().assertVersion(6)
             .assertText("status", AgreementCapabilityStatus.DISABLED.getCode());

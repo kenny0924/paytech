@@ -33,6 +33,12 @@
             <artifactId>paytech-compliance-api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 开通项前置门禁 ④ 的渠道身份就绪查询（HTTP contract only）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-channel-connector-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-mybatis-support</artifactId>

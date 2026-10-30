@@ -55,6 +55,7 @@ class AgreementActivationPrerequisiteHttpTest extends AbstractCommercialWriteApi
         gate.mockCapability(agreement, CARD_ID, CommercialCodes.Capability.CARD,
             AgreementCapabilityExecutionStatus.PENDING_PREREQUISITES);
         mockAgreementQualified();
+        mockChannelIdentityReady("USD");
 
         post(ACTIVATE, transition(5)).assertOk().assertText("status", AgreementStatus.ACTIVE.getCode()).assertVersion(6);
 

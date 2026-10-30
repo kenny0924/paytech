@@ -2,8 +2,6 @@ package com.paytech.channel.connector.service.processor;
 
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -13,85 +11,64 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.paytech.channel.connector.api.ChannelCapabilityCodes;
-import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.channel.connector.core.configuration.ChannelProperties;
-import com.paytech.channel.connector.core.dal.dataobject.*;
-import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.domain.CapabilityView;
 import com.paytech.channel.connector.domain.MidCandidateView;
-import com.paytech.channel.connector.domain.MidCapabilityContext;
-import com.paytech.channel.connector.domainservice.repository.*;
+import com.paytech.channel.connector.domain.OperatingEntityMids;
+import com.paytech.channel.connector.domain.OperatingEntityMids.UsableMid;
+import com.paytech.channel.connector.domainservice.service.OperatingEntityMidService;
 import com.paytech.channel.connector.protocol.domain.ChannelIdentity;
 import com.paytech.channel.connector.protocol.domainservice.service.ChannelService;
+import com.paytech.channel.connector.service.processor.request.MidCriteria;
 import com.paytech.channel.connector.service.processor.request.QueryMidCandidatesRequest;
 
 import lombok.AllArgsConstructor;
 
-/** Routing 的候选查询入口；只读取配置，不承担最终选路或外部访问。 */
+/**
+ * Routing 的候选查询入口；只读取配置，不承担最终选路或外部访问
+ * <li>在只读可重复读事务内经 {@link OperatingEntityMidService} 读取 OE 的账号、MID 与能力，经渠道协议模块的 {@link ChannelService}
+ * 读取渠道，再由 {@link OperatingEntityMids#usable} 筛出可用 MID；固定一致快照，防止账号换绑或主从配置更新被分次读取后混用。</li>
+ * <li>悬空关联、能力冲突或未注册属于配置损坏，抛错而不是返回空候选；空候选是正常业务结果。</li>
+ */
 @Component
 @AllArgsConstructor
 public class QueryMidCandidatesProcessor extends AbstractProcessor<QueryMidCandidatesRequest, List<MidCandidateView>> {
+    private final ChannelService channelService;
     private final ChannelProperties properties;
-    private final ChannelMidRepository mids;
-    private final MidCapabilityRepository capabilities;
-    private final ChannelAccountRepository accounts;
-    private final ChannelService channels;
+    private final OperatingEntityMidService operatingEntityMidService;
     private final PlatformTransactionManager transactionManager;
-    private final MidCapabilityDetailRepository details;
 
-    /** 固定本次查询的一致快照，防止账号换绑或主从配置更新被分次读取后混用。 */
     @Override
     protected List<MidCandidateView> processRequest(QueryMidCandidatesRequest request) {
         var read = new TransactionTemplate(transactionManager);
         read.setReadOnly(true);
         read.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
-        return read.execute(status -> queryCandidates(request));
+        return read.execute(status -> candidates(usableMids(request.getEntityNo()), request.getCriteria()));
     }
 
-    /** 批量读取当前 OE 的账号、MID 和能力，空候选是正常业务结果。 */
-    List<MidCandidateView> queryCandidates(QueryMidCandidatesRequest request) {
-        var accountRows = accounts.findByEntity(request.getEntityNo()).stream()
-            .filter(account -> request.getEntityNo().equals(account.getEntityNo()))
-            .collect(Collectors.toMap(ChannelAccount::getChannelAccountId, Function.identity()));
-        var midRows = mids.findByAccountIds(List.copyOf(accountRows.keySet()));
-        var channelRows =
-            channels.findChannels(accountRows.values().stream().map(ChannelAccount::getChannelId).distinct().toList())
-                .stream().collect(Collectors.toMap(ChannelIdentity::getChannelId, Function.identity()));
-        var eligible = midRows.stream().filter(mid -> eligible(mid, accountRows, channelRows)).toList();
-        var scopeRows = capabilities.findByMidIds(eligible.stream().map(ChannelMid::getMidId).toList());
-        var detailRows =
-            details.findByCapabilityIds(scopeRows.stream().map(MidCapability::getMidCapabilityId).toList());
-        return eligible.stream()
-            .map(mid -> candidate(mid, channelRows.get(mid.getChannelId()), scopeRows, detailRows, request))
+    /** 读取 OE 的账号、MID 与能力及其渠道身份，筛出可用 MID；悬空关联抛 ErrorException。 */
+    List<UsableMid> usableMids(String entityNo) {
+        OperatingEntityMids mids = operatingEntityMidService.loadMids(entityNo);
+        return mids.usable(channelService.findChannels(mids.channelIds()).stream()
+            .collect(Collectors.toMap(ChannelIdentity::getChannelId, Function.identity())));
+    }
+
+    /** 逐个可用 MID 解析本次维度下的能力，没有任何能力命中的 MID 不成为候选。 */
+    List<MidCandidateView> candidates(List<UsableMid> mids, MidCriteria criteria) {
+        return mids.stream().map(mid -> candidate(mid, criteria))
             .filter(candidate -> !candidate.getCapabilities().isEmpty()).toList();
     }
 
-    /** 悬空关联或 Channel/OE 不一致属于配置损坏，不能伪装成没有候选。 */
-    boolean eligible(ChannelMid mid, Map<Long, ChannelAccount> accountRows, Map<Long, ChannelIdentity> channelRows) {
-        var account = accountRows.get(mid.getChannelAccountId());
-        var channel = channelRows.get(mid.getChannelId());
-        if (account == null || channel == null || !Objects.equals(mid.getChannelId(), account.getChannelId())
-            || !Objects.equals(mid.getEntityNo(), account.getEntityNo())) {
-            throw new ErrorException("MID 与渠道账号的 Channel/OE 关系不一致");
-        }
-        return mid.getMidStatus() == ChannelStatus.ACTIVE && account.getAccountStatus() == ChannelStatus.ACTIVE
-            && channel.getChannelStatus() == ChannelStatus.ACTIVE;
-    }
-
     /** 只投影候选身份与有效能力，绝不携带账号参数、Token 或密钥；能力代码在此一处解析为支持操作与金额上下限（D06）。 */
-    MidCandidateView candidate(ChannelMid mid, ChannelIdentity channel, List<MidCapability> scopes,
-        List<MidCapabilityDetail> values, QueryMidCandidatesRequest request) {
-        var midScopes = scopes.stream().filter(scope -> mid.getMidId().equals(scope.getMidId())).toList();
-        var scopeIds = midScopes.stream().map(MidCapability::getMidCapabilityId).collect(Collectors.toSet());
-        var midValues = values.stream().filter(value -> scopeIds.contains(value.getMidCapabilityId())).toList();
+    MidCandidateView candidate(UsableMid usable, MidCriteria criteria) {
+        var mid = usable.getMid();
         var result = new MidCandidateView();
         result.setChannelId(mid.getChannelId());
-        result.setChannelCode(channel.getChannelCode());
+        result.setChannelCode(usable.getChannel().getChannelCode());
         result.setChannelAccountId(mid.getChannelAccountId());
         result.setMidId(mid.getMidId());
-        result.setCapabilities(new MidCapabilityContext(midScopes, midValues).resolve(request.getCriteria(),
-            properties.getCapabilityDefinitions()));
+        result.setCapabilities(usable.capabilityContext().resolve(criteria, properties.getCapabilityDefinitions()));
         project(result);
         return result;
     }

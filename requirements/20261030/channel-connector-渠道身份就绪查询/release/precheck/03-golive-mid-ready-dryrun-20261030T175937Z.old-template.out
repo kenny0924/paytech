@@ -1,0 +1,8 @@
+-- GOLIVE_MID_READY 模板正文字面量替换后只读试跑（mor_channel_connector，root READ ONLY）20261030T175937Z；列：satisfied / out_missing_methods / missing
+AE001  CARD,APPLE_PAY     5999  [USD]    => 0	APPLE_PAY	PAYMENT_METHOD_NOT_READY
+AE001  CARD               5999  []       => 1		NULL
+AE001  CARD               5999  [USD,AED] => 0	CARD	PAYMENT_METHOD_NOT_READY
+AE001  CARD               5816  []       => 0	CARD	PAYMENT_METHOD_NOT_READY
+AE001                     5999  []       => 0		PAYMENT_METHODS_EMPTY
+SA001  CARD               5999  []       => 0	CARD	MID_NOT_FOUND
+AE001 CARD,APPLE_PAY 5999 currencies=NULL => 1		NULL

@@ -10,7 +10,7 @@ import { Loading, QueryFailure, useDetail } from '../tenantAccess/TenantAccessVi
 import {
   capabilityStatusLabel, capabilityToggle, channelButtons, channelPaths, channelRoutes, decodeAccountPage, decodeCapability,
   decodeChannel, decodeDefinitions, decodeMid, decodeMidPage, detailValue, editable, entityNoPattern, hasButton, isId, lifecycleActions,
-  lifecycleStatuses, lifecycleStatusLabel, listFilters, localTime, primaryLifecycleAction,
+  lifecycleStatuses, lifecycleStatusLabel, listFilters, localTime, midListInitialFilters, primaryLifecycleAction,
 } from '../channel/channel';
 import type {
   CapabilityDefinition, Channel, ChannelAccountSummary, ChannelMid, ChannelMidSummary, LifecycleAction, MidCapability,
@@ -30,7 +30,7 @@ export function ChannelMids(props: Props) {
   const parts = location.pathname.replace(/\/$/, '').split('/').slice(3);
   if (parts.length > 1 || (parts.length === 1 && !isId(parts[0]))) return <QueryFailure failure={new ApiError(404, 'NOT_FOUND')} />;
   return <div className="configuration-page channel-page">
-    {parts.length === 1 ? <MidDetail key={parts[0]} midId={parts[0]} {...props} /> : <MidList {...props} />}
+    {parts.length === 1 ? <MidDetail key={parts[0]} midId={parts[0]} {...props} /> : <MidList key={location.search} {...props} />}
   </div>;
 }
 
@@ -38,19 +38,24 @@ interface FilterValues { channelId?: string; entityNo?: string; status?: string;
 type ListStep = { kind: 'create' } | { kind: 'rebind'; mid: Pick<ChannelMid, 'midId' | 'channelId' | 'channelAccountId' | 'entityNo' | 'externalMidCode'> }
   | { kind: 'status'; mid: Pick<ChannelMid, 'midId' | 'externalMidCode'>; action: LifecycleAction } | null;
 
-/** MID 列表（画板 06）：渠道 / OE / 状态 / 外部 MID 前缀筛选；行内详情、改绑账号与当前状态允许的主动作。 */
+/**
+ * MID 列表（画板 06）：渠道 / OE / 状态 / 外部 MID 前缀筛选；行内详情、改绑账号与当前状态允许的主动作。
+ * URL 带合法 entityNo 时作为初始 OE 筛选（商务「去配置 MID」）。
+ */
 function MidList({ resources, onAuthorizationChanged }: Props) {
   const t = useT('channel'), tNav = useT('nav');
   const navigate = useNavigate();
+  const location = useLocation();
+  const [initialFilters] = useState(() => midListInitialFilters(location.search));
   const [form] = Form.useForm<FilterValues>();
   const [step, setStep] = useState<ListStep>(null);
-  const page = usePaging<ChannelMidSummary>(channelPaths.mids, decodeMidPage, {}, { notifyOnError: false });
+  const page = usePaging<ChannelMidSummary>(channelPaths.mids, decodeMidPage, initialFilters, { notifyOnError: false });
   const canManage = hasButton(resources, channelButtons.midManage);
   const done = () => { setStep(null); page.refresh(); };
   return <>
     <div className="page-heading"><h1>{tNav('resource.OPERATIONS_CHANNEL_MIDS')}</h1></div>
     <div className="channel-toolbar">
-      <Form form={form} name="channel-mid-filter" layout="vertical" onFinish={(values: FilterValues) => page.applyFilters(listFilters({ ...values }))}>
+      <Form form={form} name="channel-mid-filter" layout="vertical" initialValues={initialFilters} onFinish={(values: FilterValues) => page.applyFilters(listFilters({ ...values }))}>
         <div className="channel-filters">
           <Form.Item name="channelId" label={t('filter.channel')}><ChannelSelect channelType="PAYMENT" /></Form.Item>
           <Form.Item name="entityNo" label="OE" normalize={(v?: string) => v?.trim().toUpperCase()} rules={[{ pattern: entityNoPattern, message: t('mids.entityNoExample') }]}>
@@ -60,7 +65,7 @@ function MidList({ resources, onAuthorizationChanged }: Props) {
           <Form.Item name="externalMidCode" label={t('channels.externalMid')} rules={[{ max: 128, message: t('form.maxLength', { max: 128 }) }]}>
             <Input allowClear maxLength={128} placeholder={t('mids.prefixMatch')} /></Form.Item>
           <div className="channel-filter-actions"><Button type="primary" htmlType="submit">{t('changes.search')}</Button>
-            <Button onClick={() => { form.resetFields(); page.applyFilters({}); }}>{t('filter.reset')}</Button></div>
+            <Button onClick={() => { form.setFieldsValue({ channelId: undefined, entityNo: undefined, status: undefined, externalMidCode: undefined }); page.applyFilters({}); }}>{t('filter.reset')}</Button></div>
         </div>
       </Form>
       {canManage && <Button type="primary" onClick={() => setStep({ kind: 'create' })}>{t('mids.create')}</Button>}</div>

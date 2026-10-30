@@ -1,0 +1,679 @@
+{
+ "command": "api",
+ "at": "2026-10-30T19:00:37Z",
+ "results": [
+  {
+   "ac": "R",
+   "step": "AE001 批量 6 组 200、逐组回显",
+   "ok": true,
+   "detail": {
+    "status": 200
+   }
+  },
+  {
+   "ac": "R",
+   "step": "CARD × USD × 5999 → ready=True reason=None",
+   "ok": true,
+   "detail": {
+    "currency": "USD",
+    "mccCode": "5999",
+    "paymentMethodCode": "CARD",
+    "ready": true,
+    "reasonCode": null
+   }
+  },
+  {
+   "ac": "R",
+   "step": "APPLE_PAY × USD × 5999 → ready=False reason=PAYMENT_METHOD_NOT_SUPPORTED",
+   "ok": true,
+   "detail": {
+    "currency": "USD",
+    "mccCode": "5999",
+    "paymentMethodCode": "APPLE_PAY",
+    "ready": false,
+    "reasonCode": "PAYMENT_METHOD_NOT_SUPPORTED"
+   }
+  },
+  {
+   "ac": "R",
+   "step": "CARD × AED × 5999 → ready=False reason=CURRENCY_NOT_SUPPORTED",
+   "ok": true,
+   "detail": {
+    "currency": "AED",
+    "mccCode": "5999",
+    "paymentMethodCode": "CARD",
+    "ready": false,
+    "reasonCode": "CURRENCY_NOT_SUPPORTED"
+   }
+  },
+  {
+   "ac": "R",
+   "step": "CARD × USD × 1234 → ready=False reason=MCC_NOT_COVERED",
+   "ok": true,
+   "detail": {
+    "currency": "USD",
+    "mccCode": "1234",
+    "paymentMethodCode": "CARD",
+    "ready": false,
+    "reasonCode": "MCC_NOT_COVERED"
+   }
+  },
+  {
+   "ac": "R",
+   "step": "CARD × USD × 5816 → ready=False reason=PAYMENT_ACTION_NOT_SUPPORTED",
+   "ok": true,
+   "detail": {
+    "currency": "USD",
+    "mccCode": "5816",
+    "paymentMethodCode": "CARD",
+    "ready": false,
+    "reasonCode": "PAYMENT_ACTION_NOT_SUPPORTED"
+   }
+  },
+  {
+   "ac": "R",
+   "step": "CARD × USD × 5999 → ready=True reason=None",
+   "ok": true,
+   "detail": {
+    "currency": "USD",
+    "mccCode": "5999",
+    "paymentMethodCode": "CARD",
+    "ready": true,
+    "reasonCode": null
+   }
+  },
+  {
+   "ac": "R",
+   "step": "SA001 → MID_NOT_FOUND",
+   "ok": true,
+   "detail": {
+    "entityNo": "SA001",
+    "items": [
+     {
+      "currency": "USD",
+      "mccCode": "5999",
+      "paymentMethodCode": "CARD",
+      "ready": false,
+      "reasonCode": "MID_NOT_FOUND"
+     }
+    ]
+   }
+  },
+  {
+   "ac": "R",
+   "step": "币种 * 非法 → 422 VALIDATION_ERROR",
+   "ok": true,
+   "detail": {
+    "status": 422,
+    "code": "VALIDATION_ERROR"
+   }
+  },
+  {
+   "ac": "C",
+   "step": "Client 237573040244891649 经营分类 confirmed + 5999",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "mcc": "5999",
+    "confirmed": true
+   }
+  },
+  {
+   "ac": "C",
+   "step": "Client 237573267559391233 经营分类 confirmed + 5999",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "mcc": "5999",
+    "confirmed": true
+   }
+  },
+  {
+   "ac": "C",
+   "step": "Client 237573382420406273 经营分类 confirmed + 5999",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "mcc": "5999",
+    "confirmed": true
+   }
+  },
+  {
+   "ac": "C",
+   "step": "Client 237573476041465857 经营分类 confirmed + 5999",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "mcc": "5999",
+    "confirmed": true
+   }
+  },
+  {
+   "ac": "C",
+   "step": "Client 237574764993028097 经营分类 confirmed + 5999",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "mcc": "5999",
+    "confirmed": true
+   }
+  },
+  {
+   "ac": "C",
+   "step": "Client 237575207592763393 经营分类 confirmed + 5999",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "mcc": "5999",
+    "confirmed": true
+   }
+  },
+  {
+   "ac": "C",
+   "step": "Client 237610139979456513 经营分类 confirmed + 5999",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "mcc": "5999",
+    "confirmed": true
+   }
+  },
+  {
+   "ac": "C",
+   "step": "不存在的 Client → 404",
+   "ok": true,
+   "detail": 404
+  },
+  {
+   "ac": "C",
+   "step": "Client ID 非法 → 400",
+   "ok": true,
+   "detail": 400
+  },
+  {
+   "ac": "G",
+   "step": "CL-F1105E 检查前置 200",
+   "ok": true,
+   "detail": {
+    "status": 200
+   }
+  },
+  {
+   "ac": "G",
+   "step": "CL-F1105E CARD ④ = 预测SKIPPED/AWAITING_PRICE（None）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "entityNo": "AE001"
+    },
+    "reasonCode": "AWAITING_PRICE",
+    "result": "SKIPPED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "CL-F1105E CARD 执行状态与逐项结论一致（SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-001 检查前置 200",
+   "ok": true,
+   "detail": {
+    "status": 200
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-001 CARD partial：满足但提醒缺 MID 币种 AED，执行状态保持 ENABLED",
+   "ok": true,
+   "detail": {
+    "item": {
+     "code": "CHANNEL_IDENTITY",
+     "params": {
+      "currencies": "AED",
+      "mccCode": "5999",
+      "entityNo": "AE001",
+      "paymentMethodCode": "CARD"
+     },
+     "reasonCode": "CHANNEL_IDENTITY_PARTIAL",
+     "result": "SATISFIED"
+    },
+    "executionStatus": "ENABLED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-001 CARD ④ = 预测SATISFIED/CHANNEL_IDENTITY_PARTIAL（AED）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "currencies": "AED",
+     "mccCode": "5999",
+     "entityNo": "AE001",
+     "paymentMethodCode": "CARD"
+    },
+    "reasonCode": "CHANNEL_IDENTITY_PARTIAL",
+    "result": "SATISFIED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-001 CARD 执行状态与逐项结论一致（ENABLED）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "ENABLED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-001 APPLE_PAY ④ = 预测UNSATISFIED/PAYMENT_METHOD_NOT_SUPPORTED（AED,USD）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "currencies": "AED,USD",
+     "mccCode": "5999",
+     "entityNo": "AE001",
+     "paymentMethodCode": "APPLE_PAY"
+    },
+    "reasonCode": "PAYMENT_METHOD_NOT_SUPPORTED",
+    "result": "UNSATISFIED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-001 APPLE_PAY 执行状态与逐项结论一致（SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-002 检查前置 200",
+   "ok": true,
+   "detail": {
+    "status": 200
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-002 CARD ④ = 预测SKIPPED/AWAITING_PRICE（None）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "entityNo": "AE001"
+    },
+    "reasonCode": "AWAITING_PRICE",
+    "result": "SKIPPED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-002 CARD 执行状态与逐项结论一致（SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-002 GOOGLE_PAY ④ = 预测SKIPPED/AWAITING_PRICE（None）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "entityNo": "AE001"
+    },
+    "reasonCode": "AWAITING_PRICE",
+    "result": "SKIPPED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO-CL-002 GOOGLE_PAY 执行状态与逐项结论一致（SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-101 检查前置 200",
+   "ok": true,
+   "detail": {
+    "status": 200
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-101 CARD ④ = 预测UNSATISFIED/CURRENCY_NOT_SUPPORTED（AED）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "currencies": "AED",
+     "mccCode": "5999",
+     "entityNo": "AE001",
+     "paymentMethodCode": "CARD"
+    },
+    "reasonCode": "CURRENCY_NOT_SUPPORTED",
+    "result": "UNSATISFIED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-101 CARD 执行状态与逐项结论一致（SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-102 检查前置 200",
+   "ok": true,
+   "detail": {
+    "status": 200
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-102 APPLE_PAY ④ = 预测SKIPPED/AWAITING_PRICE（None）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "entityNo": "AE001"
+    },
+    "reasonCode": "AWAITING_PRICE",
+    "result": "SKIPPED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-102 APPLE_PAY 执行状态与逐项结论一致（SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-102 CARD ④ = 预测SKIPPED/AWAITING_PRICE（None）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "entityNo": "AE001"
+    },
+    "reasonCode": "AWAITING_PRICE",
+    "result": "SKIPPED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-102 CARD 执行状态与逐项结论一致（SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-103 检查前置 200",
+   "ok": true,
+   "detail": {
+    "status": 200
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-103 CARD partial：满足但提醒缺 MID 币种 AED，执行状态保持 ENABLED",
+   "ok": true,
+   "detail": {
+    "item": {
+     "code": "CHANNEL_IDENTITY",
+     "params": {
+      "currencies": "AED",
+      "mccCode": "5999",
+      "entityNo": "AE001",
+      "paymentMethodCode": "CARD"
+     },
+     "reasonCode": "CHANNEL_IDENTITY_PARTIAL",
+     "result": "SATISFIED"
+    },
+    "executionStatus": "ENABLED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-103 CARD ④ = 预测SATISFIED/CHANNEL_IDENTITY_PARTIAL（AED）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "currencies": "AED",
+     "mccCode": "5999",
+     "entityNo": "AE001",
+     "paymentMethodCode": "CARD"
+    },
+    "reasonCode": "CHANNEL_IDENTITY_PARTIAL",
+    "result": "SATISFIED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-103 CARD 执行状态与逐项结论一致（ENABLED）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "ENABLED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-103 GOOGLE_PAY ④ = 预测SKIPPED/AWAITING_PRICE（None）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "entityNo": "AE001"
+    },
+    "reasonCode": "AWAITING_PRICE",
+    "result": "SKIPPED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-103 GOOGLE_PAY 执行状态与逐项结论一致（SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-103 STC_PAY ④ = 预测SKIPPED/AWAITING_PRICE（None）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "entityNo": "AE001"
+    },
+    "reasonCode": "AWAITING_PRICE",
+    "result": "SKIPPED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-103 STC_PAY 执行状态与逐项结论一致（SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-901 检查前置 200",
+   "ok": true,
+   "detail": {
+    "status": 200
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-901 CARD ④ = 预测SKIPPED/AWAITING_PRICE（None）",
+   "ok": true,
+   "detail": {
+    "code": "CHANNEL_IDENTITY",
+    "params": {
+     "entityNo": "AE001"
+    },
+    "reasonCode": "AWAITING_PRICE",
+    "result": "SKIPPED"
+   }
+  },
+  {
+   "ac": "G",
+   "step": "DEMO2-CL-901 CARD 执行状态与逐项结论一致（SUSPENDED_BY_PREREQUISITE）",
+   "ok": true,
+   "detail": {
+    "executionStatus": "SUSPENDED_BY_PREREQUISITE"
+   }
+  },
+  {
+   "ac": "Q",
+   "step": "GOLIVE_MID_READY {'entityNo': 'AE001', 'paymentMethods': 'CARD,APPLE_PAY', 'mccCode': '5999', 'currencies': 'USD'} → 0/APPLE_PAY/PAYMENT_METHOD_NOT_READY",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "row": {
+     "satisfied": "0",
+     "out_missing_methods": "APPLE_PAY",
+     "missing": "PAYMENT_METHOD_NOT_READY"
+    }
+   }
+  },
+  {
+   "ac": "Q",
+   "step": "GOLIVE_MID_READY {'entityNo': 'AE001', 'paymentMethods': 'CARD', 'mccCode': '5999', 'currencies': ''} → 1/∅/None",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "row": {
+     "satisfied": "1",
+     "out_missing_methods": "",
+     "missing": null
+    }
+   }
+  },
+  {
+   "ac": "Q",
+   "step": "GOLIVE_MID_READY {'entityNo': 'AE001', 'paymentMethods': 'CARD', 'mccCode': '5999'} → 1/∅/None",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "row": {
+     "satisfied": "1",
+     "out_missing_methods": "",
+     "missing": null
+    }
+   }
+  },
+  {
+   "ac": "Q",
+   "step": "GOLIVE_MID_READY {'entityNo': 'AE001', 'paymentMethods': 'CARD,APPLE_PAY', 'mccCode': '5999'} → 0/APPLE_PAY/PAYMENT_METHOD_NOT_READY",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "row": {
+     "satisfied": "0",
+     "out_missing_methods": "APPLE_PAY",
+     "missing": "PAYMENT_METHOD_NOT_READY"
+    }
+   }
+  },
+  {
+   "ac": "Q",
+   "step": "GOLIVE_MID_READY {'entityNo': 'AE001', 'paymentMethods': 'CARD', 'mccCode': '5999', 'currencies': 'USD,AED'} → 1/∅/None",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "row": {
+     "satisfied": "1",
+     "out_missing_methods": "",
+     "missing": null
+    }
+   }
+  },
+  {
+   "ac": "Q",
+   "step": "GOLIVE_MID_READY {'entityNo': 'SA001', 'paymentMethods': 'CARD', 'mccCode': '5999', 'currencies': ''} → 0/CARD/MID_NOT_FOUND",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "row": {
+     "satisfied": "0",
+     "out_missing_methods": "CARD",
+     "missing": "MID_NOT_FOUND"
+    }
+   }
+  }
+ ],
+ "data": {
+  "startedUtc": "2026-10-30T19:00:07Z",
+  "readiness": [
+   {
+    "currency": "USD",
+    "mccCode": "5999",
+    "paymentMethodCode": "CARD",
+    "ready": true,
+    "reasonCode": null
+   },
+   {
+    "currency": "USD",
+    "mccCode": "5999",
+    "paymentMethodCode": "APPLE_PAY",
+    "ready": false,
+    "reasonCode": "PAYMENT_METHOD_NOT_SUPPORTED"
+   },
+   {
+    "currency": "AED",
+    "mccCode": "5999",
+    "paymentMethodCode": "CARD",
+    "ready": false,
+    "reasonCode": "CURRENCY_NOT_SUPPORTED"
+   },
+   {
+    "currency": "USD",
+    "mccCode": "1234",
+    "paymentMethodCode": "CARD",
+    "ready": false,
+    "reasonCode": "MCC_NOT_COVERED"
+   },
+   {
+    "currency": "USD",
+    "mccCode": "5816",
+    "paymentMethodCode": "CARD",
+    "ready": false,
+    "reasonCode": "PAYMENT_ACTION_NOT_SUPPORTED"
+   },
+   {
+    "currency": "USD",
+    "mccCode": "5999",
+    "paymentMethodCode": "CARD",
+    "ready": true,
+    "reasonCode": null
+   }
+  ]
+ },
+ "pass": 57,
+ "fail": 0
+}

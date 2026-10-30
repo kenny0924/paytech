@@ -1,0 +1,15 @@
+# 阶段 6 测试摘要（候选树 Code-MoR-req02-rel；只用 mor-local-*）
+## 第一轮（17:57Z 快照，2026-10-30T18:00:44Z）
+channel-connector: [INFO] Tests run: 404, Failures: 0, Errors: 0, Skipped: 0 
+client-master: [INFO] Tests run: 181, Failures: 0, Errors: 0, Skipped: 0 
+commercial: [INFO] Tests run: 252, Failures: 0, Errors: 0, Skipped: 0 
+arch-rules: [INFO] Tests run: 70, Failures: 0, Errors: 0, Skipped: 0 [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
+## 第二轮（Q-4 修订迁入后，2026-10-30T18:20:18Z；channel-connector / client-master 源码未变，不重跑）
+commercial: [INFO] Tests run: 253, Failures: 0, Errors: 0, Skipped: 0  [INFO] BUILD SUCCESS
+arch-rules: [INFO] Tests run: 70, Failures: 0, Errors: 0, Skipped: 0 [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0 
+reactor test-compile: 126 模块 [INFO] BUILD SUCCESS
+ops-web tsc --noEmit: exit 0
+ops-web npm test（候选树原样）: ℹ tests 1705 ℹ pass 1704 ℹ fail 1  —— 唯一失败为 financeWorkflow.test.ts 能力清单对照（读仓库内 Platform console-resource-capabilities.json，plops 把 OPERATIONS_FINANCE_POSTING_OPS 加在 Platform 文件里）
+ops-web npm test（临时放入 plops 的 Platform 能力清单，复跑后已还原）: ℹ tests 1705 ℹ pass 1705 ℹ fail 0 
+ops-web npm run build: exit 0（dist 291 个文件）
+ops-web i18n:export-source: Total: 27 namespaces, 11291 keys

@@ -32,7 +32,9 @@ import com.paytech.commercial.domainservice.service.impl.BusinessChangeHistoryWr
 import com.paytech.commercial.domainservice.service.impl.PricingProfileServiceImpl;
 import com.paytech.commercial.service.processor.ActivateAgreementProcessor;
 import com.paytech.commercial.service.processor.ActivatePricingProfileProcessor;
+import com.paytech.commercial.integration.ChannelIdentityReadinessClient;
 import com.paytech.commercial.integration.CheckoutQualificationClient;
+import com.paytech.commercial.integration.ClientClassificationClient;
 import com.paytech.commercial.service.processor.AddAgreementCapabilityProcessor;
 import com.paytech.commercial.service.processor.CheckCapabilityPrerequisitesProcessor;
 import com.paytech.commercial.service.processor.CommercialTermLoader;
@@ -210,14 +212,15 @@ public class CommercialWriteConfiguration {
     @Bean
     public CheckCapabilityPrerequisitesProcessor checkCapabilityPrerequisitesProcessor(Clock clock,
         CommercialTermLoader termLoader, AgreementService agreementService, AgreementRepository agreementRepository,
-        CheckoutQualificationClient qualificationClient, ProductCapabilityRepository productCapabilityRepository,
+        CheckoutQualificationClient qualificationClient, ClientClassificationClient classificationClient,
+        ChannelIdentityReadinessClient readinessClient, ProductCapabilityRepository productCapabilityRepository,
         CommercialTermPlanRepository commercialTermPlanRepository,
         AgreementCapabilityRepository agreementCapabilityRepository,
         BusinessChangeRecordRepository businessChangeRecordRepository,
         CommercialTermVersionRepository commercialTermVersionRepository,
         AgreementCapabilityLimitRepository agreementCapabilityLimitRepository) {
         return new CheckCapabilityPrerequisitesProcessor(clock, termLoader, agreementService, agreementRepository,
-            qualificationClient, productCapabilityRepository, commercialTermPlanRepository, agreementCapabilityRepository,
+            qualificationClient, classificationClient, readinessClient, productCapabilityRepository, commercialTermPlanRepository, agreementCapabilityRepository,
             businessChangeRecordRepository, commercialTermVersionRepository, agreementCapabilityLimitRepository);
     }
 

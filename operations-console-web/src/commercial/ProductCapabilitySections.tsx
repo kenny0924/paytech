@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import type { ReactNode } from 'react';
 import { Alert, Button, Empty, Space, Spin, Table, Tag } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined, MinusCircleOutlined, QuestionCircleOutlined, SyncOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, MinusCircleOutlined, SyncOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { joinList, localTime } from './commercial';
 import type { Agreement, AgreementCapability, CapabilityPrerequisites } from './commercial';
@@ -17,6 +17,7 @@ import type { CatalogCapability, CatalogProduct } from './commercialConsole';
 import { capabilityDisplayName, productFootnote, productSections, sectionTitle, showEntityColumn } from './productCapabilities';
 import type { ProductSection } from './productCapabilities';
 import type { CapabilityPrerequisitesState } from './useCapabilityPrerequisites';
+import { channelRoutes } from '../channel/channel';
 import { clientRoutes } from '../masterData/clients';
 import { masterDataRoutes } from '../masterData/masterData';
 import { useT } from '../i18n/react';
@@ -31,6 +32,8 @@ export interface CapabilityGateProps {
   onResume: (capability: AgreementCapability) => void;
   /** 「去定价」：切到本合同的定价页签 */
   onGoPricing: () => void;
+  /** 当前运营可打开 MID 页面：否则渠道身份不满足时不显示「去配置 MID」 */
+  canViewMids: boolean;
 }
 
 /**
@@ -116,7 +119,8 @@ function ProductBlock({ section, entityColumn, catalog, definitions, canAdd, onA
           onExpand: (open, capability) => row.toggle(capability.agreementCapabilityId, open),
           rowExpandable: capability => actions(capability).expandable,
           expandedRowRender: capability => <PrerequisitePanel agreement={agreement} capability={capability}
-            checked={prerequisites.fresh.get(capability.agreementCapabilityId)} prerequisites={prerequisites} onGoPricing={gate.onGoPricing} />,
+            checked={prerequisites.fresh.get(capability.agreementCapabilityId)} prerequisites={prerequisites} onGoPricing={gate.onGoPricing}
+            canViewMids={gate.canViewMids} />,
         }}
         columns={[
           { title: t('productSections.column.capability'), width: 190, render: (_, item) => <div className="commercial-cell">
@@ -148,7 +152,7 @@ function lapsedReason(agreement: Agreement, capability: AgreementCapability, che
   if (checked?.executionStatus !== 'SUSPENDED_BY_PREREQUISITE') return null;
   const blocking = checked.checks.find(check => check.result === 'UNSATISFIED');
   return blocking?.reasonCode ? prerequisiteShortReason(blocking.reasonCode, blocking.params,
-    { clientId: agreement.clientId, entityNo: capability.entityNo, agreementStatus: agreement.status }) : null;
+    { clientId: agreement.clientId, entityNo: capability.entityNo, agreementStatus: agreement.status }, blocking.code) : null;
 }
 
 /** 本地时间 HH:mm（「上次检查」「核对于」）。 */
@@ -157,16 +161,16 @@ function clockTime(value: Date): string {
 }
 
 const markIcons: Readonly<Record<PrerequisiteMark, ReactNode>> = {
-  satisfied: <CheckCircleOutlined />, unsatisfied: <CloseCircleOutlined />, unknown: <QuestionCircleOutlined />, skipped: <MinusCircleOutlined />,
+  satisfied: <CheckCircleOutlined />, unsatisfied: <CloseCircleOutlined />, unknown: <ExclamationCircleOutlined />, skipped: <MinusCircleOutlined />,
 };
 
 /**
  * 行内展开区「还差什么」：头部摘要（核对时间、满足 / 未满足 / 检查失败数、按执行状态的结尾说明），逐项（图标、名称、说明、跳转链接）；
  * 核对中、失败与手动暂停各有提示。
  */
-function PrerequisitePanel({ agreement, capability, checked, prerequisites, onGoPricing }: {
+function PrerequisitePanel({ agreement, capability, checked, prerequisites, onGoPricing, canViewMids }: {
   agreement: Agreement; capability: AgreementCapability; checked: CapabilityPrerequisites | undefined; prerequisites: CapabilityPrerequisitesState;
-  onGoPricing: () => void;
+  onGoPricing: () => void; canViewMids: boolean;
 }) {
   const t = useT('commercial'), tCommon = useT('common');
   const lines = checked ? prerequisiteLines(checked.checks, { clientId: agreement.clientId, entityNo: capability.entityNo, agreementStatus: agreement.status }) : [];
@@ -190,22 +194,24 @@ function PrerequisitePanel({ agreement, capability, checked, prerequisites, onGo
       <span className="cc-prereq-icon" role="img" aria-label={line.result} title={line.result}>{markIcons[line.mark]}</span>
       <span className="cc-prereq-name">{line.title}</span>
       <span className="cc-prereq-detail">{line.detail}</span>
-      <PrerequisiteLinkButton line={line} onGoPricing={onGoPricing} onRecheck={() => void prerequisites.run()} loading={prerequisites.loading} />
+      <PrerequisiteLinkButton line={line} onGoPricing={onGoPricing} onRecheck={() => void prerequisites.run()} loading={prerequisites.loading}
+        canViewMids={canViewMids} />
     </li>)}</ul>}
   </div>;
 }
 
-/** 前置行右侧的跳转：Client / OE 详情、去定价、重新检查。 */
-function PrerequisiteLinkButton({ line, onGoPricing, onRecheck, loading }: {
-  line: PrerequisiteLine; onGoPricing: () => void; onRecheck: () => void; loading: boolean;
+/** 前置行右侧的跳转：Client / OE 详情、去定价、去配置 MID（按 OE 筛选，无 MID 页面时不显示）、重新检查。 */
+function PrerequisiteLinkButton({ line, onGoPricing, onRecheck, loading, canViewMids }: {
+  line: PrerequisiteLine; onGoPricing: () => void; onRecheck: () => void; loading: boolean; canViewMids: boolean;
 }) {
   const t = useT('commercial');
   const navigate = useNavigate();
   const link: PrerequisiteLink | null = line.link;
-  if (!link) return <span />;
+  if (!link || (link.kind === 'mids' && !canViewMids)) return <span />;
   const go = () => {
     if (link.kind === 'client') void navigate(clientRoutes.detail(link.clientId));
     else if (link.kind === 'entity') void navigate(masterDataRoutes.entity(link.entityNo));
+    else if (link.kind === 'mids') void navigate(channelRoutes.midsOfEntity(link.entityNo));
     else if (link.kind === 'pricing') onGoPricing();
     else onRecheck();
   };

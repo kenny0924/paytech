@@ -28,8 +28,8 @@ import lombok.Setter;
 
 /**
  * 一次开通项前置核对的上下文（开通项前置门禁 technique.md §7、§9）：合同、BCR Root、开通项与条件、各商业条款方案的 ACTIVE 版本价格、
- * compliance 资格结论，以及构造时一次算出的逐开通项判定
- * <li>Processor 在合同锁内、事务外读取本库事实并完成资格查询后一次构造；判定是纯计算，不访问数据库或外部服务。</li>
+ * compliance 资格结论、渠道身份事实（REQ-02 technique.md §10.2），以及构造时一次算出的逐开通项判定
+ * <li>Processor 在合同锁内、事务外读取本库事实并完成资格与渠道身份查询后一次构造；判定是纯计算，不访问数据库或外部服务。</li>
  * <li>状态规则：SUSPENDED_MANUALLY 不触碰；任一项 UNKNOWN 不迁移；全部满足 → ENABLED；ENABLED 遇明确不满足 → SUSPENDED_BY_PREREQUISITE；
  * PENDING_PREREQUISITES 不满足时保持。</li>
  * <li>root 与开通项在保存成功后由 Repository 同步为新值；事务回滚后整体丢弃。</li>
@@ -72,17 +72,18 @@ public class CapabilityPrerequisiteContext {
      * @param limits 这些开通项的约束行
      * @param termCoverages 合同各商业条款方案的 ACTIVE 版本价格
      * @param qualifications 每个资格主体的结论；资格查询失败时为 null
+     * @param channelIdentity Client 主 MCC 与各 OE 的渠道身份就绪结论
      */
     public CapabilityPrerequisiteContext(Agreement agreement, BusinessChangeRecord root, Instant now,
         List<CapabilityAcceptance> capabilities, List<AgreementCapabilityLimit> limits, List<TermCoverage> termCoverages,
-        Map<QualificationSubject, Boolean> qualifications) {
+        Map<QualificationSubject, Boolean> qualifications, ChannelIdentityFacts channelIdentity) {
         this.agreement = agreement;
         this.root = root;
         this.now = now;
         this.limits = List.copyOf(limits);
         List<CapabilityPrerequisiteDecision> computed = new ArrayList<>();
         for (CapabilityAcceptance capability : capabilities) {
-            computed.add(decide(capability, termCoverages, qualifications));
+            computed.add(decide(capability, termCoverages, qualifications, channelIdentity));
         }
         this.decisions = List.copyOf(computed);
     }
@@ -104,6 +105,34 @@ public class CapabilityPrerequisiteContext {
             }
         }
         return List.copyOf(subjects);
+    }
+
+    /**
+     * ④ 需要查询渠道身份的开通项：成员资格 ACTIVE、支付方式类、且价格已覆盖至少一个币种；没有时无需查询
+     *
+     * @param capabilities 合同全部开通项（含目录与接受条件）
+     * @param termCoverages 合同各商业条款方案的 ACTIVE 版本价格覆盖
+     * @return 按输入顺序的开通项
+     */
+    public static List<CapabilityAcceptance> channelIdentitySubjects(List<CapabilityAcceptance> capabilities,
+        List<TermCoverage> termCoverages) {
+        return capabilities.stream().filter(capability -> capability.member()
+            && capability.kind() == CapabilityKind.PAYMENT_METHOD && !coveredCurrencies(capability, termCoverages).isEmpty())
+            .toList();
+    }
+
+    /**
+     * 开通项的已覆盖币种：与其种类相关、有 ACTIVE 版本的方案中价格已完整覆盖的币种并集（字典序）
+     *
+     * @param capability 开通项
+     * @param termCoverages 合同各商业条款方案的 ACTIVE 版本价格覆盖
+     * @return 已覆盖币种；没有时为空
+     */
+    public static List<String> coveredCurrencies(CapabilityAcceptance capability, List<TermCoverage> termCoverages) {
+        long capabilityId = capability.capability().getAgreementCapabilityId();
+        return termCoverages.stream()
+            .filter(coverage -> coverage.relevantTo(capability.kind()) && coverage.getActiveVersion() != null)
+            .flatMap(coverage -> coverage.coveredCurrencies(capabilityId).stream()).distinct().sorted().toList();
     }
 
     /** 需要迁移执行状态的判定。 */
@@ -129,14 +158,14 @@ public class CapabilityPrerequisiteContext {
 
     /** 单个开通项的逐项结论与目标执行状态；成员资格 DISABLED 不检查、不迁移。 */
     CapabilityPrerequisiteDecision decide(CapabilityAcceptance acceptance, List<TermCoverage> termCoverages,
-        Map<QualificationSubject, Boolean> qualifications) {
+        Map<QualificationSubject, Boolean> qualifications, ChannelIdentityFacts channelIdentity) {
         AgreementCapability capability = acceptance.capability();
         if (!acceptance.member()) {
             return new CapabilityPrerequisiteDecision(capability, acceptance.kind(), capability.getExecutionStatus(),
                 List.of());
         }
         List<CapabilityPrerequisiteDecision.Check> checks = List.of(qualification(capability, qualifications),
-            agreementTerm(acceptance, termCoverages), channelIdentity(acceptance.kind()));
+            agreementTerm(acceptance, termCoverages), channelIdentity(acceptance, termCoverages, channelIdentity));
         return new CapabilityPrerequisiteDecision(capability, acceptance.kind(),
             target(capability.getExecutionStatus(), checks), checks);
     }
@@ -227,11 +256,73 @@ public class CapabilityPrerequisiteContext {
         return params;
     }
 
-    /** ④：本期不接入，支付方式类标注未接入，其他种类不适用；均按满足处理。 */
-    static CapabilityPrerequisiteDecision.Check channelIdentity(CapabilityKind kind) {
-        String reason = kind == CapabilityKind.PAYMENT_METHOD ? CapabilityPrerequisiteReasons.CHANNEL_IDENTITY_NOT_CONNECTED
-            : CapabilityPrerequisiteReasons.NOT_APPLICABLE;
-        return check(CapabilityPrerequisiteCode.CHANNEL_IDENTITY, CapabilityPrerequisiteResult.SKIPPED, reason, Map.of());
+    /**
+     * ④：支付方式类开通项在其 OE 下按运行期选 MID 同一口径就绪（REQ-02 technique.md §10.2）；其他种类不适用
+     * <li>价格尚未覆盖任何币种时等待价格（按满足处理，② 已说明缺价格）；查询失败为 UNKNOWN；Client 主 MCC 未确认为不满足。</li>
+     */
+    CapabilityPrerequisiteDecision.Check channelIdentity(CapabilityAcceptance acceptance, List<TermCoverage> termCoverages,
+        ChannelIdentityFacts facts) {
+        CapabilityPrerequisiteCode code = CapabilityPrerequisiteCode.CHANNEL_IDENTITY;
+        if (acceptance.kind() != CapabilityKind.PAYMENT_METHOD) {
+            return check(code, CapabilityPrerequisiteResult.SKIPPED, CapabilityPrerequisiteReasons.NOT_APPLICABLE, Map.of());
+        }
+        String entityNo = acceptance.capability().getEntityNo();
+        List<String> currencies = coveredCurrencies(acceptance, termCoverages);
+        if (currencies.isEmpty()) {
+            return check(code, CapabilityPrerequisiteResult.SKIPPED, CapabilityPrerequisiteReasons.AWAITING_PRICE,
+                Map.of("entityNo", entityNo));
+        }
+        if (facts.unavailable(entityNo)) {
+            return check(code, CapabilityPrerequisiteResult.UNKNOWN, CapabilityPrerequisiteReasons.CHECK_UNAVAILABLE, Map.of());
+        }
+        if (facts.mccCode() == null) {
+            return unsatisfied(code, CapabilityPrerequisiteReasons.CLIENT_MCC_MISSING,
+                Map.of("clientId", Long.toString(agreement.getClientId())));
+        }
+        return channelReadiness(acceptance, currencies, facts);
+    }
+
+    /**
+     * ④ 的逐币种结论（Q-4 修订：任一币种就绪即满足）
+     * <li>至少一个已覆盖币种就绪：SATISFIED；另有不就绪币种时带 CHANNEL_IDENTITY_PARTIAL 与参数，全部就绪时原因为空。</li>
+     * <li>全部不就绪：UNSATISFIED，取字典序第一个不就绪币种的原因；参数 currencies 列出全部不就绪币种。</li>
+     */
+    static CapabilityPrerequisiteDecision.Check channelReadiness(CapabilityAcceptance acceptance, List<String> currencies,
+        ChannelIdentityFacts facts) {
+        CapabilityPrerequisiteCode code = CapabilityPrerequisiteCode.CHANNEL_IDENTITY;
+        String entityNo = acceptance.capability().getEntityNo();
+        String paymentMethodCode = acceptance.catalog().getPaymentMethodCode();
+        List<ChannelIdentityReadiness> notReady = new ArrayList<>();
+        for (String currency : currencies) {
+            ChannelIdentityReadiness readiness = facts.readiness(entityNo, paymentMethodCode, currency);
+            if (readiness == null) {
+                return check(code, CapabilityPrerequisiteResult.UNKNOWN, CapabilityPrerequisiteReasons.CHECK_UNAVAILABLE,
+                    Map.of());
+            }
+            if (!readiness.ready()) {
+                notReady.add(readiness);
+            }
+        }
+        if (notReady.isEmpty()) {
+            return check(code, CapabilityPrerequisiteResult.SATISFIED, null, Map.of());
+        }
+        Map<String, String> params = readinessGapParams(entityNo, paymentMethodCode, facts.mccCode(), notReady);
+        if (notReady.size() < currencies.size()) {
+            return check(code, CapabilityPrerequisiteResult.SATISFIED, CapabilityPrerequisiteReasons.CHANNEL_IDENTITY_PARTIAL,
+                params);
+        }
+        return unsatisfied(code, notReady.getFirst().reasonCode(), params);
+    }
+
+    /** ④ 缺口的文案参数：OE、支付方式、MCC 与不就绪币种（字典序逗号分隔）。 */
+    static Map<String, String> readinessGapParams(String entityNo, String paymentMethodCode, String mccCode,
+        List<ChannelIdentityReadiness> notReady) {
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("entityNo", entityNo);
+        params.put("paymentMethodCode", paymentMethodCode);
+        params.put("mccCode", mccCode);
+        params.put("currencies", String.join(",", notReady.stream().map(readiness -> readiness.item().currency()).toList()));
+        return params;
     }
 
     /** 当前时刻在半开区间 [from, to) 内；空起点视为未生效。 */
@@ -272,6 +363,9 @@ public class CapabilityPrerequisiteContext {
         /** 未被完整覆盖的开通项 → 未覆盖的币种（字典序；无法归到币种时为空列表） */
         private final Map<Long, List<String>> uncoveredCurrencies;
 
+        /** 成员相关开通项 → 已完整覆盖的币种（字典序；没有时为空列表），④ 只核对这些币种 */
+        private final Map<Long, List<String>> coveredCurrencies;
+
         /**
          * 构造方案覆盖事实
          *
@@ -280,14 +374,17 @@ public class CapabilityPrerequisiteContext {
          * @param activeVersion ACTIVE 版本，可空
          * @param coveredCapabilityIds 被完整覆盖的开通项 ID
          * @param uncoveredCurrencies 未被完整覆盖的开通项及其未覆盖的币种
+         * @param coveredCurrencies 成员相关开通项及其已覆盖的币种
          */
         public TermCoverage(String termType, Set<CapabilityKind> kinds, CommercialTermVersion activeVersion,
-            Set<Long> coveredCapabilityIds, Map<Long, List<String>> uncoveredCurrencies) {
+            Set<Long> coveredCapabilityIds, Map<Long, List<String>> uncoveredCurrencies,
+            Map<Long, List<String>> coveredCurrencies) {
             this.termType = termType;
             this.kinds = Set.copyOf(kinds);
             this.activeVersion = activeVersion;
             this.coveredCapabilityIds = Set.copyOf(coveredCapabilityIds);
             this.uncoveredCurrencies = Map.copyOf(uncoveredCurrencies);
+            this.coveredCurrencies = Map.copyOf(coveredCurrencies);
         }
 
         /** 方案计费事件挂接了该种类。 */
@@ -298,6 +395,11 @@ public class CapabilityPrerequisiteContext {
         /** 该开通项未覆盖的币种；完整覆盖、未计算或无法归到币种时为空列表。 */
         List<String> uncoveredCurrencies(long agreementCapabilityId) {
             return uncoveredCurrencies.getOrDefault(agreementCapabilityId, List.of());
+        }
+
+        /** 该开通项已覆盖的币种；没有 ACTIVE 版本或没有覆盖时为空列表。 */
+        List<String> coveredCurrencies(long agreementCapabilityId) {
+            return coveredCurrencies.getOrDefault(agreementCapabilityId, List.of());
         }
 
         /** 有 ACTIVE 版本且完整覆盖该开通项。 */

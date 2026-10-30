@@ -1,0 +1,11 @@
+channel-connector-service sha256:f330c4ae93bfee95438ed9df924bbf7a8905d57fa3139b8043454c02463d47e1 ["mor-test/channel-connector-service:req02-20261030a"] created=2026-10-30T18:01:06.619835799Z
+client-master-service sha256:df13cc47d936b51abaa766bafa30df8ca8f1776677f46b831656b87a54d7ef1f ["mor-test/client-master-service:req02-20261030a"] created=2026-10-30T18:01:15.625187054Z
+commercial-service sha256:2be844e7a163ed47dc5ecce840a9cee263958e1938c568878ea49da22342431f ["mor-test/commercial-service:req02-20261030b"] created=2026-10-30T18:21:01.353654547Z
+operations-console-web sha256:bbc03d33854e65dadbea4e5754e4fb7ef4aea3e49d4297d23fa1493b7310d486 ["mor-test/operations-console-web:req02-20261030b"] created=2026-10-30T18:21:04.821407715Z
+
+# channel-connector / client-master（candidate/，a）
+f18d024129d7b2e530cd9966cd291cc28727451c6cb34fb750be0b047f3d2a8d  channel-connector-service.jar
+ca97482e644a5c6eceb5e6415ea974d0e35285ab7bf531c93f89ee9469788209  client-master-service.jar
+# commercial（candidate-b/，b）
+faffac5b9f3275e670ab22e629db60dbe63734395e9a71cc82021c2f6c3f1c4a  commercial-service.jar
+# 已构建但不发布：commercial a 913388dc…、ops-web a 46ac5a73…（Q-4 修订前）

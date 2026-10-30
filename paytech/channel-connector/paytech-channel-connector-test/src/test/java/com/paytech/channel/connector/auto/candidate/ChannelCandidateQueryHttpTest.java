@@ -15,12 +15,15 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import com.paytech.channel.connector.api.ChannelCapabilityCodes;
 import com.paytech.channel.connector.api.candidate.ChannelCandidateQueryApi;
 import com.paytech.channel.connector.api.candidate.request.QueryMidCandidatesRequestBody;
 import com.paytech.channel.connector.api.candidate.response.QueryMidCandidatesResponseBody;
 import com.paytech.channel.connector.api.enums.ChannelOperation;
+import com.paytech.channel.connector.protocol.core.enums.ChannelStatus;
 import com.paytech.channel.connector.test.base.ChannelConnectorMockTestBase;
 import com.paytech.channel.connector.test.builder.ChannelRequestBuilder;
+import com.paytech.channel.connector.test.builder.MidCapabilityBuilder;
 import com.paytech.channel.connector.test.dal.ChannelTestMapper;
 import com.paytech.channel.connector.test.mocker.ChannelDataMocker.Fixture;
 
@@ -73,6 +76,39 @@ class ChannelCandidateQueryHttpTest extends ChannelConnectorMockTestBase {
 
         assertAll(() -> assertEquals(List.of(), candidate.getSupportedOperations()),
             () -> assertNull(candidate.getMinAmount()), () -> assertNull(candidate.getMaxAmount()));
+    }
+
+    /**
+     * 抽取共用可用 MID 读取（REQ-02 T1）后的对照：同 OE 两个账号下的多个 MID，候选按 MID 读取顺序逐字段与重构前口径一致
+     * <li>关闭的 MID、关闭的渠道账号下的 MID 不成为候选；每个候选只投影本 MID 命中的能力。</li>
+     */
+    @Test
+    void test_multipleAccountsProjection() {
+        var secondAccount = data.account(fixture.getChannel().getChannelId(), "00001", "C".repeat(43));
+        var second = data.mid(fixture.getChannel().getChannelId(), secondAccount.getChannelAccountId(), "00001");
+        data.capability(second, MidCapabilityBuilder.template().scheme("VISA"),
+            ChannelCapabilityCodes.ACTION_PREFIX + ChannelOperation.AUTHORIZE.getCode(), true);
+        var closed = data.mid(fixture.getChannel().getChannelId(), secondAccount.getChannelAccountId(), "00001",
+            ChannelStatus.CLOSED);
+        data.capability(closed, MidCapabilityBuilder.template(), ChannelCapabilityCodes.ACTION_PREFIX + ChannelOperation.PAY.getCode(),
+            true);
+        var suspendedAccount = data.account(fixture.getChannel().getChannelId(), "00001", "D".repeat(43), ChannelStatus.SUSPENDED);
+        var orphan = data.mid(fixture.getChannel().getChannelId(), suspendedAccount.getChannelAccountId(), "00001");
+        data.capability(orphan, MidCapabilityBuilder.template(), ChannelCapabilityCodes.ACTION_PREFIX + ChannelOperation.PAY.getCode(),
+            true);
+
+        var candidates = query(ChannelRequestBuilder.candidatesBody()).getCandidates();
+
+        assertAll(() -> assertEquals(List.of(fixture.getMid().getMidId().toString(), second.getMidId().toString()),
+                candidates.stream().map(candidate -> candidate.getMidId()).toList()),
+            () -> assertEquals(List.of(fixture.getAccount().getChannelAccountId().toString(),
+                secondAccount.getChannelAccountId().toString()), candidates.stream().map(c -> c.getChannelAccountId()).toList()),
+            () -> assertEquals(List.of(fixture.getChannel().getChannelCode(), fixture.getChannel().getChannelCode()),
+                candidates.stream().map(c -> c.getChannelCode()).toList()),
+            () -> assertEquals(List.of(ChannelOperation.PAY.getCode()), candidates.get(0).getSupportedOperations()),
+            () -> assertEquals(List.of(ChannelOperation.AUTHORIZE.getCode()), candidates.get(1).getSupportedOperations()),
+            () -> assertNull(candidates.get(1).getMinAmount()), () -> assertNull(candidates.get(1).getThreeDsMode()));
+        vault.assertNoCalls();
     }
 
     /** 配置损坏返回 500，不伪装成空候选；请求维度非法返回 422。 */
