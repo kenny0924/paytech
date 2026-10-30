@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## channel-connector 渠道身份就绪查询（REQ-02，2026-10-30，已部署 mor-test，已本地提交，未推送）
+## channel-connector 渠道身份就绪查询（REQ-02，2026-10-30，已部署 mor-test，已本地提交 `02958308`，未推送）
 
 - **范围：** [需求](<../requirements/20261030/channel-connector-渠道身份就绪查询/requirement.md>)、[技术方案](<../requirements/20261030/channel-connector-渠道身份就绪查询/technique.md>)、[交付记录](<../requirements/20261030/channel-connector-渠道身份就绪查询/delivery.md>)、[发布手册](<../requirements/20261030/channel-connector-渠道身份就绪查询/release/runbook.md>)、[阶段 7 报告](<../requirements/20261030/channel-connector-渠道身份就绪查询/release/stage7-report.md>)。依据 [2026-10-28 客户上线决定](decisions/2026-10-28-client-go-live-orchestration.md) 3.2 ④（本需求修订：判定与运行期选 MID 同口径，不含路由策略）。
 - **Implemented：** channel-connector 批量渠道身份就绪查询（MID / 渠道账号 / 渠道 ACTIVE，ENABLED 能力覆盖支付方式 × 币种 × Client 已确认主 MCC，并声明 `ACTION.PAY` 或 `ACTION.AUTHORIZE`），与 `QueryMidCandidatesProcessor` 共用筛选；client-master 服务间经营分类查询 `GET /client-master/v1/clients/{clientId}/business-classification`；commercial 开通项前置 ④ 由固定 `SKIPPED` 改为真实判定（任一币种就绪即 SATISFIED，缺币种 `CHANNEL_IDENTITY_PARTIAL` 提醒，全部不就绪 UNSATISFIED，3 秒超时）；运营 Web 合同详情"还差什么"渠道身份项与"去配置 MID"（MID 列表按 OE 预填，无 MID 页权限不显示链接）；data-query 模板 `GOLIVE_MID_READY`。无表、无 DDL、无注册块。

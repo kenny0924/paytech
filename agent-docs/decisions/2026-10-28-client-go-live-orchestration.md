@@ -97,7 +97,7 @@
 |---|---|---|
 | REQ-00 | 本决定 | 评审稿 |
 | REQ-01 | [requirements/20261028/commercial-开通项前置门禁](../../requirements/20261028/commercial-开通项前置门禁/requirement.md) | 阶段 1—8 完成：已部署 mor-test，已本地提交 `ba0e15b5` |
-| REQ-02 | [requirements/20261030/channel-connector-渠道身份就绪查询](../../requirements/20261030/channel-connector-渠道身份就绪查询/requirement.md) | 阶段 1—8 完成：2026-10-30 已部署 mor-test（req02-20261030a/b，语言包 #31，`GOLIVE_MID_READY` v1），已本地提交 |
+| REQ-02 | [requirements/20261030/channel-connector-渠道身份就绪查询](../../requirements/20261030/channel-connector-渠道身份就绪查询/requirement.md) | 阶段 1—8 完成：2026-10-30 已部署 mor-test（req02-20261030a/b，语言包 #31，`GOLIVE_MID_READY` v1），已本地提交 `02958308` |
 | REQ-03 | [requirements/20261029/risk-decision-承保记录](../../requirements/20261029/risk-decision-承保记录/requirement.md) | 已实现，2026-10-29 部署 mor-test（rq03-20261029a，块 143），已本地提交 |
 | REQ-03b | 承保建议策略（待办，未立项） | 待风控给出政策数值：按 CRR × 交付方式配置建议观察期、结算周期 T+N、保证金比例（× 估算敞口）；承保页预填建议值并提示偏离；自动承保改为套用建议值（替代固定标准模板，现模板 T+N 为空） |
 | REQ-04 | [requirements/20261029/risk-decision-限额档位](../../requirements/20261029/risk-decision-限额档位/requirement.md) | 已实现，2026-10-30 部署 mor-test（rq04-20261030b，块 145；Gateway Snapshot 上限 4 MiB），已本地提交 |

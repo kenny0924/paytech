@@ -19,6 +19,7 @@
 | 2026-10-30 | 6 完成 | [W3 报告](./release/W3-report.md)、[runbook](./release/runbook.md)、[baseline](./release/baseline.md)。主会话核对：候选树 `Code-MoR-req02-rel` = main `331d8e0e` + plops ops-web 18 文件 + 本需求 69 文件，NO DRIFT；镜像 channel-connector `f330c4ae`、client-master `df13cc47`（`req02-20261030a`）、commercial `2be844e7`、ops-web `bbc03d33`（`req02-20261030b`），4 个候选 compose 钉对应 sha256；env 与现网逐键相同、无新键；现网三个后端"现网独有"0，ops-web 现网 = plops 源码重建逐字节相同；测试 channel-connector 404、client-master 181、commercial 253、arch-rules 70 + 5 全过，ops-web 1704 / 1705（唯一失败为读 plops Platform 能力清单的对照测试，放入后全过，不影响 dist）；内部调用经服务发现、认证 OFF，无需登记；巡检新口径 2 条将暂停（DEMO-CL-001 APPLE_PAY、DEMO2-CL-101 CARD）、2 条 PARTIAL 保持 ENABLED；语言包计划 commercial 新增 17 / 改值 3 / 废弃 2，号码运行时取下一个（预计 #31）；`GOLIVE_MID_READY` 只读试跑 12 / 12。等待用户审批阶段 7 | 已交付 |
 | 2026-10-30 | 6 确认 / 7 发布 | 用户"继续"：接受 2 条预期暂停、`GOLIVE_MID_READY` 同批登记、进入阶段 7。18:45—19:01Z 按 runbook 发布：client-master `df13cc47`、channel-connector `f330c4ae`、commercial `2be844e7`、ops-web `bbc03d33`，运营语言包 #31，全量重查后暂停集合与预测一致（DEMO-CL-001 APPLE_PAY、DEMO2-CL-101 CARD），`GOLIVE_MID_READY` v1 ACTIVE。验收 api 57 / 0、check 15 / 0、浏览器 44 / 0；合成账号已停用。发布中发现模板在 data-query 绑定执行时 500（`JSON_TABLE` 不接受绑定参数），改为 `WITH RECURSIVE` 后试跑 8 / 8 再登记；验收脚本 3 处缺陷已修。[阶段 7 报告](./release/stage7-report.md)。已告知 REQ-06（ops-web 基线、#32）与明细账运维（其已提交 `a1f3d627` / `f4474c7a`） | 已完成 |
 | 2026-10-30 | 7 用户验证 | 用户在 mor-test 自行验证。数据查询页试运行 `GOLIVE_MID_READY` 时，留空可选参数 `currencies` 会提示"服务暂时不可用"。主会话用真实浏览器复现：平台返回 200、结果正确，但返回的绑定参数含 `null`，运营 Web 解析失败（`INVALID_RESPONSE`）；另外模板编辑页会把空串默认值丢掉。这是数据查询模块原有的前端缺陷，不是本需求引入的，流程执行用登记版本，不受影响。用户决定"下个需求一起做"，登记为遗留 L-1 | 已确认 |
+| 2026-10-30 | 8 提交 | 用户"可以，开始提交"。以 main `f4474c7a`（含明细账运维）为基线，私有索引构建本地提交 `02958308`（180 个文件）：候选树 `Code-MoR-req02-rel` 的本需求 68 个代码文件与阶段 6 清单 `source-files-req02.sha256` 逐字节一致，候选树里明细账运维的 18 个 ops-web 文件与 main 相同、未重复提交；另含决定修订（第 5 节状态更新）、上线规划 REQ-20、需求索引与实现台账。代码与阶段 6 测试过的版本相同，未重跑测试。未推送 | 已完成 |
 
 ## 适用阶段
 
@@ -26,7 +27,7 @@
 
 ## 当前阶段与下一确认点
 
-阶段 1—8 已完成（2026-10-30 本地提交，未推送）。推送须另行授权。
+阶段 1—8 已完成（2026-10-30 本地提交 `02958308`，未推送）。推送须另行授权。
 
 ## 遗留
 
