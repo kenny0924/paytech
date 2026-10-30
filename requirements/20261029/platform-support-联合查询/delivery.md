@@ -25,6 +25,7 @@
 | 2026-10-30 | 修订 b 发布与验收 | 主会话按 runbook-b（08:38—08:41Z）：ops-bff `2452aaa7` → Platform `c82b6f34` → ops-web `d236f1d5`（`jq-20261030b`，均 healthy、无 ERROR，routeCount 641）；语言包 #26（504，查库 READY 且当前）。API 32/33（唯一失败：订单号入口计费事实经“按支付尝试”第二次到达，D-b1；验收脚本发送空 values 的问题已修）；浏览器 94 步通过（订单号入口 24 → 16 项；会计凭证 ID 入口凭证 / 记账批次 / 计费事实仍各 3 次——跨路径重复；子行模板被误判为按自身 ID 查而折叠，D-b2）；税务回归通过 | 已完成 |
 | 2026-10-30 | 修订 c 授权 | 用户“可以，按建议改”：前端按对象合并显示（technique §8.7 补充、需求 B5c）；D-b2 新增 3 个键类型并修正 3 个子行模板行主体；授权在 mor-test 经运营 API 新增键类型与修改 3 个演示模板、发布新 ops-web 镜像（及必要的语言包）；Platform / ops-bff 不变 | 已确认 |
 | 2026-10-30 | 修订 c 发布与验收 | 主会话按 runbook-c（09:03—09:07Z）：演示数据经运营 API 新增 3 个键类型（`ACCOUNT_ENTRY_ID` / `JOURNAL_LINE_ID` / `STATEMENT_LINE_ID`）、3 个子行模板新版本（50/50）；ops-web `6f8161c2`（`jq-20261030c`）healthy；语言包 #27（+1 key）READY 且当前；Platform 为 1b 的 `a3003ef6`、ops-bff `2452aaa7` 未动。验收：API 15/15；浏览器 zh-CN / en × 1440 / 390 共 114 步 0 失败——订单号与会计凭证 ID 入口均 18 项、每个对象只出现一次、凭证分录 / 账户分录为独立节点、“也可经 … 到达”、7 列完整、税务等回归通过、mor-test 零写入。代码仓库：初始化数据键类型 26 → 29（块 144 与变更文件同步）、新增 `changes/2026-10-30-joint-query-child-key-types{,-rollback}.sql`（已初始化环境补丁）。遗留：mor-test 计费事实引用合成支付 ID，支付泳道多为 0 行节点；“一个模板支持多个键参数”列为后续优化 | 已完成（待确认） |
+| 2026-10-30 | 8 提交 | 提交 `d673817f`（父 `b4304d8a`，626 个文件，私有索引）：发布树 `Code-MoR-jq-rel` 的 243 个代码文件（与多语言发布变更记录 `1c8341a2` 重叠的 5 个文件三方合并，PlatformDataCleaner 两处冲突手工合并；合并后 Platform / ops-bff test-compile 通过）+ 需求 / 决定 / 设计稿 / 运行卡与验收材料 + 共享文档本需求段落（AGENTS.md、design-discuss/README.md、requirements/README.md、CURRENT_IMPLEMENTATION.md）。未纳入：`operations-console.pen`（混有其他会话改动，原型以 prototypes/ PNG 为准）、首发与修订 b 浏览器截图、修订 c first-attempt（留在 `Code-MoR-jq-rel/.jq-notes`）；`.jq-notes`、`node_modules`、`.vite-cache`、`dist`。未推送 | 已完成 |
 
 ## 适用阶段
 
@@ -32,7 +33,7 @@
 
 ## 当前阶段与下一确认点
 
-阶段 7（含修订 b、c）完成待确认。阶段 8：以私有索引提交 `Code-MoR-jq-rel` 中本需求改动 + 需求 / 决定 / 设计 / 台账文档，不含 `.jq-notes`、`node_modules`、`.vite-cache`、`dist`；不推送；提交后告知 1b / b8 / 税务会话提交号。
+阶段 1—8 完成（2026-10-30），提交 `d673817f`（未推送）。推送另行授权。后续优化：一个模板支持多个键参数（一种对象一个模板）。
 
 ## 发布基线提示（阶段 6 用）
 

@@ -20,7 +20,7 @@
 - **mor-test（2026-10-30 08:55—09:05Z）：** `mor_platform` DDL 与补录（26,620 行，34 个发布）；platform-support-service `a3003ef6…`（`i18nchg-20261030b` = 联合查询 `c82b6f34` 只替换应用 JAR），回滚 `c82b6f34`（旧代码不读新表，DDL 可保留），备份 `Code-MoR-backups/i18nchg-20261030/mortest-20261030T085512Z`；client-console 语言包 #9 为验收发布。
 - **Known gaps：** 之后的 Platform 构建必须包含 `1c8341a2`（`69f87bbf`）；不含它的 Platform 发布的版本没有明细，换回后预检报「发布变更明细缺失」，重跑补录脚本即可。AC-06 最大差异（#19 对 #1，19,618 条、2.65 MB 响应）13 次中 2 次 1.1—1.2 s（中位数 0.53 s），已接受为遗留。
 
-## platform-support 联合查询（2026-10-29—30，已部署 mor-test，已本地提交，未推送）
+## platform-support 联合查询（2026-10-29—30，已部署 mor-test，已本地提交 `d673817f`，未推送）
 
 - **范围：** [需求](<../requirements/20261029/platform-support-联合查询/requirement.md>)、[技术方案](<../requirements/20261029/platform-support-联合查询/technique.md>)、[交付记录](<../requirements/20261029/platform-support-联合查询/delivery.md>)、[运行卡](<../requirements/20261029/platform-support-联合查询/release/runbook.md>)；依据 [2026-10-29 联合查询决定](./decisions/2026-10-29-data-query-joint-query.md)，讨论稿 [design-discuss/joint-query](../design-discuss/joint-query/design.md)。
 - **Implemented：** data-query 新增键类型注册表 `t_query_key_type`（分组 `group_name`、默认角色、入口正则与提示、排序），模板版本新增 `joint_json`（行主体键类型、键参数、列标注，与参数 / 列声明分开）；保存校验与参与评估、键类型图（不缓存）与可达预览、按跳分步执行（单跳 8 秒预算、并发 8、单跳 20 次、`rowCap`、`EXECUTOR_BUSY`）；8 个接口（键类型 K1—K5、联合查询 J1—J3，J3 含 `loadedSubjects` / `alreadyLoaded`：“按自身 ID 查”的模板跳过已加载对象），模板接口增 `joint` / `jointQuery`；注册块 144（8 路由、2 菜单、29 个键类型）。ops-bff 同路径转发；ops-web 联合查询页（链路总览 + 节点明细、未查全汇总与重试、按客户筛选、以此查询、覆盖范围抽屉、390 折叠卡片）、键类型页（按分组拖动排序）、模板编辑器“联合查询”页签；页面按对象合并显示（同一对象经多路径只显示一次，注明“也可经 … 到达”），被跳过视图可按需查看。
