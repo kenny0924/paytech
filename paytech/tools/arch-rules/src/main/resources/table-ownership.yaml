@@ -304,6 +304,7 @@ services:
       - t_i18n_namespace
       - t_i18n_release
       - t_i18n_release_bundle
+      - t_i18n_release_change
       - t_i18n_translation
       - t_jwt_signing_key
       - t_notification_attempt
