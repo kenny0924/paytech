@@ -1,0 +1,647 @@
+{
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "19-initial",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询",
+          "check": {
+            "menuEntries": 1,
+            "recentRows": 0
+          }
+        },
+        {
+          "step": "order-S1",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Party 880000000702（AE001） 平台运营代操作",
+          "check": {
+            "orderNo": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR",
+            "pill": "已登记 · 已开票",
+            "callout": "申报底稿暂缺法定汇率 该注册按 SAR 申报，法定汇率源尚未接入。只影响后续申报，不影响收款和入账（计费已按 USD 记税额 15.00）。",
+            "lines": 1,
+            "downloadButton": 1
+          }
+        },
+        {
+          "step": "order-S2",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo 阻断 · 不可支付 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Party 880000000702（AE001）",
+          "check": {
+            "orderNo": "ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo",
+            "pill": "阻断 · 不可支付",
+            "callout": "这笔订单暂时不能支付 最新一次报价被阻断，系统不会以零税继续收款。订单保持开放，原因解决后消费者重新提交资料即可再算一次。",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-S3",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc 不由平台计税 Relsnap Synthetic Client PSP LLC（Client 900000000001380201） PSP 税务责任方 Client 收单 Relsnap Synthetic AE001 FZ-LLC（AE001）",
+          "check": {
+            "orderNo": "ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc",
+            "pill": "不由平台计税",
+            "callout": "这笔销售的税由 Client 自己负责 PSP 合同下卖方是 Client，平台不判断税率、不登记、不申报，也不开税票。这不是免税或零税率：页面显示的税额是 Client 建单时自报的金额。",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-S5",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "税务查询",
+          "check": {
+            "orderNo": "ord_3L5VmtoflSHBWF4HfQIXjWPwa6Q4G6",
+            "pill": null,
+            "callout": "",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "20-not-found",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "税务查询"
+        },
+        {
+          "step": "19-initial-recent",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询 最近查询 仅保存在本浏览器 ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc Relsnap Synthetic Client PSP LLC · PSP 自报 0.00 USD 不由平台计税 ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo Relsnap Synthetic Client MOR LLC · 科威特 — 阻断 ord_3LNdh7rIvmeRORFbLYgk4L",
+          "check": {
+            "recentRows": 3,
+            "recent": "最近查询 仅保存在本浏览器 ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc Relsnap Synthetic Client PSP LLC · PSP 自报 0.00 USD 不由平台计税 ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo Relsnap Synthetic Client MOR LLC · 科威特 — 阻断 ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR Relsnap Synthetic Client MOR LLC · 沙特阿拉伯 税额 15.00 USD 已登记"
+          }
+        },
+        {
+          "step": "16-download-ok",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Party 880000000702（AE001） 平台运营代操作",
+          "check": {
+            "grantStatus": 200,
+            "grantKeys": [
+              "documentId",
+              "documentNumber",
+              "expiresAt",
+              "url"
+            ],
+            "urlHost": "127.0.0.1:19400",
+            "downloadFile": "SA-RCPT-2026-000001.pdf",
+            "popup": null
+          }
+        },
+        {
+          "step": "21-download-failed",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Party 880000000702（AE001） 平台运营代操作",
+          "check": {
+            "notice": "税票下载失败 文件服务暂时不可用，税票本身不受影响。请稍后重试；如果持续失败，请把请求编号发给技术支持。 重试下载 复制请求编号 b5e2…0021"
+          }
+        }
+      ]
+    },
+    {
+      "locale": "zh-CN",
+      "width": 390,
+      "steps": [
+        {
+          "step": "19-initial",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询",
+          "check": {
+            "menuEntries": 0,
+            "recentRows": 0
+          }
+        },
+        {
+          "step": "order-S1",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Party 880000000702（AE001） 平台运营代操作",
+          "check": {
+            "orderNo": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR",
+            "pill": "已登记 · 已开票",
+            "callout": "申报底稿暂缺法定汇率 该注册按 SAR 申报，法定汇率源尚未接入。只影响后续申报，不影响收款和入账（计费已按 USD 记税额 15.00）。",
+            "lines": 1,
+            "downloadButton": 1
+          }
+        },
+        {
+          "step": "order-S2",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo 阻断 · 不可支付 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Party 880000000702（AE001）",
+          "check": {
+            "orderNo": "ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo",
+            "pill": "阻断 · 不可支付",
+            "callout": "这笔订单暂时不能支付 最新一次报价被阻断，系统不会以零税继续收款。订单保持开放，原因解决后消费者重新提交资料即可再算一次。",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-S3",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc 不由平台计税 Relsnap Synthetic Client PSP LLC（Client 900000000001380201） PSP 税务责任方 Client 收单 Relsnap Synthetic AE001 FZ-LLC（AE001）",
+          "check": {
+            "orderNo": "ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc",
+            "pill": "不由平台计税",
+            "callout": "这笔销售的税由 Client 自己负责 PSP 合同下卖方是 Client，平台不判断税率、不登记、不申报，也不开税票。这不是免税或零税率：页面显示的税额是 Client 建单时自报的金额。",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-S5",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "税务查询",
+          "check": {
+            "orderNo": "ord_3L5VmtoflSHBWF4HfQIXjWPwa6Q4G6",
+            "pill": null,
+            "callout": "",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "20-not-found",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "税务查询"
+        },
+        {
+          "step": "19-initial-recent",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询 最近查询 仅保存在本浏览器 ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc Relsnap Synthetic Client PSP LLC · PSP 自报 0.00 USD 不由平台计税 ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo Relsnap Synthetic Client MOR LLC · 科威特 — 阻断 ord_3LNdh7rIvmeRORFbLYgk4L",
+          "check": {
+            "recentRows": 3,
+            "recent": "最近查询 仅保存在本浏览器 ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc Relsnap Synthetic Client PSP LLC · PSP 自报 0.00 USD 不由平台计税 ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo Relsnap Synthetic Client MOR LLC · 科威特 — 阻断 ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR Relsnap Synthetic Client MOR LLC · 沙特阿拉伯 税额 15.00 USD 已登记"
+          }
+        },
+        {
+          "step": "16-download-ok",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Party 880000000702（AE001） 平台运营代操作",
+          "check": {
+            "grantStatus": 200,
+            "grantKeys": [
+              "documentId",
+              "documentNumber",
+              "expiresAt",
+              "url"
+            ],
+            "urlHost": "127.0.0.1:19400",
+            "downloadFile": "SA-RCPT-2026-000001.pdf",
+            "popup": null
+          }
+        },
+        {
+          "step": "21-download-failed",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Party 880000000702（AE001） 平台运营代操作",
+          "check": {
+            "notice": "税票下载失败 文件服务暂时不可用，税票本身不受影响。请稍后重试；如果持续失败，请把请求编号发给技术支持。 重试下载 复制请求编号 b5e2…0021"
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "19-initial",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "See the tax on an order by its order number Quotes and recalculations, line-level tax, registration, reporting entries and the receipt, all on one page Search",
+          "check": {
+            "menuEntries": 1,
+            "recentRows": 0
+          }
+        },
+        {
+          "step": "order-S1",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR Registered · Receipt Issued Relsnap Synthetic Client MOR LLC (Client 237161687952666625) MoR Tax subject party 880000000702 (AE001) Operated by platform operations",
+          "check": {
+            "orderNo": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR",
+            "pill": "Registered · Receipt Issued",
+            "callout": "Reporting entries are missing the statutory rate This registration reports in SAR and the statutory rate source isn't connected yet. Only later filing is affected; collection and posting aren't (billi",
+            "lines": 1,
+            "downloadButton": 1
+          }
+        },
+        {
+          "step": "order-S2",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo Blocked · Not Payable Relsnap Synthetic Client MOR LLC (Client 237161687952666625) MoR Tax subject party 880000000702 (AE001)",
+          "check": {
+            "orderNo": "ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo",
+            "pill": "Blocked · Not Payable",
+            "callout": "This order can't be paid for now The latest quote is blocked, so the system won't collect with zero tax. The order stays open; once the cause is resolved, the consumer can resubmit their details to re",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-S3",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc Not Taxed by Platform Relsnap Synthetic Client PSP LLC (Client 900000000001380201) PSP Tax responsible: Client Acquired by Relsnap Synthetic AE001 FZ-LLC (AE001)",
+          "check": {
+            "orderNo": "ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc",
+            "pill": "Not Taxed by Platform",
+            "callout": "Tax on this sale is the Client's responsibility Under a PSP agreement the seller is the Client: the platform doesn't determine rates, register, report or issue receipts. This isn't an exemption or a z",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-S5",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "Tax Lookup",
+          "check": {
+            "orderNo": "ord_3L5VmtoflSHBWF4HfQIXjWPwa6Q4G6",
+            "pill": null,
+            "callout": "",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "20-not-found",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "Tax Lookup"
+        },
+        {
+          "step": "19-initial-recent",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "See the tax on an order by its order number Quotes and recalculations, line-level tax, registration, reporting entries and the receipt, all on one page Search Recent Searches Saved in this browser only ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc Relsnap Synthetic Clien",
+          "check": {
+            "recentRows": 3,
+            "recent": "Recent Searches Saved in this browser only ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc Relsnap Synthetic Client PSP LLC · PSP Declared 0.00 USD Not Taxed by Platform ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo Relsnap Synthetic Client MOR LLC · Kuwait — Blocked ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR Relsnap Synthetic Client MOR LLC · Saudi Arabia Tax 15.00 USD Registered"
+          }
+        },
+        {
+          "step": "16-download-ok",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR Registered · Receipt Issued Relsnap Synthetic Client MOR LLC (Client 237161687952666625) MoR Tax subject party 880000000702 (AE001) Operated by platform operations",
+          "check": {
+            "grantStatus": 200,
+            "grantKeys": [
+              "documentId",
+              "documentNumber",
+              "expiresAt",
+              "url"
+            ],
+            "urlHost": "127.0.0.1:19400",
+            "downloadFile": "SA-RCPT-2026-000001.pdf",
+            "popup": null
+          }
+        },
+        {
+          "step": "21-download-failed",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR Registered · Receipt Issued Relsnap Synthetic Client MOR LLC (Client 237161687952666625) MoR Tax subject party 880000000702 (AE001) Operated by platform operations",
+          "check": {
+            "notice": "Receipt download failed The file service is temporarily unavailable; the receipt itself isn't affected. Try again later, and if it keeps failing, send the request ID to technical support. Retry Download Copy request ID b5e2…0021"
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "zh-CN-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "19-initial",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "order-S1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "order-S2",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "order-S3",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "order-S5",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "order-S5",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "20-not-found",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "20-not-found",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "19-initial-recent",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "19-initial-recent",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "21-download-failed",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "19-initial",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "order-S1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "order-S2",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "order-S3",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "order-S5",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "order-S5",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "20-not-found",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "20-not-found",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "19-initial-recent",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "19-initial-recent",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "21-download-failed",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    },
+    {
+      "run": "en-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "19-initial",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "order-S1",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "order-S2",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "order-S3",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "order-S5",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "order-S5",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "en-1440",
+      "step": "20-not-found",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "20-not-found",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "en-1440",
+      "step": "19-initial-recent",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "19-initial-recent",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-1440",
+      "step": "21-download-failed",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    }
+  ],
+  "httpErrors": [
+    {
+      "run": "zh-CN-1440",
+      "step": "order-S5",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ord_3L5VmtoflSHBWF4HfQIXjWPwa6Q4G6",
+      "status": 404,
+      "requestId": "b36100c0-ebef-440c-bc80-94bfa46edf9c"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "20-not-found",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ORD-NOTFOUND-20261029",
+      "status": 404,
+      "requestId": "9572a717-4e76-4f0f-961e-ac3188d58bfa"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "21-download-failed",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR/documents/241629648407027712/download",
+      "status": 503,
+      "requestId": "b5e2c9d4-7a1f-4c3e-9d2b-5a7e00000021"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "order-S5",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ord_3L5VmtoflSHBWF4HfQIXjWPwa6Q4G6",
+      "status": 404,
+      "requestId": "2f18ee87-a1d2-43c8-8d78-b3bdbccccfdf"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "20-not-found",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ORD-NOTFOUND-20261029",
+      "status": 404,
+      "requestId": "f51c8773-32fc-4317-ab38-d5d995c3bddd"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "21-download-failed",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR/documents/241629648407027712/download",
+      "status": 503,
+      "requestId": "b5e2c9d4-7a1f-4c3e-9d2b-5a7e00000021"
+    },
+    {
+      "run": "en-1440",
+      "step": "order-S5",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ord_3L5VmtoflSHBWF4HfQIXjWPwa6Q4G6",
+      "status": 404,
+      "requestId": "88a3849c-9d41-49d9-8928-194c49137942"
+    },
+    {
+      "run": "en-1440",
+      "step": "20-not-found",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ORD-NOTFOUND-20261029",
+      "status": 404,
+      "requestId": "77367b0e-0780-474d-be77-cb05566f8f94"
+    },
+    {
+      "run": "en-1440",
+      "step": "21-download-failed",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LNdh7rIvmeRORFbLYgk4LTbAip0GR/documents/241629648407027712/download",
+      "status": 503,
+      "requestId": "b5e2c9d4-7a1f-4c3e-9d2b-5a7e00000021"
+    }
+  ]
+}

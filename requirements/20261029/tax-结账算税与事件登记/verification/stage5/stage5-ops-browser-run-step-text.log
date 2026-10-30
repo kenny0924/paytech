@@ -1,0 +1,92 @@
+{"run":"zh-CN-1440","step":"19-initial","rawKeys":[],"overflowX":0,"head":"按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询","check":{"menuEntries":1,"recentRows":0}}
+{"run":"zh-CN-1440","step":"order-S1","rawKeys":[],"overflowX":0,"head":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Relsnap Synthetic AE001 FZ-LLC（AE001） 平台运营代操作","check":{"orderNo":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN","pill":"已登记 · 已开票","callout":"申报底稿暂缺法定汇率 该注册按 SAR 申报，法定汇率源尚未接入。只影响后续申报，不影响收款和入账（计费已按 USD 记税额 15.00）。","lines":1,"downloadButton":1}}
+{"run":"zh-CN-1440","step":"20-not-found","rawKeys":[],"overflowX":0,"head":"税务查询"}
+{"run":"zh-CN-1440","step":"19-initial-recent","rawKeys":[],"overflowX":0,"head":"按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询 最近查询 仅保存在本浏览器 ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Relsnap Synthetic Client MOR LLC · 沙特阿拉伯 税额 15.00 USD 已登记","check":{"recentRows":1,"recent":"最近查询 仅保存在本浏览器 ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Relsnap Synthetic Client MOR LLC · 沙特阿拉伯 税额 15.00 USD 已登记"}}
+{"run":"zh-CN-1440","step":"16-download-ok","rawKeys":[],"overflowX":0,"head":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Relsnap Synthetic AE001 FZ-LLC（AE001） 平台运营代操作","check":{"grantStatus":200,"grantKeys":["documentId","documentNumber","expiresAt","url"],"urlHost":"127.0.0.1:19400","downloadFile":"SA-RCPT-2026-000003.pdf","popup":null}}
+{"run":"zh-CN-1440","step":"21-download-failed","rawKeys":[],"overflowX":0,"head":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Relsnap Synthetic AE001 FZ-LLC（AE001） 平台运营代操作","check":{"notice":"税票下载失败 文件服务暂时不可用，税票本身不受影响。请稍后重试；如果持续失败，请把请求编号发给技术支持。 重试下载 复制请求编号 b5e2…0021"}}
+{"run":"zh-CN-390","step":"19-initial","rawKeys":[],"overflowX":0,"head":"按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询","check":{"menuEntries":0,"recentRows":0}}
+{"run":"zh-CN-390","step":"order-S1","rawKeys":[],"overflowX":0,"head":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Relsnap Synthetic AE001 FZ-LLC（AE001） 平台运营代操作","check":{"orderNo":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN","pill":"已登记 · 已开票","callout":"申报底稿暂缺法定汇率 该注册按 SAR 申报，法定汇率源尚未接入。只影响后续申报，不影响收款和入账（计费已按 USD 记税额 15.00）。","lines":1,"downloadButton":1}}
+{"run":"zh-CN-390","step":"20-not-found","rawKeys":[],"overflowX":0,"head":"税务查询"}
+{"run":"zh-CN-390","step":"19-initial-recent","rawKeys":[],"overflowX":0,"head":"按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询 最近查询 仅保存在本浏览器 ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Relsnap Synthetic Client MOR LLC · 沙特阿拉伯 税额 15.00 USD 已登记","check":{"recentRows":1,"recent":"最近查询 仅保存在本浏览器 ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Relsnap Synthetic Client MOR LLC · 沙特阿拉伯 税额 15.00 USD 已登记"}}
+{"run":"zh-CN-390","step":"16-download-ok","rawKeys":[],"overflowX":0,"head":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Relsnap Synthetic AE001 FZ-LLC（AE001） 平台运营代操作","check":{"grantStatus":200,"grantKeys":["documentId","documentNumber","expiresAt","url"],"urlHost":"127.0.0.1:19400","downloadFile":"SA-RCPT-2026-000003.pdf","popup":null}}
+{"run":"zh-CN-390","step":"21-download-failed","rawKeys":[],"overflowX":0,"head":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN 已登记 · 已开票 Relsnap Synthetic Client MOR LLC（Client 237161687952666625） MoR 纳税主体 Relsnap Synthetic AE001 FZ-LLC（AE001） 平台运营代操作","check":{"notice":"税票下载失败 文件服务暂时不可用，税票本身不受影响。请稍后重试；如果持续失败，请把请求编号发给技术支持。 重试下载 复制请求编号 b5e2…0021"}}
+{"run":"en-1440","step":"19-initial","rawKeys":[],"overflowX":0,"head":"See the tax on an order by its order number Quotes and recalculations, line-level tax, registration, reporting entries and the receipt, all on one page Search","check":{"menuEntries":1,"recentRows":0}}
+{"run":"en-1440","step":"order-S1","rawKeys":[],"overflowX":0,"head":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Registered · Receipt Issued Relsnap Synthetic Client MOR LLC (Client 237161687952666625) MoR Tax subject Relsnap Synthetic AE001 FZ-LLC (AE001) Operated by platform operations","check":{"orderNo":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN","pill":"Registered · Receipt Issued","callout":"Reporting entries are missing the statutory rate This registration reports in SAR and the statutory rate source isn't connected yet. Only later filing is affected; collection and posting aren't (billi","lines":1,"downloadButton":1}}
+{"run":"en-1440","step":"20-not-found","rawKeys":[],"overflowX":0,"head":"Tax Lookup"}
+{"run":"en-1440","step":"19-initial-recent","rawKeys":[],"overflowX":0,"head":"See the tax on an order by its order number Quotes and recalculations, line-level tax, registration, reporting entries and the receipt, all on one page Search Recent Searches Saved in this browser only ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Relsnap Synthetic Clien","check":{"recentRows":1,"recent":"Recent Searches Saved in this browser only ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Relsnap Synthetic Client MOR LLC · Saudi Arabia Tax 15.00 USD Registered"}}
+{"run":"en-1440","step":"16-download-ok","rawKeys":[],"overflowX":0,"head":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Registered · Receipt Issued Relsnap Synthetic Client MOR LLC (Client 237161687952666625) MoR Tax subject Relsnap Synthetic AE001 FZ-LLC (AE001) Operated by platform operations","check":{"grantStatus":200,"grantKeys":["documentId","documentNumber","expiresAt","url"],"urlHost":"127.0.0.1:19400","downloadFile":"SA-RCPT-2026-000003.pdf","popup":null}}
+{"run":"en-1440","step":"21-download-failed","rawKeys":[],"overflowX":0,"head":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Registered · Receipt Issued Relsnap Synthetic Client MOR LLC (Client 237161687952666625) MoR Tax subject Relsnap Synthetic AE001 FZ-LLC (AE001) Operated by platform operations","check":{"notice":"Receipt download failed The file service is temporarily unavailable; the receipt itself isn't affected. Try again later, and if it keeps failing, send the request ID to technical support. Retry Download Copy request ID b5e2…0021"}}
+{"run":"en-390","step":"19-initial","rawKeys":[],"overflowX":0,"head":"See the tax on an order by its order number Quotes and recalculations, line-level tax, registration, reporting entries and the receipt, all on one page Search","check":{"menuEntries":0,"recentRows":0}}
+{"run":"en-390","step":"order-S1","rawKeys":[],"overflowX":0,"head":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Registered · Receipt Issued Relsnap Synthetic Client MOR LLC (Client 237161687952666625) MoR Tax subject Relsnap Synthetic AE001 FZ-LLC (AE001) Operated by platform operations","check":{"orderNo":"ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN","pill":"Registered · Receipt Issued","callout":"Reporting entries are missing the statutory rate This registration reports in SAR and the statutory rate source isn't connected yet. Only later filing is affected; collection and posting aren't (billi","lines":1,"downloadButton":1}}
+{"run":"en-390","step":"20-not-found","rawKeys":[],"overflowX":0,"head":"Tax Lookup"}
+{"run":"en-390","step":"19-initial-recent","rawKeys":[],"overflowX":0,"head":"See the tax on an order by its order number Quotes and recalculations, line-level tax, registration, reporting entries and the receipt, all on one page Search Recent Searches Saved in this browser only ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Relsnap Synthetic Clien","check":{"recentRows":1,"recent":"Recent Searches Saved in this browser only ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN Relsnap Synthetic Client MOR LLC · Saudi Arabia Tax 15.00 USD Registered"}}
+{"run":"en-390","step":"16-download-missing","rawKeys":[],"overflowX":0,"head":""}
+{
+ "console": 36,
+ "httpErrors": [
+  {
+   "run": "zh-CN-1440",
+   "step": "20-not-found",
+   "method": "GET",
+   "path": "/api/operations/tax/v1/orders/ORD-NOTFOUND-20261029",
+   "status": 404,
+   "requestId": "0195b5b7-f4d9-4467-9639-8adde19be474"
+  },
+  {
+   "run": "zh-CN-1440",
+   "step": "21-download-failed",
+   "method": "POST",
+   "path": "/api/operations/tax/v1/orders/ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN/documents/241634934211534848/download",
+   "status": 503,
+   "requestId": "b5e2c9d4-7a1f-4c3e-9d2b-5a7e00000021"
+  },
+  {
+   "run": "zh-CN-390",
+   "step": "20-not-found",
+   "method": "GET",
+   "path": "/api/operations/tax/v1/orders/ORD-NOTFOUND-20261029",
+   "status": 404,
+   "requestId": "8c9bc23e-564b-4783-9d22-b7d861c98345"
+  },
+  {
+   "run": "zh-CN-390",
+   "step": "21-download-failed",
+   "method": "POST",
+   "path": "/api/operations/tax/v1/orders/ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN/documents/241634934211534848/download",
+   "status": 503,
+   "requestId": "b5e2c9d4-7a1f-4c3e-9d2b-5a7e00000021"
+  },
+  {
+   "run": "en-1440",
+   "step": "20-not-found",
+   "method": "GET",
+   "path": "/api/operations/tax/v1/orders/ORD-NOTFOUND-20261029",
+   "status": 404,
+   "requestId": "da995718-2c3d-445d-889f-8a746d3d24f0"
+  },
+  {
+   "run": "en-1440",
+   "step": "21-download-failed",
+   "method": "POST",
+   "path": "/api/operations/tax/v1/orders/ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN/documents/241634934211534848/download",
+   "status": 503,
+   "requestId": "b5e2c9d4-7a1f-4c3e-9d2b-5a7e00000021"
+  },
+  {
+   "run": "en-390",
+   "step": "20-not-found",
+   "method": "GET",
+   "path": "/api/operations/tax/v1/orders/ORD-NOTFOUND-20261029",
+   "status": 404,
+   "requestId": "5879dc84-efff-49ce-a26c-000dac245538"
+  },
+  {
+   "run": "en-390",
+   "step": "19-initial-recent",
+   "method": "GET",
+   "path": "/api/operations/auth/v1/context",
+   "status": 429,
+   "requestId": "8e120120-41bd-4c3f-8100-b6ffa185358d"
+  }
+ ]
+}

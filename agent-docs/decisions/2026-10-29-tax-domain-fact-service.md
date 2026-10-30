@@ -32,7 +32,7 @@
 ### 协作方式
 
 7. **报价同步，登记走事件。** acquiring 在支付准备时同步调用 CalculateTax，冻结不可变 calculation 的 ID 与金额。Tax 消费 acquiring 的 `OrderPaymentSucceeded` / `RefundSucceeded` 建立正式事实，按 `source_system + source_fact_type + source_fact_id + tax_scope_key` 幂等；事件内容与冻结计算冲突时进死信。Tax 不提供对外的正式登记写命令，也不接受其他领域服务代为登记。
-8. **billing 不等 Tax。** billing 消费同一事件，直接按携带的冻结结果生成 `SELLER_TAX` 行并引用 calculation_id，不读 Tax、不等待登记。两者都派生自同一份不可变 calculation，Tax 登记失败只影响申报底稿。`SELLER_TAX` 按税组件逐行生成，行上带纳税主体、辖区、注册三个可索引证据列。`NOT_MANAGED` 不生成 `SELLER_TAX` 行。
+8. **billing 不等 Tax。** billing 消费同一事件，直接按携带的冻结结果生成 `SELLER_TAX` 行并引用 calculation_id，不读 Tax、不等待登记。两者都派生自同一份不可变 calculation，Tax 登记失败只影响申报底稿。`SELLER_TAX` 按税组件逐行生成：付方为渠道，收方为 `TAX_AUTHORITY` 且收方 ID = 纳税主体 Party（已有索引），辖区与注册写入行的 `source_evidence` JSON（2026-10-29 首个需求阶段 2 S-09 修订：原定三个可索引证据列取消，因无查询消费者，子分类账核对按账本 + 币种进行）。`NOT_MANAGED` 不生成 `SELLER_TAX` 行。
 9. **两阶段报价。** Client 建单时按 Client 声明的国家与税类先报价；消费者在 Hosted Checkout 提交资料后重算并绑定新的 `source_revision`。支付只能基于最新的 `READY` 计算。
 10. **账务一致性用子分类账模式。** ledger 每账本每币种一个 `TAX_PAYABLE` 控制科目，不按注册或辖区拆科目；Tax 的申报底稿是其子分类账，期末按账本加币种汇总与控制科目核对，纳入关账检查。
 11. **资金事件。** `TaxPaymentSubmitted` 与新增的 `TaxPaymentFailed` 供 reconciliation 建立或取消预期银行流水，后者与 payout 的 `PayoutExecutionFailed` 对称。`TaxPaymentSettled` 携带缴款币种与负债币种两组金额，不同时 billing 增加 `TAX_FX_DIFFERENCE` 行。新增 `TaxRefundReceived` 对应 billing 新事实类型 `TAX_REFUND_RECEIVED`。抵税额跨期转用没有现金流，不向 billing 发布事件。
@@ -47,6 +47,10 @@
 
 15. **19 张表的公共模型加有版本的地区规则包。** 准入、注册、规则包、不可变计算（头 / 行 / 组件 / 证据）、正式交易、申报底稿、单据与序列、期间、申报版本与栏目、缴款与分配与事件、抵税转用。地区差异放进经 Schema 校验的规则包，不按国家建表、不建万能 DSL 或脚本执行器。逐表字段与约束以 [database.md](../../design-discuss/tax/database.md) 为准。
 16. **退款分摊。** 只带总金额的退款，原交易各行处理相同时按剩余可退 gross 比例分摊，尾差给剩余额最大的行；处理不同时拒绝并要求行级金额。退款基数用 `refund_basis_amount`，`quantity` 只表示真实数量。
+
+### 修订（2026-10-29，首个需求阶段 1）
+
+17. **首期由平台运营代操作。** 用户决定 Partner 控制台本期不做，税务页面只做在 Operations 控制台。因此首期 `t_tax_market.managed_by` 取 `PLATFORM_OPERATIONS`：准入、注册、人工登记、申报冻结与回执回填、缴款登记由平台运营在 Operations 控制台代 PayFac Partner 执行，按 Maker-Checker 留痕。法定申报与缴纳仍由 Partner 财务在税局系统完成，平台只录入其结果与证据。第 3 条"由持有方在 Partner 控制台操作"与第 4 条 Partner 写操作例外保留为后续目标，Partner 控制台交付时把对应主体切换为 `SUBJECT_HOLDER`。
 
 ## 3. 取代范围
 
@@ -85,6 +89,6 @@
 ## 6. 后续
 
 - 第 3 节的文档修订与 `AGENTS.md` 路由已于 2026-10-29 完成。
-- 按[需求交付流程](../REQUIREMENT_DELIVERY_WORKFLOW.md)登记首个需求：结账算税、事件登记、B2C 简化票据、退款与人工登记通道（design.md 第 11 节切片 2）。
+- 首个需求已登记：[结账算税与事件登记](../../requirements/20261029/tax-结账算税与事件登记/requirement.md)（阶段 1 评审稿）；退款与人工登记通道按其待确认 Q1、Q3 拆到后续需求。
 - 待 Partner 确认：SA / EG 走非居民注册还是设本地主体；Client 与 OE 之间的合同性质。待 Partner 税务顾问核实：SA 非居民税务代表与担保、SA 非居民电子发票适用性。
 - 待同步：`tax.pen` 画板与 UML 预览图重渲染。

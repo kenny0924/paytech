@@ -1,0 +1,37 @@
+# tax 结账算税与事件登记 · mor-test 覆盖文件（阶段 6 准备，2026-10-29；阶段 7 须用户授权，由主会话执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag 仅供辨认；本机 :development tag 已不存在，不能不带本文件起服务）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-tax-rel = main 30361be7 + tax 研发 worktree Code-MoR-tax 的 378 个文件（3 个与 REQ-03 重叠的按三方合并），未提交。
+# env：base compose 的键 + 下列键；scripts/env_check.sh 渲染后与运行容器逐键逐值比较（候选只多下列新增键，回滚与现网完全相同）。
+services:
+  tax-service:
+    # 新：CalculateTax / 订单查询 HTTP、消费 OrderPaymentSucceeded（tax.acquiring.p0..p3）、补偿开票（TAX_DOCUMENT_ISSUE）经 Platform 文件服务上传税票。
+    image: sha256:a5616e20b18c04e2e5bb158031898f8c7bef9ab26540d5a025d5be3975cf1c31  # mor-test/tax-service:tax-20261029a（JAR b26621ba01189ebf）
+    environment:
+      # 消费 acquiring.events（与 billing / account 同一 vhost 与账号；mor_test 为 .* .* .*，启动时声明 tax.acquiring.hash / p0..p3 / dlx / dlq）。
+      TAX_RABBITMQ_HOST: rabbitmq
+      TAX_RABBITMQ_PORT: "5672"
+      TAX_RABBITMQ_USERNAME: ${MOR_RABBITMQ_USER:?prepare test secrets}
+      TAX_RABBITMQ_PASSWORD: ${MOR_RABBITMQ_PASSWORD:?prepare test secrets}
+      TAX_RABBITMQ_VHOST: /mor-test
+      # 税票上传：Platform 内部文件接口（含 Context Path，同 billing）；internal-auth 保持 OFF（Platform DUAL 以 X-Caller-Service=tax-service 识别来源）。
+      TAX_PLATFORM_SERVICE_URL: http://platform-support-service:18106/platform-support
+      TAX_COMPENSATION_INSTANCE_ID: tax-test
+      PAYTECH_INSTANCE_ID: tax-test
+      # 补偿扫描执行器：任务 compensationEventScan 在 xxl-job-admin 登记（scripts/xxl_tax.py；新建执行器分组 tax-service）。
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: tax-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.42
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+      # 税票 PUT 直传 https://minio.mor-test.localhost:29400（私有 test-ca，后端网络别名指向 minio 容器）：与 Platform / card 共用信任库（JDK cacerts + test CA）。
+      JAVA_TOOL_OPTIONS: -Djavax.net.ssl.trustStore=/run/mor-test/platform-truststore.p12 -Djavax.net.ssl.trustStoreType=PKCS12 -Djavax.net.ssl.trustStorePassword=changeit
+    volumes:
+      - /Users/kenny/Desktop/Workspace/Code-MoR/test-environment/private/platform-truststore.p12:/run/mor-test/platform-truststore.p12:ro
+    depends_on:
+      rabbitmq: { condition: service_healthy }
+      platform-support-service: { condition: service_healthy }

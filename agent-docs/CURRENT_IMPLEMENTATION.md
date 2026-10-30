@@ -11,6 +11,15 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## tax 结账算税与事件登记（2026-10-29—30，已部署 mor-test，已本地提交 `fa21d5ce`，未推送）
+
+- **范围：** [需求](<../requirements/20261029/tax-结账算税与事件登记/requirement.md>)、[技术方案](<../requirements/20261029/tax-结账算税与事件登记/technique.md>)、[交付记录](<../requirements/20261029/tax-结账算税与事件登记/delivery.md>)、[运行卡](<../requirements/20261029/tax-结账算税与事件登记/release/runbook.md>)、[阶段 7 报告](<../requirements/20261029/tax-结账算税与事件登记/release/stage7-report.md>)；依据 [2026-10-29 tax 决定](./decisions/2026-10-29-tax-domain-fact-service.md)（Confirmed，含第 17 条首期由平台运营代操作）。
+- **Implemented：** `mor_tax` 重建为 16 表（准入、登记、规则包、计算、正式交易与 OUTPUT 底稿、税票序列与单据、补偿事件等）；tax 提供 CalculateTax 等 3 个内部接口，消费 `OrderPaymentSucceeded`（`tax.acquiring.p0—p3`）登记正式事实并开具税票（经 Platform 文件服务存 PDF）。acquiring 建单暂估、消费者资料提交后重算为最终、BLOCKED 不可付（新表 + 3 表改动，固定地址 `ACQUIRING_TAX_SERVICE_URL` 调 tax）；billing 新增 `SELLER_TAX` 行（本金减税，收方 TAX_AUTHORITY），account 一处映射，ledger 合并为 `TAX_PAYABLE`；billing 不调用、不等待 tax。ops-bff / ops-web 新增"财务 → 税务查询"（订单税务事实与税票下载，`TAX_VIEW`）。CLIENT 来源订单 NOT_MANAGED，未知税类 BLOCKED。
+- **Verified：** tax 62、acquiring 916、billing 142、account 68、ledger 332、ops-bff 2481、messaging 73、arch-rules 7、ops-web 1631；本机 e2e S1—S5 与 AC-10（tax 停机补登记）通过、浏览器 zh-CN / en × 1440 / 390；mor-test 离线演练（块 146 编译 631 → 633 → 631，SQL 前滚 / 回滚 / 拒绝路径）；mor-test 验收 A1—A4、A7 通过（合成事件驱动 billing → account → ledger，SELLER_TAX 15.00 = TAX_PAYABLE 15.00）。
+- **本机：** auto 库 `mor_tax` 重建、`mor_acquiring` 迁移；e2e `mor_tax_v2e2e`（AE001 Party `900000000001380102`）、`mor_acquiring_v2e2e` 迁移；e2e tax（18116）首次运行，acquiring / billing / account 为本需求构建（`*.pre-tax`），acquiring 已切 REAL；ops-bff 为 REQ-03 + tax 合并构建；本机 payment JAR 更新到 `e3e0c12f`；本机语言包 #17 / #18。
+- **mor-test（2026-10-30 05:49Z）：** tax-service `a5616e20…`、billing-service `adfd0817…`、account-service `8a21dab8…`、acquiring-service `843382e3…`、operations-console-bff `e243d57b…`、operations-console-web `748ca7b9…`（`tax-20261029a`，源码 = `fa21d5ce`）；`mor_tax` 16 表 + 初始化（AE001 Party `880000000702`）、`mor_acquiring` 迁移、billing 注释；块 146 激活（routeCount 633）；XXL 分组 18 / 任务 28；语言包 operations-console #24。Platform 未随发（能力清单缺 `OPERATIONS_FINANCE_TAX`，只影响菜单资源管理页的编辑）。
+- **Known gaps：** mor-test 上非 AE / SA / EG 或税类非 `SAAS_AUTOMATED` 的 MoR 订单一律 BLOCKED（D-1 已接受，他人脚本需改）；验收 S1 订单在 acquiring 未付、tax / billing 已按合成事件记为已付；汇率源未接（底稿 PENDING `FX_RATE_MISSING`）；阿拉伯语税票待补；Partner 门户操作未做（首期运营代操作）；tax 上传失败日志无原因；acquiring 迁移有新单后只能前滚修复。
+
 ## risk-decision 承保记录（REQ-03，2026-10-29，已部署 mor-test，已本地提交 `9d272ae6`）
 
 - **范围：** [需求](<../requirements/20261029/risk-decision-承保记录/requirement.md>)、[技术方案](<../requirements/20261029/risk-decision-承保记录/technique.md>)、[交付记录](<../requirements/20261029/risk-decision-承保记录/delivery.md>)、[运行卡](<../requirements/20261029/risk-decision-承保记录/release/runbook.md>)；依据 [2026-10-28 客户上线决定](./decisions/2026-10-28-client-go-live-orchestration.md)（Proposed）。归属 risk-decision（非 compliance）。

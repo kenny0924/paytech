@@ -1,0 +1,46 @@
+{
+ "app": "operations-console",
+ "currentRelease": 23,
+ "liveNamespaces": 26,
+ "repoNamespaces": 27,
+ "newNamespaces": [
+  {
+   "code": "tax",
+   "name": "税务",
+   "sort": 270
+  }
+ ],
+ "repoKeys": 10902,
+ "liveActiveKeys": 10688,
+ "added": 214,
+ "restored": 0,
+ "sourceChanged": 0,
+ "missingInRepo": 0,
+ "zhImportKeys": 214,
+ "zhMissingForImport": 0,
+ "keepLiveZh": 10688,
+ "refdataZhReplaced": 0,
+ "liveOutdatedZh": 0,
+ "rebaseExpected": 0,
+ "rebaseScope": 429,
+ "outdatedUntouched": 0,
+ "zhChangedNotImported": 0,
+ "byNamespace": {
+  "added": {
+   "nav": 1,
+   "tax": 213
+  },
+  "sourceChanged": {},
+  "deprecated": {},
+  "restored": {},
+  "zhImport": {
+   "nav": 1,
+   "tax": 213
+  }
+ },
+ "deprecations": [],
+ "sha256": {
+  "operations-console.release.en.json": "5ed0cdfa1754453d4dce26adb474e23b468c3c959acc7ec7ea8f0d8f18ce8af1",
+  "operations-console.release.zh-CN.delta.json": "e6db7e8648332767c9196fabf5f2e9f827dc3efb70c0c222e7530bed04e18cd1"
+ }
+}

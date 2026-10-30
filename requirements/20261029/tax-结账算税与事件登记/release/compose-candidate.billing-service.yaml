@@ -1,0 +1,10 @@
+# tax 结账算税与事件登记 · mor-test 覆盖文件（阶段 6 准备，2026-10-29；阶段 7 须用户授权，由主会话执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag 仅供辨认；本机 :development tag 已不存在，不能不带本文件起服务）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-tax-rel = main 30361be7 + tax 研发 worktree Code-MoR-tax 的 378 个文件（3 个与 REQ-03 重叠的按三方合并），未提交。
+# env：base compose 的键 + 下列键；scripts/env_check.sh 渲染后与运行容器逐键逐值比较（候选只多下列新增键，回滚与现网完全相同）。
+services:
+  billing-service:
+    # 新：OrderPaymentSucceeded 税务字段 → 逐组件 SELLER_TAX 行、TAX_CALCULATION 引用；旧载荷与 NOT_MANAGED 同现状。消费方先于 acquiring 上线。
+    image: sha256:adfd081728ae50759ba9dc2ce18aa9a019c0097997912925c7c19b7c75dfc05e  # mor-test/billing-service:tax-20261029a（JAR b52f655e288d3a41）

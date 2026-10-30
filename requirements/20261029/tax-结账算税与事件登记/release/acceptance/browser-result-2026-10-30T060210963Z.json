@@ -1,0 +1,791 @@
+{
+  "orders": {
+    "S1": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8",
+    "S2": "ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn",
+    "STANDARD_US": "ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS",
+    "STANDARD_AE": "ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed",
+    "EXISTING": "ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V"
+  },
+  "runs": [
+    {
+      "locale": "zh-CN",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "19-initial",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询",
+          "check": {
+            "menuEntries": 1,
+            "recentRows": 0
+          }
+        },
+        {
+          "step": "order-S1",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "税务查询",
+          "check": {
+            "orderNo": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8",
+            "pill": "已登记 · 已开票",
+            "callout": "申报底稿暂缺法定汇率 该注册按 SAR 申报，法定汇率源尚未接入。只影响后续申报，不影响收款和入账（计费已按 USD 记税额 15.00）。",
+            "lines": 1,
+            "downloadButton": 1
+          }
+        },
+        {
+          "step": "order-S2",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn 阻断 · 不可支付 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001）",
+          "check": {
+            "orderNo": "ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn",
+            "pill": "阻断 · 不可支付",
+            "callout": "这笔订单暂时不能支付 最新一次报价被阻断，系统不会以零税继续收款。订单保持开放，原因解决后消费者重新提交资料即可再算一次。",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-STANDARD_US",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS 阻断 · 不可支付 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001）",
+          "check": {
+            "orderNo": "ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS",
+            "pill": "阻断 · 不可支付",
+            "callout": "这笔订单暂时不能支付 最新一次报价被阻断，系统不会以零税继续收款。订单保持开放，原因解决后消费者重新提交资料即可再算一次。",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-STANDARD_AE",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed 阻断 · 不可支付 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001）",
+          "check": {
+            "orderNo": "ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed",
+            "pill": "阻断 · 不可支付",
+            "callout": "这笔订单暂时不能支付 最新一次报价被阻断，系统不会以零税继续收款。订单保持开放，原因解决后消费者重新提交资料即可再算一次。",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-EXISTING",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "税务查询",
+          "check": {
+            "orderNo": "ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+            "pill": null,
+            "callout": "",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "20-not-found",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "税务查询"
+        },
+        {
+          "step": "19-initial-recent",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询 最近查询 仅保存在本浏览器 ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed Accept Tester · 阿拉伯联合酋长国 — 阻断 ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS Accept Tester · 美国 — 阻断 ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn Accept Tester · 科威特 — 阻断 ord_3LOyZii4ct",
+          "check": {
+            "recentRows": 4
+          }
+        },
+        {
+          "step": "16-download-ok",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 已登记 · 已开票 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001） 平台运营代操作",
+          "check": {
+            "grantStatus": 200,
+            "grantKeys": [
+              "documentId",
+              "documentNumber",
+              "expiresAt",
+              "url"
+            ],
+            "urlHost": "minio.mor-test.localhost:29400",
+            "downloadFile": "SA-RCPT-2026-000001.pdf",
+            "popup": null
+          }
+        },
+        {
+          "step": "21-download-failed",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 已登记 · 已开票 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001） 平台运营代操作",
+          "check": {
+            "notice": "税票下载失败 文件服务暂时不可用，税票本身不受影响。请稍后重试；如果持续失败，请把请求编号发给技术支持。 重试下载 复制请求编号 b5e2…0021"
+          }
+        },
+        {
+          "step": "90-regression-risk-underwriting",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "承保 评估平台愿意为客户承担的交易与拒付风险，记录额度档位起点、保证金与结算周期建议。批准后不可修改，变更通过修订产生新版本。 新建承保",
+          "check": {
+            "rows": 3,
+            "alerts": 0
+          }
+        },
+        {
+          "step": "91-regression-workflow-definitions",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "",
+          "check": {
+            "rows": 0,
+            "alerts": 0
+          }
+        }
+      ]
+    },
+    {
+      "locale": "zh-CN",
+      "width": 390,
+      "steps": [
+        {
+          "step": "19-initial",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询",
+          "check": {
+            "menuEntries": 0,
+            "recentRows": 0
+          }
+        },
+        {
+          "step": "order-S1",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 已登记 · 已开票 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001） 平台运营代操作",
+          "check": {
+            "orderNo": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8",
+            "pill": "已登记 · 已开票",
+            "callout": "申报底稿暂缺法定汇率 该注册按 SAR 申报，法定汇率源尚未接入。只影响后续申报，不影响收款和入账（计费已按 USD 记税额 15.00）。",
+            "lines": 1,
+            "downloadButton": 1
+          }
+        },
+        {
+          "step": "order-S2",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn 阻断 · 不可支付 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001）",
+          "check": {
+            "orderNo": "ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn",
+            "pill": "阻断 · 不可支付",
+            "callout": "这笔订单暂时不能支付 最新一次报价被阻断，系统不会以零税继续收款。订单保持开放，原因解决后消费者重新提交资料即可再算一次。",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-STANDARD_US",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS 阻断 · 不可支付 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001）",
+          "check": {
+            "orderNo": "ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS",
+            "pill": "阻断 · 不可支付",
+            "callout": "这笔订单暂时不能支付 最新一次报价被阻断，系统不会以零税继续收款。订单保持开放，原因解决后消费者重新提交资料即可再算一次。",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-STANDARD_AE",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed 阻断 · 不可支付 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001）",
+          "check": {
+            "orderNo": "ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed",
+            "pill": "阻断 · 不可支付",
+            "callout": "这笔订单暂时不能支付 最新一次报价被阻断，系统不会以零税继续收款。订单保持开放，原因解决后消费者重新提交资料即可再算一次。",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-EXISTING",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "税务查询",
+          "check": {
+            "orderNo": "ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+            "pill": null,
+            "callout": "",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "20-not-found",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "税务查询"
+        },
+        {
+          "step": "19-initial-recent",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "按订单号查看这笔订单的税 报价与重算记录、逐行税额、正式登记、申报底稿和税票，一页看完 查 询 最近查询 仅保存在本浏览器 ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed Accept Tester · 阿拉伯联合酋长国 — 阻断 ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS Accept Tester · 美国 — 阻断 ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn Accept Tester · 科威特 — 阻断 ord_3LOyZii4ct",
+          "check": {
+            "recentRows": 4
+          }
+        },
+        {
+          "step": "16-download-ok",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 已登记 · 已开票 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001） 平台运营代操作",
+          "check": {
+            "grantStatus": 200,
+            "grantKeys": [
+              "documentId",
+              "documentNumber",
+              "expiresAt",
+              "url"
+            ],
+            "urlHost": "minio.mor-test.localhost:29400",
+            "downloadFile": "SA-RCPT-2026-000001.pdf",
+            "popup": null
+          }
+        },
+        {
+          "step": "21-download-failed",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 已登记 · 已开票 Accept Tester（Client 237575207592763393） MoR 纳税主体 AE001 Demo Operating Entity FZ-LLC（AE001） 平台运营代操作",
+          "check": {
+            "notice": "税票下载失败 文件服务暂时不可用，税票本身不受影响。请稍后重试；如果持续失败，请把请求编号发给技术支持。 重试下载 复制请求编号 b5e2…0021"
+          }
+        },
+        {
+          "step": "90-regression-risk-underwriting",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "承保 评估平台愿意为客户承担的交易与拒付风险，记录额度档位起点、保证金与结算周期建议。批准后不可修改，变更通过修订产生新版本。 新建承保",
+          "check": {
+            "rows": 0,
+            "alerts": 0
+          }
+        },
+        {
+          "step": "91-regression-workflow-definitions",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "",
+          "check": {
+            "rows": 0,
+            "alerts": 0
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 1440,
+      "steps": [
+        {
+          "step": "19-initial",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "See the tax on an order by its order number Quotes and recalculations, line-level tax, registration, reporting entries and the receipt, all on one page Search",
+          "check": {
+            "menuEntries": 1,
+            "recentRows": 0
+          }
+        },
+        {
+          "step": "order-S1",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 Registered · Receipt Issued Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001) Operated by platform operations",
+          "check": {
+            "orderNo": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8",
+            "pill": "Registered · Receipt Issued",
+            "callout": "Reporting entries are missing the statutory rate This registration reports in SAR and the statutory rate source isn't connected yet. Only later filing is affected; collection and posting aren't (billi",
+            "lines": 1,
+            "downloadButton": 1
+          }
+        },
+        {
+          "step": "order-S2",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn Blocked · Not Payable Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001)",
+          "check": {
+            "orderNo": "ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn",
+            "pill": "Blocked · Not Payable",
+            "callout": "This order can't be paid for now The latest quote is blocked, so the system won't collect with zero tax. The order stays open; once the cause is resolved, the consumer can resubmit their details to re",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-STANDARD_US",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS Blocked · Not Payable Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001)",
+          "check": {
+            "orderNo": "ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS",
+            "pill": "Blocked · Not Payable",
+            "callout": "This order can't be paid for now The latest quote is blocked, so the system won't collect with zero tax. The order stays open; once the cause is resolved, the consumer can resubmit their details to re",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-STANDARD_AE",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed Blocked · Not Payable Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001)",
+          "check": {
+            "orderNo": "ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed",
+            "pill": "Blocked · Not Payable",
+            "callout": "This order can't be paid for now The latest quote is blocked, so the system won't collect with zero tax. The order stays open; once the cause is resolved, the consumer can resubmit their details to re",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-EXISTING",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "Tax Lookup",
+          "check": {
+            "orderNo": "ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+            "pill": null,
+            "callout": "",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "20-not-found",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "Tax Lookup"
+        },
+        {
+          "step": "19-initial-recent",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "See the tax on an order by its order number Quotes and recalculations, line-level tax, registration, reporting entries and the receipt, all on one page Search Recent Searches Saved in this browser only ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed Accept Tester · United ",
+          "check": {
+            "recentRows": 4
+          }
+        },
+        {
+          "step": "16-download-ok",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 Registered · Receipt Issued Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001) Operated by platform operations",
+          "check": {
+            "grantStatus": 200,
+            "grantKeys": [
+              "documentId",
+              "documentNumber",
+              "expiresAt",
+              "url"
+            ],
+            "urlHost": "minio.mor-test.localhost:29400",
+            "downloadFile": "SA-RCPT-2026-000001.pdf",
+            "popup": null
+          }
+        },
+        {
+          "step": "21-download-failed",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 Registered · Receipt Issued Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001) Operated by platform operations",
+          "check": {
+            "notice": "Receipt download failed The file service is temporarily unavailable; the receipt itself isn't affected. Try again later, and if it keeps failing, send the request ID to technical support. Retry Download Copy request ID b5e2…0021"
+          }
+        },
+        {
+          "step": "90-regression-risk-underwriting",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "Underwriting Assess how much transaction and chargeback risk the platform takes on for a client: starting tier, security deposit and suggested settlement cycle. Approved records are immutable; changes create a new version. New underwriting",
+          "check": {
+            "rows": 3,
+            "alerts": 0
+          }
+        },
+        {
+          "step": "91-regression-workflow-definitions",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "",
+          "check": {
+            "rows": 0,
+            "alerts": 0
+          }
+        }
+      ]
+    },
+    {
+      "locale": "en",
+      "width": 390,
+      "steps": [
+        {
+          "step": "19-initial",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "See the tax on an order by its order number Quotes and recalculations, line-level tax, registration, reporting entries and the receipt, all on one page Search",
+          "check": {
+            "menuEntries": 0,
+            "recentRows": 0
+          }
+        },
+        {
+          "step": "order-S1",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 Registered · Receipt Issued Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001) Operated by platform operations",
+          "check": {
+            "orderNo": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8",
+            "pill": "Registered · Receipt Issued",
+            "callout": "Reporting entries are missing the statutory rate This registration reports in SAR and the statutory rate source isn't connected yet. Only later filing is affected; collection and posting aren't (billi",
+            "lines": 1,
+            "downloadButton": 1
+          }
+        },
+        {
+          "step": "order-S2",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn Blocked · Not Payable Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001)",
+          "check": {
+            "orderNo": "ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn",
+            "pill": "Blocked · Not Payable",
+            "callout": "This order can't be paid for now The latest quote is blocked, so the system won't collect with zero tax. The order stays open; once the cause is resolved, the consumer can resubmit their details to re",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-STANDARD_US",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS Blocked · Not Payable Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001)",
+          "check": {
+            "orderNo": "ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS",
+            "pill": "Blocked · Not Payable",
+            "callout": "This order can't be paid for now The latest quote is blocked, so the system won't collect with zero tax. The order stays open; once the cause is resolved, the consumer can resubmit their details to re",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-STANDARD_AE",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed Blocked · Not Payable Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001)",
+          "check": {
+            "orderNo": "ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed",
+            "pill": "Blocked · Not Payable",
+            "callout": "This order can't be paid for now The latest quote is blocked, so the system won't collect with zero tax. The order stays open; once the cause is resolved, the consumer can resubmit their details to re",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "order-EXISTING",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "Tax Lookup",
+          "check": {
+            "orderNo": "ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+            "pill": null,
+            "callout": "",
+            "lines": 0,
+            "downloadButton": 0
+          }
+        },
+        {
+          "step": "20-not-found",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "Tax Lookup"
+        },
+        {
+          "step": "19-initial-recent",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "See the tax on an order by its order number Quotes and recalculations, line-level tax, registration, reporting entries and the receipt, all on one page Search Recent Searches Saved in this browser only ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed Accept Tester · United ",
+          "check": {
+            "recentRows": 4
+          }
+        },
+        {
+          "step": "16-download-ok",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 Registered · Receipt Issued Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001) Operated by platform operations",
+          "check": {
+            "grantStatus": 200,
+            "grantKeys": [
+              "documentId",
+              "documentNumber",
+              "expiresAt",
+              "url"
+            ],
+            "urlHost": "minio.mor-test.localhost:29400",
+            "downloadFile": "SA-RCPT-2026-000001.pdf",
+            "popup": null
+          }
+        },
+        {
+          "step": "21-download-failed",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8 Registered · Receipt Issued Accept Tester (Client 237575207592763393) MoR Tax subject AE001 Demo Operating Entity FZ-LLC (AE001) Operated by platform operations",
+          "check": {
+            "notice": "Receipt download failed The file service is temporarily unavailable; the receipt itself isn't affected. Try again later, and if it keeps failing, send the request ID to technical support. Retry Download Copy request ID b5e2…0021"
+          }
+        },
+        {
+          "step": "90-regression-risk-underwriting",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "Underwriting Assess how much transaction and chargeback risk the platform takes on for a client: starting tier, security deposit and suggested settlement cycle. Approved records are immutable; changes create a new version. New underwriting",
+          "check": {
+            "rows": 3,
+            "alerts": 0
+          }
+        },
+        {
+          "step": "91-regression-workflow-definitions",
+          "rawKeys": [],
+          "overflowX": 0,
+          "head": "",
+          "check": {
+            "rows": 0,
+            "alerts": 0
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "zh-CN-1440",
+      "step": "goto /finance/tax?orderNo=ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "goto /finance/tax?orderNo=ORD-NOTFOUND-20261029",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "16-download-ok",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "goto /finance/tax?orderNo=ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "16-download-ok",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    },
+    {
+      "run": "en-1440",
+      "step": "goto /finance/tax?orderNo=ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "en-1440",
+      "step": "goto /finance/tax?orderNo=ORD-NOTFOUND-20261029",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "en-1440",
+      "step": "16-download-ok",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    },
+    {
+      "run": "en-390",
+      "step": "goto /finance/tax?orderNo=ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "en-390",
+      "step": "goto /finance/tax?orderNo=ORD-NOTFOUND-20261029",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "run": "en-390",
+      "step": "16-download-ok",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+    }
+  ],
+  "httpErrors": [
+    {
+      "run": "zh-CN-1440",
+      "step": "goto /finance/tax?orderNo=ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "status": 404,
+      "requestId": "48da10d8-718d-4d81-af96-ebea67dd0062"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "goto /finance/tax?orderNo=ORD-NOTFOUND-20261029",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ORD-NOTFOUND-20261029",
+      "status": 404,
+      "requestId": "9a52b30c-9f9d-4ddf-802d-b17def933a1a"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "16-download-ok",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download",
+      "status": 503,
+      "requestId": "b5e2c9d4-7a1f-4c3e-9d2b-5a7e00000021"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "goto /finance/tax?orderNo=ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "status": 404,
+      "requestId": "dc1ada5e-35d7-42fb-a05e-07aa5eb76cc4"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "16-download-ok",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download",
+      "status": 503,
+      "requestId": "b5e2c9d4-7a1f-4c3e-9d2b-5a7e00000021"
+    },
+    {
+      "run": "en-1440",
+      "step": "goto /finance/tax?orderNo=ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "status": 404,
+      "requestId": "f17592b4-7435-4f6b-be09-c7bb15c19fb3"
+    },
+    {
+      "run": "en-1440",
+      "step": "goto /finance/tax?orderNo=ORD-NOTFOUND-20261029",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ORD-NOTFOUND-20261029",
+      "status": 404,
+      "requestId": "ff437f6a-517b-4a9f-b534-219aa1daf623"
+    },
+    {
+      "run": "en-1440",
+      "step": "16-download-ok",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download",
+      "status": 503,
+      "requestId": "b5e2c9d4-7a1f-4c3e-9d2b-5a7e00000021"
+    },
+    {
+      "run": "en-390",
+      "step": "goto /finance/tax?orderNo=ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+      "status": 404,
+      "requestId": "e82a0168-d8a8-426e-a607-dd56b84aede7"
+    },
+    {
+      "run": "en-390",
+      "step": "goto /finance/tax?orderNo=ORD-NOTFOUND-20261029",
+      "method": "GET",
+      "path": "/api/operations/tax/v1/orders/ORD-NOTFOUND-20261029",
+      "status": 404,
+      "requestId": "d2e313f6-e0ef-4db0-a879-6e1295a4ad1d"
+    },
+    {
+      "run": "en-390",
+      "step": "16-download-ok",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download",
+      "status": 503,
+      "requestId": "b5e2c9d4-7a1f-4c3e-9d2b-5a7e00000021"
+    }
+  ],
+  "writes": [
+    {
+      "run": "zh-CN-1440",
+      "step": "download",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download"
+    },
+    {
+      "run": "zh-CN-1440",
+      "step": "16-download-ok",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "download",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download"
+    },
+    {
+      "run": "zh-CN-390",
+      "step": "16-download-ok",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download"
+    },
+    {
+      "run": "en-1440",
+      "step": "download",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download"
+    },
+    {
+      "run": "en-1440",
+      "step": "16-download-ok",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download"
+    },
+    {
+      "run": "en-390",
+      "step": "download",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download"
+    },
+    {
+      "run": "en-390",
+      "step": "16-download-ok",
+      "method": "POST",
+      "path": "/api/operations/tax/v1/orders/ord_3LOyZii4ct3BgT48vPZhmHbyC302a8/documents/241801532096454656/download"
+    }
+  ]
+}

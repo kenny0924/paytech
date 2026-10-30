@@ -1,0 +1,266 @@
+### image sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb; platform jar 4b37f87e5330ae1e
+### dump mor_tax 05154a74c377531e
+### dump mor_acquiring 0260eabf24e6b4e9
+### dump mor_billing 6920324b0d90d034
+### dump mor_platform dfc0ac9c447b3b0e
+### imported 4 dumps
+### ===== forward (runbook order)
+### compile baseline               COMPILE OK: routes loaded=637, effective=631, block loaded=0, block ACTIVE=0, block effective=0
+### p01-precheck (mor_platform-block-146-precheck.sql @ mor_platform) exit=0 expect=ok 0.31s
++-------------+------------------+-----------+--------+---------+--------+-------------+
+| permissions | role_permissions | resources | routes | headers | guards | file_routes |
++-------------+------------------+-----------+--------+---------+--------+-------------+
+|           0 |                0 |         0 |      0 |       0 |      0 |           0 |
++-------------+------------------+-----------+--------+---------+--------+-------------+
++-----------------+---------------+----------------------+------------------------+
+| permission_code | resource_code | route_codes_or_paths | file_route_tax_service |
++-----------------+---------------+----------------------+------------------------+
+|               0 |             0 |                    0 |                      0 |
++-----------------+---------------+----------------------+------------------------+
++--------------------+----------------+--------+---------+
+| role_id            | role_code      | status | version |
++--------------------+----------------+--------+---------+
+| 900000000000000510 | PLATFORM_ADMIN | ACTIVE |      52 |
++--------------------+----------------+--------+---------+
++--------------------+--------------------+---------------+--------+
+| resource_id        | resource_code      | resource_type | status |
++--------------------+--------------------+---------------+--------+
+| 900000000000097301 | OPERATIONS_FINANCE | MENU          | ACTIVE |
++--------------------+--------------------+---------------+--------+
++--------------------+--------+
+| target_id          | status |
++--------------------+--------+
+| 900000000000000001 | ACTIVE |
++--------------------+--------+
++--------------------+--------------------+--------------------+--------------------------+--------------------+----------------------+----------------+--------+
+| route_id           | bucket_id          | bucket_name        | scan_policy_code         | max_upload_seconds | pdf_allowed_expect_1 | max_size_bytes | status |
++--------------------+--------------------+--------------------+--------------------------+--------------------+----------------------+----------------+--------+
+| 238885821824974848 | 238885048240128000 | mor-platform-files | CLIENT_ONBOARDING_FORMAT |                900 |                    1 |       10485760 | ACTIVE |
++--------------------+--------------------+--------------------+--------------------------+--------------------+----------------------+----------------+--------+
++--------------------+-------------------------------------+------------+--------+
+| resource_id        | resource_code                       | sort_order | status |
++--------------------+-------------------------------------+------------+--------+
+| 900000000000097302 | OPERATIONS_FINANCE_SETUP            |         10 | ACTIVE |
+| 900000000000097303 | OPERATIONS_FINANCE_LEDGER           |         20 | ACTIVE |
+| 900000000000097304 | OPERATIONS_FINANCE_BALANCES         |         30 | ACTIVE |
+| 900000000000099301 | OPERATIONS_FINANCE_SUBLEDGER        |         40 | ACTIVE |
+| 900000000000120301 | OPERATIONS_FINANCE_ADJUSTMENTS      |         50 | ACTIVE |
+| 900000000000121301 | OPERATIONS_FINANCE_PERIOD_CLOSE     |         60 | ACTIVE |
+| 900000000000122301 | OPERATIONS_FINANCE_ACCOUNTING_RULES |         70 | ACTIVE |
+| 900000000000123301 | OPERATIONS_FINANCE_RECON            |         80 | ACTIVE |
++--------------------+-------------------------------------+------------+--------+
++---------------+-----------------+--------------------+
+| active_routes | disabled_routes | max_route          |
++---------------+-----------------+--------------------+
+|           631 |               6 | 900000000000143412 |
++---------------+-----------------+--------------------+
++--------------------+---------------------------------+--------+
+| route_id           | route_code                      | status |
++--------------------+---------------------------------+--------+
+| 900000000000134411 | operations-file-record-detail   | ACTIVE |
+| 900000000000134412 | operations-file-record-download | ACTIVE |
++--------------------+---------------------------------+--------+
+### p10-register (mor_platform-block-146.sql @ mor_platform) exit=0 expect=ok 0.15s
+### compile dormant                COMPILE OK: routes loaded=639, effective=631, block loaded=2, block ACTIVE=0, block effective=0
+### p11-verify-dormant (mor_platform-block-146-verify.sql @ mor_platform) exit=0 expect=ok 0.25s
++---------------+--------------------+-------------+----------+-----------+-----------+--------------+
+| permissions_1 | role_permissions_1 | resources_1 | routes_2 | headers_8 | guards_12 | file_route_1 |
++---------------+--------------------+-------------+----------+-----------+-----------+--------------+
+|             1 |                  1 |           1 |        2 |         8 |        12 |            1 |
++---------------+--------------------+-------------+----------+-----------+-----------+--------------+
++-----------------+----------+---+
+| kind            | status   | n |
++-----------------+----------+---+
+| role_permission | REVOKED  | 1 |
+| resource        | DISABLED | 1 |
+| route           | DISABLED | 2 |
+| permission      | ACTIVE   | 1 |
++-----------------+----------+---+
++--------------------+---------------+--------------+---------------+---------------+------------+
+| route_id           | source_system | access_level | same_bucket_1 | same_policy_1 | same_ttl_1 |
++--------------------+---------------+--------------+---------------+---------------+------------+
+| 900000000000146801 | tax-service   | PRIVATE      |             1 |             1 |          1 |
++--------------------+---------------+--------------+---------------+---------------+------------+
++------------------------------------------+--------------+----------------+---------------+
+| route_code                               | route_same_1 | headers_same_1 | guards_same_1 |
++------------------------------------------+--------------+----------------+---------------+
+| operations-finance-tax-order-detail      |            1 |              1 |             1 |
+| operations-finance-tax-document-download |            1 |              1 |             1 |
++------------------------------------------+--------------+----------------+---------------+
++---------------+-----------------+
+| active_routes | disabled_routes |
++---------------+-----------------+
+|           631 |               8 |
++---------------+-----------------+
+### p10-register-again (mor_platform-block-146.sql @ mor_platform) exit=1 expect=fail 0.25s
+ERROR 1062 (23000) at line 21: Duplicate entry '900000000000146101' for key 't_permission.PRIMARY'
+### t10-rebuild (mor_tax-rebuild.sql @ mor_tax) exit=0 expect=ok 0.94s
+### t11-initial-data (mor_tax-initial-data.sql @ mor_tax) exit=0 expect=ok 0.14s
+### t12-verify (mor_tax-verify.sql @ mor_tax) exit=0 expect=ok 0.15s
++------------------+-------------------+--------------+
+| tables_expect_16 | expected_names_16 | old_tables_0 |
++------------------+-------------------+--------------+
+|               16 |                16 |            0 |
++------------------+-------------------+--------------+
++------------+----------+----------------+----------+------------+
+| category_1 | policy_3 | registration_3 | market_3 | sequence_3 |
++------------+----------+----------------+----------+------------+
+|          1 |        3 |              3 |        3 |          3 |
++------------+----------+----------------+----------+------------+
++---------------------------+
+| party_expect_880000000702 |
++---------------------------+
+|              880000000702 |
++---------------------------+
++-------------------+-------------------+---------------------+--------------+---------------+------+--------------+-------------+
+| jurisdiction_code | collection_status | managed_by          | package_code | policy_status | rate | series_code  | next_number |
++-------------------+-------------------+---------------------+--------------+---------------+------+--------------+-------------+
+| AE                | ENABLED           | PLATFORM_OPERATIONS | DEMO_AE_SAAS | APPROVED      | 0.05 | AE-RCPT-2026 |           1 |
+| EG                | ENABLED           | PLATFORM_OPERATIONS | DEMO_EG_SAAS | APPROVED      | 0.14 | EG-RCPT-2026 |           1 |
+| SA                | ENABLED           | PLATFORM_OPERATIONS | DEMO_SA_SAAS | APPROVED      | 0.15 | SA-RCPT-2026 |           1 |
++-------------------+-------------------+---------------------+--------------+---------------+------+--------------+-------------+
+### t11-initial-data-again (mor_tax-initial-data.sql @ mor_tax) exit=1 expect=fail 0.19s
+ERROR 1062 (23000) at line 15: Duplicate entry '1' for key 't_tax_category.PRIMARY'
+### b10-comment (mor_billing-comment.sql @ mor_billing) exit=0 expect=ok 0.18s
+### b11-comment-again (mor_billing-comment.sql @ mor_billing) exit=0 expect=ok 0.20s
+### a10-migrate (mor_acquiring-migrate.sql @ mor_acquiring) exit=0 expect=ok 0.36s
+### a11-verify-after (mor_acquiring-verify-after.sql @ mor_acquiring) exit=0 expect=ok 0.15s
++-------------+----------------------+-------------------------------+
+| new_table_1 | null_amount_status_0 | calc_rows_0_before_new_orders |
++-------------+----------------------+-------------------------------+
+|           1 |                    0 |                             0 |
++-------------+----------------------+-------------------------------+
++---------------+--------+
+| amount_status | orders |
++---------------+--------+
+| FINAL         |     51 |
++---------------+--------+
++----------------------------+-------------+-------------+
+| COLUMN_NAME                | IS_NULLABLE | COLUMN_TYPE |
++----------------------------+-------------+-------------+
+| finance_tax_snapshot_hash  | YES         | char(64)    |
+| finance_tax_snapshot_id    | YES         | bigint      |
+| initial_tax_calculation_id | YES         | bigint      |
++----------------------------+-------------+-------------+
++----------------------+-----------------------------+
+| INDEX_NAME           | cols                        |
++----------------------+-----------------------------+
+| uk_consumer_contract | order_id,tax_calculation_id |
++----------------------+-----------------------------+
+### a12-migrate-again (mor_acquiring-migrate.sql @ mor_acquiring) exit=1 expect=fail 0.14s
+ERROR 1050 (42S01) at line 21: Table 't_order_tax_calculation' already exists
+### p20-activate (mor_platform-block-146-activate.sql @ mor_platform) exit=0 expect=ok 0.15s
++--------------------+--------+---------+
+| role_permission_id | status | version |
++--------------------+--------+---------+
+| 900000000000146201 | ACTIVE |       2 |
++--------------------+--------+---------+
++--------------------+------------------------+--------+---------+
+| resource_id        | resource_code          | status | version |
++--------------------+------------------------+--------+---------+
+| 900000000000146301 | OPERATIONS_FINANCE_TAX | ACTIVE |       2 |
++--------------------+------------------------+--------+---------+
++--------------------+------------------------------------------+--------+---------+
+| route_id           | route_code                               | status | version |
++--------------------+------------------------------------------+--------+---------+
+| 900000000000146401 | operations-finance-tax-order-detail      | ACTIVE |       2 |
+| 900000000000146402 | operations-finance-tax-document-download | ACTIVE |       2 |
++--------------------+------------------------------------------+--------+---------+
+### compile active                 COMPILE OK: routes loaded=639, effective=633, block loaded=2, block ACTIVE=2, block effective=2
+### p21-verify-active (mor_platform-block-146-verify.sql @ mor_platform) exit=0 expect=ok 0.10s
++---------------+--------------------+-------------+----------+-----------+-----------+--------------+
+| permissions_1 | role_permissions_1 | resources_1 | routes_2 | headers_8 | guards_12 | file_route_1 |
++---------------+--------------------+-------------+----------+-----------+-----------+--------------+
+|             1 |                  1 |           1 |        2 |         8 |        12 |            1 |
++---------------+--------------------+-------------+----------+-----------+-----------+--------------+
++-----------------+--------+---+
+| kind            | status | n |
++-----------------+--------+---+
+| role_permission | ACTIVE | 1 |
+| resource        | ACTIVE | 1 |
+| route           | ACTIVE | 2 |
+| permission      | ACTIVE | 1 |
++-----------------+--------+---+
++--------------------+---------------+--------------+---------------+---------------+------------+
+| route_id           | source_system | access_level | same_bucket_1 | same_policy_1 | same_ttl_1 |
++--------------------+---------------+--------------+---------------+---------------+------------+
+| 900000000000146801 | tax-service   | PRIVATE      |             1 |             1 |          1 |
++--------------------+---------------+--------------+---------------+---------------+------------+
++------------------------------------------+--------------+----------------+---------------+
+| route_code                               | route_same_1 | headers_same_1 | guards_same_1 |
++------------------------------------------+--------------+----------------+---------------+
+| operations-finance-tax-order-detail      |            1 |              1 |             1 |
+| operations-finance-tax-document-download |            1 |              1 |             1 |
++------------------------------------------+--------------+----------------+---------------+
++---------------+-----------------+
+| active_routes | disabled_routes |
++---------------+-----------------+
+|           633 |               6 |
++---------------+-----------------+
+### ===== rollback (reverse order)
+### p30-rollback-while-active (mor_platform-block-146-rollback.sql @ mor_platform) exit=1 expect=fail 0.10s
+ERROR 1242 (21000) at line 10: Subquery returns more than 1 row
+### p31-deactivate (mor_platform-block-146-deactivate.sql @ mor_platform) exit=0 expect=ok 0.12s
+### compile deactivated            COMPILE OK: routes loaded=639, effective=631, block loaded=2, block ACTIVE=0, block effective=0
+### p32-verify-deactivated (mor_platform-block-146-verify.sql @ mor_platform) exit=0 expect=ok 0.09s
++---------------+--------------------+-------------+----------+-----------+-----------+--------------+
+| permissions_1 | role_permissions_1 | resources_1 | routes_2 | headers_8 | guards_12 | file_route_1 |
++---------------+--------------------+-------------+----------+-----------+-----------+--------------+
+|             1 |                  1 |           1 |        2 |         8 |        12 |            1 |
++---------------+--------------------+-------------+----------+-----------+-----------+--------------+
++-----------------+----------+---+
+| kind            | status   | n |
++-----------------+----------+---+
+| role_permission | REVOKED  | 1 |
+| resource        | DISABLED | 1 |
+| route           | DISABLED | 2 |
+| permission      | ACTIVE   | 1 |
++-----------------+----------+---+
++--------------------+---------------+--------------+---------------+---------------+------------+
+| route_id           | source_system | access_level | same_bucket_1 | same_policy_1 | same_ttl_1 |
++--------------------+---------------+--------------+---------------+---------------+------------+
+| 900000000000146801 | tax-service   | PRIVATE      |             1 |             1 |          1 |
++--------------------+---------------+--------------+---------------+---------------+------------+
++------------------------------------------+--------------+----------------+---------------+
+| route_code                               | route_same_1 | headers_same_1 | guards_same_1 |
++------------------------------------------+--------------+----------------+---------------+
+| operations-finance-tax-order-detail      |            1 |              1 |             1 |
+| operations-finance-tax-document-download |            1 |              1 |             1 |
++------------------------------------------+--------------+----------------+---------------+
++---------------+-----------------+
+| active_routes | disabled_routes |
++---------------+-----------------+
+|           631 |               8 |
++---------------+-----------------+
+### fixture: upload 236087249488396288 source_system -> tax-service
+### p33-rollback-refused-tax-files (mor_platform-block-146-rollback.sql @ mor_platform) exit=1 expect=fail 0.09s
+ERROR 1242 (21000) at line 11: Subquery returns more than 1 row
+### fixture restored (platform-support)
+### p34-block-rollback (mor_platform-block-146-rollback.sql @ mor_platform) exit=0 expect=ok 0.40s
+### compile rolled-back            COMPILE OK: routes loaded=637, effective=631, block loaded=0, block ACTIVE=0, block effective=0
+### p35-block-rollback-again (mor_platform-block-146-rollback.sql @ mor_platform) exit=0 expect=ok 0.21s
+### fixture: context 237092525444284416 snapshot -> NULL (simulates a new order)
+### a20-rollback-precheck (mor_acquiring-rollback-precheck.sql @ mor_acquiring) exit=0 expect=ok 0.15s
++-------------------------------+------------------------------+---------------+----------------------+
+| new_orders_without_snapshot_0 | orders_with_multi_contract_0 | tax_calc_rows | orders_after_release |
++-------------------------------+------------------------------+---------------+----------------------+
+|                             1 |                            0 |             0 |                    0 |
++-------------------------------+------------------------------+---------------+----------------------+
+### a21-rollback-refused (mor_acquiring-rollback.sql @ mor_acquiring) exit=1 expect=fail 0.17s
+ERROR 1138 (22004) at line 11: Invalid use of NULL value
+### a22-remigrate-clean (mor_acquiring-migrate.sql @ mor_acquiring) exit=0 expect=ok 0.44s
+### fixture discarded: mor_acquiring re-imported from dump and migrated again
+### a23-rollback (mor_acquiring-rollback.sql @ mor_acquiring) exit=0 expect=ok 0.24s
+### a24-rollback-again (mor_acquiring-rollback.sql @ mor_acquiring) exit=1 expect=fail 0.18s
+ERROR 1091 (42000) at line 11: Can't DROP 'initial_tax_calculation_id'; check that column/key exists
+### b20-comment-rollback (mor_billing-comment-rollback.sql @ mor_billing) exit=0 expect=ok 0.20s
+### t20-rollback (mor_tax-rebuild-rollback.sql @ mor_tax) exit=0 expect=ok 0.66s
+### t21-rebuild-after-rollback (mor_tax-rebuild.sql @ mor_tax) exit=0 expect=ok 0.85s
+### t22-initial-after-rollback (mor_tax-initial-data.sql @ mor_tax) exit=0 expect=ok 0.12s
+### mor_platform-before vs mor_platform-final: 2 differing lines (expected 0)
+### mor_acquiring-before vs mor_acquiring-final: 0 differing lines (expected 0)
+### mor_acquiring-migrated vs mor_acquiring-after-refused: 2 differing lines (expected 2 (fixture row only))
+### mor_billing-before vs mor_billing-final: 0 differing lines (expected 0)
+### mor_tax-before vs mor_tax-final: 0 differing lines (expected see diff (old 24 tables recreated by rollback))
+### mor_tax-forwarded vs mor_tax-reforwarded: 26 differing lines (expected seed timestamps only)
+### DONE

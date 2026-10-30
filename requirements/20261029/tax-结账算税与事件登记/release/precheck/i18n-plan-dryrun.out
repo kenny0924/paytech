@@ -1,0 +1,18 @@
+[通过] operations-console 仓库源校验（命名空间编码、key 规则与前缀、非空基准、文案 / 说明长度，均按 Platform 规则）
+[通过] operations-console 新命名空间名称 ≤ 64 字符、排序 0—9999
+[通过] operations-console 线上 10688 个 ACTIVE key 都在仓库中（否则 KEY_IMPORT 会废弃它们；确认废弃用 --accept-deprecations）
+[通过] operations-console 新增 214 < 3000
+[通过] operations-console 导入集合 214+ 个 key 都有仓库 zh-CN（缺 0）
+[通过] operations-console added 只在 ['nav', 'tax']（{'nav': 1, 'tax': 213}）
+[通过] operations-console sourceChanged 只在 ['nav', 'tax']（{}）
+[通过] operations-console deprecated 只在 ['nav', 'tax']（{}）
+[通过] operations-console restored 只在 ['nav', 'tax']（{}）
+[通过] operations-console zhImport 只在 ['nav', 'tax']（{'nav': 1, 'tax': 213}）
+[通过] operations-console 仓库 zh-CN 与线上不同但不会导入的 key 为 0（0）
+[通过] operations-console 新建命名空间恰好为 ['tax']（[{'code': 'tax', 'name': '税务', 'sort': 270}]）
+{"byNamespace": {"added": {"nav": 1, "tax": 213}, "sourceChanged": {}, "deprecated": {}, "restored": {}, "zhImport": {"nav": 1, "tax": 213}}, "zhChangedNotImported": []}
+{"currentRelease": 23, "liveNamespaces": 26, "repoNamespaces": 27, "newNamespaces": [{"code": "tax", "name": "税务", "sort": 270}], "repoKeys": 10902, "liveActiveKeys": 10688, "added": 214, "restored": 0, "sourceChanged": 0, "missingInRepo": 0, "zhMissingForImport": 0, "keepLiveZh": 10688, "refdataZhReplaced": 0, "liveOutdatedZh": 0, "rebaseExpected": 0, "outdatedUntouched": 0}
+导入文件与计划：/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261029/tax-结账算税与事件登记/release/i18n-bundles
+计划完成（只读，未登录、未写入）：可执行
+
+== 参考数据语言包计划：通过 12，失败 0，未能验证 0

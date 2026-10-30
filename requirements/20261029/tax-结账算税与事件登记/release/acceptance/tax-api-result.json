@@ -1,0 +1,627 @@
+{
+ "before": {
+  "at": "2026-10-30T03:39:24.415Z",
+  "create": {
+   "clientOrderId": "tax-s7-before-b7eecc9d",
+   "http": 201,
+   "code": null,
+   "orderNo": "ord_3LOiYExjYx4oZnvVzxARAkITZrX4xK",
+   "orderStatus": null,
+   "amountStatus": "FINAL",
+   "amounts": {
+    "merchandiseAmount": "12.34",
+    "discountAmount": "0.00",
+    "netAmount": "12.34",
+    "taxAmount": "0.00",
+    "roundingAmount": "0.00",
+    "totalAmount": "12.34"
+   },
+   "taxBlockReason": null
+  },
+  "note": "发布前基线：零税 Mock，amountStatus 由旧代码推导",
+  "verdict": "RECORDED"
+ },
+ "preflight": {
+  "at": "2026-10-30T05:50:45.430Z",
+  "images": {
+   "tax-service": "sha256:a5616e20b18c04e2e5bb158031898f8c7bef9ab26540d5a025d5be3975cf1c31",
+   "acquiring-service": "sha256:843382e35d401341a8984bcbc02ceb98b7c9774d4b48524fe602e44058bed01c",
+   "billing-service": "sha256:adfd081728ae50759ba9dc2ce18aa9a019c0097997912925c7c19b7c75dfc05e",
+   "account-service": "sha256:8a21dab8e54bde0945e52dcace5a4a2722a581dbba79d7b1e4d8acc257e2b68e",
+   "operations-console-bff": "sha256:e243d57bd5406a2ac8efa133b52586cc38acfd60ec2c739e6fe5ff1dabd6fe27",
+   "operations-console-web": "sha256:748ca7b9c6b417104bbb7e3a09ba4b2630d8c4c513a4de2c43644a769b66a97a"
+  },
+  "queues": {
+   "account.billing.dlq": {
+    "messages": 0,
+    "consumers": 0
+   },
+   "account.billing.p0": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "account.billing.p1": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "account.billing.p2": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "account.billing.p3": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "billing.acquiring.dlq": {
+    "messages": 0,
+    "consumers": 0
+   },
+   "billing.acquiring.p0": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "billing.acquiring.p1": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "billing.acquiring.p2": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "billing.acquiring.p3": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "tax.acquiring.dlq": {
+    "messages": 0,
+    "consumers": 0
+   },
+   "tax.acquiring.p0": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "tax.acquiring.p1": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "tax.acquiring.p2": {
+    "messages": 0,
+    "consumers": 1
+   },
+   "tax.acquiring.p3": {
+    "messages": 0,
+    "consumers": 1
+   }
+  },
+  "taxSeeds": [
+   [
+    "1",
+    "3",
+    "3",
+    "1",
+    "880000000702"
+   ]
+  ],
+  "block146Routes": [
+   [
+    "ACTIVE",
+    "2"
+   ]
+  ],
+  "dlqBaseline": {
+   "tax.acquiring.dlq": 0,
+   "billing.acquiring.dlq": 0,
+   "account.billing.dlq": 0
+  },
+  "verdict": "PASS"
+ },
+ "after": {
+  "at": "2026-10-30T05:51:53.669Z",
+  "standardUS": {
+   "clientOrderId": "tax-s7-after-us-a3267221",
+   "http": 201,
+   "code": null,
+   "orderNo": "ord_3LOyfN9dCNe6aGvFJjtpj2LdJMj1OS",
+   "orderStatus": null,
+   "amountStatus": "BLOCKED",
+   "amounts": {
+    "merchandiseAmount": "12.34",
+    "discountAmount": "0.00",
+    "netAmount": "12.34",
+    "taxAmount": null,
+    "roundingAmount": null,
+    "totalAmount": null
+   },
+   "taxBlockReason": "MARKET_NOT_ENABLED"
+  },
+  "standardAE": {
+   "clientOrderId": "tax-s7-after-ae-099a03c0",
+   "http": 201,
+   "code": null,
+   "orderNo": "ord_3LOyfRRUPJT7hR0I4BVY6t4eaMM7Ed",
+   "orderStatus": null,
+   "amountStatus": "BLOCKED",
+   "amounts": {
+    "merchandiseAmount": "12.34",
+    "discountAmount": "0.00",
+    "netAmount": "12.34",
+    "taxAmount": null,
+    "roundingAmount": null,
+    "totalAmount": null
+   },
+   "taxBlockReason": "UNKNOWN_TAX_CATEGORY"
+  },
+  "before": {
+   "clientOrderId": "tax-s7-before-b7eecc9d",
+   "http": 201,
+   "code": null,
+   "orderNo": "ord_3LOiYExjYx4oZnvVzxARAkITZrX4xK",
+   "orderStatus": null,
+   "amountStatus": "FINAL",
+   "amounts": {
+    "merchandiseAmount": "12.34",
+    "discountAmount": "0.00",
+    "netAmount": "12.34",
+    "taxAmount": "0.00",
+    "roundingAmount": "0.00",
+    "totalAmount": "12.34"
+   },
+   "taxBlockReason": null
+  },
+  "existingPaidOrder": [
+   {
+    "orderNo": "ord_3Ks2SLUTz9Y30xd7aIfcAm8z13G56V",
+    "amountStatus": "FINAL",
+    "taxAmount": "0.00000000",
+    "total": "42.90000000"
+   }
+  ],
+  "existingTaxQueryHttp": 404,
+  "verdict": "PASS"
+ },
+ "scenario": {
+  "at": "2026-10-30T05:51:03.020Z",
+  "S1": {
+   "create": {
+    "clientOrderId": "tax-s7-sa-c9640ca7",
+    "http": 201,
+    "code": null,
+    "orderNo": "ord_3LOyZii4ct3BgT48vPZhmHbyC302a8",
+    "orderStatus": null,
+    "amountStatus": "ESTIMATED",
+    "amounts": {
+     "merchandiseAmount": "100.00",
+     "discountAmount": "0.00",
+     "netAmount": "100.00",
+     "taxAmount": "5.00",
+     "roundingAmount": "0.00",
+     "totalAmount": "105.00"
+    },
+    "taxBlockReason": null
+   },
+   "consumer": {
+    "http": 200,
+    "code": null,
+    "amountStatus": "FINAL",
+    "amounts": {
+     "merchandiseAmount": "100.00",
+     "discountAmount": "0.00",
+     "netAmount": "100.00",
+     "taxAmount": "15.00",
+     "roundingAmount": "0.00",
+     "totalAmount": "115.00"
+    },
+    "taxBlockReason": null,
+    "allowedActions": null
+   },
+   "view": {
+    "http": 200,
+    "amountStatus": "FINAL",
+    "amounts": {
+     "merchandiseAmount": "100.00",
+     "discountAmount": "0.00",
+     "netAmount": "100.00",
+     "taxAmount": "15.00",
+     "roundingAmount": "0.00",
+     "totalAmount": "115.00"
+    },
+    "allowedActions": [
+     "SAVE_CONSUMER",
+     "PAY"
+    ],
+    "contractId": "241801080659361792"
+   },
+   "acquiring": {
+    "orderId": "241801063336886272",
+    "status": "OPEN",
+    "amountStatus": "FINAL",
+    "taxAmount": "15.00000000",
+    "total": "115.00000000",
+    "version": "2",
+    "taxCalculations": [
+     {
+      "revision": "1",
+      "taxCalculationId": "241801065383665664",
+      "stage": "PROVISIONAL",
+      "status": "READY",
+      "basisCountry": "AE",
+      "taxAmount": "5.00000000",
+      "total": "105.00000000",
+      "blockReason": "NULL",
+      "components": "[{\"taxType\": \"VAT\", \"taxAmount\": \"5.00\", \"registrationId\": \"21\", \"jurisdictionCode\": \"AE\", \"taxSubjectPartyId\": \"880000000702\"}]"
+     },
+     {
+      "revision": "2",
+      "taxCalculationId": "241801079967260672",
+      "stage": "FINAL",
+      "status": "READY",
+      "basisCountry": "SA",
+      "taxAmount": "15.00000000",
+      "total": "115.00000000",
+      "blockReason": "NULL",
+      "components": "[{\"taxType\": \"VAT\", \"taxAmount\": \"15.00\", \"registrationId\": \"22\", \"jurisdictionCode\": \"SA\", \"taxSubjectPartyId\": \"880000000702\"}]"
+     }
+    ],
+    "contracts": [
+     {
+      "contractId": "241801067279532034",
+      "taxCalculationId": "241801065383665664"
+     },
+     {
+      "contractId": "241801080659361792",
+      "taxCalculationId": "241801079967260672"
+     }
+    ],
+    "context": {
+     "orderContextId": "241801067279532032",
+     "financeTaxSnapshotId": "NULL",
+     "initialTaxCalculationId": "241801065383665664",
+     "consumerCountryCode": "AE"
+    }
+   },
+   "taxQuery": {
+    "http": 200,
+    "calculations": 2,
+    "transactions": 0
+   }
+  },
+  "S2": {
+   "create": {
+    "clientOrderId": "tax-s7-kw-0b19144c",
+    "http": 201,
+    "code": null,
+    "orderNo": "ord_3LOyb0R0G8kxDD6WGUT9WyrqAy1DQn",
+    "orderStatus": null,
+    "amountStatus": "ESTIMATED",
+    "amounts": {
+     "merchandiseAmount": "100.00",
+     "discountAmount": "0.00",
+     "netAmount": "100.00",
+     "taxAmount": "5.00",
+     "roundingAmount": "0.00",
+     "totalAmount": "105.00"
+    },
+    "taxBlockReason": null
+   },
+   "consumer": {
+    "http": 200,
+    "code": null,
+    "amountStatus": "BLOCKED",
+    "amounts": {
+     "merchandiseAmount": "100.00",
+     "discountAmount": "0.00",
+     "netAmount": "100.00",
+     "taxAmount": null,
+     "roundingAmount": null,
+     "totalAmount": null
+    },
+    "taxBlockReason": "MARKET_NOT_ENABLED",
+    "allowedActions": null
+   },
+   "payment": {
+    "http": 409,
+    "code": "CHECKOUT_NOT_READY"
+   },
+   "acquiring": {
+    "orderId": "241801105871323136",
+    "status": "OPEN",
+    "amountStatus": "BLOCKED",
+    "taxAmount": "NULL",
+    "total": "NULL",
+    "version": "2",
+    "taxCalculations": [
+     {
+      "revision": "1",
+      "taxCalculationId": "241801107255402496",
+      "stage": "PROVISIONAL",
+      "status": "READY",
+      "basisCountry": "AE",
+      "taxAmount": "5.00000000",
+      "total": "105.00000000",
+      "blockReason": "NULL",
+      "components": "[{\"taxType\": \"VAT\", \"taxAmount\": \"5.00\", \"registrationId\": \"21\", \"jurisdictionCode\": \"AE\", \"taxSubjectPartyId\": \"880000000702\"}]"
+     },
+     {
+      "revision": "2",
+      "taxCalculationId": "241801117661470720",
+      "stage": "FINAL",
+      "status": "BLOCKED",
+      "basisCountry": "KW",
+      "taxAmount": "NULL",
+      "total": "NULL",
+      "blockReason": "MARKET_NOT_ENABLED",
+      "components": "NULL"
+     }
+    ],
+    "contracts": [
+     {
+      "contractId": "241801107423215618",
+      "taxCalculationId": "241801107255402496"
+     },
+     {
+      "contractId": "241801117980278784",
+      "taxCalculationId": "241801117661470720"
+     }
+    ],
+    "context": {
+     "orderContextId": "241801107423215616",
+     "financeTaxSnapshotId": "NULL",
+     "initialTaxCalculationId": "241801107255402496",
+     "consumerCountryCode": "AE"
+    }
+   }
+  },
+  "verdict": "PASS"
+ },
+ "synthetic": {
+  "at": "2026-10-30T05:52:57.300Z",
+  "eventId": "ORDER:241801063336886272:OrderPaymentSucceeded:3",
+  "payloadHash": "sha256:1cd6a7289b54e0af5f59cb81f2312d6e71f50294c31de15778f3ac4d6c2a7d43",
+  "routed": true,
+  "dlqBefore": {
+   "tax.acquiring.dlq": 0,
+   "billing.acquiring.dlq": 0,
+   "account.billing.dlq": 0
+  },
+  "verdict": "PUBLISHED"
+ },
+ "check": {
+  "at": "2026-10-30T05:54:25.578Z",
+  "tax": {
+   "calculations": [
+    {
+     "calculationId": "241801065383665664",
+     "orderId": "241801063336886272",
+     "revision": "1",
+     "stage": "PROVISIONAL",
+     "status": "READY",
+     "taxAmount": "5.00000000",
+     "gross": "105.00000000",
+     "subjectPartyId": "880000000702",
+     "blockReasons": "NULL"
+    },
+    {
+     "calculationId": "241801079967260672",
+     "orderId": "241801063336886272",
+     "revision": "2",
+     "stage": "FINAL",
+     "status": "READY",
+     "taxAmount": "15.00000000",
+     "gross": "115.00000000",
+     "subjectPartyId": "880000000702",
+     "blockReasons": "NULL"
+    }
+   ],
+   "transactions": [
+    {
+     "transactionId": "241801531337285632",
+     "calculationId": "241801079967260672",
+     "factId": "241801063336886272",
+     "origin": "AUTO",
+     "reportingStatus": "PENDING",
+     "reportingBlockReason": "FX_RATE_MISSING"
+    }
+   ],
+   "entries": [],
+   "documents": [
+    {
+     "documentId": "241801532096454656",
+     "series": "SA-RCPT-2026",
+     "number": "SA-RCPT-2026-000001",
+     "issueStatus": "ISSUED",
+     "fileAddress": "/files/v1/241801539763650560"
+    }
+   ]
+  },
+  "billing": {
+   "factIds": [
+    "241801538719309824"
+   ],
+   "facts": [
+    {
+     "factId": "241801538719309824",
+     "type": "PAYMENT",
+     "status": "APPROVED",
+     "currency": "USD",
+     "gross": "115.00000000"
+    }
+   ],
+   "lines": [
+    {
+     "factId": "241801538719309824",
+     "lineNo": "1",
+     "component": "CLIENT_FEE",
+     "payer": "CHANNEL",
+     "payee": "OPERATING_ENTITY",
+     "payeeId": "AE001",
+     "posted": "3.11000000",
+     "evidence": "{\"rate\": \"0.027\", \"bandId\": null, \"planId\": \"238331390490382336\", \"priceId\": \"238331390859481160\", \"termType\": \"CLIENT_PRICING\", \"maxAmount\": null, \"minAmount\": null, \"fixedAmount\": null, \"triggerCode\": \"SALE\", \"roundingMode\": \"HALF_UP\", \"componentCode\": \"SALE_PCT\", \"componentType\": \"PERCENTAGE\", \"schemaVersion\": 1, \"calculationBase\": \"GROSS_AMOUNT\", \"calculationMethod\": \"PERCENTAGE\", \"pricingProfileCode\": \"APPLE_PAY_STANDARD\"}"
+    },
+    {
+     "factId": "241801538719309824",
+     "lineNo": "2",
+     "component": "CLIENT_FEE",
+     "payer": "CHANNEL",
+     "payee": "OPERATING_ENTITY",
+     "payeeId": "AE001",
+     "posted": "0.30000000",
+     "evidence": "{\"rate\": null, \"bandId\": null, \"planId\": \"238331390490382336\", \"priceId\": \"238331390859481160\", \"termType\": \"CLIENT_PRICING\", \"maxAmount\": null, \"minAmount\": null, \"fixedAmount\": \"0.30\", \"triggerCode\": \"SALE\", \"roundingMode\": \"HALF_UP\", \"componentCode\": \"SALE_FIXED\", \"componentType\": \"FIXED\", \"schemaVersion\": 1, \"calculationBase\": \"FIXED_PER_EVENT\", \"calculationMethod\": \"FIXED\", \"pricingProfileCode\": \"APPLE_PAY_STANDARD\"}"
+    },
+    {
+     "factId": "241801538719309824",
+     "lineNo": "3",
+     "component": "SELLER_TAX",
+     "payer": "CHANNEL",
+     "payee": "TAX_AUTHORITY",
+     "payeeId": "880000000702",
+     "posted": "15.00000000",
+     "evidence": "{\"taxType\": \"VAT\", \"taxScopeKey\": \"SALE\", \"schemaVersion\": 1, \"registrationId\": \"22\", \"jurisdictionCode\": \"SA\", \"taxCalculationId\": \"241801079967260672\", \"taxSubjectPartyId\": \"880000000702\"}"
+    },
+    {
+     "factId": "241801538719309824",
+     "lineNo": "4",
+     "component": "CLIENT_PRINCIPAL",
+     "payer": "CHANNEL",
+     "payee": "CLIENT",
+     "payeeId": "237575207592763393",
+     "posted": "96.59000000",
+     "evidence": "{\"planId\": \"238331390490382336\", \"priceId\": \"238331390859481160\", \"termType\": \"CLIENT_PRICING\", \"schemaVersion\": 1, \"pricingProfileCode\": \"APPLE_PAY_STANDARD\"}"
+    },
+    {
+     "factId": "241801538719309824",
+     "lineNo": "5",
+     "component": "CHANNEL_COST",
+     "payer": "OPERATING_ENTITY",
+     "payee": "CHANNEL",
+     "payeeId": "238508282463989760",
+     "posted": "0.58000000",
+     "evidence": "{\"rate\": \"0.005\", \"costVer\": \"1\", \"scopeId\": \"239292999287283712\", \"planCode\": \"DEMO_NI_COST\", \"maxAmount\": null, \"minAmount\": null, \"contentHash\": \"c6bd9bf8ff157de115db74cb9b5bf03c58524a521fd817f6209cdfe354cc6d71\", \"fixedAmount\": null, \"roundingMode\": \"HALF_UP\", \"componentCode\": \"PROCESSING_PCT\", \"componentType\": \"PROCESSING_FEE\", \"schemaVersion\": 1, \"calculationBase\": \"TRANSACTION_AMOUNT\"}"
+    }
+   ],
+   "refs": [
+    {
+     "factId": "241801538719309824",
+     "refType": "ORDER",
+     "refId": "241801063336886272"
+    },
+    {
+     "factId": "241801538719309824",
+     "refType": "ORDER_CONTEXT",
+     "refId": "241801067279532032"
+    },
+    {
+     "factId": "241801538719309824",
+     "refType": "PAYMENT_INTENT",
+     "refId": "999900000000000301"
+    },
+    {
+     "factId": "241801538719309824",
+     "refType": "PAYMENT_ATTEMPT",
+     "refId": "999900000000000302"
+    },
+    {
+     "factId": "241801538719309824",
+     "refType": "PAYMENT_CHANNEL_ACCOUNT",
+     "refId": "238508278357794816"
+    },
+    {
+     "factId": "241801538719309824",
+     "refType": "MID",
+     "refId": "238508278684950528"
+    },
+    {
+     "factId": "241801538719309824",
+     "refType": "CLEARING_ACCOUNT",
+     "refId": "238508282463989760"
+    },
+    {
+     "factId": "241801538719309824",
+     "refType": "CHANNEL_TRANSACTION_REF",
+     "refId": "999900000000000303"
+    },
+    {
+     "factId": "241801538719309824",
+     "refType": "TAX_CALCULATION",
+     "refId": "241801079967260672"
+    }
+   ]
+  },
+  "account": {
+   "postings": [
+    {
+     "postingId": "241801543844753408",
+     "entityType": "OPERATING_ENTITY",
+     "entityId": "AE001",
+     "currency": "USD",
+     "factId": "241801538719309824",
+     "entryCount": "1"
+    }
+   ]
+  },
+  "ledger": {
+   "instructions": [
+    {
+     "instructionId": "241801560974258176",
+     "type": "PAYMENT_SUCCEEDED",
+     "status": "POSTED",
+     "economicFactId": "241801538719309824"
+    }
+   ],
+   "journalLines": [
+    {
+     "instructionId": "241801560974258176",
+     "lineNo": "1",
+     "accountCode": "CHANNEL_UNSETTLED_RECEIVABLE",
+     "side": "DEBIT",
+     "amount": "115.00000000"
+    },
+    {
+     "instructionId": "241801560974258176",
+     "lineNo": "2",
+     "accountCode": "CLIENT_FEE_REVENUE",
+     "side": "CREDIT",
+     "amount": "3.41000000"
+    },
+    {
+     "instructionId": "241801560974258176",
+     "lineNo": "3",
+     "accountCode": "TAX_PAYABLE",
+     "side": "CREDIT",
+     "amount": "15.00000000"
+    },
+    {
+     "instructionId": "241801560974258176",
+     "lineNo": "4",
+     "accountCode": "CHANNEL_FEE_EXPENSE",
+     "side": "DEBIT",
+     "amount": "0.58000000"
+    },
+    {
+     "instructionId": "241801560974258176",
+     "lineNo": "5",
+     "accountCode": "CHANNEL_FEE_ACCRUAL",
+     "side": "CREDIT",
+     "amount": "0.58000000"
+    },
+    {
+     "instructionId": "241801560974258176",
+     "lineNo": "6",
+     "accountCode": "CLIENT_PAYABLE",
+     "side": "CREDIT",
+     "amount": "96.59000000"
+    }
+   ]
+  },
+  "taxQuery": {
+   "http": 200,
+   "transactions": 1,
+   "documents": 1
+  },
+  "dlq": {
+   "tax.acquiring.dlq": 0,
+   "billing.acquiring.dlq": 0,
+   "account.billing.dlq": 0
+  },
+  "verdict": "PASS"
+ }
+}

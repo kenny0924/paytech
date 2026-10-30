@@ -1,0 +1,4 @@
+A=555 B=555 onlyA=0 onlyB=0 changed=3
+  ~ paytech-account-core.jar!com/paytech/account/domainservice/validator/FactBalanceMappingRule.class
+  ~ paytech-billing-api.jar!com/paytech/billing/api/enums/FactRefType.class
+  ~ paytech-messaging.jar!catalog/events.yaml

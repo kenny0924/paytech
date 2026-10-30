@@ -1,0 +1,15 @@
+A=1599 B=1604 onlyA=0 onlyB=5 changed=9
+  + paytech-billing-core.jar!com/paytech/billing/core/enums/OrderTaxStatus.class
+  + paytech-billing-core.jar!com/paytech/billing/domain/OrderTaxCalculation$OrderTaxCalculationBuilder.class
+  + paytech-billing-core.jar!com/paytech/billing/domain/OrderTaxCalculation.class
+  + paytech-billing-core.jar!com/paytech/billing/domain/OrderTaxComponent$OrderTaxComponentBuilder.class
+  + paytech-billing-core.jar!com/paytech/billing/domain/OrderTaxComponent.class
+  ~ paytech-billing-api.jar!com/paytech/billing/api/enums/FactRefType.class
+  ~ paytech-billing-core.jar!com/paytech/billing/domain/OrderCommercialContext$OrderCommercialContextBuilder.class
+  ~ paytech-billing-core.jar!com/paytech/billing/domain/OrderCommercialContext.class
+  ~ paytech-billing-core.jar!com/paytech/billing/domainservice/service/impl/PaymentFactAssemblerImpl.class
+  ~ paytech-billing-core.jar!com/paytech/billing/domainservice/validator/fact/BillingFactInvariants$1.class
+  ~ paytech-billing-core.jar!com/paytech/billing/domainservice/validator/fact/BillingFactInvariants.class
+  ~ paytech-billing-core.jar!com/paytech/billing/ext/mq/OrderPaymentSucceededEventReader.class
+  ~ paytech-billing-core.jar!com/paytech/billing/service/processor/RecordPaymentFactProcessor.class
+  ~ paytech-messaging.jar!catalog/events.yaml

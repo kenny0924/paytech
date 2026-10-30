@@ -1,0 +1,1 @@
+ERROR 1062 (23000) at line 15: Duplicate entry '1' for key 't_tax_category.PRIMARY'

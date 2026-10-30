@@ -1,0 +1,19 @@
+# 阶段 6 测试摘要（候选 worktree Code-MoR-tax-rel，JDK 25，离线 Maven，package + mor-local-*；2026-10-29）
+reactor clean test-compile: 121 modules, [INFO] BUILD SUCCESS
+tax: Tests run: 62, Failures: 0, Errors: 0, Skipped: 0 | BUILD SUCCESS
+account: Tests run: 68, Failures: 0, Errors: 0, Skipped: 0 | BUILD SUCCESS
+ledger: Tests run: 332, Failures: 0, Errors: 0, Skipped: 0 | BUILD SUCCESS
+billing: Tests run: 142, Failures: 0, Errors: 0, Skipped: 0 | BUILD SUCCESS
+acquiring: Tests run: 916, Failures: 0, Errors: 0, Skipped: 0 | BUILD SUCCESS
+opsbff: Tests run: 2481, Failures: 0, Errors: 0, Skipped: 0 | BUILD SUCCESS
+archrules: Tests run: 7, Failures: 0, Errors: 0, Skipped: 0 | BUILD SUCCESS
+messaging: Tests run: 12, Failures: 1, Errors: 0, Skipped: 0 | BUILD FAILURE
+messaging-fixed: Tests run: 12, Failures: 0, Errors: 0, Skipped: 0 | BUILD SUCCESS
+platform-role: Tests run: 11, Failures: 9, Errors: 2, Skipped: 0 | BUILD FAILURE
+messaging 失败明细: org.opentest4j.AssertionFailedError: expected: <[billing]> but was: <[billing, tax]>
+platform-role 未能运行: 测试独占表存在数据，可能是本地开发数据或上次中断的残留，请人工确认后清空：[t_role_permission, t_role, t_permission, t_jwt_signing_key, t_data_source] ==> expected: <true> but was: <false>
+ops-web npm test: ℹ tests 1631 ℹ pass 1631 ℹ fail 0 
+ops-web build: dist 266 files; i18n:export-source: Total: 26 namespaces, 10473 keys
+# 增补（主会话修正 YamlEventCatalogAutoTest 后同步到候选，clean 重跑）
+messaging 模块全部：Tests run: 73, Failures: 0, Errors: 0, Skipped: 0 | BUILD SUCCESS
+（同步后首次未 clean 的运行仍用旧 class 报目录测试失败；另有 PartitionQueueBaselineAutoTest.residualMessagesPurged 1 次 expected 2 but was 1——共享本机 RabbitMQ 计数时序，clean 重跑通过。）

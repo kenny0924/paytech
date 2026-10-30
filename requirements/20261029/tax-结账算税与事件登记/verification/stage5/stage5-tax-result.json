@@ -1,0 +1,1575 @@
+{
+  "probe": {
+    "mor_billing_v2e2e.t_billing_fact": [
+      "id",
+      "fact_type",
+      "origin_type",
+      "source_system",
+      "source_event_key",
+      "source_version",
+      "source_payload_hash",
+      "parent_fact_id",
+      "supersedes_fact_id",
+      "client_id",
+      "entity_no",
+      "local_partner_id",
+      "finance_entity_id",
+      "currency",
+      "gross_amount",
+      "business_time",
+      "balance_available_time",
+      "status",
+      "fact_version",
+      "maker_id",
+      "checker_id",
+      "approved_time",
+      "published_at",
+      "create_time",
+      "update_time"
+    ],
+    "mor_billing_v2e2e.t_billing_fact_line": [
+      "id",
+      "fact_id",
+      "line_no",
+      "component_type",
+      "payer_role",
+      "payer_id",
+      "payee_role",
+      "payee_id",
+      "basis_amount",
+      "rate_value",
+      "raw_amount",
+      "posted_amount",
+      "effect_direction",
+      "target_bucket",
+      "source_rule_type",
+      "source_rule_version_id",
+      "source_price_id",
+      "source_rule_component_id",
+      "source_evidence",
+      "create_time"
+    ],
+    "mor_billing_v2e2e.t_billing_fact_ref": [
+      "id",
+      "fact_id",
+      "ref_type",
+      "ref_id",
+      "external_reference_type",
+      "external_transaction_id",
+      "create_time"
+    ],
+    "mor_account_v2e2e.t_account_entry": [
+      "id",
+      "posting_id",
+      "line_no",
+      "account_id",
+      "entry_side",
+      "amount",
+      "fact_line_no",
+      "reverses_entry_id",
+      "create_time"
+    ],
+    "mor_ledger_v2e2e.t_journal_line": [
+      "id",
+      "journal_entry_id",
+      "line_no",
+      "instruction_line_id",
+      "account_id",
+      "entry_side",
+      "amount",
+      "create_time"
+    ],
+    "mor_tax_v2e2e.t_tax_calculation": [
+      "id",
+      "source_system",
+      "source_object_type",
+      "source_object_id",
+      "source_object_no",
+      "source_revision",
+      "tax_scope_key",
+      "calculation_stage",
+      "supply_kind",
+      "business_mode",
+      "seller_party_id",
+      "buyer_client_id",
+      "tax_subject_party_id",
+      "acquiring_entity_no",
+      "currency",
+      "price_mode",
+      "tax_point_date",
+      "tax_point_basis",
+      "status",
+      "tax_amount_source",
+      "block_reasons_json",
+      "net_amount",
+      "charged_tax_amount",
+      "gross_amount",
+      "rounding_amount",
+      "expires_at",
+      "create_time"
+    ],
+    "mor_tax_v2e2e.t_tax_transaction": [
+      "id",
+      "calculation_id",
+      "source_system",
+      "source_fact_type",
+      "source_fact_id",
+      "tax_scope_key",
+      "origin",
+      "transaction_kind",
+      "tax_subject_party_id",
+      "currency",
+      "occurred_at",
+      "tax_point_date",
+      "tax_point_basis",
+      "registered_at",
+      "reporting_status",
+      "reporting_block_reason",
+      "source_payload_hash",
+      "create_time",
+      "update_time"
+    ],
+    "mor_tax_v2e2e.t_tax_document": [
+      "id",
+      "transaction_id",
+      "document_kind",
+      "document_scope_key",
+      "issuance_mode",
+      "issuer_party_id",
+      "registration_id",
+      "series_code",
+      "document_number",
+      "issued_at",
+      "currency",
+      "policy_id",
+      "template_code",
+      "template_revision",
+      "content_schema_version",
+      "document_content_json",
+      "issue_status",
+      "submission_status",
+      "submission_source",
+      "document_file_address",
+      "document_digest",
+      "void_reason",
+      "create_time",
+      "update_time"
+    ],
+    "mor_acquiring_v2e2e.t_order_tax_calculation": [
+      "order_tax_calculation_id",
+      "order_id",
+      "revision",
+      "tax_calculation_id",
+      "calculation_stage",
+      "tax_status",
+      "basis_country_code",
+      "tax_amount",
+      "rounding_amount",
+      "total_amount",
+      "block_reason_code",
+      "expires_at",
+      "lines_json",
+      "components_json",
+      "create_time"
+    ],
+    "mor_acquiring_v2e2e.t_commerce_order": [
+      "order_id",
+      "order_no",
+      "client_id",
+      "client_order_id",
+      "customer_id",
+      "creation_mode",
+      "consumer_country_code",
+      "termination_requested_at",
+      "entity_no",
+      "entity_source_type",
+      "local_partner_id",
+      "industry_code",
+      "mcc_code",
+      "merchandise_amount",
+      "discount_amount",
+      "net_amount",
+      "tax_amount",
+      "rounding_amount",
+      "total_amount",
+      "amount_status",
+      "currency",
+      "order_status",
+      "status_reason_code",
+      "expires_at",
+      "paid_at",
+      "cancelled_at",
+      "version",
+      "create_time",
+      "update_time"
+    ]
+  },
+  "_runs": [
+    {
+      "scenario": "probe",
+      "startedAt": "2026-10-29T18:28:09.383900Z",
+      "finishedAt": "2026-10-29T18:28:11.552378Z"
+    },
+    {
+      "scenario": "s2",
+      "startedAt": "2026-10-29T18:34:10.997260Z",
+      "finishedAt": "2026-10-29T18:34:15.636164Z"
+    },
+    {
+      "scenario": "s5",
+      "startedAt": "2026-10-29T18:34:15.636377Z",
+      "finishedAt": "2026-10-29T18:34:16.731232Z"
+    },
+    {
+      "scenario": "s3",
+      "startedAt": "2026-10-29T18:35:29.550392Z",
+      "finishedAt": "2026-10-29T18:36:47.191712Z"
+    },
+    {
+      "scenario": "s3",
+      "startedAt": "2026-10-29T18:37:57.046900Z",
+      "finishedAt": "2026-10-29T18:38:33.125081Z"
+    },
+    {
+      "scenario": "s1",
+      "startedAt": "2026-10-29T18:47:02.064187Z",
+      "finishedAt": "2026-10-29T18:47:57.624425Z"
+    },
+    {
+      "scenario": "s1",
+      "startedAt": "2026-10-29T18:50:51.896941Z",
+      "finishedAt": "2026-10-29T18:51:50.275593Z"
+    },
+    {
+      "scenario": "s4",
+      "startedAt": "2026-10-29T18:52:46.100825Z",
+      "finishedAt": "2026-10-29T18:57:07.577465Z"
+    },
+    {
+      "scenario": "s4",
+      "startedAt": "2026-10-29T18:57:46.372329Z",
+      "finishedAt": "2026-10-29T18:58:54.846645Z"
+    }
+  ],
+  "S2": {
+    "created": {
+      "http": 201,
+      "code": null,
+      "orderNo": "ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo",
+      "amountStatus": "ESTIMATED",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": "5.00",
+        "roundingAmount": "0.00",
+        "totalAmount": "105.00"
+      },
+      "orderStatus": null,
+      "clientOrderId": "tax5-s2-223410-e46f48"
+    },
+    "saveConsumerKW": {
+      "http": 200,
+      "code": null,
+      "keys": [
+        "amountStatus",
+        "amounts",
+        "consumerStatus",
+        "currency",
+        "orderNo",
+        "taxBlockReason"
+      ],
+      "amountStatus": "BLOCKED",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": null,
+        "roundingAmount": null,
+        "totalAmount": null
+      },
+      "tax": null,
+      "payment": null,
+      "blockReasons": null
+    },
+    "view": {
+      "http": 200,
+      "code": null,
+      "amountStatus": "BLOCKED",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": null,
+        "roundingAmount": null,
+        "totalAmount": null
+      },
+      "tax": null,
+      "allowedActions": [
+        "SAVE_CONSUMER"
+      ],
+      "payment": null,
+      "contractId": "241630714968170496",
+      "preparationStatus": "PENDING"
+    },
+    "payment": {
+      "http": 409,
+      "code": "CHECKOUT_NOT_READY",
+      "contractId": "241630714968170496",
+      "submissionId": null,
+      "status": null,
+      "detail": "Checkout支付条件尚未满足",
+      "errors": null
+    },
+    "facts": {
+      "orderId": "241630712434810880",
+      "status": "OPEN",
+      "amountStatus": "BLOCKED",
+      "declaredCountry": "AE",
+      "net": "100.00000000",
+      "taxAmount": "NULL",
+      "total": "NULL",
+      "version": "2",
+      "paidAt": "NULL",
+      "taxCalculations": [
+        {
+          "revision": "1",
+          "taxCalculationId": "241630714368417792",
+          "stage": "PROVISIONAL",
+          "status": "READY",
+          "basisCountry": "AE",
+          "taxAmount": "5.00000000",
+          "total": "105.00000000",
+          "blockReason": "NULL",
+          "expiresAt": "NULL"
+        },
+        {
+          "revision": "2",
+          "taxCalculationId": "241630714888511488",
+          "stage": "FINAL",
+          "status": "BLOCKED",
+          "basisCountry": "KW",
+          "taxAmount": "NULL",
+          "total": "NULL",
+          "blockReason": "MARKET_NOT_ENABLED",
+          "expiresAt": "NULL"
+        }
+      ],
+      "initialTaxCalculationId": "241630714368417792",
+      "contracts": [
+        {
+          "contractId": "241630714573905922",
+          "taxCalculationId": "241630714368417792"
+        },
+        {
+          "contractId": "241630714968170496",
+          "taxCalculationId": "241630714888511488"
+        }
+      ],
+      "projection": []
+    },
+    "tax": {
+      "calculations": [
+        {
+          "calculationId": "241630714368417792",
+          "revision": "1",
+          "stage": "PROVISIONAL",
+          "status": "READY",
+          "taxAmount": "5.00000000",
+          "net": "100.00000000",
+          "gross": "105.00000000",
+          "subjectPartyId": "880000000702",
+          "blockReasons": "NULL"
+        },
+        {
+          "calculationId": "241630714888511488",
+          "revision": "2",
+          "stage": "FINAL",
+          "status": "BLOCKED",
+          "taxAmount": "NULL",
+          "net": "100.00000000",
+          "gross": "NULL",
+          "subjectPartyId": "880000000702",
+          "blockReasons": "[{\"code\": \"MARKET_NOT_ENABLED\", \"path\": \"market.KW\"}]"
+        }
+      ],
+      "components": [
+        {
+          "componentId": "241630714435526656",
+          "calculationId": "241630714368417792",
+          "jurisdiction": "AE",
+          "taxType": "VAT",
+          "treatment": "TAXABLE",
+          "rate": "0.0500000000",
+          "base": "100.00000000",
+          "taxAmount": "5.00000000"
+        }
+      ],
+      "transactions": [],
+      "entries": [],
+      "documents": [],
+      "compensation": []
+    },
+    "verdict": {
+      "finalBlocked": true,
+      "payRejected": true,
+      "orderOpen": true,
+      "noFormalFact": true
+    },
+    "orderNo": "ord_3LNeFr4WMLAQVvoRXmXnUZLX3a6ARo"
+  },
+  "S5": {
+    "orders": [
+      {
+        "orderNo": "ord_3L42M7hAlBTiG3MlqKlqCr8oLID25V",
+        "paidAt": "2026-10-22 19:56:11.413007",
+        "clientGet": {
+          "http": 200,
+          "orderStatus": "PAID",
+          "paymentStatus": "SUCCEEDED",
+          "amountStatus": "FINAL",
+          "amounts": {
+            "merchandiseAmount": "44.90",
+            "discountAmount": "2.00",
+            "netAmount": "42.90",
+            "taxAmount": "0.00",
+            "roundingAmount": "0.00",
+            "totalAmount": "42.90",
+            "paidAmount": "42.90"
+          },
+          "code": null
+        },
+        "taxCalculationRows": "0",
+        "taxOrderApi": {
+          "http": 404,
+          "code": "TAX_ORDER_NOT_FOUND"
+        }
+      },
+      {
+        "orderNo": "ord_3L42YeikwE0RHdBz3cO1VMAXz759xv",
+        "paidAt": "2026-10-22 19:57:50.115978",
+        "clientGet": {
+          "http": 200,
+          "orderStatus": "PAID",
+          "paymentStatus": "SUCCEEDED",
+          "amountStatus": "FINAL",
+          "amounts": {
+            "merchandiseAmount": "44.90",
+            "discountAmount": "2.00",
+            "netAmount": "42.90",
+            "taxAmount": "0.00",
+            "roundingAmount": "0.00",
+            "totalAmount": "42.90",
+            "paidAmount": "42.90"
+          },
+          "code": null
+        },
+        "taxCalculationRows": "0",
+        "taxOrderApi": {
+          "http": 404,
+          "code": "TAX_ORDER_NOT_FOUND"
+        }
+      },
+      {
+        "orderNo": "ord_3L5VmtoflSHBWF4HfQIXjWPwa6Q4G6",
+        "paidAt": "2026-10-23 08:28:14.673998",
+        "clientGet": {
+          "http": 200,
+          "orderStatus": "PAID",
+          "paymentStatus": "SUCCEEDED",
+          "amountStatus": "FINAL",
+          "amounts": {
+            "merchandiseAmount": "333.00",
+            "discountAmount": "0.00",
+            "netAmount": "333.00",
+            "taxAmount": "0.00",
+            "roundingAmount": "0.00",
+            "totalAmount": "333.00",
+            "paidAmount": "333.00"
+          },
+          "code": null
+        },
+        "taxCalculationRows": "0",
+        "taxOrderApi": {
+          "http": 404,
+          "code": "TAX_ORDER_NOT_FOUND"
+        }
+      }
+    ],
+    "verdict": {
+      "allClientGet200": true,
+      "amountStatusFinal": true,
+      "noTaxImport": true
+    }
+  },
+  "s3_error": {
+    "error": "IndexError('list index out of range')"
+  },
+  "S3": {
+    "created": {
+      "http": 201,
+      "code": null,
+      "orderNo": "ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc",
+      "amountStatus": "FINAL",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": "0.00",
+        "roundingAmount": "0.00",
+        "totalAmount": "100.00"
+      },
+      "orderStatus": null,
+      "clientOrderId": "tax5-s3-223757-cdeb4e"
+    },
+    "saveConsumerSA": {
+      "http": 200,
+      "code": null,
+      "keys": [
+        "amountStatus",
+        "amounts",
+        "consumerStatus",
+        "currency",
+        "orderNo",
+        "taxBlockReason"
+      ],
+      "amountStatus": "FINAL",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": "0.00",
+        "roundingAmount": "0.00",
+        "totalAmount": "100.00"
+      },
+      "tax": null,
+      "payment": null,
+      "blockReasons": null
+    },
+    "view": {
+      "http": 200,
+      "code": null,
+      "amountStatus": "FINAL",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": "0.00",
+        "roundingAmount": "0.00",
+        "totalAmount": "100.00"
+      },
+      "tax": null,
+      "allowedActions": [
+        "SAVE_CONSUMER",
+        "PAY"
+      ],
+      "payment": null,
+      "contractId": "241631671059767296",
+      "preparationStatus": "READY"
+    },
+    "payment": {
+      "http": 200,
+      "code": null,
+      "contractId": "241631671059767296",
+      "submissionId": "241631671378534400",
+      "status": "SUCCEEDED",
+      "detail": null,
+      "errors": null,
+      "finalStatus": "SUCCEEDED",
+      "attemptId": "241631675140833280",
+      "failure": null
+    },
+    "paid": {
+      "orderId": "241631662142676992",
+      "status": "PAID",
+      "amountStatus": "FINAL",
+      "declaredCountry": "US",
+      "net": "100.00000000",
+      "taxAmount": "0.00000000",
+      "total": "100.00000000",
+      "version": "5",
+      "paidAt": "2026-10-29 18:38:01.342893",
+      "taxCalculations": [
+        {
+          "revision": "1",
+          "taxCalculationId": "241631669994446848",
+          "stage": "PROVISIONAL",
+          "status": "NOT_MANAGED",
+          "basisCountry": "US",
+          "taxAmount": "0.00000000",
+          "total": "100.00000000",
+          "blockReason": "NULL",
+          "expiresAt": "NULL"
+        },
+        {
+          "revision": "2",
+          "taxCalculationId": "241631671001079808",
+          "stage": "FINAL",
+          "status": "NOT_MANAGED",
+          "basisCountry": "SA",
+          "taxAmount": "0.00000000",
+          "total": "100.00000000",
+          "blockReason": "NULL",
+          "expiresAt": "NULL"
+        }
+      ],
+      "initialTaxCalculationId": "241631669994446848",
+      "contracts": [
+        {
+          "contractId": "241631670220906498",
+          "taxCalculationId": "241631669994446848"
+        },
+        {
+          "contractId": "241631671059767296",
+          "taxCalculationId": "241631671001079808"
+        }
+      ],
+      "projection": [
+        {
+          "intentId": "241631672137711616",
+          "intentStatus": "SUCCEEDED",
+          "successfulAttemptId": "241631675140833280",
+          "captured": "100.00000000"
+        }
+      ]
+    },
+    "tax": {
+      "calculations": [
+        {
+          "calculationId": "241631669994446848",
+          "revision": "1",
+          "stage": "PROVISIONAL",
+          "status": "NOT_MANAGED",
+          "taxAmount": "0.00000000",
+          "net": "100.00000000",
+          "gross": "100.00000000",
+          "subjectPartyId": "900000000001380202",
+          "blockReasons": "NULL"
+        },
+        {
+          "calculationId": "241631671001079808",
+          "revision": "2",
+          "stage": "FINAL",
+          "status": "NOT_MANAGED",
+          "taxAmount": "0.00000000",
+          "net": "100.00000000",
+          "gross": "100.00000000",
+          "subjectPartyId": "900000000001380202",
+          "blockReasons": "NULL"
+        }
+      ],
+      "components": [],
+      "transactions": [],
+      "entries": [],
+      "documents": [],
+      "compensation": []
+    },
+    "taxCalculationApi": {
+      "http": 200,
+      "status": "NOT_MANAGED",
+      "notManagedReason": "SUBJECT_NOT_REGISTERED",
+      "taxSubjectPartyId": "900000000001380202",
+      "taxAmount": "0.00"
+    },
+    "downstream": {
+      "billing": {
+        "facts": [],
+        "lines": [],
+        "refs": []
+      },
+      "account": {
+        "postings": [],
+        "entries": []
+      },
+      "ledger": {
+        "instructions": [],
+        "journalLines": []
+      }
+    },
+    "verdict": {
+      "notManaged": true,
+      "paid": true,
+      "noFormalFact": true,
+      "noSellerTax": true
+    },
+    "orderNo": "ord_3LNeiE9WoN6f1SMqHv3iaNOfMSv7fc"
+  },
+  "S1": {
+    "created": {
+      "http": 201,
+      "code": null,
+      "orderNo": "ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN",
+      "amountStatus": "BLOCKED",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": null,
+        "roundingAmount": null,
+        "totalAmount": null
+      },
+      "orderStatus": null,
+      "clientOrderId": "tax5-s1-225051-b2cba3"
+    },
+    "afterCreate": {
+      "orderId": "241634912384344064",
+      "status": "OPEN",
+      "amountStatus": "BLOCKED",
+      "declaredCountry": "US",
+      "net": "100.00000000",
+      "taxAmount": "NULL",
+      "total": "NULL",
+      "version": "1",
+      "paidAt": "NULL",
+      "taxCalculations": [
+        {
+          "revision": "1",
+          "taxCalculationId": "241634919057514496",
+          "stage": "PROVISIONAL",
+          "status": "BLOCKED",
+          "basisCountry": "US",
+          "taxAmount": "NULL",
+          "total": "NULL",
+          "blockReason": "MARKET_NOT_ENABLED",
+          "expiresAt": "NULL"
+        }
+      ],
+      "initialTaxCalculationId": "241634919057514496",
+      "contracts": [
+        {
+          "contractId": "241634919317528578",
+          "taxCalculationId": "241634919057514496"
+        }
+      ],
+      "projection": []
+    },
+    "saveConsumerSA": {
+      "http": 200,
+      "code": null,
+      "keys": [
+        "amountStatus",
+        "amounts",
+        "consumerStatus",
+        "currency",
+        "orderNo",
+        "taxBlockReason"
+      ],
+      "amountStatus": "FINAL",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": "15.00",
+        "roundingAmount": "0.00",
+        "totalAmount": "115.00"
+      },
+      "tax": null,
+      "payment": null,
+      "blockReasons": null
+    },
+    "viewBeforePay": {
+      "http": 200,
+      "code": null,
+      "amountStatus": "FINAL",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": "15.00",
+        "roundingAmount": "0.00",
+        "totalAmount": "115.00"
+      },
+      "tax": null,
+      "allowedActions": [
+        "SAVE_CONSUMER",
+        "PAY"
+      ],
+      "payment": null,
+      "contractId": "241634923469889536",
+      "preparationStatus": "READY"
+    },
+    "afterSave": {
+      "orderId": "241634912384344064",
+      "status": "OPEN",
+      "amountStatus": "FINAL",
+      "declaredCountry": "US",
+      "net": "100.00000000",
+      "taxAmount": "15.00000000",
+      "total": "115.00000000",
+      "version": "2",
+      "paidAt": "NULL",
+      "taxCalculations": [
+        {
+          "revision": "1",
+          "taxCalculationId": "241634919057514496",
+          "stage": "PROVISIONAL",
+          "status": "BLOCKED",
+          "basisCountry": "US",
+          "taxAmount": "NULL",
+          "total": "NULL",
+          "blockReason": "MARKET_NOT_ENABLED",
+          "expiresAt": "NULL"
+        },
+        {
+          "revision": "2",
+          "taxCalculationId": "241634923092434944",
+          "stage": "FINAL",
+          "status": "READY",
+          "basisCountry": "SA",
+          "taxAmount": "15.00000000",
+          "total": "115.00000000",
+          "blockReason": "NULL",
+          "expiresAt": "2026-10-30 18:50:55.025297"
+        }
+      ],
+      "initialTaxCalculationId": "241634919057514496",
+      "contracts": [
+        {
+          "contractId": "241634919317528578",
+          "taxCalculationId": "241634919057514496"
+        },
+        {
+          "contractId": "241634923469889536",
+          "taxCalculationId": "241634923092434944"
+        }
+      ],
+      "projection": []
+    },
+    "payment": {
+      "http": 200,
+      "code": null,
+      "contractId": "241634923469889536",
+      "submissionId": "241634925302800384",
+      "status": "SUCCEEDED",
+      "detail": null,
+      "errors": null,
+      "finalStatus": "SUCCEEDED",
+      "attemptId": "241634929207705600",
+      "failure": null
+    },
+    "paid": {
+      "orderId": "241634912384344064",
+      "status": "PAID",
+      "amountStatus": "FINAL",
+      "declaredCountry": "US",
+      "net": "100.00000000",
+      "taxAmount": "15.00000000",
+      "total": "115.00000000",
+      "version": "5",
+      "paidAt": "2026-10-29 18:50:57.086883",
+      "taxCalculations": [
+        {
+          "revision": "1",
+          "taxCalculationId": "241634919057514496",
+          "stage": "PROVISIONAL",
+          "status": "BLOCKED",
+          "basisCountry": "US",
+          "taxAmount": "NULL",
+          "total": "NULL",
+          "blockReason": "MARKET_NOT_ENABLED",
+          "expiresAt": "NULL"
+        },
+        {
+          "revision": "2",
+          "taxCalculationId": "241634923092434944",
+          "stage": "FINAL",
+          "status": "READY",
+          "basisCountry": "SA",
+          "taxAmount": "15.00000000",
+          "total": "115.00000000",
+          "blockReason": "NULL",
+          "expiresAt": "2026-10-30 18:50:55.025297"
+        }
+      ],
+      "initialTaxCalculationId": "241634919057514496",
+      "contracts": [
+        {
+          "contractId": "241634919317528578",
+          "taxCalculationId": "241634919057514496"
+        },
+        {
+          "contractId": "241634923469889536",
+          "taxCalculationId": "241634923092434944"
+        }
+      ],
+      "projection": [
+        {
+          "intentId": "241634926259109888",
+          "intentStatus": "SUCCEEDED",
+          "successfulAttemptId": "241634929207705600",
+          "captured": "115.00000000"
+        }
+      ]
+    },
+    "taxAfterPay": {
+      "calculations": [
+        {
+          "calculationId": "241634919057514496",
+          "revision": "1",
+          "stage": "PROVISIONAL",
+          "status": "BLOCKED",
+          "taxAmount": "NULL",
+          "net": "100.00000000",
+          "gross": "NULL",
+          "subjectPartyId": "900000000001380102",
+          "blockReasons": "[{\"code\": \"MARKET_NOT_ENABLED\", \"path\": \"market.US\"}]"
+        },
+        {
+          "calculationId": "241634923092434944",
+          "revision": "2",
+          "stage": "FINAL",
+          "status": "READY",
+          "taxAmount": "15.00000000",
+          "net": "100.00000000",
+          "gross": "115.00000000",
+          "subjectPartyId": "900000000001380102",
+          "blockReasons": "NULL"
+        }
+      ],
+      "components": [
+        {
+          "componentId": "241634923209875456",
+          "calculationId": "241634923092434944",
+          "jurisdiction": "SA",
+          "taxType": "VAT",
+          "treatment": "TAXABLE",
+          "rate": "0.1500000000",
+          "base": "100.00000000",
+          "taxAmount": "15.00000000"
+        }
+      ],
+      "transactions": [
+        {
+          "transactionId": "241634933796298752",
+          "calculationId": "241634923092434944",
+          "factType": "ORDER_PAYMENT_SUCCEEDED",
+          "factId": "241634912384344064",
+          "origin": "AUTO",
+          "kind": "ORIGINAL",
+          "reportingStatus": "PENDING",
+          "reportingBlockReason": "FX_RATE_MISSING",
+          "registeredAt": "2026-10-29 18:50:57.572908"
+        }
+      ],
+      "entries": [],
+      "documents": [
+        {
+          "documentId": "241634934211534848",
+          "series": "SA-RCPT-2026",
+          "number": "SA-RCPT-2026-000003",
+          "issueStatus": "ISSUED",
+          "fileAddress": "/files/v1/241634936086335488",
+          "issuedAt": "2026-10-29 18:50:57.669136",
+          "digest": "e1c54d501c8e052d58d8f2690bec34f8ad128f08cf94c4ece01022f9d9f3262a"
+        }
+      ],
+      "compensation": []
+    },
+    "tax": {
+      "calculations": [
+        {
+          "calculationId": "241634919057514496",
+          "revision": "1",
+          "stage": "PROVISIONAL",
+          "status": "BLOCKED",
+          "taxAmount": "NULL",
+          "net": "100.00000000",
+          "gross": "NULL",
+          "subjectPartyId": "900000000001380102",
+          "blockReasons": "[{\"code\": \"MARKET_NOT_ENABLED\", \"path\": \"market.US\"}]"
+        },
+        {
+          "calculationId": "241634923092434944",
+          "revision": "2",
+          "stage": "FINAL",
+          "status": "READY",
+          "taxAmount": "15.00000000",
+          "net": "100.00000000",
+          "gross": "115.00000000",
+          "subjectPartyId": "900000000001380102",
+          "blockReasons": "NULL"
+        }
+      ],
+      "components": [
+        {
+          "componentId": "241634923209875456",
+          "calculationId": "241634923092434944",
+          "jurisdiction": "SA",
+          "taxType": "VAT",
+          "treatment": "TAXABLE",
+          "rate": "0.1500000000",
+          "base": "100.00000000",
+          "taxAmount": "15.00000000"
+        }
+      ],
+      "transactions": [
+        {
+          "transactionId": "241634933796298752",
+          "calculationId": "241634923092434944",
+          "factType": "ORDER_PAYMENT_SUCCEEDED",
+          "factId": "241634912384344064",
+          "origin": "AUTO",
+          "kind": "ORIGINAL",
+          "reportingStatus": "PENDING",
+          "reportingBlockReason": "FX_RATE_MISSING",
+          "registeredAt": "2026-10-29 18:50:57.572908"
+        }
+      ],
+      "entries": [],
+      "documents": [
+        {
+          "documentId": "241634934211534848",
+          "series": "SA-RCPT-2026",
+          "number": "SA-RCPT-2026-000003",
+          "issueStatus": "ISSUED",
+          "fileAddress": "/files/v1/241634936086335488",
+          "issuedAt": "2026-10-29 18:50:57.669136",
+          "digest": "e1c54d501c8e052d58d8f2690bec34f8ad128f08cf94c4ece01022f9d9f3262a"
+        }
+      ],
+      "compensation": []
+    },
+    "receiptFile": {
+      "metadata": {
+        "http": 200,
+        "fileId": "241634936086335488",
+        "status": null,
+        "mimeType": "application/pdf",
+        "size": null,
+        "sizeBytes": "1140",
+        "accessLevel": "PRIVATE",
+        "sourceSystem": "tax-service",
+        "reasonCode": "TAX_RECEIPT",
+        "code": null
+      },
+      "authorize": {
+        "http": 200,
+        "code": null,
+        "disposition": "ATTACHMENT",
+        "expiresAt": "2026-10-29T18:52:04.700205Z",
+        "keys": [
+          "disposition",
+          "expiresAt",
+          "url"
+        ]
+      },
+      "download": {
+        "http": 200,
+        "contentType": "application/pdf",
+        "bytes": 1140,
+        "pdfMagic": true,
+        "sha256": "e1c54d501c8e052d58d8f2690bec34f8ad128f08cf94c4ece01022f9d9f3262a",
+        "hasArabic": false,
+        "mentions": {
+          "SA-RCPT-2026": true,
+          "DEMO-SA-TRN-0001": true,
+          "15.00": true,
+          "115.00": true,
+          "SAR": false,
+          "USD": true
+        }
+      }
+    },
+    "taxOrderApi": {
+      "http": 200,
+      "calculations": 2,
+      "transactions": 1,
+      "currentStatus": "READY"
+    },
+    "downstream": {
+      "billing": {
+        "facts": [],
+        "lines": [],
+        "refs": []
+      },
+      "account": {
+        "postings": [],
+        "entries": []
+      },
+      "ledger": {
+        "instructions": [],
+        "journalLines": []
+      }
+    },
+    "queues": {
+      "account.billing.p1": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "tax.acquiring.p1": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "tax.acquiring.dlq": {
+        "messages": "0",
+        "consumers": "0"
+      },
+      "tax.acquiring.p3": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.p0": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.p3": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.dlq": {
+        "messages": "4",
+        "consumers": "0"
+      },
+      "billing.acquiring.p1": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "account.billing.p3": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "tax.acquiring.p2": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "account.billing.p2": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.p2": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "account.billing.dlq": {
+        "messages": "2",
+        "consumers": "0"
+      },
+      "tax.acquiring.p0": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "account.billing.p0": {
+        "messages": "0",
+        "consumers": "1"
+      }
+    },
+    "verdict": {
+      "createProvisional": true,
+      "finalSA15": true,
+      "contractRerendered": true,
+      "paid115": true,
+      "formalFactOnFinal": true,
+      "reportingPendingFx": true,
+      "receiptIssued": true,
+      "receiptDownloadable": true,
+      "billingSellerTax15": false,
+      "ledgerTaxPayable": false
+    },
+    "orderNo": "ord_3LNgHd0TWGaDLjatKpMN9CnRwDu7TN"
+  },
+  "S4": {
+    "prepared": [
+      {
+        "orderNo": "ord_3LNh7dqb0r8HtVN9eyLdmSSjiVw7Hp",
+        "amountStatus": "FINAL",
+        "total": "115.00"
+      },
+      {
+        "orderNo": "ord_3LNh8G3rBgAVQpRVN7lylgaRYf28y1",
+        "amountStatus": "FINAL",
+        "total": "115.00"
+      },
+      {
+        "orderNo": "ord_3LNh8Ms56XsXEGy413bMaeSBNyh5Ec",
+        "amountStatus": "FINAL",
+        "total": "115.00"
+      }
+    ],
+    "taxStop": {
+      "at": "2026-10-29T18:57:52.453542Z",
+      "result": "stopped 35147"
+    },
+    "taxReadyWhileStopped": false,
+    "paymentTries": [
+      {
+        "orderNo": "ord_3LNh7dqb0r8HtVN9eyLdmSSjiVw7Hp",
+        "http": 200,
+        "code": null,
+        "contractId": "241636668891750400",
+        "submissionId": "241636687434768384",
+        "status": "SUCCEEDED",
+        "detail": null,
+        "errors": null,
+        "finalStatus": "SUCCEEDED",
+        "attemptId": "241636691075432448",
+        "failure": null
+      }
+    ],
+    "created": {
+      "http": 201,
+      "code": null,
+      "orderNo": "ord_3LNh7dqb0r8HtVN9eyLdmSSjiVw7Hp",
+      "amountStatus": "BLOCKED",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": null,
+        "roundingAmount": null,
+        "totalAmount": null
+      },
+      "orderStatus": null,
+      "clientOrderId": "tax5-s4-1-225746-2d744b"
+    },
+    "saveConsumerSA": {
+      "http": 200,
+      "code": null,
+      "keys": [
+        "amountStatus",
+        "amounts",
+        "consumerStatus",
+        "currency",
+        "orderNo",
+        "taxBlockReason"
+      ],
+      "amountStatus": "FINAL",
+      "amounts": {
+        "merchandiseAmount": "100.00",
+        "discountAmount": "0.00",
+        "netAmount": "100.00",
+        "taxAmount": "15.00",
+        "roundingAmount": "0.00",
+        "totalAmount": "115.00"
+      },
+      "tax": null,
+      "payment": null,
+      "blockReasons": null
+    },
+    "payment": {
+      "http": 200,
+      "code": null,
+      "contractId": "241636668891750400",
+      "submissionId": "241636687434768384",
+      "status": "SUCCEEDED",
+      "detail": null,
+      "errors": null,
+      "finalStatus": "SUCCEEDED",
+      "attemptId": "241636691075432448",
+      "failure": null
+    },
+    "paid": {
+      "orderId": "241636650596196352",
+      "status": "PAID",
+      "amountStatus": "FINAL",
+      "declaredCountry": "US",
+      "net": "100.00000000",
+      "taxAmount": "15.00000000",
+      "total": "115.00000000",
+      "version": "5",
+      "paidAt": "2026-10-29 18:57:57.195785",
+      "taxCalculations": [
+        {
+          "revision": "1",
+          "taxCalculationId": "241636666404560896",
+          "stage": "PROVISIONAL",
+          "status": "BLOCKED",
+          "basisCountry": "US",
+          "taxAmount": "NULL",
+          "total": "NULL",
+          "blockReason": "MARKET_NOT_ENABLED",
+          "expiresAt": "NULL"
+        },
+        {
+          "revision": "2",
+          "taxCalculationId": "241636668187140096",
+          "stage": "FINAL",
+          "status": "READY",
+          "basisCountry": "SA",
+          "taxAmount": "15.00000000",
+          "total": "115.00000000",
+          "blockReason": "NULL",
+          "expiresAt": "2026-10-30 18:57:51.088521"
+        }
+      ],
+      "initialTaxCalculationId": "241636666404560896",
+      "contracts": [
+        {
+          "contractId": "241636667000119298",
+          "taxCalculationId": "241636666404560896"
+        },
+        {
+          "contractId": "241636668891750400",
+          "taxCalculationId": "241636668187140096"
+        }
+      ],
+      "projection": [
+        {
+          "intentId": "241636688131031040",
+          "intentStatus": "SUCCEEDED",
+          "successfulAttemptId": "241636691075432448",
+          "captured": "115.00000000"
+        }
+      ]
+    },
+    "downstreamWhileTaxDown": {
+      "billing": {
+        "facts": [],
+        "lines": [],
+        "refs": []
+      },
+      "account": {
+        "postings": [],
+        "entries": []
+      },
+      "ledger": {
+        "instructions": [],
+        "journalLines": []
+      }
+    },
+    "queuesWhileTaxDown": {
+      "account.billing.p1": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "tax.acquiring.p1": {
+        "messages": "0",
+        "consumers": "0"
+      },
+      "tax.acquiring.dlq": {
+        "messages": "0",
+        "consumers": "0"
+      },
+      "tax.acquiring.p3": {
+        "messages": "1",
+        "consumers": "0"
+      },
+      "billing.acquiring.p0": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.p3": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.dlq": {
+        "messages": "5",
+        "consumers": "0"
+      },
+      "billing.acquiring.p1": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "account.billing.p3": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "tax.acquiring.p2": {
+        "messages": "0",
+        "consumers": "0"
+      },
+      "account.billing.p2": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.p2": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "account.billing.dlq": {
+        "messages": "2",
+        "consumers": "0"
+      },
+      "tax.acquiring.p0": {
+        "messages": "0",
+        "consumers": "0"
+      },
+      "account.billing.p0": {
+        "messages": "0",
+        "consumers": "1"
+      }
+    },
+    "taxWhileDown": {
+      "calculations": [
+        {
+          "calculationId": "241636666404560896",
+          "revision": "1",
+          "stage": "PROVISIONAL",
+          "status": "BLOCKED",
+          "taxAmount": "NULL",
+          "net": "100.00000000",
+          "gross": "NULL",
+          "subjectPartyId": "900000000001380102",
+          "blockReasons": "[{\"code\": \"MARKET_NOT_ENABLED\", \"path\": \"market.US\"}]"
+        },
+        {
+          "calculationId": "241636668187140096",
+          "revision": "2",
+          "stage": "FINAL",
+          "status": "READY",
+          "taxAmount": "15.00000000",
+          "net": "100.00000000",
+          "gross": "115.00000000",
+          "subjectPartyId": "900000000001380102",
+          "blockReasons": "NULL"
+        }
+      ],
+      "components": [
+        {
+          "componentId": "241636668333940736",
+          "calculationId": "241636668187140096",
+          "jurisdiction": "SA",
+          "taxType": "VAT",
+          "treatment": "TAXABLE",
+          "rate": "0.1500000000",
+          "base": "100.00000000",
+          "taxAmount": "15.00000000"
+        }
+      ],
+      "transactions": [],
+      "entries": [],
+      "documents": [],
+      "compensation": []
+    },
+    "taxStart": {
+      "at": "2026-10-29T18:58:45.073491Z",
+      "result": "started tax 39660"
+    },
+    "taxReadyAfterStart": true,
+    "tax": {
+      "calculations": [
+        {
+          "calculationId": "241636666404560896",
+          "revision": "1",
+          "stage": "PROVISIONAL",
+          "status": "BLOCKED",
+          "taxAmount": "NULL",
+          "net": "100.00000000",
+          "gross": "NULL",
+          "subjectPartyId": "900000000001380102",
+          "blockReasons": "[{\"code\": \"MARKET_NOT_ENABLED\", \"path\": \"market.US\"}]"
+        },
+        {
+          "calculationId": "241636668187140096",
+          "revision": "2",
+          "stage": "FINAL",
+          "status": "READY",
+          "taxAmount": "15.00000000",
+          "net": "100.00000000",
+          "gross": "115.00000000",
+          "subjectPartyId": "900000000001380102",
+          "blockReasons": "NULL"
+        }
+      ],
+      "components": [
+        {
+          "componentId": "241636668333940736",
+          "calculationId": "241636668187140096",
+          "jurisdiction": "SA",
+          "taxType": "VAT",
+          "treatment": "TAXABLE",
+          "rate": "0.1500000000",
+          "base": "100.00000000",
+          "taxAmount": "15.00000000"
+        }
+      ],
+      "transactions": [
+        {
+          "transactionId": "241636919497252864",
+          "calculationId": "241636668187140096",
+          "factType": "ORDER_PAYMENT_SUCCEEDED",
+          "factId": "241636650596196352",
+          "origin": "AUTO",
+          "kind": "ORIGINAL",
+          "reportingStatus": "PENDING",
+          "reportingBlockReason": "FX_RATE_MISSING",
+          "registeredAt": "2026-10-29 18:58:51.000239"
+        }
+      ],
+      "entries": [],
+      "documents": [
+        {
+          "documentId": "241636920034123776",
+          "series": "SA-RCPT-2026",
+          "number": "SA-RCPT-2026-000004",
+          "issueStatus": "ISSUED",
+          "fileAddress": "/files/v1/241636924442284032",
+          "issuedAt": "2026-10-29 18:58:51.121650",
+          "digest": "9433acee7087e23ed9d583943ff20c432968b20bbe6c4c4ff997e8517a8878bd"
+        }
+      ],
+      "compensation": []
+    },
+    "queuesAfter": {
+      "account.billing.p1": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "tax.acquiring.p1": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "tax.acquiring.dlq": {
+        "messages": "0",
+        "consumers": "0"
+      },
+      "tax.acquiring.p3": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.p0": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.p3": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.dlq": {
+        "messages": "5",
+        "consumers": "0"
+      },
+      "billing.acquiring.p1": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "account.billing.p3": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "tax.acquiring.p2": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "account.billing.p2": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "billing.acquiring.p2": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "account.billing.dlq": {
+        "messages": "2",
+        "consumers": "0"
+      },
+      "tax.acquiring.p0": {
+        "messages": "0",
+        "consumers": "1"
+      },
+      "account.billing.p0": {
+        "messages": "0",
+        "consumers": "1"
+      }
+    },
+    "verdict": {
+      "taxWasDown": true,
+      "paidWhileTaxDown": true,
+      "billingPostedWhileTaxDown": false,
+      "taxCaughtUp": true,
+      "amountsMatchBilling": false,
+      "receiptIssued": true,
+      "noDeadLetter": true
+    },
+    "orderNo": "ord_3LNh7dqb0r8HtVN9eyLdmSSjiVw7Hp"
+  }
+}

@@ -1,0 +1,543 @@
+-- tax：2026-10-29-tax-rebuild.sql 的回退——删除新 16 张表、按重建前的 tax-schema.sql（e3e0c12f 版本，旧 Finance 来源 24 张表）重建空表。
+-- 目标库：mor_tax；以 root 手工执行。应用与测试不执行本文件。
+-- 前提：新表没有需要保留的业务数据（t_tax_transaction、t_tax_reporting_entry、t_tax_document 为 0 行；初始化数据随表删除）；
+-- 已有正式事实或单据时不得回退，改为前滚修复。回退后旧 24 张表为空表，与 e3e0c12f 的 tax-schema.sql 逐列一致。
+SET NAMES utf8mb4;
+
+DROP TABLE IF EXISTS `t_compensation_event`;
+DROP TABLE IF EXISTS `t_consumed_aggregate_version`;
+DROP TABLE IF EXISTS `t_consumed_event`;
+DROP TABLE IF EXISTS `t_tax_document_sequence`;
+DROP TABLE IF EXISTS `t_tax_document`;
+DROP TABLE IF EXISTS `t_tax_period`;
+DROP TABLE IF EXISTS `t_tax_reporting_entry`;
+DROP TABLE IF EXISTS `t_tax_transaction`;
+DROP TABLE IF EXISTS `t_tax_evidence`;
+DROP TABLE IF EXISTS `t_tax_calculation_component`;
+DROP TABLE IF EXISTS `t_tax_calculation_line`;
+DROP TABLE IF EXISTS `t_tax_calculation`;
+DROP TABLE IF EXISTS `t_tax_policy`;
+DROP TABLE IF EXISTS `t_tax_registration`;
+DROP TABLE IF EXISTS `t_tax_market`;
+DROP TABLE IF EXISTS `t_tax_category`;
+
+CREATE TABLE `t_tax_jurisdiction` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务辖区 Snowflake 主键。',
+  `jurisdiction_code` VARCHAR(64) NOT NULL COMMENT '跨税务规则稳定引用该辖区的业务代码。取值来源：Finance 税务辖区目录；非固定枚举。',
+  `jurisdiction_type` VARCHAR(64) NOT NULL COMMENT '该辖区在法定行政或特殊税区层级中的类别。允许值：COUNTRY、SUBNATIONAL、LOCAL、SPECIAL_ZONE。',
+  `country_code` CHAR(2) NOT NULL COMMENT '该辖区所属的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。',
+  `parent_id` BIGINT NULL COMMENT '该辖区的直接上级税务辖区，国家级辖区为空。',
+  `timezone` VARCHAR(64) NOT NULL COMMENT '确定该辖区税务日期边界的 IANA 时区代码。取值来源：IANA 时区数据库；非固定枚举。',
+  `status` VARCHAR(64) NOT NULL COMMENT '该辖区是否允许被新的税务规则引用。允许值：DRAFT、ACTIVE、INACTIVE。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_jurisdiction` (`jurisdiction_code`) COMMENT '保证业务唯一性：jurisdiction_code',
+  KEY `idx_tax_juris_parent` (`parent_id`) COMMENT '支持访问路径：parent_id',
+  KEY `idx_tax_juris_country` (`country_code`, `status`) COMMENT '支持访问路径：country_code、status'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存国家、州省、地方和特殊税区组成的多级税务辖区树。';
+
+CREATE TABLE `t_tax_authority` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务机关 Snowflake 主键。',
+  `jurisdiction_id` BIGINT NOT NULL COMMENT '该税务机关所属的本库税务辖区。',
+  `authority_code` VARCHAR(64) NOT NULL COMMENT '同一辖区内稳定识别该税务机关的代码。取值来源：Finance 税务机关目录；非固定枚举。',
+  `authority_name` VARCHAR(255) NOT NULL COMMENT '法定申报和付款使用的税务机关名称。',
+  `status` VARCHAR(64) NOT NULL COMMENT '该税务机关是否允许被新的税务注册引用。允许值：DRAFT、ACTIVE、INACTIVE。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_authority` (`jurisdiction_id`, `authority_code`) COMMENT '保证业务唯一性：jurisdiction_id、authority_code'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存税务辖区内负责注册、申报和收款的法定税务机关。';
+
+CREATE TABLE `t_tax_registration` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务注册 Snowflake 主键。',
+  `entity_type` VARCHAR(64) NOT NULL COMMENT '区分完成该税务注册的 CCT Operating Entity 或 Finance 本地内部财务主体。允许值：OPERATING_ENTITY、FINANCE_ENTITY。',
+  `entity_id` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '按主体类型解释的稳定业务ID；Finance Entity 使用本地主键且不建立多态外键。',
+  `authority_id` BIGINT NOT NULL COMMENT '受理该注册的本库税务机关。',
+  `tax_type` VARCHAR(64) NOT NULL COMMENT '该注册适用的法定税种代码。取值来源：Finance 多国税种目录；非固定枚举。',
+  `reporting_currency` CHAR(3) NOT NULL COMMENT '该注册下税务快照报告金额、税负汇总、申报和缴税统一使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `registration_kind` VARCHAR(64) NOT NULL COMMENT '区分实际税务注册与经规则确认的法定无需注册范围。允许值：REGISTERED、NO_REGISTRATION_REQUIRED。',
+  `registration_no_vault_token` VARCHAR(128) NULL COMMENT '中央 Vault 中可受控读取税务注册号的不透明稳定令牌。',
+  `registration_no_blind_index` CHAR(64) NULL COMMENT '按财务主体、字段和用途隔离后用于等值查重的盲索引。',
+  `registration_no_blind_key_ver` INT NULL COMMENT '生成注册号盲索引时使用的密钥版本。',
+  `registration_no_masked` VARCHAR(128) NULL COMMENT '无需读取明文即可受控展示的税务注册号脱敏值。',
+  `vault_record_version` BIGINT NULL COMMENT '该令牌绑定的中央 Vault 不可变记录版本。',
+  `vault_metadata_hash` CHAR(64) NULL COMMENT '中央 Vault 返回的用途和访问边界元数据摘要。',
+  `effective_from` DATETIME(6) NOT NULL COMMENT '该税务注册开始适用的 UTC 微秒时间。',
+  `effective_to` DATETIME(6) NULL COMMENT '该税务注册停止适用的 UTC 微秒时间，长期有效时为空。',
+  `status` VARCHAR(64) NOT NULL COMMENT '该税务注册当前的业务状态。允许值：DRAFT、ACTIVE、SUSPENDED、EXPIRED、REVOKED。',
+  `version` BIGINT NOT NULL DEFAULT 0 COMMENT '更新税务注册状态时进行条件更新的乐观锁版本号。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_registration` (`entity_type`, `entity_id`, `authority_id`, `tax_type`, `registration_kind`, `effective_from`) COMMENT '保证业务唯一性：entity_type、entity_id、authority_id、tax_type、registration_kind、effective_from',
+  UNIQUE KEY `uk_tax_reg_number` (`authority_id`, `tax_type`, `registration_no_blind_key_ver`, `registration_no_blind_index`) COMMENT '保证业务唯一性：authority_id、tax_type、registration_no_blind_key_ver、registration_no_blind_index',
+  KEY `idx_tax_reg_authority` (`authority_id`, `tax_type`, `status`) COMMENT '支持访问路径：authority_id、tax_type、status',
+  KEY `idx_tax_reg_effective` (`entity_type`, `entity_id`, `tax_type`, `effective_from`, `effective_to`) COMMENT '支持访问路径：entity_type、entity_id、tax_type、effective_from、effective_to'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存 Operating Entity 或 Finance Entity 在税务机关和税种下的实际注册或法定无需注册范围；主体必须与账簿、财务日历和税款支付链一致。';
+
+CREATE TABLE `t_tax_category` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务分类 Snowflake 主键。',
+  `category_code` VARCHAR(64) NOT NULL COMMENT '稳定识别税务处理分类的业务代码。取值来源：Finance 税务分类目录；非固定枚举。',
+  `parent_id` BIGINT NULL COMMENT '该税务分类的直接上级分类，顶级分类为空。',
+  `category_name` VARCHAR(255) NOT NULL COMMENT '供税务规则配置和审计展示的分类名称。',
+  `status` VARCHAR(64) NOT NULL COMMENT '该税务分类是否允许被新映射和规则引用。允许值：DRAFT、ACTIVE、INACTIVE。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_category` (`category_code`) COMMENT '保证业务唯一性：category_code',
+  KEY `idx_tax_category_parent` (`parent_id`) COMMENT '支持访问路径：parent_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存商品或服务的税务处理分类树，不替代平台行业或 MCC 分类。';
+
+CREATE TABLE `t_tax_category_mapping` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务分类映射 Snowflake 主键。',
+  `source_system` VARCHAR(64) NOT NULL COMMENT '提供原始商品或服务分类的受控系统代码。取值来源：Code-MoR 系统目录；非固定枚举。',
+  `source_category_code` VARCHAR(64) NOT NULL COMMENT '来源系统中稳定识别商品或服务类别的代码。取值来源：来源系统商品服务分类目录；非固定枚举。',
+  `seller_jurisdiction_id` BIGINT NOT NULL COMMENT '该映射适用的本库卖方税务辖区。',
+  `tax_category_id` BIGINT NOT NULL COMMENT '映射结果对应的本库税务分类。',
+  `effective_from` DATETIME(6) NOT NULL COMMENT '该映射开始参与税务匹配的 UTC 微秒时间。',
+  `effective_to` DATETIME(6) NULL COMMENT '该映射停止参与税务匹配的 UTC 微秒时间，长期有效时为空。',
+  `priority` INT NOT NULL COMMENT '相同适用范围内数值越小越优先的确定性匹配顺序。',
+  `status` VARCHAR(64) NOT NULL COMMENT '该映射的发布生命周期状态。允许值：DRAFT、ACTIVE、INACTIVE。',
+  `version` BIGINT NOT NULL DEFAULT 0 COMMENT '更新映射状态时进行条件更新的乐观锁版本号。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_cat_map` (`source_system`, `source_category_code`, `seller_jurisdiction_id`, `effective_from`) COMMENT '保证业务唯一性：source_system、source_category_code、seller_jurisdiction_id、effective_from',
+  KEY `idx_tax_cat_map_juris` (`seller_jurisdiction_id`, `status`, `priority`) COMMENT '支持访问路径：seller_jurisdiction_id、status、priority',
+  KEY `idx_tax_cat_map_cat` (`tax_category_id`) COMMENT '支持访问路径：tax_category_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按卖方税务辖区和生效期把来源商品服务分类映射到 Finance 税务分类。';
+
+CREATE TABLE `t_tax_treatment` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务处理 Snowflake 主键。',
+  `treatment_code` VARCHAR(64) NOT NULL COMMENT '稳定标识税务处理语义的业务代码。允许值：STANDARD、ZERO_RATED、EXEMPT、OUT_OF_SCOPE、REVERSE_CHARGE。',
+  `tax_type` VARCHAR(64) NOT NULL COMMENT '该处理适用的法定税种代码。取值来源：Finance 多国税种目录；非固定枚举。',
+  `liability_mode` VARCHAR(64) NOT NULL COMMENT '税款由卖方承担或由买方反向申报。允许值：SELLER、BUYER_REVERSE_CHARGE。',
+  `invoice_requirement` VARCHAR(64) NOT NULL COMMENT '该处理是否要求生成法定发票或贷项通知。允许值：REQUIRED、NOT_REQUIRED、CONDITIONAL。',
+  `status` VARCHAR(64) NOT NULL COMMENT '该税务处理是否允许被新规则引用。允许值：DRAFT、ACTIVE、INACTIVE。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_treatment` (`tax_type`, `treatment_code`) COMMENT '保证业务唯一性：tax_type、treatment_code'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存标准税率、零税率、免税、范围外和反向征税等稳定税务处理。';
+
+CREATE TABLE `t_tax_rule` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成且精确识别该规则业务版本的 Snowflake 主键。',
+  `rule_code` VARCHAR(64) NOT NULL COMMENT '跨版本稳定识别税务规则的业务代码。取值来源：Finance 税务规则代码；非固定枚举。',
+  `tax_type` VARCHAR(64) NOT NULL COMMENT '该税务规则处理的法定税种代码。取值来源：Finance 多国税种目录；非固定枚举。',
+  `rule_ver` INT NOT NULL COMMENT '同一税务规则下严格递增的业务版本号。',
+  `seller_jurisdiction_id` BIGINT NOT NULL COMMENT '该规则版本适用的本库卖方税务辖区。',
+  `buyer_jurisdiction_id` BIGINT NULL COMMENT '该规则版本限定的本库买方税务辖区，适用任意辖区时为空。',
+  `buyer_type` VARCHAR(64) NOT NULL COMMENT '该规则版本适用的消费者或企业买方类别。允许值：B2C、B2B、ANY。',
+  `category_id` BIGINT NOT NULL COMMENT '该规则版本适用的本库税务分类。',
+  `treatment_id` BIGINT NOT NULL COMMENT '该规则版本采用的本库税务处理。',
+  `effective_from` DATETIME(6) NOT NULL COMMENT '该规则版本开始参与税务计算的 UTC 微秒时间。',
+  `effective_to` DATETIME(6) NULL COMMENT '该规则版本停止参与税务计算的 UTC 微秒时间，长期有效时为空。',
+  `priority` INT NOT NULL COMMENT '相同适用范围内数值越小越优先的确定性顺序。',
+  `content_hash` CHAR(64) NULL COMMENT '提交审批时生成并覆盖规则头、供应地规则、税率和证据规则的规范化摘要；草稿时为空。',
+  `status` VARCHAR(64) NOT NULL COMMENT '该规则版本的草拟、审批和发布生命周期。允许值：DRAFT、PENDING_APPROVAL、ACTIVE、REJECTED、INACTIVE。',
+  `maker_id` BIGINT NOT NULL COMMENT '创建该规则版本的 Platform Actor 稳定业务ID。',
+  `checker_id` BIGINT NULL COMMENT '复核该规则版本的另一 Platform Actor 稳定业务ID。',
+  `checker_decision` VARCHAR(64) NULL COMMENT '复核人对该规则版本作出的批准或驳回决定。允许值：APPROVED、REJECTED。',
+  `decision_time` DATETIME(6) NULL COMMENT '复核决定发生的 UTC 微秒时间。',
+  `version` BIGINT NOT NULL DEFAULT 0 COMMENT '更新草稿或推进规则版本生命周期时使用的乐观锁版本号。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_rule` (`rule_code`, `rule_ver`) COMMENT '保证业务唯一性：rule_code、rule_ver',
+  KEY `idx_tax_rule_seller` (`seller_jurisdiction_id`, `status`, `effective_from`) COMMENT '支持访问路径：seller_jurisdiction_id、status、effective_from',
+  KEY `idx_tax_rule_buyer` (`buyer_jurisdiction_id`) COMMENT '支持访问路径：buyer_jurisdiction_id',
+  KEY `idx_tax_rule_category` (`category_id`) COMMENT '支持访问路径：category_id',
+  KEY `idx_tax_rule_treatment` (`treatment_id`) COMMENT '支持访问路径：treatment_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='每行保存一个可独立审批和生效的税务规则业务版本；离开草稿后适用范围等被审批业务内容及其供应地、税率和证据子行冻结，仅审批与发布状态按生命周期推进。';
+
+CREATE TABLE `t_place_of_supply_rule` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的供应地规则 Snowflake 主键。',
+  `tax_rule_id` BIGINT NOT NULL COMMENT '该供应地规则所属的本库精确税务规则版本。',
+  `rule_no` INT NOT NULL COMMENT '同一税务规则版本内稳定且唯一的行序号。',
+  `seller_country` CHAR(2) NOT NULL COMMENT '规则匹配使用的 ISO 3166-1 alpha-2 卖方国家代码。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。',
+  `buyer_country` CHAR(2) NULL COMMENT '规则匹配使用的 ISO 3166-1 alpha-2 买方国家代码，任意国家时为空。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。',
+  `supply_type` VARCHAR(64) NOT NULL COMMENT '用于判定供应地的商品或服务交付类别。取值来源：Finance 供应类型目录；非固定枚举。',
+  `evidence_match_mode` VARCHAR(64) NOT NULL COMMENT '要求证据全部一致或满足任一合格组合。允许值：ALL、ANY。',
+  `result_jurisdiction_id` BIGINT NOT NULL COMMENT '该规则命中后采用的本库税务辖区。',
+  `priority` INT NOT NULL COMMENT '同一规则版本内数值越小越优先的匹配顺序。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_supply_rule` (`tax_rule_id`, `rule_no`) COMMENT '保证业务唯一性：tax_rule_id、rule_no',
+  UNIQUE KEY `uk_supply_priority` (`tax_rule_id`, `priority`) COMMENT '保证业务唯一性：tax_rule_id、priority',
+  KEY `idx_supply_result` (`result_jurisdiction_id`) COMMENT '支持访问路径：result_jurisdiction_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='冻结税务规则版本中根据买卖方国家、供应类型和证据组合确定结果辖区的规则。';
+
+CREATE TABLE `t_tax_rate` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税率 Snowflake 主键。',
+  `tax_rule_id` BIGINT NOT NULL COMMENT '该税率所属的本库精确税务规则版本。',
+  `jurisdiction_id` BIGINT NOT NULL COMMENT '该税率适用的本库税务辖区。',
+  `category_id` BIGINT NOT NULL COMMENT '该税率适用的本库税务分类。',
+  `treatment_id` BIGINT NOT NULL COMMENT '该税率对应的本库税务处理。',
+  `rate_value` DECIMAL(18,10) NOT NULL COMMENT '零至一之间用于计算税额的十进制税率。',
+  `effective_from` DATETIME(6) NOT NULL COMMENT '该税率开始适用的 UTC 微秒时间。',
+  `effective_to` DATETIME(6) NULL COMMENT '该税率停止适用的 UTC 微秒时间，长期有效时为空。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_rate` (`tax_rule_id`, `jurisdiction_id`, `category_id`, `treatment_id`, `effective_from`) COMMENT '保证业务唯一性：tax_rule_id、jurisdiction_id、category_id、treatment_id、effective_from',
+  KEY `idx_tax_rate_juris` (`jurisdiction_id`, `effective_from`, `effective_to`) COMMENT '支持访问路径：jurisdiction_id、effective_from、effective_to',
+  KEY `idx_tax_rate_category` (`category_id`) COMMENT '支持访问路径：category_id',
+  KEY `idx_tax_rate_treatment` (`treatment_id`) COMMENT '支持访问路径：treatment_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='冻结税务规则版本在特定辖区、分类和处理方式下的法定税率及生效期。';
+
+CREATE TABLE `t_tax_evidence_rule` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务证据规则 Snowflake 主键。',
+  `tax_rule_id` BIGINT NOT NULL COMMENT '该证据要求所属的本库精确税务规则版本。',
+  `evidence_type` VARCHAR(64) NOT NULL COMMENT '参与供应地和税务处理判定的受控证据类别。取值来源：Finance 税务证据类型目录；非固定枚举。',
+  `minimum_count` INT NOT NULL COMMENT '满足该证据类型要求所需的最少独立证据数量。',
+  `must_agree` BOOLEAN NOT NULL COMMENT '同类证据中的国家或结论是否必须完全一致。1 表示是，0 表示否。',
+  `max_age_days` INT NOT NULL COMMENT '证据从观测到税务计算允许经过的最大天数。',
+  `priority` INT NOT NULL COMMENT '多个证据要求组合时采用的稳定评估顺序。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_evidence_rule` (`tax_rule_id`, `evidence_type`) COMMENT '保证业务唯一性：tax_rule_id、evidence_type'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='冻结税务规则版本要求的位置、身份或供应地证据种类和一致性条件。';
+
+CREATE TABLE `t_tax_exchange_rate` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务汇率 Snowflake 主键。',
+  `rate_source` VARCHAR(64) NOT NULL COMMENT '提供该法定税务汇率的受控来源代码。取值来源：Finance 税务汇率来源目录；非固定枚举。',
+  `rate_date` DATE NOT NULL COMMENT '该汇率适用的法定业务日期。',
+  `base_currency` CHAR(3) NOT NULL COMMENT '换算方向左侧的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `quote_currency` CHAR(3) NOT NULL COMMENT '换算方向右侧的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `rate_value` DECIMAL(18,10) NOT NULL COMMENT '基础币种金额乘以该正数汇率得到报价币种金额。',
+  `source_ref` VARCHAR(128) NOT NULL COMMENT '汇率来源提供的公告、批次或记录稳定引用。',
+  `source_hash` CHAR(64) NOT NULL COMMENT '权威汇率来源原始内容的不可变摘要。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_fx` (`rate_source`, `rate_date`, `base_currency`, `quote_currency`) COMMENT '保证业务唯一性：rate_source、rate_date、base_currency、quote_currency'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存税务报告币种换算采用的不可变权威汇率，不进行隐式倒数换算。';
+
+CREATE TABLE `t_tax_snapshot` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务计算快照 Snowflake 主键。',
+  `tax_snapshot_no` VARCHAR(128) NOT NULL COMMENT '供跨系统追踪税务计算结果的稳定业务编号。',
+  `source_system` VARCHAR(64) NOT NULL COMMENT '发起本次税务计算请求的受控系统代码。取值来源：Code-MoR 系统目录；非固定枚举。',
+  `source_request_id` VARCHAR(128) NOT NULL COMMENT '来源系统在其命名空间内提供的税务计算幂等请求标识。',
+  `request_hash` CHAR(64) NOT NULL COMMENT '规范化税务计算输入的不可变摘要，相同请求ID必须保持一致。',
+  `order_id` BIGINT NOT NULL COMMENT '本次税务计算对应的 Commerce Order 稳定业务ID。',
+  `client_order_id` VARCHAR(128) NOT NULL COMMENT 'Client 在自身范围内提供且用于业务对账的订单引用。',
+  `client_id` BIGINT NOT NULL COMMENT '订单所属 CCT Client 的稳定业务ID。',
+  `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '订单冻结的 CCT Operating Entity 稳定业务ID。',
+  `buyer_type` VARCHAR(64) NOT NULL COMMENT '本次计算采用的消费者或企业买方类别。允许值：B2C、B2B。',
+  `buyer_tax_country` CHAR(2) NULL COMMENT '买方税务身份所属的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。',
+  `buyer_tax_id_vault_token` VARCHAR(128) NULL COMMENT '中央 Vault 中可受控读取买方税号的不透明稳定令牌。',
+  `buyer_tax_id_blind_index` CHAR(64) NULL COMMENT '按客户、字段和用途隔离后用于等值关联的盲索引。',
+  `buyer_tax_id_blind_key_ver` INT NULL COMMENT '生成买方税号盲索引时使用的密钥版本。',
+  `buyer_tax_id_masked` VARCHAR(128) NULL COMMENT '无需读取明文即可受控展示的买方税号脱敏值。',
+  `buyer_tax_vault_record_version` BIGINT NULL COMMENT '交易时点冻结的中央 Vault 不可变记录版本。',
+  `buyer_tax_vault_metadata_hash` CHAR(64) NULL COMMENT '中央 Vault 返回的用途和访问边界元数据摘要。',
+  `buyer_tax_validation` VARCHAR(64) NOT NULL COMMENT '交易时点对买方税务身份完成的验证结论。允许值：NOT_PROVIDED、UNVERIFIED、VALID、INVALID。',
+  `currency` CHAR(3) NOT NULL COMMENT '税基和实收税额使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `reporting_currency` CHAR(3) NOT NULL COMMENT '法定税务报告金额使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `exchange_rate_id` BIGINT NULL COMMENT '交易币种与报告币种不同时采用的本库不可变税务汇率。',
+  `total_collected_tax` DECIMAL(24,8) NOT NULL COMMENT '卖方从消费者实际收取的交易币种税额合计。',
+  `total_reverse_charge_tax` DECIMAL(24,8) NOT NULL COMMENT '由买方自行申报且仅作披露的交易币种税额合计。',
+  `reporting_collected_tax` DECIMAL(24,8) NOT NULL COMMENT '换算为法定报告币种的实收税额合计。',
+  `reporting_reverse_charge_tax` DECIMAL(24,8) NOT NULL COMMENT '换算为法定报告币种的反向征税披露合计。',
+  `calculation_hash` CHAR(64) NOT NULL COMMENT '按照 Tax Calculation V1 契约覆盖 Header、Evidence 和 Tax Line 的输出摘要。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_snapshot_no` (`tax_snapshot_no`) COMMENT '保证业务唯一性：tax_snapshot_no',
+  UNIQUE KEY `uk_tax_snapshot_req` (`source_system`, `source_request_id`) COMMENT '保证业务唯一性：source_system、source_request_id',
+  KEY `idx_tax_snapshot_order` (`order_id`) COMMENT '支持访问路径：order_id',
+  KEY `idx_tax_snapshot_client` (`client_id`, `client_order_id`) COMMENT '支持访问路径：client_id、client_order_id',
+  KEY `idx_tax_buyer_blind` (`client_id`, `buyer_tax_id_blind_key_ver`, `buyer_tax_id_blind_index`) COMMENT '支持访问路径：client_id、buyer_tax_id_blind_key_ver、buyer_tax_id_blind_index',
+  KEY `idx_tax_snapshot_oe` (`entity_no`, `currency`) COMMENT '支持访问路径：entity_no、currency',
+  KEY `idx_tax_snapshot_fx` (`exchange_rate_id`) COMMENT '支持访问路径：exchange_rate_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='冻结 Checkout 税务计算的幂等请求、买方税务信息、汇率、汇总金额和计算摘要。';
+
+CREATE TABLE `t_tax_evidence` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务证据快照 Snowflake 主键。',
+  `tax_snapshot_id` BIGINT NOT NULL COMMENT '该证据所属的本库税务计算快照。',
+  `evidence_no` INT NOT NULL COMMENT '同一税务计算快照内稳定且唯一的证据序号。',
+  `evidence_type` VARCHAR(64) NOT NULL COMMENT '用于供应地和税务处理判定的受控证据类别。取值来源：Finance 税务证据类型目录；非固定枚举。',
+  `country_code` CHAR(2) NULL COMMENT '证据支持的 ISO 3166-1 alpha-2 国家代码。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。',
+  `evidence_value_hash` CHAR(64) NOT NULL COMMENT '最小化原始证据值后生成的不可变摘要。',
+  `source_system` VARCHAR(64) NOT NULL COMMENT '提供该证据的受控系统代码。取值来源：Code-MoR 系统目录；非固定枚举。',
+  `source_ref_id` VARCHAR(128) NOT NULL COMMENT '来源系统中可定位该证据的稳定业务引用。',
+  `observed_time` DATETIME(6) NOT NULL COMMENT '该证据被来源系统观测到的 UTC 微秒时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_evidence` (`tax_snapshot_id`, `evidence_no`) COMMENT '保证业务唯一性：tax_snapshot_id、evidence_no',
+  KEY `idx_tax_evidence_source` (`source_system`, `source_ref_id`) COMMENT '支持访问路径：source_system、source_ref_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='逐条冻结本次税务计算实际采用的消费者位置、身份和供应地证据。';
+
+CREATE TABLE `t_tax_line` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务计算行 Snowflake 主键。',
+  `tax_snapshot_id` BIGINT NOT NULL COMMENT '该税务计算行所属的本库税务计算快照。',
+  `line_no` INT NOT NULL COMMENT '同一税务计算快照内稳定且唯一的税务行序号。',
+  `line_key` CHAR(64) NOT NULL COMMENT '覆盖来源行、税种、辖区、注册、规则、税率、处理和责任模式的规范化键。',
+  `source_order_item_id` BIGINT NULL COMMENT '该税务行对应的 Commerce Order Item 稳定业务ID，订单级税项为空。',
+  `source_line_ref` VARCHAR(128) NOT NULL COMMENT 'Commerce 可稳定映射到同一订单项或订单级税项的行引用。',
+  `tax_type` VARCHAR(64) NOT NULL COMMENT '该税务行计算的法定税种代码。取值来源：Finance 多国税种目录；非固定枚举。',
+  `jurisdiction_id` BIGINT NOT NULL COMMENT '该税务行采用的本库税务辖区。',
+  `registration_id` BIGINT NOT NULL COMMENT '该税务行冻结的本库 Operating Entity 税务注册。',
+  `fiscal_scope_hash` CHAR(64) NOT NULL COMMENT '覆盖注册、辖区、税种和法定单据范围的不可变摘要。',
+  `tax_rule_id` BIGINT NOT NULL COMMENT '该税务行采用的本库精确且已冻结税务规则版本。',
+  `tax_rate_id` BIGINT NOT NULL COMMENT '该税务行采用的本库不可变税率。',
+  `treatment_id` BIGINT NOT NULL COMMENT '该税务行采用的本库税务处理。',
+  `liability_mode` VARCHAR(64) NOT NULL COMMENT '税款由卖方承担或由买方反向申报。允许值：SELLER、BUYER_REVERSE_CHARGE。',
+  `liable_party_type` VARCHAR(64) NOT NULL COMMENT '承担本行税务责任的业务角色。允许值：OPERATING_ENTITY、BUYER。',
+  `liable_entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NULL COMMENT '卖方责任模式下承担税务责任的 Operating Entity 稳定业务ID。',
+  `tax_basis` DECIMAL(24,8) NOT NULL COMMENT '按交易币种计算税额的非负税基金额。',
+  `tax_rate` DECIMAL(18,10) NOT NULL COMMENT '从冻结税率来源复制的零至一十进制税率。',
+  `collected_tax_amount` DECIMAL(24,8) NOT NULL COMMENT '卖方从消费者实际收取的交易币种税额。',
+  `reverse_charge_tax_amount` DECIMAL(24,8) NOT NULL COMMENT '由买方自行申报且不进入卖方应付税的披露金额。',
+  `currency` CHAR(3) NOT NULL COMMENT '税基和税额使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `reporting_tax_basis` DECIMAL(24,8) NOT NULL COMMENT '按本次税务快照冻结汇率换算到报告币种的非负税基金额，零税率行也必须保存。',
+  `reporting_collected_tax` DECIMAL(24,8) NOT NULL COMMENT '换算为报告币种的实收税额。',
+  `reporting_reverse_charge_tax` DECIMAL(24,8) NOT NULL COMMENT '换算为报告币种的反向征税披露金额。',
+  `reporting_currency` CHAR(3) NOT NULL COMMENT '法定报告金额使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_line_no` (`tax_snapshot_id`, `line_no`) COMMENT '保证业务唯一性：tax_snapshot_id、line_no',
+  UNIQUE KEY `uk_tax_line_key` (`tax_snapshot_id`, `line_key`) COMMENT '保证业务唯一性：tax_snapshot_id、line_key',
+  KEY `idx_tax_line_juris` (`jurisdiction_id`) COMMENT '支持访问路径：jurisdiction_id',
+  KEY `idx_tax_line_reg` (`registration_id`) COMMENT '支持访问路径：registration_id',
+  KEY `idx_tax_line_rule` (`tax_rule_id`) COMMENT '支持访问路径：tax_rule_id',
+  KEY `idx_tax_line_rate` (`tax_rate_id`) COMMENT '支持访问路径：tax_rate_id',
+  KEY `idx_tax_line_treatment` (`treatment_id`) COMMENT '支持访问路径：treatment_id',
+  KEY `idx_tax_line_item` (`source_order_item_id`) COMMENT '支持访问路径：source_order_item_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='逐行冻结多税种、多辖区、多责任主体的税基、税率、规则来源和计算金额。';
+
+CREATE TABLE `t_fiscal_number_sequence` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的财政号码序列 Snowflake 主键。',
+  `tax_registration_id` BIGINT NOT NULL COMMENT '使用该号码系列的本库税务注册。',
+  `record_type` VARCHAR(64) NOT NULL COMMENT '决定法定号码系列用途的受控记录类型。取值来源：Finance 财政记录类型目录；非固定枚举。',
+  `series_code` VARCHAR(64) NOT NULL COMMENT '同一注册和记录类型下的法定号码系列代码。取值来源：Finance 财政号码系列目录；非固定枚举。',
+  `fiscal_year` INT NOT NULL COMMENT '该连续号码系列适用的四位财政年度。',
+  `next_value` BIGINT NOT NULL COMMENT '下一次成功条件更新可分配的法定顺序值。',
+  `version` BIGINT NOT NULL DEFAULT 0 COMMENT '原子取号条件更新使用的乐观锁版本号。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_fiscal_seq` (`tax_registration_id`, `record_type`, `series_code`, `fiscal_year`) COMMENT '保证业务唯一性：tax_registration_id、record_type、series_code、fiscal_year'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按税务注册、财政记录类型、号码系列和财年原子分配连续且不可复用的法定号码。';
+
+CREATE TABLE `t_fiscal_record` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的财政记录 Snowflake 主键。',
+  `client_id` BIGINT NOT NULL COMMENT '财政事实所属 CCT Client 的稳定业务ID。',
+  `entity_no` CHAR(5) CHARACTER SET ascii COLLATE ascii_bin NOT NULL COMMENT '承担该财政事实的 CCT Operating Entity 稳定业务ID。',
+  `order_id` BIGINT NOT NULL COMMENT '该财政事实对应的 Commerce Order 稳定业务ID。',
+  `refund_request_id` BIGINT NULL COMMENT '退款财政事实对应的 Commerce Refund Request 稳定业务ID。',
+  `business_ref_type` VARCHAR(64) NOT NULL COMMENT '说明业务引用ID代表订单还是退款请求。允许值：ORDER、REFUND。',
+  `business_ref_id` BIGINT NOT NULL COMMENT '按业务引用类型指向订单或退款请求的稳定业务ID。',
+  `document_type` VARCHAR(64) NOT NULL COMMENT '该财政事实应生成的辖区法定单据类别。取值来源：Finance 法定单据类型目录；非固定枚举。',
+  `tax_registration_id` BIGINT NOT NULL COMMENT '该财政事实使用的本库税务注册。',
+  `tax_period_id` BIGINT NOT NULL COMMENT '该财政事实归属的本库法定税务期间。',
+  `fiscal_sequence_id` BIGINT NOT NULL COMMENT '为该财政事实分配号码的本库连续序列。',
+  `sequence_value` BIGINT NOT NULL COMMENT '从财政号码序列原子取得且不可复用的顺序值。',
+  `series_code` VARCHAR(64) NOT NULL COMMENT '生成财政号码时采用的法定号码系列代码。取值来源：Finance 财政号码系列目录；非固定枚举。',
+  `source_system` VARCHAR(64) NOT NULL COMMENT '发布该业务事实事件的受控系统代码。取值来源：Code-MoR 系统目录；非固定枚举。',
+  `record_type` VARCHAR(64) NOT NULL COMMENT '决定财政号码和法定处理路径的受控记录类型。取值来源：Finance 财政记录类型目录；非固定枚举。',
+  `fiscal_number` VARCHAR(128) NOT NULL COMMENT '税务注册和记录类型范围内唯一的完整法定号码。',
+  `tax_snapshot_id` BIGINT NOT NULL COMMENT '该财政事实引用的本库不可变税务计算快照。',
+  `source_event_key` VARCHAR(128) NOT NULL COMMENT '来源系统在其命名空间内稳定且可幂等消费的事件键。',
+  `source_version` BIGINT NOT NULL COMMENT '来源事件固定为一的事实版本。',
+  `source_payload_hash` CHAR(64) NOT NULL COMMENT '消息事件信封规范化载荷的不可变摘要，不等同于财政内容摘要。',
+  `generation_key_version` INT NOT NULL COMMENT '法定文档生成键 Canonical 算法的显式版本。',
+  `document_generation_key` CHAR(64) NOT NULL COMMENT '按版本化 Canonical 契约生成且跨系统一致的法定文档幂等键。',
+  `generation_scope_hash` CHAR(64) NOT NULL COMMENT '覆盖经营主体、注册、记录类型、单据类型和业务范围的摘要。',
+  `original_record_id` BIGINT NULL COMMENT '更正记录所引用的本库原始财政记录。',
+  `fiscal_date` DATE NOT NULL COMMENT '按照税务辖区规则确定的法定业务日期。',
+  `currency` CHAR(3) NOT NULL COMMENT '财政记录金额使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `total_amount` DECIMAL(24,8) NOT NULL COMMENT '该财政记录全部明细行的含税金额合计。',
+  `content_hash` CHAR(64) NOT NULL COMMENT '覆盖来源事实、注册、期间、号码、税务行和金额的不可变摘要。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_fiscal_no` (`tax_registration_id`, `record_type`, `fiscal_number`) COMMENT '保证业务唯一性：tax_registration_id、record_type、fiscal_number',
+  UNIQUE KEY `uk_fiscal_sequence` (`fiscal_sequence_id`, `sequence_value`) COMMENT '保证业务唯一性：fiscal_sequence_id、sequence_value',
+  UNIQUE KEY `uk_fiscal_source` (`source_system`, `source_event_key`, `record_type`, `document_type`, `tax_registration_id`, `source_version`) COMMENT '保证业务唯一性：source_system、source_event_key、record_type、document_type、tax_registration_id、source_version',
+  UNIQUE KEY `uk_fiscal_generation` (`generation_key_version`, `document_generation_key`) COMMENT '保证业务唯一性：generation_key_version、document_generation_key',
+  KEY `idx_fiscal_period` (`tax_period_id`, `fiscal_date`) COMMENT '支持访问路径：tax_period_id、fiscal_date',
+  KEY `idx_fiscal_snapshot` (`tax_snapshot_id`) COMMENT '支持访问路径：tax_snapshot_id',
+  KEY `idx_fiscal_original` (`original_record_id`) COMMENT '支持访问路径：original_record_id',
+  KEY `idx_fiscal_order` (`order_id`, `refund_request_id`) COMMENT '支持访问路径：order_id、refund_request_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按来源事件、税务注册和法定号码冻结支付或退款产生的权威财政事实。';
+
+CREATE TABLE `t_fiscal_record_line` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的财政记录明细 Snowflake 主键。',
+  `fiscal_record_id` BIGINT NOT NULL COMMENT '该明细所属的本库财政记录。',
+  `line_no` INT NOT NULL COMMENT '同一财政记录内稳定且唯一的行序号。',
+  `tax_line_id` BIGINT NOT NULL COMMENT '该明细引用的本库不可变税务计算行。',
+  `net_amount` DECIMAL(24,8) NOT NULL COMMENT '该明细在财政记录币种下的未税金额。',
+  `collected_tax_amount` DECIMAL(24,8) NOT NULL COMMENT '该明细由卖方实际收取的税额。',
+  `reverse_charge_tax_amount` DECIMAL(24,8) NOT NULL COMMENT '该明细仅用于法定披露的买方反向征税金额。',
+  `gross_amount` DECIMAL(24,8) NOT NULL COMMENT '未税金额与实收税额之和。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_fiscal_line` (`fiscal_record_id`, `line_no`) COMMENT '保证业务唯一性：fiscal_record_id、line_no',
+  UNIQUE KEY `uk_fiscal_tax_line` (`fiscal_record_id`, `tax_line_id`) COMMENT '保证业务唯一性：fiscal_record_id、tax_line_id',
+  KEY `idx_fiscal_line_tax` (`tax_line_id`) COMMENT '支持访问路径：tax_line_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='逐行关联财政记录与原始税务计算行并冻结净额、税额和含税金额。';
+
+CREATE TABLE `t_tax_period` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务期间 Snowflake 主键。',
+  `tax_registration_id` BIGINT NOT NULL COMMENT '该法定期间所属的本库税务注册。',
+  `tax_type` VARCHAR(64) NOT NULL COMMENT '该法定期间申报的税种代码。取值来源：Finance 多国税种目录；非固定枚举。',
+  `period_start` DATE NOT NULL COMMENT '该法定申报期间包含的首个业务日期。',
+  `period_end` DATE NOT NULL COMMENT '该法定申报期间包含的最后一个业务日期。',
+  `filing_due_date` DATE NOT NULL COMMENT '税务申报必须提交的法定截止日期。',
+  `payment_due_date` DATE NOT NULL COMMENT '净应纳税额必须支付的法定截止日期。',
+  `status` VARCHAR(64) NOT NULL COMMENT '该期间当前是否允许归集财政记录或已进入申报关闭流程。允许值：OPEN、PREPARING、FILED、CLOSED。',
+  `version` BIGINT NOT NULL DEFAULT 0 COMMENT '更新税务期间状态时进行条件更新的乐观锁版本号。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_period` (`tax_registration_id`, `tax_type`, `period_start`, `period_end`) COMMENT '保证业务唯一性：tax_registration_id、tax_type、period_start、period_end',
+  KEY `idx_tax_period_status` (`tax_registration_id`, `status`, `filing_due_date`) COMMENT '支持访问路径：tax_registration_id、status、filing_due_date'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='保存单一税务注册和税种下连续、不重叠的法定申报与付款期间。';
+
+CREATE TABLE `t_tax_liability_summary` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税负汇总快照 Snowflake 主键。',
+  `tax_period_id` BIGINT NOT NULL COMMENT '该汇总所属的本库税务期间。',
+  `summary_no` INT NOT NULL COMMENT '同一税务期间内稳定且唯一的汇总行序号。',
+  `jurisdiction_id` BIGINT NOT NULL COMMENT '该汇总对应的本库税务辖区。',
+  `treatment_id` BIGINT NOT NULL COMMENT '该汇总对应的本库税务处理。',
+  `tax_rate_id` BIGINT NOT NULL COMMENT '该汇总采用的本库不可变税率。',
+  `liability_mode` VARCHAR(64) NOT NULL COMMENT '税款由卖方承担或由买方反向申报。允许值：SELLER、BUYER_REVERSE_CHARGE。',
+  `currency` CHAR(3) NOT NULL COMMENT '汇总税基和税额使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `taxable_amount` DECIMAL(24,8) NOT NULL COMMENT '卖方责任模式下纳入申报的未税金额合计。',
+  `output_tax` DECIMAL(24,8) NOT NULL COMMENT '卖方实际收取并形成税务负债的税额合计。',
+  `recoverable_tax` DECIMAL(24,8) NOT NULL COMMENT '税务机关允许从销项税中抵扣的进项税额。',
+  `reverse_charge_taxable_amount` DECIMAL(24,8) NOT NULL COMMENT '买方反向征税模式下仅作披露的税基金额。',
+  `reverse_charge_tax_amount` DECIMAL(24,8) NOT NULL COMMENT '买方反向征税模式下仅作披露的税额。',
+  `net_tax_payable` DECIMAL(24,8) NOT NULL COMMENT '销项税额减去可抵扣税额后的 Operating Entity 应付税额。',
+  `source_hash` CHAR(64) NOT NULL COMMENT '有序覆盖全部来源财政记录和计算行的不可变摘要。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_summary` (`tax_period_id`, `summary_no`) COMMENT '保证业务唯一性：tax_period_id、summary_no',
+  UNIQUE KEY `uk_tax_summary_dim` (`tax_period_id`, `jurisdiction_id`, `treatment_id`, `tax_rate_id`, `liability_mode`, `currency`) COMMENT '保证业务唯一性：tax_period_id、jurisdiction_id、treatment_id、tax_rate_id、liability_mode、currency',
+  KEY `idx_tax_summary_juris` (`jurisdiction_id`) COMMENT '支持访问路径：jurisdiction_id',
+  KEY `idx_tax_summary_treat` (`treatment_id`) COMMENT '支持访问路径：treatment_id',
+  KEY `idx_tax_summary_rate` (`tax_rate_id`) COMMENT '支持访问路径：tax_rate_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='按税务期间、辖区、处理、税率、责任模式和币种冻结可从财政记录重建的税负汇总。';
+
+CREATE TABLE `t_tax_return` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成且精确识别该申报业务版本的 Snowflake 主键。',
+  `return_no` VARCHAR(128) NOT NULL COMMENT '跨更正版本稳定识别一次税务申报的业务编号。',
+  `return_ver` INT NOT NULL COMMENT '同一申报编号下从一开始连续递增的业务版本号。',
+  `amends_return_id` BIGINT NULL COMMENT '版本大于一时引用同一申报编号下此前已提交的精确申报版本。',
+  `tax_period_id` BIGINT NOT NULL COMMENT '该申报覆盖的本库税务期间。',
+  `tax_registration_id` BIGINT NOT NULL COMMENT '该申报使用的本库税务注册。',
+  `authority_id` BIGINT NOT NULL COMMENT '接收该申报的本库税务机关。',
+  `currency` CHAR(3) NOT NULL COMMENT '申报金额使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `declared_taxable_amount` DECIMAL(24,8) NOT NULL COMMENT '本版本向税务机关申报的应税金额合计。',
+  `declared_tax` DECIMAL(24,8) NOT NULL COMMENT '本版本向税务机关申报的净税额。',
+  `declared_reverse_charge_taxable` DECIMAL(24,8) NOT NULL COMMENT '本版本披露的买方反向征税税基合计。',
+  `declared_reverse_charge_tax` DECIMAL(24,8) NOT NULL COMMENT '本版本披露的买方反向征税税额合计。',
+  `content_hash` CHAR(64) NULL COMMENT '提交审批时生成并覆盖申报头及全部明细的规范化摘要；草稿时为空。',
+  `file_id` BIGINT NULL COMMENT '提交到 Platform Support 文件服务的受控申报文件稳定ID。',
+  `file_content_hash` CHAR(64) NULL COMMENT '与申报文件ID配对保存的 Platform 文件二进制内容摘要。',
+  `maker_id` BIGINT NOT NULL COMMENT '创建该申报版本的 Platform Actor 稳定业务ID。',
+  `checker_id` BIGINT NULL COMMENT '复核该申报版本的另一 Platform Actor 稳定业务ID。',
+  `checker_decision` VARCHAR(64) NULL COMMENT '复核人对该申报版本作出的批准或驳回决定。允许值：APPROVED、REJECTED。',
+  `decision_time` DATETIME(6) NULL COMMENT '复核决定发生的 UTC 微秒时间。',
+  `authority_ref` VARCHAR(128) NULL COMMENT '税务机关受理或返回本版本时提供的外部稳定引用。',
+  `status` VARCHAR(64) NOT NULL COMMENT '该申报版本的草拟、审批、提交、受理、更正和关闭生命周期。允许值：DRAFT、PENDING_APPROVAL、APPROVED、FILED、ACCEPTED、REJECTED、AMENDMENT_REQUIRED、CLOSED。',
+  `filed_time` DATETIME(6) NULL COMMENT '本版本正式提交至税务机关的 UTC 微秒时间。',
+  `version` BIGINT NOT NULL DEFAULT 0 COMMENT '更新草稿或推进申报版本生命周期时使用的乐观锁版本号。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_return_no` (`return_no`, `return_ver`) COMMENT '保证业务唯一性：return_no、return_ver',
+  UNIQUE KEY `uk_tax_return_period` (`tax_period_id`, `return_ver`) COMMENT '保证业务唯一性：tax_period_id、return_ver',
+  KEY `idx_tax_return_reg` (`tax_registration_id`) COMMENT '支持访问路径：tax_registration_id',
+  KEY `idx_tax_return_auth` (`authority_id`) COMMENT '支持访问路径：authority_id',
+  KEY `idx_tax_return_amends` (`amends_return_id`) COMMENT '支持访问路径：amends_return_id',
+  KEY `idx_tax_return_file` (`file_id`) COMMENT '支持访问路径：file_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='每行保存一个可独立审批、提交和更正的税务申报业务版本；离开草稿后被审批的申报金额等业务内容和明细冻结，仅文件、回执与状态证据按生命周期补齐。';
+
+CREATE TABLE `t_tax_return_line` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税务申报明细 Snowflake 主键。',
+  `tax_return_id` BIGINT NOT NULL COMMENT '该申报明细所属的本库精确税务申报版本。',
+  `line_no` INT NOT NULL COMMENT '同一申报版本内稳定且唯一的行序号。',
+  `liability_summary_id` BIGINT NOT NULL COMMENT '该明细引用的本库不可变税负汇总。',
+  `declared_taxable_amount` DECIMAL(24,8) NOT NULL COMMENT '该申报行向税务机关申报的应税金额。',
+  `declared_tax` DECIMAL(24,8) NOT NULL COMMENT '该申报行向税务机关申报的净税额。',
+  `declared_reverse_charge_taxable` DECIMAL(24,8) NOT NULL COMMENT '该申报行披露的买方反向征税税基。',
+  `declared_reverse_charge_tax` DECIMAL(24,8) NOT NULL COMMENT '该申报行披露的买方反向征税税额。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_return_line` (`tax_return_id`, `line_no`) COMMENT '保证业务唯一性：tax_return_id、line_no',
+  UNIQUE KEY `uk_tax_return_summary` (`tax_return_id`, `liability_summary_id`) COMMENT '保证业务唯一性：tax_return_id、liability_summary_id',
+  KEY `idx_tax_ret_line_summary` (`liability_summary_id`) COMMENT '支持访问路径：liability_summary_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='把税务申报版本逐行绑定到已冻结税负汇总并保存实际申报金额。';
+
+CREATE TABLE `t_tax_payment` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税款支付 Snowflake 主键。',
+  `tax_return_id` BIGINT NOT NULL COMMENT '本次付款清偿的本库精确税务申报版本。',
+  `payment_no` INT NOT NULL COMMENT '同一申报版本下稳定且唯一的税款付款序号。',
+  `tax_payable_account_id` BIGINT NOT NULL COMMENT '本次付款直接清偿的同主体、税务机关和币种 TAX_PAYABLE/NONE Account。',
+  `cash_account_binding_ver_id` BIGINT NOT NULL COMMENT '付款时冻结的本库 TAX 用途现金账户绑定版本。',
+  `cash_account_id` BIGINT NOT NULL COMMENT '实际提交税款付款的本库外部银行现金账户。',
+  `execution_key` VARCHAR(128) NOT NULL COMMENT 'Operations 登记同一次人工银行或税务门户执行时使用的稳定幂等键。',
+  `request_hash` CHAR(64) NOT NULL COMMENT '覆盖申报版本、其税务机关与注册、应付税账户、现金账户绑定与现金账户、金额和币种的 Canonical SHA-256 摘要。',
+  `bank_payment_ref` VARCHAR(128) NULL COMMENT '银行接受付款指令后返回的外部稳定引用。',
+  `amount` DECIMAL(24,8) NOT NULL COMMENT '本次税款支付提交且必须大于零的金额。',
+  `reconciled_amount` DECIMAL(24,8) NOT NULL COMMENT '已经与银行借记流水确认匹配的累计金额。',
+  `currency` CHAR(3) NOT NULL COMMENT '付款及其直接账户清偿使用的 ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。',
+  `journal_entry_id` BIGINT NULL COMMENT '银行借记完整对账后生成的本库会计分录。',
+  `reconciled_time` DATETIME(6) NULL COMMENT '付款金额全部匹配银行借记的 UTC 微秒时间。',
+  `status` VARCHAR(64) NOT NULL COMMENT '税款支付的提交、未决、失败和对账生命周期状态。允许值：CREATED、SUBMITTED、PROCESSING、BANK_ACCEPTED、FAILED、UNKNOWN、RECONCILED。',
+  `active_slot` TINYINT NULL COMMENT '付款仍可能形成银行扣款时固定为 1，FAILED 或 RECONCILED 后固定为 NULL。',
+  `version` BIGINT NOT NULL DEFAULT 0 COMMENT '更新付款状态和已对账金额时使用的乐观锁版本号。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '该可变记录最后一次持久化更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_payment` (`tax_return_id`, `payment_no`) COMMENT '保证业务唯一性：tax_return_id、payment_no',
+  UNIQUE KEY `uk_tax_execution` (`cash_account_id`, `execution_key`) COMMENT '保证业务唯一性：cash_account_id、execution_key',
+  UNIQUE KEY `uk_tax_bank_ref` (`cash_account_id`, `bank_payment_ref`) COMMENT '保证业务唯一性：cash_account_id、bank_payment_ref',
+  UNIQUE KEY `uk_tax_payment_active` (`tax_return_id`, `active_slot`) COMMENT '保证业务唯一性：tax_return_id、active_slot',
+  KEY `idx_tax_pay_binding` (`cash_account_binding_ver_id`) COMMENT '支持访问路径：cash_account_binding_ver_id',
+  UNIQUE KEY `uk_tax_pay_journal` (`journal_entry_id`) COMMENT '保证业务唯一性：journal_entry_id',
+  KEY `idx_tax_pay_status` (`status`, `reconciled_time`) COMMENT '支持访问路径：status、reconciled_time',
+  KEY `idx_tax_pay_payable_status` (`tax_payable_account_id`, `status`) COMMENT '支持访问路径：tax_payable_account_id、status',
+  KEY `idx_tax_pay_cash_status` (`cash_account_id`, `status`) COMMENT '支持访问路径：cash_account_id、status'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='管理账簿主体向税务机关支付某个精确申报版本净应纳税额的直接账户清偿、人工外部执行登记、银行引用和对账状态。';
+
+CREATE TABLE `t_tax_payment_event` (
+  `id` BIGINT NOT NULL COMMENT '服务侧生成的税款支付事件 Snowflake 主键。',
+  `tax_payment_id` BIGINT NOT NULL COMMENT '该执行事件所属的本库税款支付。',
+  `event_no` INT NOT NULL COMMENT '同一税款支付内稳定且严格递增的事件序号。',
+  `event_type` VARCHAR(64) NOT NULL COMMENT '描述付款指令生命周期变化的受控事件类别。允许值：CREATED、SUBMITTED、PROCESSING、BANK_ACCEPTED、FAILED、UNKNOWN、RECONCILED。',
+  `bank_status` VARCHAR(64) NULL COMMENT '银行返回的原始状态规范化代码。取值来源：Finance 银行付款状态目录；非固定枚举。',
+  `source_ref` VARCHAR(128) NULL COMMENT '银行回执、人工操作或对账记录提供的稳定引用；与证据摘要成对为空或成对非空。',
+  `evidence_hash` CHAR(64) NULL COMMENT '证明银行未扣款或权威状态的不可变证据摘要；FAILED 必填，UNKNOWN 可与来源引用同时为空。',
+  `occurred_time` DATETIME(6) NOT NULL COMMENT '该执行事件实际发生的 UTC 微秒时间。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '该记录在 Finance 数据库中的 UTC 微秒创建时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tax_payment_event` (`tax_payment_id`, `event_no`) COMMENT '保证业务唯一性：tax_payment_id、event_no'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='追加记录税款支付提交、银行处理、失败、未知和对账结果的不可变执行历史；FAILED 必须有权威未扣款证据，超时或无响应形成的 UNKNOWN 允许没有来源证据。';
+
+CREATE TABLE `t_compensation_event` (
+  `id` BIGINT NOT NULL COMMENT 'Finance 数据库内补偿事件记录的 Snowflake 主键，不作为跨系统事件标识。',
+  `event_key` VARCHAR(255) NOT NULL COMMENT '按来源事实和事件类型确定性生成的全局稳定事件标识。',
+  `event_type` VARCHAR(128) NOT NULL COMMENT '业务事实事件或本地恢复任务的稳定类型代码。取值来源：Finance 事件契约目录；非固定枚举。',
+  `execution_type` VARCHAR(64) NOT NULL COMMENT '事件由 MQ 发布器或本地处理器执行。允许值：MQ_PUBLISH、LOCAL_HANDLER。',
+  `source_type` VARCHAR(64) NOT NULL COMMENT '拥有该事件的 Finance 聚合根或不可变业务事实类型。取值来源：Finance 事件来源事实类型目录；非固定枚举。',
+  `source_id` BIGINT NOT NULL COMMENT '拥有该事件的 Finance 聚合根或不可变事实标识。',
+  `source_version` BIGINT NOT NULL COMMENT '来源聚合根版本或不可变事实固定版本。',
+  `schema_version` INTEGER NOT NULL COMMENT '事件 Payload 契约的正整数版本。',
+  `payload_json` JSON NOT NULL COMMENT '最大六十四 KiB、不可变且不含敏感明文的 Canonical JSON 事件信封。',
+  `payload_hash` CHAR(64) NOT NULL COMMENT 'Canonical Payload 的 SHA-256 哈希，创建后不得修改。',
+  `execute_status` VARCHAR(64) NOT NULL COMMENT '补偿事件当前 Claim、重试或人工处置状态。允许值：INIT、PROCESSING、ERROR、FAILED。',
+  `execute_count` INTEGER NOT NULL DEFAULT 0 COMMENT '已经开始执行该事件的累计次数。',
+  `next_execute_at` DATETIME(6) NOT NULL COMMENT '事件下次允许被 Claim 的 UTC 微秒时间。',
+  `lock_owner` VARCHAR(128) NULL COMMENT '当前多实例 Claim Lease 的执行节点稳定标识。',
+  `lock_until` DATETIME(6) NULL COMMENT '当前 Claim Lease 到期的 UTC 微秒时间。',
+  `last_error_code` VARCHAR(64) NULL COMMENT '最近一次失败的受控且不含敏感信息的错误代码。取值来源：Finance 补偿执行错误代码目录；非固定枚举。',
+  `last_error_summary` VARCHAR(1000) NULL COMMENT '最近一次失败的有界脱敏摘要，禁止保存敏感明文。',
+  `lock_version` BIGINT NOT NULL DEFAULT 0 COMMENT '仅用于 Claim 和 Lease 条件更新的技术乐观锁版本。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '补偿事件与业务事实原子登记的 UTC 微秒时间。',
+  `update_time` DATETIME(6) NOT NULL COMMENT '补偿事件执行状态最后更新的 UTC 微秒时间。',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_finance_comp_event` (`event_key`) COMMENT '保证业务唯一性：event_key',
+  UNIQUE KEY `uk_finance_comp_source` (`source_type`, `source_id`, `source_version`, `event_type`) COMMENT '保证业务唯一性：source_type、source_id、source_version、event_type',
+  KEY `idx_fin_comp_claim` (`execute_status`, `next_execute_at`, `lock_until`) COMMENT '支持访问路径：execute_status、next_execute_at、lock_until',
+  KEY `idx_fin_comp_created` (`create_time`) COMMENT '支持访问路径：create_time'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='与 Finance 业务事实在同一事务登记 MQ 发布或本地处理任务，并通过 Claim、Lease 和乐观锁可靠重试';

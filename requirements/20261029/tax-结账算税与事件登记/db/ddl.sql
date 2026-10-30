@@ -1,0 +1,14 @@
+-- =====================================================================================================================
+-- tax：结账算税与事件登记 · DDL 索引（只作指引，本文件不含可执行语句，不在任何数据库执行）
+-- 状态：阶段 3 计划（2026-10-29），执行文件在阶段 4 编写，执行另行授权。设计见 technique.md 第 8 节。
+--
+-- mor_tax（root 执行，旧 24 表无业务数据）：
+--   全量：paytech/tax/docs/database/sql/tax-schema.sql（16 张表）
+--   切换：paytech/tax/docs/database/sql/changes/2026-10-29-tax-rebuild.sql
+--   回滚：paytech/tax/docs/database/sql/changes/2026-10-29-tax-rebuild-rollback.sql
+-- mor_acquiring（新增 t_order_tax_calculation；t_commerce_order 加 amount_status；t_order_context 两列改可空并加
+--   initial_tax_calculation_id；t_consumer_contract 加 tax_calculation_id 并改唯一键）：
+--   前滚：paytech/acquiring/docs/database/sql/changes/2026-10-29-order-tax-calculation.sql
+--   回滚：paytech/acquiring/docs/database/sql/changes/2026-10-29-order-tax-calculation-rollback.sql
+-- mor_billing / mor_account / mor_ledger：无结构变更（billing ref_type 列注释增加 TAX_CALCULATION）。
+-- =====================================================================================================================
