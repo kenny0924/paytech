@@ -11,7 +11,7 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
-## operations 明细账运维（2026-10-30，已部署 mor-test，已本地提交，未推送）
+## operations 明细账运维（2026-10-30，已部署 mor-test，已本地提交 `a1f3d627`，未推送）
 
 - **范围：** [需求](<../requirements/20261030/operations-明细账运维/requirement.md>)、[技术方案](<../requirements/20261030/operations-明细账运维/technique.md>)、[交付记录](<../requirements/20261030/operations-明细账运维/delivery.md>)、[运行卡](<../requirements/20261030/operations-明细账运维/release/runbook.md>)、[阶段 5 报告](<../requirements/20261030/operations-明细账运维/verification/stage5/stage5-report.md>)、[阶段 6 报告](<../requirements/20261030/operations-明细账运维/release/stage6-report.md>)、[阶段 7 验收](<../requirements/20261030/operations-明细账运维/release/stage7-acceptance.md>)。
 - **Implemented：** ledger 新增账簿入账进度查询 `PostingProgressQueryApi`（关账第 3 步改用同一判定服务，行为不变）；ledger 读 account / billing 的响应上限由 8192 B 改为 4 MiB / 8 MiB（追平每页 200 批与大事实读取，影响 ledger 全部经 HTTP 的读取）；account 重建响应新增 `changedAccountCount`；Operations BFF 4 个接口（进度含卡住批次、批次浏览、追平、重建）；运营 Web"财务 → 明细账运维"页与批次浏览子页（结果条含时间与操作人）；Platform 能力清单与注册块 148（查看沿用 `FINANCE_ACCOUNTING_READ`，执行新增 `FINANCE_SUBLEDGER_MANAGE`）。无新表、无 DDL。

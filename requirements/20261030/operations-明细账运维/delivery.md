@@ -31,7 +31,8 @@
 | 2026-10-30 | 6 确认 | 用户"继续"：按建议批准 U-1（阶段 7：mor-test 替换 ledger / account / Platform / ops-bff / ops-web 为 `plops-20261030a`，备份 `mor_platform` 后执行块 148，语言包 #30，验收写入合成只读角色与账号各 1、空追平 1 次、同值重建 1 次）、U-2（ledger 随带 main 提供方 api 类）、U-3（O-1 不做）、U-4（T-1 在阶段 8 从发布树提交）。主会话按 [runbook](./release/runbook.md) 执行 | 已确认 |
 | 2026-10-30 | 7 部署 | 主会话按 [runbook](./release/runbook.md) 执行（约 17:20—17:28Z）：0 复核 NO DRIFT、env 10 行全同、5 镜像 same；1 备份 `mor_platform` → `~/Code-MoR-backups/plops-stage7/mortest-20261030T1722*Z/`（23.7 MB，Dump completed，SHA256SUMS）；2 预检与阶段 6 一致，语言包干跑 12 / 12；3 块 148 休眠写入 51 行、状态正确，Gateway 快照成功、路由 671；4—8 依次替换 ledger `b65223c1`、account `6ad6a22b`、Platform `1bfed883`、ops-bff `4bdfce6e`、ops-web `5784fa81`，均 healthy、启动后无 ERROR，ledger / account 各 4 个消费者恢复、积压 0，Web 入口 `index-CqHRNw-B.js` 与发布树 dist 一致；9 激活块 148：ACTIVE 路由 675（OPERATIONS 597），Gateway 连续失败 0；10 运营语言包 #30 发布，81 项核对通过。验收（第 11 步）交验证代理执行 | 已完成 |
 | 2026-10-30 | 7 验收 | [release/stage7-acceptance.md](./release/stage7-acceptance.md)：V-0—V-8 全部 PASS（截图 55 张）。AE001 三段 CONSISTENT（account 12 = ledger 12，主会话复核）；FE（PLATFORM_HQ）三段 CONSISTENT、流清单为空；批次浏览 12 批与库逐行一致；空追平 processedCount 0 / caughtUp true（0.21 s，经接口：流一致时页面按设计不显示追平按钮，runbook V-4 措辞待改）；同值重建 9 个账户 changedAccountCount 0，余额与桶逐行相同；只读账号 B3 / B4 403、无执行按钮；zh / en × 1440 / 390 共 55 步无横向滚动、无裸键、无 ≥400、控制台 0 条，文案来自语言包 #30；回归页正常。写入仅授权三项；清理：合成账号已 DISABLED（主会话复核），角色因仍挂停用账号无法删除，改为撤销权限（`t_role_permission` REVOKED），审计保留。已按约定通知 REQ-06（镜像、路由 675、语言包 #30） | 已完成 |
-| 2026-10-30 | 7 确认 / 8 提交 | 用户"继续"：接受 mor-test 验收结果，授权阶段 8 本地提交（不推送）。功能提交 = 发布树 `Code-MoR-plops-rel` 相对 `331d8e0e` 的 68 个文件（即 mor-test 现役源码，含 T-1 路由清单测试修正）+ 本需求目录 + `CURRENT_IMPLEMENTATION.md` 本需求一节（只含本需求 hunk）；runbook V-4 措辞按阶段 7 实测更正。经私有暂存区提交，不触碰其他会话文件；随后单独提交交付记录 | 进行中 |
+| 2026-10-30 | 7 确认 / 8 提交 | 用户"继续"：接受 mor-test 验收结果，授权阶段 8 本地提交（不推送）。功能提交 = 发布树 `Code-MoR-plops-rel` 相对 `331d8e0e` 的 68 个文件（即 mor-test 现役源码，含 T-1 路由清单测试修正）+ 本需求目录 + `CURRENT_IMPLEMENTATION.md` 本需求一节（只含本需求 hunk）；runbook V-4 措辞按阶段 7 实测更正。经私有暂存区提交，不触碰其他会话文件；随后单独提交交付记录 | 已确认 |
+| 2026-10-30 | 8 提交 | 功能提交 `a1f3d627`（父 `331d8e0e`，481 个文件 = 代码 68 + 需求目录 412 + `CURRENT_IMPLEMENTATION.md` 本需求一节；68 个代码文件与发布树 / mor-test 现役源码逐字节相同）；共享暂存区与主工作区对应路径已对齐，其他会话的未提交修改未动。本条交付记录单独提交。未推送 | 已完成 |
 
 ## 适用阶段
 
@@ -39,7 +40,7 @@
 
 ## 当前阶段与下一确认点
 
-阶段 8（本地提交）进行中；不推送。
+八阶段全部完成：mor-test 已部署（`plops-20261030a`），本地提交 `a1f3d627`，未推送。遗留：200 批追平未在 mor-test 复测（S-03）；新标签页 ledger 从未可用时账簿下拉显示主键（已知限制）；本机走查偶发"登录后跳回登录页"（非本需求，未查）。
 
 ## 实现 / 验证 / 部署状态
 
