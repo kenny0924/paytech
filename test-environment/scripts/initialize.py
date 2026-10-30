@@ -50,6 +50,8 @@ SERVICE_DATABASES = (
     ServiceDatabase("account", "mor_account", "account_app", "MOR_ACCOUNT_DB_PASSWORD", True),
     ServiceDatabase("reconciliation", "mor_reconciliation", "reconciliation_app", "MOR_RECONCILIATION_DB_PASSWORD", True),
     ServiceDatabase("tax", "mor_tax", "tax_app", "MOR_TAX_DB_PASSWORD", True),
+    # payout：docs 下的 payout-schema.sql 是 9 表目标模型（S1 只建 3 表）；表结构按需求目录审阅过的 DDL 手工执行，不走 --apply-service-sql。
+    ServiceDatabase("payout", "mor_payout", "payout_app", "MOR_PAYOUT_DB_PASSWORD", False),
 )
 SERVICE_PASSWORD_PATTERN = re.compile(r"[A-Za-z0-9._@%+=:-]{16,128}")
 PLATFORM_CATALOG = WORKSPACE_ROOT / 'paytech/platform-support/docs/database/sql/platform-support-initial-data.sql'

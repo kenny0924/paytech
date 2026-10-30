@@ -1,0 +1,22 @@
+-- mor_platform · payout S1 注册块与通知模板（requirements/20261030/payout-收款账户与余额解释，technique.md 第 8.3、8.6、9 节）
+-- 性质：评审稿（阶段 3）——本文件为结构与清单，可执行行在阶段 4 按块 145 模板生成（release/sql/mor_platform-block-<N>*.sql 六件套），
+--       块号 __PAYOUT_BLOCK__ 暂定 146，阶段 6 以 mor-test 只读核对现网最大块号后替换。未执行。
+-- A. 权限 8 行（t_permission，ACTIVE）：
+--    CLIENT_PAYOUT_ACCOUNT_READ (CLIENT_PAYOUT_ACCOUNT, READ, LOW)
+--    CLIENT_PAYOUT_ACCOUNT_MANAGE (CLIENT_PAYOUT_ACCOUNT, MANAGE, HIGH)
+--    CLIENT_BALANCE_READ (CLIENT_BALANCE, READ, LOW)
+--    PAYOUT_BENEFICIARY_READ (PAYOUT_BENEFICIARY, READ, LOW)
+--    PAYOUT_BENEFICIARY_SUBMIT (PAYOUT_BENEFICIARY, SUBMIT, MEDIUM)
+--    PAYOUT_BENEFICIARY_REVIEW (PAYOUT_BENEFICIARY, REVIEW, HIGH)
+--    PAYOUT_BENEFICIARY_REVEAL (PAYOUT_BENEFICIARY, REVEAL, CRITICAL)
+--    PAYOUT_BENEFICIARY_MANAGE (PAYOUT_BENEFICIARY, MANAGE, HIGH)
+-- B. 角色授权（t_role_permission）：Client 系统角色 OWNER / ADMIN / MEMBER 按 technique 8.6 表（READ、BALANCE 三角色，MANAGE 两角色，共 8 行，休眠 REVOKED）；
+--    平台管理员角色 900000000000000510 授予 5 个运营权限（休眠 REVOKED）。激活脚本改 ACTIVE。
+-- C. 菜单与页面资源（t_console_resource，DISABLED）：Client「资金」菜单组 + 收款账户、余额 2 页；Operations「财务 · 出款」下 收款账户核验、Owner 账户与余额 2 页；
+--    页面动作资源按 pageCapabilities（提交、核验、Reveal、停用 / 恢复 / 关闭）。
+-- D. Gateway 路由（t_gateway_route + 头 + 守卫，DISABLED）：Client 7 条（/client-payout/v1/**，technique 8.4）、Operations 11 条（/payout-admin/v1/**，technique 8.5）。
+-- E. 通知模板（t_notification_template + t_notification_template_content，ACTIVE；不经快照）：
+--    PAYOUT_BENEFICIARY_VERIFIED_EMAIL、PAYOUT_BENEFICIARY_REJECTED_EMAIL、PAYOUT_BENEFICIARY_SUSPENDED_EMAIL、PAYOUT_BENEFICIARY_CLOSED_EMAIL，各 zh-CN / en。
+--    参数：bankName、accountLast4、currency、availableAt（VERIFIED）、reasonText（其余）；不含户名、账号原值。
+-- F. 配置（非 SQL）：notification.http.callers.payout-service = 上述 4 个模板码。
+-- 行数阶段 4 生成后回填；执行顺序：休眠写入 → 部署 → 离线快照编译演练 → 激活 → 核验。

@@ -25,6 +25,7 @@ import masterDataNs from './en/master-data.json' with { type: 'json' };
 import onboardingSchemaNs from './en/onboarding-schema.json' with { type: 'json' };
 import referenceDataNs from './en/reference-data.json' with { type: 'json' };
 import taxNs from './en/tax.json' with { type: 'json' };
+import payoutNs from './en/payout.json' with { type: 'json' };
 
 /** English base text bundled at build time; one JSON file per namespace (see namespaces.ts). */
 export const builtin: Catalog = {
@@ -54,4 +55,5 @@ export const builtin: Catalog = {
   'onboarding-schema': onboardingSchemaNs,
   'reference-data': referenceDataNs,
   tax: taxNs,
+  payout: payoutNs,
 };

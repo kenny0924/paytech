@@ -53,6 +53,13 @@
         ORDER BY id
     </select>
 
+    <!-- 走 idx_owner_account_owner（owner_type, owner_id, entity_id, currency）前缀；只取经营主体账簿。 -->
+    <select id="selectByOwnerAcrossEntities" resultType="com.paytech.account.core.dal.dataobject.OwnerAccount">
+        SELECT <include refid="columns"/> FROM t_owner_account
+        WHERE owner_type = #{ownerType} AND owner_id = #{ownerId} AND entity_type = #{entityType}
+        ORDER BY entity_id, currency, id
+    </select>
+
     <select id="selectPage" resultType="com.paytech.account.core.dal.dataobject.OwnerAccount">
         SELECT <include refid="columns"/> FROM t_owner_account WHERE <include refid="pageWhere"/>
         ORDER BY account_code, owner_type, owner_id, balance_bucket, id

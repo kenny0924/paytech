@@ -1,0 +1,7 @@
+# payout 本地补偿事件类型目录（ArchUnit R12）：每个 CompensationEventHandler 的 eventType() 必须在此登记；
+# 与 MQ 领域事件目录 foundation/paytech-messaging/catalog/events.yaml 不是同一集合。
+# 2026-10-30 需求 payout-收款账户与余额解释（technique 7.3、8.3）：
+# - BENEFICIARY_NOTIFICATION：核验通过 / 拒绝、停用、关闭与账户状态在同一本地事务登记，event_key = {accountId}:{eventNo}，
+#   sub_event_type = Platform 邮件模板编码；提交后回读本库调用 Platform 通知（tenantRecipients），去重键 BENEFICIARY:{accountId}:{eventNo}。
+eventTypes:
+  - BENEFICIARY_NOTIFICATION

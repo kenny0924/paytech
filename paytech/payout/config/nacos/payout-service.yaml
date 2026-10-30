@@ -1,0 +1,27 @@
+# Data ID: payout-service.yaml
+# Namespace: 按环境选择；本地为 mor-local。Group: DEFAULT_GROUP。
+# 本地参数模板；上传前按目标环境调整。数据库与 Redis 密码、实例 Snowflake 坐标由进程环境提供，不写入模板。
+# 进程以 nacos Profile 启动时由 application.yml 导入本文件；连接与执行器参数只在启动时生效，修改需重启。
+
+server:
+  address: 127.0.0.1
+  port: 18117
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:13306/mor_payout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: payout_app
+  # 写入口资源锁；密码由 PAYOUT_REDIS_PASSWORD 提供。
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      connect-timeout: 2s
+      timeout: 2s
+
+payout:
+  beneficiary:
+    # 核验通过后的冷却时长；可刷新，只影响之后的批准。
+    cooling: 24h
+  notification:
+    default-locale: en

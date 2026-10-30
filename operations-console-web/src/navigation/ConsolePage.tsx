@@ -67,6 +67,8 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_FINANCE_RECON_BANK: lazy(() => import('../pages/ReconBank').then(m => ({ default: m.ReconBank }))),
   OPERATIONS_FINANCE_RECON_EXCEPTIONS: lazy(() => import('../pages/ReconExceptions').then(m => ({ default: m.ReconExceptions }))),
   OPERATIONS_FINANCE_RECON_SUMMARY: lazy(() => import('../pages/ReconSummary').then(m => ({ default: m.ReconSummary }))),
+  OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_REVIEWS: lazy(() => import('../pages/PayoutBeneficiaryReviews').then(m => ({ default: m.PayoutBeneficiaryReviews }))),
+  OPERATIONS_FINANCE_PAYOUT_OWNERS: lazy(() => import('../pages/PayoutOwners').then(m => ({ default: m.PayoutOwners }))),
   OPERATIONS_COMMERCIAL_AGREEMENTS: lazy(() => import('../pages/CommercialAgreements').then(m => ({ default: m.CommercialAgreements }))),
   OPERATIONS_COMMERCIAL_PRICING_PROFILES: lazy(() => import('../pages/CommercialPricingProfiles').then(m => ({ default: m.CommercialPricingProfiles }))),
   OPERATIONS_COMMERCIAL_TERMS: lazy(() => import('../pages/CommercialTerms').then(m => ({ default: m.CommercialTerms }))),

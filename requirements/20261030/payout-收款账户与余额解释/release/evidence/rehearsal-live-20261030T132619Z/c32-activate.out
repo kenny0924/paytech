@@ -1,0 +1,48 @@
++--------------------+--------+---------+
+| role_permission_id | status | version |
++--------------------+--------+---------+
+| 900000000000147201 | ACTIVE |       2 |
+| 900000000000147202 | ACTIVE |       2 |
+| 900000000000147203 | ACTIVE |       2 |
+| 900000000000147204 | ACTIVE |       2 |
+| 900000000000147205 | ACTIVE |       2 |
++--------------------+--------+---------+
++--------+---------------+
+| status | client_grants |
++--------+---------------+
+| ACTIVE |           390 |
++--------+---------------+
++--------------------+-----------------------------------------------+--------+---------+
+| resource_id        | resource_code                                 | status | version |
++--------------------+-----------------------------------------------+--------+---------+
+| 900000000000147301 | OPERATIONS_FINANCE_PAYOUT                     | ACTIVE |       2 |
+| 900000000000147302 | OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_REVIEWS | ACTIVE |       2 |
+| 900000000000147303 | OPERATIONS_FINANCE_PAYOUT_OWNERS              | ACTIVE |       2 |
+| 900000000000147304 | OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_REVIEW  | ACTIVE |       2 |
+| 900000000000147305 | OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_REVEAL  | ACTIVE |       2 |
+| 900000000000147306 | OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_SUBMIT  | ACTIVE |       2 |
+| 900000000000147307 | OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_MANAGE  | ACTIVE |       2 |
++--------------------+-----------------------------------------------+--------+---------+
++--------------------+--------------------------------------------------+--------+---------+
+| route_id           | route_code                                       | status | version |
++--------------------+--------------------------------------------------+--------+---------+
+| 900000000000147401 | client-payout-beneficiary-list                   | ACTIVE |       2 |
+| 900000000000147402 | client-payout-beneficiary-submit                 | ACTIVE |       2 |
+| 900000000000147403 | client-payout-beneficiary-detail                 | ACTIVE |       2 |
+| 900000000000147404 | client-payout-beneficiary-default                | ACTIVE |       2 |
+| 900000000000147405 | client-payout-beneficiary-close                  | ACTIVE |       2 |
+| 900000000000147406 | client-payout-beneficiary-requirements           | ACTIVE |       2 |
+| 900000000000147407 | client-payout-balances                           | ACTIVE |       2 |
+| 900000000000147408 | operations-payout-admin-review-list              | ACTIVE |       2 |
+| 900000000000147409 | operations-payout-admin-beneficiary-list         | ACTIVE |       2 |
+| 900000000000147410 | operations-payout-admin-beneficiary-detail       | ACTIVE |       2 |
+| 900000000000147411 | operations-payout-admin-beneficiary-submit       | ACTIVE |       2 |
+| 900000000000147412 | operations-payout-admin-maker-review             | ACTIVE |       2 |
+| 900000000000147413 | operations-payout-admin-checker-decision         | ACTIVE |       2 |
+| 900000000000147414 | operations-payout-admin-reveal                   | ACTIVE |       2 |
+| 900000000000147415 | operations-payout-admin-suspend                  | ACTIVE |       2 |
+| 900000000000147416 | operations-payout-admin-resume                   | ACTIVE |       2 |
+| 900000000000147417 | operations-payout-admin-close                    | ACTIVE |       2 |
+| 900000000000147418 | operations-payout-admin-balances                 | ACTIVE |       2 |
+| 900000000000147419 | operations-payout-admin-beneficiary-requirements | ACTIVE |       2 |
++--------------------+--------------------------------------------------+--------+---------+

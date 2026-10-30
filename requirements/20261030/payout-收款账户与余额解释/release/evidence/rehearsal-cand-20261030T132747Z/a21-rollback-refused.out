@@ -1,0 +1,6 @@
+ERROR 1242 (21000) at line 16: Subquery returns more than 1 row
++---------------+-------------+
+| tables_before | rows_before |
++---------------+-------------+
+|             3 |           1 |
++---------------+-------------+

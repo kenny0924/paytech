@@ -106,6 +106,7 @@ create_v2_finance_database mor_billing billing_app MOR_BILLING_DB_PASSWORD "SELE
 create_v2_finance_database mor_account account_app MOR_ACCOUNT_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_account
 create_v2_finance_database mor_reconciliation reconciliation_app MOR_RECONCILIATION_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_reconciliation
 create_v2_finance_database mor_tax tax_app MOR_TAX_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_tax
+create_v2_finance_database mor_payout payout_app MOR_PAYOUT_DB_PASSWORD "SELECT, INSERT, UPDATE, DELETE" mor_payout
 
 # V2 Commerce successors (refactor step 03, design/10 §5.1): same optional rule as above until compose.yaml passes the
 # variables to the mysql container. mor_commerce and commerce_app stay for the main branch.

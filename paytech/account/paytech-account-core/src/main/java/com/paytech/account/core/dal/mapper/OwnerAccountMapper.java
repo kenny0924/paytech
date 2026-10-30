@@ -41,6 +41,10 @@ public interface OwnerAccountMapper {
     List<OwnerAccount> selectByOwner(@Param("entityType") AccountEntityType entityType, @Param("entityId") String entityId,
         @Param("currency") String currency, @Param("ownerType") OwnerType ownerType, @Param("ownerId") String ownerId);
 
+    /** 读取一个核算对象在全部经营主体与币种下的账户，按主体、币种、主键排序。 */
+    List<OwnerAccount> selectByOwnerAcrossEntities(@Param("entityType") AccountEntityType entityType,
+        @Param("ownerType") OwnerType ownerType, @Param("ownerId") String ownerId);
+
     /** 按筛选条件分页读取，按科目代码、核算对象类型、核算对象标识、余额桶、主键排序；账户号为精确匹配。 */
     List<OwnerAccount> selectPage(@Param("entityType") AccountEntityType entityType, @Param("entityId") String entityId,
         @Param("currency") String currency, @Param("ownerType") OwnerType ownerType, @Param("ownerId") String ownerId,

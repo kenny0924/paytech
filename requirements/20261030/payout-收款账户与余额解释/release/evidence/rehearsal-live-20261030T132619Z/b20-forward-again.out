@@ -1,0 +1,1 @@
+ERROR 1062 (23000) at line 17: Duplicate entry '9100000000000880' for key 't_vault_data_type.PRIMARY'

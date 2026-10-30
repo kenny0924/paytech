@@ -23,7 +23,7 @@ class TableOwnershipAutoTest {
     void test_normalFlow() {
         // design/03 §4.2：17 个目标库共 265 张物理表；另加保留服务 platform-support 自身 Schema 的 46 张表
         // （2026-10-20 渠道协议 10 表迁往 channel-connector 后由 56 张减为 46 张，总表数不变）。
-        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2 - 2 + 2 + 3 + 10 + 3 - 1 + 2 + 1 + 4 + 1 + 7 + 3 + 1 + 13 + 4 + 3 - 8 + 1 + 3 + 1 + 1 + 3, ownership.physicalTableCount(),
+        Assertions.assertEquals(265 + 46 + 1 + 6 - 7 + 9 + 4 + 6 + 1 + 2 + 1 - 13 + 10 + 2 + 10 - 2 - 2 + 2 + 3 + 10 + 3 - 1 + 2 + 1 + 4 + 1 + 7 + 3 + 1 + 13 + 4 + 3 - 8 + 1 + 3 + 1 + 1 + 3 + 1, ownership.physicalTableCount(),
             "design 03 + Platform 保留表 + 第 12 步 t_card_material_ticket + account 明细账六张业务表（2026-10-19 重构）"
                 + " - billing 经济事实三表与渠道成本四表 + billing 计费事实九表 + channel-connector 渠道成本四表（2026-10-19 计费事实重构）"
                 + " + commercial 产品目录三表与合同订阅 / 开通 / 约束三表（2026-10-19 六层产品定价模型）"
@@ -48,7 +48,8 @@ class TableOwnershipAutoTest {
                 + " + risk-decision 承保记录与自动承保规则版本 / 阈值三表（2026-10-29 REQ-03 承保记录）"
                 + " + Platform 联合查询键类型 t_query_key_type（2026-10-29 联合查询）"
                 + " + Platform 发布变更明细 t_i18n_release_change（2026-10-30 多语言发布变更记录）"
-                + " + risk-decision 限额档位、档位变更记录与日放行汇总三表（2026-10-30 REQ-04 限额档位）");
+                + " + risk-decision 限额档位、档位变更记录与日放行汇总三表（2026-10-30 REQ-04 限额档位）"
+                + " + payout 收款账户事件 t_beneficiary_account_event（2026-10-30 结算出款 S1）");
         // mor_platform：2026-10-20 渠道协议 10 表迁往 channel-connector，由 57 张减为 47 张；2026-10-22 文件存储 3 表、工作流 10 表与 data-query 3 表并入，
         // 第二段删除 t_file_owner_ref，卡 BIN 库新增 t_country_region，文件公开桶新增 t_file_version，共 64 张；2026-10-23 多语言新增七张 t_i18n_*，共 71 张；
         // 2026-10-27 参考数据目录：币种与国家两表改名 t_ref_*，新增行政区、行业、MCC 三表，共 74 张；

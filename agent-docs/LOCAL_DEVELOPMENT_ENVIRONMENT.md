@@ -283,7 +283,7 @@ V2 服务端口（2026-10-17/18 搬迁后，取自各 `paytech/<service>/paytech
 | account（`account-service`） | 18114 | 19114 | — | finance-service |
 | reconciliation（`reconciliation-service`） | 18115 | 19115 | — | finance-service |
 | tax（`tax-service`） | 18116 | 19116 | — | finance-service |
-| payout（`payout-service`，未建工程） | 18117 | — | — | 预留 |
+| payout（`payout-service`） | 18117 | 19117 | — | 新建（2026-10-30 收款账户与余额解释 S1） |
 | dispute（`dispute-service`，只有模型） | 18118 | — | — | 预留 |
 | fx（`fx-service`，未建工程） | 18119 | — | — | 预留 |
 | Operations Console BFF（`operations-console-bff`） | 18201 | 19201 | — | operations-console-bff |
@@ -340,9 +340,10 @@ xxl_job
 | account | `mor_account` | `account_app` | `mor_finance` |
 | reconciliation | `mor_reconciliation` | `reconciliation_app` | `mor_finance` |
 | tax | `mor_tax` | `tax_app` | `mor_finance` |
+| payout | `mor_payout` | `payout_app` | — |
 
 - 旧库 `mor_cct`、`mor_commerce`、`mor_risk`、`mor_finance` 及其账号在 `refactor-main` 与 `main` 并行期间保留，初始化脚本只追加不删除。
-- `mor_platform`、`mor_vault`、`nacos_config`、`xxl_job`、`paytech_foundation_test` 不变；`mor_dispute`、`mor_payout`、`mor_fx` 尚不创建；工作流并入 Platform Support、表在 `mor_platform`，不再有 `mor_workflow_approval`（[2026-10-22 决定](./decisions/2026-10-22-workflow-into-platform-support.md)）。
+- `mor_platform`、`mor_vault`、`nacos_config`、`xxl_job`、`paytech_foundation_test` 不变；`mor_dispute`、`mor_fx` 尚不创建（`mor_payout` 已按上表创建，密码变量 `MOR_PAYOUT_DB_PASSWORD`）；工作流并入 Platform Support、表在 `mor_platform`，不再有 `mor_workflow_approval`（[2026-10-22 决定](./decisions/2026-10-22-workflow-into-platform-support.md)）。
 - 搬迁后新增的库在初始化脚本中按“密码变量存在才创建”的可选规则创建，因为 `compose.yaml` 的 `mysql.environment` 尚未透传这些变量；各库是否已在本机建出、建了哪些表，以 [`CURRENT_IMPLEMENTATION.md`](./CURRENT_IMPLEMENTATION.md) 为准。
 - 各 `paytech/<service>/paytech-<service>-test/src/test/resources/init/ddl.sql` 自带建库、建账号（最小权限 `SELECT, INSERT, UPDATE, DELETE`）与全部建表语句，由开发者以 root 人工执行。
 

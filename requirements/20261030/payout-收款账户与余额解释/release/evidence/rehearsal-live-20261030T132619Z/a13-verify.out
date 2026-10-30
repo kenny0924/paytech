@@ -1,0 +1,42 @@
++-----------------------------+------------+--------------------+
+| TABLE_NAME                  | TABLE_ROWS | TABLE_COLLATION    |
++-----------------------------+------------+--------------------+
+| t_beneficiary_account       |          0 | utf8mb4_0900_ai_ci |
+| t_beneficiary_account_event |          0 | utf8mb4_0900_ai_ci |
+| t_compensation_event        |          0 | utf8mb4_0900_ai_ci |
++-----------------------------+------------+--------------------+
++-----------------------------+---------+
+| TABLE_NAME                  | columns |
++-----------------------------+---------+
+| t_beneficiary_account       |      31 |
+| t_beneficiary_account_event |      13 |
+| t_compensation_event        |      15 |
++-----------------------------+---------+
++-----------------------------+----------------------------+------------+---------------------------------------------------+
+| TABLE_NAME                  | INDEX_NAME                 | NON_UNIQUE | columns                                           |
++-----------------------------+----------------------------+------------+---------------------------------------------------+
+| t_beneficiary_account       | idx_beneficiary_owner      |          1 | owner_type,owner_id,status                        |
+| t_beneficiary_account       | idx_beneficiary_review     |          1 | status,review_maker_id,create_time                |
+| t_beneficiary_account       | idx_beneficiary_token      |          1 | bank_account_token                                |
+| t_beneficiary_account       | uk_beneficiary_acct        |          0 | owner_type,owner_id,account_code                  |
+| t_beneficiary_account       | uk_beneficiary_owner_token |          0 | owner_type,owner_id,bank_account_token,active_key |
+| t_beneficiary_account_event | uk_beneficiary_event_no    |          0 | beneficiary_account_id,event_no                   |
+| t_compensation_event        | idx_comp_event_lease       |          1 | execute_status,lock_until,id                      |
+| t_compensation_event        | idx_comp_event_ready       |          1 | execute_status,next_execute_at,id                 |
+| t_compensation_event        | uk_comp_event_identity     |          0 | event_key,event_type,sub_event_type               |
++-----------------------------+----------------------------+------------+---------------------------------------------------+
++-------------+--------------------------------------------------------------------+
+| COLUMN_NAME | GENERATION_EXPRESSION                                              |
++-------------+--------------------------------------------------------------------+
+| active_key  | if((`status` in (_utf8mb4\'REJECTED\',_utf8mb4\'CLOSED\')),`id`,0) |
++-------------+--------------------------------------------------------------------+
++-------------+
+| fk_or_check |
++-------------+
+|           0 |
++-------------+
++----------+--------+---------------------+
+| accounts | events | compensation_events |
++----------+--------+---------------------+
+|        0 |      0 |                   0 |
++----------+--------+---------------------+

@@ -1,0 +1,6 @@
+snapshot-active-again.json 1080333 e3e64cebd08a3bbb
+snapshot-active.json 1080333 e3e64cebd08a3bbb
+snapshot-baseline.json 1049930 38dd0a46c8e31b65
+snapshot-deactivated.json 1049930 38dd0a46c8e31b65
+snapshot-dormant.json 1049930 38dd0a46c8e31b65
+snapshot-rolled-back.json 1049930 38dd0a46c8e31b65

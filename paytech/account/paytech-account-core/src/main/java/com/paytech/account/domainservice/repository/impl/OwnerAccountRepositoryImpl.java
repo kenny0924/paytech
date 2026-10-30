@@ -73,6 +73,13 @@ public class OwnerAccountRepositoryImpl implements OwnerAccountRepository {
         return mapper.selectByOwner(entityType, entityId, currency, ownerType, ownerId);
     }
 
+    /** 一条 SQL 读取该核算对象的全部主体与币种账户。 */
+    @Override
+    public List<OwnerAccount> findByOwnerAcrossEntities(AccountEntityType entityType, OwnerType ownerType,
+        String ownerId) {
+        return mapper.selectByOwnerAcrossEntities(entityType, ownerType, ownerId);
+    }
+
     /** 数据库 LIMIT / OFFSET 分页。 */
     @Override
     public List<OwnerAccount> findPage(AccountEntityType entityType, String entityId, String currency,

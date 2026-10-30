@@ -1,0 +1,40 @@
+# 收款账户字段要求静态清单（requirements/20261030/payout-收款账户与余额解释，technique 7.5、Q-1）。
+# 过渡期来源：S3 由 channel-connector 出款账户能力取代后删除本文件与 BeneficiaryRequirementProperties。
+# 由 application.yml 的 spring.config.import 导入，绑定 payout.beneficiary-requirements；修改需重启。
+# 匹配：railType × bankCountry × currency；bankCountry 为 * 只在没有精确国家条目时生效。字段值先规范化（户名去首尾空白并合并空白；
+# IBAN、账号、银行代码、BIC 去空白转大写）再整体匹配 pattern 与 maxLength。oneOfGroup 同组字段至少且至多填一个。
+# 清单外的组合不允许提交（422 BENEFICIARY_UNSUPPORTED_ROUTE），清单外的字段不允许出现（400）。
+payout:
+  beneficiary-requirements:
+    routes:
+      - rail-type: LOCAL
+        bank-country: AE
+        currencies: [AED, USD]
+        fields:
+          - {code: holderName, required: true, max-length: 140, label-key: payout.beneficiary.field.holderName}
+          - {code: iban, required: true, pattern: "AE[0-9]{21}", max-length: 23, label-key: payout.beneficiary.field.iban}
+          - {code: bankName, required: true, max-length: 128, label-key: payout.beneficiary.field.bankName}
+      - rail-type: LOCAL
+        bank-country: SA
+        currencies: [SAR, USD]
+        fields:
+          - {code: holderName, required: true, max-length: 140, label-key: payout.beneficiary.field.holderName}
+          - {code: iban, required: true, pattern: "SA[0-9]{22}", max-length: 24, label-key: payout.beneficiary.field.iban}
+          - {code: bankName, required: true, max-length: 128, label-key: payout.beneficiary.field.bankName}
+      - rail-type: LOCAL
+        bank-country: EG
+        currencies: [EGP]
+        fields:
+          - {code: holderName, required: true, max-length: 140, label-key: payout.beneficiary.field.holderName}
+          - {code: accountNumber, required: true, pattern: "[0-9]{6,29}", max-length: 29, label-key: payout.beneficiary.field.accountNumber}
+          - {code: bankCode, required: true, pattern: "[0-9A-Z]{2,11}", max-length: 11, label-key: payout.beneficiary.field.bankCode}
+          - {code: bankName, required: true, max-length: 128, label-key: payout.beneficiary.field.bankName}
+      - rail-type: SWIFT
+        bank-country: "*"
+        currencies: [USD, EUR]
+        fields:
+          - {code: holderName, required: true, max-length: 140, label-key: payout.beneficiary.field.holderName}
+          - {code: iban, one-of-group: accountIdentifier, pattern: "[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}", max-length: 34, label-key: payout.beneficiary.field.iban}
+          - {code: accountNumber, one-of-group: accountIdentifier, pattern: "[A-Z0-9]{4,34}", max-length: 34, label-key: payout.beneficiary.field.accountNumber}
+          - {code: swiftBic, required: true, pattern: "[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?", max-length: 11, label-key: payout.beneficiary.field.swiftBic}
+          - {code: bankName, required: true, max-length: 128, label-key: payout.beneficiary.field.bankName}

@@ -1,0 +1,93 @@
+{
+ "command": "accounts",
+ "results": [
+  {
+   "ac": "准备",
+   "step": "运营 maker 建成（READ/SUBMIT/REVIEW/REVEAL/MANAGE/FINANCE_MENU）",
+   "ok": true,
+   "detail": "241927147466342400"
+  },
+  {
+   "ac": "准备",
+   "step": "运营 checker 建成（READ/SUBMIT/REVIEW/REVEAL/MANAGE/FINANCE_MENU）",
+   "ok": true,
+   "detail": "241927149974536192"
+  },
+  {
+   "ac": "准备",
+   "step": "运营 ro 建成（READ/FINANCE_MENU）",
+   "ok": true,
+   "detail": "241927152331735040"
+  },
+  {
+   "ac": "准备",
+   "step": "运营 noperm 建成（DATA_QUERY_READ）",
+   "ok": true,
+   "detail": "241927154286280704"
+  },
+  {
+   "ac": "准备",
+   "step": "Maker 与 Checker 为两个不同账号",
+   "ok": true,
+   "detail": {
+    "maker": "241927147466342400",
+    "checker": "241927149974536192",
+    "ro": "241927152331735040",
+    "noperm": "241927154286280704"
+   }
+  }
+ ],
+ "data": {
+  "clients": {
+   "A": "237575207592763393",
+   "B": "240686705999454209"
+  },
+  "accounts": {},
+  "operators": {
+   "maker": {
+    "accountId": "241927147466342400",
+    "roleId": "241927146631675904",
+    "permissions": [
+     "READ",
+     "SUBMIT",
+     "REVIEW",
+     "REVEAL",
+     "MANAGE",
+     "FINANCE_MENU"
+    ]
+   },
+   "checker": {
+    "accountId": "241927149974536192",
+    "roleId": "241927149152452608",
+    "permissions": [
+     "READ",
+     "SUBMIT",
+     "REVIEW",
+     "REVEAL",
+     "MANAGE",
+     "FINANCE_MENU"
+    ]
+   },
+   "ro": {
+    "accountId": "241927152331735040",
+    "roleId": "241927151505457152",
+    "permissions": [
+     "READ",
+     "FINANCE_MENU"
+    ]
+   },
+   "noperm": {
+    "accountId": "241927154286280704",
+    "roleId": "241927153694883840",
+    "permissions": [
+     "DATA_QUERY_READ"
+    ]
+   }
+  },
+  "billingFacts": [],
+  "notifications": [],
+  "viewer": {}
+ },
+ "pass": 5,
+ "fail": 0
+}

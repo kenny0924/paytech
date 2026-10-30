@@ -8,10 +8,7 @@ import java.util.Map;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import com.paytech.client.console.bff.domain.enums.ClientBffErrorCode;
-import com.paytech.client.console.bff.domain.enums.ClientContextType;
 import com.paytech.client.console.bff.integration.CctWorkspaceClient;
-import com.paytech.client.console.bff.integration.PlatformAuthenticationClient;
 import com.paytech.client.console.bff.integration.PlatformAuthorizationClient;
 import com.paytech.client.console.bff.service.model.ClientActor;
 import com.paytech.client.console.bff.service.model.response.HomeProfile;
@@ -42,32 +39,15 @@ public class ClientWorkspaceHomeProcessor extends AbstractProcessor<ClientActor,
     /** 页面能力名到 Platform 权限码；顺序即返回顺序。 */
     static final Map<String, String> CAPABILITIES = capabilityPermissions();
 
+    private final CurrentWorkspaceResolver workspaces;
     private final CctWorkspaceClient workspaceSummaries;
     private final PlatformAuthorizationClient authorization;
-    private final PlatformAuthenticationClient authentication;
 
     @Override
     protected WorkspaceHomeResponseBody processRequest(ClientActor actor) {
-        if (!actor.isTenantContext()) {
-            throw new FailException(ClientBffErrorCode.WORKSPACE_CONTEXT_REQUIRED);
-        }
-        requireCurrentTenantContext(actor);
-        var workspace = authentication.workspaces(actor).stream()
-            .filter(candidate -> actor.getMemberId().equals(candidate.getMemberId())
-                && actor.getTenantId().equals(candidate.getTenantId()) && candidate.isAccessible())
-            .findFirst()
-            .orElseThrow(() -> new FailException(ClientAuthenticationErrorCode.CLIENT_WORKSPACE_UNAVAILABLE));
+        var workspace = workspaces.current(actor);
         var summary = workspaceSummaries.summaries(actor, List.of(workspace.getClientId())).get(workspace.getClientId());
         return response(workspace, summary, capabilities(actor));
-    }
-
-    /** Platform 实时上下文必须是同一成员、同一租户的租户上下文。 */
-    void requireCurrentTenantContext(ClientActor actor) {
-        var context = authentication.context(actor);
-        if (context == null || !ClientContextType.TENANT.getCode().equals(context.getContextType())
-            || !actor.getMemberId().equals(context.getMemberId()) || !actor.getTenantId().equals(context.getTenantId())) {
-            throw new FailException(ClientAuthenticationErrorCode.CLIENT_SESSION_INVALID);
-        }
     }
 
     /** 当前成员被授予的页面能力；会话失效照常抛出，其他失败返回空能力。 */

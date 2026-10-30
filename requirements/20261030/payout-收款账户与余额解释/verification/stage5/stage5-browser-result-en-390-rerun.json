@@ -1,0 +1,460 @@
+{
+  "startedAt": "2026-10-30T11:03:05.120Z",
+  "sim": true,
+  "runs": [
+    {
+      "locale": "en",
+      "width": 390,
+      "write": false,
+      "steps": [
+        {
+          "role": "admin",
+          "step": "00-admin-home",
+          "check": {
+            "menuHasPayout": false
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "O1a-maker-detail",
+          "check": {
+            "attempts": 1,
+            "menuHasPayout": false,
+            "tabs": [
+              "Pending Review",
+              "Pending Check2",
+              "Processed"
+            ],
+            "queueItems": 2,
+            "activeItem": "Bizinfo Trading 1029120613 LLC 10/30, 14:38 S1E2E London Test Bank ending 6850 USD · SWIFT Client · 241533217348268033",
+            "detail": "S1E2E London Test Bank ending 6850 Pending review Bizinfo Trading 1029120613 LLC (Client 241533217348268033) · BA-0003 · USD · United Kingdom SWIFT · Submitted by Client member 241533082010652672 at 10/30, 14:38 Account Details Account Holder S**** T****** L** Show Account Number / IBAN •••• 6850 Show Bank S1E2E London Test Bank Bank Code / BIC SONEGB2L Country / Currency / Method United Kingdom · USD · SWIFT Viewing original values is audited and hides automatically after 60 seconds. Name Check Client legal name Bizinfo Trading 1029120613 LLC Account Holder Compared after reveal The holder name must match the legal name; differences only in case, spaces or punctuation count as a match. Your Review Opinion Approve Holder name matches the legal name and the details are complete Reject Choose a reason; the Client will be notified Note (optional) 0 / 500 After you submit, another colleague ",
+            "sharedAlert": 0,
+            "options": [
+              {
+                "text": "Approve Holder name matches the legal name and the details are complete",
+                "disabled": false,
+                "pressed": "false"
+              },
+              {
+                "text": "Reject Choose a reason; the Client will be notified",
+                "disabled": false,
+                "pressed": "false"
+              }
+            ],
+            "foot": {
+              "text": " After you submit, another colleague checks it; the account is usable 24 hours after approval Submit Opinion",
+              "blocked": false,
+              "submitDisabled": true
+            }
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "O1b-revealed",
+          "check": {
+            "originalShown": 2,
+            "hideButton": "Hide 60s",
+            "audit": "Audit recorded: you viewed the original values at 15:03",
+            "nameMatch": "payout-match is-mismatch"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "O1c-hidden",
+          "check": {
+            "countdown": [
+              "60",
+              "57"
+            ],
+            "originalShownAfterHide": 0,
+            "showButton": "Show",
+            "nameMatchHint": "The holder name must match the legal name; differences only in case, spaces or punctuation count as a match."
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "O4-four-eyes",
+          "check": {
+            "attempts": 1,
+            "tabs": [
+              "Pending Review2",
+              "Pending Check",
+              "Processed"
+            ],
+            "opinion": "Reviewer You: Approve 10/30, 14:38 · S1E2E 户名与法定名一致",
+            "options": [
+              {
+                "text": "Approve The account is verified and usable after 24-hour cooling; the Client is notified",
+                "disabled": true,
+                "pressed": "false"
+              },
+              {
+                "text": "Reject The account is rejected; choose a reason",
+                "disabled": true,
+                "pressed": "false"
+              }
+            ],
+            "foot": {
+              "text": " You gave the review opinion, so another colleague must check it Approve",
+              "blocked": true,
+              "submitDisabled": true
+            }
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "O5-open",
+          "check": {
+            "attempts": 1
+          }
+        },
+        {
+          "role": "admin",
+          "step": "O5a-reject-dialog",
+          "check": {
+            "title": "Reject Payout Account",
+            "subject": "Bizinfo Trading 1029120613 LLC · S1E2E London Test Bank ending 6850 · USD",
+            "reasons": [
+              "Holder name does not match the legal name",
+              "Invalid account number or IBAN",
+              "Bank not supported",
+              "Supporting documents required",
+              "Other"
+            ],
+            "clientNote": 1,
+            "notice": "After rejection the account cannot be used and the Client must add it again. This opinion takes effect only after another colleague checks it.",
+            "buttons": [
+              "Cancel",
+              "Submit Rejection"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "O5b-cancelled",
+          "check": {
+            "modalOpen": 0,
+            "payoutWritesDuringDialog": 0,
+            "tabs": [
+              "Pending Review",
+              "Pending Check2",
+              "Processed"
+            ]
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "O3a-owner-empty",
+          "check": {
+            "empty": "Choose the Owner type and enter its ID to view balances and payout accounts."
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "admin",
+          "step": "O3b-owner-client-a",
+          "check": {
+            "url": "?ownerType=CLIENT&ownerId=241533217348268033",
+            "title": "Bizinfo Trading 1029120613 LLC Client 241533217348268033 Legal name Bizinfo Trading 1029120613 LLC · No. CL-241533217348268033 · Active",
+            "balances": [
+              "AE001 · USD Available 0.00 Pending 250.00 Available 0.00 Locked 0.00 Security Deposit 0.00 Recovery Receivable 0.00 No available balance USD payout account is cooling down, available at 10/31/2026, 14:38"
+            ],
+            "rows": [
+              "BA-0001 S1E2E Emirates Test Bank ending 5765 USD Pending review 10/30, 14:38 Maker reviewed · You Close Details",
+              "BA-0002 S1E2E London Test Bank ending 5340 USD Cooling until 10/31/2026, 14:57 10/30, 14:57 Approved in check · s***@example.test Suspend Close Details",
+              "BA-0003 S1E2E London Test Bank ending 6850 USD Pending review 10/30, 14:38 Submitted Close Details",
+              "BA-0004 S1E2E Emirates Test Bank ending 2077Default USD Cooling until 10/31/2026, 14:38 10/30, 14:38 Approved in check · s***@example.test Suspend Close Details",
+              "BA-0005 S1E2E London Test Bank ending 4010 USD Rejected · Holder name does not match the legal name 10/30, 14:38 Rejected in check · s***@example.test Details",
+              "BA-0006 S1E2E London Test Bank ending 0986 USD Closed 10/30, 14:38 Closed Details",
+              "BA-0007 S1E2E Riyadh Test Bank ending 4970 USD Closed 10/30, 14:38 Closed Details"
+            ],
+            "submitButton": 1
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "checker",
+          "step": "O2a-checker-detail",
+          "check": {
+            "attempts": 1,
+            "tabs": [
+              "Pending Review",
+              "Pending Check2",
+              "Processed"
+            ],
+            "opinion": "Reviewer o***@example.test: Approve 10/30, 14:38 · S1E2E 户名与法定名一致",
+            "options": [
+              {
+                "text": "Approve The account is verified and usable after 24-hour cooling; the Client is notified",
+                "disabled": false,
+                "pressed": "false"
+              },
+              {
+                "text": "Reject The account is rejected; choose a reason",
+                "disabled": false,
+                "pressed": "false"
+              }
+            ],
+            "foot": {
+              "text": " Approval starts a 24-hour cooling period · You are not the reviewer Approve",
+              "blocked": false,
+              "submitDisabled": true
+            }
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "noperm",
+          "step": "R-noperm-home",
+          "check": {
+            "menuHasPayout": false,
+            "menu": "Data Query"
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "noperm",
+          "step": "R-noperm-reviews",
+          "check": {
+            "main": "No access To use this feature, ask a platform administrator to grant you access.",
+            "workbench": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        },
+        {
+          "role": "noperm",
+          "step": "R-noperm-owners",
+          "check": {
+            "main": "No access To use this feature, ask a platform administrator to grant you access.",
+            "balanceCards": 0
+          },
+          "page": {
+            "rawKeys": [],
+            "horizontalScroll": false,
+            "scrollWidth": 390
+          }
+        }
+      ]
+    }
+  ],
+  "console": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/beneficiary-reviews?stage=MAKER&account=241873292779155456",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/beneficiary-reviews?stage=MAKER&account=241873292779155456",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/beneficiary-reviews?stage=CHECKER&account=241873284461850624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/beneficiary-reviews?stage=CHECKER&account=241873284461850624",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/beneficiary-reviews?stage=MAKER&account=241873292779155456",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/beneficiary-reviews?stage=MAKER&account=241873292779155456",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/beneficiary-reviews?stage=MAKER&account=241873292779155456",
+      "type": "error",
+      "text": "Warning: [antd: Modal] `maskClosable` is deprecated. Please use `mask.closable` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/owners",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "checker",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "checker",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "checker",
+      "step": "/finance/payout/beneficiary-reviews?stage=CHECKER&account=241873284461850624",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "checker",
+      "step": "/finance/payout/beneficiary-reviews?stage=CHECKER&account=241873284461850624",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    },
+    {
+      "run": "en-390",
+      "role": "noperm",
+      "step": "login",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "noperm",
+      "step": "/finance/payout/beneficiary-reviews",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    },
+    {
+      "run": "en-390",
+      "role": "noperm",
+      "step": "/finance/payout/owners?ownerType=CLIENT&ownerId=241533217348268033",
+      "type": "error",
+      "text": "Warning: [antd: Spin] `tip` is deprecated. Please use `description` instead."
+    }
+  ],
+  "httpErrors": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/beneficiary-reviews?stage=MAKER&account=241873292779155456",
+      "method": "GET",
+      "path": "/api/operations/payout-admin/v1/beneficiary-reviews?stage=MAKER&page=1&size=10",
+      "status": 429
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/beneficiary-reviews?stage=CHECKER&account=241873284461850624",
+      "method": "GET",
+      "path": "/api/operations/payout-admin/v1/beneficiary-reviews?stage=CHECKER&page=1&size=10",
+      "status": 429
+    },
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "/finance/payout/beneficiary-reviews?stage=MAKER&account=241873292779155456",
+      "method": "GET",
+      "path": "/api/operations/payout-admin/v1/beneficiary-reviews?stage=MAKER&page=1&size=10",
+      "status": 429
+    },
+    {
+      "run": "en-390",
+      "role": "checker",
+      "step": "/finance/payout/beneficiary-reviews?stage=CHECKER&account=241873284461850624",
+      "method": "GET",
+      "path": "/api/operations/payout-admin/v1/beneficiary-reviews?stage=MAKER&page=1&size=10",
+      "status": 429
+    }
+  ],
+  "deliberate": [],
+  "writes": [
+    {
+      "run": "en-390",
+      "role": "admin",
+      "step": "O1a-maker-detail",
+      "path": "/api/operations/payout-admin/v1/beneficiary-accounts/241873292779155456/reveal",
+      "status": 200
+    }
+  ]
+}

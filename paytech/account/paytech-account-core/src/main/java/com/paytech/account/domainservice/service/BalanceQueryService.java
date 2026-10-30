@@ -1,9 +1,11 @@
 package com.paytech.account.domainservice.service;
 
+import java.util.List;
+
 import com.paytech.account.domain.model.ClientBalance;
 import com.paytech.account.domain.model.PartnerBalance;
 
-/** 查询 Client 与 Local Partner 在一个经营主体与币种下的分类余额；只读本库 Owner 账户。 */
+/** 查询 Client 与 Local Partner 在一个或全部经营主体与币种下的分类余额；只读本库 Owner 账户。 */
 public interface BalanceQueryService {
 
     /**
@@ -25,4 +27,20 @@ public interface BalanceQueryService {
      * @return Local Partner 分类余额，缺少的桶为零；该 Partner 在此主体与币种下没有任何账户时为空
      */
     PartnerBalance partnerBalance(String partnerId, String entityNo, String currency);
+
+    /**
+     * 列出 Client 在全部经营主体与币种下的分类余额
+     *
+     * @param clientId Client 规范十进制标识
+     * @return 每个有账户的经营主体 × 币种一项，按 entityNo、币种升序；没有任何账户时为空列表
+     */
+    List<ClientBalance> clientPositions(String clientId);
+
+    /**
+     * 列出 Local Partner 在全部经营主体与币种下的分类余额
+     *
+     * @param partnerId Local Partner 规范十进制标识
+     * @return 每个有账户的经营主体 × 币种一项，按 entityNo、币种升序；没有任何账户时为空列表
+     */
+    List<PartnerBalance> partnerPositions(String partnerId);
 }

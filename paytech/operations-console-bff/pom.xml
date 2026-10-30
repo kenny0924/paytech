@@ -87,6 +87,11 @@
             </dependency>
             <dependency>
                 <groupId>com.paytech</groupId>
+                <artifactId>paytech-payout-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
                 <artifactId>paytech-vault-client</artifactId>
                 <version>${project.version}</version>
             </dependency>

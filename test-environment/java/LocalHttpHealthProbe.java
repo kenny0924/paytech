@@ -28,7 +28,8 @@ public final class LocalHttpHealthProbe {
         "http://127.0.0.1:19113/actuator/health/readiness",
         "http://127.0.0.1:19114/actuator/health/readiness",
         "http://127.0.0.1:19115/actuator/health/readiness",
-        "http://127.0.0.1:19116/actuator/health/readiness"
+        "http://127.0.0.1:19116/actuator/health/readiness",
+        "http://127.0.0.1:19117/actuator/health/readiness"
     );
 
     @FunctionalInterface

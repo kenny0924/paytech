@@ -1,0 +1,175 @@
+# payout-service 配置字段清单，同时作为 Mock 测试的可运行配置。
+# 只连接仓库 local-environment 的 Loopback MySQL（mor_payout）与 Redis；数据库账号 payout_app 由 local-environment 初始化脚本创建，
+# 密码 MOR_PAYOUT_DB_PASSWORD 与 Redis 密码从 .env.local 读取（不提交固定值），可用同名环境变量覆盖。
+# 出站 HTTP（Vault、account 余额列表、Platform 通知）经 simple discovery 指向测试 Mock HTTP 服务，不连接 Nacos。
+# 字段要求清单 beneficiary-requirements.yaml 由正式 application.yml 的 spring.config.import 导入，测试使用同一份清单。
+
+# ==================== 中间件、框架与公共组件配置 ====================
+
+server:
+  address: 127.0.0.1
+  port: 0
+
+spring:
+  config:
+    # 唯一锚点 paytech.local-environment.dir 由父 POM 经 Surefire 注入。
+    import:
+      - "optional:file:${paytech.local-environment.dir}/.env.local[.properties]"
+  application:
+    name: payout-service
+  main:
+    banner-mode: "off"
+  jmx:
+    enabled: false
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            # 同一独立 Mock HTTP 服务承载 Vault、account 余额列表与 Platform 通知。
+            vault-service:
+              - uri: "${test.mock-http.base-url}"
+            account-service:
+              - uri: "${test.mock-http.base-url}"
+            platform-support-service:
+              - uri: "${test.mock-http.base-url}"
+    loadbalancer:
+      retry:
+        enabled: false
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        # 自动测试不连接 Nacos。
+        enabled: false
+        register-enabled: false
+  datasource:
+    url: "${PAYOUT_TEST_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_payout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${PAYOUT_TEST_DB_USERNAME:payout_app}"
+    password: "${PAYOUT_TEST_DB_PASSWORD:${MOR_PAYOUT_DB_PASSWORD}}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 2000
+      connection-init-sql: "SET time_zone = '+00:00'"
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+  # 仓库 local-environment 的本机 Redis：写入口资源锁。
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      password: "${PAYOUT_TEST_REDIS_PASSWORD:${PAYTECH_REDIS_PASSWORD:${MOR_REDIS_PASSWORD}}}"
+      connect-timeout: 2s
+      timeout: 2s
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      account-service:
+        # 经 simple discovery 解析为测试 Mock HTTP 服务。
+        base-url: lb://account-service
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      platform-support-service:
+        base-url: lb://platform-support-service/platform-support
+        connect-timeout: 2s
+        read-timeout: 10s
+        redirects: dont-follow
+
+web:
+  logging:
+    metadata-only-path-prefixes:
+      - /payout/v1/beneficiary-accounts
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-redis-starter
+redis:
+  # 测试专用 Key 前缀，与本地运行实例隔离；生产缺省使用 spring.application.name。
+  key-prefix: payout-mock
+  coordination:
+    enabled: true
+    threads: 4
+    netty-threads: 4
+
+# paytech-compensation-event：本库 t_compensation_event；业务事务内登记 BENEFICIARY_NOTIFICATION，提交后执行。
+compensation:
+  enabled: true
+  instance-id: payout-test
+
+# 实例 ID。
+paytech:
+  instance-id: payout-test
+
+# 内部调用 Token：关闭。
+internal-auth:
+  mode: "OFF"
+
+# paytech-xxl-job-starter（随 compensation-event 引入）：测试不连接调度中心。
+xxl:
+  job:
+    executor:
+      enabled: false
+
+vault:
+  client:
+    caller-service: payout-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
+
+management:
+  server:
+    address: 127.0.0.1
+    port: 0
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+# ==================== payout 系统自定义配置 ====================
+
+payout:
+  beneficiary:
+    # 核验通过后的冷却时长；默认 24h，Mock 同默认（冷却到期场景由测试改写 cooling_until）。
+    cooling: 24h
+  notification:
+    # Platform 通知 X-Caller-Service；生产默认同此。
+    caller-service: payout-service
+    # 通知默认语言；生产默认同此。
+    default-locale: en
+    # Owner 类型 → 收件人判定权限；与生产一致，只有 CLIENT（Local Partner 不发通知）。
+    recipient-permissions:
+      CLIENT: CLIENT_PAYOUT_ACCOUNT_MANAGE
+  identifier:
+    # Snowflake Region / Worker 标识；生产无默认值且必填。测试进程固定 0/0。
+    region-id: 0
+    worker-id: 0
+
+# test.mock-http.base-url 由 EnableMockHttpServer 在创建真实客户端之前注入随机 Loopback 端口。

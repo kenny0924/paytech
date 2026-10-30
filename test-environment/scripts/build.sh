@@ -61,6 +61,7 @@ readonly -a java_services=(
   account-service:account
   reconciliation-service:reconciliation
   tax-service:tax
+  payout-service:payout
 )
 
 main() {
@@ -99,4 +100,4 @@ fi
   nacos risk-decision-service compliance-service platform-support-service operations-console-bff api-gateway \
   client-console-bff client-master-service commercial-service acquiring-service counterparty-service payment-service \
   channel-connector-service card-service ledger-service billing-service account-service reconciliation-service \
-  tax-service operations-console-web
+  tax-service payout-service operations-console-web

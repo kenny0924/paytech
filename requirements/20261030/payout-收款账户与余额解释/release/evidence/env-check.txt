@@ -1,0 +1,12 @@
+candidate account-service            image=8dfd1060d136 keys live=35 rendered=35 missing=[] extra=[] valuediff=[]
+candidate platform-support-service   image=0ea9cc2d6e89 keys live=59 rendered=59 missing=[] extra=[] valuediff=['SPRING_APPLICATION_JSON']
+candidate client-console-bff         image=24d3aa05f3f0 keys live=16 rendered=16 missing=[] extra=[] valuediff=[]
+candidate operations-console-bff     image=626a74a740ce keys live=21 rendered=21 missing=[] extra=[] valuediff=[]
+candidate operations-console-web     image=acb33e948c65 keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+rollback  account-service            image=8a21dab8e54b keys live=35 rendered=35 missing=[] extra=[] valuediff=[]
+rollback  platform-support-service   image=af13e77a05c3 keys live=59 rendered=59 missing=[] extra=[] valuediff=[]
+rollback  client-console-bff         image=8fe7f24c3ef7 keys live=16 rendered=16 missing=[] extra=[] valuediff=[]
+rollback  operations-console-bff     image=4bd4c3dfb16e keys live=21 rendered=21 missing=[] extra=[] valuediff=[]
+rollback  operations-console-web     image=2f7f8780d5ab keys live=7 rendered=7 missing=[] extra=[] valuediff=[]
+candidate payout-service image=75a6337cd55f keys=28 NACOS_NAMESPACE NACOS_SERVER_ADDR PAYOUT_ACCOUNT_SERVICE_URL PAYOUT_COMPENSATION_INSTANCE_ID PAYOUT_DB_PASSWORD PAYOUT_DB_URL PAYOUT_DB_USERNAME PAYOUT_REDIS_HOST PAYOUT_REDIS_PASSWORD PAYOUT_REDIS_PORT PAYOUT_SNOWFLAKE_REGION_ID PAYOUT_SNOWFLAKE_WORKER_ID PAYTECH_INSTANCE_ID SERVER_ADDRESS SPRING_CLOUD_NACOS_DISCOVERY_GROUP SPRING_CLOUD_NACOS_DISCOVERY_IP SPRING_CLOUD_NACOS_DISCOVERY_PASSWORD SPRING_CLOUD_NACOS_DISCOVERY_USERNAME SPRING_PROFILES_ACTIVE TZ XXL_JOB_ADMIN_ACCESSTOKEN XXL_JOB_ADMIN_ADDRESSES XXL_JOB_EXECUTOR_APPNAME XXL_JOB_EXECUTOR_ENABLED XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES XXL_JOB_EXECUTOR_IP XXL_JOB_EXECUTOR_LOGPATH XXL_JOB_EXECUTOR_PORT
+  ip=172.30.73.44 mem_limit=469762048 read_only=True user=image healthcheck=http://127.0.0.1:19117/actuator/health/readiness

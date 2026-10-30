@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_beneficiary_account_event：收款账户事件链，只追加不修改，只读写 mor_payout。 -->
+<mapper namespace="com.paytech.payout.core.dal.mapper.BeneficiaryAccountEventMapper">
+    <sql id="columns">id, beneficiary_account_id, event_no, from_status, to_status, action, reason_code, actor_type, actor_id, source_key, account_version_after, occurred_time, create_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_beneficiary_account_event (<include refid="columns"/>)
+        VALUES (#{id}, #{beneficiaryAccountId}, #{eventNo}, #{fromStatus}, #{toStatus}, #{action}, #{reasonCode}, #{actorType}, #{actorId}, #{sourceKey}, #{accountVersionAfter}, #{occurredTime}, #{createTime})
+    </insert>
+
+    <select id="selectByAccount" resultType="com.paytech.payout.core.dal.dataobject.BeneficiaryAccountEvent">
+        SELECT <include refid="columns"/> FROM t_beneficiary_account_event
+        WHERE beneficiary_account_id = #{beneficiaryAccountId} ORDER BY event_no
+    </select>
+
+    <select id="selectByEventNo" resultType="com.paytech.payout.core.dal.dataobject.BeneficiaryAccountEvent">
+        SELECT <include refid="columns"/> FROM t_beneficiary_account_event
+        WHERE beneficiary_account_id = #{beneficiaryAccountId} AND event_no = #{eventNo}
+    </select>
+
+    <select id="selectMaxEventNo" resultType="int">
+        SELECT COALESCE(MAX(event_no), 0) FROM t_beneficiary_account_event WHERE beneficiary_account_id = #{beneficiaryAccountId}
+    </select>
+</mapper>

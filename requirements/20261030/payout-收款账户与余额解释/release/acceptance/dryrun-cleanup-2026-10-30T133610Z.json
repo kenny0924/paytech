@@ -1,0 +1,24 @@
+{
+ "command": "cleanup",
+ "results": [
+  {
+   "ac": "cleanup",
+   "step": "mor_payout 尚未建表（阶段 7 之前）：无可清理数据，不生成草稿",
+   "ok": true,
+   "detail": null
+  }
+ ],
+ "data": {
+  "clients": {
+   "A": "237575207592763393",
+   "B": "240686705999454209"
+  },
+  "accounts": {},
+  "operators": {},
+  "billingFacts": [],
+  "notifications": [],
+  "viewer": {}
+ },
+ "pass": 1,
+ "fail": 0
+}

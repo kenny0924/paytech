@@ -1,0 +1,63 @@
++---------------+----------------+-------------+-----------+------------+-----------------+------------+-------------+------------+---------------------------------------------+---------------------+
+| permissions_8 | admin_grants_5 | resources_7 | routes_19 | headers_71 | query_params_19 | guards_114 | templates_4 | contents_8 | notification_routes_4_or_0_without_provider | ses_primary_present |
++---------------+----------------+-------------+-----------+------------+-----------------+------------+-------------+------------+---------------------------------------------+---------------------+
+|             8 |              5 |           7 |        19 |         71 |              19 |        114 |           4 |          8 |                                           4 |                   1 |
++---------------+----------------+-------------+-----------+------------+-----------------+------------+-------------+------------+---------------------------------------------+---------------------+
++------------------+----------+-----+
+| kind             | status   | n   |
++------------------+----------+-----+
+| permission       | ACTIVE   |   8 |
+| admin_grant      | REVOKED  |   5 |
+| client_grant     | REVOKED  | 390 |
+| resource         | DISABLED |   7 |
+| client_route     | DISABLED |   7 |
+| operations_route | DISABLED |  12 |
+| template         | ACTIVE   |   4 |
+| template_route   | ACTIVE   |   4 |
++------------------+----------+-----+
++-------------------------+
+| missing_client_grants_0 |
++-------------------------+
+|                       0 |
++-------------------------+
++----------------------------+
+| unexpected_client_grants_0 |
++----------------------------+
+|                          0 |
++----------------------------+
++------------------------------------+------------------+---------------+
+| template_code                      | locales_en_zh-CN | provider_code |
++------------------------------------+------------------+---------------+
+| PAYOUT_BENEFICIARY_CLOSED_EMAIL    | en,zh-CN         | SES_PRIMARY   |
+| PAYOUT_BENEFICIARY_REJECTED_EMAIL  | en,zh-CN         | SES_PRIMARY   |
+| PAYOUT_BENEFICIARY_SUSPENDED_EMAIL | en,zh-CN         | SES_PRIMARY   |
+| PAYOUT_BENEFICIARY_VERIFIED_EMAIL  | en,zh-CN         | SES_PRIMARY   |
++------------------------------------+------------------+---------------+
++--------------------+--------------------------------------------------+-------------+-----------------------+---------------------+--------------------+------------------+--------------------+----------+
+| route_id           | route_code                                       | http_method | security_profile_code | authorization_mode  | permission_id      | body_limit_bytes | target_id          | status   |
++--------------------+--------------------------------------------------+-------------+-----------------------+---------------------+--------------------+------------------+--------------------+----------+
+| 900000000000147401 | client-payout-beneficiary-list                   | GET         | CLIENT_JWT            | HUMAN_AUTHENTICATED |               NULL |            16384 | 236085272176050176 | DISABLED |
+| 900000000000147402 | client-payout-beneficiary-submit                 | POST        | CLIENT_JWT            | HUMAN_AUTHENTICATED |               NULL |            65536 | 236085272176050176 | DISABLED |
+| 900000000000147403 | client-payout-beneficiary-detail                 | GET         | CLIENT_JWT            | HUMAN_AUTHENTICATED |               NULL |            16384 | 236085272176050176 | DISABLED |
+| 900000000000147404 | client-payout-beneficiary-default                | POST        | CLIENT_JWT            | HUMAN_AUTHENTICATED |               NULL |            65536 | 236085272176050176 | DISABLED |
+| 900000000000147405 | client-payout-beneficiary-close                  | POST        | CLIENT_JWT            | HUMAN_AUTHENTICATED |               NULL |            65536 | 236085272176050176 | DISABLED |
+| 900000000000147406 | client-payout-beneficiary-requirements           | GET         | CLIENT_JWT            | HUMAN_AUTHENTICATED |               NULL |            16384 | 236085272176050176 | DISABLED |
+| 900000000000147407 | client-payout-balances                           | GET         | CLIENT_JWT            | HUMAN_AUTHENTICATED |               NULL |            16384 | 236085272176050176 | DISABLED |
+| 900000000000147408 | operations-payout-admin-review-list              | GET         | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147104 |                0 | 900000000000000001 | DISABLED |
+| 900000000000147409 | operations-payout-admin-beneficiary-list         | GET         | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147104 |                0 | 900000000000000001 | DISABLED |
+| 900000000000147410 | operations-payout-admin-beneficiary-detail       | GET         | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147104 |                0 | 900000000000000001 | DISABLED |
+| 900000000000147411 | operations-payout-admin-beneficiary-submit       | POST        | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147105 |            16384 | 900000000000000001 | DISABLED |
+| 900000000000147412 | operations-payout-admin-maker-review             | POST        | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147106 |             4096 | 900000000000000001 | DISABLED |
+| 900000000000147413 | operations-payout-admin-checker-decision         | POST        | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147106 |             4096 | 900000000000000001 | DISABLED |
+| 900000000000147414 | operations-payout-admin-reveal                   | POST        | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147107 |             4096 | 900000000000000001 | DISABLED |
+| 900000000000147415 | operations-payout-admin-suspend                  | POST        | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147108 |             4096 | 900000000000000001 | DISABLED |
+| 900000000000147416 | operations-payout-admin-resume                   | POST        | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147108 |             4096 | 900000000000000001 | DISABLED |
+| 900000000000147417 | operations-payout-admin-close                    | POST        | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147108 |             4096 | 900000000000000001 | DISABLED |
+| 900000000000147418 | operations-payout-admin-balances                 | GET         | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147104 |                0 | 900000000000000001 | DISABLED |
+| 900000000000147419 | operations-payout-admin-beneficiary-requirements | GET         | OPERATIONS_JWT        | HUMAN_PERMISSION    | 900000000000147105 |                0 | 900000000000000001 | DISABLED |
++--------------------+--------------------------------------------------+-------------+-----------------------+---------------------+--------------------+------------------+--------------------+----------+
++---------------+-----------------+
+| active_routes | disabled_routes |
++---------------+-----------------+
+|           652 |              25 |
++---------------+-----------------+

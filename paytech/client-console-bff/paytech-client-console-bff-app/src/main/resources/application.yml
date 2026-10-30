@@ -73,3 +73,5 @@ web:
       - /client-developer
       - /client-team
       - /client-invitations
+      # 收款账户提交含户名与账号原值，整个资金前缀只记元数据。
+      - /client-payout

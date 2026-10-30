@@ -669,6 +669,36 @@
     "actions": []
   },
   {
+    "componentKey": "OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_REVIEWS",
+    "displayName": "收款账户核验",
+    "frontendRoute": "/finance/payout/beneficiary-reviews",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_REVIEW",
+        "displayName": "核验"
+      },
+      {
+        "resourceCode": "OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_REVEAL",
+        "displayName": "查看原值"
+      }
+    ]
+  },
+  {
+    "componentKey": "OPERATIONS_FINANCE_PAYOUT_OWNERS",
+    "displayName": "Owner 账户与余额",
+    "frontendRoute": "/finance/payout/owners",
+    "actions": [
+      {
+        "resourceCode": "OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_SUBMIT",
+        "displayName": "代提交"
+      },
+      {
+        "resourceCode": "OPERATIONS_FINANCE_PAYOUT_BENEFICIARY_MANAGE",
+        "displayName": "停用 / 恢复 / 关闭"
+      }
+    ]
+  },
+  {
     "componentKey": "OPERATIONS_COMMERCIAL_AGREEMENTS",
     "displayName": "合同",
     "frontendRoute": "/commercial/agreements",

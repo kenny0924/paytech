@@ -1,0 +1,46 @@
+{
+ "app": "operations-console",
+ "currentRelease": 28,
+ "liveNamespaces": 27,
+ "repoNamespaces": 28,
+ "newNamespaces": [
+  {
+   "code": "payout",
+   "name": "出款",
+   "sort": 280
+  }
+ ],
+ "repoKeys": 11558,
+ "liveActiveKeys": 11335,
+ "added": 223,
+ "restored": 0,
+ "sourceChanged": 0,
+ "missingInRepo": 0,
+ "zhImportKeys": 223,
+ "zhMissingForImport": 0,
+ "keepLiveZh": 11335,
+ "refdataZhReplaced": 0,
+ "liveOutdatedZh": 0,
+ "rebaseExpected": 0,
+ "rebaseScope": 429,
+ "outdatedUntouched": 0,
+ "zhChangedNotImported": 0,
+ "byNamespace": {
+  "added": {
+   "nav": 7,
+   "payout": 216
+  },
+  "sourceChanged": {},
+  "deprecated": {},
+  "restored": {},
+  "zhImport": {
+   "nav": 7,
+   "payout": 216
+  }
+ },
+ "deprecations": [],
+ "sha256": {
+  "operations-console.release.en.json": "fa109099400d239b2694ee3f1e4b225ad750578d95760cc0bc66cce5138677f9",
+  "operations-console.release.zh-CN.delta.json": "bf3e8729a5b04d25d890ed158a15505abe60f4b46f7622f86c3714429505b083"
+ }
+}

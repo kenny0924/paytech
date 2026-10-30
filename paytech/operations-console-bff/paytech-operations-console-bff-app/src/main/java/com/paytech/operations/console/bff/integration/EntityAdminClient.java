@@ -2,6 +2,7 @@ package com.paytech.operations.console.bff.integration;
 
 import com.paytech.client.master.api.entityadmin.request.ChangeAcquiringQualificationRequestBody;
 import com.paytech.client.master.api.entityadmin.request.ReplacePartnerRolesRequestBody;
+import com.paytech.client.master.api.entityadmin.response.ClientSummaryResponseBody;
 import com.paytech.client.master.api.entityadmin.response.LocalPartnerDetailResponseBody;
 import com.paytech.client.master.api.entityadmin.response.LocalPartnerSummaryResponseBody;
 import com.paytech.client.master.api.entityadmin.response.OperatingEntityDetailResponseBody;
@@ -31,6 +32,15 @@ public interface EntityAdminClient {
 
     /** B5 Local Partner 详情。 */
     LocalPartnerDetailResponseBody localPartner(OperatorContext operator, String localPartnerId);
+
+    /**
+     * Client 主体摘要（编号、类型、状态与法定名称）
+     *
+     * @param operator 当前操作人
+     * @param clientId Client ID
+     * @return 摘要；不存在时 client-master 的 404 CLIENT_NOT_FOUND 原样抛出，回执不属于该 Client 视为上游响应无效
+     */
+    ClientSummaryResponseBody clientSummary(OperatorContext operator, String clientId);
 
     /**
      * 可作为责任方的 PayFac 选项：ACTIVE 且有 OE_PROVIDER 角色的 Local Partner

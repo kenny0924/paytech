@@ -50,9 +50,26 @@ public class SubmitNotificationRequest {
     @Setter
     public static class Recipient {
 
-        /** 收件邮箱；SMS 不属于本期模块能力。 */
-        @NotBlank @Size(max = 254)
+        /** 不输出邮箱、Token 与参数值。 */
+        @Override
+        public String toString() {
+            return "Recipient[redacted]";
+        }
+
+        /**
+         * 收件邮箱；SMS 不属于本期模块能力
+         * <li>与 addressVaultToken 二选一：给出邮箱时受理前经 Vault Protect 为 EMAIL_ADDRESS_V1 稳定 Token。</li>
+         */
+        @Size(max = 254)
         private String email;
+
+        /**
+         * 已保护的收件邮箱 Token
+         * <li>与 email 二选一；必须是 EMAIL_ADDRESS_V1 稳定 Token（例如账号登录邮箱 Token），受理时直接保存、不再 Protect。</li>
+         * <li>只由模块内已解析收件人的入口提供，HTTP 调用方不能直接提交；禁止日志输出。</li>
+         */
+        @Size(max = 255)
+        private String addressVaultToken;
 
         /** 可空语言覆盖。 */
         @Size(max = 35)

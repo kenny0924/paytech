@@ -58,6 +58,15 @@ public class ClientErrorStatusResolver implements ApiErrorStatusResolver {
                 default -> HttpStatus.CONFLICT;
             };
         }
+        if(code instanceof com.paytech.payout.api.enums.PayoutErrorCode value) {
+            // 与 payout 合同一致：账户不属于当前工作区与不存在同为 404。
+            return switch(value) {
+                case BENEFICIARY_DUPLICATE, BENEFICIARY_STATUS_CONFLICT -> HttpStatus.CONFLICT;
+                case BENEFICIARY_UNSUPPORTED_ROUTE -> HttpStatus.UNPROCESSABLE_CONTENT;
+                case FOUR_EYES_REQUIRED, BENEFICIARY_REVEAL_FORBIDDEN -> HttpStatus.FORBIDDEN;
+                case BENEFICIARY_ACCOUNT_NOT_FOUND, BENEFICIARY_REQUIREMENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            };
+        }
         if(code==com.paytech.foundation.common.error.CommonErrorCode.NOT_FOUND) {
             // Platform 对其他工作区或不存在的凭证、端点、投递、成员、邀请统一返回 NOT_FOUND，浏览器保持 404。
             return HttpStatus.NOT_FOUND;

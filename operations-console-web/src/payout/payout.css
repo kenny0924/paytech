@@ -1,0 +1,110 @@
+/* 收款账户核验（O1—O5）与 Owner 账户 / 余额（O3）。 */
+.payout-page .cell-meta { max-width: none; }
+.payout-heading { flex-wrap: wrap; }
+.payout-owner-filter { width: min(360px, 100%); }
+.payout-owner-filter .ant-select { width: 140px; flex: none; }
+
+.payout-tabs { display: flex; gap: 24px; border-bottom: 1px solid #eef0f3; margin-bottom: 16px; overflow-x: auto; }
+.payout-tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 0 0 8px; font-size: 14px; color: #4b5563; cursor: pointer; white-space: nowrap; }
+.payout-tabs button.is-active { color: #2f54eb; border-bottom-color: #2f54eb; font-weight: 600; }
+.payout-count { display: inline-block; margin-left: 6px; min-width: 18px; padding: 0 6px; border-radius: 9px; background: #f1f3f6; color: #4b5563; font-size: 11px; line-height: 18px; text-align: center; }
+.payout-tabs button.is-active .payout-count { background: #eef2ff; color: #2f54eb; }
+
+.payout-workbench { display: grid; grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); border: 1px solid #eef0f3; border-radius: 8px; background: #fff; min-height: 640px; }
+.payout-queue { border-right: 1px solid #eef0f3; display: flex; flex-direction: column; min-width: 0; }
+.payout-queue-item { display: block; width: 100%; text-align: left; background: #fff; border: 0; border-bottom: 1px solid #eef0f3; border-left: 3px solid transparent; padding: 14px 16px; cursor: pointer; }
+.payout-queue-item:hover { background: #fafbfc; }
+.payout-queue-item.is-active { background: #f5f7ff; border-left-color: #2f54eb; }
+.payout-queue-line { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-top: 4px; }
+.payout-queue-line:first-child { margin-top: 0; }
+.payout-queue-line strong { font-size: 14px; overflow-wrap: anywhere; }
+.payout-shared-tag { margin-left: 8px; color: #b45309; background: #fff7ed; border-color: #fed7aa; }
+.payout-queue-pages { padding: 12px 16px; }
+.payout-queue-foot { margin-top: auto; padding: 12px 16px; }
+.payout-detail { min-width: 0; display: flex; flex-direction: column; }
+.payout-detail-empty { margin: auto; }
+
+.payout-panel { display: flex; flex-direction: column; flex: 1; min-height: 100%; }
+.payout-panel-body { padding: 20px 24px; flex: 1; }
+.payout-panel-title { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.payout-panel-title h2 { margin: 0; font-size: 18px; }
+.payout-panel-meta { margin: 6px 0 16px; }
+.payout-shared { margin-bottom: 16px; }
+.payout-note { margin-top: 12px; }
+.payout-note .payout-field-label { display: block; margin-bottom: 6px; }
+.payout-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.payout-card { border: 1px solid #eef0f3; border-radius: 8px; padding: 16px; background: #fff; margin-bottom: 16px; }
+.payout-cards .payout-card { margin-bottom: 0; }
+.payout-card-title { font-weight: 600; margin-bottom: 12px; }
+.payout-field { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 0; font-size: 13px; }
+.payout-field-label { color: #69717d; flex: none; }
+.payout-field-value { display: flex; align-items: center; gap: 8px; text-align: right; overflow-wrap: anywhere; min-width: 0; justify-content: flex-end; }
+.payout-original { font-weight: 600; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.payout-audit { margin-top: 8px; }
+.payout-match { margin-top: 10px; padding: 8px 12px; border-radius: 6px; font-size: 12px; }
+.payout-match.is-exact, .payout-match.is-normalized { background: #ecfdf3; color: #067647; }
+.payout-match.is-mismatch { background: #fef3f2; color: #b42318; }
+.payout-match.is-hint, .payout-match.is-unknown { background: #f8fafc; color: #69717d; }
+
+.payout-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.payout-option { display: flex; gap: 10px; align-items: flex-start; text-align: left; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; background: #fff; cursor: pointer; }
+.payout-option strong { display: block; }
+.payout-option .cell-meta { display: block; }
+.payout-option.is-ok .payout-option-icon { color: #067647; }
+.payout-option.is-danger .payout-option-icon { color: #b42318; }
+.payout-option.is-selected { border-color: #2f54eb; box-shadow: 0 0 0 1px #2f54eb; background: #f5f7ff; }
+.payout-option:disabled { cursor: not-allowed; opacity: .5; background: #fff; box-shadow: none; border-color: #e5e7eb; }
+.payout-opinion { display: flex; gap: 10px; align-items: flex-start; background: #f8fafc; border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; }
+.payout-opinion.is-ok > .anticon { color: #067647; margin-top: 3px; }
+.payout-opinion.is-danger > .anticon { color: #b42318; margin-top: 3px; }
+.payout-panel-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; border-top: 1px solid #eef0f3; padding: 14px 24px; color: #69717d; font-size: 13px; }
+.payout-panel-foot.is-blocked { color: #b45309; }
+.payout-failure { margin-top: 12px; }
+
+.payout-badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 10px; padding: 1px 10px; font-size: 12px; line-height: 20px; background: #f1f3f6; color: #4b5563; white-space: nowrap; }
+.payout-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.payout-badge.is-pending_review, .payout-badge.is-stage-maker { background: #fff7ed; color: #b45309; }
+.payout-badge.is-cooling, .payout-badge.is-stage-checker { background: #eef2ff; color: #2f54eb; }
+.payout-badge.is-usable { background: #ecfdf3; color: #067647; }
+.payout-badge.is-rejected { background: #fef3f2; color: #b42318; }
+.payout-badge.is-suspended, .payout-badge.is-closed, .payout-badge.is-stage-done { background: #f1f3f6; color: #4b5563; }
+
+.payout-dialog-subject { background: #f8fafc; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; }
+.payout-reason-options { display: grid; gap: 8px; width: 100%; }
+.payout-reason-options .ant-radio-wrapper { border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 12px; margin: 0; }
+.payout-reason-options .ant-radio-wrapper-checked { border-color: #2f54eb; background: #f5f7ff; }
+.payout-dialog-notice { color: #69717d; font-size: 12px; margin-bottom: 12px; }
+.payout-dialog-foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+
+.payout-owner-title { margin-bottom: 8px; }
+.payout-owner-title > div:first-child { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.payout-owner-title h2 { margin: 0; font-size: 22px; }
+.payout-owner-tag { border-radius: 10px; }
+.payout-owner-empty { margin-top: 80px; }
+.payout-section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 24px 0 12px; flex-wrap: wrap; }
+.payout-section-head h2 { margin: 0; font-size: 15px; }
+.payout-balance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.payout-balance-card { border: 1px solid #eef0f3; border-radius: 8px; padding: 16px; background: #fff; }
+.payout-balance-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.payout-available { color: #69717d; font-weight: 600; font-variant-numeric: tabular-nums; }
+.payout-available.is-positive { color: #067647; }
+.payout-bar { display: flex; height: 6px; border-radius: 3px; background: #f1f3f6; overflow: hidden; margin: 12px 0 10px; }
+.payout-bar span.is-pending, .payout-legend i.is-pending { background: #9ca3af; }
+.payout-bar span.is-available, .payout-legend i.is-available { background: #12b76a; }
+.payout-bar span.is-locked, .payout-legend i.is-locked { background: #f79009; }
+.payout-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; color: #69717d; font-size: 12px; font-variant-numeric: tabular-nums; }
+.payout-legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; }
+.payout-legend.is-secondary { margin-top: 8px; }
+.payout-legend .is-danger { color: #b42318; }
+.payout-block-reasons { list-style: none; margin: 12px 0 0; padding: 8px 12px; background: #fff7ed; border-radius: 6px; color: #b45309; font-size: 12px; }
+.payout-block-reasons li + li { margin-top: 4px; }
+.payout-default-tag { margin-left: 8px; }
+
+@media (max-width: 900px) {
+  .payout-workbench { grid-template-columns: minmax(0, 1fr); }
+  .payout-queue { border-right: 0; border-bottom: 1px solid #eef0f3; max-height: 360px; overflow-y: auto; }
+  .payout-cards, .payout-options { grid-template-columns: minmax(0, 1fr); }
+  .payout-panel-body { padding: 16px; }
+  .payout-panel-foot { padding: 12px 16px; }
+  .payout-balance-grid { grid-template-columns: minmax(0, 1fr); }
+}

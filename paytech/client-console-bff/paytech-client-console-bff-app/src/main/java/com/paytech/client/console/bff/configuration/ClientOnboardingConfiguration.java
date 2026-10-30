@@ -11,6 +11,10 @@ import com.paytech.foundation.common.error.*;
 import com.paytech.foundation.httpclient.api.*;
 import com.paytech.foundation.internalauth.api.InternalTokenSupplier;
 import com.paytech.compliance.api.ClientReviewResultApi;
+import com.paytech.payout.api.balance.BalanceExplanationApi;
+import com.paytech.payout.api.beneficiary.BeneficiaryAccountApi;
+import com.paytech.payout.api.beneficiary.BeneficiaryRequirementApi;
+import com.paytech.payout.api.enums.PayoutErrorCode;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
@@ -99,6 +103,37 @@ public class ClientOnboardingConfiguration {
         ).createClient(ClientReviewResultApi.class);
     }
 
+    /** payout 收款账户：列表、提交、详情、设默认与关闭；Owner 固定为当前工作区 Client。 */
+    @Bean
+    BeneficiaryAccountApi clientPayoutBeneficiaryAccountApi(Environment env, ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        return payoutFactory(env, discovery, tokens).createClient(BeneficiaryAccountApi.class);
+    }
+
+    /** payout 收款方式 × 国家 × 币种的字段要求。 */
+    @Bean
+    BeneficiaryRequirementApi clientPayoutBeneficiaryRequirementApi(Environment env, ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        return payoutFactory(env, discovery, tokens).createClient(BeneficiaryRequirementApi.class);
+    }
+
+    /** payout 余额解释。 */
+    @Bean
+    BalanceExplanationApi clientPayoutBalanceExplanationApi(Environment env, ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        return payoutFactory(env, discovery, tokens).createClient(BalanceExplanationApi.class);
+    }
+
+    /**
+     * payout 代理工厂：读取 4 秒（提交与余额解释在 payout 内同步调用 Vault / account），登记 PayoutErrorCode
+     * <li>工厂不注册为 Bean，避免与 CCT 工厂按类型冲突；auto 测试经 client.payout-test-base-url 直连 loopback。</li>
+     */
+    HttpServiceProxyFactory payoutFactory(Environment env, ObjectProvider<LoadBalancerClient> discovery,
+        ObjectProvider<InternalTokenSupplier> tokens) {
+        return HttpServiceClientFactory.create(transport(env, discovery, "payout", "payout-service", "", Duration.ofSeconds(4)),
+            options(tokens, "payout-service"), PayoutErrorCode.values());
+    }
+
     /** 依赖失败保留 Cause，业务错误按明确合同投影；内部调用 Token 按目标服务附加（默认 OFF 不附加）。 */
     HttpServiceClientOptions options(ObjectProvider<InternalTokenSupplier> tokens, String service) {
         return InternalCallTokenOptions.apply(
@@ -106,13 +141,25 @@ public class ClientOnboardingConfiguration {
             tokens, service);
     }
 
-    /** 发现失败显式不可用；auto 只允许随机 loopback 服务地址。 */
+    /** 发现失败显式不可用；auto 只允许随机 loopback 服务地址；读取超时 2 秒。 */
     RestClient transport(
         Environment env,
         ObjectProvider<LoadBalancerClient> discovery,
         String owner,
         String service,
         String context
+    ) {
+        return transport(env, discovery, owner, service, context, Duration.ofSeconds(2));
+    }
+
+    /** 发现失败显式不可用；auto 只允许随机 loopback 服务地址；读取超时由调用方给出。 */
+    RestClient transport(
+        Environment env,
+        ObjectProvider<LoadBalancerClient> discovery,
+        String owner,
+        String service,
+        String context,
+        Duration readTimeout
     ) {
         String testUrl = env.getProperty("client." + owner + "-test-base-url", "");
         var builder = RestClient.builder();
@@ -154,7 +201,7 @@ public class ClientOnboardingConfiguration {
                 .followRedirects(HttpClient.Redirect.NEVER)
                 .build()
         );
-        transport.setReadTimeout(Duration.ofSeconds(2));
+        transport.setReadTimeout(readTimeout);
         return builder.requestFactory(transport).build();
     }
 }

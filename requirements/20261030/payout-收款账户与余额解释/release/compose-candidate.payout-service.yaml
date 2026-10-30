@@ -1,0 +1,67 @@
+# payout S1 收款账户与余额解释 · mor-test 覆盖文件（阶段 6 准备，2026-10-30；阶段 7 须用户授权，由主会话执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag payout-s1-20261030a 仅供辨认）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-po-rel = main 9eab368c + po-int 241 个文件（21 个与 30361be7..9eab368c 重叠的三方合并，见 evidence/merge-notes.md）+ test-environment 5 个文件 + payout 测试 Mock 修正，未提交。
+# 新服务：base compose 没有 payout-service，本文件给出完整定义（anchor 不能跨文件引用，x-java / x-discovery / jvm-small 已展开，逐项同 tax-service）。
+# 前置（runbook）：.env.test 有 MOR_PAYOUT_DB_PASSWORD（prepare.py 追加）、mor_payout 库与 payout_app 账号（initialize.py --create-service-databases）、
+# W9 的 sql/12-mor_payout-ddl.sql、sql/20-mor_vault-payout.sql；XXL 分组 / 任务在服务起来后由 scripts/xxl_payout.py 登记。
+# 地址：IP 172.30.73.44（.43 已被 screening-mock 占用，技术方案写的 .43 作废）；Snowflake Region 0 / Worker 16（mor-test 已用 17–31）。
+services:
+  payout-service:
+    image: sha256:75a6337cd55f8fba597a5b20ad3dd044d96adade7cd90778e73fd06bf01a40f7  # mor-test/payout-service:payout-s1-20261030a（JAR ce299689e742e9fc）
+    profiles: [applications]
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=128m,mode=1777"]
+    mem_limit: 448m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 30s
+    entrypoint: [java, -Xms64m, -Xmx160m, -XX:MaxMetaspaceSize=160m, -XX:ReservedCodeCacheSize=48m, -Xss512k, -XX:+UseSerialGC, -XX:TieredStopAtLevel=1, -Duser.home=/tmp, -Djava.io.tmpdir=/tmp, -jar, /app/application.jar]
+    environment:
+      SPRING_PROFILES_ACTIVE: test
+      NACOS_SERVER_ADDR: nacos:8848
+      NACOS_NAMESPACE: mor-test
+      SPRING_CLOUD_NACOS_DISCOVERY_USERNAME: mor-test-services
+      SPRING_CLOUD_NACOS_DISCOVERY_PASSWORD: ${MOR_NACOS_SERVICE_PASSWORD:?prepare test secrets}
+      SPRING_CLOUD_NACOS_DISCOVERY_GROUP: DEFAULT_GROUP
+      TZ: UTC
+      # 注册 Nacos（Client / Operations BFF 经发现调用 payout-service），并经发现找 vault-service 与 platform-support-service。
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.44
+      PAYOUT_DB_URL: jdbc:mysql://mysql:3306/mor_payout?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      PAYOUT_DB_USERNAME: payout_app
+      PAYOUT_DB_PASSWORD: ${MOR_PAYOUT_DB_PASSWORD:?prepare test secrets}
+      PAYOUT_SNOWFLAKE_REGION_ID: "0"
+      PAYOUT_SNOWFLAKE_WORKER_ID: "16"
+      # 写命令资源锁（AbstractLockProcessor）。
+      PAYOUT_REDIS_HOST: redis
+      PAYOUT_REDIS_PORT: "6379"
+      PAYOUT_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      # account 不注册 Nacos，固定私网地址（阶段 5 修正，technique 8.7）。
+      PAYOUT_ACCOUNT_SERVICE_URL: http://account-service:18114
+      PAYOUT_COMPENSATION_INSTANCE_ID: payout-test
+      PAYTECH_INSTANCE_ID: payout-test
+      # 补偿扫描执行器（BENEFICIARY_NOTIFICATION 兜底重试）：任务 compensationEventScan 由 scripts/xxl_payout.py 登记（新建执行器分组 payout-service）。
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: payout-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.44
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      vault-service: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19117/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.44 }

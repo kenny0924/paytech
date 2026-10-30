@@ -1,0 +1,93 @@
+{
+ "command": "check",
+ "results": [
+  {
+   "ac": "check",
+   "step": "本次账户终态分布",
+   "ok": true,
+   "detail": {
+    "byStatus": {
+     "CLOSED": "2",
+     "PENDING_REVIEW": "3",
+     "REJECTED": "1",
+     "VERIFIED": "1"
+    }
+   }
+  },
+  {
+   "ac": "check",
+   "step": "事件序号连续（每账户 COUNT = MAX(event_no)）",
+   "ok": true,
+   "detail": {
+    "gaps": "0"
+   }
+  },
+  {
+   "ac": "check",
+   "step": "mor_payout 无 ERROR / FAILED 补偿事件",
+   "ok": true,
+   "detail": {
+    "count": "0"
+   }
+  },
+  {
+   "ac": "check",
+   "step": "mor_payout 三表无原值",
+   "ok": true,
+   "detail": {
+    "hits": []
+   }
+  },
+  {
+   "ac": "check",
+   "step": "Vault 两类记录存在",
+   "ok": true,
+   "detail": {
+    "records": {
+     "PAYOUT_BANK_ACCOUNT_KEY_V1": "6",
+     "PAYOUT_BENEFICIARY_V1": "8"
+    }
+   }
+  },
+  {
+   "ac": "check",
+   "step": "自本次开始各服务日志无原值（ERROR 行数供人工复核）",
+   "ok": true,
+   "detail": {
+    "payout-service": {
+     "rawHits": 0,
+     "errorLines": 0
+    },
+    "platform-support-service": {
+     "rawHits": 0,
+     "errorLines": 0
+    },
+    "client-console-bff": {
+     "rawHits": 0,
+     "errorLines": 0
+    },
+    "operations-console-bff": {
+     "rawHits": 0,
+     "errorLines": 0
+    },
+    "api-gateway": {
+     "rawHits": 0,
+     "errorLines": 0
+    }
+   }
+  }
+ ],
+ "data": {
+  "clients": {
+   "A": "237575207592763393",
+   "B": "240686705999454209"
+  },
+  "accounts": {},
+  "operators": {},
+  "billingFacts": [],
+  "notifications": [],
+  "viewer": {}
+ },
+ "pass": 6,
+ "fail": 0
+}

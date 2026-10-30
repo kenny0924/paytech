@@ -11,6 +11,14 @@
 - `Deployed`：只表示明确写出的环境，不代表生产部署。
 - `Pending`：结论已确认，但对应代码、模型、物理库、验证或部署仍未完成。
 
+## payout 收款账户与余额解释（S1，2026-10-30，已部署 mor-test，已本地提交，未推送）
+
+- **范围：** [需求](<../requirements/20261030/payout-收款账户与余额解释/requirement.md>)、[技术方案](<../requirements/20261030/payout-收款账户与余额解释/technique.md>)、[交付记录](<../requirements/20261030/payout-收款账户与余额解释/delivery.md>)、[运行卡](<../requirements/20261030/payout-收款账户与余额解释/release/runbook.md>)、[阶段 6 报告](<../requirements/20261030/payout-收款账户与余额解释/release/stage6-report.md>)、[阶段 7 报告](<../requirements/20261030/payout-收款账户与余额解释/release/stage7-report.md>)；依据 [2026-10-30 出款模型决定](./decisions/2026-10-30-payout-settlement-payout-model.md)。
+- **Implemented：** 新服务 `paytech/payout`（api / core / app / test，`payout-service` 18117 / 19117）；`mor_payout` 三表 `t_beneficiary_account`（31 列含生成列 `active_key`）、`t_beneficiary_account_event`、`t_compensation_event`（PDManer 为 9 表目标模型，S1 只建 3 表；`initialize.py` 不对 payout 自动执行 Schema）；接口 P1—P12（提交、Maker / Checker 四眼核验、24 h 冷却、设默认、停用 / 恢复 / 关闭、Reveal、核验队列、字段要求、余额解释）；Vault REFERENCE + STABLE Token、跨 Owner 共用提示；核验结果经补偿事件调用 Platform 通知。account 新增 Owner 余额 positions 接口；Platform 通知新增租户权限收件人（`tenantRecipients`）、Client 角色加 3 项 payout 权限、运营能力清单 6 项；Operations BFF `/payout-admin/v1` 12 个接口、Client BFF `/client-payout/v1` 7 个接口；运营 Web 两页（财务 → 出款：收款账户核验、Owner 账户与余额）与 `payout` 命名空间；注册块 147；test-environment 新服务落位（IP `172.30.73.44`、Worker 16、探针、build / prepare / initialize、base compose）。
+- **Verified（2026-10-30）：** 候选树 payout 33 / 0、account 72 / 0、Platform 受影响 6 类 41 / 0、Client BFF 108 / 0、Operations BFF 2543 / 0、arch-rules 70 / 0、ops-web `tsc` / 1686 单测 / build；本机阶段 5 联调与浏览器走查；mor-test 离线演练块 147（652 → 671 路由）；mor-test 运营侧验收 api 64 / 0、AC-09 运营侧 9 / 0、数据检查 6 / 0、浏览器 zh-CN / en × 1440 / 390 通过。
+- **Deployed：** mor-test 2026-10-30 14:01—14:08Z（tag `payout-s1-20261030a`）：payout `75a6337c…`、account `8dfd1060…`、Platform `0ea9cc2d…`、Client BFF `24d3aa05…`、Operations BFF `626a74a7…`、运营 Web `acb33e94…`；`mor_payout` 库与 `payout_app` 账号、Vault 策略版本 22、块 147 激活、运营语言包 #29、XXL 分组 19 / 任务 29。验收合成数据已清理。
+- **Pending：** Client 门户页面未做（Client 原型暂缓）；Client 侧验收（Client 入口、设默认、Client 余额页、TENANT_VIEWER 分支、同键重放）与 AC-09 实际送达待 Client 所有者凭据；Owner 按名称搜索无 client-master 合同；未推送。
+
 ## risk-decision 限额档位（REQ-04，2026-10-29—30，已部署 mor-test，已本地提交 `b369e9b6`，未推送）
 
 - **范围：** [需求](<../requirements/20261029/risk-decision-限额档位/requirement.md>)、[技术方案](<../requirements/20261029/risk-decision-限额档位/technique.md>)、[交付记录](<../requirements/20261029/risk-decision-限额档位/delivery.md>)、[运行卡](<../requirements/20261029/risk-decision-限额档位/release/runbook.md>)、[阶段 6 报告](<../requirements/20261029/risk-decision-限额档位/release/stage6-report.md>)；依据 [2026-10-28 客户上线决定](./decisions/2026-10-28-client-go-live-orchestration.md)（Proposed）。

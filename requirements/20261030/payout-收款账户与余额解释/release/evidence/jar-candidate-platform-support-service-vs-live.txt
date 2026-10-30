@@ -1,0 +1,22 @@
+A=3238 B=3249 onlyA=0 onlyB=11 changed=10
+  + paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/core/dal/mapper/TenantPermissionRecipientMapper.class
+  + paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/domain/tenantaccess/TenantPermissionRecipientView.class
+  + paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/domainservice/repository/TenantPermissionRecipientRepository.class
+  + paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/domainservice/repository/impl/TenantPermissionRecipientRepositoryImpl.class
+  + paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/domainservice/service/TenantPermissionRecipientService.class
+  + paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/domainservice/service/impl/TenantPermissionRecipientServiceImpl.class
+  + paytech-platform-support-access-control.jar!mapper/access-control/TenantPermissionRecipientMapper.xml
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/notification/request/SubmitNotificationRequestBody$TenantRecipients.class
+  + paytech-platform-support-core.jar!com/paytech/platform/support/service/processor/notification/SubmitTenantNotificationProcessor.class
+  + paytech-platform-support-core.jar!com/paytech/platform/support/service/processor/notification/request/SubmitTenantNotificationRequest.class
+  + paytech-platform-support-core.jar!com/paytech/platform/support/service/processor/notification/response/SubmitTenantNotificationResponse.class
+  ~ BOOT-INF/classes/application.yml
+  ~ BOOT-INF/classes/com/paytech/platform/support/ext/rest/notification/NotificationController.class
+  ~ BOOT-INF/classes/com/paytech/platform/support/ext/rest/notification/NotificationConverter.class
+  ~ paytech-platform-support-access-control.jar!com/paytech/platform/support/accesscontrol/domain/clientteam/ClientTeamPermissions.class
+  ~ paytech-platform-support-access-control.jar!operations/console-resource-capabilities.json
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/notification/request/SubmitNotificationRequestBody$Recipient.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/notification/request/SubmitNotificationRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/notification/response/SubmitNotificationResponseBody.class
+  ~ paytech-platform-support-delivery.jar!com/paytech/platform/support/delivery/service/processor/SubmitNotificationProcessor.class
+  ~ paytech-platform-support-delivery.jar!com/paytech/platform/support/delivery/service/processor/request/SubmitNotificationRequest$Recipient.class

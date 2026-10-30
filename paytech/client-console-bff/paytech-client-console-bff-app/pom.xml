@@ -17,6 +17,7 @@
     <dependencies>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-client-master-api</artifactId></dependency>
         <dependency><groupId>com.paytech</groupId><artifactId>paytech-compliance-api</artifactId></dependency>
+        <dependency><groupId>com.paytech</groupId><artifactId>paytech-payout-api</artifactId></dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-platform-support-api</artifactId>

@@ -1,0 +1,782 @@
+{
+ "command": "api",
+ "results": [
+  {
+   "ac": "AC-01",
+   "step": "运营字段清单 LOCAL × AE × USD",
+   "ok": true,
+   "detail": {
+    "fields": [
+     "holderName",
+     "iban",
+     "bankName"
+    ]
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "运营字段清单 LOCAL × EG × USD 不支持 404",
+   "ok": true,
+   "detail": {
+    "status": 404,
+    "code": "BENEFICIARY_REQUIREMENT_NOT_FOUND",
+    "detail": "该国家 / 币种没有字段要求: LOCAL EG USD"
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "运营代 A 提交 AE 本地 USD → PENDING_REVIEW，掩码与后四位",
+   "ok": true,
+   "detail": {
+    "id": "241927555391750144",
+    "code": "BA-0001",
+    "masked": "S*** T****** L**"
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "运营代 A 提交 SWIFT USD → PENDING_REVIEW",
+   "ok": true,
+   "detail": {
+    "id": "241927555727294464"
+   }
+  },
+  {
+   "ac": "AC-10",
+   "step": "新键、同 Owner 同内容重复提交 → 返回原账户（业务幂等）",
+   "ok": true,
+   "detail": {
+    "id": "241927555391750144"
+   }
+  },
+  {
+   "ac": "AC-02",
+   "step": "同 Owner 同账号、内容不同 → 409 BENEFICIARY_DUPLICATE",
+   "ok": true,
+   "detail": {
+    "status": 409,
+    "code": "BENEFICIARY_DUPLICATE",
+    "detail": "同一 Owner 已有相同账号的收款账户: 241927555391750144, 状态 PENDING_REVIEW"
+   }
+  },
+  {
+   "ac": "AC-02",
+   "step": "409 含已有账户 ID（technique P1）",
+   "ok": true,
+   "detail": {
+    "detail": "同一 Owner 已有相同账号的收款账户: 241927555391750144, 状态 PENDING_REVIEW"
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "运营提交不支持组合 LOCAL × EG × USD 422",
+   "ok": true,
+   "detail": {
+    "status": 422,
+    "code": "BENEFICIARY_UNSUPPORTED_ROUTE",
+    "detail": "该国家 / 币种暂不支持: LOCAL EG USD"
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "运营提交IBAN 格式不符 400",
+   "ok": true,
+   "detail": {
+    "status": 400,
+    "code": "INVALID_REQUEST",
+    "detail": "请求参数不正确"
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "运营提交清单外字段 400",
+   "ok": true,
+   "detail": {
+    "status": 400,
+    "code": "INVALID_REQUEST",
+    "detail": "请求参数不正确"
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "运营提交缺必填字段 400",
+   "ok": true,
+   "detail": {
+    "status": 400,
+    "code": "INVALID_REQUEST",
+    "detail": "请求参数不正确"
+   }
+  },
+  {
+   "ac": "AC-02",
+   "step": "运营代另一 Client 提交共用同一账号 → PENDING_REVIEW",
+   "ok": true,
+   "detail": {
+    "id": "241927556964614144",
+    "ownerId": "240686705999454209"
+   }
+  },
+  {
+   "ac": "R10",
+   "step": "无 PAYOUT 权限运营提交 403",
+   "ok": true,
+   "detail": {
+    "status": 403,
+    "code": "OPERATIONS_PERMISSION_DENIED",
+    "detail": "没有执行此操作的权限"
+   }
+  },
+  {
+   "ac": "R10",
+   "step": "只读运营（ro）提交 403",
+   "ok": true,
+   "detail": {
+    "status": 403,
+    "code": "OPERATIONS_PERMISSION_DENIED",
+    "detail": "没有执行此操作的权限"
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "AE 本地：mor_payout 三表无原值（户名 / IBAN / 账号）",
+   "ok": true,
+   "detail": {
+    "hits": []
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "AE 本地：Vault 有 PAYOUT_BENEFICIARY_V1 与 PAYOUT_BANK_ACCOUNT_KEY_V1 两类 Token",
+   "ok": true,
+   "detail": {
+    "row": [
+     [
+      "PAYOUT_BENEFICIARY_V1",
+      "PAYOUT_BANK_ACCOUNT_KEY_V1"
+     ]
+    ]
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "SWIFT：mor_payout 三表无原值（户名 / IBAN / 账号）",
+   "ok": true,
+   "detail": {
+    "hits": []
+   }
+  },
+  {
+   "ac": "AC-01",
+   "step": "SWIFT：Vault 有 PAYOUT_BENEFICIARY_V1 与 PAYOUT_BANK_ACCOUNT_KEY_V1 两类 Token",
+   "ok": true,
+   "detail": {
+    "row": [
+     [
+      "PAYOUT_BENEFICIARY_V1",
+      "PAYOUT_BANK_ACCOUNT_KEY_V1"
+     ]
+    ]
+   }
+  },
+  {
+   "ac": "AC-02",
+   "step": "跨 Owner 同账号的 STABLE Token 相同（盲索引）",
+   "ok": true,
+   "detail": {
+    "distinctTokens": "1"
+   }
+  },
+  {
+   "ac": "R10",
+   "step": "只读运营（ro）Reveal 403",
+   "ok": true,
+   "detail": {
+    "status": 403,
+    "code": "OPERATIONS_PERMISSION_DENIED",
+    "detail": "没有执行此操作的权限"
+   }
+  },
+  {
+   "ac": "R10",
+   "step": "只读运营（ro）可读核验队列 200",
+   "ok": true,
+   "detail": {
+    "status": 200
+   }
+  },
+  {
+   "ac": "R10",
+   "step": "只读运营（ro）Maker 意见 403",
+   "ok": true,
+   "detail": {
+    "status": 403,
+    "code": "OPERATIONS_PERMISSION_DENIED",
+    "detail": "没有执行此操作的权限"
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "Maker 队列含三条新账户",
+   "ok": true,
+   "detail": {
+    "total": 4
+   }
+  },
+  {
+   "ac": "AC-02",
+   "step": "队列项 sharedOwners 列出另一 Client 的账户",
+   "ok": true,
+   "detail": {
+    "sharedOwners": [
+     {
+      "accountCode": "BA-0001",
+      "ownerId": "240686705999454209",
+      "ownerType": "CLIENT",
+      "status": "PENDING_REVIEW"
+     }
+    ],
+    "profiles": [
+     "CLIENT:240686705999454209"
+    ]
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "详情聚合 Owner 法定名（client-master）",
+   "ok": true,
+   "detail": {
+    "owner": {
+     "ownerType": "CLIENT",
+     "ownerId": "237575207592763393",
+     "ownerNo": "CL-237575207592763393",
+     "legalName": "Accept Tester",
+     "status": "ACTIVE"
+    }
+   }
+  },
+  {
+   "ac": "AC-02",
+   "step": "详情 sharedOwners + sharedOwnerProfiles 含对方 Client 法定名",
+   "ok": true,
+   "detail": {
+    "profiles": {
+     "CLIENT:240686705999454209": {
+      "ownerType": "CLIENT",
+      "ownerId": "240686705999454209",
+      "ownerNo": "CL-240686705999454209",
+      "legalName": "Acceptance Trading 1027040243 LLC",
+      "status": "ACTIVE"
+     }
+    }
+   }
+  },
+  {
+   "ac": "AC-07",
+   "step": "Reveal 返回原值字段（不输出值）",
+   "ok": true,
+   "detail": {
+    "fields": [
+     "beneficiaryAccountId",
+     "holderName",
+     "iban"
+    ]
+   }
+  },
+  {
+   "ac": "AC-07",
+   "step": "Reveal 审计：payout REVEAL 事件 + Vault 访问事件（用途 PAYOUT_BENEFICIARY_REVIEW）",
+   "ok": true,
+   "detail": {
+    "payoutEvents": [
+     [
+      "REVEAL",
+      "MAKER_REVIEW",
+      "OPERATIONS",
+      "241927147466342400"
+     ],
+     [
+      "REVEAL",
+      "MAKER_REVIEW",
+      "OPERATIONS",
+      "241927147466342400"
+     ]
+    ],
+    "vaultLatest": [
+     [
+      "payout-service",
+      "REVEAL",
+      "PAYOUT_BENEFICIARY_V1",
+      "PAYOUT_BENEFICIARY_REVIEW",
+      "SUCCESS",
+      "NULL"
+     ]
+    ]
+   }
+  },
+  {
+   "ac": "AC-07",
+   "step": "Reveal 原因代码非法 422",
+   "ok": true,
+   "detail": {
+    "status": 422,
+    "code": "VALIDATION_ERROR",
+    "detail": "请求字段校验未通过"
+   }
+  },
+  {
+   "ac": "AC-07",
+   "step": "无 PAYOUT 权限运营 Reveal 403",
+   "ok": true,
+   "detail": {
+    "status": 403,
+    "code": "OPERATIONS_PERMISSION_DENIED",
+    "detail": "没有执行此操作的权限"
+   }
+  },
+  {
+   "ac": "R10",
+   "step": "无 PAYOUT 权限运营读队列 403",
+   "ok": true,
+   "detail": {
+    "status": 403,
+    "code": "OPERATIONS_PERMISSION_DENIED",
+    "detail": "没有执行此操作的权限"
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "Checker 在无 Maker 意见时 409",
+   "ok": true,
+   "detail": {
+    "status": 409,
+    "code": "BENEFICIARY_STATUS_CONFLICT",
+    "detail": "该账户尚无 Maker 意见: 收款账户 241927555391750144, 状态 PENDING_REVIEW"
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "Maker 意见 APPROVE（带 note）：运营详情与库内有备注",
+   "ok": true,
+   "detail": {
+    "makerId": "241927147466342400",
+    "version": "1",
+    "noteInCommandResponse": null,
+    "noteInDetail": "S1MT 户名与法定名一致"
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "重复 Maker 意见 409",
+   "ok": true,
+   "detail": {
+    "status": 409,
+    "code": "BENEFICIARY_STATUS_CONFLICT",
+    "detail": "该账户已有 Maker 意见: 收款账户 241927555391750144, 状态 PENDING_REVIEW"
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "进入 Checker 队列",
+   "ok": true,
+   "detail": {
+    "total": 1
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "同一人做 Checker 403 FOUR_EYES_REQUIRED",
+   "ok": true,
+   "detail": {
+    "status": 403,
+    "code": "FOUR_EYES_REQUIRED",
+    "detail": "需由另一人复核: 收款账户 241927555391750144, 操作人 241927147466342400"
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "contentHash 不一致 409",
+   "ok": true,
+   "detail": {
+    "status": 409,
+    "code": "CONCURRENT_REQUEST",
+    "detail": "审阅的内容摘要与当前账户不一致，请重新审阅: 241927555391750144"
+   }
+  },
+  {
+   "ac": "AC-10",
+   "step": "Checker expectedVersion 过期（当前 − 1）409",
+   "ok": true,
+   "detail": {
+    "status": 409,
+    "code": "CONCURRENT_REQUEST",
+    "detail": "收款账户已变更，请刷新后重试: 241927555391750144, 当前版本 1"
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "另一人批准 → VERIFIED，coolingUntil = 决定 + 24h",
+   "ok": true,
+   "detail": {
+    "decisionTime": "2026-10-30T14:13:46.870531Z",
+    "coolingUntil": "2026-10-31T14:13:46.870531Z",
+    "checkerId": "241927149974536192"
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "库内 cooling_until − decision_time = 86400 秒，Maker ≠ Checker",
+   "ok": true,
+   "detail": {
+    "row": [
+     [
+      "VERIFIED",
+      "86400",
+      "241927147466342400",
+      "241927149974536192"
+     ]
+    ]
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "Maker 建议拒绝时 Checker 批准 409",
+   "ok": true,
+   "detail": {
+    "status": 409,
+    "code": "BENEFICIARY_STATUS_CONFLICT",
+    "detail": "Maker 建议拒绝，不能批准: 收款账户 241927555727294464, 状态 PENDING_REVIEW"
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "拒绝 → REJECTED，原因代码与给 Client 的说明（沿用 Maker 的 clientNote）",
+   "ok": true,
+   "detail": {
+    "reasonCode": "HOLDER_NAME_MISMATCH",
+    "reasonNote": "S1MT 请上传银行开户证明"
+   }
+  },
+  {
+   "ac": "AC-04",
+   "step": "运营详情：VERIFIED、usable=false、coolingUntil 有值",
+   "ok": true,
+   "detail": {
+    "coolingUntil": "2026-10-31T14:13:46.870531Z"
+   }
+  },
+  {
+   "ac": "AC-04",
+   "step": "运营视图 Client A 阻断原因 ⊇ ['ACCOUNT_COOLING']（account 现值 [['AE001', 'USD', 'AVAILABLE', '97.00000000'], ['AE001', 'USD', 'PENDING', '137.69000000']]）",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "position": {
+     "available": "97.00",
+     "blockReasons": [
+      "ACCOUNT_COOLING"
+     ],
+     "currency": "USD",
+     "entityNo": "AE001",
+     "locked": "0.00",
+     "pending": "137.69",
+     "recoveryReceivable": "0.00",
+     "securityDeposit": "0.00"
+    }
+   }
+  },
+  {
+   "ac": "AC-08",
+   "step": "运营视图 Client A 桶余额为字符串且与 mor_account 一致",
+   "ok": true,
+   "detail": {
+    "pending": "137.69",
+    "available": "97.00",
+    "locked": "0.00",
+    "securityDeposit": "0.00",
+    "recoveryReceivable": "0.00"
+   }
+  },
+  {
+   "ac": "AC-08",
+   "step": "运营视图 Client B 阻断原因 ⊇ ['NO_AVAILABLE_BALANCE', 'NO_USABLE_ACCOUNT']（account 现值 []）",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "position": null
+   }
+  },
+  {
+   "ac": "AC-08",
+   "step": "Client Z（只有 PENDING）：NO_AVAILABLE_BALANCE + NO_USABLE_ACCOUNT",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "position": {
+     "available": "0.00",
+     "blockReasons": [
+      "NO_AVAILABLE_BALANCE",
+      "NO_USABLE_ACCOUNT"
+     ],
+     "currency": "USD",
+     "entityNo": "AE001",
+     "locked": "0.00",
+     "pending": "51.10",
+     "recoveryReceivable": "0.00",
+     "securityDeposit": "0.00"
+    }
+   }
+  },
+  {
+   "ac": "AC-08",
+   "step": "无 account 账户的 Owner（C）：positions 为空数组",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "positions": []
+   }
+  },
+  {
+   "ac": "AC-10",
+   "step": "停用 expectedVersion 过期（当前 − 1）409",
+   "ok": true,
+   "detail": {
+    "status": 409,
+    "code": "CONCURRENT_REQUEST",
+    "detail": "收款账户已变更，请刷新后重试: 241927583321620480, 当前版本 2"
+   }
+  },
+  {
+   "ac": "AC-06",
+   "step": "停用 → SUSPENDED（RISK_REVIEW）",
+   "ok": true,
+   "detail": {
+    "version": "3"
+   }
+  },
+  {
+   "ac": "AC-06",
+   "step": "停用原因非法 400",
+   "ok": true,
+   "detail": {
+    "status": 400,
+    "code": "INVALID_REQUEST",
+    "detail": "请求参数不正确"
+   }
+  },
+  {
+   "ac": "AC-06",
+   "step": "恢复 → PENDING_REVIEW，清 Maker / Checker 与冷却，需重核",
+   "ok": true,
+   "detail": {
+    "status": "PENDING_REVIEW"
+   }
+  },
+  {
+   "ac": "AC-06",
+   "step": "恢复后重走核验与冷却（新 coolingUntil）",
+   "ok": true,
+   "detail": {
+    "firstCooling": "2026-10-31T14:13:50.820208Z",
+    "secondCooling": "2026-10-31T14:13:51.148491Z"
+   }
+  },
+  {
+   "ac": "AC-06",
+   "step": "运营关闭 VERIFIED 账户 → CLOSED（OPS）",
+   "ok": true,
+   "detail": {
+    "version": "7"
+   }
+  },
+  {
+   "ac": "AC-06",
+   "step": "CLOSED 账户再关闭 409",
+   "ok": true,
+   "detail": {
+    "status": 409,
+    "code": "BENEFICIARY_STATUS_CONFLICT",
+    "detail": "已拒绝或已关闭的账户不能关闭: 收款账户 241927583321620480, 状态 CLOSED"
+   }
+  },
+  {
+   "ac": "AC-06",
+   "step": "事件时间线完整（提交 → 核验 → 停用 → 恢复 → 重核 → 关闭）",
+   "ok": true,
+   "detail": {
+    "events": [
+     [
+      "1",
+      "SUBMIT",
+      "PENDING_REVIEW"
+     ],
+     [
+      "2",
+      "MAKER_REVIEW",
+      "PENDING_REVIEW"
+     ],
+     [
+      "3",
+      "CHECKER_DECIDE",
+      "VERIFIED"
+     ],
+     [
+      "4",
+      "SUSPEND",
+      "SUSPENDED"
+     ],
+     [
+      "5",
+      "RESUME",
+      "PENDING_REVIEW"
+     ],
+     [
+      "6",
+      "MAKER_REVIEW",
+      "PENDING_REVIEW"
+     ],
+     [
+      "7",
+      "CHECKER_DECIDE",
+      "VERIFIED"
+     ],
+     [
+      "8",
+      "CLOSE",
+      "CLOSED"
+     ]
+    ]
+   }
+  },
+  {
+   "ac": "AC-06",
+   "step": "运营关闭待核验账户 → CLOSED（原因 OPS）",
+   "ok": true,
+   "detail": {
+    "id": "241927555953786880"
+   }
+  },
+  {
+   "ac": "AC-03",
+   "step": "B 共用账户 Maker 建议通过，留在 Checker 队列",
+   "ok": true,
+   "detail": null
+  },
+  {
+   "ac": "准备",
+   "step": "浏览器走查账户 A_BROWSER_MAKER → PENDING_REVIEW",
+   "ok": true,
+   "detail": {
+    "id": "241927607745052672"
+   }
+  },
+  {
+   "ac": "准备",
+   "step": "浏览器走查账户 A_BROWSER_REJECT → PENDING_REVIEW",
+   "ok": true,
+   "detail": {
+    "id": "241927633527439360"
+   }
+  },
+  {
+   "ac": "回归",
+   "step": "REQ-04 限额档位列表 GET /risk-limit-tiers/v1/client-tiers 200",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "total": 6
+   }
+  },
+  {
+   "ac": "回归",
+   "step": "REQ-04 档位配额 GET /risk-limit-tiers/v1/tier-quotas 200",
+   "ok": true,
+   "detail": {
+    "status": 200
+   }
+  },
+  {
+   "ac": "回归",
+   "step": "联合查询键类型列表 200",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "total": 29
+   }
+  },
+  {
+   "ac": "回归",
+   "step": "多语言发布历史 200",
+   "ok": true,
+   "detail": {
+    "status": 200,
+    "total": 29
+   }
+  }
+ ],
+ "data": {
+  "clients": {
+   "A": "237575207592763393",
+   "B": "240686705999454209"
+  },
+  "accounts": {
+   "A_AE_LOCAL": "241927555391750144",
+   "A_SWIFT_1": "241927555727294464",
+   "A_SWIFT_2": "241927555953786880",
+   "B_AE_SHARED": "241927556964614144",
+   "A_SA_LOCAL_LIFECYCLE": "241927583321620480",
+   "A_BROWSER_MAKER": "241927607745052672",
+   "A_BROWSER_REJECT": "241927633527439360"
+  },
+  "operators": {
+   "maker": {
+    "accountId": "241927147466342400",
+    "roleId": "241927146631675904",
+    "permissions": [
+     "READ",
+     "SUBMIT",
+     "REVIEW",
+     "REVEAL",
+     "MANAGE",
+     "FINANCE_MENU"
+    ]
+   },
+   "checker": {
+    "accountId": "241927149974536192",
+    "roleId": "241927149152452608",
+    "permissions": [
+     "READ",
+     "SUBMIT",
+     "REVIEW",
+     "REVEAL",
+     "MANAGE",
+     "FINANCE_MENU"
+    ]
+   },
+   "ro": {
+    "accountId": "241927152331735040",
+    "roleId": "241927151505457152",
+    "permissions": [
+     "READ",
+     "FINANCE_MENU"
+    ]
+   },
+   "noperm": {
+    "accountId": "241927154286280704",
+    "roleId": "241927153694883840",
+    "permissions": [
+     "DATA_QUERY_READ"
+    ]
+   }
+  },
+  "billingFacts": [],
+  "notifications": [],
+  "viewer": {},
+  "startedUtc": "2026-10-30 14:13:01",
+  "accountCodes": {
+   "A_BROWSER_MAKER": "BA-0005",
+   "A_BROWSER_REJECT": "BA-0006"
+  }
+ },
+ "pass": 64,
+ "fail": 0
+}

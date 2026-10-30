@@ -1,0 +1,3 @@
+main=9eab368c candidate_head=9eab368c expected=9eab368c
+files=247 status_extra=0 status_missing=0 tracked_diff_outside_list=0 hash_mismatch=0
+NO DRIFT

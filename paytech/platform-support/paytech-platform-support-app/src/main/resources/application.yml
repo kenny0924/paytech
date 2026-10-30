@@ -230,6 +230,9 @@ notification:
       read-timeout: 15s
   # 内部 HTTP 调用方白名单：服务名 → 可用普通邮件模板编码。过渡信任，X-Caller-Service 可伪造，部署须限制私网访问。
   # 默认为空，全部拒绝；例如 payment-service: [PAYMENT_REFUND_SUCCEEDED_EMAIL]
+  # payout S1（收款账户状态通知，按租户权限 tenantRecipients 解析收件人）各环境配置：
+  #   payout-service: [PAYOUT_BENEFICIARY_VERIFIED_EMAIL, PAYOUT_BENEFICIARY_REJECTED_EMAIL,
+  #                    PAYOUT_BENEFICIARY_SUSPENDED_EMAIL, PAYOUT_BENEFICIARY_CLOSED_EMAIL]
   http:
     callers: {}
 

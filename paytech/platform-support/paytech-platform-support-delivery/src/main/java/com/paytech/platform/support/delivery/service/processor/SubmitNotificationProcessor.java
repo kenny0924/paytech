@@ -59,13 +59,35 @@ public class SubmitNotificationProcessor
         NotificationInput.parameters(request.getDefaultParameters());
         var addresses = new HashSet<String>();
         for (var recipient : request.getRecipients()) {
-            if (!addresses.add(NotificationInput.canonicalEmail(recipient.getEmail()))) {
+            if (!addresses.add(addressKey(recipient))) {
                 throw new InvalidParameterException("同一通知中不允许重复邮箱");
             }
             if (recipient.getLocale() != null)
                 NotificationInput.locale(recipient.getLocale());
             NotificationInput.parameters(recipient.getParameters());
         }
+    }
+
+    /**
+     * 收件人去重键：邮箱规范化值，或已保护 Token
+     * <li>两者恰好提供一个；同一请求混用两种来源时不能跨来源判重，由提供 Token 的入口保证不混用。</li>
+     */
+    static String addressKey(SubmitNotificationRequest.Recipient recipient) {
+        boolean hasEmail = recipient.getEmail() != null;
+        boolean hasToken = recipient.getAddressVaultToken() != null;
+        if (hasEmail == hasToken) {
+            throw new InvalidParameterException("收件人必须且只能提供邮箱或已保护邮箱 Token 之一");
+        }
+        if (hasToken) {
+            if (recipient.getAddressVaultToken().isBlank()) {
+                throw new InvalidParameterException("收件人邮箱 Token 不能为空");
+            }
+            return "token:" + recipient.getAddressVaultToken();
+        }
+        if (recipient.getEmail().isBlank()) {
+            throw new InvalidParameterException("收件邮箱不能为空");
+        }
+        return "email:" + NotificationInput.canonicalEmail(recipient.getEmail());
     }
 
     /** 先检查全部输入与配置，事务外保护地址，再一次性保存与登记任务；即时发送模板不经此入口。 */
@@ -83,7 +105,7 @@ public class SubmitNotificationProcessor
         return new SubmitNotificationResponse(context.getRequest().getRequestId(), context.getDeliveries().size());
     }
 
-    /** 检查每个收件人的当前语言及必要参数，任何一项失败都不会调用 Vault。 */
+    /** 检查每个收件人的当前语言及必要参数，任何一项失败都不会调用 Vault；已提供 Token 的收件人不再 Protect。 */
     SubmitNotificationContext buildContext(SubmitNotificationRequest input, NotificationTemplate template,
         NotificationRoute route) {
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
@@ -118,8 +140,9 @@ public class SubmitNotificationProcessor
             deliveries.add(delivery);
         }
         for (int index = 0; index < deliveries.size(); index++) {
-            String email = NotificationInput.canonicalEmail(input.getRecipients().get(index).getEmail());
-            deliveries.get(index).setAddressVaultToken(vault.protect(email));
+            var recipient = input.getRecipients().get(index);
+            deliveries.get(index).setAddressVaultToken(recipient.getAddressVaultToken() != null
+                ? recipient.getAddressVaultToken() : vault.protect(NotificationInput.canonicalEmail(recipient.getEmail())));
         }
         return new SubmitNotificationContext(request, java.util.List.copyOf(deliveries));
     }

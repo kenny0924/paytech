@@ -1,0 +1,12 @@
+# payout S1 收款账户与余额解释 · mor-test 覆盖文件（阶段 6 准备，2026-10-30；阶段 7 须用户授权，由主会话执行）。
+# compose.sh 已带 compose.yaml + compose.applications.yaml + compose.scheduler.yaml，只传本文件，不叠加任何历史覆盖文件：
+#   ./test-environment/compose.sh -f "<本文件绝对路径>" up -d --no-deps --no-build --pull never --wait --wait-timeout 180 <service>
+# 只认 sha256（tag payout-s1-20261030a 仅供辨认）。不加 --remove-orphans。
+# 构建源：/Users/kenny/Desktop/Workspace/Code-MoR-po-rel = main 9eab368c + po-int 241 个文件（21 个与 30361be7..9eab368c 重叠的三方合并，见 evidence/merge-notes.md）+ test-environment 5 个文件 + payout 测试 Mock 修正，未提交。
+# env 继承现网覆盖的 OPERATIONS_TAX_BASE_URL（只在历史覆盖文件里，base 没有），其余在 base；payout-service 经 Nacos 发现，无地址键。
+services:
+  operations-console-bff:
+    # 新：/payout-admin/v1 十二个接口（核验队列、详情聚合法定名、代提交、Maker / Checker、Reveal、停用 / 恢复 / 关闭、字段要求、余额）。其余 = 现网 rq04-20261030b（JAR 3061 项 0 独有）。
+    image: sha256:626a74a740cecb8ca643160b4f8423a1c071744b87f3cb1bf3a07c68ec779a3c  # mor-test/operations-console-bff:payout-s1-20261030a（JAR 2081c6a988461a47）
+    environment:
+      OPERATIONS_TAX_BASE_URL: http://tax-service:18116

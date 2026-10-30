@@ -50,7 +50,7 @@
         <module>ledger</module>
         <module>reconciliation</module>
         <module>tax</module>
-        <!-- <module>payout</module> -->
+        <module>payout</module>
         <!-- <module>dispute</module> -->
         <!-- <module>fx</module> -->
         <module>tools/arch-rules</module>

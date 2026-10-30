@@ -1,0 +1,131 @@
+{
+ "command": "plan",
+ "results": [
+  {
+   "ac": "plan",
+   "step": "Client A 237575207592763393 ACTIVE 且工作区 ACTIVE",
+   "ok": true,
+   "detail": {
+    "client/tenant/members": [
+     [
+      "ACTIVE",
+      "ACTIVE",
+      "1"
+     ]
+    ],
+    "accountRows": [
+     [
+      "AE001",
+      "USD",
+      "AVAILABLE",
+      "97.00000000"
+     ],
+     [
+      "AE001",
+      "USD",
+      "PENDING",
+      "137.69000000"
+     ]
+    ]
+   }
+  },
+  {
+   "ac": "plan",
+   "step": "Client B 240686705999454209 ACTIVE 且工作区 ACTIVE",
+   "ok": true,
+   "detail": {
+    "client/tenant/members": [
+     [
+      "ACTIVE",
+      "ACTIVE",
+      "1"
+     ]
+    ],
+    "accountRows": []
+   }
+  },
+  {
+   "ac": "plan",
+   "step": "Client Z 237092466744991745 ACTIVE 且工作区 ACTIVE",
+   "ok": true,
+   "detail": {
+    "client/tenant/members": [
+     [
+      "ACTIVE",
+      "ACTIVE",
+      "1"
+     ]
+    ],
+    "accountRows": [
+     [
+      "AE001",
+      "USD",
+      "PENDING",
+      "51.10000000"
+     ]
+    ]
+   }
+  },
+  {
+   "ac": "plan",
+   "step": "Client C 241049681294106625 ACTIVE 且工作区 ACTIVE",
+   "ok": true,
+   "detail": {
+    "client/tenant/members": [
+     [
+      "ACTIVE",
+      "ACTIVE",
+      "1"
+     ]
+    ],
+    "accountRows": []
+   }
+  },
+  {
+   "ac": "plan",
+   "step": "块 147 路由状态（阶段 7 激活后应 ACTIVE 19）",
+   "ok": true,
+   "detail": {}
+  },
+  {
+   "ac": "plan",
+   "step": "Vault payout-service 规则数（阶段 7 后应 3）",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "ac": "plan",
+   "step": "mor_payout 表数（阶段 7 后应 3）",
+   "ok": true,
+   "detail": "0"
+  },
+  {
+   "ac": "plan",
+   "step": "Client 所有者凭据文件就位（D-4）",
+   "ok": false,
+   "detail": {
+    "file": "/Users/kenny/Code-MoR-backups/payout-s1-stage7/clients.json",
+    "exists": false
+   }
+  },
+  {
+   "ac": "plan",
+   "step": "运营合成账号（accounts 之后应 4 个）",
+   "ok": true,
+   "detail": []
+  }
+ ],
+ "data": {
+  "clients": {
+   "A": "237575207592763393",
+   "B": "240686705999454209"
+  },
+  "accounts": {},
+  "operators": {},
+  "billingFacts": [],
+  "notifications": [],
+  "viewer": {}
+ },
+ "pass": 8,
+ "fail": 1
+}

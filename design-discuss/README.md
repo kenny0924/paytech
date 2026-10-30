@@ -29,3 +29,5 @@
 - 讨论定稿：登记决定记录，并在决定记录里链接本目录的文件；`AGENTS.md` 只在需要路由时加一条。
 - 已实施后：实现偏离设计的地方回写到 `design.md`（标注日期与原因），不改历史结论的措辞。
 - `.pen` 只用 Pencil 工具读写；Pen 应用里的修改要手动保存才会落盘；文件移动后要在 Pen 中重新打开新路径。
+
+新增讨论（2026-10-29）：[`payout/`](payout/design.md)——出款系统设计讨论，调研阶段：行业三类 payout（结算出款 / 代发分账 / 退款到卡）、余额与成熟、触发方式、生命周期（失败 vs 退回）、收款账户、费用与 FX、Maker-Checker 与付款运行、合规与 PayFac 资金流、记账对账、GCC 轨道；对照现有 Manual Payout 七表设计的用例覆盖表 P-01–P-22 与待定 Q1–Q10。原始调研笔记 [`assets/research-industry-payout.md`](payout/assets/research-industry-payout.md)。`payout.pen` 九张画板（职责边界与系统上下文；概念模型与付款方 / 收款方 / 发起来源 / 审批策略 / 执行渠道五维度；现行状态机与 03b 简化提案；100 USD 走数例子；接口事件、用例覆盖与 Q1–Q10；自有银行人工渠道与服务商 API 渠道两张时序泳道图；07 出款渠道修正模型与 Q11–Q14），导出 `assets/01-…07-*.png`。状态：**已确认**（2026-10-30）：决定 [`2026-10-30-payout-settlement-payout-model.md`](../agent-docs/decisions/2026-10-30-payout-settlement-payout-model.md)（P1–P12）；首个需求 `requirements/20261030/payout-收款账户与余额解释/`（阶段 1 评审稿）；`design.md` 第 8–10 节为字段级模型、各系统改动与切片 S1–S5；未改代码与模型。

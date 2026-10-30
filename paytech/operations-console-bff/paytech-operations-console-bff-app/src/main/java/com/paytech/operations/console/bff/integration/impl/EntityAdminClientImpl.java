@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import com.paytech.client.master.api.entityadmin.ClientMasterEntityAdminApi;
 import com.paytech.client.master.api.entityadmin.request.ChangeAcquiringQualificationRequestBody;
 import com.paytech.client.master.api.entityadmin.request.ReplacePartnerRolesRequestBody;
+import com.paytech.client.master.api.entityadmin.response.ClientSummaryResponseBody;
 import com.paytech.client.master.api.entityadmin.response.LocalPartnerDetailResponseBody;
 import com.paytech.client.master.api.entityadmin.response.LocalPartnerSummaryResponseBody;
 import com.paytech.client.master.api.entityadmin.response.OperatingEntityDetailResponseBody;
@@ -63,6 +64,14 @@ public class EntityAdminClientImpl implements EntityAdminClient {
     @Override
     public LocalPartnerDetailResponseBody localPartner(OperatorContext o, String localPartnerId) {
         return partner(localPartnerId, api.getLocalPartner(o.accountId(), o.sessionId(), localPartnerId));
+    }
+
+    /** Client 摘要；回执必须属于本 Client 且带状态。 */
+    @Override
+    public ClientSummaryResponseBody clientSummary(OperatorContext o, String clientId) {
+        var client = api.getClientSummary(o.accountId(), o.sessionId(), clientId);
+        require(client != null && clientId.equals(client.getClientId()) && client.getStatus() != null);
+        return client;
     }
 
     /** 只保留 client-master 已按条件过滤的 ACTIVE OE_PROVIDER；返回其他角色或状态视为上游响应无效。 */

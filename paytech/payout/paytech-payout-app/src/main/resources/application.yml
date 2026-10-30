@@ -1,0 +1,165 @@
+server:
+  address: 127.0.0.1
+  port: 18117
+
+spring:
+  application:
+    name: payout-service
+  config:
+    # 收款账户字段要求静态清单（Q-1，S3 由 channel-connector 出款账户能力取代后删除）。
+    import:
+      - "classpath:beneficiary-requirements.yaml"
+  jmx:
+    enabled: false
+  cloud:
+    nacos:
+      config:
+        # 启用 nacos Profile 后，从配置中心加载服务配置。
+        enabled: false
+      discovery:
+        # 注册本服务（Client / Operations BFF 经服务发现调用）并发现 Vault、account 与 Platform Support；地址与命名空间由部署环境注入。
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
+    loadbalancer:
+      retry:
+        enabled: false
+  datasource:
+    url: "${PAYOUT_DB_URL:jdbc:mysql://127.0.0.1:13306/mor_payout?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}"
+    username: "${PAYOUT_DB_USERNAME:payout_app}"
+    password: "${PAYOUT_DB_PASSWORD:}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-init-sql: "SET time_zone = '+00:00'"
+      data-source-properties:
+        connectionTimeZone: UTC
+        forceConnectionTimeZoneToSession: true
+  # 写入口 AbstractLockProcessor 的资源锁（paytech-redis-starter）；地址与密码由部署环境注入。
+  data:
+    redis:
+      host: "${PAYOUT_REDIS_HOST:127.0.0.1}"
+      port: "${PAYOUT_REDIS_PORT:16379}"
+      password: "${PAYOUT_REDIS_PASSWORD:}"
+      connect-timeout: 2s
+      timeout: 2s
+  # 内部 HTTP 客户端：account 余额列表（余额解释）与 Platform 通知（补偿任务）；经服务发现选实例，JDK HttpClient 不自动重试。
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      account-service:
+        base-url: "${PAYOUT_ACCOUNT_SERVICE_URL:http://127.0.0.1:18114}"
+        connect-timeout: 2s
+        read-timeout: 5s
+        redirects: dont-follow
+      platform-support-service:
+        base-url: lb://platform-support-service/platform-support
+        connect-timeout: 2s
+        read-timeout: 10s
+        redirects: dont-follow
+
+web:
+  logging:
+    # 收款账户提交请求带户名与账号原值、Reveal 响应带原值（B7）：该前缀只记元数据，不记请求 / 响应体。
+    metadata-only-path-prefixes:
+      - /payout/v1/beneficiary-accounts
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-redis-starter：同 Owner 写命令共用资源锁 PAYOUT_BENEFICIARY_OWNER:{ownerType}:{ownerId}。
+redis:
+  coordination:
+    enabled: true
+
+# paytech-compensation-event：业务事务内登记 BENEFICIARY_NOTIFICATION，提交后执行；XXL-Job 执行器承载兜底扫描 compensationEventScan，
+# 调度中心地址与执行器参数沿用组件默认，由部署注入。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识前缀；部署多实例时由 PAYOUT_COMPENSATION_INSTANCE_ID 注入带实例后缀的值。
+  instance-id: "${PAYOUT_COMPENSATION_INSTANCE_ID:payout}"
+
+# 实例 ID（实例清单 instance.id）：内部调用 Token 的 inst；internal-auth.mode 非 OFF 时必填。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
+
+# 内部调用 Token（D26）：默认关闭；值必须带引号，裸 OFF 在 YAML 1.1 中是布尔 false。
+internal-auth:
+  mode: "OFF"
+
+vault:
+  client:
+    # 收款账户原值 Protect（PAYOUT_BENEFICIARY_V1 REFERENCE、PAYOUT_BANK_ACCOUNT_KEY_V1 STABLE，用途 PAYOUT_BENEFICIARY_SUBMIT）与
+    # 运营核验 Reveal（用途 PAYOUT_BENEFICIARY_REVIEW）；Vault 按调用服务名授权（mor_vault 访问规则）。
+    caller-service: payout-service
+    service-id: vault-service
+    connect-timeout: 2s
+    read-timeout: 5s
+
+management:
+  server:
+    # 管理端口 = 业务端口 + 1000。
+    address: 127.0.0.1
+    port: 19117
+  endpoints:
+    enabled-by-default: false
+    web:
+      discovery:
+        enabled: false
+      exposure:
+        include: health,info,prometheus
+    jmx:
+      exposure:
+        exclude: "*"
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      probes:
+        enabled: true
+        add-additional-paths: false
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+    info:
+      access: read-only
+    prometheus:
+      access: read-only
+
+payout:
+  beneficiary:
+    # 核验通过后的冷却时长（B4、Q-3）：默认 24 小时；批准时冻结 cooling_until，修改只影响之后的批准。
+    cooling: 24h
+  notification:
+    # 调用 Platform 通知的 X-Caller-Service，须登记在 Platform notification.http.callers。
+    caller-service: payout-service
+    # 通知默认语言（BCP 47）；收件人语言由 Platform 覆盖。
+    default-locale: en
+    # Owner 类型 → 收件人判定权限（S-05）：该 Owner 租户内具备此权限的有效成员收到邮件。
+    recipient-permissions:
+      # Local Partner 没有门户与权限码，不发通知（补偿任务记日志后完成）。
+      CLIENT: CLIENT_PAYOUT_ACCOUNT_MANAGE
+  identifier:
+    # 部署分配的 Snowflake Region / Worker 标识，必填；每个 app 独立分配。
+    region-id: "${PAYOUT_SNOWFLAKE_REGION_ID}"
+    worker-id: "${PAYOUT_SNOWFLAKE_WORKER_ID}"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: nacos
+    import:
+      - "optional:nacos:mor-common.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=false"
+      - "nacos:payout-service.yaml?group=${NACOS_GROUP:DEFAULT_GROUP}&refreshEnabled=true"
+  cloud:
+    nacos:
+      config:
+        enabled: true
+        server-addr: "${NACOS_SERVER_ADDR:127.0.0.1:8848}"
+        namespace: "${NACOS_NAMESPACE:mor-local}"
+        group: "${NACOS_GROUP:DEFAULT_GROUP}"
+        username: "${NACOS_USERNAME:}"
+        password: "${NACOS_PASSWORD:}"

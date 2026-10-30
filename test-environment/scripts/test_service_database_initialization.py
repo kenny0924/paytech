@@ -34,7 +34,7 @@ class ServiceDatabaseCatalogTest(unittest.TestCase):
     def test_catalog_matches_design_ten_databases_and_compose_wiring(self):
         names = [service.database for service in self.module.SERVICE_DATABASES]
         self.assertEqual(len(names), len(set(names)))
-        self.assertEqual(14, len(names))
+        self.assertEqual(15, len(names))
         base = COMPOSE_BASE.read_text(encoding="utf-8")
         applications = COMPOSE_APPLICATIONS.read_text(encoding="utf-8")
         for service in self.module.SERVICE_DATABASES:
@@ -45,7 +45,7 @@ class ServiceDatabaseCatalogTest(unittest.TestCase):
                 self.assertIn("/" + service.database + "?", applications)
                 self.assertIn("${" + service.password_variable + ":?prepare test secrets}", applications)
         self.assertEqual(
-            {"risk-decision", "compliance"},
+            {"risk-decision", "compliance", "payout"},
             {service.service for service in self.module.SERVICE_DATABASES if not service.applies_sql},
         )
 

@@ -36,6 +36,9 @@ public interface OwnerAccountRepository {
     List<OwnerAccount> findByOwner(AccountEntityType entityType, String entityId, String currency, OwnerType ownerType,
         String ownerId);
 
+    /** 读取一个核算对象在指定主体类型下全部主体与币种的账户，按主体、币种、主键排序。 */
+    List<OwnerAccount> findByOwnerAcrossEntities(AccountEntityType entityType, OwnerType ownerType, String ownerId);
+
     /** 按可选筛选条件分页读取主体与币种下的账户；账户号为精确匹配。 */
     List<OwnerAccount> findPage(AccountEntityType entityType, String entityId, String currency, OwnerType ownerType,
         String ownerId, String accountCode, BalanceBucket bucket, String accountNo, PagingRequestBody paging);

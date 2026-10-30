@@ -43,8 +43,9 @@ const entry = { journalEntryId: line.journalEntryId, ledgerBookId: book.ledgerBo
 const usd = (amount: string) => ({ currency: 'USD', amount });
 
 test('页面注册：财务七页按序登记，动作与 Platform 能力清单一致（账本查询增加发起试算，三个新页各有制单 / 复核）', () => {
-  // 对账七页（OPERATIONS_FINANCE_RECON_*）在 reconciliation/reconModel.test.ts 校验。
-  const finance = pageCapabilities.filter(page => page.componentKey.startsWith('OPERATIONS_FINANCE_') && !page.componentKey.startsWith('OPERATIONS_FINANCE_RECON_'));
+  // 对账七页（OPERATIONS_FINANCE_RECON_*）在 reconciliation/reconModel.test.ts 校验；出款两页（OPERATIONS_FINANCE_PAYOUT_*）在 payout/payout.test.ts 校验。
+  const finance = pageCapabilities.filter(page => page.componentKey.startsWith('OPERATIONS_FINANCE_') && !page.componentKey.startsWith('OPERATIONS_FINANCE_RECON_')
+    && !page.componentKey.startsWith('OPERATIONS_FINANCE_PAYOUT_'));
   assert.deepEqual(finance.map(page => [page.componentKey, page.frontendRoute]), [
     ['OPERATIONS_FINANCE_SETUP', '/finance/setup'], ['OPERATIONS_FINANCE_LEDGER', '/finance/ledger'], ['OPERATIONS_FINANCE_BALANCES', '/finance/balances'],
     ['OPERATIONS_FINANCE_SUBLEDGER', '/finance/subledger'], ['OPERATIONS_FINANCE_ADJUSTMENTS', '/finance/adjustments'],

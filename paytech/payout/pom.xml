@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.paytech</groupId>
+        <artifactId>paytech-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../build/paytech-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>paytech-payout</artifactId>
+    <packaging>pom</packaging>
+
+    <name>PayTech Payout</name>
+    <description>Payout service aggregator: settlement payout slice S1 beneficiary accounts and balance explanation (2026-10-30).</description>
+
+    <modules>
+        <module>paytech-payout-api</module>
+        <module>paytech-payout-core</module>
+        <module>paytech-payout-app</module>
+        <module>paytech-payout-test</module>
+    </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>payout-bootstrap-scope</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <searchTransitive>true</searchTransitive>
+                                    <excludes>
+                                        <!-- No other service's core/app; cross-service calls go through *-api only (D09). -->
+                                        <exclude>com.paytech:*-core</exclude>
+                                        <exclude>com.paytech:*-app</exclude>
+                                        <!-- S1 has no MQ consumer or producer: notifications go to Platform over HTTP from the local
+                                             compensation event, so AMQP / RabbitMQ stay banned until S2 publishes payout facts. -->
+                                        <exclude>org.flywaydb:*</exclude>
+                                        <exclude>org.liquibase:*</exclude>
+                                        <exclude>org.springframework.amqp:*</exclude>
+                                        <exclude>com.rabbitmq:*</exclude>
+                                        <exclude>org.springframework:spring-webflux</exclude>
+                                        <exclude>org.springframework.cloud:spring-cloud-starter-gateway*</exclude>
+                                        <exclude>org.springframework.cloud:spring-cloud-starter-openfeign</exclude>
+                                        <exclude>org.apache.dubbo:*</exclude>
+                                        <exclude>org.mockito:*</exclude>
+                                        <exclude>org.testcontainers:*</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <!-- Foundation, not a service core. -->
+                                        <include>com.paytech:paytech-common-core</include>
+                                        <include>com.paytech:paytech-payout-api</include>
+                                        <include>com.paytech:paytech-payout-core</include>
+                                        <include>com.paytech:paytech-payout-app</include>
+                                        <include>com.paytech:paytech-payout-test</include>
+                                    </includes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

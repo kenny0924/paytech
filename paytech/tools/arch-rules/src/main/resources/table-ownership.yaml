@@ -262,6 +262,7 @@ services:
   payout:
     mor_payout:
       - t_beneficiary_account
+      - t_beneficiary_account_event
       - t_compensation_event
       - t_finance_restriction_proj
       - t_payout

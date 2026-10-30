@@ -1,0 +1,1 @@
+ERROR 1142 (42000) at line 1: SELECT command denied to user 'payout_app'@'localhost' for table 't_permission'

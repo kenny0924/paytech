@@ -1,0 +1,11 @@
+payout-service sha256:75a6337cd55f8fba597a5b20ad3dd044d96adade7cd90778e73fd06bf01a40f7 mor-test/payout-service:payout-s1-20261030a 2026-10-30T13:29:22.270987294Z
+account-service sha256:8dfd1060d13607f68668b376541c9cf80fb6e9056f891a8b73cb74ac40db0fb5 mor-test/account-service:payout-s1-20261030a 2026-10-30T13:29:26.172967879Z
+platform-support-service sha256:0ea9cc2d6e897783080a009da6abaf5754a9599757e7f2cc90f0ae90e54514bb mor-test/platform-support-service:payout-s1-20261030a 2026-10-30T13:29:29.722757714Z
+client-console-bff sha256:24d3aa05f3f003783a29b8812e5a4f703da66ba71e069785bfcfc44636596644 mor-test/client-console-bff:payout-s1-20261030a 2026-10-30T13:29:36.584238467Z
+operations-console-bff sha256:626a74a740cecb8ca643160b4f8423a1c071744b87f3cb1bf3a07c68ec779a3c mor-test/operations-console-bff:payout-s1-20261030a 2026-10-30T13:29:39.446313302Z
+operations-console-web sha256:acb33e948c659b2d2acbdb0404914e88626b4c71802785de002dbd3b0c88d0d8 mor-test/operations-console-web:payout-s1-20261030a 2026-10-30T13:29:42.510595928Z
+8d19a1c7384229e0c33f2025a95661a047920049cf307ee988071cb1aa564295  account.jar
+540635b8cdb93a4b9d8d715b9dbeb57c22be8e8461cd7511980ee448b5755e66  client-console-bff.jar
+2081c6a988461a479be886a28eb9ecdcbe6921397c8e210b80238f3ac000ff57  operations-console-bff.jar
+ce299689e742e9fc5f9631d36625ec3a6a6e422815ccf2cfa082e6adaeff5a62  payout.jar
+f4782de42eeb781e7b026e4c72d56e6514c7cf787145df584f2e8292bf9dc7df  platform-support.jar

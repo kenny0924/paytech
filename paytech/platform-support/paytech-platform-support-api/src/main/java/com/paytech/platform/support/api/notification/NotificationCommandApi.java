@@ -28,9 +28,9 @@ public interface NotificationCommandApi {
      * @param callerService
      *            调用方服务名，须在 notification.http.callers 中登记，并作为通知来源系统保存
      * @param requestBody
-     *            模板、语言、参数与收件人；Body 不超过 1 MB
+     *            模板、语言、参数与收件人（显式邮箱或按租户权限解析，二选一）；Body 不超过 1 MB
      * @return 受理结果
-     *         <li>200 表示已受理，不表示邮件已发出或送达。</li>
+     *         <li>200 表示已受理，不表示邮件已发出或送达；按租户权限解析为 0 人时 200 且 requestId 为空、未落库。</li>
      *         <li>409 表示同一调用方的该 sourceEventKey 已受理过，调用方应视为成功，不得换新 key 重发。</li>
      *         <li>400/413/422 不重试；503 未写库，可用原 sourceEventKey 重试。</li>
      */

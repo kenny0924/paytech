@@ -323,8 +323,8 @@
         }
       },
       "defKey": "t_beneficiary_account",
-      "defName": "受益人账户",
-      "comment": "一个可变根即一个可被历史出款精确引用的受益人账户版本；提交审核后银行与 Vault 身份字段冻结，变更必须创建新账户。",
+      "defName": "收款账户",
+      "comment": "Owner 收款账户（2026-10-30 payout 决定 P11）：原值只在 Vault；提交即冻结，Maker-Checker 核验后冷却可用。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -491,8 +491,8 @@
       "fields": [
         {
           "defKey": "id",
-          "defName": "受益人账户标识",
-          "comment": "受益人账户聚合根的 Snowflake 主键。",
+          "defName": "收款账户标识",
+          "comment": "收款账户聚合根的 Snowflake 主键；一行即一个可被历史出款精确引用的账户版本，冻结字段变化必须新建账户。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -509,10 +509,10 @@
         },
         {
           "defKey": "owner_type",
-          "defName": "收款方类型",
-          "comment": "出款收款方为 Client 或 Local Partner。允许值：CLIENT、LOCAL_PARTNER。",
+          "defName": "Owner类型",
+          "comment": "收款账户所属 Owner 类型。允许值：CLIENT、LOCAL_PARTNER（PAYEE 为代发预留，本期不开放）。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 32,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -527,8 +527,8 @@
         },
         {
           "defKey": "owner_id",
-          "defName": "收款方标识",
-          "comment": "Client 或 Local Partner 的外部稳定标识。",
+          "defName": "Owner标识",
+          "comment": "Client 或 Local Partner 的 client-master 稳定标识；不建立跨库关系。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -545,10 +545,10 @@
         },
         {
           "defKey": "account_code",
-          "defName": "账户业务代码",
-          "comment": "收款方范围内稳定且可读的受益人账户代码。取值来源：Finance 受益人账户代码规则；非固定枚举。",
+          "defName": "账户编号",
+          "comment": "Owner 范围内可读编号，格式 BA- 加 4 位以上递增序号（锁 Owner 后取最大值加一）；只用于展示与沟通。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 16,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -562,11 +562,11 @@
           "id": "7EDD1548-BC74-5988-9160-D45C95BCA902"
         },
         {
-          "defKey": "beneficiary_vault_token",
-          "defName": "受益人 Vault 令牌",
-          "comment": "包含受益人姓名和银行账号的 Finance 专属中央 Vault 值令牌。",
+          "defKey": "rail_type",
+          "defName": "收款方式",
+          "comment": "收款方式，决定字段要求。允许值：LOCAL、SWIFT。",
           "type": "VARCHAR",
-          "len": 128,
+          "len": 16,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -577,30 +577,12 @@
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "EF1F8E13-5C33-56E2-92F9-A06427ACF710"
-        },
-        {
-          "defKey": "beneficiary_name_masked",
-          "defName": "受益人姓名脱敏值",
-          "comment": "经授权可用于付款复核展示的受益人姓名脱敏值。",
-          "type": "VARCHAR",
-          "len": 255,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "9547713B-638A-5D15-AB9F-169C85864709"
+          "id": "FED71166-24C4-4B07-873D-076494BB819E"
         },
         {
           "defKey": "bank_country",
           "defName": "开户国家",
-          "comment": "开户银行所在国家的 ISO 3166-1 alpha-2 代码。取值来源：ISO 3166-1 alpha-2 国家代码；非固定枚举。",
+          "comment": "开户银行所在国家的 ISO 3166-1 alpha-2 代码。取值来源：Platform 参考数据 t_ref_country；非固定枚举。",
           "type": "CHAR",
           "len": 2,
           "scale": "",
@@ -618,7 +600,7 @@
         {
           "defKey": "currency",
           "defName": "币种",
-          "comment": "ISO 4217 三位币种代码。取值来源：ISO 4217 币种代码；非固定枚举。",
+          "comment": "收款币种的 ISO 4217 三位代码。取值来源：Platform 参考数据 t_ref_currency；非固定枚举。",
           "type": "CHAR",
           "len": 3,
           "scale": "",
@@ -630,15 +612,15 @@
           "refDict": "",
           "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
           "extProps": {},
-          "domain": "7107154F-CF2B-4D2A-AC43-514D4027E5C6",
+          "domain": "",
           "id": "B1337AFB-A9D9-5EA7-B9C4-5884BDE12CED"
         },
         {
-          "defKey": "bank_account_blind_index",
-          "defName": "银行账号盲索引",
-          "comment": "按收款方、字段和用途隔离生成的银行账号等值检索摘要。",
-          "type": "CHAR",
-          "len": 64,
+          "defKey": "bank_name",
+          "defName": "银行名称",
+          "comment": "开户银行显示名称，非敏感。",
+          "type": "VARCHAR",
+          "len": 128,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -646,17 +628,35 @@
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "BC06E035-0635-5683-8055-0EA8E33470CD"
+          "id": "F8B0D55C-AEF1-4EEA-9B94-6355BC948F0B"
         },
         {
-          "defKey": "bank_account_blind_key_ver",
-          "defName": "盲索引密钥版本",
-          "comment": "生成银行账号盲索引所用的密钥版本。",
-          "type": "INTEGER",
-          "len": "",
+          "defKey": "bank_code",
+          "defName": "银行代码",
+          "comment": "本地银行代码或 SWIFT BIC，非敏感；只用 IBAN 的国家为空。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "703BA3A0-EACC-5B93-AEA6-B284767CCDE3"
+        },
+        {
+          "defKey": "beneficiary_vault_token",
+          "defName": "账户原值Vault令牌",
+          "comment": "PAYOUT_BENEFICIARY_V1 的 REFERENCE Token，值为 JSON（户名、账号或 IBAN、银行代码、SWIFT BIC、账户类型）；只在运营核验与出款执行前 Reveal。",
+          "type": "VARCHAR",
+          "len": 128,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -664,15 +664,51 @@
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
-          "id": "7CF957B4-0382-52C7-A38C-DF16A4173C80"
+          "id": "EF1F8E13-5C33-56E2-92F9-A06427ACF710"
+        },
+        {
+          "defKey": "bank_account_token",
+          "defName": "账号查重令牌",
+          "comment": "PAYOUT_BANK_ACCOUNT_KEY_V1 的 STABLE Token，值为规范化账号（去空白、转大写）；同值同 Token，用于同 Owner 查重与跨 Owner 共用提示。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "C48195AD-F215-4A49-BCA6-AE4B16CC622D"
+        },
+        {
+          "defKey": "holder_name_masked",
+          "defName": "户名脱敏值",
+          "comment": "户名脱敏值，可用于页面与通知展示。",
+          "type": "VARCHAR",
+          "len": 255,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "9547713B-638A-5D15-AB9F-169C85864709"
         },
         {
           "defKey": "account_last4",
-          "defName": "银行账号末四位",
-          "comment": "经授权可展示的收款银行账号末四位。",
+          "defName": "账号末四位",
+          "comment": "账号或 IBAN 末四位。",
           "type": "CHAR",
           "len": 4,
           "scale": "",
@@ -688,68 +724,14 @@
           "id": "D4DF26FB-D131-5D43-BBB8-C112A258B580"
         },
         {
-          "defKey": "vault_record_version",
-          "defName": "Vault 记录版本",
-          "comment": "写入本账户时中央 Vault 记录的并发版本。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "0FD33F93-4CC8-5B1E-B8B5-8CB31C6C044D"
-        },
-        {
-          "defKey": "vault_metadata_hash",
-          "defName": "Vault 元数据哈希",
-          "comment": "中央 Vault 受益人记录元数据的内容承诺哈希。",
-          "type": "CHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
-          "extProps": {},
-          "domain": "",
-          "id": "79B9AADF-D5C0-5DFE-A744-9F8E52373B14"
-        },
-        {
-          "defKey": "bank_code",
-          "defName": "银行代码",
-          "comment": "收款银行的受控机构代码。取值来源：Finance 银行机构目录；非固定枚举。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "703BA3A0-EACC-5B93-AEA6-B284767CCDE3"
-        },
-        {
           "defKey": "content_hash",
-          "defName": "账户内容哈希",
-          "comment": "提交审核后全部冻结账户字段的 Canonical SHA-256 哈希。",
+          "defName": "内容Hash",
+          "comment": "提交时冻结的全部账户字段 Canonical SHA-256；复核人审阅的哈希必须与之一致。",
           "type": "CHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -760,9 +742,27 @@
           "id": "5CB138DA-AC3D-5C22-BA81-1764F1C145E7"
         },
         {
-          "defKey": "maker_id",
+          "defKey": "submitted_by_type",
+          "defName": "提交人类型",
+          "comment": "提交人类型。允许值：CLIENT_MEMBER、OPERATIONS。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "446FB78A-D820-4BE3-A50E-D6EF0A16995D"
+        },
+        {
+          "defKey": "submitted_by",
           "defName": "提交人标识",
-          "comment": "Platform 身份系统中的受益人账户提交人标识。",
+          "comment": "提交人的 Platform 账号标识。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -778,9 +778,63 @@
           "id": "C64C0369-8656-595D-9255-74E4FB7BEE5E"
         },
         {
+          "defKey": "review_maker_id",
+          "defName": "核验意见人标识",
+          "comment": "核验意见人（Maker）的 Platform 账号标识；未出具意见时为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "A45E2B29-FF98-4047-9F77-644FCFC29722"
+        },
+        {
+          "defKey": "review_maker_decision",
+          "defName": "核验意见",
+          "comment": "Maker 核验意见。允许值：APPROVE、REJECT。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "4617DE3B-8601-4CDA-A4AB-00362D14780E"
+        },
+        {
+          "defKey": "review_maker_note",
+          "defName": "核验意见备注",
+          "comment": "Maker 核验意见的内部备注（可选，最多 500 字符），只给运营查看；恢复重新核验时清空。",
+          "type": "VARCHAR",
+          "len": 500,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "FCD4747A-4B73-44F2-8D7D-7998C9DEFC0A"
+        },
+        {
           "defKey": "checker_id",
           "defName": "复核人标识",
-          "comment": "Platform 身份系统中的独立受益人账户复核人标识。",
+          "comment": "复核人（Checker）的 Platform 账号标识，必须不同于 Maker 与运营代提交人。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -798,9 +852,9 @@
         {
           "defKey": "checker_decision",
           "defName": "复核决定",
-          "comment": "复核人对受益人账户作出的批准或拒绝决定。允许值：APPROVED、REJECTED。",
+          "comment": "复核决定。允许值：APPROVED、REJECTED。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 16,
           "scale": "",
           "primaryKey": false,
           "notNull": false,
@@ -815,8 +869,8 @@
         },
         {
           "defKey": "decision_time",
-          "defName": "决定时间",
-          "comment": "受益人账户复核决定发生的 UTC 微秒时间。",
+          "defName": "复核时间",
+          "comment": "复核决定的 UTC 微秒时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -832,11 +886,83 @@
           "id": "F2EFF702-8949-5A97-A25B-8545E4DC5A95"
         },
         {
-          "defKey": "status",
-          "defName": "账户状态",
-          "comment": "受益人账户当前审核和使用状态。允许值：DRAFT、PENDING_REVIEW、VERIFIED、REJECTED、SUSPENDED、CLOSED。",
+          "defKey": "reason_code",
+          "defName": "原因代码",
+          "comment": "最近一次拒绝、停用或关闭的原因代码。取值来源：payout-api BeneficiaryRejectReason / BeneficiarySuspendReason / BeneficiaryCloseReason；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "42AFEB3F-1A46-4D42-BBAF-A35B3CD75943"
+        },
+        {
+          "defKey": "reason_note",
+          "defName": "给 Owner 的说明",
+          "comment": "拒绝时运营给 Owner 的说明（可选，最多 500 字符），随拒绝通知的 reasonText 发送；停用、关闭、恢复时清空。",
+          "type": "VARCHAR",
+          "len": 500,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "60947DD6-1943-41E9-ABA1-8C37A067F989"
+        },
+        {
+          "defKey": "cooling_until",
+          "defName": "冷却结束时间",
+          "comment": "冷却结束的 UTC 微秒时间 = decision_time + 配置冷却小时；早于此时刻的 VERIFIED 账户不可用于出款。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "730DA6A1-BAC4-4202-B224-17EAB6CAEDA0"
+        },
+        {
+          "defKey": "is_default",
+          "defName": "是否默认",
+          "comment": "是否为同 Owner、同币种的默认收款账户，1 是 0 否；至多一个由应用在 Owner 锁内保证。",
+          "type": "TINYINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "0",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "5C31D3A2-D8C4-425F-9E8A-C031BE86FCF3"
+        },
+        {
+          "defKey": "status",
+          "defName": "状态",
+          "comment": "账户状态。允许值：PENDING_REVIEW、VERIFIED、REJECTED、SUSPENDED、CLOSED。",
+          "type": "VARCHAR",
+          "len": 16,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
@@ -850,8 +976,26 @@
           "id": "64B194F4-2BDD-589F-90BC-248C4CAA3CDF"
         },
         {
+          "defKey": "active_key",
+          "defName": "未终结键",
+          "comment": "生成列：未终结账户为 0、终结账户为自身主键，使同 Owner 同账号只能有一个未终结账户。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "AF8AB2D8-F365-450B-B568-6BAEC1D37575"
+        },
+        {
           "defKey": "version",
-          "defName": "并发版本",
+          "defName": "乐观锁版本",
           "comment": "聚合根条件更新使用的乐观锁版本。",
           "type": "BIGINT",
           "len": "",
@@ -870,7 +1014,7 @@
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "该记录在 Finance 数据库中的 UTC 微秒创建时间。",
+          "comment": "记录创建的 UTC 微秒时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -888,7 +1032,7 @@
         {
           "defKey": "update_time",
           "defName": "更新时间",
-          "comment": "该可变记录最后一次持久化更新的 UTC 微秒时间。",
+          "comment": "记录最近一次持久化更新的 UTC 微秒时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -915,20 +1059,49 @@
             {
               "fieldDefKey": "44376745-B999-5FFD-9FC8-50D31FEF1CF8",
               "ascOrDesc": "A",
-              "id": "6D37D324-5D4E-51F7-91C7-913E68B2F68B"
+              "id": "7CCAA44A-A698-4AC0-9985-9635BC55C3F9"
             },
             {
               "fieldDefKey": "4B4389AD-5F0B-5376-8344-B9E088B0538F",
               "ascOrDesc": "A",
-              "id": "EBBA2473-CA25-5A9A-A26D-B97C7CC30195"
+              "id": "26B19581-56A5-4194-A50F-425FA9426D90"
             },
             {
               "fieldDefKey": "7EDD1548-BC74-5988-9160-D45C95BCA902",
               "ascOrDesc": "A",
-              "id": "C4BE459C-5C50-53ED-AA95-75AA18C8F6F4"
+              "id": "85A6A254-0AD7-4585-9F65-EAC209C9BA35"
             }
           ],
           "id": "BBD311BA-C90E-5F46-991C-098A12BDAEE7"
+        },
+        {
+          "defKey": "uk_beneficiary_owner_token",
+          "defName": "唯一索引 owner_type、owner_id、bank_account_token、active_key",
+          "unique": true,
+          "comment": "保证业务唯一性：同 Owner 同账号只能有一个未终结账户",
+          "fields": [
+            {
+              "fieldDefKey": "44376745-B999-5FFD-9FC8-50D31FEF1CF8",
+              "ascOrDesc": "A",
+              "id": "852D7A29-6D77-40BC-ABB9-791F55AEDD4F"
+            },
+            {
+              "fieldDefKey": "4B4389AD-5F0B-5376-8344-B9E088B0538F",
+              "ascOrDesc": "A",
+              "id": "273F1D26-9622-4345-B60D-FEBEFCA19FFB"
+            },
+            {
+              "fieldDefKey": "C48195AD-F215-4A49-BCA6-AE4B16CC622D",
+              "ascOrDesc": "A",
+              "id": "BB61BE75-0DB0-4A92-A4D8-BCFEF0383BF6"
+            },
+            {
+              "fieldDefKey": "AF8AB2D8-F365-450B-B568-6BAEC1D37575",
+              "ascOrDesc": "A",
+              "id": "761F241F-7A6F-4C32-8FF2-78984072F0FD"
+            }
+          ],
+          "id": "BB1E2DDF-222E-4078-9B0A-8E24BB570B8E"
         },
         {
           "defKey": "idx_beneficiary_owner",
@@ -939,39 +1112,502 @@
             {
               "fieldDefKey": "44376745-B999-5FFD-9FC8-50D31FEF1CF8",
               "ascOrDesc": "A",
-              "id": "66727BBB-F227-5180-9114-6CBD0C36071D"
+              "id": "D767D9AB-71CF-45D1-8890-C1E85E89B1ED"
             },
             {
               "fieldDefKey": "4B4389AD-5F0B-5376-8344-B9E088B0538F",
               "ascOrDesc": "A",
-              "id": "EEA1AC5C-09D4-5CA9-B815-1137C5394981"
+              "id": "E42F8A4F-1260-47F9-A17B-7DCA2C4CC4FD"
             },
             {
               "fieldDefKey": "64B194F4-2BDD-589F-90BC-248C4CAA3CDF",
               "ascOrDesc": "A",
-              "id": "70BDAF5C-6510-5FFC-9E78-72AC7ED53906"
+              "id": "D772ECAB-ECA1-4A79-BC07-7284373D98E8"
             }
           ],
           "id": "87C47E17-8684-5A36-B6E8-9204AAA1A0D4"
         },
         {
-          "defKey": "idx_beneficiary_blind",
-          "defName": "访问索引 bank_account_blind_key_ver、bank_account_blind_index",
+          "defKey": "idx_beneficiary_token",
+          "defName": "访问索引 bank_account_token",
           "unique": false,
-          "comment": "支持访问路径：bank_account_blind_key_ver、bank_account_blind_index",
+          "comment": "支持访问路径：跨 Owner 共用账号提示",
           "fields": [
             {
-              "fieldDefKey": "7CF957B4-0382-52C7-A38C-DF16A4173C80",
+              "fieldDefKey": "C48195AD-F215-4A49-BCA6-AE4B16CC622D",
               "ascOrDesc": "A",
-              "id": "998C9F90-DB95-593B-AF1F-B98AC8291251"
-            },
-            {
-              "fieldDefKey": "BC06E035-0635-5683-8055-0EA8E33470CD",
-              "ascOrDesc": "A",
-              "id": "C141C853-682E-5A79-9D9E-F9B38959C5EB"
+              "id": "9C415DFD-1952-4B8C-8F56-E328F67870C8"
             }
           ],
-          "id": "F67F1178-6535-56DA-B19B-8E657F879376"
+          "id": "ED49F2BB-44D0-4A3F-AF0F-3212C73B4908"
+        },
+        {
+          "defKey": "idx_beneficiary_review",
+          "defName": "访问索引 status、review_maker_id、create_time",
+          "unique": false,
+          "comment": "支持访问路径：核验队列",
+          "fields": [
+            {
+              "fieldDefKey": "64B194F4-2BDD-589F-90BC-248C4CAA3CDF",
+              "ascOrDesc": "A",
+              "id": "C6A145B8-AEEB-4DA5-8444-D4AEED0C7FAF"
+            },
+            {
+              "fieldDefKey": "A45E2B29-FF98-4047-9F77-644FCFC29722",
+              "ascOrDesc": "A",
+              "id": "08F068AD-0501-48D7-92C8-034B5B59A170"
+            },
+            {
+              "fieldDefKey": "0F846C6C-9F6F-5579-B5DD-EE22A4751E24",
+              "ascOrDesc": "A",
+              "id": "4F52F585-5E63-45AC-8465-FF2C62D233FC"
+            }
+          ],
+          "id": "0D342C80-7E9D-4971-AA23-C07D631CACAA"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "627F5337-054D-4A3B-AF47-F7D1C6682A51",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_beneficiary_account_event",
+      "defName": "收款账户事件",
+      "comment": "收款账户不可变事件链：每次状态变化与敏感读取与账户在同一本地事务追加。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "id",
+          "defName": "事件标识",
+          "comment": "收款账户事件的 Snowflake 主键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "B55BA67A-705D-4D0D-AACA-87373A9D6DA7",
+          "id": "A7AC4EDC-BA20-4762-BA75-18FC85AE39D5"
+        },
+        {
+          "defKey": "beneficiary_account_id",
+          "defName": "收款账户标识",
+          "comment": "所属本库收款账户。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "17BB8910-7F2E-443E-B91A-A915135CDFEE"
+        },
+        {
+          "defKey": "event_no",
+          "defName": "事件序号",
+          "comment": "同一账户内从 1 开始严格连续的事件序号，在账户行锁内分配。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "9449B896-7483-4A54-897F-CCB249F2DC72"
+        },
+        {
+          "defKey": "from_status",
+          "defName": "变更前状态",
+          "comment": "变更前状态；首条事件为空。允许值：PENDING_REVIEW、VERIFIED、REJECTED、SUSPENDED、CLOSED。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "0D8879B9-69A5-4F04-9146-5C2B954E5044"
+        },
+        {
+          "defKey": "to_status",
+          "defName": "变更后状态",
+          "comment": "变更后状态；不改状态的动作（设默认、Reveal 等）与 from_status 相同。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "DBA9D019-39C0-4587-B960-D76287D8B5F0"
+        },
+        {
+          "defKey": "action",
+          "defName": "动作",
+          "comment": "触发动作。允许值：SUBMIT、MAKER_REVIEW、CHECKER_DECIDE、SET_DEFAULT、UNSET_DEFAULT、SUSPEND、RESUME、CLOSE、REVEAL。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "17F9CB0B-027B-4F42-9DEB-CEE147259C08"
+        },
+        {
+          "defKey": "reason_code",
+          "defName": "原因代码",
+          "comment": "动作原因代码；取值来源同 t_beneficiary_account.reason_code。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "A6AEB346-9C59-41E6-A190-D205F92FA59F"
+        },
+        {
+          "defKey": "actor_type",
+          "defName": "操作人类型",
+          "comment": "操作人类型。允许值：CLIENT_MEMBER、OPERATIONS、SYSTEM。",
+          "type": "VARCHAR",
+          "len": 16,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "120D08A9-A7F2-456E-BDA5-F64D3B056308"
+        },
+        {
+          "defKey": "actor_id",
+          "defName": "操作人标识",
+          "comment": "操作人的 Platform 账号标识；SYSTEM 为空。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "DE39491A-325D-403B-8E36-C5F5AF6918C5"
+        },
+        {
+          "defKey": "source_key",
+          "defName": "来源键",
+          "comment": "触发命令的稳定来源键（Gateway 请求 ID 或命令业务键），用于审计关联。",
+          "type": "VARCHAR",
+          "len": 128,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "7E16B0A8-683D-4A25-8118-0F7DC4B566BC"
+        },
+        {
+          "defKey": "account_version_after",
+          "defName": "变更后账户版本",
+          "comment": "同一事务完成后账户聚合根的版本。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "4F58AA0A-7FE4-410C-A43A-9D0EA4ED82CD"
+        },
+        {
+          "defKey": "occurred_time",
+          "defName": "发生时间",
+          "comment": "事件发生的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "82FAC369-3549-4793-8790-E0543DDB9CDC"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "记录创建的 UTC 微秒时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "64999EBD-7AF4-42BD-A4D8-CD4E4144E8FD"
+        }
+      ],
+      "correlations": [
+        {
+          "id": "7577FD09-9FAE-4C35-A272-5643B0A9E61B",
+          "myField": "17BB8910-7F2E-443E-B91A-A915135CDFEE",
+          "refEntity": "5E6A53A9-EFF2-5F59-A7AC-99630F3537F6",
+          "refField": "72A55B47-C5B3-5B24-8A41-495197F339A0",
+          "myRows": "n",
+          "refRows": "1",
+          "innerType": ""
+        }
+      ],
+      "indexes": [
+        {
+          "defKey": "uk_beneficiary_event_no",
+          "defName": "唯一索引 beneficiary_account_id、event_no",
+          "unique": true,
+          "comment": "保证业务唯一性：beneficiary_account_id、event_no",
+          "fields": [
+            {
+              "fieldDefKey": "17BB8910-7F2E-443E-B91A-A915135CDFEE",
+              "ascOrDesc": "A",
+              "id": "FE583F97-C002-4323-A3EE-781856A2E1B7"
+            },
+            {
+              "fieldDefKey": "9449B896-7483-4A54-897F-CCB249F2DC72",
+              "ascOrDesc": "A",
+              "id": "5A07A46C-8F4E-42B9-AE91-44DE038AFD3A"
+            }
+          ],
+          "id": "004453B0-A7F1-4D0E-9CD9-E3BEBCAD9726"
         }
       ],
       "type": "P"
@@ -4901,7 +5537,7 @@
       },
       "defKey": "t_compensation_event",
       "defName": "本地补偿事件",
-      "comment": "与 Finance 业务事实在同一事务登记 MQ 发布或本地处理任务，并通过 Claim、Lease 和乐观锁可靠重试",
+      "comment": "与本库业务事实在同一事务登记的本地可靠执行记录（paytech-compensation-event 现行模型，COMPENSATION_EVENT_GUIDE 第 3 节）；成功后删除，FAILED 保留并可受控重开",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -5069,7 +5705,7 @@
         {
           "defKey": "id",
           "defName": "补偿事件标识",
-          "comment": "Finance 数据库内补偿事件记录的 Snowflake 主键，不作为跨系统事件标识。",
+          "comment": "本库补偿事件记录的 Snowflake 主键，不作为跨系统事件标识。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
@@ -5087,25 +5723,7 @@
         {
           "defKey": "event_key",
           "defName": "事件键",
-          "comment": "按来源事实和事件类型确定性生成的全局稳定事件标识。",
-          "type": "VARCHAR",
-          "len": 255,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "F3CD3207-B72F-505C-A2EF-AA182C230772"
-        },
-        {
-          "defKey": "event_type",
-          "defName": "事件类型",
-          "comment": "业务事实事件或本地恢复任务的稳定类型代码。取值来源：Finance 事件契约目录；非固定枚举。",
+          "comment": "Handler 读取本服务权威事实使用的稳定业务键，最长 128 个字符；去首尾空白、拒绝控制字符，大小写敏感。",
           "type": "VARCHAR",
           "len": 128,
           "scale": "",
@@ -5116,14 +5734,38 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
+          "domain": "",
+          "id": "F3CD3207-B72F-505C-A2EF-AA182C230772"
+        },
+        {
+          "defKey": "event_type",
+          "defName": "事件类型",
+          "comment": "全应用唯一注册的 Handler 类型，最长 64 个字符，大小写敏感。取值来源：本服务 compensation-event-catalog.yaml；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
           "domain": "",
           "id": "7C9CD59B-5B93-50A8-96B4-F0F383ADD172"
         },
         {
-          "defKey": "execution_type",
-          "defName": "执行类型",
-          "comment": "事件由 MQ 发布器或本地处理器执行。允许值：MQ_PUBLISH、LOCAL_HANDLER。",
+          "defKey": "sub_event_type",
+          "defName": "事件子类型",
+          "comment": "同一 Handler 下的受控业务子类型；无业务子类型时为占位值 -；与 event_key、event_type 共同组成唯一身份。取值来源：本服务补偿子类型目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -5134,129 +5776,42 @@
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
+          "extProps": {
+            "characterSet": "ascii",
+            "collation": "ascii_bin"
+          },
           "domain": "",
-          "id": "BFA6AA67-0798-54C4-B939-7425352824AF"
-        },
-        {
-          "defKey": "source_type",
-          "defName": "来源事实类型",
-          "comment": "拥有该事件的 Finance 聚合根或不可变业务事实类型。取值来源：Finance 事件来源事实类型目录；非固定枚举。",
-          "type": "VARCHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
-          "extProps": {},
-          "domain": "",
-          "id": "6F0F7433-64A3-5DBD-8797-E29167EC7ED4"
-        },
-        {
-          "defKey": "source_id",
-          "defName": "来源事实标识",
-          "comment": "拥有该事件的 Finance 聚合根或不可变事实标识。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "3066ED98-FAC0-57F0-AADC-5CA9CD96C20C"
-        },
-        {
-          "defKey": "source_version",
-          "defName": "来源事实版本",
-          "comment": "来源聚合根版本或不可变事实固定版本。",
-          "type": "BIGINT",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
-          "extProps": {},
-          "domain": "",
-          "id": "40FA7364-FFCE-55CE-8072-FEE124F5CF05"
-        },
-        {
-          "defKey": "schema_version",
-          "defName": "契约版本",
-          "comment": "事件 Payload 契约的正整数版本。",
-          "type": "INTEGER",
-          "len": "",
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
-          "extProps": {},
-          "domain": "",
-          "id": "B37F0E17-CDC3-5334-9BAD-250F0E09A331"
+          "id": "94F12714-9DC6-569C-8E75-0359A602552C"
         },
         {
           "defKey": "payload_json",
-          "defName": "事件载荷",
-          "comment": "最大六十四 KiB、不可变且不含敏感明文的 Canonical JSON 事件信封。",
-          "type": "JSON",
-          "len": "",
+          "defName": "最小补充载荷",
+          "comment": "可选最小 JSON Object，通常为空；最多 4 KiB，不得保存可从本库恢复的上下文、敏感明文或凭据。",
+          "type": "VARCHAR",
+          "len": 4096,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
           "refDict": "",
-          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
           "extProps": {},
           "domain": "",
           "id": "D41AE8F7-C2C4-53BB-8CD9-12E30991AF9D"
         },
         {
-          "defKey": "payload_hash",
-          "defName": "载荷哈希",
-          "comment": "Canonical Payload 的 SHA-256 哈希，创建后不得修改。",
-          "type": "CHAR",
-          "len": 64,
-          "scale": "",
-          "primaryKey": false,
-          "notNull": true,
-          "autoIncrement": false,
-          "defaultValue": "",
-          "hideInGraph": false,
-          "refDict": "",
-          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
-          "extProps": {},
-          "domain": "",
-          "id": "63B54ADD-A942-5C68-B33F-2312A021A861"
-        },
-        {
           "defKey": "execute_status",
           "defName": "执行状态",
-          "comment": "补偿事件当前 Claim、重试或人工处置状态。允许值：INIT、PROCESSING、ERROR、FAILED。",
+          "comment": "本地补偿任务执行状态；成功后删除记录。允许值：INIT、PROCESSING、ERROR、FAILED。",
           "type": "VARCHAR",
-          "len": 64,
+          "len": 16,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "'INIT'",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
@@ -5267,7 +5822,7 @@
         {
           "defKey": "execute_count",
           "defName": "执行次数",
-          "comment": "已经开始执行该事件的累计次数。",
+          "comment": "已开始的 Handler 尝试次数，非负，Claim 时增加。",
           "type": "INTEGER",
           "len": "",
           "scale": "",
@@ -5285,14 +5840,14 @@
         {
           "defKey": "next_execute_at",
           "defName": "下次执行时间",
-          "comment": "事件下次允许被 Claim 的 UTC 微秒时间。",
+          "comment": "任务下次允许 Claim 的 UTC 微秒时间，由 Handler 退避策略更新。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "CURRENT_TIMESTAMP(6)",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
@@ -5303,9 +5858,9 @@
         {
           "defKey": "lock_owner",
           "defName": "锁持有者",
-          "comment": "当前多实例 Claim Lease 的执行节点稳定标识。",
+          "comment": "当前持有数据库 Claim Lease 的服务实例标识；未被认领时为空。",
           "type": "VARCHAR",
-          "len": 128,
+          "len": 64,
           "scale": "",
           "primaryKey": false,
           "notNull": false,
@@ -5321,7 +5876,7 @@
         {
           "defKey": "lock_until",
           "defName": "锁到期时间",
-          "comment": "当前 Claim Lease 到期的 UTC 微秒时间。",
+          "comment": "Claim Lease 到期并可被其他实例接管的 UTC 微秒时间；无活动 Lease 时为空。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
@@ -5339,7 +5894,7 @@
         {
           "defKey": "last_error_code",
           "defName": "最后错误代码",
-          "comment": "最近一次失败的受控且不含敏感信息的错误代码。取值来源：Finance 补偿执行错误代码目录；非固定枚举。",
+          "comment": "最近一次执行失败的稳定错误分类代码；尚无错误时为空。取值来源：本服务补偿执行错误代码目录；非固定枚举。",
           "type": "VARCHAR",
           "len": 64,
           "scale": "",
@@ -5357,7 +5912,7 @@
         {
           "defKey": "last_error_summary",
           "defName": "最后错误摘要",
-          "comment": "最近一次失败的有界脱敏摘要，禁止保存敏感明文。",
+          "comment": "最近一次执行失败的脱敏摘要，最长 1000 字符，禁止保存敏感明文。",
           "type": "VARCHAR",
           "len": 1000,
           "scale": "",
@@ -5375,14 +5930,14 @@
         {
           "defKey": "lock_version",
           "defName": "锁版本",
-          "comment": "仅用于 Claim 和 Lease 条件更新的技术乐观锁版本。",
+          "comment": "Claim 和 Lease 使用的正乐观锁版本；登记初始值固定为 1，仅当前 Lease 持有者可回写执行结果。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "0",
+          "defaultValue": "1",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
@@ -5393,14 +5948,14 @@
         {
           "defKey": "create_time",
           "defName": "创建时间",
-          "comment": "补偿事件与业务事实原子登记的 UTC 微秒时间。",
+          "comment": "补偿记录与业务事实原子登记的 UTC 微秒时间。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "CURRENT_TIMESTAMP(6)",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
@@ -5411,14 +5966,14 @@
         {
           "defKey": "update_time",
           "defName": "更新时间",
-          "comment": "补偿事件执行状态最后更新的 UTC 微秒时间。",
+          "comment": "补偿记录最近更新的 UTC 微秒时间，由写入口维护。",
           "type": "DATETIME",
           "len": 6,
           "scale": "",
           "primaryKey": false,
           "notNull": true,
           "autoIncrement": false,
-          "defaultValue": "",
+          "defaultValue": "CURRENT_TIMESTAMP(6)",
           "hideInGraph": false,
           "refDict": "",
           "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
@@ -5430,85 +5985,76 @@
       "correlations": [],
       "indexes": [
         {
-          "defKey": "uk_finance_comp_event",
-          "defName": "唯一索引 event_key",
+          "defKey": "uk_comp_event_identity",
+          "defName": "唯一索引 event_key、event_type、sub_event_type",
           "unique": true,
-          "comment": "保证业务唯一性：event_key",
+          "comment": "保证业务唯一性：event_key、event_type、sub_event_type",
           "fields": [
             {
               "fieldDefKey": "F3CD3207-B72F-505C-A2EF-AA182C230772",
               "ascOrDesc": "A",
-              "id": "E657FECF-ABF5-596E-9B45-2115AAF20464"
-            }
-          ],
-          "id": "774E0A83-9183-59DB-B392-7BDFFB393A0C"
-        },
-        {
-          "defKey": "uk_finance_comp_source",
-          "defName": "唯一索引 source_type、source_id、source_version、event_type",
-          "unique": true,
-          "comment": "保证业务唯一性：source_type、source_id、source_version、event_type",
-          "fields": [
-            {
-              "fieldDefKey": "6F0F7433-64A3-5DBD-8797-E29167EC7ED4",
-              "ascOrDesc": "A",
-              "id": "49D1E892-8FEF-5937-A218-0784D9483B60"
-            },
-            {
-              "fieldDefKey": "3066ED98-FAC0-57F0-AADC-5CA9CD96C20C",
-              "ascOrDesc": "A",
-              "id": "98DBCDE2-80E8-5AEF-ADDF-3F032585D18E"
-            },
-            {
-              "fieldDefKey": "40FA7364-FFCE-55CE-8072-FEE124F5CF05",
-              "ascOrDesc": "A",
-              "id": "A5E8C34E-6E8B-5867-9EBD-E76DE7BB57D5"
+              "id": "BC546057-B6CF-5BA8-AD81-409C0CFF0C49"
             },
             {
               "fieldDefKey": "7C9CD59B-5B93-50A8-96B4-F0F383ADD172",
               "ascOrDesc": "A",
-              "id": "C41B76C4-1911-5643-B524-F0C4CFC65CF6"
+              "id": "6A9BF99D-0293-5B6A-9356-24D47E3A955F"
+            },
+            {
+              "fieldDefKey": "94F12714-9DC6-569C-8E75-0359A602552C",
+              "ascOrDesc": "A",
+              "id": "4793DC33-57C9-51E9-8CE3-B24CC284AA93"
             }
           ],
-          "id": "6CDD6902-C19F-5E3A-BBC9-9D29C8D96F01"
+          "id": "3DB41784-12DD-59F6-B397-72749310C290"
         },
         {
-          "defKey": "idx_fin_comp_claim",
-          "defName": "访问索引 execute_status、next_execute_at、lock_until",
+          "defKey": "idx_comp_event_ready",
+          "defName": "访问索引 execute_status、next_execute_at、id",
           "unique": false,
-          "comment": "支持访问路径：execute_status、next_execute_at、lock_until",
+          "comment": "支持访问路径：execute_status、next_execute_at、id",
           "fields": [
             {
               "fieldDefKey": "4746DB9C-D2BE-5497-8A87-701F7EAB9751",
               "ascOrDesc": "A",
-              "id": "C3A21E55-EF5B-5FC0-B224-17D0784EDC1C"
+              "id": "3EA5031B-75B4-53B5-AE3C-02B34400C89D"
             },
             {
               "fieldDefKey": "B035BAC0-2B4F-5399-B16D-053BFA00CE3B",
               "ascOrDesc": "A",
-              "id": "5A5786FE-0B87-5D75-8E0B-5A8E036B27CF"
+              "id": "C4C4BE85-6794-55AA-BD3D-677D65EF915D"
+            },
+            {
+              "fieldDefKey": "5637262C-10F4-5359-839C-AC3ABABD6058",
+              "ascOrDesc": "A",
+              "id": "A9341292-584B-5207-AF9D-815783A0661B"
+            }
+          ],
+          "id": "F5D4DA32-4487-54E7-AC07-460335C498F3"
+        },
+        {
+          "defKey": "idx_comp_event_lease",
+          "defName": "访问索引 execute_status、lock_until、id",
+          "unique": false,
+          "comment": "支持访问路径：execute_status、lock_until、id",
+          "fields": [
+            {
+              "fieldDefKey": "4746DB9C-D2BE-5497-8A87-701F7EAB9751",
+              "ascOrDesc": "A",
+              "id": "335D9716-5F08-5EFD-A0E2-D62BFC712068"
             },
             {
               "fieldDefKey": "E663D7B1-F776-579F-A01B-0150A6B94DE6",
               "ascOrDesc": "A",
-              "id": "41AC5B3E-4B13-5B70-BC19-7265E5CE7BBF"
-            }
-          ],
-          "id": "3BDC121D-39ED-5A90-9973-0F5048DF3883"
-        },
-        {
-          "defKey": "idx_fin_comp_created",
-          "defName": "访问索引 create_time",
-          "unique": false,
-          "comment": "支持访问路径：create_time",
-          "fields": [
+              "id": "55E39319-1DAF-5118-B49B-7E70A50FD795"
+            },
             {
-              "fieldDefKey": "1E26BAEF-7949-5A9C-B3C2-B850BA4563CF",
+              "fieldDefKey": "5637262C-10F4-5359-839C-AC3ABABD6058",
               "ascOrDesc": "A",
-              "id": "5BC92FE6-1BB0-55F9-9A6A-524F2FF9658E"
+              "id": "47BA26A7-A5BB-5671-B328-74BAC05B22D0"
             }
           ],
-          "id": "67AC49AA-0660-553B-B47A-AA2F53821FF7"
+          "id": "E09F41B8-E1DA-5293-8F45-8B9E09C8D823"
         }
       ],
       "type": "P"
@@ -5678,7 +6224,7 @@
             "type": "P",
             "size": {
               "width": 390,
-              "height": 592
+              "height": 736
             }
           },
           {
@@ -5769,6 +6315,21 @@
             "size": {
               "width": 390,
               "height": 526
+            }
+          },
+          {
+            "id": "15708028-D9C4-416B-BF7C-C68177B06009",
+            "shape": "table",
+            "position": {
+              "x": 1290,
+              "y": 916
+            },
+            "count": 0,
+            "originKey": "627F5337-054D-4A3B-AF47-F7D1C6682A51",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 352
             }
           },
           {
@@ -5958,6 +6519,28 @@
             "target": {
               "cell": "EEA25647-6A3E-5C4D-84C3-6467171AD006",
               "port": "EB65C6F5-12D1-5825-9845-8777EA08A3FD%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "858C3887-0071-409D-B135-19D98CF19C88",
+            "shape": "erdRelation",
+            "originKey": "7577FD09-9FAE-4C35-A272-5643B0A9E61B",
+            "source": {
+              "cell": "15708028-D9C4-416B-BF7C-C68177B06009",
+              "port": "17BB8910-7F2E-443E-B91A-A915135CDFEE%out"
+            },
+            "target": {
+              "cell": "8CF00672-4820-5749-9480-979D282AFD75",
+              "port": "72A55B47-C5B3-5B24-8A41-495197F339A0%in"
             },
             "relation": "n:1",
             "vertices": [],

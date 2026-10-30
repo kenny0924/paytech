@@ -151,3 +151,5 @@ web:
       - /client-admin
       # 入驻码签发响应含明文码（只出现一次），只记元数据。
       - /onboarding-code-admin
+      # 收款账户：代提交请求与 Reveal 响应含户名、账号原值，详情与队列含 Owner 法定名，整个前缀只记元数据。
+      - /payout-admin

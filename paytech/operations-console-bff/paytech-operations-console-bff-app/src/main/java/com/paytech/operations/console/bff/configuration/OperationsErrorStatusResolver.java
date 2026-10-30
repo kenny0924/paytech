@@ -123,6 +123,15 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case CLEARING_ACCOUNT_NOT_RESOLVED -> defaultStatus;
             };
         }
+        // 收款账户（2026-10-30 payout S1）：payout 的合同状态原样到达浏览器；四眼与 Reveal 拒绝为 403。
+        if (errorCode instanceof com.paytech.payout.api.enums.PayoutErrorCode payout) {
+            return switch (payout) {
+                case BENEFICIARY_DUPLICATE, BENEFICIARY_STATUS_CONFLICT -> HttpStatus.CONFLICT;
+                case BENEFICIARY_UNSUPPORTED_ROUTE -> HttpStatus.UNPROCESSABLE_CONTENT;
+                case FOUR_EYES_REQUIRED, BENEFICIARY_REVEAL_FORBIDDEN -> HttpStatus.FORBIDDEN;
+                case BENEFICIARY_ACCOUNT_NOT_FOUND, BENEFICIARY_REQUIREMENT_NOT_FOUND -> HttpStatus.NOT_FOUND;
+            };
+        }
         // 主档维护与资格登记（2026-10-23 商业关系快照）：Owner 404 / 409 / 422 原样到达浏览器。
         if (errorCode instanceof com.paytech.client.master.api.enums.EntityAdminErrorCode entityAdmin) {
             return switch (entityAdmin) {

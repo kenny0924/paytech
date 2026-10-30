@@ -1,0 +1,16 @@
+-- payout S1 · mor-test 验收合成数据清理计划（W9 阶段 6；模板，未执行）。阶段 7 验收后由 payout_acceptance.py cleanup 只读生成带实际 ID 的
+--   cleanup-<UTC>.sql（release/acceptance/），主会话审阅后用 root 执行。范围只限本次验收创建的数据，按 ID 或 S1MT 标记：
+-- 1. mor_payout：本次账户（run.json accounts + bank_name LIKE 'S1MT %'）的事件、补偿事件、账户行——删除（payout 新库，只有验收数据；
+--    注意：清理后 mor_payout 为空，与"首建后无业务数据"等价，不影响 91 / 92 回滚保护的语义）。
+-- 2. mor_vault：PAYOUT_* 记录保留（外键与审计，先例 data-query 2026-10-22）。数据类型与 3 条规则保留（服务继续使用）。
+-- 3. mor_platform：payout-service 通知请求 / 投递 / 尝试保留（通知审计；块 147 回滚在有通知请求时拒绝删除模板——这是有意的保护）；
+--    合成运营账号 4 个与角色 4 个、Client A 两名合成成员：经 IAM / 团队页停用或移除，不物理删除。
+-- 4. 计费事实（只有用了 prepare --billing-fact 才有）：不删除；需要时登记反向 MANUAL_ADJUSTMENT。
+-- 5. ~/Code-MoR-backups/payout-s1-stage7/{accounts,run}.json：验收报告写完后删除（含口令与原值样本）；clients.json 由提供者决定。
+-- 模板 SQL（以 cleanup 子命令生成的 ID 替换 <ids>）：
+-- START TRANSACTION;
+-- DELETE FROM mor_payout.t_beneficiary_account_event WHERE beneficiary_account_id IN (<ids>);
+-- DELETE FROM mor_payout.t_compensation_event WHERE event_type = 'BENEFICIARY_NOTIFICATION' AND SUBSTRING_INDEX(event_key, ':', 1) IN (<ids 字符串>);
+-- DELETE FROM mor_payout.t_beneficiary_account WHERE id IN (<ids>);
+-- SELECT COUNT(*) FROM mor_payout.t_beneficiary_account WHERE id IN (<ids>);   -- 期望 0
+-- COMMIT;

@@ -1,0 +1,28 @@
+{
+ "command": "cleanup",
+ "results": [
+  {
+   "ac": "cleanup",
+   "step": "生成清理草稿（未执行）",
+   "ok": true,
+   "detail": {
+    "file": "/Users/kenny/Desktop/Workspace/Code-MoR/requirements/20261030/payout-收款账户与余额解释/release/acceptance/cleanup-20261030T142616Z.sql",
+    "accounts": 7,
+    "notificationRequests": 8
+   }
+  }
+ ],
+ "data": {
+  "clients": {
+   "A": "237575207592763393",
+   "B": "240686705999454209"
+  },
+  "accounts": {},
+  "operators": {},
+  "billingFacts": [],
+  "notifications": [],
+  "viewer": {}
+ },
+ "pass": 1,
+ "fail": 0
+}

@@ -144,7 +144,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
                 "/data-query-admin/v1/template-trials", "/data-query/v1", "/data-query-admin/v1/key-types",
                 "/data-query-admin/v1/key-type-order",
                 "/channel-admin/v1/channel-accounts", "/finance/reconciliation/v1/cash-accounts", "/workflow-admin", "/workflow",
-                "/card-admin/v1/bin-library/uploads", "/localization-admin/v1/uploads", "/file-upload/v1/uploads", "/tax/v1", "/client-admin", "/onboarding-code-admin"),
+                "/card-admin/v1/bin-library/uploads", "/localization-admin/v1/uploads", "/file-upload/v1/uploads", "/tax/v1", "/client-admin", "/onboarding-code-admin", "/payout-admin"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
         Set<String> routes = applicationContext.getBean(
@@ -635,7 +635,17 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /workflow/v1/action-runs/{actionRunId}/transfer",
             "POST /workflow/v1/approvals/{approvalId}/decision",
             "POST /workflow/v1/approvals/{approvalId}/transfer",
-            "POST /workflow/v1/callbacks/{callbackId}/retry"), routes);
+            "POST /workflow/v1/callbacks/{callbackId}/retry",
+            // 收款账户核验与 Owner 账户 / 余额（2026-10-30 payout S1）。
+            "GET /payout-admin/v1/beneficiary-reviews", "GET /payout-admin/v1/beneficiary-accounts",
+            "GET /payout-admin/v1/beneficiary-accounts/{accountId}", "POST /payout-admin/v1/beneficiary-accounts",
+            "POST /payout-admin/v1/beneficiary-accounts/{accountId}/maker-reviews",
+            "POST /payout-admin/v1/beneficiary-accounts/{accountId}/checker-decisions",
+            "POST /payout-admin/v1/beneficiary-accounts/{accountId}/reveal",
+            "POST /payout-admin/v1/beneficiary-accounts/{accountId}/suspend",
+            "POST /payout-admin/v1/beneficiary-accounts/{accountId}/resume",
+            "POST /payout-admin/v1/beneficiary-accounts/{accountId}/close",
+            "GET /payout-admin/v1/beneficiary-requirements", "GET /payout-admin/v1/balances"), routes);
 
         Path classes = appModule().resolve("target/classes/com/paytech/operations/console/bff");
         try (var files = Files.walk(classes)) {

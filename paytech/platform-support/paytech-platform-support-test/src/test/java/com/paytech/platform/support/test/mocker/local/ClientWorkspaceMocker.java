@@ -41,7 +41,10 @@ public class ClientWorkspaceMocker implements Clear {
         ClientDeveloperPermissions.WEBHOOK_READ, 900000000000058103L,
         ClientDeveloperPermissions.WEBHOOK_MANAGE, 900000000000058104L,
         ClientTeamPermissions.TEAM_READ, 900000000000058105L,
-        ClientTeamPermissions.TEAM_MANAGE, 900000000000058106L);
+        ClientTeamPermissions.TEAM_MANAGE, 900000000000058106L,
+        ClientTeamPermissions.PAYOUT_ACCOUNT_READ, 900000000000147101L,
+        ClientTeamPermissions.PAYOUT_ACCOUNT_MANAGE, 900000000000147102L,
+        ClientTeamPermissions.BALANCE_READ, 900000000000147103L);
 
     /** 测试账号的登录密码，与 PHC 一致。 */
     public static final String PASSWORD = "client-password-0001";
@@ -53,7 +56,7 @@ public class ClientWorkspaceMocker implements Clear {
     private final List<Long> credentialTenants = new ArrayList<>();
     private boolean permissions;
 
-    /** 插入 6 个 CLIENT 工作区权限（开发者 4 个、团队 2 个；每例一次）。 */
+    /** 插入 9 个 CLIENT 工作区权限（开发者 4 个、团队 2 个、收款账户与余额 3 个；每例一次）。 */
     public void permissions() {
         if (permissions) {
             return;

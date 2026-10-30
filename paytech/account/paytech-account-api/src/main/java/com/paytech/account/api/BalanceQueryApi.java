@@ -1,5 +1,7 @@
 package com.paytech.account.api;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
@@ -12,7 +14,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
 /**
- * FIN-I01/FIN-I02：单一 Owner、Operating Entity 和币种下的当前余额查询。
+ * FIN-I01/FIN-I02：单一 Owner、Operating Entity 和币种下的当前余额查询；以及同一 Owner 在全部 Operating Entity 与币种下的余额列表。
  *
  * <li>Finance 内部开发接口：未接调用方身份及资源授权，不得把请求中的 Owner ID 当作身份凭证，不得对外发布。</li>
  * <li>余额查询不等于出款资格评估。</li>
@@ -55,4 +57,27 @@ public interface BalanceQueryApi {
         @PathVariable("partnerId") @NotBlank @Pattern(regexp = "[1-9][0-9]{0,18}") String partnerId,
         @RequestParam("entityNo") @NotBlank @Pattern(regexp = "[A-Z]{2}[0-9]{3}") String entityNo,
         @RequestParam("currency") @NotBlank @Pattern(regexp = "[A-Z]{3}") String currency);
+
+    /**
+     * 列出 Client 在全部 Operating Entity 与币种下的分类余额；一次读取该 Client 的全部 Owner 账户后按 entityNo × 币种聚合。
+     *
+     * @param clientId
+     *            正十进制 Client 标识
+     * @return 每个有账户的 entityNo × 币种一项，按 entityNo、币种升序；字段语义同单查询，不提供跨主体或跨币种合计；
+     *         Client 没有任何账户时为空数组（不返回 OWNER_ACCOUNT_NOT_FOUND）
+     */
+    @GetExchange("/clients/{clientId}/positions")
+    List<ClientBalanceResponseBody> listClientPositions(
+        @PathVariable("clientId") @NotBlank @Pattern(regexp = "[1-9][0-9]{0,18}") String clientId);
+
+    /**
+     * 列出 Local Partner 在全部 Operating Entity 与币种下的分类余额，不返回 Client 保证金字段。
+     *
+     * @param partnerId
+     *            正十进制 Local Partner 标识
+     * @return 每个有账户的 entityNo × 币种一项，按 entityNo、币种升序；Partner 没有任何账户时为空数组
+     */
+    @GetExchange("/partners/{partnerId}/positions")
+    List<PartnerBalanceResponseBody> listPartnerPositions(
+        @PathVariable("partnerId") @NotBlank @Pattern(regexp = "[1-9][0-9]{0,18}") String partnerId);
 }

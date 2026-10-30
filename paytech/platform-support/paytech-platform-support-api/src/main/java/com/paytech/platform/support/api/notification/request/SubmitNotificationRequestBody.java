@@ -4,11 +4,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -57,13 +58,20 @@ public class SubmitNotificationRequestBody {
     private final Map<@Pattern(regexp = "[A-Za-z][A-Za-z0-9_]{0,63}") String, @NotNull @Size(max = 2048) String> defaultParameters;
 
     /**
-     * 收件人
-     * <li>1—100 人；规范化后重复邮箱整单拒绝；每人一封单收件人邮件。</li>
+     * 显式收件人
+     * <li>与 tenantRecipients 二选一；给出时 1—100 人；规范化后重复邮箱整单拒绝；每人一封单收件人邮件。</li>
      */
-    @NotEmpty
-    @Size(max = 100)
+    @Size(min = 1, max = 100)
     @Valid
     private final List<@NotNull Recipient> recipients;
+
+    /**
+     * 按租户权限解析的收件人
+     * <li>与 recipients 二选一；Platform 受理前在本库解析租户内具备该权限的成员，直接使用其已验证登录邮箱。</li>
+     * <li>解析为 0 人时 200 且不受理（requestId 为空、deliveryCount 为 0），不占用 sourceEventKey；超过 100 人时 400。</li>
+     */
+    @Valid
+    private final TenantRecipients tenantRecipients;
 
     /** 按 JSON 属性绑定。 */
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
@@ -71,13 +79,26 @@ public class SubmitNotificationRequestBody {
         @JsonProperty("sourceEventKey") String sourceEventKey, @JsonProperty("templateCode") String templateCode,
         @JsonProperty("defaultLocale") String defaultLocale,
         @JsonProperty("defaultParameters") Map<String, String> defaultParameters,
-        @JsonProperty("recipients") List<Recipient> recipients) {
+        @JsonProperty("recipients") List<Recipient> recipients,
+        @JsonProperty("tenantRecipients") TenantRecipients tenantRecipients) {
         this.tenantId = tenantId;
         this.sourceEventKey = sourceEventKey;
         this.templateCode = templateCode;
         this.defaultLocale = defaultLocale;
         this.defaultParameters = defaultParameters;
         this.recipients = recipients;
+        this.tenantRecipients = tenantRecipients;
+    }
+
+    /**
+     * 收件人来源校验：recipients 与 tenantRecipients 必须且只能提供一个
+     *
+     * @return 恰好提供一个时为真；不参与 JSON 序列化
+     */
+    @JsonIgnore
+    @AssertTrue(message = "recipients 与 tenantRecipients 必须且只能提供一个")
+    public boolean isRecipientSourceExclusive() {
+        return (recipients == null) != (tenantRecipients == null);
     }
 
     /** 请求归属租户 ID */
@@ -105,9 +126,80 @@ public class SubmitNotificationRequestBody {
         return defaultParameters;
     }
 
-    /** 收件人 */
+    /** 显式收件人 */
     public List<Recipient> getRecipients() {
         return recipients;
+    }
+
+    /** 按租户权限解析的收件人 */
+    public TenantRecipients getTenantRecipients() {
+        return tenantRecipients;
+    }
+
+    /** 按租户权限解析收件人的条件；Platform 只发给已验证登录邮箱，不接受邮箱原值。 */
+    public static class TenantRecipients {
+
+        /**
+         * 租户类型
+         * <li>CLIENT 或 PARTNER。</li>
+         */
+        @NotBlank
+        @Pattern(regexp = "CLIENT|PARTNER", message = "tenantType 只能为 CLIENT 或 PARTNER")
+        private final String tenantType;
+
+        /**
+         * 租户所有者引用
+         * <li>Client ID 或 Local Partner ID，规范正整数字符串。</li>
+         */
+        @NotBlank
+        @Pattern(regexp = "[1-9][0-9]{0,18}", message = "ownerRefId 必须为规范正整数字符串")
+        private final String ownerRefId;
+
+        /**
+         * 收件人须持有的权限码
+         * <li>成员经当前有效角色持有该 ACTIVE 权限才会收到；最多 128 字符。</li>
+         */
+        @NotBlank
+        @Pattern(regexp = "[A-Z][A-Z0-9_]{0,127}", message = "permissionCode 只能由大写字母开头，包含大写字母、数字或下划线")
+        private final String permissionCode;
+
+        /**
+         * 语言覆盖
+         * <li>可空，BCP 47，最多 35 字符；为空时使用 defaultLocale。所有解析出的收件人使用同一语言。</li>
+         */
+        @Size(max = 35)
+        private final String locale;
+
+        /** 按 JSON 属性绑定。 */
+        @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+        public TenantRecipients(@JsonProperty("tenantType") String tenantType,
+            @JsonProperty("ownerRefId") String ownerRefId, @JsonProperty("permissionCode") String permissionCode,
+            @JsonProperty("locale") String locale) {
+            this.tenantType = tenantType;
+            this.ownerRefId = ownerRefId;
+            this.permissionCode = permissionCode;
+            this.locale = locale;
+        }
+
+        /** 租户类型 */
+        public String getTenantType() {
+            return tenantType;
+        }
+
+        /** 租户所有者引用 */
+        public String getOwnerRefId() {
+            return ownerRefId;
+        }
+
+        /** 收件人须持有的权限码 */
+        public String getPermissionCode() {
+            return permissionCode;
+        }
+
+        /** 语言覆盖 */
+        public String getLocale() {
+            return locale;
+        }
     }
 
     /** 单个收件人；不支持 CC/BCC。 */

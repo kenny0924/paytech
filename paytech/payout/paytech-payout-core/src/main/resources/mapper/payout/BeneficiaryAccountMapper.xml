@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- t_beneficiary_account：收款账户，只读写 mor_payout；生成列 active_key 不写入。 -->
+<mapper namespace="com.paytech.payout.core.dal.mapper.BeneficiaryAccountMapper">
+    <sql id="columns">id, owner_type, owner_id, account_code, rail_type, bank_country, currency, bank_name, bank_code, beneficiary_vault_token, bank_account_token, holder_name_masked, account_last4, content_hash, submitted_by_type, submitted_by, review_maker_id, review_maker_decision, review_maker_note, checker_id, checker_decision, decision_time, reason_code, reason_note, cooling_until, is_default, status, version, create_time, update_time</sql>
+
+    <insert id="insert">
+        INSERT INTO t_beneficiary_account (<include refid="columns"/>)
+        VALUES (#{id}, #{ownerType}, #{ownerId}, #{accountCode}, #{railType}, #{bankCountry}, #{currency}, #{bankName}, #{bankCode}, #{beneficiaryVaultToken}, #{bankAccountToken}, #{holderNameMasked}, #{accountLast4}, #{contentHash}, #{submittedByType}, #{submittedBy}, #{reviewMakerId}, #{reviewMakerDecision}, #{reviewMakerNote}, #{checkerId}, #{checkerDecision}, #{decisionTime}, #{reasonCode}, #{reasonNote}, #{coolingUntil}, #{isDefault}, #{status}, #{version}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.payout.core.dal.dataobject.BeneficiaryAccount">
+        SELECT <include refid="columns"/> FROM t_beneficiary_account WHERE id = #{id}
+    </select>
+
+    <select id="selectByOwner" resultType="com.paytech.payout.core.dal.dataobject.BeneficiaryAccount">
+        SELECT <include refid="columns"/> FROM t_beneficiary_account
+        WHERE owner_type = #{ownerType} AND owner_id = #{ownerId}
+        <if test="status != null">AND status = #{status}</if>
+        <if test="currency != null">AND currency = #{currency}</if>
+        ORDER BY currency, create_time, id
+    </select>
+
+    <select id="selectActiveByOwnerToken" resultType="com.paytech.payout.core.dal.dataobject.BeneficiaryAccount">
+        SELECT <include refid="columns"/> FROM t_beneficiary_account
+        WHERE owner_type = #{ownerType} AND owner_id = #{ownerId} AND bank_account_token = #{bankAccountToken} AND active_key = 0
+    </select>
+
+    <select id="selectMaxAccountCode" resultType="string">
+        SELECT account_code FROM t_beneficiary_account
+        WHERE owner_type = #{ownerType} AND owner_id = #{ownerId}
+        ORDER BY CHAR_LENGTH(account_code) DESC, account_code DESC LIMIT 1
+    </select>
+
+    <select id="selectDefault" resultType="com.paytech.payout.core.dal.dataobject.BeneficiaryAccount">
+        SELECT <include refid="columns"/> FROM t_beneficiary_account
+        WHERE owner_type = #{ownerType} AND owner_id = #{ownerId} AND currency = #{currency} AND is_default = 1
+        ORDER BY id LIMIT 1
+    </select>
+
+    <select id="selectOtherOwnerAccounts" resultType="com.paytech.payout.core.dal.dataobject.BeneficiaryAccount">
+        SELECT <include refid="columns"/> FROM t_beneficiary_account
+        WHERE bank_account_token = #{bankAccountToken} AND active_key = 0 AND NOT (owner_type = #{ownerType} AND owner_id = #{ownerId})
+        ORDER BY create_time, id LIMIT #{limit}
+    </select>
+
+    <sql id="reviewWhere">
+        <where>
+            <choose>
+                <when test="stage.code == 'MAKER'">status = 'PENDING_REVIEW' AND review_maker_id IS NULL</when>
+                <when test="stage.code == 'CHECKER'">status = 'PENDING_REVIEW' AND review_maker_id IS NOT NULL</when>
+                <otherwise>checker_decision IS NOT NULL AND decision_time &gt;= #{decidedSince}</otherwise>
+            </choose>
+            <if test="ownerType != null">AND owner_type = #{ownerType}</if>
+            <if test="ownerId != null">AND owner_id = #{ownerId}</if>
+        </where>
+    </sql>
+
+    <select id="selectReviewPage" resultType="com.paytech.payout.core.dal.dataobject.BeneficiaryAccount">
+        SELECT <include refid="columns"/> FROM t_beneficiary_account <include refid="reviewWhere"/>
+        <choose>
+            <when test="stage.code == 'DONE'">ORDER BY decision_time DESC, id DESC</when>
+            <otherwise>ORDER BY create_time, id</otherwise>
+        </choose>
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countReviewPage" resultType="long">
+        SELECT COUNT(*) FROM t_beneficiary_account <include refid="reviewWhere"/>
+    </select>
+
+    <update id="updateMakerReview">
+        UPDATE t_beneficiary_account
+        SET review_maker_id = #{makerId}, review_maker_decision = #{decision}, review_maker_note = #{makerNote}, reason_code = #{reasonCode}, reason_note = #{reasonNote}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = 'PENDING_REVIEW' AND review_maker_id IS NULL
+    </update>
+
+    <update id="updateCheckerDecision">
+        UPDATE t_beneficiary_account
+        SET status = #{status}, checker_id = #{checkerId}, checker_decision = #{decision}, decision_time = #{now}, reason_code = #{reasonCode}, reason_note = #{reasonNote}, cooling_until = #{coolingUntil}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = 'PENDING_REVIEW' AND review_maker_id IS NOT NULL
+    </update>
+
+    <update id="updateDefault">
+        UPDATE t_beneficiary_account
+        SET is_default = #{isDefault}, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = #{record.status}
+    </update>
+
+    <update id="updateStatusWithReason">
+        UPDATE t_beneficiary_account
+        SET status = #{status}, reason_code = #{reasonCode}, reason_note = NULL, is_default = 0, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = #{record.status}
+    </update>
+
+    <update id="updateResume">
+        UPDATE t_beneficiary_account
+        SET status = 'PENDING_REVIEW', review_maker_id = NULL, review_maker_decision = NULL, review_maker_note = NULL, checker_id = NULL, checker_decision = NULL, decision_time = NULL, reason_code = NULL, reason_note = NULL, cooling_until = NULL, version = version + 1, update_time = #{now}
+        WHERE id = #{record.id} AND version = #{record.version} AND status = 'SUSPENDED'
+    </update>
+</mapper>

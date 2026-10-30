@@ -1,0 +1,24 @@
+# payout S1 阶段 6 验证（候选树 Code-MoR-po-rel，JDK 25，-o 本地仓库 ~/.m3，env 取自 local-environment/.env.local 不打印；本机库只用 mor-local-mysql-1，payout 用 mor_payout）
+全 reactor test-compile: 126 模块 SUCCESS（48 s）
+候选应用 JAR（-DskipTests clean package，5 个 app -am）: SUCCESS（27 s）
+模块测试（package，-am，-Dtest=<模块包>/**，最终一轮单独顺序执行 2026-10-30 13:42—13:58Z）:
+payout rc=0 run=33 fail=0 err=0 skip=0
+account rc=0 run=72 fail=0 err=0 skip=0
+platform rc=0 run=41 fail=0 err=0 skip=0
+clientbff rc=0 run=108 fail=0 err=0 skip=0
+opsbff rc=0 run=2543 fail=0 err=0 skip=0
+arch rc=0 run=70 fail=0 err=0 skip=0
+  platform 只跑受影响类: NotificationHttpApiTest 9、TenantRecipientNotificationTest 5、OperationsRoleManagementTest 11（加载能力清单）、ClientInvitationAcceptanceTest 7、ClientTenantProvisionTest 3、ClientTeamMemberTest 6
+首轮发现并修正（均为测试代码，不进 JAR）:
+  payout 33 中 7 个错误：MockPlatformNotificationController 映射成 /platform-support/requests（见 merge-notes 第 3 节）→ 修正后 33/0
+  ops-bff 2543 中 12 个错误：合并漏 @Bean（PayoutOwnerSimulator）→ 修正后 2543/0
+  首轮有两个测试进程误并发（本代理脚本重启所致），其结果作废，日志在 logs/round1-concurrent/，最终结果只取上面单独顺序的一轮
+测试后重建的 JAR 与镜像内 JAR 条目比对（证明修正不影响制品）:
+payout A=1156 B=1156 onlyA=0 onlyB=0 changed=0
+account A=556 B=556 onlyA=0 onlyB=0 changed=0
+platform-support A=3249 B=3249 onlyA=0 onlyB=0 changed=0
+client-console-bff A=1104 B=1104 onlyA=0 onlyB=0 changed=0
+operations-console-bff A=3119 B=3119 onlyA=0 onlyB=0 changed=0
+operations-console-web: tsc --noEmit 0 错误；npm test 1686/1686；npm run build 通过（dist 284）；i18n:export-source 27 命名空间 11 129 key（payout 216）
+test-environment Python: test_java_image_health_probe + test_service_database_initialization 在 9eab368c 上 25/2（2 个既有失败）；候选树套用 compose-base-payout.patch 后同样 25/2；不套补丁时多 2 个失败（base compose 缺 payout-service / mysql 的 MOR_PAYOUT_DB_PASSWORD）
+未跑全 reactor 测试。

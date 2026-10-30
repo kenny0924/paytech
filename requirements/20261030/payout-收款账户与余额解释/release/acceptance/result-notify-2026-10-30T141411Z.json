@@ -1,0 +1,147 @@
+{
+ "command": "notify",
+ "results": [
+  {
+   "ac": "AC-09",
+   "step": "payout t_compensation_event 本次登记的通知任务全部处理完成（成功即删除，剩余 0）",
+   "ok": true,
+   "detail": {
+    "left": []
+   }
+  },
+  {
+   "ac": "AC-09",
+   "step": "Platform 受理四类 payout 通知（核验通过 / 拒绝 / 停用 / 关闭）",
+   "ok": true,
+   "detail": {
+    "templates": [
+     "PAYOUT_BENEFICIARY_CLOSED_EMAIL",
+     "PAYOUT_BENEFICIARY_REJECTED_EMAIL",
+     "PAYOUT_BENEFICIARY_SUSPENDED_EMAIL",
+     "PAYOUT_BENEFICIARY_VERIFIED_EMAIL"
+    ],
+    "count": 7
+   }
+  },
+  {
+   "ac": "AC-09",
+   "step": "每条通知投递数 = Client A 持 MANAGE 的有效已验证成员数（1；成员共 1，含 VIEWER）",
+   "ok": true,
+   "detail": {
+    "deliveries": [
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1",
+     "1"
+    ]
+   }
+  },
+  {
+   "ac": "AC-09",
+   "step": "投递全部到终态（SENT / DELIVERED / FAILED，无 PENDING / PROCESSING / RETRY_WAIT / UNKNOWN 滞留）",
+   "ok": true,
+   "detail": {
+    "FAILED": 7
+   }
+  },
+  {
+   "ac": "AC-09",
+   "step": "（--ops-only）未邀请 SES 模拟器成员：投递成功与否不判定，Client 侧收件验证留作遗留",
+   "ok": true,
+   "detail": {
+    "FAILED": 7
+   }
+  },
+  {
+   "ac": "AC-09",
+   "step": "@example.test 收件人被 SES 沙箱拒绝时只记投递 FAILED，账户状态不受影响（见 api 结果的账户终态）",
+   "ok": true,
+   "detail": {
+    "failed": 7
+   }
+  },
+  {
+   "ac": "AC-09",
+   "step": "模板参数无原值（户名 / IBAN / BIC）",
+   "ok": true,
+   "detail": {
+    "leakIndexes": []
+   }
+  },
+  {
+   "ac": "AC-09",
+   "step": "投递地址为账号邮箱 Vault Token（不 Reveal）",
+   "ok": true,
+   "detail": {
+    "withToken": "7"
+   }
+  },
+  {
+   "ac": "AC-09",
+   "step": "Mailpit 只作对照（mor-test Platform 不经 Mailpit 发信）",
+   "ok": true,
+   "detail": {
+    "mailpitMessages": 0
+   }
+  }
+ ],
+ "data": {
+  "clients": {
+   "A": "237575207592763393",
+   "B": "240686705999454209"
+  },
+  "accounts": {},
+  "operators": {},
+  "billingFacts": [],
+  "notifications": [
+   {
+    "requestId": "241927567899181056",
+    "sourceEventKey": "BENEFICIARY:241927555391750144:5",
+    "template": "PAYOUT_BENEFICIARY_VERIFIED_EMAIL",
+    "deliveries": "1"
+   },
+   {
+    "requestId": "241927568679321600",
+    "sourceEventKey": "BENEFICIARY:241927555727294464:4",
+    "template": "PAYOUT_BENEFICIARY_REJECTED_EMAIL",
+    "deliveries": "1"
+   },
+   {
+    "requestId": "241927584072417280",
+    "sourceEventKey": "BENEFICIARY:241927583321620480:3",
+    "template": "PAYOUT_BENEFICIARY_VERIFIED_EMAIL",
+    "deliveries": "1"
+   },
+   {
+    "requestId": "241927584533790720",
+    "sourceEventKey": "BENEFICIARY:241927583321620480:4",
+    "template": "PAYOUT_BENEFICIARY_SUSPENDED_EMAIL",
+    "deliveries": "1"
+   },
+   {
+    "requestId": "241927585414594560",
+    "sourceEventKey": "BENEFICIARY:241927583321620480:7",
+    "template": "PAYOUT_BENEFICIARY_VERIFIED_EMAIL",
+    "deliveries": "1"
+   },
+   {
+    "requestId": "241927585532035072",
+    "sourceEventKey": "BENEFICIARY:241927583321620480:8",
+    "template": "PAYOUT_BENEFICIARY_CLOSED_EMAIL",
+    "deliveries": "1"
+   },
+   {
+    "requestId": "241927586224095232",
+    "sourceEventKey": "BENEFICIARY:241927555953786880:2",
+    "template": "PAYOUT_BENEFICIARY_CLOSED_EMAIL",
+    "deliveries": "1"
+   }
+  ],
+  "viewer": {}
+ },
+ "pass": 9,
+ "fail": 0
+}

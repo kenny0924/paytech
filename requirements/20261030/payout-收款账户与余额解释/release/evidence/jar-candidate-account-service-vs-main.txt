@@ -1,0 +1,10 @@
+A=555 B=556 onlyA=0 onlyB=1 changed=8
+  + paytech-account-core.jar!com/paytech/account/domainservice/service/impl/BalanceQueryServiceImpl$Position.class
+  ~ BOOT-INF/classes/com/paytech/account/app/ext/rest/BalanceQueryController.class
+  ~ paytech-account-api.jar!com/paytech/account/api/BalanceQueryApi.class
+  ~ paytech-account-core.jar!com/paytech/account/core/dal/mapper/OwnerAccountMapper.class
+  ~ paytech-account-core.jar!com/paytech/account/domainservice/repository/OwnerAccountRepository.class
+  ~ paytech-account-core.jar!com/paytech/account/domainservice/repository/impl/OwnerAccountRepositoryImpl.class
+  ~ paytech-account-core.jar!com/paytech/account/domainservice/service/BalanceQueryService.class
+  ~ paytech-account-core.jar!com/paytech/account/domainservice/service/impl/BalanceQueryServiceImpl.class
+  ~ paytech-account-core.jar!mapper/account/OwnerAccountMapper.xml

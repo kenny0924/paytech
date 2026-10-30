@@ -847,6 +847,53 @@ services:
     networks:
       backend: { ipv4_address: 172.30.73.42 }
 
+  payout-service:
+    <<: *java
+    mem_limit: 448m
+    entrypoint: *jvm-small
+    image: mor-test/payout-service:development
+    build:
+      context: ./artifacts
+      dockerfile: ../java/Dockerfile
+      args: { JAR_FILE: payout-service.jar }
+    environment:
+      <<: *discovery
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: 172.30.73.44
+      PAYOUT_DB_URL: jdbc:mysql://mysql:3306/mor_payout?useUnicode=true&characterEncoding=UTF-8&connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true&allowPublicKeyRetrieval=true&useSSL=false
+      PAYOUT_DB_USERNAME: payout_app
+      PAYOUT_DB_PASSWORD: ${MOR_PAYOUT_DB_PASSWORD:?prepare test secrets}
+      PAYOUT_SNOWFLAKE_REGION_ID: "0"
+      PAYOUT_SNOWFLAKE_WORKER_ID: "16"
+      # 收款账户与余额解释（2026-10-30 payout S1）：写命令资源锁、account 固定私网地址（account 不注册 Nacos）、补偿扫描执行器（compensationEventScan）。
+      PAYOUT_REDIS_HOST: redis
+      PAYOUT_REDIS_PORT: "6379"
+      PAYOUT_REDIS_PASSWORD: ${PAYTECH_REDIS_PASSWORD:?prepare test secrets}
+      PAYOUT_ACCOUNT_SERVICE_URL: http://account-service:18114
+      PAYOUT_COMPENSATION_INSTANCE_ID: payout-test
+      PAYTECH_INSTANCE_ID: payout-test
+      XXL_JOB_ADMIN_ADDRESSES: http://xxl-job-admin:8080
+      XXL_JOB_ADMIN_ACCESSTOKEN: ${MOR_XXL_JOB_ACCESS_TOKEN:?prepare test secrets}
+      XXL_JOB_EXECUTOR_ENABLED: "true"
+      XXL_JOB_EXECUTOR_APPNAME: payout-service
+      XXL_JOB_EXECUTOR_IP: 172.30.73.44
+      XXL_JOB_EXECUTOR_PORT: "9999"
+      XXL_JOB_EXECUTOR_LOGPATH: /tmp/xxl-job
+      XXL_JOB_EXECUTOR_EXCLUDEDPACKAGES: org.springframework.,spring.
+    depends_on:
+      mysql: { condition: service_healthy }
+      nacos: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      vault-service: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, java, -cp, /app/health-probe, LocalHttpHealthProbe, http://127.0.0.1:19117/actuator/health/readiness]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 40s
+    networks:
+      backend: { ipv4_address: 172.30.73.44 }
+
   client-console-bff:
     <<: *java
     mem_limit: 576m

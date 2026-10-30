@@ -1,0 +1,81 @@
+== account-service live(A) vs main-9eab368c(B)
+A=555 B=555 onlyA=0 onlyB=0 changed=0
+== platform-support-service live(A) vs main-9eab368c(B)
+A=3238 B=3238 onlyA=0 onlyB=0 changed=0
+== client-console-bff live(A) vs main-9eab368c(B)
+A=1022 B=1061 onlyA=0 onlyB=39 changed=32
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/JointQueryApi.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/QueryKeyTypeManagementApi.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/ChangeQueryKeyTypeStatusRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/CreateQueryKeyTypeRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/JointQueryKeyValues.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/JointQueryLoadedSubject.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/JointQueryStepRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/QueryKeyTypeOrderItem.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/QueryTemplateJointColumn.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/QueryTemplateJointConfig.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/QueryTemplateJointKeyParameter.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/ReorderQueryKeyTypesRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/UpdateQueryKeyTypeRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryAlreadyLoaded.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryEntryKeyType.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryExcludedTemplate.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryGraphBreak.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryGraphGroup.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryGraphResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryGraphTemplate.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryGroup.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryLimits.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryLink.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryNode.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryNodeColumn.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQuerySettingsResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryStepResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/JointQueryTruncation.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/QueryKeyTypeOrderResult.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/QueryKeyTypeResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/QueryTemplateJointParticipation.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/ReorderQueryKeyTypesResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/WorkflowDataQueryTemplateApi.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/request/ValidateWorkflowActionTemplateRequestBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowActionTemplateValidationResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowDataQueryCheckBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowDataQueryCheckResponseBody.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowDataQueryTemplateBody$Parameter.class
+  + paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowDataQueryTemplateBody.class
+  ~ paytech-client-master-api.jar!com/paytech/client/contract/api/onboarding/ClientDraftModels$ClientDraftResponseBody.class
+  ~ paytech-client-master-api.jar!com/paytech/client/contract/api/onboarding/ClientDraftModels$CommandReceiptResponseBody.class
+  ~ paytech-client-master-api.jar!com/paytech/client/contract/api/onboarding/ClientDraftModels$DraftPatchRequestBody.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$AddressComponent.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$AddressFormat.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$CatalogOption.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Declaration.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Field.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Group.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$IdentifierTypeOption.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Material.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$RelationRules.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$RelationTypeOption.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Section.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody$Validation.class
+  ~ paytech-client-master-api.jar!com/paytech/client/master/api/onboarding/response/FormSchemaResponseBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/CreateQueryTemplateRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/UpdateQueryTemplateRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/request/ValidateQueryTemplateRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/QueryTemplateDetailResponseBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/dataquery/response/QueryTemplateVersionResponseBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/WorkflowActionTemplateManagementApi.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/WorkflowInstanceApi.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/request/StartWorkflowInstanceRequestBody$ActionExecutor.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/request/StartWorkflowInstanceRequestBody$NodeApprovers.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/request/StartWorkflowInstanceRequestBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowInstanceDetailResponseBody$ActionRunBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowInstanceDetailResponseBody$ApprovalBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowInstanceDetailResponseBody$TransferBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowInstanceDetailResponseBody$VerificationBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowMutationResponseBody.class
+  ~ paytech-platform-support-api.jar!com/paytech/platform/support/api/workflow/response/WorkflowTaskBody.class
+== operations-console-bff live(A) vs main-9eab368c(B)
+A=3061 B=3061 onlyA=0 onlyB=0 changed=0
+== api-gateway live(A) vs main-9eab368c(B)
+A=988 B=988 onlyA=0 onlyB=0 changed=0
