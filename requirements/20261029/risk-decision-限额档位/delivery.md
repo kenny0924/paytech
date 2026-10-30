@@ -17,6 +17,7 @@
 | 2026-10-30 | 6 确认 / 7 授权 | 用户"继续"（针对阶段 6 Q-1—Q-5 与阶段 7 授权的提问）：Q-1 额度按 stage6-report 第 5 节建议值（待风控确认，激活后改常量即时生效）；Q-2 接受 F-4 有条件上线（mor-test 激活档位门禁 + 逐迁移客户实时预热 + 验收统计 TIMED_OUT），登记"风控配置缓存"为 REQ-04c，作为档位门禁上生产的前提；Q-3 Platform 随本次发布（含 69f87bbf，回滚 a3003ef6）；Q-4 验收对 REQ-03 L / H 做修订批准以进入 VERIFICATION；Q-5 迁移临时白名单致 risk-decision 重启两次；授权阶段 7（mor-test 停 / 起 risk-decision、operations-console-bff、platform-support-service、operations-console-web，mor_risk_decision DDL，块 145，表级 GRANT 与 GOLIVE_LIMIT_TIER，语言包，风控配置、迁移、激活档位发布与验收）。执行前须等联合查询提交并按其重建候选（ops-web、Platform）、重做块 145 编译 | 已确认 |
 | 2026-10-30 | 7 中断与裁决 | mor-test 执行至 ⑦（09:38—09:43Z）：④ DDL、⑤ risk-decision `1414384e`、⑥ ops-bff `4bd4c3df`、⑥b Platform `af13e77a` 均 healthy；块 145 休眠写入后刷新 641 正常，09:42:20Z 激活后 Gateway 每次刷新 CONTROL_PLANE_UNAVAILABLE，09:43:00Z 按"失败即停"停用块 145，刷新恢复 641。根因（只读排查）：Gateway 拉取公共快照的 WebClient 应答上限硬编码 1 MiB（`PlatformSnapshotProperties.MAX_RESPONSE_BYTES`），现 641 路由快照 1,032,106 字节，块 145 的 11 路由约需 17.8 KB，超出约 1.4 KB；阶段 6 离线演练只编译未序列化，未覆盖传输上限。用户选 **A**：Gateway 上限提至 4 MiB（代码 + 配置 + 3 个测试），构建并发布 api-gateway 镜像（超出 REQ-04 原范围，用户授权），之后重新激活块 145（期望 652）。⑧—⑫ 可先行，⑬ 激活与 ⑮ 验收待路由上线 | 已确认 |
 | 2026-10-30 | 7 完成 / 8 授权 | 阶段 7 在 mor-test 执行完毕（含 ⑦a Gateway `d51daee3`、⑪ 续跑修订 D-10），验收全部通过（自动 16 / 19 / 39 / 12+1 已解释，浏览器 10 / 10）；用户"提交吧"：授权本地提交（私有索引，基于当时 main），不含推送 | 已确认 |
+| 2026-10-30 | 8 提交 | 本地提交 `b369e9b6`（610 文件，父 `20ffcd9f`，私有索引；与 `264ea3d2` 三方合并 arch-rules 两文件，提交树复测 arch-rules 70 / 0；代码与发布树逐文件一致）。未提交：`operations-console.pen` 原型板（混有其他会话改动，PNG 已在 prototypes/）、本机备份与运行文件。推送由用户自行完成 | 已完成 |
 
 ## 适用阶段
 
@@ -24,7 +25,7 @@
 
 ## 当前阶段与下一确认点
 
-阶段 1—7 已完成：2026-10-30 已部署 mor-test（`rq04-20261030b`，含 Gateway Snapshot 上限修订 D-9），验收通过（见文末"阶段 7 执行记录"）。阶段 8：用户"提交吧"（2026-10-30）授权本地提交，推送由用户自行完成。
+阶段 1—8 已完成：2026-10-30 已部署 mor-test（`rq04-20261030b`，含 Gateway Snapshot 上限修订 D-9），验收通过（见文末"阶段 7 执行记录"），本地提交 `b369e9b6`，推送由用户自行完成。
 
 ## 阶段 4 实施记录（前端）
 
