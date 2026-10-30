@@ -3,8 +3,8 @@
 # 255 source tables, 17 databases, 265 physical tables.
 # Retained: platform-support mor_platform from paytech/platform-support/docs/database/sql/platform-support-schema.sql.
 # 73 retained-service tables added on top of design 03 (not part of the §4.2 count).
-# 23 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model; applied after the §4.2 count).
-# 66 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket; not part of the §4.2 count).
+# 42 step-removed tables (approved later refactors, e.g. 2026-10-19 billing fact model, 2026-10-29 tax rebuild removing 19 old Finance tax tables; applied after the §4.2 count).
+# 78 step-added tables (approved refactor-step designs, e.g. design/05 t_card_material_ticket, 2026-10-29 tax 11 new tables and acquiring t_order_tax_calculation, 2026-10-29 REQ-03 risk-decision 3 underwriting tables; not part of the §4.2 count).
 # Structure: services.<service>.<database> = tables owned (or copied / per-database infrastructure);
 # Renamed: t_transaction_economics -> t_economic_fact, t_transaction_economic_component -> t_economic_fact_line, t_transaction_economic_comp_link -> t_economic_fact_line_link, t_account -> t_ledger_account, t_payment_method_profile -> t_pricing_profile, t_payment_method_profile_cond -> t_pricing_profile_cond.
 # Renamed services: consumer -> counterparty; databases: mor_consumer -> mor_counterparty.
@@ -40,6 +40,7 @@ services:
       - t_order_payment_projection
       - t_order_refund_position
       - t_order_relationship_binding
+      - t_order_tax_calculation
       - t_refund_request
   billing:
     mor_billing:
@@ -423,26 +424,18 @@ services:
   tax:
     mor_tax:
       - t_compensation_event
-      - t_fiscal_number_sequence
-      - t_fiscal_record
-      - t_fiscal_record_line
-      - t_place_of_supply_rule
-      - t_tax_authority
+      - t_consumed_aggregate_version
+      - t_consumed_event
+      - t_tax_calculation
+      - t_tax_calculation_component
+      - t_tax_calculation_line
       - t_tax_category
-      - t_tax_category_mapping
+      - t_tax_document
+      - t_tax_document_sequence
       - t_tax_evidence
-      - t_tax_evidence_rule
-      - t_tax_exchange_rate
-      - t_tax_jurisdiction
-      - t_tax_liability_summary
-      - t_tax_line
-      - t_tax_payment
-      - t_tax_payment_event
+      - t_tax_market
       - t_tax_period
-      - t_tax_rate
+      - t_tax_policy
       - t_tax_registration
-      - t_tax_return
-      - t_tax_return_line
-      - t_tax_rule
-      - t_tax_snapshot
-      - t_tax_treatment
+      - t_tax_reporting_entry
+      - t_tax_transaction

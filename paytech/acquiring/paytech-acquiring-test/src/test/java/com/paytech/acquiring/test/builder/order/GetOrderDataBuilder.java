@@ -1,5 +1,6 @@
 package com.paytech.acquiring.test.builder.order;
 
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -68,7 +69,8 @@ public final class GetOrderDataBuilder {
             .entityNo(ready ? "AE001" : null)
             .merchandiseAmount(decimal("50")).discountAmount(decimal("2")).netAmount(decimal("48"))
             .taxAmount(ready ? decimal("2") : null).roundingAmount(ready ? decimal("0") : null)
-            .totalAmount(ready ? decimal("50") : null).currency(currency)
+            .totalAmount(ready ? decimal("50") : null)
+            .amountStatus(ready ? OrderAmountStatus.FINAL : OrderAmountStatus.ESTIMATED).currency(currency)
             .orderStatus(paid ? OrderStatus.PAID : ready ? OrderStatus.OPEN : OrderStatus.CREATED)
             .expiresAt(NOW.plusSeconds(1800)).paidAt(paid ? NOW : null).version(7L)
             .createTime(NOW.minusSeconds(60)).updateTime(NOW).build();

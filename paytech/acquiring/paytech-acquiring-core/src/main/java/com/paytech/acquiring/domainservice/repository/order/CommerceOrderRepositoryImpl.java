@@ -9,7 +9,9 @@ import org.springframework.stereotype.Repository;
 
 import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
 import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
 import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
 import com.paytech.acquiring.core.dal.mapper.order.CommerceOrderMapper;
 import com.paytech.acquiring.domain.enums.OrderStatus;
@@ -31,11 +33,19 @@ public class CommerceOrderRepositoryImpl implements CommerceOrderRepository {
         return commerceOrderMapper.findByOrderId(orderId);
     }
 
-    /** SQL 成功后同步原订单版本；任何后续失败均由调用方丢弃本次 Context。 */
+    /** SQL 成功后同步原订单版本及新报价金额；任何后续失败均由调用方丢弃本次 Context。 */
     @Override
-    public void recordConsumerChange(CommerceOrder order, CheckoutSession session, Instant now) {
-        if (commerceOrderMapper.recordConsumerChange(order, session, now) != 1) {
+    public void recordConsumerChange(CommerceOrder order, CheckoutSession session, OrderTaxCalculation quote,
+        Instant now) {
+        OrderAmountStatus amountStatus = quote == null ? null : quote.amountStatus();
+        if (commerceOrderMapper.recordConsumerChange(order, session, quote, amountStatus, now) != 1) {
             throw new ConcurrentRequestException("订单或会话已改变，请重新保存消费者资料");
+        }
+        if (quote != null) {
+            order.setTaxAmount(quote.getTaxAmount());
+            order.setRoundingAmount(quote.getRoundingAmount());
+            order.setTotalAmount(quote.getTotalAmount());
+            order.setAmountStatus(amountStatus);
         }
         order.setVersion(order.getVersion() + 1);
         order.setUpdateTime(now);

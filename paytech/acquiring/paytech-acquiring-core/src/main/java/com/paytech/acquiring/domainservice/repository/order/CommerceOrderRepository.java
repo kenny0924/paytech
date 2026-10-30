@@ -6,14 +6,23 @@ import java.util.List;
 import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
 import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation;
 
 /** CommerceOrder 的单表持久化边界。 */
 public interface CommerceOrderRepository {
     /** 已通过 Checkout Token 定位订单身份后，读取订单本表。 */
     CommerceOrder findByOrderId(long orderId);
 
-    /** 条件保存消费者变更的订单版本；资料写入失败时由同一事务回滚。 */
-    void recordConsumerChange(CommerceOrder order, CheckoutSession session, Instant now);
+    /**
+     * 条件保存消费者变更的订单版本；资料写入失败时由同一事务回滚
+     * <li>quote 非空时同时把订单当前报价金额与金额状态改为该计算；已有消费者接受的订单不更新（SQL 条件保护）。</li>
+     *
+     * @param order 原订单，成功后同步版本与报价
+     * @param session Token 绑定的会话
+     * @param quote 本次重算的新计算；存量订单不重算时为 null
+     * @param now 写入时刻
+     */
+    void recordConsumerChange(CommerceOrder order, CheckoutSession session, OrderTaxCalculation quote, Instant now);
 
     /** 受理支付时以当前版本保护订单、会话、合同与 Intent，成功后同步原订单。 */
     void recordPaymentSubmission(CommerceOrder order, CheckoutSession session, long contractId,

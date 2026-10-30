@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.paytech.billing.api.enums.BillingFactStatus;
@@ -30,6 +32,9 @@ public final class BillingFactBuilder {
 
     /** 渠道清算账户：PAYMENT 行目录中渠道角色的付方 / 收方标识。 */
     private Long clearingAccountId;
+
+    /** 待由 {@link #paymentLines} 生成的 SELLER_TAX 行（税务机关标识，税额），按登记顺序。 */
+    private final List<Map.Entry<String, String>> sellerTaxes = new ArrayList<>();
 
     private BillingFactBuilder() {
     }
@@ -124,9 +129,22 @@ public final class BillingFactBuilder {
     }
 
     /**
-     * 按 billing 自动登记的 PAYMENT 行目录（technique 4.6）追加明细行，全部 CHARGE，金额为零的组件不生成行
-     * <li>顺序：CLIENT_FEE（渠道 → 经营主体）、CLIENT_PRINCIPAL（渠道 → Client，= 总额 − 手续费）、PARTNER_SHARE（经营主体 → Local Partner）、
-     * PLATFORM_SERVICE_CHARGE（经营主体 → Finance Entity）、CHANNEL_COST（经营主体 → 渠道）；渠道标识取清算账户。</li>
+     * 登记一行卖方税，由 {@link #paymentLines} 在手续费之后生成（渠道清算账户 → 税务机关），并从本金中扣除
+     *
+     * @param taxAuthorityId 税务机关（纳税主体 Party）标识
+     * @param amount 税额
+     * @return 本构造器
+     */
+    public BillingFactBuilder sellerTax(String taxAuthorityId, String amount) {
+        sellerTaxes.add(Map.entry(taxAuthorityId, amount));
+        return this;
+    }
+
+    /**
+     * 按 billing 自动登记的 PAYMENT 行目录（technique 4.6、tax 技术方案 11.2）追加明细行，全部 CHARGE，金额为零的组件不生成行
+     * <li>顺序：CLIENT_FEE（渠道 → 经营主体）、已登记的 SELLER_TAX（渠道 → 税务机关）、CLIENT_PRINCIPAL（渠道 → Client，= 总额 − 手续费 − 税额）、
+     * PARTNER_SHARE（经营主体 → Local Partner）、PLATFORM_SERVICE_CHARGE（经营主体 → Finance Entity）、CHANNEL_COST（经营主体 → 渠道）；
+     * 渠道标识取清算账户。</li>
      * <li>合作方两行只在已设置合作方二元组时生成，须先调用 {@link #partner(long, long)}。</li>
      *
      * @param clientFee Client 手续费
@@ -139,9 +157,12 @@ public final class BillingFactBuilder {
         String channelCost) {
         String entityNo = fact.getEntityNo();
         String channel = String.valueOf(clearingAccountId);
-        String principal = fact.getGrossAmount().subtract(new BigDecimal(clientFee)).toPlainString();
+        BigDecimal taxTotal = sellerTaxes.stream().map(tax -> new BigDecimal(tax.getValue())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        String principal = fact.getGrossAmount().subtract(new BigDecimal(clientFee)).subtract(taxTotal).toPlainString();
         chargeLine(FactComponentType.CLIENT_FEE, FactPartyRole.CHANNEL, channel, FactPartyRole.OPERATING_ENTITY, entityNo,
             clientFee);
+        sellerTaxes.forEach(tax -> chargeLine(FactComponentType.SELLER_TAX, FactPartyRole.CHANNEL, channel,
+            FactPartyRole.TAX_AUTHORITY, tax.getKey(), tax.getValue()));
         chargeLine(FactComponentType.CLIENT_PRINCIPAL, FactPartyRole.CHANNEL, channel, FactPartyRole.CLIENT,
             String.valueOf(fact.getClientId()), principal);
         if (fact.getLocalPartnerId() != null) {

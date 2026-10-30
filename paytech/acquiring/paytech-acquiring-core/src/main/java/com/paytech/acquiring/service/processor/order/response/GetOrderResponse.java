@@ -12,7 +12,7 @@ import lombok.Builder;
 /** 订单查询的有限结果；不包含数据库身份、内部引用或完整持久化对象。 */
 @Builder
 public record GetOrderResponse(String orderNo, String clientOrderId, OrderCreationMode creationMode, OrderStatus orderStatus,
-    Checkout checkout, boolean ready, boolean finalAmount,
+    Checkout checkout, boolean ready, com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus amountStatus,
     OrderPaymentStatus paymentStatus, String currency, String consumerCountryCode, List<Item> items, Amounts amounts,
     PaymentAttemptStatus lastAttemptStatus, RefundSummary refundSummary, FundsAvailability fundsAvailability,
     Instant createdAt, Instant expiresAt, Instant paidAt, Instant updatedAt) {

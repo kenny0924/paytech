@@ -48,11 +48,12 @@ test('页面注册：财务七页按序登记，动作与 Platform 能力清单�
   assert.deepEqual(finance.map(page => [page.componentKey, page.frontendRoute]), [
     ['OPERATIONS_FINANCE_SETUP', '/finance/setup'], ['OPERATIONS_FINANCE_LEDGER', '/finance/ledger'], ['OPERATIONS_FINANCE_BALANCES', '/finance/balances'],
     ['OPERATIONS_FINANCE_SUBLEDGER', '/finance/subledger'], ['OPERATIONS_FINANCE_ADJUSTMENTS', '/finance/adjustments'],
-    ['OPERATIONS_FINANCE_PERIOD_CLOSE', '/finance/period-close'], ['OPERATIONS_FINANCE_ACCOUNTING_RULES', '/finance/accounting-rules']]);
+    ['OPERATIONS_FINANCE_PERIOD_CLOSE', '/finance/period-close'], ['OPERATIONS_FINANCE_ACCOUNTING_RULES', '/finance/accounting-rules'],
+    ['OPERATIONS_FINANCE_TAX', '/finance/tax']]);
   assert.deepEqual(finance.map(page => page.actions.map(action => action.resourceCode)), [[manageFinanceSetup], ['OPERATIONS_FINANCE_LEDGER_MANAGE'], [], [],
     ['OPERATIONS_FINANCE_ADJUSTMENTS_MANAGE', 'OPERATIONS_FINANCE_ADJUSTMENTS_APPROVE'],
     ['OPERATIONS_FINANCE_PERIOD_CLOSE_MANAGE', 'OPERATIONS_FINANCE_PERIOD_CLOSE_APPROVE'],
-    ['OPERATIONS_FINANCE_ACCOUNTING_RULES_MANAGE', 'OPERATIONS_FINANCE_ACCOUNTING_RULES_APPROVE']]);
+    ['OPERATIONS_FINANCE_ACCOUNTING_RULES_MANAGE', 'OPERATIONS_FINANCE_ACCOUNTING_RULES_APPROVE'], []]);
 });
 
 test('基础资料解码：主键、状态、日期与枚举严格校验，未知值失败关闭', () => {

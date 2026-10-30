@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 
 import org.springframework.stereotype.Component;
 
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
 import com.paytech.acquiring.api.client.v1.enums.CommerceCheckoutErrorCode;
 import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentRecord;
@@ -120,13 +121,21 @@ public class GetOrderProcessor extends AbstractProcessor<GetOrderRequest, GetOrd
         }
     }
 
-    /** 最终金额必须齐全且平衡；准备前或提前结束的 Checkout 允许预估金额。 */
+    /**
+     * 当前报价金额必须齐全且平衡；准备前、提前结束的 Checkout 或 BLOCKED（无法正确计税）允许金额为空
+     * <li>金额状态与总额一致：BLOCKED 时总额为空，FINAL 时总额必须存在，ESTIMATED 可为建单暂估或准备前的空金额；有总额时必须平衡。</li>
+     */
     void validateAmounts(OrderRecord order) {
         boolean finalAmount = order.totalAmount() != null;
         if (finalAmount != (order.taxAmount() != null) || finalAmount != (order.roundingAmount() != null)
             || finalAmount && order.netAmount().add(order.taxAmount()).add(order.roundingAmount())
-                .compareTo(order.totalAmount()) != 0) {
+                .compareTo(order.totalAmount()) != 0
+            || order.amountStatus() == null || order.amountStatus() == OrderAmountStatus.BLOCKED && finalAmount
+            || order.amountStatus() == OrderAmountStatus.FINAL && !finalAmount) {
             throw new ErrorException("订单最终金额不完整");
+        }
+        if (order.amountStatus() == OrderAmountStatus.BLOCKED) {
+            return;
         }
         if (!finalAmount && order.sessionStatus() != null && order.sessionStatus() != CheckoutSessionStatus.PREPARING
             && order.sessionStatus() != CheckoutSessionStatus.EXPIRED
@@ -192,7 +201,7 @@ public class GetOrderProcessor extends AbstractProcessor<GetOrderRequest, GetOrd
         var payment = context.payment();
         var refund = context.refund();
         var funds = context.funds();
-        boolean finalAmount = order.totalAmount() != null;
+        boolean finalAmount = order.amountStatus() == OrderAmountStatus.FINAL;
         var items = context.items().stream()
             .map(item -> new GetOrderResponse.Item(item.clientItemId(), item.itemName(), item.itemDescription(),
                 item.productTypeCode(), item.taxCategoryCode(), item.quantity(), item.unitAmount(),
@@ -213,7 +222,8 @@ public class GetOrderProcessor extends AbstractProcessor<GetOrderRequest, GetOrd
             .filter(Objects::nonNull).max(Instant::compareTo).orElseThrow();
         return GetOrderResponse.builder().orderNo(order.orderNo()).clientOrderId(order.clientOrderId())
             .creationMode(order.creationMode()).orderStatus(order.orderStatus()).checkout(checkout)
-            .ready(order.sessionStatus() != CheckoutSessionStatus.PREPARING && finalAmount).finalAmount(finalAmount)
+            .ready(order.sessionStatus() != CheckoutSessionStatus.PREPARING && finalAmount)
+            .amountStatus(order.amountStatus())
             .paymentStatus(paymentStatus(payment)).currency(order.currency())
             .consumerCountryCode(context.consumerCountryCode()).items(items).amounts(amounts)
             .lastAttemptStatus(payment == null ? null : payment.lastAttemptStatus()).refundSummary(refundSummary)

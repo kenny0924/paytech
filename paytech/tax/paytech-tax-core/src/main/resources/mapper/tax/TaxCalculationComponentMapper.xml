@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.tax.core.dal.mapper.TaxCalculationComponentMapper">
+    <insert id="batchInsert">
+        INSERT INTO t_tax_calculation_component (id, calculation_id, line_id, component_code, jurisdiction_code, tax_type, treatment, reason_code, liable_role, market_id, registration_id, policy_id, rule_code, tax_base, rate, charged_tax_amount, calculation_method, rounding_method, rounding_scale, create_time)
+        VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.id}, #{row.calculationId}, #{row.lineId}, #{row.componentCode}, #{row.jurisdictionCode}, #{row.taxType}, #{row.treatment}, #{row.reasonCode}, #{row.liableRole}, #{row.marketId}, #{row.registrationId}, #{row.policyId}, #{row.ruleCode}, #{row.taxBase}, #{row.rate}, #{row.chargedTaxAmount}, #{row.calculationMethod}, #{row.roundingMethod}, #{row.roundingScale}, #{row.createTime})
+        </foreach>
+    </insert>
+
+    <select id="selectByCalculationIds" resultType="com.paytech.tax.core.dal.dataobject.TaxCalculationComponent">
+        SELECT id, calculation_id, line_id, component_code, jurisdiction_code, tax_type, treatment, reason_code, liable_role, market_id, registration_id, policy_id, rule_code, tax_base, rate, charged_tax_amount, calculation_method, rounding_method, rounding_scale, create_time FROM t_tax_calculation_component
+        WHERE calculation_id IN <foreach collection="calculationIds" item="v" open="(" separator="," close=")">#{v}</foreach> ORDER BY calculation_id, line_id, jurisdiction_code, component_code
+    </select>
+</mapper>

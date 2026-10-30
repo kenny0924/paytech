@@ -464,17 +464,51 @@
           },
           "consumerStatus": {
             "type": "string"
+          },
+          "amountStatus": {
+            "type": "string",
+            "enum": [
+              "ESTIMATED",
+              "FINAL",
+              "BLOCKED"
+            ],
+            "description": "重算后的金额状态：FINAL 可继续确认条款并付款；BLOCKED 无法正确计税，税额与总额为 null，原因见 taxBlockReason，可更换账单地址后重新保存。税务服务上线前的历史订单不重算，沿用原状态。"
+          },
+          "taxBlockReason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "税务阻断原因代码，仅 amountStatus=BLOCKED 时有值（如 MARKET_NOT_ENABLED、NO_RULE、AMBIGUOUS_RULE、UNKNOWN_TAX_CATEGORY、MISSING_EVIDENCE、POLICY_INVALID），其他状态为 null。"
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$",
+            "description": "订单币种 Code。"
+          },
+          "amounts": {
+            "$ref": "#/components/schemas/CheckoutAmountsInfo"
           }
         },
         "required": [
           "orderNo",
-          "consumerStatus"
+          "consumerStatus",
+          "amountStatus",
+          "taxBlockReason",
+          "currency",
+          "amounts"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "保存结果不回显个人原值；返回按账单国家重算后的当前报价。"
       },
       "CheckoutAmountsInfo": {
         "type": "object",
-        "description": "金额使用币种主单位十进制字符串，按币种精度输出；USD 的 10 美元表示为 \"10.00\"，不表示为 1000。新创建订单已确定税、舍入及总额；未初始化历史数据保留 null。",
+        "description": "金额使用币种主单位十进制字符串，按币种精度输出；USD 的 10 美元表示为 \"10.00\"，不表示为 1000。税额、舍入额与总额为当前有效报价：建单按 Client 声明国家暂估，消费者提交账单地址后按账单国家重算；amountStatus=BLOCKED 或未初始化历史数据为 null。",
         "properties": {
           "merchandiseAmount": {
             "description": "优惠前商品总额，等于各行单价乘数量之和；使用订单币种主单位字符串并按币种精度输出。",
@@ -492,7 +526,7 @@
             "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?$"
           },
           "taxAmount": {
-            "description": "税额，使用订单币种主单位字符串并按币种精度输出；新创建时已确定，未初始化历史数据为 null。",
+            "description": "税额，使用订单币种主单位字符串并按币种精度输出；为当前有效报价；BLOCKED 或未初始化历史数据为 null。",
             "anyOf": [
               {
                 "type": "string",
@@ -504,7 +538,7 @@
             ]
           },
           "roundingAmount": {
-            "description": "舍入调整金额，使用订单币种主单位字符串并按币种精度输出；新创建时已确定，未初始化历史数据为 null。",
+            "description": "舍入调整金额，使用订单币种主单位字符串并按币种精度输出；为当前有效报价；BLOCKED 或未初始化历史数据为 null。",
             "anyOf": [
               {
                 "type": "string",
@@ -923,7 +957,25 @@
             "type": "string"
           },
           "amountStatus": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "ESTIMATED",
+              "FINAL",
+              "BLOCKED"
+            ],
+            "description": "金额状态，取订单当前有效报价：ESTIMATED 按 Client 声明国家暂估，提交账单地址后重算，不能付款；FINAL 最终金额，可付款；BLOCKED 无法正确计税，税额、舍入额与总额为 null，原因见 taxBlockReason，不能付款。税务服务上线前的历史订单不重算。"
+          },
+          "taxBlockReason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "税务阻断原因代码，仅 amountStatus=BLOCKED 时有值（如 MARKET_NOT_ENABLED、NO_RULE、AMBIGUOUS_RULE、UNKNOWN_TAX_CATEGORY、MISSING_EVIDENCE、POLICY_INVALID），其他状态为 null。"
           },
           "currency": {
             "type": "string",
@@ -1014,6 +1066,7 @@
           "checkoutStatus",
           "preparationStatus",
           "amountStatus",
+          "taxBlockReason",
           "currency",
           "consumerCountryCode",
           "locale",

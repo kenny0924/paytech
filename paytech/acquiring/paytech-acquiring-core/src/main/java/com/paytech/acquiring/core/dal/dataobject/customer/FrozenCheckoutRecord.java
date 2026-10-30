@@ -46,11 +46,23 @@ public class FrozenCheckoutRecord {
     /** 风险评估引用。 */
     private long riskCheckoutAssessmentId;
 
-    /** 税务快照引用。 */
-    private long financeTaxSnapshotId;
+    /**
+     * 历史订单的旧税务快照引用
+     * <li>2026-10-29 起新订单为空，税务计算见 initialTaxCalculationId。</li>
+     */
+    private Long financeTaxSnapshotId;
 
-    /** 税务快照摘要。 */
+    /**
+     * 历史订单的旧税务快照摘要
+     * <li>新订单为空。</li>
+     */
     private String financeTaxSnapshotHash;
+
+    /**
+     * 建单时取得的 tax 暂估计算
+     * <li>历史订单为空。</li>
+     */
+    private Long initialTaxCalculationId;
 
     /** 计税国家。 */
     private String consumerCountryCode;
@@ -136,8 +148,14 @@ public class FrozenCheckoutRecord {
     /** 卖方支持电话。 */
     private String publicSupportPhone;
 
-    /** 消费者合同主键。 */
+    /** 消费者合同主键；查询时为订单当前（最新呈现）合同。 */
     private long consumerContractId;
+
+    /**
+     * 合同渲染所依据的 tax 计算
+     * <li>历史订单为空；新订单每次报价变化追加合同，接受的合同必须绑定当前有效计算。</li>
+     */
+    private Long contractTaxCalculationId;
 
     /** 订单合同文件。 */
     private long renderedFileId;

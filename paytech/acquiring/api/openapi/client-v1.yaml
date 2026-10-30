@@ -831,24 +831,25 @@ components:
           anyOf:
             - $ref: '#/components/schemas/DecimalAmount'
             - type: 'null'
-          description: 准备前为 null；计税完成后为明确税额。
+          description: 当前有效报价的税额：建单按 Client 声明的消费者国家暂估（amountStatus=ESTIMATED），消费者提交账单地址后按账单国家重算；amountStatus=BLOCKED 或准备前为 null。
         roundingAmount:
           anyOf:
             - $ref: '#/components/schemas/DecimalAmount'
             - type: 'null'
-          description: 准备前为 null；准备后为明确舍入金额。
+          description: 当前有效报价的舍入金额；amountStatus=BLOCKED 或准备前为 null。
         totalAmount:
           anyOf:
             - $ref: '#/components/schemas/DecimalAmount'
             - type: 'null'
-          description: 准备前为 null；准备后为最终金额，不能用零值代替未知。
+          description: 当前有效报价的应付总额，不能用零值代替未知；amountStatus=BLOCKED 或准备前为 null。
         paidAmount:
           $ref: '#/components/schemas/DecimalAmount'
           description: 已成功支付金额，使用订单币种主单位金额字符串；当前响应可提供该金额时返回。
     CreateCheckoutResponse:
       type: object
       description: Immutable receipt returned after a checkout and its order have been created.
-      required: [orderNo, clientOrderId, checkoutUrl, currency, amounts, expiresAt, preparationStatus, amountStatus, checkoutStatus]
+      required: [orderNo, clientOrderId, checkoutUrl, currency, amounts, expiresAt, preparationStatus, amountStatus, checkoutStatus,
+        taxBlockReason]
       properties:
         orderNo:
           $ref: '#/components/schemas/PublicOrderNo'
@@ -880,13 +881,19 @@ components:
         amountStatus:
           type: string
           minLength: 1
-          description: 基础创建为 ESTIMATED，税额、舍入和总额明确为 null。
-          x-known-values: [ESTIMATED]
+          description: 创建时的金额状态。ESTIMATED 为按 Client 声明的消费者国家暂估的税额与总额，消费者提交账单地址后按账单国家重算，暂不可支付；BLOCKED 为无法正确计税，税额、舍入额与总额为 null，原因见 taxBlockReason，订单仍创建，消费者资料提交后可能重算为可支付；FINAL 为税务不由平台计算（NOT_MANAGED），税额为 Client 自报值（本 API 尚无自报字段，为 0）。
+          x-known-values: [ESTIMATED, BLOCKED, FINAL]
         checkoutStatus:
           type: string
           minLength: 1
           description: 创建时为 PREPARING，尚不能支付。
           x-known-values: [PREPARING]
+        taxBlockReason:
+          anyOf:
+            - type: string
+              maxLength: 64
+            - type: 'null'
+          description: 税务阻断原因代码，仅 amountStatus=BLOCKED 时有值（如 MARKET_NOT_ENABLED、NO_RULE、UNKNOWN_TAX_CATEGORY），其他状态为 null。
     OrderItem:
       type: object
       description: Immutable item snapshot stored on an order.
@@ -950,8 +957,8 @@ components:
         amountStatus:
           type: string
           minLength: 1
-          description: 金额状态，ESTIMATED 时税额、舍入额及总额为 null，FINAL 时为最终金额。
-          x-known-values: [ESTIMATED, FINAL]
+          description: 当前有效报价的金额状态。ESTIMATED 为建单暂估或准备前（准备前金额为 null），消费者提交账单地址后重算；FINAL 为可支付的最终金额；BLOCKED 为无法正确计税，税额、舍入额与总额为 null，不可支付。
+          x-known-values: [ESTIMATED, FINAL, BLOCKED]
         paymentStatus:
           $ref: '#/components/schemas/PaymentStatus'
           description: Current aggregate payment lifecycle code.

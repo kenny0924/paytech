@@ -16,10 +16,12 @@ public interface CheckoutPaymentTestMapper {
 INSERT INTO t_order_context (order_context_id,order_id,commercial_context_time,affiliation_id,entity_scope_id,
  entity_source_relation_id,client_pricing_version_id,partner_share_version_id,platform_charge_version_id,
  platform_service_party_id,risk_checkout_assessment_id,finance_tax_snapshot_id,finance_tax_snapshot_hash,
- consumer_country_code,locale,fund_flow,effective_relationship_model_version,snapshot_model_version,create_time) VALUES
+ initial_tax_calculation_id,consumer_country_code,locale,fund_flow,effective_relationship_model_version,
+ snapshot_model_version,create_time) VALUES
  (#{orderContextId},#{orderId},#{commercialContextTime},#{affiliationId},#{entityScopeId},#{entitySourceRelationId},
  #{clientPricingVersionId},#{partnerShareVersionId},#{platformChargeVersionId},#{platformServicePartyId},
- #{riskCheckoutAssessmentId},#{financeTaxSnapshotId},#{financeTaxSnapshotHash},#{consumerCountryCode},#{locale},
+ #{riskCheckoutAssessmentId},#{financeTaxSnapshotId},#{financeTaxSnapshotHash},#{initialTaxCalculationId},
+ #{consumerCountryCode},#{locale},
  #{fundFlow},#{effectiveRelationshipModelVersion},#{snapshotModelVersion},#{presentedAt})
 """)
     void insertContext(FrozenCheckoutRecord row);
@@ -43,9 +45,9 @@ INSERT INTO t_order_legal (order_legal_id,order_context_id,client_agreement_id,p
     /** 本例准备事实，直接 INSERT。 */
     @Insert(
 """
-INSERT INTO t_consumer_contract (consumer_contract_id,order_id,order_legal_id,rendered_file_id,rendered_content_hash,
- locale,presented_at,create_time) VALUES (#{consumerContractId},#{orderId},#{orderLegalId},#{renderedFileId},
- #{renderedContentHash},#{locale},#{presentedAt},#{presentedAt})
+INSERT INTO t_consumer_contract (consumer_contract_id,order_id,order_legal_id,tax_calculation_id,rendered_file_id,
+ rendered_content_hash,locale,presented_at,create_time) VALUES (#{consumerContractId},#{orderId},#{orderLegalId},
+ #{contractTaxCalculationId},#{renderedFileId},#{renderedContentHash},#{locale},#{presentedAt},#{presentedAt})
 """)
     void insertContract(FrozenCheckoutRecord row);
 

@@ -75,8 +75,10 @@ public class CreateCheckoutResponseBody {
     private String preparationStatus;
 
     /**
-     * 创建回执的金额状态。
-     * <li>固定为 ESTIMATED。</li>
+     * 创建回执的金额状态（OrderAmountStatus Code）。
+     * <li>ESTIMATED：按 Client 声明的消费者国家暂估的税额与总额，消费者提交账单地址后重算，暂不可支付。</li>
+     * <li>BLOCKED：无法正确计税，税额、舍入额与总额为 null，原因见 taxBlockReason；订单仍创建，消费者资料提交后可能重算为可支付。</li>
+     * <li>FINAL：税务不由平台计算（NOT_MANAGED），税额为 Client 自报值（Client API 尚无该字段，为 0）。</li>
      */
     @JsonProperty(isRequired = OptBoolean.TRUE)
     @NotBlank
@@ -89,6 +91,13 @@ public class CreateCheckoutResponseBody {
     @JsonProperty(isRequired = OptBoolean.TRUE)
     @NotBlank
     private String checkoutStatus;
+
+    /**
+     * 税务阻断原因代码。
+     * <li>仅 amountStatus=BLOCKED 时有值，如 MARKET_NOT_ENABLED、NO_RULE、UNKNOWN_TAX_CATEGORY；其他状态为 null。</li>
+     */
+    @Size(max = 64)
+    private String taxBlockReason;
 
     /** 创建时的预估金额信息；均使用订单币种主单位字符串，响应按币种补齐小数位。 */
     @Getter

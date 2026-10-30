@@ -120,7 +120,8 @@ class SaveConsumerTransactionTest extends MockTestBase {
             consumer.setOrderId(orderId());
         }
         return new SaveConsumerContext(orderChecker.order(orderId()), orderChecker.session(orderId()), consumer,
-            template().details(), new ProtectedConsumer("service-email-reference", "service-profile-reference"));
+            template().details(), new ProtectedConsumer("service-email-reference", "service-profile-reference"), null,
+            null);
     }
 
     /** 当前用例持有的订单标识。 */

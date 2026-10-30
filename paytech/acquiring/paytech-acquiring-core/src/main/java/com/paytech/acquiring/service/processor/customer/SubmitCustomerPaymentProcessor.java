@@ -40,6 +40,7 @@ import com.paytech.acquiring.domainservice.repository.customer.ConsumerContractR
 import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
 import com.paytech.acquiring.domainservice.repository.order.OrderContextRepository;
 import com.paytech.acquiring.domainservice.repository.order.OrderPaymentProjectionRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderTaxCalculationRepository;
 import com.paytech.acquiring.domainservice.service.customer.CheckoutSubmissionService;
 import com.paytech.acquiring.integration.counterparty.CounterpartyCustomerClient;
 import com.paytech.acquiring.service.processor.customer.request.SubmitCustomerPaymentRequest;
@@ -71,6 +72,7 @@ public class SubmitCustomerPaymentProcessor
     private final CheckoutNetworkEvidenceRepository evidenceRepository;
     private final CardSavingEligibility cardSavingEligibility;
     private final CounterpartyCustomerClient counterparty;
+    private final OrderTaxCalculationRepository taxCalculationRepository;
 
     /** 非 HTTP 调用同样执行字段约束；不访问数据库，不复制模板的事务检查。 */
     @Override
@@ -103,6 +105,7 @@ public class SubmitCustomerPaymentProcessor
         checkNewSubmission(order, session);
         var choice = buildCardChoice(request, order);
         var contract = getAndCheckContract(order, request.getConsumerContractId());
+        checkTaxQuote(order, contract);
         var projection = getAndCheckPayment(order);
         var context = buildContext(request, order, session, contract, projection);
         // 先提交接受事实，作为 Intent 可能已创建的持久化边界。
@@ -172,6 +175,25 @@ public class SubmitCustomerPaymentProcessor
             throw new FailException(LEGAL_DOCUMENT_CHANGED);
         }
         return contract;
+    }
+
+    /**
+     * 税务门禁：只能按最新且可支付的计算付款（technique 9.1、F-07）
+     * <li>最新计算必须是 FINAL 阶段、READY 或 NOT_MANAGED 且未过期，否则 CHECKOUT_NOT_READY（建单暂估、BLOCKED、过期都需重新提交资料）。</li>
+     * <li>本次确认的合同必须绑定该计算，否则 LEGAL_DOCUMENT_CHANGED。</li>
+     * <li>税务服务上线前的历史订单没有计算记录，合同也未绑定计算，按原合同放行（AC-12）。</li>
+     */
+    void checkTaxQuote(CommerceOrder order, ConsumerContract contract) {
+        var latest = taxCalculationRepository.findLatestByOrderId(order.getOrderId());
+        if (latest == null && contract.getTaxCalculationId() == null) {
+            return;
+        }
+        if (latest == null || !latest.payableAt(clock.instant())) {
+            throw new FailException(CHECKOUT_NOT_READY);
+        }
+        if (contract.getTaxCalculationId() == null || contract.getTaxCalculationId() != latest.getTaxCalculationId()) {
+            throw new FailException(LEGAL_DOCUMENT_CHANGED);
+        }
     }
 
     /** 按需读取已有 Intent；尚无关联允许首次创建。 */

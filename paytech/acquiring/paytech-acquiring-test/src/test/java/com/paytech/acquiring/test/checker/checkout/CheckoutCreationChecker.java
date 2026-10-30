@@ -166,6 +166,13 @@ public final class CheckoutCreationChecker {
         }
     }
 
+    /** 已提交订单的内部主键，供其他只读 Checker 定位。 */
+    public long orderId(long clientId, String clientOrderId) {
+        var order = mapper.order(clientId, clientOrderId);
+        assertNotNull(order, "订单应已提交");
+        return order.getOrderId();
+    }
+
     /** 失败用例不能产生订单。 */
     public void assertAbsent(long clientId, String clientOrderId) {
         assertNull(mapper.order(clientId, clientOrderId), "不应写入订单");

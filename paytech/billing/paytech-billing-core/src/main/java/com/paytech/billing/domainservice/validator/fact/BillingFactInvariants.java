@@ -67,7 +67,12 @@ public final class BillingFactInvariants {
         FactComponentType.CLIENT_PRINCIPAL, List.of(FactPartyRole.CHANNEL, FactPartyRole.CLIENT),
         FactComponentType.PARTNER_SHARE, List.of(FactPartyRole.OPERATING_ENTITY, FactPartyRole.LOCAL_PARTNER),
         FactComponentType.PLATFORM_SERVICE_CHARGE, List.of(FactPartyRole.OPERATING_ENTITY, FactPartyRole.FINANCE_ENTITY),
-        FactComponentType.CHANNEL_COST, List.of(FactPartyRole.OPERATING_ENTITY, FactPartyRole.CHANNEL));
+        FactComponentType.CHANNEL_COST, List.of(FactPartyRole.OPERATING_ENTITY, FactPartyRole.CHANNEL),
+        FactComponentType.SELLER_TAX, List.of(FactPartyRole.CHANNEL, FactPartyRole.TAX_AUTHORITY));
+
+    /** 自动 PAYMENT 事实中合计等于毛额的组件：渠道从毛额中拆分给 Client、OE 与税务机关的部分。 */
+    static final Set<FactComponentType> PAYMENT_GROSS_COMPONENTS = EnumSet.of(FactComponentType.CLIENT_PRINCIPAL,
+        FactComponentType.CLIENT_FEE, FactComponentType.SELLER_TAX);
 
     private static final Pattern DECIMAL_ID = Pattern.compile("[1-9][0-9]{0,18}");
 
@@ -228,8 +233,9 @@ public final class BillingFactInvariants {
      * 校验一条待登记的自动 PAYMENT 事实（技术方案 4.6.4）
      * <li>头部：Client、OE、币种、业务时间与到期时间非空，毛额为正，合作方二元组全有或全无。</li>
      * <li>引用：包含 {@link #PAYMENT_REFS} 全部类型、不含 TICKET；明细行：组件、付方 / 收方角色按行目录，CHARGE、无目标余额桶、金额为正，
-     * 主体标识等于头部，渠道标识等于 CLEARING_ACCOUNT；CLIENT_PRINCIPAL 恰一行，Σ CLIENT_PRINCIPAL + Σ CLIENT_FEE = 毛额；PARTNER_SHARE、
-     * PLATFORM_SERVICE_CHARGE 只在有合作方时出现。</li>
+     * 主体标识等于头部，渠道标识等于 CLEARING_ACCOUNT，税务机关标识为十进制 Party ID；CLIENT_PRINCIPAL 恰一行，
+     * Σ CLIENT_PRINCIPAL + Σ CLIENT_FEE + Σ SELLER_TAX = 毛额；全部 SELLER_TAX 行收方相同（ledger 合并为一笔 TAX_PAYABLE 贷记）；
+     * PARTNER_SHARE、PLATFORM_SERVICE_CHARGE 只在有合作方时出现。</li>
      *
      * @param fact 由待登记事实头、引用与明细行组装的载荷
      * @throws BizCheckFailException 任一约束不满足
@@ -280,25 +286,32 @@ public final class BillingFactInvariants {
         }
     }
 
-    /** 渠道角色的标识是清算账户，其余角色的标识等于头部主体。 */
+    /** 渠道角色的标识是清算账户，税务机关的标识是十进制纳税主体 Party ID，其余角色的标识等于头部主体。 */
     static boolean paymentPartyMatches(BillingFactPayload fact, String role, String id, String clearingAccountId) {
         FactPartyRole partyRole = roleOf(role, "主体");
         if (partyRole == FactPartyRole.CHANNEL) {
             return Objects.equals(clearingAccountId, id);
         }
+        if (partyRole == FactPartyRole.TAX_AUTHORITY) {
+            return id != null && DECIMAL_ID.matcher(id).matches();
+        }
         return Objects.equals(headerIdentity(fact, partyRole), id);
     }
 
-    /** 本金恰一行、本金与手续费之和等于毛额、合作方组件只在有合作方时出现。 */
+    /** 本金恰一行、本金、手续费与税额之和等于毛额、税行收方唯一、合作方组件只在有合作方时出现。 */
     static void checkPaymentTotals(BillingFactPayload fact) {
         long principalLines = fact.getLines().stream()
             .filter(line -> componentOf(line) == FactComponentType.CLIENT_PRINCIPAL).count();
-        BigDecimal clientTotal = fact.getLines().stream()
-            .filter(line -> componentOf(line) == FactComponentType.CLIENT_PRINCIPAL
-                || componentOf(line) == FactComponentType.CLIENT_FEE)
+        BigDecimal grossTotal = fact.getLines().stream()
+            .filter(line -> PAYMENT_GROSS_COMPONENTS.contains(componentOf(line)))
             .map(BillingFactLinePayload::getPostedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (principalLines != 1 || clientTotal.compareTo(fact.getGrossAmount()) != 0) {
-            throw paymentRejected(fact, "本金必须恰一行且本金与手续费之和等于毛额");
+        if (principalLines != 1 || grossTotal.compareTo(fact.getGrossAmount()) != 0) {
+            throw paymentRejected(fact, "本金必须恰一行且本金、手续费与税额之和等于毛额");
+        }
+        long taxPayees = fact.getLines().stream().filter(line -> componentOf(line) == FactComponentType.SELLER_TAX)
+            .map(BillingFactLinePayload::getPayeeId).distinct().count();
+        if (taxPayees > 1) {
+            throw paymentRejected(fact, "全部 SELLER_TAX 行必须付给同一税务机关");
         }
         boolean partnerLines = fact.getLines().stream().anyMatch(line -> PARTNER_COMPONENTS.contains(componentOf(line)));
         if (partnerLines && fact.getLocalPartnerId() == null) {

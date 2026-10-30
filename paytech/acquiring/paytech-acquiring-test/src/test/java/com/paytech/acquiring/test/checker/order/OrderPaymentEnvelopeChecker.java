@@ -1,5 +1,8 @@
 package com.paytech.acquiring.test.checker.order;
 
+import java.math.BigDecimal;
+
+import com.paytech.tax.api.enums.TaxCalculationStatus;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,14 +20,19 @@ import tools.jackson.databind.JsonNode;
 
 /** 已收到的 OrderPaymentSucceeded 信封；期望值来自用例插入的前置事实与发布的支付事实。 */
 public class OrderPaymentEnvelopeChecker {
-    /** Payload 字段顺序（technique 4.3，订单组在前、支付组在后）。 */
+    /** Payload 字段顺序（technique 4.3，订单组在前、支付组在后；tax 需求 11.1 可空新增的税务组最后）。 */
     public static final List<String> PAYLOAD_FIELDS = List.of("orderId", "orderContextId", "clientId", "entityNo",
         "entitySourceType", "localPartnerId", "industryCode", "mccCode", "orderAmount", "currency",
         "commercialContextTime", "clientAgreementId", "clientPricingVersionId", "partnerAgreementId",
         "partnerAgreementOperatingEntityId", "partnerShareVersionId", "platformChargeVersionId", "platformServicePartyId",
         "financeTaxSnapshotId", "consumerCountryCode", "paymentIntentId", "paymentAttemptId", "capturedAmount",
         "paymentSucceededTime", "paymentMethodCode", "channelId", "channelAccountId", "midId", "channelTransactionRef",
-        "channelTransactionRefId", "channelReferenceType", "cardBrand", "fundingType", "cardLevel");
+        "channelTransactionRefId", "channelReferenceType", "cardBrand", "fundingType", "cardLevel", "taxCalculationId",
+        "taxStatus", "taxScopeKey", "taxAmount", "taxComponents");
+
+    /** 税务组件元素的字段顺序。 */
+    public static final List<String> TAX_COMPONENT_FIELDS = List.of("jurisdictionCode", "taxType", "registrationId",
+        "taxSubjectPartyId", "taxAmount");
 
     private final DomainEvent decoded;
     private final JsonNode envelope;
@@ -71,6 +79,57 @@ public class OrderPaymentEnvelopeChecker {
                 assertEquals(want, value.asString(), field);
             }
         });
+        return this;
+    }
+
+    /**
+     * 税务字段满足 billing 消费方的死信规则（billing 按这些规则判定载荷一致，不一致进死信）
+     * <li>任一税务字段非空则 taxCalculationId 非空；不发布 BLOCKED；NOT_MANAGED 没有组件；READY 时 taxAmount 等于组件合计、每个组件有
+     * registrationId、所有组件同一纳税主体。</li>
+     */
+    public OrderPaymentEnvelopeChecker assertBillingTaxShape() {
+        JsonNode payload = envelope.path("payload");
+        boolean anyTax = List.of("taxStatus", "taxScopeKey", "taxAmount", "taxComponents").stream()
+            .anyMatch(field -> !payload.path(field).isNull());
+        if (!anyTax && payload.path("taxCalculationId").isNull()) {
+            return this;
+        }
+        assertTrue(payload.path("taxCalculationId").isString(), "有税务字段时必须有 taxCalculationId");
+        String status = payload.path("taxStatus").asString();
+        assertTrue(!TaxCalculationStatus.BLOCKED.getCode().equals(status), "不发布 BLOCKED");
+        JsonNode components = payload.path("taxComponents");
+        if (TaxCalculationStatus.NOT_MANAGED.getCode().equals(status)) {
+            assertEquals(0, components.size(), "NOT_MANAGED 没有组件");
+            return this;
+        }
+        assertEquals(TaxCalculationStatus.READY.getCode(), status, "税务状态");
+        BigDecimal sum = BigDecimal.ZERO;
+        var subjects = new java.util.HashSet<String>();
+        for (JsonNode component : components) {
+            assertTrue(component.path("registrationId").isString(), "组件必须有 registrationId");
+            subjects.add(component.path("taxSubjectPartyId").asString());
+            sum = sum.add(new BigDecimal(component.path("taxAmount").asString()));
+        }
+        assertEquals(0, sum.compareTo(new BigDecimal(payload.path("taxAmount").asString())), "taxAmount 等于组件合计");
+        assertTrue(subjects.size() <= 1, "所有组件同一纳税主体");
+        return this;
+    }
+
+    /**
+     * taxComponents 为 JSON 数组，元素字段与顺序固定，逐元素比较字符串值
+     *
+     * @param expected 期望组件，按数组顺序；空列表表示空数组（NOT_MANAGED）
+     * @return 当前 Checker
+     */
+    public OrderPaymentEnvelopeChecker taxComponents(List<Map<String, String>> expected) {
+        JsonNode components = envelope.path("payload").path("taxComponents");
+        assertTrue(components.isArray(), "taxComponents 应为数组，实际：" + components);
+        assertEquals(expected.size(), components.size(), "taxComponents 数量");
+        for (int index = 0; index < expected.size(); index++) {
+            JsonNode component = components.get(index);
+            assertEquals(TAX_COMPONENT_FIELDS, new ArrayList<>(component.propertyNames()), "税务组件字段顺序");
+            expected.get(index).forEach((field, want) -> assertEquals(want, component.path(field).asString(), field));
+        }
         return this;
     }
 }

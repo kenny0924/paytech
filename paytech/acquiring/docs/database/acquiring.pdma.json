@@ -324,7 +324,7 @@
       },
       "defKey": "t_commerce_order",
       "defName": "订单",
-      "comment": "基础创建时固定商品净额/币种/期限；支付准备选择提交后固定OE，Context建立时一次补齐税额和最终金额；不延长到期或跨OE恢复。",
+      "comment": "基础创建时固定商品净额/币种/期限与OE；税额、舍入额与总额为当前有效报价，随 t_order_tax_calculation 新 revision 在消费者接受前更新，接受后不再变化；不延长到期或跨OE恢复。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -789,7 +789,7 @@
         {
           "defKey": "tax_amount",
           "defName": "税额",
-          "comment": "订单创建时冻结的消费者实收税额汇总金额。",
+          "comment": "当前有效报价的消费者实收税额汇总，只在消费者接受前随新的税务计算 revision 更新；BLOCKED 时为空。",
           "type": "DECIMAL",
           "len": 24,
           "scale": 8,
@@ -807,7 +807,7 @@
         {
           "defKey": "rounding_amount",
           "defName": "舍入调整金额",
-          "comment": "订单金额计算为保持币种精度而冻结的舍入差额。",
+          "comment": "当前有效报价为保持币种精度的舍入差额，随税务计算 revision 更新；BLOCKED 时为空。",
           "type": "DECIMAL",
           "len": 24,
           "scale": 8,
@@ -825,7 +825,7 @@
         {
           "defKey": "total_amount",
           "defName": "订单总金额",
-          "comment": "消费者最终应付的订单冻结总金额。",
+          "comment": "当前有效报价的消费者应付总额，只在消费者接受前随税务计算 revision 更新；BLOCKED 时为空。",
           "type": "DECIMAL",
           "len": 24,
           "scale": 8,
@@ -839,6 +839,24 @@
           "extProps": {},
           "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
           "id": "B62AF1D9-B591-5F2C-A17A-AF7B3C300677"
+        },
+        {
+          "defKey": "amount_status",
+          "defName": "金额状态",
+          "comment": "订单当前有效报价的金额状态：ESTIMATED 为建单暂估或消费者尚未完成重算，FINAL 为可支付的最终金额，BLOCKED 为无法正确计税、税额与总额为空且不可支付。允许值：ESTIMATED、FINAL、BLOCKED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'HOSTED_CHECKOUT'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "23E8E78F-3140-4A14-827C-D06ABD7EC19E"
         },
         {
           "defKey": "currency",
@@ -1489,12 +1507,12 @@
         {
           "defKey": "finance_tax_snapshot_id",
           "defName": "Finance 税务快照标识",
-          "comment": "Finance 对订单税务计算结果的不可变快照标识。",
+          "comment": "历史订单的旧 Finance 税务快照标识（零税 Mock）；2026-10-29 起新订单为 NULL，税务计算见 initial_tax_calculation_id 与 t_order_tax_calculation，本列后续删除。",
           "type": "BIGINT",
           "len": "",
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1507,12 +1525,12 @@
         {
           "defKey": "finance_tax_snapshot_hash",
           "defName": "Finance 税务快照哈希",
-          "comment": "Finance 税务快照 calculation_hash 的精确副本，按 CODE-MOR:FINANCE:TAX_CALCULATION:1 对 Header、全部 Evidence 和 Tax Line 生成 SHA-256 小写 64 位十六进制，用于校验按标识返回的不可变税务结果。",
+          "comment": "历史订单的旧 Finance 税务快照摘要；2026-10-29 起新订单为 NULL，本列后续删除。",
           "type": "CHAR",
           "len": 64,
           "scale": "",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoIncrement": false,
           "defaultValue": "",
           "hideInGraph": false,
@@ -1521,6 +1539,24 @@
           "extProps": {},
           "domain": "",
           "id": "12791545-F54D-5190-84A1-381B1E18296A"
+        },
+        {
+          "defKey": "initial_tax_calculation_id",
+          "defName": "建单税务计算标识",
+          "comment": "建单时取得的 tax 暂估计算标识，即 t_order_tax_calculation revision 1 的 tax_calculation_id；历史订单为 NULL，不建立跨库外键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "8A5A4D2C-33F6-4E0D-BA18-9235D8833654"
         },
         {
           "defKey": "consumer_country_code",
@@ -3090,6 +3126,490 @@
             }
           ],
           "id": "0038C902-0130-4404-B5CB-726B8F51BB7C"
+        }
+      ],
+      "type": "P"
+    },
+    {
+      "id": "3E82BF7A-73FC-4955-9953-5E12741C28DD",
+      "env": {
+        "base": {
+          "nameSpace": "",
+          "codeRoot": ""
+        }
+      },
+      "defKey": "t_order_tax_calculation",
+      "defName": "订单税务计算",
+      "comment": "订单税务计算按 revision 追加、不可变：建单暂估为 revision 1，消费者提交资料后每次重算追加一行；最大 revision 即当前有效报价，订单金额只在消费者接受前随新 revision 更新；支付只能基于最新且 FINAL、READY 或 NOT_MANAGED、未过期的计算。",
+      "properties": {},
+      "sysProps": {
+        "nameTemplate": "{defKey}[{defName}]"
+      },
+      "notes": {},
+      "headers": [
+        {
+          "refKey": "defKey",
+          "hideInGraph": false,
+          "value": "字段代码",
+          "freeze": false
+        },
+        {
+          "refKey": "defName",
+          "hideInGraph": false,
+          "value": "显示名称",
+          "freeze": false
+        },
+        {
+          "refKey": "primaryKey",
+          "hideInGraph": false,
+          "value": "主键",
+          "freeze": false
+        },
+        {
+          "refKey": "notNull",
+          "hideInGraph": true,
+          "value": "不为空",
+          "freeze": false
+        },
+        {
+          "refKey": "autoIncrement",
+          "hideInGraph": true,
+          "value": "自增",
+          "freeze": false
+        },
+        {
+          "refKey": "domain",
+          "hideInGraph": true,
+          "value": "数据域",
+          "freeze": false
+        },
+        {
+          "refKey": "type",
+          "hideInGraph": false,
+          "value": "数据类型",
+          "freeze": false
+        },
+        {
+          "refKey": "len",
+          "hideInGraph": false,
+          "value": "长度",
+          "freeze": false
+        },
+        {
+          "refKey": "scale",
+          "hideInGraph": false,
+          "value": "小数位数",
+          "freeze": false
+        },
+        {
+          "refKey": "comment",
+          "hideInGraph": true,
+          "value": "说明",
+          "freeze": false
+        },
+        {
+          "refKey": "refDict",
+          "hideInGraph": true,
+          "value": "数据字典",
+          "freeze": false
+        },
+        {
+          "refKey": "defaultValue",
+          "hideInGraph": true,
+          "value": "默认值",
+          "freeze": false
+        },
+        {
+          "refKey": "isStandard",
+          "hideInGraph": false,
+          "value": "标准字段",
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "uiHint",
+          "hideInGraph": true,
+          "value": "UI建议",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "extProps",
+          "hideInGraph": true,
+          "value": "拓展属性",
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr1",
+          "value": "属性1",
+          "hideInGraph": true,
+          "enable": true,
+          "freeze": false
+        },
+        {
+          "refKey": "attr2",
+          "value": "属性2",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr3",
+          "value": "属性3",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr4",
+          "value": "属性4",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr5",
+          "value": "属性5",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr6",
+          "value": "属性6",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr7",
+          "value": "属性7",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr8",
+          "value": "属性8",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        },
+        {
+          "refKey": "attr9",
+          "value": "属性9",
+          "hideInGraph": true,
+          "enable": false,
+          "freeze": false
+        }
+      ],
+      "fields": [
+        {
+          "defKey": "order_tax_calculation_id",
+          "defName": "订单税务计算标识",
+          "comment": "订单一次税务计算记录的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": true,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "C49D1344-522B-453E-BFD8-EBC2FE90569B"
+        },
+        {
+          "defKey": "order_id",
+          "defName": "订单标识",
+          "comment": "Commerce 订单聚合的内部唯一标识。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "560217EA-4F81-4284-8002-E7730FA78885"
+        },
+        {
+          "defKey": "revision",
+          "defName": "计算序号",
+          "comment": "订单内税务计算的追加序号，建单为 1，每次消费者资料提交重算加 1；同订单最大 revision 即当前有效报价，也是发给 tax 的 sourceRevision。",
+          "type": "INT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1D764C4A-6F9F-421E-B11A-6F3E23B51811",
+          "extProps": {},
+          "domain": "",
+          "id": "16B73D6D-0C89-4360-9F45-9926B4E9C151"
+        },
+        {
+          "defKey": "tax_calculation_id",
+          "defName": "税务计算标识",
+          "comment": "tax 返回的不可变税务计算标识，不建立跨库外键。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "0D723750-5E43-40D7-9FB6-73508501A97A"
+        },
+        {
+          "defKey": "calculation_stage",
+          "defName": "计算阶段",
+          "comment": "计算阶段：PROVISIONAL 为建单按 Client 声明国家的暂估，不可支付；FINAL 为消费者提交资料后按账单国家的最终计算。允许值：PROVISIONAL、FINAL。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'HOSTED_CHECKOUT'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "D3C1424E-0FFE-4E4A-BEF8-4002AD942BA7"
+        },
+        {
+          "defKey": "tax_status",
+          "defName": "税务状态",
+          "comment": "tax 计算结果状态：READY 已按规则计算，BLOCKED 无法正确计税、订单不可支付，NOT_MANAGED 纳税主体不由平台计税、税额取 Client 自报值。允许值：READY、BLOCKED、NOT_MANAGED。",
+          "type": "VARCHAR",
+          "len": 32,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "'HOSTED_CHECKOUT'",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "E876372F-B1E8-46B6-B933-9A165C3F633A"
+        },
+        {
+          "defKey": "basis_country_code",
+          "defName": "计税国家",
+          "comment": "本次计算采用的国家证据：PROVISIONAL 为 Client 声明的消费者国家，FINAL 为消费者账单国家；ISO 3166-1 alpha-2。",
+          "type": "CHAR",
+          "len": 2,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "4629ED77-822E-4610-86D1-82426E63066E",
+          "extProps": {},
+          "domain": "",
+          "id": "ED508B47-3E47-43A0-9857-E78711C4E85E"
+        },
+        {
+          "defKey": "tax_amount",
+          "defName": "税额",
+          "comment": "本次计算的消费者实收税额汇总，订单币种主单位；BLOCKED 时为 NULL。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "01C952C7-E1C0-4596-BC6B-D2A7A948E41E"
+        },
+        {
+          "defKey": "rounding_amount",
+          "defName": "舍入差额",
+          "comment": "本次计算的头部舍入差额，订单币种主单位；逐行取整时为 0，BLOCKED 时为 NULL。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "76B51606-9177-4BAB-90FD-EAB7C94A7D18"
+        },
+        {
+          "defKey": "total_amount",
+          "defName": "应付总额",
+          "comment": "本次计算的消费者应付总额，等于订单净额加税额加舍入差额；BLOCKED 时为 NULL。",
+          "type": "DECIMAL",
+          "len": 24,
+          "scale": 8,
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "1A0BDC09-0792-4174-9E8E-80BE8DF44B8E",
+          "extProps": {},
+          "domain": "C3B1681B-99F9-4818-9E80-DE1652A51D85",
+          "id": "42DAA40C-A237-4E87-B50F-372E24C30DE5"
+        },
+        {
+          "defKey": "block_reason_code",
+          "defName": "阻断原因",
+          "comment": "BLOCKED 时 tax 返回的第一条阻断原因代码，其他状态为 NULL。取值来源：tax TaxBlockReason；非固定枚举。",
+          "type": "VARCHAR",
+          "len": 64,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "FC9790A7-36B8-4A48-8F9A-BC1042BCFE64",
+          "extProps": {},
+          "domain": "",
+          "id": "ADA60DEC-FBAD-4465-8B25-21B02C542314"
+        },
+        {
+          "defKey": "expires_at",
+          "defName": "报价有效期",
+          "comment": "FINAL 计算的报价有效截止 UTC 时刻，过期后不可支付；PROVISIONAL 与无有效期的结果为 NULL。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "FB2C00E9-0975-4F81-8818-236102271C62"
+        },
+        {
+          "defKey": "lines_json",
+          "defName": "逐行税额",
+          "comment": "逐行税额 JSON 数组，元素为 clientItemId、netAmount、taxAmount、totalAmount（十进制字符串），与订单商品行一一对应；BLOCKED 时为 NULL。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "E1AEF679-B52B-48B6-A958-6A1C2ABCCE84"
+        },
+        {
+          "defKey": "components_json",
+          "defName": "税组件",
+          "comment": "按辖区与注册汇总的税组件 JSON 数组，元素为 jurisdictionCode、registrationId、taxSubjectPartyId、taxAmount（十进制字符串），供支付成功事件直接携带；NOT_MANAGED 为空数组，BLOCKED 时为 NULL。",
+          "type": "JSON",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B17BDED3-085F-40E1-9019-3B79CF2BF075",
+          "extProps": {},
+          "domain": "",
+          "id": "B9D8BEB9-FEA5-4EB3-8BE0-DF7D034CE5CC"
+        },
+        {
+          "defKey": "create_time",
+          "defName": "创建时间",
+          "comment": "数据库记录创建的 UTC 微秒精度时间。",
+          "type": "DATETIME",
+          "len": 6,
+          "scale": "",
+          "primaryKey": false,
+          "notNull": true,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "89D69E81-EA34-42EE-9FA2-93B8BD27E098",
+          "extProps": {},
+          "domain": "7CFFA0D3-6A93-4DDC-BC10-DF21211064DC",
+          "id": "29A0DA4E-ADB0-4CA7-81D1-4ABB0037FCD9"
+        }
+      ],
+      "correlations": [],
+      "indexes": [
+        {
+          "defKey": "uk_order_tax_calc",
+          "defName": "UK ORDER TAX CALC",
+          "unique": true,
+          "comment": "唯一索引：order_id、revision",
+          "fields": [
+            {
+              "fieldDefKey": "560217EA-4F81-4284-8002-E7730FA78885",
+              "ascOrDesc": "A",
+              "id": "44185769-3D91-420B-BDC5-6BDC4722C59E"
+            },
+            {
+              "fieldDefKey": "16B73D6D-0C89-4360-9F45-9926B4E9C151",
+              "ascOrDesc": "A",
+              "id": "8BFA703A-9328-489B-B34C-62E0502FDDC6"
+            }
+          ],
+          "id": "28FE573E-5361-403B-8ED3-7E2C5D2ADFEE"
+        },
+        {
+          "defKey": "uk_order_tax_calc_ref",
+          "defName": "UK ORDER TAX CALC REF",
+          "unique": true,
+          "comment": "唯一索引：tax_calculation_id",
+          "fields": [
+            {
+              "fieldDefKey": "0D723750-5E43-40D7-9FB6-73508501A97A",
+              "ascOrDesc": "A",
+              "id": "6CE708B7-6EA6-4B8B-804E-406BB92121E1"
+            }
+          ],
+          "id": "1BD470F2-D2FF-4BF1-A086-33B738BAD732"
         }
       ],
       "type": "P"
@@ -5576,7 +6096,7 @@
       },
       "defKey": "t_consumer_contract",
       "defName": "消费者合同呈现",
-      "comment": "呈现给消费者的不可变合同文件事实；文件标识、内容哈希、Locale 与呈现时间共同封存。",
+      "comment": "呈现给消费者的不可变合同文件事实；文件标识、内容哈希、Locale 与呈现时间共同封存；同一订单每个税务计算至多一份，金额变化时追加新合同，最新一份为当前合同。",
       "properties": {},
       "sysProps": {
         "nameTemplate": "{defKey}[{defName}]"
@@ -5796,6 +6316,24 @@
           "id": "C1802746-23C2-58A7-9DED-D87BD4C96538"
         },
         {
+          "defKey": "tax_calculation_id",
+          "defName": "税务计算标识",
+          "comment": "合同渲染所依据的 tax 计算标识；金额随重算变化时重新渲染一份合同并绑定新计算，消费者接受的合同必须绑定当前有效计算；历史订单为 NULL。",
+          "type": "BIGINT",
+          "len": "",
+          "scale": "",
+          "primaryKey": false,
+          "notNull": false,
+          "autoIncrement": false,
+          "defaultValue": "",
+          "hideInGraph": false,
+          "refDict": "",
+          "baseType": "B5503A77-01B9-4086-8D7B-EB9106F91540",
+          "extProps": {},
+          "domain": "",
+          "id": "209EC43B-90B4-4051-9CF1-3516E3DCCFCE"
+        },
+        {
           "defKey": "rendered_file_id",
           "defName": "呈现文件标识",
           "comment": "Platform Support 保存的不可变消费者合同文件标识。",
@@ -5909,12 +6447,17 @@
           "defKey": "uk_consumer_contract",
           "defName": "UK CONSUMER CONTRACT",
           "unique": true,
-          "comment": "唯一索引：order_id",
+          "comment": "唯一索引：order_id、tax_calculation_id",
           "fields": [
             {
               "fieldDefKey": "C6CCCDF7-0EE2-5FAF-A477-E076CE1C25B0",
               "ascOrDesc": "A",
               "id": "1787FABB-9763-5FB4-B791-0BF26B85CDFF"
+            },
+            {
+              "fieldDefKey": "209EC43B-90B4-4051-9CF1-3516E3DCCFCE",
+              "ascOrDesc": "A",
+              "id": "B23FA6BD-3555-401E-BFF1-57F882C68282"
             }
           ],
           "id": "DA158A8E-1191-508C-923A-85AD7DF1FF3D"
@@ -8986,6 +9529,42 @@
             "source": {
               "cell": "6F936A38-6954-4465-8709-16A17FABC79A",
               "port": "772F4B58-40C0-4F09-9319-87C25C1A4FA3%out"
+            },
+            "target": {
+              "cell": "117980E4-DE99-556C-960B-035F45F897C7",
+              "port": "4633721A-9A7B-5F73-98D4-B7C16EA3E790%in"
+            },
+            "relation": "n:1",
+            "vertices": [],
+            "fillColor": "#ACDAFC",
+            "attrs": {
+              "line": {
+                "strokeDasharray": ""
+              }
+            },
+            "isLock": true
+          },
+          {
+            "id": "911A3361-FB1A-4EC4-A729-C3EC53FAD57E",
+            "shape": "table",
+            "position": {
+              "x": 2150,
+              "y": 0
+            },
+            "count": 0,
+            "originKey": "3E82BF7A-73FC-4955-9953-5E12741C28DD",
+            "type": "P",
+            "size": {
+              "width": 390,
+              "height": 372
+            }
+          },
+          {
+            "id": "367BDDB6-6710-4FAA-9561-7C4F0A70F84B",
+            "shape": "erdRelation",
+            "source": {
+              "cell": "911A3361-FB1A-4EC4-A729-C3EC53FAD57E",
+              "port": "560217EA-4F81-4284-8002-E7730FA78885%out"
             },
             "target": {
               "cell": "117980E4-DE99-556C-960B-035F45F897C7",

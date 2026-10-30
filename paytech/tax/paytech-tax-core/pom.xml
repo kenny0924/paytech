@@ -15,13 +15,64 @@
     <packaging>jar</packaging>
 
     <name>PayTech Tax Core</name>
-    <description>Tax business implementation: dal, domain, domainservice and processors; no boot class or controller.</description>
+    <description>Tax business implementation: dal, domain, domainservice, processors, MQ and compensation handlers; no boot class or controller.</description>
 
     <dependencies>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-tax-api</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <!-- 简化税票文件经 Platform 内部文件接口上传（technique 9.3、S-12）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-platform-support-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-mybatis-support</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-snowflake-id</artifactId>
+        </dependency>
+        <!-- OrderPaymentSucceeded 来源载荷 Hash（RFC 8785），与 billing 相同口径。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-json-canonicalization</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compensation-event</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

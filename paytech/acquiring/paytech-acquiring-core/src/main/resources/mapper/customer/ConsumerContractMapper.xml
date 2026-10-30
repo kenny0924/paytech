@@ -5,12 +5,14 @@
         <id column="consumer_contract_id" property="consumerContractId" javaType="_long"/>
         <result column="order_id" property="orderId" javaType="_long"/>
         <result column="order_legal_id" property="orderLegalId" javaType="_long"/>
+        <result column="tax_calculation_id" property="taxCalculationId" javaType="java.lang.Long"/>
     </resultMap>
     <select id="findByOrderId" resultMap="ConsumerContract" useCache="false" flushCache="true">
-        SELECT cc.consumer_contract_id,cc.order_id,cc.order_legal_id
+        SELECT cc.consumer_contract_id,cc.order_id,cc.order_legal_id,cc.tax_calculation_id
         FROM t_consumer_contract cc
         JOIN t_order_legal l ON l.order_legal_id=cc.order_legal_id
         JOIN t_order_context c ON c.order_context_id=l.order_context_id AND c.order_id=cc.order_id
         WHERE cc.order_id=#{orderId}
+        ORDER BY cc.presented_at DESC,cc.consumer_contract_id DESC LIMIT 1
     </select>
 </mapper>

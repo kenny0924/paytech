@@ -1,6 +1,8 @@
 // Finance 逻辑模型按 V2 服务切分（第 07 步，design/03 §2.1、§4.2，design/09 §5.2）。
 // 逻辑模型仍由 manifests 生成 84 张表并做全部校验；每个服务只持有本库表的物理模型：
-//   - 按 Manifest 分组：06 → payout，02 其余表 → tax；01/03/07 归 ledger，但 ledger 服务库模型已脱离生成器（2026-10-19），不再投影；
+//   - 按 Manifest 分组：06 → payout；01/03/07 归 ledger，但 ledger 服务库模型已脱离生成器（2026-10-19），不再投影；
+//   - 02 其余表原归 tax，2026-10-29 起不再投影（需求 tax-结账算税与事件登记 S-11，决定 2026-10-29-tax-domain-fact-service）：
+//     tax 模型脱离生成器直接维护 paytech/tax/docs/database/tax.pdma.json（13 张业务表 + 补偿与消费去重三张标准表）；
 //   - 05（渠道与银行对账）及 02 中的渠道成本确认 / 分配两表不再投影（2026-10-20 对账切片 1，决定 2026-10-20-reconciliation-facts-via-billing）：
 //     reconciliation 模型脱离生成器直接维护 paytech/reconciliation/docs/database/reconciliation.pdma.json（由 reconciliation-model.test.mjs 校验）；
 //   - 02 中原属 billing 的经济事实三表与渠道成本四表不再投影（2026-10-19 计费事实重构，决定 2026-10-19-billing-fact-engine）：
@@ -8,9 +10,10 @@
 //     渠道成本四表归 channel-connector，由 Payment Orchestration 生成器的 channel-connector 分区产出；
 //   - 08 的 compensation_event 每库一份，command_idempotency 删除（S10）；
 //   - currency_spec 的 Owner 是 platform-support（D41），ledger 与 billing 的只读副本随各自直接维护的模型维护，生成器不再投影；
-//   - account（mor_account）、ledger（mor_ledger）、billing（mor_billing）与 reconciliation（mor_reconciliation）服务库模型已脱离生成器，
-//     分别直接维护 paytech/account/docs/database/account.pdma.json、paytech/ledger/docs/database/ledger.pdma.json、
-//     paytech/billing/docs/database/billing.pdma.json 与 paytech/reconciliation/docs/database/reconciliation.pdma.json，不在此切分。
+//   - account（mor_account）、ledger（mor_ledger）、billing（mor_billing）、reconciliation（mor_reconciliation）与 tax（mor_tax）服务库模型
+//     已脱离生成器，分别直接维护 paytech/account/docs/database/account.pdma.json、paytech/ledger/docs/database/ledger.pdma.json、
+//     paytech/billing/docs/database/billing.pdma.json、paytech/reconciliation/docs/database/reconciliation.pdma.json 与
+//     paytech/tax/docs/database/tax.pdma.json，不在此切分。
 // 84 张表的逻辑模型不变，仍覆盖全部 Finance 表并做全部校验。
 // 跨服务关系（如 accounting_instruction.economic_fact_id → economic_fact）只保留在逻辑模型，服务模型只保留库内关系。
 import { TABLES as ACCOUNTING_FOUNDATION_TABLES } from "./manifests/01-accounting-foundation.mjs";
@@ -21,7 +24,7 @@ import { TABLES as PAYOUT_TABLES } from "./manifests/06-payout.mjs";
 import { TABLES as CLOSE_TABLES } from "./manifests/07-close.mjs";
 import { TABLES as RELIABILITY_TABLES } from "./manifests/08-reliability.mjs";
 
-export const FINANCE_SERVICES = Object.freeze(["tax", "payout"]);
+export const FINANCE_SERVICES = Object.freeze(["payout"]);
 
 /** 每库一份的基础设施表。 */
 export const PER_DATABASE_TABLES = Object.freeze(["compensation_event"]);
@@ -59,7 +62,8 @@ const MANIFEST_DEFAULTS = Object.freeze([
   [TAX_ECONOMICS_COST_TABLES, (key) => {
     if (RETIRED_FROM_02.has(key)) return NOT_PROJECTED;
     if (RECONCILIATION_FROM_02.has(key)) return NOT_PROJECTED;
-    return "tax";
+    // 2026-10-29：其余 02 表原归 tax，tax 模型已脱离生成器直接维护。
+    return NOT_PROJECTED;
   }],
   [ACCOUNTING_JOURNAL_TABLES, () => NOT_PROJECTED],
   [CHANNEL_CASH_RECON_TABLES, () => NOT_PROJECTED],
@@ -95,7 +99,7 @@ export function serviceTables() {
   return byService;
 }
 
-/** 每库物理表数：design/03 §4.2 的逻辑切分，切分结果必须逐库一致（ledger、account、billing、reconciliation 已脱离生成器，不在此列）。 */
+/** 每库物理表数：design/03 §4.2 的逻辑切分，切分结果必须逐库一致（ledger、account、billing、reconciliation、tax 已脱离生成器，不在此列）。 */
 export const EXPECTED_SERVICE_TABLE_COUNTS = Object.freeze({
-  tax: 24, payout: 8,
+  payout: 8,
 });

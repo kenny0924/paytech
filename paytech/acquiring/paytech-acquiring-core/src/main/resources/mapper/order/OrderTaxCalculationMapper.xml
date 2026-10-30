@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.acquiring.core.dal.mapper.order.OrderTaxCalculationMapper">
+    <resultMap id="OrderTaxCalculation" type="com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation">
+        <id column="order_tax_calculation_id" property="orderTaxCalculationId" javaType="_long"/>
+        <result column="order_id" property="orderId" javaType="_long"/>
+        <result column="revision" property="revision" javaType="_int"/>
+        <result column="tax_calculation_id" property="taxCalculationId" javaType="_long"/>
+        <result column="calculation_stage" property="calculationStage" javaType="com.paytech.tax.api.enums.TaxCalculationStage"/>
+        <result column="tax_status" property="taxStatus" javaType="com.paytech.tax.api.enums.TaxCalculationStatus"/>
+        <result column="basis_country_code" property="basisCountryCode" javaType="java.lang.String"/>
+        <result column="tax_amount" property="taxAmount" javaType="java.math.BigDecimal"/>
+        <result column="rounding_amount" property="roundingAmount" javaType="java.math.BigDecimal"/>
+        <result column="total_amount" property="totalAmount" javaType="java.math.BigDecimal"/>
+        <result column="block_reason_code" property="blockReasonCode" javaType="java.lang.String"/>
+        <result column="expires_at" property="expiresAt" javaType="java.time.Instant"/>
+        <result column="lines_json" property="linesJson" javaType="java.lang.String"/>
+        <result column="components_json" property="componentsJson" javaType="java.lang.String"/>
+        <result column="create_time" property="createTime" javaType="java.time.Instant"/>
+    </resultMap>
+    <insert id="insert">
+        INSERT INTO t_order_tax_calculation (order_tax_calculation_id,order_id,revision,tax_calculation_id,
+            calculation_stage,tax_status,basis_country_code,tax_amount,rounding_amount,total_amount,block_reason_code,
+            expires_at,lines_json,components_json,create_time)
+        VALUES (#{row.orderTaxCalculationId},#{row.orderId},#{row.revision},#{row.taxCalculationId},
+            #{row.calculationStage},#{row.taxStatus},#{row.basisCountryCode},#{row.taxAmount},#{row.roundingAmount},
+            #{row.totalAmount},#{row.blockReasonCode},#{row.expiresAt},#{row.linesJson},#{row.componentsJson},
+            #{row.createTime})
+    </insert>
+    <select id="findLatestByOrderId" resultMap="OrderTaxCalculation" useCache="false" flushCache="true">
+        SELECT order_tax_calculation_id,order_id,revision,tax_calculation_id,calculation_stage,tax_status,
+            basis_country_code,tax_amount,rounding_amount,total_amount,block_reason_code,expires_at,lines_json,
+            components_json,create_time
+        FROM t_order_tax_calculation WHERE order_id=#{orderId} ORDER BY revision DESC LIMIT 1
+    </select>
+</mapper>

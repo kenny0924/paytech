@@ -13,7 +13,10 @@ import com.paytech.acquiring.domain.customer.CheckoutSubmissionModels.PaymentRes
 import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.*;
 import com.paytech.acquiring.domainservice.port.customer.*;
 
-/** 本轮明确授权的固定外部 Client Mock；仅用于临时流程联通，不代表真实 Owner 集成。商业解析的 Mock 见 CommercialMockConfiguration。 */
+/**
+ * 本轮明确授权的固定外部 Client Mock；仅用于临时流程联通，不代表真实 Owner 集成。商业解析的 Mock 见 CommercialMockConfiguration。
+ * <li>税务计算已接入 tax（CheckoutTaxPortImpl + TaxClientConfiguration），不再有零税 Mock。</li>
+ */
 @Configuration(proxyBeanMethods = false)
 public class CustomerCheckoutIntegrationConfiguration {
     /** TODO(Vault)：接入稳定 Email Protect 与独立 Profile Protect/Reveal。 */
@@ -32,29 +35,13 @@ public class CustomerCheckoutIntegrationConfiguration {
         };
     }
 
-    /** TODO(Finance)：接入按原订单身份冻结的 Tax Snapshot。 */
-    @Bean
-    @ConditionalOnMissingBean(CheckoutTaxPort.class)
-    CheckoutTaxPort checkoutTaxPort() {
-        return (request, facts) -> {
-            var zero = java.math.BigDecimal.ZERO;
-            var lines = request.getItems().stream()
-                .map(item -> new TaxLine(item.clientItemId(), item.lineNetAmount(), zero, item.lineNetAmount()))
-                .toList();
-            return TaxFacts.builder().snapshotId(request.getOrderId()).snapshotHash("d".repeat(64)).taxAmount(zero)
-                .roundingAmount(zero).totalAmount(request.getNetAmount()).orderId(request.getOrderId())
-                .entityNo(facts.entityNo()).country(request.getCountry()).currency(request.getCurrency())
-                .netAmount(request.getNetAmount()).lines(lines).build();
-        };
-    }
-
     /** TODO(Platform)：接入不可变合同生成与受控文件链接。 */
     @Bean
     @ConditionalOnMissingBean(CheckoutDocumentPort.class)
     CheckoutDocumentPort checkoutDocumentPort() {
         return new CheckoutDocumentPort() {
-            public RenderedContract render(InitializationRequest r, CommercialFacts f, TaxFacts t) {
-                return new RenderedContract(r.getOrderId(), "e".repeat(64));
+            public RenderedContract render(InitializationRequest r, Seller s, TaxCalculation t) {
+                return new RenderedContract(t.calculationId(), "e".repeat(64));
             }
 
             public FileLink link(long fileId, String hash, Instant expiresAt) {

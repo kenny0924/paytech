@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <name>PayTech Tax</name>
-    <description>Tax service aggregator: tax and fiscal schema ownership only, no code yet (moved from finance-service, step 07).</description>
+    <description>Tax service aggregator: tax calculation, formal tax facts, reporting entries and simplified receipts (2026-10-29 tax domain fact service).</description>
 
     <modules>
         <module>paytech-tax-api</module>
@@ -44,16 +44,12 @@
                                         <!-- No other service's core/app; cross-service calls go through *-api only (D09). -->
                                         <exclude>com.paytech:*-core</exclude>
                                         <exclude>com.paytech:*-app</exclude>
-                                        <!-- Finance bans copied verbatim (09 §1.4); AMQP / compensation-event reopen for account and ledger in step 11. -->
+                                        <!-- Finance bans copied from 09 §1.4. 2026-10-29 reopens AMQP (OrderPaymentSucceeded consumer),
+                                             compensation-event and its XXL-Job fallback (TAX_DOCUMENT_ISSUE receipt issuance). -->
                                         <exclude>org.flywaydb:*</exclude>
                                         <exclude>org.liquibase:*</exclude>
                                         <exclude>com.alibaba.cloud:*</exclude>
                                         <exclude>com.alibaba.nacos:*</exclude>
-                                        <exclude>org.springframework.amqp:*</exclude>
-                                        <exclude>com.rabbitmq:*</exclude>
-                                        <exclude>com.xuxueli:*</exclude>
-                                        <exclude>com.paytech:paytech-compensation-event</exclude>
-                                        <exclude>com.paytech:paytech-xxl-job-starter</exclude>
                                         <exclude>org.springframework:spring-webflux</exclude>
                                         <exclude>org.springframework.cloud:spring-cloud-starter-gateway*</exclude>
                                         <exclude>org.springframework.cloud:spring-cloud-starter-openfeign</exclude>

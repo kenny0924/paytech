@@ -143,7 +143,7 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
                 "/data-query-admin/v1/data-sources", "/data-query-admin/v1/data-source-connection-tests",
                 "/data-query-admin/v1/template-trials", "/data-query/v1",
                 "/channel-admin/v1/channel-accounts", "/finance/reconciliation/v1/cash-accounts", "/workflow-admin", "/workflow",
-                "/card-admin/v1/bin-library/uploads", "/localization-admin/v1/uploads", "/file-upload/v1/uploads", "/client-admin", "/onboarding-code-admin"),
+                "/card-admin/v1/bin-library/uploads", "/localization-admin/v1/uploads", "/file-upload/v1/uploads", "/tax/v1", "/client-admin", "/onboarding-code-admin"),
             applicationContext.getBean(WebLoggingProperties.class).metadataOnlyPathPrefixes(),
             "身份、管理筛选和状态原因只能写元数据日志");
         Set<String> routes = applicationContext.getBean(
@@ -480,6 +480,8 @@ class OperationsConsoleBffApplicationAutoTest extends OperationsBffHttpTestBase 
             "POST /finance/manual-adjustments/v1/{manualAdjustmentId}/reject",
             "GET /finance/billing-facts/v1", "POST /finance/billing-facts/v1", "GET /finance/billing-facts/v1/{factId}",
             "POST /finance/billing-facts/v1/{factId}/approve", "POST /finance/billing-facts/v1/{factId}/void",
+            // 财务 → 税务查询（tax 结账算税与事件登记，AC-13 / AC-14）
+            "GET /tax/v1/orders/{orderNo}", "POST /tax/v1/orders/{orderNo}/documents/{documentId}/download",
             "GET /finance/period-close/v1/board", "GET /finance/accounting-periods/v1/{accountingPeriodId}/closes",
             "GET /finance/accounting-periods/v1/{accountingPeriodId}/closes/{closeNo}",
             "POST /finance/accounting-periods/v1/{accountingPeriodId}/closes",

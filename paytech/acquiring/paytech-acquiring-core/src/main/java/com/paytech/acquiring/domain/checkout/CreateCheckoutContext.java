@@ -9,6 +9,7 @@ import com.paytech.acquiring.core.dal.dataobject.order.OrderFundsAvailabilityPro
 import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderRelationshipBinding;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,6 +26,10 @@ public class CreateCheckoutContext {
     /** 与冻结事实同时取得的商业关系角色绑定；固定 Mock 解析时为空集合。 */
     @Setter
     private List<OrderRelationshipBinding> relationshipBindings;
+
+    /** 建单暂估的税务计算记录（revision 1），与订单同一事务写入。 */
+    @Setter
+    private OrderTaxCalculation taxCalculation;
 
     /** 订单创建时的基础事实。 */
     private final CommerceOrder order;

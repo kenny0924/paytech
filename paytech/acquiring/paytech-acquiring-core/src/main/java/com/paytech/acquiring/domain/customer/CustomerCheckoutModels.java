@@ -10,9 +10,14 @@ import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
 import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
 import com.paytech.acquiring.domain.checkout.CheckoutUpstreamProtocolException;
+import com.paytech.commercial.api.enums.BusinessMode;
+import com.paytech.commercial.api.enums.RelationshipRole;
+import com.paytech.commercial.api.enums.RelationshipSubjectType;
 import com.paytech.foundation.common.error.CommonErrorCode;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.common.error.FailException;
+import com.paytech.tax.api.enums.TaxCalculationStage;
+import com.paytech.tax.api.enums.TaxCalculationStatus;
 
 import jakarta.validation.constraints.Email;
 
@@ -172,15 +177,129 @@ public final class CustomerCheckoutModels {
         String contentHash) {
     }
 
-    /** Finance 权威税结果，不能以零税兜底。 */
-    @lombok.Builder(toBuilder = true)
-    public record TaxFacts(long snapshotId, String snapshotHash, BigDecimal taxAmount, BigDecimal roundingAmount,
-        BigDecimal totalAmount, long orderId, String entityNo, String country, String currency, BigDecimal netAmount,
-        List<TaxLine> lines) {
+    /**
+     * tax 计算请求：订单身份、计算序号与阶段、国家证据、商业关系主体与不可变商品行
+     * <li>建单为 revision 1、PROVISIONAL、Client 声明国家；消费者资料提交为最新 revision + 1、FINAL、账单国家。</li>
+     * <li>同一 orderId + revision 的内容必须稳定：tax 对同身份同内容返回原计算，不同内容 409。</li>
+     */
+    @lombok.Getter
+    @lombok.Builder
+    public static class TaxQuoteRequest {
+        /** 订单主键，作为 tax sourceObjectId。 */
+        private final long orderId;
+
+        /** 公开订单号，作为 tax sourceObjectNo。 */
+        private final String orderNo;
+
+        /** 订单内计算序号，作为 tax sourceRevision。 */
+        private final int revision;
+
+        /** 计算阶段：PROVISIONAL 用 Client 声明国家，FINAL 用消费者账单国家。 */
+        private final TaxCalculationStage stage;
+
+        /** 本阶段的国家证据（ISO 3166-1 alpha-2）。 */
+        private final String countryCode;
+
+        /** 买方 Client。 */
+        private final long clientId;
+
+        /** 冻结的收单 OE。 */
+        private final String entityNo;
+
+        /** 由商业关系快照取得的计税主体。 */
+        private final TaxParties parties;
+
+        /** 订单币种。 */
+        private final String currency;
+
+        /** 税点日期（UTC 日历日）。 */
+        private final java.time.LocalDate taxPointDate;
+
+        /** 订单不可变商品行，按原呈现顺序。 */
+        private final List<OrderItem> items;
     }
 
-    /** Finance 税明细按原 Client Item ID 精确对齐，不更新不可变商品行。 */
+    /**
+     * 商业关系快照中计税所需的主体
+     * <li>有快照时：businessMode 按快照反推（SELLER 为 OPERATING_ENTITY 即 MOR，否则 PSP，与 commercial RelationshipSnapshot.derive
+     * 一致），TAX_RESPONSIBLE 必须有法律 Party。</li>
+     * <li>没有快照（CLIENT 来源 OE，责任方在 Client 一侧）：taxSubjectPartyId 为空，tax 恒返回 NOT_MANAGED（TAX_RESPONSIBLE_UNRESOLVED）。</li>
+     *
+     * @param businessMode commercial BusinessMode Code
+     * @param sellerPartyId SELLER 角色的法律 Party，可空
+     * @param taxSubjectPartyId TAX_RESPONSIBLE 角色的法律 Party；没有快照时为空
+     */
+    public record TaxParties(String businessMode, Long sellerPartyId, Long taxSubjectPartyId) {
+        /**
+         * 从商业关系快照取得计税主体
+         * <li>快照存在但缺少 SELLER 或 TAX_RESPONSIBLE 法律 Party：上游协议缺陷，失败关闭，不以零税或 NOT_MANAGED 兜底。</li>
+         *
+         * @param bindings 订单冻结的角色绑定，非空
+         * @return 计税主体
+         */
+        public static TaxParties from(List<RoleBindingFacts> bindings) {
+            RoleBindingFacts seller = role(bindings, RelationshipRole.SELLER);
+            RoleBindingFacts responsible = role(bindings, RelationshipRole.TAX_RESPONSIBLE);
+            if (seller == null || responsible == null || responsible.partyId() == null) {
+                throw new CheckoutUpstreamProtocolException("商业关系缺少 SELLER 或 TAX_RESPONSIBLE 法律 Party");
+            }
+            boolean merchantOfRecord = RelationshipSubjectType.OPERATING_ENTITY.getCode().equals(seller.subjectType());
+            return new TaxParties(merchantOfRecord ? BusinessMode.MOR.getCode() : BusinessMode.PSP.getCode(),
+                seller.partyId(), responsible.partyId());
+        }
+
+        /**
+         * 没有商业关系快照时的计税主体：只有合同业务模式，卖方与责任方为空
+         *
+         * @param businessMode commercial 返回的 Client 合同业务模式
+         * @return 计税主体
+         */
+        public static TaxParties unresolved(String businessMode) {
+            if (businessMode == null || businessMode.isBlank()) {
+                throw new CheckoutUpstreamProtocolException("商业事实缺少合同业务模式");
+            }
+            return new TaxParties(businessMode, null, null);
+        }
+
+        /** 取指定角色的唯一绑定；不存在返回 null。 */
+        private static RoleBindingFacts role(List<RoleBindingFacts> bindings, RelationshipRole role) {
+            return bindings.stream().filter(binding -> role.getCode().equals(binding.role())).findFirst().orElse(null);
+        }
+    }
+
+    /**
+     * tax 返回的一次不可变税务计算
+     * <li>BLOCKED 时税额、舍入额、总额与逐行税额为空，blockReasonCode 为第一条原因；NOT_MANAGED 时税额为自报值、组件为空。</li>
+     * <li>expiresAt 只有 FINAL + READY 非空。</li>
+     *
+     * @param calculationId tax 计算 ID
+     * @param stage 计算阶段
+     * @param status 计算状态
+     * @param taxAmount 税额汇总
+     * @param roundingAmount 头部舍入差额
+     * @param totalAmount 应付总额 = 订单净额 + 税额 + 舍入差额
+     * @param blockReasonCode BLOCKED 的第一条原因代码
+     * @param expiresAt 报价有效截止时刻
+     * @param lines 逐行税额，与订单商品行一一对应
+     * @param components 按辖区与注册汇总的税组件
+     */
+    @lombok.Builder(toBuilder = true)
+    public record TaxCalculation(long calculationId, TaxCalculationStage stage, TaxCalculationStatus status,
+        BigDecimal taxAmount, BigDecimal roundingAmount, BigDecimal totalAmount, String blockReasonCode,
+        Instant expiresAt, List<TaxLine> lines, List<TaxComponent> components) {
+        /** 是否被阻断：税额未知、订单不可支付。 */
+        public boolean blocked() {
+            return status == TaxCalculationStatus.BLOCKED;
+        }
+    }
+
+    /** 一行税额，按原 Client Item ID 与商品行对齐，不更新不可变商品行。 */
     public record TaxLine(String clientItemId, BigDecimal netAmount, BigDecimal taxAmount, BigDecimal totalAmount) {
+    }
+
+    /** 按辖区、税种、注册与纳税主体汇总的税组件，事件按此逐组件携带；ID 为十进制字符串。 */
+    public record TaxComponent(String jurisdictionCode, String taxType, String registrationId,
+        String taxSubjectPartyId, BigDecimal taxAmount) {
     }
 
     /** 个性化合同文件，不包括临时访问 URL。 */

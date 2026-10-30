@@ -32,6 +32,8 @@ import com.paytech.billing.domain.FeeCalculationBasis;
 import com.paytech.billing.domain.OrderCommercialContext;
 import com.paytech.billing.domain.PaymentFactInputs;
 import com.paytech.billing.domain.OrderPaymentSucceededFact;
+import com.paytech.billing.domain.OrderTaxCalculation;
+import com.paytech.billing.domain.OrderTaxComponent;
 import com.paytech.billing.domain.PriceComponentAmount;
 import com.paytech.billing.domain.PriceSettlement;
 import com.paytech.billing.domainservice.service.ChannelCostCalculator;
@@ -48,6 +50,8 @@ import lombok.AllArgsConstructor;
  * <li>付方 / 收方（技术方案 4.6 行目录）：CLIENT_FEE、CLIENT_PRINCIPAL 由渠道（清算账户）付给 OE / Client；PARTNER_SHARE、
  * PLATFORM_SERVICE_CHARGE、CHANNEL_COST 由 OE 付给 Local Partner / 平台 Finance Entity / 渠道（清算账户）；全部 CHARGE、无目标余额桶。</li>
  * <li>基数：Client 定价只用毛额；Partner 两条款可引用 Σ CLIENT_FEE；渠道成本基数为毛额。</li>
+ * <li>SELLER_TAX（技术方案 11.2）：订单 tax 计算为 READY 时，税额为正的组件各一行，由渠道（清算账户）付给 TAX_AUTHORITY（纳税主体 Party），
+ * 规则族 TAX_RULE、版本为 tax 计算 ID；本金 = 毛额 − Σ CLIENT_FEE − Σ SELLER_TAX。无计算或 NOT_MANAGED 不生成税行。</li>
  * <li>Σ CLIENT_FEE 记账金额为零时业务拒绝（S14）：ledger STANDARD_TRANSACTION 的 PAYMENT_SUCCEEDED 指令把 CLIENT_FEE_REVENUE 标为必需行，
  * 没有手续费行的事实无法过账；其他组件的零金额仍只是不生成行（S7）。</li>
  * <li>计算证据 source_evidence 只含命中证据（{@value #EVIDENCE_SCHEMA_VERSION} 版），不含载荷全文。</li>
@@ -109,7 +113,7 @@ public class PaymentFactAssemblerImpl implements PaymentFactAssembler {
         return fact;
     }
 
-    /** CLIENT_FEE 各组件与 CLIENT_PRINCIPAL；本金 = 毛额 − Σ CLIENT_FEE，必须为正。返回 Σ CLIENT_FEE。 */
+    /** CLIENT_FEE 各组件、SELLER_TAX 各组件与 CLIENT_PRINCIPAL；本金 = 毛额 − Σ CLIENT_FEE − Σ SELLER_TAX，必须为正。返回 Σ CLIENT_FEE。 */
     BigDecimal addClientLines(BillingFact fact, PaymentFactInputs inputs, List<BillingFactLine> lines, Instant now) {
         CommercialPrice price = inputs.getClientPrice();
         String clearingAccountId = clearingAccountId(inputs);
@@ -125,15 +129,42 @@ public class PaymentFactAssemblerImpl implements PaymentFactAssembler {
                 FactPartyRole.CHANNEL, clearingAccountId, FactPartyRole.OPERATING_ENTITY, fact.getEntityNo()),
                 SourceRuleType.COMMERCIAL_PRICE, price, fee));
         }
-        BigDecimal principal = fact.getGrossAmount().subtract(feeTotal);
+        BigDecimal taxTotal = addSellerTaxLines(fact, inputs, lines, now);
+        BigDecimal principal = fact.getGrossAmount().subtract(feeTotal).subtract(taxTotal);
         if (principal.signum() <= 0) {
-            throw new BizCheckFailException("Client 手续费不小于支付金额，本金不为正: 价格 " + price.getPriceId() + ", 来源 "
+            throw new BizCheckFailException("Client 手续费与税额之和不小于支付金额，本金不为正: 价格 " + price.getPriceId() + ", 来源 "
                 + fact.getSourceEventKey());
         }
         lines.add(principalLine(withParties(newLine(fact, lines, FactComponentType.CLIENT_PRINCIPAL, now),
             FactPartyRole.CHANNEL, clearingAccountId, FactPartyRole.CLIENT, fact.getClientId().toString()),
             price, fact.getGrossAmount(), principal));
         return feeTotal;
+    }
+
+    /**
+     * SELLER_TAX：订单 tax 计算为 READY 时每个税额为正的组件一行，零税额组件不生成行；返回 Σ SELLER_TAX
+     * <li>组件税额小数位超过币种精度为上游数据不一致，业务拒绝。</li>
+     */
+    BigDecimal addSellerTaxLines(BillingFact fact, PaymentFactInputs inputs, List<BillingFactLine> lines, Instant now) {
+        OrderTaxCalculation tax = inputs.getPayment().getOrder().getTaxCalculation();
+        if (tax == null || !tax.collectsSellerTax()) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal taxTotal = BigDecimal.ZERO;
+        for (OrderTaxComponent component : tax.getComponents()) {
+            if (component.getTaxAmount().stripTrailingZeros().scale() > inputs.getMinorUnit()) {
+                throw new BizCheckFailException("税务组件税额超出币种精度: 税务计算 " + tax.getTaxCalculationId() + ", 来源 "
+                    + fact.getSourceEventKey());
+            }
+            if (component.getTaxAmount().signum() == 0) {
+                continue;
+            }
+            lines.add(sellerTaxLine(withParties(newLine(fact, lines, FactComponentType.SELLER_TAX, now),
+                FactPartyRole.CHANNEL, clearingAccountId(inputs), FactPartyRole.TAX_AUTHORITY,
+                Long.toString(component.getTaxSubjectPartyId())), tax, component));
+            taxTotal = taxTotal.add(component.getTaxAmount());
+        }
+        return taxTotal;
     }
 
     /** PARTNER_SHARE 与 PLATFORM_SERVICE_CHARGE；两条款可引用 Σ CLIENT_FEE。 */
@@ -234,6 +265,33 @@ public class PaymentFactAssemblerImpl implements PaymentFactAssembler {
         return line;
     }
 
+    /**
+     * 税行：金额取组件税额；事件不携带组件税基，基数按资金类行记为金额本身、无费率
+     * <li>规则族 TAX_RULE，版本为 tax 计算 ID，无价格与组件 ID（组件不可变标识在 tax 内由计算 ID + 辖区 + 注册定位）。</li>
+     */
+    static BillingFactLine sellerTaxLine(BillingFactLine line, OrderTaxCalculation tax, OrderTaxComponent component) {
+        line.setBasisAmount(component.getTaxAmount());
+        line.setRawAmount(component.getTaxAmount());
+        line.setPostedAmount(component.getTaxAmount());
+        line.setSourceRuleType(SourceRuleType.TAX_RULE);
+        line.setSourceRuleVersionId(tax.getTaxCalculationId());
+        line.setSourceEvidence(taxEvidence(tax, component));
+        return line;
+    }
+
+    /** 税务证据：计算、计税范围、辖区、税种、注册与纳税主体。 */
+    static Map<String, Object> taxEvidence(OrderTaxCalculation tax, OrderTaxComponent component) {
+        Map<String, Object> evidence = new LinkedHashMap<>();
+        evidence.put("schemaVersion", EVIDENCE_SCHEMA_VERSION);
+        evidence.put("taxCalculationId", Long.toString(tax.getTaxCalculationId()));
+        evidence.put("taxScopeKey", tax.getTaxScopeKey());
+        evidence.put("jurisdictionCode", component.getJurisdictionCode());
+        evidence.put("taxType", component.getTaxType());
+        evidence.put("registrationId", Long.toString(component.getRegistrationId()));
+        evidence.put("taxSubjectPartyId", Long.toString(component.getTaxSubjectPartyId()));
+        return evidence;
+    }
+
     /** 价格级证据：条款类型、方案、价格与定价画像。 */
     static Map<String, Object> priceEvidence(CommercialPrice price) {
         Map<String, Object> evidence = new LinkedHashMap<>();
@@ -287,8 +345,8 @@ public class PaymentFactAssemblerImpl implements PaymentFactAssembler {
     }
 
     /**
-     * 八类必需引用与可选 TAX_SNAPSHOT（技术方案 4.5），按引用类型代码升序；渠道交易引用带外部交易号类型与交易号
-     * <li>税务快照只记引用，不读 tax、不生成税行（S11）。</li>
+     * 八类必需引用与可选税务引用，按引用类型代码升序；渠道交易引用带外部交易号类型与交易号
+     * <li>有 tax 计算时记 TAX_CALCULATION（技术方案 11.2）；仅存量订单（无计算、有旧税务快照）记 TAX_SNAPSHOT。</li>
      */
     List<BillingFactRef> buildRefs(BillingFact fact, PaymentFactInputs inputs, Instant now) {
         OrderPaymentSucceededFact payment = inputs.getPayment();
@@ -305,7 +363,9 @@ public class PaymentFactAssemblerImpl implements PaymentFactAssembler {
         channelRef.setExternalReferenceType(payment.getChannelReferenceType());
         channelRef.setExternalTransactionId(payment.getChannelTransactionRef());
         refs.add(channelRef);
-        if (order.getFinanceTaxSnapshotId() != null) {
+        if (order.getTaxCalculation() != null) {
+            refs.add(ref(fact, FactRefType.TAX_CALCULATION, order.getTaxCalculation().getTaxCalculationId(), now));
+        } else if (order.getFinanceTaxSnapshotId() != null) {
             refs.add(ref(fact, FactRefType.TAX_SNAPSHOT, order.getFinanceTaxSnapshotId(), now));
         }
         refs.sort(Comparator.comparing(ref -> ref.getRefType().getCode()));

@@ -1,5 +1,6 @@
 package com.paytech.acquiring.service.processor.customer.response;
 
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
 import com.paytech.acquiring.integration.payment.PaymentStoredCardClient;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -30,6 +31,12 @@ public class GetCheckoutResponse {
 
     /** 最终合同与金额是否齐备，不依赖 Intent。 */
     private final boolean ready;
+
+    /** 订单当前报价的金额状态。 */
+    private final OrderAmountStatus amountStatus;
+
+    /** 当前报价 BLOCKED 时的原因代码，其他状态为空。 */
+    private final String taxBlockReason;
 
     /** 订单币种。 */
     private final String currency;

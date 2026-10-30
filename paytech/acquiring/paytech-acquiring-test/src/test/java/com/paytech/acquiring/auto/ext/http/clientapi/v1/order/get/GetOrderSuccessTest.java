@@ -13,6 +13,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
 import com.paytech.acquiring.api.client.v1.order.ClientOrderApi;
 import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
 import com.paytech.acquiring.domain.enums.OrderStatus;
@@ -67,6 +68,25 @@ class GetOrderSuccessTest extends AbstractGetOrderApiTest {
         assertAll(() -> assertEquals("NOT_APPLICABLE", funds.getStatus()), () -> assertNull(funds.getAvailableAmount()),
             () -> assertNull(funds.getAvailableAt()), () -> assertNull(funds.getScheduledAt()),
             () -> assertEquals(NOW, funds.getAsOf()), () -> assertEquals(NOW, funds.getUpdatedAt()));
+    }
+
+    /** 当前报价被阻断（tax BLOCKED）：金额状态 BLOCKED，税额、舍入额与总额为 null，准备状态 PENDING，不能视为可支付。 */
+    @Test
+    void test_blockedQuote() {
+        fixture = orderData.template().ready().build();
+        fixture.getOrder().setTaxAmount(null);
+        fixture.getOrder().setRoundingAmount(null);
+        fixture.getOrder().setTotalAmount(null);
+        fixture.getOrder().setAmountStatus(OrderAmountStatus.BLOCKED);
+        orderData.mock(fixture);
+
+        var response = invoke().assertSuccess().getResponseBody();
+
+        assertAll(() -> assertEquals(OrderAmountStatus.BLOCKED.getCode(), response.getAmountStatus()),
+            () -> assertEquals("PENDING", response.getPreparationStatus()),
+            () -> assertNull(response.getAmounts().getTaxAmount()),
+            () -> assertNull(response.getAmounts().getRoundingAmount()),
+            () -> assertNull(response.getAmounts().getTotalAmount()));
     }
 
     /** 支付成功后保持原链接，退款可用金额扣除处理中的预占和已成功退款。 */

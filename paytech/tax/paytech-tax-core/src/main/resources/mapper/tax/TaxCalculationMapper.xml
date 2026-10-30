@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.tax.core.dal.mapper.TaxCalculationMapper">
+    <insert id="insert">
+        INSERT INTO t_tax_calculation (id, source_system, source_object_type, source_object_id, source_object_no, source_revision, tax_scope_key, calculation_stage, supply_kind, business_mode, seller_party_id, buyer_client_id, tax_subject_party_id, acquiring_entity_no, currency, price_mode, tax_point_date, tax_point_basis, status, tax_amount_source, block_reasons_json, net_amount, charged_tax_amount, gross_amount, rounding_amount, expires_at, create_time)
+        VALUES (#{row.id}, #{row.sourceSystem}, #{row.sourceObjectType}, #{row.sourceObjectId}, #{row.sourceObjectNo}, #{row.sourceRevision}, #{row.taxScopeKey}, #{row.calculationStage}, #{row.supplyKind}, #{row.businessMode}, #{row.sellerPartyId}, #{row.buyerClientId}, #{row.taxSubjectPartyId}, #{row.acquiringEntityNo}, #{row.currency}, #{row.priceMode}, #{row.taxPointDate}, #{row.taxPointBasis}, #{row.status}, #{row.taxAmountSource}, #{row.blockReasonsJson}, #{row.netAmount}, #{row.chargedTaxAmount}, #{row.grossAmount}, #{row.roundingAmount}, #{row.expiresAt}, #{row.createTime})
+    </insert>
+
+    <select id="selectById" resultType="com.paytech.tax.core.dal.dataobject.TaxCalculation">
+        SELECT id, source_system, source_object_type, source_object_id, source_object_no, source_revision, tax_scope_key, calculation_stage, supply_kind, business_mode, seller_party_id, buyer_client_id, tax_subject_party_id, acquiring_entity_no, currency, price_mode, tax_point_date, tax_point_basis, status, tax_amount_source, block_reasons_json, net_amount, charged_tax_amount, gross_amount, rounding_amount, expires_at, create_time FROM t_tax_calculation
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByIdentity" resultType="com.paytech.tax.core.dal.dataobject.TaxCalculation">
+        SELECT id, source_system, source_object_type, source_object_id, source_object_no, source_revision, tax_scope_key, calculation_stage, supply_kind, business_mode, seller_party_id, buyer_client_id, tax_subject_party_id, acquiring_entity_no, currency, price_mode, tax_point_date, tax_point_basis, status, tax_amount_source, block_reasons_json, net_amount, charged_tax_amount, gross_amount, rounding_amount, expires_at, create_time FROM t_tax_calculation
+        WHERE source_system = #{sourceSystem} AND source_object_type = #{sourceObjectType} AND source_object_id = #{sourceObjectId}
+          AND source_revision = #{sourceRevision} AND tax_scope_key = #{taxScopeKey}
+    </select>
+
+    <select id="selectByObjectNo" resultType="com.paytech.tax.core.dal.dataobject.TaxCalculation">
+        SELECT id, source_system, source_object_type, source_object_id, source_object_no, source_revision, tax_scope_key, calculation_stage, supply_kind, business_mode, seller_party_id, buyer_client_id, tax_subject_party_id, acquiring_entity_no, currency, price_mode, tax_point_date, tax_point_basis, status, tax_amount_source, block_reasons_json, net_amount, charged_tax_amount, gross_amount, rounding_amount, expires_at, create_time FROM t_tax_calculation
+        WHERE source_object_no = #{sourceObjectNo} ORDER BY source_revision, id
+    </select>
+</mapper>

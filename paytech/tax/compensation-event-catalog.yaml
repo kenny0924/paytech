@@ -1,0 +1,5 @@
+# Tax 本地补偿事件类型目录（design/02 R12）：每个 CompensationEventHandler 的 eventType() 必须在此登记。
+# 新增 Handler 时同步追加；与 MQ 领域事件目录 foundation/paytech-messaging/catalog/events.yaml 不是同一集合。
+# 2026-10-29 tax 结账算税与事件登记（technique 11.5）：正式交易登记后开具 B2C 简化税票（event_key = 交易 ID，sub_event_type = RECEIPT）。
+eventTypes:
+  - TAX_DOCUMENT_ISSUE

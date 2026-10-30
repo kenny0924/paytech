@@ -5,6 +5,8 @@ import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,11 +21,14 @@ import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderFundsAvailabilityProjection;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderItem;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderRefundPosition;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation;
 import com.paytech.acquiring.domain.checkout.CheckoutInitializationContext;
 import com.paytech.acquiring.domain.checkout.CheckoutPublicOrigin;
 import com.paytech.acquiring.domain.checkout.CheckoutPublicToken;
 import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
 import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.InitializationRequest;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.TaxParties;
+import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.TaxQuoteRequest;
 import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
 import com.paytech.acquiring.domain.enums.FundsAvailabilityStatus;
 import com.paytech.acquiring.domain.enums.OrderStatus;
@@ -46,6 +51,7 @@ import com.paytech.foundation.common.error.InvalidParameterException;
 import com.paytech.foundation.money.Money;
 import com.paytech.foundation.processor.AbstractProcessor;
 import com.paytech.foundation.token.PublicTokenGenerator;
+import com.paytech.tax.api.enums.TaxCalculationStage;
 
 import lombok.AllArgsConstructor;
 
@@ -135,8 +141,11 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
     }
 
     /**
-     * 所有 Owner 调用在保存前完成；Risk 经正式客户端评估，商业解析按 acquiring.commercial.resolution-mode 走 commercial 或固定
-     * Mock，Tax / Document 仍按批准的固定 Mock 返回初始化结果。
+     * 所有 Owner 调用在保存前完成：商业解析按 acquiring.commercial.resolution-mode 走 commercial 或固定 Mock，Risk 经正式客户端评估，
+     * tax 按 Client 声明国家给出暂估报价（revision 1，PROVISIONAL）；Document 仍按批准的固定 Mock 渲染合同。
+     * <li>计税主体取自商业关系快照的 TAX_RESPONSIBLE；快照存在却缺少它时在 Risk 评估前失败关闭。没有快照（CLIENT 来源，责任方在
+     * Client 一侧）时不传责任方，tax 返回 NOT_MANAGED。</li>
+     * <li>BLOCKED 仍建单（technique D-02），金额为空、amountStatus=BLOCKED，消费者资料提交后重算。</li>
      */
     void initializeCheckout(CreateCheckoutContext context) {
         var order = context.getOrder();
@@ -145,20 +154,39 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
             order.getMerchandiseAmount(), order.getDiscountAmount(), order.getNetAmount(), context.getItems());
         var facts = commercial.resolve(input);
         CheckoutInitializationContext.validateCommercial(facts);
+        var parties = facts.relationship() == null ? TaxParties.unresolved(facts.businessMode())
+            : TaxParties.from(facts.relationship().bindings());
         var riskId = risk.assess(input, facts);
-        var amounts = tax.calculate(input, facts);
-        var rendered = documents.render(input, facts, amounts);
-        var initialization = new CheckoutInitializationContext(input, facts, riskId, amounts, rendered);
+        var quote = tax.calculate(provisionalQuote(context, facts.entityNo(), parties));
+        var rendered = documents.render(input, facts.seller(), quote);
+        var initialization = new CheckoutInitializationContext(input, facts, riskId, quote, rendered);
         context.setFrozen(initialization.buildFrozen(nextId(), nextId(), nextId()));
         context.setRelationshipBindings(initialization.buildRelationshipBindings(this::nextId));
+        context.setTaxCalculation(initialization.buildTaxCalculation(nextId()));
         order.setEntityNo(facts.entityNo());
         order.setEntitySourceType(facts.entitySourceType());
         order.setLocalPartnerId(facts.localPartnerId());
         order.setIndustryCode(facts.industryCode());
         order.setMccCode(facts.mccCode());
-        order.setTaxAmount(amounts.taxAmount());
-        order.setRoundingAmount(amounts.roundingAmount());
-        order.setTotalAmount(amounts.totalAmount());
+        applyQuote(order, context.getTaxCalculation());
+    }
+
+    /** 建单暂估报价：revision 1、PROVISIONAL、Client 声明国家，税点为建单 UTC 日期。 */
+    TaxQuoteRequest provisionalQuote(CreateCheckoutContext context, String entityNo, TaxParties parties) {
+        var order = context.getOrder();
+        return TaxQuoteRequest.builder().orderId(order.getOrderId()).orderNo(order.getOrderNo())
+            .revision(CheckoutInitializationContext.INITIAL_REVISION).stage(TaxCalculationStage.PROVISIONAL)
+            .countryCode(order.getConsumerCountryCode()).clientId(order.getClientId()).entityNo(entityNo)
+            .parties(parties).currency(order.getCurrency())
+            .taxPointDate(LocalDate.ofInstant(order.getCreateTime(), ZoneOffset.UTC)).items(context.getItems()).build();
+    }
+
+    /** 订单当前报价取建单计算；订单开放供消费者提交资料，是否可支付由金额状态与支付门禁决定。 */
+    void applyQuote(CommerceOrder order, OrderTaxCalculation quote) {
+        order.setTaxAmount(quote.getTaxAmount());
+        order.setRoundingAmount(quote.getRoundingAmount());
+        order.setTotalAmount(quote.getTotalAmount());
+        order.setAmountStatus(quote.amountStatus());
         order.setOrderStatus(OrderStatus.OPEN);
     }
 
@@ -200,7 +228,7 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
             .merchandiseAmount(amount(amounts.merchandise())).discountAmount(amount(amounts.discount()))
             .netAmount(amount(amounts.net())).currency(request.getCurrency()).orderStatus(OrderStatus.CREATED)
             .expiresAt(resolveExpiresAt(request, now)).version(1).createTime(now).updateTime(now).build();
-        return new CreateCheckoutContext(null, List.of(), order, buildOrderItems(order, amounts.lines()),
+        return new CreateCheckoutContext(null, List.of(), null, order, buildOrderItems(order, amounts.lines()),
             buildRefundPosition(order), buildFundsAvailability(order), buildCheckoutSession(order));
     }
 
@@ -256,6 +284,7 @@ public final class CreateCheckoutProcessor extends AbstractProcessor<CreateCheck
             .currency(order.getCurrency()).merchandiseAmount(order.getMerchandiseAmount())
             .discountAmount(order.getDiscountAmount()).netAmount(order.getNetAmount()).taxAmount(order.getTaxAmount())
             .roundingAmount(order.getRoundingAmount()).totalAmount(order.getTotalAmount())
+            .amountStatus(order.getAmountStatus()).taxBlockReason(context.getTaxCalculation().getBlockReasonCode())
             .expiresAt(order.getExpiresAt()).location("/api/v1/orders/" + order.getOrderNo()).build();
     }
 

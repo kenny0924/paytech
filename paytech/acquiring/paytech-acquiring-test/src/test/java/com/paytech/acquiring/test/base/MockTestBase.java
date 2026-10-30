@@ -5,6 +5,7 @@ import com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker;
 import com.paytech.acquiring.test.mocker.external.CounterpartyMocker;
 import com.paytech.acquiring.test.mocker.external.PaymentTerminationMocker;
 import com.paytech.acquiring.test.mocker.external.PlatformWebhookMocker;
+import com.paytech.acquiring.test.mocker.external.TaxCalculationMocker;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.awaitility.Awaitility.await;
 
@@ -83,6 +84,9 @@ public abstract class MockTestBase extends TestBase {
     protected PaymentTerminationMocker paymentTerminationMocker;
 
     @Autowired
+    protected TaxCalculationMocker taxMocker;
+
+    @Autowired
     protected OrderPaymentEventProbe orderPaymentEvents;
 
     @Autowired
@@ -122,7 +126,7 @@ public abstract class MockTestBase extends TestBase {
         assertAll("检查外部 Mock 调用", preparationMocker::assertNoUnexpectedCalls,
             riskMocker::assertNoUnexpectedCalls, platformWebhookMocker::assertNoUnexpectedCalls,
             counterpartyMocker::assertNoUnexpectedCalls, paymentTerminationMocker::assertNoUnexpectedCalls,
-            cctCheckoutMockServer::assertNoUnexpectedRequests);
+            taxMocker::assertNoUnexpectedCalls, cctCheckoutMockServer::assertNoUnexpectedRequests);
     }
 
     /** 异步无法停止时保留现场，防止公共清理之后仍被后台请求回写。 */

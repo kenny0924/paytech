@@ -53,6 +53,13 @@ spring:
         connect-timeout: 2s
         read-timeout: 5s
         redirects: dont-follow
+      # 结账报价：建单暂估与消费者资料提交后重算（POST /tax/v1/calculations），tax 无 context-path。
+      # tax 与 billing / account / ledger 同属不注册 Nacos 的服务（tax 父 POM 禁用 Nacos），使用固定私网地址，不经服务发现。
+      tax-service:
+        base-url: "${ACQUIRING_TAX_SERVICE_URL:http://127.0.0.1:18116}"
+        connect-timeout: 2s
+        read-timeout: 3s
+        redirects: dont-follow
   data:
     redis:
       host: "${MOR_REDIS_HOST:127.0.0.1}"

@@ -1,5 +1,7 @@
 package com.paytech.acquiring.test.mocker.local;
 
+import com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation;
+import com.paytech.acquiring.core.dal.mapper.order.OrderTaxCalculationMapper;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -29,15 +31,30 @@ public class OrderContextDataMocker {
     private final CheckoutDataMocker ids;
     private final OrderQueryTestMapper orders;
     private final CheckoutPaymentTestMapper contexts;
+    private final OrderTaxCalculationMapper taxCalculations;
     private final TransactionTemplate transaction;
 
     /** 数据准备使用短事务，HTTP 请求在该事务提交之后执行。 */
     public OrderContextDataMocker(CheckoutDataMocker ids, OrderQueryTestMapper orders,
-        CheckoutPaymentTestMapper contexts, PlatformTransactionManager manager) {
+        CheckoutPaymentTestMapper contexts, OrderTaxCalculationMapper taxCalculations,
+        PlatformTransactionManager manager) {
         this.ids = ids;
         this.orders = orders;
         this.contexts = contexts;
+        this.taxCalculations = taxCalculations;
         this.transaction = new TransactionTemplate(manager);
+    }
+
+    /** 预留一个本库主键，由全局清理按订单回收。 */
+    public long nextId() {
+        return ids.reserveOrderId();
+    }
+
+    /** 追加订单的税务计算记录（税务服务上线后的订单支付所依据的报价）。 */
+    public void mockTaxCalculation(OrderTaxCalculation row) {
+        if (taxCalculations.insert(row) != 1) {
+            throw new IllegalStateException("前置税务计算未写入");
+        }
     }
 
     /** 每例独立的平台来源订单上下文，Partner 字段全部为空。 */

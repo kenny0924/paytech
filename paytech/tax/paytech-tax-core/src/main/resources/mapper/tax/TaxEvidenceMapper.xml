@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.tax.core.dal.mapper.TaxEvidenceMapper">
+    <insert id="batchInsert">
+        INSERT INTO t_tax_evidence (id, calculation_id, evidence_type, source_code, country_code, subdivision_code, validation_status, result_code, checked_at, create_time)
+        VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.id}, #{row.calculationId}, #{row.evidenceType}, #{row.sourceCode}, #{row.countryCode}, #{row.subdivisionCode}, #{row.validationStatus}, #{row.resultCode}, #{row.checkedAt}, #{row.createTime})
+        </foreach>
+    </insert>
+
+    <select id="selectByCalculationIds" resultType="com.paytech.tax.core.dal.dataobject.TaxEvidence">
+        SELECT id, calculation_id, evidence_type, source_code, country_code, subdivision_code, validation_status, result_code, checked_at, create_time FROM t_tax_evidence
+        WHERE calculation_id IN <foreach collection="calculationIds" item="v" open="(" separator="," close=")">#{v}</foreach> ORDER BY calculation_id, evidence_type
+    </select>
+</mapper>

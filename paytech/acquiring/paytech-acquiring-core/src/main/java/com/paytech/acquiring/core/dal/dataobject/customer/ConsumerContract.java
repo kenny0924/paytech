@@ -21,5 +21,11 @@ public class ConsumerContract {
 
     /** 同一订单上下文下的法律事实主键。 */
     private long orderLegalId;
+
+    /**
+     * 合同渲染所依据的 tax 计算
+     * <li>历史订单为空。</li>
+     */
+    private Long taxCalculationId;
 }
 

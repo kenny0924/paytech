@@ -28,7 +28,8 @@ const modelContracts = [
   ["paytech/billing", "billing.pdma.json", null],
   // reconciliation 模型脱离 Finance 生成器（2026-10-20 对账切片 1），直接维护 JSON，由 reconciliation-model.test.mjs 校验。
   ["paytech/reconciliation", "reconciliation.pdma.json", null],
-  ["paytech/tax", "tax.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
+  // tax 模型脱离 Finance 生成器（2026-10-29 tax 结账算税与事件登记，S-11），直接维护 JSON。
+  ["paytech/tax", "tax.pdma.json", null],
   ["paytech/payout", "payout.pdma.json", "scripts/pdmaner/finance/generate-finance-model.mjs"],
   ["paytech/platform-support", "platform-support.pdma.json", "scripts/pdmaner/platform-support/generate-platform-support-model.mjs"],
   ["paytech/vault", "vault.pdma.json", "scripts/pdmaner/vault/generate-vault-model.mjs"],

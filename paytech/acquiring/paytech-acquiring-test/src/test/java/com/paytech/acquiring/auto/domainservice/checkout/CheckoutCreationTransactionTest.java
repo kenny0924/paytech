@@ -9,6 +9,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.paytech.acquiring.test.builder.order.OrderTaxCalculationBuilder;
+import com.paytech.acquiring.test.checker.order.OrderTaxChecker;
 import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
 import com.paytech.acquiring.domainservice.service.checkout.CheckoutCreationService;
 import com.paytech.acquiring.test.base.MockTestBase;
@@ -26,13 +28,19 @@ class CheckoutCreationTransactionTest extends MockTestBase {
     @Autowired
     private PlatformTransactionManager transactionManager;
 
+    @Autowired
+    private OrderTaxChecker taxChecker;
+
     private CreateCheckoutContext context;
 
-    /** 类公共准备仅组装本例 Context，不调用被测业务命令。 */
+    /** 类公共准备仅组装本例 Context（含建单暂估计算 revision 1），不调用被测业务命令。 */
     @BeforeEach
     void setUpClassMocks() {
         context = CreateCheckoutContextBuilder.template().orderId(checkoutDataMocker.reserveOrderId())
             .clientId(checkoutDataMocker.clientId()).now(adjustableUtcClock.instant()).build();
+        context.setTaxCalculation(OrderTaxCalculationBuilder.provisional(checkoutDataMocker.reserveOrderId(),
+            context.getOrder().getOrderId(), checkoutDataMocker.reserveOrderId(), "US", "1.00", "0.00",
+            adjustableUtcClock.instant()));
     }
 
     /** Session 唯一键冲突，之前四类写入必须全部回滚。 */
@@ -62,9 +70,11 @@ class CheckoutCreationTransactionTest extends MockTestBase {
         new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
             service.saveCreateCheckoutContext(context);
             checkoutChecker.assertCreationRowCount(context.getOrder().getOrderId(), 8);
+            taxChecker.assertRevisions(context.getOrder().getOrderId(), 1);
             status.setRollbackOnly();
         });
 
         checkoutChecker.assertCreationRowCount(context.getOrder().getOrderId(), 0);
+        taxChecker.assertRevisions(context.getOrder().getOrderId(), 0);
     }
 }

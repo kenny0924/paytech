@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.tax.core.dal.mapper.TaxPeriodMapper">
+    <!-- uk_tax_period 已存在时不改任何列（并发生成同一期间时只保留先提交的一行）。 -->
+    <insert id="insertIfAbsent">
+        INSERT INTO t_tax_period (id, registration_id, period_start, period_end, filing_due_date, payment_due_date, reporting_currency, status, create_time, update_time)
+        VALUES (#{row.id}, #{row.registrationId}, #{row.periodStart}, #{row.periodEnd}, #{row.filingDueDate}, #{row.paymentDueDate}, #{row.reportingCurrency}, #{row.status}, #{row.createTime}, #{row.updateTime})
+        ON DUPLICATE KEY UPDATE id = id
+    </insert>
+
+    <select id="selectByRange" resultType="com.paytech.tax.core.dal.dataobject.TaxPeriod">
+        SELECT id, registration_id, period_start, period_end, filing_due_date, payment_due_date, reporting_currency, status, create_time, update_time FROM t_tax_period
+        WHERE registration_id = #{registrationId} AND period_start = #{periodStart} AND period_end = #{periodEnd}
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.tax.core.dal.dataobject.TaxPeriod">
+        SELECT id, registration_id, period_start, period_end, filing_due_date, payment_due_date, reporting_currency, status, create_time, update_time FROM t_tax_period
+        WHERE id IN <foreach collection="ids" item="v" open="(" separator="," close=")">#{v}</foreach> ORDER BY id
+    </select>
+</mapper>

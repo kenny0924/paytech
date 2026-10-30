@@ -27,7 +27,7 @@ public final class GetCheckoutConverter {
         var currency = result.getCurrency();
         return new GetCheckoutResponseBody(result.getOrderNo(), result.getOrderStatus().getCode(),
             result.getCheckoutStatus().getCode(),
-            result.isReady() ? "READY" : "PENDING", result.getConsumerContractId() == null ? "ESTIMATED" : "FINAL",
+            result.isReady() ? "READY" : "PENDING", result.getAmountStatus().getCode(), result.getTaxBlockReason(),
             currency, result.getCountry(), result.getLocale(), result.getExpiresAt(),
             new CheckoutAmountsInfo(money(currency, amounts.getMerchandise()), money(currency, amounts.getDiscount()),
                 money(currency, amounts.getNet()), money(currency, amounts.getTax()),

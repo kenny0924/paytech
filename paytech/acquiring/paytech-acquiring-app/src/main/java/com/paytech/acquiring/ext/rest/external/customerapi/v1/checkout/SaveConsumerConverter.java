@@ -1,6 +1,7 @@
 package com.paytech.acquiring.ext.rest.external.customerapi.v1.checkout;
 
 import com.paytech.acquiring.api.checkout.v1.checkout.request.SaveConsumerRequestBody;
+import com.paytech.acquiring.api.checkout.v1.checkout.response.GetCheckoutResponseBody.CheckoutAmountsInfo;
 import com.paytech.acquiring.api.checkout.v1.checkout.response.SaveConsumerResponseBody;
 import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.Address;
 import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.ConsumerDetails;
@@ -21,8 +22,16 @@ public final class SaveConsumerConverter {
                     address.getRegion(), address.getCity(), address.getPostalCode())));
     }
 
-    /** 只输出公开编号和保存状态。 */
+    /** 输出公开编号、保存状态与重算后的报价；金额按币种精度，未知金额保持 null。 */
     public static SaveConsumerResponseBody response(SaveConsumerResponse response) {
-        return new SaveConsumerResponseBody(response.getOrderNo(), response.getConsumerStatus());
+        var currency = response.getCurrency();
+        var amounts = new CheckoutAmountsInfo(GetCheckoutConverter.money(currency, response.getMerchandiseAmount()),
+            GetCheckoutConverter.money(currency, response.getDiscountAmount()),
+            GetCheckoutConverter.money(currency, response.getNetAmount()),
+            GetCheckoutConverter.money(currency, response.getTaxAmount()),
+            GetCheckoutConverter.money(currency, response.getRoundingAmount()),
+            GetCheckoutConverter.money(currency, response.getTotalAmount()));
+        return new SaveConsumerResponseBody(response.getOrderNo(), response.getConsumerStatus(),
+            response.getAmountStatus().getCode(), response.getTaxBlockReason(), currency, amounts);
     }
 }

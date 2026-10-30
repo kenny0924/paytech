@@ -90,6 +90,13 @@ public final class OperationsErrorStatusResolver implements ApiErrorStatusResolv
                 case FILE_POLICY_REJECTED -> HttpStatus.UNPROCESSABLE_CONTENT;
             };
         }
+        // tax 订单查询：订单没有税务记录为 404，页面显示"订单未找到"空状态。
+        if (errorCode instanceof com.paytech.tax.api.enums.TaxErrorCode taxCode) {
+            return switch (taxCode) {
+                case TAX_ORDER_NOT_FOUND, TAX_CALCULATION_NOT_FOUND -> HttpStatus.NOT_FOUND;
+                case TAX_CALCULATION_CONFLICT -> HttpStatus.CONFLICT;
+            };
+        }
         if (errorCode instanceof com.paytech.commercial.api.enums.CommercialPriceErrorCode price) {
             return switch (price) {
                 case PRICE_AMBIGUOUS -> HttpStatus.CONFLICT;

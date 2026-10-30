@@ -77,6 +77,8 @@ operations:
   ledger-long-running-read-timeout: ${OPERATIONS_LEDGER_LONG_RUNNING_READ_TIMEOUT:9s}
   # reconciliation 运营接口固定私网地址（与 ledger / account / billing 同一接入方式），规则同上；auto 测试指向本地 Simulator。
   reconciliation-base-url: ${OPERATIONS_RECONCILIATION_BASE_URL:http://127.0.0.1:18115}
+  # tax 订单税务查询固定私网地址（tax 不注册 Nacos），规则同上；auto 测试指向本地 Simulator。
+  tax-base-url: ${OPERATIONS_TAX_BASE_URL:http://127.0.0.1:18116}
   # Platform 数据查询（数据源连接检查、模板试运行与执行）的读取超时，须小于 Gateway 路由响应超时上限 10 秒。
   data-query-read-timeout: ${OPERATIONS_DATA_QUERY_READ_TIMEOUT:9s}
 
@@ -137,6 +139,9 @@ web:
       - /localization-admin/v1/uploads
       # 公开文件上传开始的响应含对象存储的临时 PUT 授权，只记元数据。
       - /file-upload/v1/uploads
+      # 税票下载（/tax/v1/orders/{orderNo}/documents/{documentId}/download）的响应含 60 秒临时签名地址；前缀只能整段匹配，
+      # 税务查询整个前缀只记元数据。
+      - /tax/v1
       # Client 详情含法定名称、关系人姓名与证件掩码，只记元数据。
       - /client-admin
       # 入驻码签发响应含明文码（只出现一次），只记元数据。

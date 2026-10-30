@@ -10,4 +10,18 @@
             #{b.snapshotModelVersion},#{b.createTime})
         </foreach>
     </insert>
+    <resultMap id="OrderRelationshipBinding" type="com.paytech.acquiring.core.dal.dataobject.order.OrderRelationshipBinding">
+        <id column="binding_id" property="bindingId" javaType="_long"/>
+        <result column="order_id" property="orderId" javaType="_long"/>
+        <result column="role_code" property="roleCode" javaType="java.lang.String"/>
+        <result column="subject_type" property="subjectType" javaType="java.lang.String"/>
+        <result column="subject_id" property="subjectId" javaType="java.lang.String"/>
+        <result column="party_id" property="partyId" javaType="java.lang.Long"/>
+        <result column="snapshot_model_version" property="snapshotModelVersion" javaType="_int"/>
+        <result column="create_time" property="createTime" javaType="java.time.Instant"/>
+    </resultMap>
+    <select id="findByOrderId" resultMap="OrderRelationshipBinding" useCache="false" flushCache="true">
+        SELECT binding_id,order_id,role_code,subject_type,subject_id,party_id,snapshot_model_version,create_time
+        FROM t_order_relationship_binding WHERE order_id=#{orderId} ORDER BY binding_id
+    </select>
 </mapper>

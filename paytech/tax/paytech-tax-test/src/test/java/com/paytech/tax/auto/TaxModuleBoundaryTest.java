@@ -15,9 +15,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 /**
- * 在默认 Maven 测试中保护 tax-service 的模块集合、依赖清单与已批准的基础设施范围（Snowflake 与 JDBC）
+ * 在默认 Maven 测试中保护 tax-service 的模块集合、依赖清单与已批准的基础设施范围
  * <li>由 FinanceModuleBoundaryTest 按服务拆分（design/09 §2.7）；跨服务依赖图规则由 ArchitectureAutoTest（R1–R12）检查。</li>
- * <li>本服务第 11 步前不得引入 MQ：RabbitTemplate 不在 classpath。</li>
+ * <li>2026-10-29 结账算税与事件登记：引入 MyBatis、RabbitMQ 消费（OrderPaymentSucceeded）、本地补偿任务（开票）与 Platform 内部文件接口；
+ * 仍不接 Nacos、不使用 Redis。</li>
  *
  * @see com.paytech.tax.TaxApplication
  */
@@ -33,13 +34,17 @@ class TaxModuleBoundaryTest {
     @Test
     void test_businessLibrariesHaveApprovedDependencies() throws Exception {
         Assertions.assertEquals(
-            Set.of("paytech-tax-api", "lombok"),
+            Set.of("paytech-tax-api", "paytech-platform-support-api", "paytech-mybatis-support", "paytech-snowflake-id",
+                "paytech-json-canonicalization", "paytech-compensation-event", "paytech-messaging-api", "jackson-databind",
+                "jakarta.validation-api", "spring-context", "spring-tx", "spring-web", "mybatis", "lombok"),
             values(readPom("paytech-tax-core"), "/project/dependencies/dependency/artifactId"));
-        Assertions.assertEquals(Set.of("lombok"),
+        Assertions.assertEquals(Set.of("spring-web", "jakarta.validation-api", "paytech-common-core", "lombok"),
             values(readPom("paytech-tax-api"), "/project/dependencies/dependency/artifactId"));
         Set<String> app = values(readPom("paytech-tax-app"),
             "/project/dependencies/dependency[groupId='com.paytech']/artifactId");
-        Assertions.assertEquals(Set.of("paytech-tax-api", "paytech-tax-core", "paytech-snowflake-id", "paytech-mvc-web-starter"), app);
+        Assertions.assertEquals(Set.of("paytech-tax-api", "paytech-tax-core", "paytech-snowflake-id",
+            "paytech-mybatis-support", "paytech-mvc-web-starter", "paytech-compensation-event", "paytech-messaging",
+            "paytech-http-client-support", "paytech-internal-auth"), app);
     }
 
     @Test
@@ -60,11 +65,11 @@ class TaxModuleBoundaryTest {
     @Test
     void test_runtimeContainsOnlyApprovedInfrastructure() {
         for (String resource : Set.of("com/zaxxer/hikari/HikariDataSource.class",
-            "com/mysql/cj/jdbc/Driver.class")) {
+            "com/mysql/cj/jdbc/Driver.class", "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
+            "org/apache/ibatis/session/SqlSession.class")) {
             Assertions.assertNotNull(getClass().getClassLoader().getResource(resource), resource);
         }
         for (String resource : Set.of("com/alibaba/nacos/api/NacosFactory.class",
-            "org/springframework/amqp/rabbit/core/RabbitTemplate.class",
             "org/mockito/Mockito.class",
             "org/redisson/Redisson.class")) {
             Assertions.assertNull(getClass().getClassLoader().getResource(resource), resource);

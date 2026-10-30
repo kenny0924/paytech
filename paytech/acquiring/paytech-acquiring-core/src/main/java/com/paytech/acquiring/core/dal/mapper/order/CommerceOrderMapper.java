@@ -5,6 +5,9 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Param;
 
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation;
+
 import com.paytech.acquiring.core.dal.dataobject.order.CommerceOrder;
 import com.paytech.acquiring.core.dal.dataobject.checkout.CheckoutSession;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderPaymentProjection;
@@ -19,8 +22,9 @@ public interface CommerceOrderMapper {
         @Param("contractId") long contractId, @Param("payment") OrderPaymentProjection payment,
         @Param("now") Instant now);
 
-    /** 保存消费者前检查原版本、会话及准备状态，并递增订单版本。 */
+    /** 保存消费者前检查原版本、会话及准备状态，并递增订单版本；有新报价时同时更新当前报价金额与金额状态。 */
     int recordConsumerChange(@Param("order") CommerceOrder order, @Param("session") CheckoutSession session,
+        @Param("quote") OrderTaxCalculation quote, @Param("amountStatus") OrderAmountStatus amountStatus,
         @Param("now") Instant now);
 
     /** 按 Client 和公开订单号查询订单表。 */

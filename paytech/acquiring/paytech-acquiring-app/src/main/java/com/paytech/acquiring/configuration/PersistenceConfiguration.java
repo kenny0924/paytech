@@ -1,5 +1,6 @@
 package com.paytech.acquiring.configuration;
 
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
 import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
 import com.paytech.acquiring.domain.enums.CheckoutSessionStatus;
 import com.paytech.acquiring.domain.enums.RefundStatus;
@@ -12,6 +13,8 @@ import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
 import com.paytech.foundation.mybatis.typehandler.CodeEnumTypeHandler;
 import com.paytech.foundation.compensation.model.CompensationEventStatus;
 import com.paytech.foundation.mybatis.typehandler.InstantTypeHandler;
+import com.paytech.tax.api.enums.TaxCalculationStage;
+import com.paytech.tax.api.enums.TaxCalculationStatus;
 import org.mybatis.spring.annotation.MapperScan;
 import org.mybatis.spring.boot.autoconfigure.ConfigurationCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +41,12 @@ public class PersistenceConfiguration {
                 new CodeEnumTypeHandler<>(OrderStatus.class));
             configuration.getTypeHandlerRegistry().register(OrderCreationMode.class,
                 new CodeEnumTypeHandler<>(OrderCreationMode.class));
+            configuration.getTypeHandlerRegistry().register(OrderAmountStatus.class,
+                new CodeEnumTypeHandler<>(OrderAmountStatus.class));
+            configuration.getTypeHandlerRegistry().register(TaxCalculationStage.class,
+                new CodeEnumTypeHandler<>(TaxCalculationStage.class));
+            configuration.getTypeHandlerRegistry().register(TaxCalculationStatus.class,
+                new CodeEnumTypeHandler<>(TaxCalculationStatus.class));
             configuration.getTypeHandlerRegistry().register(CheckoutSessionStatus.class,
                 new CodeEnumTypeHandler<>(CheckoutSessionStatus.class));
             configuration.getTypeHandlerRegistry().register(PaymentIntentStatus.class,

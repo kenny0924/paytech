@@ -14,11 +14,15 @@ public abstract class AbstractCreateCheckoutApiTest extends MockTestBase {
     protected static final String CLIENT_ORDER_ID = "checkout-main";
     protected static final Instant NOW = Instant.parse("2026-09-08T00:00:00Z");
 
-    /** 由各场景类的 BeforeEach 调用，每例重新配置本 Client 的 USD/US commercial 解析 DTO 与 Risk 默认放行。 */
+    /**
+     * 由各场景类的 BeforeEach 调用，每例重新配置本 Client 的 USD/US commercial 解析 DTO、Risk 默认放行与 tax 默认 NOT_MANAGED
+     * （税额 0、金额状态 FINAL）；税务场景在用例内按阶段覆盖 tax 响应。
+     */
     protected final void mockDefaultPreparation() {
         preparationMocker.mockResolution(clientId(), "US", "USD",
             CheckoutContextResponseBuilder.template(clientId()).build());
         riskMocker.allow(CheckoutRiskMocker.DEFAULT_EVALUATION_ID);
+        taxMocker.notManaged();
     }
 
     /** 调用经过真实 Controller，不直接调用 Processor 或 Service 代替入口。 */

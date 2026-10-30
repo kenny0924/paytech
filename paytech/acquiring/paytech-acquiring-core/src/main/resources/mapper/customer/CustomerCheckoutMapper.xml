@@ -15,8 +15,9 @@
             <arg column="platform_charge_version_id" javaType="java.lang.Long"/>
             <arg column="platform_service_party_id" javaType="java.lang.Long"/>
             <arg column="risk_checkout_assessment_id" javaType="_long"/>
-            <arg column="finance_tax_snapshot_id" javaType="_long"/>
+            <arg column="finance_tax_snapshot_id" javaType="java.lang.Long"/>
             <arg column="finance_tax_snapshot_hash" javaType="java.lang.String"/>
+            <arg column="initial_tax_calculation_id" javaType="java.lang.Long"/>
             <arg column="consumer_country_code" javaType="java.lang.String"/>
             <arg column="locale" javaType="java.lang.String"/>
             <arg column="fund_flow" javaType="java.lang.String"/>
@@ -43,6 +44,7 @@
             <arg column="public_support_email" javaType="java.lang.String"/>
             <arg column="public_support_phone" javaType="java.lang.String"/>
             <arg column="consumer_contract_id" javaType="_long"/>
+            <arg column="contract_tax_calculation_id" javaType="java.lang.Long"/>
             <arg column="rendered_file_id" javaType="_long"/>
             <arg column="rendered_content_hash" javaType="java.lang.String"/>
             <arg column="presented_at" javaType="java.time.Instant"/>
@@ -53,15 +55,18 @@
         SELECT c.order_context_id,c.order_id,c.commercial_context_time,c.affiliation_id,c.entity_scope_id,
         c.entity_source_relation_id,c.client_pricing_version_id,c.partner_share_version_id,c.platform_charge_version_id,
         c.platform_service_party_id,c.risk_checkout_assessment_id,c.finance_tax_snapshot_id,c.finance_tax_snapshot_hash,
-        c.consumer_country_code,c.locale,c.fund_flow,c.effective_relationship_model_version,c.snapshot_model_version,
+        c.initial_tax_calculation_id,c.consumer_country_code,c.locale,c.fund_flow,c.effective_relationship_model_version,c.snapshot_model_version,
         l.order_legal_id,l.client_agreement_id,l.partner_agreement_id,
         l.partner_agreement_operating_entity_id,l.consumer_terms_document_id,l.consumer_terms_file_id,l.consumer_terms_content_hash,
         l.refund_policy_document_id,l.refund_policy_file_id,l.refund_policy_content_hash,l.privacy_notice_document_id,
         l.privacy_notice_file_id,l.privacy_notice_content_hash,l.seller_disclosure_id,l.public_legal_name,
         l.public_registration_number,l.public_tax_registration_number,l.public_address_text,l.public_support_email,l.public_support_phone,
-        cc.consumer_contract_id,cc.rendered_file_id,cc.rendered_content_hash,cc.presented_at
+        cc.consumer_contract_id,cc.tax_calculation_id AS contract_tax_calculation_id,cc.rendered_file_id,
+        cc.rendered_content_hash,cc.presented_at
         FROM t_order_context c JOIN t_order_legal l ON l.order_context_id=c.order_context_id
-        JOIN t_consumer_contract cc ON cc.order_legal_id=l.order_legal_id AND cc.order_id=c.order_id
+        JOIN t_consumer_contract cc ON cc.consumer_contract_id=(SELECT x.consumer_contract_id FROM t_consumer_contract x
+            WHERE x.order_id=c.order_id AND x.order_legal_id=l.order_legal_id
+            ORDER BY x.presented_at DESC,x.consumer_contract_id DESC LIMIT 1)
         WHERE c.order_id=#{orderId}
     </select>
 
@@ -69,10 +74,12 @@
         INSERT INTO t_order_context (order_context_id,order_id,commercial_context_time,affiliation_id,entity_scope_id,
         entity_source_relation_id,client_pricing_version_id,partner_share_version_id,platform_charge_version_id,
         platform_service_party_id,risk_checkout_assessment_id,finance_tax_snapshot_id,finance_tax_snapshot_hash,
-        consumer_country_code,locale,fund_flow,effective_relationship_model_version,snapshot_model_version,create_time) VALUES
+        initial_tax_calculation_id,consumer_country_code,locale,fund_flow,effective_relationship_model_version,
+        snapshot_model_version,create_time) VALUES
         (#{orderContextId},#{orderId},#{commercialContextTime},#{affiliationId},#{entityScopeId},#{entitySourceRelationId},
         #{clientPricingVersionId},#{partnerShareVersionId},#{platformChargeVersionId},#{platformServicePartyId},
-        #{riskCheckoutAssessmentId},#{financeTaxSnapshotId},#{financeTaxSnapshotHash},#{consumerCountryCode},#{locale},
+        #{riskCheckoutAssessmentId},#{financeTaxSnapshotId},#{financeTaxSnapshotHash},#{initialTaxCalculationId},
+        #{consumerCountryCode},#{locale},
         #{fundFlow},#{effectiveRelationshipModelVersion},#{snapshotModelVersion},#{presentedAt})
     </insert>
     <insert id="insertLegal">
@@ -89,8 +96,9 @@
     </insert>
     <insert id="insertContract">
         INSERT INTO t_consumer_contract
-        (consumer_contract_id,order_id,order_legal_id,rendered_file_id,rendered_content_hash,
-        locale,presented_at,create_time) VALUES (#{consumerContractId},#{orderId},#{orderLegalId},#{renderedFileId},
+        (consumer_contract_id,order_id,order_legal_id,tax_calculation_id,rendered_file_id,rendered_content_hash,
+        locale,presented_at,create_time) VALUES (#{consumerContractId},#{orderId},#{orderLegalId},
+        #{contractTaxCalculationId},#{renderedFileId},
         #{renderedContentHash},#{locale},#{presentedAt},#{presentedAt})
     </insert>
 </mapper>

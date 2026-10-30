@@ -1,6 +1,5 @@
 package com.paytech.acquiring.domain.checkout;
 
-import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -8,6 +7,8 @@ import java.util.function.LongSupplier;
 
 import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
 import com.paytech.acquiring.core.dal.dataobject.order.OrderRelationshipBinding;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation;
+import com.paytech.acquiring.domain.customer.OrderTaxQuotes;
 import com.paytech.acquiring.domain.customer.CustomerCheckoutModels.*;
 import com.paytech.acquiring.domain.enums.EntitySourceType;
 import com.paytech.commercial.api.enums.FundFlow;
@@ -22,6 +23,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class CheckoutInitializationContext {
+    /** 建单暂估计算的订单内序号。 */
+    public static final int INITIAL_REVISION = 1;
+
     /** 订单创建输入。 */
     private final InitializationRequest request;
 
@@ -31,25 +35,23 @@ public class CheckoutInitializationContext {
     /** 订单资格评估引用。 */
     private final long riskId;
 
-    /** 税额和最终金额。 */
-    private final TaxFacts tax;
+    /** 建单暂估（revision 1）的税务计算。 */
+    private final TaxCalculation tax;
 
     /** 已生成的消费者合同文件。 */
     private final RenderedContract rendered;
 
-    /** Owner 结果完整且金额恒等式成立后，才形成 TERM_PRICE 本库写入对象。 */
+    /**
+     * Owner 结果完整且税务计算与商品行对齐后，才形成本库写入对象
+     * <li>新订单不再写旧 Finance 税务快照，记录建单计算 ID；合同绑定该计算。BLOCKED 仍可建单（technique D-02），金额为空。</li>
+     */
     public FrozenCheckoutRecord buildFrozen(long orderContextId, long orderLegalId, long consumerContractId) {
         var f = commercial;
         var now = request.getContextTime();
-        if (riskId <= 0 || tax == null || tax.snapshotId() <= 0 || !hash(tax.snapshotHash()) || rendered == null
-            || rendered.fileId() <= 0 || !hash(rendered.contentHash()) || tax.taxAmount() == null
-            || tax.roundingAmount() == null || tax.totalAmount() == null || tax.taxAmount().signum() < 0
-            || tax.totalAmount().signum() <= 0
-            || request.getNetAmount().add(tax.taxAmount()).add(tax.roundingAmount()).compareTo(tax.totalAmount()) != 0
-            || !money(tax.taxAmount()) || !money(tax.roundingAmount()) || !money(tax.totalAmount())) {
-            throw new CheckoutUpstreamProtocolException("Checkout 初始化权威结果或金额不完整");
+        if (riskId <= 0 || rendered == null || rendered.fileId() <= 0 || !hash(rendered.contentHash())) {
+            throw new CheckoutUpstreamProtocolException("Checkout 初始化权威结果不完整");
         }
-        validateTaxLines(f, tax);
+        OrderTaxQuotes.validate(tax, request.getCurrency(), request.getNetAmount(), request.getItems());
         var seller = f.seller();
         var relationship = f.relationship();
         return FrozenCheckoutRecord.builder().orderContextId(orderContextId).orderId(request.getOrderId())
@@ -57,8 +59,8 @@ public class CheckoutInitializationContext {
             .entityScopeId(f.entityScopeId()).entitySourceRelationId(f.entitySourceRelationId())
             .clientPricingVersionId(f.clientPricingVersionId()).partnerShareVersionId(f.partnerShareVersionId())
             .platformChargeVersionId(f.platformChargeVersionId()).platformServicePartyId(f.platformServicePartyId())
-            .riskCheckoutAssessmentId(riskId).financeTaxSnapshotId(tax.snapshotId())
-            .financeTaxSnapshotHash(tax.snapshotHash()).consumerCountryCode(request.getCountry()).locale(request.getLocale())
+            .riskCheckoutAssessmentId(riskId).initialTaxCalculationId(tax.calculationId())
+            .consumerCountryCode(request.getCountry()).locale(request.getLocale())
             .fundFlow(relationship == null ? null : relationship.fundFlow())
             .effectiveRelationshipModelVersion(relationship == null ? 0 : relationship.effectiveModelVersion())
             .snapshotModelVersion(relationship == null ? null : relationship.snapshotModelVersion())
@@ -74,8 +76,20 @@ public class CheckoutInitializationContext {
             .publicLegalName(seller.legalName()).publicRegistrationNumber(seller.registrationNumber())
             .publicTaxRegistrationNumber(seller.taxRegistrationNumber()).publicAddressText(seller.addressText())
             .publicSupportEmail(seller.supportEmail()).publicSupportPhone(seller.supportPhone())
-            .consumerContractId(consumerContractId).renderedFileId(rendered.fileId())
+            .consumerContractId(consumerContractId).contractTaxCalculationId(tax.calculationId())
+            .renderedFileId(rendered.fileId())
             .renderedContentHash(rendered.contentHash()).presentedAt(now).build();
+    }
+
+    /**
+     * 建单暂估的计算记录：revision 1，国家证据为 Client 声明国家
+     *
+     * @param id 本库主键
+     * @return 待插入的计算记录
+     */
+    public OrderTaxCalculation buildTaxCalculation(long id) {
+        return OrderTaxQuotes.record(id, request.getOrderId(), INITIAL_REVISION, request.getCountry(), tax,
+            request.getCurrency(), request.getContextTime());
     }
 
     /**
@@ -165,42 +179,6 @@ public class CheckoutInitializationContext {
         return bindings.stream().filter(binding -> RelationshipRole.ACQUIRING_OE.getCode().equals(binding.role()))
             .allMatch(binding -> RelationshipSubjectType.OPERATING_ENTITY.getCode().equals(binding.subjectType())
                 && entityNo.equals(binding.subjectId()));
-    }
-
-    /** Finance 回执必须属于原订单、OE、国家和币种，逐行净额及税额完整对齐。 */
-    private void validateTaxLines(CommercialFacts facts, TaxFacts tax) {
-        var s = request;
-        if (tax.orderId() != s.getOrderId() || !facts.entityNo().equals(tax.entityNo())
-            || !s.getCountry().equals(tax.country()) || !s.getCurrency().equals(tax.currency())
-            || tax.netAmount() == null || s.getNetAmount().compareTo(tax.netAmount()) != 0 || tax.lines() == null
-            || tax.lines().size() != s.getItems().size() || tax.lines().isEmpty()) {
-            throw new CheckoutUpstreamProtocolException("Finance 税回执归属或行数不一致");
-        }
-        var lines = new java.util.HashMap<String, TaxLine>();
-        BigDecimal sum = BigDecimal.ZERO;
-        for (var line : tax.lines()) {
-            if (line == null || lines.put(line.clientItemId(), line) != null || line.netAmount() == null
-                || line.taxAmount() == null || line.totalAmount() == null || line.taxAmount().signum() < 0
-                || !money(line.taxAmount())
-                || line.netAmount().add(line.taxAmount()).compareTo(line.totalAmount()) != 0) {
-                throw new CheckoutUpstreamProtocolException("Finance 税明细不完整");
-            }
-            sum = sum.add(line.taxAmount());
-        }
-        for (var item : s.getItems()) {
-            var line = lines.get(item.clientItemId());
-            if (line == null || item.lineNetAmount().compareTo(line.netAmount()) != 0) {
-                throw new CheckoutUpstreamProtocolException("Finance 税明细与原商品行不一致");
-            }
-        }
-        if (sum.compareTo(tax.taxAmount()) != 0) {
-            throw new CheckoutUpstreamProtocolException("Finance 行税额与汇总不一致");
-        }
-    }
-
-    /** MVP USD 金额精度沿当前 Client 创建合同，包含有符号舍入额。 */
-    private static boolean money(BigDecimal value) {
-        return value.stripTrailingZeros().scale() <= 2 && value.abs().precision() - value.abs().scale() <= 16;
     }
 
     /** 文本完整性只校验 Owner 协议，不推导缺失的法律事实。 */

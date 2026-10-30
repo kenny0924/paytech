@@ -25,6 +25,10 @@
     </update>
     <update id="recordConsumerChange">
         UPDATE t_commerce_order SET version=version+1,update_time=#{now}
+        <if test="quote != null">
+            ,tax_amount=#{quote.taxAmount},rounding_amount=#{quote.roundingAmount},total_amount=#{quote.totalAmount},
+            amount_status=#{amountStatus}
+        </if>
         WHERE order_id=#{order.orderId} AND version=#{order.version}
         AND order_status IN ('CREATED','OPEN') AND termination_requested_at IS NULL
         AND paid_at IS NULL AND expires_at > #{now}
@@ -54,6 +58,7 @@
         <result column="tax_amount" property="taxAmount" javaType="java.math.BigDecimal"/>
         <result column="rounding_amount" property="roundingAmount" javaType="java.math.BigDecimal"/>
         <result column="total_amount" property="totalAmount" javaType="java.math.BigDecimal"/>
+        <result column="amount_status" property="amountStatus" javaType="com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus"/>
         <result column="currency" property="currency" javaType="java.lang.String"/>
         <result column="order_status" property="orderStatus" javaType="com.paytech.acquiring.domain.enums.OrderStatus"/>
         <result column="expires_at" property="expiresAt" javaType="java.time.Instant"/>
@@ -66,13 +71,13 @@
     <select id="findByOrderId" resultMap="CommerceOrder" useCache="false" flushCache="true">
         SELECT order_id,order_no,client_id,client_order_id,customer_id,creation_mode,consumer_country_code,
         termination_requested_at,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,merchandise_amount,discount_amount,net_amount,tax_amount,rounding_amount,
-            total_amount,currency,order_status,expires_at,paid_at,cancelled_at,version,create_time,update_time
+            total_amount,amount_status,currency,order_status,expires_at,paid_at,cancelled_at,version,create_time,update_time
         FROM t_commerce_order WHERE order_id=#{orderId}
     </select>
     <select id="findByOrderNo" resultMap="CommerceOrder">
         SELECT order_id,order_no,client_id,client_order_id,customer_id,creation_mode,consumer_country_code,
         termination_requested_at,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,merchandise_amount,discount_amount,net_amount,tax_amount,rounding_amount,
-        total_amount,currency,order_status,expires_at,paid_at,cancelled_at,version,create_time,update_time
+        total_amount,amount_status,currency,order_status,expires_at,paid_at,cancelled_at,version,create_time,update_time
         FROM t_commerce_order WHERE client_id=#{clientId} AND order_no=#{orderNo}
     </select>
     <select id="findOrderId" resultType="java.lang.Long">
@@ -90,10 +95,10 @@
 
     <insert id="insert">
         INSERT INTO t_commerce_order
-        (order_id,order_no,client_id,client_order_id,customer_id,creation_mode,consumer_country_code,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,tax_amount,rounding_amount,total_amount,
+        (order_id,order_no,client_id,client_order_id,customer_id,creation_mode,consumer_country_code,entity_no,entity_source_type,local_partner_id,industry_code,mcc_code,tax_amount,rounding_amount,total_amount,amount_status,
             merchandise_amount,discount_amount,net_amount,currency,order_status,expires_at,version,create_time,update_time)
         SELECT
-        #{order.orderId},#{order.orderNo},#{order.clientId},#{order.clientOrderId},#{order.customerId},#{order.creationMode},#{order.consumerCountryCode},#{order.entityNo},#{order.entitySourceType},#{order.localPartnerId},#{order.industryCode},#{order.mccCode},#{order.taxAmount},#{order.roundingAmount},#{order.totalAmount},
+        #{order.orderId},#{order.orderNo},#{order.clientId},#{order.clientOrderId},#{order.customerId},#{order.creationMode},#{order.consumerCountryCode},#{order.entityNo},#{order.entitySourceType},#{order.localPartnerId},#{order.industryCode},#{order.mccCode},#{order.taxAmount},#{order.roundingAmount},#{order.totalAmount},#{order.amountStatus},
         #{order.merchandiseAmount},#{order.discountAmount},#{order.netAmount},#{order.currency},#{order.orderStatus},
             #{order.expiresAt},1,#{order.createTime},#{order.createTime}
         WHERE #{order.expiresAt} &gt; #{now}

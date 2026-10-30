@@ -49,6 +49,10 @@ class BillingFactInvariantsTest {
 
     private static final String CLEARING_ACCOUNT_ID = "610001";
 
+    private static final String TAX_SUBJECT_PARTY_ID = "880000000801";
+
+    private static final String OTHER_TAX_SUBJECT_PARTY_ID = "880000000802";
+
     /** 合法的人工调整（含合作方行与目标余额桶）与合法的成本调整都通过。 */
     @Test
     void test_validFactsAccepted() {
@@ -283,6 +287,35 @@ class BillingFactInvariantsTest {
         assertPaymentRejected(fact -> fact.getLines().add(paymentLine(FactComponentType.CLIENT_PRINCIPAL,
             FactPartyRole.CHANNEL, CLEARING_ACCOUNT_ID, FactPartyRole.CLIENT, Long.toString(CLIENT_ID), "1")),
             "本金必须恰一行");
+    }
+
+    /**
+     * SELLER_TAX（技术方案 11.2）：渠道付给 TAX_AUTHORITY，本金减税后本金、手续费与税额之和等于毛额，带 TAX_CALCULATION 引用通过；
+     * 收方标识非十进制、付方不是渠道、税额未从本金扣除、两行收方不同都拒绝。
+     */
+    @Test
+    void test_autoPaymentSellerTax() {
+        assertDoesNotThrow(() -> BillingFactInvariants.checkAutoPayment(withTax(payment(true), TAX_SUBJECT_PARTY_ID)));
+        assertDoesNotThrow(() -> BillingFactInvariants.checkAutoPayment(withTax(payment(false), TAX_SUBJECT_PARTY_ID)));
+        assertPaymentRejected(fact -> withTax(fact, OTHER_TAX_SUBJECT_PARTY_ID), "同一税务机关");
+        assertPaymentRejected(fact -> withTax(fact, ENTITY_NO), "不符合行目录");
+        assertPaymentRejected(fact -> withTax(fact, TAX_SUBJECT_PARTY_ID).getLines().getLast()
+            .setPayerRole(FactPartyRole.CLIENT.getCode()), "不符合行目录");
+        assertPaymentRejected(fact -> {
+            withTax(fact, TAX_SUBJECT_PARTY_ID);
+            fact.getLines().get(1).setPostedAmount(new BigDecimal("90"));
+        }, "本金必须恰一行");
+    }
+
+    /** 本金 90 → 85，追加两行 SELLER_TAX 3 + 2（渠道 → 税务机关，第二行收方为给定标识）与 TAX_CALCULATION 引用。 */
+    private static BillingFactPayload withTax(BillingFactPayload fact, String secondPayeeId) {
+        fact.getLines().get(1).setPostedAmount(new BigDecimal("85"));
+        fact.getLines().add(paymentLine(FactComponentType.SELLER_TAX, FactPartyRole.CHANNEL, CLEARING_ACCOUNT_ID,
+            FactPartyRole.TAX_AUTHORITY, TAX_SUBJECT_PARTY_ID, "3"));
+        fact.getLines().add(paymentLine(FactComponentType.SELLER_TAX, FactPartyRole.CHANNEL, CLEARING_ACCOUNT_ID,
+            FactPartyRole.TAX_AUTHORITY, secondPayeeId, "2"));
+        fact.getRefs().add(ref(FactRefType.TAX_CALCULATION, "48001"));
+        return fact;
     }
 
     /** 修改一份合法 PAYMENT 事实后被业务拒绝，消息含给定片段。 */

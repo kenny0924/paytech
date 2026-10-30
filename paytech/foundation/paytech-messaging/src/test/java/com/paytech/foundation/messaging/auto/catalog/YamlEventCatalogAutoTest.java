@@ -50,7 +50,7 @@ class YamlEventCatalogAutoTest {
         assertEquals(1, orderPaid.schemaVersion());
         assertEquals("acquiring", orderPaid.producer());
         assertEquals("ORDER", orderPaid.aggregateType());
-        assertEquals(List.of("billing"), orderPaid.consumers());
+        assertEquals(List.of("billing", "tax"), orderPaid.consumers());
         assertFalse(orderPaid.strictOrder());
         EventCatalogEntry notified = catalog.find("ChannelPaymentNotified").orElseThrow();
         assertEquals("channel-connector", notified.producer());

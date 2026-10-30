@@ -1,5 +1,5 @@
 # tax-service 配置字段清单，同时作为 Mock 测试的可运行配置。
-# 只连接仓库 local-environment 的 Loopback MySQL；固定凭据为隔离本地测试账号，可用环境变量覆盖。
+# 只连接仓库 local-environment 的 Loopback MySQL / RabbitMQ；固定凭据为隔离本地测试账号，可用环境变量覆盖。
 
 # ==================== 中间件、框架与公共组件配置 ====================
 
@@ -8,6 +8,10 @@ server:
   port: 0
 
 spring:
+  config:
+    # 复用仓库已启动的本地 RabbitMQ 凭据；唯一锚点 paytech.local-environment.dir 由父 POM 经 Surefire 注入（10 §4.4）。
+    import:
+      - "optional:file:${paytech.local-environment.dir}/.env.local[.properties]"
   application:
     name: tax-service
   main:
@@ -24,6 +28,61 @@ spring:
       data-source-properties:
         connectionTimeZone: UTC
         forceConnectionTimeZoneToSession: true
+  # 测试从不建表：paytech-messaging test-jar 自带的 application-mock.yaml 会开启 SQL 初始化，这里显式关闭（Schema 由 init/ddl.sql 手工准备）。
+  sql:
+    init:
+      mode: never
+  # 仓库 local-environment 的本机 RabbitMQ；凭据只来自 .env.local 或同名环境变量，不写默认值。
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: "${MOR_RABBITMQ_USER}"
+    password: "${MOR_RABBITMQ_PASSWORD}"
+    virtual-host: "${MOR_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+    # 只供测试扮演 acquiring 的 AcquiringEventPublisher 等待 Broker 确认（tax 生产不发布事件，生产配置不需要）。
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+  # Platform 内部文件接口：指向测试注入的独立 Loopback Mock HTTP 服务（tax.test.external.base-url 由 @EnableMockHttpServer 在应用创建
+  # 客户端前注入），Context Path 与生产一致；传输策略与生产一致。
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      platform-support-service:
+        base-url: "${tax.test.external.base-url}/platform-support"
+        connect-timeout: 2s
+        read-timeout: 10s
+        redirects: dont-follow
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-compensation-event：本地补偿任务（开票），事务内登记、提交后执行。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识；测试固定值。
+  instance-id: tax-test
+
+# paytech-messaging 消费端：订阅 acquiring 的 OrderPaymentSucceeded（tax.acquiring.p0..p3 与 DLQ）；测试由 AcquiringEventPublisher 扮演
+# acquiring 发布到真实 acquiring.events。重投退避基数测试为 200ms（生产缺省 1s），使投递上限前的退避在数秒内结束。
+messaging:
+  consumer:
+    service: tax
+    retry-backoff: 200ms
+  consumers:
+    acquiring:
+      partitions: 4
+
+paytech:
+  instance-id: "main"
+
+# 内部调用身份：测试 OFF，Platform Mock 以 X-Caller-Service 识别调用方。
+internal-auth:
+  mode: "OFF"
 
 management:
   server:

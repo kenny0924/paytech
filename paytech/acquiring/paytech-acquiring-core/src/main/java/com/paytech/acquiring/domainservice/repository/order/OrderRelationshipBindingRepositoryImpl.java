@@ -26,4 +26,10 @@ public class OrderRelationshipBindingRepositoryImpl implements OrderRelationship
             throw new ErrorException("插入 OrderRelationshipBinding 受影响行数异常");
         }
     }
+
+    /** 按订单读取，不存在返回空集合。 */
+    @Override
+    public List<OrderRelationshipBinding> findByOrderId(long orderId) {
+        return mapper.findByOrderId(orderId);
+    }
 }

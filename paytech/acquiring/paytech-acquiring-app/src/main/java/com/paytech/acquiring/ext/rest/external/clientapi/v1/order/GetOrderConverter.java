@@ -31,7 +31,7 @@ public final class GetOrderConverter {
             money(currency, item.discountAmount()))).toList();
         return new GetOrderResponseBody(result.orderNo(), result.clientOrderId(), result.creationMode().getCode(),
             result.orderStatus().getCode(), result.ready() ? "READY" : "PENDING",
-            result.finalAmount() ? "FINAL" : "ESTIMATED", result.paymentStatus().getCode(), currency,
+            result.amountStatus().getCode(), result.paymentStatus().getCode(), currency,
             result.consumerCountryCode(), items,
             new AmountsInfo(money(currency, amounts.merchandiseAmount()), money(currency, amounts.discountAmount()),
                 money(currency, amounts.netAmount()), money(currency, amounts.taxAmount()),

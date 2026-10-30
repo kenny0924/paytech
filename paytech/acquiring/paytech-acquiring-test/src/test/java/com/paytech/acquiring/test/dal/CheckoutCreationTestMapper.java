@@ -107,9 +107,10 @@ public interface CheckoutCreationTestMapper {
     /** 已存在业务编号前置事实，不通过调用被测接口完成 Arrange。 */
     @Insert("""
         INSERT INTO t_commerce_order (order_id,order_no,client_id,client_order_id,creation_mode,consumer_country_code,
-          merchandise_amount,discount_amount,net_amount,currency,order_status,expires_at,version,create_time,update_time)
+          merchandise_amount,discount_amount,net_amount,amount_status,currency,order_status,expires_at,version,create_time,
+          update_time)
         VALUES (#{orderId},#{orderNo},#{clientId},#{clientOrderId},'HOSTED_CHECKOUT','US',
-          44.90,2.00,42.90,'USD',#{status},#{expiresAt},1,#{now},#{now})
+          44.90,2.00,42.90,'ESTIMATED','USD',#{status},#{expiresAt},1,#{now},#{now})
         """)
     void insertOrder(@Param("orderId") long orderId, @Param("orderNo") String orderNo, @Param("clientId") long clientId,
         @Param("clientOrderId") String clientOrderId, @Param("status") String status,
@@ -150,6 +151,14 @@ public interface CheckoutCreationTestMapper {
     /** 清理本测试订单的商业关系角色绑定。 */
     @Delete("DELETE FROM t_order_relationship_binding WHERE order_id=#{orderId}")
     void deleteRelationshipBindings(long orderId);
+
+    /** 清理本测试订单的税务计算记录。 */
+    @Delete("DELETE FROM t_order_tax_calculation WHERE order_id=#{orderId}")
+    void deleteTaxCalculations(long orderId);
+
+    /** 本测试订单的税务计算记录数，用于残留检查。 */
+    @Select("SELECT COUNT(*) FROM t_order_tax_calculation WHERE order_id=#{orderId}")
+    int taxCalculationCount(long orderId);
 
     /** 清理本测试的 Session。 */
     @Delete("DELETE FROM t_checkout_session WHERE order_id=#{orderId}")

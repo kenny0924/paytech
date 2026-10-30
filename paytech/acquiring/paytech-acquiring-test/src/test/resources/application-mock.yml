@@ -40,6 +40,8 @@ spring:
               - uri: "${acquiring.test.external.base-url}"
             platform-support-service:
               - uri: "${acquiring.test.external.base-url}"
+            tax-service:
+              - uri: "${acquiring.test.external.base-url}"
     loadbalancer:
       retry:
         enabled: false
@@ -81,6 +83,12 @@ spring:
         base-url: lb://platform-support-service/platform-support
         connect-timeout: 2s
         read-timeout: 5s
+        redirects: dont-follow
+      # 读超时比生产 3s 短，使超时用例更快结束。
+      tax-service:
+        base-url: lb://tax-service
+        connect-timeout: 2s
+        read-timeout: 500ms
         redirects: dont-follow
   data:
     redis:

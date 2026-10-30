@@ -13,6 +13,7 @@ import com.paytech.operations.console.bff.test.simulator.LedgerOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.PlatformOperationsSimulator;
 import com.paytech.operations.console.bff.test.simulator.ReconciliationOwnerSimulator;
 import com.paytech.operations.console.bff.test.simulator.RiskDecisionConfigurationSimulator;
+import com.paytech.operations.console.bff.test.simulator.TaxOwnerSimulator;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
@@ -30,6 +31,7 @@ public class OperationsBffTestConfiguration {
     public static final ChannelConnectorOwnerSimulator CHANNEL_CONNECTOR = new ChannelConnectorOwnerSimulator();
     public static final ReconciliationOwnerSimulator RECONCILIATION = new ReconciliationOwnerSimulator();
     public static final CardOwnerSimulator CARD = new CardOwnerSimulator();
+    public static final TaxOwnerSimulator TAX = new TaxOwnerSimulator();
 
     @Bean(destroyMethod = "close")
     LedgerOwnerSimulator ledgerOwnerSimulator() { return LEDGER; }
@@ -51,6 +53,9 @@ public class OperationsBffTestConfiguration {
 
     @Bean(destroyMethod = "close")
     CardOwnerSimulator cardOwnerSimulator() { return CARD; }
+
+    @Bean(destroyMethod = "close")
+    TaxOwnerSimulator taxOwnerSimulator() { return TAX; }
 
     @Bean(destroyMethod = "close")
     ClientReviewOwnerSimulator clientReviewOwnerSimulator() { return CLIENT_REVIEW; }

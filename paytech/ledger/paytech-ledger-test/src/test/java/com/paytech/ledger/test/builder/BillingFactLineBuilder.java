@@ -52,6 +52,12 @@ public final class BillingFactLineBuilder {
             .payee(FactPartyRole.TAX_AUTHORITY, String.valueOf(taxAuthorityId));
     }
 
+    /** Seller 实收税（billing 自动 PAYMENT 行目录，tax 技术方案 11.2）：渠道清算账户 → 税务机关。 */
+    public static BillingFactLineBuilder channelSellerTax(String amount, long taxAuthorityId) {
+        return component(FactComponentType.SELLER_TAX, amount).payer(FactPartyRole.CHANNEL, CHANNEL_ID)
+            .payee(FactPartyRole.TAX_AUTHORITY, String.valueOf(taxAuthorityId));
+    }
+
     /** Seller 实收税，缺少税务机关收方。 */
     public static BillingFactLineBuilder sellerTaxWithoutAuthority(String amount) {
         return component(FactComponentType.SELLER_TAX, amount).payerFromHeader(FactPartyRole.CLIENT);

@@ -3,6 +3,7 @@ package com.paytech.acquiring.core.dal.dataobject.order;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
 import com.paytech.acquiring.api.client.v1.enums.OrderCreationMode;
 import com.paytech.acquiring.api.checkout.v1.enums.CustomerCheckoutErrorCode;
 import com.paytech.acquiring.domain.enums.OrderStatus;
@@ -62,14 +63,26 @@ public class CommerceOrder {
     /** 冻结商品净额，以订单币种主单位表示，等于商品总额减优惠总额。 */
     private BigDecimal netAmount;
 
-    /** 支付准备确定的税额，以订单币种主单位表示。 */
+    /**
+     * 当前有效报价的税额，以订单币种主单位表示
+     * <li>随税务计算 revision 在消费者接受前更新；BLOCKED 时为空。</li>
+     */
     private BigDecimal taxAmount;
 
-    /** 支付准备确定的舍入差额，以订单币种主单位表示。 */
+    /**
+     * 当前有效报价的舍入差额，以订单币种主单位表示
+     * <li>BLOCKED 时为空。</li>
+     */
     private BigDecimal roundingAmount;
 
-    /** 支付准备确定的最终应付金额，以订单币种主单位表示。 */
+    /**
+     * 当前有效报价的应付金额，以订单币种主单位表示
+     * <li>BLOCKED 时为空。</li>
+     */
     private BigDecimal totalAmount;
+
+    /** 当前有效报价的金额状态；只有 FINAL 可支付。 */
+    private OrderAmountStatus amountStatus;
 
     /** 金额币种。 */
     private String currency;

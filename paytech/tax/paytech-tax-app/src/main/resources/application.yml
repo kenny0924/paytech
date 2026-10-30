@@ -17,6 +17,51 @@ spring:
       data-source-properties:
         connectionTimeZone: UTC
         forceConnectionTimeZoneToSession: true
+  # 只消费 acquiring.events 的 OrderPaymentSucceeded（tax.acquiring.p0..p3）；本期不发布领域事件（technique 11.4）。
+  rabbitmq:
+    host: "${TAX_RABBITMQ_HOST:127.0.0.1}"
+    port: "${TAX_RABBITMQ_PORT:5672}"
+    username: "${TAX_RABBITMQ_USERNAME:}"
+    password: "${TAX_RABBITMQ_PASSWORD:}"
+    virtual-host: "${TAX_RABBITMQ_VHOST:/mor-local}"
+    connection-timeout: 2s
+  # Platform 内部文件接口（简化税票上传，technique 9.3、S-12）：JDK HttpClient 不自动重试；不接服务发现，基址含 Platform Context Path。
+  http:
+    clients:
+      imperative:
+        factory: jdk
+    serviceclient:
+      platform-support-service:
+        base-url: "${TAX_PLATFORM_SERVICE_URL:http://127.0.0.1:18106/platform-support}"
+        connect-timeout: 2s
+        read-timeout: 10s
+        redirects: dont-follow
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+
+# paytech-compensation-event：正式交易登记事务内登记 TAX_DOCUMENT_ISSUE 开票任务，提交后执行；XXL-Job 兜底唤醒沿用组件默认。
+compensation:
+  enabled: true
+  # 多实例 Claim/Lease 的实例标识前缀：tax；部署多实例时由 TAX_COMPENSATION_INSTANCE_ID 注入带实例后缀的值。
+  instance-id: "${TAX_COMPENSATION_INSTANCE_ID:tax}"
+
+# paytech-messaging 消费端：订阅 acquiring 的 OrderPaymentSucceeded（technique 9.2），声明 tax.acquiring.hash 与 tax.acquiring.p0..p3
+# 分区队列（含 DLX/DLQ），登记正式交易与底稿。
+messaging:
+  consumer:
+    service: tax
+  consumers:
+    acquiring:
+      partitions: 4
+
+# 实例 ID（实例清单 instance.id，01 §5）：内部调用 Token 的 inst；internal-auth.mode 非 OFF 时必填。
+paytech:
+  instance-id: "${PAYTECH_INSTANCE_ID:main}"
+
+# 内部调用身份（D26）：默认 OFF；YAML 中必须带引号，裸 OFF 会被解析为布尔 false。Platform 内部文件接口在 OFF 时以 X-Caller-Service 识别本服务。
+internal-auth:
+  mode: "${TAX_INTERNAL_AUTH_MODE:OFF}"
 
 management:
   server:

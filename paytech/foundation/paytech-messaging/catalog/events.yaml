@@ -194,11 +194,15 @@ events:
   # com.paytech.acquiring.domain.order.OrderPaymentSucceededPayload：订单冻结商业字段在前、支付事实在后，ID 与金额为十进制字符串，
   # 时间为 UTC RFC 3339，缺失为 JSON null。aggregateId 为订单 ID，aggregateVersion 为推进 PAID 后的 t_commerce_order.version
   # （一个订单只成功一次，版本可能跳号，strictOrder=false）。已关闭订单补记支付投影与重复事件不发布。billing 据此登记 AUTO PAYMENT 计费事实。
+  # 2026-10-29 tax 结账算税与事件登记（technique 11.1，S-08）：在 v1 末尾可空新增 taxCalculationId、taxStatus、taxScopeKey、taxAmount、
+  # taxComponents[]{jurisdictionCode, registrationId, taxSubjectPartyId, taxAmount}（存量订单为 null），financeTaxSnapshotId 新单置空；
+  # 只追加可空字段故 schemaVersion 仍为 1。tax 登记为消费方（tax.acquiring.p0..p3，Handler strictOrder=false、HANDLER_MANAGED）：
+  # 缺 taxCalculationId 或 NOT_MANAGED 跳过，READY 建正式交易与申报底稿，与冻结计算不一致进 DLQ。
   - eventType: OrderPaymentSucceeded
     schemaVersion: 1
     producer: acquiring
     aggregateType: ORDER
     aggregateVersionField: version
-    consumers: [billing]
+    consumers: [billing, tax]
     strictOrder: false
     payloadSchemaRef: paytech-acquiring-api/event/OrderPaymentSucceeded/v1

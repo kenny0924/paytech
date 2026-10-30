@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.tax.core.dal.mapper.TaxMarketMapper">
+    <select id="selectBySubject" resultType="com.paytech.tax.core.dal.dataobject.TaxMarket">
+        SELECT id, subject_party_id, jurisdiction_code, tax_type, scheme_code, assessment_no, revision, valid_from, valid_to, obligation, collection_status, managed_by, registration_id, policy_id, approved_by, approved_at, review_due_at, create_time, update_time FROM t_tax_market
+        WHERE subject_party_id = #{subjectPartyId} ORDER BY jurisdiction_code, assessment_no, revision
+    </select>
+
+    <select id="selectByIds" resultType="com.paytech.tax.core.dal.dataobject.TaxMarket">
+        SELECT id, subject_party_id, jurisdiction_code, tax_type, scheme_code, assessment_no, revision, valid_from, valid_to, obligation, collection_status, managed_by, registration_id, policy_id, approved_by, approved_at, review_due_at, create_time, update_time FROM t_tax_market
+        WHERE id IN <foreach collection="ids" item="v" open="(" separator="," close=")">#{v}</foreach> ORDER BY id
+    </select>
+</mapper>

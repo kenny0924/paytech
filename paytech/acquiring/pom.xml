@@ -66,6 +66,11 @@
                 <artifactId>paytech-commercial-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.paytech</groupId>
+                <artifactId>paytech-tax-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

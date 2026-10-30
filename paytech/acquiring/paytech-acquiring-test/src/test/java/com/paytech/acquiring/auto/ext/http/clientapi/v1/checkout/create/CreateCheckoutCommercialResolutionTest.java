@@ -34,6 +34,7 @@ import com.paytech.acquiring.test.builder.external.CheckoutContextResponseBuilde
 import com.paytech.acquiring.test.mocker.external.CheckoutCommercialMocker.Reply;
 import com.paytech.commercial.api.checkout.response.ResolveCheckoutContextResponseBody;
 import com.paytech.commercial.api.enums.CheckoutErrorCode;
+import com.paytech.commercial.api.enums.BusinessMode;
 import com.paytech.commercial.api.enums.FundFlow;
 import com.paytech.commercial.api.enums.RelationshipRole;
 import com.paytech.commercial.api.enums.RelationshipSubjectType;
@@ -108,7 +109,10 @@ class CreateCheckoutCommercialResolutionTest extends AbstractCreateCheckoutApiTe
             CheckoutContextResponseBuilder.SNAPSHOT_MODEL_VERSION, CheckoutContextResponseBuilder.morBindings(clientId()));
     }
 
-    /** commercial 未返回快照（CLIENT 来源）：不写绑定行，资金流向与快照版本为空，生效版本 0。 */
+    /**
+     * commercial 未返回快照（CLIENT 来源）：不写绑定行，资金流向与快照版本为空，生效版本 0；责任方在 Client 一侧，tax 请求不带责任方、
+     * 带合同业务模式，结果 NOT_MANAGED，订单金额 FINAL。
+     */
     @Test
     void test_snapshotAbsent() {
         preparationMocker.mockResolution(clientId(), "US", "USD",
@@ -118,6 +122,10 @@ class CreateCheckoutCommercialResolutionTest extends AbstractCreateCheckoutApiTe
 
         checkoutChecker.assertEntitySource(clientId(), CLIENT_ORDER_ID, EntitySourceType.CLIENT.getCode(), null);
         checkoutChecker.assertRelationship(clientId(), CLIENT_ORDER_ID, null, 0, null, List.of());
+        var taxRequest = taxMocker.requests().getFirst();
+        assertNull(taxRequest.getTaxSubjectPartyId());
+        assertNull(taxRequest.getSellerPartyId());
+        assertEquals(BusinessMode.MOR.getCode(), taxRequest.getBusinessMode());
     }
 
     /** commercial 业务错误码与依赖故障按映射表转换为 Client API 错误，不重试、不落订单、不调用 Risk。 */

@@ -39,6 +39,33 @@ public final class PaymentFactConstants {
     /** 订单冻结的 Finance 税务快照（acquiring 恒有值）。 */
     public static final long TAX_SNAPSHOT_ID = 47001L;
 
+    /** 订单支付时生效的 tax 计算。 */
+    public static final long TAX_CALCULATION_ID = 48001L;
+
+    /** 计税范围键（本期 acquiring 恒为 SALE）。 */
+    public static final String TAX_SCOPE_SALE = "SALE";
+
+    /** 纳税主体 Party（SELLER_TAX 收方）。 */
+    public static final long TAX_SUBJECT_PARTY_ID = 880000000801L;
+
+    /** 另一纳税主体 Party。 */
+    public static final long OTHER_TAX_SUBJECT_PARTY_ID = 880000000802L;
+
+    /** 征税辖区。 */
+    public static final String TAX_JURISDICTION = "AE";
+
+    /** 另一征税辖区（同一纳税主体的第二个组件）。 */
+    public static final String OTHER_TAX_JURISDICTION = "AE-DU";
+
+    /** 税种（tax TaxType 代码，billing 未发布常量）。 */
+    public static final String TAX_TYPE_VAT = "VAT";
+
+    /** 法定税务注册。 */
+    public static final long TAX_REGISTRATION_ID = 48101L;
+
+    /** 另一法定税务注册。 */
+    public static final long OTHER_TAX_REGISTRATION_ID = 48102L;
+
     /** 订单版本（信封聚合版本）。 */
     public static final long ORDER_VERSION = 3L;
 

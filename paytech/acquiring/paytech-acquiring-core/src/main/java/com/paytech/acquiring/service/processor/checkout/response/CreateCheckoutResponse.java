@@ -1,5 +1,6 @@
 package com.paytech.acquiring.service.processor.checkout.response;
 
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -26,6 +27,8 @@ public record CreateCheckoutResponse(
     BigDecimal taxAmount,
     BigDecimal roundingAmount,
     BigDecimal totalAmount,
+    OrderAmountStatus amountStatus,
+    String taxBlockReason,
     Instant expiresAt,
     String location) {
 
@@ -50,6 +53,10 @@ public record CreateCheckoutResponse(
             if (netAmount.add(taxAmount).add(roundingAmount).compareTo(totalAmount) != 0) {
                 throw new IllegalArgumentException("创建回执最终金额不一致");
             }
+        }
+        Objects.requireNonNull(amountStatus, "Amount Status 不能为空");
+        if ((amountStatus == OrderAmountStatus.BLOCKED) != (totalAmount == null)) {
+            throw new IllegalArgumentException("创建回执金额状态与总额不一致");
         }
         if (merchandiseAmount.subtract(discountAmount).compareTo(netAmount) != 0) {
             throw new IllegalArgumentException("Create Checkout 回执金额恒等式不成立");

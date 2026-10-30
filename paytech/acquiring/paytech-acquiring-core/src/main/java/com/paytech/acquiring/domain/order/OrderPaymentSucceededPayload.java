@@ -2,6 +2,8 @@ package com.paytech.acquiring.domain.order;
 
 import java.math.BigDecimal;
 
+import com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation;
+import com.paytech.acquiring.domain.customer.OrderTaxQuotes;
 import com.paytech.foundation.money.Money;
 
 import tools.jackson.databind.node.JsonNodeFactory;
@@ -9,10 +11,15 @@ import tools.jackson.databind.node.ObjectNode;
 
 /**
  * OrderPaymentSucceeded Payload：acquiring.events 信封 Schema v1（需求 billing-支付事实自动登记 technique 4.3）
- * <li>固定字段顺序：订单与冻结商业字段在前，支付事实在后。</li>
+ * <li>固定字段顺序：订单与冻结商业字段在前，支付事实在后，税务字段最后。</li>
  * <li>ID 与金额一律十进制字符串（金额按订单币种精度输出主单位），时间为 UTC RFC 3339，缺失为 JSON null，符合 Foundation JSON
  * Object Profile。</li>
- * <li>不含消费者资料、法律披露、公开卖家信息、风控引用与税务摘要。</li>
+ * <li>2026-10-29 tax 结账算税需求（technique 11.1、S-08）可空新增税务字段，schemaVersion 保持 1：taxCalculationId（支付所依据的
+ * tax 计算）、taxStatus（READY / NOT_MANAGED）、taxScopeKey（SALE）、taxAmount、taxComponents[]{jurisdictionCode, taxType,
+ * registrationId, taxSubjectPartyId, taxAmount}（按辖区与注册汇总，取自 t_order_tax_calculation.components_json，不回查 tax；
+ * NOT_MANAGED 为空数组）。READY 时 taxAmount 等于组件合计且组件只有一个纳税主体（报价落库前已校验，与 billing 死信规则一致）。
+ * 税务服务上线前的历史订单五个字段均为 null；新订单 financeTaxSnapshotId 为 null（该字段保留待后续删除）。</li>
+ * <li>不含消费者资料、法律披露、公开卖家信息与风控引用。</li>
  */
 public final class OrderPaymentSucceededPayload {
     /** 事件类型。 */
@@ -23,6 +30,9 @@ public final class OrderPaymentSucceededPayload {
 
     /** 聚合类型：订单。 */
     public static final String AGGREGATE_TYPE = "ORDER";
+
+    /** 税务范围：acquiring 本期只发起销售计算。 */
+    public static final String TAX_SCOPE_KEY = "SALE";
 
     /** 禁止实例化。 */
     private OrderPaymentSucceededPayload() {
@@ -73,7 +83,25 @@ public final class OrderPaymentSucceededPayload {
         payload.put("cardBrand", facts.getCardBrand());
         payload.put("fundingType", facts.getFundingType());
         payload.put("cardLevel", facts.getCardLevel());
+        putTax(payload, context.getCurrency(), source.getTax());
         return payload;
+    }
+
+    /** 追加可空税务字段；历史订单没有税务计算时全部为 null。 */
+    private static void putTax(ObjectNode payload, String currency, OrderTaxCalculation tax) {
+        if (tax == null) {
+            payload.putNull("taxCalculationId");
+            payload.putNull("taxStatus");
+            payload.putNull("taxScopeKey");
+            payload.putNull("taxAmount");
+            payload.putNull("taxComponents");
+            return;
+        }
+        payload.put("taxCalculationId", Long.toString(tax.getTaxCalculationId()));
+        payload.put("taxStatus", tax.getTaxStatus().getCode());
+        payload.put("taxScopeKey", TAX_SCOPE_KEY);
+        payload.put("taxAmount", tax.getTaxAmount() == null ? null : amount(currency, tax.getTaxAmount()));
+        payload.set("taxComponents", OrderTaxQuotes.components(tax.getComponentsJson()));
     }
 
     /** 可空 ID 转十进制字符串。 */

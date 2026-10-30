@@ -39,7 +39,8 @@ public final class CreateCheckoutConverter {
             optionalMoney(value.taxAmount(), value.currency()), optionalMoney(value.roundingAmount(), value.currency()),
             optionalMoney(value.totalAmount(), value.currency()), null);
         return new CreateCheckoutResponseBody(value.orderNo(), value.clientOrderId(), value.checkoutUrl(),
-            value.currency(), amounts, value.expiresAt(), "READY", "FINAL", "OPEN");
+            value.currency(), amounts, value.expiresAt(), "READY", value.amountStatus().getCode(), "OPEN",
+            value.taxBlockReason());
     }
 
     /** 验证并返回创建响应唯一允许的相对 Order Location。 */

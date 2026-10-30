@@ -59,7 +59,7 @@ public class OrderCommercialContextView {
     /** PARTNER 来源冻结的平台签约法律 Party，其他来源为空。 */
     private Long platformServicePartyId;
 
-    /** 冻结的 Finance 税务快照引用。 */
+    /** 历史订单的旧 Finance 税务快照引用；2026-10-29 起新订单为空，税务字段改由 t_order_tax_calculation 提供。 */
     private Long financeTaxSnapshotId;
 
     /** 冻结的消费者国家。 */

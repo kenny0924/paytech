@@ -30,19 +30,25 @@ import static com.paytech.billing.test.builder.PaymentFactConstants.PAYMENT_METH
 import static com.paytech.billing.test.builder.PaymentFactConstants.PAYMENT_SUCCEEDED_TIME;
 import static com.paytech.billing.test.builder.PaymentFactConstants.PLATFORM_CHARGE_VERSION_ID;
 import static com.paytech.billing.test.builder.PaymentFactConstants.PLATFORM_SERVICE_PARTY_ID;
+import static com.paytech.billing.test.builder.PaymentFactConstants.TAX_CALCULATION_ID;
+import static com.paytech.billing.test.builder.PaymentFactConstants.TAX_SCOPE_SALE;
 import static com.paytech.billing.test.builder.PaymentFactConstants.TAX_SNAPSHOT_ID;
+import static com.paytech.billing.test.builder.PaymentFactConstants.TAX_TYPE_VAT;
 import static com.paytech.billing.test.builder.PaymentFactConstants.USD;
 
 import java.time.Instant;
 
+import com.paytech.billing.core.enums.OrderTaxStatus;
 import com.paytech.foundation.messaging.api.DomainEvent;
 
+import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
  * acquiring OrderPaymentSucceeded Schema v1 信封（技术方案 4.3 字段表：订单组在前、支付组在后，字符串标量，缺省 JSON null）
- * <li>template() 为 PLATFORM 来源、100.00 USD 的卡支付，Partner 五项为 null、税务快照有值；partner() 补齐 Partner 五项；build() 不修复负例。</li>
+ * <li>template() 为 PLATFORM 来源、100.00 USD 的卡支付，Partner 五项为 null、税务快照有值、无 tax 计算字段（存量订单载荷）；partner() 补齐
+ * Partner 五项；taxCalculation() 改为新订单载荷（税务快照置空、写入 tax 计算组，技术方案 11.1）；build() 不修复负例。</li>
  */
 public final class OrderPaymentSucceededEnvelopeBuilder {
     /** 发布方服务名。 */
@@ -128,6 +134,57 @@ public final class OrderPaymentSucceededEnvelopeBuilder {
         payload.put("platformChargeVersionId", Long.toString(PLATFORM_CHARGE_VERSION_ID));
         payload.put("platformServicePartyId", Long.toString(PLATFORM_SERVICE_PARTY_ID));
         return this;
+    }
+
+    /**
+     * 新订单的 tax 计算组：税务快照置空，写入计算 ID、状态、计税范围 SALE、税额合计与组件
+     *
+     * @param status 计算状态
+     * @param taxAmount 税额合计
+     * @param components 组件；为空时 taxComponents 写 JSON null
+     * @return 本构造器
+     */
+    public OrderPaymentSucceededEnvelopeBuilder taxCalculation(OrderTaxStatus status, String taxAmount,
+        ObjectNode... components) {
+        payload.putNull("financeTaxSnapshotId");
+        payload.put("taxCalculationId", Long.toString(TAX_CALCULATION_ID));
+        payload.put("taxStatus", status.getCode());
+        payload.put("taxScopeKey", TAX_SCOPE_SALE);
+        payload.put("taxAmount", taxAmount);
+        if (components.length == 0) {
+            payload.putNull("taxComponents");
+            return this;
+        }
+        ArrayNode array = payload.putArray("taxComponents");
+        for (ObjectNode component : components) {
+            array.add(component);
+        }
+        return this;
+    }
+
+    /**
+     * taxComponents 的一项：税种固定 VAT，另带一个未知字段以验证消费方忽略
+     *
+     * @param jurisdictionCode 征税辖区
+     * @param registrationId 法定税务注册，可为 null
+     * @param taxSubjectPartyId 纳税主体 Party
+     * @param taxAmount 组件税额
+     * @return 组件 JSON 对象
+     */
+    public static ObjectNode taxComponent(String jurisdictionCode, Long registrationId, long taxSubjectPartyId,
+        String taxAmount) {
+        ObjectNode component = JsonNodeFactory.instance.objectNode();
+        component.put("jurisdictionCode", jurisdictionCode);
+        component.put("taxType", TAX_TYPE_VAT);
+        component.put("componentLabel", jurisdictionCode + "-" + TAX_TYPE_VAT);
+        if (registrationId == null) {
+            component.putNull("registrationId");
+        } else {
+            component.put("registrationId", Long.toString(registrationId));
+        }
+        component.put("taxSubjectPartyId", Long.toString(taxSubjectPartyId));
+        component.put("taxAmount", taxAmount);
+        return component;
     }
 
     /** 订单金额与收取金额。 */

@@ -1,5 +1,7 @@
 package com.paytech.acquiring.domain.customer;
 
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
+import com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,9 +50,17 @@ public class CheckoutQueryContext {
     /** 已保存接受事实后可能已向 Payment 创建 Intent，禁止再修改消费者。 */
     private final boolean paymentStarted;
 
-    /** 最终合同与金额齐备即可以展示支付页。 */
+    /** 订单当前有效报价的税务计算；税务服务上线前的历史订单为空。 */
+    private final OrderTaxCalculation taxCalculation;
+
+    /** 合同齐备且当前报价为最终金额（暂估与阻断不可支付）即可以展示支付页。 */
     public boolean isReady() {
-        return legal != null && legal.hasContract() && order.getTotalAmount() != null;
+        return legal != null && legal.hasContract() && order.getAmountStatus() == OrderAmountStatus.FINAL;
+    }
+
+    /** 当前报价 BLOCKED 时的原因代码，其他情况为空。 */
+    public String taxBlockReason() {
+        return taxCalculation == null ? null : taxCalculation.getBlockReasonCode();
     }
 
     /** 取消意图或订单终态关闭全部展示操作。 */

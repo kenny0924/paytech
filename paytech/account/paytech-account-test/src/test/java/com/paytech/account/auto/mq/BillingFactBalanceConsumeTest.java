@@ -48,6 +48,9 @@ import com.paytech.billing.api.fact.BillingFactPayload;
  * @see com.paytech.account.ext.mq.BillingFactRecordedBalanceHandler#consume(com.paytech.foundation.messaging.api.DomainEvent)
  */
 class BillingFactBalanceConsumeTest extends AbstractBalanceTest {
+    /** 税务机关（纳税主体 Party）标识。 */
+    private static final String TAX_AUTHORITY = "880000000801";
+
     /** AccountPosted Payload 字段顺序（T0 合同示例）。 */
     private static final List<String> PAYLOAD_FIELDS = List.of("postingId", "entityType", "entityId", "currency", "shardNo",
         "postingSequence", "sourceType", "postedTime", "factId", "factVersion", "factType", "supersedesFactId",
@@ -140,6 +143,29 @@ class BillingFactBalanceConsumeTest extends AbstractBalanceTest {
             () -> assertEquals(MaturityStatus.PENDING.getCode(),
                 testMapper.selectAppliedFact(fact.getFactId()).get("maturity_status")));
         posted.await(1);
+    }
+
+    /**
+     * billing 自动登记的含税 PAYMENT（tax 技术方案 11.2、11.3）：渠道付两行卖方税 3 + 2 给同一税务机关、本金 85 给 Client；
+     * 渠道付方与税务机关收方都只在 ledger 记账，只有 Client 本金一条流水，不开立税务账户。
+     */
+    @Test
+    void test_autoPaymentFactChannelPaysSellerTax() {
+        BillingFactPayload fact = payment("100").sellerTax(TAX_AUTHORITY, "3").sellerTax(TAX_AUTHORITY, "2")
+            .paymentLines("10", "0", "0", "0.5").balanceAvailableTime(Instant.now().plus(2, ChronoUnit.DAYS)).build();
+
+        consumed(fact);
+
+        assertBalance(OwnerAccountType.CLIENT_PAYABLE, CLIENT, BalanceBucket.PENDING, "0", "85", "85");
+        List<Map<String, Object>> entries = factEntries(fact.getFactId());
+        assertAll(() -> assertEquals(5, fact.getLines().size()),
+            () -> assertEquals(FactComponentType.SELLER_TAX.getCode(), fact.getLines().get(1).getComponentType()),
+            () -> assertEquals(1, testMapper.selectAccounts().size(), "只开立 Client 账户"),
+            () -> assertEquals(List.of(4), entries.stream().map(row -> ((Number)row.get("fact_line_no")).intValue()).toList()),
+            () -> assertEquals(AppliedFactStatus.APPLIED.getCode(), applyStatus(fact.getFactId())));
+        AccountPostedPayload payload = posted.await(1).getFirst().payload();
+        assertAll(() -> assertEquals(1, payload.getEntries().size()),
+            () -> assertEntry(payload.getEntries().get(0), OwnerAccountType.CLIENT_PAYABLE, CLIENT, EntrySide.CREDIT, 4));
     }
 
     /** 渠道只允许付本金与手续费、收渠道成本：渠道作为分润付方不在白名单，整条 PAYMENT 事实拒绝进入死信。 */

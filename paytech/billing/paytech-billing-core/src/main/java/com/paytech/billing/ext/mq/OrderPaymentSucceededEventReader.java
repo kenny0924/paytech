@@ -4,11 +4,17 @@ import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.regex.Pattern;
 
+import com.paytech.billing.core.enums.BillingCodes;
+import com.paytech.billing.core.enums.OrderTaxStatus;
 import com.paytech.billing.domain.OrderCommercialContext;
 import com.paytech.billing.domain.OrderPaymentSucceededFact;
+import com.paytech.billing.domain.OrderTaxCalculation;
+import com.paytech.billing.domain.OrderTaxComponent;
 import com.paytech.foundation.common.error.ErrorException;
 import com.paytech.foundation.jsoncanonicalization.api.Rfc8785JsonCanonicalizer;
 import com.paytech.foundation.messaging.api.DomainEvent;
@@ -22,6 +28,8 @@ import tools.jackson.databind.json.JsonMapper;
  * <li>信封结构与 payloadHash 已由 paytech-messaging 解码器校验；这里校验来源服务 acquiring、事件类型、Schema 版本 1、聚合类型 ORDER 且
  * 聚合 ID 等于 orderId，以及 billing 使用的必填字段格式。acquiring-api 不发布载荷类，按 4.3 字段表本地解析。</li>
  * <li>可空字段为 JSON null 或缺失时为空；给出时必须符合格式。</li>
+ * <li>税务组（技术方案 11.1，schema 1 可空新增）：taxCalculationId 缺失时 taxStatus、taxScopeKey、taxAmount、taxComponents 必须同时缺失，
+ * 表示存量订单；给出时 taxStatus 必填，组件逐项校验格式。旧字段 financeTaxSnapshotId 继续读取。</li>
  * <li>来源载荷 Hash 为 Payload 的 RFC 8785 规范 bytes 的 SHA-256 小写十六进制（同键重投时比对）。</li>
  * <li>任何不合法都抛出 {@link DomainEventRejectedException}（直接进入 DLQ），异常消息不回显消息内容。</li>
  */
@@ -50,6 +58,9 @@ public final class OrderPaymentSucceededEventReader {
     private static final Pattern CODE = Pattern.compile("[A-Z][A-Z0-9_]{0,63}");
 
     private static final Pattern REFERENCE = Pattern.compile("[\\x21-\\x7E]{1,128}");
+
+    /** 只在 taxCalculationId 给出时允许出现的税务字段。 */
+    private static final List<String> TAX_DETAIL_FIELDS = List.of("taxStatus", "taxScopeKey", "taxAmount", "taxComponents");
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
@@ -103,7 +114,7 @@ public final class OrderPaymentSucceededEventReader {
             .cardLevel(optional(payload, "cardLevel", CODE)).build();
     }
 
-    /** 订单组：订单、Client、OE、金额、币种、商业时点、Client 合同与条款版本、可选 Partner 五项、税务快照与消费者国家。 */
+    /** 订单组：订单、Client、OE、金额、币种、商业时点、Client 合同与条款版本、可选 Partner 五项、税务快照、tax 计算与消费者国家。 */
     static OrderCommercialContext toOrder(JsonNode payload) {
         return OrderCommercialContext.builder().orderId(id(payload, "orderId"))
             .orderContextId(id(payload, "orderContextId")).clientId(id(payload, "clientId"))
@@ -118,8 +129,47 @@ public final class OrderPaymentSucceededEventReader {
             .partnerShareVersionId(optionalId(payload, "partnerShareVersionId"))
             .platformChargeVersionId(optionalId(payload, "platformChargeVersionId"))
             .platformServicePartyId(optionalId(payload, "platformServicePartyId"))
-            .financeTaxSnapshotId(optionalId(payload, "financeTaxSnapshotId"))
+            .financeTaxSnapshotId(optionalId(payload, "financeTaxSnapshotId")).taxCalculation(taxCalculation(payload))
             .consumerCountryCode(optional(payload, "consumerCountryCode", COUNTRY)).build();
+    }
+
+    /** 税务组：缺 taxCalculationId 为空且其余税务字段必须缺失；给出时状态必填、组件逐项读取。 */
+    static OrderTaxCalculation taxCalculation(JsonNode payload) {
+        Long calculationId = optionalId(payload, "taxCalculationId");
+        if (calculationId == null) {
+            boolean detailPresent = TAX_DETAIL_FIELDS.stream().map(payload::path)
+                .anyMatch(value -> !value.isMissingNode() && !value.isNull());
+            if (detailPresent) {
+                throw new IllegalArgumentException("tax fields without taxCalculationId");
+            }
+            return null;
+        }
+        String amount = optional(payload, "taxAmount", AMOUNT);
+        return OrderTaxCalculation.builder().taxCalculationId(calculationId)
+            .taxStatus(BillingCodes.parse(OrderTaxStatus.class, "taxStatus", matched(payload, "taxStatus", CODE)))
+            .taxScopeKey(optional(payload, "taxScopeKey", CODE)).taxAmount(amount == null ? null : new BigDecimal(amount))
+            .components(taxComponents(payload.path("taxComponents"))).build();
+    }
+
+    /** 税务组件数组：缺失或 JSON null 为空列表；每项为对象，未知字段忽略。 */
+    static List<OrderTaxComponent> taxComponents(JsonNode array) {
+        if (array.isMissingNode() || array.isNull()) {
+            return List.of();
+        }
+        if (!array.isArray()) {
+            throw new IllegalArgumentException("malformed taxComponents");
+        }
+        List<OrderTaxComponent> components = new ArrayList<>();
+        for (JsonNode item : array) {
+            if (!item.isObject()) {
+                throw new IllegalArgumentException("malformed taxComponents item");
+            }
+            components.add(OrderTaxComponent.builder().jurisdictionCode(matched(item, "jurisdictionCode", REFERENCE))
+                .taxType(optional(item, "taxType", CODE))
+                .registrationId(optionalId(item, "registrationId")).taxSubjectPartyId(id(item, "taxSubjectPartyId"))
+                .taxAmount(amount(item, "taxAmount")).build());
+        }
+        return List.copyOf(components);
     }
 
     /** 必填字符串字段。 */

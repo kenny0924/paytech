@@ -588,6 +588,12 @@ export const pageCapabilities = [
     ]
   },
   {
+    "componentKey": "OPERATIONS_FINANCE_TAX",
+    "displayName": "税务查询",
+    "frontendRoute": "/finance/tax",
+    "actions": []
+  },
+  {
     "componentKey": "OPERATIONS_FINANCE_RECON_CLEARING",
     "displayName": "清算账户",
     "frontendRoute": "/finance/reconciliation/clearing-accounts",

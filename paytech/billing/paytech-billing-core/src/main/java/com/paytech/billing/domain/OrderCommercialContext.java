@@ -75,10 +75,16 @@ public class OrderCommercialContext {
     private final Long platformServicePartyId;
 
     /**
-     * Finance 税务快照
-     * <li>acquiring 恒有值（列 NOT NULL）；本期只记 TAX_SNAPSHOT 引用，不读 tax、不生成税行（S11）。</li>
+     * Finance 税务快照（旧字段，只读兼容）
+     * <li>存量订单有值、新订单为空；只在没有 tax 计算时记 TAX_SNAPSHOT 引用，不生成税行。</li>
      */
     private final Long financeTaxSnapshotId;
+
+    /**
+     * 订单支付时生效的 tax 计算
+     * <li>载荷缺 taxCalculationId 时为空（存量订单），与旧行为相同。</li>
+     */
+    private final OrderTaxCalculation taxCalculation;
 
     /**
      * 消费者国家 ISO 3166-1 alpha-2

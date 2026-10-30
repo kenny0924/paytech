@@ -18,6 +18,7 @@
             <arg column="tax_amount" javaType="java.math.BigDecimal"/>
             <arg column="rounding_amount" javaType="java.math.BigDecimal"/>
             <arg column="total_amount" javaType="java.math.BigDecimal"/>
+            <arg column="amount_status" javaType="com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus"/>
             <arg column="currency" javaType="java.lang.String"/>
             <arg column="expires_at" javaType="java.time.Instant"/>
             <arg column="paid_at" javaType="java.time.Instant"/>
@@ -66,7 +67,7 @@
     <select id="selectOrder" resultMap="OrderRecord" useCache="false" flushCache="true">
         SELECT o.order_id,o.order_no,o.client_id,o.client_order_id,o.creation_mode,o.entity_no,
             o.termination_requested_at,o.order_status,o.version,o.merchandise_amount,o.discount_amount,o.net_amount,
-            o.tax_amount,o.rounding_amount,o.total_amount,o.currency,o.expires_at,o.paid_at,o.create_time,o.update_time,
+            o.tax_amount,o.rounding_amount,o.total_amount,o.amount_status,o.currency,o.expires_at,o.paid_at,o.create_time,o.update_time,
             s.session_status,s.public_token,s.public_origin,
             s.version AS session_version,s.update_time AS session_update_time,s.cancelled_at,
             c.order_context_id IS NOT NULL AS context_present,COALESCE(c.consumer_country_code,o.consumer_country_code) AS consumer_country_code

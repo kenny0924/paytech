@@ -5,50 +5,57 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.core.annotation.Order;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.paytech.foundation.testsupport.api.Clear;
+import com.paytech.tax.test.dal.TaxTestMapper;
 
 /**
- * Tax 本地 mor_tax 测试数据的基线检查与全局清理（design/10 §3.1）
- * <li>tax-app 不装配 MyBatis，清理经 JdbcTemplate 执行。本期只有 Schema 归属、没有测试写入：BeforeEach 断言全部 24 张表为空，AfterEach 仍按表清单删除以兜底。</li>
- * <li>发现非测试遗留数据时失败而不删除；清理失败后环境标记为不可复用。</li>
+ * tax 本地 mor_tax 测试数据的基线检查与全局清理（16 张表）
+ * <li>BeforeEach 只检查空基线与初始化 DML 保留行，发现非测试遗留数据时失败而不删除。</li>
+ * <li>AfterEach 按依赖逆序删除运行时表全部行与主数据表 1000 以上的行；清理失败后环境标记为不可复用。</li>
  */
 @TestComponent
 @Order(1)
 public class TaxDataCleaner implements Clear {
-    private static final List<String> FULLY_OWNED_TABLES = List.of("t_compensation_event", "t_tax_payment_event", "t_tax_payment", "t_tax_return_line",
-        "t_tax_return", "t_tax_liability_summary", "t_tax_period", "t_fiscal_record_line",
-        "t_fiscal_record", "t_fiscal_number_sequence", "t_tax_line", "t_tax_evidence", "t_tax_snapshot",
-        "t_tax_exchange_rate", "t_tax_evidence_rule", "t_tax_rate", "t_place_of_supply_rule", "t_tax_rule",
-        "t_tax_treatment", "t_tax_category_mapping", "t_tax_category", "t_tax_registration",
-        "t_tax_authority", "t_tax_jurisdiction");
+    /** 初始化 DML 保留行数：税类 1、地区包 3、注册 3、准入 3、号码序列 3。 */
+    static final int RESERVED_ROWS = 13;
+
+    private static final List<String> RUNTIME_TABLES = List.of("t_tax_document", "t_tax_reporting_entry",
+        "t_tax_transaction", "t_tax_period", "t_tax_evidence", "t_tax_calculation_component", "t_tax_calculation_line",
+        "t_tax_calculation", "t_compensation_event", "t_consumed_event", "t_consumed_aggregate_version");
+
+    private static final List<String> MASTER_TABLES = List.of("t_tax_document_sequence", "t_tax_market",
+        "t_tax_registration", "t_tax_policy", "t_tax_category");
 
     private static boolean reusable = true;
 
-    private final JdbcTemplate jdbc;
+    private final TaxTestMapper mapper;
 
-    public TaxDataCleaner(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
+    /** 注入测试 Mapper。 */
+    public TaxDataCleaner(TaxTestMapper mapper) {
+        this.mapper = mapper;
     }
 
-    /** 检查环境可复用且没有任何测试可写数据。 */
+    /** 检查环境可复用、初始化 DML 已执行且没有任何测试可写数据。 */
     public void assertEmpty() {
         assertTrue(reusable, "上一次清理失败，测试环境不可复用；请手工核对 mor_tax 后重新运行");
-        assertEquals(24, FULLY_OWNED_TABLES.size(), "mor_tax 表清单与测试 DDL 不一致");
-        assertAll(FULLY_OWNED_TABLES.stream().map(table -> () -> assertEquals(0L,
-            jdbc.queryForObject("SELECT COUNT(*) FROM " + table, Long.class),
-            "测试开始前 " + table + " 应为空；若是本地开发数据请先自行处理，测试不会删除它")));
+        assertEquals(RESERVED_ROWS, mapper.countReservedRows(),
+            "mor_tax 未执行 tax-initial-data.sql 或保留行被修改（见 paytech-tax-test init/ddl.sql）");
+        List<Map<String, Object>> counts = mapper.countWritableRows();
+        assertAll(counts.stream().map(row -> () -> assertEquals(0L, ((Number)row.get("c")).longValue(),
+            "测试开始前 " + row.get("t") + " 应为空；若是本地开发数据请先自行处理，测试不会删除它")));
     }
 
     /** 按依赖逆序删除测试写入；任何失败都标记环境不可复用并上抛。 */
     @Override
     public void clear() {
         try {
-            FULLY_OWNED_TABLES.forEach(table -> jdbc.update("DELETE FROM " + table));
+            RUNTIME_TABLES.forEach(mapper::deleteAll);
+            MASTER_TABLES.forEach(mapper::deleteNonReserved);
         } catch (RuntimeException e) {
             reusable = false;
             throw e;

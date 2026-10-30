@@ -40,8 +40,10 @@ public record OrderRecord(
         BigDecimal taxAmount,
         /** 舍入金额；未准备为空。 */
         BigDecimal roundingAmount,
-        /** 最终总额；未准备为空。 */
+        /** 当前报价总额；未准备或 BLOCKED 时为空。 */
         BigDecimal totalAmount,
+        /** 当前报价的金额状态。 */
+        com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus amountStatus,
         /** ISO 币种。 */
         String currency,
         /** 原始到期时刻。 */

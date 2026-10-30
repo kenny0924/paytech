@@ -102,6 +102,7 @@
   "nav.resource.OPERATIONS_FINANCE_SETUP": "账务基础资料",
   "nav.resource.OPERATIONS_FINANCE_SETUP_MANAGE": "维护",
   "nav.resource.OPERATIONS_FINANCE_SUBLEDGER": "明细账查询",
+  "nav.resource.OPERATIONS_FINANCE_TAX": "税务查询",
   "nav.resource.OPERATIONS_GATEWAY_CONFIGURATION": "API 路由管理",
   "nav.resource.OPERATIONS_GATEWAY_CONFIGURATION_MANAGE": "管理配置",
   "nav.resource.OPERATIONS_I18N": "多语言",

@@ -27,7 +27,9 @@
             l.public_tax_registration_number,l.public_address_text,l.public_support_email,l.public_support_phone
         FROM t_order_context c
         LEFT JOIN t_order_legal l ON l.order_context_id=c.order_context_id
-        LEFT JOIN t_consumer_contract cc ON cc.order_legal_id=l.order_legal_id AND cc.order_id=c.order_id
+        LEFT JOIN t_consumer_contract cc ON cc.consumer_contract_id=(SELECT x.consumer_contract_id
+            FROM t_consumer_contract x WHERE x.order_id=c.order_id AND x.order_legal_id=l.order_legal_id
+            ORDER BY x.presented_at DESC,x.consumer_contract_id DESC LIMIT 1)
         WHERE c.order_id=#{orderId}
     </select>
     <resultMap id="OrderCommercialContextView" type="com.paytech.acquiring.domain.order.OrderCommercialContextView">

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.tax.core.dal.mapper.TaxTransactionMapper">
+    <insert id="insert">
+        INSERT INTO t_tax_transaction (id, calculation_id, source_system, source_fact_type, source_fact_id, tax_scope_key, origin, transaction_kind, tax_subject_party_id, currency, occurred_at, tax_point_date, tax_point_basis, registered_at, reporting_status, reporting_block_reason, source_payload_hash, create_time, update_time)
+        VALUES (#{row.id}, #{row.calculationId}, #{row.sourceSystem}, #{row.sourceFactType}, #{row.sourceFactId}, #{row.taxScopeKey}, #{row.origin}, #{row.transactionKind}, #{row.taxSubjectPartyId}, #{row.currency}, #{row.occurredAt}, #{row.taxPointDate}, #{row.taxPointBasis}, #{row.registeredAt}, #{row.reportingStatus}, #{row.reportingBlockReason}, #{row.sourcePayloadHash}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectBySource" resultType="com.paytech.tax.core.dal.dataobject.TaxTransaction">
+        SELECT id, calculation_id, source_system, source_fact_type, source_fact_id, tax_scope_key, origin, transaction_kind, tax_subject_party_id, currency, occurred_at, tax_point_date, tax_point_basis, registered_at, reporting_status, reporting_block_reason, source_payload_hash, create_time, update_time FROM t_tax_transaction
+        WHERE source_system = #{sourceSystem} AND source_fact_type = #{sourceFactType} AND source_fact_id = #{sourceFactId}
+          AND tax_scope_key = #{taxScopeKey}
+    </select>
+
+    <select id="selectById" resultType="com.paytech.tax.core.dal.dataobject.TaxTransaction">
+        SELECT id, calculation_id, source_system, source_fact_type, source_fact_id, tax_scope_key, origin, transaction_kind, tax_subject_party_id, currency, occurred_at, tax_point_date, tax_point_basis, registered_at, reporting_status, reporting_block_reason, source_payload_hash, create_time, update_time FROM t_tax_transaction
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByCalculationIds" resultType="com.paytech.tax.core.dal.dataobject.TaxTransaction">
+        SELECT id, calculation_id, source_system, source_fact_type, source_fact_id, tax_scope_key, origin, transaction_kind, tax_subject_party_id, currency, occurred_at, tax_point_date, tax_point_basis, registered_at, reporting_status, reporting_block_reason, source_payload_hash, create_time, update_time FROM t_tax_transaction
+        WHERE calculation_id IN <foreach collection="calculationIds" item="v" open="(" separator="," close=")">#{v}</foreach> ORDER BY id
+    </select>
+</mapper>

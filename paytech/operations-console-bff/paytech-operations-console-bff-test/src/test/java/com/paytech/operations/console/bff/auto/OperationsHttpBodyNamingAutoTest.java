@@ -75,6 +75,7 @@ class OperationsHttpBodyNamingAutoTest {
         com.paytech.operations.console.bff.ext.rest.FinanceBillingFactController.class,
         com.paytech.operations.console.bff.ext.rest.FinancePeriodCloseController.class,
         com.paytech.operations.console.bff.ext.rest.FinanceRuleBundleController.class,
+        com.paytech.operations.console.bff.ext.rest.TaxOrderController.class, com.paytech.tax.api.TaxOrderQueryApi.class,
         com.paytech.billing.api.BillingFactQueryApi.class,
         com.paytech.account.api.OwnerAccountQueryApi.class, com.paytech.account.api.AccountPostingApi.class,
         com.paytech.ledger.api.LedgerSetupQueryApi.class, com.paytech.ledger.api.LedgerBookQueryApi.class,

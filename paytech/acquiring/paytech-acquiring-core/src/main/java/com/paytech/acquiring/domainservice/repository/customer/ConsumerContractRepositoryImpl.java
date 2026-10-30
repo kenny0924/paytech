@@ -25,7 +25,7 @@ public class ConsumerContractRepositoryImpl implements ConsumerContractRepositor
         }
     }
 
-    /** 查找本订单已冻结且法律关系完整的合同。 */
+    /** 查找本订单当前（最新呈现）且法律关系完整的合同；报价变化后每个税务计算一份，取最新一份。 */
     @Override
     public ConsumerContract findByOrderId(long orderId) {
         return mapper.findByOrderId(orderId);

@@ -34,7 +34,36 @@
         </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
+            <artifactId>paytech-mybatis-support</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
             <artifactId>paytech-mvc-web-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-compensation-event</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+        <!-- Platform 内部文件接口（税票上传）：公共出站边界与内部调用身份。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-http-client-support</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-internal-auth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -55,6 +84,10 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>

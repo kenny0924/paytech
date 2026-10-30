@@ -21,9 +21,10 @@ CREATE TABLE `t_commerce_order` (
   `merchandise_amount` DECIMAL(24,8) NOT NULL COMMENT '订单创建时冻结的优惠前商品服务汇总金额。',
   `discount_amount` DECIMAL(24,8) NOT NULL COMMENT '订单创建时冻结的全部商品服务优惠汇总金额。',
   `net_amount` DECIMAL(24,8) NOT NULL COMMENT '订单创建时冻结的商品服务金额扣除优惠后的净金额。',
-  `tax_amount` DECIMAL(24,8) NULL COMMENT '订单创建时冻结的消费者实收税额汇总金额。',
-  `rounding_amount` DECIMAL(24,8) NULL COMMENT '订单金额计算为保持币种精度而冻结的舍入差额。',
-  `total_amount` DECIMAL(24,8) NULL COMMENT '消费者最终应付的订单冻结总金额。',
+  `tax_amount` DECIMAL(24,8) NULL COMMENT '当前有效报价的消费者实收税额汇总，只在消费者接受前随新的税务计算 revision 更新；BLOCKED 时为空。',
+  `rounding_amount` DECIMAL(24,8) NULL COMMENT '当前有效报价为保持币种精度的舍入差额，随税务计算 revision 更新；BLOCKED 时为空。',
+  `total_amount` DECIMAL(24,8) NULL COMMENT '当前有效报价的消费者应付总额，只在消费者接受前随税务计算 revision 更新；BLOCKED 时为空。',
+  `amount_status` VARCHAR(32) NOT NULL COMMENT '订单当前有效报价的金额状态：ESTIMATED 为建单暂估或消费者尚未完成重算，FINAL 为可支付的最终金额，BLOCKED 为无法正确计税、税额与总额为空且不可支付。允许值：ESTIMATED、FINAL、BLOCKED。',
   `currency` CHAR(3) NOT NULL COMMENT '金额采用的 ISO 4217 三位币种代码。',
   `order_status` VARCHAR(64) NOT NULL COMMENT '订单聚合当前的闭合业务生命周期状态。允许值：CREATED、OPEN、PAID、CANCELLED、EXPIRED。',
   `status_reason_code` VARCHAR(64) NULL COMMENT '当前终态原因采用的稳定业务代码，适用于取消、失败、过期等需要说明的结果；没有终态原因时为空。取值来源：Commerce Order Status Reason Catalog；非固定枚举。',
@@ -39,7 +40,7 @@ CREATE TABLE `t_commerce_order` (
   KEY `idx_order_client_time` (`client_id`, `create_time`, `order_id`) COMMENT '访问索引：client_id、create_time、order_id',
   KEY `idx_order_partner_time` (`local_partner_id`, `create_time`, `order_id`) COMMENT '访问索引：local_partner_id、create_time、order_id',
   KEY `idx_order_expiry` (`order_status`, `expires_at`, `order_id`) COMMENT '访问索引：order_status、expires_at、order_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='基础创建时固定商品净额/币种/期限；支付准备选择提交后固定OE，Context建立时一次补齐税额和最终金额；不延长到期或跨OE恢复。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='基础创建时固定商品净额/币种/期限与OE；税额、舍入额与总额为当前有效报价，随 t_order_tax_calculation 新 revision 在消费者接受前更新，接受后不再变化；不延长到期或跨OE恢复。';
 
 CREATE TABLE `t_order_context` (
   `order_context_id` BIGINT NOT NULL COMMENT '订单创建时冻结外部商业、风控和税务证据引用的内部唯一标识。',
@@ -53,8 +54,9 @@ CREATE TABLE `t_order_context` (
   `platform_charge_version_id` BIGINT NULL COMMENT 'PARTNER来源时固定的CCT服务费版本，与分成版本属于同一Partner合同。',
   `platform_service_party_id` BIGINT NULL COMMENT '支付准备从 Partner Agreement 唯一 PLATFORM_SIGNATORY 解析并冻结的法律 Party 稳定标识；Finance 后续映射本地 Finance Entity。',
   `risk_checkout_assessment_id` BIGINT NOT NULL COMMENT 'Risk & Compliance 返回且由订单上下文冻结的不可变评估标识。',
-  `finance_tax_snapshot_id` BIGINT NOT NULL COMMENT 'Finance 对订单税务计算结果的不可变快照标识。',
-  `finance_tax_snapshot_hash` CHAR(64) NOT NULL COMMENT 'Finance 税务快照 calculation_hash 的精确副本，按 CODE-MOR:FINANCE:TAX_CALCULATION:1 对 Header、全部 Evidence 和 Tax Line 生成 SHA-256 小写 64 位十六进制，用于校验按标识返回的不可变税务结果。',
+  `finance_tax_snapshot_id` BIGINT NULL COMMENT '历史订单的旧 Finance 税务快照标识（零税 Mock）；2026-10-29 起新订单为 NULL，税务计算见 initial_tax_calculation_id 与 t_order_tax_calculation，本列后续删除。',
+  `finance_tax_snapshot_hash` CHAR(64) NULL COMMENT '历史订单的旧 Finance 税务快照摘要；2026-10-29 起新订单为 NULL，本列后续删除。',
+  `initial_tax_calculation_id` BIGINT NULL COMMENT '建单时取得的 tax 暂估计算标识，即 t_order_tax_calculation revision 1 的 tax_calculation_id；历史订单为 NULL，不建立跨库外键。',
   `consumer_country_code` CHAR(2) NOT NULL COMMENT '订单创建时冻结的消费者 ISO 3166-1 alpha-2 国家代码。',
   `locale` VARCHAR(35) NOT NULL COMMENT '文档或消费者体验采用的 IETF BCP 47 语言区域代码。',
   `fund_flow` VARCHAR(32) NULL COMMENT 'commercial 商业关系快照的资金流向；固定 Mock 解析时为 NULL。允许值：THROUGH_CUSTODIAN、DIRECT_TO_CLIENT。',
@@ -111,6 +113,27 @@ CREATE TABLE `t_order_item` (
   PRIMARY KEY (`order_item_id`),
   UNIQUE KEY `uk_order_item` (`order_id`, `client_item_id`) COMMENT '唯一索引：order_id、client_item_id'
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='创建时固定不可变商品/优惠/净额；新流程最终逐行税额和总额由Finance不可变Tax Snapshot按client_item_id读取，不先写假税额再更新。';
+
+CREATE TABLE `t_order_tax_calculation` (
+  `order_tax_calculation_id` BIGINT NOT NULL COMMENT '订单一次税务计算记录的内部唯一标识。',
+  `order_id` BIGINT NOT NULL COMMENT 'Commerce 订单聚合的内部唯一标识。',
+  `revision` INT NOT NULL COMMENT '订单内税务计算的追加序号，建单为 1，每次消费者资料提交重算加 1；同订单最大 revision 即当前有效报价，也是发给 tax 的 sourceRevision。',
+  `tax_calculation_id` BIGINT NOT NULL COMMENT 'tax 返回的不可变税务计算标识，不建立跨库外键。',
+  `calculation_stage` VARCHAR(32) NOT NULL COMMENT '计算阶段：PROVISIONAL 为建单按 Client 声明国家的暂估，不可支付；FINAL 为消费者提交资料后按账单国家的最终计算。允许值：PROVISIONAL、FINAL。',
+  `tax_status` VARCHAR(32) NOT NULL COMMENT 'tax 计算结果状态：READY 已按规则计算，BLOCKED 无法正确计税、订单不可支付，NOT_MANAGED 纳税主体不由平台计税、税额取 Client 自报值。允许值：READY、BLOCKED、NOT_MANAGED。',
+  `basis_country_code` CHAR(2) NOT NULL COMMENT '本次计算采用的国家证据：PROVISIONAL 为 Client 声明的消费者国家，FINAL 为消费者账单国家；ISO 3166-1 alpha-2。',
+  `tax_amount` DECIMAL(24,8) NULL COMMENT '本次计算的消费者实收税额汇总，订单币种主单位；BLOCKED 时为 NULL。',
+  `rounding_amount` DECIMAL(24,8) NULL COMMENT '本次计算的头部舍入差额，订单币种主单位；逐行取整时为 0，BLOCKED 时为 NULL。',
+  `total_amount` DECIMAL(24,8) NULL COMMENT '本次计算的消费者应付总额，等于订单净额加税额加舍入差额；BLOCKED 时为 NULL。',
+  `block_reason_code` VARCHAR(64) NULL COMMENT 'BLOCKED 时 tax 返回的第一条阻断原因代码，其他状态为 NULL。取值来源：tax TaxBlockReason；非固定枚举。',
+  `expires_at` DATETIME(6) NULL COMMENT 'FINAL 计算的报价有效截止 UTC 时刻，过期后不可支付；PROVISIONAL 与无有效期的结果为 NULL。',
+  `lines_json` JSON NULL COMMENT '逐行税额 JSON 数组，元素为 clientItemId、netAmount、taxAmount、totalAmount（十进制字符串），与订单商品行一一对应；BLOCKED 时为 NULL。',
+  `components_json` JSON NULL COMMENT '按辖区与注册汇总的税组件 JSON 数组，元素为 jurisdictionCode、registrationId、taxSubjectPartyId、taxAmount（十进制字符串），供支付成功事件直接携带；NOT_MANAGED 为空数组，BLOCKED 时为 NULL。',
+  `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
+  PRIMARY KEY (`order_tax_calculation_id`),
+  UNIQUE KEY `uk_order_tax_calc` (`order_id`, `revision`) COMMENT '唯一索引：order_id、revision',
+  UNIQUE KEY `uk_order_tax_calc_ref` (`tax_calculation_id`) COMMENT '唯一索引：tax_calculation_id'
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='订单税务计算按 revision 追加、不可变：建单暂估为 revision 1，消费者提交资料后每次重算追加一行；最大 revision 即当前有效报价，订单金额只在消费者接受前随新 revision 更新；支付只能基于最新且 FINAL、READY 或 NOT_MANAGED、未过期的计算。';
 
 CREATE TABLE `t_order_relationship_binding` (
   `binding_id` BIGINT NOT NULL COMMENT '订单商业关系中一个角色绑定的内部唯一标识。',
@@ -235,15 +258,16 @@ CREATE TABLE `t_consumer_contract` (
   `consumer_contract_id` BIGINT NOT NULL COMMENT '订单呈现给消费者的不可变合同文件记录标识。',
   `order_id` BIGINT NOT NULL COMMENT 'Commerce 订单聚合的内部唯一标识。',
   `order_legal_id` BIGINT NOT NULL COMMENT '订单不可变上下文对应法律呈现记录的内部唯一标识。',
+  `tax_calculation_id` BIGINT NULL COMMENT '合同渲染所依据的 tax 计算标识；金额随重算变化时重新渲染一份合同并绑定新计算，消费者接受的合同必须绑定当前有效计算；历史订单为 NULL。',
   `rendered_file_id` BIGINT NOT NULL COMMENT 'Platform Support 保存的不可变消费者合同文件标识。',
   `rendered_content_hash` CHAR(64) NOT NULL COMMENT '呈现给消费者的合同文件内容完整性哈希。',
   `locale` VARCHAR(35) NOT NULL COMMENT '文档或消费者体验采用的 IETF BCP 47 语言区域代码。',
   `presented_at` DATETIME(6) NOT NULL COMMENT '不可变消费者合同文件完成呈现的业务时刻。',
   `create_time` DATETIME(6) NOT NULL COMMENT '数据库记录创建的 UTC 微秒精度时间。',
   PRIMARY KEY (`consumer_contract_id`),
-  UNIQUE KEY `uk_consumer_contract` (`order_id`) COMMENT '唯一索引：order_id',
+  UNIQUE KEY `uk_consumer_contract` (`order_id`, `tax_calculation_id`) COMMENT '唯一索引：order_id、tax_calculation_id',
   KEY `idx_contract_legal` (`order_legal_id`) COMMENT '访问索引：order_legal_id'
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='呈现给消费者的不可变合同文件事实；文件标识、内容哈希、Locale 与呈现时间共同封存。';
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT='呈现给消费者的不可变合同文件事实；文件标识、内容哈希、Locale 与呈现时间共同封存；同一订单每个税务计算至多一份，金额变化时追加新合同，最新一份为当前合同。';
 
 CREATE TABLE `t_checkout_network_evidence` (
   `network_evidence_id` BIGINT NOT NULL COMMENT '一条不可变 Checkout 网络与设备证据的内部唯一标识。',

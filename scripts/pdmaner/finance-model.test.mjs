@@ -252,7 +252,11 @@ test("Finance service artifacts are exact per-database projections of the logica
     "t_channel_cost_alloc"]) {
     assert.ok(!owners.has(table), `${table} 属于 reconciliation，不再由 Finance 生成器投影`);
   }
-  assert.equal(owners.size, 84 - 1 - 27 - 7 - 1 - 17, "其余每张逻辑表恰属一个生成器维护的服务库");
+  // 2026-10-29 tax 结账算税与事件登记：tax 模型脱离生成器直接维护（S-11），02 其余 23 张旧 tax 表不再投影。
+  for (const table of ["t_tax_snapshot", "t_tax_line", "t_fiscal_record", "t_tax_return", "t_tax_payment"]) {
+    assert.ok(!owners.has(table), `${table} 属于 tax，不再由 Finance 生成器投影`);
+  }
+  assert.equal(owners.size, 84 - 1 - 27 - 7 - 1 - 17 - 23, "其余每张逻辑表恰属一个生成器维护的服务库");
   for (const [table, services] of owners) {
     if (!["t_compensation_event", "t_currency_spec"].includes(table)) {
       assert.equal(services.length, 1, `${table} 只能属于一个服务库`);

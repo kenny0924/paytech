@@ -41,8 +41,11 @@ public enum FactRefType implements CodeEnum {
     /** 争议案件；Owner dispute */
     DISPUTE_CASE,
 
-    /** 税额计算快照；Owner tax */
+    /** Finance 旧税务快照；只读兼容存量事实，新事实改用 {@link #TAX_CALCULATION} */
     TAX_SNAPSHOT,
+
+    /** 订单支付时生效的 tax 计算（SELLER_TAX 行的来源）；Owner tax */
+    TAX_CALCULATION,
 
     /** Finance 渠道清算账户，ledger 渠道账户 Owner 的来源；Owner reconciliation */
     CLEARING_ACCOUNT,

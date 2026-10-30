@@ -29,6 +29,7 @@ public abstract class OperationsBffHttpTestBase {
         registry.add("operations.channel-connector-test-base-url", OperationsBffTestConfiguration.CHANNEL_CONNECTOR::baseUrl);
         registry.add("operations.reconciliation-base-url", OperationsBffTestConfiguration.RECONCILIATION::baseUrl);
         registry.add("operations.card-test-base-url", OperationsBffTestConfiguration.CARD::baseUrl);
+        registry.add("operations.tax-base-url", OperationsBffTestConfiguration.TAX::baseUrl);
         registry.add("operations.console-origin", () -> "https://operations-console.local.test");
     }
 }

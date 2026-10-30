@@ -196,6 +196,11 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
     public static final String RECON_READ_PERMISSION_ID = "900000000000123101";
     public static final String RECON_OPERATE_PERMISSION_ID = "900000000000123102";
     public static final String RECON_APPROVE_PERMISSION_ID = "900000000000123103";
+    /** Client 详情页（块 138）与经营主体详情页（块 137）的查看权限；税务查询页据此决定是否显示名称。 */
+    public static final String CLIENT_DETAIL_PERMISSION_ID = "900000000000138102";
+    public static final String OPERATING_ENTITY_DETAIL_PERMISSION_ID = "900000000000137103";
+    /** 税务查询权限 TAX_VIEW（技术方案第 12 节；注册块编号阶段 6 分配，此处为合成值）。 */
+    public static final String TAX_VIEW_PERMISSION_ID = "900000000000149901";
     public static final Map<String, String> FINANCE_ROUTE_PERMISSIONS = Map.ofEntries(
         Map.entry("operations-finance-entity-list", FINANCE_READ_PERMISSION_ID),
         Map.entry("operations-finance-entity-create", FINANCE_MANAGE_PERMISSION_ID),
@@ -292,7 +297,9 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-finance-recon-summary", RECON_READ_PERMISSION_ID),
         Map.entry("operations-finance-recon-channel-line-search", RECON_READ_PERMISSION_ID),
         Map.entry("operations-finance-recon-bank-statement-detail", RECON_READ_PERMISSION_ID),
-        Map.entry("operations-finance-recon-bank-statement-line-detail", RECON_READ_PERMISSION_ID));
+        Map.entry("operations-finance-recon-bank-statement-line-detail", RECON_READ_PERMISSION_ID),
+        Map.entry("operations-finance-tax-order-detail", TAX_VIEW_PERMISSION_ID),
+        Map.entry("operations-finance-tax-document-download", TAX_VIEW_PERMISSION_ID));
 
     // 这是 Platform Simulator 的当前目录事实；BFF 生产代码仍只传可信 Route Code。
     /**
@@ -416,6 +423,8 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
         Map.entry("operations-channel-cost-version-diff", CHANNEL_COST_READ_PERMISSION_ID));
 
     private static final Map<String, String> ROUTE_PERMISSIONS = Map.ofEntries(
+        Map.entry("operations-client-admin-detail", CLIENT_DETAIL_PERMISSION_ID),
+        Map.entry("operations-operating-entity-detail", OPERATING_ENTITY_DETAIL_PERMISSION_ID),
         Map.entry("operations-account-create", ACCOUNT_CREATE_PERMISSION_ID),
         Map.entry("operations-account-disable", ACCOUNT_DISABLE_PERMISSION_ID),
         Map.entry("operations-account-roles", ACCOUNT_ASSIGN_ROLES_PERMISSION_ID),
@@ -583,6 +592,8 @@ public final class PlatformOperationsSimulator implements AutoCloseable {
             grantedPermissions.addAll(FINANCE_ROUTE_PERMISSIONS.values());
             grantedPermissions.addAll(COMMERCIAL_ROUTE_PERMISSIONS.values());
             grantedPermissions.addAll(CHANNEL_ROUTE_PERMISSIONS.values());
+            grantedPermissions.add(CLIENT_DETAIL_PERMISSION_ID);
+            grantedPermissions.add(OPERATING_ENTITY_DETAIL_PERMISSION_ID);
             sessionActive = true;
             allowed = true;
             disconnect = false;

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -13,17 +14,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.paytech.acquiring.core.dal.dataobject.order.OrderTaxCalculation;
 import com.paytech.acquiring.domain.checkout.CreateCheckoutContext;
+import com.paytech.acquiring.domain.order.OrderPaymentSucceededPayload;
 import com.paytech.acquiring.domain.enums.PaymentAttemptStatus;
 import com.paytech.acquiring.domain.enums.PaymentIntentStatus;
 import com.paytech.acquiring.domain.order.OrderPaymentFacts;
 import com.paytech.acquiring.ext.job.OrderPaymentSucceededHandler;
 import com.paytech.acquiring.test.base.MockTestBase;
 import com.paytech.acquiring.test.builder.order.GetOrderDataBuilder;
+import com.paytech.acquiring.test.builder.order.OrderTaxCalculationBuilder;
 import com.paytech.acquiring.test.dal.OrderQueryTestMapper;
 import com.paytech.acquiring.test.mocker.local.OrderContextDataMocker;
 import com.paytech.foundation.compensation.api.CompensationEvent;
 import com.paytech.foundation.compensation.api.CompensationEventRegistrar;
+import com.paytech.tax.api.enums.TaxCalculationStage;
+import com.paytech.tax.api.enums.TaxCalculationStatus;
 
 /**
  * OrderPaymentSucceeded 发布入口：测试在本地事务登记补偿任务，提交后由 Foundation 唤醒真实 Handler，回读订单冻结上下文与支付投影，
@@ -54,7 +60,7 @@ class OrderPaymentSucceededHandlerTest extends MockTestBase {
         register(context, facts(ATTEMPT_ID));
 
         orderPaymentEvents.awaitEnvelope(orderId(context)).envelope(orderId(context), ORDER_VERSION, SUCCEEDED_TIME)
-            .payload(expected(context, false, true));
+            .payload(expected(context, false, true)).assertBillingTaxShape();
     }
 
     /** Partner 来源：合作方、Partner 合同、OE 关联、两个条款版本与平台签约 Party 一并发布。 */
@@ -80,6 +86,58 @@ class OrderPaymentSucceededHandlerTest extends MockTestBase {
 
         orderPaymentEvents.awaitEnvelope(orderId(context)).envelope(orderId(context), ORDER_VERSION, SUCCEEDED_TIME)
             .payload(expected(context, false, false));
+    }
+
+    /**
+     * 税务服务上线后的订单（AC-07 / technique 11.1）：携带支付所依据的计算 ID、READY、SALE、冻结税额与按辖区汇总的组件（取自计算记录，
+     * 不回查 tax）；新订单不写旧税务快照，financeTaxSnapshotId 为 null。
+     */
+    @Test
+    void test_taxedOrder() {
+        var context = contextData.template();
+        context.getFrozen().financeTaxSnapshotId(null).financeTaxSnapshotHash(null);
+        mockPaidOrder(context, ATTEMPT_ID);
+        long calculationId = contextData.nextId();
+        contextData.mockTaxCalculation(OrderTaxCalculationBuilder.finalReady(contextData.nextId(), orderId(context), 2,
+            calculationId, "SA", "1.00", "0.15", SUCCEEDED_TIME.plusSeconds(3600), SUCCEEDED_TIME));
+
+        register(context, facts(ATTEMPT_ID));
+
+        var expected = expected(context, false, true);
+        expected.put("taxCalculationId", Long.toString(calculationId));
+        expected.put("taxStatus", TaxCalculationStatus.READY.getCode());
+        expected.put("taxScopeKey", OrderPaymentSucceededPayload.TAX_SCOPE_KEY);
+        expected.put("taxAmount", "0.15");
+        expected.remove("taxComponents");
+        orderPaymentEvents.awaitEnvelope(orderId(context)).envelope(orderId(context), ORDER_VERSION, SUCCEEDED_TIME)
+            .fields(expected).taxComponents(List.of(Map.of("jurisdictionCode", "SA", "taxType", "VAT",
+                "registrationId", "9200001", "taxSubjectPartyId", "601", "taxAmount", "0.15")))
+            .assertBillingTaxShape();
+    }
+
+    /** 不由平台计税的订单（AC-04）：taxStatus=NOT_MANAGED、税额 0.00、taxComponents 为空数组。 */
+    @Test
+    void test_notManagedOrder() {
+        var context = contextData.template();
+        context.getFrozen().financeTaxSnapshotId(null).financeTaxSnapshotHash(null);
+        mockPaidOrder(context, ATTEMPT_ID);
+        long calculationId = contextData.nextId();
+        contextData.mockTaxCalculation(OrderTaxCalculation.builder().orderTaxCalculationId(contextData.nextId())
+            .orderId(orderId(context)).revision(2).taxCalculationId(calculationId)
+            .calculationStage(TaxCalculationStage.FINAL).taxStatus(TaxCalculationStatus.NOT_MANAGED)
+            .basisCountryCode("SA").taxAmount(BigDecimal.ZERO).roundingAmount(BigDecimal.ZERO)
+            .totalAmount(new BigDecimal("1.00")).linesJson("[]").componentsJson("[]").createTime(SUCCEEDED_TIME).build());
+
+        register(context, facts(ATTEMPT_ID));
+
+        var expected = expected(context, false, true);
+        expected.put("taxCalculationId", Long.toString(calculationId));
+        expected.put("taxStatus", TaxCalculationStatus.NOT_MANAGED.getCode());
+        expected.put("taxScopeKey", OrderPaymentSucceededPayload.TAX_SCOPE_KEY);
+        expected.put("taxAmount", "0.00");
+        expected.remove("taxComponents");
+        orderPaymentEvents.awaitEnvelope(orderId(context)).envelope(orderId(context), ORDER_VERSION, SUCCEEDED_TIME)
+            .fields(expected).taxComponents(List.of()).assertBillingTaxShape();
     }
 
     /** 未知订单：终态失败，不发布。 */
@@ -192,7 +250,8 @@ class OrderPaymentSucceededHandlerTest extends MockTestBase {
         payload.put("partnerShareVersionId", partner ? Long.toString(PARTNER_SHARE_VERSION_ID) : null);
         payload.put("platformChargeVersionId", partner ? Long.toString(PLATFORM_CHARGE_VERSION_ID) : null);
         payload.put("platformServicePartyId", partner ? Long.toString(PLATFORM_SERVICE_PARTY_ID) : null);
-        payload.put("financeTaxSnapshotId", Long.toString(frozen.financeTaxSnapshotId()));
+        payload.put("financeTaxSnapshotId",
+            frozen.financeTaxSnapshotId() == null ? null : Long.toString(frozen.financeTaxSnapshotId()));
         payload.put("consumerCountryCode", frozen.consumerCountryCode());
         payload.put("paymentIntentId", Long.toString(order.getOrderId()));
         payload.put("paymentAttemptId", Long.toString(ATTEMPT_ID));
@@ -208,6 +267,12 @@ class OrderPaymentSucceededHandlerTest extends MockTestBase {
         payload.put("cardBrand", fullFacts ? "VISA" : null);
         payload.put("fundingType", fullFacts ? "CREDIT" : null);
         payload.put("cardLevel", fullFacts ? "CLASSIC" : null);
+        // 存量订单（旧零税快照，无税务计算记录）：可空新增的税务字段全部为 null（AC-12）。
+        payload.put("taxCalculationId", null);
+        payload.put("taxStatus", null);
+        payload.put("taxScopeKey", null);
+        payload.put("taxAmount", null);
+        payload.put("taxComponents", null);
         return payload;
     }
 

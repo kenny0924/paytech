@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.tax.core.dal.mapper.TaxDocumentMapper">
+    <insert id="insert">
+        INSERT INTO t_tax_document (id, transaction_id, document_kind, document_scope_key, issuance_mode, issuer_party_id, registration_id, series_code, document_number, issued_at, currency, policy_id, template_code, template_revision, content_schema_version, document_content_json, issue_status, submission_status, submission_source, document_file_address, document_digest, void_reason, create_time, update_time)
+        VALUES (#{row.id}, #{row.transactionId}, #{row.documentKind}, #{row.documentScopeKey}, #{row.issuanceMode}, #{row.issuerPartyId}, #{row.registrationId}, #{row.seriesCode}, #{row.documentNumber}, #{row.issuedAt}, #{row.currency}, #{row.policyId}, #{row.templateCode}, #{row.templateRevision}, #{row.contentSchemaVersion}, #{row.documentContentJson}, #{row.issueStatus}, #{row.submissionStatus}, #{row.submissionSource}, #{row.documentFileAddress}, #{row.documentDigest}, #{row.voidReason}, #{row.createTime}, #{row.updateTime})
+    </insert>
+
+    <select id="selectByTransaction" resultType="com.paytech.tax.core.dal.dataobject.TaxDocument">
+        SELECT id, transaction_id, document_kind, document_scope_key, issuance_mode, issuer_party_id, registration_id, series_code, document_number, issued_at, currency, policy_id, template_code, template_revision, content_schema_version, document_content_json, issue_status, submission_status, submission_source, document_file_address, document_digest, void_reason, create_time, update_time FROM t_tax_document
+        WHERE transaction_id = #{transactionId} AND document_kind = #{documentKind} AND document_scope_key = #{documentScopeKey}
+    </select>
+
+    <update id="updateIssued">
+        UPDATE t_tax_document
+        SET document_file_address = #{fileAddress}, document_digest = #{digest}, issue_status = 'ISSUED', update_time = #{now}
+        WHERE id = #{id} AND issue_status = 'RESERVED'
+    </update>
+
+    <select id="selectByTransactionIds" resultType="com.paytech.tax.core.dal.dataobject.TaxDocument">
+        SELECT id, transaction_id, document_kind, document_scope_key, issuance_mode, issuer_party_id, registration_id, series_code, document_number, issued_at, currency, policy_id, template_code, template_revision, content_schema_version, document_content_json, issue_status, submission_status, submission_source, document_file_address, document_digest, void_reason, create_time, update_time FROM t_tax_document
+        WHERE transaction_id IN <foreach collection="transactionIds" item="v" open="(" separator="," close=")">#{v}</foreach> ORDER BY transaction_id, id
+    </select>
+</mapper>

@@ -23,6 +23,13 @@
     </properties>
 
     <dependencies>
+        <!-- 分区队列基线：监听容器启动前清空 tax.acquiring.p0..p3 与 DLQ（其他模块测试真实发布的 OrderPaymentSucceeded 残留）。 -->
+        <dependency>
+            <groupId>com.paytech</groupId>
+            <artifactId>paytech-messaging</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.paytech</groupId>
             <artifactId>paytech-tax-app</artifactId>

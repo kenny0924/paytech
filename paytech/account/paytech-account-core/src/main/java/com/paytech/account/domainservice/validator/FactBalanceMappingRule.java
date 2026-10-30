@@ -23,8 +23,8 @@ import com.paytech.foundation.common.error.BizCheckFailException;
  * <li>每条明细行都必须给出付方与收方（BillingFactRecorded 载荷的单一路径），缺任一方即拒绝整条事实。</li>
  * <li>只有 CLIENT、LOCAL_PARTNER 两个角色对应 account 明细账；渠道、经营主体、Finance Entity、税务机关只在 ledger 记账，在本表登记的金额组件上
  * 允许出现但不产生流水；CONSUMER、CASH_ACCOUNT、FX_ACCOUNT 角色与其余组合拒绝，使 ledger 与 account 对同一事实同时接受或同时拒绝。</li>
- * <li>PAYMENT 事实按资金实际流向写行：渠道（清算账户）是本金（→ Client）与 Client 手续费（→ 经营主体）的付方，毛额在渠道处一次拆分，
- * Client 只作为本金收方出现；平台服务费由经营主体付给 Finance Entity，不动 Partner 余额。</li>
+ * <li>PAYMENT 事实按资金实际流向写行：渠道（清算账户）是本金（→ Client）、Client 手续费（→ 经营主体）与卖方税（→ 税务机关）的付方，
+ * 毛额在渠道处一次拆分，Client 只作为本金收方出现；平台服务费由经营主体付给 Finance Entity，不动 Partner 余额。</li>
  * <li>收方记贷方、付方记借方，余额桶固定为 PENDING（行的 targetBucket 本期不参与映射）；方向为 REVERSAL 时借贷互换。</li>
  * <li>COST_ADJUSTMENT 只允许渠道与经营主体之间的 CHANNEL_COST，不影响 Owner，生成 0 流水批次。</li>
  * <li>Owner 角色出现在没有映射的金额组件上时拒绝整条事实（Fail-Closed），不静默丢弃 Owner 影响。</li>
@@ -46,7 +46,7 @@ public final class FactBalanceMappingRule {
 
     /**
      * 平台侧角色 → 允许的金额组件：不产生 Owner 流水，但必须与 ledger 规则包（STANDARD_ADJUSTMENT、STANDARD_TRANSACTION）的平台侧规则行一一对应；
-     * 渠道作为 PAYMENT 本金与手续费的付方、成本调整与渠道成本的收付方；
+     * 渠道作为 PAYMENT 本金、手续费与卖方税（SELLER_TAX → 税务机关）的付方、成本调整与渠道成本的收付方；
      * 不在其中的组合（含 CONSUMER、CASH_ACCOUNT、FX_ACCOUNT 角色）两边一致拒绝。
      */
     private static final Map<String, Set<String>> PLATFORM_SIDE_FEES = Map.of(
@@ -57,7 +57,8 @@ public final class FactBalanceMappingRule {
         FactPartyRole.FINANCE_ENTITY.getCode(), Set.of(FactComponentType.PLATFORM_SERVICE_CHARGE.getCode()),
         FactPartyRole.TAX_AUTHORITY.getCode(), Set.of(FactComponentType.SELLER_TAX.getCode()),
         FactPartyRole.CHANNEL.getCode(), Set.of(FactComponentType.CHANNEL_COST.getCode(),
-            FactComponentType.CLIENT_PRINCIPAL.getCode(), FactComponentType.CLIENT_FEE.getCode()));
+            FactComponentType.CLIENT_PRINCIPAL.getCode(), FactComponentType.CLIENT_FEE.getCode(),
+            FactComponentType.SELLER_TAX.getCode()));
 
     private FactBalanceMappingRule() {
     }

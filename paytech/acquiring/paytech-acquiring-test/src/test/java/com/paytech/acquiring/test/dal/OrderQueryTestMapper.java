@@ -17,11 +17,11 @@ public interface OrderQueryTestMapper {
     @Insert("""
         INSERT INTO t_commerce_order (order_id,order_no,client_id,client_order_id,creation_mode,
           consumer_country_code,entity_no,merchandise_amount,
-          discount_amount,net_amount,tax_amount,rounding_amount,total_amount,currency,order_status,
+          discount_amount,net_amount,tax_amount,rounding_amount,total_amount,amount_status,currency,order_status,
           expires_at,paid_at,version,create_time,update_time)
         VALUES (#{orderId},#{orderNo},#{clientId},#{clientOrderId},#{creationMode},#{consumerCountryCode},
           #{entityNo},#{merchandiseAmount},#{discountAmount},#{netAmount},
-          #{taxAmount},#{roundingAmount},#{totalAmount},#{currency},#{orderStatus},#{expiresAt},#{paidAt},
+          #{taxAmount},#{roundingAmount},#{totalAmount},#{amountStatus},#{currency},#{orderStatus},#{expiresAt},#{paidAt},
           #{version},#{createTime},#{updateTime})
         """)
     void insertOrder(CommerceOrder order);

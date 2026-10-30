@@ -57,6 +57,7 @@ const pages: Record<PageComponentKey, ComponentType<PageProps>> = {
   OPERATIONS_FINANCE_ADJUSTMENTS: lazy(() => import('../pages/FinanceAdjustments').then(m => ({ default: m.FinanceAdjustments }))),
   OPERATIONS_FINANCE_PERIOD_CLOSE: lazy(() => import('../pages/FinancePeriodClose').then(m => ({ default: m.FinancePeriodClose }))),
   OPERATIONS_FINANCE_ACCOUNTING_RULES: lazy(() => import('../pages/FinanceAccountingRules').then(m => ({ default: m.FinanceAccountingRules }))),
+  OPERATIONS_FINANCE_TAX: lazy(() => import('../pages/FinanceTax').then(m => ({ default: m.FinanceTax }))),
   OPERATIONS_FINANCE_RECON_CLEARING: lazy(() => import('../pages/ReconClearingAccounts').then(m => ({ default: m.ReconClearingAccounts }))),
   OPERATIONS_FINANCE_RECON_CASH: lazy(() => import('../pages/ReconCashAccounts').then(m => ({ default: m.ReconCashAccounts }))),
   OPERATIONS_FINANCE_RECON_STATEMENTS: lazy(() => import('../pages/ReconStatements').then(m => ({ default: m.ReconStatements }))),

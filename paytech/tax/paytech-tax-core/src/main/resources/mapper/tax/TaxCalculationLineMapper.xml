@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.tax.core.dal.mapper.TaxCalculationLineMapper">
+    <insert id="batchInsert">
+        INSERT INTO t_tax_calculation_line (id, calculation_id, source_line_ref, line_no, category_code, description, quantity, unit_price, discount_amount, net_amount, charged_tax_amount, gross_amount, rounding_delta, create_time)
+        VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.id}, #{row.calculationId}, #{row.sourceLineRef}, #{row.lineNo}, #{row.categoryCode}, #{row.description}, #{row.quantity}, #{row.unitPrice}, #{row.discountAmount}, #{row.netAmount}, #{row.chargedTaxAmount}, #{row.grossAmount}, #{row.roundingDelta}, #{row.createTime})
+        </foreach>
+    </insert>
+
+    <select id="selectByCalculationIds" resultType="com.paytech.tax.core.dal.dataobject.TaxCalculationLine">
+        SELECT id, calculation_id, source_line_ref, line_no, category_code, description, quantity, unit_price, discount_amount, net_amount, charged_tax_amount, gross_amount, rounding_delta, create_time FROM t_tax_calculation_line
+        WHERE calculation_id IN <foreach collection="calculationIds" item="v" open="(" separator="," close=")">#{v}</foreach> ORDER BY calculation_id, line_no
+    </select>
+</mapper>

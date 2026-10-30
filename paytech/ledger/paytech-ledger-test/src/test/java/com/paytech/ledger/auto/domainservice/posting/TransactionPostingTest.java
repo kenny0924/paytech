@@ -1,6 +1,7 @@
 package com.paytech.ledger.auto.domainservice.posting;
 
 import static com.paytech.ledger.test.builder.BillingFactLineBuilder.channelCost;
+import static com.paytech.ledger.test.builder.BillingFactLineBuilder.channelSellerTax;
 import static com.paytech.ledger.test.builder.BillingFactLineBuilder.clientFee;
 import static com.paytech.ledger.test.builder.BillingFactLineBuilder.clientPrincipal;
 import static com.paytech.ledger.test.builder.BillingFactLineBuilder.partnerShare;
@@ -174,6 +175,32 @@ class TransactionPostingTest extends AbstractTransactionPostingTest {
             ENTITY_NO), "零手续费不应创建收入账户");
         ledgerChecker.assertBalancedJournals(book, 1).assertAccount(taxPayable, "0", "5", "5", 1)
             .assertAccount(channelAccrual, "0", "2", "2", 1);
+    }
+
+    /**
+     * billing 按 tax 组件登记的两行 SELLER_TAX（渠道 → 同一税务机关 3 + 2）合并为一笔规则行 5204 TAX_PAYABLE 贷记 5
+     * （tax 技术方案 11.3，ledger 无代码改动）。
+     */
+    @Test
+    void test_twoSellerTaxLinesPostOneTaxPayableCredit() {
+        long book = oeLedger.getLedgerBookId();
+        BillingFactPayload economics = fact(payment("100"), clientFee("3", ENTITY_NO),
+            channelSellerTax("3", TAX_AUTHORITY_ID), channelSellerTax("2", TAX_AUTHORITY_ID),
+            clientPrincipal("92", CLIENT_ID));
+        AccountPostedPayload posting = paymentPosting(economics, 1, "92", null).build();
+
+        List<PostedInstructionView> views = postBatch(economics, posting);
+
+        assertEquals(1, views.size());
+        AccountingInstruction instruction = instruction(posting, AutoInstructionType.PAYMENT_SUCCEEDED);
+        long taxPayable = existingAccount(book, RuleVersionRequestBuilder.TAX_PAYABLE, LedgerOwnerType.TAX_AUTHORITY,
+            String.valueOf(TAX_AUTHORITY_ID));
+        assertInstructionLines(instruction.getId(), debit(5201, channelReceivable(book), "100"),
+            credit(5203, existingAccount(book, RuleVersionRequestBuilder.CLIENT_FEE_REVENUE,
+                LedgerOwnerType.OPERATING_ENTITY, ENTITY_NO), "3"),
+            credit(5204, taxPayable, "5"),
+            entry(posting.getEntries().get(0), controlAccount(StandardAccountCodes.CLIENT_PAYABLE)));
+        ledgerChecker.assertBalancedJournals(book, 1).assertAccount(taxPayable, "0", "5", "5", 1);
     }
 
     /** 同一批次重复投递只消费一次；直接重复调用引擎返回原指令与 Journal，不新增指令、Journal 或序号。 */

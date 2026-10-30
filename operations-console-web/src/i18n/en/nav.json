@@ -102,6 +102,7 @@
   "nav.resource.OPERATIONS_FINANCE_SETUP": "Accounting Setup",
   "nav.resource.OPERATIONS_FINANCE_SETUP_MANAGE": "Manage",
   "nav.resource.OPERATIONS_FINANCE_SUBLEDGER": "Subledger",
+  "nav.resource.OPERATIONS_FINANCE_TAX": "Tax Lookup",
   "nav.resource.OPERATIONS_GATEWAY_CONFIGURATION": "API Routes",
   "nav.resource.OPERATIONS_GATEWAY_CONFIGURATION_MANAGE": "Manage Configuration",
   "nav.resource.OPERATIONS_I18N": "Localization",

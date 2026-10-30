@@ -10,6 +10,7 @@ import static com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker.raw;
 import static com.paytech.acquiring.test.mocker.external.CheckoutRiskMocker.result;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.Duration;
 import java.util.List;
@@ -243,7 +244,7 @@ class CreateCheckoutRiskTest extends AbstractCreateCheckoutApiTest {
             () -> assertEquals(12, request.getInputs().size()));
     }
 
-    /** CLIENT 来源不传 Local Partner（11 个输入）；整额无小数时金额为整数字符串。 */
+    /** CLIENT 来源不传 Local Partner（11 个输入）；整额无小数时金额为整数字符串；没有快照时 tax 不收责任方（NOT_MANAGED）。 */
     @Test
     void test_clientSource() {
         preparationMocker.mockResolution(clientId(), "US", "USD",
@@ -259,6 +260,7 @@ class CreateCheckoutRiskTest extends AbstractCreateCheckoutApiTest {
             EntitySourceType.CLIENT.getCode(), null, "US", "USD", "10", "0", "10", "RETAIL", "5999", "1");
         assertEquals(expected.inputs(), riskMocker.requests().getFirst().getInputs());
         assertEquals(11, riskMocker.requests().getFirst().getInputs().size());
+        assertNull(taxMocker.requests().getFirst().getTaxSubjectPartyId());
     }
 
     /** 两次调用的业务身份与输入完全相同（Risk 按业务身份重放）。 */

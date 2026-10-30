@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.tax.core.dal.mapper.TaxDocumentSequenceMapper">
+    <!-- uk_tax_document_sequence 已存在时不改任何列：年度序列首次使用时自动建立，并发建立只保留先提交的一行。 -->
+    <insert id="insertIfAbsent">
+        INSERT INTO t_tax_document_sequence (id, issuer_party_id, registration_id, series_code, document_kind, next_number, number_format, create_time, update_time)
+        VALUES (#{row.id}, #{row.issuerPartyId}, #{row.registrationId}, #{row.seriesCode}, #{row.documentKind}, #{row.nextNumber}, #{row.numberFormat}, #{row.createTime}, #{row.updateTime})
+        ON DUPLICATE KEY UPDATE id = id
+    </insert>
+
+    <select id="selectForUpdate" resultType="com.paytech.tax.core.dal.dataobject.TaxDocumentSequence" flushCache="true" useCache="false">
+        SELECT id, issuer_party_id, registration_id, series_code, document_kind, next_number, number_format, create_time, update_time FROM t_tax_document_sequence
+        WHERE issuer_party_id = #{issuerPartyId} AND registration_id = #{registrationId} AND series_code = #{seriesCode} FOR UPDATE
+    </select>
+
+    <update id="updateNextNumber">
+        UPDATE t_tax_document_sequence SET next_number = next_number + 1, update_time = #{now}
+        WHERE id = #{id} AND next_number = #{expected}
+    </update>
+</mapper>

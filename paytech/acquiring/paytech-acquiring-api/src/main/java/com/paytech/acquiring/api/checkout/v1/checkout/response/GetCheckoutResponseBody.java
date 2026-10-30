@@ -30,10 +30,17 @@ public class GetCheckoutResponseBody {
     private String preparationStatus;
 
     /**
-     * 金额状态。
-     * <li>ESTIMATED：尚未冻结；FINAL：已冻结最终金额。</li>
+     * 金额状态（OrderAmountStatus Code），取订单当前有效报价。
+     * <li>ESTIMATED：按 Client 声明国家暂估，提交账单地址后重算；FINAL：最终金额，可付款；BLOCKED：无法正确计税，税额与总额为空，
+     * 原因见 taxBlockReason，不能付款。</li>
      */
     private String amountStatus;
+
+    /**
+     * 税务阻断原因代码。
+     * <li>仅 amountStatus=BLOCKED 时有值，如 MARKET_NOT_ENABLED、NO_RULE；其他状态为 null。</li>
+     */
+    private String taxBlockReason;
 
     /** 订单币种 Code。 */
     private String currency;
@@ -163,21 +170,21 @@ public class GetCheckoutResponseBody {
 
         /**
          * 税额。
-         * <li>未初始化的历史数据为空，新订单在创建时确定。</li>
+         * <li>未初始化的历史数据或 amountStatus=BLOCKED 时为空；建单为暂估，消费者提交账单地址后重算。</li>
          * <li>订单币种主单位金额字符串，按币种精度输出；当前 USD "10.00" 表示 10 美元。</li>
          */
         private String taxAmount;
 
         /**
          * 舍入调整金额。
-         * <li>未初始化的历史数据为空，新订单在创建时确定。</li>
+         * <li>未初始化的历史数据或 amountStatus=BLOCKED 时为空；建单为暂估，消费者提交账单地址后重算。</li>
          * <li>订单币种主单位金额字符串，按币种精度输出；当前 USD "10.00" 表示 10 美元。</li>
          */
         private String roundingAmount;
 
         /**
          * 最终应付总额。
-         * <li>未初始化的历史数据为空，新订单在创建时确定。</li>
+         * <li>未初始化的历史数据或 amountStatus=BLOCKED 时为空；建单为暂估，消费者提交账单地址后重算。</li>
          * <li>订单币种主单位金额字符串，按币种精度输出；当前 USD "10.00" 表示 10 美元。</li>
          */
         private String totalAmount;

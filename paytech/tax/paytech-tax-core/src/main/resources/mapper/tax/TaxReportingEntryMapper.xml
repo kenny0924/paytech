@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.paytech.tax.core.dal.mapper.TaxReportingEntryMapper">
+    <insert id="batchInsert">
+        INSERT INTO t_tax_reporting_entry (id, transaction_id, component_id, registration_id, period_id, entry_role, reporting_rule_code, reporting_policy_id, source_currency, source_tax_base, source_tax_amount, reporting_currency, fx_rate, fx_rate_date, fx_source_ref, reporting_tax_base, reporting_tax_amount, tax_point_date, create_time)
+        VALUES
+        <foreach collection="rows" item="row" separator=",">
+            (#{row.id}, #{row.transactionId}, #{row.componentId}, #{row.registrationId}, #{row.periodId}, #{row.entryRole}, #{row.reportingRuleCode}, #{row.reportingPolicyId}, #{row.sourceCurrency}, #{row.sourceTaxBase}, #{row.sourceTaxAmount}, #{row.reportingCurrency}, #{row.fxRate}, #{row.fxRateDate}, #{row.fxSourceRef}, #{row.reportingTaxBase}, #{row.reportingTaxAmount}, #{row.taxPointDate}, #{row.createTime})
+        </foreach>
+    </insert>
+
+    <select id="selectByTransactionIds" resultType="com.paytech.tax.core.dal.dataobject.TaxReportingEntry">
+        SELECT id, transaction_id, component_id, registration_id, period_id, entry_role, reporting_rule_code, reporting_policy_id, source_currency, source_tax_base, source_tax_amount, reporting_currency, fx_rate, fx_rate_date, fx_source_ref, reporting_tax_base, reporting_tax_amount, tax_point_date, create_time FROM t_tax_reporting_entry
+        WHERE transaction_id IN <foreach collection="transactionIds" item="v" open="(" separator="," close=")">#{v}</foreach> ORDER BY transaction_id, id
+    </select>
+</mapper>

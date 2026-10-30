@@ -26,6 +26,7 @@ import com.paytech.acquiring.domainservice.repository.customer.ConsumerContextRe
 import com.paytech.acquiring.domainservice.repository.order.CommerceOrderRepository;
 import com.paytech.acquiring.domainservice.repository.order.OrderContextRepository;
 import com.paytech.acquiring.domainservice.repository.order.OrderItemRepository;
+import com.paytech.acquiring.domainservice.repository.order.OrderTaxCalculationRepository;
 import com.paytech.acquiring.domainservice.repository.order.OrderPaymentProjectionRepository;
 import com.paytech.acquiring.integration.customer.CheckoutDocumentLinkClient;
 import com.paytech.acquiring.integration.payment.PaymentStoredCardClient;
@@ -55,6 +56,7 @@ public class GetCustomerCheckoutProcessor extends AbstractProcessor<GetCheckoutR
     private final OrderPaymentProjectionRepository orderPaymentProjectionRepository;
     private final CardSavingEligibility cardSavingEligibility;
     private final PaymentStoredCardClient storedCards;
+    private final OrderTaxCalculationRepository taxCalculationRepository;
 
     /** Token 的格式与校验码不合法时按原合同返回不存在，不发起数据库或外部查询。 */
     @Override
@@ -92,7 +94,8 @@ public class GetCustomerCheckoutProcessor extends AbstractProcessor<GetCheckoutR
         var links = documentLinks(legal, order.getExpiresAt(), now);
         var paymentStatus = paymentStatus(projection);
         return new CheckoutQueryContext(session, order, consumer, legal, projection, items, country, details, links,
-            paymentStatus, acceptances.existsByOrderId(order.getOrderId()));
+            paymentStatus, acceptances.existsByOrderId(order.getOrderId()),
+            taxCalculationRepository.findLatestByOrderId(order.getOrderId()));
     }
 
     /** 按原 Token 读取实际会话，不拼装其他用例的订单聚合。 */
@@ -196,7 +199,8 @@ public class GetCustomerCheckoutProcessor extends AbstractProcessor<GetCheckoutR
                 legal.getPublicSupportPhone());
         var actions = context.allowedActions(now);
         return new GetCheckoutResponse(order.getOrderNo(), order.getOrderStatus(),
-            context.getSession().getSessionStatus(), context.isReady(), order.getCurrency(), context.getCountry(),
+            context.getSession().getSessionStatus(), context.isReady(), order.getAmountStatus(),
+            context.taxBlockReason(), order.getCurrency(), context.getCountry(),
             legal == null ? "en" : legal.getLocale(), order.getExpiresAt(), amounts, items,
             context.getConsumer() != null, context.getDetails(), seller,
             legal == null ? null : legal.getConsumerContractId(), context.getLinks(),

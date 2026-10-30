@@ -1,5 +1,6 @@
 package com.paytech.acquiring.test.builder.checkout;
 
+import com.paytech.acquiring.api.client.v1.enums.OrderAmountStatus;
 import com.paytech.acquiring.core.dal.dataobject.customer.FrozenCheckoutRecord;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -43,7 +44,7 @@ public final class CreateCheckoutContextBuilder {
             .consumerCountryCode("US").merchandiseAmount(one).discountAmount(zero).netAmount(one)
             .entityNo("AE001").entitySourceType(EntitySourceType.CLIENT.getCode()).industryCode("RETAIL")
             .mccCode("5999")
-            .taxAmount(zero).roundingAmount(zero).totalAmount(one).currency("USD").orderStatus(OrderStatus.OPEN).expiresAt(now.plusSeconds(1800))
+            .taxAmount(zero).roundingAmount(zero).totalAmount(one).amountStatus(OrderAmountStatus.FINAL).currency("USD").orderStatus(OrderStatus.OPEN).expiresAt(now.plusSeconds(1800))
             .version(1L).createTime(now).updateTime(now).build();
         var item = OrderItem.builder().orderItemId(orderId).orderId(orderId).clientItemId("line-1")
             .itemName("Purchase").productTypeCode("SERVICE").taxCategoryCode("STANDARD")
@@ -69,6 +70,7 @@ public final class CreateCheckoutContextBuilder {
             .sellerDisclosureId(106).publicLegalName("Test Seller").publicRegistrationNumber("TEST-REG")
             .publicAddressText("Test Address").publicSupportEmail("support@example.invalid")
             .consumerContractId(orderId).renderedFileId(orderId).renderedContentHash("e".repeat(64)).presentedAt(now).build();
-        return new CreateCheckoutContext(frozen, List.of(), order, List.of(item), refund, funds, session);
+        // 历史形态：旧零税快照、无税务计算记录、合同未绑定计算（AC-12 存量订单路径）。
+        return new CreateCheckoutContext(frozen, List.of(), null, order, List.of(item), refund, funds, session);
     }
 }
